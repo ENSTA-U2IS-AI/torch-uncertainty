@@ -10,6 +10,7 @@ packages = [{include = "poetry_demo"}]
 python = "^3.9"
 pytorch-lightning = "^1.9.0"
 tensorboard = "^2.11.2"
+einops = "^0.6.0"
 
 
 [tool.poetry.group.dev.dependencies]
