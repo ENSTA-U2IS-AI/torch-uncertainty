@@ -1,0 +1,15 @@
+[flake8]
+max-line-length = 80
+exclude =
+    .git,
+    __pycache__,
+    .ipynb_checkpoints,
+    build,
+    dist
+extend-ignore = E203, E302
+ignore =
+    # W503 line break before binary operator
+    # C901 too complex
+    # B010 setattr are often just necessary
+    # B305 `.next()` is not a thing on Python 3
+    W503, C901, B010, B305

@@ -24,3 +24,40 @@ sphinx-rtd-theme = "^1.1.1"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 80
+target_version = ['py38', 'py39', 'py310', 'py311']
+include = '\.pyi?$'
+exclude = '''
+/(
+    __pycache__
+  | \.git
+  | \.mypy_cache
+  | \.ipynb_checkpoints
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+line_length = 80
+profile = "black"
+known_first_party = ["numpy"]
+
+[tool.mypy]
+python_version = 3.8
+platform = "posix"
+
+color_output = true
+pretty = true
+show_column_numbers = true
+strict = true
+
+# probably redundant, but useful when switching strict to false
+check_untyped_defs = true
+ignore_missing_imports = true
+warn_no_return = true
+warn_redundant_casts = true
+warn_unused_configs = true
+warn_unused_ignores = true
