@@ -28,8 +28,6 @@ def cli_main(
     parser.add_argument("--test", type=int, default=None)
     parser.add_argument("--summary", dest="summary", action="store_true")
     parser.add_argument("--log_graph", dest="log_graph", action="store_true")
-    parser.add_argument("--profile", dest="profile", action="store_true")
-    parser.add_argument("--multi-gpu", action="store_true")
 
     parser = pl.Trainer.add_argparse_args(parser)
     parser = datamodule.add_argparse_args(parser)

@@ -6,6 +6,10 @@
 
 The package can be installed from PyPI or from source.
 
+### From PyPI
+
+Install the package via pip: `pip install torch-uncertainty`
+
 ### From source
 
 #### Installing Poetry
