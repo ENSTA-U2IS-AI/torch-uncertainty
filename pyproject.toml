@@ -4,7 +4,7 @@ version = "0.1.0"
 description = ""
 authors = ["Olivier Laurent", "Adrien Lafage", "Gianni Franchi"]
 readme = "README.md"
-packages = [{include = "poetry_demo"}]
+packages = [{include = "src"}]
 
 [tool.poetry.dependencies]
 python = "^3.9"
