@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "torch-uncertainty"
+name = "torch_uncertainty"
 version = "0.1.0"
 description = ""
 authors = ["Olivier Laurent", "Adrien Lafage", "Gianni Franchi"]
@@ -12,6 +12,8 @@ pytorch-lightning = "^1.9.0"
 tensorboard = "^2.11.2"
 einops = "^0.6.0"
 torchinfo = "^1.7.1"
+torchvision = "^0.14.1"
+timm = "^0.6.12"
 
 
 [tool.poetry.group.dev.dependencies]
