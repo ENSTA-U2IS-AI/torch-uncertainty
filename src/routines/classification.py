@@ -1,25 +1,25 @@
+# fmt:off
 from argparse import ArgumentParser, Namespace
 from typing import Tuple
 
+import pytorch_lightning as pl
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
-from torchmetrics import (
-    MetricCollection,
-    Accuracy,
-    CalibrationError,
-    AUROC,
-    AveragePrecision,
-)
-
-import pytorch_lightning as pl
 from pytorch_lightning.utilities.memory import get_model_size_mb
 from pytorch_lightning.utilities.types import STEP_OUTPUT
+from torchmetrics import (
+    AUROC,
+    Accuracy,
+    AveragePrecision,
+    CalibrationError,
+    MetricCollection,
+)
 
 from ..metrics import Entropy, FPR95Metric, NegativeLogLikelihood
 
 
+# fmt:on
 class ClassificationSingle(pl.LightningModule):
     def __init__(self, num_classes: int, *args, **kwargs) -> None:
         super().__init__()

@@ -1,10 +1,10 @@
 # fmt: off
 from typing import List, Type, Union
 
-from torch import Tensor
 import torch.nn as nn
 import torch.nn.functional as F
 from einops import rearrange
+from torch import Tensor
 
 from ...layers import PackedConv2d, PackedLinear
 
@@ -151,11 +151,11 @@ class _PackedResNet(nn.Module):
         # self.dataset = dataset
 
         self.num_estimators = num_estimators
-        self.in_channels = in_channels
-        self.alpha = alpha
         self.in_planes = int(64 * alpha)
         if self.in_planes % self.num_estimators:
-            self.in_planes += self.num_estimators - self.in_planes % self.num_estimators
+            self.in_planes += (
+                self.num_estimators - self.in_planes % self.num_estimators
+            )
         block_planes = self.in_planes
 
         # No subgroups in the first layer
@@ -251,7 +251,9 @@ class _PackedResNet(nn.Module):
         strides = [stride] + [1] * (num_blocks - 1)
         layers = []
         for stride in strides:
-            layers.append(block(self.in_planes, planes, stride, num_estimators, gamma))
+            layers.append(
+                block(self.in_planes, planes, stride, num_estimators, gamma)
+            )
             self.in_planes = planes * block.expansion
         return nn.Sequential(*layers)
 
@@ -264,7 +266,9 @@ class _PackedResNet(nn.Module):
         out = self.layer2(out)
         out = self.layer3(out)
         out = self.layer4(out)
-        out = rearrange(out, "e (m c) h w -> (m e) c h w", m=self.num_estimators)
+        out = rearrange(
+            out, "e (m c) h w -> (m e) c h w", m=self.num_estimators
+        )
         out = self.pool(out)
         out = self.flatten(out)
         out = self.linear(out)

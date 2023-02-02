@@ -1,15 +1,17 @@
-import numpy as np
-
-from torchmetrics import Metric
+# fmt: off
 from typing import List
+
 import torch
 from torch import Tensor
-from numpy.typing import ArrayLike
-
+from torchmetrics import Metric
 from torchmetrics.utilities import rank_zero_warn
 from torchmetrics.utilities.data import dim_zero_cat
 
+import numpy as np
+from numpy.typing import ArrayLike
 
+
+# fmt:on
 def stable_cumsum(arr: ArrayLike, rtol: float = 1e-05, atol: float = 1e-08):
     """
     From https://github.com/hendrycks/anomaly-seg

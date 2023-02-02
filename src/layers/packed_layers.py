@@ -1,10 +1,10 @@
 # fmt: off
 from typing import Any, Union
-from torch import Tensor
-import torch.nn as nn
-from torch.nn.common_types import _size_2_t
 
+import torch.nn as nn
 from einops import rearrange
+from torch import Tensor
+from torch.nn.common_types import _size_2_t
 
 
 # fmt: on
@@ -41,9 +41,13 @@ class PackedLinear(nn.Module):
 
         # fix if not divisible by groups
         if in_features % (num_estimators * groups):
-            in_features += num_estimators - in_features % (num_estimators * groups)
+            in_features += num_estimators - in_features % (
+                num_estimators * groups
+            )
         if out_features % (num_estimators * groups):
-            out_features += num_estimators - out_features % (num_estimators * groups)
+            out_features += num_estimators - out_features % (
+                num_estimators * groups
+            )
 
         self.conv1x1 = nn.Conv2d(
             in_channels=in_features,
@@ -122,15 +126,20 @@ class PackedConv2d(nn.Module):
 
         while (
             in_channels % (num_estimators * groups) != 0
-            or in_channels // (num_estimators * groups) < minimum_channels_per_group
+            or in_channels // (num_estimators * groups)
+            < minimum_channels_per_group
         ) and groups > 1:
             groups -= 1
 
         # fix if not divisible by groups
         if in_channels % (num_estimators * groups):
-            in_channels += num_estimators - in_channels % num_estimators * groups
+            in_channels += (
+                num_estimators - in_channels % num_estimators * groups
+            )
         if out_channels % (num_estimators * groups):
-            out_channels += num_estimators - out_channels % num_estimators * groups
+            out_channels += (
+                num_estimators - out_channels % num_estimators * groups
+            )
 
         self.conv = nn.Conv2d(
             in_channels=in_channels,

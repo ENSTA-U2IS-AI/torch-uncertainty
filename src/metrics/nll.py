@@ -1,4 +1,5 @@
 from typing import Any, Literal, Optional
+
 import torch
 import torch.nn.functional as F
 from torchmetrics import Metric

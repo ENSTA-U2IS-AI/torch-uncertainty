@@ -1,6 +1,7 @@
 from typing import Any, Literal, Optional
+
 import torch
-from torchmetrics import Metric, ROC
+from torchmetrics import ROC, Metric
 from torchmetrics.utilities.data import dim_zero_cat
 
 
