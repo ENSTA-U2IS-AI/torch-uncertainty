@@ -1,7 +1,7 @@
 from typing import Any, Literal, Optional
 
 import torch
-from torchmetrics import ROC, Metric
+from torchmetrics import Metric
 from torchmetrics.utilities.data import dim_zero_cat
 
 
@@ -58,7 +58,7 @@ class Entropy(Metric):
             self.total += probs.size(0)
 
     def compute(self) -> torch.Tensor:
-        """Computes Entropy based on inputs passed in to ``update`` previously."""
+        """Computes Entropy based on inputs passed in to ``update``."""
         values = dim_zero_cat(self.values)
         if self.reduction == "sum":
             return values.sum(dim=-1)
