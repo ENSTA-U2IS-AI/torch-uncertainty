@@ -1,4 +1,4 @@
-name: Docs
+name: docs
 on:
   push:
     branches:
@@ -17,12 +17,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - uses: actions/setup-python@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
 
     - name: Full Python version
       run: |
         echo "PYTHON_VERSION=$(python -c "import platform; print(platform.python_version())")"
-        echo "PYTHON_VERSION=$(python -c "import platform; print(platform.python_version())")" >> $GITHUB_ENV
 
     - name: Cache Packages
       uses: actions/cache@v3
@@ -60,4 +63,4 @@ jobs:
       with:
         deploy_key: ${{ secrets.ACTIONS_DEPLOY_KEY }}
         publish_branch: gh-pages
-        publish_dir: docs/_build/html
+        publish_dir: docs/build/html
