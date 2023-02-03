@@ -150,6 +150,7 @@ class _PackedResNet(nn.Module):
         # ], "The dataset is not taken in charge by this implementation."
         # self.dataset = dataset
 
+        self.in_channels = in_channels
         self.num_estimators = num_estimators
         self.in_planes = int(64 * alpha)
         if self.in_planes % self.num_estimators:
