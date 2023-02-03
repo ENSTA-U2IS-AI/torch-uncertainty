@@ -1,13 +1,14 @@
 # fmt: off
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import Type, Union
+from typing import Callable, Type, Union
 
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import LearningRateMonitor
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint
 from pytorch_lightning.loggers.tensorboard import TensorBoardLogger
+from torch.nn import Module
 from torchinfo import summary
 
 import numpy as np
@@ -20,6 +21,8 @@ from .utils import get_version
 def cli_main(
     network: Type[ClassificationSingle],
     datamodule: Type[pl.LightningDataModule],
+    loss: Module,
+    optimization_procedure: Callable[[Module], dict],
     root: Union[Path, str],
     net_name: str,
 ) -> None:
@@ -34,28 +37,24 @@ def cli_main(
     parser = network.add_model_specific_args(parser)
     args = parser.parse_args()
 
-    if args.deterministic and args.seed is None:
-        print("Setting seed to 0.")
-        args.__setattr__("seed", 0)
+    # if args.deterministic and args.seed is None:
+    #     print("Setting seed to 0.")
+    #     args.__setattr__("seed", 0)
 
     if args.seed:
         pl.seed_everything(args.seed, workers=True)
-
-    if args.profile:
-        print(
-            "Profiling will leak memory and increase the computational time."
-            "Do not launch long lasting trainings with the profile flag."
-        )
 
     if isinstance(root, str):
         root = Path(root)
 
     # datamodule
-    args.root = str(root / args.root)
+    args.root = str(root / "data")
     dm = datamodule(**vars(args))
 
     # model
-    model = network(args)
+    model = network(
+        loss, optimization_procedure, dm.num_classes, dm.num_channels, args
+    )
 
     # logger
     tb_logger = TensorBoardLogger(

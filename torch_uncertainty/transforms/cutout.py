@@ -1,5 +1,9 @@
+# fmt: off
 import torch
+
 import numpy as np
+
+# fmt: on
 
 
 class Cutout:

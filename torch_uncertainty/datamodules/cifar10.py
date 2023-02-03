@@ -6,14 +6,12 @@ from typing import Any, List, Optional, Union
 import torch.nn as nn
 import torchvision.transforms as T
 from pytorch_lightning import LightningDataModule
+from timm.data.auto_augment import rand_augment_transform
 from torch.utils.data import DataLoader, Dataset, random_split
 from torchvision.datasets import CIFAR10, SVHN
 
-
-from ..datasets import AggregatedDataset, CIFAR10_C, ImageNetO
+from ..datasets import CIFAR10_C, AggregatedDataset, ImageNetO
 from ..transforms import Cutout
-
-from timm.data.auto_augment import rand_augment_transform
 
 
 # fmt: on
@@ -29,7 +27,7 @@ class CIFAR10DataModule(LightningDataModule):
         use_cifar_c: str = None,
         corruption_severity: int = 1,
         use_imagenet_o: bool = False,
-        n_dataloaders: int = 1,
+        num_dataloaders: int = 1,
         pin_memory: bool = True,
         persistent_workers: bool = True,
         **kwargs,
@@ -44,7 +42,9 @@ class CIFAR10DataModule(LightningDataModule):
         self.num_workers = num_workers
         self.enable_cutout = enable_cutout
         self.auto_augment = auto_augment
-        self.n_dataloaders = n_dataloaders
+        self.num_dataloaders = num_dataloaders
+        self.num_classes = 10
+        self.num_channels = 3
 
         self.pin_memory = pin_memory
         self.persistent_workers = persistent_workers
@@ -181,9 +181,10 @@ class CIFAR10DataModule(LightningDataModule):
         Returns:
             DataLoader: CIFAR10 training dataloader.
         """
-        if self.n_dataloaders > 1:
+        if self.num_dataloaders > 1:
             return self._data_loader(
-                AggregatedDataset(self.train, self.n_dataloaders), shuffle=True
+                AggregatedDataset(self.train, self.num_dataloaders),
+                shuffle=True,
             )
         else:
             return self._data_loader(self.train, shuffle=True)

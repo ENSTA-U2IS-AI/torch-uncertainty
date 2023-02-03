@@ -1,23 +1,18 @@
 # fmt: off
-import pathlib
 from argparse import ArgumentParser
 from pathlib import Path
 from typing import Any, List, Optional, Union
-import numpy as np
 
 import torch
 import torch.nn as nn
 import torchvision.transforms as T
 from pytorch_lightning import LightningDataModule
-from torch.utils.data import DataLoader, Dataset, random_split
-from torchvision.datasets import CIFAR100,SVHN
-
 from timm.data.auto_augment import rand_augment_transform
+from torch.utils.data import DataLoader, Dataset, random_split
+from torchvision.datasets import CIFAR100, SVHN
 
-from ..datasets import (
-    CIFAR100_C, MixingSet, AggregatedDataset
-)
-from ..transforms import Cutout, pixmix
+from ..datasets import CIFAR100_C, AggregatedDataset
+from ..transforms import Cutout
 
 
 # fmt: on
@@ -35,7 +30,7 @@ class CIFAR100DataModule(LightningDataModule):
         use_cifar_c: str = None,
         corrupution_severity: int = 1,
         use_imagenet_o: bool = False,
-        n_dataloaders: int = 1,
+        num_dataloaders: int = 1,
         pin_memory: bool = True,
         persistent_workers: bool = True,
         **kwargs,
@@ -53,7 +48,9 @@ class CIFAR100DataModule(LightningDataModule):
         self.enable_pixmix = enable_pixmix
         self.enable_randaugment = enable_randaugment
         self.auto_augment = auto_augment
-        self.n_dataloaders = n_dataloaders
+        self.num_dataloaders = num_dataloaders
+        self.num_classes = 100
+        self.num_channels = 3
 
         self.pin_memory = pin_memory
         self.persistent_workers = persistent_workers
@@ -78,12 +75,6 @@ class CIFAR100DataModule(LightningDataModule):
 
         if enable_cutout:
             main_transform = Cutout(8)
-        elif enable_pixmix:
-            pixmix_set = MixingSet(
-                root=pathlib.Path(__file__).parent.resolve()
-                / Path("data/", "fractals_and_fvis")
-            )
-            main_transform = pixmix(pixmix_set)
         elif enable_randaugment:
             main_transform = T.RandAugment(num_ops=2, magnitude=20)
         elif auto_augment:
@@ -186,9 +177,10 @@ class CIFAR100DataModule(LightningDataModule):
         Returns:
             DataLoader: CIFAR10 training dataloader.
         """
-        if self.n_dataloaders > 1:
+        if self.num_dataloaders > 1:
             return self._data_loader(
-                AggregatedDataset(self.train, self.n_dataloaders), shuffle=True
+                AggregatedDataset(self.train, self.num_dataloaders),
+                shuffle=True,
             )
         else:
             return self._data_loader(self.train, shuffle=True)
@@ -233,7 +225,6 @@ class CIFAR100DataModule(LightningDataModule):
         p.add_argument("--val_split", type=int, default=0)
         p.add_argument("--num_workers", type=int, default=4)
         p.add_argument("--cutout", dest="enable_cutout", action="store_true")
-        p.add_argument("--pixmix", dest="enable_pixmix", action="store_true")
         p.add_argument(
             "--randaugment", dest="enable_randaugment", action="store_true"
         )

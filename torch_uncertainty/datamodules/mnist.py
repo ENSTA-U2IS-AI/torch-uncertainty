@@ -6,9 +6,7 @@ from typing import Any, List, Optional, Union
 import torchvision.transforms as T
 from pytorch_lightning import LightningDataModule
 from torch.utils.data import DataLoader, Dataset, random_split
-from torchvision.datasets import (
-    MNIST, FashionMNIST,
-)
+from torchvision.datasets import MNIST, FashionMNIST
 
 
 # fmt: on
@@ -38,6 +36,7 @@ class MNISTDataModule(LightningDataModule):
         self.persistent_workers = persistent_workers
         self.dataset = MNIST
         self.ood_dataset = FashionMNIST
+        self.num_classes = 10
 
         self.transform_train = T.Compose(
             [

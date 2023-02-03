@@ -5,12 +5,9 @@ from typing import Any, List, Optional, Union
 
 import torchvision.transforms as T
 from pytorch_lightning import LightningDataModule
-from torch.utils.data import DataLoader, Dataset, random_split
-from torchvision.datasets import (
-    DTD, SVHN, ImageNet, INaturalist
-)
-
 from timm.data.auto_augment import rand_augment_transform
+from torch.utils.data import DataLoader, Dataset, random_split
+from torchvision.datasets import DTD, SVHN, ImageNet, INaturalist
 
 from ..datasets import ImageNetO, ImageNetR
 
@@ -44,6 +41,8 @@ class ImageNetDataModule(LightningDataModule):
         self.pin_memory = pin_memory
         self.persistent_workers = persistent_workers
         self.ood_name = ood_name
+        self.num_classes = 1000
+        self.num_channels = 3
 
         if test_option is None:
             self.dataset = ImageNet

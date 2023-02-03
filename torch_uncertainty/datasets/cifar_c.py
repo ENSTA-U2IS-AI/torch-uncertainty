@@ -1,8 +1,12 @@
+# fmt:off
 from pathlib import Path
 from typing import Any, Callable, Optional, Tuple
 
-import numpy as np
 from torchvision.datasets import VisionDataset
+
+import numpy as np
+
+# fmt:on
 
 
 class CIFAR10_C(VisionDataset):

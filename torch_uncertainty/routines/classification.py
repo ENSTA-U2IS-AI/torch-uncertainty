@@ -17,12 +17,12 @@ from torchmetrics import (
 )
 
 from ..metrics import (
+    DisagreementMetric,
     Entropy,
     FPR95Metric,
-    NegativeLogLikelihood,
-    DisagreementMetric,
     JensenShannonDivergence,
     MutualInformation,
+    NegativeLogLikelihood,
 )
 
 
@@ -108,7 +108,7 @@ class ClassificationSingle(pl.LightningModule):
     ) -> None:
         inputs, targets = batch
         logits = self.forward(inputs)
-        probs = F.sofmax(logits, dim=-1)
+        probs = F.softmax(logits, dim=-1)
         self.val_metrics.update(probs, targets)
         self.log_dict(self.val_metrics.compute(), on_epoch=True)
 
@@ -120,7 +120,7 @@ class ClassificationSingle(pl.LightningModule):
     ) -> None:
         inputs, targets = batch
         logits = self.forward(inputs)
-        probs = F.sofmax(logits, dim=-1)
+        probs = F.softmax(logits, dim=-1)
         confs, _ = probs.max(dim=-1)
 
         if self.use_logits:

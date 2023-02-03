@@ -1,7 +1,6 @@
 import torch
-from torch import Tensor
 import torch.nn.functional as F
-
+from torch import Tensor
 from torchmetrics import Metric
 from torchmetrics.utilities import rank_zero_warn
 from torchmetrics.utilities.data import dim_zero_cat

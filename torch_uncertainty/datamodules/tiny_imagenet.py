@@ -36,6 +36,7 @@ class TinyImageNetDataModule(LightningDataModule):
         self.persistent_workers = persistent_workers
         self.dataset = TinyImageNet
         self.ood_dataset = SVHN
+        self.num_classes = 200
 
         self.transform_train = T.Compose(
             [

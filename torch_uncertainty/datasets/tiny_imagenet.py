@@ -1,13 +1,15 @@
+# fmt:off
 import os
 from collections import defaultdict
 from typing import Callable, Optional
 
-import matplotlib.image as mpimg
-import numpy as np
 from PIL import Image
 from torch.utils.data import Dataset
 
+import numpy as np
 
+
+# fmt:on
 class TinyImageNetPaths:
     """From https://gist.github.com/z-a-f/b862013c0dc2b540cf96a123a6766e54."""
 
