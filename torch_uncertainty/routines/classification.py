@@ -213,7 +213,9 @@ class ClassificationEnsemble(ClassificationSingle):
     def add_model_specific_args(
         parent_parser: ArgumentParser,
     ) -> ArgumentParser:
-        parent_parser = super().add_model_specific_args(parent_parser)
+        parent_parser = ClassificationSingle.add_model_specific_args(
+            parent_parser
+        )
         parent_parser.add_argument(
             "--mutual_information", dest="uses_mi", action="store_true"
         )
@@ -263,7 +265,7 @@ class ClassificationEnsemble(ClassificationSingle):
     ) -> None:
         inputs, targets = batch
         logits = self.forward(inputs)
-        logits = logits.reshape(self.n_estimators, -1, logits.size(-1))
+        logits = logits.reshape(self.num_estimators, -1, logits.size(-1))
         probs_per_est = F.softmax(logits, dim=-1)
         probs = probs_per_est.mean(dim=0)
         self.val_metrics.update(probs, targets)
