@@ -20,7 +20,6 @@ from ..metrics import (
     DisagreementMetric,
     Entropy,
     FPR95Metric,
-    JensenShannonDivergence,
     MutualInformation,
     NegativeLogLikelihood,
 )
@@ -205,7 +204,6 @@ class ClassificationEnsemble(ClassificationSingle):
             {
                 "disagreement": DisagreementMetric(),
                 "mi": MutualInformation(),
-                "js_div": JensenShannonDivergence(),
                 "entropy": Entropy(over_estimators=True),
             }
         )
@@ -247,11 +245,9 @@ class ClassificationEnsemble(ClassificationSingle):
                     "hp/test_fpr95": 0,
                     "hp/test_id_ens_disagreement": 0,
                     "hp/test_id_ens_mi": 0,
-                    "hp/test_id_ens_js_div": 0,
                     "hp/test_id_ens_entropy": 0,
                     "hp/test_ood_ens_disagreement": 0,
                     "hp/test_ood_ens_mi": 0,
-                    "hp/test_ood_ens_js_div": 0,
                     "hp/test_ood_ens_entropy": 0,
                 },
             )

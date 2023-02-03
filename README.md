@@ -35,3 +35,9 @@ Install the package using poetry
 Depending on your system, you may encounter an error. If so, kill the process and add `PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring` at the beginning of your command.
 
 ## Credits
+
+
+
+## Other repositories of interest
+
+You may find a lot of information about modern uncertainty estimation techniques on this What's Awesome: [Awesome Uncertainty in Deep Learning](https://github.com/ENSTA-U2IS/awesome-uncertainty-deeplearning)

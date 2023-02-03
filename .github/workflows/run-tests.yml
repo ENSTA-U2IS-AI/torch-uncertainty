@@ -1,4 +1,4 @@
-name: Torch Uncertainty
+name: Tests
 
 on: 
   push:
