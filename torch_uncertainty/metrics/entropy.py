@@ -45,6 +45,11 @@ class Entropy(Metric):
     def update(self, probs: torch.Tensor) -> None:
         """probs of size (num_estimators, batch, num_classes)"""
 
+        if self.over_estimators:
+            batch_size = probs.size(1)
+        else:
+            batch_size = probs.size(0)
+
         entropy = torch.special.entr(probs).sum(dim=-1)
         # entropy = -(torch.log(probs) * probs).sum(dim=-1)
 
@@ -55,7 +60,7 @@ class Entropy(Metric):
             self.values.append(entropy)
         else:
             self.values += entropy.sum()
-            self.total += probs.size(0)
+            self.total += batch_size
 
     def compute(self) -> torch.Tensor:
         """Computes Entropy based on inputs passed in to ``update``."""
