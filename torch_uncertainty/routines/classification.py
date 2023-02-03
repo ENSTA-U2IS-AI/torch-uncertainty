@@ -299,24 +299,9 @@ class ClassificationEnsemble(ClassificationSingle):
             self.test_ood_metrics.update(ood_values, torch.zeros_like(targets))
             self.test_entropy_id(probs)
             self.test_id_ens_metrics.update(probs_per_est)
-            # self.log_dict(
-            #     self.test_cls_metrics.compute(),
-            #     on_epoch=True,
-            #     add_dataloader_idx=False,
-            # )
-            # self.log_dict(
-            #     self.test_ood_metrics.compute(),
-            #     on_epoch=True,
-            #     add_dataloader_idx=False,
-            # )
             self.log(
                 "test_entropy_id",
                 self.test_entropy_id,
-                on_epoch=True,
-                add_dataloader_idx=False,
-            )
-            self.log_dict(
-                self.test_id_ens_metrics.compute(),
                 on_epoch=True,
                 add_dataloader_idx=False,
             )
@@ -324,22 +309,12 @@ class ClassificationEnsemble(ClassificationSingle):
             self.test_ood_metrics.update(ood_values, torch.ones_like(targets))
             self.test_entropy_ood(probs)
             self.test_ood_ens_metrics.update(probs_per_est)
-            # self.log_dict(
-            #     self.test_ood_metrics.compute(),
-            #     on_epoch=True,
-            #     add_dataloader_idx=False,
-            # )
             self.log(
                 "test_entropy_ood",
                 self.test_entropy_ood,
                 on_epoch=True,
                 add_dataloader_idx=False,
             )
-            # self.log_dict(
-            #     self.test_ood_ens_metrics.compute(),
-            #     on_epoch=True,
-            #     add_dataloader_idx=False,
-            # )
 
     def test_epoch_end(
         self, outputs: Union[EPOCH_OUTPUT, List[EPOCH_OUTPUT]]
