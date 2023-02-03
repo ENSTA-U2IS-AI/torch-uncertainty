@@ -11,10 +11,10 @@ class Cutout:
     Reference : https://github.com/quark0/darts/blob/master/cnn/utils.py
     """
 
-    def __init__(self, length):
+    def __init__(self, length: int):
         self.length = length
 
-    def __call__(self, img):
+    def __call__(self, img: torch.Tensor):
         if self.length <= 0:
             return img
         h, w = img.size(1), img.size(2)

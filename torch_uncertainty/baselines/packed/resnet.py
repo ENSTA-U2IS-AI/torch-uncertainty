@@ -1,6 +1,6 @@
 # fmt: off
 from argparse import ArgumentParser, Namespace
-from typing import Any, Callable, Dict, Union
+from typing import Any, Callable
 
 import torch
 import torch.nn as nn

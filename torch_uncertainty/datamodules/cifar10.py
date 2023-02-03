@@ -10,7 +10,7 @@ from timm.data.auto_augment import rand_augment_transform
 from torch.utils.data import DataLoader, Dataset, random_split
 from torchvision.datasets import CIFAR10, SVHN
 
-from ..datasets import CIFAR10_C, AggregatedDataset, ImageNetO
+from ..datasets import CIFAR10_C, AggregatedDataset
 from ..transforms import Cutout
 
 
@@ -26,7 +26,6 @@ class CIFAR10DataModule(LightningDataModule):
         auto_augment: str = None,
         use_cifar_c: str = None,
         corruption_severity: int = 1,
-        use_imagenet_o: bool = False,
         num_dataloaders: int = 1,
         pin_memory: bool = True,
         persistent_workers: bool = True,
@@ -56,12 +55,7 @@ class CIFAR10DataModule(LightningDataModule):
 
         self.use_cifar_c = use_cifar_c
         self.corruption_severity = corruption_severity
-        self.use_imagenet_o = use_imagenet_o
-
-        if use_imagenet_o:
-            self.ood_dataset = ImageNetO
-        else:
-            self.ood_dataset = SVHN
+        self.ood_dataset = SVHN
 
         if enable_cutout:
             main_transform = Cutout(16)

@@ -8,7 +8,6 @@ from torch import Tensor
 
 from ...layers import PackedConv2d, PackedLinear
 
-
 # fmt: on
 __all__ = [
     "packed_resnet_18",
@@ -70,7 +69,7 @@ class BasicBlock(nn.Module):
                 nn.BatchNorm2d(self.expansion * planes),
             )
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         out = F.relu(self.bn1(self.conv1(x)))
         out = self.bn2(self.conv2(out))
         out += self.shortcut(x)
@@ -129,7 +128,7 @@ class Bottleneck(nn.Module):
                 nn.BatchNorm2d(self.expansion * planes),
             )
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         out = F.relu(self.bn1(self.conv1(x)))
         out = F.relu(self.bn2(self.conv2(out)))
         out = self.bn3(self.conv3(out))
@@ -251,13 +250,13 @@ class _PackedResNet(nn.Module):
 
     def _make_layer(
         self,
-        block: nn.Module,
+        block: Type[Union[BasicBlock, Bottleneck]],
         planes: int,
         num_blocks: int,
         stride: int,
         num_estimators: int,
         gamma: int,
-    ):
+    ) -> nn.Module:
         strides = [stride] + [1] * (num_blocks - 1)
         layers = []
         for stride in strides:
@@ -267,7 +266,7 @@ class _PackedResNet(nn.Module):
             self.in_planes = planes * block.expansion
         return nn.Sequential(*layers)
 
-    def forward(self, x: Tensor):
+    def forward(self, x: Tensor) -> Tensor:
         out = F.relu(self.bn1(self.conv1(x)))
         # if self.dataset == "imagenet" or self.dataset == "tinyimagenet":
         # out = F.max_pool2d(out, kernel_size=3, stride=2, padding=1)
