@@ -9,11 +9,6 @@ on:
 env:
   POETRY_VERSION: "1.3.2"
 
-# Allow one concurrent deployment
-concurrency:
-  group: "tests"
-  cancel-in-progress: true
-
 jobs:
   build:
     runs-on: ubuntu-latest
