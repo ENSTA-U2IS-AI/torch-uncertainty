@@ -1,9 +1,12 @@
 # fmt:off
 
+import math
+
 import pytest
 import torch
+
 from torch_uncertainty.metrics import Entropy
-import math
+
 # fmt:on
 
 

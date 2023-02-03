@@ -1,5 +1,4 @@
-from typing import Any, Literal, Optional
-
+# fmt: on
 import torch
 import torch.nn.functional as F
 from torchmetrics import Metric
@@ -7,6 +6,7 @@ from torchmetrics.utilities import rank_zero_warn
 from torchmetrics.utilities.data import dim_zero_cat
 
 
+# fmt:off
 class NegativeLogLikelihood(Metric):
     full_state_update: bool = False
 
@@ -22,7 +22,7 @@ class NegativeLogLikelihood(Metric):
             " footprint."
         )
 
-    def update(self, probs: torch.Tensor, target: torch.Tensor) -> None:  # type: ignore
+    def update(self, probs: torch.Tensor, target: torch.Tensor) -> None:
         self.log_probs.append(torch.log(probs))
         self.targets.append(target)
 

@@ -32,6 +32,14 @@ jobs:
         echo "PYTHON_VERSION=$(python -c "import platform; print(platform.python_version())")"
         echo "PYTHON_VERSION=$(python -c "import platform; print(platform.python_version())")" >> $GITHUB_ENV
 
+    - name: Cache Packages
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.local
+          .venv
+        key: poetry-${{ runner.os }}-${{ env.PYTHON_VERSION }}-${{ hashFiles('**/poetry.lock') }}
+
     - name: Install and configure Poetry
       uses: snok/install-poetry@v1.3.3
       with:
@@ -39,14 +47,23 @@ jobs:
         virtualenvs-create: true
         virtualenvs-in-project: true
 
+    - name: Cache folder for traffic
+      uses: actions/cache@v3
+      id: cache-folder
+      with:
+        path: |
+          ~/.cache/torch-uncertainty/
+        key: torch-uncertainty-${{ runner.os }}
+
     - name: Install dependencies
       run: |
         poetry install --with dev
 
-    - name: Lint with flake8
+    - name: Style checking
       run: |
-        # stop the build if there are Python syntax errors or undefined names
-        poetry run flake8 torch-uncertainty --count --select=E9,F63,F7,F82 --show-source --statistics
+        poetry run flake8 torch_uncertainty tests
+        poetry run isort --check-only torch_uncertainty tests
+        poetry run black --check torch_uncertainty tests
 
     - name: Test with pytest
       run: |
