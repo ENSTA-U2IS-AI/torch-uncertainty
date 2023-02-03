@@ -1,0 +1,70 @@
+name: Torch Uncertainty
+
+on: 
+  push:
+    branches:
+      - main
+      - workflow
+
+env:
+  POETRY_VERSION: "1.3.2"
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10"]
+    env:
+      PYTHON_VERSION: ${{ matrix.python-version }}
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    # Update full Python version
+    - name: Full Python version
+      run: |
+        echo "PYTHON_VERSION=$(python -c "import platform; print(platform.python_version())")"
+        echo "PYTHON_VERSION=$(python -c "import platform; print(platform.python_version())")" >> $GITHUB_ENV
+
+    - name: Cache Packages
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.local
+          .venv
+        key: poetry-${{ runner.os }}-${{ env.PYTHON_VERSION }}-${{ hashFiles('**/poetry.lock') }}
+
+    - name: Install and configure Poetry
+      uses: snok/install-poetry@v1.3.3
+      with:
+        version: ${{ env.POETRY_VERSION }}
+        virtualenvs-create: true
+        virtualenvs-in-project: true
+
+    - name: Cache folder for Torch Uncertainty
+      uses: actions/cache@v3
+      id: cache-folder
+      with:
+        path: |
+          ~/.cache/torch-uncertainty/
+        key: torch-uncertainty-${{ runner.os }}
+
+    - name: Install dependencies
+      run: |
+        poetry install --with dev
+
+    - name: Style checking
+      run: |
+        poetry run flake8 torch_uncertainty tests
+        poetry run isort --check-only torch_uncertainty tests
+        poetry run black --check torch_uncertainty tests
+
+    - name: Test with pytest
+      run: |
+        poetry run pytest
