@@ -59,6 +59,5 @@ jobs:
       uses: peaceiris/actions-gh-pages@v3
       with:
         deploy_key: ${{ secrets.ACTIONS_DEPLOY_KEY }}
-        external_repository: torch-uncertainty/torch-uncertainty.github.io
-        publish_branch: main
+        publish_branch: gh-pages
         publish_dir: docs/_build/html
