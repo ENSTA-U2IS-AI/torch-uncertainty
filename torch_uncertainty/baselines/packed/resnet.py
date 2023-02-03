@@ -1,6 +1,6 @@
 # fmt: off
 from argparse import ArgumentParser, Namespace
-from typing import Dict, Union
+from typing import Any, Callable, Dict, Union
 
 import torch
 import torch.nn as nn
@@ -20,23 +20,29 @@ choices = [18, 34, 50, 101, 152]
 
 
 class PackedResNet(ClassificationEnsemble):
-    """_summary_
+    """LightningModule for Packed-Ensembles ResNet.
 
     Args:
-        loss (_type_): _description_
-        optimization_procedure (_type_): _description_
-        num_classes (int): _description_
-        in_channels (int): _description_
+        loss (nn.Module): Training loss.
+        optimization_procedure (Any): _description_
+        num_classes (int): number of classes.
+        in_channels (int): number of channel in input images.
         config (Union[Dict, Namespace]): _description_
+
+
     """
 
     def __init__(
         self,
-        loss,
-        optimization_procedure,
+        loss: nn.Module,
+        optimization_procedure: Any,
         num_classes: int,
         in_channels: int,
-        config: Union[Dict, Namespace],
+        num_estimators: int,
+        alpha: int,
+        gamma: int,
+        arch: Callable[..., nn.Module],
+        **kwargs,
     ) -> None:
         if isinstance(config, Namespace):
             config = vars(config)

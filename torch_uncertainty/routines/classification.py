@@ -27,15 +27,21 @@ from ..metrics import (
 
 # fmt:on
 class ClassificationSingle(pl.LightningModule):
-    def __init__(self, num_classes: int, *args, **kwargs) -> None:
+    def __init__(
+        self,
+        num_classes: int,
+        use_logits: bool = False,
+        use_entropy: bool = False,
+        **kwargs,
+    ) -> None:
         super().__init__()
 
-        self.use_logits: bool = kwargs.get("use_logits", False)
-        self.use_entropy: bool = kwargs.get("use_entropy", False)
-
         assert (
-            self.use_logits + self.use_entropy
+            use_logits + use_entropy
         ) <= 1, "You cannot choose more than one OOD criterion."
+
+        self.use_logits = use_logits
+        self.use_entropy = use_entropy
 
         # metrics
         cls_metrics = MetricCollection(
