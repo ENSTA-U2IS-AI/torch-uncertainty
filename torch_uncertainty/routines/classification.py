@@ -115,6 +115,7 @@ class ClassificationSingle(pl.LightningModule):
         self, outputs: Union[EPOCH_OUTPUT, List[EPOCH_OUTPUT]]
     ) -> None:
         self.log_dict(self.val_metrics.compute())
+        self.val_metrics.reset()
 
     def test_step(
         self,
@@ -139,7 +140,7 @@ class ClassificationSingle(pl.LightningModule):
             self.test_ood_metrics.update(ood_values, torch.zeros_like(targets))
             self.test_entropy_id(probs)
             self.log(
-                "test_entropy_id",
+                "hp/test_entropy_id",
                 self.test_entropy_id,
                 on_epoch=True,
                 add_dataloader_idx=False,
@@ -148,7 +149,7 @@ class ClassificationSingle(pl.LightningModule):
             self.test_ood_metrics.update(ood_values, torch.ones_like(targets))
             self.test_entropy_ood(probs)
             self.log(
-                "test_entropy_ood",
+                "hp/test_entropy_ood",
                 self.test_entropy_ood,
                 on_epoch=True,
                 add_dataloader_idx=False,
@@ -163,6 +164,8 @@ class ClassificationSingle(pl.LightningModule):
         self.log_dict(
             self.test_ood_metrics.compute(),
         )
+        self.test_cls_metrics.reset()
+        self.test_ood_metrics.reset()
 
     @staticmethod
     def add_model_specific_args(
@@ -269,7 +272,6 @@ class ClassificationEnsemble(ClassificationSingle):
         probs_per_est = F.softmax(logits, dim=-1)
         probs = probs_per_est.mean(dim=0)
         self.val_metrics.update(probs, targets)
-        # self.log_dict(self.val_metrics.compute(), on_epoch=True)
 
     def test_step(
         self,
@@ -326,3 +328,5 @@ class ClassificationEnsemble(ClassificationSingle):
         self.log_dict(
             self.test_ood_ens_metrics.compute(),
         )
+        self.test_id_ens_metrics.reset()
+        self.test_ood_ens_metrics.reset()
