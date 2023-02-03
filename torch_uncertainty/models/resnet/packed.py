@@ -10,6 +10,15 @@ from ...layers import PackedConv2d, PackedLinear
 
 
 # fmt: on
+__all__ = [
+    "packed_resnet_18",
+    "packed_resnet_34",
+    "packed_resnet_50",
+    "packed_resnet_101",
+    "packed_resnet_152",
+]
+
+
 class BasicBlock(nn.Module):
     expansion = 1
 
@@ -276,13 +285,25 @@ class _PackedResNet(nn.Module):
         return out
 
 
-def PackedResNet18(
+def packed_resnet_18(
     in_channels: int,
     num_estimators: int,
     alpha: int,
     gamma: int,
     num_classes: int,
 ) -> _PackedResNet:
+    """_summary_
+
+    Args:
+        in_channels (int): _description_
+        num_estimators (int): _description_
+        alpha (int): _description_
+        gamma (int): _description_
+        num_classes (int): _description_
+
+    Returns:
+        _PackedResNet: _description_
+    """
     return _PackedResNet(
         block=BasicBlock,
         num_blocks=[2, 2, 2, 2],
@@ -294,13 +315,25 @@ def PackedResNet18(
     )
 
 
-def PackedResNet34(
+def packed_resnet_34(
     in_channels: int,
     num_estimators: int,
     alpha: int,
     gamma: int,
     num_classes: int,
 ) -> _PackedResNet:
+    """_summary_
+
+    Args:
+        in_channels (int): _description_
+        num_estimators (int): _description_
+        alpha (int): _description_
+        gamma (int): _description_
+        num_classes (int): _description_
+
+    Returns:
+        _PackedResNet: _description_
+    """
     return _PackedResNet(
         block=BasicBlock,
         num_blocks=[3, 4, 6, 3],
@@ -312,13 +345,25 @@ def PackedResNet34(
     )
 
 
-def PackedResNet50(
+def packed_resnet_50(
     in_channels: int,
     num_estimators: int,
     alpha: int,
     gamma: int,
     num_classes: int,
 ) -> _PackedResNet:
+    """_summary_
+
+    Args:
+        in_channels (int): _description_
+        num_estimators (int): _description_
+        alpha (int): _description_
+        gamma (int): _description_
+        num_classes (int): _description_
+
+    Returns:
+        _PackedResNet: _description_
+    """
     return _PackedResNet(
         block=Bottleneck,
         num_blocks=[3, 4, 6, 3],
@@ -330,13 +375,25 @@ def PackedResNet50(
     )
 
 
-def PackedResNet101(
+def packed_resnet_101(
     in_channels: int,
     num_estimators: int,
     alpha: int,
     gamma: int,
     num_classes: int,
 ) -> _PackedResNet:
+    """_summary_
+
+    Args:
+        in_channels (int): _description_
+        num_estimators (int): _description_
+        alpha (int): _description_
+        gamma (int): _description_
+        num_classes (int): _description_
+
+    Returns:
+        _PackedResNet: _description_
+    """
     return _PackedResNet(
         block=Bottleneck,
         num_blocks=[3, 4, 23, 3],
@@ -348,13 +405,25 @@ def PackedResNet101(
     )
 
 
-def PackedResNet152(
+def packed_resnet_152(
     in_channels: int,
     num_estimators: int,
     alpha: int,
     gamma: int,
     num_classes: int,
 ) -> _PackedResNet:
+    """_summary_
+
+    Args:
+        in_channels (int): _description_
+        num_estimators (int): _description_
+        alpha (int): _description_
+        gamma (int): _description_
+        num_classes (int): _description_
+
+    Returns:
+        _PackedResNet: _description_
+    """
     return _PackedResNet(
         block=Bottleneck,
         num_blocks=[3, 8, 36, 3],

@@ -5,27 +5,31 @@ from typing import Dict, Union
 import torch
 import torch.nn as nn
 
-from torch_uncertainty.models.resnet.packed import (
-    PackedResNet18,
-    PackedResNet34,
-    PackedResNet50,
-    PackedResNet101,
-    PackedResNet152,
-)
+from torch_uncertainty.models.resnet.packed import *
 from torch_uncertainty.routines.classification import ClassificationEnsemble
 
 # fmt: on
 archs = [
-    PackedResNet18,
-    PackedResNet34,
-    PackedResNet50,
-    PackedResNet101,
-    PackedResNet152,
+    packed_resnet_18,
+    packed_resnet_34,
+    packed_resnet_50,
+    packed_resnet_101,
+    packed_resnet_152,
 ]
 choices = [18, 34, 50, 101, 152]
 
 
 class PackedResNet(ClassificationEnsemble):
+    """_summary_
+
+    Args:
+        loss (_type_): _description_
+        optimization_procedure (_type_): _description_
+        num_classes (int): _description_
+        in_channels (int): _description_
+        config (Union[Dict, Namespace]): _description_
+    """
+
     def __init__(
         self,
         loss,
