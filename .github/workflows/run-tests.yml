@@ -33,20 +33,20 @@ jobs:
         echo "PYTHON_VERSION=$(python -c "import platform; print(platform.python_version())")" >> $GITHUB_ENV
 
     - name: Install and configure Poetry
-        uses: snok/install-poetry@v1.3.3
-        with:
-          version: ${{ env.POETRY_VERSION }}
-          virtualenvs-create: true
-          virtualenvs-in-project: true
+      uses: snok/install-poetry@v1.3.3
+      with:
+        version: ${{ env.POETRY_VERSION }}
+        virtualenvs-create: true
+        virtualenvs-in-project: true
 
     - name: Install dependencies
       run: |
         poetry install --with dev
 
     - name: Lint with flake8
-        run: |
-          # stop the build if there are Python syntax errors or undefined names
-          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+      run: |
+        # stop the build if there are Python syntax errors or undefined names
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
 
     - name: Test with pytest
       run: |
