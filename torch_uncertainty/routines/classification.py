@@ -1,13 +1,13 @@
 # fmt: off
 from argparse import ArgumentParser, Namespace
-from typing import Tuple
+from typing import List, Tuple, Union
 
 import pytorch_lightning as pl
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from pytorch_lightning.utilities.memory import get_model_size_mb
-from pytorch_lightning.utilities.types import STEP_OUTPUT
+from pytorch_lightning.utilities.types import STEP_OUTPUT, EPOCH_OUTPUT
 from torchmetrics import (
     AUROC,
     Accuracy,
@@ -56,7 +56,7 @@ class ClassificationSingle(pl.LightningModule):
                 "auroc": AUROC(task="binary"),
                 "aupr": AveragePrecision(task="binary"),
             },
-            compute_groups=[["auroc", "aupr"]],
+            compute_groups=[["auroc", "aupr"], ["fpr95"]],
         )
 
         self.val_metrics = cls_metrics.clone(prefix="hp/val_")
@@ -110,7 +110,11 @@ class ClassificationSingle(pl.LightningModule):
         logits = self.forward(inputs)
         probs = F.softmax(logits, dim=-1)
         self.val_metrics.update(probs, targets)
-        self.log_dict(self.val_metrics.compute(), on_epoch=True)
+
+    def validation_epoch_end(
+        self, outputs: Union[EPOCH_OUTPUT, List[EPOCH_OUTPUT]]
+    ) -> None:
+        self.log_dict(self.val_metrics.compute())
 
     def test_step(
         self,
@@ -134,16 +138,6 @@ class ClassificationSingle(pl.LightningModule):
             self.test_cls_metrics.update(probs, targets)
             self.test_ood_metrics.update(ood_values, torch.zeros_like(targets))
             self.test_entropy_id(probs)
-            self.log_dict(
-                self.test_cls_metrics.compute(),
-                on_epoch=True,
-                add_dataloader_idx=False,
-            )
-            self.log_dict(
-                self.test_ood_metrics.compute(),
-                on_epoch=True,
-                add_dataloader_idx=False,
-            )
             self.log(
                 "test_entropy_id",
                 self.test_entropy_id,
@@ -151,19 +145,24 @@ class ClassificationSingle(pl.LightningModule):
                 add_dataloader_idx=False,
             )
         else:
-            self.test_ood_metrics(ood_values, torch.ones_like(targets))
+            self.test_ood_metrics.update(ood_values, torch.ones_like(targets))
             self.test_entropy_ood(probs)
-            self.log_dict(
-                self.test_ood_metrics.compute(),
-                on_epoch=True,
-                add_dataloader_idx=False,
-            )
             self.log(
                 "test_entropy_ood",
                 self.test_entropy_ood,
                 on_epoch=True,
                 add_dataloader_idx=False,
             )
+
+    def test_epoch_end(
+        self, outputs: Union[EPOCH_OUTPUT, List[EPOCH_OUTPUT]]
+    ) -> None:
+        self.log_dict(
+            self.test_cls_metrics.compute(),
+        )
+        self.log_dict(
+            self.test_ood_metrics.compute(),
+        )
 
     @staticmethod
     def add_model_specific_args(
@@ -268,7 +267,7 @@ class ClassificationEnsemble(ClassificationSingle):
         probs_per_est = F.softmax(logits, dim=-1)
         probs = probs_per_est.mean(dim=0)
         self.val_metrics.update(probs, targets)
-        self.log_dict(self.val_metrics.compute(), on_epoch=True)
+        # self.log_dict(self.val_metrics.compute(), on_epoch=True)
 
     def test_step(
         self,
@@ -298,16 +297,16 @@ class ClassificationEnsemble(ClassificationSingle):
             self.test_ood_metrics.update(ood_values, torch.zeros_like(targets))
             self.test_entropy_id(probs)
             self.test_id_ens_metrics.update(probs_per_est)
-            self.log_dict(
-                self.test_cls_metrics.compute(),
-                on_epoch=True,
-                add_dataloader_idx=False,
-            )
-            self.log_dict(
-                self.test_ood_metrics.compute(),
-                on_epoch=True,
-                add_dataloader_idx=False,
-            )
+            # self.log_dict(
+            #     self.test_cls_metrics.compute(),
+            #     on_epoch=True,
+            #     add_dataloader_idx=False,
+            # )
+            # self.log_dict(
+            #     self.test_ood_metrics.compute(),
+            #     on_epoch=True,
+            #     add_dataloader_idx=False,
+            # )
             self.log(
                 "test_entropy_id",
                 self.test_entropy_id,
@@ -320,22 +319,33 @@ class ClassificationEnsemble(ClassificationSingle):
                 add_dataloader_idx=False,
             )
         else:
-            self.test_ood_metrics(ood_values, torch.ones_like(targets))
+            self.test_ood_metrics.update(ood_values, torch.ones_like(targets))
             self.test_entropy_ood(probs)
             self.test_ood_ens_metrics.update(probs_per_est)
-            self.log_dict(
-                self.test_ood_metrics.compute(),
-                on_epoch=True,
-                add_dataloader_idx=False,
-            )
+            # self.log_dict(
+            #     self.test_ood_metrics.compute(),
+            #     on_epoch=True,
+            #     add_dataloader_idx=False,
+            # )
             self.log(
                 "test_entropy_ood",
                 self.test_entropy_ood,
                 on_epoch=True,
                 add_dataloader_idx=False,
             )
-            self.log_dict(
-                self.test_ood_ens_metrics.compute(),
-                on_epoch=True,
-                add_dataloader_idx=False,
-            )
+            # self.log_dict(
+            #     self.test_ood_ens_metrics.compute(),
+            #     on_epoch=True,
+            #     add_dataloader_idx=False,
+            # )
+
+    def test_epoch_end(
+        self, outputs: Union[EPOCH_OUTPUT, List[EPOCH_OUTPUT]]
+    ) -> None:
+        super().test_epoch_end(outputs)
+        self.log_dict(
+            self.test_id_ens_metrics.compute(),
+        )
+        self.log_dict(
+            self.test_ood_ens_metrics.compute(),
+        )
