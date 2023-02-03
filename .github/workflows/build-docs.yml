@@ -1,0 +1,54 @@
+name: Docs
+on: [push, pull_request, workflow_dispatch]
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - uses: actions/setup-python@v2
+
+    - name: Full Python version
+    run: |
+      echo "PYTHON_VERSION=$(python -c "import platform; print(platform.python_version())")"
+      echo "PYTHON_VERSION=$(python -c "import platform; print(platform.python_version())")" >> $GITHUB_ENV
+
+    - name: Cache Packages
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.local
+          .venv
+        key: poetry-${{ runner.os }}-${{ env.PYTHON_VERSION }}-${{ hashFiles('**/poetry.lock') }}
+
+    - name: Install and configure Poetry
+      uses: snok/install-poetry@v1.3.3
+      with:
+        version: ${{ env.POETRY_VERSION }}
+        virtualenvs-create: true
+        virtualenvs-in-project: true
+
+    - name: Cache folder for Torch Uncertainty
+      uses: actions/cache@v3
+      id: cache-folder
+      with:
+        path: |
+          ~/.cache/torch-uncertainty/
+        key: torch-uncertainty-${{ runner.os }}
+
+    - name: Install dependencies
+      run: |
+        poetry install --with dev
+
+    - name: Sphinx build
+      run: |
+        cd docs && poetry run make html
+
+    - name: Deploy
+      uses: peaceiris/actions-gh-pages@v3
+      if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+      with:
+        publish_branch: gh-pages
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: _build/
+        force_orphan: true
