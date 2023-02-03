@@ -16,13 +16,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-
     - uses: actions/setup-python@v2
 
     - name: Full Python version
-    run: |
-      echo "PYTHON_VERSION=$(python -c "import platform; print(platform.python_version())")"
-      echo "PYTHON_VERSION=$(python -c "import platform; print(platform.python_version())")" >> $GITHUB_ENV
+      run: |
+        echo "PYTHON_VERSION=$(python -c "import platform; print(platform.python_version())")"
+        echo "PYTHON_VERSION=$(python -c "import platform; print(platform.python_version())")" >> $GITHUB_ENV
 
     - name: Cache Packages
       uses: actions/cache@v3
