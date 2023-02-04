@@ -10,11 +10,11 @@ from ...layers import PackedConv2d, PackedLinear
 
 # fmt: on
 __all__ = [
-    "packed_resnet_18",
-    "packed_resnet_34",
-    "packed_resnet_50",
-    "packed_resnet_101",
-    "packed_resnet_152",
+    "packed_resnet18",
+    "packed_resnet34",
+    "packed_resnet50",
+    "packed_resnet101",
+    "packed_resnet152",
 ]
 
 
@@ -284,24 +284,25 @@ class _PackedResNet(nn.Module):
         return out
 
 
-def packed_resnet_18(
+def packed_resnet18(
     in_channels: int,
     num_estimators: int,
     alpha: int,
     gamma: int,
     num_classes: int,
 ) -> _PackedResNet:
-    """_summary_
+    """Packed-Ensembles of ResNet-18 from `Deep Residual Learning for Image
+    Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
 
     Args:
-        in_channels (int): _description_
-        num_estimators (int): _description_
-        alpha (int): _description_
-        gamma (int): _description_
-        num_classes (int): _description_
+        in_channels (int): Number of input channels.
+        num_estimators (int): Number of estimators in the ensemble.
+        alpha (int): Expansion factor affecting the width of the estimators.
+        gamma (int): Number of groups within each estimator.
+        num_classes (int): Number of classes to predict.
 
     Returns:
-        _PackedResNet: _description_
+        _PackedResNet: A Packed-Ensembles ResNet-18.
     """
     return _PackedResNet(
         block=BasicBlock,
@@ -314,24 +315,25 @@ def packed_resnet_18(
     )
 
 
-def packed_resnet_34(
+def packed_resnet34(
     in_channels: int,
     num_estimators: int,
     alpha: int,
     gamma: int,
     num_classes: int,
 ) -> _PackedResNet:
-    """_summary_
+    """Packed-Ensembles of ResNet-34 from `Deep Residual Learning for Image
+    Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
 
     Args:
-        in_channels (int): _description_
-        num_estimators (int): _description_
-        alpha (int): _description_
-        gamma (int): _description_
-        num_classes (int): _description_
+        in_channels (int): Number of input channels.
+        num_estimators (int): Number of estimators in the ensemble.
+        alpha (int): Expansion factor affecting the width of the estimators.
+        gamma (int): Number of groups within each estimator.
+        num_classes (int): Number of classes to predict.
 
     Returns:
-        _PackedResNet: _description_
+        _PackedResNet: A Packed-Ensembles ResNet-34.
     """
     return _PackedResNet(
         block=BasicBlock,
@@ -344,24 +346,25 @@ def packed_resnet_34(
     )
 
 
-def packed_resnet_50(
+def packed_resnet50(
     in_channels: int,
     num_estimators: int,
     alpha: int,
     gamma: int,
     num_classes: int,
 ) -> _PackedResNet:
-    """_summary_
+    """Packed-Ensembles of ResNet-50 from `Deep Residual Learning for Image
+    Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
 
     Args:
-        in_channels (int): _description_
-        num_estimators (int): _description_
-        alpha (int): _description_
-        gamma (int): _description_
-        num_classes (int): _description_
+        in_channels (int): Number of input channels.
+        num_estimators (int): Number of estimators in the ensemble.
+        alpha (int): Expansion factor affecting the width of the estimators.
+        gamma (int): Number of groups within each estimator.
+        num_classes (int): Number of classes to predict.
 
     Returns:
-        _PackedResNet: _description_
+        _PackedResNet: A Packed-Ensembles ResNet-50.
     """
     return _PackedResNet(
         block=Bottleneck,
@@ -374,24 +377,25 @@ def packed_resnet_50(
     )
 
 
-def packed_resnet_101(
+def packed_resnet101(
     in_channels: int,
     num_estimators: int,
     alpha: int,
     gamma: int,
     num_classes: int,
 ) -> _PackedResNet:
-    """_summary_
+    """Packed-Ensembles of ResNet-101 from `Deep Residual Learning for Image
+    Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
 
     Args:
-        in_channels (int): _description_
-        num_estimators (int): _description_
-        alpha (int): _description_
-        gamma (int): _description_
-        num_classes (int): _description_
+        in_channels (int): Number of input channels.
+        num_estimators (int): Number of estimators in the ensemble.
+        alpha (int): Expansion factor affecting the width of the estimators.
+        gamma (int): Number of groups within each estimator.
+        num_classes (int): Number of classes to predict.
 
     Returns:
-        _PackedResNet: _description_
+        _PackedResNet: A Packed-Ensembles ResNet-101.
     """
     return _PackedResNet(
         block=Bottleneck,
@@ -404,24 +408,25 @@ def packed_resnet_101(
     )
 
 
-def packed_resnet_152(
+def packed_resnet152(
     in_channels: int,
     num_estimators: int,
     alpha: int,
     gamma: int,
     num_classes: int,
 ) -> _PackedResNet:
-    """_summary_
+    """Packed-Ensembles of ResNet-152 from `Deep Residual Learning for Image
+    Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
 
     Args:
-        in_channels (int): _description_
-        num_estimators (int): _description_
-        alpha (int): _description_
-        gamma (int): _description_
-        num_classes (int): _description_
+        in_channels (int): Number of input channels.
+        num_estimators (int): Number of estimators in the ensemble.
+        alpha (int): Expansion factor affecting the width of the estimators.
+        gamma (int): Number of groups within each estimator.
+        num_classes (int): Number of classes to predict.
 
     Returns:
-        _PackedResNet: _description_
+        _PackedResNet: A Packed-Ensembles ResNet-152.
     """
     return _PackedResNet(
         block=Bottleneck,

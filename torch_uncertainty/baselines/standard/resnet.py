@@ -1,47 +1,53 @@
 # fmt: off
-from argparse import ArgumentParser, Namespace
-from typing import Dict, Union
+from argparse import ArgumentParser
+from typing import Any
 
 import torch
 import torch.nn as nn
 
-from torch_uncertainty.models.resnet.std import (
-    ResNet18,
-    ResNet34,
-    ResNet50,
-    ResNet101,
-    ResNet152,
+from torch_uncertainty.models.resnet import (
+    resnet18,
+    resnet34,
+    resnet50,
+    resnet101,
+    resnet152,
 )
 from torch_uncertainty.routines.classification import ClassificationSingle
 
 # fmt: on
-archs = [ResNet18, ResNet34, ResNet50, ResNet101, ResNet152]
+archs = [resnet18, resnet34, resnet50, resnet101, resnet152]
 choices = [18, 34, 50, 101, 152]
 
 
 class ResNet(ClassificationSingle):
     def __init__(
         self,
-        loss,
-        optimization_procedure,
         num_classes: int,
         in_channels: int,
-        config: Union[Dict, Namespace],
+        arch: int,
+        loss: nn.Module,
+        optimization_procedure: Any,
+        groups: int = 1,
+        use_entropy: bool = False,
+        use_logits: bool = False,
+        **kwargs,
     ) -> None:
-        if isinstance(config, Namespace):
-            config = vars(config)
+        super().__init__(
+            num_classes=num_classes,
+            use_entropy=use_entropy,
+            use_logits=use_logits,
+        )
 
-        super().__init__(num_classes, config)
-        self.save_hyperparameters(config)
-        assert config["groups"] >= 1
+        self.save_hyperparameters(ignore=["loss", "optimization_procedure"])
+        assert groups >= 1
 
         self.loss = loss
         self.optimization_procedure = optimization_procedure
 
-        self.model = archs[choices.index(config["arch"])](
+        self.model = archs[choices.index(arch)](
             in_channels=in_channels,
             num_classes=num_classes,
-            groups=config["groups"],
+            groups=groups,
         )
 
         # to log the graph
@@ -61,9 +67,6 @@ class ResNet(ClassificationSingle):
     def add_model_specific_args(
         parent_parser: ArgumentParser,
     ) -> ArgumentParser:
-        parent_parser = ClassificationSingle.add_model_specific_args(
-            parent_parser
-        )
         parent_parser.add_argument(
             "--arch",
             type=int,
@@ -71,5 +74,11 @@ class ResNet(ClassificationSingle):
             choices=choices,
             help="Type of ResNet",
         )
+        parent_parser.add_argument(
+            "--entropy", dest="use_entropy", action="store_true"
+        )
         parent_parser.add_argument("--groups", type=int, default=1)
+        parent_parser.add_argument(
+            "--logits", dest="use_logits", action="store_true"
+        )
         return parent_parser

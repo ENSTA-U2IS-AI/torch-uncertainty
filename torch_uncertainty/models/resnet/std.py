@@ -7,6 +7,15 @@ from torch import Tensor
 
 
 # fmt: on
+__all__ = [
+    "resnet18",
+    "resnet34",
+    "resnet50",
+    "resnet101",
+    "resnet152",
+]
+
+
 class BasicBlock(nn.Module):
     expansion = 1
 
@@ -249,11 +258,22 @@ class _ResNet(nn.Module):
         return out
 
 
-def ResNet18(
+def resnet18(
     in_channels: int,
     num_classes: int,
     groups: int,
 ) -> _ResNet:
+    """ResNet-18 from `Deep Residual Learning for Image Recognition
+    <https://arxiv.org/pdf/1512.03385.pdf>`_.
+
+    Args:
+        in_channels (int): Number of input channels.
+        num_classes (int): Number of classes to predict.
+        groups (int): Number of groups in convolutions.
+
+    Returns:
+        _PackedResNet: A ResNet-18.
+    """
     return _ResNet(
         block=BasicBlock,
         num_blocks=[2, 2, 2, 2],
@@ -263,11 +283,22 @@ def ResNet18(
     )
 
 
-def ResNet34(
+def resnet34(
     in_channels: int,
     num_classes: int,
     groups: int,
 ) -> _ResNet:
+    """ResNet-34 from `Deep Residual Learning for Image Recognition
+    <https://arxiv.org/pdf/1512.03385.pdf>`_.
+
+    Args:
+        in_channels (int): Number of input channels.
+        num_classes (int): Number of classes to predict.
+        groups (int): Number of groups in convolutions.
+
+    Returns:
+        _PackedResNet: A ResNet-34.
+    """
     return _ResNet(
         block=BasicBlock,
         num_blocks=[3, 4, 6, 3],
@@ -277,11 +308,22 @@ def ResNet34(
     )
 
 
-def ResNet50(
+def resnet50(
     in_channels: int,
     num_classes: int,
     groups: int,
 ) -> _ResNet:
+    """ResNet-50 from `Deep Residual Learning for Image Recognition
+    <https://arxiv.org/pdf/1512.03385.pdf>`_.
+
+    Args:
+        in_channels (int): Number of input channels.
+        num_classes (int): Number of classes to predict.
+        groups (int): Number of groups in convolutions.
+
+    Returns:
+        _PackedResNet: A ResNet-50.
+    """
     return _ResNet(
         block=Bottleneck,
         num_blocks=[3, 4, 6, 3],
@@ -291,11 +333,22 @@ def ResNet50(
     )
 
 
-def ResNet101(
+def resnet101(
     in_channels: int,
     num_classes: int,
     groups: int,
 ) -> _ResNet:
+    """ResNet-101 from `Deep Residual Learning for Image Recognition
+    <https://arxiv.org/pdf/1512.03385.pdf>`_.
+
+    Args:
+        in_channels (int): Number of input channels.
+        num_classes (int): Number of classes to predict.
+        groups (int): Number of groups in convolutions.
+
+    Returns:
+        _PackedResNet: A ResNet-101.
+    """
     return _ResNet(
         block=Bottleneck,
         num_blocks=[3, 4, 23, 3],
@@ -305,11 +358,22 @@ def ResNet101(
     )
 
 
-def ResNet152(
+def resnet152(
     in_channels: int,
     num_classes: int,
     groups: int,
 ) -> _ResNet:
+    """ResNet-152 from `Deep Residual Learning for Image Recognition
+    <https://arxiv.org/pdf/1512.03385.pdf>`_.
+
+    Args:
+        in_channels (int): Number of input channels.
+        num_classes (int): Number of classes to predict.
+        groups (int): Number of groups in convolutions.
+
+    Returns:
+        _PackedResNet: A ResNet-152.
+    """
     return _ResNet(
         block=Bottleneck,
         num_blocks=[3, 8, 36, 3],
