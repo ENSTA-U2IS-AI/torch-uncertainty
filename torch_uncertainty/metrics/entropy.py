@@ -20,7 +20,6 @@ class Entropy(Metric):
     def __init__(
         self,
         reduction: Literal["mean", "sum", "none", None] = "mean",
-        over_estimators: bool = False,
         **kwargs: Any,
     ) -> None:
         super().__init__(**kwargs)
@@ -33,7 +32,6 @@ class Entropy(Metric):
             )
 
         self.reduction = reduction
-        self.over_estimators = over_estimators
 
         if self.reduction in ["mean", "sum"]:
             self.add_state(
@@ -49,17 +47,17 @@ class Entropy(Metric):
 
         Args:
             probs (torch.Tensor): A probability tensor of shape
-                (num_estimators, batch, num_classes)
+                (num_estimators, batch, num_classes) or
+                (batch, num_classes)
         """
-
-        if self.over_estimators:
-            batch_size = probs.size(1)
-        else:
+        if len(probs.shape) == 2:
             batch_size = probs.size(0)
+        else:
+            batch_size = probs.size(1)
 
         entropy = torch.special.entr(probs).sum(dim=-1)
 
-        if self.over_estimators:
+        if len(probs.shape) == 3:
             entropy = entropy.mean(dim=0)
 
         if self.reduction is None or self.reduction == "none":

@@ -77,16 +77,13 @@ def optim_cifar100_resnet50(model: nn.Module, adam: bool = False) -> dict:
     r"""Hyperparameters from Deep Residual Learning for Image Recognition
     https://arxiv.org/pdf/1512.03385.pdf
     """
-    if adam:
-        optimizer = optim.Adam(model.parameters(), lr=0.001, weight_decay=5e-4)
-    else:
-        optimizer = optim.SGD(
-            model.parameters(),
-            lr=0.1,
-            momentum=0.9,
-            weight_decay=5e-4,
-            nesterov=True,
-        )
+    optimizer = optim.SGD(
+        model.parameters(),
+        lr=0.1,
+        momentum=0.9,
+        weight_decay=5e-4,
+        nesterov=True,
+    )
     scheduler = optim.lr_scheduler.MultiStepLR(
         optimizer,
         milestones=[60, 120, 160],
@@ -124,10 +121,22 @@ def optim_imagenet_resnet50(
 def optim_imagenet_resnet50_A3(
     model: nn.Module, effective_batch_size: int = None
 ) -> dict:
+    """
+    Training procedure proposed in ResNet strikes back: An improved training
+        procedure in timm.
+
+    Args:
+        model (nn.Module): The model to be optimized.
+        effective_batch_size (int, optional): The batch size of the model
+            (taking multiple GPUs into account). Defaults to None.
+
+    Returns:
+        dict: The optimizer and the scheduler for the training.
+    """
     if effective_batch_size is None:
         print("Setting effective batch size to 2048 for steps computations !")
         effective_batch_size = 2048
-    print("Using standard Lamb algorithm.")
+
     optimizer = Lamb(model.parameters(), lr=0.008, weight_decay=0.02)
 
     warmup = optim.lr_scheduler.LinearLR(

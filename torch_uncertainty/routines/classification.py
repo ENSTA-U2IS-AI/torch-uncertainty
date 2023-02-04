@@ -210,7 +210,7 @@ class ClassificationEnsemble(ClassificationSingle):
             {
                 "disagreement": DisagreementMetric(),
                 "mi": MutualInformation(),
-                "entropy": Entropy(over_estimators=True),
+                "entropy": Entropy(),
             }
         )
         self.test_id_ens_metrics = ens_metrics.clone(prefix="hp/test_id_ens_")
