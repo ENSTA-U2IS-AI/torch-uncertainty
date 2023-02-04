@@ -2,11 +2,13 @@
 
 [![tests](https://github.com/ENSTA-U2IS/torch-uncertainty/actions/workflows/run-tests.yml/badge.svg?branch=main&event=push)](https://github.com/ENSTA-U2IS/torch-uncertainty/actions/workflows/run-tests.yml) [![Code style: black](https://img.shields.io/badge/code%20style-black-black.svg)](https://github.com/psf/black)
 
+_Torch Uncertainty_ is a package designed to help you leverage uncertainty quantification techniques and make your neural networks more reliable. It is based on PyTorch Lightning to handle multi-GPU training and inference and automatic logging through tensorboard.
+
 ## Installation
 
 The package can be installed from PyPI or from source.
 
-### From PyPI
+### From PyPI (available soon)
 
 Install the package via pip: `pip install torch-uncertainty`
 
@@ -34,10 +36,16 @@ Install the package using poetry
 
 Depending on your system, you may encounter an error. If so, kill the process and add `PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring` at the beginning of your command.
 
+
+## Documentation
+
+Please find the documentation at [torch-uncertainty.github.io](https://torch-uncertainty.github.io).
+
+
 ## Credits
 
 
 
 ## Other repositories of interest
 
-You may find a lot of information about modern uncertainty estimation techniques on this What's Awesome: [Awesome Uncertainty in Deep Learning](https://github.com/ENSTA-U2IS/awesome-uncertainty-deeplearning)
+You may find a lot of information about modern uncertainty estimation techniques on the [Awesome Uncertainty in Deep Learning](https://github.com/ENSTA-U2IS/awesome-uncertainty-deeplearning).
