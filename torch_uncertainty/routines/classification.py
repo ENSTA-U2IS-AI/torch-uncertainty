@@ -1,5 +1,5 @@
 # fmt: off
-from argparse import ArgumentParser, Namespace
+from argparse import Namespace
 from typing import List, Tuple, Union
 
 import pytorch_lightning as pl
@@ -22,6 +22,7 @@ from ..metrics import (
     FPR95Metric,
     MutualInformation,
     NegativeLogLikelihood,
+    VariationRatio,
 )
 
 
@@ -30,16 +31,17 @@ class ClassificationSingle(pl.LightningModule):
     def __init__(
         self,
         num_classes: int,
-        use_logits: bool = False,
         use_entropy: bool = False,
-        **kwargs,
+        use_logits: bool = False,
     ) -> None:
         super().__init__()
 
+        # FIXME: use ValueError instead
         assert (
             use_logits + use_entropy
         ) <= 1, "You cannot choose more than one OOD criterion."
 
+        self.num_classes = num_classes
         self.use_logits = use_logits
         self.use_entropy = use_entropy
 
@@ -47,9 +49,11 @@ class ClassificationSingle(pl.LightningModule):
         cls_metrics = MetricCollection(
             {
                 "nll": NegativeLogLikelihood(),
-                "acc": Accuracy(task="multiclass", num_classes=num_classes),
+                "acc": Accuracy(
+                    task="multiclass", num_classes=self.num_classes
+                ),
                 "ece": CalibrationError(
-                    task="multiclass", num_classes=num_classes
+                    task="multiclass", num_classes=self.num_classes
                 ),
             },
             compute_groups=False,
@@ -172,32 +176,29 @@ class ClassificationSingle(pl.LightningModule):
         self.test_cls_metrics.reset()
         self.test_ood_metrics.reset()
 
-    @staticmethod
-    def add_model_specific_args(
-        parent_parser: ArgumentParser,
-    ) -> ArgumentParser:
-        parent_parser.add_argument(
-            "--logits", dest="use_logits", action="store_true"
-        )
-        parent_parser.add_argument(
-            "--entropy", dest="use_entropy", action="store_true"
-        )
-        return parent_parser
-
 
 class ClassificationEnsemble(ClassificationSingle):
     def __init__(
-        self, num_classes: int, num_estimators: int, *args, **kwargs
+        self,
+        num_classes: int,
+        num_estimators: int,
+        use_entropy: bool = False,
+        use_logits: bool = False,
+        use_mi: bool = False,
+        use_variation_ratio: bool = False,
     ) -> None:
-        super().__init__(num_classes, *args, **kwargs)
+        super().__init__(
+            num_classes=num_classes,
+            use_entropy=use_entropy,
+            use_logits=use_logits,
+        )
 
         self.num_estimators = num_estimators
 
-        self.use_mi: bool = kwargs.get("use_mi", False)
-        self.use_variation_ratio: bool = kwargs.get(
-            "use_variation_ratio", False
-        )
+        self.use_mi = use_mi
+        self.use_variation_ratio = use_variation_ratio
 
+        # FIXME: use ValueError instead
         assert (
             self.use_logits
             + self.use_entropy
@@ -215,21 +216,6 @@ class ClassificationEnsemble(ClassificationSingle):
         )
         self.test_id_ens_metrics = ens_metrics.clone(prefix="hp/test_id_ens_")
         self.test_ood_ens_metrics = ens_metrics.clone(prefix="hp/test_ood_ens_")
-
-    @staticmethod
-    def add_model_specific_args(
-        parent_parser: ArgumentParser,
-    ) -> ArgumentParser:
-        parent_parser = ClassificationSingle.add_model_specific_args(
-            parent_parser
-        )
-        parent_parser.add_argument(
-            "--mutual_information", dest="uses_mi", action="store_true"
-        )
-        parent_parser.add_argument(
-            "--variation_ratio", dest="use_variation_ratio", action="store_true"
-        )
-        return parent_parser
 
     def on_train_start(self) -> None:
         # hyperparameters for performances
@@ -295,6 +281,9 @@ class ClassificationEnsemble(ClassificationSingle):
         elif self.use_mi:
             mi_metric = MutualInformation(reduction="none")
             ood_values = mi_metric(probs_per_est)
+        elif self.use_variation_ratio:
+            vr_metric = VariationRatio(reduction="none", probabilistic=False)
+            ood_values = vr_metric(probs_per_est)
         else:
             ood_values = -confs
 
