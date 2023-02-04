@@ -17,20 +17,31 @@ Baselines
 
 Models
 ------
-
-**Packed-Ensembles ResNet**
-
 .. currentmodule:: torch_uncertainty.models.resnet
+
+**ResNet**
 
 .. autosummary::
     :toctree: generated/
     :nosignatures:
 
-    packed_resnet_18
-    packed_resnet_34
-    packed_resnet_50
-    packed_resnet_101
-    packed_resnet_152
+    resnet18
+    resnet34
+    resnet50
+    resnet101
+    resnet152
+
+**Packed-Ensembles ResNet**
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+
+    packed_resnet18
+    packed_resnet34
+    packed_resnet50
+    packed_resnet101
+    packed_resnet152
 
 
 Layers
