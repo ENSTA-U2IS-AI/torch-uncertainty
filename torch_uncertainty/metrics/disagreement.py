@@ -1,3 +1,4 @@
+# fmt: off
 from typing import List
 
 import torch
@@ -8,7 +9,9 @@ from torchmetrics.utilities import rank_zero_warn
 from torchmetrics.utilities.data import dim_zero_cat
 
 
-class DisagreementMetric(Metric):
+# fmt: on
+# TODO: Check dimension
+class Disagreement(Metric):
     full_state_update: bool = False
     probs: List[Tensor]
 
@@ -18,7 +21,7 @@ class DisagreementMetric(Metric):
         self.add_state("probs", [], dist_reduce_fx="cat")
 
         rank_zero_warn(
-            "Metric `DisagreementMetric` will save all targets and predictions"
+            "Metric `Disagreement` will save all targets and predictions"
             " in buffer. For large datasets this may lead to large memory"
             " footprint."
         )
@@ -39,9 +42,9 @@ class DisagreementMetric(Metric):
         # TODO: Using onehot might be memory intensive
         n_estimators = classes.shape[-1]
         counts = torch.sum(F.one_hot(classes), dim=1)
-        potential_counts = n_estimators * (n_estimators - 1) / 2
+        max_counts = n_estimators * (n_estimators - 1) / 2
         return torch.mean(
-            1 - (counts * (counts - 1) / 2).sum(dim=1) / potential_counts
+            1 - (counts * (counts - 1) / 2).sum(dim=1) / max_counts
         )
 
     def compute(self) -> Tensor:

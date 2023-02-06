@@ -6,34 +6,34 @@ import torch
 import torch.nn as nn
 
 from torch_uncertainty.models.resnet import (
-    packed_resnet18,
-    packed_resnet34,
-    packed_resnet50,
-    packed_resnet101,
-    packed_resnet152,
+    masked_resnet18,
+    masked_resnet34,
+    masked_resnet50,
+    masked_resnet101,
+    masked_resnet152,
 )
 from torch_uncertainty.routines.classification import ClassificationEnsemble
 
 # fmt: on
 archs = [
-    packed_resnet18,
-    packed_resnet34,
-    packed_resnet50,
-    packed_resnet101,
-    packed_resnet152,
+    masked_resnet18,
+    masked_resnet34,
+    masked_resnet50,
+    masked_resnet101,
+    masked_resnet152,
 ]
 choices = [18, 34, 50, 101, 152]
 
 
-class PackedResNet(ClassificationEnsemble):
-    r"""LightningModule for Packed-Ensembles ResNet.
+class MaskedResNet(ClassificationEnsemble):
+    r"""LightningModule for Masksembles ResNet.
 
     Args:
         num_classes (int): Number of classes to predict.
         num_estimators (int): Number of estimators in the ensemble.
         in_channels (int): Number of input channels.
-        alpha (int): Expansion factor affecting the width of the estimators.
-        gamma (int): Number of groups within each estimator.
+        scale (int): Expansion factor affecting the width of the estimators.
+        groups (int): Number of groups within each estimator.
         arch (int):
             Determines which ResNet architecture to use:
 
@@ -68,8 +68,8 @@ class PackedResNet(ClassificationEnsemble):
         ``True``. Otherwise a :class:`ValueError()` will be raised.
 
     Raises:
-            ValueError: If :attr:`alpha`:math:`<1`.
-            ValueError: If :attr:`gamma`:math:`<1`.
+            ValueError: If :attr:`scale`:math:`<1`.
+            ValueError: If :attr:`groups`:math:`<1`.
     """
 
     def __init__(
@@ -77,8 +77,8 @@ class PackedResNet(ClassificationEnsemble):
         num_classes: int,
         num_estimators: int,
         in_channels: int,
-        alpha: int,
-        gamma: int,
+        scale: int,
+        groups: int,
         arch: Literal[18, 34, 50, 101, 152],
         loss: nn.Module,
         optimization_procedure: Any,
@@ -97,10 +97,12 @@ class PackedResNet(ClassificationEnsemble):
             use_variation_ratio=use_variation_ratio,
         )
 
-        if alpha < 1:
-            raise ValueError(f"Attribute `alpha` should be >= 1, not {alpha}")
-        if gamma < 1:
-            raise ValueError(f"Attribute `gamma` should be >= 1, not {gamma}")
+        if scale < 1:
+            raise ValueError(f"Attribute `scale` should be >= 1, not {scale}.")
+        if groups < 1:
+            raise ValueError(
+                f"Attribute `groups` should be >= 1, not {groups}."
+            )
 
         # construct config
         self.save_hyperparameters(ignore=["loss", "optimization_procedure"])
@@ -111,8 +113,8 @@ class PackedResNet(ClassificationEnsemble):
         self.model = archs[choices.index(arch)](
             in_channels=in_channels,
             num_estimators=num_estimators,
-            alpha=alpha,
-            gamma=gamma,
+            scale=scale,
+            groups=groups,
             num_classes=num_classes,
         )
 
@@ -127,7 +129,7 @@ class PackedResNet(ClassificationEnsemble):
         return self.loss()
 
     def forward(self, input: torch.Tensor) -> torch.Tensor:  # type: ignore
-        input = input.repeat(1, self.num_estimators, 1, 1)
+        input = input.repeat(self.num_estimators, 1, 1, 1)
         return self.model.forward(input)
 
     @staticmethod
@@ -139,8 +141,8 @@ class PackedResNet(ClassificationEnsemble):
         - ``--arch [int]``: defines :attr:`arch`. Defaults to ``18``.
         - ``--num_estimators [int]``: defines :attr:`num_estimators`. Defaults
           to ``1``.
-        - ``--alpha [int]``: defines :attr:`alpha`. Defaults to ``1``.
-        - ``--gamma [int]``: defines :attr:`gamma`. Defaults to ``1``.
+        - ``--scale [int]``: defines :attr:`scale`. Defaults to ``1``.
+        - ``--groups [int]``: defines :attr:`groups`. Defaults to ``1``.
         - ``--entropy``: sets :attr:`use_entropy` to ``True``.
         - ``--logits``: sets :attr:`use_logits` to ``True``.
         - ``--mutual_information``: sets :attr:`use_mi` to ``True``.
@@ -150,7 +152,7 @@ class PackedResNet(ClassificationEnsemble):
 
             .. parsed-literal::
 
-                python script.py --arch 18 --num_estimators 4 --alpha 2
+                python script.py --arch 18 --num_estimators 4 --scale 2
         """
         parent_parser.add_argument(
             "--arch",
@@ -159,11 +161,11 @@ class PackedResNet(ClassificationEnsemble):
             choices=choices,
             help="Type of ResNet",
         )
-        parent_parser.add_argument("--alpha", type=int, default=2)
+        parent_parser.add_argument("--scale", type=float, default=2.0)
         parent_parser.add_argument(
             "--entropy", dest="use_entropy", action="store_true"
         )
-        parent_parser.add_argument("--gamma", type=int, default=1)
+        parent_parser.add_argument("--groups", type=int, default=1)
         parent_parser.add_argument(
             "--logits", dest="use_logits", action="store_true"
         )

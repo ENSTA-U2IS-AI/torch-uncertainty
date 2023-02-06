@@ -17,9 +17,9 @@ from torchmetrics import (
 )
 
 from ..metrics import (
-    DisagreementMetric,
+    FPR95,
+    Disagreement,
     Entropy,
-    FPR95Metric,
     MutualInformation,
     NegativeLogLikelihood,
     VariationRatio,
@@ -61,7 +61,7 @@ class ClassificationSingle(pl.LightningModule):
 
         ood_metrics = MetricCollection(
             {
-                "fpr95": FPR95Metric(pos_label=1),
+                "fpr95": FPR95(pos_label=1),
                 "auroc": AUROC(task="binary"),
                 "aupr": AveragePrecision(task="binary"),
             },
@@ -209,7 +209,7 @@ class ClassificationEnsemble(ClassificationSingle):
         # metrics for ensembles only
         ens_metrics = MetricCollection(
             {
-                "disagreement": DisagreementMetric(),
+                "disagreement": Disagreement(),
                 "mi": MutualInformation(),
                 "entropy": Entropy(),
             }
