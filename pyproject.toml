@@ -15,7 +15,6 @@ torchinfo = "^1.7.1"
 torchvision = "^0.14.1"
 timm = "^0.6.12"
 scipy = "^1.10.0"
-pytest-cov = "^4.0.0"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -25,6 +24,7 @@ black = "^23.1.0"
 flake8 = "^6.0.0"
 mypy = "^0.991"
 sphinx-rtd-theme = "^1.1.1"
+pytest-cov = "^4.0.0"
 
 [build-system]
 requires = ["poetry-core"]
