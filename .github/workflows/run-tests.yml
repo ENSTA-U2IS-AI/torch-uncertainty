@@ -4,7 +4,11 @@ on:
   push:
     branches:
       - main
-      - workflow
+      - coverage
+  pull_request_target:
+  schedule:
+    - cron: "42 7 * * 0"
+  workflow_dispatch:
 
 env:
   POETRY_VERSION: "1.3.2"
@@ -64,6 +68,12 @@ jobs:
         poetry run isort --check-only torch_uncertainty tests
         poetry run black --check torch_uncertainty tests
 
-    - name: Test with pytest
+    - name: Test with pytest with coverage
       run: |
-        poetry run pytest
+        poetry run pytest --cov --cov-report xml
+
+    - name: Upload coverage to Codecov
+      if: ${{ github.event_name != 'pull_request_target' }}
+      uses: codecov/codecov-action@v3
+      with:
+        env_vars: PYTHON_VERSION
