@@ -41,7 +41,7 @@ Install the package using poetry:
 
 `poetry install torch-uncertainty` or, for development, `poetry install torch-uncertainty --with dev`
 
-Depending on your system, you may encounter errors. If so, kill the process and add `PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring` at the beginning of every poetry commands.
+Depending on your system, you may encounter errors. If so, kill the process and add `PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring` at the beginning of every `poetry install` commands.
 
 
 ## Documentation
