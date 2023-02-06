@@ -1,0 +1,11 @@
+[run]
+branch = True
+include = */torch-uncertainty/*
+omit = *tests*
+
+[report]
+exclude_lines =
+    coverage: ignore
+    raise NotImplementedError
+    
+ignore_errors = True

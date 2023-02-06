@@ -6,7 +6,8 @@ from torchmetrics.utilities.data import dim_zero_cat
 
 
 class Entropy(Metric):
-    """The Shannon Entropy to estimate the confidence of the estimators.
+    """
+    The Shannon Entropy to estimate the confidence of the estimators.
     A higher entropy means a lower confidence.
 
     TODO: _docstring_
@@ -19,7 +20,6 @@ class Entropy(Metric):
     def __init__(
         self,
         reduction: Literal["mean", "sum", "none", None] = "mean",
-        over_estimators: bool = False,
         **kwargs: Any,
     ) -> None:
         super().__init__(**kwargs)
@@ -32,7 +32,6 @@ class Entropy(Metric):
             )
 
         self.reduction = reduction
-        self.over_estimators = over_estimators
 
         if self.reduction in ["mean", "sum"]:
             self.add_state(
@@ -43,17 +42,22 @@ class Entropy(Metric):
         self.add_state("total", default=torch.tensor(0), dist_reduce_fx="sum")
 
     def update(self, probs: torch.Tensor) -> None:
-        """probs of size (num_estimators, batch, num_classes)"""
+        """
+        Update the current entropy with a new tensor of probabilities.
 
-        if self.over_estimators:
-            batch_size = probs.size(1)
-        else:
+        Args:
+            probs (torch.Tensor): A probability tensor of shape
+                (num_estimators, batch, num_classes) or
+                (batch, num_classes)
+        """
+        if len(probs.shape) == 2:
             batch_size = probs.size(0)
+        else:
+            batch_size = probs.size(1)
 
         entropy = torch.special.entr(probs).sum(dim=-1)
-        # entropy = -(torch.log(probs) * probs).sum(dim=-1)
 
-        if self.over_estimators:
+        if len(probs.shape) == 3:
             entropy = entropy.mean(dim=0)
 
         if self.reduction is None or self.reduction == "none":
@@ -63,7 +67,15 @@ class Entropy(Metric):
             self.total += batch_size
 
     def compute(self) -> torch.Tensor:
-        """Computes Entropy based on inputs passed in to ``update``."""
+        """
+        Compute the final entropy based on inputs passed to ``update``.
+
+        Raises:
+            ValueError: if reduction is not in ['mean', 'sum', 'none', None]
+
+        Returns:
+            torch.Tensor: _description_
+        """
         values = dim_zero_cat(self.values)
         if self.reduction == "sum":
             return values.sum(dim=-1)
@@ -74,5 +86,5 @@ class Entropy(Metric):
         else:
             raise ValueError(
                 "Expected argument `reduction` to be one of ",
-                "['mean','sum','none',None] but got {reduction}",
+                "['mean', 'sum', 'none', None] but got {reduction}",
             )

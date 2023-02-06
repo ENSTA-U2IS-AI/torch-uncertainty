@@ -179,7 +179,7 @@ class _PackedWide(nn.Module):
         return out
 
 
-def PackedWideResNet28x10_GrE(
+def packed_wideresnet28x10(
     num_estimators: int, alpha: int, gamma: int, num_classes: int
 ) -> nn.Module:
     return _PackedWide(

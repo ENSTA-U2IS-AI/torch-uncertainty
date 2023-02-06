@@ -53,7 +53,11 @@ def cli_main(
 
     # model
     model = network(
-        loss, optimization_procedure, dm.num_classes, dm.num_channels, args
+        loss=loss,
+        optimization_procedure=optimization_procedure,
+        num_classes=dm.num_classes,
+        in_channels=dm.num_channels,
+        **vars(args),
     )
 
     # logger

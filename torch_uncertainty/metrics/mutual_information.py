@@ -8,7 +8,8 @@ from torchmetrics.utilities.data import dim_zero_cat
 
 # fmt:on
 class MutualInformation(Metric):
-    r"""The Mutual Information to estimate the epistemic uncertainty.
+    r"""
+    The Mutual Information to estimate the epistemic uncertainty.
     A higher mutual information means a higher uncertainty.
     """
     full_state_update: bool = False

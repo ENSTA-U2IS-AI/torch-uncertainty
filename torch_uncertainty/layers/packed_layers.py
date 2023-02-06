@@ -9,17 +9,21 @@ from torch.nn.common_types import _size_2_t
 
 # fmt: on
 class PackedLinear(nn.Module):
-    """TODO: _summary_
+    """Packed-Ensemble style Linear layer.
+
+    This layer computes fully-connected operation for a given number of
+    estimators (:attr:`num_estimators`) using a `1x1` convolution.
 
     Args:
-        in_features (int): _description_
-        out_features (int): _description_
-        num_estimators (int): _description_
-        bias (bool, optional): _description_. Defaults to True.
-        groups (int, optional): _description_. Defaults to 1.
-        rearrange (bool, optional): _description_. Defaults to True.
-        device (_type_, optional): _description_. Defaults to None.
-        dtype (_type_, optional): _description_. Defaults to None.
+        in_features (int): Number of input features of the linear layer.
+        out_features (int): Number of channels produced by the linear layer.
+        num_estimators (int): The number of estimators grouped in the layer.
+        bias (bool, optional): It ``True``, adds a learnable bias to the
+            output. Defaults to ``True``.
+        groups (int, optional): Number of blocked connections from input
+            channels to output channels. Defaults to ``1``.
+        rearrange (bool, optional): Rearrange the input and outputs for
+            compatibility with previous and later layers. Defaults to True.
     """
 
     def __init__(
@@ -77,12 +81,11 @@ class PackedLinear(nn.Module):
 
 
 class PackedConv2d(nn.Module):
-    r"""FIXME: Applies :attr:`num_estimators` 2D convolutions over an input
-    signal composed of several input planes using grouped convolutions.
+    r"""Packed-Ensemble style Conv2d layer.
 
     Args:
         in_channels (int): Number of channels in the input image.
-        out_channels (int): Number of channels produced by the convolution
+        out_channels (int): Number of channels produced by the convolution.
         kernel_size (int or tuple): Size of the convolving kernel.
         n_estimators (int): Number of estimators in the ensemble.
         stride (int or tuple, optional): Stride of the convolution.
@@ -93,10 +96,12 @@ class PackedConv2d(nn.Module):
             Defaults to ``1``.
         groups (int, optional): Number of blocked connexions from input
             channels to output channels for each estimator. Defaults to ``1``.
+        minimum_channels_per_group (int, optional): Smallest possible number of
+            hannels per group.
         bias (bool, optional): If ``True``, adds a learnable bias to the
             output. Defaults to ``True``.
 
-    .. note:
+    Note:
         Each ensemble member will only see
         :math:`\frac{in_channels}{n_estimators}` channels, so when using
         :attr:`groups` you have to make sure that :attr:`in_channels` and

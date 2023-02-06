@@ -7,6 +7,24 @@ from typing import Tuple, Union
 def get_version(
     root: Union[str, Path], version: int, checkpoint: int = None
 ) -> Tuple[Path, Path]:
+    """
+    Find a compute the path to the checkpoint corresponding to the input
+        parameters
+
+
+    Args:
+        root (Union[str, Path]): The root of the dataset containing the
+            checkpoints.
+        version (int): The version of the checkpoint
+        checkpoint (int, optional): The number of the checkpoint. Defaults
+            to None.
+
+    Raises:
+        Exception: if the checkpoint cannot be found.
+
+    Returns:
+        Tuple[Path, Path]: The path to the checkpoints and to its parameters.
+    """
     if isinstance(root, str):
         root = Path(root)
 

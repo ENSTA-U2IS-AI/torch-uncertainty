@@ -3,10 +3,18 @@ from typing import List, Type, Union
 
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.nn import Conv2d, Linear
-
+from torch import Tensor
 
 # fmt: on
+__all__ = [
+    "resnet18",
+    "resnet34",
+    "resnet50",
+    "resnet101",
+    "resnet152",
+]
+
+
 class BasicBlock(nn.Module):
     expansion = 1
 
@@ -20,7 +28,7 @@ class BasicBlock(nn.Module):
         super(BasicBlock, self).__init__()
 
         # No subgroups for the first layer
-        self.conv1 = Conv2d(
+        self.conv1 = nn.Conv2d(
             in_planes,
             planes,
             kernel_size=3,
@@ -29,7 +37,7 @@ class BasicBlock(nn.Module):
             bias=False,
         )
         self.bn1 = nn.BatchNorm2d(planes)
-        self.conv2 = Conv2d(
+        self.conv2 = nn.Conv2d(
             planes,
             planes,
             kernel_size=3,
@@ -43,7 +51,7 @@ class BasicBlock(nn.Module):
         self.shortcut = nn.Sequential()
         if stride != 1 or in_planes != self.expansion * planes:
             self.shortcut = nn.Sequential(
-                Conv2d(
+                nn.Conv2d(
                     in_planes,
                     self.expansion * planes,
                     kernel_size=1,
@@ -54,7 +62,7 @@ class BasicBlock(nn.Module):
                 nn.BatchNorm2d(self.expansion * planes),
             )
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         out = F.relu(self.bn1(self.conv1(x)))
         out = self.bn2(self.conv2(out))
         out += self.shortcut(x)
@@ -69,14 +77,14 @@ class Bottleneck(nn.Module):
         super(Bottleneck, self).__init__()
 
         # No subgroups for the first layer
-        self.conv1 = Conv2d(
+        self.conv1 = nn.Conv2d(
             in_planes,
             planes,
             kernel_size=1,
             bias=False,
         )
         self.bn1 = nn.BatchNorm2d(planes)
-        self.conv2 = Conv2d(
+        self.conv2 = nn.Conv2d(
             planes,
             planes,
             kernel_size=3,
@@ -86,7 +94,7 @@ class Bottleneck(nn.Module):
             bias=False,
         )
         self.bn2 = nn.BatchNorm2d(planes)
-        self.conv3 = Conv2d(
+        self.conv3 = nn.Conv2d(
             planes,
             self.expansion * planes,
             kernel_size=1,
@@ -98,7 +106,7 @@ class Bottleneck(nn.Module):
         self.shortcut = nn.Sequential()
         if stride != 1 or in_planes != self.expansion * planes:
             self.shortcut = nn.Sequential(
-                Conv2d(
+                nn.Conv2d(
                     in_planes,
                     self.expansion * planes,
                     kernel_size=1,
@@ -109,7 +117,7 @@ class Bottleneck(nn.Module):
                 nn.BatchNorm2d(self.expansion * planes),
             )
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         out = F.relu(self.bn1(self.conv1(x)))
         out = F.relu(self.bn2(self.conv2(out)))
         out = self.bn3(self.conv3(out))
@@ -141,7 +149,7 @@ class _ResNet(nn.Module):
 
         # No subgroups in the first layer
         # if self.dataset == "imagenet":
-        #     self.conv1 = Conv2d(
+        #     self.conv1 = nn.Conv2d(
         #         3 * self.num_estimators,
         #         block_planes,
         #         kernel_size=7,
@@ -152,7 +160,7 @@ class _ResNet(nn.Module):
         #         bias=False,
         #     )
         # elif self.dataset == "mnist":
-        #     self.conv1 = Conv2d(
+        #     self.conv1 = nn.Conv2d(
         #         1 * self.num_estimators,
         #         block_planes,
         #         kernel_size=3,
@@ -163,7 +171,7 @@ class _ResNet(nn.Module):
         #         bias=False,
         #     )
         # else:
-        self.conv1 = Conv2d(
+        self.conv1 = nn.Conv2d(
             in_channels,
             block_planes,
             kernel_size=3,
@@ -209,19 +217,19 @@ class _ResNet(nn.Module):
         self.pool = nn.AdaptiveAvgPool2d(output_size=1)
         self.flatten = nn.Flatten(1)
 
-        self.linear = Linear(
+        self.linear = nn.Linear(
             block_planes * 8 * block.expansion,
             num_classes,
         )
 
     def _make_layer(
         self,
-        block: nn.Module,
+        block: Union[Type[BasicBlock], Type[Bottleneck]],
         planes: int,
         num_blocks: int,
         stride: int,
         groups: int,
-    ):
+    ) -> nn.Module:
         strides = [stride] + [1] * (num_blocks - 1)
         layers = []
         for stride in strides:
@@ -236,7 +244,7 @@ class _ResNet(nn.Module):
             self.in_planes = planes * block.expansion
         return nn.Sequential(*layers)
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         out = F.relu(self.bn1(self.conv1(x)))
         out = self.optional_pool(out)
         out = self.layer1(out)
@@ -249,11 +257,22 @@ class _ResNet(nn.Module):
         return out
 
 
-def ResNet18(
+def resnet18(
     in_channels: int,
     num_classes: int,
     groups: int,
 ) -> _ResNet:
+    """ResNet-18 from `Deep Residual Learning for Image Recognition
+    <https://arxiv.org/pdf/1512.03385.pdf>`_.
+
+    Args:
+        in_channels (int): Number of input channels.
+        num_classes (int): Number of classes to predict.
+        groups (int): Number of groups in convolutions.
+
+    Returns:
+        _PackedResNet: A ResNet-18.
+    """
     return _ResNet(
         block=BasicBlock,
         num_blocks=[2, 2, 2, 2],
@@ -263,11 +282,22 @@ def ResNet18(
     )
 
 
-def ResNet34(
+def resnet34(
     in_channels: int,
     num_classes: int,
     groups: int,
 ) -> _ResNet:
+    """ResNet-34 from `Deep Residual Learning for Image Recognition
+    <https://arxiv.org/pdf/1512.03385.pdf>`_.
+
+    Args:
+        in_channels (int): Number of input channels.
+        num_classes (int): Number of classes to predict.
+        groups (int): Number of groups in convolutions.
+
+    Returns:
+        _PackedResNet: A ResNet-34.
+    """
     return _ResNet(
         block=BasicBlock,
         num_blocks=[3, 4, 6, 3],
@@ -277,11 +307,22 @@ def ResNet34(
     )
 
 
-def ResNet50(
+def resnet50(
     in_channels: int,
     num_classes: int,
     groups: int,
 ) -> _ResNet:
+    """ResNet-50 from `Deep Residual Learning for Image Recognition
+    <https://arxiv.org/pdf/1512.03385.pdf>`_.
+
+    Args:
+        in_channels (int): Number of input channels.
+        num_classes (int): Number of classes to predict.
+        groups (int): Number of groups in convolutions.
+
+    Returns:
+        _PackedResNet: A ResNet-50.
+    """
     return _ResNet(
         block=Bottleneck,
         num_blocks=[3, 4, 6, 3],
@@ -291,11 +332,22 @@ def ResNet50(
     )
 
 
-def ResNet101(
+def resnet101(
     in_channels: int,
     num_classes: int,
     groups: int,
 ) -> _ResNet:
+    """ResNet-101 from `Deep Residual Learning for Image Recognition
+    <https://arxiv.org/pdf/1512.03385.pdf>`_.
+
+    Args:
+        in_channels (int): Number of input channels.
+        num_classes (int): Number of classes to predict.
+        groups (int): Number of groups in convolutions.
+
+    Returns:
+        _PackedResNet: A ResNet-101.
+    """
     return _ResNet(
         block=Bottleneck,
         num_blocks=[3, 4, 23, 3],
@@ -305,11 +357,22 @@ def ResNet101(
     )
 
 
-def ResNet152(
+def resnet152(
     in_channels: int,
     num_classes: int,
     groups: int,
 ) -> _ResNet:
+    """ResNet-152 from `Deep Residual Learning for Image Recognition
+    <https://arxiv.org/pdf/1512.03385.pdf>`_.
+
+    Args:
+        in_channels (int): Number of input channels.
+        num_classes (int): Number of classes to predict.
+        groups (int): Number of groups in convolutions.
+
+    Returns:
+        _PackedResNet: A ResNet-152.
+    """
     return _ResNet(
         block=Bottleneck,
         num_blocks=[3, 8, 36, 3],

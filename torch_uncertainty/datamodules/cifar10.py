@@ -10,7 +10,7 @@ from timm.data.auto_augment import rand_augment_transform
 from torch.utils.data import DataLoader, Dataset, random_split
 from torchvision.datasets import CIFAR10, SVHN
 
-from ..datasets import CIFAR10_C, AggregatedDataset, ImageNetO
+from ..datasets import CIFAR10_C, AggregatedDataset
 from ..transforms import Cutout
 
 
@@ -26,7 +26,6 @@ class CIFAR10DataModule(LightningDataModule):
         auto_augment: str = None,
         use_cifar_c: str = None,
         corruption_severity: int = 1,
-        use_imagenet_o: bool = False,
         num_dataloaders: int = 1,
         pin_memory: bool = True,
         persistent_workers: bool = True,
@@ -56,12 +55,7 @@ class CIFAR10DataModule(LightningDataModule):
 
         self.use_cifar_c = use_cifar_c
         self.corruption_severity = corruption_severity
-        self.use_imagenet_o = use_imagenet_o
-
-        if use_imagenet_o:
-            self.ood_dataset = ImageNetO
-        else:
-            self.ood_dataset = SVHN
+        self.ood_dataset = SVHN
 
         if enable_cutout:
             main_transform = Cutout(16)
@@ -116,10 +110,10 @@ class CIFAR10DataModule(LightningDataModule):
                 severity=self.corruption_severity,
             )
 
-        if self.use_imagenet_o:
-            self.ood_dataset(self.root)
-        else:
-            self.ood_dataset(self.root, split="test", download=True)
+        # if self.use_imagenet_o:
+        #     self.ood_dataset(self.root)
+        # else:
+        self.ood_dataset(self.root, split="test", download=True)
 
     def setup(self, stage: Optional[str] = None) -> None:
         if stage == "fit" or stage is None:
@@ -149,18 +143,18 @@ class CIFAR10DataModule(LightningDataModule):
                 download=False,
                 transform=self.transform_test,
             )
-            if self.use_imagenet_o:
-                self.ood = self.ood_dataset(
-                    self.root,
-                    transform=self.transform_test_imagenet,
-                )
-            else:
-                self.ood = self.ood_dataset(
-                    self.root,
-                    split="test",
-                    download=False,
-                    transform=self.transform_test,
-                )
+            # if self.use_imagenet_o:
+            #     self.ood = self.ood_dataset(
+            #         self.root,
+            #         transform=self.transform_test_imagenet,
+            #     )
+            # else:
+            self.ood = self.ood_dataset(
+                self.root,
+                split="test",
+                download=False,
+                transform=self.transform_test,
+            )
         else:
             self.test = self.dataset(
                 self.root,
@@ -237,9 +231,9 @@ class CIFAR10DataModule(LightningDataModule):
         p.add_argument("--num_workers", type=int, default=4)
         p.add_argument("--cutout", dest="enable_cutout", action="store_true")
         p.add_argument("--auto_augment", type=str)
-        p.add_argument(
-            "--imagenet-o", dest="use_imagenet_o", action="store_true"
-        )
+        # p.add_argument(
+        #     "--imagenet-o", dest="use_imagenet_o", action="store_true"
+        # )
         p.add_argument("--cifar-c", dest="use_cifar_c", type=str, default=None)
         p.add_argument(
             "--severity", dest="corruption_severity", type=int, default=None

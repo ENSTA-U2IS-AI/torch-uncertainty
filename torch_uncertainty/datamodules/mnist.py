@@ -48,7 +48,7 @@ class MNISTDataModule(LightningDataModule):
         self.transform_test = T.Compose(
             [
                 T.ToTensor(),
-                T.RandomCrop(28, padding=4),
+                T.CenterCrop(28),
                 T.Normalize((0.1307,), (0.3081,)),
             ]
         )

@@ -1,12 +1,21 @@
 # Torch Uncertainty
 
-[![tests](https://github.com/ENSTA-U2IS/torch-uncertainty/actions/workflows/run-tests.yml/badge.svg?branch=main&event=push)](https://github.com/ENSTA-U2IS/torch-uncertainty/actions/workflows/run-tests.yml) [![Code style: black](https://img.shields.io/badge/code%20style-black-black.svg)](https://github.com/psf/black)
+[![tests](https://github.com/ENSTA-U2IS/torch-uncertainty/actions/workflows/run-tests.yml/badge.svg?branch=main&event=push)](https://github.com/ENSTA-U2IS/torch-uncertainty/actions/workflows/run-tests.yml) [![Code Coverage](https://img.shields.io/codecov/c/github/ENSTA-U2IS/torch-uncertainty.svg)](https://codecov.io/gh/ENSTA-U2IS/torch-uncertainty) [![Code style: black](https://img.shields.io/badge/code%20style-black-black.svg)](https://github.com/psf/black)
+
+_Torch Uncertainty_ is a package designed to help you leverage uncertainty quantification techniques and make your neural networks more reliable. It is based on PyTorch Lightning to handle multi-GPU training and inference and automatic logging through tensorboard.
+
+---
+
+This package provides a multi-level API, including:
+- ready-to-train baselines on research datasets, such as CIFAR and ImageNet
+- baselines available for training on your datasets
+- layers available for use in your networks
 
 ## Installation
 
 The package can be installed from PyPI or from source.
 
-### From PyPI
+### From PyPI (available soon)
 
 Install the package via pip: `pip install torch-uncertainty`
 
@@ -20,24 +29,32 @@ Installation guidelines for poetry are available on <https://python-poetry.org/d
 
 #### Installing the package
 
-Clone the repository with:
+Clone the repository:
 
-`https://github.com/ENSTA-U2IS/torch-uncertainty.git`
+`git clone https://github.com/ENSTA-U2IS/torch-uncertainty.git`
 
 Create a new conda environment and activate it with:
 
 `conda create -n uncertainty && conda activate uncertainty`
 
-Install the package using poetry
+Install the package using poetry:
 
-`poetry install` or, for development, `poetry install --with dev`
+`poetry install torch-uncertainty` or, for development, `poetry install torch-uncertainty --with dev`
 
-Depending on your system, you may encounter an error. If so, kill the process and add `PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring` at the beginning of your command.
+Depending on your system, you may encounter errors. If so, kill the process and add `PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring` at the beginning of every poetry commands.
+
+
+## Documentation
+
+Please find the documentation at [torch-uncertainty.github.io](https://torch-uncertainty.github.io).
+
 
 ## Credits
 
 
+## Awesome Torch repositories
 
-## Other repositories of interest
+You may find a lot of information about modern uncertainty estimation techniques on the [Awesome Uncertainty in Deep Learning](https://github.com/ENSTA-U2IS/awesome-uncertainty-deeplearning).
 
-You may find a lot of information about modern uncertainty estimation techniques on this What's Awesome: [Awesome Uncertainty in Deep Learning](https://github.com/ENSTA-U2IS/awesome-uncertainty-deeplearning)
+## References
+
