@@ -23,7 +23,7 @@ class PackedLinear(nn.Module):
         groups (int, optional): Number of blocked connections from input
             channels to output channels. Defaults to ``1``.
         rearrange (bool, optional): Rearrange the input and outputs for
-            compatibility with previous and later layers. Defaults to True.
+            compatibility with previous and later layers. Defaults to ``True``.
     """
 
     def __init__(
