@@ -68,7 +68,7 @@ jobs:
         poetry run isort --check-only torch_uncertainty tests
         poetry run black --check torch_uncertainty tests
 
-    - name: Test with pytest with coverage
+    - name: Test with pytest and compute coverage
       run: |
         poetry run pytest --cov --cov-report xml
 
