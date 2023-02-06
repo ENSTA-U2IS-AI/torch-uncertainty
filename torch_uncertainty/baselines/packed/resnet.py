@@ -59,7 +59,7 @@ class PackedResNet(ClassificationEnsemble):
 
     Note:
 
-        The OOD criterion is by defaults the confidence scores.
+        The OOD criterion is by defaults the confidence score.
 
     Warning:
 
