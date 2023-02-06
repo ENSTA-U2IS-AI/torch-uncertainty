@@ -88,13 +88,13 @@ class TestEntropy:
         res = self.entropy.compute()
         assert all(res == torch.as_tensor([0, math.log(2)]))
 
-    def test_compute_3D_ensemble_False(self, vec3D: torch.Tensor):
+    def test_compute_3D(self, vec3D: torch.Tensor):
         self.entropy = Entropy(reduction="mean")
         self.entropy.update(vec3D)
         res = self.entropy.compute()
         assert res == 0
 
-    def test_compute_3D_ensemble_True(self, vec3D: torch.Tensor):
+    def test_compute_3D_to_2D(self, vec3D: torch.Tensor):
         self.entropy = Entropy(reduction="mean")
         vec3D = vec3D.mean(1)
         self.entropy.update(vec3D)
