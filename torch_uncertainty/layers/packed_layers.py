@@ -9,7 +9,7 @@ from torch.nn.common_types import _size_2_t
 
 # fmt: on
 class PackedLinear(nn.Module):
-    """Packed-Ensemble style Linear layer.
+    r"""Packed-Ensembles-style Linear layer.
 
     This layer computes fully-connected operation for a given number of
     estimators (:attr:`num_estimators`) using a `1x1` convolution.
@@ -24,6 +24,14 @@ class PackedLinear(nn.Module):
             channels to output channels. Defaults to ``1``.
         rearrange (bool, optional): Rearrange the input and outputs for
             compatibility with previous and later layers. Defaults to ``True``.
+
+        Note:
+            Each ensemble member will only see
+            :math:`\frac{in\_features}{n\_estimators}` features, so when using
+            :attr:`groups` you should make sure that :attr:`in_features` and
+            :attr:`out_features` are both divisible by :attr:`n_estimators`
+            :math:`\times`:attr:`groups`. However, the number of input and
+            output features will be changed to comply with this constraint.
     """
 
     def __init__(
@@ -81,13 +89,13 @@ class PackedLinear(nn.Module):
 
 
 class PackedConv2d(nn.Module):
-    r"""Packed-Ensemble style Conv2d layer.
+    r"""Packed-Ensembles-style Conv2d layer.
 
     Args:
         in_channels (int): Number of channels in the input image.
         out_channels (int): Number of channels produced by the convolution.
         kernel_size (int or tuple): Size of the convolving kernel.
-        n_estimators (int): Number of estimators in the ensemble.
+        num_estimators (int): Number of estimators in the ensemble.
         stride (int or tuple, optional): Stride of the convolution.
             Defaults to ``1``.
         padding (int, tuple or str, optional): Padding added to all four sides
@@ -103,10 +111,11 @@ class PackedConv2d(nn.Module):
 
     Note:
         Each ensemble member will only see
-        :math:`\frac{in_channels}{n_estimators}` channels, so when using
-        :attr:`groups` you have to make sure that :attr:`in_channels` and
-        :attr:`out_channels` are both divisible by :attr:`n_estimators`
-        :math:`\times`:attr:`groups`.
+        :math:`\frac{in\_channels}{num\_estimators}` channels, so when using
+        :attr:`groups` you should make sure that :attr:`in_channels` and
+        :attr:`out_channels` are both divisible by :attr:`num_estimators`
+        :math:`\times`:attr:`groups`. However, the number of input and
+        output channels will be changed to comply with this constraint.
     """
 
     def __init__(

@@ -43,6 +43,17 @@ Models
     packed_resnet101
     packed_resnet152
 
+**Masksembles ResNet**
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+
+    masked_resnet18
+    masked_resnet34
+    masked_resnet50
+    masked_resnet101
+    masked_resnet152
 
 Layers
 ------

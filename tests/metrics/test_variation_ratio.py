@@ -1,0 +1,58 @@
+# fmt:off
+
+import pytest
+import torch
+
+from torch_uncertainty.metrics import VariationRatio
+
+# fmt:on
+
+
+@pytest.fixture
+def disagreement_probas_3est() -> torch.Tensor:
+    """Return a vector with mean entropy ~ln(2) and entropy of mean =0."""
+    vec = torch.as_tensor([[[0.2, 0.8]], [[0.7, 0.3]], [[0.6, 0.4]]])
+    return vec
+
+
+@pytest.fixture
+def agreement_probas() -> torch.Tensor:
+    vec = torch.as_tensor([[[0.9, 0.1]], [[0.9, 0.1]]])
+    return vec
+
+
+@pytest.fixture
+def agreement_probas_3est() -> torch.Tensor:
+    """Return a vector with mean entropy ~ln(2) and entropy of mean =0."""
+    vec = torch.as_tensor([[[0.2, 0.8]], [[0.3, 0.7]], [[0.4, 0.6]]])
+    return vec
+
+
+class TestVariationRatio:
+    """Testing the VariationRatio metric class."""
+
+    def test_compute_agreement(self, agreement_probas: torch.Tensor):
+        self.metric = VariationRatio(probabilistic=True)
+        self.metric.update(agreement_probas)
+        res = self.metric.compute()
+        assert res == pytest.approx(0.1, 1e-6)
+
+        self.metric = VariationRatio(probabilistic=False)
+        self.metric.update(agreement_probas)
+        res = self.metric.compute()
+        assert res == 0.0
+
+    def test_compute_disagreement(
+        self,
+        agreement_probas_3est: torch.Tensor,
+        disagreement_probas_3est: torch.Tensor,
+    ):
+        self.metric = VariationRatio(probabilistic=True, reduction="sum")
+        self.metric.update(disagreement_probas_3est)
+        self.metric.update(agreement_probas_3est)
+        res = self.metric.compute()
+        assert res == pytest.approx(0.8, 1e-6)
+
+    def test_bad_argument(self):
+        with pytest.raises(Exception):
+            _ = VariationRatio(reduction="geometric_mean")

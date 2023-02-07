@@ -14,7 +14,6 @@ from torch_uncertainty.metrics import MutualInformation
 def disagreement_probas() -> torch.Tensor:
     """Return a vector with mean entropy ~ln(2) and entropy of mean =0."""
     vec = torch.as_tensor([[[1e-8, 1 - 1e-8]], [[1 - 1e-8, 1e-8]]])
-    print(vec.shape)
     return vec
 
 
@@ -48,9 +47,12 @@ class TestMutualInformation:
         res = metric.compute()
         assert res == pytest.approx(math.log(2) / 2, 1e-5)
 
-    def test_bad_argument(self, agreement_probas: torch.Tensor):
+        metric = MutualInformation(reduction="sum")
+        metric.update(agreement_probas)
+        metric.update(disagreement_probas)
+        res = metric.compute()
+        assert res == pytest.approx(math.log(2), 1e-5)
+
+    def test_bad_argument(self):
         with pytest.raises(Exception):
-            metric = MutualInformation("geometric_mean")
-            metric.update(agreement_probas)
-            res = metric.compute()
-            assert res == 0.5
+            _ = MutualInformation("geometric_mean")

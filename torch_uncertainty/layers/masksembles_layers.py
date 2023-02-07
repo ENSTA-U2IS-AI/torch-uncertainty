@@ -95,6 +95,7 @@ def generation_wrapper(c: int, n: int, scale: float) -> np.ndarray:
     # inverse formula for number of active features in masks
     active_features = int(int(c) / (scale * (1 - (1 - 1 / scale) ** n)))
 
+    # Use binary search to find the correct value of the scale
     masks = generate_masks(active_features, n, scale)
     up = 4 * scale
     down = max(0.2 * scale, 1.0)
@@ -159,6 +160,22 @@ class Mask1D(nn.Module):
 
 
 class MaskedLinear(nn.Module):
+    r"""Masksembles-style Linear layer.
+
+    This layer computes fully-connected operation for a given number of
+    estimators (:attr:`num_estimators`) with a given :attr:`scale`.
+
+    Args:
+        in_features (int): Number of input features of the linear layer.
+        out_features (int): Number of channels produced by the linear layer.
+        num_estimators (int): The number of estimators grouped in the layer.
+        scale (float): The scale parameter for the masks.
+        bias (bool, optional): It ``True``, adds a learnable bias to the
+            output. Defaults to ``True``.
+        groups (int, optional): Number of blocked connections from input
+            channels to output channels. Defaults to ``1``.
+    """
+
     def __init__(
         self,
         in_features: int,
@@ -188,6 +205,27 @@ class MaskedLinear(nn.Module):
 
 
 class MaskedConv2d(nn.Module):
+    r"""Masksembles-style Conv2d layer.
+
+    Args:
+        in_channels (int): Number of channels in the input image.
+        out_channels (int): Number of channels produced by the convolution.
+        kernel_size (int or tuple): Size of the convolving kernel.
+        num_estimators (int): Number of estimators in the ensemble.
+        scale (float): The scale parameter for the masks.
+        stride (int or tuple, optional): Stride of the convolution.
+            Defaults to ``1``.
+        padding (int, tuple or str, optional): Padding added to all four sides
+            of the input. Defaults to ``0``.
+        dilation (int or tuple, optional): Spacing between kernel elements.
+            Defaults to ``1``.
+        groups (int, optional): Number of blocked connexions from input
+            channels to output channels for each estimator. Defaults to ``1``.
+        bias (bool, optional): If ``True``, adds a learnable bias to the
+            output. Defaults to ``True``.
+
+    """
+
     def __init__(
         self,
         in_channels: int,
