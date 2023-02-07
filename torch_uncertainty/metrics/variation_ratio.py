@@ -34,7 +34,7 @@ class VariationRatio(Metric):
         self.probs.append(probs.transpose(0, 1))
 
     def compute(self) -> Tensor:
-        r"""Computes the variation ratio which amount to the proportion of
+        r"""Computes the variation ratio which amounts to the proportion of
         predicted class labels which are not the chosen class.
         Returns:
             Tensor: Mean disagreement between estimators.

@@ -86,3 +86,9 @@ class TestEntropy:
         self.metric.update(vec3D)
         res = self.metric.compute()
         assert res == math.log(2)
+
+    def test_bad_argument(self, vec3D: torch.Tensor):
+        with pytest.raises(Exception):
+            metric = Entropy("geometric_mean")
+            metric.update(vec3D)
+            _ = metric.compute()

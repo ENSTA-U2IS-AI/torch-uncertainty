@@ -1,4 +1,6 @@
 # fmt:off
+from typing import Literal
+
 import torch
 from torch import Tensor
 from torchmetrics import Metric
@@ -14,12 +16,20 @@ class MutualInformation(Metric):
     """
     full_state_update: bool = False
 
-    def __init__(self, reduction: str = "mean", **kwargs) -> None:
+    def __init__(
+        self, reduction: Literal["mean", "sum", "none", None] = "mean", **kwargs
+    ) -> None:
         super().__init__(**kwargs)
 
+        allowed_reduction = ("sum", "mean", "none", None)
+        if reduction not in allowed_reduction:
+            raise ValueError(
+                "Expected argument `reduction` to be one of ",
+                f"{allowed_reduction} but got {reduction}",
+            )
+
         self.reduction = reduction
-        # self.entropy_over_estimators = Entropy(over_estimators=True)
-        # self.entropy = Entropy()
+
         self.add_state("probs_per_est", [], dist_reduce_fx="cat")
 
         rank_zero_warn(

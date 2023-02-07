@@ -1,7 +1,7 @@
 Quickstart
 ==========
 
-The following code train a Packed-Ensembles ResNet on CIFAR10:
+The following code - available in the experiments folder -trains a Packed-Ensembles ResNet on CIFAR10:
 
 .. code:: python
 
@@ -23,3 +23,5 @@ The following code train a Packed-Ensembles ResNet on CIFAR10:
         root,
         "packed",
     )
+
+You may replace the architecture (which should be a Lightning Module), the Datamodule (a Lightning Datamodule), the loss or the optimization procedure to your likings.

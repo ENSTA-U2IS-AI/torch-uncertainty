@@ -1,7 +1,5 @@
 # fmt:off
 
-import math
-
 import pytest
 import torch
 

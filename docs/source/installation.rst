@@ -52,6 +52,6 @@ Install the package using poetry:
 
 
 .. note::
-    Depending on your system, you may encounter an error. If so, kill the
+    Depending on your system, you may encounter errors. If so, kill the 
     process and add :bash:`PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring`
-    at the beginning of your command.
+    at the beginning of every :bash:`poetry install` commands.
