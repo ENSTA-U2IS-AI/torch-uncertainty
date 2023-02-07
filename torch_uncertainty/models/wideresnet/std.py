@@ -1,5 +1,6 @@
 # fmt: off
 from typing import Type
+
 import torch.nn as nn
 import torch.nn.functional as F
 from einops import rearrange
