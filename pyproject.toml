@@ -25,6 +25,7 @@ flake8 = "^6.0.0"
 mypy = "^0.991"
 sphinx-rtd-theme = "^1.2.0"
 pytest-cov = "^4.0.0"
+pre-commit = "^3.0.4"
 
 [build-system]
 requires = ["poetry-core"]
