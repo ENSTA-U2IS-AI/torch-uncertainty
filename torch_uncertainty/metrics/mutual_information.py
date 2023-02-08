@@ -40,6 +40,9 @@ class MutualInformation(Metric):
 
     def update(self, probs_per_est: Tensor) -> None:  # type: ignore
         # store data as (example, estimator, class)
+        if len(probs_per_est.shape) <= 2:
+            raise ValueError("Please give the probabilities per estimator.")
+
         self.probs_per_est.append(probs_per_est.transpose(0, 1))
 
     def compute(self) -> Tensor:
@@ -53,14 +56,14 @@ class MutualInformation(Metric):
         probs = probs_per_est.mean(dim=0)
 
         # Entropy of the mean over the estimators
-        entropy_product = torch.log(probs) * probs
-        entropy_mean = -entropy_product.sum(dim=-1)
+        entropy_product = torch.special.entr(probs)
+        entropy_mean = entropy_product.sum(dim=-1)
 
         # Mean over the estimators of the entropy over the classes
-        entropy_product = torch.log(probs_per_est) * probs_per_est
-        mean_entropy = (-entropy_product.sum(dim=-1)).mean(dim=0)
+        entropy_product = torch.special.entr(probs_per_est)
+        mean_entropy = entropy_product.sum(dim=-1).mean(dim=0)
 
-        mutual_information = entropy_mean - mean_entropy
+        mutual_information: torch.Tensor = entropy_mean - mean_entropy
 
         if self.reduction == "mean":
             mutual_information = mutual_information.mean()
