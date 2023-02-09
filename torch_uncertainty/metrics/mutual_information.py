@@ -56,12 +56,10 @@ class MutualInformation(Metric):
         probs = probs_per_est.mean(dim=0)
 
         # Entropy of the mean over the estimators
-        entropy_product = torch.special.entr(probs)
-        entropy_mean = entropy_product.sum(dim=-1)
+        entropy_mean = torch.special.entr(probs).sum(dim=-1)
 
         # Mean over the estimators of the entropy over the classes
-        entropy_product = torch.special.entr(probs_per_est)
-        mean_entropy = entropy_product.sum(dim=-1).mean(dim=0)
+        mean_entropy = torch.special.entr(probs_per_est).sum(dim=-1).mean(dim=0)
 
         mutual_information: torch.Tensor = entropy_mean - mean_entropy
 

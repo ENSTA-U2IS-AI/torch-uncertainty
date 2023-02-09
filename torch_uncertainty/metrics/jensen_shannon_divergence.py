@@ -1,3 +1,4 @@
+# fmt:off
 import torch
 import torch.nn.functional as F
 from torch import Tensor
@@ -6,6 +7,7 @@ from torchmetrics.utilities import rank_zero_warn
 from torchmetrics.utilities.data import dim_zero_cat
 
 
+# fmt:on
 class JensenShannonDivergence(Metric):
     full_state_update: bool = False
 

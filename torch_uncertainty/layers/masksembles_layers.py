@@ -64,16 +64,21 @@ def generate_masks(m: int, n: int, s: float) -> np.ndarray:
 
 def generation_wrapper(c: int, n: int, scale: float) -> np.ndarray:
     """Generates set of binary masks with properties defined by c, n, scale
-    params.
-     Allows to generate masks sets with predefined features number c.
-    Particularly
-     convenient to use in torch-like layers where one need to define shapes
-      inputs
-     tensors beforehand.
-    :param c: int, number of channels in generated masks
-    :param n: int, number of masks in the set
-    :param scale: float, scale param controls overlap of generated masks
-    :return: np.ndarray, matrix of binary vectors
+    params. Allows to generate masks sets with predefined features number c.
+    Particularly convenient to use in torch-like layers where one need to
+    define shapes inputs tensors beforehand.
+
+    Args:
+        c (int): number of channels in generated masks.
+        n (int): number of masks in the set.
+        scale (float): scale param controls overlap of generated masks.
+
+    Raises:
+        ValueError: If :attr:`c` < 10.
+        ValueError: If :attr:`s` > 0.6.
+
+    Returns:
+        np.ndarray: matrix of binary vectors
     """
 
     if c < 10:
@@ -88,7 +93,7 @@ def generation_wrapper(c: int, n: int, scale: float) -> np.ndarray:
     if scale > 6.0:
         raise ValueError(
             "Masksembles approach couldn't be used in such setups where "
-            f"scale parameter is larger then 6. Current value is  "
+            "scale parameter is larger then 6. Current value is  "
             f"(scale={scale})."
         )
 

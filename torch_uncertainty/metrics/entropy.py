@@ -70,21 +70,13 @@ class Entropy(Metric):
         """
         Compute the final entropy based on inputs passed to ``update``.
 
-        Raises:
-            ValueError: if reduction is not in ['mean', 'sum', 'none', None]
-
         Returns:
-            torch.Tensor: _description_
+            torch.Tensor: The final value(s) for the Entropy
         """
         values = dim_zero_cat(self.values)
         if self.reduction == "sum":
             return values.sum(dim=-1)
         elif self.reduction == "mean":
             return values.sum(dim=-1) / self.total
-        elif self.reduction is None or self.reduction == "none":
+        else:  # reduction is None
             return values
-        else:
-            raise ValueError(
-                "Expected argument `reduction` to be one of ",
-                "['mean', 'sum', 'none', None] but got {reduction}",
-            )

@@ -27,11 +27,12 @@ class PackedLinear(nn.Module):
 
         Note:
             Each ensemble member will only see
-            :math:`\frac{in\_features}{n\_estimators}` features, so when using
-            :attr:`groups` you should make sure that :attr:`in_features` and
-            :attr:`out_features` are both divisible by :attr:`n_estimators`
-            :math:`\times`:attr:`groups`. However, the number of input and
-            output features will be changed to comply with this constraint.
+            :math:`\frac{\text{in\_features}}{\text{n\_estimators}}` features,
+            so when using :attr:`groups` you should make sure that
+            :attr:`in_features` and :attr:`out_features` are both divisible by
+            :attr:`n_estimators` :math:`\times`:attr:`groups`. However, the
+            number of input and output features will be changed to comply with
+            this constraint.
     """
 
     def __init__(
@@ -111,11 +112,12 @@ class PackedConv2d(nn.Module):
 
     Note:
         Each ensemble member will only see
-        :math:`\frac{in\_channels}{num\_estimators}` channels, so when using
-        :attr:`groups` you should make sure that :attr:`in_channels` and
-        :attr:`out_channels` are both divisible by :attr:`num_estimators`
-        :math:`\times`:attr:`groups`. However, the number of input and
-        output channels will be changed to comply with this constraint.
+        :math:`\frac{\text{in\_channels}}{\text{num\_estimators}}` channels,
+        so when using :attr:`groups` you should make sure that
+        :attr:`in_channels` and :attr:`out_channels` are both divisible by
+        :attr:`num_estimators` :math:`\times`:attr:`groups`. However, the
+        number of input and output channels will be changed to comply with this
+        constraint.
     """
 
     def __init__(
