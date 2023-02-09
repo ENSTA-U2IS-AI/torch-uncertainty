@@ -1,4 +1,5 @@
 # flake8: noqa
+from .brier_score import BrierScore
 from .disagreement import Disagreement
 from .entropy import Entropy
 from .fpr95 import FPR95
