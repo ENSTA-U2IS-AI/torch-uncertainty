@@ -15,14 +15,17 @@ def _generate_masks(m: int, n: int, s: float) -> np.ndarray:
     """Generates set of binary masks with properties defined by n, m, s params.
     Results of this function are stochastic, that is, calls with the same sets
     of arguments might generate outputs of different shapes. Check
-    generate_masks
-    and generation_wrapper function for more deterministic behaviour.
-    :param m: int, number of ones in each mask
-    :param n: int, number of masks in the set
-    :param s: float, scale param controls overlap of generated masks
-    :return: np.ndarray, matrix of binary vectors
-    """
+    generate_masks and generation_wrapper function for more deterministic
+    behaviour.
 
+    Args:
+        m (int): Number of ones in each mask.
+        n (int): Number of masks in the set.
+        s (float): Scale param controls overlap of generated masks.
+
+    Returns:
+        np.ndarray: Matrix of binary vectors.
+    """
     total_positions = int(m * s)
     masks = []
 
@@ -40,18 +43,17 @@ def _generate_masks(m: int, n: int, s: float) -> np.ndarray:
 
 def generate_masks(m: int, n: int, s: float) -> np.ndarray:
     """Generates set of binary masks with properties defined by n, m, s params
-    Resulting masks are required to have fixed features size as it's described
-    in [1].
+    Resulting masks are required to have fixed features size.
     Since process of masks generation is stochastic therefore function
-     evaluates
-    _generate_masks multiple times till expected size is acquired.
-    :param m: int, number of ones in each mask
-    :param n: int, number of masks in the set
-    :param s: float, scale param controls overlap of generated masks
-    :return: np.ndarray, matrix of binary vectors
-    References
-    [1] `Masksembles for Uncertainty Estimation: Supplementary Material`,
-    Nikita Durasov, Timur Bagautdinov, Pierre Baque, Pascal Fua
+    evaluates _generate_masks multiple times till expected size is acquired.
+
+    Args:
+        m (int): number of ones in each mask
+        n (int): number of masks in the set
+        s (float): scale param controls overlap of generated masks
+
+    Returns:
+        np.ndarray: matrix of binary vectors
     """
 
     masks = _generate_masks(m, n, s)
@@ -119,47 +121,46 @@ def generation_wrapper(c: int, n: int, scale: float) -> np.ndarray:
     return masks
 
 
-class Mask2D(nn.Module):
-    def __init__(
-        self, channels: int, num_masks: int, scale: float, **factory_kwargs
-    ):
-        super().__init__()
-
-        self.channels = channels
-        self.num_masks = num_masks
-        self.scale = scale
-        masks = generation_wrapper(channels, num_masks, scale)
-        masks = torch.from_numpy(masks)
-        self.masks = torch.nn.Parameter(masks, requires_grad=False).cuda()
-
-    def forward(self, inputs):
-        batch = inputs.shape[0]
-        x = torch.split(inputs.unsqueeze(1), batch // self.num_masks, dim=0)
-        x = torch.cat(x, dim=1).permute([1, 0, 2, 3, 4])
-        x = x * self.masks.unsqueeze(1).unsqueeze(-1).unsqueeze(-1)
-        x = torch.cat(torch.split(x, 1, dim=0), dim=1)
-        return torch.as_tensor(x, dtype=inputs.dtype).squeeze(0)
-
-
 class Mask1D(nn.Module):
     def __init__(
         self, channels: int, num_masks: int, scale: float, **factory_kwargs
     ):
         super().__init__()
-
-        self.channels = channels
         self.num_masks = num_masks
-        self.scale = scale
 
         masks = generation_wrapper(channels, num_masks, scale)
         masks = torch.from_numpy(masks)
-        self.masks = torch.nn.Parameter(masks, requires_grad=False).cuda()
+        self.masks = torch.nn.Parameter(masks, requires_grad=False).to(
+            device=factory_kwargs["device"]
+        )
 
-    def forward(self, inputs):
+    def forward(self, inputs: Tensor) -> Tensor:
         batch = inputs.shape[0]
         x = torch.split(inputs.unsqueeze(1), batch // self.num_masks, dim=0)
         x = torch.cat(x, dim=1).permute([1, 0, 2])
         x = x * self.masks.unsqueeze(1)
+        x = torch.cat(torch.split(x, 1, dim=0), dim=1)
+        return torch.as_tensor(x, dtype=inputs.dtype).squeeze(0)
+
+
+class Mask2D(nn.Module):
+    def __init__(
+        self, channels: int, num_masks: int, scale: float, **factory_kwargs
+    ):
+        super().__init__()
+        self.num_masks = num_masks
+
+        masks = generation_wrapper(channels, num_masks, scale)
+        masks = torch.from_numpy(masks)
+        self.masks = torch.nn.Parameter(masks, requires_grad=False).to(
+            device=factory_kwargs["device"]
+        )
+
+    def forward(self, inputs: Tensor) -> Tensor:
+        batch = inputs.shape[0]
+        x = torch.split(inputs.unsqueeze(1), batch // self.num_masks, dim=0)
+        x = torch.cat(x, dim=1).permute([1, 0, 2, 3, 4])
+        x = x * self.masks.unsqueeze(1).unsqueeze(-1).unsqueeze(-1)
         x = torch.cat(torch.split(x, 1, dim=0), dim=1)
         return torch.as_tensor(x, dtype=inputs.dtype).squeeze(0)
 
@@ -179,6 +180,14 @@ class MaskedLinear(nn.Module):
             output. Defaults to ``True``.
         groups (int, optional): Number of blocked connections from input
             channels to output channels. Defaults to ``1``.
+
+    Warning:
+        Be sure to apply a repeat on the batch at the start of the training
+        if you use `MaskedLinear`.
+
+    References:
+        `Masksembles for Uncertainty Estimation`, Nikita Durasov, Timur
+        Bagautdinov, Pierre Baque, Pascal Fua.
     """
 
     def __init__(
@@ -188,16 +197,15 @@ class MaskedLinear(nn.Module):
         num_estimators: int,
         scale: float,
         bias: bool = True,
-        groups: int = 1,
         device: Union[Any, None] = None,
         dtype: Union[Any, None] = None,
     ) -> None:
         factory_kwargs = {"device": device, "dtype": dtype}
         super().__init__()
 
-        self.num_estimators = num_estimators
-
-        self.mask = Mask1D(in_features, num_masks=num_estimators, scale=scale)
+        self.mask = Mask1D(
+            in_features, num_masks=num_estimators, scale=scale, **factory_kwargs
+        )
         self.conv1x1 = nn.Linear(
             in_features=in_features,
             out_features=out_features,
@@ -229,6 +237,13 @@ class MaskedConv2d(nn.Module):
         bias (bool, optional): If ``True``, adds a learnable bias to the
             output. Defaults to ``True``.
 
+    Warning:
+        Be sure to apply a repeat on the batch at the start of the training
+        if you use `MaskedConv2d`.
+
+    References:
+        `Masksembles for Uncertainty Estimation`, Nikita Durasov, Timur
+        Bagautdinov, Pierre Baque, Pascal Fua.
     """
 
     def __init__(
@@ -249,7 +264,9 @@ class MaskedConv2d(nn.Module):
         factory_kwargs = {"device": device, "dtype": dtype}
         super().__init__()
 
-        self.mask = Mask2D(in_channels, num_masks=num_estimators, scale=scale)
+        self.mask = Mask2D(
+            in_channels, num_masks=num_estimators, scale=scale, **factory_kwargs
+        )
         self.conv = nn.Conv2d(
             in_channels=in_channels,
             out_channels=out_channels,

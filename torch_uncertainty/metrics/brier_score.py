@@ -48,9 +48,9 @@ class BrierScore(Metric):
         else:
             batch_size = probs.size(1)
             self.num_estimators = probs.size(2)
-            target = target.unsqueeze(0)
+            target = target.repeat(1, self.num_estimators, 1)
 
-        brier_score = F.mse_loss(probs, target, reduce=False).sum(dim=-1)
+        brier_score = F.mse_loss(probs, target, reduction="none").sum(dim=-1)
 
         if self.reduction is None or self.reduction == "none":
             self.values.append(brier_score)
