@@ -4,6 +4,7 @@ from typing import Any, Dict, Literal
 
 import torch
 import torch.nn as nn
+from torch import optim
 
 from torch_uncertainty.models.resnet import (
     batched_resnet18,
@@ -103,14 +104,43 @@ class BatchedResNet(ClassificationEnsemble):
         self.example_input_array = torch.randn(1, in_channels, 32, 32)
 
     def configure_optimizers(self) -> dict:
-        return self.optimization_procedure(self)
+        my_list = ["R", "S"]
+        params_multi_tmp = list(
+            filter(
+                lambda kv: (my_list[0] in kv[0]) or (my_list[1] in kv[0]),
+                self.named_parameters(),
+            )
+        )
+        param_core_tmp = list(
+            filter(
+                lambda kv: (my_list[0] not in kv[0])
+                and (my_list[1] not in kv[0]),
+                self.named_parameters(),
+            )
+        )
+        params_multi = [param for _, param in params_multi_tmp]
+        param_core = [param for _, param in param_core_tmp]
+        optimizer = optim.SGD(
+            [
+                {"params": param_core, "weight_decay": 5e-4},
+                {"params": params_multi, "weight_decay": 0.0},
+            ],
+            lr=0.05,
+            momentum=0.9,
+        )
+        scheduler = optim.lr_scheduler.MultiStepLR(
+            optimizer,
+            milestones=[25, 50],
+            gamma=0.1,
+        )
+        return {"optimizer": optimizer, "lr_scheduler": scheduler}
 
     @property
     def criterion(self) -> nn.Module:
         return self.loss()
 
     def forward(self, input: torch.Tensor) -> torch.Tensor:  # type: ignore
-        input = input.repeat(1, self.num_estimators, 1, 1)
+        input = input.repeat(self.num_estimators, 1, 1, 1)
         return self.model.forward(input)
 
     @staticmethod
@@ -140,6 +170,7 @@ class BatchedResNet(ClassificationEnsemble):
             choices=choices,
             help="Type of ResNet",
         )
+        parent_parser.add_argument("--num_estimators", type=int, default=4)
         parent_parser.add_argument(
             "--entropy", dest="use_entropy", action="store_true"
         )
@@ -149,7 +180,6 @@ class BatchedResNet(ClassificationEnsemble):
         parent_parser.add_argument(
             "--mutual_information", dest="uses_mi", action="store_true"
         )
-        parent_parser.add_argument("--num_estimators", type=int, default=4)
         parent_parser.add_argument(
             "--variation_ratio", dest="use_variation_ratio", action="store_true"
         )
