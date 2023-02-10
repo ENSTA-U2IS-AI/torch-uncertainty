@@ -104,6 +104,10 @@ class BatchedResNet(ClassificationEnsemble):
         self.example_input_array = torch.randn(1, in_channels, 32, 32)
 
     def configure_optimizers(self) -> dict:
+        param_optimizer = self.optimization_procedure(self)["optimizer"]
+        weight_decay = param_optimizer.defaults["weight_decay"]
+        lr = param_optimizer.defaults["lr"]
+        momentum = param_optimizer.defaults["momentum"]
         my_list = ["R", "S"]
         params_multi_tmp = list(
             filter(
@@ -122,17 +126,14 @@ class BatchedResNet(ClassificationEnsemble):
         param_core = [param for _, param in param_core_tmp]
         optimizer = optim.SGD(
             [
-                {"params": param_core, "weight_decay": 5e-4},
+                {"params": param_core, "weight_decay": weight_decay},
                 {"params": params_multi, "weight_decay": 0.0},
             ],
-            lr=0.05,
-            momentum=0.9,
+            lr=lr,
+            momentum=momentum,
         )
-        scheduler = optim.lr_scheduler.MultiStepLR(
-            optimizer,
-            milestones=[25, 50],
-            gamma=0.1,
-        )
+        scheduler = self.optimization_procedure(self)["lr_scheduler"]
+        scheduler.optimizer = optimizer
         return {"optimizer": optimizer, "lr_scheduler": scheduler}
 
     @property
