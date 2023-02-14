@@ -53,6 +53,14 @@ class TestMaskedLinear:
         out = layer(feat_input_even)
         assert out.shape == torch.Size([8, 2])
 
+    def test_linear_c_lt_10(self):
+        with pytest.raises(Exception):
+            _ = MaskedLinear(8, 2, num_estimators=1, scale=2)
+
+    def test_linear_s_gt_6(self):
+        with pytest.raises(Exception):
+            _ = MaskedLinear(10, 2, num_estimators=1, scale=7)
+
 
 class TestMaskedConv2d:
     """Testing the MaskedConv2d layer class."""

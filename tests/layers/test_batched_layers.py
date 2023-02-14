@@ -23,13 +23,18 @@ def img_input() -> torch.Tensor:
 class TestBatchLinear:
     """Testing the BatchLinear layer class."""
 
-    def test_linear_one_estimator_no_rearrange(self, feat_input: torch.Tensor):
+    def test_linear_one_estimator(self, feat_input: torch.Tensor):
         layer = BatchLinear(6, 2, num_estimators=1)
         out = layer(feat_input)
         assert out.shape == torch.Size([4, 2])
 
-    def test_linear_two_estimators_no_rearrange(self, feat_input: torch.Tensor):
+    def test_linear_two_estimators(self, feat_input: torch.Tensor):
         layer = BatchLinear(6, 2, num_estimators=2)
+        out = layer(feat_input)
+        assert out.shape == torch.Size([4, 2])
+
+    def test_linear_one_estimator_no_bias(self, feat_input: torch.Tensor):
+        layer = BatchLinear(6, 2, num_estimators=1, bias=False)
         out = layer(feat_input)
         assert out.shape == torch.Size([4, 2])
 

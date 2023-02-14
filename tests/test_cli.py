@@ -1,5 +1,5 @@
 # fmt: off
-from argparse import ArgumentParser, Namespace
+from argparse import ArgumentParser
 from pathlib import Path
 
 import pytorch_lightning as pl
@@ -35,9 +35,7 @@ class TestCLI:
 
         # Simulate that summary is True & the only argument
         args = parser.parse_args("")
-        args = vars(args)
-        args["summary"] = True
-        args = Namespace(**args)
+        args.summary = True
 
         main(
             network,
