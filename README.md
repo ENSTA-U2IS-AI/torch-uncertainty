@@ -47,10 +47,11 @@ Depending on your system, you may encounter errors. If so, kill the process and 
 
 In case that you would like to contribute, install from source and add the pre-commit hooks with `pre-commit install`
 
-
-## Documentation
+## Getting Started and Documentation
 
 Please find the documentation at [torch-uncertainty.github.io](https://torch-uncertainty.github.io).
+
+A quickstart is available at [torch-uncertainty.github.io/quickstart](https://torch-uncertainty.github.io/quickstart.html).
 
 ## Implemented baselines
 
