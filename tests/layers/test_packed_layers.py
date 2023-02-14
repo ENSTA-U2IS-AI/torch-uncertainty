@@ -77,10 +77,10 @@ class TestPackedConv2d:
         layer = PackedConv2d(6, 2, num_estimators=1, kernel_size=1, groups=2)
         out = layer(img_input)
         assert out.shape == torch.Size([5, 2, 3, 3])
-        assert layer.conv.groups == 1
+        assert layer.conv.groups == 1  # and not 2
 
     def test_conv_two_estimators_groups2(self, img_input: torch.Tensor):
         layer = PackedConv2d(6, 2, num_estimators=2, kernel_size=1, groups=2)
         out = layer(img_input)
         assert out.shape == torch.Size([5, 2, 3, 3])
-        assert layer.conv.groups == 2
+        assert layer.conv.groups == 2  # and not 4

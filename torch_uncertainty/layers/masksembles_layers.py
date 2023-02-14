@@ -214,7 +214,7 @@ class MaskedLinear(nn.Module):
         )
 
     def forward(self, input: Tensor) -> Tensor:
-        return self.conv1x1(input)
+        return self.conv1x1(self.mask(input))
 
 
 class MaskedConv2d(nn.Module):
