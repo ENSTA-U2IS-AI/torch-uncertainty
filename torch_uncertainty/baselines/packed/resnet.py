@@ -97,8 +97,8 @@ class PackedResNet(ClassificationEnsemble):
             use_variation_ratio=use_variation_ratio,
         )
 
-        if alpha < 1:
-            raise ValueError(f"Attribute `alpha` should be >= 1, not {alpha}")
+        if alpha <= 0:
+            raise ValueError(f"Attribute `alpha` should be > 0, not {alpha}")
         if gamma < 1:
             raise ValueError(f"Attribute `gamma` should be >= 1, not {gamma}")
 
