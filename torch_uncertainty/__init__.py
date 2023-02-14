@@ -100,7 +100,7 @@ def cli_main(
     root: Union[Path, str],
     net_name: str,
 ) -> None:
-    parser = ArgumentParser()
+    parser = ArgumentParser("torch-uncertainty")
     parser.add_argument("--seed", type=int, default=None)
     parser.add_argument("--test", type=int, default=None)
     parser.add_argument("--summary", dest="summary", action="store_true")

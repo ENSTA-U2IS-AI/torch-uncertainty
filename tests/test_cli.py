@@ -19,7 +19,7 @@ class TestCLI:
     def test_main_summary(self):
         root = Path(__file__).parent.absolute().parents[0]
 
-        parser = ArgumentParser()
+        parser = ArgumentParser("torch-uncertainty")
         parser.add_argument("--seed", type=int, default=None)
         parser.add_argument("--test", type=int, default=None)
         parser.add_argument("--summary", dest="summary", action="store_true")
@@ -32,9 +32,9 @@ class TestCLI:
         parser = pl.Trainer.add_argparse_args(parser)
         parser = datamodule.add_argparse_args(parser)
         parser = network.add_model_specific_args(parser)
-        args = parser.parse_args()
 
-        # Simulate that summary is True
+        # Simulate that summary is True & the only argument
+        args = parser.parse_args("")
         args = vars(args)
         args["summary"] = True
         args = Namespace(**args)
