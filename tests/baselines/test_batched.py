@@ -14,6 +14,11 @@ class TestBatchedBaseline:
 
     def test_batched(self):
         net = BatchedResNet(
-            10, 4, 3, 2, 1, 18, nn.CrossEntropyLoss, optim_cifar100_resnet50
+            num_classes=10,
+            num_estimators=4,
+            in_channels=3,
+            arch=18,
+            loss=nn.CrossEntropyLoss,
+            optimization_procedure=optim_cifar100_resnet50,
         )
         summary(net)

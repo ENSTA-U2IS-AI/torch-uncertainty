@@ -14,6 +14,13 @@ class TestMaskedBaseline:
 
     def test_masked(self):
         net = MaskedResNet(
-            10, 4, 3, 2, 1, 18, nn.CrossEntropyLoss, optim_cifar100_resnet18
+            num_classes=10,
+            num_estimators=4,
+            in_channels=3,
+            scale=2,
+            groups=1,
+            arch=18,
+            loss=nn.CrossEntropyLoss,
+            optimization_procedure=optim_cifar100_resnet18,
         )
         summary(net)
