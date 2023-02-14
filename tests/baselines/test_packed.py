@@ -1,5 +1,7 @@
 # fmt:off
 
+from argparse import ArgumentParser
+
 import torch.nn as nn
 from torchinfo import summary
 
@@ -16,4 +18,7 @@ class TestPackedBaseline:
         net = PackedResNet(
             10, 4, 3, 2, 1, 50, nn.CrossEntropyLoss, optim_cifar10_resnet50
         )
+        parser = ArgumentParser("torch-uncertainty-test")
+        parser = net.add_model_specific_args(parser)
+        parser.parse_args("")
         summary(net)

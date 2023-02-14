@@ -1,5 +1,7 @@
 # fmt:off
 
+from argparse import ArgumentParser
+
 import torch.nn as nn
 from torchinfo import summary
 
@@ -23,4 +25,7 @@ class TestMaskedBaseline:
             loss=nn.CrossEntropyLoss,
             optimization_procedure=optim_cifar100_resnet18,
         )
+        parser = ArgumentParser("torch-uncertainty-test")
+        parser = net.add_model_specific_args(parser)
+        parser.parse_args("")
         summary(net)
