@@ -1,5 +1,5 @@
 # fmt: off
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 from pathlib import Path
 from typing import Callable, Type, Union
 
@@ -16,31 +16,18 @@ import numpy as np
 from .routines.classification import ClassificationSingle
 from .utils import get_version
 
-
 # fmt: on
-def cli_main(
+
+
+def main(
     network: Type[ClassificationSingle],
     datamodule: Type[pl.LightningDataModule],
     loss: Module,
     optimization_procedure: Callable[[Module], dict],
     root: Union[Path, str],
     net_name: str,
+    args: Namespace,
 ) -> None:
-    parser = ArgumentParser()
-    parser.add_argument("--seed", type=int, default=None)
-    parser.add_argument("--test", type=int, default=None)
-    parser.add_argument("--summary", dest="summary", action="store_true")
-    parser.add_argument("--log_graph", dest="log_graph", action="store_true")
-
-    parser = pl.Trainer.add_argparse_args(parser)
-    parser = datamodule.add_argparse_args(parser)
-    parser = network.add_model_specific_args(parser)
-    args = parser.parse_args()
-
-    # if args.deterministic and args.seed is None:
-    #     print("Setting seed to 0.")
-    #     args.__setattr__("seed", 0)
-
     if args.seed:
         pl.seed_everything(args.seed, workers=True)
 
@@ -103,3 +90,26 @@ def cli_main(
         # training and testing
         trainer.fit(model, dm)
         trainer.test(datamodule=dm, ckpt_path="best")
+
+
+def cli_main(
+    network: Type[ClassificationSingle],
+    datamodule: Type[pl.LightningDataModule],
+    loss: Module,
+    optimization_procedure: Callable[[Module], dict],
+    root: Union[Path, str],
+    net_name: str,
+) -> None:
+    parser = ArgumentParser()
+    parser.add_argument("--seed", type=int, default=None)
+    parser.add_argument("--test", type=int, default=None)
+    parser.add_argument("--summary", dest="summary", action="store_true")
+    parser.add_argument("--log_graph", dest="log_graph", action="store_true")
+
+    parser = pl.Trainer.add_argparse_args(parser)
+    parser = datamodule.add_argparse_args(parser)
+    parser = network.add_model_specific_args(parser)
+    args = parser.parse_args()
+    main(
+        network, datamodule, loss, optimization_procedure, root, net_name, args
+    )

@@ -1,6 +1,9 @@
 Quickstart
 ==========
 
+.. role:: bash(code)
+    :language: bash
+
 You can use the Torch Uncertainty library at different levels. Let's start with the highest-level usage.
 
 Using the CLI tool
@@ -26,6 +29,7 @@ routine, which takes as arguments:
 * the path to the data and logs folder, in the example below, the root of the library
 * and finally, the name of your model (used for logs)
 
+Move to the directory containing your file and execute the code with :bash:`python3 experiment.py`. Add lightning arguments such as :bash:`--accelerator gpu --devices "0, 1"` for multi-gpu training, etc.
 
 Exemple
 ^^^^^^^
