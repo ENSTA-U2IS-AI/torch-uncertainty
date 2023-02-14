@@ -33,6 +33,11 @@ class PackedLinear(nn.Module):
             :attr:`n_estimators` :math:`\times`:attr:`groups`. However, the
             number of input and output features will be changed to comply with
             this constraint.
+
+        Note:
+            The input should be of size (`batch_size`, :attr:`in_features`, 1,
+            1). The (often) necessary rearrange operation is executed by
+            default.
     """
 
     def __init__(

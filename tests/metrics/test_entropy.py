@@ -36,55 +36,55 @@ class TestEntropy:
     """Testing the Entropy metric class."""
 
     def test_compute(self, vec2D_min: torch.Tensor):
-        self.metric = Entropy()
-        self.metric.update(vec2D_min)
-        res = self.metric.compute()
+        metric = Entropy()
+        metric.update(vec2D_min)
+        res = metric.compute()
         assert res == 0
 
     def test_compute_max(self, vec2D_max: torch.Tensor):
-        self.metric = Entropy(reduction="sum")
-        self.metric.update(vec2D_max)
-        res = self.metric.compute()
+        metric = Entropy(reduction="sum")
+        metric.update(vec2D_max)
+        res = metric.compute()
         assert res == math.log(2)
 
     def test_multiple_compute_sum(
         self, vec2D_min: torch.Tensor, vec2D_max: torch.Tensor
     ):
-        self.metric = Entropy(reduction="sum")
-        self.metric.update(vec2D_min)
-        self.metric.update(vec2D_max)
-        res = self.metric.compute()
+        metric = Entropy(reduction="sum")
+        metric.update(vec2D_min)
+        metric.update(vec2D_max)
+        res = metric.compute()
         assert res == math.log(2)
 
     def test_multiple_compute_mean(
         self, vec2D_min: torch.Tensor, vec2D_max: torch.Tensor
     ):
-        self.metric = Entropy(reduction="mean")
-        self.metric.update(vec2D_min)
-        self.metric.update(vec2D_max)
-        res = self.metric.compute()
+        metric = Entropy(reduction="mean")
+        metric.update(vec2D_min)
+        metric.update(vec2D_max)
+        res = metric.compute()
         assert res == math.log(2) / 2
 
     def test_multiple_compute_none(
         self, vec2D_min: torch.Tensor, vec2D_max: torch.Tensor
     ):
-        self.metric = Entropy(reduction=None)
-        self.metric.update(vec2D_min)
-        self.metric.update(vec2D_max)
-        res = self.metric.compute()
+        metric = Entropy(reduction=None)
+        metric.update(vec2D_min)
+        metric.update(vec2D_max)
+        res = metric.compute()
         assert all(res == torch.as_tensor([0, math.log(2)]))
 
     def test_compute_3D(self, vec3D: torch.Tensor):
-        self.metric = Entropy(reduction="mean")
-        self.metric.update(vec3D)
-        res = self.metric.compute()
+        metric = Entropy(reduction="mean")
+        metric.update(vec3D)
+        res = metric.compute()
         assert res == 0
 
     def test_compute_3D_to_2D(self, vec3D: torch.Tensor):
-        self.metric = Entropy(reduction="mean")
+        metric = Entropy(reduction="mean")
         vec3D = vec3D.mean(1)
-        self.metric.update(vec3D)
-        res = self.metric.compute()
+        metric.update(vec3D)
+        res = metric.compute()
         assert res == math.log(2)
 
     def test_bad_argument(self):

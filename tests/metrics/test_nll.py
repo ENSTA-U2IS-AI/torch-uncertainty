@@ -26,7 +26,7 @@ class TestNegativeLogLikelihood:
     def test_compute_zero(
         self, probs_zero: torch.Tensor, targets_zero: torch.Tensor
     ):
-        self.metric = NegativeLogLikelihood()
-        self.metric.update(probs_zero, targets_zero)
-        res = self.metric.compute()
+        metric = NegativeLogLikelihood()
+        metric.update(probs_zero, targets_zero)
+        res = metric.compute()
         assert res == 0

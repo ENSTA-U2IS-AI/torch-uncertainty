@@ -32,14 +32,14 @@ class TestVariationRatio:
     """Testing the VariationRatio metric class."""
 
     def test_compute_agreement(self, agreement_probas: torch.Tensor):
-        self.metric = VariationRatio(probabilistic=True)
-        self.metric.update(agreement_probas)
-        res = self.metric.compute()
+        metric = VariationRatio(probabilistic=True)
+        metric.update(agreement_probas)
+        res = metric.compute()
         assert res == pytest.approx(0.1, 1e-6)
 
-        self.metric = VariationRatio(probabilistic=False)
-        self.metric.update(agreement_probas)
-        res = self.metric.compute()
+        metric = VariationRatio(probabilistic=False)
+        metric.update(agreement_probas)
+        res = metric.compute()
         assert res == 0.0
 
     def test_compute_disagreement(
@@ -47,10 +47,10 @@ class TestVariationRatio:
         agreement_probas_3est: torch.Tensor,
         disagreement_probas_3est: torch.Tensor,
     ):
-        self.metric = VariationRatio(probabilistic=True, reduction="sum")
-        self.metric.update(disagreement_probas_3est)
-        self.metric.update(agreement_probas_3est)
-        res = self.metric.compute()
+        metric = VariationRatio(probabilistic=True, reduction="sum")
+        metric.update(disagreement_probas_3est)
+        metric.update(agreement_probas_3est)
+        res = metric.compute()
         assert res == pytest.approx(0.8, 1e-6)
 
     def test_bad_argument(self):
