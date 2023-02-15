@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - new_baselines
+      - dev
   pull_request_target:
   schedule:
     - cron: "42 7 * * 0"
