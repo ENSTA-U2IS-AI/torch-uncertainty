@@ -13,14 +13,14 @@ from torch_uncertainty.metrics import JensenShannonDivergence
 @pytest.fixture
 def disagreement_probas() -> torch.Tensor:
     """Return a vector with mean entropy ~ln(2) and entropy of mean =0."""
-    vec = torch.as_tensor([[[1e-8, 1 - 1e-8]], [[1 - 1e-8, 1e-8]]])
+    vec = torch.as_tensor([[[1e-8, 1 - 1e-8], [1 - 1e-8, 1e-8]]])
     print(vec.shape)
     return vec
 
 
 @pytest.fixture
 def agreement_probas() -> torch.Tensor:
-    vec = torch.as_tensor([[[0.9, 0.1]], [[0.9, 0.1]]])
+    vec = torch.as_tensor([[[0.9, 0.1], [0.9, 0.1]]])
     return vec
 
 
