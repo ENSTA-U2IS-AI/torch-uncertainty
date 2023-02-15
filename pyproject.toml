@@ -1,8 +1,11 @@
 [tool.poetry]
 name = "torch_uncertainty"
-version = "0.1.1"
+version = "0.1.2"
 description = "A PyTorch Library for benchmarking and leveraging efficient predictive uncertainty quantification techniques."
-authors = ["Olivier Laurent", "Adrien Lafage", "Gianni Franchi"]
+authors = [
+    "Adrien Lafage <adrienlafage@outlook.com>",
+    "Olivier Laurent <olivier.ar.laurent@gmail.com>",
+]
 readme = "README.md"
 packages = [{include = "torch_uncertainty"}]
 
