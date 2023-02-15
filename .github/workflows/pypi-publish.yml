@@ -2,7 +2,8 @@
 name: publish
 
 on:
-  push:
+  release:
+    types: [published]
   workflow_dispatch:
 
 env:
@@ -38,5 +39,4 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           user: __token__
-          password: ${{ secrets.TEST_PYPI_PASSWORD }}
-          repository_url: https://test.pypi.org/legacy/
+          password: ${{ secrets.PYPI_PASSWORD }}
