@@ -43,13 +43,23 @@ Install the package using poetry:
 
 Depending on your system, you may encounter errors. If so, kill the process and add `PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring` at the beginning of every `poetry install` commands.
 
+#### Contributing
 
-## Documentation
+In case that you would like to contribute, install from source and add the pre-commit hooks with `pre-commit install`
+
+## Getting Started and Documentation
 
 Please find the documentation at [torch-uncertainty.github.io](https://torch-uncertainty.github.io).
 
+A quickstart is available at [torch-uncertainty.github.io/quickstart](https://torch-uncertainty.github.io/quickstart.html).
 
-## Credits
+## Implemented baselines
+
+To date, the following baselines are implemented:
+
+- Deep Ensembles
+- Masksembles
+- Packed-Ensembles
 
 
 ## Awesome Torch repositories

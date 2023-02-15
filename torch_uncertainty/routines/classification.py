@@ -6,6 +6,7 @@ import pytorch_lightning as pl
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from einops import rearrange
 from pytorch_lightning.utilities.memory import get_model_size_mb
 from pytorch_lightning.utilities.types import EPOCH_OUTPUT, STEP_OUTPUT
 from torchmetrics import (
@@ -17,9 +18,9 @@ from torchmetrics import (
 )
 
 from ..metrics import (
-    DisagreementMetric,
+    FPR95,
+    Disagreement,
     Entropy,
-    FPR95Metric,
     MutualInformation,
     NegativeLogLikelihood,
     VariationRatio,
@@ -61,7 +62,7 @@ class ClassificationSingle(pl.LightningModule):
 
         ood_metrics = MetricCollection(
             {
-                "fpr95": FPR95Metric(pos_label=1),
+                "fpr95": FPR95(pos_label=1),
                 "auroc": AUROC(task="binary"),
                 "aupr": AveragePrecision(task="binary"),
             },
@@ -209,7 +210,7 @@ class ClassificationEnsemble(ClassificationSingle):
         # metrics for ensembles only
         ens_metrics = MetricCollection(
             {
-                "disagreement": DisagreementMetric(),
+                "disagreement": Disagreement(),
                 "mi": MutualInformation(),
                 "entropy": Entropy(),
             }
@@ -256,9 +257,10 @@ class ClassificationEnsemble(ClassificationSingle):
     ) -> None:
         inputs, targets = batch
         logits = self.forward(inputs)
-        logits = logits.reshape(self.num_estimators, -1, logits.size(-1))
+        # logits = logits.reshape(self.num_estimators, -1, logits.size(-1))
+        logits = rearrange(logits, "(n b) c -> b n c", n=self.num_estimators)
         probs_per_est = F.softmax(logits, dim=-1)
-        probs = probs_per_est.mean(dim=0)
+        probs = probs_per_est.mean(dim=1)
         self.val_metrics.update(probs, targets)
 
     def test_step(
@@ -269,21 +271,22 @@ class ClassificationEnsemble(ClassificationSingle):
     ) -> None:
         inputs, targets = batch
         logits = self.forward(inputs)
-        logits = logits.reshape(self.num_estimators, -1, logits.size(-1))
+        # logits = logits.reshape(self.num_estimators, -1, logits.size(-1))
+        logits = rearrange(logits, "(n b) c -> b n c", n=self.num_estimators)
         probs_per_est = F.softmax(logits, dim=-1)
-        probs = probs_per_est.mean(dim=0)
+        probs = probs_per_est.mean(dim=1)
         confs, _ = probs.max(-1)
 
         if self.use_logits:
-            ood_values, _ = -logits.mean(dim=0).max(dim=-1)
+            ood_values, _ = -logits.mean(dim=1).max(dim=-1)
         elif self.use_entropy:
-            ood_values = torch.special.entr(probs).sum(dim=-1).mean(dim=0)
+            ood_values = torch.special.entr(probs).sum(dim=-1).mean(dim=1)
         elif self.use_mi:
             mi_metric = MutualInformation(reduction="none")
             ood_values = mi_metric(probs_per_est)
         elif self.use_variation_ratio:
             vr_metric = VariationRatio(reduction="none", probabilistic=False)
-            ood_values = vr_metric(probs_per_est)
+            ood_values = vr_metric(probs_per_est.transpose(0, 1))
         else:
             ood_values = -confs
 

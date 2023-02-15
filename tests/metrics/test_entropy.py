@@ -35,68 +35,58 @@ def vec3D() -> torch.Tensor:
 class TestEntropy:
     """Testing the Entropy metric class."""
 
-    def test_init(self):
-        self.entropy = Entropy()
-
-    def test_update(self, vec2D_min: torch.Tensor):
-        self.entropy = Entropy()
-        self.entropy.update(vec2D_min)
-
-    def test_multiple_updates(
-        self, vec2D_min: torch.Tensor, vec2D_max: torch.Tensor
-    ):
-        self.entropy = Entropy()
-        self.entropy.update(vec2D_min)
-        self.entropy.update(vec2D_max)
-
     def test_compute(self, vec2D_min: torch.Tensor):
-        self.entropy = Entropy()
-        self.entropy.update(vec2D_min)
-        res = self.entropy.compute()
+        metric = Entropy()
+        metric.update(vec2D_min)
+        res = metric.compute()
         assert res == 0
 
     def test_compute_max(self, vec2D_max: torch.Tensor):
-        self.entropy = Entropy(reduction="sum")
-        self.entropy.update(vec2D_max)
-        res = self.entropy.compute()
+        metric = Entropy(reduction="sum")
+        metric.update(vec2D_max)
+        res = metric.compute()
         assert res == math.log(2)
 
     def test_multiple_compute_sum(
         self, vec2D_min: torch.Tensor, vec2D_max: torch.Tensor
     ):
-        self.entropy = Entropy(reduction="sum")
-        self.entropy.update(vec2D_min)
-        self.entropy.update(vec2D_max)
-        res = self.entropy.compute()
+        metric = Entropy(reduction="sum")
+        metric.update(vec2D_min)
+        metric.update(vec2D_max)
+        res = metric.compute()
         assert res == math.log(2)
 
     def test_multiple_compute_mean(
         self, vec2D_min: torch.Tensor, vec2D_max: torch.Tensor
     ):
-        self.entropy = Entropy(reduction="mean")
-        self.entropy.update(vec2D_min)
-        self.entropy.update(vec2D_max)
-        res = self.entropy.compute()
+        metric = Entropy(reduction="mean")
+        metric.update(vec2D_min)
+        metric.update(vec2D_max)
+        res = metric.compute()
         assert res == math.log(2) / 2
 
     def test_multiple_compute_none(
         self, vec2D_min: torch.Tensor, vec2D_max: torch.Tensor
     ):
-        self.entropy = Entropy(reduction=None)
-        self.entropy.update(vec2D_min)
-        self.entropy.update(vec2D_max)
-        res = self.entropy.compute()
+        metric = Entropy(reduction=None)
+        metric.update(vec2D_min)
+        metric.update(vec2D_max)
+        res = metric.compute()
         assert all(res == torch.as_tensor([0, math.log(2)]))
 
     def test_compute_3D(self, vec3D: torch.Tensor):
-        self.entropy = Entropy(reduction="mean")
-        self.entropy.update(vec3D)
-        res = self.entropy.compute()
+        metric = Entropy(reduction="mean")
+        metric.update(vec3D)
+        res = metric.compute()
         assert res == 0
 
     def test_compute_3D_to_2D(self, vec3D: torch.Tensor):
-        self.entropy = Entropy(reduction="mean")
+        metric = Entropy(reduction="mean")
         vec3D = vec3D.mean(1)
-        self.entropy.update(vec3D)
-        res = self.entropy.compute()
+        metric.update(vec3D)
+        res = metric.compute()
         assert res == math.log(2)
+
+    def test_bad_argument(self):
+        with pytest.raises(Exception):
+            _ = Entropy("geometric_mean")

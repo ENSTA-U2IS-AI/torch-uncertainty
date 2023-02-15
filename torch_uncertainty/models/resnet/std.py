@@ -27,13 +27,13 @@ class BasicBlock(nn.Module):
     ):
         super(BasicBlock, self).__init__()
 
-        # No subgroups for the first layer
         self.conv1 = nn.Conv2d(
             in_planes,
             planes,
             kernel_size=3,
             stride=stride,
             padding=1,
+            groups=groups,
             bias=False,
         )
         self.bn1 = nn.BatchNorm2d(planes)
@@ -76,11 +76,11 @@ class Bottleneck(nn.Module):
     def __init__(self, in_planes, planes, stride=1, groups=1):
         super(Bottleneck, self).__init__()
 
-        # No subgroups for the first layer
         self.conv1 = nn.Conv2d(
             in_planes,
             planes,
             kernel_size=1,
+            groups=groups,
             bias=False,
         )
         self.bn1 = nn.BatchNorm2d(planes)
@@ -147,7 +147,6 @@ class _ResNet(nn.Module):
         self.in_planes = 64
         block_planes = self.in_planes
 
-        # No subgroups in the first layer
         # if self.dataset == "imagenet":
         #     self.conv1 = nn.Conv2d(
         #         3 * self.num_estimators,
@@ -171,6 +170,8 @@ class _ResNet(nn.Module):
         #         bias=False,
         #     )
         # else:
+
+        # No groups in the first layer
         self.conv1 = nn.Conv2d(
             in_channels,
             block_planes,

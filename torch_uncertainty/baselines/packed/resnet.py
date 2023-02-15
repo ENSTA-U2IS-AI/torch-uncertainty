@@ -97,10 +97,10 @@ class PackedResNet(ClassificationEnsemble):
             use_variation_ratio=use_variation_ratio,
         )
 
-        if alpha < 1:
-            raise ValueError(f"Attribute `alpha` should be >= 1, not {alpha}")
+        if alpha <= 0:
+            raise ValueError(f"Attribute `alpha` should be > 0, not {alpha}")
         if gamma < 1:
-            raise ValueError(f"Attribute `alpha` should be >= 1, not {gamma}")
+            raise ValueError(f"Attribute `gamma` should be >= 1, not {gamma}")
 
         # construct config
         self.save_hyperparameters(ignore=["loss", "optimization_procedure"])
@@ -159,7 +159,7 @@ class PackedResNet(ClassificationEnsemble):
             choices=choices,
             help="Type of ResNet",
         )
-        parent_parser.add_argument("--alpha", type=int, default=1)
+        parent_parser.add_argument("--alpha", type=int, default=2)
         parent_parser.add_argument(
             "--entropy", dest="use_entropy", action="store_true"
         )
@@ -170,7 +170,7 @@ class PackedResNet(ClassificationEnsemble):
         parent_parser.add_argument(
             "--mutual_information", dest="uses_mi", action="store_true"
         )
-        parent_parser.add_argument("--num_estimators", type=int, default=1)
+        parent_parser.add_argument("--num_estimators", type=int, default=4)
         parent_parser.add_argument(
             "--variation_ratio", dest="use_variation_ratio", action="store_true"
         )

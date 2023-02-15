@@ -1,4 +1,6 @@
 # fmt: off
+from typing import Literal
+
 import torch
 from torch import Tensor
 from torchmetrics import Metric
@@ -15,9 +17,19 @@ class VariationRatio(Metric):
     higher_is_better: bool = False
 
     def __init__(
-        self, probabilistic: bool = True, reduction: str = "mean", **kwargs
+        self,
+        probabilistic: bool = True,
+        reduction: Literal["mean", "sum", "none", None] = "mean",
+        **kwargs,
     ) -> None:
         super().__init__(**kwargs)
+
+        allowed_reduction = ("sum", "mean", "none", None)
+        if reduction not in allowed_reduction:
+            raise ValueError(
+                "Expected argument `reduction` to be one of ",
+                f"{allowed_reduction} but got {reduction}",
+            )
 
         self.probabilistic = probabilistic
         self.reduction = reduction
@@ -34,7 +46,7 @@ class VariationRatio(Metric):
         self.probs.append(probs.transpose(0, 1))
 
     def compute(self) -> Tensor:
-        r"""Computes the variation ratio which amount to the proportion of
+        r"""Computes the variation ratio which amounts to the proportion of
         predicted class labels which are not the chosen class.
         Returns:
             Tensor: Mean disagreement between estimators.
@@ -67,5 +79,4 @@ class VariationRatio(Metric):
         elif self.reduction == "sum":
             variation_ratio = variation_ratio.sum()
 
-        # print(variation_ratio, variation_ratio.shape)
         return variation_ratio

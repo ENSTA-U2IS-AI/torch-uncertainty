@@ -35,7 +35,7 @@ def stable_cumsum(arr: ArrayLike, rtol: float = 1e-05, atol: float = 1e-08):
     return out
 
 
-class FPR95Metric(Metric):
+class FPR95(Metric):
     """Class which computes the False Positive Rate at 95% Recall."""
 
     is_differentiable: bool = False
@@ -45,7 +45,7 @@ class FPR95Metric(Metric):
     conf: List[Tensor]
     targets: List[Tensor]
 
-    def __init__(self, pos_label: int = None, **kwargs) -> None:
+    def __init__(self, pos_label: int, **kwargs) -> None:
         super().__init__(**kwargs)
 
         self.pos_label = pos_label
@@ -53,7 +53,7 @@ class FPR95Metric(Metric):
         self.add_state("targets", [], dist_reduce_fx="cat")
 
         rank_zero_warn(
-            "Metric `FPR95Metric` will save all targets and predictions"
+            "Metric `FPR95` will save all targets and predictions"
             " in buffer. For large datasets this may lead to large memory"
             " footprint."
         )

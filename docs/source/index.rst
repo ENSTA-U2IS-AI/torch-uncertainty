@@ -3,7 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Torch-Uncertainty
+Torch Uncertainty
 =================
 
 A PyTorch Library for benchmarking and leveraging efficient predictive
