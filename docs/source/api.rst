@@ -67,3 +67,20 @@ Layers
 
     PackedConv2d
     PackedLinear
+
+Metrics
+-------
+
+.. currentmodule:: torch_uncertainty.metrics
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: class.rst
+
+    .. BrierScore
+    Disagreement
+    Entropy
+    JensenShannonDivergence
+    MutualInformation
+    NegativeLogLikelihood
