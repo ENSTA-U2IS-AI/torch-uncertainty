@@ -2,7 +2,13 @@
 name = "torch_uncertainty"
 version = "0.1.0"
 description = "A PyTorch Library for benchmarking and leveraging efficient predictive uncertainty quantification techniques."
-authors = ["Olivier Laurent", "Adrien Lafage", "Gianni Franchi"]
+authors = [
+    "ENSTA U2IS <olivier.laurent@ensta-paris.fr>",
+    "Adrien Lafage <adrienlafage@outlook.com>",
+    "Olivier Laurent <olivier.ar.laurent@gmail.com>",
+]
+license = "Apache-2.0"
+keywords = ["deep-learning", "pytorch", "uncertainty-quantification"]
 readme = "README.md"
 packages = [{include = "torch_uncertainty"}]
 
@@ -18,14 +24,16 @@ scipy = "^1.10.0"
 
 
 [tool.poetry.group.dev.dependencies]
-sphinx = "^6.1.3"
 isort = "^5.12.0"
 black = "^23.1.0"
 flake8 = "^6.0.0"
 mypy = "^0.991"
-sphinx-rtd-theme = "^1.2.0"
 pytest-cov = "^4.0.0"
 pre-commit = "^3.0.4"
+
+[tool.poetry.group.docs.dependencies]
+sphinx = "^6.1.3"
+sphinx-rtd-theme = "^1.2.0"
 
 [build-system]
 requires = ["poetry-core"]

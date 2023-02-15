@@ -52,7 +52,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        poetry install --with dev
+        poetry install --only docs
 
     - name: Sphinx build
       run: |
