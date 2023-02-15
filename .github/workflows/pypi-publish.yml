@@ -1,0 +1,42 @@
+# This workflows will upload a Python Package using Twine when a release is created
+name: publish
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+env:
+  POETRY_VERSION: "1.3.1"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install and configure Poetry
+        uses: snok/install-poetry@v1.3.3
+        with:
+          version: ${{ env.POETRY_VERSION }}
+          virtualenvs-in-project: true
+
+      - name: Display Python version
+        run: poetry run python -c "import sys; print(sys.version)"
+
+      - name: Dynamic versioning
+        run: poetry self add "poetry-dynamic-versioning[plugin]" || true
+
+      - name: Build packages
+        run: poetry build
+
+      - name: Publish a Python distribution to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_PASSWORD }}
