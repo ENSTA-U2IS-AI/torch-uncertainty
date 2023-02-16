@@ -1,6 +1,6 @@
 # Torch Uncertainty
 
-[![tests](https://github.com/ENSTA-U2IS/torch-uncertainty/actions/workflows/run-tests.yml/badge.svg?branch=main&event=push)](https://github.com/ENSTA-U2IS/torch-uncertainty/actions/workflows/run-tests.yml) [![Code Coverage](https://img.shields.io/codecov/c/github/ENSTA-U2IS/torch-uncertainty.svg)](https://codecov.io/gh/ENSTA-U2IS/torch-uncertainty) [![Code style: black](https://img.shields.io/badge/code%20style-black-black.svg)](https://github.com/psf/black)
+[![pypi](https://img.shields.io/pypi/v/torch_uncertainty.svg)](https://pypi.python.org/pypi/torch_uncertainty)[![tests](https://github.com/ENSTA-U2IS/torch-uncertainty/actions/workflows/run-tests.yml/badge.svg?branch=main&event=push)](https://github.com/ENSTA-U2IS/torch-uncertainty/actions/workflows/run-tests.yml) [![Code Coverage](https://img.shields.io/codecov/c/github/ENSTA-U2IS/torch-uncertainty.svg)](https://codecov.io/gh/ENSTA-U2IS/torch-uncertainty) [![Code style: black](https://img.shields.io/badge/code%20style-black-black.svg)](https://github.com/psf/black)
 
 _Torch Uncertainty_ is a package designed to help you leverage uncertainty quantification techniques and make your neural networks more reliable. It is based on PyTorch Lightning to handle multi-GPU training and inference and automatic logging through tensorboard.
 
@@ -11,11 +11,25 @@ This package provides a multi-level API, including:
 - baselines available for training on your datasets
 - layers available for use in your networks
 
+## Reference
+
+This package also contains the official implementation of Packed-Ensembles.
+
+If you find the corresponding models interesting, please consider citing our [paper](https://arxiv.org/abs/2104.14812):
+	
+    @inproceedings{laurent2022packed,
+        title={Packed-Ensembles for Efficient Uncertainty Estimation},
+        author={Laurent, Olivier and Lafage, Adrien and Tartaglione, Enzo and Daniel, Geoffrey and Martinez, Jean-Marc and Bursuc, Andrei and Franchi, Gianni},
+        booktitle={ICLR2023},
+        year={2022}
+    }
+
+
 ## Installation
 
 The package can be installed from PyPI or from source.
 
-### From PyPI (available soon)
+### From PyPI
 
 Install the package via pip: `pip install torch-uncertainty`
 
@@ -66,5 +80,6 @@ To date, the following baselines are implemented:
 
 You may find a lot of information about modern uncertainty estimation techniques on the [Awesome Uncertainty in Deep Learning](https://github.com/ENSTA-U2IS/awesome-uncertainty-deeplearning).
 
-## References
+## Other References
+
 
