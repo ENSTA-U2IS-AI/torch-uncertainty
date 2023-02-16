@@ -103,13 +103,6 @@ class MNISTDataModule(LightningDataModule):
         """
         return self._data_loader(self.val)
 
-    def predict_dataloader(self) -> DataLoader:
-        r"""Gets the validation dataloader for MNIST.
-        Returns:
-            DataLoader: MNIST validation dataloader.
-        """
-        return self._data_loader(self.val)
-
     def test_dataloader(self) -> List[DataLoader]:
         r"""Gets the test dataloaders for MNIST.
         Returns:

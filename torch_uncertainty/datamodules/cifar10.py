@@ -87,18 +87,6 @@ class CIFAR10DataModule(LightningDataModule):
             ]
         )
 
-        self.transform_test_imagenet = T.Compose(
-            [
-                T.ToTensor(),
-                T.RandomCrop(32),
-                T.RandomHorizontalFlip(),
-                T.Normalize(
-                    (0.4914, 0.4822, 0.4465),
-                    (0.2023, 0.1994, 0.2010),
-                ),
-            ]
-        )
-
     def prepare_data(self) -> None:
         if self.use_cifar_c is None:
             self.dataset(self.root, train=True, download=True)
@@ -110,9 +98,6 @@ class CIFAR10DataModule(LightningDataModule):
                 severity=self.corruption_severity,
             )
 
-        # if self.use_imagenet_o:
-        #     self.ood_dataset(self.root)
-        # else:
         self.ood_dataset(self.root, split="test", download=True)
 
     def setup(self, stage: Optional[str] = None) -> None:
@@ -143,12 +128,6 @@ class CIFAR10DataModule(LightningDataModule):
                 download=False,
                 transform=self.transform_test,
             )
-            # if self.use_imagenet_o:
-            #     self.ood = self.ood_dataset(
-            #         self.root,
-            #         transform=self.transform_test_imagenet,
-            #     )
-            # else:
             self.ood = self.ood_dataset(
                 self.root,
                 split="test",
@@ -231,9 +210,6 @@ class CIFAR10DataModule(LightningDataModule):
         p.add_argument("--num_workers", type=int, default=4)
         p.add_argument("--cutout", dest="enable_cutout", action="store_true")
         p.add_argument("--auto_augment", type=str)
-        # p.add_argument(
-        #     "--imagenet-o", dest="use_imagenet_o", action="store_true"
-        # )
         p.add_argument("--cifar-c", dest="use_cifar_c", type=str, default=None)
         p.add_argument(
             "--severity", dest="corruption_severity", type=int, default=None
