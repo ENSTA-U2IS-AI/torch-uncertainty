@@ -60,7 +60,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        poetry install --with dev docs
+        poetry install --with "dev docs"
 
     - name: Style checking
       run: |
