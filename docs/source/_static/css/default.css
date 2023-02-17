@@ -1,0 +1,21 @@
+/** css/yourtheme.css **/
+
+/* This line is theme specific - it includes the base theme CSS */
+/* @import '../alabaster.css';  /* for Alabaster */
+@import 'theme.css';
+/* for the Read the Docs theme */
+
+.tutorials-header .header-logo {
+    background-image: url("../images/logo.png");
+}
+
+.header-logo {
+    background-image: url("../images/logo.png");
+    background-size: 201px 40px;
+    height: 40px;
+    width: 201px;
+}
+
+tr.row-odd {
+    background-color: #f2f2f2;
+}
