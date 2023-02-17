@@ -60,7 +60,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        poetry install --with dev
+        poetry install --with "dev docs"
 
     - name: Style checking
       run: |
@@ -82,3 +82,7 @@ jobs:
         flags: cpu,pytest
         name: CPU-coverage
         env_vars: PYTHON_VERSION
+
+    - name: Test sphinx build
+      run: |
+        cd docs && poetry run make html
