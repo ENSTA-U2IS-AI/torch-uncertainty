@@ -6,10 +6,11 @@ import torch.nn.functional as F
 from torchmetrics import Metric
 from torchmetrics.utilities.data import dim_zero_cat
 
-
 # fmt:on
-class BrierScore_old(Metric):
-    """The Brier Score Metric.
+
+
+class BrierScore(Metric):
+    r"""The Brier Score Metric.
 
     Args:
         reduction (str, optional): Determines how to reduce over the
@@ -24,10 +25,15 @@ class BrierScore_old(Metric):
 
     Inputs:
         - :attr:`probs`: :math:`(B, C)` or :math:`(B, N, C)`
-        - :attr:`target`: :math:`(B)`
+        - :attr:`target`: :math:`(B)` or :math:`(B, C)`
 
         where :math:`B` is the batch size, :math:`C` is the number of classes
         and :math:`N` is the number of estimators.
+
+    Note:
+        If :attr:`probs` is a 3D tensor, then the metrics computes the mean of
+        the Brier score over the estimators ie. :math:`t = \frac{1}{N}
+        \sum_{i=0}^{N-1} BrierScore(probs[:,i,:], target)`.
 
     Warning:
         Make sure that the probabilities in :attr:`probs` are normalized to sum
@@ -44,7 +50,10 @@ class BrierScore_old(Metric):
     full_state_update: bool = False
 
     def __init__(
-        self, reduction: Literal["mean", "sum", "none", None] = "mean", **kwargs
+        self,
+        num_classes: int,
+        reduction: Literal["mean", "sum", "none", None] = "mean",
+        **kwargs,
     ) -> None:
         super().__init__(**kwargs)
 
@@ -55,68 +64,7 @@ class BrierScore_old(Metric):
                 f"{allowed_reduction} but got {reduction}",
             )
 
-        self.reduction = reduction
-        self.num_estimators = 1
-
-        if self.reduction in ["mean", "sum"]:
-            self.add_state(
-                "values", default=torch.tensor(0.0), dist_reduce_fx="sum"
-            )
-        else:
-            self.add_state("values", default=[], dist_reduce_fx="cat")
-        self.add_state("total", default=torch.tensor(0), dist_reduce_fx="sum")
-
-    def update(self, probs: torch.Tensor, target: torch.Tensor) -> None:
-        """Update state with prediction probabilities and targets.
-
-        Args:
-            probs (torch.Tensor): Probabilities from the model.
-            target (torch.Tensor): Ground truth labels.
-        """
-        batch_size = probs.size(0)
-        if len(probs.shape) == 3:
-            self.num_estimators = probs.size(1)
-            target = target.unsqueeze(-1)
-            target = target.repeat(1, self.num_estimators)
-
-        brier_score = F.mse_loss(
-            probs, F.one_hot(target), reduction="none"
-        ).sum(dim=-1)
-
-        if self.reduction is None or self.reduction == "none":
-            self.values.append(brier_score)
-        else:
-            self.values += brier_score.sum()
-            self.total += batch_size
-
-    def compute(self) -> torch.Tensor:
-        """Compute the final Brier score based on inputs passed to
-        ``update``.
-        """
-        values = dim_zero_cat(self.values)
-        if self.reduction == "sum":
-            return values.sum(dim=-1) / self.num_estimators
-        elif self.reduction == "mean":
-            return values.sum(dim=-1) / self.total / self.num_estimators
-        else:  # reduction is None
-            return values
-
-
-class BrierScore(Metric):
-    full_state_update: bool = False
-
-    def __init__(
-        self, reduction: Literal["mean", "sum", "none", None] = "mean", **kwargs
-    ) -> None:
-        super().__init__(**kwargs)
-
-        allowed_reduction = ("sum", "mean", "none", None)
-        if reduction not in allowed_reduction:
-            raise ValueError(
-                "Expected argument `reduction` to be one of ",
-                f"{allowed_reduction} but got {reduction}",
-            )
-
+        self.num_classes = num_classes
         self.reduction = reduction
         self.num_estimators = 1
 
@@ -137,12 +85,16 @@ class BrierScore(Metric):
                 (num_estimators, batch, num_classes) or
                 (batch, num_classes)
         """
+        if len(target.shape) == 1:
+            target = F.one_hot(target, self.num_classes)
+
+        print("target", target.shape, "probs", probs.shape)
         if len(probs.shape) == 2:
             batch_size = probs.size(0)
         else:
-            batch_size = probs.size(1)
-            self.num_estimators = probs.size(2)
-            target = target.repeat(1, self.num_estimators, 1)
+            batch_size = probs.size(0)
+            self.num_estimators = probs.size(1)
+            target = target.unsqueeze(1).repeat(1, self.num_estimators, 1)
 
         brier_score = F.mse_loss(probs, target, reduction="none").sum(dim=-1)
 
@@ -166,19 +118,3 @@ class BrierScore(Metric):
             return values.sum(dim=-1) / self.total / self.num_estimators
         else:  # reduction is None
             return values
-
-
-if __name__ == "__main__":
-    input = torch.softmax(torch.randn(8, 4), dim=-1)
-    target = torch.randint(4, (8,))
-
-    bs_old = BrierScore_old()
-    bs = BrierScore()
-
-    assert bs(input, target) == bs_old(input, target)
-
-    input = torch.softmax(torch.randn(8, 5, 4), dim=-1)
-
-    assert bs(input, target) == bs_old(input.transpose(0, 1), target)
-
-    print("All good!")

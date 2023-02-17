@@ -78,7 +78,7 @@ Metrics
     :nosignatures:
     :template: class.rst
 
-    .. BrierScore
+    BrierScore
     Disagreement
     Entropy
     JensenShannonDivergence
