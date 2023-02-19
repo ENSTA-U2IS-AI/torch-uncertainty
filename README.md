@@ -17,11 +17,11 @@ This package also contains the official implementation of Packed-Ensembles.
 
 If you find the corresponding models interesting, please consider citing our [paper](https://arxiv.org/abs/2104.14812):
 	
-    @inproceedings{laurent2022packed,
+    @inproceedings{laurent2023packed,
         title={Packed-Ensembles for Efficient Uncertainty Estimation},
         author={Laurent, Olivier and Lafage, Adrien and Tartaglione, Enzo and Daniel, Geoffrey and Martinez, Jean-Marc and Bursuc, Andrei and Franchi, Gianni},
         booktitle={ICLR2023},
-        year={2022}
+        year={2023}
     }
 
 
@@ -33,7 +33,7 @@ The package can be installed from PyPI or from source.
 
 Install the package via pip: `pip install torch-uncertainty`
 
-### From source
+### From source with Poetry
 
 #### Installing Poetry
 
@@ -55,7 +55,7 @@ Install the package using poetry:
 
 `poetry install torch-uncertainty` or, for development, `poetry install torch-uncertainty --with dev`
 
-Depending on your system, you may encounter errors. If so, kill the process and add `PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring` at the beginning of every `poetry install` commands.
+Depending on your system, you may encounter poetry-related errors. If so, kill the process and add `PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring` at the beginning of every `poetry install` commands.
 
 #### Contributing
 

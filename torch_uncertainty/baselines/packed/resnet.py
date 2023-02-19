@@ -168,7 +168,7 @@ class PackedResNet(ClassificationEnsemble):
             "--logits", dest="use_logits", action="store_true"
         )
         parent_parser.add_argument(
-            "--mutual_information", dest="uses_mi", action="store_true"
+            "--mutual_information", dest="use_mi", action="store_true"
         )
         parent_parser.add_argument("--num_estimators", type=int, default=4)
         parent_parser.add_argument(

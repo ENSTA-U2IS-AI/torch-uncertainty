@@ -11,8 +11,8 @@ from torchmetrics.utilities.data import dim_zero_cat
 
 # fmt:on
 class JensenShannonDivergence(Metric):
-    """The Jensen Shannon Divergence Metric to estimate the epistemic
-    uncertainty of an ensemble of estimators.
+    """The Generalized Jensen Shannon Divergence Metric to estimate the
+    epistemic uncertainty of an ensemble of estimators.
 
     Args:
         reduction (str, optional): Determines how to reduce over the
@@ -31,8 +31,16 @@ class JensenShannonDivergence(Metric):
         where :math:`B` is the batch size, :math:`C` is the number of classes
         and :math:`N` is the number of estimators.
 
+    See also:
+        The Jensen-Shannon Divergence on wikipedia
+        <https://en.wikipedia.org/wiki/Jensen%E2%80%93Shannon_divergence>`_.
+
     Note:
         A higher Jensen-Shannon divergence means a higher uncertainty.
+
+    Note:
+        The generalized Jensen-Shannon divergence is computationnally
+            equivalent to the Mutual-Information.
 
     Warning:
         Make sure that the probabilities in :attr:`probs` are normalized to sum
