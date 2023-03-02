@@ -1663,7 +1663,7 @@ sphinx = "*"
 type = "git"
 url = "https://github.com/alafage/pytorch_sphinx_theme"
 reference = "HEAD"
-resolved_reference = "d3deed89ddcf87af66c04c584eacd65dff17d5bd"
+resolved_reference = "7bf0f113a9e4b80f91c9e3b18883dd4a5f7ad712"
 
 [[package]]
 name = "pytz"

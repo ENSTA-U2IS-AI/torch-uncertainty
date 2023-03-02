@@ -48,7 +48,7 @@ html_theme_options = {
             "name": "GitHub",
             "url": "https://github.com/ENSTA-U2IS/torch-uncertainty",
         }
-    ]
+    ],
 }
 # html_theme_options = {
 #     'pytorch_project': 'docs',
@@ -60,4 +60,4 @@ html_theme_options = {
 # }
 
 html_static_path = ["_static"]
-html_style = "css/default.css"
+# html_style = "css/default.css"
