@@ -3,7 +3,7 @@
 # For the full list of built-in configuration values, see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
-import pytorch_sphinx_theme
+# import pytorch_sphinx_theme
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
@@ -39,17 +39,17 @@ exclude_patterns = []
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = "pytorch_sphinx_theme"
-html_theme_path = [pytorch_sphinx_theme.get_html_theme_path()]
-html_theme_options = {
-    "logo_url": "https://torch-uncertainty.github.io/",
-    "menu": [
-        {
-            "name": "GitHub",
-            "url": "https://github.com/ENSTA-U2IS/torch-uncertainty",
-        }
-    ],
-}
+html_theme = "sphinx_rtd_theme"
+# html_theme_path = [pytorch_sphinx_theme.get_html_theme_path()]
+# html_theme_options = {
+#     "logo_url": "https://torch-uncertainty.github.io/",
+#     "menu": [
+#         {
+#             "name": "GitHub",
+#             "url": "https://github.com/ENSTA-U2IS/torch-uncertainty",
+#         }
+#     ],
+# }
 # html_theme_options = {
 #     'pytorch_project': 'docs',
 #     'canonical_url': 'https://pytorch.org/docs/stable/',
