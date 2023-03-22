@@ -22,7 +22,15 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.mathjax",
     "sphinx_copybutton",
+    "sphinx_gallery.gen_gallery",
 ]
+
+sphinx_gallery_conf = {
+    "examples_dirs": ["../../tutorials"],
+    "gallery_dirs": "auto_tutorials",
+    "filename_pattern": r"pe_",
+}
+
 
 autosummary_generate = True
 napoleon_use_ivar = True

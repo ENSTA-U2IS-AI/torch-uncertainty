@@ -37,6 +37,8 @@ sphinx-rtd-theme = "^1.2.0"
 # pytorch-sphinx-theme = {git = "https://github.com/alafage/pytorch_sphinx_theme"}
 sphinx-copybutton = "^0.5.1"
 # furo = "^2022.12.7"
+sphinx-gallery = "^0.12.2"
+matplotlib = "^3.7.1"
 
 [build-system]
 requires = ["poetry-core"]

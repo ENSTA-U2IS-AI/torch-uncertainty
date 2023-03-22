@@ -3,6 +3,7 @@
 data/
 logs/
 docs/*/generated/
+docs/*/auto_tutorials/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
