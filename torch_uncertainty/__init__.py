@@ -1,4 +1,5 @@
 # fmt: off
+# flake8: noqa
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
 from typing import Callable, Type, Union
@@ -14,7 +15,7 @@ from torchinfo import summary
 import numpy as np
 
 from .routines.classification import ClassificationSingle
-from .utils import get_version
+from .utils import get_version, packing
 
 # fmt: on
 
