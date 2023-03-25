@@ -133,11 +133,12 @@ net = Net()
 # You can now modify the vanilla classifier into a Packed-Ensemble
 # (4,2,1) by using the :func:`packing()` function:
 
-from torch_uncertainty import packing
+# FIXME: 
+# from torch_uncertainty import packing
 
-packing(net, num_estimators=2, alpha=2, gamma=1)
+# packing(net, num_estimators=2, alpha=2, gamma=1)
 
-print(net)
+# print(net)
 
 ########################################################################
 # 3. Define a Loss function and optimizer
