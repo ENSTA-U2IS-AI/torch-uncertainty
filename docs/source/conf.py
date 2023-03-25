@@ -2,7 +2,6 @@
 #
 # For the full list of built-in configuration values, see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
-
 import pytorch_sphinx_theme
 
 # -- Project information -----------------------------------------------------
@@ -29,6 +28,11 @@ sphinx_gallery_conf = {
     "examples_dirs": ["../../tutorials"],
     "gallery_dirs": "auto_tutorials",
     "filename_pattern": r"pe_",
+    'promote_jupyter_magic': True,
+    'backreferences_dir': None,
+    'first_notebook_cell': ("# For tips on running notebooks in Google Colab, see\n"
+                            "# https://pytorch.org/tutorials/beginner/colab\n"
+                            "%matplotlib inline")
 }
 
 

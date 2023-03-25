@@ -1950,7 +1950,7 @@ sphinx = "*"
 type = "git"
 url = "https://github.com/alafage/pytorch_sphinx_theme"
 reference = "HEAD"
-resolved_reference = "a43c270e02cdd66f1ad150c1892b0494dd80037a"
+resolved_reference = "09936aab60fca399b27e8dd2aaa35d03ae88af92"
 
 [[package]]
 name = "pyyaml"

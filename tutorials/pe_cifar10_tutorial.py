@@ -101,7 +101,7 @@ print(' '.join(f'{classes[labels[j]]:5s}' for j in range(batch_size)))
 ########################################################################
 # 2. Define a Packed-Ensemble from a vanilla classifier
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-# First let's define a vanilla classifier for CIFAR10. We will use a
+# First we define a vanilla classifier for CIFAR10 for reference. We will use a
 # convolutional neural network.
 
 import torch.nn as nn
@@ -130,15 +130,42 @@ class Net(nn.Module):
 net = Net()
 
 ########################################################################
-# You can now modify the vanilla classifier into a Packed-Ensemble
-# (4,2,1) by using the :func:`packing()` function:
+# Let's modify the vanilla classifier into a Packed-Ensemble classifier of 
+# parameters :math:`M=4,\ \alpha=2\text{ and }\gamma=1`.
 
-# FIXME: 
-# from torch_uncertainty import packing
+from einops import rearrange
+from torch_uncertainty.layers import PackedConv2d, PackedLinear
 
-# packing(net, num_estimators=2, alpha=2, gamma=1)
+class PackedNet(nn.Module):
+    def __init__(self) -> None:
+        super().__init__()
+        M = 4
+        alpha = 2
+        gamma = 1
+        # The first layer is left as is since all the subnetworks have the
+        # input.
+        self.conv1 = nn.Conv2d(3, 6*alpha, 5)
+        self.pool = nn.MaxPool2d(2, 2)
+        self.conv2 = PackedConv2d(6*alpha, 16*alpha, 5, num_estimators=M, groups=gamma)
+        self.fc1 = PackedLinear(16 * 5 * 5 * alpha, 120 * alpha, num_estimators=M, groups=gamma)
+        self.fc2 = PackedLinear(120 * alpha, 84 * alpha, num_estimators=M, groups=gamma)
+        self.fc3 = PackedLinear(84 * alpha, 10 * M, num_estimators=M, groups=gamma)
 
-# print(net)
+        self.num_estimators = M
+
+    def forward(self, x):
+         x = self.pool(F.relu(self.conv1(x)))
+         x = self.pool(F.relu(self.conv2(x)))
+         x = rearrange(
+            x, "e (m c) h w -> (m e) c h w", m=self.num_estimators
+        )
+         x = x.flatten(1)
+         x = F.relu(self.fc1(x))
+         x = F.relu(self.fc2(x))
+         x = self.fc3(x)
+         return x
+
+packed_net = PackedNet()
 
 ########################################################################
 # 3. Define a Loss function and optimizer
@@ -148,7 +175,7 @@ net = Net()
 import torch.optim as optim
 
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
+optimizer = optim.SGD(packed_net.parameters(), lr=0.001, momentum=0.9)
 
 ########################################################################
 # 4. Train the Packed-Ensemble on the training data
@@ -156,23 +183,66 @@ optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
 # Let's train the Packed-Ensemble on the training data.
 
 for epoch in range(2):  # loop over the dataset multiple times
-    
-   running_loss = 0.0
-   for i, data in enumerate(trainloader, 0):
-      # get the inputs; data is a list of [inputs, labels]
-      inputs, labels = data
+        
+    running_loss = 0.0
+    for i, data in enumerate(trainloader, 0):
+        # get the inputs; data is a list of [inputs, labels]
+        inputs, labels = data
 
-      # zero the parameter gradients
-      optimizer.zero_grad()
+        # zero the parameter gradients
+        optimizer.zero_grad()
+        # forward + backward + optimize
+        outputs = packed_net(inputs)
+        loss = criterion(outputs, labels.repeat(packed_net.num_estimators))
+        loss.backward()
+        optimizer.step()
 
-      # forward + backward + optimize
-      outputs = net(inputs)
-      loss = criterion(outputs, labels)
-      loss.backward()
-      optimizer.step()
+        # print statistics
+        running_loss += loss.item()
+        if i % 2000 == 1999:    # print every 2000 mini-batches
+            print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / 2000:.3f}')
+            running_loss = 0.0
 
-      # print statistics
-      running_loss += loss.item()
-      if i % 2000 == 1999:    # print every 2000 mini-batches
-         print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / 2000:.3f}')
-         running_loss = 0.0
+print('Finished Training')
+
+########################################################################
+# Save our trained model:
+
+PATH = './cifar_packed_net.pth'
+torch.save(packed_net.state_dict(), PATH)
+
+########################################################################
+# 5. Test the Packed-Ensemble on the test data
+# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+# Let us display an image from the test set to get familiar.
+
+dataiter = iter(testloader)
+images, labels = next(dataiter)
+
+# print images
+imshow(torchvision.utils.make_grid(images))
+print('GroundTruth: ', ' '.join(f'{classes[labels[j]]:5s}' for j in range(batch_size)))
+
+########################################################################
+# Next, let us load back in our saved model (note: saving and re-loading the
+# model wasn't necessary here, we only did it to illustrate how to do so):
+
+packed_net = PackedNet()
+packed_net.load_state_dict(torch.load(PATH))
+
+########################################################################
+# Let us see what the Packed-Ensemble thinks these examples above are:
+
+logits = packed_net(images)
+logits = rearrange(logits, "(n b) c -> b n c", n=packed_net.num_estimators)
+probs_per_est = F.softmax(logits, dim=-1)
+outputs = probs_per_est.mean(dim=1)
+
+_, predicted = torch.max(outputs, 1)
+
+print(
+    'Predicted: ', ' '.join(f'{classes[predicted[j]]:5s}' for j in range(batch_size))
+)
+
+########################################################################
+# The results seem pretty good.
