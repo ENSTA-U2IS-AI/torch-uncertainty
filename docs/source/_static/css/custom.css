@@ -1,3 +1,4 @@
+@import "theme.css";
 /* sphinx-design styles for cards/tabs
 */
 
@@ -70,4 +71,19 @@
 
 .sd-card:hover:after {
     transform: scaleX(1);
+}
+
+.header-logo {
+    background-image: url("../images/torch_uncertainty.png");
+    background-size: 220px 40px;
+    height: 40px;
+    width: 220px;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    margin: auto 0;
+}
+
+.tutorials-header .header-logo {
+    background-image: url("../images/torch_uncertainty.png");
 }

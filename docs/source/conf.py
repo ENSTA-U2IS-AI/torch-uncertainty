@@ -22,17 +22,20 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx_copybutton",
     "sphinx_gallery.gen_gallery",
+    # 'sphinx.ext.intersphinx',
 ]
 
 sphinx_gallery_conf = {
     "examples_dirs": ["../../tutorials"],
     "gallery_dirs": "auto_tutorials",
     "filename_pattern": r"pe_",
-    'promote_jupyter_magic': True,
-    'backreferences_dir': None,
-    'first_notebook_cell': ("# For tips on running notebooks in Google Colab, see\n"
-                            "# https://pytorch.org/tutorials/beginner/colab\n"
-                            "%matplotlib inline")
+    "promote_jupyter_magic": True,
+    "backreferences_dir": None,
+    "first_notebook_cell": (
+        "# For tips on running notebooks in Google Colab, see\n"
+        "# https://pytorch.org/tutorials/beginner/colab\n"
+        "%matplotlib inline"
+    ),
 }
 
 
@@ -51,7 +54,7 @@ exclude_patterns = []
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = 'pytorch_sphinx_theme'
+html_theme = "pytorch_sphinx_theme"
 html_theme_path = [pytorch_sphinx_theme.get_html_theme_path()]
 
 html_theme_options = {
@@ -62,10 +65,12 @@ html_theme_options = {
             "url": "https://github.com/ENSTA-U2IS/torch-uncertainty",
         }
     ],
+    "pytorch_project": "tutorials",
 }
 
 html_static_path = ["_static"]
-html_css_files = [
-    'https://cdn.jsdelivr.net/npm/katex@0.10.0-beta/dist/katex.min.css',
-    'css/custom.css'
-]
+html_style = "css/custom.css"
+# html_css_files = [
+#     'https://cdn.jsdelivr.net/npm/katex@0.10.0-beta/dist/katex.min.css',
+#     'css/custom.css'
+# ]

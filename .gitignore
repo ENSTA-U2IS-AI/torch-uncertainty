@@ -4,6 +4,7 @@ data/
 logs/
 docs/*/generated/
 docs/*/auto_tutorials/
+*.pth
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
