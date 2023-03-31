@@ -34,29 +34,44 @@ The package can be installed from PyPI or from source.
 
 ### From PyPI
 
-Install the package via pip: `pip install torch-uncertainty`
+Install the package via pip: 
+```sh
+pip install torch-uncertainty
+```
 
 ### From source
 
 #### Installing Poetry
 
 Installation guidelines for poetry are available on <https://python-poetry.org/docs/>. They boil down to executing the following command:
-
-`curl -sSL https://install.python-poetry.org | python3 -`
+```sh
+curl -sSL https://install.python-poetry.org | python3 -
+```
 
 #### Installing the package
 
 Clone the repository:
 
-`git clone https://github.com/ENSTA-U2IS/torch-uncertainty.git`
+```sh
+git clone https://github.com/ENSTA-U2IS/torch-uncertainty.git
+```
 
 Create a new conda environment and activate it with:
 
-`conda create -n uncertainty && conda activate uncertainty`
+```sh
+conda create -n uncertainty && conda activate uncertainty
+```
 
 Install the package using poetry:
 
-`poetry install torch-uncertainty` or, for development, `poetry install torch-uncertainty --with dev`
+```sh
+poetry install torch-uncertainty
+```
+or, for development,
+
+```sh
+poetry install torch-uncertainty --with dev
+```
 
 Depending on your system, you may encounter errors. If so, kill the process and add `PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring` at the beginning of every `poetry install` commands.
 
