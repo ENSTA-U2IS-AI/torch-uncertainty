@@ -33,10 +33,8 @@ pre-commit = "^3.0.4"
 
 [tool.poetry.group.docs.dependencies]
 sphinx = "^5.1.3"
-# sphinx-rtd-theme = "^1.2.0"
-pytorch-sphinx-theme = {git = "https://github.com/alafage/pytorch_sphinx_theme"}
+pytorch-sphinx-theme = {git = "https://github.com/torch-uncertainty/pytorch_sphinx_theme"}
 sphinx-copybutton = "^0.5.1"
-# furo = "^2022.12.7"
 sphinx-gallery = "^0.12.2"
 matplotlib = "^3.7.1"
 sphinx-design = "^0.3.0"
