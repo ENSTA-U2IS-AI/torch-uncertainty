@@ -5,7 +5,8 @@ exclude =
     __pycache__,
     .ipynb_checkpoints,
     build,
-    dist
+    dist,
+    tutorials/*
 extend-ignore = E203, E302
 ignore =
     # W503 line break before binary operator

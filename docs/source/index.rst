@@ -25,6 +25,7 @@ the paper:
 
    installation
    quickstart
+   auto_tutorials/index
    api
 
 Indices and tables

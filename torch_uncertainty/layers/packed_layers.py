@@ -27,7 +27,7 @@ class PackedLinear(nn.Module):
 
         Note:
             Each ensemble member will only see
-            :math:`\frac{\text{in\_features}}{\text{n\_estimators}}` features,
+            :math:`\frac{\text{in_features}}{\text{n_estimators}}` features,
             so when using :attr:`groups` you should make sure that
             :attr:`in_features` and :attr:`out_features` are both divisible by
             :attr:`n_estimators` :math:`\times`:attr:`groups`. However, the
@@ -117,7 +117,7 @@ class PackedConv2d(nn.Module):
 
     Note:
         Each ensemble member will only see
-        :math:`\frac{\text{in\_channels}}{\text{num\_estimators}}` channels,
+        :math:`\frac{\text{in_channels}}{\text{num_estimators}}` channels,
         so when using :attr:`groups` you should make sure that
         :attr:`in_channels` and :attr:`out_channels` are both divisible by
         :attr:`num_estimators` :math:`\times`:attr:`groups`. However, the
