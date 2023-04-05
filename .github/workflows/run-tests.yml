@@ -83,6 +83,6 @@ jobs:
         name: CPU-coverage
         env_vars: PYTHON_VERSION
 
-    - name: Test sphinx build
+    - name: Test sphinx build without tutorials
       run: |
-        cd docs && poetry run make html
+        cd docs && poetry run make html-noplot

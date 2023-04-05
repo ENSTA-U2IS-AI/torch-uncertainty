@@ -16,19 +16,18 @@ release = "0.1.0"
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
-    "sphinxcontrib.katex",
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
     "sphinx.ext.napoleon",
     "sphinx_copybutton",
     "sphinx_gallery.gen_gallery",
-    # 'sphinx.ext.intersphinx',
 ]
 
 sphinx_gallery_conf = {
-    "examples_dirs": ["../../tutorials"],
+    "examples_dirs": ["../../auto_tutorials_source"],
     "gallery_dirs": "auto_tutorials",
     "filename_pattern": r"pe_",
+    "plot_gallery": "True",
     "promote_jupyter_magic": True,
     "backreferences_dir": None,
     "first_notebook_cell": (

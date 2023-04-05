@@ -43,6 +43,7 @@ import torch
 import torchvision
 import torchvision.transforms as transforms
 
+torch.set_num_threads(1)
 ########################################################################
 # The output of torchvision datasets are PILImage images of range [0, 1].
 # We transform them to Tensors of normalized range [-1, 1].

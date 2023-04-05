@@ -38,7 +38,6 @@ sphinx-copybutton = "^0.5.1"
 sphinx-gallery = "^0.12.2"
 matplotlib = "^3.7.1"
 sphinx-design = "^0.3.0"
-sphinxcontrib-katex = "^0.9.4"
 
 [build-system]
 requires = ["poetry-core"]
@@ -56,6 +55,7 @@ exclude = '''
   | \.ipynb_checkpoints
   | build
   | dist
+  | auto_tutorials_source/*
 )/
 '''
 
