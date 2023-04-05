@@ -127,7 +127,6 @@ class PackedResNet(ClassificationEnsemble):
         return self.loss()
 
     def forward(self, input: torch.Tensor) -> torch.Tensor:  # type: ignore
-        input = input.repeat(1, self.num_estimators, 1, 1)
         return self.model.forward(input)
 
     @staticmethod
@@ -160,10 +159,10 @@ class PackedResNet(ClassificationEnsemble):
             help="Type of ResNet",
         )
         parent_parser.add_argument("--alpha", type=int, default=2)
+        parent_parser.add_argument("--gamma", type=int, default=1)
         parent_parser.add_argument(
             "--entropy", dest="use_entropy", action="store_true"
         )
-        parent_parser.add_argument("--gamma", type=int, default=1)
         parent_parser.add_argument(
             "--logits", dest="use_logits", action="store_true"
         )

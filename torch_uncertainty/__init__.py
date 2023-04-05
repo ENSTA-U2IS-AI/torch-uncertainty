@@ -15,7 +15,7 @@ from torchinfo import summary
 import numpy as np
 
 from .routines.classification import ClassificationSingle
-from .utils import get_version, packing
+from .utils import get_version
 
 # fmt: on
 

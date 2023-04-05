@@ -17,7 +17,9 @@ class PackedLinear(nn.Module):
     Args:
         in_features (int): Number of input features of the linear layer.
         out_features (int): Number of channels produced by the linear layer.
+        alpha (float): The width multiplier of the linear layer.
         num_estimators (int): The number of estimators grouped in the layer.
+        gamma (int, optional): Defaults to ``1``.
         bias (bool, optional): It ``True``, adds a learnable bias to the
             output. Defaults to ``True``.
         groups (int, optional): Number of blocked connections from input
@@ -25,29 +27,33 @@ class PackedLinear(nn.Module):
         rearrange (bool, optional): Rearrange the input and outputs for
             compatibility with previous and later layers. Defaults to ``True``.
 
-        Note:
-            Each ensemble member will only see
-            :math:`\frac{\text{in_features}}{\text{n_estimators}}` features,
-            so when using :attr:`groups` you should make sure that
-            :attr:`in_features` and :attr:`out_features` are both divisible by
-            :attr:`n_estimators` :math:`\times`:attr:`groups`. However, the
-            number of input and output features will be changed to comply with
-            this constraint.
+    Note:
+        Each ensemble member will only see
+        :math:`\frac{\text{in_features}}{\text{num_estimators}}` features,
+        so when using :attr:`groups` you should make sure that
+        :attr:`in_features` and :attr:`out_features` are both divisible by
+        :attr:`n_estimators` :math:`\times`:attr:`groups`. However, the
+        number of input and output features will be changed to comply with
+        this constraint.
 
-        Note:
-            The input should be of size (`batch_size`, :attr:`in_features`, 1,
-            1). The (often) necessary rearrange operation is executed by
-            default.
+    Note:
+        The input should be of size (`batch_size`, :attr:`in_features`, 1,
+        1). The (often) necessary rearrange operation is executed by
+        default.
     """
 
     def __init__(
         self,
         in_features: int,
         out_features: int,
+        alpha: float,
         num_estimators: int,
+        gamma: int = 1,
         bias: bool = True,
         groups: int = 1,
         rearrange: bool = True,
+        first: bool = False,
+        last: bool = False,
         device=None,
         dtype=None,
     ) -> None:
@@ -57,24 +63,33 @@ class PackedLinear(nn.Module):
         self.num_estimators = num_estimators
         self.rearrange = rearrange
 
+        # Define the number of features of the underlying convolution
+        extended_in_features = int(in_features * (1 if first else alpha))
+        extended_out_features = int(
+            out_features * (num_estimators if last else alpha)
+        )
+
+        # Define the number of groups of the underlying convolution
+        actual_groups = num_estimators * gamma * groups
+
         # fix if not divisible by groups
-        if in_features % (num_estimators * groups):
-            in_features += num_estimators - in_features % (
-                num_estimators * groups
+        if extended_in_features % actual_groups:
+            extended_in_features += num_estimators - extended_in_features % (
+                actual_groups
             )
-        if out_features % (num_estimators * groups):
-            out_features += num_estimators - out_features % (
-                num_estimators * groups
+        if extended_out_features % actual_groups:
+            extended_out_features += num_estimators - extended_out_features % (
+                actual_groups
             )
 
         self.conv1x1 = nn.Conv2d(
-            in_channels=in_features,
-            out_channels=out_features,
+            in_channels=extended_in_features,
+            out_channels=extended_out_features,
             kernel_size=1,
             stride=1,
             padding=0,
             dilation=1,
-            groups=num_estimators * groups,
+            groups=actual_groups,
             bias=bias,
             padding_mode="zeros",
             **factory_kwargs,
@@ -101,7 +116,9 @@ class PackedConv2d(nn.Module):
         in_channels (int): Number of channels in the input image.
         out_channels (int): Number of channels produced by the convolution.
         kernel_size (int or tuple): Size of the convolving kernel.
+        alpha (float): The channel multiplier of the convolutional layer.
         num_estimators (int): Number of estimators in the ensemble.
+        gamma (int, optional): Defaults to ``1``.
         stride (int or tuple, optional): Stride of the convolution.
             Defaults to ``1``.
         padding (int, tuple or str, optional): Padding added to all four sides
@@ -120,9 +137,9 @@ class PackedConv2d(nn.Module):
         :math:`\frac{\text{in_channels}}{\text{num_estimators}}` channels,
         so when using :attr:`groups` you should make sure that
         :attr:`in_channels` and :attr:`out_channels` are both divisible by
-        :attr:`num_estimators` :math:`\times`:attr:`groups`. However, the
-        number of input and output channels will be changed to comply with this
-        constraint.
+        :attr:`num_estimators` :math:`\times`:attr:`gamma` :math:`\times`
+        :attr:`groups`. However, the number of input and output channels will
+        be changed to comply with this constraint.
     """
 
     def __init__(
@@ -130,13 +147,17 @@ class PackedConv2d(nn.Module):
         in_channels: int,
         out_channels: int,
         kernel_size: _size_2_t,
+        alpha: float,
         num_estimators: int,
+        gamma: int = 1,
         stride: _size_2_t = 1,
         padding: Union[str, _size_2_t] = 0,
         dilation: _size_2_t = 1,
         groups: int = 1,
         minimum_channels_per_group: int = 64,
         bias: bool = True,
+        first: bool = False,
+        last: bool = False,
         device: Union[Any, None] = None,
         dtype: Union[Any, None] = None,
     ) -> None:
@@ -145,31 +166,41 @@ class PackedConv2d(nn.Module):
 
         self.num_estimators = num_estimators
 
+        # Define the number of channels of the underlying convolution
+        extended_in_channels = int(in_channels * (1 if first else alpha))
+        extended_out_channels = int(
+            out_channels * (num_estimators if last else alpha)
+        )
+
+        # Define the number of groups of the underlying convolution
+        actual_groups = 1 if first else gamma * groups * num_estimators
+
         while (
-            in_channels % (num_estimators * groups) != 0
-            or in_channels // (num_estimators * groups)
+            extended_in_channels % actual_groups != 0
+            or extended_in_channels // actual_groups
             < minimum_channels_per_group
-        ) and groups > 1:
-            groups -= 1
+        ) and actual_groups // (groups * num_estimators) > 1:
+            gamma -= 1
+            actual_groups = gamma * groups * num_estimators
 
         # fix if not divisible by groups
-        if in_channels % (num_estimators * groups):
-            in_channels += (
-                num_estimators - in_channels % num_estimators * groups
+        if extended_in_channels % actual_groups:
+            extended_in_channels += (
+                num_estimators - extended_in_channels % actual_groups
             )
-        if out_channels % (num_estimators * groups):
-            out_channels += (
-                num_estimators - out_channels % num_estimators * groups
+        if extended_out_channels % actual_groups:
+            extended_out_channels += (
+                num_estimators - extended_out_channels % actual_groups
             )
 
         self.conv = nn.Conv2d(
-            in_channels=in_channels,
-            out_channels=out_channels,
+            in_channels=extended_in_channels,
+            out_channels=extended_out_channels,
             kernel_size=kernel_size,
             stride=stride,
             padding=padding,
             dilation=dilation,
-            groups=num_estimators * groups,
+            groups=actual_groups,
             bias=bias,
             padding_mode="zeros",
             **factory_kwargs,
@@ -177,3 +208,21 @@ class PackedConv2d(nn.Module):
 
     def forward(self, input: Tensor) -> Tensor:
         return self.conv(input)
+
+
+class PackedConv3d(nn.Module):
+    r"""Packed-Ensembles-style Conv3d layer.
+
+    Warning:
+        Not yet implemented (open an issue if desired).
+    """
+
+    def __init__(self, **kwargs) -> None:
+        raise NotImplementedError(
+            "Open an issue if you would like this layer to be implemented."
+        )
+
+    def forward(self, input: Tensor) -> Tensor:
+        raise NotImplementedError(
+            "Open an issue if you would like this layer to be implemented."
+        )

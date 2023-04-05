@@ -46,7 +46,7 @@ class TestPackedBaseline:
                 gamma=1,
                 arch=50,
                 loss=nn.CrossEntropyLoss,
-                optimizatio_procedure=optim_cifar10_resnet50,
+                optimization_procedure=optim_cifar10_resnet50,
             )
 
     def test_masked_gamma_lt_1(self):
@@ -59,5 +59,5 @@ class TestPackedBaseline:
                 gamma=0,
                 arch=50,
                 loss=nn.CrossEntropyLoss,
-                optimizatio_procedure=optim_cifar10_resnet50,
+                optimization_procedure=optim_cifar10_resnet50,
             )
