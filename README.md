@@ -59,7 +59,7 @@ git clone https://github.com/ENSTA-U2IS/torch-uncertainty.git
 Create a new conda environment and activate it with:
 
 ```sh
-conda create -n uncertainty && conda activate uncertainty
+conda create -n uncertainty python=3.10 && conda activate uncertainty
 ```
 
 Install the package using poetry:

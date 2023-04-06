@@ -39,7 +39,7 @@ Create a new conda environment and activate it with:
 
 .. parsed-literal::
 
-    conda create -n uncertainty
+    conda create -n uncertainty python=3.10
     conda activate uncertainty
 
 Install the package using poetry:
