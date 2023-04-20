@@ -29,12 +29,15 @@ routine, which takes as arguments:
 * the path to the data and logs folder, in the example below, the root of the library
 * and finally, the name of your model (used for logs)
 
-Move to the directory containing your file and execute the code with :bash:`python3 experiment.py`. Add lightning arguments such as :bash:`--accelerator gpu --devices "0, 1"` for multi-gpu training, etc.
+Move to the directory containing your file and execute the code with :bash:`python3 experiment.py`.
+Add lightning arguments such as :bash:`--accelerator gpu --devices "0, 1" --benchmark True` 
+for multi-gpu training and cuDNN benchmark, etc.
 
 Exemple
 ^^^^^^^
 
-The following code - available in the experiments folder - trains a Packed-Ensembles ResNet on CIFAR10:
+The following code - `available in the experiments folder <https://github.com/ENSTA-U2IS/torch-uncertainty/blob/main/experiments/packed/resnet18_cifar10.py>`_ - 
+trains a Packed-Ensembles ResNet-18 on CIFAR10:
 
 .. code:: python
 
@@ -57,6 +60,7 @@ The following code - available in the experiments folder - trains a Packed-Ensem
         "packed",
     )
 
+Run this model with, for instance, :bash:`python3 resnet18_cifar10.py --arch 18 --accelerator gpu --devices 1 --benchmark True --max_epochs 75 --precision 16`.
 You may replace the architecture (which should be a Lightning Module), the
 Datamodule (a Lightning Datamodule), the loss or the optimization procedure to your likings.
 
