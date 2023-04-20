@@ -17,6 +17,9 @@ from ..transforms import Cutout
 
 # fmt: on
 class CIFAR100DataModule(LightningDataModule):
+    num_classes = 100
+    num_channels = 3
+
     def __init__(
         self,
         root: Union[str, Path],
@@ -46,8 +49,6 @@ class CIFAR100DataModule(LightningDataModule):
         self.enable_randaugment = enable_randaugment
         self.auto_augment = auto_augment
         self.num_dataloaders = num_dataloaders
-        self.num_classes = 100
-        self.num_channels = 3
 
         self.pin_memory = pin_memory
         self.persistent_workers = persistent_workers
@@ -62,12 +63,15 @@ class CIFAR100DataModule(LightningDataModule):
         self.use_cifar_c = use_cifar_c
         self.corruption_severity = corrupution_severity
 
-        assert (
+        if (
             self.enable_cutout
             + self.enable_randaugment
             + int(self.auto_augment is not None)
-            <= 1
-        ), "Only one data augmentation can be chosen at a time."
+            > 1
+        ):
+            raise ValueError(
+                "Only one data augmentation can be chosen at a time."
+            )
 
         if enable_cutout:
             main_transform = Cutout(8)

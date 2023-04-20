@@ -14,7 +14,7 @@ from torch_uncertainty.optimization_procedures import optim_cifar10_resnet18
 
 
 class TestCLI:
-    """Testing the VariationRatio metric class."""
+    """Testing the CLI function."""
 
     def test_main_summary(self):
         root = Path(__file__).parent.absolute().parents[0]
@@ -25,6 +25,11 @@ class TestCLI:
         parser.add_argument("--summary", dest="summary", action="store_true")
         parser.add_argument(
             "--log_graph", dest="log_graph", action="store_true"
+        )
+        parser.add_argument(
+            "--channels_last",
+            action="store_true",
+            help="Use channels last memory format",
         )
 
         datamodule = CIFAR10DataModule

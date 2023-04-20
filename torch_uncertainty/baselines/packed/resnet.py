@@ -58,11 +58,9 @@ class PackedResNet(ClassificationEnsemble):
             variation ratio as the OOD criterion or not. Defaults to ``False``.
 
     Note:
-
         The OOD criterion is by defaults the confidence score.
 
     Warning:
-
         Make sure at most only one of :attr:`use_entropy`, :attr:`use_logits`,
         :attr:`use_mi` and :attr:`use_variation_ratio` attributes is set to
         ``True``. Otherwise a :class:`ValueError()` will be raised.

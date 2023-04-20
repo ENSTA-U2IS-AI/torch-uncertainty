@@ -136,7 +136,9 @@ net = Net()
 # parameters :math:`M=4,\ \alpha=2\text{ and }\gamma=1`.
 
 from einops import rearrange
+
 from torch_uncertainty.layers import PackedConv2d, PackedLinear
+
 
 class PackedNet(nn.Module):
     def __init__(self) -> None:
