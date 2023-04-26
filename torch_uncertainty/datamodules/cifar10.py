@@ -8,14 +8,17 @@ import torchvision.transforms as T
 from pytorch_lightning import LightningDataModule
 from timm.data.auto_augment import rand_augment_transform
 from torch.utils.data import DataLoader, Dataset, random_split
-from torchvision.datasets import CIFAR10, SVHN
+from torchvision.datasets import SVHN
 
-from ..datasets import CIFAR10_C, AggregatedDataset
+from ..datasets import CIFAR10_C, CIFAR10_H, AggregatedDataset
 from ..transforms import Cutout
 
 
 # fmt: on
 class CIFAR10DataModule(LightningDataModule):
+    num_classes = 10
+    num_channels = 3
+
     def __init__(
         self,
         root: Union[str, Path],
@@ -24,7 +27,7 @@ class CIFAR10DataModule(LightningDataModule):
         num_workers: int = 1,
         enable_cutout: bool = False,
         auto_augment: str = None,
-        use_cifar_c: str = None,
+        alt: str = None,
         corruption_severity: int = 1,
         num_dataloaders: int = 1,
         pin_memory: bool = True,
@@ -42,18 +45,18 @@ class CIFAR10DataModule(LightningDataModule):
         self.enable_cutout = enable_cutout
         self.auto_augment = auto_augment
         self.num_dataloaders = num_dataloaders
-        self.num_classes = 10
-        self.num_channels = 3
 
         self.pin_memory = pin_memory
         self.persistent_workers = persistent_workers
 
-        if use_cifar_c is None:
-            self.dataset = CIFAR10
+        if alt == "c":
+            self.dataset = CIFAR10_C
+        elif alt == "h":
+            self.dataset = CIFAR10_H
         else:
             self.dataset = CIFAR10_C
 
-        self.use_cifar_c = use_cifar_c
+        self.alt = alt
         self.corruption_severity = corruption_severity
         self.ood_dataset = SVHN
 
@@ -88,13 +91,12 @@ class CIFAR10DataModule(LightningDataModule):
         )
 
     def prepare_data(self) -> None:
-        if self.use_cifar_c is None:
+        if self.alt != "c":
             self.dataset(self.root, train=True, download=True)
             self.dataset(self.root, train=False, download=True)
         else:
             self.dataset(
                 self.root,
-                subset=self.use_cifar_c,
                 severity=self.corruption_severity,
             )
 
@@ -102,9 +104,7 @@ class CIFAR10DataModule(LightningDataModule):
 
     def setup(self, stage: Optional[str] = None) -> None:
         if stage == "fit" or stage is None:
-            assert (
-                self.use_cifar_c is None
-            ), "CIFAR-C can only be used in testing."
+            assert self.alt == "c", "CIFAR-C can only be used in testing."
             full = self.dataset(
                 self.root,
                 train=True,
@@ -137,7 +137,6 @@ class CIFAR10DataModule(LightningDataModule):
         else:
             self.test = self.dataset(
                 self.root,
-                subset=self.use_cifar_c,
                 severity=self.corruption_severity,
                 transform=self.transform_test,
             )
