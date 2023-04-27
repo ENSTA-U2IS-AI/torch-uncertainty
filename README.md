@@ -18,7 +18,7 @@ This package provides a multi-level API, including:
 
 This package also contains the official implementation of Packed-Ensembles.
 
-If you find the corresponding models interesting, please consider citing our [paper](https://arxiv.org/abs/2104.14812):
+If you find the corresponding models interesting, please consider citing our [paper](https://arxiv.org/abs/2210.09184):
 	
     @inproceedings{laurent2023packed,
         title={Packed-Ensembles for Efficient Uncertainty Estimation},
