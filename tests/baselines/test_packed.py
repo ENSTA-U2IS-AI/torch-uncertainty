@@ -1,5 +1,4 @@
 # fmt:off
-
 from argparse import ArgumentParser
 
 import pytest
@@ -29,7 +28,7 @@ class TestPackedBaseline:
         )
         parser = ArgumentParser("torch-uncertainty-test")
         parser = net.add_model_specific_args(parser)
-        parser.parse_args("")
+        parser.parse_args(["--arch", "50"])
         summary(net)
 
         _ = net.criterion

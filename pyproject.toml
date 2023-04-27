@@ -21,6 +21,7 @@ torchinfo = "^1.7.1"
 torchvision = "^0.14.1"
 timm = "^0.6.12"
 scipy = "^1.10.0"
+huggingface-hub = "^0.14.1"
 
 
 [tool.poetry.group.dev.dependencies]
