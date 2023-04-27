@@ -27,7 +27,7 @@ class CIFAR10DataModule(LightningDataModule):
         num_workers: int = 1,
         enable_cutout: bool = False,
         auto_augment: str = None,
-        alt: str = None,
+        test_alt: str = None,
         corruption_severity: int = 1,
         num_dataloaders: int = 1,
         pin_memory: bool = True,
@@ -49,14 +49,14 @@ class CIFAR10DataModule(LightningDataModule):
         self.pin_memory = pin_memory
         self.persistent_workers = persistent_workers
 
-        if alt == "c":
+        if test_alt == "c":
             self.dataset = CIFAR10_C
-        elif alt == "h":
+        elif test_alt == "h":
             self.dataset = CIFAR10_H
         else:
             self.dataset = CIFAR10_C
 
-        self.alt = alt
+        self.test_alt = test_alt
         self.corruption_severity = corruption_severity
         self.ood_dataset = SVHN
 
@@ -91,7 +91,7 @@ class CIFAR10DataModule(LightningDataModule):
         )
 
     def prepare_data(self) -> None:
-        if self.alt != "c":
+        if self.test_alt != "c":
             self.dataset(self.root, train=True, download=True)
             self.dataset(self.root, train=False, download=True)
         else:
@@ -104,7 +104,7 @@ class CIFAR10DataModule(LightningDataModule):
 
     def setup(self, stage: Optional[str] = None) -> None:
         if stage == "fit" or stage is None:
-            assert self.alt == "c", "CIFAR-C can only be used in testing."
+            assert self.test_alt == "c", "CIFAR-C can only be used in testing."
             full = self.dataset(
                 self.root,
                 train=True,
@@ -209,7 +209,9 @@ class CIFAR10DataModule(LightningDataModule):
         p.add_argument("--num_workers", type=int, default=4)
         p.add_argument("--cutout", dest="enable_cutout", action="store_true")
         p.add_argument("--auto_augment", type=str)
-        p.add_argument("--cifar-c", dest="use_cifar_c", type=str, default=None)
+        p.add_argument(
+            "--test_alt", dest="test_alt", choices=["c", "h"], default=None
+        )
         p.add_argument(
             "--severity", dest="corruption_severity", type=int, default=None
         )
