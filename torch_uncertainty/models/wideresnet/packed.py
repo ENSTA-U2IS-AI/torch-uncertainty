@@ -180,9 +180,14 @@ class _PackedWide(nn.Module):
 
 
 def packed_wideresnet28x10(
-    num_estimators: int, alpha: int, gamma: int, num_classes: int
+    in_channels: int,
+    num_estimators: int,
+    alpha: int,
+    gamma: int,
+    num_classes: int,
 ) -> nn.Module:
     return _PackedWide(
+        in_channels=in_channels,
         depth=28,
         widen_factor=10,
         dropout_rate=0.3,
