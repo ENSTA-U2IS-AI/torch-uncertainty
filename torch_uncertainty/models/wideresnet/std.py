@@ -3,7 +3,6 @@ from typing import Type
 
 import torch.nn as nn
 import torch.nn.functional as F
-from einops import rearrange
 
 
 # fmt: on
@@ -155,9 +154,6 @@ class _Wide(nn.Module):
         out = self.layer2(out)
         out = self.layer3(out)
         out = F.relu(self.bn1(out))
-        out = rearrange(
-            out, "e (m c) h w -> (m e) c h w", m=self.num_estimators
-        )
         out = self.pool(out)
         out = self.flatten(out)
         out = self.linear(out)
