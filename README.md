@@ -14,20 +14,6 @@ This package provides a multi-level API, including:
 - baselines available for training on your datasets
 - layers available for use in your networks
 
-## Reference
-
-This package also contains the official implementation of Packed-Ensembles.
-
-If you find the corresponding models interesting, please consider citing our [paper](https://arxiv.org/abs/2210.09184):
-	
-    @inproceedings{laurent2023packed,
-        title={Packed-Ensembles for Efficient Uncertainty Estimation},
-        author={Laurent, Olivier and Lafage, Adrien and Tartaglione, Enzo and Daniel, Geoffrey and Martinez, Jean-Marc and Bursuc, Andrei and Franchi, Gianni},
-        booktitle={ICLR},
-        year={2023}
-    }
-
-
 ## Installation
 
 The package can be installed from PyPI or from source.
@@ -53,7 +39,7 @@ curl -sSL https://install.python-poetry.org | python3 -
 Clone the repository:
 
 ```sh
-git clone https://github.com/ENSTA-U2IS/torch-uncertainty.git
+git clone https://github.com/ENSTA-U2IS/torch-uncertainty.git && cd torch-uncertainty
 ```
 
 Create a new conda environment and activate it with:
@@ -65,12 +51,12 @@ conda create -n uncertainty && conda activate uncertainty
 Install the package using poetry:
 
 ```sh
-poetry install torch-uncertainty
+poetry install
 ```
 or, for development,
 
 ```sh
-poetry install torch-uncertainty --with dev
+poetry install --with dev
 ```
 
 Depending on your system, you may encounter errors. If so, kill the process and add `PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring` at the beginning of every `poetry install` commands.
@@ -93,11 +79,22 @@ To date, the following baselines are implemented:
 - Masksembles
 - Packed-Ensembles
 
+## Tutorials
 
-## Awesome Torch repositories
+
+## Awesome Uncertainty repositories
 
 You may find a lot of information about modern uncertainty estimation techniques on the [Awesome Uncertainty in Deep Learning](https://github.com/ENSTA-U2IS/awesome-uncertainty-deeplearning).
 
 ## Other References
 
+This package also contains the official implementation of Packed-Ensembles.
 
+If you find the corresponding models interesting, please consider citing our [paper](https://arxiv.org/abs/2210.09184):
+	
+    @inproceedings{laurent2023packed,
+        title={Packed-Ensembles for Efficient Uncertainty Estimation},
+        author={Laurent, Olivier and Lafage, Adrien and Tartaglione, Enzo and Daniel, Geoffrey and Martinez, Jean-Marc and Bursuc, Andrei and Franchi, Gianni},
+        booktitle={ICLR},
+        year={2023}
+    }
