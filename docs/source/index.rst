@@ -6,6 +6,9 @@
 Torch Uncertainty
 =================
 
+.. role:: bash(code)
+   :language: bash
+
 Welcome to the documentation of TorchUncertainty.
 
 This website contains the documentation for 
@@ -15,6 +18,14 @@ details on the `API <https://torch-uncertainty.github.io/api.html>`_, and a
 `comprehensive list of the references <https://torch-uncertainty.github.io/references.html>`_  of
 the models and metrics implemented.
 
+TorchUncertainty can be directly installed from PyPI:
+
+.. parsed-literal::
+   pip install torch-uncertainty
+
+To install TorchUncertainty with contribution in mind, check the
+`detailed installation page <https://torch-uncertainty.github.io/installation.html>`_, 
+which explains how to install the full package using poetry.
 
 Packed-Ensembles
 ^^^^^^^^^^^^^^^^

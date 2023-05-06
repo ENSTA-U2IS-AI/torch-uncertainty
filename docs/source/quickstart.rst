@@ -2,12 +2,12 @@ Quickstart
 ==========
 
 .. role:: bash(code)
-    :language: bash
+  :language: bash
 
 You can use the Torch Uncertainty library at different levels. Let's start with the highest-level usage.
 
-Using the CLI tool
-------------------
+Using the lightning-based CLI tool
+----------------------------------
 
 Procedure
 ^^^^^^^^^
@@ -31,7 +31,7 @@ routine, which takes as arguments:
 
 Move to the directory containing your file and execute the code with :bash:`python3 experiment.py`. Add lightning arguments such as :bash:`--accelerator gpu --devices "0, 1"` for multi-gpu training, etc.
 
-Exemple
+Example
 ^^^^^^^
 
 The following code - available in the experiments folder - trains a Packed-Ensembles ResNet on CIFAR10:
