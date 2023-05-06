@@ -6,25 +6,26 @@
 Torch Uncertainty
 =================
 
-A PyTorch Library for benchmarking and leveraging efficient predictive
-uncertainty quantification techniques. 
+Welcome to the documentation of TorchUncertainty.
 
-Torch Uncertainty is a package designed to help you leverage uncertainty
-quantification techniques and make your neural networks more reliable. It is
-based on PyTorch Lightning to handle multi-GPU training and inference and
-automatic logging through tensorboard.
+This website contains the documentation for 
+`installing <https://torch-uncertainty.github.io/installation.html>`_ TorchUncertainty, 
+how to `contribute <https://torch-uncertainty.github.io/>`_,
+details on the `API <https://torch-uncertainty.github.io/api.html>`_, and a 
+`comprehensive list of the references <https://torch-uncertainty.github.io/references.html>`_  of
+the models and metrics implemented.
 
-Official Pytorch implementation for
-the paper:
 
----------
+Packed-Ensembles
+^^^^^^^^^^^^^^^^
+
+Finally, TorchUncertainty also includes the official PyTorch implementation for
+the following paper:
 
 **Packed-Ensembles for Efficient Uncertainty Estimation**
 
-* Authors: *Olivier Laurent, Adrien Lafage, Enzo Tartaglione, Geoffrey Daniel, Jean-Marc Martinez, Andrei Bursuc and Gianni Franchi*
+* Authors: *Olivier Laurent, Adrien Lafage, Enzo Tartaglione, Geoffrey Daniel, Jean-Marc Martinez, Andrei Bursuc, and Gianni Franchi*
 * Paper: `here <https://arxiv.org/abs/2210.09184>`_.
-
----------
 
 .. toctree::
    :maxdepth: 2
