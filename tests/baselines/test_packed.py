@@ -9,9 +9,8 @@ from torchinfo import summary
 from torch_uncertainty.baselines.packed import PackedResNet
 from torch_uncertainty.optimization_procedures import optim_cifar10_resnet50
 
+
 # fmt:on
-
-
 class TestPackedBaseline:
     """Testing the PackedResNet baseline class."""
 

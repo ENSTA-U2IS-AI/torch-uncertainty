@@ -9,9 +9,8 @@ from torchinfo import summary
 from torch_uncertainty.baselines.standard import ResNet
 from torch_uncertainty.optimization_procedures import optim_cifar10_resnet18
 
+
 # fmt:on
-
-
 class TestStandardBaseline:
     """Testing the ResNet baseline class."""
 

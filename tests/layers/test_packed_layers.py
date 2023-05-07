@@ -1,13 +1,11 @@
 # fmt:off
-
 import pytest
 import torch
 
 from torch_uncertainty.layers.packed_layers import PackedConv2d, PackedLinear
 
+
 # fmt:on
-
-
 @pytest.fixture
 def feat_input() -> torch.Tensor:
     feat = torch.rand((6, 1, 1))

@@ -1,5 +1,4 @@
 # fmt:off
-
 import math
 
 import pytest
@@ -7,9 +6,8 @@ import torch
 
 from torch_uncertainty.metrics import Entropy
 
+
 # fmt:on
-
-
 @pytest.fixture
 def vec2D_max() -> torch.Tensor:
     vec = torch.as_tensor([0.5, 0.5])

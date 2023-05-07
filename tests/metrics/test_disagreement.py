@@ -1,13 +1,11 @@
 # fmt:off
-
 import pytest
 import torch
 
 from torch_uncertainty.metrics import Disagreement
 
+
 # fmt:on
-
-
 @pytest.fixture
 def disagreement_probas() -> torch.Tensor:
     vec = torch.as_tensor([[[0.0, 1.0], [1.0, 0.0]]])

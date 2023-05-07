@@ -1,5 +1,4 @@
 # fmt:off
-
 import math
 
 import pytest
@@ -7,9 +6,8 @@ import torch
 
 from torch_uncertainty.metrics import JensenShannonDivergence
 
+
 # fmt:on
-
-
 @pytest.fixture
 def disagreement_probas() -> torch.Tensor:
     """Return a vector with mean entropy ~ln(2) and entropy of mean =0."""

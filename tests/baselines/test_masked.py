@@ -1,5 +1,4 @@
 # fmt:off
-
 from argparse import ArgumentParser
 
 import pytest
@@ -10,9 +9,8 @@ from torchinfo import summary
 from torch_uncertainty.baselines.masked import MaskedResNet
 from torch_uncertainty.optimization_procedures import optim_cifar100_resnet18
 
+
 # fmt:on
-
-
 class TestMaskedBaseline:
     """Testing the MaskedResNet baseline class."""
 

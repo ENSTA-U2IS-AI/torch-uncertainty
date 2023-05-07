@@ -1,5 +1,4 @@
 # fmt:off
-
 from argparse import ArgumentParser
 
 import torch
@@ -9,9 +8,8 @@ from torchinfo import summary
 from torch_uncertainty.baselines.batched import BatchedResNet
 from torch_uncertainty.optimization_procedures import optim_cifar100_resnet50
 
+
 # fmt:on
-
-
 class TestBatchedBaseline:
     """Testing the BatchedResNet baseline class."""
 

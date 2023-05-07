@@ -5,9 +5,8 @@ import pytest
 
 import torch_uncertainty.utils as utils
 
+
 # fmt:on
-
-
 class TestUtils:
     """Testing utils methods."""
 

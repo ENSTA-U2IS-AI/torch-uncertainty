@@ -10,9 +10,8 @@ from torch_uncertainty.baselines.standard import ResNet
 from torch_uncertainty.datamodules import CIFAR10DataModule
 from torch_uncertainty.optimization_procedures import optim_cifar10_resnet18
 
+
 # fmt: on
-
-
 class TestCLI:
     """Testing the CLI function."""
 

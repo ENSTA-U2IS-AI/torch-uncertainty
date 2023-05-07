@@ -1,13 +1,11 @@
 # fmt:off
-
 import pytest
 import torch
 
 from torch_uncertainty.layers.batchens_layers import BatchConv2d, BatchLinear
 
+
 # fmt:on
-
-
 @pytest.fixture
 def feat_input() -> torch.Tensor:
     feat = torch.rand((4, 6))
