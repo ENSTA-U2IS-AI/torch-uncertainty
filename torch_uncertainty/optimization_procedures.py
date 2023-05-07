@@ -3,8 +3,18 @@ import torch.nn as nn
 import torch.optim as optim
 from timm.optim import Lamb
 
-
 # fmt:on
+__all__ = [
+    "optim_cifar10_resnet18",
+    "optim_cifar10_resnet50",
+    "optim_cifar10_wideresnet",
+    "optim_cifar100_resnet18",
+    "optim_cifar100_resnet50",
+    "optim_imagenet_resnet50",
+    "optim_imagenet_resnet50_A3",
+]
+
+
 def optim_cifar10_resnet18(model: nn.Module) -> dict:
     """optimizer to train a ResNet18 on CIFAR-10"""
     optimizer = optim.SGD(

@@ -261,7 +261,7 @@ class _ResNet(nn.Module):
 def resnet18(
     in_channels: int,
     num_classes: int,
-    groups: int,
+    groups: int = 1,
 ) -> _ResNet:
     """ResNet-18 from `Deep Residual Learning for Image Recognition
     <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -269,7 +269,7 @@ def resnet18(
     Args:
         in_channels (int): Number of input channels.
         num_classes (int): Number of classes to predict.
-        groups (int): Number of groups in convolutions.
+        groups (int): Number of groups in convolutions. Defaults to 1.
 
     Returns:
         _PackedResNet: A ResNet-18.
@@ -286,7 +286,7 @@ def resnet18(
 def resnet34(
     in_channels: int,
     num_classes: int,
-    groups: int,
+    groups: int = 1,
 ) -> _ResNet:
     """ResNet-34 from `Deep Residual Learning for Image Recognition
     <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -294,7 +294,7 @@ def resnet34(
     Args:
         in_channels (int): Number of input channels.
         num_classes (int): Number of classes to predict.
-        groups (int): Number of groups in convolutions.
+        groups (int): Number of groups in convolutions. Defaults to 1.
 
     Returns:
         _PackedResNet: A ResNet-34.
@@ -311,7 +311,7 @@ def resnet34(
 def resnet50(
     in_channels: int,
     num_classes: int,
-    groups: int,
+    groups: int = 1,
 ) -> _ResNet:
     """ResNet-50 from `Deep Residual Learning for Image Recognition
     <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -319,7 +319,7 @@ def resnet50(
     Args:
         in_channels (int): Number of input channels.
         num_classes (int): Number of classes to predict.
-        groups (int): Number of groups in convolutions.
+        groups (int): Number of groups in convolutions. Defaults to 1.
 
     Returns:
         _PackedResNet: A ResNet-50.
@@ -336,7 +336,7 @@ def resnet50(
 def resnet101(
     in_channels: int,
     num_classes: int,
-    groups: int,
+    groups: int = 1,
 ) -> _ResNet:
     """ResNet-101 from `Deep Residual Learning for Image Recognition
     <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -344,7 +344,7 @@ def resnet101(
     Args:
         in_channels (int): Number of input channels.
         num_classes (int): Number of classes to predict.
-        groups (int): Number of groups in convolutions.
+        groups (int): Number of groups in convolutions. Defaults to 1.
 
     Returns:
         _PackedResNet: A ResNet-101.
@@ -361,7 +361,7 @@ def resnet101(
 def resnet152(
     in_channels: int,
     num_classes: int,
-    groups: int,
+    groups: int = 1,
 ) -> _ResNet:
     """ResNet-152 from `Deep Residual Learning for Image Recognition
     <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -369,7 +369,7 @@ def resnet152(
     Args:
         in_channels (int): Number of input channels.
         num_classes (int): Number of classes to predict.
-        groups (int): Number of groups in convolutions.
+        groups (int): Number of groups in convolutions. Defaults to 1.
 
     Returns:
         _PackedResNet: A ResNet-152.
