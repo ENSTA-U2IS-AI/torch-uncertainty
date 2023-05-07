@@ -8,7 +8,7 @@ import torchvision.transforms as T
 from pytorch_lightning import LightningDataModule
 from timm.data.auto_augment import rand_augment_transform
 from torch.utils.data import DataLoader, Dataset, random_split
-from torchvision.datasets import SVHN
+from torchvision.datasets import CIFAR10, SVHN
 
 from ..datasets import CIFAR10_C, CIFAR10_H, AggregatedDataset
 from ..transforms import Cutout
@@ -25,7 +25,7 @@ class CIFAR10DataModule(LightningDataModule):
         batch_size: int,
         val_split: int = 0,
         num_workers: int = 1,
-        enable_cutout: bool = False,
+        cutout: int = None,
         auto_augment: str = None,
         test_alt: str = None,
         corruption_severity: int = 1,
@@ -42,8 +42,6 @@ class CIFAR10DataModule(LightningDataModule):
         self.batch_size = batch_size
         self.val_split = val_split
         self.num_workers = num_workers
-        self.enable_cutout = enable_cutout
-        self.auto_augment = auto_augment
         self.num_dataloaders = num_dataloaders
 
         self.pin_memory = pin_memory
@@ -54,16 +52,16 @@ class CIFAR10DataModule(LightningDataModule):
         elif test_alt == "h":
             self.dataset = CIFAR10_H
         else:
-            self.dataset = CIFAR10_C
+            self.dataset = CIFAR10
 
         self.test_alt = test_alt
         self.corruption_severity = corruption_severity
         self.ood_dataset = SVHN
 
-        if enable_cutout:
-            main_transform = Cutout(16)
+        if cutout:
+            main_transform = Cutout(cutout)
         elif auto_augment:
-            main_transform = rand_augment_transform(self.auto_augment, {})
+            main_transform = rand_augment_transform(auto_augment, {})
         else:
             main_transform = nn.Identity()
 
@@ -71,12 +69,12 @@ class CIFAR10DataModule(LightningDataModule):
             [
                 T.RandomCrop(32, padding=4),
                 T.RandomHorizontalFlip(),
+                main_transform,
                 T.ToTensor(),
                 T.Normalize(
                     (0.4914, 0.4822, 0.4465),
                     (0.2023, 0.1994, 0.2010),
                 ),
-                main_transform,
             ]
         )
 
@@ -104,7 +102,7 @@ class CIFAR10DataModule(LightningDataModule):
 
     def setup(self, stage: Optional[str] = None) -> None:
         if stage == "fit" or stage is None:
-            assert self.test_alt == "c", "CIFAR-C can only be used in testing."
+            assert self.test_alt != "c", "CIFAR-C can only be used in testing."
             full = self.dataset(
                 self.root,
                 train=True,
@@ -207,11 +205,9 @@ class CIFAR10DataModule(LightningDataModule):
         p.add_argument("--batch_size", type=int, default=128)
         p.add_argument("--val_split", type=int, default=0)
         p.add_argument("--num_workers", type=int, default=4)
-        p.add_argument("--cutout", dest="enable_cutout", action="store_true")
+        p.add_argument("--cutout", type=int, default=0)
         p.add_argument("--auto_augment", type=str)
-        p.add_argument(
-            "--test_alt", dest="test_alt", choices=["c", "h"], default=None
-        )
+        p.add_argument("--test_alt", choices=["c", "h"], default=None)
         p.add_argument(
             "--severity", dest="corruption_severity", type=int, default=None
         )

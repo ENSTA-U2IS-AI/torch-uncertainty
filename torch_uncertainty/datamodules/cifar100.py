@@ -26,11 +26,11 @@ class CIFAR100DataModule(LightningDataModule):
         batch_size: int,
         val_split: int = 0,
         num_workers: int = 1,
-        enable_cutout: bool = False,
+        cutout: int = None,
         enable_randaugment: bool = False,
         auto_augment: str = None,
-        use_cifar_c: str = None,
-        corrupution_severity: int = 1,
+        test_alt: str = None,
+        corruption_severity: int = 1,
         num_dataloaders: int = 1,
         pin_memory: bool = True,
         persistent_workers: bool = True,
@@ -45,40 +45,36 @@ class CIFAR100DataModule(LightningDataModule):
         self.batch_size = batch_size
         self.val_split = val_split
         self.num_workers = num_workers
-        self.enable_cutout = enable_cutout
-        self.enable_randaugment = enable_randaugment
-        self.auto_augment = auto_augment
         self.num_dataloaders = num_dataloaders
 
         self.pin_memory = pin_memory
         self.persistent_workers = persistent_workers
 
-        if use_cifar_c is None:
-            self.dataset = CIFAR100
-        else:
+        if test_alt == "c":
             self.dataset = CIFAR100_C
+        else:
+            self.dataset = CIFAR100
+
+        self.test_alt = test_alt
 
         self.ood_dataset = SVHN
 
-        self.use_cifar_c = use_cifar_c
-        self.corruption_severity = corrupution_severity
+        self.corruption_severity = corruption_severity
 
-        if (
-            self.enable_cutout
-            + self.enable_randaugment
-            + int(self.auto_augment is not None)
-            > 1
-        ):
+        if (cutout is not None) + enable_randaugment + int(
+            auto_augment is not None
+        ) > 1:
             raise ValueError(
-                "Only one data augmentation can be chosen at a time."
+                "Only one data augmentation can be chosen at a time. Raise a "
+                "GitHub issue if needed."
             )
 
-        if enable_cutout:
-            main_transform = Cutout(8)
+        if cutout:
+            main_transform = Cutout(cutout)
         elif enable_randaugment:
             main_transform = T.RandAugment(num_ops=2, magnitude=20)
         elif auto_augment:
-            main_transform = rand_augment_transform(self.auto_augment, {})
+            main_transform = rand_augment_transform(auto_augment, {})
         else:
             main_transform = nn.Identity()
 
@@ -106,7 +102,7 @@ class CIFAR100DataModule(LightningDataModule):
         )
 
     def prepare_data(self) -> None:
-        if self.use_cifar_c is None:
+        if self.test_alt is None:
             self.dataset(self.root, train=True, download=True)
             self.dataset(self.root, train=False, download=True)
 
@@ -119,9 +115,7 @@ class CIFAR100DataModule(LightningDataModule):
 
     def setup(self, stage: Optional[str] = None) -> None:
         if stage == "fit" or stage is None:
-            assert (
-                self.use_cifar_c is None
-            ), "CIFAR-C can only be used in testing."
+            assert self.test_alt != "c", "CIFAR-C can only be used in testing."
             full = self.dataset(
                 self.root,
                 train=True,
@@ -139,7 +133,7 @@ class CIFAR100DataModule(LightningDataModule):
                     transform=self.transform_test,
                 )
         elif stage == "test":
-            if self.use_cifar_c is None:
+            if self.test_alt is None:
                 self.test = self.dataset(
                     self.root,
                     train=False,
@@ -150,7 +144,6 @@ class CIFAR100DataModule(LightningDataModule):
                 self.test = self.dataset(
                     self.root,
                     transform=self.transform_test,
-                    subset=self.use_cifar_c,
                     severity=self.corruption_severity,
                 )
             self.ood = self.ood_dataset(
@@ -161,9 +154,9 @@ class CIFAR100DataModule(LightningDataModule):
             )
 
     def train_dataloader(self) -> DataLoader:
-        r"""Gets the training dataloader for CIFAR10.
+        r"""Gets the training dataloader for CIFAR100.
         Returns:
-            DataLoader: CIFAR10 training dataloader.
+            DataLoader: CIFAR100 training dataloader.
         """
         if self.num_dataloaders > 1:
             return self._data_loader(
@@ -212,13 +205,13 @@ class CIFAR100DataModule(LightningDataModule):
         p.add_argument("--batch_size", type=int, default=128)
         p.add_argument("--val_split", type=int, default=0)
         p.add_argument("--num_workers", type=int, default=4)
-        p.add_argument("--cutout", dest="enable_cutout", action="store_true")
+        p.add_argument("--cutout", type=int, default=0)
         p.add_argument(
             "--randaugment", dest="enable_randaugment", action="store_true"
         )
         p.add_argument("--auto_augment", type=str)
-        p.add_argument("--cifar-c", dest="use_cifar_c", type=str, default=None)
+        p.add_argument("--test_alt", choices=["c"], default=None)
         p.add_argument(
-            "--severity", dest="corrupution_severity", type=int, default=1
+            "--severity", dest="corruption_severity", type=int, default=1
         )
         return parent_parser

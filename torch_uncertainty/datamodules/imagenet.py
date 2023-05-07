@@ -6,7 +6,7 @@ from typing import Any, List, Optional, Union
 import torchvision.transforms as T
 from pytorch_lightning import LightningDataModule
 from timm.data.auto_augment import rand_augment_transform
-from torch.utils.data import DataLoader, Dataset, random_split
+from torch.utils.data import DataLoader, Dataset
 from torchvision.datasets import DTD, SVHN, ImageNet, INaturalist
 
 from ..datasets import ImageNetO, ImageNetR
@@ -124,20 +124,16 @@ class ImageNetDataModule(LightningDataModule):
 
     def setup(self, stage: Optional[str] = None) -> None:
         if stage == "fit" or stage is None:
-            full = self.dataset(
+            self.train = self.dataset(
                 self.root,
                 split="train",
                 transform=self.transform_train,
             )
-            self.train, self.val = random_split(
-                full, [len(full) - self.val_split, self.val_split]
+            self.val = self.dataset(
+                self.root,
+                split="val",
+                transform=self.transform_test,
             )
-            if self.val_split == 0:
-                self.val = self.dataset(
-                    self.root,
-                    split="val",
-                    transform=self.transform_test,
-                )
         if stage == "test" or stage is None:
             self.test = self.dataset(
                 self.root,
@@ -166,8 +162,8 @@ class ImageNetDataModule(LightningDataModule):
     def test_dataloader(self) -> List[DataLoader]:
         r"""Gets test dataloaders for ImageNet.
         Returns:
-            List[DataLoader]: ImageNet test set (in distribution data) and SVHN
-                test split (out-of-distribution data).
+            List[DataLoader]: ImageNet test set (in distribution data) and
+            Textures test split (out-of-distribution data).
         """
         return [self._data_loader(self.test), self._data_loader(self.ood)]
 
