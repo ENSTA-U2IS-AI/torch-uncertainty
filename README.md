@@ -10,8 +10,9 @@ _TorchUncertainty_ is a package designed to help you leverage uncertainty quanti
 ---
 
 This package provides a multi-level API, including:
-- ready-to-train baselines on research datasets, such as CIFAR and ImageNet
+- ready-to-train baselines on research datasets, such as ImageNet and CIFAR
 - baselines available for training on your datasets
+- [pretrained weights](https://huggingface.co/torch-uncertainty) for these baselines on ImageNet and CIFAR.
 - layers available for use in your networks
 
 ## Installation
