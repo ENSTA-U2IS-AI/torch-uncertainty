@@ -17,9 +17,20 @@ Baselines
 
 Models
 ------
+
+This section encapsulates the model backbones currently supported by the library.
+
+ResNet
+^^^^^^
+
 .. currentmodule:: torch_uncertainty.models.resnet
 
-**ResNet**
+Concerning ResNet backbones, we provide building functions for ResNet18, ResNet34,
+ResNet50, ResNet101 and, ResNet152 (from `Deep Residual Learning for Image Recognition
+<https://arxiv.org/pdf/1512.03385.pdf>`_, CVPR 2016). 
+
+Vanilla
+~~~~~~~
 
 .. autosummary::
     :toctree: generated/
@@ -31,7 +42,8 @@ Models
     resnet101
     resnet152
 
-**Packed-Ensembles ResNet**
+Packed-Ensembles
+~~~~~~~~~~~~~~~~
 
 .. autosummary::
     :toctree: generated/
@@ -43,7 +55,8 @@ Models
     packed_resnet101
     packed_resnet152
 
-**Masksembles ResNet**
+Masksembles
+~~~~~~~~~~~
 
 .. autosummary::
     :toctree: generated/

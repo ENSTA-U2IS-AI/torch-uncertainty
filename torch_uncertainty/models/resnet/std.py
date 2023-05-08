@@ -272,7 +272,7 @@ def resnet18(
         groups (int): Number of groups in convolutions. Defaults to 1.
 
     Returns:
-        _PackedResNet: A ResNet-18.
+        _ResNet: A ResNet-18.
     """
     return _ResNet(
         block=BasicBlock,
@@ -297,7 +297,7 @@ def resnet34(
         groups (int): Number of groups in convolutions. Defaults to 1.
 
     Returns:
-        _PackedResNet: A ResNet-34.
+        _ResNet: A ResNet-34.
     """
     return _ResNet(
         block=BasicBlock,
@@ -322,7 +322,7 @@ def resnet50(
         groups (int): Number of groups in convolutions. Defaults to 1.
 
     Returns:
-        _PackedResNet: A ResNet-50.
+        _ResNet: A ResNet-50.
     """
     return _ResNet(
         block=Bottleneck,
@@ -347,7 +347,7 @@ def resnet101(
         groups (int): Number of groups in convolutions. Defaults to 1.
 
     Returns:
-        _PackedResNet: A ResNet-101.
+        _ResNet: A ResNet-101.
     """
     return _ResNet(
         block=Bottleneck,
@@ -372,7 +372,7 @@ def resnet152(
         groups (int): Number of groups in convolutions. Defaults to 1.
 
     Returns:
-        _PackedResNet: A ResNet-152.
+        _ResNet: A ResNet-152.
     """
     return _ResNet(
         block=Bottleneck,

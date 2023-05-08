@@ -34,8 +34,9 @@ Clone the repository with:
 .. parsed-literal::
 
     git clone https://github.com/ENSTA-U2IS/torch-uncertainty.git
+    cd torch-uncertainty
 
-Create a new conda environment and activate it with:
+Create a new conda environment and activate it:
 
 .. parsed-literal::
 
@@ -52,6 +53,6 @@ Install the package using poetry:
 
 
 .. note::
-    Depending on your system, you may encounter errors. If so, kill the 
+    Depending on your system, you may encounter poetry errors. If so, kill the 
     process and add :bash:`PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring`
     at the beginning of every :bash:`poetry install` command.

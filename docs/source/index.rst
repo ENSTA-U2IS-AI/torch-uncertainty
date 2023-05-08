@@ -6,18 +6,37 @@
 Torch Uncertainty
 =================
 
-A PyTorch Library for benchmarking and leveraging efficient predictive
-uncertainty quantification techniques. Official Pytorch implementation for
-the paper:
+.. role:: bash(code)
+   :language: bash
 
----------
+Welcome to the documentation of TorchUncertainty.
+
+This website contains the documentation for 
+`installing <https://torch-uncertainty.github.io/installation.html>`_ TorchUncertainty, 
+how to `contribute <https://torch-uncertainty.github.io/>`_,
+details on the `API <https://torch-uncertainty.github.io/api.html>`_, and a 
+`comprehensive list of the references <https://torch-uncertainty.github.io/references.html>`_  of
+the models and metrics implemented.
+
+TorchUncertainty can be directly installed from PyPI:
+
+.. parsed-literal::
+   pip install torch-uncertainty
+
+To install TorchUncertainty with contribution in mind, check the
+`detailed installation page <https://torch-uncertainty.github.io/installation.html>`_, 
+which explains how to install the full package using poetry.
+
+Packed-Ensembles
+^^^^^^^^^^^^^^^^
+
+Finally, TorchUncertainty also includes the official PyTorch implementation for
+the following paper:
 
 **Packed-Ensembles for Efficient Uncertainty Estimation**
 
-* Authors: *Olivier Laurent, Adrien Lafage, Enzo Tartaglione, Geoffrey Daniel, Jean-Marc Martinez, Andrei Bursuc and Gianni Franchi*
+* Authors: *Olivier Laurent, Adrien Lafage, Enzo Tartaglione, Geoffrey Daniel, Jean-Marc Martinez, Andrei Bursuc, and Gianni Franchi*
 * Paper: `here <https://arxiv.org/abs/2210.09184>`_.
-
----------
 
 .. toctree::
    :maxdepth: 2
@@ -25,8 +44,10 @@ the paper:
 
    installation
    quickstart
+   introduction_uncertainty
    auto_tutorials/index
    api
+   references
 
 Indices and tables
 ==================
