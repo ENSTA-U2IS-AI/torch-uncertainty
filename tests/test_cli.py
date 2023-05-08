@@ -38,7 +38,7 @@ class TestCLI:
         parser = network.add_model_specific_args(parser)
 
         # Simulate that summary is True & the only argument
-        args = parser.parse_args("")
+        args = parser.parse_args(["--no-imagenet_structure"])
         args.summary = True
 
         main(

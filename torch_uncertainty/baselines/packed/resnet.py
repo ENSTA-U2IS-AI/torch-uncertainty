@@ -1,5 +1,5 @@
 # fmt: off
-from argparse import ArgumentParser
+from argparse import ArgumentParser, BooleanOptionalAction
 from typing import Any, Dict, Literal
 
 import torch
@@ -120,6 +120,7 @@ class PackedResNet(ClassificationEnsemble):
         use_logits: bool = False,
         use_mi: bool = False,
         use_variation_ratio: bool = False,
+        imagenet_structure: bool = True,
         pretrained: bool = False,
         **kwargs: Dict[str, Any],
     ) -> None:
@@ -149,6 +150,7 @@ class PackedResNet(ClassificationEnsemble):
             alpha=alpha,
             gamma=gamma,
             num_classes=num_classes,
+            imagenet_structure=imagenet_structure,
         )
 
         # to log the graph
@@ -201,6 +203,12 @@ class PackedResNet(ClassificationEnsemble):
             choices=choices,
             required=True,
             help=f"Type of Packed-ResNet. Choose among {choices}",
+        )
+        parent_parser.add_argument(
+            "--imagenet_structure",
+            action=BooleanOptionalAction,
+            default=True,
+            help="Use imagenet structure",
         )
         parent_parser.add_argument("--alpha", type=int, default=2)
         parent_parser.add_argument("--gamma", type=int, default=1)

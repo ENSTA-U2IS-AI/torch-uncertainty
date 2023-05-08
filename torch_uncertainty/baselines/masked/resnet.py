@@ -1,5 +1,5 @@
 # fmt: off
-from argparse import ArgumentParser
+from argparse import ArgumentParser, BooleanOptionalAction
 from typing import Any, Dict, Literal
 
 import torch
@@ -86,6 +86,7 @@ class MaskedResNet(ClassificationEnsemble):
         use_logits: bool = False,
         use_mi: bool = False,
         use_variation_ratio: bool = False,
+        imagenet_structure: bool = True,
         **kwargs: Dict[str, Any],
     ) -> None:
         super().__init__(
@@ -116,6 +117,7 @@ class MaskedResNet(ClassificationEnsemble):
             scale=scale,
             groups=groups,
             num_classes=num_classes,
+            imagenet_structure=imagenet_structure,
         )
 
         # to log the graph
@@ -160,6 +162,12 @@ class MaskedResNet(ClassificationEnsemble):
             default=18,
             choices=choices,
             help="Type of ResNet",
+        )
+        parent_parser.add_argument(
+            "--imagenet_structure",
+            action=BooleanOptionalAction,
+            default=True,
+            help="Use imagenet structure",
         )
         parent_parser.add_argument("--scale", type=float, default=2.0)
         parent_parser.add_argument(

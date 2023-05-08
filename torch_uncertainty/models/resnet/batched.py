@@ -144,47 +144,40 @@ class _BatchedResNet(nn.Module):
         num_estimators,
         num_classes=10,
         width_multiplier: int = 1,
-        # dataset: str = "cifar",
+        imagenet_structure: bool = True,
     ):
         super().__init__()
         self.in_planes = 64 * width_multiplier
-        # self.dataset = dataset
 
         self.width_multiplier = width_multiplier
-        # if dataset == "imagenet":
-        #     self.conv1 = BatchConv2d(
-        #         3,
-        #         64 * self.width_multiplier,
-        #         kernel_size=7,
-        #         stride=2,
-        #         padding=3,
-        #         bias=False,
-        #         num_estimators=num_estimators,
-        #     )
-
-        # elif dataset == "mnist":
-        #     self.conv1 = BatchConv2d(
-        #         1,
-        #         64 * self.width_multiplier,
-        #         kernel_size=3,
-        #         stride=1,
-        #         padding=1,
-        #         bias=False,
-        #         num_estimators=num_estimators,
-        #     )
-        # else:
-        self.conv1 = BatchConv2d(
-            in_channels,
-            64 * self.width_multiplier,
-            kernel_size=3,
-            stride=1,
-            padding=1,
-            bias=False,
-            num_estimators=num_estimators,
-        )
+        if imagenet_structure:
+            self.conv1 = BatchConv2d(
+                3,
+                64 * self.width_multiplier,
+                kernel_size=7,
+                stride=2,
+                padding=3,
+                bias=False,
+                num_estimators=num_estimators,
+            )
+        else:
+            self.conv1 = BatchConv2d(
+                in_channels,
+                64 * self.width_multiplier,
+                kernel_size=3,
+                stride=1,
+                padding=1,
+                bias=False,
+                num_estimators=num_estimators,
+            )
         self.bn1 = nn.BatchNorm2d(64 * self.width_multiplier)
 
-        self.optional_pool = nn.Identity()
+        if imagenet_structure:
+            self.optional_pool = nn.MaxPool2d(
+                kernel_size=3, stride=2, padding=1
+            )
+        else:
+            self.optional_pool = nn.Identity()
 
         self.layer1 = self._make_layer(
             block,
@@ -233,8 +226,6 @@ class _BatchedResNet(nn.Module):
 
     def forward(self, x):
         out = F.relu(self.bn1(self.conv1(x)))
-        # if self.dataset == "imagenet" or self.dataset == "tinyimagenet":
-        #     out = F.max_pool2d(out, kernel_size=3, stride=2, padding=1)
         out = self.optional_pool(out)
         out = self.layer1(out)
         out = self.layer2(out)
@@ -247,7 +238,10 @@ class _BatchedResNet(nn.Module):
 
 
 def batched_resnet18(
-    in_channels: int, num_estimators: int, num_classes: int
+    in_channels: int,
+    num_estimators: int,
+    num_classes: int,
+    imagenet_structure: bool = True,
 ) -> _BatchedResNet:
     """BatchEnsembles of ResNet-18 from `Deep Residual Learning for Image
     Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -267,11 +261,15 @@ def batched_resnet18(
         in_channels=in_channels,
         num_estimators=num_estimators,
         num_classes=num_classes,
+        imagenet_structure=imagenet_structure,
     )
 
 
 def batched_resnet34(
-    in_channels: int, num_estimators: int, num_classes: int
+    in_channels: int,
+    num_estimators: int,
+    num_classes: int,
+    imagenet_structure: bool = True,
 ) -> _BatchedResNet:
     """BatchEnsembles of ResNet-18 from `Deep Residual Learning for Image
     Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -291,6 +289,7 @@ def batched_resnet34(
         in_channels=in_channels,
         num_estimators=num_estimators,
         num_classes=num_classes,
+        imagenet_structure=imagenet_structure,
     )
 
 
@@ -299,6 +298,7 @@ def batched_resnet50(
     num_estimators: int,
     num_classes: int,
     width_multiplier: int = 1,
+    imagenet_structure: bool = True,
 ) -> _BatchedResNet:
     """BatchEnsembles of ResNet-18 from `Deep Residual Learning for Image
     Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -319,11 +319,15 @@ def batched_resnet50(
         num_estimators=num_estimators,
         num_classes=num_classes,
         width_multiplier=width_multiplier,
+        imagenet_structure=imagenet_structure,
     )
 
 
 def batched_resnet101(
-    in_channels: int, num_estimators: int, num_classes: int
+    in_channels: int,
+    num_estimators: int,
+    num_classes: int,
+    imagenet_structure: bool = True,
 ) -> _BatchedResNet:
     """BatchEnsembles of ResNet-18 from `Deep Residual Learning for Image
     Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -343,11 +347,15 @@ def batched_resnet101(
         in_channels=in_channels,
         num_estimators=num_estimators,
         num_classes=num_classes,
+        imagenet_structure=imagenet_structure,
     )
 
 
 def batched_resnet152(
-    in_channels: int, num_estimators: int, num_classes: int
+    in_channels: int,
+    num_estimators: int,
+    num_classes: int,
+    imagenet_structure: bool = True,
 ) -> _BatchedResNet:
     """BatchEnsembles of ResNet-18 from `Deep Residual Learning for Image
     Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -367,4 +375,5 @@ def batched_resnet152(
         in_channels=in_channels,
         num_estimators=num_estimators,
         num_classes=num_classes,
+        imagenet_structure=imagenet_structure,
     )

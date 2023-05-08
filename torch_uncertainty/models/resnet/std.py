@@ -134,53 +134,33 @@ class _ResNet(nn.Module):
         in_channels: int,
         num_classes: int,
         groups: int,
-        # dataset: str = "cifar",
+        imagenet_structure: bool = True,
     ) -> None:
         super().__init__()
-        # assert dataset in [
-        #     "cifar",
-        #     "mnist",
-        #     "tinyimagenet",
-        #     "imagenet",
-        # ], "The dataset is not taken in charge by this implementation."
-        # self.dataset = dataset
+
         self.in_planes = 64
         block_planes = self.in_planes
 
-        # if self.dataset == "imagenet":
-        #     self.conv1 = nn.Conv2d(
-        #         3 * self.num_estimators,
-        #         block_planes,
-        #         kernel_size=7,
-        #         stride=2,
-        #         padding=3,
-        #         groups=1,
-        #         num_estimators=num_estimators,
-        #         bias=False,
-        #     )
-        # elif self.dataset == "mnist":
-        #     self.conv1 = nn.Conv2d(
-        #         1 * self.num_estimators,
-        #         block_planes,
-        #         kernel_size=3,
-        #         stride=1,
-        #         padding=1,
-        #         groups=1,
-        #         num_estimators=num_estimators,
-        #         bias=False,
-        #     )
-        # else:
-
-        # No groups in the first layer
-        self.conv1 = nn.Conv2d(
-            in_channels,
-            block_planes,
-            kernel_size=3,
-            stride=1,
-            padding=1,
-            groups=1,
-            bias=False,
-        )
+        if imagenet_structure == "imagenet":
+            self.conv1 = nn.Conv2d(
+                in_channels,
+                block_planes,
+                kernel_size=7,
+                stride=2,
+                padding=3,
+                groups=1,  # No groups in the first layer
+                bias=False,
+            )
+        else:
+            self.conv1 = nn.Conv2d(
+                in_channels,
+                block_planes,
+                kernel_size=3,
+                stride=1,
+                padding=1,
+                groups=1,  # No groups in the first layer
+                bias=False,
+            )
 
         self.bn1 = nn.BatchNorm2d(block_planes)
 
@@ -262,6 +242,7 @@ def resnet18(
     in_channels: int,
     num_classes: int,
     groups: int = 1,
+    imagenet_structure: bool = True,
 ) -> _ResNet:
     """ResNet-18 from `Deep Residual Learning for Image Recognition
     <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -287,6 +268,7 @@ def resnet34(
     in_channels: int,
     num_classes: int,
     groups: int = 1,
+    imagenet_structure: bool = True,
 ) -> _ResNet:
     """ResNet-34 from `Deep Residual Learning for Image Recognition
     <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -312,6 +294,7 @@ def resnet50(
     in_channels: int,
     num_classes: int,
     groups: int = 1,
+    imagenet_structure: bool = True,
 ) -> _ResNet:
     """ResNet-50 from `Deep Residual Learning for Image Recognition
     <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -337,6 +320,7 @@ def resnet101(
     in_channels: int,
     num_classes: int,
     groups: int = 1,
+    imagenet_structure: bool = True,
 ) -> _ResNet:
     """ResNet-101 from `Deep Residual Learning for Image Recognition
     <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -362,6 +346,7 @@ def resnet152(
     in_channels: int,
     num_classes: int,
     groups: int = 1,
+    imagenet_structure: bool = True,
 ) -> _ResNet:
     """ResNet-152 from `Deep Residual Learning for Image Recognition
     <https://arxiv.org/pdf/1512.03385.pdf>`_.

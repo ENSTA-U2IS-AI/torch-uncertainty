@@ -165,63 +165,52 @@ class _PackedResNet(nn.Module):
         num_estimators: int,
         alpha: int = 2,
         gamma: int = 1,
-        # dataset: str = "cifar",
+        imagenet_structure: bool = True,
     ) -> None:
         super().__init__()
-        # assert dataset in [
-        #     "cifar",
-        #     "mnist",
-        #     "tinyimagenet",
-        #     "imagenet",
-        # ], "The dataset is not taken in charge by this implementation."
-        # self.dataset = dataset
 
         self.in_channels = in_channels
         self.num_estimators = num_estimators
         self.in_planes = 64
         block_planes = self.in_planes
 
-        # No subgroups in the first layer
-        # if self.dataset == "imagenet":
-        #     self.conv1 = PackedConv2d(
-        #         3 * self.num_estimators,
-        #         block_planes,
-        #         kernel_size=7,
-        #         stride=2,
-        #         padding=3,
-        #         groups=1,
-        #         num_estimators=num_estimators,
-        #         bias=False,
-        #     )
-        # elif self.dataset == "mnist":
-        #     self.conv1 = PackedConv2d(
-        #         1 * self.num_estimators,
-        #         block_planes,
-        #         kernel_size=3,
-        #         stride=1,
-        #         padding=1,
-        #         groups=1,
-        #         num_estimators=num_estimators,
-        #         bias=False,
-        #     )
-        # else:
-        self.conv1 = PackedConv2d(
-            self.in_channels,
-            block_planes,
-            kernel_size=3,
-            stride=1,
-            padding=1,
-            alpha=alpha,
-            num_estimators=num_estimators,
-            gamma=1,  # No groups for the first layer
-            groups=1,
-            bias=False,
-            first=True,
-        )
+        if imagenet_structure:
+            self.conv1 = PackedConv2d(
+                self.in_channels,
+                block_planes,
+                kernel_size=7,
+                stride=2,
+                padding=3,
+                alpha=alpha,
+                num_estimators=num_estimators,
+                gamma=1,  # No groups for the first layer
+                groups=1,
+                bias=False,
+                first=True,
+            )
+        else:
+            self.conv1 = PackedConv2d(
+                self.in_channels,
+                block_planes,
+                kernel_size=3,
+                stride=1,
+                padding=1,
+                alpha=alpha,
+                num_estimators=num_estimators,
+                gamma=1,  # No groups for the first layer
+                groups=1,
+                bias=False,
+                first=True,
+            )
 
         self.bn1 = nn.BatchNorm2d(block_planes * alpha)
 
-        self.optional_pool = nn.Identity()
+        if imagenet_structure:
+            self.optional_pool = nn.MaxPool2d(
+                kernel_size=3, stride=2, padding=1
+            )
+        else:
+            self.optional_pool = nn.Identity()
 
         self.layer1 = self._make_layer(
             block,
@@ -299,8 +288,6 @@ class _PackedResNet(nn.Module):
 
     def forward(self, x: Tensor) -> Tensor:
         out = F.relu(self.bn1(self.conv1(x)))
-        # if self.dataset == "imagenet" or self.dataset == "tinyimagenet":
-        # out = F.max_pool2d(out, kernel_size=3, stride=2, padding=1)
         out = self.optional_pool(out)
         out = self.layer1(out)
         out = self.layer2(out)
@@ -323,6 +310,7 @@ def packed_resnet18(
     alpha: int,
     gamma: int,
     num_classes: int,
+    imagenet_structure: bool = True,
 ) -> _PackedResNet:
     """Packed-Ensembles of ResNet-18 from `Deep Residual Learning for Image
     Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -345,6 +333,7 @@ def packed_resnet18(
         alpha=alpha,
         gamma=gamma,
         num_classes=num_classes,
+        imagenet_structure=imagenet_structure,
     )
 
 
@@ -354,6 +343,7 @@ def packed_resnet34(
     alpha: int,
     gamma: int,
     num_classes: int,
+    imagenet_structure: bool = True,
 ) -> _PackedResNet:
     """Packed-Ensembles of ResNet-34 from `Deep Residual Learning for Image
     Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -376,6 +366,7 @@ def packed_resnet34(
         alpha=alpha,
         gamma=gamma,
         num_classes=num_classes,
+        imagenet_structure=imagenet_structure,
     )
 
 
@@ -385,6 +376,7 @@ def packed_resnet50(
     alpha: int,
     gamma: int,
     num_classes: int,
+    imagenet_structure: bool = True,
 ) -> _PackedResNet:
     """Packed-Ensembles of ResNet-50 from `Deep Residual Learning for Image
     Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -407,6 +399,7 @@ def packed_resnet50(
         alpha=alpha,
         gamma=gamma,
         num_classes=num_classes,
+        imagenet_structure=imagenet_structure,
     )
 
 
@@ -416,6 +409,7 @@ def packed_resnet101(
     alpha: int,
     gamma: int,
     num_classes: int,
+    imagenet_structure: bool = True,
 ) -> _PackedResNet:
     """Packed-Ensembles of ResNet-101 from `Deep Residual Learning for Image
     Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -438,6 +432,7 @@ def packed_resnet101(
         alpha=alpha,
         gamma=gamma,
         num_classes=num_classes,
+        imagenet_structure=imagenet_structure,
     )
 
 
@@ -447,6 +442,7 @@ def packed_resnet152(
     alpha: int,
     gamma: int,
     num_classes: int,
+    imagenet_structure: bool = True,
 ) -> _PackedResNet:
     """Packed-Ensembles of ResNet-152 from `Deep Residual Learning for Image
     Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -469,4 +465,5 @@ def packed_resnet152(
         alpha=alpha,
         gamma=gamma,
         num_classes=num_classes,
+        imagenet_structure=imagenet_structure,
     )

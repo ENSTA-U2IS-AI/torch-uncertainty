@@ -1,5 +1,5 @@
 # fmt: off
-from argparse import ArgumentParser
+from argparse import ArgumentParser, BooleanOptionalAction
 from typing import Any
 
 import torch
@@ -30,6 +30,7 @@ class ResNet(ClassificationSingle):
         groups: int = 1,
         use_entropy: bool = False,
         use_logits: bool = False,
+        imagenet_structure: bool = True,
         **kwargs,
     ) -> None:
         super().__init__(
@@ -48,6 +49,7 @@ class ResNet(ClassificationSingle):
             in_channels=in_channels,
             num_classes=num_classes,
             groups=groups,
+            imagenet_structure=imagenet_structure,
         )
 
         # to log the graph
@@ -73,6 +75,12 @@ class ResNet(ClassificationSingle):
             default=18,
             choices=choices,
             help="Type of ResNet",
+        )
+        parent_parser.add_argument(
+            "--imagenet_structure",
+            action=BooleanOptionalAction,
+            default=True,
+            help="Use imagenet structure",
         )
         parent_parser.add_argument(
             "--entropy", dest="use_entropy", action="store_true"

@@ -24,10 +24,11 @@ class TestMaskedBaseline:
             arch=18,
             loss=nn.CrossEntropyLoss,
             optimization_procedure=optim_cifar100_resnet18,
+            imagenet_structure=False,
         )
         parser = ArgumentParser("torch-uncertainty-test")
         parser = net.add_model_specific_args(parser)
-        parser.parse_args("")
+        parser.parse_args(["--no-imagenet_structure"])
         summary(net)
 
         _ = net.criterion
