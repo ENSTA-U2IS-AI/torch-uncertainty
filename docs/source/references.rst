@@ -126,7 +126,7 @@ ImageNet-O
 
 **Natural adversarial examples**
 
-* Authors: *Dan Hendrycks, Kevin Zhao, Steven Basart, Jacob Steinhardt, and Dawn Song**
+* Authors: *Dan Hendrycks, Kevin Zhao, Steven Basart, Jacob Steinhardt, and Dawn Song*
 * Paper: `CVPR 2021 <https://arxiv.org/pdf/1907.07174.pdf>`_.
 
 
@@ -135,7 +135,7 @@ ImageNet-R
 
 **The many faces of robustness: A critical analysis of out-of-distribution generalization**
 
-* Authors: *Dan Hendrycks, Steven Basart, Norman Mu, Saurav Kadavath, Frank Wang, Evan Dorundo, Rahul Desai, Tyler Zhu, Samyak Parajuli, Mike Guo, et al.**
+* Authors: *Dan Hendrycks, Steven Basart, Norman Mu, Saurav Kadavath, Frank Wang, Evan Dorundo, Rahul Desai, Tyler Zhu, Samyak Parajuli, Mike Guo, et al.*
 * Paper: `ICCV 2021 <https://arxiv.org/pdf/2006.16241.pdf>`_.
 
 Textures
