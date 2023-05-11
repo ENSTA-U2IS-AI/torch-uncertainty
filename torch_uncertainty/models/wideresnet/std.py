@@ -65,6 +65,7 @@ class _Wide(nn.Module):
         num_classes: int,
         dropout_rate: float,
         groups: int = 1,
+        imagenet_structure: bool = True,
     ):
         super().__init__()
         self.in_planes = 16
@@ -75,17 +76,33 @@ class _Wide(nn.Module):
 
         nStages = [16, 16 * k, 32 * k, 64 * k]
 
-        self.conv1 = nn.Conv2d(
-            in_channels,
-            nStages[0],
-            kernel_size=3,
-            stride=1,
-            padding=1,
-            groups=groups,
-            bias=True,
-        )
+        if imagenet_structure == "imagenet":
+            self.conv1 = nn.Conv2d(
+                in_channels,
+                nStages[0],
+                kernel_size=7,
+                stride=2,
+                padding=3,
+                groups=groups,
+                bias=True,
+            )
+        else:
+            self.conv1 = nn.Conv2d(
+                in_channels,
+                nStages[0],
+                kernel_size=3,
+                stride=1,
+                padding=1,
+                groups=groups,
+                bias=True,
+            )
 
-        self.optional_pool = nn.Identity()
+        if imagenet_structure:
+            self.optional_pool = nn.MaxPool2d(
+                kernel_size=3, stride=2, padding=1
+            )
+        else:
+            self.optional_pool = nn.Identity()
 
         self.layer1 = self._wide_layer(
             WideBasicBlock,
@@ -162,7 +179,10 @@ class _Wide(nn.Module):
 
 
 def wideresnet28x10(
-    in_channels: int, groups: int, num_classes: int
+    in_channels: int,
+    groups: int,
+    num_classes: int,
+    imagenet_structure: bool = True,
 ) -> nn.Module:
     return _Wide(
         depth=28,
@@ -171,4 +191,5 @@ def wideresnet28x10(
         dropout_rate=0.3,
         num_classes=num_classes,
         groups=groups,
+        imagenet_structure=imagenet_structure,
     )

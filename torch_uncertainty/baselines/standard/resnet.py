@@ -69,6 +69,21 @@ class ResNet(ClassificationSingle):
     def add_model_specific_args(
         parent_parser: ArgumentParser,
     ) -> ArgumentParser:
+        """Defines the model's attributes via command-line options:
+
+        - ``--arch [int]``: defines :attr:`arch`. Defaults to ``18``.
+        - ``--groups [int]``: defines :attr:`groups`. Defaults to ``1``.
+        - ``--imagenet_structure``: sets :attr:`imagenet_structure`. Defaults
+          to ``True``.
+        - ``--entropy``: sets :attr:`use_entropy` to ``True``.
+        - ``--logits``: sets :attr:`use_logits` to ``True``.
+
+        Example:
+
+            .. parsed-literal::
+
+                python script.py --arch 18 --num_estimators 4 --alpha 2
+        """
         parent_parser.add_argument(
             "--arch",
             type=int,
@@ -76,6 +91,7 @@ class ResNet(ClassificationSingle):
             choices=choices,
             help="Type of ResNet",
         )
+        parent_parser.add_argument("--groups", type=int, default=1)
         parent_parser.add_argument(
             "--imagenet_structure",
             action=BooleanOptionalAction,
@@ -85,7 +101,6 @@ class ResNet(ClassificationSingle):
         parent_parser.add_argument(
             "--entropy", dest="use_entropy", action="store_true"
         )
-        parent_parser.add_argument("--groups", type=int, default=1)
         parent_parser.add_argument(
             "--logits", dest="use_logits", action="store_true"
         )
