@@ -202,6 +202,7 @@ def packed_wideresnet28x10(
     num_classes: int,
 ) -> nn.Module:
     return _PackedWide(
+        in_channels=in_channels,
         depth=28,
         widen_factor=10,
         in_channels=in_channels,
