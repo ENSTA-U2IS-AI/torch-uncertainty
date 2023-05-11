@@ -1,5 +1,5 @@
 # fmt: off
-from argparse import ArgumentParser
+from argparse import ArgumentParser, BooleanOptionalAction
 from typing import Any, Dict
 
 import torch
@@ -55,6 +55,7 @@ class PackedWideResNet(ClassificationEnsemble):
         use_variation_ratio: bool = False,
         alpha: int = 2,
         gamma: int = 1,
+        imagenet_structure: bool = True,
         **kwargs: Dict[str, Any],
     ) -> None:
         super().__init__(
@@ -78,6 +79,7 @@ class PackedWideResNet(ClassificationEnsemble):
             num_classes=num_classes,
             alpha=alpha,
             gamma=gamma,
+            imagenet_structure=imagenet_structure,
         )
 
         # to log the graph
@@ -121,7 +123,6 @@ class PackedWideResNet(ClassificationEnsemble):
         return self.loss()
 
     def forward(self, input: torch.Tensor) -> torch.Tensor:  # type: ignore
-        input = input.repeat(1, self.num_estimators, 1, 1)
         return self.model.forward(input)
 
     @staticmethod
@@ -132,6 +133,8 @@ class PackedWideResNet(ClassificationEnsemble):
 
         - ``--num_estimators [int]``: defines :attr:`num_estimators`. Defaults
           to ``1``.
+        - ``--imagenet_structure``: sets :attr:`imagenet_structure`. Defaults
+          to ``True``.
         - ``--entropy``: sets :attr:`use_entropy` to ``True``.
         - ``--logits``: sets :attr:`use_logits` to ``True``.
         - ``--mutual_information``: sets :attr:`use_mi` to ``True``.
@@ -144,6 +147,12 @@ class PackedWideResNet(ClassificationEnsemble):
                 python script.py --num_estimators 4 --alpha 2
         """
         parent_parser.add_argument("--num_estimators", type=int, default=4)
+        parent_parser.add_argument(
+            "--imagenet_structure",
+            action=BooleanOptionalAction,
+            default=True,
+            help="Use imagenet structure",
+        )
         parent_parser.add_argument(
             "--entropy", dest="use_entropy", action="store_true"
         )

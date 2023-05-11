@@ -1,5 +1,5 @@
 # fmt: off
-from argparse import ArgumentParser
+from argparse import ArgumentParser, BooleanOptionalAction
 from typing import Any, Dict
 
 import torch
@@ -48,8 +48,10 @@ class WideResNet(ClassificationSingle):
         in_channels: int,
         loss: nn.Module,
         optimization_procedure: Any,
+        groups: int = 1,
         use_entropy: bool = False,
         use_logits: bool = False,
+        imagenet_structure: bool = True,
         **kwargs: Dict[str, Any],
     ) -> None:
         super().__init__(
@@ -60,6 +62,7 @@ class WideResNet(ClassificationSingle):
 
         # construct config
         self.save_hyperparameters(ignore=["loss", "optimization_procedure"])
+        assert groups >= 1
 
         self.loss = loss
         self.optimization_procedure = optimization_procedure
@@ -67,7 +70,8 @@ class WideResNet(ClassificationSingle):
         self.model = wideresnet28x10(
             in_channels=in_channels,
             num_classes=num_classes,
-            groups=1,
+            groups=groups,
+            imagenet_structure=imagenet_structure,
         )
 
         # to log the graph
@@ -119,6 +123,9 @@ class WideResNet(ClassificationSingle):
     ) -> ArgumentParser:
         """Defines the model's attributes via command-line options:
 
+        - ``--groups [int]``: defines :attr:`groups`. Defaults to ``1``.
+        - ``--imagenet_structure``: sets :attr:`imagenet_structure`. Defaults
+          to ``True``.
         - ``--entropy``: sets :attr:`use_entropy` to ``True``.
         - ``--logits``: sets :attr:`use_logits` to ``True``.
 
@@ -128,6 +135,13 @@ class WideResNet(ClassificationSingle):
 
                 python script.py --num_estimators 4 --alpha 2
         """
+        parent_parser.add_argument("--groups", type=int, default=1)
+        parent_parser.add_argument(
+            "--imagenet_structure",
+            action=BooleanOptionalAction,
+            default=True,
+            help="Use imagenet structure",
+        )
         parent_parser.add_argument(
             "--entropy", dest="use_entropy", action="store_true"
         )

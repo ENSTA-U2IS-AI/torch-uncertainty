@@ -184,6 +184,8 @@ class PackedResNet(ClassificationEnsemble):
         - ``--arch [int]``: defines :attr:`arch`. Defaults to ``18``.
         - ``--num_estimators [int]``: defines :attr:`num_estimators`. Defaults
           to ``1``.
+        - ``--imagenet_structure``: sets :attr:`imagenet_structure`. Defaults
+          to ``True``.
         - ``--alpha [int]``: defines :attr:`alpha`. Defaults to ``1``.
         - ``--gamma [int]``: defines :attr:`gamma`. Defaults to ``1``.
         - ``--entropy``: sets :attr:`use_entropy` to ``True``.
@@ -204,6 +206,7 @@ class PackedResNet(ClassificationEnsemble):
             required=True,
             help=f"Type of Packed-ResNet. Choose among {choices}",
         )
+        parent_parser.add_argument("--num_estimators", type=int, default=4)
         parent_parser.add_argument(
             "--imagenet_structure",
             action=BooleanOptionalAction,
@@ -221,7 +224,6 @@ class PackedResNet(ClassificationEnsemble):
         parent_parser.add_argument(
             "--mutual_information", dest="use_mi", action="store_true"
         )
-        parent_parser.add_argument("--num_estimators", type=int, default=4)
         parent_parser.add_argument(
             "--variation_ratio", dest="use_variation_ratio", action="store_true"
         )

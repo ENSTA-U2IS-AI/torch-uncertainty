@@ -21,7 +21,7 @@ class WideBasicBlock(nn.Module):
         gamma: int = 1,
     ):
         super().__init__()
-        self.bn1 = nn.BatchNorm2d(in_planes)
+        self.bn1 = nn.BatchNorm2d(alpha * in_planes)
         self.conv1 = PackedConv2d(
             in_planes,
             planes,
@@ -33,7 +33,7 @@ class WideBasicBlock(nn.Module):
             bias=False,
         )
         self.dropout = nn.Dropout(p=dropout_rate)
-        self.bn2 = nn.BatchNorm2d(planes)
+        self.bn2 = nn.BatchNorm2d(alpha * planes)
         self.conv2 = PackedConv2d(
             planes,
             planes,
@@ -78,6 +78,7 @@ class _PackedWide(nn.Module):
         alpha: int = 2,
         gamma: int = 1,
         dropout_rate: float = 0,
+        imagenet_structure: bool = True,
     ):
         super().__init__()
         self.num_estimators = num_estimators
@@ -89,20 +90,40 @@ class _PackedWide(nn.Module):
 
         nStages = [16, 16 * k, 32 * k, 64 * k]
 
-        self.conv1 = PackedConv2d(
-            in_channels,
-            nStages[0],
-            kernel_size=3,
-            alpha=alpha,
-            num_estimators=self.num_estimators,
-            stride=1,
-            padding=1,
-            gamma=gamma,
-            bias=True,
-            first=True,
-        )
+        if imagenet_structure:
+            self.conv1 = PackedConv2d(
+                in_channels,
+                nStages[0],
+                kernel_size=7,
+                alpha=alpha,
+                num_estimators=self.num_estimators,
+                stride=2,
+                padding=3,
+                gamma=1,  # No groups for the first layer
+                groups=1,
+                bias=True,
+                first=True,
+            )
+        else:
+            self.conv1 = PackedConv2d(
+                in_channels,
+                nStages[0],
+                kernel_size=3,
+                alpha=alpha,
+                num_estimators=self.num_estimators,
+                stride=1,
+                padding=1,
+                gamma=gamma,
+                bias=True,
+                first=True,
+            )
 
-        self.optional_pool = nn.Identity()
+        if imagenet_structure:
+            self.optional_pool = nn.MaxPool2d(
+                kernel_size=3, stride=2, padding=1
+            )
+        else:
+            self.optional_pool = nn.Identity()
 
         self.layer1 = self._wide_layer(
             WideBasicBlock,
@@ -200,15 +221,16 @@ def packed_wideresnet28x10(
     alpha: int,
     gamma: int,
     num_classes: int,
+    imagenet_structure: bool = True,
 ) -> nn.Module:
     return _PackedWide(
         in_channels=in_channels,
         depth=28,
         widen_factor=10,
-        in_channels=in_channels,
         num_classes=num_classes,
         dropout_rate=0.3,
         num_estimators=num_estimators,
         alpha=alpha,
         gamma=gamma,
+        imagenet_structure=imagenet_structure,
     )

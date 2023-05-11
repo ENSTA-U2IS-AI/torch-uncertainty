@@ -164,7 +164,12 @@ class _ResNet(nn.Module):
 
         self.bn1 = nn.BatchNorm2d(block_planes)
 
-        self.optional_pool = nn.Identity()
+        if imagenet_structure:
+            self.optional_pool = nn.MaxPool2d(
+                kernel_size=3, stride=2, padding=1
+            )
+        else:
+            self.optional_pool = nn.Identity()
 
         self.layer1 = self._make_layer(
             block,
