@@ -8,7 +8,7 @@ authors = [
     "Olivier Laurent <olivier.ar.laurent@gmail.com>",
 ]
 license = "Apache-2.0"
-keywords = ["deep-learning", "pytorch", "uncertainty-quantification"]
+keywords = ["deep-learning", "pytorch", "uncertainty", "ensembles", "uncertainty-quantification", "predictive-uncertainty", "reliable-ai", "deep-learning-uncertainty"]
 readme = "README.md"
 packages = [{include = "torch_uncertainty"}]
 
