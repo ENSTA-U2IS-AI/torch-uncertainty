@@ -41,7 +41,6 @@ class CIFAR10_H(CIFAR10):
             download (bool, optional): If True, downloads the dataset from the
                 internet and puts it in root directory. If dataset is already
                 downloaded, it is not downloaded again.
-
         """
 
         super().__init__(root, train, transform, target_transform, download)
