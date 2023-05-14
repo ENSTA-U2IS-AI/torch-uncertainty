@@ -7,4 +7,6 @@ class TestDummyDataset:
     """Testing the Dummy dataset class."""
 
     def test_dataset(self):
-        _ = DummyDataset("./.data")
+        dataset = DummyDataset("./.data")
+        _ = len(dataset)
+        _, _ = dataset[0]

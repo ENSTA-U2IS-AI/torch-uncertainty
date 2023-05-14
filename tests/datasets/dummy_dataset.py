@@ -17,6 +17,7 @@ class DummyDataset(data.Dataset):
         transform: Callable[..., Any] | None = None,
         target_transform: Callable[..., Any] | None = None,
         download: bool = False,
+        **kwargs: Any,
     ) -> None:
         """Dummy dataset for testing purposes.
 
@@ -42,7 +43,9 @@ class DummyDataset(data.Dataset):
         self.data: Any = []
         self.targets = []
 
-        self.data = np.random.randint(low=0, high=255, size=(10, 3, 32, 32))
+        self.data = np.random.randint(
+            low=0, high=255, size=(10, 3, 32, 32), dtype=np.uint8
+        )
         self.data = self.data.transpose((0, 2, 3, 1))  # convert to HWC
 
         self.targets = torch.randint(low=0, high=10, size=(10,))
@@ -71,7 +74,3 @@ class DummyDataset(data.Dataset):
 
     def __len__(self) -> int:
         return len(self.data)
-
-    def extra_repr(self) -> str:
-        split = "Train" if self.train is True else "Test"
-        return f"Split: {split}"

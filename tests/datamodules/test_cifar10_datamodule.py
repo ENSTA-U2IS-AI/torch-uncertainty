@@ -1,7 +1,12 @@
 # fmt:off
 from argparse import ArgumentParser
 
+from torchvision.datasets import CIFAR10
+
 from torch_uncertainty.datamodules import CIFAR10DataModule
+from torch_uncertainty.transforms import Cutout
+
+from ..datasets.dummy_dataset import DummyDataset
 
 
 # fmt:on
@@ -16,4 +21,16 @@ class TestCIFAR10DataModule:
         args = parser.parse_args("")
         args.cutout = 16
 
-        _ = CIFAR10DataModule(**vars(args))
+        dm = CIFAR10DataModule(**vars(args))
+
+        assert dm.dataset == CIFAR10
+        assert isinstance(dm.transform_train.transforms[2], Cutout)
+
+        dm.dataset = DummyDataset
+        dm.prepare_data()
+        dm.setup()
+        dm.setup("test")
+
+        dm.train_dataloader()
+        dm.val_dataloader()
+        dm.test_dataloader()

@@ -166,13 +166,6 @@ class CIFAR10DataModule(LightningDataModule):
         """
         return self._data_loader(self.val)
 
-    def predict_dataloader(self) -> DataLoader:
-        r"""Gets the validation dataloader for CIFAR10.
-        Returns:
-            DataLoader: CIFAR10 validation dataloader.
-        """
-        return self._data_loader(self.val)
-
     def test_dataloader(self) -> List[DataLoader]:
         r"""Gets the test dataloaders for CIFAR10.
         Returns:
