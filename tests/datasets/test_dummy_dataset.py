@@ -15,3 +15,8 @@ class TestDummyDataset:
         )
         _ = len(dataset)
         _, _ = dataset[0]
+
+    def test_dataset_notransform(self):
+        dataset = DummyDataset("./.data")
+        _ = len(dataset)
+        _, _ = dataset[0]
