@@ -64,29 +64,48 @@ class _BatchedWide(nn.Module):
         in_channels: int,
         num_classes: int,
         num_estimators: int,
-        dropout_rate: float,
+        dropout_rate: float = 0.0,
+        imagenet_structure: bool = True,
     ):
         super().__init__()
         self.num_estimators = num_estimators
         self.in_planes = 16
 
-        assert (depth - 4) % 6 == 0, "Wide-resnet depth should be 6n+4"
+        assert (depth - 4) % 6 == 0, "Wide-resnet depth should be 6n+4."
         n = (depth - 4) / 6
         k = widen_factor
 
         nStages = [16, 16 * k, 32 * k, 64 * k]
 
-        self.conv1 = BatchConv2d(
-            in_channels,
-            nStages[0],
-            kernel_size=3,
-            num_estimators=self.num_estimators,
-            stride=1,
-            padding=1,
-            bias=True,
-        )
+        if imagenet_structure:
+            self.conv1 = BatchConv2d(
+                in_channels,
+                nStages[0],
+                num_estimators=self.num_estimators,
+                kernel_size=7,
+                stride=2,
+                padding=3,
+                bias=True,
+                groups=1,
+            )
+        else:
+            self.conv1 = BatchConv2d(
+                in_channels,
+                nStages[0],
+                num_estimators=self.num_estimators,
+                kernel_size=3,
+                stride=1,
+                padding=1,
+                bias=True,
+                groups=1,
+            )
 
-        self.optional_pool = nn.Identity()
+        if imagenet_structure:
+            self.optional_pool = nn.MaxPool2d(
+                kernel_size=3, stride=2, padding=1
+            )
+        else:
+            self.optional_pool = nn.Identity()
 
         self.layer1 = self._wide_layer(
             WideBasicBlock,
@@ -168,6 +187,7 @@ def batched_wideresnet28x10(
     in_channels: int,
     num_estimators: int,
     num_classes: int,
+    imagenet_structure: bool = True,
 ) -> nn.Module:
     return _BatchedWide(
         in_channels=in_channels,
@@ -176,4 +196,5 @@ def batched_wideresnet28x10(
         dropout_rate=0.3,
         num_classes=num_classes,
         num_estimators=num_estimators,
+        imagenet_structure=imagenet_structure,
     )

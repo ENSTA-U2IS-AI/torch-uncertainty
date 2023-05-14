@@ -1,5 +1,5 @@
 # fmt: off
-from argparse import ArgumentParser
+from argparse import ArgumentParser, BooleanOptionalAction
 from typing import Any, Dict
 
 import torch
@@ -137,6 +137,8 @@ class MaskedWideResNet(ClassificationEnsemble):
         - ``--mutual_information``: sets :attr:`use_mi` to ``True``.
         - ``--variation_ratio``: sets :attr:`use_variation_ratio` to ``True``.
         - ``--scale [float]``: defines :attr:`scale`. Defaults to ``2.0``.
+        - ``--imagenet_structure``: sets :attr:`imagenet_structure`. Defaults
+          to ``True``.
         - ``--groups [int]``: defines :attr:`groups`. Defaults to ``1``.
 
         Example:
@@ -146,6 +148,12 @@ class MaskedWideResNet(ClassificationEnsemble):
                 python script.py --num_estimators 4 --scale 2.0 --groups 1
         """
         parent_parser.add_argument("--num_estimators", type=int, default=4)
+        parent_parser.add_argument(
+            "--imagenet_structure",
+            action=BooleanOptionalAction,
+            default=True,
+            help="Use imagenet structure",
+        )
         parent_parser.add_argument(
             "--entropy", dest="use_entropy", action="store_true"
         )

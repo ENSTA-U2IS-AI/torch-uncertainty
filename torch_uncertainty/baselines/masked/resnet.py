@@ -144,6 +144,8 @@ class MaskedResNet(ClassificationEnsemble):
         - ``--num_estimators [int]``: defines :attr:`num_estimators`. Defaults
           to ``1``.
         - ``--scale [int]``: defines :attr:`scale`. Defaults to ``1``.
+        - ``--imagenet_structure``: sets :attr:`imagenet_structure`. Defaults
+          to ``True``.
         - ``--groups [int]``: defines :attr:`groups`. Defaults to ``1``.
         - ``--entropy``: sets :attr:`use_entropy` to ``True``.
         - ``--logits``: sets :attr:`use_logits` to ``True``.

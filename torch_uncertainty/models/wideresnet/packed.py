@@ -84,7 +84,7 @@ class _PackedWide(nn.Module):
         self.num_estimators = num_estimators
         self.in_planes = 16
 
-        assert (depth - 4) % 6 == 0, "Wide-resnet depth should be 6n+4"
+        assert (depth - 4) % 6 == 0, "Wide-resnet depth should be 6n+4."
         num_blocks = int((depth - 4) / 6)
         k = widen_factor
 

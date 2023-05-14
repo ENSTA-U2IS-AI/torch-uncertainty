@@ -1,5 +1,5 @@
 # fmt: off
-from argparse import ArgumentParser
+from argparse import ArgumentParser, BooleanOptionalAction
 from typing import Any, Dict
 
 import torch
@@ -9,9 +9,8 @@ from torch import optim
 from torch_uncertainty.models.wideresnet.batched import batched_wideresnet28x10
 from torch_uncertainty.routines.classification import ClassificationEnsemble
 
+
 # fmt: on
-
-
 class BatchedWideResNet(ClassificationEnsemble):
     r"""LightningModule for BatchEnsembles ResNet.
 
@@ -128,6 +127,8 @@ class BatchedWideResNet(ClassificationEnsemble):
 
         - ``--num_estimators [int]``: defines :attr:`num_estimators`. Defaults
           to ``1``.
+        - ``--imagenet_structure``: sets :attr:`imagenet_structure`. Defaults
+          to ``True``.
         - ``--entropy``: sets :attr:`use_entropy` to ``True``.
         - ``--logits``: sets :attr:`use_logits` to ``True``.
         - ``--mutual_information``: sets :attr:`use_mi` to ``True``.
@@ -140,6 +141,12 @@ class BatchedWideResNet(ClassificationEnsemble):
                 python script.py --num_estimators 4
         """
         parent_parser.add_argument("--num_estimators", type=int, default=4)
+        parent_parser.add_argument(
+            "--imagenet_structure",
+            action=BooleanOptionalAction,
+            default=True,
+            help="Use imagenet structure",
+        )
         parent_parser.add_argument(
             "--entropy", dest="use_entropy", action="store_true"
         )
