@@ -76,7 +76,7 @@ class _Wide(nn.Module):
 
         nStages = [16, 16 * k, 32 * k, 64 * k]
 
-        if imagenet_structure == "imagenet":
+        if imagenet_structure:
             self.conv1 = nn.Conv2d(
                 in_channels,
                 nStages[0],
