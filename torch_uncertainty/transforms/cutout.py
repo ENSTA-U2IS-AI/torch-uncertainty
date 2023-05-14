@@ -3,9 +3,8 @@ import torch
 
 import numpy as np
 
+
 # fmt: on
-
-
 class Cutout:
     """
     Reference : https://github.com/quark0/darts/blob/master/cnn/utils.py
