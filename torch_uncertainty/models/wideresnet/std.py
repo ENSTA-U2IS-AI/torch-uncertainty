@@ -70,13 +70,13 @@ class _Wide(nn.Module):
         super().__init__()
         self.in_planes = 16
 
-        assert (depth - 4) % 6 == 0, "Wide-resnet depth should be 6n+4"
+        assert (depth - 4) % 6 == 0, "Wide-resnet depth should be 6n+4."
         num_blocks = int((depth - 4) / 6)
         k = widen_factor
 
         nStages = [16, 16 * k, 32 * k, 64 * k]
 
-        if imagenet_structure == "imagenet":
+        if imagenet_structure:
             self.conv1 = nn.Conv2d(
                 in_channels,
                 nStages[0],

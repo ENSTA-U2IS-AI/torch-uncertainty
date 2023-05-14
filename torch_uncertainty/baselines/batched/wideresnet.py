@@ -1,47 +1,23 @@
 # fmt: off
 from argparse import ArgumentParser, BooleanOptionalAction
-from typing import Any, Dict, Literal
+from typing import Any, Dict
 
 import torch
 import torch.nn as nn
 from torch import optim
 
-from torch_uncertainty.models.resnet import (
-    batched_resnet18,
-    batched_resnet34,
-    batched_resnet50,
-    batched_resnet101,
-    batched_resnet152,
-)
+from torch_uncertainty.models.wideresnet.batched import batched_wideresnet28x10
 from torch_uncertainty.routines.classification import ClassificationEnsemble
 
+
 # fmt: on
-archs = [
-    batched_resnet18,
-    batched_resnet34,
-    batched_resnet50,
-    batched_resnet101,
-    batched_resnet152,
-]
-choices = [18, 34, 50, 101, 152]
-
-
-class BatchedResNet(ClassificationEnsemble):
+class BatchedWideResNet(ClassificationEnsemble):
     r"""LightningModule for BatchEnsembles ResNet.
 
     Args:
         num_classes (int): Number of classes to predict.
         num_estimators (int): Number of estimators in the ensemble.
         in_channels (int): Number of input channels.
-        arch (int):
-            Determines which ResNet architecture to use:
-
-            - ``18``: ResNet-18
-            - ``32``: ResNet-32
-            - ``50``: ResNet-50
-            - ``101``: ResNet-101
-            - ``152``: ResNet-152
-
         loss (torch.nn.Module): Training loss.
         optimization_procedure (Any): Optimization procedure, corresponds to
             what expect the `LightningModule.configure_optimizers()
@@ -70,14 +46,12 @@ class BatchedResNet(ClassificationEnsemble):
         num_classes: int,
         num_estimators: int,
         in_channels: int,
-        arch: Literal[18, 34, 50, 101, 152],
         loss: nn.Module,
         optimization_procedure: Any,
         use_entropy: bool = False,
         use_logits: bool = False,
         use_mi: bool = False,
         use_variation_ratio: bool = False,
-        imagenet_structure: bool = True,
         **kwargs: Dict[str, Any],
     ) -> None:
         super().__init__(
@@ -95,11 +69,10 @@ class BatchedResNet(ClassificationEnsemble):
         self.loss = loss
         self.optimization_procedure = optimization_procedure
 
-        self.model = archs[choices.index(arch)](
+        self.model = batched_wideresnet28x10(
             in_channels=in_channels,
             num_estimators=num_estimators,
             num_classes=num_classes,
-            imagenet_structure=imagenet_structure,
         )
 
         # to log the graph
@@ -152,7 +125,6 @@ class BatchedResNet(ClassificationEnsemble):
     ) -> ArgumentParser:
         """Defines the model's attributes via command-line options:
 
-        - ``--arch [int]``: defines :attr:`arch`. Defaults to ``18``.
         - ``--num_estimators [int]``: defines :attr:`num_estimators`. Defaults
           to ``1``.
         - ``--imagenet_structure``: sets :attr:`imagenet_structure`. Defaults
@@ -166,22 +138,15 @@ class BatchedResNet(ClassificationEnsemble):
 
             .. parsed-literal::
 
-                python script.py --arch 18 --num_estimators 4 --alpha 2
+                python script.py --num_estimators 4
         """
-        parent_parser.add_argument(
-            "--arch",
-            type=int,
-            default=18,
-            choices=choices,
-            help="Type of ResNet",
-        )
+        parent_parser.add_argument("--num_estimators", type=int, default=4)
         parent_parser.add_argument(
             "--imagenet_structure",
             action=BooleanOptionalAction,
             default=True,
             help="Use imagenet structure",
         )
-        parent_parser.add_argument("--num_estimators", type=int, default=4)
         parent_parser.add_argument(
             "--entropy", dest="use_entropy", action="store_true"
         )
@@ -189,7 +154,7 @@ class BatchedResNet(ClassificationEnsemble):
             "--logits", dest="use_logits", action="store_true"
         )
         parent_parser.add_argument(
-            "--mutual_information", dest="use_mi", action="store_true"
+            "--mutual_information", dest="uses_mi", action="store_true"
         )
         parent_parser.add_argument(
             "--variation_ratio", dest="use_variation_ratio", action="store_true"
