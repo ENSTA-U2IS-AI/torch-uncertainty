@@ -6,6 +6,11 @@ from ...layers import BatchConv2d, BatchLinear
 
 
 # fmt: on
+__all__ = [
+    "batched_wideresnet28x10",
+]
+
+
 class WideBasicBlock(nn.Module):
     def __init__(
         self,
@@ -188,7 +193,20 @@ def batched_wideresnet28x10(
     num_estimators: int,
     num_classes: int,
     imagenet_structure: bool = True,
-) -> nn.Module:
+) -> _BatchedWide:
+    """BatchEnsemble of Wide-ResNet-28x10 from `Wide Residual Networks
+    <https://arxiv.org/pdf/1605.07146.pdf>`_.
+
+    Args:
+        in_channels (int): Number of input channels.
+        num_estimators (int): Number of estimators in the ensemble.
+        num_classes (int): Number of classes to predict.
+        imagenet_structure (bool, optional): Whether to use the ImageNet
+            structure. Defaults to ``True``.
+
+    Returns:
+        _BatchedWide: A BatchEnsemble-style Wide-ResNet-28x10.
+    """
     return _BatchedWide(
         in_channels=in_channels,
         depth=28,

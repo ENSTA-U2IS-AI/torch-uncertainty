@@ -13,12 +13,14 @@ from torch_uncertainty.routines.classification import ClassificationEnsemble
 
 
 class PackedWideResNet(ClassificationEnsemble):
-    r"""LightningModule for BatchEnsembles ResNet.
+    r"""LightningModule for Packed-Ensembles WideResNet.
 
     Args:
         num_classes (int): Number of classes to predict.
         num_estimators (int): Number of estimators in the ensemble.
         in_channels (int): Number of input channels.
+        alpha (int): Expansion factor affecting the width of the estimators.
+        gamma (int): Number of groups within each estimator.
         loss (torch.nn.Module): Training loss.
         optimization_procedure (Any): Optimization procedure, corresponds to
             what expect the `LightningModule.configure_optimizers()
@@ -47,14 +49,14 @@ class PackedWideResNet(ClassificationEnsemble):
         num_classes: int,
         num_estimators: int,
         in_channels: int,
+        alpha: int,
+        gamma: int,
         loss: nn.Module,
         optimization_procedure: Any,
         use_entropy: bool = False,
         use_logits: bool = False,
         use_mi: bool = False,
         use_variation_ratio: bool = False,
-        alpha: int = 2,
-        gamma: int = 1,
         imagenet_structure: bool = True,
         **kwargs: Dict[str, Any],
     ) -> None:
@@ -86,37 +88,12 @@ class PackedWideResNet(ClassificationEnsemble):
         self.example_input_array = torch.randn(1, in_channels, 32, 32)
 
     def configure_optimizers(self) -> dict:
-        param_optimizer = self.optimization_procedure(self)["optimizer"]
-        weight_decay = param_optimizer.defaults["weight_decay"]
-        lr = param_optimizer.defaults["lr"]
-        momentum = param_optimizer.defaults["momentum"]
-        my_list = ["R", "S"]
-        params_multi_tmp = list(
-            filter(
-                lambda kv: (my_list[0] in kv[0]) or (my_list[1] in kv[0]),
-                self.named_parameters(),
-            )
-        )
-        param_core_tmp = list(
-            filter(
-                lambda kv: (my_list[0] not in kv[0])
-                and (my_list[1] not in kv[0]),
-                self.named_parameters(),
-            )
-        )
-        params_multi = [param for _, param in params_multi_tmp]
-        param_core = [param for _, param in param_core_tmp]
-        optimizer = optim.SGD(
-            [
-                {"params": param_core, "weight_decay": weight_decay},
-                {"params": params_multi, "weight_decay": 0.0},
-            ],
-            lr=lr,
-            momentum=momentum,
-        )
-        scheduler = self.optimization_procedure(self)["lr_scheduler"]
-        scheduler.optimizer = optimizer
-        return {"optimizer": optimizer, "lr_scheduler": scheduler}
+        """Configures the optimizers.
+
+        Returns:
+            dict: Optimizers.
+        """
+        return self.optimization_procedure(self)
 
     @property
     def criterion(self) -> nn.Module:
@@ -160,7 +137,7 @@ class PackedWideResNet(ClassificationEnsemble):
             "--logits", dest="use_logits", action="store_true"
         )
         parent_parser.add_argument(
-            "--mutual_information", dest="uses_mi", action="store_true"
+            "--mutual_information", dest="use_mi", action="store_true"
         )
         parent_parser.add_argument(
             "--variation_ratio", dest="use_variation_ratio", action="store_true"

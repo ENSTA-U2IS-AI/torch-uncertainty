@@ -141,7 +141,7 @@ class _ResNet(nn.Module):
         self.in_planes = 64
         block_planes = self.in_planes
 
-        if imagenet_structure == "imagenet":
+        if imagenet_structure:
             self.conv1 = nn.Conv2d(
                 in_channels,
                 block_planes,
@@ -256,6 +256,8 @@ def resnet18(
         in_channels (int): Number of input channels.
         num_classes (int): Number of classes to predict.
         groups (int): Number of groups in convolutions. Defaults to 1.
+        imagenet_structure (bool, optional): Whether to use the ImageNet
+            structure. Defaults to ``True``.
 
     Returns:
         _ResNet: A ResNet-18.
@@ -266,6 +268,7 @@ def resnet18(
         in_channels=in_channels,
         num_classes=num_classes,
         groups=groups,
+        imagenet_structure=imagenet_structure,
     )
 
 
@@ -282,6 +285,8 @@ def resnet34(
         in_channels (int): Number of input channels.
         num_classes (int): Number of classes to predict.
         groups (int): Number of groups in convolutions. Defaults to 1.
+        imagenet_structure (bool, optional): Whether to use the ImageNet
+            structure. Defaults to ``True``.
 
     Returns:
         _ResNet: A ResNet-34.
@@ -292,6 +297,7 @@ def resnet34(
         in_channels=in_channels,
         groups=groups,
         num_classes=num_classes,
+        imagenet_structure=imagenet_structure,
     )
 
 
@@ -308,6 +314,8 @@ def resnet50(
         in_channels (int): Number of input channels.
         num_classes (int): Number of classes to predict.
         groups (int): Number of groups in convolutions. Defaults to 1.
+        imagenet_structure (bool, optional): Whether to use the ImageNet
+            structure. Defaults to ``True``.
 
     Returns:
         _ResNet: A ResNet-50.
@@ -318,6 +326,7 @@ def resnet50(
         in_channels=in_channels,
         groups=groups,
         num_classes=num_classes,
+        imagenet_structure=imagenet_structure,
     )
 
 
@@ -334,6 +343,8 @@ def resnet101(
         in_channels (int): Number of input channels.
         num_classes (int): Number of classes to predict.
         groups (int): Number of groups in convolutions. Defaults to 1.
+        imagenet_structure (bool, optional): Whether to use the ImageNet
+            structure. Defaults to ``True``.
 
     Returns:
         _ResNet: A ResNet-101.
@@ -344,6 +355,7 @@ def resnet101(
         in_channels=in_channels,
         groups=groups,
         num_classes=num_classes,
+        imagenet_structure=imagenet_structure,
     )
 
 
@@ -359,7 +371,10 @@ def resnet152(
     Args:
         in_channels (int): Number of input channels.
         num_classes (int): Number of classes to predict.
-        groups (int): Number of groups in convolutions. Defaults to 1.
+        groups (int, optional): Number of groups in convolutions. Defaults to
+            ``1``.
+        imagenet_structure (bool, optional): Whether to use the ImageNet
+            structure. Defaults to ``True``.
 
     Returns:
         _ResNet: A ResNet-152.
@@ -368,6 +383,7 @@ def resnet152(
         block=Bottleneck,
         num_blocks=[3, 8, 36, 3],
         in_channels=in_channels,
-        groups=groups,
         num_classes=num_classes,
+        groups=groups,
+        imagenet_structure=imagenet_structure,
     )

@@ -9,6 +9,11 @@ from ...layers import PackedConv2d, PackedLinear
 
 
 # fmt: on
+__all__ = [
+    "packed_wideresnet28x10",
+]
+
+
 class WideBasicBlock(nn.Module):
     def __init__(
         self,
@@ -222,7 +227,22 @@ def packed_wideresnet28x10(
     gamma: int,
     num_classes: int,
     imagenet_structure: bool = True,
-) -> nn.Module:
+) -> _PackedWide:
+    """Packed-Ensembles of Wide-ResNet-28x10 from `Wide Residual Networks
+    <https://arxiv.org/pdf/1605.07146.pdf>`_.
+
+    Args:
+        in_channels (int): Number of input channels.
+        num_estimators (int): Number of estimators in the ensemble.
+        alpha (int): Expansion factor affecting the width of the estimators.
+        gamma (int): Number of groups within each estimator.
+        num_classes (int): Number of classes to predict.
+        imagenet_structure (bool, optional): Whether to use the ImageNet
+            structure. Defaults to ``True``.
+
+    Returns:
+        _PackedWide: A Packed-Ensembles Wide-ResNet-28x10.
+    """
     return _PackedWide(
         in_channels=in_channels,
         depth=28,

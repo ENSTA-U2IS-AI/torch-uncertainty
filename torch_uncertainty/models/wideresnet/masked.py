@@ -6,6 +6,11 @@ from ...layers import MaskedConv2d, MaskedLinear
 
 
 # fmt: on
+__all__ = [
+    "masked_wideresnet28x10",
+]
+
+
 class WideBasicBlock(nn.Module):
     def __init__(
         self,
@@ -202,11 +207,26 @@ class _MaskedWide(nn.Module):
 def masked_wideresnet28x10(
     in_channels: int,
     num_estimators: int,
+    scale: float,
+    groups: int,
     num_classes: int,
-    scale: float = 2.0,
-    groups: int = 1,
     imagenet_structure: bool = True,
-) -> nn.Module:
+) -> _MaskedWide:
+    """Masksembles of Wide-ResNet-28x10 from `Wide Residual Networks
+    <https://arxiv.org/pdf/1605.07146.pdf>`_.
+
+    Args:
+        in_channels (int): Number of input channels.
+        num_estimators (int): Number of estimators in the ensemble.
+        scale (float): Expansion factor affecting the width of the estimators.
+        groups (int): Number of groups within each estimator.
+        num_classes (int): Number of classes to predict.
+        imagenet_structure (bool, optional): Whether to use the ImageNet
+            structure. Defaults to ``True``.
+
+    Returns:
+        _MaskedWide: A Masksembles-style Wide-ResNet-28x10.
+    """
     return _MaskedWide(
         in_channels=in_channels,
         depth=28,

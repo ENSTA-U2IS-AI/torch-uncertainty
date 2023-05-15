@@ -6,7 +6,23 @@ API reference
 Baselines
 ---------
 
+This API provides lightning-based models that can be easily trained and evaluated.
+
 .. currentmodule:: torch_uncertainty.baselines
+
+Vanilla
+^^^^^^^
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: class.rst
+
+    ResNet
+    WideResNet
+
+Packed-Ensembles
+^^^^^^^^^^^^^^^^
 
 .. autosummary::
     :toctree: generated/
@@ -14,6 +30,30 @@ Baselines
     :template: class.rst
 
     PackedResNet
+    PackedWideResNet
+
+Masksembles
+^^^^^^^^^^^
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: class.rst
+
+    MaskedResNet
+    MaskedWideResNet
+
+BatchEnsemble
+^^^^^^^^^^^^^
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: class.rst
+
+    
+    BatchedResNet
+    BatchedWideResNet
 
 Models
 ------
@@ -67,6 +107,64 @@ Masksembles
     masked_resnet50
     masked_resnet101
     masked_resnet152
+
+BatchEnsemble
+~~~~~~~~~~~~~
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+
+    batched_resnet18
+    batched_resnet34
+    batched_resnet50
+    batched_resnet101
+    batched_resnet152
+
+Wide-ResNet
+^^^^^^^^^^^
+
+.. currentmodule:: torch_uncertainty.models.wideresnet
+
+Concerning Wide-ResNet backbones, we provide building functions for Wide-ResNet28x10
+(from `Wide Residual Networks <https://arxiv.org/pdf/1605.07146.pdf>`_, British
+Machine Vision Conference 2016).
+
+Vanilla
+~~~~~~~
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+
+    wideresnet28x10
+
+Packed-Ensembles
+~~~~~~~~~~~~~~~~
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+
+    packed_wideresnet28x10
+
+Masksembles
+~~~~~~~~~~~
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+
+    masked_wideresnet28x10
+
+BatchEnsemble
+~~~~~~~~~~~~~
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+
+    batched_wideresnet28x10
 
 Layers
 ------

@@ -243,7 +243,7 @@ def batched_resnet18(
     num_classes: int,
     imagenet_structure: bool = True,
 ) -> _BatchedResNet:
-    """BatchEnsembles of ResNet-18 from `Deep Residual Learning for Image
+    """BatchEnsemble of ResNet-18 from `Deep Residual Learning for Image
     Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
 
     Args:
@@ -253,7 +253,7 @@ def batched_resnet18(
         num_classes (int): Number of classes to predict.
 
     Returns:
-        _BatchedResNet: A BatchEnsembles-style ResNet-18.
+        _BatchedResNet: A BatchEnsemble-style ResNet-18.
     """
     return _BatchedResNet(
         BasicBlock,
@@ -271,7 +271,7 @@ def batched_resnet34(
     num_classes: int,
     imagenet_structure: bool = True,
 ) -> _BatchedResNet:
-    """BatchEnsembles of ResNet-18 from `Deep Residual Learning for Image
+    """BatchEnsemble of ResNet-34 from `Deep Residual Learning for Image
     Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
 
     Args:
@@ -281,7 +281,7 @@ def batched_resnet34(
         num_classes (int): Number of classes to predict.
 
     Returns:
-        _BatchedResNet: A BatchEnsembles-style ResNet-34.
+        _BatchedResNet: A BatchEnsemble-style ResNet-34.
     """
     return _BatchedResNet(
         BasicBlock,
@@ -300,7 +300,7 @@ def batched_resnet50(
     width_multiplier: int = 1,
     imagenet_structure: bool = True,
 ) -> _BatchedResNet:
-    """BatchEnsembles of ResNet-18 from `Deep Residual Learning for Image
+    """BatchEnsemble of ResNet-50 from `Deep Residual Learning for Image
     Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
 
     Args:
@@ -310,7 +310,7 @@ def batched_resnet50(
         num_classes (int): Number of classes to predict.
 
     Returns:
-        _BatchedResNet: A BatchEnsembles-style ResNet-50.
+        _BatchedResNet: A BatchEnsemble-style ResNet-50.
     """
     return _BatchedResNet(
         Bottleneck,
@@ -329,7 +329,7 @@ def batched_resnet101(
     num_classes: int,
     imagenet_structure: bool = True,
 ) -> _BatchedResNet:
-    """BatchEnsembles of ResNet-18 from `Deep Residual Learning for Image
+    """BatchEnsemble of ResNet-101 from `Deep Residual Learning for Image
     Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
 
     Args:
@@ -339,7 +339,7 @@ def batched_resnet101(
         num_classes (int): Number of classes to predict.
 
     Returns:
-        _BatchedResNet: A BatchEnsembles-style ResNet-101.
+        _BatchedResNet: A BatchEnsemble-style ResNet-101.
     """
     return _BatchedResNet(
         Bottleneck,
@@ -357,7 +357,7 @@ def batched_resnet152(
     num_classes: int,
     imagenet_structure: bool = True,
 ) -> _BatchedResNet:
-    """BatchEnsembles of ResNet-18 from `Deep Residual Learning for Image
+    """BatchEnsemble of ResNet-152 from `Deep Residual Learning for Image
     Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
 
     Args:
@@ -365,9 +365,11 @@ def batched_resnet152(
         num_estimators (int): Number of estimators in the ensemble.
         groups (int): Number of groups within each estimator.
         num_classes (int): Number of classes to predict.
+        imagenet_structure (bool, optional): Whether to use the ImageNet
+            structure. Defaults to ``True``.
 
     Returns:
-        _BatchedResNet: A BatchEnsembles-style ResNet-152.
+        _BatchedResNet: A BatchEnsemble-style ResNet-152.
     """
     return _BatchedResNet(
         Bottleneck,

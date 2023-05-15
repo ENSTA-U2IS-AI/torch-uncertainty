@@ -434,6 +434,7 @@ def masked_resnet152(
     Args:
         in_channels (int): Number of input channels.
         num_estimators (int): Number of estimators in the ensemble.
+        scale (float): Expansion factor affecting the width of the estimators.
         groups (int): Number of groups within each estimator.
         num_classes (int): Number of classes to predict.
 

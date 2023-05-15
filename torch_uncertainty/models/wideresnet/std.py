@@ -6,6 +6,11 @@ import torch.nn.functional as F
 
 
 # fmt: on
+__all__ = [
+    "wideresnet28x10",
+]
+
+
 class WideBasicBlock(nn.Module):
     def __init__(
         self,
@@ -180,10 +185,24 @@ class _Wide(nn.Module):
 
 def wideresnet28x10(
     in_channels: int,
-    groups: int,
     num_classes: int,
+    groups: int = 1,
     imagenet_structure: bool = True,
 ) -> nn.Module:
+    """Wide-ResNet-28x10 from `Wide Residual Networks
+    <https://arxiv.org/pdf/1605.07146.pdf>`_.
+
+    Args:
+        in_channels (int): Number of input channels
+        num_classes (int): Number of classes to predict.
+        groups (int, optional): Number of groups in convolutions. Defaults to
+            ``1``.
+        imagenet_structure (bool, optional): Whether to use the ImageNet
+            structure. Defaults to ``True``.
+
+    Returns:
+        _Wide: A Wide-ResNet-28x10.
+    """
     return _Wide(
         depth=28,
         widen_factor=10,

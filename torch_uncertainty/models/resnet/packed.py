@@ -453,6 +453,8 @@ def packed_resnet152(
         alpha (int): Expansion factor affecting the width of the estimators.
         gamma (int): Number of groups within each estimator.
         num_classes (int): Number of classes to predict.
+        imagenet_structure (bool, optional): Whether to use the ImageNet
+            structure. Defaults to ``True``.
 
     Returns:
         _PackedResNet: A Packed-Ensembles ResNet-152.
