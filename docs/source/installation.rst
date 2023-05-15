@@ -18,7 +18,7 @@ Install the package via pip:
 From source
 -----------
 
-**Installing Poetry**
+**Install Poetry**
 
 Installation guidelines for poetry are available `here <https://python-poetry.org/docs/>`_.
 They boil down to executing the following command:
@@ -27,7 +27,7 @@ They boil down to executing the following command:
     
     curl -sSL https://install.python-poetry.org | python3 -
 
-**Installing the package**
+**Install the package**
 
 Clone the repository with:
 

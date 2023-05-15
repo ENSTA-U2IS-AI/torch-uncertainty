@@ -22,13 +22,15 @@ routine, which takes as arguments:
 * a Lightning Module corresponding to the model, its own arguments, and
   forward/validation/test logic. For instance, you might use already available
   modules, such as the Packed-Ensembles-style ResNet available at
-  torch_uncertainty/baselines/packed/resnet.py
+  `torch_uncertainty/baselines/packed/resnet.py <https://github.com/ENSTA-U2IS/torch-uncertainty/blob/main/torch_uncertainty/baselines/packed/resnet.py>`_
 * a Lightning DataModule corresponding to the training, validation, and test
   sets with again its arguments and logic. CIFAR-10/100, ImageNet, and
-  ImageNet-200 are available, for instance
+  ImageNet-200 are available, for instance.
 * a PyTorch loss such as the torch.nn.CrossEntropyLoss
 * a dictionary containing the optimization procedure, namely a scheduler and
-  an optimizer. Many procedures are available at torch_uncertainty/optimization_procedures.py
+  an optimizer. Many procedures are available at 
+  `torch_uncertainty/optimization_procedures.py < https://github.com/ENSTA-U2IS/torch-uncertainty/blob/main/torch_uncertainty/optimization_procedures.py>`_
+
 * the path to the data and logs folder, in the example below, the root of the library
 * and finally, the name of your model (used for logs)
 
@@ -83,18 +85,18 @@ Example
 ^^^^^^^
 
 You can initialize a Packed-Ensemble out of a ResNet18
-backbone using the following:
+backbone with the following code:
 
 .. code:: python
 
     from torch_uncertainty.models.resnet import packed_resnet18
 
     model = packed_resnet18(
-        in_channels = 3
+        in_channels = 3,
         num_estimators = 4,
         alpha = 2,
-        gamma = 2
-        num_classes = 10
+        gamma = 2,
+        num_classes = 10,
     )
 
 Using the pytorch-based layers
@@ -109,6 +111,9 @@ In that case, you might be interested in directly using the actual layers.
 1. Check the API reference for specific layers of your choosing.
 2. Import the layers and use them as you would for any vanilla PyTorch layers.
 
+If you think that your architecture should be added to the package, raise an
+issue on the GitHub repository!
+
 .. tip::
 
   Do not hesitate to go to the API reference to get better explanations on the
@@ -117,7 +122,8 @@ In that case, you might be interested in directly using the actual layers.
 Example
 ^^^^^^^
 
-You can create a Packed-Ensemble ``torch.nn.Module`` model with the following:
+You can create a Packed-Ensemble ``torch.nn.Module`` model with the following
+code:
 
 .. code:: python
 
