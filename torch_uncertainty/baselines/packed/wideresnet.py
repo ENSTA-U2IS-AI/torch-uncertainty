@@ -4,7 +4,6 @@ from typing import Any, Dict
 
 import torch
 import torch.nn as nn
-from torch import optim
 
 from torch_uncertainty.models.wideresnet.packed import packed_wideresnet28x10
 from torch_uncertainty.routines.classification import ClassificationEnsemble

@@ -74,6 +74,7 @@ class TestMaskedWideBaseline:
             in_channels=3,
             num_classes=10,
             num_estimators=4,
+            scale=2,
             groups=1,
             loss=nn.CrossEntropyLoss,
             optimization_procedure=optim_cifar10_wideresnet,

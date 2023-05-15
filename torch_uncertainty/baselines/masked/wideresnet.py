@@ -57,8 +57,6 @@ class MaskedWideResNet(ClassificationEnsemble):
         use_mi: bool = False,
         use_variation_ratio: bool = False,
         imagenet_structure: bool = True,
-        # scale: float = 2.0,
-        # groups: int = 1,
         **kwargs: Dict[str, Any],
     ) -> None:
         super().__init__(
