@@ -5,8 +5,11 @@ from typing import Any, List, Optional, Union
 
 import torchvision.transforms as T
 from pytorch_lightning import LightningDataModule
+from torch import nn
 from torch.utils.data import DataLoader, Dataset, random_split
 from torchvision.datasets import MNIST, FashionMNIST
+
+from torch_uncertainty.transforms import Cutout
 
 
 # fmt: on
@@ -17,7 +20,7 @@ class MNISTDataModule(LightningDataModule):
         batch_size: int,
         val_split: int = 0,
         num_workers: int = 1,
-        enable_cutout: bool = False,
+        cutout: int = None,
         pin_memory: bool = True,
         persistent_workers: bool = True,
         **kwargs,
@@ -31,15 +34,20 @@ class MNISTDataModule(LightningDataModule):
         self.batch_size = batch_size
         self.val_split = val_split
         self.num_workers = num_workers
-        self.enable_cutout = enable_cutout
         self.pin_memory = pin_memory
         self.persistent_workers = persistent_workers
         self.dataset = MNIST
         self.ood_dataset = FashionMNIST
         self.num_classes = 10
 
+        if cutout:
+            main_transform = Cutout(cutout)
+        else:
+            main_transform = nn.Identity()
+
         self.transform_train = T.Compose(
             [
+                main_transform,
                 T.ToTensor(),
                 T.RandomCrop(28, padding=4),
                 T.Normalize((0.1307,), (0.3081,)),

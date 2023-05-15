@@ -6,16 +6,18 @@ import torch
 import torch.nn as nn
 from torchinfo import summary
 
-from torch_uncertainty.baselines.standard import ResNet
-from torch_uncertainty.optimization_procedures import optim_cifar10_resnet18
+from torch_uncertainty.baselines.standard import ResNet, WideResNet
+from torch_uncertainty.optimization_procedures import (
+    optim_cifar10_resnet18,
+    optim_cifar10_wideresnet,
+)
+
 
 # fmt:on
-
-
 class TestStandardBaseline:
     """Testing the ResNet baseline class."""
 
-    def test_packed(self):
+    def test_standard(self):
         net = ResNet(
             num_classes=10,
             in_channels=3,
@@ -23,10 +25,33 @@ class TestStandardBaseline:
             arch=34,
             loss=nn.CrossEntropyLoss,
             optimization_procedure=optim_cifar10_resnet18,
+            imagenet_structure=False,
         )
         parser = ArgumentParser("torch-uncertainty-test")
         parser = net.add_model_specific_args(parser)
-        parser.parse_args("")
+        parser.parse_args(["--no-imagenet_structure"])
+        summary(net)
+
+        _ = net.criterion
+        _ = net.configure_optimizers()
+        _ = net(torch.rand(1, 3, 32, 32))
+
+
+class TestStandardWideBaseline:
+    """Testing the WideResNet baseline class."""
+
+    def test_packed(self):
+        net = WideResNet(
+            num_classes=10,
+            in_channels=3,
+            groups=1,
+            loss=nn.CrossEntropyLoss,
+            optimization_procedure=optim_cifar10_wideresnet,
+            imagenet_structure=False,
+        )
+        parser = ArgumentParser("torch-uncertainty-test")
+        parser = net.add_model_specific_args(parser)
+        parser.parse_args(["--no-imagenet_structure"])
         summary(net)
 
         _ = net.criterion

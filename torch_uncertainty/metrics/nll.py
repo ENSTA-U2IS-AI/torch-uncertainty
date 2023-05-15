@@ -4,36 +4,10 @@ from typing import Any, Literal, Optional
 import torch
 import torch.nn.functional as F
 from torchmetrics import Metric
-from torchmetrics.utilities import rank_zero_warn
 from torchmetrics.utilities.data import dim_zero_cat
 
 
 # fmt: on
-class NegativeLogLikelihood_old(Metric):
-    full_state_update: bool = False
-
-    def __init__(self, **kwargs) -> None:
-        super().__init__(**kwargs)
-
-        self.add_state("log_probs", [], dist_reduce_fx="cat")
-        self.add_state("targets", [], dist_reduce_fx="cat")
-
-        rank_zero_warn(
-            "Metric `NLLMetric` will save all targets and predictions"
-            " in buffer. For large datasets this may lead to large memory"
-            " footprint."
-        )
-
-    def update(self, probs: torch.Tensor, target: torch.Tensor) -> None:
-        self.log_probs.append(torch.log(probs))
-        self.targets.append(target)
-
-    def compute(self) -> torch.Tensor:
-        log_probs = dim_zero_cat(self.log_probs)
-        targets = dim_zero_cat(self.targets)
-        return F.nll_loss(log_probs, targets)
-
-
 class NegativeLogLikelihood(Metric):
     """The Negative Log Likelihood Metric.
 
@@ -120,15 +94,3 @@ class NegativeLogLikelihood(Metric):
             return values.sum(dim=-1) / self.total
         else:  # reduction is None or "none"
             return values
-
-
-if __name__ == "__main__":
-    input = torch.softmax(torch.randn(8, 4), dim=-1)
-    target = torch.randint(4, (8,))
-
-    nll = NegativeLogLikelihood_old()
-    nllv2 = NegativeLogLikelihood()
-
-    assert nll(input, target) == nllv2(input, target)
-
-    print("All good!")

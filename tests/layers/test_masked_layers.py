@@ -1,5 +1,4 @@
 # fmt:off
-
 import pytest
 import torch
 
@@ -8,9 +7,8 @@ from torch_uncertainty.layers.masksembles_layers import (
     MaskedLinear,
 )
 
+
 # fmt:on
-
-
 @pytest.fixture
 def feat_input_odd() -> torch.Tensor:
     feat = torch.rand((5, 10))

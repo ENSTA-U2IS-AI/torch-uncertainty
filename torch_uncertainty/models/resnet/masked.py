@@ -162,16 +162,9 @@ class _MaskedResNet(nn.Module):
         num_estimators: int,
         scale: float = 2.0,
         groups: int = 1,
-        # dataset: str = "cifar",
+        imagenet_structure: bool = True,
     ) -> None:
         super().__init__()
-        # assert dataset in [
-        #     "cifar",
-        #     "mnist",
-        #     "tinyimagenet",
-        #     "imagenet",
-        # ], "The dataset is not taken in charge by this implementation."
-        # self.dataset = dataset
 
         self.in_channels = in_channels
         self.num_estimators = num_estimators
@@ -182,43 +175,35 @@ class _MaskedResNet(nn.Module):
             )
         block_planes = self.in_planes
 
-        # No subgroups in the first layer
-        # if self.dataset == "imagenet":
-        #     self.conv1 = MaskedConv2d(
-        #         3 * self.num_estimators,
-        #         block_planes,
-        #         kernel_size=7,
-        #         stride=2,
-        #         padding=3,
-        #         groups=1,
-        #         num_estimators=num_estimators,
-        #         bias=False,
-        #     )
-        # elif self.dataset == "mnist":
-        #     self.conv1 = MaskedConv2d(
-        #         1 * self.num_estimators,
-        #         block_planes,
-        #         kernel_size=3,
-        #         stride=1,
-        #         padding=1,
-        #         groups=1,
-        #         num_estimators=num_estimators,
-        #         bias=False,
-        #     )
-        # else:
-        self.conv1 = nn.Conv2d(
-            self.in_channels,
-            block_planes,
-            kernel_size=3,
-            stride=1,
-            padding=1,
-            groups=1,
-            bias=False,
-        )
+        if imagenet_structure:
+            self.conv1 = nn.Conv2d(
+                self.in_channels,
+                block_planes,
+                kernel_size=7,
+                stride=2,
+                padding=3,
+                groups=1,  # No groups for the first layer
+                bias=False,
+            )
+        else:
+            self.conv1 = nn.Conv2d(
+                self.in_channels,
+                block_planes,
+                kernel_size=3,
+                stride=1,
+                padding=1,
+                groups=1,
+                bias=False,
+            )
 
         self.bn1 = nn.BatchNorm2d(block_planes)
 
-        self.optional_pool = nn.Identity()
+        if imagenet_structure:
+            self.optional_pool = nn.MaxPool2d(
+                kernel_size=3, stride=2, padding=1
+            )
+        else:
+            self.optional_pool = nn.Identity()
 
         self.layer1 = self._make_layer(
             block,
@@ -295,8 +280,6 @@ class _MaskedResNet(nn.Module):
 
     def forward(self, x: Tensor) -> Tensor:
         out = F.relu(self.bn1(self.conv1(x)))
-        # if self.dataset == "imagenet" or self.dataset == "tinyimagenet":
-        # out = F.max_pool2d(out, kernel_size=3, stride=2, padding=1)
         out = self.optional_pool(out)
         out = self.layer1(out)
         out = self.layer2(out)
@@ -315,6 +298,7 @@ def masked_resnet18(
     scale: float,
     groups: int,
     num_classes: int,
+    imagenet_structure: bool = True,
 ) -> _MaskedResNet:
     """Masksembles of ResNet-18 from `Deep Residual Learning for Image
     Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -336,6 +320,7 @@ def masked_resnet18(
         scale=scale,
         groups=groups,
         num_classes=num_classes,
+        imagenet_structure=imagenet_structure,
     )
 
 
@@ -345,6 +330,7 @@ def masked_resnet34(
     scale: float,
     groups: int,
     num_classes: int,
+    imagenet_structure: bool = True,
 ) -> _MaskedResNet:
     """Masksembles of ResNet-34 from `Deep Residual Learning for Image
     Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -366,6 +352,7 @@ def masked_resnet34(
         scale=scale,
         groups=groups,
         num_classes=num_classes,
+        imagenet_structure=imagenet_structure,
     )
 
 
@@ -375,6 +362,7 @@ def masked_resnet50(
     scale: float,
     groups: int,
     num_classes: int,
+    imagenet_structure: bool = True,
 ) -> _MaskedResNet:
     """Masksembles of ResNet-50 from `Deep Residual Learning for Image
     Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -396,6 +384,7 @@ def masked_resnet50(
         scale=scale,
         groups=groups,
         num_classes=num_classes,
+        imagenet_structure=imagenet_structure,
     )
 
 
@@ -405,6 +394,7 @@ def masked_resnet101(
     scale: float,
     groups: int,
     num_classes: int,
+    imagenet_structure: bool = True,
 ) -> _MaskedResNet:
     """Masksembles of ResNet-101 from `Deep Residual Learning for Image
     Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -426,6 +416,7 @@ def masked_resnet101(
         scale=scale,
         groups=groups,
         num_classes=num_classes,
+        imagenet_structure=imagenet_structure,
     )
 
 
@@ -435,6 +426,7 @@ def masked_resnet152(
     scale: float,
     groups: int,
     num_classes: int,
+    imagenet_structure: bool = True,
 ) -> _MaskedResNet:
     """Masksembles of ResNet-152 from `Deep Residual Learning for Image
     Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -442,6 +434,7 @@ def masked_resnet152(
     Args:
         in_channels (int): Number of input channels.
         num_estimators (int): Number of estimators in the ensemble.
+        scale (float): Expansion factor affecting the width of the estimators.
         groups (int): Number of groups within each estimator.
         num_classes (int): Number of classes to predict.
 
@@ -456,4 +449,5 @@ def masked_resnet152(
         scale=scale,
         groups=groups,
         num_classes=num_classes,
+        imagenet_structure=imagenet_structure,
     )

@@ -5,14 +5,13 @@ import torch
 import torch.nn.functional as F
 from torch import Tensor
 from torchmetrics import Metric
-from torchmetrics.utilities import rank_zero_warn
 from torchmetrics.utilities.data import dim_zero_cat
 
 
 # fmt:on
 class JensenShannonDivergence(Metric):
-    """The Jensen Shannon Divergence Metric to estimate the epistemic
-    uncertainty of an ensemble of estimators.
+    """The Generalized Jensen Shannon Divergence Metric to estimate the
+    epistemic uncertainty of an ensemble of estimators.
 
     Args:
         reduction (str, optional): Determines how to reduce over the
@@ -31,8 +30,16 @@ class JensenShannonDivergence(Metric):
         where :math:`B` is the batch size, :math:`C` is the number of classes
         and :math:`N` is the number of estimators.
 
+    See also:
+        The Jensen-Shannon Divergence on wikipedia
+        <https://en.wikipedia.org/wiki/Jensen%E2%80%93Shannon_divergence>`_.
+
     Note:
         A higher Jensen-Shannon divergence means a higher uncertainty.
+
+    Note:
+        The generalized Jensen-Shannon divergence is computationnally
+            equivalent to the Mutual-Information.
 
     Warning:
         Make sure that the probabilities in :attr:`probs` are normalized to sum
@@ -112,52 +119,3 @@ class JensenShannonDivergence(Metric):
             return values.sum(dim=-1) / self.total
         else:  # reduction is None or "none"
             return values
-
-
-class JensenShannonDivergence_old(Metric):
-    full_state_update: bool = False
-
-    def __init__(self, **kwargs) -> None:
-        super().__init__(**kwargs)
-
-        self.add_state("probs", [], dist_reduce_fx="cat")
-
-        rank_zero_warn(
-            "Metric `JensenShannonDivergence` will save all "
-            "predictions in buffer. For large datasets this may lead to large "
-            "memory footprint."
-        )
-
-    def update(self, probs: Tensor) -> None:  # type: ignore
-        # store data as (example, estimator, class)
-        self.probs.append(probs.transpose(0, 1))
-
-    def compute(self) -> Tensor:
-        probs = dim_zero_cat(self.probs)
-        mean_proba = probs.mean(1, keepdim=True).repeat(1, probs.shape[1], 1)
-
-        return (
-            F.kl_div(
-                mean_proba.log(),
-                probs.log(),
-                log_target=True,
-                reduction="batchmean",
-            )
-            / probs.shape[1]
-        )
-
-
-if __name__ == "__main__":
-    import pytest
-
-    input = torch.softmax(torch.randn(8, 5, 4), dim=-1)  # (B, N, C)
-
-    mi_old = JensenShannonDivergence_old()
-    mi = JensenShannonDivergence()
-
-    print(mi_old(input.transpose(0, 1)))
-    print(mi(input))
-
-    assert mi_old(input.transpose(0, 1)) == pytest.approx(mi(input))
-
-    print("All good!")

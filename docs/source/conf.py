@@ -23,13 +23,13 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx_copybutton",
     "sphinx_gallery.gen_gallery",
-    # 'sphinx.ext.intersphinx',
 ]
 
 sphinx_gallery_conf = {
-    "examples_dirs": ["../../tutorials"],
+    "examples_dirs": ["../../auto_tutorials_source"],
     "gallery_dirs": "auto_tutorials",
     "filename_pattern": r"pe_",
+    "plot_gallery": "True",
     "promote_jupyter_magic": True,
     "backreferences_dir": None,
     "first_notebook_cell": (

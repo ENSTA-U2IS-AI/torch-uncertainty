@@ -1,5 +1,5 @@
 # fmt: off
-from argparse import ArgumentParser
+from argparse import ArgumentParser, BooleanOptionalAction
 from typing import Any, Dict, Literal
 
 import torch
@@ -86,6 +86,7 @@ class MaskedResNet(ClassificationEnsemble):
         use_logits: bool = False,
         use_mi: bool = False,
         use_variation_ratio: bool = False,
+        imagenet_structure: bool = True,
         **kwargs: Dict[str, Any],
     ) -> None:
         super().__init__(
@@ -116,6 +117,7 @@ class MaskedResNet(ClassificationEnsemble):
             scale=scale,
             groups=groups,
             num_classes=num_classes,
+            imagenet_structure=imagenet_structure,
         )
 
         # to log the graph
@@ -142,6 +144,8 @@ class MaskedResNet(ClassificationEnsemble):
         - ``--num_estimators [int]``: defines :attr:`num_estimators`. Defaults
           to ``1``.
         - ``--scale [int]``: defines :attr:`scale`. Defaults to ``1``.
+        - ``--imagenet_structure``: sets :attr:`imagenet_structure`. Defaults
+          to ``True``.
         - ``--groups [int]``: defines :attr:`groups`. Defaults to ``1``.
         - ``--entropy``: sets :attr:`use_entropy` to ``True``.
         - ``--logits``: sets :attr:`use_logits` to ``True``.
@@ -161,6 +165,12 @@ class MaskedResNet(ClassificationEnsemble):
             choices=choices,
             help="Type of ResNet",
         )
+        parent_parser.add_argument(
+            "--imagenet_structure",
+            action=BooleanOptionalAction,
+            default=True,
+            help="Use imagenet structure",
+        )
         parent_parser.add_argument("--scale", type=float, default=2.0)
         parent_parser.add_argument(
             "--entropy", dest="use_entropy", action="store_true"
@@ -170,7 +180,7 @@ class MaskedResNet(ClassificationEnsemble):
             "--logits", dest="use_logits", action="store_true"
         )
         parent_parser.add_argument(
-            "--mutual_information", dest="uses_mi", action="store_true"
+            "--mutual_information", dest="use_mi", action="store_true"
         )
         parent_parser.add_argument("--num_estimators", type=int, default=4)
         parent_parser.add_argument(

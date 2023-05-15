@@ -43,6 +43,8 @@ import torch
 import torchvision
 import torchvision.transforms as transforms
 
+torch.set_num_threads(1)
+
 ########################################################################
 # The output of torchvision datasets are PILImage images of range [0, 1].
 # We transform them to Tensors of normalized range [-1, 1].
@@ -134,7 +136,9 @@ net = Net()
 # parameters :math:`M=4,\ \alpha=2\text{ and }\gamma=1`.
 
 from einops import rearrange
+
 from torch_uncertainty.layers import PackedConv2d, PackedLinear
+
 
 class PackedNet(nn.Module):
     def __init__(self) -> None:
@@ -142,14 +146,13 @@ class PackedNet(nn.Module):
         M = 4
         alpha = 2
         gamma = 1
-        # The first layer is left as is since all the subnetworks have the
-        # input.
-        self.conv1 = nn.Conv2d(3, 6*alpha, 5)
+        # The first layer does not use the number of estimators and gamma.
+        self.conv1 = PackedConv2d(3, 6, 5, alpha=alpha, num_estimators=M, gamma=gamma, first=True)
         self.pool = nn.MaxPool2d(2, 2)
-        self.conv2 = PackedConv2d(6*alpha, 16*alpha, 5, num_estimators=M, groups=gamma)
-        self.fc1 = PackedLinear(16 * 5 * 5 * alpha, 120 * alpha, num_estimators=M, groups=gamma)
-        self.fc2 = PackedLinear(120 * alpha, 84 * alpha, num_estimators=M, groups=gamma)
-        self.fc3 = PackedLinear(84 * alpha, 10 * M, num_estimators=M, groups=gamma)
+        self.conv2 = PackedConv2d(6, 16, 5, alpha=alpha, num_estimators=M, gamma=gamma)
+        self.fc1 = PackedLinear(16 * 5 * 5, 120, alpha=alpha, num_estimators=M, gamma=gamma)
+        self.fc2 = PackedLinear(120, 84, alpha=alpha, num_estimators=M, gamma=gamma)
+        self.fc3 = PackedLinear(84, 10 * M, alpha=alpha, num_estimators=M, gamma=gamma, last=True)
 
         self.num_estimators = M
 

@@ -134,57 +134,42 @@ class _ResNet(nn.Module):
         in_channels: int,
         num_classes: int,
         groups: int,
-        # dataset: str = "cifar",
+        imagenet_structure: bool = True,
     ) -> None:
         super().__init__()
-        # assert dataset in [
-        #     "cifar",
-        #     "mnist",
-        #     "tinyimagenet",
-        #     "imagenet",
-        # ], "The dataset is not taken in charge by this implementation."
-        # self.dataset = dataset
+
         self.in_planes = 64
         block_planes = self.in_planes
 
-        # if self.dataset == "imagenet":
-        #     self.conv1 = nn.Conv2d(
-        #         3 * self.num_estimators,
-        #         block_planes,
-        #         kernel_size=7,
-        #         stride=2,
-        #         padding=3,
-        #         groups=1,
-        #         num_estimators=num_estimators,
-        #         bias=False,
-        #     )
-        # elif self.dataset == "mnist":
-        #     self.conv1 = nn.Conv2d(
-        #         1 * self.num_estimators,
-        #         block_planes,
-        #         kernel_size=3,
-        #         stride=1,
-        #         padding=1,
-        #         groups=1,
-        #         num_estimators=num_estimators,
-        #         bias=False,
-        #     )
-        # else:
-
-        # No groups in the first layer
-        self.conv1 = nn.Conv2d(
-            in_channels,
-            block_planes,
-            kernel_size=3,
-            stride=1,
-            padding=1,
-            groups=1,
-            bias=False,
-        )
+        if imagenet_structure:
+            self.conv1 = nn.Conv2d(
+                in_channels,
+                block_planes,
+                kernel_size=7,
+                stride=2,
+                padding=3,
+                groups=1,  # No groups in the first layer
+                bias=False,
+            )
+        else:
+            self.conv1 = nn.Conv2d(
+                in_channels,
+                block_planes,
+                kernel_size=3,
+                stride=1,
+                padding=1,
+                groups=1,  # No groups in the first layer
+                bias=False,
+            )
 
         self.bn1 = nn.BatchNorm2d(block_planes)
 
-        self.optional_pool = nn.Identity()
+        if imagenet_structure:
+            self.optional_pool = nn.MaxPool2d(
+                kernel_size=3, stride=2, padding=1
+            )
+        else:
+            self.optional_pool = nn.Identity()
 
         self.layer1 = self._make_layer(
             block,
@@ -261,7 +246,8 @@ class _ResNet(nn.Module):
 def resnet18(
     in_channels: int,
     num_classes: int,
-    groups: int,
+    groups: int = 1,
+    imagenet_structure: bool = True,
 ) -> _ResNet:
     """ResNet-18 from `Deep Residual Learning for Image Recognition
     <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -269,10 +255,12 @@ def resnet18(
     Args:
         in_channels (int): Number of input channels.
         num_classes (int): Number of classes to predict.
-        groups (int): Number of groups in convolutions.
+        groups (int): Number of groups in convolutions. Defaults to 1.
+        imagenet_structure (bool, optional): Whether to use the ImageNet
+            structure. Defaults to ``True``.
 
     Returns:
-        _PackedResNet: A ResNet-18.
+        _ResNet: A ResNet-18.
     """
     return _ResNet(
         block=BasicBlock,
@@ -280,13 +268,15 @@ def resnet18(
         in_channels=in_channels,
         num_classes=num_classes,
         groups=groups,
+        imagenet_structure=imagenet_structure,
     )
 
 
 def resnet34(
     in_channels: int,
     num_classes: int,
-    groups: int,
+    groups: int = 1,
+    imagenet_structure: bool = True,
 ) -> _ResNet:
     """ResNet-34 from `Deep Residual Learning for Image Recognition
     <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -294,10 +284,12 @@ def resnet34(
     Args:
         in_channels (int): Number of input channels.
         num_classes (int): Number of classes to predict.
-        groups (int): Number of groups in convolutions.
+        groups (int): Number of groups in convolutions. Defaults to 1.
+        imagenet_structure (bool, optional): Whether to use the ImageNet
+            structure. Defaults to ``True``.
 
     Returns:
-        _PackedResNet: A ResNet-34.
+        _ResNet: A ResNet-34.
     """
     return _ResNet(
         block=BasicBlock,
@@ -305,13 +297,15 @@ def resnet34(
         in_channels=in_channels,
         groups=groups,
         num_classes=num_classes,
+        imagenet_structure=imagenet_structure,
     )
 
 
 def resnet50(
     in_channels: int,
     num_classes: int,
-    groups: int,
+    groups: int = 1,
+    imagenet_structure: bool = True,
 ) -> _ResNet:
     """ResNet-50 from `Deep Residual Learning for Image Recognition
     <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -319,10 +313,12 @@ def resnet50(
     Args:
         in_channels (int): Number of input channels.
         num_classes (int): Number of classes to predict.
-        groups (int): Number of groups in convolutions.
+        groups (int): Number of groups in convolutions. Defaults to 1.
+        imagenet_structure (bool, optional): Whether to use the ImageNet
+            structure. Defaults to ``True``.
 
     Returns:
-        _PackedResNet: A ResNet-50.
+        _ResNet: A ResNet-50.
     """
     return _ResNet(
         block=Bottleneck,
@@ -330,13 +326,15 @@ def resnet50(
         in_channels=in_channels,
         groups=groups,
         num_classes=num_classes,
+        imagenet_structure=imagenet_structure,
     )
 
 
 def resnet101(
     in_channels: int,
     num_classes: int,
-    groups: int,
+    groups: int = 1,
+    imagenet_structure: bool = True,
 ) -> _ResNet:
     """ResNet-101 from `Deep Residual Learning for Image Recognition
     <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -344,10 +342,12 @@ def resnet101(
     Args:
         in_channels (int): Number of input channels.
         num_classes (int): Number of classes to predict.
-        groups (int): Number of groups in convolutions.
+        groups (int): Number of groups in convolutions. Defaults to 1.
+        imagenet_structure (bool, optional): Whether to use the ImageNet
+            structure. Defaults to ``True``.
 
     Returns:
-        _PackedResNet: A ResNet-101.
+        _ResNet: A ResNet-101.
     """
     return _ResNet(
         block=Bottleneck,
@@ -355,13 +355,15 @@ def resnet101(
         in_channels=in_channels,
         groups=groups,
         num_classes=num_classes,
+        imagenet_structure=imagenet_structure,
     )
 
 
 def resnet152(
     in_channels: int,
     num_classes: int,
-    groups: int,
+    groups: int = 1,
+    imagenet_structure: bool = True,
 ) -> _ResNet:
     """ResNet-152 from `Deep Residual Learning for Image Recognition
     <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -369,15 +371,19 @@ def resnet152(
     Args:
         in_channels (int): Number of input channels.
         num_classes (int): Number of classes to predict.
-        groups (int): Number of groups in convolutions.
+        groups (int, optional): Number of groups in convolutions. Defaults to
+            ``1``.
+        imagenet_structure (bool, optional): Whether to use the ImageNet
+            structure. Defaults to ``True``.
 
     Returns:
-        _PackedResNet: A ResNet-152.
+        _ResNet: A ResNet-152.
     """
     return _ResNet(
         block=Bottleneck,
         num_blocks=[3, 8, 36, 3],
         in_channels=in_channels,
-        groups=groups,
         num_classes=num_classes,
+        groups=groups,
+        imagenet_structure=imagenet_structure,
     )

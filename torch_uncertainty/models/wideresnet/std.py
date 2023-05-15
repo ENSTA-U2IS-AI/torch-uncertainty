@@ -4,8 +4,12 @@ from typing import Type
 import torch.nn as nn
 import torch.nn.functional as F
 
-
 # fmt: on
+__all__ = [
+    "wideresnet28x10",
+]
+
+
 class WideBasicBlock(nn.Module):
     def __init__(
         self,
@@ -65,27 +69,44 @@ class _Wide(nn.Module):
         num_classes: int,
         dropout_rate: float,
         groups: int = 1,
+        imagenet_structure: bool = True,
     ):
         super().__init__()
         self.in_planes = 16
 
-        assert (depth - 4) % 6 == 0, "Wide-resnet depth should be 6n+4"
+        assert (depth - 4) % 6 == 0, "Wide-resnet depth should be 6n+4."
         num_blocks = int((depth - 4) / 6)
         k = widen_factor
 
         nStages = [16, 16 * k, 32 * k, 64 * k]
 
-        self.conv1 = nn.Conv2d(
-            in_channels,
-            nStages[0],
-            kernel_size=3,
-            stride=1,
-            padding=1,
-            groups=groups,
-            bias=True,
-        )
+        if imagenet_structure:
+            self.conv1 = nn.Conv2d(
+                in_channels,
+                nStages[0],
+                kernel_size=7,
+                stride=2,
+                padding=3,
+                groups=groups,
+                bias=True,
+            )
+        else:
+            self.conv1 = nn.Conv2d(
+                in_channels,
+                nStages[0],
+                kernel_size=3,
+                stride=1,
+                padding=1,
+                groups=groups,
+                bias=True,
+            )
 
-        self.optional_pool = nn.Identity()
+        if imagenet_structure:
+            self.optional_pool = nn.MaxPool2d(
+                kernel_size=3, stride=2, padding=1
+            )
+        else:
+            self.optional_pool = nn.Identity()
 
         self.layer1 = self._wide_layer(
             WideBasicBlock,
@@ -162,8 +183,25 @@ class _Wide(nn.Module):
 
 
 def wideresnet28x10(
-    in_channels: int, groups: int, num_classes: int
+    in_channels: int,
+    num_classes: int,
+    groups: int = 1,
+    imagenet_structure: bool = True,
 ) -> nn.Module:
+    """Wide-ResNet-28x10 from `Wide Residual Networks
+    <https://arxiv.org/pdf/1605.07146.pdf>`_.
+
+    Args:
+        in_channels (int): Number of input channels
+        num_classes (int): Number of classes to predict.
+        groups (int, optional): Number of groups in convolutions. Defaults to
+            ``1``.
+        imagenet_structure (bool, optional): Whether to use the ImageNet
+            structure. Defaults to ``True``.
+
+    Returns:
+        _Wide: A Wide-ResNet-28x10.
+    """
     return _Wide(
         depth=28,
         widen_factor=10,
@@ -171,4 +209,5 @@ def wideresnet28x10(
         dropout_rate=0.3,
         num_classes=num_classes,
         groups=groups,
+        imagenet_structure=imagenet_structure,
     )

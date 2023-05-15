@@ -37,10 +37,8 @@ class ClassificationSingle(pl.LightningModule):
     ) -> None:
         super().__init__()
 
-        # FIXME: use ValueError instead
-        assert (
-            use_logits + use_entropy
-        ) <= 1, "You cannot choose more than one OOD criterion."
+        if (use_logits + use_entropy) > 1:
+            raise ValueError("You cannot choose more than one OOD criterion.")
 
         self.num_classes = num_classes
         self.use_logits = use_logits
@@ -199,13 +197,13 @@ class ClassificationEnsemble(ClassificationSingle):
         self.use_mi = use_mi
         self.use_variation_ratio = use_variation_ratio
 
-        # FIXME: use ValueError instead
-        assert (
+        if (
             self.use_logits
             + self.use_entropy
             + self.use_mi
             + self.use_variation_ratio
-        ) <= 1, "You cannot choose more than one OOD criterion."
+        ) > 1:
+            raise ValueError("You cannot choose more than one OOD criterion.")
 
         # metrics for ensembles only
         ens_metrics = MetricCollection(

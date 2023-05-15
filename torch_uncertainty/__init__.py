@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Callable, Type, Union
 
 import pytorch_lightning as pl
+import torch
 from pytorch_lightning.callbacks import LearningRateMonitor
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint
@@ -15,7 +16,7 @@ from torchinfo import summary
 import numpy as np
 
 from .routines.classification import ClassificationSingle
-from .utils import get_version, packing
+from .utils import get_version
 
 # fmt: on
 
@@ -47,6 +48,9 @@ def main(
         in_channels=dm.num_channels,
         **vars(args),
     )
+
+    if args.channels_last:
+        model = model.to(memory_format=torch.channels_last)
 
     # logger
     tb_logger = TensorBoardLogger(
@@ -102,10 +106,27 @@ def cli_main(
     net_name: str,
 ) -> None:
     parser = ArgumentParser("torch-uncertainty")
-    parser.add_argument("--seed", type=int, default=None)
-    parser.add_argument("--test", type=int, default=None)
-    parser.add_argument("--summary", dest="summary", action="store_true")
-    parser.add_argument("--log_graph", dest="log_graph", action="store_true")
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=None,
+        help="Set the random seed to some value for reproducibility",
+    )
+    parser.add_argument(
+        "--test",
+        type=int,
+        default=None,
+        help="Test a specific version of the model. The checkpoint must be available in the logs folder.",
+    )
+    parser.add_argument(
+        "--summary", action="store_true", help="Print a summary of the model"
+    )
+    parser.add_argument("--log_graph", action="store_true")
+    parser.add_argument(
+        "--channels_last",
+        action="store_true",
+        help="Use channels last memory format",
+    )
 
     parser = pl.Trainer.add_argparse_args(parser)
     parser = datamodule.add_argparse_args(parser)

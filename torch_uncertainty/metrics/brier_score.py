@@ -6,9 +6,8 @@ import torch.nn.functional as F
 from torchmetrics import Metric
 from torchmetrics.utilities.data import dim_zero_cat
 
+
 # fmt:on
-
-
 class BrierScore(Metric):
     r"""The Brier Score Metric.
 

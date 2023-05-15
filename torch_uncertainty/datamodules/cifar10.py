@@ -10,21 +10,24 @@ from timm.data.auto_augment import rand_augment_transform
 from torch.utils.data import DataLoader, Dataset, random_split
 from torchvision.datasets import CIFAR10, SVHN
 
-from ..datasets import CIFAR10_C, AggregatedDataset
+from ..datasets import CIFAR10_C, CIFAR10_H, AggregatedDataset
 from ..transforms import Cutout
 
 
 # fmt: on
 class CIFAR10DataModule(LightningDataModule):
+    num_classes = 10
+    num_channels = 3
+
     def __init__(
         self,
         root: Union[str, Path],
         batch_size: int,
         val_split: int = 0,
         num_workers: int = 1,
-        enable_cutout: bool = False,
+        cutout: int = None,
         auto_augment: str = None,
-        use_cifar_c: str = None,
+        test_alt: str = None,
         corruption_severity: int = 1,
         num_dataloaders: int = 1,
         pin_memory: bool = True,
@@ -39,28 +42,26 @@ class CIFAR10DataModule(LightningDataModule):
         self.batch_size = batch_size
         self.val_split = val_split
         self.num_workers = num_workers
-        self.enable_cutout = enable_cutout
-        self.auto_augment = auto_augment
         self.num_dataloaders = num_dataloaders
-        self.num_classes = 10
-        self.num_channels = 3
 
         self.pin_memory = pin_memory
         self.persistent_workers = persistent_workers
 
-        if use_cifar_c is None:
-            self.dataset = CIFAR10
-        else:
+        if test_alt == "c":
             self.dataset = CIFAR10_C
+        elif test_alt == "h":
+            self.dataset = CIFAR10_H
+        else:
+            self.dataset = CIFAR10
 
-        self.use_cifar_c = use_cifar_c
+        self.test_alt = test_alt
         self.corruption_severity = corruption_severity
         self.ood_dataset = SVHN
 
-        if enable_cutout:
-            main_transform = Cutout(16)
+        if cutout:
+            main_transform = Cutout(cutout)
         elif auto_augment:
-            main_transform = rand_augment_transform(self.auto_augment, {})
+            main_transform = rand_augment_transform(auto_augment, {})
         else:
             main_transform = nn.Identity()
 
@@ -68,12 +69,12 @@ class CIFAR10DataModule(LightningDataModule):
             [
                 T.RandomCrop(32, padding=4),
                 T.RandomHorizontalFlip(),
+                main_transform,
                 T.ToTensor(),
                 T.Normalize(
                     (0.4914, 0.4822, 0.4465),
                     (0.2023, 0.1994, 0.2010),
                 ),
-                main_transform,
             ]
         )
 
@@ -88,13 +89,12 @@ class CIFAR10DataModule(LightningDataModule):
         )
 
     def prepare_data(self) -> None:
-        if self.use_cifar_c is None:
+        if self.test_alt != "c":
             self.dataset(self.root, train=True, download=True)
             self.dataset(self.root, train=False, download=True)
         else:
             self.dataset(
                 self.root,
-                subset=self.use_cifar_c,
                 severity=self.corruption_severity,
             )
 
@@ -102,9 +102,7 @@ class CIFAR10DataModule(LightningDataModule):
 
     def setup(self, stage: Optional[str] = None) -> None:
         if stage == "fit" or stage is None:
-            assert (
-                self.use_cifar_c is None
-            ), "CIFAR-C can only be used in testing."
+            assert self.test_alt != "c", "CIFAR-C can only be used in testing."
             full = self.dataset(
                 self.root,
                 train=True,
@@ -137,7 +135,6 @@ class CIFAR10DataModule(LightningDataModule):
         else:
             self.test = self.dataset(
                 self.root,
-                subset=self.use_cifar_c,
                 severity=self.corruption_severity,
                 transform=self.transform_test,
             )
@@ -163,13 +160,6 @@ class CIFAR10DataModule(LightningDataModule):
             return self._data_loader(self.train, shuffle=True)
 
     def val_dataloader(self) -> DataLoader:
-        r"""Gets the validation dataloader for CIFAR10.
-        Returns:
-            DataLoader: CIFAR10 validation dataloader.
-        """
-        return self._data_loader(self.val)
-
-    def predict_dataloader(self) -> DataLoader:
         r"""Gets the validation dataloader for CIFAR10.
         Returns:
             DataLoader: CIFAR10 validation dataloader.
@@ -208,9 +198,9 @@ class CIFAR10DataModule(LightningDataModule):
         p.add_argument("--batch_size", type=int, default=128)
         p.add_argument("--val_split", type=int, default=0)
         p.add_argument("--num_workers", type=int, default=4)
-        p.add_argument("--cutout", dest="enable_cutout", action="store_true")
+        p.add_argument("--cutout", type=int, default=0)
         p.add_argument("--auto_augment", type=str)
-        p.add_argument("--cifar-c", dest="use_cifar_c", type=str, default=None)
+        p.add_argument("--test_alt", choices=["c", "h"], default=None)
         p.add_argument(
             "--severity", dest="corruption_severity", type=int, default=None
         )

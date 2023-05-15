@@ -1,43 +1,52 @@
 # fmt: off
+from typing import Type
+
 import torch.nn as nn
 import torch.nn.functional as F
 from einops import rearrange
 
 from ...layers import PackedConv2d, PackedLinear
 
-
 # fmt: on
+__all__ = [
+    "packed_wideresnet28x10",
+]
+
+
 class WideBasicBlock(nn.Module):
     def __init__(
         self,
-        in_planes,
-        planes,
-        dropout_rate,
-        stride=1,
-        num_estimators=4,
-        gamma=1,
+        in_planes: int,
+        planes: int,
+        dropout_rate: float,
+        stride: int = 1,
+        alpha: float = 2,
+        num_estimators: int = 4,
+        gamma: int = 1,
     ):
         super().__init__()
-        self.bn1 = nn.BatchNorm2d(in_planes)
+        self.bn1 = nn.BatchNorm2d(alpha * in_planes)
         self.conv1 = PackedConv2d(
             in_planes,
             planes,
             kernel_size=3,
+            alpha=alpha,
             num_estimators=num_estimators,
+            gamma=gamma,
             padding=1,
-            groups=gamma,
             bias=False,
         )
         self.dropout = nn.Dropout(p=dropout_rate)
-        self.bn2 = nn.BatchNorm2d(planes)
+        self.bn2 = nn.BatchNorm2d(alpha * planes)
         self.conv2 = PackedConv2d(
             planes,
             planes,
             kernel_size=3,
+            alpha=alpha,
             num_estimators=num_estimators,
+            gamma=gamma,
             stride=stride,
             padding=1,
-            groups=gamma,
             bias=False,
         )
         self.shortcut = nn.Sequential()
@@ -47,9 +56,10 @@ class WideBasicBlock(nn.Module):
                     in_planes,
                     planes,
                     kernel_size=1,
+                    alpha=alpha,
                     num_estimators=num_estimators,
+                    gamma=gamma,
                     stride=stride,
-                    groups=gamma,
                     bias=True,
                 ),
             )
@@ -68,58 +78,84 @@ class _PackedWide(nn.Module):
         widen_factor: int,
         in_channels: int,
         num_classes: int,
-        num_estimators: int,
-        dropout_rate: float,
+        num_estimators: int = 4,
         alpha: int = 2,
         gamma: int = 1,
+        dropout_rate: float = 0,
+        imagenet_structure: bool = True,
     ):
         super().__init__()
         self.num_estimators = num_estimators
-        self.in_planes = 16 * alpha
+        self.in_planes = 16
 
-        assert (depth - 4) % 6 == 0, "Wide-resnet depth should be 6n+4"
-        n = (depth - 4) / 6
+        assert (depth - 4) % 6 == 0, "Wide-resnet depth should be 6n+4."
+        num_blocks = int((depth - 4) / 6)
         k = widen_factor
 
         nStages = [16, 16 * k, 32 * k, 64 * k]
 
-        self.conv1 = PackedConv2d(
-            in_channels * self.num_estimators,
-            nStages[0] * alpha,
-            kernel_size=3,
-            num_estimators=self.num_estimators,
-            stride=1,
-            padding=1,
-            groups=gamma,
-            bias=True,
-        )
+        if imagenet_structure:
+            self.conv1 = PackedConv2d(
+                in_channels,
+                nStages[0],
+                kernel_size=7,
+                alpha=alpha,
+                num_estimators=self.num_estimators,
+                stride=2,
+                padding=3,
+                gamma=1,  # No groups for the first layer
+                groups=1,
+                bias=True,
+                first=True,
+            )
+        else:
+            self.conv1 = PackedConv2d(
+                in_channels,
+                nStages[0],
+                kernel_size=3,
+                alpha=alpha,
+                num_estimators=self.num_estimators,
+                stride=1,
+                padding=1,
+                gamma=gamma,
+                bias=True,
+                first=True,
+            )
 
-        self.optional_pool = nn.Identity()
+        if imagenet_structure:
+            self.optional_pool = nn.MaxPool2d(
+                kernel_size=3, stride=2, padding=1
+            )
+        else:
+            self.optional_pool = nn.Identity()
 
         self.layer1 = self._wide_layer(
             WideBasicBlock,
-            nStages[1] * alpha,
-            n,
+            nStages[1],
+            num_blocks,
             dropout_rate,
             stride=1,
+            alpha=alpha,
             num_estimators=self.num_estimators,
             gamma=gamma,
         )
         self.layer2 = self._wide_layer(
             WideBasicBlock,
-            nStages[2] * alpha,
-            n,
+            nStages[2],
+            num_blocks,
             dropout_rate,
             stride=2,
+            alpha=alpha,
             num_estimators=self.num_estimators,
             gamma=gamma,
         )
         self.layer3 = self._wide_layer(
             WideBasicBlock,
-            nStages[3] * alpha,
-            n,
+            nStages[3],
+            num_blocks,
             dropout_rate,
             stride=2,
+            alpha=alpha,
             num_estimators=self.num_estimators,
             gamma=gamma,
         )
@@ -129,20 +165,23 @@ class _PackedWide(nn.Module):
         self.flatten = nn.Flatten(1)
 
         self.linear = PackedLinear(
-            nStages[3] * alpha,
-            num_classes * num_estimators,
-            num_estimators,
+            nStages[3],
+            num_classes,
+            alpha=alpha,
+            num_estimators=num_estimators,
+            last=True,
         )
 
     def _wide_layer(
         self,
-        block: nn.Module,
+        block: Type[WideBasicBlock],
         planes: int,
         num_blocks: int,
         dropout_rate: float,
         stride: int,
+        alpha: float,
         num_estimators: int,
-        gamma,
+        gamma: int,
     ):
         strides = [stride] + [1] * (int(num_blocks) - 1)
         layers = []
@@ -150,12 +189,13 @@ class _PackedWide(nn.Module):
         for stride in strides:
             layers.append(
                 block(
-                    self.in_planes,
-                    planes,
-                    dropout_rate,
-                    stride,
-                    num_estimators,
-                    gamma,
+                    in_planes=self.in_planes,
+                    planes=planes,
+                    dropout_rate=dropout_rate,
+                    stride=stride,
+                    alpha=alpha,
+                    num_estimators=num_estimators,
+                    gamma=gamma,
                 )
             )
             self.in_planes = planes
@@ -180,14 +220,36 @@ class _PackedWide(nn.Module):
 
 
 def packed_wideresnet28x10(
-    num_estimators: int, alpha: int, gamma: int, num_classes: int
-) -> nn.Module:
+    in_channels: int,
+    num_estimators: int,
+    alpha: int,
+    gamma: int,
+    num_classes: int,
+    imagenet_structure: bool = True,
+) -> _PackedWide:
+    """Packed-Ensembles of Wide-ResNet-28x10 from `Wide Residual Networks
+    <https://arxiv.org/pdf/1605.07146.pdf>`_.
+
+    Args:
+        in_channels (int): Number of input channels.
+        num_estimators (int): Number of estimators in the ensemble.
+        alpha (int): Expansion factor affecting the width of the estimators.
+        gamma (int): Number of groups within each estimator.
+        num_classes (int): Number of classes to predict.
+        imagenet_structure (bool, optional): Whether to use the ImageNet
+            structure. Defaults to ``True``.
+
+    Returns:
+        _PackedWide: A Packed-Ensembles Wide-ResNet-28x10.
+    """
     return _PackedWide(
+        in_channels=in_channels,
         depth=28,
         widen_factor=10,
-        dropout_rate=0.3,
         num_classes=num_classes,
+        dropout_rate=0.3,
         num_estimators=num_estimators,
         alpha=alpha,
         gamma=gamma,
+        imagenet_structure=imagenet_structure,
     )

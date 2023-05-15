@@ -6,6 +6,7 @@ repos:
       language: system
       entry: black
       types: [python]
+      exclude: ^auto_tutorials_source/
     - id: flake8
       name: flake8
       language: system
@@ -21,6 +22,7 @@ repos:
       language: system
       entry: isort
       types: [python]
+      exclude: ^auto_tutorials_source/
     - id: pytest-check
       name: pytest-check
       entry: pytest

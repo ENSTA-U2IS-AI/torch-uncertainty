@@ -1,6 +1,7 @@
 # fmt:off
 import os
 from collections import defaultdict
+from pathlib import Path
 from typing import Callable, Optional
 
 from PIL import Image
@@ -88,7 +89,7 @@ class TinyImageNet(Dataset):
         self.label_idx = 1  # from [image, id, nid, box]
         self.transform = transform
         self.target_transform = target_transform
-        self.root = root
+        self.root = Path(root)
 
         self.IMAGE_SHAPE = (64, 64, 3)
 

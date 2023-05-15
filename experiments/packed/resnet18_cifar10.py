@@ -12,7 +12,6 @@ from torch_uncertainty.optimization_procedures import optim_cifar10_resnet18
 
 if __name__ == "__main__":
     root = Path(__file__).parent.absolute().parents[1]
-    # print(root)
     cli_main(
         PackedResNet,
         CIFAR10DataModule,
