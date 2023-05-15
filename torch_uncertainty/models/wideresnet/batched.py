@@ -4,7 +4,6 @@ import torch.nn.functional as F
 
 from ...layers import BatchConv2d, BatchLinear
 
-
 # fmt: on
 __all__ = [
     "batched_wideresnet28x10",

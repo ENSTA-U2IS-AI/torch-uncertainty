@@ -7,7 +7,6 @@ from einops import rearrange
 
 from ...layers import PackedConv2d, PackedLinear
 
-
 # fmt: on
 __all__ = [
     "packed_wideresnet28x10",

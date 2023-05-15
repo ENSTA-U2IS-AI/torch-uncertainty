@@ -4,7 +4,6 @@ from typing import Type
 import torch.nn as nn
 import torch.nn.functional as F
 
-
 # fmt: on
 __all__ = [
     "wideresnet28x10",

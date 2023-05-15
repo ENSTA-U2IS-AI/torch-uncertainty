@@ -4,7 +4,6 @@ import torch.nn.functional as F
 
 from ...layers import MaskedConv2d, MaskedLinear
 
-
 # fmt: on
 __all__ = [
     "masked_wideresnet28x10",
