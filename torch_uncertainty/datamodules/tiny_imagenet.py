@@ -3,9 +3,11 @@ from argparse import ArgumentParser
 from pathlib import Path
 from typing import Any, List, Optional, Union
 
+import torch.nn as nn
 import torchvision.transforms as T
 from pytorch_lightning import LightningDataModule
-from torch.utils.data import DataLoader, Dataset, random_split
+from timm.data.auto_augment import rand_augment_transform
+from torch.utils.data import DataLoader, Dataset
 from torchvision.datasets import SVHN
 
 from ..datasets import TinyImageNet
@@ -13,11 +15,14 @@ from ..datasets import TinyImageNet
 
 # fmt: on
 class TinyImageNetDataModule(LightningDataModule):
+    num_classes = 200
+    num_channels = 3
+
     def __init__(
         self,
         root: Union[str, Path],
         batch_size: int,
-        val_split: int = 0,
+        rand_augment_opt: str = None,
         num_workers: int = 1,
         pin_memory: bool = True,
         persistent_workers: bool = True,
@@ -30,18 +35,22 @@ class TinyImageNetDataModule(LightningDataModule):
 
         self.root: Path = root
         self.batch_size = batch_size
-        self.val_split = val_split
         self.num_workers = num_workers
         self.pin_memory = pin_memory
         self.persistent_workers = persistent_workers
         self.dataset = TinyImageNet
         self.ood_dataset = SVHN
-        self.num_classes = 200
+
+        if rand_augment_opt is not None:
+            main_transform = (rand_augment_transform(rand_augment_opt, {}),)
+        else:
+            main_transform = nn.Identity()
 
         self.transform_train = T.Compose(
             [
                 T.RandomCrop(64, padding=4),
                 T.RandomHorizontalFlip(),
+                main_transform,
                 T.ToTensor(),
                 T.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
             ]
@@ -63,26 +72,20 @@ class TinyImageNetDataModule(LightningDataModule):
             )
 
     def prepare_data(self) -> None:
-        # self.dataset(self.root, split="train")
-        # self.dataset(self.root, split="val")
         self.ood_dataset(self.root, split="test", download=True)
 
     def setup(self, stage: Optional[str] = None) -> None:
         if stage == "fit" or stage is None:
-            full = self.dataset(
+            self.train = self.dataset(
                 self.root,
                 split="train",
                 transform=self.transform_train,
             )
-            self.train, self.val = random_split(
-                full, [len(full) - self.val_split, self.val_split]
+            self.val = self.dataset(
+                self.root,
+                split="val",
+                transform=self.transform_test,
             )
-            if self.val_split == 0:
-                self.val = self.dataset(
-                    self.root,
-                    split="val",
-                    transform=self.transform_test,
-                )
         if stage == "test" or stage is None:
             self.test = self.dataset(
                 self.root,
@@ -96,9 +99,17 @@ class TinyImageNetDataModule(LightningDataModule):
             )
 
     def train_dataloader(self) -> DataLoader:
+        r"""Gets the training dataloader for TinyImageNet.
+        Returns:
+            DataLoader: TinyImageNet training dataloader.
+        """
         return self._data_loader(self.train, shuffle=True)
 
     def val_dataloader(self) -> DataLoader:
+        r"""Gets the validation dataloader for TinyImageNet.
+        Returns:
+            DataLoader: TinyImageNet validation dataloader.
+        """
         return self._data_loader(self.val)
 
     def test_dataloader(self) -> List[DataLoader]:
@@ -130,6 +141,8 @@ class TinyImageNetDataModule(LightningDataModule):
         p = parent_parser.add_argument_group("datamodule")
         p.add_argument("--root", type=str, default="./data/")
         p.add_argument("--batch_size", type=int, default=256)
-        p.add_argument("--val_split", type=int, default=0)
         p.add_argument("--num_workers", type=int, default=4)
+        p.add_argument(
+            "--rand_augment", dest="rand_augment_opt", type=str, default=None
+        )
         return parent_parser
