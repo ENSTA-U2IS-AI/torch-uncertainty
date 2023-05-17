@@ -157,3 +157,10 @@ ResNet
 * Authors: *Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun*
 * Paper: `CVPR 2016 <https://arxiv.org/pdf/1512.03385.pdf>`__.
 
+Wide-ResNet
+^^^^^^^^^^^
+
+**Wide Residual Networks**
+
+* Authors: *Sergey Zagoruyko and Nikos Komodakis*
+* Paper: `BMVC 2016 <https://arxiv.org/pdf/1605.07146.pdf>`__.

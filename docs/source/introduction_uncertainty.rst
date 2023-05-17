@@ -1,7 +1,7 @@
 Introduction to Classification Uncertainty
 ==========================================
 
-Please wait while we are currently working on a tutorial and the improvement of this page...
+WORK IN PROGRESS - Please wait while we are currently working on a tutorial and the improvement of this page...
 
 Short background
 ----------------
