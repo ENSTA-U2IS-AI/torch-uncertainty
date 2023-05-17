@@ -29,7 +29,7 @@ routine, which takes as arguments:
 * a PyTorch loss such as the torch.nn.CrossEntropyLoss
 * a dictionary containing the optimization procedure, namely a scheduler and
   an optimizer. Many procedures are available at 
-  `torch_uncertainty/optimization_procedures.py < https://github.com/ENSTA-U2IS/torch-uncertainty/blob/main/torch_uncertainty/optimization_procedures.py>`_
+  `torch_uncertainty/optimization_procedures.py <https://github.com/ENSTA-U2IS/torch-uncertainty/blob/main/torch_uncertainty/optimization_procedures.py>`_
 
 * the path to the data and logs folder, in the example below, the root of the library
 * and finally, the name of your model (used for logs)
