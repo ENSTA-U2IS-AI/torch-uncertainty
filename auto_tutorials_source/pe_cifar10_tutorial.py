@@ -146,7 +146,6 @@ class PackedNet(nn.Module):
         M = 4
         alpha = 2
         gamma = 1
-        # The first layer does not use the number of estimators and gamma.
         self.conv1 = PackedConv2d(3, 6, 5, alpha=alpha, num_estimators=M, gamma=gamma, first=True)
         self.pool = nn.MaxPool2d(2, 2)
         self.conv2 = PackedConv2d(6, 16, 5, alpha=alpha, num_estimators=M, gamma=gamma)
