@@ -6,8 +6,14 @@ import numpy as np
 
 # fmt: on
 class Cutout:
-    """
-    Reference : https://github.com/quark0/darts/blob/master/cnn/utils.py
+    """Cutout augmentation class.
+
+    Args:
+        length (int): Length of the cutout square.
+        value (int): Pixel value to be filled in the cutout square.
+
+    Implementation Reference:
+        https://github.com/quark0/darts/blob/master/cnn/utils.py
     """
 
     def __init__(self, length: int, value: int = 0):

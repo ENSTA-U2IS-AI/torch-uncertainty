@@ -9,8 +9,8 @@ class ImageNetO(ImageFolder):
         self,
         root: str,
         transform: Optional[Callable] = None,
-        download: bool = False,
-        split: str = None,
+        # download: bool = False,
+        # split: str = None,
     ):
         super().__init__(root=root / Path("imagenet-o"), transform=transform)
 

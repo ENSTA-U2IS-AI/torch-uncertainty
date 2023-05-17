@@ -10,8 +10,8 @@ class ImageNetR(ImageFolder):
         root: str,
         transform: Optional[Callable] = None,
         target_transform: Optional[Callable] = None,
-        is_valid_file: Optional[Callable[[str], bool]] = None,
-        split: str = None,
+        # is_valid_file: Optional[Callable[[str], bool]] = None,
+        # split: str = None,
     ):
         super().__init__(
             root=root / Path("imagenet-r"),
