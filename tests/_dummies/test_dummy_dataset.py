@@ -1,8 +1,8 @@
 # fmt:off
 from torchvision.transforms import ToTensor
 
-from ..transforms.dummy_transform import DummyTransform
-from .dummy_dataset import DummyDataset
+from .dataset import DummyDataset
+from .transform import DummyTransform
 
 
 # fmt:on

@@ -4,7 +4,7 @@ from argparse import ArgumentParser
 from torch_uncertainty.datamodules import TinyImageNetDataModule
 from torch_uncertainty.datasets import TinyImageNet
 
-from ..datasets.dummy_dataset import DummyDataset
+from .._dummies.dataset import DummyDataset
 
 
 # fmt:on

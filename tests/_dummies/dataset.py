@@ -16,7 +16,10 @@ class DummyDataset(data.Dataset):
         train: bool = True,
         transform: Callable[..., Any] | None = None,
         target_transform: Callable[..., Any] | None = None,
-        download: bool = False,
+        num_channels: int = 3,
+        image_size: int = 32,
+        num_classes: int = 10,
+        num_images: int = 10,
         **kwargs: Any,
     ) -> None:
         """Dummy dataset for testing purposes.
@@ -30,25 +33,30 @@ class DummyDataset(data.Dataset):
                 ``transforms.RandomCrop``
             target_transform (callable, optional): A function/transform that
                 takes in the target and transforms it.
-            download (bool, optional): If True, downloads the dataset from the
-                internet and puts it in root directory. If dataset is already
-                downloaded, it is not downloaded again (unused).
+            num_channels (int, optional): Number of channels in the images.
+            image_size (int, optional): Size of the images.
+            num_classes (int, optional): Number of classes in the dataset.
+            num_images (int, optional): Number of images in the dataset.
         """
         self.root = root
         self.train = train  # training set or test set
         self.transform = transform
         self.target_transform = target_transform
-        self.download = download
 
         self.data: Any = []
         self.targets = []
 
         self.data = np.random.randint(
-            low=0, high=255, size=(10, 3, 32, 32), dtype=np.uint8
+            low=0,
+            high=255,
+            size=(num_images, num_channels, image_size, image_size),
+            dtype=np.uint8,
         )
         self.data = self.data.transpose((0, 2, 3, 1))  # convert to HWC
 
-        self.targets = torch.randint(low=0, high=10, size=(10,))
+        self.targets = torch.randint(
+            low=0, high=num_classes, size=(num_images,)
+        )
 
     def __getitem__(self, index: int) -> Tuple[Any, Any]:
         """

@@ -22,6 +22,9 @@ class Cutout:
         else:
             self.length = length
 
+        if value < 0 or value > 255:
+            raise ValueError("Cutout value must be between 0 and 255.")
+
         self.value = value
 
     def __call__(self, img: torch.Tensor):
