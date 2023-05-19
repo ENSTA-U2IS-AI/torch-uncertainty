@@ -46,13 +46,22 @@ class DummyDataset(data.Dataset):
         self.data: Any = []
         self.targets = []
 
+        if num_channels == 1:
+            shape = (num_images, image_size, image_size)
+        else:
+            shape = (num_images, num_channels, image_size, image_size)
+
         self.data = np.random.randint(
             low=0,
             high=255,
-            size=(num_images, num_channels, image_size, image_size),
+            size=shape,
             dtype=np.uint8,
         )
-        self.data = self.data.transpose((0, 2, 3, 1))  # convert to HWC
+
+        if num_channels == 1:
+            self.data = self.data.transpose((0, 1, 2))  # convert to HWC
+        else:
+            self.data = self.data.transpose((0, 2, 3, 1))  # convert to HWC
 
         self.targets = torch.randint(
             low=0, high=num_classes, size=(num_images,)

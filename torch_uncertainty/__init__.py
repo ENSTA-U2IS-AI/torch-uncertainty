@@ -18,9 +18,8 @@ import numpy as np
 from .routines.classification import ClassificationSingle
 from .utils import get_version
 
+
 # fmt: on
-
-
 def main(
     network: Type[ClassificationSingle],
     datamodule: Type[pl.LightningDataModule],
@@ -30,11 +29,18 @@ def main(
     net_name: str,
     args: Namespace,
 ) -> None:
+    if isinstance(root, str):
+        root = Path(root)
+
     if args.seed:
         pl.seed_everything(args.seed, workers=True)
 
-    if isinstance(root, str):
-        root = Path(root)
+    if args.max_epochs is None:
+        print(
+            "Setting max_epochs to 1 for testing purposes. Set max_epochs "
+            "manually to train the model."
+        )
+        args.max_epochs = 1
 
     # datamodule
     args.root = str(root / "data")

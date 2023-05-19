@@ -5,10 +5,12 @@ from pathlib import Path
 import pytorch_lightning as pl
 import torch.nn as nn
 
-from torch_uncertainty import main
+from torch_uncertainty import cli_main, main
 from torch_uncertainty.baselines.standard import ResNet
 from torch_uncertainty.datamodules import CIFAR10DataModule
 from torch_uncertainty.optimization_procedures import optim_cifar10_resnet18
+
+from ._dummies import Dummy, DummyDataModule
 
 
 # fmt: on
@@ -49,4 +51,15 @@ class TestCLI:
             root,
             "std",
             args,
+        )
+
+    def test_cli_main(self):
+        root = Path(__file__).parent.absolute().parents[0]
+        cli_main(
+            Dummy,
+            DummyDataModule,
+            nn.CrossEntropyLoss,
+            optim_cifar10_resnet18,
+            root,
+            "dummy",
         )
