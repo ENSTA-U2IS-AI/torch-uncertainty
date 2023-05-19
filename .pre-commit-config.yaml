@@ -42,3 +42,7 @@ repos:
     name: check-merge-conflict
     entry: check-merge-conflict
     language: system
+  - id: check-added-large-files
+    name: check-added-large-files
+    entry: check-added-large-files
+    language: system
