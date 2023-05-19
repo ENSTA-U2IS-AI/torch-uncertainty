@@ -23,6 +23,7 @@ timm = "^0.6.12"
 scipy = "^1.10.0"
 huggingface-hub = "^0.14.1"
 pre-commit-hooks = "^4.4.0"
+cli-test-helpers = "^3.2.0"
 
 
 [tool.poetry.group.dev.dependencies]

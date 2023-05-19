@@ -363,6 +363,18 @@ files = [
 ]
 
 [[package]]
+name = "cli-test-helpers"
+version = "3.2.0"
+description = "Useful helpers for writing tests for your Python CLI program."
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "cli-test-helpers-3.2.0.tar.gz", hash = "sha256:9c3bdfc4faae4a7340ef02321152f36ebc2012525acfb7272451c688b88a25e9"},
+    {file = "cli_test_helpers-3.2.0-py3-none-any.whl", hash = "sha256:414fa232239c6733e8843fae653b5e10bb489cf875be94e029819755194baf17"},
+]
+
+[[package]]
 name = "click"
 version = "8.1.3"
 description = "Composable command line interface toolkit"
@@ -2780,4 +2792,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.12"
-content-hash = "4c7d619116751534a4964b008ae6f0b63646e637267216da2ace74afd998ede6"
+content-hash = "3d7bcaeb2abcd7a700c28779535716830827daed3e3ab110d33b9ad8c79b0cbe"

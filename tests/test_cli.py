@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytorch_lightning as pl
 import torch.nn as nn
+from cli_test_helpers import ArgvContext
 
 from torch_uncertainty import cli_main, main
 from torch_uncertainty.baselines.standard import ResNet
@@ -55,11 +56,12 @@ class TestCLI:
 
     def test_cli_main(self):
         root = Path(__file__).parent.absolute().parents[0]
-        cli_main(
-            Dummy,
-            DummyDataModule,
-            nn.CrossEntropyLoss,
-            optim_cifar10_resnet18,
-            root,
-            "dummy",
-        )
+        with ArgvContext(""):
+            cli_main(
+                Dummy,
+                DummyDataModule,
+                nn.CrossEntropyLoss,
+                optim_cifar10_resnet18,
+                root,
+                "dummy",
+            )
