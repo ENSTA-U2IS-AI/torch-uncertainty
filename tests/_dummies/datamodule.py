@@ -27,8 +27,7 @@ class DummyDataModule(LightningDataModule):
     ) -> None:
         super().__init__()
 
-        if isinstance(root, str):
-            root = Path(root)
+        root = Path(root)
 
         self.root: Path = root
         self.batch_size = batch_size
@@ -68,7 +67,7 @@ class DummyDataModule(LightningDataModule):
                 image_size=self.image_size,
                 transform=self.transform_test,
             )
-        elif stage == "test" or stage is None:
+        elif stage == "test":
             self.test = self.dataset(
                 self.root,
                 num_channels=self.num_channels,

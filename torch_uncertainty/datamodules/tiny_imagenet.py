@@ -86,7 +86,7 @@ class TinyImageNetDataModule(LightningDataModule):
                 split="val",
                 transform=self.transform_test,
             )
-        if stage == "test" or stage is None:
+        if stage == "test":
             self.test = self.dataset(
                 self.root,
                 split="val",

@@ -119,7 +119,7 @@ class CIFAR10DataModule(LightningDataModule):
                     download=False,
                     transform=self.transform_test,
                 )
-        elif stage == "test" or stage is None:
+        elif stage == "test":
             self.test = self.dataset(
                 self.root,
                 train=False,
