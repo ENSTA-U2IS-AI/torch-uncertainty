@@ -16,6 +16,14 @@ repos:
     language: system
     entry: check-yaml
     types: [yaml]
+  - id: check-merge-conflict
+    name: check-merge-conflict
+    entry: check-merge-conflict
+    language: system
+  - id: check-added-large-files
+    name: check-added-large-files
+    entry: check-added-large-files
+    language: system
   - id: black
     name: black
     language: system
@@ -38,11 +46,3 @@ repos:
     entry: pytest
     language: system
     pass_filenames: false
-  - id: check-merge-conflict
-    name: check-merge-conflict
-    entry: check-merge-conflict
-    language: system
-  - id: check-added-large-files
-    name: check-added-large-files
-    entry: check-added-large-files
-    language: system

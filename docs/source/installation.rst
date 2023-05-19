@@ -56,7 +56,6 @@ Install the package using poetry:
     poetry install --with dev
 
 
-.. note::
-    Depending on your system, you may encounter poetry errors. If so, kill the 
-    process and add :bash:`PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring`
-    at the beginning of every :bash:`poetry install` command.
+Depending on your system, you may encounter poetry errors. If so, kill the 
+process and add :bash:`PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring`
+at the beginning of every :bash:`poetry install` command.
