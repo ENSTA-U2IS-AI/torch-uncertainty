@@ -1,6 +1,6 @@
 # fmt: off
-from argparse import Namespace
-from typing import List, Tuple, Union
+from argparse import ArgumentParser, Namespace
+from typing import Dict, List, Tuple, Union
 
 import pytorch_lightning as pl
 import torch
@@ -32,8 +32,12 @@ class ClassificationSingle(pl.LightningModule):
     def __init__(
         self,
         num_classes: int,
+        model: nn.Module = None,
+        loss: nn.Module = None,
+        optimization_procedure: Dict = None,
         use_entropy: bool = False,
         use_logits: bool = False,
+        **kwargs,
     ) -> None:
         super().__init__()
 
@@ -43,6 +47,11 @@ class ClassificationSingle(pl.LightningModule):
         self.num_classes = num_classes
         self.use_logits = use_logits
         self.use_entropy = use_entropy
+
+        # Optional parameters
+        self.model = model
+        self.loss = loss
+        self.optimization_procedure = optimization_procedure
 
         # metrics
         cls_metrics = MetricCollection(
@@ -74,12 +83,24 @@ class ClassificationSingle(pl.LightningModule):
         self.test_entropy_id = Entropy()
         self.test_entropy_ood = Entropy()
 
+    def configure_optimizers(self) -> dict:
+        if self.optimization_procedure is not None:
+            return self.optimization_procedure(self)
+        else:
+            raise NotImplementedError()
+
     @property
     def criterion(self) -> nn.Module:
-        raise NotImplementedError()
+        if self.loss is not None:
+            return self.loss()
+        else:
+            raise NotImplementedError()
 
-    def forward(self, input: torch.Tensor) -> torch.Tensor:
-        raise NotImplementedError()
+    def forward(self, input: torch.Tensor) -> torch.Tensor:  # type: ignore
+        if self.model is not None:
+            return self.model.forward(input)
+        else:
+            raise NotImplementedError()
 
     def on_train_start(self) -> None:
         # hyperparameters for performances
@@ -174,6 +195,37 @@ class ClassificationSingle(pl.LightningModule):
         )
         self.test_cls_metrics.reset()
         self.test_ood_metrics.reset()
+
+    @staticmethod
+    def add_model_specific_args(
+        parent_parser: ArgumentParser,
+    ) -> ArgumentParser:
+        """Defines the model's attributes via command-line options:
+
+        - ``--entropy``: sets :attr:`use_entropy` to ``True``.
+        - ``--logits``: sets :attr:`use_logits` to ``True``.
+        - ``--mutual_information``: sets :attr:`use_mi` to ``True``.
+        - ``--variation_ratio``: sets :attr:`use_variation_ratio` to ``True``.
+
+        Example:
+
+            .. parsed-literal::
+
+                python script.py --arch 18 --num_estimators 4 --alpha 2
+        """
+        parent_parser.add_argument(
+            "--entropy", dest="use_entropy", action="store_true"
+        )
+        parent_parser.add_argument(
+            "--logits", dest="use_logits", action="store_true"
+        )
+        parent_parser.add_argument(
+            "--mutual_information", dest="use_mi", action="store_true"
+        )
+        parent_parser.add_argument(
+            "--variation_ratio", dest="use_variation_ratio", action="store_true"
+        )
+        return parent_parser
 
 
 class ClassificationEnsemble(ClassificationSingle):
