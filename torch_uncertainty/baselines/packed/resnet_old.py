@@ -1,12 +1,10 @@
 # fmt: off
-from argparse import ArgumentParser
+from argparse import ArgumentParser, BooleanOptionalAction
 from typing import Any, Dict, Literal
 
 import torch
 import torch.nn as nn
 
-from torch_uncertainty.baselines.packed.packed import PackedBaseline
-from torch_uncertainty.baselines.resnet import ResNetBaseline
 from torch_uncertainty.models.resnet import (
     packed_resnet18,
     packed_resnet34,
@@ -59,7 +57,7 @@ weight_ids = {
 }
 
 
-class PackedResNet(ClassificationEnsemble, ResNetBaseline, PackedBaseline):
+class PackedResNet(ClassificationEnsemble):
     r"""LightningModule for Packed-Ensembles ResNet.
 
     Args:
@@ -126,17 +124,7 @@ class PackedResNet(ClassificationEnsemble, ResNetBaseline, PackedBaseline):
         pretrained: bool = False,
         **kwargs: Dict[str, Any],
     ) -> None:
-        model = archs[choices.index(arch)](
-            in_channels=in_channels,
-            num_estimators=num_estimators,
-            alpha=alpha,
-            gamma=gamma,
-            num_classes=num_classes,
-            imagenet_structure=imagenet_structure,
-        )
-        ClassificationEnsemble.__init__(
-            self=self,
-            model=model,
+        super().__init__(
             num_classes=num_classes,
             num_estimators=num_estimators,
             use_entropy=use_entropy,
@@ -144,18 +132,11 @@ class PackedResNet(ClassificationEnsemble, ResNetBaseline, PackedBaseline):
             use_mi=use_mi,
             use_variation_ratio=use_variation_ratio,
         )
-        ResNetBaseline.__init__(
-            self=self,
-            num_classes=num_classes,
-            num_estimators=num_estimators,
-            use_entropy=use_entropy,
-            use_logits=use_logits,
-            use_mi=use_mi,
-            use_variation_ratio=use_variation_ratio,
-        )
-        PackedBaseline.__init__(
-            self=self, alpha=alpha, gamma=gamma, num_estimators=num_estimators
-        )
+
+        if alpha <= 0:
+            raise ValueError(f"Attribute `alpha` should be > 0, not {alpha}")
+        if gamma < 1:
+            raise ValueError(f"Attribute `gamma` should be >= 1, not {gamma}")
 
         # construct config
         self.save_hyperparameters(ignore=["loss", "optimization_procedure"])
@@ -163,10 +144,29 @@ class PackedResNet(ClassificationEnsemble, ResNetBaseline, PackedBaseline):
         self.loss = loss
         self.optimization_procedure = optimization_procedure
 
+        self.model = archs[choices.index(arch)](
+            in_channels=in_channels,
+            num_estimators=num_estimators,
+            alpha=alpha,
+            gamma=gamma,
+            num_classes=num_classes,
+            imagenet_structure=imagenet_structure,
+        )
+
         # to log the graph
         self.example_input_array = torch.randn(1, in_channels, 32, 32)
 
         self._load(pretrained, arch, num_classes)
+
+    def configure_optimizers(self) -> dict:
+        return self.optimization_procedure(self)
+
+    @property
+    def criterion(self) -> nn.Module:
+        return self.loss()
+
+    def forward(self, input: torch.Tensor) -> torch.Tensor:  # type: ignore
+        return self.model.forward(input)
 
     def _load(self, pretrained: bool, arch: str, num_classes: int):
         if pretrained:
@@ -179,9 +179,52 @@ class PackedResNet(ClassificationEnsemble, ResNetBaseline, PackedBaseline):
     def add_model_specific_args(
         parent_parser: ArgumentParser,
     ) -> ArgumentParser:
-        parent_parser = PackedBaseline.add_model_specific_args(parent_parser)
-        parent_parser = ResNetBaseline.add_model_specific_args(parent_parser)
-        parent_parser = ClassificationEnsemble.add_model_specific_args(
-            parent_parser
+        """Defines the model's attributes via command-line options:
+
+        - ``--arch [int]``: defines :attr:`arch`. Defaults to ``18``.
+        - ``--num_estimators [int]``: defines :attr:`num_estimators`. Defaults
+          to ``1``.
+        - ``--imagenet_structure``: sets :attr:`imagenet_structure`. Defaults
+          to ``True``.
+        - ``--alpha [int]``: defines :attr:`alpha`. Defaults to ``1``.
+        - ``--gamma [int]``: defines :attr:`gamma`. Defaults to ``1``.
+        - ``--entropy``: sets :attr:`use_entropy` to ``True``.
+        - ``--logits``: sets :attr:`use_logits` to ``True``.
+        - ``--mutual_information``: sets :attr:`use_mi` to ``True``.
+        - ``--variation_ratio``: sets :attr:`use_variation_ratio` to ``True``.
+
+        Example:
+
+            .. parsed-literal::
+
+                python script.py --arch 18 --num_estimators 4 --alpha 2
+        """
+        parent_parser.add_argument(
+            "--arch",
+            type=int,
+            choices=choices,
+            required=True,
+            help=f"Type of Packed-ResNet. Choose among {choices}",
+        )
+        parent_parser.add_argument("--num_estimators", type=int, default=4)
+        parent_parser.add_argument(
+            "--imagenet_structure",
+            action=BooleanOptionalAction,
+            default=True,
+            help="Use imagenet structure",
+        )
+        parent_parser.add_argument("--alpha", type=int, default=2)
+        parent_parser.add_argument("--gamma", type=int, default=1)
+        parent_parser.add_argument(
+            "--entropy", dest="use_entropy", action="store_true"
+        )
+        parent_parser.add_argument(
+            "--logits", dest="use_logits", action="store_true"
+        )
+        parent_parser.add_argument(
+            "--mutual_information", dest="use_mi", action="store_true"
+        )
+        parent_parser.add_argument(
+            "--variation_ratio", dest="use_variation_ratio", action="store_true"
         )
         return parent_parser

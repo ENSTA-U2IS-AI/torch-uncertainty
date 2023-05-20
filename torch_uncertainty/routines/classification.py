@@ -233,6 +233,9 @@ class ClassificationEnsemble(ClassificationSingle):
         self,
         num_classes: int,
         num_estimators: int,
+        model: nn.Module = None,
+        loss: nn.Module = None,
+        optimization_procedure: Dict = None,
         use_entropy: bool = False,
         use_logits: bool = False,
         use_mi: bool = False,
@@ -240,6 +243,9 @@ class ClassificationEnsemble(ClassificationSingle):
     ) -> None:
         super().__init__(
             num_classes=num_classes,
+            model=model,
+            loss=loss,
+            optimization_procedure=optimization_procedure,
             use_entropy=use_entropy,
             use_logits=use_logits,
         )
