@@ -12,7 +12,7 @@ import numpy as np
 # fmt:on
 class CIFAR10_H(CIFAR10):
     htest_list = [["cifar-10h-probs.npy", "7b41f73eee90fdefc73bfc820ab29ba8"]]
-    cifarh_url = (
+    url = (
         "https://github.com/jcpeterson/cifar-10h/raw/master/data/"
         "cifar10h-probs.npy"
     )
@@ -20,7 +20,6 @@ class CIFAR10_H(CIFAR10):
     def __init__(
         self,
         root: str,
-        train: bool = True,
         transform: Callable[..., Any] | None = None,
         target_transform: Callable[..., Any] | None = None,
         download: bool = False,
@@ -31,8 +30,6 @@ class CIFAR10_H(CIFAR10):
             root (string): Root directory of dataset where file
                 ``cifar-10h-probs.npy`` exists or will be saved to if download
                 is set to True.
-            train (bool, optional): If True, creates dataset from training set,
-                otherwise creates from test set.
             transform (callable, optional): A function/transform that takes in
                 a PIL image and returns a transformed version. E.g,
                 ``transforms.RandomCrop``
@@ -43,20 +40,23 @@ class CIFAR10_H(CIFAR10):
                 downloaded, it is not downloaded again.
         """
 
-        super().__init__(root, train, transform, target_transform, download)
+        super().__init__(
+            root,
+            train=False,
+            transform=transform,
+            target_transform=target_transform,
+            download=download,
+        )
 
-        # Download the new targets
-        if not self._check_specific_integrity() and download:
-            download_url(
-                self.cifarh_url,
-                root,
-                filename=self.htest_list[0][0],
-                md5=self.htest_list[0][1],
-            )
-        elif not download:
+        if download:
+            self.download()
+
+        if not self._check_specific_integrity():
             raise RuntimeError(
-                "Dataset not found. You can use download=True to download it"
+                "Dataset not found or corrupted. You can use download=True to "
+                "download it."
             )
+
         self.targets = list(
             torch.as_tensor(
                 np.load(os.path.join(self.root, self.htest_list[0][0]))
@@ -69,3 +69,11 @@ class CIFAR10_H(CIFAR10):
             if not check_integrity(fpath, md5):
                 return False
         return True
+
+    def download(self) -> None:
+        download_url(
+            self.url,
+            self.root,
+            filename=self.htest_list[0][0],
+            md5=self.htest_list[0][1],
+        )

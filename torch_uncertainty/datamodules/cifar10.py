@@ -96,6 +96,7 @@ class CIFAR10DataModule(LightningDataModule):
             self.dataset(
                 self.root,
                 severity=self.corruption_severity,
+                download=True,
             )
 
         self.ood_dataset(self.root, split="test", download=True)
