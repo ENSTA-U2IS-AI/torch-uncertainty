@@ -11,7 +11,7 @@
 
 _TorchUncertainty_ is a package designed to help you leverage uncertainty quantification techniques and make your neural networks more reliable. It is based on PyTorch Lightning to handle multi-GPU training and inference and automatic logging through tensorboard.
 
-:contruction: _TorchUncertainty_ is in early development :contruction: : expect massive changes but do reach out to us and contribute if you are interested by the project!
+:construction: _TorchUncertainty_ is in early development :construction: - expect massive changes but do reach out to us and contribute if you are interested by the project!
 
 ---
 
