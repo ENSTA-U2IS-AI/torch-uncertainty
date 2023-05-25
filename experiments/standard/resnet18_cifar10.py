@@ -18,5 +18,5 @@ if __name__ == "__main__":
         nn.CrossEntropyLoss,
         optim_cifar10_resnet18,
         root,
-        "std",
+        "std-resnet18-cifar10",
     )
