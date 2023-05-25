@@ -6,7 +6,7 @@ import torch.nn as nn
 from torch_uncertainty import cli_main
 from torch_uncertainty.baselines.packed import PackedResNet
 from torch_uncertainty.datamodules import CIFAR10DataModule
-from torch_uncertainty.optimization_procedures import optim_cifar10_resnet18
+from torch_uncertainty.optimization_procedures import optim_cifar10_resnet50
 
 # fmt: on
 
@@ -16,7 +16,7 @@ if __name__ == "__main__":
         PackedResNet,
         CIFAR10DataModule,
         nn.CrossEntropyLoss,
-        optim_cifar10_resnet18,
+        optim_cifar10_resnet50,
         root,
-        "packed-resnet18-cifar10",
+        "packed-resnet50-cifar10",
     )
