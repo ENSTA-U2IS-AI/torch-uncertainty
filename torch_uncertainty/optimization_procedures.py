@@ -174,3 +174,19 @@ def optim_imagenet_resnet50_A3(
         },
         "monitor": "hp/val_acc",
     }
+
+
+def get_procedure(model_name, dm_name):
+    if model_name == "resnet18":
+        if dm_name == "cifar10":
+            return optim_cifar10_resnet18
+        elif dm_name == "cifar100":
+            return optim_cifar100_resnet18
+    elif model_name == "resnet50":
+        if dm_name == "cifar10":
+            return optim_cifar10_resnet50
+        elif dm_name == "cifar100":
+            return optim_cifar100_resnet50
+    elif model_name == "wideresnet28x10":
+        if dm_name == "cifar10" or dm_name == "cifar100":
+            return optim_cifar10_wideresnet
