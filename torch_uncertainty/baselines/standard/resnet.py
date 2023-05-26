@@ -41,20 +41,8 @@ class ResNet(ClassificationSingle):
             method.
         groups (int, optional): Number of groups in convolutions. Defaults to
             ``1``.
-        use_entropy (bool, optional): Indicates whether to use the entropy
-            values as the OOD criterion or not. Defaults to ``False``.
-        use_logits (bool, optional): Indicates whether to use the logits as the
-            OOD criterion or not. Defaults to ``False``.
         imagenet_structure (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
-
-    Note:
-        The OOD criterion is by defaults the confidence score.
-
-    Warning:
-        Make sure at most only one of :attr:`use_entropy` and :attr:`use_logits`
-        attributes is set to ``True``. Otherwise a :class:`ValueError()` will
-        be raised.
 
     Raises:
         ValueError: If :attr:`groups` :math:`<1`.
@@ -68,15 +56,12 @@ class ResNet(ClassificationSingle):
         loss: nn.Module,
         optimization_procedure: Any,
         groups: int = 1,
-        use_entropy: bool = False,
-        use_logits: bool = False,
         imagenet_structure: bool = True,
         **kwargs,
     ) -> None:
         super().__init__(
             num_classes=num_classes,
-            use_entropy=use_entropy,
-            use_logits=use_logits,
+            **kwargs,
         )
 
         self.save_hyperparameters(ignore=["loss", "optimization_procedure"])
@@ -118,15 +103,16 @@ class ResNet(ClassificationSingle):
         - ``--groups [int]``: defines :attr:`groups`. Defaults to ``1``.
         - ``--imagenet_structure``: sets :attr:`imagenet_structure`. Defaults
           to ``True``.
-        - ``--entropy``: sets :attr:`use_entropy` to ``True``.
-        - ``--logits``: sets :attr:`use_logits` to ``True``.
 
         Example:
 
             .. parsed-literal::
 
-                python script.py --arch 18 --num_estimators 4 --alpha 2
+                python script.py --groups 2 --no-imagenet_structure
         """
+        parent_parser = ClassificationSingle.add_model_specific_args(
+            parent_parser
+        )
         parent_parser.add_argument(
             "--arch",
             type=int,
@@ -140,11 +126,5 @@ class ResNet(ClassificationSingle):
             action=BooleanOptionalAction,
             default=True,
             help="Use imagenet structure",
-        )
-        parent_parser.add_argument(
-            "--entropy", dest="use_entropy", action="store_true"
-        )
-        parent_parser.add_argument(
-            "--logits", dest="use_logits", action="store_true"
         )
         return parent_parser

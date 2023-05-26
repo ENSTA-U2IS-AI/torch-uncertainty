@@ -80,23 +80,8 @@ class PackedResNet(ClassificationEnsemble):
             what expect the `LightningModule.configure_optimizers()
             <https://pytorch-lightning.readthedocs.io/en/stable/common/lightning_module.html#configure-optimizers>`_
             method.
-        use_entropy (bool, optional): Indicates whether to use the entropy
-            values as the OOD criterion or not. Defaults to ``False``.
-        use_logits (bool, optional): Indicates whether to use the logits as the
-            OOD criterion or not. Defaults to ``False``.
-        use_mi (bool, optional): Indicates whether to use the mutual
-            information as the OOD criterion or not. Defaults to ``False``.
-        use_variation_ratio (bool, optional): Indicates whether to use the
-            variation ratio as the OOD criterion or not. Defaults to ``False``.
         pretrained (bool, optional): Indicates whether to use the pretrained
             weights or not. Defaults to ``False``.
-
-    Note:
-        The OOD criterion is by defaults the confidence score.
-
-    Warning:
-        Make sure at most only one of :attr:`use_entropy`, :attr:`use_logits`,
-        :attr:`use_mi` and :attr:`use_variation_ratio` attributes is set to
         ``True``. Otherwise a :class:`ValueError()` will be raised.
 
     Raises:
@@ -116,10 +101,6 @@ class PackedResNet(ClassificationEnsemble):
         arch: Literal[18, 34, 50, 101, 152],
         loss: nn.Module,
         optimization_procedure: Any,
-        use_entropy: bool = False,
-        use_logits: bool = False,
-        use_mi: bool = False,
-        use_variation_ratio: bool = False,
         imagenet_structure: bool = True,
         pretrained: bool = False,
         **kwargs: Dict[str, Any],
@@ -127,10 +108,7 @@ class PackedResNet(ClassificationEnsemble):
         super().__init__(
             num_classes=num_classes,
             num_estimators=num_estimators,
-            use_entropy=use_entropy,
-            use_logits=use_logits,
-            use_mi=use_mi,
-            use_variation_ratio=use_variation_ratio,
+            **kwargs,
         )
 
         if alpha <= 0:
@@ -188,10 +166,6 @@ class PackedResNet(ClassificationEnsemble):
           to ``True``.
         - ``--alpha [int]``: defines :attr:`alpha`. Defaults to ``1``.
         - ``--gamma [int]``: defines :attr:`gamma`. Defaults to ``1``.
-        - ``--entropy``: sets :attr:`use_entropy` to ``True``.
-        - ``--logits``: sets :attr:`use_logits` to ``True``.
-        - ``--mutual_information``: sets :attr:`use_mi` to ``True``.
-        - ``--variation_ratio``: sets :attr:`use_variation_ratio` to ``True``.
 
         Example:
 
@@ -199,6 +173,9 @@ class PackedResNet(ClassificationEnsemble):
 
                 python script.py --arch 18 --num_estimators 4 --alpha 2
         """
+        parent_parser = ClassificationEnsemble.add_model_specific_args(
+            parent_parser
+        )
         parent_parser.add_argument(
             "--arch",
             type=int,
@@ -215,16 +192,4 @@ class PackedResNet(ClassificationEnsemble):
         )
         parent_parser.add_argument("--alpha", type=int, default=2)
         parent_parser.add_argument("--gamma", type=int, default=1)
-        parent_parser.add_argument(
-            "--entropy", dest="use_entropy", action="store_true"
-        )
-        parent_parser.add_argument(
-            "--logits", dest="use_logits", action="store_true"
-        )
-        parent_parser.add_argument(
-            "--mutual_information", dest="use_mi", action="store_true"
-        )
-        parent_parser.add_argument(
-            "--variation_ratio", dest="use_variation_ratio", action="store_true"
-        )
         return parent_parser
