@@ -345,7 +345,8 @@ class ClassificationEnsemble(ClassificationSingle):
 
         if dataloader_idx == 0:
             self.test_cls_metrics.update(
-                probs, F.one_hot(targets, num_classes=10)
+                probs,
+                targets,
             )
             self.test_ood_metrics.update(ood_values, torch.zeros_like(targets))
             self.test_entropy_id(probs)
