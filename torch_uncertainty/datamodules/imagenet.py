@@ -69,15 +69,13 @@ class ImageNetDataModule(LightningDataModule):
             print("Custom Procedure")
             train_size = train_size
             if rand_augment_opt is not None:
-                main_transform = (rand_augment_transform(rand_augment_opt, {}),)
+                main_transform = rand_augment_transform(rand_augment_opt, {})
             else:
                 main_transform = nn.Identity()
         elif self.procedure == "A3":
             print("Procedure A3")
             train_size = 160
-            main_transform = (
-                rand_augment_transform("rand-m6-mstd0.5-inc1", {}),
-            )
+            main_transform = rand_augment_transform("rand-m6-mstd0.5-inc1", {})
         else:
             raise ValueError("The procedure is unknown")
 

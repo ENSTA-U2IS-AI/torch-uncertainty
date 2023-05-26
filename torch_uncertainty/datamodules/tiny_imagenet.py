@@ -42,7 +42,7 @@ class TinyImageNetDataModule(LightningDataModule):
         self.ood_dataset = SVHN
 
         if rand_augment_opt is not None:
-            main_transform = (rand_augment_transform(rand_augment_opt, {}),)
+            main_transform = rand_augment_transform(rand_augment_opt, {})
         else:
             main_transform = nn.Identity()
 

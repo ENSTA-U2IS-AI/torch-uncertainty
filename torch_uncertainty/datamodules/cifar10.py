@@ -89,13 +89,18 @@ class CIFAR10DataModule(LightningDataModule):
         )
 
     def prepare_data(self) -> None:
-        if self.test_alt != "c":
+        if self.test_alt is None:
             self.dataset(self.root, train=True, download=True)
             self.dataset(self.root, train=False, download=True)
-        else:
+        elif self.test_alt == "c":
             self.dataset(
                 self.root,
                 severity=self.corruption_severity,
+                download=True,
+            )
+        else:
+            self.dataset(
+                self.root,
                 download=True,
             )
 
