@@ -1,6 +1,6 @@
 # fmt: off
 from argparse import ArgumentParser, Namespace
-from typing import List, Tuple, Union
+from typing import Any, List, Tuple, Union
 
 import pytorch_lightning as pl
 import torch
@@ -48,6 +48,9 @@ class ClassificationSingle(pl.LightningModule):
     def __init__(
         self,
         num_classes: int,
+        model: nn.Module,
+        loss: nn.Module,
+        optimization_procedure: Any,
         use_entropy: bool = False,
         use_logits: bool = False,
         **kwargs,
@@ -61,6 +64,12 @@ class ClassificationSingle(pl.LightningModule):
         self.use_logits = use_logits
         self.use_entropy = use_entropy
 
+        # model
+        self.model = model
+        # loss
+        self.loss = loss
+        # optimization procedure
+        self.optimization_procedure = optimization_procedure
         # metrics
         cls_metrics = MetricCollection(
             {
@@ -91,12 +100,15 @@ class ClassificationSingle(pl.LightningModule):
         self.test_entropy_id = Entropy()
         self.test_entropy_ood = Entropy()
 
+    def configure_optimizers(self) -> Any:
+        return self.optimization_procedure(self)
+
     @property
     def criterion(self) -> nn.Module:
-        raise NotImplementedError()
+        return self.loss()
 
     def forward(self, input: torch.Tensor) -> torch.Tensor:
-        raise NotImplementedError()
+        return self.model.forward(input)
 
     def on_train_start(self) -> None:
         # hyperparameters for performances
@@ -234,6 +246,9 @@ class ClassificationEnsemble(ClassificationSingle):
     def __init__(
         self,
         num_classes: int,
+        model: nn.Module,
+        loss: nn.Module,
+        optimization_procedure: Any,
         num_estimators: int,
         use_entropy: bool = False,
         use_logits: bool = False,
@@ -243,6 +258,9 @@ class ClassificationEnsemble(ClassificationSingle):
     ) -> None:
         super().__init__(
             num_classes=num_classes,
+            model=model,
+            loss=loss,
+            optimization_procedure=optimization_procedure,
             use_entropy=use_entropy,
             use_logits=use_logits,
             **kwargs,
@@ -311,7 +329,6 @@ class ClassificationEnsemble(ClassificationSingle):
     ) -> None:
         inputs, targets = batch
         logits = self.forward(inputs)
-        # logits = logits.reshape(self.num_estimators, -1, logits.size(-1))
         logits = rearrange(logits, "(n b) c -> b n c", n=self.num_estimators)
         probs_per_est = F.softmax(logits, dim=-1)
         probs = probs_per_est.mean(dim=1)
