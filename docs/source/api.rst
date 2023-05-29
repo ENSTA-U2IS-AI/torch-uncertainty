@@ -10,8 +10,8 @@ This API provides lightning-based models that can be easily trained and evaluate
 
 .. currentmodule:: torch_uncertainty.baselines
 
-Vanilla
-^^^^^^^
+Classification
+^^^^^^^^^^^^^^
 
 .. autosummary::
     :toctree: generated/
@@ -20,40 +20,6 @@ Vanilla
 
     ResNet
     WideResNet
-
-Packed-Ensembles
-^^^^^^^^^^^^^^^^
-
-.. autosummary::
-    :toctree: generated/
-    :nosignatures:
-    :template: class.rst
-
-    PackedResNet
-    PackedWideResNet
-
-Masksembles
-^^^^^^^^^^^
-
-.. autosummary::
-    :toctree: generated/
-    :nosignatures:
-    :template: class.rst
-
-    MaskedResNet
-    MaskedWideResNet
-
-BatchEnsemble
-^^^^^^^^^^^^^
-
-.. autosummary::
-    :toctree: generated/
-    :nosignatures:
-    :template: class.rst
-
-    
-    BatchedResNet
-    BatchedWideResNet
 
 Models
 ------
