@@ -19,6 +19,7 @@ from ..transforms import Cutout
 class CIFAR100DataModule(LightningDataModule):
     num_classes = 100
     num_channels = 3
+    input_shape = (3, 32, 32)
 
     def __init__(
         self,

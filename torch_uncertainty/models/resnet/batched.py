@@ -148,6 +148,7 @@ class _BatchedResNet(nn.Module):
     ):
         super().__init__()
         self.in_planes = 64 * width_multiplier
+        self.num_estimators = num_estimators
 
         self.width_multiplier = width_multiplier
         if imagenet_structure:
@@ -225,7 +226,8 @@ class _BatchedResNet(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x):
-        out = F.relu(self.bn1(self.conv1(x)))
+        out = x.repeat(self.num_estimators, 1, 1, 1)
+        out = F.relu(self.bn1(self.conv1(out)))
         out = self.optional_pool(out)
         out = self.layer1(out)
         out = self.layer2(out)

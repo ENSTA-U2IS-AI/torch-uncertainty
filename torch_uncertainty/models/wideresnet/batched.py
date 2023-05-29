@@ -173,7 +173,8 @@ class _BatchedWide(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x):
-        out = self.conv1(x)
+        out = x.repeat(self.num_estimators, 1, 1, 1)
+        out = self.conv1(out)
         out = self.optional_pool(out)
         out = self.layer1(out)
         out = self.layer2(out)

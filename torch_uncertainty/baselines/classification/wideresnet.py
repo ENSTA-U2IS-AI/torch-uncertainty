@@ -5,27 +5,11 @@ from typing import Any, Literal, Optional
 import torch.nn as nn
 from pytorch_lightning import LightningModule
 
-from torch_uncertainty.models.resnet import (
-    batched_resnet18,
-    batched_resnet34,
-    batched_resnet50,
-    batched_resnet101,
-    batched_resnet152,
-    masked_resnet18,
-    masked_resnet34,
-    masked_resnet50,
-    masked_resnet101,
-    masked_resnet152,
-    packed_resnet18,
-    packed_resnet34,
-    packed_resnet50,
-    packed_resnet101,
-    packed_resnet152,
-    resnet18,
-    resnet34,
-    resnet50,
-    resnet101,
-    resnet152,
+from torch_uncertainty.models.wideresnet import (
+    batched_wideresnet28x10,
+    masked_wideresnet28x10,
+    packed_wideresnet28x10,
+    wideresnet28x10,
 )
 from torch_uncertainty.routines.classification import (
     ClassificationEnsemble,
@@ -34,34 +18,15 @@ from torch_uncertainty.routines.classification import (
 
 
 # fmt: on
-class ResNet:
+class WideResNet:
     single = ["vanilla"]
     ensemble = ["packed", "batched", "masked"]
     versions = {
-        "vanilla": [resnet18, resnet34, resnet50, resnet101, resnet152],
-        "packed": [
-            packed_resnet18,
-            packed_resnet34,
-            packed_resnet50,
-            packed_resnet101,
-            packed_resnet152,
-        ],
-        "batched": [
-            batched_resnet18,
-            batched_resnet34,
-            batched_resnet50,
-            batched_resnet101,
-            batched_resnet152,
-        ],
-        "masked": [
-            masked_resnet18,
-            masked_resnet34,
-            masked_resnet50,
-            masked_resnet101,
-            masked_resnet152,
-        ],
+        "vanilla": [wideresnet28x10],
+        "packed": [packed_wideresnet28x10],
+        "batched": [batched_wideresnet28x10],
+        "masked": [masked_wideresnet28x10],
     }
-    archs = [18, 34, 50, 101, 152]
 
     def __new__(
         cls,
@@ -70,7 +35,6 @@ class ResNet:
         loss: nn.Module,
         optimization_procedure: Any,
         version: Literal["vanilla", "packed", "batched", "masked"],
-        arch: int,
         imagenet_structure: bool = True,
         num_estimators: Optional[int] = None,
         groups: Optional[int] = None,
@@ -84,12 +48,13 @@ class ResNet:
         pretrained: bool = False,
         **kwargs,
     ) -> LightningModule:
+        # FIXME: should be a function to avoid repetition
         params = {
             "in_channels": in_channels,
             "num_classes": num_classes,
             "imagenet_structure": imagenet_structure,
         }
-        # version specific parameters
+        # version specific params
         if version == "vanilla":
             # TODO: check parameters within a function
             if groups < 1:
@@ -112,7 +77,7 @@ class ResNet:
                     "num_estimators": num_estimators,
                     "alpha": alpha,
                     "gamma": gamma,
-                    "pretrained": pretrained,
+                    # "pretrained": pretrained,
                 }
             )
         elif version == "batched":
@@ -137,7 +102,7 @@ class ResNet:
         else:
             raise ValueError(f"Unknown version: {version}")
 
-        model = cls.versions[version][cls.archs.index(arch)](**params)
+        model = cls.versions[version][0](**params)
         kwargs.update(params)
         # routine specific parameters
         if version in cls.single:
@@ -168,14 +133,8 @@ class ResNet:
             type=str,
             choices=cls.versions.keys(),
             default="vanilla",
-            help=f"Variation of ResNet. Choose among: {cls.versions.keys()}",
-        )
-        parser.add_argument(
-            "--arch",
-            type=int,
-            choices=cls.archs,
-            default=18,
-            help=f"Architecture of ResNet. Choose among: {cls.archs}",
+            help="Variation of WideResNet. "
+            + f"Choose among: {cls.versions.keys()}",
         )
         parser.add_argument(
             "--num_estimators",
@@ -187,25 +146,25 @@ class ResNet:
             "--groups",
             type=int,
             default=1,
-            help="Number of groups for vanilla or masked resnet",
+            help="Number of groups for vanilla or masked wideresnet",
         )
         parser.add_argument(
             "--scale",
             type=float,
             default=None,
-            help="Scale for masked resnet",
+            help="Scale for masked wideresnet",
         )
         parser.add_argument(
             "--alpha",
             type=int,
             default=None,
-            help="Alpha for packed resnet",
+            help="Alpha for packed wideresnet",
         )
         parser.add_argument(
             "--gamma",
             type=int,
             default=None,
-            help="Gamma for packed resnet",
+            help="Gamma for packed wideresnet",
         )
         # FIXME: should be a str to choose among the available OOD criteria
         # rather than a boolean, but it is not possible since
