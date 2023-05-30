@@ -10,7 +10,7 @@ from torch_uncertainty.optimization_procedures import get_procedure
 
 # fmt: on
 if __name__ == "__main__":
-    root = Path(__file__).parent.absolute().parents[1]
+    root = Path(__file__).parent.absolute().parents[2]
 
     args = init_args(ResNet, CIFAR10DataModule)
 
@@ -25,7 +25,9 @@ if __name__ == "__main__":
         num_classes=dm.num_classes,
         in_channels=dm.num_channels,
         loss=nn.CrossEntropyLoss,
-        optimization_procedure=get_procedure(f"resnet{args.arch}", "cifar10"),
+        optimization_procedure=get_procedure(
+            f"resnet{args.arch}", "cifar10", args.version
+        ),
         imagenet_structure=False,
         **vars(args),
     )
