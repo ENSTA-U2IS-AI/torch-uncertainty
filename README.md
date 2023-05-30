@@ -16,6 +16,7 @@ _TorchUncertainty_ is a package designed to help you leverage uncertainty quanti
 ---
 
 This package provides a multi-level API, including:
+
 - ready-to-train baselines on research datasets, such as ImageNet and CIFAR
 - baselines available for training on your datasets
 - [pretrained weights](https://huggingface.co/torch-uncertainty) for these baselines on ImageNet and CIFAR (work in progress 🚧).
@@ -38,16 +39,24 @@ Please find the documentation at [torch-uncertainty.github.io](https://torch-unc
 
 A quickstart is available at [torch-uncertainty.github.io/quickstart](https://torch-uncertainty.github.io/quickstart.html).
 
-## Implemented baselines
+## Implemented methods
+
+### Baselines
 
 To date, the following baselines are implemented:
 
 - Deep Ensembles
+- BatchEnsemble
 - Masksembles
 - Packed-Ensembles
 
-## Tutorials
+### Post-processing methods
 
+To date, the following post-processing methods are implemented:
+
+- Temperature scaling
+
+## Tutorials
 
 ## Awesome Uncertainty repositories
 
@@ -58,10 +67,12 @@ You may find a lot of information about modern uncertainty estimation techniques
 This package also contains the official implementation of Packed-Ensembles.
 
 If you find the corresponding models interesting, please consider citing our [paper](https://arxiv.org/abs/2210.09184):
-	
-    @inproceedings{laurent2023packed,
-        title={Packed-Ensembles for Efficient Uncertainty Estimation},
-        author={Laurent, Olivier and Lafage, Adrien and Tartaglione, Enzo and Daniel, Geoffrey and Martinez, Jean-Marc and Bursuc, Andrei and Franchi, Gianni},
-        booktitle={ICLR},
-        year={2023}
-    }
+
+```text
+@inproceedings{laurent2023packed,
+    title={Packed-Ensembles for Efficient Uncertainty Estimation},
+    author={Laurent, Olivier and Lafage, Adrien and Tartaglione, Enzo and Daniel, Geoffrey and Martinez, Jean-Marc and Bursuc, Andrei and Franchi, Gianni},
+    booktitle={ICLR},
+    year={2023}
+}
+```
