@@ -245,7 +245,9 @@ def get_procedure(
         if ds_name == "cifar10" or ds_name == "cifar100":
             procedure = optim_cifar10_wideresnet
 
-    if model_name == "batch_ensemble":
-        procedure = partial(batch_ensemble_wrapper, {"procedure": procedure})
+    if model_name == "batched":
+        procedure = partial(
+            batch_ensemble_wrapper, optimization_procedure=procedure
+        )
 
     return procedure
