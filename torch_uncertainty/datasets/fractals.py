@@ -47,10 +47,6 @@ class Fractals(ImageFolder):
             root, transform=transform, target_transform=target_transform
         )
 
-        print(self.classes)
-        # print(self.samples)
-        print(len(self))
-
     def _check_integrity(self) -> bool:
         fpath = self.root / self.filename
         return check_integrity(
