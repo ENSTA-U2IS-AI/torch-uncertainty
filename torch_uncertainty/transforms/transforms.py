@@ -11,6 +11,7 @@ import numpy as np
 # fmt: on
 class AutoContrast(nn.Module):
     pixmix_max_level = None
+    level_type = None
     corruption_overlap = False
 
     def __init__(self):
@@ -24,6 +25,7 @@ class AutoContrast(nn.Module):
 
 class Equalize(nn.Module):
     pixmix_max_level = None
+    level_type = None
     corruption_overlap = False
 
     def __init__(self):
@@ -38,6 +40,7 @@ class Equalize(nn.Module):
 class Posterize(nn.Module):
     max_level = 4
     pixmix_max_level = 4
+    level_type = int
     corruption_overlap = False
 
     def __init__(self, level):
@@ -57,6 +60,7 @@ class Posterize(nn.Module):
 class Solarize(nn.Module):
     max_level = 256
     pixmix_max_level = 256
+    level_type = int
     corruption_overlap = False
 
     def __init__(self):
@@ -72,6 +76,7 @@ class Solarize(nn.Module):
 
 class Rotation(nn.Module):
     pixmix_max_level = 30
+    level_type = float
     corruption_overlap = False
 
     def __init__(
@@ -106,6 +111,7 @@ class Rotation(nn.Module):
 
 class Shear(nn.Module):
     pixmix_max_level = 0.3
+    level_type = float
     corruption_overlap = False
 
     def __init__(
@@ -143,6 +149,7 @@ class Shear(nn.Module):
 
 class Translate(nn.Module):
     pixmix_max_level = 0.45
+    level_type = float
     corruption_overlap = False
 
     def __init__(
@@ -180,6 +187,7 @@ class Translate(nn.Module):
 
 class Contrast(nn.Module):
     pixmix_max_level = 1.8
+    level_type = float
     corruption_overlap = True
 
     def __init__(self):
@@ -195,6 +203,7 @@ class Contrast(nn.Module):
 
 class Brightness(nn.Module):
     pixmix_max_level = 1.8
+    level_type = float
     corruption_overlap = True
 
     def __init__(self):
@@ -210,6 +219,7 @@ class Brightness(nn.Module):
 
 class Sharpness(nn.Module):
     pixmix_max_level = 1.8
+    level_type = float
     corruption_overlap = True
 
     def __init__(self):
@@ -225,6 +235,7 @@ class Sharpness(nn.Module):
 
 class Color(nn.Module):
     pixmix_max_level = 1.8
+    level_type = float
     corruption_overlap = True
 
     def __init__(self):
