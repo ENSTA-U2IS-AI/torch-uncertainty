@@ -3,9 +3,11 @@ from pathlib import Path
 from typing import Any, Callable, Tuple
 
 from torchvision.datasets import ImageFolder
-from torchvision.datasets.utils import check_integrity, extract_archive
-
-from torch_uncertainty.utils.drive import download_url
+from torchvision.datasets.utils import (
+    check_integrity,
+    download_file_from_google_drive,
+    extract_archive,
+)
 
 
 # fmt: on
@@ -58,14 +60,14 @@ class Fractals(ImageFolder):
         if self._check_integrity():
             print("Files already downloaded and verified")
             return
-        download_url(
-            self.root,
-            self.file_id,
-            self.filename,
+
+        download_file_from_google_drive(
+            file_id=self.file_id,
+            root=self.root,
+            filename=self.filename,
+            md5=self.tgz_md5,
         )
-        check_integrity(self.root / self.filename, self.tgz_md5)
-        archive = self.root / self.filename
-        extract_archive(archive, self.root)
+        extract_archive(self.root / self.filename, self.root)
 
     def __getitem__(self, index: int) -> Tuple[Any, Any]:
         return super().__getitem__(index)[0]
