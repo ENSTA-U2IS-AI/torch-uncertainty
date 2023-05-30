@@ -14,6 +14,10 @@ from torch_uncertainty.transforms import Cutout
 
 # fmt: on
 class MNISTDataModule(LightningDataModule):
+    num_classes = 10
+    num_channels = 1
+    input_shape = (1, 28, 28)
+
     def __init__(
         self,
         root: Union[str, Path],
