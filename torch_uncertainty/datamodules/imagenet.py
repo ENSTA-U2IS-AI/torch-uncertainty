@@ -10,13 +10,14 @@ from timm.data.auto_augment import rand_augment_transform
 from torch.utils.data import DataLoader, Dataset
 from torchvision.datasets import DTD, SVHN, ImageNet, INaturalist
 
-from ..datasets import ImageNetO, ImageNetR
+from ..datasets import ImageNetA, ImageNetO, ImageNetR
 
 
 # fmt: on
 class ImageNetDataModule(LightningDataModule):
     num_classes = 1000
     num_channels = 3
+    test_datasets = ["r", "o", "a"]
     ood_datasets = ["inaturalist", "imagenet-o", "svhn", "textures"]
 
     def __init__(
@@ -44,13 +45,16 @@ class ImageNetDataModule(LightningDataModule):
         self.pin_memory = pin_memory
         self.persistent_workers = persistent_workers
         self.ood_ds = ood_ds
+        self.test_alt = test_alt
 
         if test_alt is None:
             self.dataset = ImageNet
         elif test_alt == "r":
             self.dataset = ImageNetR
-        else:
-            raise ValueError(f"Error, {test_alt} not taken in charge.")
+        elif test_alt == "o":
+            self.dataset = ImageNetO
+        elif test_alt == "a":
+            self.dataset = ImageNetA
 
         if ood_ds == "inaturalist":
             self.ood_dataset = INaturalist
@@ -106,6 +110,12 @@ class ImageNetDataModule(LightningDataModule):
             )
 
     def prepare_data(self) -> None:
+        if self.test_alt is not None:
+            self.data = self.dataset(
+                self.root,
+                split="test",
+                download=True,
+            )
         if self.ood_ds == "inaturalist":
             self.ood = self.ood_dataset(
                 self.root,
@@ -130,6 +140,10 @@ class ImageNetDataModule(LightningDataModule):
 
     def setup(self, stage: Optional[str] = None) -> None:
         if stage == "fit" or stage is None:
+            if self.test_alt is not None:
+                raise ValueError(
+                    "The test_alt argument is not supported for training."
+                )
             self.train = self.dataset(
                 self.root,
                 split="train",
@@ -204,7 +218,7 @@ class ImageNetDataModule(LightningDataModule):
         p.add_argument("--batch_size", type=int, default=256)
         p.add_argument("--num_workers", type=int, default=4)
         p.add_argument("--ood_ds", choices=cls.ood_datasets, default="svhn")
-        p.add_argument("--test_alt", choices=["r"], default=None)
+        p.add_argument("--test_alt", choices=cls.test_datasets, default=None)
         p.add_argument("--procedure", choices=["A3"], default=None)
         p.add_argument("--train_size", type=int, default=224)
         p.add_argument(

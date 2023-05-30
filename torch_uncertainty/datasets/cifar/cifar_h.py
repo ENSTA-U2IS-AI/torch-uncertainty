@@ -20,8 +20,9 @@ class CIFAR10_H(CIFAR10):
     def __init__(
         self,
         root: str,
-        transform: Callable[..., Any] | None = None,
-        target_transform: Callable[..., Any] | None = None,
+        train: bool = None,
+        transform: Callable[..., Any] = None,
+        target_transform: Callable[..., Any] = None,
         download: bool = False,
     ) -> None:
         """`CIFAR-10H <https://github.com/jcpeterson/cifar-10h>`_ Dataset.
@@ -30,6 +31,7 @@ class CIFAR10_H(CIFAR10):
             root (string): Root directory of dataset where file
                 ``cifar-10h-probs.npy`` exists or will be saved to if download
                 is set to True.
+            train (bool, optional): For API consistency, not used.
             transform (callable, optional): A function/transform that takes in
                 a PIL image and returns a transformed version. E.g,
                 ``transforms.RandomCrop``
@@ -40,6 +42,10 @@ class CIFAR10_H(CIFAR10):
                 downloaded, it is not downloaded again.
         """
 
+        print(
+            "WARNING: CIFAR10_H cannot be used with Classification routines "
+            "for now."
+        )
         super().__init__(
             root,
             train=False,

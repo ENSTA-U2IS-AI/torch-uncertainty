@@ -9,5 +9,5 @@ class TestImageNetR:
     """Testing the ImageNetR dataset class."""
 
     def test_nodataset(self):
-        with pytest.raises(FileNotFoundError):
+        with pytest.raises(RuntimeError):
             _ = ImageNetR("./.data")
