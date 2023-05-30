@@ -14,7 +14,7 @@ if __name__ == "__main__":
 
     args = init_args(ResNet, CIFAR100DataModule)
 
-    net_name = f"{args.version}-resnet{args.arch}-cifar10"
+    net_name = f"{args.version}-resnet{args.arch}-cifar100"
 
     # datamodule
     args.root = str(root / "data")
