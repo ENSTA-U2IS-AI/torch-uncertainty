@@ -18,19 +18,33 @@ class TemperatureScaler(nn.Module):
             of modern neural networks. In ICML 2017.
 
     Note:
-        Heavily inspired by `<https://github.com/gpleiss/temperature_scaling>`_
+        Inspired by `<https://github.com/gpleiss/temperature_scaling>`_
     """
 
-    fitted = False
+    trained = False
 
-    def __init__(self, init_val: float = 1) -> None:
+    def __init__(
+        self,
+        init_val: float = 1,
+        lr: float = 0.01,
+        max_iter: int = 50,
+        device=None,
+    ) -> None:
         super().__init__()
-
+        self.device = device
         if init_val <= 0:
             raise ValueError("Initial temperature value must be positive.")
 
-        self.temperature = nn.Parameter(torch.ones(1) * init_val)
+        self.temperature = nn.Parameter(torch.ones(1) * init_val).to(device)
         self.criterion = nn.CrossEntropyLoss()
+
+        if lr <= 0:
+            raise ValueError("Learning rate must be positive.")
+        self.lr = lr
+
+        if max_iter <= 0:
+            raise ValueError("Max iterations must be positive.")
+        self.max_iter = int(max_iter)
 
     def set_temperature(self, val: float) -> None:
         """
@@ -61,14 +75,16 @@ class TemperatureScaler(nn.Module):
         labels_list = []
         with torch.no_grad():
             for input, label in val_loader:
-                input = input.cuda()
+                input = input.to(self.device)
                 logits = model(input)
                 logits_list.append(logits)
                 labels_list.append(label)
-            logits = torch.cat(logits_list).cuda()
-            labels = torch.cat(labels_list).cuda()
+            logits = torch.cat(logits_list).to(self.device)
+            labels = torch.cat(labels_list).to(self.device)
 
-        optimizer = optim.LBFGS([self.temperature], lr=0.01, max_iter=50)
+        optimizer = optim.LBFGS(
+            [self.temperature], lr=self.lr, max_iter=self.max_iter
+        )
 
         def eval() -> torch.Tensor:
             optimizer.zero_grad()
@@ -77,13 +93,14 @@ class TemperatureScaler(nn.Module):
             return loss
 
         optimizer.step(eval)
+        self.trained = True
 
         return self
 
     def forward(self, logits: torch.Tensor) -> torch.Tensor:
-        if not self.fitted:
+        if not self.trained:
             print(
-                "TemperatureScaler has not been fitted yet. Returning a "
+                "TemperatureScaler has not been trained yet. Returning a "
                 "manually tempered input."
             )
         return self._scale(logits)
