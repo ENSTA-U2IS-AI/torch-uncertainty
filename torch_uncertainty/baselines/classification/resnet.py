@@ -163,6 +163,7 @@ class ResNet:
 
     @classmethod
     def add_model_specific_args(cls, parser: ArgumentParser) -> ArgumentParser:
+        parser = ClassificationEnsemble.add_model_specific_args(parser)
         parser.add_argument(
             "--version",
             type=str,
@@ -176,12 +177,6 @@ class ResNet:
             choices=cls.archs,
             default=18,
             help=f"Architecture of ResNet. Choose among: {cls.archs}",
-        )
-        parser.add_argument(
-            "--num_estimators",
-            type=int,
-            default=None,
-            help="Number of estimators for ensemble",
         )
         parser.add_argument(
             "--groups",
@@ -207,39 +202,10 @@ class ResNet:
             default=None,
             help="Gamma for packed resnet",
         )
-        # FIXME: should be a str to choose among the available OOD criteria
-        # rather than a boolean, but it is not possible since
-        # ClassificationSingle and ClassificationEnsemble have different OOD
-        # criteria.
-        parser.add_argument(
-            "--entropy",
-            dest="use_entropy",
-            action=BooleanOptionalAction,
-            default=False,
-        )
-        parser.add_argument(
-            "--logits",
-            dest="use_logits",
-            action=BooleanOptionalAction,
-            default=False,
-        )
-        parser.add_argument(
-            "--mutual_information",
-            dest="use_mi",
-            action=BooleanOptionalAction,
-            default=False,
-        )
-        parser.add_argument(
-            "--variation_ratio",
-            dest="use_variation_ratio",
-            action=BooleanOptionalAction,
-            default=False,
-        )
         parser.add_argument(
             "--pretrained",
             dest="pretrained",
             action=BooleanOptionalAction,
             default=False,
         )
-
         return parser
