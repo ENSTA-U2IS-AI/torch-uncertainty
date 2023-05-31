@@ -1,7 +1,7 @@
 [run]
 branch = True
 include = */torch-uncertainty/*
-omit = *tests*
+omit = *tests*, */datasets/*
 
 [report]
 exclude_lines =
