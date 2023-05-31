@@ -27,6 +27,7 @@ class TestPackedBaseline:
             num_estimators=4,
             alpha=2,
             gamma=1,
+            groups=1,
         )
 
         summary(net)
@@ -48,6 +49,7 @@ class TestPackedBaseline:
                 num_estimators=4,
                 alpha=0,
                 gamma=1,
+                groups=1,
             )
 
     def test_packed_gamma_lt_1(self):
@@ -63,6 +65,7 @@ class TestPackedBaseline:
                 num_estimators=4,
                 alpha=2,
                 gamma=0,
+                groups=1,
             )
 
 
@@ -80,6 +83,7 @@ class TestPackedWideBaseline:
             num_estimators=4,
             alpha=2,
             gamma=1,
+            groups=1,
         )
 
         summary(net)

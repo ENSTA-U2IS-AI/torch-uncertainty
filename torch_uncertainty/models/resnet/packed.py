@@ -61,6 +61,7 @@ class BasicBlock(nn.Module):
         alpha: float = 2,
         num_estimators: int = 4,
         gamma: int = 1,
+        groups: int = 1,
     ):
         super(BasicBlock, self).__init__()
 
@@ -71,6 +72,7 @@ class BasicBlock(nn.Module):
             kernel_size=3,
             alpha=alpha,
             num_estimators=num_estimators,
+            groups=groups,
             stride=stride,
             padding=1,
             bias=False,
@@ -83,6 +85,7 @@ class BasicBlock(nn.Module):
             alpha=alpha,
             num_estimators=num_estimators,
             gamma=gamma,
+            groups=groups,
             stride=1,
             padding=1,
             bias=False,
@@ -99,6 +102,7 @@ class BasicBlock(nn.Module):
                     alpha=alpha,
                     num_estimators=num_estimators,
                     gamma=gamma,
+                    groups=groups,
                     stride=stride,
                     bias=False,
                 ),
@@ -124,6 +128,7 @@ class Bottleneck(nn.Module):
         alpha: float = 2,
         num_estimators: int = 4,
         gamma: int = 1,
+        groups: int = 1,
     ):
         super(Bottleneck, self).__init__()
 
@@ -134,7 +139,8 @@ class Bottleneck(nn.Module):
             kernel_size=1,
             alpha=alpha,
             num_estimators=num_estimators,
-            gamma=1,  # No groups in the first layer
+            gamma=1,  # No groups from gamma in the first layer
+            groups=groups,
             bias=False,
         )
         self.bn1 = nn.BatchNorm2d(planes * alpha)
@@ -147,7 +153,7 @@ class Bottleneck(nn.Module):
             gamma=gamma,
             stride=stride,
             padding=1,
-            groups=1,
+            groups=groups,
             bias=False,
         )
         self.bn2 = nn.BatchNorm2d(planes * alpha)
@@ -158,6 +164,7 @@ class Bottleneck(nn.Module):
             alpha=alpha,
             num_estimators=num_estimators,
             gamma=gamma,
+            groups=groups,
             bias=False,
         )
         self.bn3 = nn.BatchNorm2d(self.expansion * planes * alpha)
@@ -172,6 +179,7 @@ class Bottleneck(nn.Module):
                     alpha=alpha,
                     num_estimators=num_estimators,
                     gamma=gamma,
+                    groups=groups,
                     stride=stride,
                     bias=False,
                 ),
@@ -197,6 +205,7 @@ class _PackedResNet(nn.Module):
         num_estimators: int,
         alpha: int = 2,
         gamma: int = 1,
+        groups: int = 1,
         imagenet_structure: bool = True,
     ) -> None:
         super().__init__()
@@ -216,7 +225,7 @@ class _PackedResNet(nn.Module):
                 alpha=alpha,
                 num_estimators=num_estimators,
                 gamma=1,  # No groups for the first layer
-                groups=1,
+                groups=groups,
                 bias=False,
                 first=True,
             )
@@ -230,7 +239,7 @@ class _PackedResNet(nn.Module):
                 alpha=alpha,
                 num_estimators=num_estimators,
                 gamma=1,  # No groups for the first layer
-                groups=1,
+                groups=groups,
                 bias=False,
                 first=True,
             )
@@ -252,6 +261,7 @@ class _PackedResNet(nn.Module):
             alpha=alpha,
             num_estimators=num_estimators,
             gamma=gamma,
+            groups=groups,
         )
         self.layer2 = self._make_layer(
             block,
@@ -261,6 +271,7 @@ class _PackedResNet(nn.Module):
             alpha=alpha,
             num_estimators=num_estimators,
             gamma=gamma,
+            groups=groups,
         )
         self.layer3 = self._make_layer(
             block,
@@ -270,6 +281,7 @@ class _PackedResNet(nn.Module):
             alpha=alpha,
             num_estimators=num_estimators,
             gamma=gamma,
+            groups=groups,
         )
         self.layer4 = self._make_layer(
             block,
@@ -279,6 +291,7 @@ class _PackedResNet(nn.Module):
             alpha=alpha,
             num_estimators=num_estimators,
             gamma=gamma,
+            groups=groups,
         )
 
         self.pool = nn.AdaptiveAvgPool2d(output_size=1)
@@ -301,6 +314,7 @@ class _PackedResNet(nn.Module):
         alpha: float,
         num_estimators: int,
         gamma: int,
+        groups: int,
     ) -> nn.Module:
         strides = [stride] + [1] * (num_blocks - 1)
         layers = []
@@ -313,6 +327,7 @@ class _PackedResNet(nn.Module):
                     alpha=alpha,
                     num_estimators=num_estimators,
                     gamma=gamma,
+                    groups=groups,
                 )
             )
             self.in_planes = planes * block.expansion
@@ -342,6 +357,7 @@ def packed_resnet18(
     alpha: int,
     gamma: int,
     num_classes: int,
+    groups: int,
     imagenet_structure: bool = True,
     pretrained: bool = False,
 ) -> _PackedResNet:
@@ -365,6 +381,7 @@ def packed_resnet18(
         num_estimators=num_estimators,
         alpha=alpha,
         gamma=gamma,
+        groups=groups,
         num_classes=num_classes,
         imagenet_structure=imagenet_structure,
     )
@@ -382,6 +399,7 @@ def packed_resnet34(
     alpha: int,
     gamma: int,
     num_classes: int,
+    groups: int,
     imagenet_structure: bool = True,
     pretrained: bool = False,
 ) -> _PackedResNet:
@@ -405,6 +423,7 @@ def packed_resnet34(
         num_estimators=num_estimators,
         alpha=alpha,
         gamma=gamma,
+        groups=groups,
         num_classes=num_classes,
         imagenet_structure=imagenet_structure,
     )
@@ -422,6 +441,7 @@ def packed_resnet50(
     alpha: int,
     gamma: int,
     num_classes: int,
+    groups: int,
     imagenet_structure: bool = True,
     pretrained: bool = False,
 ) -> _PackedResNet:
@@ -445,6 +465,7 @@ def packed_resnet50(
         num_estimators=num_estimators,
         alpha=alpha,
         gamma=gamma,
+        groups=groups,
         num_classes=num_classes,
         imagenet_structure=imagenet_structure,
     )
@@ -462,6 +483,7 @@ def packed_resnet101(
     alpha: int,
     gamma: int,
     num_classes: int,
+    groups: int,
     imagenet_structure: bool = True,
     pretrained: bool = False,
 ) -> _PackedResNet:
@@ -485,6 +507,7 @@ def packed_resnet101(
         num_estimators=num_estimators,
         alpha=alpha,
         gamma=gamma,
+        groups=groups,
         num_classes=num_classes,
         imagenet_structure=imagenet_structure,
     )
@@ -502,6 +525,7 @@ def packed_resnet152(
     alpha: int,
     gamma: int,
     num_classes: int,
+    groups: int,
     imagenet_structure: bool = True,
     pretrained: bool = False,
 ) -> _PackedResNet:
@@ -527,6 +551,7 @@ def packed_resnet152(
         num_estimators=num_estimators,
         alpha=alpha,
         gamma=gamma,
+        groups=groups,
         num_classes=num_classes,
         imagenet_structure=imagenet_structure,
     )

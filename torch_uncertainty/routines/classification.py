@@ -408,14 +408,31 @@ class ClassificationEnsemble(ClassificationSingle):
         - ``--logits``: sets :attr:`use_logits` to ``True``.
         - ``--mutual_information``: sets :attr:`use_mi` to ``True``.
         - ``--variation_ratio``: sets :attr:`use_variation_ratio` to ``True``.
+        - ``--num_estimators``: sets :attr:`num_estimators`.
         """
         parent_parser = ClassificationSingle.add_model_specific_args(
             parent_parser
         )
+        # FIXME: should be a str to choose among the available OOD criteria
+        # rather than a boolean, but it is not possible since
+        # ClassificationSingle and ClassificationEnsemble have different OOD
+        # criteria.
         parent_parser.add_argument(
-            "--mutual_information", dest="use_mi", action="store_true"
+            "--mutual_information",
+            dest="use_mi",
+            action="store_true",
+            default=False,
         )
         parent_parser.add_argument(
-            "--variation_ratio", dest="use_variation_ratio", action="store_true"
+            "--variation_ratio",
+            dest="use_variation_ratio",
+            action="store_true",
+            default=False,
+        )
+        parent_parser.add_argument(
+            "--num_estimators",
+            type=int,
+            default=None,
+            help="Number of estimators for ensemble",
         )
         return parent_parser

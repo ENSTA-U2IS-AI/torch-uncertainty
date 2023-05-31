@@ -72,16 +72,30 @@ class WideResNet:
                 raise ValueError(
                     f"Attribute `gamma` should be >= 1, not {gamma}"
                 )
+            if groups < 1:
+                raise ValueError(
+                    f"Number of groups must be at least 1, not {groups}"
+                )
             params.update(
                 {
                     "num_estimators": num_estimators,
                     "alpha": alpha,
                     "gamma": gamma,
+                    "groups": groups,
                     # "pretrained": pretrained,
                 }
             )
         elif version == "batched":
-            params.update({"num_estimators": num_estimators})
+            if groups < 1:
+                raise ValueError(
+                    f"Number of groups must be at least 1, not {groups}"
+                )
+            params.update(
+                {
+                    "num_estimators": num_estimators,
+                    "groups": groups,
+                }
+            )
         elif version == "masked":
             # TODO: check parameters within a function
             if scale < 1:

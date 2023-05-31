@@ -5,6 +5,8 @@ Reference:
     Deep Residual Learning for Image Recognition. arXiv:1512.03385
 """
 # fmt: off
+from typing import List, Type, Union
+
 import torch.nn as nn
 import torch.nn.functional as F
 from torch import Tensor
@@ -30,6 +32,7 @@ class BasicBlock(nn.Module):
         planes: int,
         stride: int = 1,
         num_estimators: int = 4,
+        groups: int = 1,
     ) -> None:
         super().__init__()
         self.conv1 = BatchConv2d(
@@ -37,6 +40,7 @@ class BasicBlock(nn.Module):
             planes,
             kernel_size=3,
             num_estimators=num_estimators,
+            groups=groups,
             stride=stride,
             padding=1,
             bias=False,
@@ -47,6 +51,7 @@ class BasicBlock(nn.Module):
             planes,
             kernel_size=3,
             num_estimators=num_estimators,
+            groups=groups,
             stride=1,
             padding=1,
             bias=False,
@@ -59,6 +64,7 @@ class BasicBlock(nn.Module):
                 nn.Conv2d(
                     in_planes,
                     self.expansion * planes,
+                    groups=groups,
                     kernel_size=1,
                     stride=stride,
                     bias=False,
@@ -83,6 +89,7 @@ class Bottleneck(nn.Module):
         planes: int,
         stride: int = 1,
         num_estimators: int = 4,
+        groups: int = 1,
     ) -> None:
         super(Bottleneck, self).__init__()
         self.conv1 = BatchConv2d(
@@ -90,6 +97,7 @@ class Bottleneck(nn.Module):
             planes,
             kernel_size=1,
             num_estimators=num_estimators,
+            groups=groups,
             bias=False,
         )
         self.bn1 = nn.BatchNorm2d(planes)
@@ -98,6 +106,7 @@ class Bottleneck(nn.Module):
             planes,
             kernel_size=3,
             num_estimators=num_estimators,
+            groups=groups,
             stride=stride,
             padding=1,
             bias=False,
@@ -107,6 +116,7 @@ class Bottleneck(nn.Module):
             planes,
             self.expansion * planes,
             num_estimators=num_estimators,
+            groups=groups,
             kernel_size=1,
             bias=False,
         )
@@ -120,6 +130,7 @@ class Bottleneck(nn.Module):
                     self.expansion * planes,
                     kernel_size=1,
                     num_estimators=num_estimators,
+                    groups=groups,
                     stride=stride,
                     bias=False,
                 ),
@@ -138,10 +149,11 @@ class Bottleneck(nn.Module):
 class _BatchedResNet(nn.Module):
     def __init__(
         self,
-        block,
-        num_blocks,
+        block: Type[Union[BasicBlock, Bottleneck]],
+        num_blocks: List[int],
         in_channels: int,
-        num_estimators,
+        num_estimators: int,
+        groups: int = 1,
         num_classes=10,
         width_multiplier: int = 1,
         imagenet_structure: bool = True,
@@ -158,8 +170,9 @@ class _BatchedResNet(nn.Module):
                 kernel_size=7,
                 stride=2,
                 padding=3,
-                bias=False,
                 num_estimators=num_estimators,
+                groups=groups,
+                bias=False,
             )
         else:
             self.conv1 = BatchConv2d(
@@ -168,8 +181,9 @@ class _BatchedResNet(nn.Module):
                 kernel_size=3,
                 stride=1,
                 padding=1,
-                bias=False,
                 num_estimators=num_estimators,
+                groups=groups,
+                bias=False,
             )
         self.bn1 = nn.BatchNorm2d(64 * self.width_multiplier)
 
@@ -186,6 +200,7 @@ class _BatchedResNet(nn.Module):
             num_blocks[0],
             stride=1,
             num_estimators=num_estimators,
+            groups=groups,
         )
         self.layer2 = self._make_layer(
             block,
@@ -193,6 +208,7 @@ class _BatchedResNet(nn.Module):
             num_blocks[1],
             stride=2,
             num_estimators=num_estimators,
+            groups=groups,
         )
         self.layer3 = self._make_layer(
             block,
@@ -200,6 +216,7 @@ class _BatchedResNet(nn.Module):
             num_blocks[2],
             stride=2,
             num_estimators=num_estimators,
+            groups=groups,
         )
         self.layer4 = self._make_layer(
             block,
@@ -207,6 +224,7 @@ class _BatchedResNet(nn.Module):
             num_blocks[3],
             stride=2,
             num_estimators=num_estimators,
+            groups=groups,
         )
         self.pool = nn.AdaptiveAvgPool2d(output_size=1)
         self.flatten = nn.Flatten(1)
@@ -217,11 +235,21 @@ class _BatchedResNet(nn.Module):
             num_estimators=num_estimators,
         )
 
-    def _make_layer(self, block, planes, num_blocks, stride, num_estimators):
+    def _make_layer(
+        self,
+        block: Type[Union[BasicBlock, Bottleneck]],
+        planes: int,
+        num_blocks: int,
+        stride: int,
+        num_estimators: int,
+        groups: int,
+    ):
         strides = [stride] + [1] * (num_blocks - 1)
         layers = []
         for stride in strides:
-            layers.append(block(self.in_planes, planes, stride, num_estimators))
+            layers.append(
+                block(self.in_planes, planes, stride, num_estimators, groups)
+            )
             self.in_planes = planes * block.expansion
         return nn.Sequential(*layers)
 
@@ -242,6 +270,7 @@ class _BatchedResNet(nn.Module):
 def batched_resnet18(
     in_channels: int,
     num_estimators: int,
+    groups: int,
     num_classes: int,
     imagenet_structure: bool = True,
 ) -> _BatchedResNet:
@@ -263,6 +292,7 @@ def batched_resnet18(
         in_channels=in_channels,
         num_estimators=num_estimators,
         num_classes=num_classes,
+        groups=groups,
         imagenet_structure=imagenet_structure,
     )
 
@@ -270,6 +300,7 @@ def batched_resnet18(
 def batched_resnet34(
     in_channels: int,
     num_estimators: int,
+    groups: int,
     num_classes: int,
     imagenet_structure: bool = True,
 ) -> _BatchedResNet:
@@ -291,6 +322,7 @@ def batched_resnet34(
         in_channels=in_channels,
         num_estimators=num_estimators,
         num_classes=num_classes,
+        groups=groups,
         imagenet_structure=imagenet_structure,
     )
 
@@ -298,6 +330,7 @@ def batched_resnet34(
 def batched_resnet50(
     in_channels: int,
     num_estimators: int,
+    groups: int,
     num_classes: int,
     width_multiplier: int = 1,
     imagenet_structure: bool = True,
@@ -321,6 +354,7 @@ def batched_resnet50(
         num_estimators=num_estimators,
         num_classes=num_classes,
         width_multiplier=width_multiplier,
+        groups=groups,
         imagenet_structure=imagenet_structure,
     )
 
@@ -328,6 +362,7 @@ def batched_resnet50(
 def batched_resnet101(
     in_channels: int,
     num_estimators: int,
+    groups: int,
     num_classes: int,
     imagenet_structure: bool = True,
 ) -> _BatchedResNet:
@@ -349,6 +384,7 @@ def batched_resnet101(
         in_channels=in_channels,
         num_estimators=num_estimators,
         num_classes=num_classes,
+        groups=groups,
         imagenet_structure=imagenet_structure,
     )
 
@@ -356,6 +392,7 @@ def batched_resnet101(
 def batched_resnet152(
     in_channels: int,
     num_estimators: int,
+    groups: int,
     num_classes: int,
     imagenet_structure: bool = True,
 ) -> _BatchedResNet:
@@ -379,5 +416,6 @@ def batched_resnet152(
         in_channels=in_channels,
         num_estimators=num_estimators,
         num_classes=num_classes,
+        groups=groups,
         imagenet_structure=imagenet_structure,
     )

@@ -296,7 +296,6 @@ class BatchConv2d(nn.Module):
         self.stride = _pair(stride)
         self.padding = padding if isinstance(padding, str) else _pair(padding)
         self.dilation = _pair(dilation)
-        self.groups = groups
 
         self.conv = nn.Conv2d(
             in_channels=in_channels,

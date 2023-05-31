@@ -206,7 +206,7 @@ class MaskedLinear(nn.Module):
         self.mask = Mask1D(
             in_features, num_masks=num_estimators, scale=scale, **factory_kwargs
         )
-        self.conv1x1 = nn.Linear(
+        self.linear = nn.Linear(
             in_features=in_features,
             out_features=out_features,
             bias=bias,
@@ -214,7 +214,7 @@ class MaskedLinear(nn.Module):
         )
 
     def forward(self, input: Tensor) -> Tensor:
-        return self.conv1x1(self.mask(input))
+        return self.linear(self.mask(input))
 
 
 class MaskedConv2d(nn.Module):

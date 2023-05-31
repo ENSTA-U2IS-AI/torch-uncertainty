@@ -24,6 +24,7 @@ class TestBatchedBaseline:
             arch=18,
             imagenet_structure=False,
             num_estimators=4,
+            groups=1,
         )
 
         summary(net)

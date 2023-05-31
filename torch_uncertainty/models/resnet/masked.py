@@ -31,13 +31,13 @@ class BasicBlock(nn.Module):
     ):
         super(BasicBlock, self).__init__()
 
-        # No subgroups for the first layer
         self.conv1 = MaskedConv2d(
             in_planes,
             planes,
             kernel_size=3,
             num_estimators=num_estimators,
             scale=scale,
+            groups=groups,
             stride=stride,
             padding=1,
             bias=False,
@@ -94,13 +94,13 @@ class Bottleneck(nn.Module):
     ):
         super(Bottleneck, self).__init__()
 
-        # No subgroups for the first layer
         self.conv1 = MaskedConv2d(
             in_planes,
             planes,
             kernel_size=1,
             num_estimators=num_estimators,
             scale=scale,
+            groups=groups,
             bias=False,
         )
         self.bn1 = nn.BatchNorm2d(planes)
@@ -182,7 +182,7 @@ class _MaskedResNet(nn.Module):
                 kernel_size=7,
                 stride=2,
                 padding=3,
-                groups=1,  # No groups for the first layer
+                groups=groups,
                 bias=False,
             )
         else:
@@ -192,7 +192,7 @@ class _MaskedResNet(nn.Module):
                 kernel_size=3,
                 stride=1,
                 padding=1,
-                groups=1,
+                groups=groups,
                 bias=False,
             )
 
