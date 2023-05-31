@@ -138,12 +138,6 @@ class WideResNet:
             + f"Choose among: {cls.versions.keys()}",
         )
         parser.add_argument(
-            "--num_estimators",
-            type=int,
-            default=None,
-            help="Number of estimators for ensemble",
-        )
-        parser.add_argument(
             "--groups",
             type=int,
             default=1,
