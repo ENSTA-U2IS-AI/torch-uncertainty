@@ -176,6 +176,11 @@ class PackedConv2d(nn.Module):
 
         if alpha <= 0:
             raise ValueError(f"Attribute `alpha` should be > 0, not {alpha}")
+
+        if not isinstance(gamma, int):
+            raise ValueError(
+                f"Attribute `gamma` should be an int, not " f"{type(gamma)}"
+            )
         if gamma <= 0:
             raise ValueError(f"Attribute `gamma` should be >= 1, not {gamma}")
 
