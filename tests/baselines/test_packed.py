@@ -1,12 +1,10 @@
 # fmt:off
-from argparse import ArgumentParser
-
 import pytest
 import torch
 import torch.nn as nn
 from torchinfo import summary
 
-from torch_uncertainty.baselines.packed import PackedResNet, PackedWideResNet
+from torch_uncertainty.baselines import ResNet, WideResNet
 from torch_uncertainty.optimization_procedures import (
     optim_cifar10_resnet50,
     optim_cifar10_wideresnet,
@@ -18,20 +16,20 @@ class TestPackedBaseline:
     """Testing the PackedResNet baseline class."""
 
     def test_packed(self):
-        net = PackedResNet(
+        net = ResNet(
             num_classes=10,
-            num_estimators=4,
             in_channels=3,
-            alpha=2,
-            gamma=1,
-            arch=50,
             loss=nn.CrossEntropyLoss,
             optimization_procedure=optim_cifar10_resnet50,
+            version="packed",
+            arch=50,
             imagenet_structure=False,
+            num_estimators=4,
+            alpha=2,
+            gamma=1,
+            groups=1,
         )
-        parser = ArgumentParser("torch-uncertainty-test")
-        parser = net.add_model_specific_args(parser)
-        parser.parse_args(["--arch", "50", "--no-imagenet_structure"])
+
         summary(net)
 
         _ = net.criterion
@@ -40,28 +38,34 @@ class TestPackedBaseline:
 
     def test_packed_alpha_lt_0(self):
         with pytest.raises(Exception):
-            _ = PackedResNet(
+            _ = ResNet(
                 num_classes=10,
-                num_estimators=4,
                 in_channels=3,
-                alpha=0,
-                gamma=1,
-                arch=50,
                 loss=nn.CrossEntropyLoss,
                 optimization_procedure=optim_cifar10_resnet50,
+                version="packed",
+                arch=50,
+                imagenet_structure=False,
+                num_estimators=4,
+                alpha=0,
+                gamma=1,
+                groups=1,
             )
 
     def test_packed_gamma_lt_1(self):
         with pytest.raises(Exception):
-            _ = PackedResNet(
+            _ = ResNet(
                 num_classes=10,
-                num_estimators=4,
                 in_channels=3,
-                alpha=2,
-                gamma=0,
-                arch=50,
                 loss=nn.CrossEntropyLoss,
                 optimization_procedure=optim_cifar10_resnet50,
+                version="packed",
+                arch=50,
+                imagenet_structure=False,
+                num_estimators=4,
+                alpha=2,
+                gamma=0,
+                groups=1,
             )
 
 
@@ -69,19 +73,19 @@ class TestPackedWideBaseline:
     """Testing the PackedWideResNet baseline class."""
 
     def test_packed(self):
-        net = PackedWideResNet(
+        net = WideResNet(
             num_classes=10,
-            num_estimators=4,
             in_channels=3,
-            alpha=2,
-            gamma=1,
             loss=nn.CrossEntropyLoss,
             optimization_procedure=optim_cifar10_wideresnet,
+            version="packed",
             imagenet_structure=False,
+            num_estimators=4,
+            alpha=2,
+            gamma=1,
+            groups=1,
         )
-        parser = ArgumentParser("torch-uncertainty-test")
-        parser = net.add_model_specific_args(parser)
-        parser.parse_args(["--no-imagenet_structure"])
+
         summary(net)
 
         _ = net.criterion

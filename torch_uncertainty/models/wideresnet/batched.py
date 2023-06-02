@@ -18,6 +18,7 @@ class WideBasicBlock(nn.Module):
         dropout_rate,
         stride=1,
         num_estimators=4,
+        groups: int = 1,
     ):
         super().__init__()
         self.bn1 = nn.BatchNorm2d(in_planes)
@@ -26,6 +27,7 @@ class WideBasicBlock(nn.Module):
             planes,
             kernel_size=3,
             num_estimators=num_estimators,
+            groups=groups,
             padding=1,
             bias=False,
         )
@@ -36,6 +38,7 @@ class WideBasicBlock(nn.Module):
             planes,
             kernel_size=3,
             num_estimators=num_estimators,
+            groups=groups,
             stride=stride,
             padding=1,
             bias=False,
@@ -48,6 +51,7 @@ class WideBasicBlock(nn.Module):
                     planes,
                     kernel_size=1,
                     num_estimators=num_estimators,
+                    groups=groups,
                     stride=stride,
                     bias=True,
                 ),
@@ -68,9 +72,10 @@ class _BatchedWide(nn.Module):
         in_channels: int,
         num_classes: int,
         num_estimators: int,
+        groups: int = 1,
         dropout_rate: float = 0.0,
         imagenet_structure: bool = True,
-    ):
+    ) -> None:
         super().__init__()
         self.num_estimators = num_estimators
         self.in_planes = 16
@@ -86,22 +91,22 @@ class _BatchedWide(nn.Module):
                 in_channels,
                 nStages[0],
                 num_estimators=self.num_estimators,
+                groups=groups,
                 kernel_size=7,
                 stride=2,
                 padding=3,
                 bias=True,
-                groups=1,
             )
         else:
             self.conv1 = BatchConv2d(
                 in_channels,
                 nStages[0],
                 num_estimators=self.num_estimators,
+                groups=groups,
                 kernel_size=3,
                 stride=1,
                 padding=1,
                 bias=True,
-                groups=1,
             )
 
         if imagenet_structure:
@@ -118,6 +123,7 @@ class _BatchedWide(nn.Module):
             dropout_rate,
             stride=1,
             num_estimators=self.num_estimators,
+            groups=groups,
         )
         self.layer2 = self._wide_layer(
             WideBasicBlock,
@@ -126,6 +132,7 @@ class _BatchedWide(nn.Module):
             dropout_rate,
             stride=2,
             num_estimators=self.num_estimators,
+            groups=groups,
         )
         self.layer3 = self._wide_layer(
             WideBasicBlock,
@@ -134,6 +141,7 @@ class _BatchedWide(nn.Module):
             dropout_rate,
             stride=2,
             num_estimators=self.num_estimators,
+            groups=groups,
         )
         self.bn1 = nn.BatchNorm2d(nStages[3])
 
@@ -154,6 +162,7 @@ class _BatchedWide(nn.Module):
         dropout_rate: float,
         stride: int,
         num_estimators: int,
+        groups: int,
     ):
         strides = [stride] + [1] * (int(num_blocks) - 1)
         layers = []
@@ -161,11 +170,12 @@ class _BatchedWide(nn.Module):
         for stride in strides:
             layers.append(
                 block(
-                    self.in_planes,
-                    planes,
-                    dropout_rate,
-                    stride,
-                    num_estimators,
+                    in_planes=self.in_planes,
+                    planes=planes,
+                    dropout_rate=dropout_rate,
+                    stride=stride,
+                    num_estimators=num_estimators,
+                    groups=groups,
                 )
             )
             self.in_planes = planes
@@ -173,7 +183,8 @@ class _BatchedWide(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x):
-        out = self.conv1(x)
+        out = x.repeat(self.num_estimators, 1, 1, 1)
+        out = self.conv1(out)
         out = self.optional_pool(out)
         out = self.layer1(out)
         out = self.layer2(out)
@@ -190,6 +201,7 @@ class _BatchedWide(nn.Module):
 def batched_wideresnet28x10(
     in_channels: int,
     num_estimators: int,
+    groups: int,
     num_classes: int,
     imagenet_structure: bool = True,
 ) -> _BatchedWide:
@@ -213,5 +225,6 @@ def batched_wideresnet28x10(
         dropout_rate=0.3,
         num_classes=num_classes,
         num_estimators=num_estimators,
+        groups=groups,
         imagenet_structure=imagenet_structure,
     )

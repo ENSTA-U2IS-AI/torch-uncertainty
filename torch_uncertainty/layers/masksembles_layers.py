@@ -203,10 +203,13 @@ class MaskedLinear(nn.Module):
         factory_kwargs = {"device": device, "dtype": dtype}
         super().__init__()
 
+        if scale < 1:
+            raise ValueError(f"Attribute `scale` should be >= 1, not {scale}.")
+
         self.mask = Mask1D(
             in_features, num_masks=num_estimators, scale=scale, **factory_kwargs
         )
-        self.conv1x1 = nn.Linear(
+        self.linear = nn.Linear(
             in_features=in_features,
             out_features=out_features,
             bias=bias,
@@ -214,7 +217,7 @@ class MaskedLinear(nn.Module):
         )
 
     def forward(self, input: Tensor) -> Tensor:
-        return self.conv1x1(self.mask(input))
+        return self.linear(self.mask(input))
 
 
 class MaskedConv2d(nn.Module):
@@ -263,6 +266,9 @@ class MaskedConv2d(nn.Module):
     ) -> None:
         factory_kwargs = {"device": device, "dtype": dtype}
         super().__init__()
+
+        if scale < 1:
+            raise ValueError(f"Attribute `scale` should be >= 1, not {scale}.")
 
         self.mask = Mask2D(
             in_channels, num_masks=num_estimators, scale=scale, **factory_kwargs

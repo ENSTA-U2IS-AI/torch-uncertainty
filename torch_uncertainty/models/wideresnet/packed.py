@@ -23,6 +23,7 @@ class WideBasicBlock(nn.Module):
         alpha: float = 2,
         num_estimators: int = 4,
         gamma: int = 1,
+        groups: int = 1,
     ):
         super().__init__()
         self.bn1 = nn.BatchNorm2d(alpha * in_planes)
@@ -33,6 +34,7 @@ class WideBasicBlock(nn.Module):
             alpha=alpha,
             num_estimators=num_estimators,
             gamma=gamma,
+            groups=groups,
             padding=1,
             bias=False,
         )
@@ -45,6 +47,7 @@ class WideBasicBlock(nn.Module):
             alpha=alpha,
             num_estimators=num_estimators,
             gamma=gamma,
+            groups=groups,
             stride=stride,
             padding=1,
             bias=False,
@@ -59,6 +62,7 @@ class WideBasicBlock(nn.Module):
                     alpha=alpha,
                     num_estimators=num_estimators,
                     gamma=gamma,
+                    groups=groups,
                     stride=stride,
                     bias=True,
                 ),
@@ -81,6 +85,7 @@ class _PackedWide(nn.Module):
         num_estimators: int = 4,
         alpha: int = 2,
         gamma: int = 1,
+        groups: int = 1,
         dropout_rate: float = 0,
         imagenet_structure: bool = True,
     ):
@@ -104,7 +109,7 @@ class _PackedWide(nn.Module):
                 stride=2,
                 padding=3,
                 gamma=1,  # No groups for the first layer
-                groups=1,
+                groups=groups,
                 bias=True,
                 first=True,
             )
@@ -118,6 +123,7 @@ class _PackedWide(nn.Module):
                 stride=1,
                 padding=1,
                 gamma=gamma,
+                groups=groups,
                 bias=True,
                 first=True,
             )
@@ -138,6 +144,7 @@ class _PackedWide(nn.Module):
             alpha=alpha,
             num_estimators=self.num_estimators,
             gamma=gamma,
+            groups=groups,
         )
         self.layer2 = self._wide_layer(
             WideBasicBlock,
@@ -148,6 +155,7 @@ class _PackedWide(nn.Module):
             alpha=alpha,
             num_estimators=self.num_estimators,
             gamma=gamma,
+            groups=groups,
         )
         self.layer3 = self._wide_layer(
             WideBasicBlock,
@@ -158,6 +166,7 @@ class _PackedWide(nn.Module):
             alpha=alpha,
             num_estimators=self.num_estimators,
             gamma=gamma,
+            groups=groups,
         )
         self.bn1 = nn.BatchNorm2d(nStages[3] * alpha, momentum=0.9)
 
@@ -182,6 +191,7 @@ class _PackedWide(nn.Module):
         alpha: float,
         num_estimators: int,
         gamma: int,
+        groups: int,
     ):
         strides = [stride] + [1] * (int(num_blocks) - 1)
         layers = []
@@ -196,6 +206,7 @@ class _PackedWide(nn.Module):
                     alpha=alpha,
                     num_estimators=num_estimators,
                     gamma=gamma,
+                    groups=groups,
                 )
             )
             self.in_planes = planes
@@ -224,6 +235,7 @@ def packed_wideresnet28x10(
     num_estimators: int,
     alpha: int,
     gamma: int,
+    groups: int,
     num_classes: int,
     imagenet_structure: bool = True,
 ) -> _PackedWide:
@@ -251,5 +263,6 @@ def packed_wideresnet28x10(
         num_estimators=num_estimators,
         alpha=alpha,
         gamma=gamma,
+        groups=groups,
         imagenet_structure=imagenet_structure,
     )

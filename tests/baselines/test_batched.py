@@ -1,11 +1,9 @@
 # fmt:off
-from argparse import ArgumentParser
-
 import torch
 import torch.nn as nn
 from torchinfo import summary
 
-from torch_uncertainty.baselines.batched import BatchedResNet, BatchedWideResNet
+from torch_uncertainty.baselines import ResNet, WideResNet
 from torch_uncertainty.optimization_procedures import (
     optim_cifar10_wideresnet,
     optim_cifar100_resnet50,
@@ -17,18 +15,18 @@ class TestBatchedBaseline:
     """Testing the BatchedResNet baseline class."""
 
     def test_batched(self):
-        net = BatchedResNet(
-            arch=18,
-            in_channels=3,
+        net = ResNet(
             num_classes=10,
-            num_estimators=4,
+            in_channels=3,
             loss=nn.CrossEntropyLoss,
             optimization_procedure=optim_cifar100_resnet50,
+            version="batched",
+            arch=18,
             imagenet_structure=False,
+            num_estimators=4,
+            groups=1,
         )
-        parser = ArgumentParser("torch-uncertainty-test")
-        parser = net.add_model_specific_args(parser)
-        parser.parse_args(["--no-imagenet_structure"])
+
         summary(net)
 
         _ = net.criterion
@@ -40,19 +38,17 @@ class TestBatchedWideBaseline:
     """Testing the BatchedWideResNet baseline class."""
 
     def test_batched(self):
-        net = BatchedWideResNet(
-            arch=18,
+        net = WideResNet(
             num_classes=10,
-            num_estimators=4,
             in_channels=3,
-            groups=1,
             loss=nn.CrossEntropyLoss,
             optimization_procedure=optim_cifar10_wideresnet,
+            version="batched",
             imagenet_structure=False,
+            num_estimators=4,
+            groups=1,
         )
-        parser = ArgumentParser("torch-uncertainty-test")
-        parser = net.add_model_specific_args(parser)
-        parser.parse_args(["--no-imagenet_structure"])
+
         summary(net)
 
         _ = net.criterion

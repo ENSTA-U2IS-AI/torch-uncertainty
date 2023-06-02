@@ -1,4 +1,7 @@
 # fmt: off
+from functools import partial
+from typing import Callable
+
 import torch.nn as nn
 import torch.optim as optim
 from timm.optim import Lamb
@@ -83,7 +86,7 @@ def optim_cifar100_resnet18(model: nn.Module) -> dict:
     return {"optimizer": optimizer, "lr_scheduler": scheduler}
 
 
-def optim_cifar100_resnet50(model: nn.Module, adam: bool = False) -> dict:
+def optim_cifar100_resnet50(model: nn.Module) -> dict:
     r"""Hyperparameters from Deep Residual Learning for Image Recognition
     https://arxiv.org/pdf/1512.03385.pdf
     """
@@ -104,7 +107,7 @@ def optim_cifar100_resnet50(model: nn.Module, adam: bool = False) -> dict:
 
 def optim_imagenet_resnet50(
     model: nn.Module,
-    n_epochs: int = 90,
+    num_epochs: int = 90,
     start_lr: float = 0.256,
     end_lr: float = 0,
 ) -> dict:
@@ -119,7 +122,7 @@ def optim_imagenet_resnet50(
         nesterov=False,
     )
     scheduler = optim.lr_scheduler.CosineAnnealingLR(
-        optimizer, n_epochs, eta_min=end_lr
+        optimizer, num_epochs, eta_min=end_lr
     )
     return {
         "optimizer": optimizer,
@@ -176,17 +179,75 @@ def optim_imagenet_resnet50_A3(
     }
 
 
-def get_procedure(model_name, dm_name):
-    if model_name == "resnet18":
-        if dm_name == "cifar10":
-            return optim_cifar10_resnet18
-        elif dm_name == "cifar100":
-            return optim_cifar100_resnet18
-    elif model_name == "resnet50":
-        if dm_name == "cifar10":
-            return optim_cifar10_resnet50
-        elif dm_name == "cifar100":
-            return optim_cifar100_resnet50
-    elif model_name == "wideresnet28x10":
-        if dm_name == "cifar10" or dm_name == "cifar100":
-            return optim_cifar10_wideresnet
+def batch_ensemble_wrapper(model: nn.Module, optimization_procedure: Callable):
+    procedure = optimization_procedure(model)
+    param_optimizer = procedure["optimizer"]
+    scheduler = procedure["lr_scheduler"]
+
+    weight_decay = param_optimizer.defaults["weight_decay"]
+    lr = param_optimizer.defaults["lr"]
+    momentum = param_optimizer.defaults["momentum"]
+
+    name_list = ["R", "S"]
+    params_multi_tmp = list(
+        filter(
+            lambda kv: (name_list[0] in kv[0]) or (name_list[1] in kv[0]),
+            model.named_parameters(),
+        )
+    )
+    param_core_tmp = list(
+        filter(
+            lambda kv: (name_list[0] not in kv[0])
+            and (name_list[1] not in kv[0]),
+            model.named_parameters(),
+        )
+    )
+
+    params_multi = [param for _, param in params_multi_tmp]
+    param_core = [param for _, param in param_core_tmp]
+    optimizer = optim.SGD(
+        [
+            {"params": param_core, "weight_decay": weight_decay},
+            {"params": params_multi, "weight_decay": 0.0},
+        ],
+        lr=lr,
+        momentum=momentum,
+    )
+
+    scheduler.optimizer = optimizer
+    return {"optimizer": optimizer, "lr_scheduler": scheduler}
+
+
+def get_procedure(
+    arch_name: str, ds_name: str, model_name: str = ""
+) -> Callable:
+    """Get the optimization procedure for a given architecture and dataset.
+
+    Args:
+        arch_name (str): The name of the architecture.
+        ds_name (str): The name of the dataset.
+        model_name (str, optional): The name of the model. Defaults to "".
+
+    Returns:
+        callable: The optimization procedure.
+    """
+    if arch_name == "resnet18":
+        if ds_name == "cifar10":
+            procedure = optim_cifar10_resnet18
+        elif ds_name == "cifar100":
+            procedure = optim_cifar100_resnet18
+    elif arch_name == "resnet50":
+        if ds_name == "cifar10":
+            procedure = optim_cifar10_resnet50
+        elif ds_name == "cifar100":
+            procedure = optim_cifar100_resnet50
+    elif arch_name == "wideresnet28x10":
+        if ds_name == "cifar10" or ds_name == "cifar100":
+            procedure = optim_cifar10_wideresnet
+
+    if model_name == "batched":
+        procedure = partial(
+            batch_ensemble_wrapper, optimization_procedure=procedure
+        )
+
+    return procedure

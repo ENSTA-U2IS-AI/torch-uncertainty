@@ -7,6 +7,7 @@ from einops import rearrange
 from torch import Tensor
 
 from ...layers import PackedConv2d, PackedLinear
+from ...utils import load_hf
 
 # fmt: on
 __all__ = [
@@ -16,6 +17,37 @@ __all__ = [
     "packed_resnet101",
     "packed_resnet152",
 ]
+
+weight_ids = {
+    "10": {
+        "18": None,
+        "32": None,
+        "50": "pe_resnet50_c10",
+        "101": None,
+        "152": None,
+    },
+    "100": {
+        "18": None,
+        "32": None,
+        "50": "pe_resnet50_c100",
+        "101": None,
+        "152": None,
+    },
+    "1000": {
+        "18": None,
+        "32": None,
+        "50": "pe_resnet50_in1k",
+        "101": None,
+        "152": None,
+    },
+    "1000_wider": {
+        "18": None,
+        "32": None,
+        "50": "pex4_resnet50",
+        "101": None,
+        "152": None,
+    },
+}
 
 
 class BasicBlock(nn.Module):
@@ -29,6 +61,7 @@ class BasicBlock(nn.Module):
         alpha: float = 2,
         num_estimators: int = 4,
         gamma: int = 1,
+        groups: int = 1,
     ):
         super(BasicBlock, self).__init__()
 
@@ -39,6 +72,7 @@ class BasicBlock(nn.Module):
             kernel_size=3,
             alpha=alpha,
             num_estimators=num_estimators,
+            groups=groups,
             stride=stride,
             padding=1,
             bias=False,
@@ -51,6 +85,7 @@ class BasicBlock(nn.Module):
             alpha=alpha,
             num_estimators=num_estimators,
             gamma=gamma,
+            groups=groups,
             stride=1,
             padding=1,
             bias=False,
@@ -67,6 +102,7 @@ class BasicBlock(nn.Module):
                     alpha=alpha,
                     num_estimators=num_estimators,
                     gamma=gamma,
+                    groups=groups,
                     stride=stride,
                     bias=False,
                 ),
@@ -92,6 +128,7 @@ class Bottleneck(nn.Module):
         alpha: float = 2,
         num_estimators: int = 4,
         gamma: int = 1,
+        groups: int = 1,
     ):
         super(Bottleneck, self).__init__()
 
@@ -102,7 +139,8 @@ class Bottleneck(nn.Module):
             kernel_size=1,
             alpha=alpha,
             num_estimators=num_estimators,
-            gamma=1,  # No groups in the first layer
+            gamma=1,  # No groups from gamma in the first layer
+            groups=groups,
             bias=False,
         )
         self.bn1 = nn.BatchNorm2d(planes * alpha)
@@ -115,7 +153,7 @@ class Bottleneck(nn.Module):
             gamma=gamma,
             stride=stride,
             padding=1,
-            groups=1,
+            groups=groups,
             bias=False,
         )
         self.bn2 = nn.BatchNorm2d(planes * alpha)
@@ -126,6 +164,7 @@ class Bottleneck(nn.Module):
             alpha=alpha,
             num_estimators=num_estimators,
             gamma=gamma,
+            groups=groups,
             bias=False,
         )
         self.bn3 = nn.BatchNorm2d(self.expansion * planes * alpha)
@@ -140,6 +179,7 @@ class Bottleneck(nn.Module):
                     alpha=alpha,
                     num_estimators=num_estimators,
                     gamma=gamma,
+                    groups=groups,
                     stride=stride,
                     bias=False,
                 ),
@@ -165,6 +205,7 @@ class _PackedResNet(nn.Module):
         num_estimators: int,
         alpha: int = 2,
         gamma: int = 1,
+        groups: int = 1,
         imagenet_structure: bool = True,
     ) -> None:
         super().__init__()
@@ -184,7 +225,7 @@ class _PackedResNet(nn.Module):
                 alpha=alpha,
                 num_estimators=num_estimators,
                 gamma=1,  # No groups for the first layer
-                groups=1,
+                groups=groups,
                 bias=False,
                 first=True,
             )
@@ -198,7 +239,7 @@ class _PackedResNet(nn.Module):
                 alpha=alpha,
                 num_estimators=num_estimators,
                 gamma=1,  # No groups for the first layer
-                groups=1,
+                groups=groups,
                 bias=False,
                 first=True,
             )
@@ -220,6 +261,7 @@ class _PackedResNet(nn.Module):
             alpha=alpha,
             num_estimators=num_estimators,
             gamma=gamma,
+            groups=groups,
         )
         self.layer2 = self._make_layer(
             block,
@@ -229,6 +271,7 @@ class _PackedResNet(nn.Module):
             alpha=alpha,
             num_estimators=num_estimators,
             gamma=gamma,
+            groups=groups,
         )
         self.layer3 = self._make_layer(
             block,
@@ -238,6 +281,7 @@ class _PackedResNet(nn.Module):
             alpha=alpha,
             num_estimators=num_estimators,
             gamma=gamma,
+            groups=groups,
         )
         self.layer4 = self._make_layer(
             block,
@@ -247,6 +291,7 @@ class _PackedResNet(nn.Module):
             alpha=alpha,
             num_estimators=num_estimators,
             gamma=gamma,
+            groups=groups,
         )
 
         self.pool = nn.AdaptiveAvgPool2d(output_size=1)
@@ -269,6 +314,7 @@ class _PackedResNet(nn.Module):
         alpha: float,
         num_estimators: int,
         gamma: int,
+        groups: int,
     ) -> nn.Module:
         strides = [stride] + [1] * (num_blocks - 1)
         layers = []
@@ -281,6 +327,7 @@ class _PackedResNet(nn.Module):
                     alpha=alpha,
                     num_estimators=num_estimators,
                     gamma=gamma,
+                    groups=groups,
                 )
             )
             self.in_planes = planes * block.expansion
@@ -310,7 +357,9 @@ def packed_resnet18(
     alpha: int,
     gamma: int,
     num_classes: int,
+    groups: int,
     imagenet_structure: bool = True,
+    pretrained: bool = False,
 ) -> _PackedResNet:
     """Packed-Ensembles of ResNet-18 from `Deep Residual Learning for Image
     Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -325,16 +374,23 @@ def packed_resnet18(
     Returns:
         _PackedResNet: A Packed-Ensembles ResNet-18.
     """
-    return _PackedResNet(
+    net = _PackedResNet(
         block=BasicBlock,
         num_blocks=[2, 2, 2, 2],
         in_channels=in_channels,
         num_estimators=num_estimators,
         alpha=alpha,
         gamma=gamma,
+        groups=groups,
         num_classes=num_classes,
         imagenet_structure=imagenet_structure,
     )
+    if pretrained:
+        weights = weight_ids[str(num_classes)][18]
+        if weights is None:
+            raise ValueError("No pretrained weights for this configuration")
+        net.load_state_dict(load_hf(weights))
+    return net
 
 
 def packed_resnet34(
@@ -343,7 +399,9 @@ def packed_resnet34(
     alpha: int,
     gamma: int,
     num_classes: int,
+    groups: int,
     imagenet_structure: bool = True,
+    pretrained: bool = False,
 ) -> _PackedResNet:
     """Packed-Ensembles of ResNet-34 from `Deep Residual Learning for Image
     Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -358,16 +416,23 @@ def packed_resnet34(
     Returns:
         _PackedResNet: A Packed-Ensembles ResNet-34.
     """
-    return _PackedResNet(
+    net = _PackedResNet(
         block=BasicBlock,
         num_blocks=[3, 4, 6, 3],
         in_channels=in_channels,
         num_estimators=num_estimators,
         alpha=alpha,
         gamma=gamma,
+        groups=groups,
         num_classes=num_classes,
         imagenet_structure=imagenet_structure,
     )
+    if pretrained:
+        weights = weight_ids[str(num_classes)][34]
+        if weights is None:
+            raise ValueError("No pretrained weights for this configuration")
+        net.load_state_dict(load_hf(weights))
+    return net
 
 
 def packed_resnet50(
@@ -376,7 +441,9 @@ def packed_resnet50(
     alpha: int,
     gamma: int,
     num_classes: int,
+    groups: int,
     imagenet_structure: bool = True,
+    pretrained: bool = False,
 ) -> _PackedResNet:
     """Packed-Ensembles of ResNet-50 from `Deep Residual Learning for Image
     Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -391,16 +458,23 @@ def packed_resnet50(
     Returns:
         _PackedResNet: A Packed-Ensembles ResNet-50.
     """
-    return _PackedResNet(
+    net = _PackedResNet(
         block=Bottleneck,
         num_blocks=[3, 4, 6, 3],
         in_channels=in_channels,
         num_estimators=num_estimators,
         alpha=alpha,
         gamma=gamma,
+        groups=groups,
         num_classes=num_classes,
         imagenet_structure=imagenet_structure,
     )
+    if pretrained:
+        weights = weight_ids[str(num_classes)][50]
+        if weights is None:
+            raise ValueError("No pretrained weights for this configuration")
+        net.load_state_dict(load_hf(weights))
+    return net
 
 
 def packed_resnet101(
@@ -409,7 +483,9 @@ def packed_resnet101(
     alpha: int,
     gamma: int,
     num_classes: int,
+    groups: int,
     imagenet_structure: bool = True,
+    pretrained: bool = False,
 ) -> _PackedResNet:
     """Packed-Ensembles of ResNet-101 from `Deep Residual Learning for Image
     Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -424,16 +500,23 @@ def packed_resnet101(
     Returns:
         _PackedResNet: A Packed-Ensembles ResNet-101.
     """
-    return _PackedResNet(
+    net = _PackedResNet(
         block=Bottleneck,
         num_blocks=[3, 4, 23, 3],
         in_channels=in_channels,
         num_estimators=num_estimators,
         alpha=alpha,
         gamma=gamma,
+        groups=groups,
         num_classes=num_classes,
         imagenet_structure=imagenet_structure,
     )
+    if pretrained:
+        weights = weight_ids[str(num_classes)][101]
+        if weights is None:
+            raise ValueError("No pretrained weights for this configuration")
+        net.load_state_dict(load_hf(weights))
+    return net
 
 
 def packed_resnet152(
@@ -442,7 +525,9 @@ def packed_resnet152(
     alpha: int,
     gamma: int,
     num_classes: int,
+    groups: int,
     imagenet_structure: bool = True,
+    pretrained: bool = False,
 ) -> _PackedResNet:
     """Packed-Ensembles of ResNet-152 from `Deep Residual Learning for Image
     Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -459,13 +544,20 @@ def packed_resnet152(
     Returns:
         _PackedResNet: A Packed-Ensembles ResNet-152.
     """
-    return _PackedResNet(
+    net = _PackedResNet(
         block=Bottleneck,
         num_blocks=[3, 8, 36, 3],
         in_channels=in_channels,
         num_estimators=num_estimators,
         alpha=alpha,
         gamma=gamma,
+        groups=groups,
         num_classes=num_classes,
         imagenet_structure=imagenet_structure,
     )
+    if pretrained:
+        weights = weight_ids[str(num_classes)][152]
+        if weights is None:
+            raise ValueError("No pretrained weights for this configuration")
+        net.load_state_dict(load_hf(weights))
+    return net
