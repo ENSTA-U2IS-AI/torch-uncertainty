@@ -16,19 +16,21 @@ Procedure
 ^^^^^^^^^
 
 The library provides a full-fledged trainer which can be used directly, via
-CLI. To do so, create a file in the experiments folder and use the `cli_main`
+CLI. To do so, create a file in the experiments folder and use the `cls_main`
 routine, which takes as arguments:
 
 * a Lightning Module corresponding to the model, its own arguments, and
   forward/validation/test logic. For instance, you might use already available
   modules, such as the Packed-Ensembles-style ResNet available at
-  torch_uncertainty/baselines/packed/resnet.py
+  `torch_uncertainty/baselines/packed/resnet.py <https://github.com/ENSTA-U2IS/torch-uncertainty/blob/main/torch_uncertainty/baselines/classification/resnet.py>`_
 * a Lightning DataModule corresponding to the training, validation, and test
   sets with again its arguments and logic. CIFAR-10/100, ImageNet, and
-  ImageNet-200 are available, for instance
+  ImageNet-200 are available, for instance.
 * a PyTorch loss such as the torch.nn.CrossEntropyLoss
 * a dictionary containing the optimization procedure, namely a scheduler and
-  an optimizer. Many procedures are available at torch_uncertainty/optimization_procedures.py
+  an optimizer. Many procedures are available at 
+  `torch_uncertainty/optimization_procedures.py <https://github.com/ENSTA-U2IS/torch-uncertainty/blob/main/torch_uncertainty/optimization_procedures.py>`_
+
 * the path to the data and logs folder, in the example below, the root of the library
 * and finally, the name of your model (used for logs)
 
@@ -39,8 +41,8 @@ for multi-gpu training and cuDNN benchmark, etc.
 Example
 ^^^^^^^
 
-The following code - `available in the experiments folder <https://github.com/ENSTA-U2IS/torch-uncertainty/blob/main/experiments/packed/resnet18_cifar10.py>`_ - 
-trains a Packed-Ensembles ResNet-18 on CIFAR10:
+The following code - `available in the experiments folder <https://github.com/ENSTA-U2IS/torch-uncertainty/blob/main/experiments/classification/cifar10/resnet.py>`_ - 
+trains any ResNet architecture on CIFAR10:
 
 .. code:: python
 
@@ -48,22 +50,41 @@ trains a Packed-Ensembles ResNet-18 on CIFAR10:
 
     import torch.nn as nn
 
-    from torch_uncertainty import cli_main
-    from torch_uncertainty.baselines.packed import PackedResNet
+    from torch_uncertainty import cls_main, init_args
+    from torch_uncertainty.baselines import ResNet
     from torch_uncertainty.datamodules import CIFAR10DataModule
-    from torch_uncertainty.optimization_procedures import optim_cifar10_resnet18
+    from torch_uncertainty.optimization_procedures import get_procedure
 
     root = Path(__file__).parent.absolute().parents[1]
-    cli_main(
-        PackedResNet,
-        CIFAR10DataModule,
-        nn.CrossEntropyLoss,
-        optim_cifar10_resnet18,
-        root,
-        "packed",
+
+    args = init_args(ResNet, CIFAR10DataModule)
+
+    net_name = f"{args.version}-resnet{args.arch}-cifar10"
+
+    # datamodule
+    args.root = str(root / "data")
+    dm = CIFAR10DataModule(**vars(args))
+
+    # model
+    model = ResNet(
+        num_classes=dm.num_classes,
+        in_channels=dm.in_channels,
+        loss=nn.CrossEntropyLoss(),
+        optimization_procedure=get_procedure(
+            f"resnet{args.arch}", "cifar10", args.version
+        ),
+        imagenet_structure=False,
+        **vars(args),
     )
 
-Run this model with, for instance, :bash:`python3 resnet18_cifar10.py --arch 18 --accelerator gpu --devices 1 --benchmark True --max_epochs 75 --precision 16`.
+    cls_main(model, dm, root, net_name, args)
+
+Run this model with, for instance:
+
+.. code:: bash
+
+    python3 resnet.py --version vanilla --arch 18 --accelerator gpu --device 1 --benchmark True --max_epochs 75 --precision 16
+
 You may replace the architecture (which should be a Lightning Module), the
 Datamodule (a Lightning Datamodule), the loss or the optimization procedure to your likings.
 
@@ -83,18 +104,18 @@ Example
 ^^^^^^^
 
 You can initialize a Packed-Ensemble out of a ResNet18
-backbone using the following:
+backbone with the following code:
 
 .. code:: python
 
     from torch_uncertainty.models.resnet import packed_resnet18
 
     model = packed_resnet18(
-        in_channels = 3
+        in_channels = 3,
         num_estimators = 4,
         alpha = 2,
-        gamma = 2
-        num_classes = 10
+        gamma = 2,
+        num_classes = 10,
     )
 
 Using the pytorch-based layers
@@ -109,6 +130,9 @@ In that case, you might be interested in directly using the actual layers.
 1. Check the API reference for specific layers of your choosing.
 2. Import the layers and use them as you would for any vanilla PyTorch layers.
 
+If you think that your architecture should be added to the package, raise an
+issue on the GitHub repository!
+
 .. tip::
 
   Do not hesitate to go to the API reference to get better explanations on the
@@ -117,7 +141,8 @@ In that case, you might be interested in directly using the actual layers.
 Example
 ^^^^^^^
 
-You can create a Packed-Ensemble ``torch.nn.Module`` model with the following:
+You can create a Packed-Ensemble ``torch.nn.Module`` model with the following
+code:
 
 .. code:: python
 

@@ -5,7 +5,7 @@ from torchvision.datasets import ImageNet
 
 from torch_uncertainty.datamodules import ImageNetDataModule
 
-from ..datasets.dummy_dataset import DummyDataset
+from .._dummies.dataset import DummyDataset
 
 
 # fmt:on

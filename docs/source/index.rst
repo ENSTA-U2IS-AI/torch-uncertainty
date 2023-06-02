@@ -47,6 +47,7 @@ the following paper:
    introduction_uncertainty
    auto_tutorials/index
    api
+   contributing
    references
 
 Indices and tables

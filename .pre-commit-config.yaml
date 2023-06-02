@@ -1,31 +1,48 @@
 repos:
--   repo: local
-    hooks:
-    - id: black
-      name: black
-      language: system
-      entry: black
-      types: [python]
-      exclude: ^auto_tutorials_source/
-    - id: flake8
-      name: flake8
-      language: system
-      entry: flake8
-      types: [python]
-    # - id: mypy
-    #   name: mypy
-    #   language: system
-    #   entry: mypy
-    #   types: [python]
-    - id: isort
-      name: isort
-      language: system
-      entry: isort
-      types: [python]
-      exclude: ^auto_tutorials_source/
-    - id: pytest-check
-      name: pytest-check
-      entry: pytest
-      language: system
-      pass_filenames: false
-      always_run: true
+- repo: local
+  hooks:
+  - id: end-of-file-fixer
+    name: end-of-file-fixer
+    language: system
+    entry: end-of-file-fixer
+    types: [text]
+  - id: check-toml
+    name: check-toml
+    language: system
+    entry: check-toml
+    types: [toml]
+  - id: check-yaml
+    name: check-yaml
+    language: system
+    entry: check-yaml
+    types: [yaml]
+  - id: check-merge-conflict
+    name: check-merge-conflict
+    entry: check-merge-conflict
+    language: system
+  - id: check-added-large-files
+    name: check-added-large-files
+    entry: check-added-large-files
+    language: system
+  - id: black
+    name: black
+    language: system
+    entry: black
+    types: [python]
+    exclude: ^auto_tutorials_source/
+  - id: flake8
+    name: flake8
+    language: system
+    entry: flake8
+    types: [python]
+  - id: isort
+    name: isort
+    language: system
+    entry: isort
+    types: [python]
+    exclude: ^auto_tutorials_source/
+  - id: pytest-check
+    name: pytest-check
+    entry: pytest
+    language: system
+    pass_filenames: false

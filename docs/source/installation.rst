@@ -4,7 +4,11 @@ Installation
 .. role:: bash(code)
     :language: bash
 
-The package can be installed from PyPI or from source.
+
+You can install the package from PyPI or from source. Choose the latter if you
+want to access the files included the `experiments <https://github.com/ENSTA-U2IS/torch-uncertainty/tree/main/experiments>`_
+folder or if you want to contribute to the project.
+
 
 From PyPI
 ---------
@@ -14,6 +18,12 @@ Install the package via pip:
 .. parsed-literal::
 
     pip install torch-uncertainty
+
+To update the package, run:
+
+.. parsed-literal::
+
+    pip install -U torch-uncertainty 
 
 From source
 -----------
@@ -52,7 +62,12 @@ Install the package using poetry:
     poetry install --with dev
 
 
-.. note::
-    Depending on your system, you may encounter poetry errors. If so, kill the 
-    process and add :bash:`PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring`
-    at the beginning of every :bash:`poetry install` command.
+Depending on your system, you may encounter poetry errors. If so, kill the 
+process and add :bash:`PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring`
+at the beginning of every :bash:`poetry install` command.
+
+To update the package, run:
+
+.. parsed-literal::
+
+    git pull && poetry update

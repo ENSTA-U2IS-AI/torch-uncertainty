@@ -18,6 +18,7 @@ from ..transforms import Cutout
 class CIFAR10DataModule(LightningDataModule):
     num_classes = 10
     num_channels = 3
+    input_shape = (3, 32, 32)
 
     def __init__(
         self,
@@ -89,13 +90,19 @@ class CIFAR10DataModule(LightningDataModule):
         )
 
     def prepare_data(self) -> None:
-        if self.test_alt != "c":
+        if self.test_alt is None:
             self.dataset(self.root, train=True, download=True)
             self.dataset(self.root, train=False, download=True)
-        else:
+        elif self.test_alt == "c":
             self.dataset(
                 self.root,
                 severity=self.corruption_severity,
+                download=True,
+            )
+        else:
+            self.dataset(
+                self.root,
+                download=True,
             )
 
         self.ood_dataset(self.root, split="test", download=True)
@@ -119,7 +126,7 @@ class CIFAR10DataModule(LightningDataModule):
                     download=False,
                     transform=self.transform_test,
                 )
-        elif stage == "test" or stage is None:
+        elif stage == "test":
             self.test = self.dataset(
                 self.root,
                 train=False,

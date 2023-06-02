@@ -1,6 +1,6 @@
 # fmt: off
-from argparse import Namespace
-from typing import List, Tuple, Union
+from argparse import ArgumentParser, Namespace
+from typing import Any, List, Tuple, Union
 
 import pytorch_lightning as pl
 import torch
@@ -29,11 +29,31 @@ from ..metrics import (
 
 # fmt:on
 class ClassificationSingle(pl.LightningModule):
+    """
+    Args:
+        use_entropy (bool, optional): Indicates whether to use the entropy
+            values as the OOD criterion or not. Defaults to ``False``.
+        use_logits (bool, optional): Indicates whether to use the logits as the
+            OOD criterion or not. Defaults to ``False``.
+
+    Note:
+        The default OOD criterion is the confidence score.
+
+    Warning:
+        Make sure at most only one of :attr:`use_entropy` and :attr:`use_logits`
+        attributes is set to ``True``. Otherwise a :class:`ValueError()` will
+        be raised.
+    """
+
     def __init__(
         self,
         num_classes: int,
+        model: nn.Module,
+        loss: nn.Module,
+        optimization_procedure: Any,
         use_entropy: bool = False,
         use_logits: bool = False,
+        **kwargs,
     ) -> None:
         super().__init__()
 
@@ -44,6 +64,12 @@ class ClassificationSingle(pl.LightningModule):
         self.use_logits = use_logits
         self.use_entropy = use_entropy
 
+        # model
+        self.model = model
+        # loss
+        self.loss = loss
+        # optimization procedure
+        self.optimization_procedure = optimization_procedure
         # metrics
         cls_metrics = MetricCollection(
             {
@@ -74,12 +100,15 @@ class ClassificationSingle(pl.LightningModule):
         self.test_entropy_id = Entropy()
         self.test_entropy_ood = Entropy()
 
+    def configure_optimizers(self) -> Any:
+        return self.optimization_procedure(self)
+
     @property
     def criterion(self) -> nn.Module:
-        raise NotImplementedError()
+        return self.loss()
 
     def forward(self, input: torch.Tensor) -> torch.Tensor:
-        raise NotImplementedError()
+        return self.model.forward(input)
 
     def on_train_start(self) -> None:
         # hyperparameters for performances
@@ -144,7 +173,7 @@ class ClassificationSingle(pl.LightningModule):
             ood_values = -confs
 
         if dataloader_idx == 0:
-            self.test_cls_metrics.update(probs, targets)
+            self.test_cls_metrics.update(probs, targets, num_classes=10)
             self.test_ood_metrics.update(ood_values, torch.zeros_like(targets))
             self.test_entropy_id(probs)
             self.log(
@@ -175,21 +204,66 @@ class ClassificationSingle(pl.LightningModule):
         self.test_cls_metrics.reset()
         self.test_ood_metrics.reset()
 
+    @staticmethod
+    def add_model_specific_args(
+        parent_parser: ArgumentParser,
+    ) -> ArgumentParser:
+        """Defines the routine's attributes via command-line options:
+
+        - ``--entropy``: sets :attr:`use_entropy` to ``True``.
+        - ``--logits``: sets :attr:`use_logits` to ``True``.
+        """
+        parent_parser.add_argument(
+            "--entropy", dest="use_entropy", action="store_true"
+        )
+        parent_parser.add_argument(
+            "--logits", dest="use_logits", action="store_true"
+        )
+        return parent_parser
+
 
 class ClassificationEnsemble(ClassificationSingle):
+    """
+    Args:
+        use_entropy (bool, optional): Indicates whether to use the entropy
+            values as the OOD criterion or not. Defaults to ``False``.
+        use_logits (bool, optional): Indicates whether to use the logits as the
+            OOD criterion or not. Defaults to ``False``.
+        use_mi (bool, optional): Indicates whether to use the mutual
+            information as the OOD criterion or not. Defaults to ``False``.
+        use_variation_ratio (bool, optional): Indicates whether to use the
+            variation ratio as the OOD criterion or not. Defaults to ``False``.
+
+    Note:
+        The default OOD criterion is the confidence score.
+
+    Warning:
+        Make sure at most only one of :attr:`use_entropy`, :attr:`use_logits`
+        , :attr:`use_mi`, and :attr:`use_variation_ratio` attributes is set to
+        ``True``. Otherwise a :class:`ValueError()` will be raised.
+    """
+
     def __init__(
         self,
         num_classes: int,
+        model: nn.Module,
+        loss: nn.Module,
+        optimization_procedure: Any,
         num_estimators: int,
         use_entropy: bool = False,
         use_logits: bool = False,
         use_mi: bool = False,
         use_variation_ratio: bool = False,
+        **kwargs,
     ) -> None:
         super().__init__(
             num_classes=num_classes,
+            model=model,
+            loss=loss,
+            optimization_procedure=optimization_procedure,
             use_entropy=use_entropy,
             use_logits=use_logits,
+            **kwargs,
         )
 
         self.num_estimators = num_estimators
@@ -255,7 +329,6 @@ class ClassificationEnsemble(ClassificationSingle):
     ) -> None:
         inputs, targets = batch
         logits = self.forward(inputs)
-        # logits = logits.reshape(self.num_estimators, -1, logits.size(-1))
         logits = rearrange(logits, "(n b) c -> b n c", n=self.num_estimators)
         probs_per_est = F.softmax(logits, dim=-1)
         probs = probs_per_est.mean(dim=1)
@@ -269,7 +342,6 @@ class ClassificationEnsemble(ClassificationSingle):
     ) -> None:
         inputs, targets = batch
         logits = self.forward(inputs)
-        # logits = logits.reshape(self.num_estimators, -1, logits.size(-1))
         logits = rearrange(logits, "(n b) c -> b n c", n=self.num_estimators)
         probs_per_est = F.softmax(logits, dim=-1)
         probs = probs_per_est.mean(dim=1)
@@ -289,7 +361,10 @@ class ClassificationEnsemble(ClassificationSingle):
             ood_values = -confs
 
         if dataloader_idx == 0:
-            self.test_cls_metrics.update(probs, targets)
+            self.test_cls_metrics.update(
+                probs,
+                targets,
+            )
             self.test_ood_metrics.update(ood_values, torch.zeros_like(targets))
             self.test_entropy_id(probs)
             self.test_id_ens_metrics.update(probs_per_est)
@@ -322,3 +397,42 @@ class ClassificationEnsemble(ClassificationSingle):
         )
         self.test_id_ens_metrics.reset()
         self.test_ood_ens_metrics.reset()
+
+    @staticmethod
+    def add_model_specific_args(
+        parent_parser: ArgumentParser,
+    ) -> ArgumentParser:
+        """Defines the routine's attributes via command-line options:
+
+        - ``--entropy``: sets :attr:`use_entropy` to ``True``.
+        - ``--logits``: sets :attr:`use_logits` to ``True``.
+        - ``--mutual_information``: sets :attr:`use_mi` to ``True``.
+        - ``--variation_ratio``: sets :attr:`use_variation_ratio` to ``True``.
+        - ``--num_estimators``: sets :attr:`num_estimators`.
+        """
+        parent_parser = ClassificationSingle.add_model_specific_args(
+            parent_parser
+        )
+        # FIXME: should be a str to choose among the available OOD criteria
+        # rather than a boolean, but it is not possible since
+        # ClassificationSingle and ClassificationEnsemble have different OOD
+        # criteria.
+        parent_parser.add_argument(
+            "--mutual_information",
+            dest="use_mi",
+            action="store_true",
+            default=False,
+        )
+        parent_parser.add_argument(
+            "--variation_ratio",
+            dest="use_variation_ratio",
+            action="store_true",
+            default=False,
+        )
+        parent_parser.add_argument(
+            "--num_estimators",
+            type=int,
+            default=None,
+            help="Number of estimators for ensemble",
+        )
+        return parent_parser

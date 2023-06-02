@@ -1,52 +1,86 @@
 # fmt: off
-from argparse import ArgumentParser
 from pathlib import Path
 
-import pytorch_lightning as pl
 import torch.nn as nn
+from cli_test_helpers import ArgvContext
 
-from torch_uncertainty import main
-from torch_uncertainty.baselines.standard import ResNet
+from torch_uncertainty import cls_main, init_args
+from torch_uncertainty.baselines import ResNet, WideResNet
 from torch_uncertainty.datamodules import CIFAR10DataModule
-from torch_uncertainty.optimization_procedures import optim_cifar10_resnet18
+from torch_uncertainty.optimization_procedures import (
+    optim_cifar10_resnet18,
+    optim_cifar10_wideresnet,
+)
 
 
 # fmt: on
 class TestCLI:
     """Testing the CLI function."""
 
-    def test_main_summary(self):
+    def test_cls_main_resnet(self):
         root = Path(__file__).parent.absolute().parents[0]
+        with ArgvContext(""):
+            args = init_args(ResNet, CIFAR10DataModule)
 
-        parser = ArgumentParser("torch-uncertainty")
-        parser.add_argument("--seed", type=int, default=None)
-        parser.add_argument("--test", type=int, default=None)
-        parser.add_argument("--summary", dest="summary", action="store_true")
-        parser.add_argument(
-            "--log_graph", dest="log_graph", action="store_true"
-        )
-        parser.add_argument(
-            "--channels_last",
-            action="store_true",
-            help="Use channels last memory format",
-        )
+            # datamodule
+            args.root = str(root / "data")
+            dm = CIFAR10DataModule(**vars(args))
 
-        datamodule = CIFAR10DataModule
-        network = ResNet
-        parser = pl.Trainer.add_argparse_args(parser)
-        parser = datamodule.add_argparse_args(parser)
-        parser = network.add_model_specific_args(parser)
+            # Simulate that summary is True & the only argument
+            args.summary = True
 
-        # Simulate that summary is True & the only argument
-        args = parser.parse_args(["--no-imagenet_structure"])
-        args.summary = True
+            model = ResNet(
+                num_classes=dm.num_classes,
+                in_channels=dm.num_channels,
+                loss=nn.CrossEntropyLoss,
+                optimization_procedure=optim_cifar10_resnet18,
+                imagenet_structure=False,
+                **vars(args),
+            )
 
-        main(
-            network,
-            datamodule,
-            nn.CrossEntropyLoss,
-            optim_cifar10_resnet18,
-            root,
-            "std",
-            args,
-        )
+            cls_main(model, dm, root, "std", args)
+
+    def test_cls_main_other_arguments(self):
+        root = Path(__file__).parent.absolute().parents[0]
+        with ArgvContext("--seed 42 --max_epochs 1 --channels_last"):
+            args = init_args(ResNet, CIFAR10DataModule)
+
+            # datamodule
+            args.root = root / "data"
+            dm = CIFAR10DataModule(**vars(args))
+
+            # Simulate that summary is True & the only argument
+            args.summary = True
+
+            model = ResNet(
+                num_classes=dm.num_classes,
+                in_channels=dm.num_channels,
+                loss=nn.CrossEntropyLoss,
+                optimization_procedure=optim_cifar10_resnet18,
+                imagenet_structure=False,
+                **vars(args),
+            )
+
+            cls_main(model, dm, root, "std", args)
+
+    def test_cls_main_wideresnet(self):
+        root = Path(__file__).parent.absolute().parents[0]
+        with ArgvContext(""):
+            args = init_args(WideResNet, CIFAR10DataModule)
+
+            # datamodule
+            args.root = root / "data"
+            dm = CIFAR10DataModule(**vars(args))
+
+            args.summary = True
+
+            model = WideResNet(
+                num_classes=dm.num_classes,
+                in_channels=dm.num_channels,
+                loss=nn.CrossEntropyLoss,
+                optimization_procedure=optim_cifar10_wideresnet,
+                imagenet_structure=False,
+                **vars(args),
+            )
+
+            cls_main(model, dm, root, "std", args)

@@ -1,24 +1,33 @@
 # fmt: off
 import torch
+from torch import nn
 
 import numpy as np
 
 
 # fmt: on
-class Cutout:
-    """
-    Reference : https://github.com/quark0/darts/blob/master/cnn/utils.py
+class Cutout(nn.Module):
+    """Cutout augmentation class.
+
+    Args:
+        length (int): Length of the cutout square.
+        value (int): Pixel value to be filled in the cutout square.
     """
 
     def __init__(self, length: int, value: int = 0):
+        super().__init__()
+
         if length <= 0:
             raise ValueError("Cutout length must be positive.")
         else:
             self.length = length
 
+        if value < 0 or value > 255:
+            raise ValueError("Cutout value must be between 0 and 255.")
+
         self.value = value
 
-    def __call__(self, img: torch.Tensor):
+    def __call__(self, img: torch.Tensor) -> torch.Tensor:
         if len(img.shape) == 2:
             img = img.unsqueeze(0)
         h, w = img.size(1), img.size(2)

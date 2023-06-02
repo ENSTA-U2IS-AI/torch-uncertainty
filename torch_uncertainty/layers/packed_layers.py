@@ -60,6 +60,16 @@ class PackedLinear(nn.Module):
         factory_kwargs = {"device": device, "dtype": dtype}
         super().__init__()
 
+        if alpha <= 0:
+            raise ValueError(f"Attribute `alpha` should be > 0, not {alpha}")
+
+        if not isinstance(gamma, int):
+            raise ValueError(
+                f"Attribute `gamma` should be an int, not " f"{type(gamma)}"
+            )
+        if gamma <= 0:
+            raise ValueError(f"Attribute `gamma` should be >= 1, not {gamma}")
+
         self.num_estimators = num_estimators
         self.rearrange = rearrange
 
@@ -163,6 +173,16 @@ class PackedConv2d(nn.Module):
     ) -> None:
         factory_kwargs = {"device": device, "dtype": dtype}
         super().__init__()
+
+        if alpha <= 0:
+            raise ValueError(f"Attribute `alpha` should be > 0, not {alpha}")
+
+        if not isinstance(gamma, int):
+            raise ValueError(
+                f"Attribute `gamma` should be an int, not " f"{type(gamma)}"
+            )
+        if gamma <= 0:
+            raise ValueError(f"Attribute `gamma` should be >= 1, not {gamma}")
 
         self.num_estimators = num_estimators
 

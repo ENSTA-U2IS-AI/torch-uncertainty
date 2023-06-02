@@ -23,6 +23,7 @@ class TestBatchLinear:
 
     def test_linear_one_estimator(self, feat_input: torch.Tensor):
         layer = BatchLinear(6, 2, num_estimators=1)
+        print(layer)
         out = layer(feat_input)
         assert out.shape == torch.Size([4, 2])
 
@@ -42,6 +43,7 @@ class TestBatchConv2d:
 
     def test_conv_one_estimator(self, img_input: torch.Tensor):
         layer = BatchConv2d(6, 2, num_estimators=1, kernel_size=1)
+        print(layer)
         out = layer(img_input)
         assert out.shape == torch.Size([5, 2, 3, 3])
 

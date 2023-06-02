@@ -52,12 +52,16 @@ class TestMaskedLinear:
         assert out.shape == torch.Size([8, 2])
 
     def test_linear_c_lt_10(self):
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError):
             _ = MaskedLinear(8, 2, num_estimators=1, scale=2)
 
     def test_linear_s_gt_6(self):
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError):
             _ = MaskedLinear(10, 2, num_estimators=1, scale=7)
+
+    def test_linear_s_lt_1(self):
+        with pytest.raises(ValueError):
+            _ = MaskedLinear(10, 2, num_estimators=1, scale=0)
 
 
 class TestMaskedConv2d:
@@ -70,10 +74,14 @@ class TestMaskedConv2d:
 
     def test_conv_two_estimators_odd(self, img_input_odd: torch.Tensor):
         layer = MaskedConv2d(10, 2, num_estimators=2, kernel_size=1, scale=2)
-        with pytest.raises(Exception):
+        with pytest.raises(RuntimeError):
             _ = layer(img_input_odd)
 
     def test_conv_two_estimators_even(self, img_input_even: torch.Tensor):
         layer = MaskedConv2d(10, 2, num_estimators=2, kernel_size=1, scale=2)
         out = layer(img_input_even)
         assert out.shape == torch.Size([8, 2, 3, 3])
+
+    def test_conv_s_lt_1(self):
+        with pytest.raises(ValueError):
+            _ = MaskedLinear(10, 2, num_estimators=1, scale=0)

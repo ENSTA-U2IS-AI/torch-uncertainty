@@ -57,6 +57,27 @@ class TestPackedLinear:
         out = layer(feat_input_two_rearrange)
         assert out.shape == torch.Size([6, 2])
 
+    def test_linear_extend(self):
+        _ = PackedConv2d(
+            5, 3, kernel_size=1, alpha=1, num_estimators=2, gamma=1
+        )
+
+    def test_linear_alpha_neg(self):
+        with pytest.raises(ValueError):
+            _ = PackedLinear(5, 2, alpha=-1, num_estimators=1, rearrange=True)
+
+    def test_linear_gamma_float(self):
+        with pytest.raises(ValueError):
+            _ = PackedLinear(
+                5, 2, alpha=1, num_estimators=1, gamma=0.5, rearrange=True
+            )
+
+    def test_linear_gamma_neg(self):
+        with pytest.raises(ValueError):
+            _ = PackedLinear(
+                5, 2, alpha=1, num_estimators=1, gamma=-1, rearrange=True
+            )
+
 
 class TestPackedConv2d:
     """Testing the PackedConv2d layer class."""
@@ -86,3 +107,24 @@ class TestPackedConv2d:
         out = layer(img_input)
         assert out.shape == torch.Size([5, 2, 3, 3])
         assert layer.conv.groups == 2  # and not 4
+
+    def test_conv_extend(self):
+        _ = PackedConv2d(
+            5, 3, kernel_size=1, alpha=1, num_estimators=2, gamma=1
+        )
+
+    def test_conv_alpha_neg(self):
+        with pytest.raises(ValueError):
+            _ = PackedConv2d(5, 2, kernel_size=1, alpha=-1, num_estimators=1)
+
+    def test_conv_gamma_float(self):
+        with pytest.raises(ValueError):
+            _ = PackedConv2d(
+                5, 2, kernel_size=1, alpha=1, num_estimators=1, gamma=0.5
+            )
+
+    def test_conv_gamma_neg(self):
+        with pytest.raises(ValueError):
+            _ = PackedConv2d(
+                5, 2, kernel_size=1, alpha=1, num_estimators=1, gamma=-0.5
+            )

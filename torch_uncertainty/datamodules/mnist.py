@@ -14,6 +14,10 @@ from torch_uncertainty.transforms import Cutout
 
 # fmt: on
 class MNISTDataModule(LightningDataModule):
+    num_classes = 10
+    num_channels = 1
+    input_shape = (1, 28, 28)
+
     def __init__(
         self,
         root: Union[str, Path],
@@ -84,7 +88,7 @@ class MNISTDataModule(LightningDataModule):
                     download=False,
                     transform=self.transform_test,
                 )
-        if stage == "test" or stage is None:
+        if stage == "test":
             self.test = self.dataset(
                 self.root,
                 train=False,

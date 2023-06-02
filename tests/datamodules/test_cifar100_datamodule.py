@@ -6,7 +6,7 @@ from torchvision.datasets import CIFAR100
 from torch_uncertainty.datamodules import CIFAR100DataModule
 from torch_uncertainty.transforms import Cutout
 
-from ..datasets.dummy_dataset import DummyDataset
+from .._dummies.dataset import DummyDataset
 
 
 # fmt:on
