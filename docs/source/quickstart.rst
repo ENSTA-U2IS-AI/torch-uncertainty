@@ -16,13 +16,13 @@ Procedure
 ^^^^^^^^^
 
 The library provides a full-fledged trainer which can be used directly, via
-CLI. To do so, create a file in the experiments folder and use the `cli_main`
+CLI. To do so, create a file in the experiments folder and use the `cls_main`
 routine, which takes as arguments:
 
 * a Lightning Module corresponding to the model, its own arguments, and
   forward/validation/test logic. For instance, you might use already available
   modules, such as the Packed-Ensembles-style ResNet available at
-  `torch_uncertainty/baselines/packed/resnet.py <https://github.com/ENSTA-U2IS/torch-uncertainty/blob/main/torch_uncertainty/baselines/packed/resnet.py>`_
+  `torch_uncertainty/baselines/packed/resnet.py <https://github.com/ENSTA-U2IS/torch-uncertainty/blob/main/torch_uncertainty/baselines/classification/resnet.py>`_
 * a Lightning DataModule corresponding to the training, validation, and test
   sets with again its arguments and logic. CIFAR-10/100, ImageNet, and
   ImageNet-200 are available, for instance.
@@ -41,8 +41,8 @@ for multi-gpu training and cuDNN benchmark, etc.
 Example
 ^^^^^^^
 
-The following code - `available in the experiments folder <https://github.com/ENSTA-U2IS/torch-uncertainty/blob/main/experiments/packed/resnet18_cifar10.py>`_ - 
-trains a Packed-Ensembles ResNet-18 on CIFAR10:
+The following code - `available in the experiments folder <https://github.com/ENSTA-U2IS/torch-uncertainty/blob/main/experiments/classification/cifar10/resnet.py>`_ - 
+trains any ResNet architecture on CIFAR10:
 
 .. code:: python
 
@@ -50,22 +50,41 @@ trains a Packed-Ensembles ResNet-18 on CIFAR10:
 
     import torch.nn as nn
 
-    from torch_uncertainty import cli_main
-    from torch_uncertainty.baselines.packed import PackedResNet
+    from torch_uncertainty import cls_main, init_args
+    from torch_uncertainty.baselines import ResNet
     from torch_uncertainty.datamodules import CIFAR10DataModule
-    from torch_uncertainty.optimization_procedures import optim_cifar10_resnet18
+    from torch_uncertainty.optimization_procedures import get_procedure
 
     root = Path(__file__).parent.absolute().parents[1]
-    cli_main(
-        PackedResNet,
-        CIFAR10DataModule,
-        nn.CrossEntropyLoss,
-        optim_cifar10_resnet18,
-        root,
-        "packed",
+
+    args = init_args(ResNet, CIFAR10DataModule)
+
+    net_name = f"{args.version}-resnet{args.arch}-cifar10"
+
+    # datamodule
+    args.root = str(root / "data")
+    dm = CIFAR10DataModule(**vars(args))
+
+    # model
+    model = ResNet(
+        num_classes=dm.num_classes,
+        in_channels=dm.in_channels,
+        loss=nn.CrossEntropyLoss(),
+        optimization_procedure=get_procedure(
+            f"resnet{args.arch}", "cifar10", args.version
+        ),
+        imagenet_structure=False,
+        **vars(args),
     )
 
-Run this model with, for instance, :bash:`python3 resnet18_cifar10.py --arch 18 --accelerator gpu --devices 1 --benchmark True --max_epochs 75 --precision 16`.
+    cls_main(model, dm, root, net_name, args)
+
+Run this model with, for instance:
+
+.. code:: bash
+
+    python3 resnet.py --version vanilla --arch 18 --accelerator gpu --device 1 --benchmark True --max_epochs 75 --precision 16
+
 You may replace the architecture (which should be a Lightning Module), the
 Datamodule (a Lightning Datamodule), the loss or the optimization procedure to your likings.
 
