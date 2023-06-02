@@ -5,15 +5,20 @@ from typing import Any, Literal, Optional
 import torch.nn as nn
 from pytorch_lightning import LightningModule
 
-from torch_uncertainty.models.wideresnet import (
+from ...models.wideresnet import (
     batched_wideresnet28x10,
     masked_wideresnet28x10,
     packed_wideresnet28x10,
     wideresnet28x10,
 )
-from torch_uncertainty.routines.classification import (
+from ...routines.classification import (
     ClassificationEnsemble,
     ClassificationSingle,
+)
+from ..utils.parser_addons import (
+    add_masked_specific_args,
+    add_packed_specific_args,
+    add_wideresnet_specific_args,
 )
 
 
@@ -163,6 +168,9 @@ class WideResNet:
     @classmethod
     def add_model_specific_args(cls, parser: ArgumentParser) -> ArgumentParser:
         parser = ClassificationEnsemble.add_model_specific_args(parser)
+        parser = add_wideresnet_specific_args(parser)
+        parser = add_packed_specific_args(parser)
+        parser = add_masked_specific_args(parser)
         parser.add_argument(
             "--version",
             type=str,
@@ -170,30 +178,6 @@ class WideResNet:
             default="vanilla",
             help="Variation of WideResNet. "
             + f"Choose among: {cls.versions.keys()}",
-        )
-        parser.add_argument(
-            "--groups",
-            type=int,
-            default=1,
-            help="Number of groups for vanilla or masked wideresnet",
-        )
-        parser.add_argument(
-            "--scale",
-            type=float,
-            default=None,
-            help="Scale for masked wideresnet",
-        )
-        parser.add_argument(
-            "--alpha",
-            type=int,
-            default=None,
-            help="Alpha for packed wideresnet",
-        )
-        parser.add_argument(
-            "--gamma",
-            type=int,
-            default=None,
-            help="Gamma for packed wideresnet",
         )
         parser.add_argument(
             "--pretrained",

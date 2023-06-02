@@ -5,7 +5,7 @@ from typing import Any, Literal, Optional
 import torch.nn as nn
 from pytorch_lightning import LightningModule
 
-from torch_uncertainty.models.resnet import (
+from ...models.resnet import (
     batched_resnet18,
     batched_resnet34,
     batched_resnet50,
@@ -27,9 +27,14 @@ from torch_uncertainty.models.resnet import (
     resnet101,
     resnet152,
 )
-from torch_uncertainty.routines.classification import (
+from ...routines.classification import (
     ClassificationEnsemble,
     ClassificationSingle,
+)
+from ..utils.parser_addons import (
+    add_masked_specific_args,
+    add_packed_specific_args,
+    add_resnet_specific_args,
 )
 
 
@@ -208,43 +213,15 @@ class ResNet:
     @classmethod
     def add_model_specific_args(cls, parser: ArgumentParser) -> ArgumentParser:
         parser = ClassificationEnsemble.add_model_specific_args(parser)
+        parser = add_resnet_specific_args(parser)
+        parser = add_packed_specific_args(parser)
+        parser = add_masked_specific_args(parser)
         parser.add_argument(
             "--version",
             type=str,
             choices=cls.versions.keys(),
             default="vanilla",
             help=f"Variation of ResNet. Choose among: {cls.versions.keys()}",
-        )
-        parser.add_argument(
-            "--arch",
-            type=int,
-            choices=cls.archs,
-            default=18,
-            help=f"Architecture of ResNet. Choose among: {cls.archs}",
-        )
-        parser.add_argument(
-            "--groups",
-            type=int,
-            default=1,
-            help="Number of groups for vanilla or masked resnet",
-        )
-        parser.add_argument(
-            "--scale",
-            type=float,
-            default=None,
-            help="Scale for masked resnet",
-        )
-        parser.add_argument(
-            "--alpha",
-            type=float,
-            default=None,
-            help="Alpha for packed resnet",
-        )
-        parser.add_argument(
-            "--gamma",
-            type=int,
-            default=1,
-            help="Gamma for packed resnet",
         )
         parser.add_argument(
             "--pretrained",
