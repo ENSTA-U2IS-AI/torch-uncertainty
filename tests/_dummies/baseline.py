@@ -2,16 +2,19 @@
 from argparse import ArgumentParser
 from typing import Any
 
-import torch
 import torch.nn as nn
+from pytorch_lightning import LightningModule
 
-from torch_uncertainty.routines.classification import ClassificationSingle
+from torch_uncertainty.routines.classification import (
+    ClassificationEnsemble,
+    ClassificationSingle,
+)
 
 from .model import dummy_model
 
 
 # fmt: on
-class Dummy(ClassificationSingle):
+class DummyBaseline:
     r"""LightningModule for Vanilla ResNet.
 
     Args:
@@ -24,40 +27,38 @@ class Dummy(ClassificationSingle):
             method.
     """
 
-    def __init__(
-        self,
+    def __new__(
+        cls,
         num_classes: int,
         in_channels: int,
         loss: nn.Module,
         optimization_procedure: Any,
+        baseline_type: str = "single",
         **kwargs,
-    ) -> None:
-        super().__init__(
-            num_classes=num_classes,
-        )
-
-        self.save_hyperparameters(ignore=["loss", "optimization_procedure"])
-
-        self.loss = loss
-        self.optimization_procedure = optimization_procedure
-
-        self.model = dummy_model(
+    ) -> LightningModule:
+        model = dummy_model(
             in_channels=in_channels,
             num_classes=num_classes,
+            num_estimators=1 + int(baseline_type == "ensemble"),
         )
 
-        # to log the graph
-        self.example_input_array = torch.randn(1, in_channels, 8, 8)
-
-    def configure_optimizers(self) -> dict:
-        return self.optimization_procedure(self)
-
-    @property
-    def criterion(self) -> nn.Module:
-        return self.loss()
-
-    def forward(self, input: torch.Tensor) -> torch.Tensor:  # type: ignore
-        return self.model.forward(input)
+        if baseline_type == "single":
+            return ClassificationSingle(
+                num_classes=num_classes,
+                model=model,
+                loss=loss,
+                optimization_procedure=optimization_procedure,
+                **kwargs,
+            )
+        elif baseline_type == "ensemble":
+            return ClassificationEnsemble(
+                num_classes=num_classes,
+                num_estimators=2,
+                model=model,
+                loss=loss,
+                optimization_procedure=optimization_procedure,
+                **kwargs,
+            )
 
     @staticmethod
     def add_model_specific_args(
