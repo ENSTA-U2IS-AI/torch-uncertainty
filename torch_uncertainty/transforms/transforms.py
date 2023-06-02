@@ -14,9 +14,6 @@ class AutoContrast(nn.Module):
     level_type = None
     corruption_overlap = False
 
-    def __init__(self):
-        super().__init__()
-
     def forward(
         self, img: Union[Tensor, Image.Image]
     ) -> Union[Tensor, Image.Image]:
@@ -27,9 +24,6 @@ class Equalize(nn.Module):
     pixmix_max_level = None
     level_type = None
     corruption_overlap = False
-
-    def __init__(self):
-        super().__init__()
 
     def forward(
         self, img: Union[Tensor, Image.Image]
@@ -43,18 +37,14 @@ class Posterize(nn.Module):
     level_type = int
     corruption_overlap = False
 
-    def __init__(self, level):
-        super().__init__()
-        self.level = level
-
     def forward(
-        self, img: Union[Tensor, Image.Image]
+        self, img: Union[Tensor, Image.Image], level: int
     ) -> Union[Tensor, Image.Image]:
-        if self.level >= self.max_level:
+        if level >= self.max_level:
             raise ValueError(f"Level must be less than {self.max_level}.")
-        if self.level < 0:
+        if level < 0:
             raise ValueError("Level must be greater than 0.")
-        return F.posterize(img, self.max_level - self.level)
+        return F.posterize(img, self.max_level - level)
 
 
 class Solarize(nn.Module):
@@ -63,14 +53,13 @@ class Solarize(nn.Module):
     level_type = int
     corruption_overlap = False
 
-    def __init__(self):
-        super().__init__()
-
     def forward(
         self, img: Union[Tensor, Image.Image], level: float
     ) -> Union[Tensor, Image.Image]:
         if level >= self.max_level:
             raise ValueError(f"Level must be less than {self.max_level}.")
+        if level < 0:
+            raise ValueError("Level must be greater than 0.")
         return F.solarize(img, self.max_level - level)
 
 
@@ -97,8 +86,10 @@ class Rotation(nn.Module):
     def forward(
         self, img: Union[Tensor, Image.Image], level: float
     ) -> Union[Tensor, Image.Image]:
-        if self.random_direction and np.random.uniform() > 0.5:
-            level = -level
+        if (
+            self.random_direction and np.random.uniform() > 0.5
+        ):  # coverage: ignore
+            level = -level  # coverage: ignore
         return F.rotate(
             img,
             level,
@@ -134,13 +125,18 @@ class Shear(nn.Module):
     def forward(
         self, img: Union[Tensor, Image.Image], level: float
     ) -> Union[Tensor, Image.Image]:
-        if self.random_direction and np.random.uniform() > 0.5:
-            level = -level
+        if (
+            self.random_direction and np.random.uniform() > 0.5
+        ):  # coverage: ignore
+            level = -level  # coverage: ignore
         shear = [0, 0]
         shear[self.axis] = level
         return F.affine(
             img,
+            angle=0,
+            scale=1.0,
             shear=shear,
+            translate=[0, 0],
             interpolation=self.interpolation,
             center=self.center,
             fill=self.fill,
@@ -172,12 +168,17 @@ class Translate(nn.Module):
     def forward(
         self, img: Union[Tensor, Image.Image], level: float
     ) -> Union[Tensor, Image.Image]:
-        if self.random_direction and np.random.uniform() > 0.5:
-            level = -level
+        if (
+            self.random_direction and np.random.uniform() > 0.5
+        ):  # coverage: ignore
+            level = -level  # coverage: ignore
         translate = [0, 0]
         translate[self.axis] = level
         return F.affine(
             img,
+            angle=0,
+            scale=1.0,
+            shear=[0, 0],
             translate=translate,
             interpolation=self.interpolation,
             center=self.center,
