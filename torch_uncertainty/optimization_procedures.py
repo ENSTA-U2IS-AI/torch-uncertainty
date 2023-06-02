@@ -236,14 +236,22 @@ def get_procedure(
             procedure = optim_cifar10_resnet18
         elif ds_name == "cifar100":
             procedure = optim_cifar100_resnet18
+        else:
+            raise NotImplementedError(f"Dataset {ds_name} not implemented.")
     elif arch_name == "resnet50":
         if ds_name == "cifar10":
             procedure = optim_cifar10_resnet50
         elif ds_name == "cifar100":
             procedure = optim_cifar100_resnet50
+        else:
+            raise NotImplementedError(f"Dataset {ds_name} not implemented.")
     elif arch_name == "wideresnet28x10":
         if ds_name == "cifar10" or ds_name == "cifar100":
             procedure = optim_cifar10_wideresnet
+        else:
+            raise NotImplementedError(f"Dataset {ds_name} not implemented.")
+    else:
+        raise NotImplementedError(f"Architecture {arch_name} not implemented.")
 
     if model_name == "batched":
         procedure = partial(
