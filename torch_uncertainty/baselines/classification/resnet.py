@@ -88,68 +88,34 @@ class ResNet:
             "in_channels": in_channels,
             "num_classes": num_classes,
             "imagenet_structure": imagenet_structure,
+            "groups": groups,
         }
-        # version specific parameters
-        if version == "vanilla":
-            # TODO: check parameters within a function
-            if groups < 1:
-                raise ValueError(
-                    f"Number of groups must be at least 1, not {groups}"
-                )
-            params.update({"groups": groups})
-        elif version == "packed":
-            # TODO: check parameters within a function
-            if alpha <= 0:
-                raise ValueError(
-                    f"Attribute `alpha` should be > 0, not {alpha}"
-                )
-            if gamma < 1:
-                raise ValueError(
-                    f"Attribute `gamma` should be >= 1, not {gamma}"
-                )
-            if groups < 1:
-                raise ValueError(
-                    f"Number of groups must be at least 1, not {groups}"
-                )
+
+        if version not in cls.versions.keys():
+            raise ValueError(f"Unknown version: {version}")
+
+        if version == "packed":
             params.update(
                 {
                     "num_estimators": num_estimators,
                     "alpha": alpha,
                     "gamma": gamma,
-                    "groups": groups,
                     "pretrained": pretrained,
                 }
             )
         elif version == "batched":
-            if groups < 1:
-                raise ValueError(
-                    f"Number of groups must be at least 1, not {groups}"
-                )
             params.update(
                 {
                     "num_estimators": num_estimators,
-                    "groups": groups,
                 }
             )
         elif version == "masked":
-            # TODO: check parameters within a function
-            if scale < 1:
-                raise ValueError(
-                    f"Attribute `scale` should be >= 1, not {scale}."
-                )
-            if groups < 1:
-                raise ValueError(
-                    f"Attribute `groups` should be >= 1, not {groups}."
-                )
             params.update(
                 {
                     "num_estimators": num_estimators,
                     "scale": scale,
-                    "groups": groups,
                 }
             )
-        else:
-            raise ValueError(f"Unknown version: {version}")
 
         model = cls.versions[version][cls.archs.index(arch)](**params)
         kwargs.update(params)

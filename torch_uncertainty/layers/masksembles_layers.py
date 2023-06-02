@@ -203,6 +203,9 @@ class MaskedLinear(nn.Module):
         factory_kwargs = {"device": device, "dtype": dtype}
         super().__init__()
 
+        if scale < 1:
+            raise ValueError(f"Attribute `scale` should be >= 1, not {scale}.")
+
         self.mask = Mask1D(
             in_features, num_masks=num_estimators, scale=scale, **factory_kwargs
         )
@@ -263,6 +266,9 @@ class MaskedConv2d(nn.Module):
     ) -> None:
         factory_kwargs = {"device": device, "dtype": dtype}
         super().__init__()
+
+        if scale < 1:
+            raise ValueError(f"Attribute `scale` should be >= 1, not {scale}.")
 
         self.mask = Mask2D(
             in_channels, num_masks=num_estimators, scale=scale, **factory_kwargs
