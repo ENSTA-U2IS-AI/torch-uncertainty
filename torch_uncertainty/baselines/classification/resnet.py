@@ -35,6 +35,70 @@ from torch_uncertainty.routines.classification import (
 
 # fmt: on
 class ResNet:
+    r"""ResNet backbone baseline for classification providing support for
+    various versions and architectures.
+
+    Args:
+        num_classes (int): Number of classes to predict.
+        in_channels (int): Number of input channels.
+        loss (nn.Module): Training loss.
+        optimization_procedure (Any): Optimization procedure, corresponds to
+            what expect the `LightningModule.configure_optimizers()
+            <https://pytorch-lightning.readthedocs.io/en/stable/common/lightning_module.html#configure-optimizers>`_
+            method.
+        version (str):
+            Determines which ResNet version to use:
+
+            - ``"vanilla"``: original ResNet
+            - ``"packed"``: Packed-Ensembles ResNet
+            - ``"batched"``: BatchEnsemble ResNet
+            - ``"masked"``: Masksemble ResNet
+
+        arch (int):
+            Determines which ResNet architecture to use:
+
+            - ``18``: ResNet-18
+            - ``32``: ResNet-32
+            - ``50``: ResNet-50
+            - ``101``: ResNet-101
+            - ``152``: ResNet-152
+
+        imagenet_structure (bool, optional): Whether to use the ImageNet
+            structure. Defaults to ``True``.
+        num_estimators (int, optional): Number of estimators in the ensemble.
+            Only used if :attr:`version` is either ``"packed"``, ``"batched"``
+            or ``"masked"`` Defaults to ``None``.
+        groups (int, optional): Number of groups in convolutions. Defaults to
+            ``1``.
+        scale (float, optional): Expansion factor affecting the width of the
+            estimators. Only used if :attr:`version` is ``"masked"``. Defaults
+            to ``None``.
+        alpha (float, optional): Expansion factor affecting the width of the
+            estimators. Only used if :attr:`version` is ``"packed"``. Defaults
+            to ``None``.
+        gamma (int, optional): Number of groups within each estimator. Only
+            used if :attr:`version` is ``"packed"`` and scales with
+            :attr:`groups`. Defaults to ``1s``.
+        use_entropy (bool, optional): Indicates whether to use the entropy
+            values as the OOD criterion or not. Defaults to ``False``.
+        use_logits (bool, optional): Indicates whether to use the logits as the
+            OOD criterion or not. Defaults to ``False``.
+        use_mi (bool, optional): Indicates whether to use the mutual
+            information as the OOD criterion or not. Defaults to ``False``.
+        use_variation_ratio (bool, optional): Indicates whether to use the
+            variation ratio as the OOD criterion or not. Defaults to ``False``.
+        pretrained (bool, optional): Indicates whether to use the pretrained
+            weights or not. Only used if :attr:`version` is ``"packed"``.
+            Defaults to ``False``.
+
+    Raises:
+        ValueError: If :attr:`version` is not either ``"vanilla"``,
+            ``"packed"``, ``"batched"`` or ``"masked"``.
+
+    Returns:
+        LightningModule: ResNet baseline ready for training and evaluation.
+    """
+
     single = ["vanilla"]
     ensemble = ["packed", "batched", "masked"]
     versions = {
@@ -73,10 +137,10 @@ class ResNet:
         arch: int,
         imagenet_structure: bool = True,
         num_estimators: Optional[int] = None,
-        groups: Optional[int] = None,
+        groups: Optional[int] = 1,
         scale: Optional[float] = None,
-        alpha: Optional[int] = None,
-        gamma: Optional[int] = None,
+        alpha: Optional[float] = None,
+        gamma: Optional[int] = 1,
         use_entropy: bool = False,
         use_logits: bool = False,
         use_mi: bool = False,
@@ -172,14 +236,14 @@ class ResNet:
         )
         parser.add_argument(
             "--alpha",
-            type=int,
+            type=float,
             default=None,
             help="Alpha for packed resnet",
         )
         parser.add_argument(
             "--gamma",
             type=int,
-            default=None,
+            default=1,
             help="Gamma for packed resnet",
         )
         parser.add_argument(
