@@ -19,10 +19,16 @@ Install the package via pip:
 
     pip install torch-uncertainty
 
+To update the package, run:
+
+.. parsed-literal::
+
+    pip install -U torch-uncertainty 
+
 From source
 -----------
 
-**Install Poetry**
+**Installing Poetry**
 
 Installation guidelines for poetry are available `here <https://python-poetry.org/docs/>`_.
 They boil down to executing the following command:
@@ -31,7 +37,7 @@ They boil down to executing the following command:
     
     curl -sSL https://install.python-poetry.org | python3 -
 
-**Install the package**
+**Installing the package**
 
 Clone the repository with:
 
@@ -59,3 +65,9 @@ Install the package using poetry:
 Depending on your system, you may encounter poetry errors. If so, kill the 
 process and add :bash:`PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring`
 at the beginning of every :bash:`poetry install` command.
+
+To update the package, run:
+
+.. parsed-literal::
+
+    git pull && poetry update
