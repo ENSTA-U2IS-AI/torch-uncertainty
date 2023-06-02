@@ -6,7 +6,7 @@ Installation
 
 
 You can install the package from PyPI or from source. Choose the latter if you
-want to access the files included the `experiments <https://github.com/ENSTA-U2IS/torch-uncertainty/blob/main/experiments/packed/resnet18_cifar10.py>`_
+want to access the files included the `experiments <https://github.com/ENSTA-U2IS/torch-uncertainty/tree/main/experiments>`_
 folder or if you want to contribute to the project.
 
 
