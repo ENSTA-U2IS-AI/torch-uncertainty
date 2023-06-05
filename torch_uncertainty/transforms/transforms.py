@@ -89,7 +89,7 @@ class Rotation(nn.Module):
         if (
             self.random_direction and np.random.uniform() > 0.5
         ):  # coverage: ignore
-            level = -level  # coverage: ignore
+            level = -level
         return F.rotate(
             img,
             level,
@@ -128,7 +128,7 @@ class Shear(nn.Module):
         if (
             self.random_direction and np.random.uniform() > 0.5
         ):  # coverage: ignore
-            level = -level  # coverage: ignore
+            level = -level
         shear = [0, 0]
         shear[self.axis] = level
         return F.affine(
@@ -171,7 +171,7 @@ class Translate(nn.Module):
         if (
             self.random_direction and np.random.uniform() > 0.5
         ):  # coverage: ignore
-            level = -level  # coverage: ignore
+            level = -level
         translate = [0, 0]
         translate[self.axis] = level
         return F.affine(
