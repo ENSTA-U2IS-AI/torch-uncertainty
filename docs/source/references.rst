@@ -60,6 +60,21 @@ For Packed-Ensembles, consider citing:
 * Authors: *Olivier Laurent, Adrien Lafage, Enzo Tartaglione, Geoffrey Daniel, Jean-Marc Martinez, Andrei Bursuc, and Gianni Franchi*
 * Paper: `ICLR 2023 <https://arxiv.org/abs/2210.09184>`__.
 
+
+Post-Processing Methods
+-----------------------
+
+Temperature scaling
+^^^^^^^^^^^^^^^^^^^
+
+For temperature scaling, consider citing:
+
+**On Calibration of Modern Neural Networks**
+
+* Authors: *Chuan Guo, Geoff Pleiss, Yu Sun, and Kilian Q. Weinberger*
+* Paper: `ICML 2017 <https://arxiv.org/pdf/1706.04599.pdf>`__.
+
+
 Metrics
 -------
 
