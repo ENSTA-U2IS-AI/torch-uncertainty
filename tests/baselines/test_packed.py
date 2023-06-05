@@ -6,6 +6,7 @@ from torchinfo import summary
 
 from torch_uncertainty.baselines import ResNet, WideResNet
 from torch_uncertainty.optimization_procedures import (
+    optim_cifar10_resnet18,
     optim_cifar10_resnet50,
     optim_cifar10_wideresnet,
 )
@@ -15,7 +16,7 @@ from torch_uncertainty.optimization_procedures import (
 class TestPackedBaseline:
     """Testing the PackedResNet baseline class."""
 
-    def test_packed(self):
+    def test_packed_50(self):
         net = ResNet(
             num_classes=10,
             in_channels=3,
@@ -35,6 +36,27 @@ class TestPackedBaseline:
         _ = net.criterion
         _ = net.configure_optimizers()
         _ = net(torch.rand(1, 3, 32, 32))
+
+    def test_packed_18(self):
+        net = ResNet(
+            num_classes=10,
+            in_channels=3,
+            loss=nn.CrossEntropyLoss,
+            optimization_procedure=optim_cifar10_resnet18,
+            version="packed",
+            arch=18,
+            imagenet_structure=True,
+            num_estimators=4,
+            alpha=2,
+            gamma=2,
+            groups=2,
+        )
+
+        summary(net)
+
+        _ = net.criterion
+        _ = net.configure_optimizers()
+        _ = net(torch.rand(1, 3, 40, 40))
 
     def test_packed_alpha_lt_0(self):
         with pytest.raises(Exception):
