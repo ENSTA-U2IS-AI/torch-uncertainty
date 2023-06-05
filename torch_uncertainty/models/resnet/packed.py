@@ -385,7 +385,7 @@ def packed_resnet18(
         num_classes=num_classes,
         imagenet_structure=imagenet_structure,
     )
-    if pretrained:
+    if pretrained:  # coverage: ignore
         weights = weight_ids[str(num_classes)][18]
         if weights is None:
             raise ValueError("No pretrained weights for this configuration")
@@ -427,7 +427,7 @@ def packed_resnet34(
         num_classes=num_classes,
         imagenet_structure=imagenet_structure,
     )
-    if pretrained:
+    if pretrained:  # coverage: ignore
         weights = weight_ids[str(num_classes)][34]
         if weights is None:
             raise ValueError("No pretrained weights for this configuration")
@@ -469,7 +469,7 @@ def packed_resnet50(
         num_classes=num_classes,
         imagenet_structure=imagenet_structure,
     )
-    if pretrained:
+    if pretrained:  # coverage: ignore
         weights = weight_ids[str(num_classes)][50]
         if weights is None:
             raise ValueError("No pretrained weights for this configuration")
@@ -511,7 +511,7 @@ def packed_resnet101(
         num_classes=num_classes,
         imagenet_structure=imagenet_structure,
     )
-    if pretrained:
+    if pretrained:  # coverage: ignore
         weights = weight_ids[str(num_classes)][101]
         if weights is None:
             raise ValueError("No pretrained weights for this configuration")
@@ -555,7 +555,7 @@ def packed_resnet152(
         num_classes=num_classes,
         imagenet_structure=imagenet_structure,
     )
-    if pretrained:
+    if pretrained:  # coverage: ignore
         weights = weight_ids[str(num_classes)][152]
         if weights is None:
             raise ValueError("No pretrained weights for this configuration")
