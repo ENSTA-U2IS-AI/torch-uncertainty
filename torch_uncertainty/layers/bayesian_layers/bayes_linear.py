@@ -122,7 +122,7 @@ class BayesLinear(nn.Module):
             bias_lposterior = self.bias_sampler.log_posterior()
             bias_lprior = self.bias_prior_dist.log_prior(bias)
         else:
-            bias, bias_lposterior, bias_lprior = None, None, None
+            bias, bias_lposterior, bias_lprior = None, 0, 0
 
         self.lvposterior = self.weight_sampler.log_posterior() + bias_lposterior
         self.lprior = self.weight_prior_dist.log_prior(weight) + bias_lprior

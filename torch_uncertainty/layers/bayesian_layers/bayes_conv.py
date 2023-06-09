@@ -164,6 +164,14 @@ class _BayesConvNd(Module):
             init.normal_(self.weight_mu, mean=self.mu_init, std=0.1)
             init.normal_(self.weight_sigma, mean=self.sigma_init, std=0.1)
 
+    def freeze(self) -> None:
+        """Freeze the layer by setting the frozen attribute to True."""
+        self.frozen = True
+
+    def unfreeze(self) -> None:
+        """Unfreeze the layer by setting the frozen attribute to False."""
+        self.frozen = False
+
     def extra_repr(self):
         s = (
             "{in_channels}, {out_channels}, kernel_size={kernel_size}"
@@ -275,9 +283,7 @@ class BayesConv1d(_BayesConvNd):
                 bias_lposterior = self.bias_sampler.log_posterior()
                 bias_lprior = self.bias_prior_dist.log_prior(bias)
             else:
-                bias = None
-                bias_lposterior = 0
-                bias_lprior = 0
+                bias, bias_lposterior, bias_lprior = None, 0, 0
 
             self.lvposterior = (
                 self.weight_sampler.log_posterior() + bias_lposterior
@@ -371,9 +377,7 @@ class BayesConv2d(_BayesConvNd):
                 bias_lposterior = self.bias_sampler.log_posterior()
                 bias_lprior = self.bias_prior_dist.log_prior(bias)
             else:
-                bias = None
-                bias_lposterior = 0
-                bias_lprior = 0
+                bias, bias_lposterior, bias_lprior = None, 0, 0
 
             self.lvposterior = (
                 self.weight_sampler.log_posterior() + bias_lposterior
@@ -467,9 +471,7 @@ class BayesConv3d(_BayesConvNd):
                 bias_lposterior = self.bias_sampler.log_posterior()
                 bias_lprior = self.bias_prior_dist.log_prior(bias)
             else:
-                bias = None
-                bias_lposterior = 0
-                bias_lprior = 0
+                bias, bias_lposterior, bias_lprior = None, 0, 0
 
             self.lvposterior = (
                 self.weight_sampler.log_posterior() + bias_lposterior
