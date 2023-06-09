@@ -17,13 +17,11 @@ class TestCutout:
         assert (output == 0).sum() > 0
 
         input = torch.rand(1, 32, 32) + 10  # no zeros
-        transform = Cutout(16)
         output = transform(input)
 
         assert (output == 0).sum() > 0
 
         input = torch.rand(3, 32, 32) + 10  # no zeros
-        transform = Cutout(16)
         output = transform(input)
 
         assert (output == 0).sum() > 0
