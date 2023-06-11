@@ -125,6 +125,24 @@ class PackedLinear(nn.Module):
             return self.conv1x1(input)
 
 
+class PackedConv1d(nn.Module):
+    r"""Packed-Ensembles-style Conv1d layer.
+
+    Warning:
+        Not yet implemented (open an issue if desired).
+    """
+
+    def __init__(self, **kwargs) -> None:
+        raise NotImplementedError(
+            "Open an issue if you would like this layer to be implemented."
+        )
+
+    def forward(self, input: Tensor) -> Tensor:
+        raise NotImplementedError(
+            "Open an issue if you would like this layer to be implemented."
+        )
+
+
 class PackedConv2d(nn.Module):
     r"""Packed-Ensembles-style Conv2d layer.
 
