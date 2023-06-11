@@ -27,6 +27,12 @@ class PackedLinear(nn.Module):
         rearrange (bool, optional): Rearrange the input and outputs for
             compatibility with previous and later layers. Defaults to ``True``.
 
+    Explanation Note:
+        Increasing :attr:`alpha` will increase the number of channels of the
+        ensemble, increasing its representation capacity. Increasing
+        :attr:`gamma` will increase the number of groups in the network and
+        therefore reduce the number of parameters.
+
     Note:
         Each ensemble member will only see
         :math:`\frac{\text{in_features}}{\text{num_estimators}}` features,
@@ -141,6 +147,12 @@ class PackedConv2d(nn.Module):
             hannels per group.
         bias (bool, optional): If ``True``, adds a learnable bias to the
             output. Defaults to ``True``.
+
+    Explanation Note:
+        Increasing :attr:`alpha` will increase the number of channels of the
+        ensemble, increasing its representation capacity. Increasing
+        :attr:`gamma` will increase the number of groups in the network and
+        therefore reduce the number of parameters.
 
     Note:
         Each ensemble member will only see
