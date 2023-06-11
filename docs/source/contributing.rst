@@ -43,7 +43,7 @@ Before submitting a final pull request, that we will review, please try your
 best not to reduce the code coverage and do document your code.
 
 If you implement a method, please add a reference to the corresponding paper in the 
-`references page <https://torch-uncertainty.github.io/references.html>`.
+`references page <https://torch-uncertainty.github.io/references.html>`_.
 
 Post-processing methods
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -51,7 +51,7 @@ Post-processing methods
 For now, we intend to follow scikit-learn style API for post-processing
 methods (except that we use a validation dataloader for now). You can get
 inspiration from the already implemented
-`temperature-scaling <https://github.com/ENSTA-U2IS/torch-uncertainty/blob/dev/torch_uncertainty/post_processing/temperature_scaler.py>`.
+`temperature-scaling <https://github.com/ENSTA-U2IS/torch-uncertainty/blob/dev/torch_uncertainty/post_processing/temperature_scaler.py>`_.
 
 
 License
