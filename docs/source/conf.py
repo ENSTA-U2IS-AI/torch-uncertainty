@@ -10,7 +10,7 @@ import pytorch_sphinx_theme
 project = "Torch Uncertainty"
 copyright = "2023, Adrien Lafage and Olivier Laurent"
 author = "Adrien Lafage and Olivier Laurent"
-release = "0.1.0"
+release = "0.1.3"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
