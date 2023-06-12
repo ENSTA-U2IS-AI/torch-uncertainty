@@ -50,7 +50,7 @@ def cls_main(
     if isinstance(root, str):
         root = Path(root)
 
-    if args.max_epochs is None:
+    if args.test is None and args.max_epochs is None:
         print(
             "Setting max_epochs to 1 for testing purposes. Set max_epochs "
             "manually to train the model."

@@ -219,7 +219,10 @@ def batch_ensemble_wrapper(model: nn.Module, optimization_procedure: Callable):
 
 
 def get_procedure(
-    arch_name: str, ds_name: str, model_name: str = ""
+    arch_name: str,
+    ds_name: str,
+    model_name: str = "",
+    imagenet_recipe: str = None,
 ) -> Callable:
     """Get the optimization procedure for a given architecture and dataset.
 
@@ -243,6 +246,11 @@ def get_procedure(
             procedure = optim_cifar10_resnet50
         elif ds_name == "cifar100":
             procedure = optim_cifar100_resnet50
+        elif ds_name == "imagenet":
+            if imagenet_recipe is not None and imagenet_recipe == "A3":
+                procedure = optim_imagenet_resnet50_A3
+            else:
+                procedure = optim_imagenet_resnet50
         else:
             raise NotImplementedError(f"Dataset {ds_name} not implemented.")
     elif arch_name == "wideresnet28x10":

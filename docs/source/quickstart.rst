@@ -5,11 +5,11 @@ Quickstart
     :language: bash
 
 Torch Uncertainty comes with different usage levels ranging from specific
-PyTorch layers to ready to train lightning-based models. The following
+PyTorch layers to ready to train Lightning-based models. The following
 presents a short introduction to each one of them. Let's start with the
 highest-level usage.
 
-Using the lightning-based CLI tool
+Using the Lightning-based CLI tool
 ----------------------------------
 
 Procedure
@@ -88,7 +88,7 @@ Run this model with, for instance:
 You may replace the architecture (which should be a Lightning Module), the
 Datamodule (a Lightning Datamodule), the loss or the optimization procedure to your likings.
 
-Using the pytorch-based models
+Using the PyTorch-based models
 ------------------------------
 
 Procedure
@@ -118,7 +118,7 @@ backbone with the following code:
         num_classes = 10,
     )
 
-Using the pytorch-based layers
+Using the PyTorch-based layers
 ------------------------------
 
 Procedure
