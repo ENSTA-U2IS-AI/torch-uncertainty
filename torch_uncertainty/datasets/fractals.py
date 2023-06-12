@@ -12,6 +12,16 @@ from torchvision.datasets.utils import (
 
 # fmt: on
 class Fractals(ImageFolder):
+    """Dataset used for PixMix augmentations.
+
+    Args:
+        root (str): Root directory of dataset.
+
+    Note:
+        There is no information on the license of the dataset. It may not
+        be suitable for commercial use.
+    """
+
     file_id = "1qC2gIUx9ARU7zhgI4IwGD3YcFhm8J4cA"
     filename = "fractals_and_fvis.tar"
     tgz_md5 = "3619fb7e2c76130749d97913fdd3ab27"
@@ -23,16 +33,6 @@ class Fractals(ImageFolder):
         target_transform: Callable[..., Any] = None,
         download: bool = False,
     ):
-        """Dataset used for PixMix augmentations.
-
-        Args:
-            root (str): Root directory of dataset.
-
-        Note:
-            There is no information on the license of the dataset. It may not
-            be suitable for commercial use.
-        """
-
         if isinstance(root, str):
             self.root = Path(root)
 

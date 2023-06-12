@@ -15,6 +15,28 @@ import numpy as np
 
 
 class CIFAR10_C(VisionDataset):
+    """The corrupted CIFAR-10-C Dataset.
+
+    Args:
+        root (str): Root directory of the datasets.
+        transform (callable, optional): A function/transform that takes in
+            a PIL image and returns a transformed version. E.g,
+            ``transforms.RandomCrop``. Defaults to None.
+        target_transform (callable, optional): A function/transform that
+            takes in the target and transforms it. Defaults to None.
+        subset (str): The subset to use, one of ``all`` or the keys in
+            ``cifarc_subsets``.
+        severity (int): The severity of the corruption, between 1 and 5.
+        download (bool, optional): If True, downloads the dataset from the
+            internet and puts it in root directory. If dataset is already
+            downloaded, it is not downloaded again. Defaults to False.
+
+    References:
+        Benchmarking neural network robustness to common corruptions and
+            perturbations. Dan Hendrycks and Thomas Dietterich.
+            In ICLR, 2019.
+    """
+
     base_folder = "CIFAR-10-C"
     tgz_md5 = "56bf5dcef84df0e2308c6dcbcbbd8499"
     cifarc_subsets = [
@@ -146,6 +168,7 @@ class CIFAR10_C(VisionDataset):
         return samples, labels
 
     def __len__(self) -> int:
+        """The number of samples in the dataset."""
         return self.labels.shape[0]
 
     def __getitem__(self, index: int) -> Any:
@@ -161,6 +184,7 @@ class CIFAR10_C(VisionDataset):
         return sample, target
 
     def _check_integrity(self) -> bool:
+        """Check the integrity of the dataset."""
         for filename, md5 in self.ctest_list:
             fpath = os.path.join(self.root, self.base_folder, filename)
             if not check_integrity(fpath, md5):
@@ -168,6 +192,7 @@ class CIFAR10_C(VisionDataset):
         return True
 
     def download(self) -> None:
+        """Download the dataset."""
         if self._check_integrity():
             print("Files already downloaded and verified.")
             return
