@@ -66,8 +66,27 @@ class PackedLinear(nn.Module):
         factory_kwargs = {"device": device, "dtype": dtype}
         super().__init__()
 
+        if alpha is None:
+            raise ValueError("You must specify the value of the arg. `alpha`")
+
+        if num_estimators is None:
+            raise ValueError(
+                "You must specify the value of the arg. `num_estimators`"
+            )
+
         if alpha <= 0:
             raise ValueError(f"Attribute `alpha` should be > 0, not {alpha}")
+
+        if not isinstance(num_estimators, int):
+            raise ValueError(
+                "Attribute `num_estimators` should be an int, not "
+                f"{type(num_estimators)}"
+            )
+        if num_estimators <= 0:
+            raise ValueError(
+                "Attribute `num_estimators` should be >= 1, not "
+                f"{num_estimators}"
+            )
 
         if not isinstance(gamma, int):
             raise ValueError(
@@ -204,12 +223,31 @@ class PackedConv2d(nn.Module):
         factory_kwargs = {"device": device, "dtype": dtype}
         super().__init__()
 
+        if alpha is None:
+            raise ValueError("You must specify the value of the arg. `alpha`")
+
+        if num_estimators is None:
+            raise ValueError(
+                "You must specify the value of the arg. `num_estimators`"
+            )
+
         if alpha <= 0:
             raise ValueError(f"Attribute `alpha` should be > 0, not {alpha}")
 
+        if not isinstance(num_estimators, int):
+            raise ValueError(
+                "Attribute `num_estimators` should be an int, not "
+                f"{type(num_estimators)}"
+            )
+        if num_estimators <= 0:
+            raise ValueError(
+                "Attribute `num_estimators` should be >= 1, not "
+                f"{num_estimators}"
+            )
+
         if not isinstance(gamma, int):
             raise ValueError(
-                f"Attribute `gamma` should be an int, not " f"{type(gamma)}"
+                f"Attribute `gamma` should be an int, not {type(gamma)}"
             )
         if gamma <= 0:
             raise ValueError(f"Attribute `gamma` should be >= 1, not {gamma}")
