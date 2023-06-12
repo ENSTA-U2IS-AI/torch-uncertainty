@@ -23,7 +23,7 @@ class TestBatchedBaseline:
             optimization_procedure=optim_cifar100_resnet18,
             version="batched",
             arch=18,
-            imagenet_structure=False,
+            style="cifar",
             num_estimators=4,
             groups=1,
         )
@@ -42,7 +42,7 @@ class TestBatchedBaseline:
             optimization_procedure=optim_cifar100_resnet50,
             version="batched",
             arch=50,
-            imagenet_structure=True,
+            style="imagenet",
             num_estimators=4,
             groups=1,
         )
@@ -64,7 +64,7 @@ class TestBatchedWideBaseline:
             loss=nn.CrossEntropyLoss,
             optimization_procedure=optim_cifar10_wideresnet,
             version="batched",
-            imagenet_structure=False,
+            style="cifar",
             num_estimators=4,
             groups=1,
         )

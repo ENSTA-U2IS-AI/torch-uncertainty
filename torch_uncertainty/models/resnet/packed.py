@@ -206,7 +206,7 @@ class _PackedResNet(nn.Module):
         alpha: int = 2,
         gamma: int = 1,
         groups: int = 1,
-        imagenet_structure: bool = True,
+        style: str = "imagenet",
     ) -> None:
         super().__init__()
 
@@ -215,7 +215,7 @@ class _PackedResNet(nn.Module):
         self.in_planes = 64
         block_planes = self.in_planes
 
-        if imagenet_structure:
+        if style == "imagenet":
             self.conv1 = PackedConv2d(
                 self.in_channels,
                 block_planes,
@@ -246,7 +246,7 @@ class _PackedResNet(nn.Module):
 
         self.bn1 = nn.BatchNorm2d(block_planes * alpha)
 
-        if imagenet_structure:
+        if style == "imagenet":
             self.optional_pool = nn.MaxPool2d(
                 kernel_size=3, stride=2, padding=1
             )
@@ -358,7 +358,7 @@ def packed_resnet18(
     gamma: int,
     num_classes: int,
     groups: int,
-    imagenet_structure: bool = True,
+    style: str = "imagenet",
     pretrained: bool = False,
 ) -> _PackedResNet:
     """Packed-Ensembles of ResNet-18 from `Deep Residual Learning for Image
@@ -383,7 +383,7 @@ def packed_resnet18(
         gamma=gamma,
         groups=groups,
         num_classes=num_classes,
-        imagenet_structure=imagenet_structure,
+        style=style,
     )
     if pretrained:  # coverage: ignore
         weights = weight_ids[str(num_classes)][18]
@@ -400,7 +400,7 @@ def packed_resnet34(
     gamma: int,
     num_classes: int,
     groups: int,
-    imagenet_structure: bool = True,
+    style: str = "imagenet",
     pretrained: bool = False,
 ) -> _PackedResNet:
     """Packed-Ensembles of ResNet-34 from `Deep Residual Learning for Image
@@ -425,7 +425,7 @@ def packed_resnet34(
         gamma=gamma,
         groups=groups,
         num_classes=num_classes,
-        imagenet_structure=imagenet_structure,
+        style=style,
     )
     if pretrained:  # coverage: ignore
         weights = weight_ids[str(num_classes)][34]
@@ -442,7 +442,7 @@ def packed_resnet50(
     gamma: int,
     num_classes: int,
     groups: int,
-    imagenet_structure: bool = True,
+    style: str = "imagenet",
     pretrained: bool = False,
 ) -> _PackedResNet:
     """Packed-Ensembles of ResNet-50 from `Deep Residual Learning for Image
@@ -467,7 +467,7 @@ def packed_resnet50(
         gamma=gamma,
         groups=groups,
         num_classes=num_classes,
-        imagenet_structure=imagenet_structure,
+        style=style,
     )
     if pretrained:  # coverage: ignore
         weights = weight_ids[str(num_classes)][50]
@@ -484,7 +484,7 @@ def packed_resnet101(
     gamma: int,
     num_classes: int,
     groups: int,
-    imagenet_structure: bool = True,
+    style: str = "imagenet",
     pretrained: bool = False,
 ) -> _PackedResNet:
     """Packed-Ensembles of ResNet-101 from `Deep Residual Learning for Image
@@ -509,7 +509,7 @@ def packed_resnet101(
         gamma=gamma,
         groups=groups,
         num_classes=num_classes,
-        imagenet_structure=imagenet_structure,
+        style=style,
     )
     if pretrained:  # coverage: ignore
         weights = weight_ids[str(num_classes)][101]
@@ -526,7 +526,7 @@ def packed_resnet152(
     gamma: int,
     num_classes: int,
     groups: int,
-    imagenet_structure: bool = True,
+    style: str = "imagenet",
     pretrained: bool = False,
 ) -> _PackedResNet:
     """Packed-Ensembles of ResNet-152 from `Deep Residual Learning for Image
@@ -538,7 +538,7 @@ def packed_resnet152(
         alpha (int): Expansion factor affecting the width of the estimators.
         gamma (int): Number of groups within each estimator.
         num_classes (int): Number of classes to predict.
-        imagenet_structure (bool, optional): Whether to use the ImageNet
+        style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
 
     Returns:
@@ -553,7 +553,7 @@ def packed_resnet152(
         gamma=gamma,
         groups=groups,
         num_classes=num_classes,
-        imagenet_structure=imagenet_structure,
+        style=style,
     )
     if pretrained:  # coverage: ignore
         weights = weight_ids[str(num_classes)][152]

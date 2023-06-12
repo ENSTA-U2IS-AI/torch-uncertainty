@@ -22,7 +22,7 @@ class TestStandardBaseline:
             optimization_procedure=optim_cifar10_resnet18,
             version="vanilla",
             arch=18,
-            imagenet_structure=False,
+            style="cifar",
             groups=1,
         )
         summary(net)
@@ -42,7 +42,7 @@ class TestStandardWideBaseline:
             loss=nn.CrossEntropyLoss,
             optimization_procedure=optim_cifar10_wideresnet,
             version="vanilla",
-            imagenet_structure=False,
+            style="cifar",
             groups=1,
         )
         # parser = ArgumentParser("torch-uncertainty-test")

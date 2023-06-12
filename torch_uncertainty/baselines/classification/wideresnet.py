@@ -43,8 +43,8 @@ class WideResNet:
             - ``"batched"``: BatchEnsemble Wide-ResNet
             - ``"masked"``: Masksemble Wide-ResNet
 
-        imagenet_structure (bool, optional): Whether to use the ImageNet
-            structure. Defaults to ``True``.
+        style (bool, optional): (str, optional): Which ResNet style to use.
+        Defaults to ``imagenet``.
         num_estimators (int, optional): Number of estimators in the ensemble.
             Only used if :attr:`version` is either ``"packed"``, ``"batched"``
             or ``"masked"`` Defaults to ``None``.
@@ -95,7 +95,7 @@ class WideResNet:
         loss: nn.Module,
         optimization_procedure: Any,
         version: Literal["vanilla", "packed", "batched", "masked"],
-        imagenet_structure: bool = True,
+        style: str = "imagenet",
         num_estimators: Optional[int] = None,
         groups: Optional[int] = None,
         scale: Optional[float] = None,
@@ -111,7 +111,7 @@ class WideResNet:
         params = {
             "in_channels": in_channels,
             "num_classes": num_classes,
-            "imagenet_structure": imagenet_structure,
+            "style": style,
             "groups": groups,
         }
 

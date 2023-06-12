@@ -68,8 +68,8 @@ class ResNet:
             - ``101``: ResNet-101
             - ``152``: ResNet-152
 
-        imagenet_structure (bool, optional): Whether to use the ImageNet
-            structure. Defaults to ``True``.
+        style (str, optional): Which ResNet style to use. Defaults to
+        ``imagenet``.
         num_estimators (int, optional): Number of estimators in the ensemble.
             Only used if :attr:`version` is either ``"packed"``, ``"batched"``
             or ``"masked"`` Defaults to ``None``.
@@ -140,7 +140,7 @@ class ResNet:
         optimization_procedure: Any,
         version: Literal["vanilla", "packed", "batched", "masked"],
         arch: int,
-        imagenet_structure: bool = True,
+        style: str = "imagenet",
         num_estimators: Optional[int] = None,
         groups: Optional[int] = 1,
         scale: Optional[float] = None,
@@ -156,7 +156,7 @@ class ResNet:
         params = {
             "in_channels": in_channels,
             "num_classes": num_classes,
-            "imagenet_structure": imagenet_structure,
+            "style": style,
             "groups": groups,
         }
 

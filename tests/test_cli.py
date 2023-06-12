@@ -34,7 +34,7 @@ class TestCLI:
                 in_channels=dm.num_channels,
                 loss=nn.CrossEntropyLoss,
                 optimization_procedure=optim_cifar10_resnet18,
-                imagenet_structure=False,
+                style="cifar",
                 **vars(args),
             )
 
@@ -57,7 +57,7 @@ class TestCLI:
                 in_channels=dm.num_channels,
                 loss=nn.CrossEntropyLoss,
                 optimization_procedure=optim_cifar10_resnet18,
-                imagenet_structure=False,
+                style="cifar",
                 **vars(args),
             )
 
@@ -79,7 +79,7 @@ class TestCLI:
                 in_channels=dm.num_channels,
                 loss=nn.CrossEntropyLoss,
                 optimization_procedure=optim_cifar10_wideresnet,
-                imagenet_structure=False,
+                style="cifar",
                 **vars(args),
             )
 

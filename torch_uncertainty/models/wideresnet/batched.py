@@ -74,7 +74,7 @@ class _BatchedWide(nn.Module):
         num_estimators: int,
         groups: int = 1,
         dropout_rate: float = 0.0,
-        imagenet_structure: bool = True,
+        style: str = "imagenet",
     ) -> None:
         super().__init__()
         self.num_estimators = num_estimators
@@ -86,7 +86,7 @@ class _BatchedWide(nn.Module):
 
         nStages = [16, 16 * k, 32 * k, 64 * k]
 
-        if imagenet_structure:
+        if style == "imagenet":
             self.conv1 = BatchConv2d(
                 in_channels,
                 nStages[0],
@@ -109,7 +109,7 @@ class _BatchedWide(nn.Module):
                 bias=True,
             )
 
-        if imagenet_structure:
+        if style == "imagenet":
             self.optional_pool = nn.MaxPool2d(
                 kernel_size=3, stride=2, padding=1
             )
@@ -203,7 +203,7 @@ def batched_wideresnet28x10(
     num_estimators: int,
     groups: int,
     num_classes: int,
-    imagenet_structure: bool = True,
+    style: str = "imagenet",
 ) -> _BatchedWide:
     """BatchEnsemble of Wide-ResNet-28x10 from `Wide Residual Networks
     <https://arxiv.org/pdf/1605.07146.pdf>`_.
@@ -212,7 +212,7 @@ def batched_wideresnet28x10(
         in_channels (int): Number of input channels.
         num_estimators (int): Number of estimators in the ensemble.
         num_classes (int): Number of classes to predict.
-        imagenet_structure (bool, optional): Whether to use the ImageNet
+        style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
 
     Returns:
@@ -226,5 +226,5 @@ def batched_wideresnet28x10(
         num_classes=num_classes,
         num_estimators=num_estimators,
         groups=groups,
-        imagenet_structure=imagenet_structure,
+        style=style,
     )

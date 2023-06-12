@@ -162,7 +162,7 @@ class _MaskedResNet(nn.Module):
         num_estimators: int,
         scale: float = 2.0,
         groups: int = 1,
-        imagenet_structure: bool = True,
+        style: str = "imagenet",
     ) -> None:
         super().__init__()
 
@@ -175,7 +175,7 @@ class _MaskedResNet(nn.Module):
             )
         block_planes = self.in_planes
 
-        if imagenet_structure:
+        if style == "imagenet":
             self.conv1 = nn.Conv2d(
                 self.in_channels,
                 block_planes,
@@ -198,7 +198,7 @@ class _MaskedResNet(nn.Module):
 
         self.bn1 = nn.BatchNorm2d(block_planes)
 
-        if imagenet_structure:
+        if style == "imagenet":
             self.optional_pool = nn.MaxPool2d(
                 kernel_size=3, stride=2, padding=1
             )
@@ -299,7 +299,7 @@ def masked_resnet18(
     scale: float,
     groups: int,
     num_classes: int,
-    imagenet_structure: bool = True,
+    style: str = "imagenet",
 ) -> _MaskedResNet:
     """Masksembles of ResNet-18 from `Deep Residual Learning for Image
     Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -321,7 +321,7 @@ def masked_resnet18(
         scale=scale,
         groups=groups,
         num_classes=num_classes,
-        imagenet_structure=imagenet_structure,
+        style=style,
     )
 
 
@@ -331,7 +331,7 @@ def masked_resnet34(
     scale: float,
     groups: int,
     num_classes: int,
-    imagenet_structure: bool = True,
+    style: str = "imagenet",
 ) -> _MaskedResNet:
     """Masksembles of ResNet-34 from `Deep Residual Learning for Image
     Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -353,7 +353,7 @@ def masked_resnet34(
         scale=scale,
         groups=groups,
         num_classes=num_classes,
-        imagenet_structure=imagenet_structure,
+        style=style,
     )
 
 
@@ -363,7 +363,7 @@ def masked_resnet50(
     scale: float,
     groups: int,
     num_classes: int,
-    imagenet_structure: bool = True,
+    style: str = "imagenet",
 ) -> _MaskedResNet:
     """Masksembles of ResNet-50 from `Deep Residual Learning for Image
     Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -385,7 +385,7 @@ def masked_resnet50(
         scale=scale,
         groups=groups,
         num_classes=num_classes,
-        imagenet_structure=imagenet_structure,
+        style=style,
     )
 
 
@@ -395,7 +395,7 @@ def masked_resnet101(
     scale: float,
     groups: int,
     num_classes: int,
-    imagenet_structure: bool = True,
+    style: str = "imagenet",
 ) -> _MaskedResNet:
     """Masksembles of ResNet-101 from `Deep Residual Learning for Image
     Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -417,7 +417,7 @@ def masked_resnet101(
         scale=scale,
         groups=groups,
         num_classes=num_classes,
-        imagenet_structure=imagenet_structure,
+        style=style,
     )
 
 
@@ -427,7 +427,7 @@ def masked_resnet152(
     scale: float,
     groups: int,
     num_classes: int,
-    imagenet_structure: bool = True,
+    style: str = "imagenet",
 ) -> _MaskedResNet:
     """Masksembles of ResNet-152 from `Deep Residual Learning for Image
     Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -450,5 +450,5 @@ def masked_resnet152(
         scale=scale,
         groups=groups,
         num_classes=num_classes,
-        imagenet_structure=imagenet_structure,
+        style=style,
     )
