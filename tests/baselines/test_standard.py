@@ -45,9 +45,6 @@ class TestStandardWideBaseline:
             style="cifar",
             groups=1,
         )
-        # parser = ArgumentParser("torch-uncertainty-test")
-        # parser = net.add_model_specific_args(parser)
-        # parser.parse_args(["--no-imagenet_structure"])
         summary(net)
 
         _ = net.criterion

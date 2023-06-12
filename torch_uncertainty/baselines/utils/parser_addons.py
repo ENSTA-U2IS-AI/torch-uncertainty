@@ -4,12 +4,20 @@ from argparse import ArgumentParser
 
 # fmt: on
 def add_resnet_specific_args(parser: ArgumentParser) -> ArgumentParser:
+    style_choices = ["cifar", "imagenet", "robust"]
     parser.add_argument(
         "--arch",
         type=int,
         choices=[18, 34, 50, 101, 152],
         default=18,
         help=f"Architecture of ResNet. Choose among: {[18, 34, 50, 101, 152]}",
+    )
+    parser.add_argument(
+        "--style",
+        type=str,
+        choices=style_choices,
+        default="imagenet",
+        help=f"Variation of ResNet. Choose among: {style_choices}",
     )
     parser.add_argument(
         "--groups",
@@ -21,6 +29,14 @@ def add_resnet_specific_args(parser: ArgumentParser) -> ArgumentParser:
 
 
 def add_wideresnet_specific_args(parser: ArgumentParser) -> ArgumentParser:
+    style_choices = ["cifar", "imagenet"]
+    parser.add_argument(
+        "--style",
+        type=str,
+        choices=style_choices,
+        default="imagenet",
+        help=f"Variation of ResNet. Choose among: {style_choices}",
+    )
     parser.add_argument(
         "--groups",
         type=int,
@@ -33,7 +49,7 @@ def add_wideresnet_specific_args(parser: ArgumentParser) -> ArgumentParser:
 def add_packed_specific_args(parser: ArgumentParser) -> ArgumentParser:
     parser.add_argument(
         "--alpha",
-        type=float,
+        type=int,
         default=None,
         help="Alpha for Packed-Ensembles",
     )

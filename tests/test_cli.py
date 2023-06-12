@@ -19,7 +19,7 @@ class TestCLI:
 
     def test_cls_main_resnet(self):
         root = Path(__file__).parent.absolute().parents[0]
-        with ArgvContext(""):
+        with ArgvContext("--style cifar"):
             args = init_args(ResNet, CIFAR10DataModule)
 
             # datamodule
@@ -34,7 +34,6 @@ class TestCLI:
                 in_channels=dm.num_channels,
                 loss=nn.CrossEntropyLoss,
                 optimization_procedure=optim_cifar10_resnet18,
-                style="cifar",
                 **vars(args),
             )
 
@@ -42,7 +41,9 @@ class TestCLI:
 
     def test_cls_main_other_arguments(self):
         root = Path(__file__).parent.absolute().parents[0]
-        with ArgvContext("--seed 42 --max_epochs 1 --channels_last"):
+        with ArgvContext(
+            "--seed 42 --max_epochs 1 --channels_last --style cifar"
+        ):
             args = init_args(ResNet, CIFAR10DataModule)
 
             # datamodule
@@ -57,7 +58,6 @@ class TestCLI:
                 in_channels=dm.num_channels,
                 loss=nn.CrossEntropyLoss,
                 optimization_procedure=optim_cifar10_resnet18,
-                style="cifar",
                 **vars(args),
             )
 
@@ -65,7 +65,7 @@ class TestCLI:
 
     def test_cls_main_wideresnet(self):
         root = Path(__file__).parent.absolute().parents[0]
-        with ArgvContext(""):
+        with ArgvContext("--style cifar"):
             args = init_args(WideResNet, CIFAR10DataModule)
 
             # datamodule
@@ -79,7 +79,6 @@ class TestCLI:
                 in_channels=dm.num_channels,
                 loss=nn.CrossEntropyLoss,
                 optimization_procedure=optim_cifar10_wideresnet,
-                style="cifar",
                 **vars(args),
             )
 

@@ -25,9 +25,9 @@ class TestUtils:
 class TestHub:
     """Testing hub methods."""
 
-    def test_hub_existent(self):
+    def test_hub_exists(self):
         _ = utils.hub.load_hf("test")
 
-    def test_hub_nonexistent(self):
+    def test_hub_notexists(self):
         with pytest.raises(Exception):
             _ = utils.hub.load_hf("tests")
