@@ -24,6 +24,10 @@ class UCIRegression(Dataset):
             numpy array and returns a transformed version.
         target_transform (callable, optional): A function/transform that takes
             in the target and transforms it.
+        dataset_name (string, optional): The name of the dataset. One of
+            "boston-housing", "concrete", "energy", "kin8nm",
+            "naval-propulsion-plant", "power-plant",
+            "protein-tertiary-structure", "wine-quality-red", "yacht".
         download (bool, optional): If true, downloads the dataset from the
             internet and puts it in root directory. If dataset is already
             downloaded, it is not downloaded again.
@@ -132,8 +136,10 @@ class UCIRegression(Dataset):
 
         self._make_dataset()
 
+        self._standardize()
+
     def __len__(self) -> int:
-        return self.samples.shape[0]
+        return self.data.shape[0]
 
     def _check_integrity(self) -> bool:
         """Check the integrity of the dataset(s)."""
@@ -141,6 +147,17 @@ class UCIRegression(Dataset):
             self.root / self.root_appendix / Path(self.start_filename),
             self.md5,
         )
+
+    def _standardize(self):
+        self.data_mean = self.data.mean(axis=0)
+        self.data_std = self.data.std(axis=0)
+        self.data_std[self.data_std == 0] = 1
+
+        self.target_mean = self.targets.mean(axis=0)
+        self.target_std = self.targets.std(axis=0)
+
+        self.data = (self.data - self.data_mean) / self.data_std
+        self.targets = (self.targets - self.target_mean) / self.target_std
 
     def download(self) -> None:
         """Download and extract dataset."""
@@ -226,6 +243,10 @@ class UCIRegression(Dataset):
 
     def __getitem__(self, index: int) -> Tuple[torch.Tensor, torch.Tensor]:
         """Get sample and target for a given index."""
-        return self.transform(self.data[index]), self.target_transform(
-            self.targets[index]
-        )
+        data = self.data[index]
+        if self.transform is not None:
+            data = self.transform(data)
+        target = self.targets[index]
+        if self.target_transform is not None:
+            target = self.target_transform(target)
+        return data, target
