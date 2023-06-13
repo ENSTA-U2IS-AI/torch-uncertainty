@@ -173,7 +173,9 @@ class ClassificationSingle(pl.LightningModule):
             ood_values = -confs
 
         if dataloader_idx == 0:
-            self.test_cls_metrics.update(probs, targets, num_classes=10)
+            self.test_cls_metrics.update(
+                probs, targets, num_classes=self.num_classes
+            )
             self.test_ood_metrics.update(ood_values, torch.zeros_like(targets))
             self.test_entropy_id(probs)
             self.log(
