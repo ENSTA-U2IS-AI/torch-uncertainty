@@ -2,6 +2,7 @@
 .vscode/
 data/
 logs/
+lightning_logs/
 docs/*/generated/
 docs/*/auto_tutorials/
 *.pth
