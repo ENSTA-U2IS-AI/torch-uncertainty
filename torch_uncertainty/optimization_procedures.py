@@ -179,6 +179,21 @@ def optim_imagenet_resnet50_A3(
     }
 
 
+def optim_regression(
+    model: nn.Module,
+    learning_rate: float = 1e-2,
+) -> dict:
+    optimizer = optim.SGD(
+        model.parameters(),
+        lr=learning_rate,
+        weight_decay=0,
+    )
+    return {
+        "optimizer": optimizer,
+        "monitor": "hp/val_nll",
+    }
+
+
 def batch_ensemble_wrapper(model: nn.Module, optimization_procedure: Callable):
     procedure = optimization_procedure(model)
     param_optimizer = procedure["optimizer"]

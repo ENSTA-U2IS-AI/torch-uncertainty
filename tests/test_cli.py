@@ -37,7 +37,7 @@ class TestCLI:
                 **vars(args),
             )
 
-            cls_main(model, dm, root, "std", args)
+            cls_main(model, dm, root, "std", "classification", args)
 
     def test_cls_main_other_arguments(self):
         root = Path(__file__).parent.absolute().parents[0]
@@ -61,7 +61,7 @@ class TestCLI:
                 **vars(args),
             )
 
-            cls_main(model, dm, root, "std", args)
+            cls_main(model, dm, root, "std", "classification", args)
 
     def test_cls_main_wideresnet(self):
         root = Path(__file__).parent.absolute().parents[0]
@@ -82,4 +82,4 @@ class TestCLI:
                 **vars(args),
             )
 
-            cls_main(model, dm, root, "std", args)
+            cls_main(model, dm, root, "std", "classification", args)

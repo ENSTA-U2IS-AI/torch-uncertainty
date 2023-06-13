@@ -32,7 +32,7 @@ class TestClassificationSingle:
                 **vars(args),
             )
 
-            cls_main(model, dm, root, "dummy", args)
+            cls_main(model, dm, root, "dummy", "classification", args)
 
 
 class TestClassificationEnsemble:
@@ -56,4 +56,4 @@ class TestClassificationEnsemble:
                 **vars(args),
             )
 
-            cls_main(model, dm, root, "dummy", args)
+            cls_main(model, dm, root, "dummy", "classification", args)

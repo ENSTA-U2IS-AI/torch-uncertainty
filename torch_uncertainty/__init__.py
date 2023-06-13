@@ -2,7 +2,7 @@
 # flake8: noqa
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
-from typing import Type, Union
+from typing import Literal, Type, Union
 
 import pytorch_lightning as pl
 import torch
@@ -45,10 +45,18 @@ def cls_main(
     datamodule: pl.LightningDataModule,
     root: Union[Path, str],
     net_name: str,
+    problem_type: Literal["classification", "regression"],
     args: Namespace,
 ) -> None:
     if isinstance(root, str):
         root = Path(root)
+
+    if problem_type == "classification":
+        monitor = "hp/val_acc"
+        mode = "max"
+    elif problem_type == "regression":
+        monitor = "hp/val_gnll"
+        mode = "min"
 
     if args.test is None and args.max_epochs is None:
         print(
@@ -74,8 +82,8 @@ def cls_main(
 
     # callbacks
     save_checkpoints = ModelCheckpoint(
-        monitor="hp/val_acc",
-        mode="max",
+        monitor=monitor,
+        mode=mode,
         save_last=True,
         save_weights_only=True,
     )
@@ -84,7 +92,7 @@ def cls_main(
     callbacks = [
         save_checkpoints,
         LearningRateMonitor(logging_interval="step"),
-        EarlyStopping(monitor="hp/val_nll", patience=np.inf, check_finite=True),
+        EarlyStopping(monitor=monitor, patience=np.inf, check_finite=True),
     ]
     # trainer
     trainer = pl.Trainer.from_argparse_args(
