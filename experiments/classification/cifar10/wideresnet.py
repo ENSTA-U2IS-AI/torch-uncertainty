@@ -28,7 +28,7 @@ if __name__ == "__main__":
         optimization_procedure=get_procedure(
             f"resnet{args.arch}", "cifar10", args.version
         ),
-        imagenet_structure=False,
+        style="cifar",
         **vars(args),
     )
 

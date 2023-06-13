@@ -4,7 +4,7 @@ from argparse import ArgumentParser
 
 # fmt: on
 def add_resnet_specific_args(parser: ArgumentParser) -> ArgumentParser:
-    style_choices = ["cifar", "imagenet", "robust"]
+    # style_choices = ["cifar", "imagenet", "robust"]
     parser.add_argument(
         "--arch",
         type=int,
@@ -12,13 +12,13 @@ def add_resnet_specific_args(parser: ArgumentParser) -> ArgumentParser:
         default=18,
         help=f"Architecture of ResNet. Choose among: {[18, 34, 50, 101, 152]}",
     )
-    parser.add_argument(
-        "--style",
-        type=str,
-        choices=style_choices,
-        default="imagenet",
-        help=f"Variation of ResNet. Choose among: {style_choices}",
-    )
+    # parser.add_argument(
+    #     "--style",
+    #     type=str,
+    #     choices=style_choices,
+    #     default="imagenet",
+    #     help=f"Variation of ResNet. Choose among: {style_choices}",
+    # )
     parser.add_argument(
         "--groups",
         type=int,
@@ -29,14 +29,14 @@ def add_resnet_specific_args(parser: ArgumentParser) -> ArgumentParser:
 
 
 def add_wideresnet_specific_args(parser: ArgumentParser) -> ArgumentParser:
-    style_choices = ["cifar", "imagenet"]
-    parser.add_argument(
-        "--style",
-        type=str,
-        choices=style_choices,
-        default="imagenet",
-        help=f"Variation of ResNet. Choose among: {style_choices}",
-    )
+    # style_choices = ["cifar", "imagenet"]
+    # parser.add_argument(
+    #     "--style",
+    #     type=str,
+    #     choices=style_choices,
+    #     default="imagenet",
+    #     help=f"Variation of ResNet. Choose among: {style_choices}",
+    # )
     parser.add_argument(
         "--groups",
         type=int,
