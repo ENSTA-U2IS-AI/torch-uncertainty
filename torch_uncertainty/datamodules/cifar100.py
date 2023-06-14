@@ -124,7 +124,11 @@ class CIFAR100DataModule(LightningDataModule):
                 transform=self.transform_train,
             )
             self.train, self.val = random_split(
-                full, [len(full) - self.val_split, self.val_split]
+                full,
+                [
+                    int(len(full) ** (1 - self.val_split)),
+                    len(full) - int(len(full) ** (1 - self.val_split)),
+                ],
             )
             if self.val_split == 0:
                 self.val = self.dataset(
@@ -204,7 +208,7 @@ class CIFAR100DataModule(LightningDataModule):
         p = parent_parser.add_argument_group("datamodule")
         p.add_argument("--root", type=str, default="./data/")
         p.add_argument("--batch_size", type=int, default=128)
-        p.add_argument("--val_split", type=int, default=0)
+        p.add_argument("--val_split", type=float, default=0.0)
         p.add_argument("--num_workers", type=int, default=4)
         p.add_argument("--cutout", type=int, default=0)
         p.add_argument(
