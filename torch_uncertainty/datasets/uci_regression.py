@@ -11,6 +11,8 @@ from torchvision.datasets.utils import (
     download_url,
 )
 
+import numpy as np
+
 
 # fmt:on
 class UCIRegression(Dataset):
@@ -26,8 +28,8 @@ class UCIRegression(Dataset):
             in the target and transforms it.
         dataset_name (string, optional): The name of the dataset. One of
             "boston-housing", "concrete", "energy", "kin8nm",
-            "naval-propulsion-plant", "power-plant",
-            "protein-tertiary-structure", "wine-quality-red", "yacht".
+            "naval-propulsion-plant", "power-plant", "protein",
+            "wine-quality-red", and "yacht".
         download (bool, optional): If true, downloads the dataset from the
             internet and puts it in root directory. If dataset is already
             downloaded, it is not downloaded again.
@@ -43,13 +45,13 @@ class UCIRegression(Dataset):
 
     root_appendix = "uci_regression"
     uci_subsets = [
-        "boston-housing",
+        "boston",
         "concrete",
         "energy",
         "kin8nm",
         "naval-propulsion-plant",
         "power-plant",
-        "protein-tertiary-structure",
+        "protein",
         "wine-quality-red",
         "yacht",
     ]
@@ -59,7 +61,7 @@ class UCIRegression(Dataset):
         "eba3e28907d4515244165b6b2c311b7b",
         "2018fb7b50778fdc1304d50a78874579",
         "df08c665b7665809e74e32b107836a3a",
-        None,
+        "54f4febcf51bdba12e1ca63e28b3e973",
         "f5065a616eae05eb4ecae445ecf6e720",
         "37bcb77a8abad274a987439e6a3de632",
         "0ddfa7a9379510fe7ff88b9930e3c332",
@@ -72,8 +74,8 @@ class UCIRegression(Dataset):
         "strength.zip",
         "https://archive.ics.uci.edu/static/public/242/energy+efficiency.zip",
         "https://www.openml.org/data/get_csv/3626/dataset_2175_kin8nm.arff",
-        "https://archive.ics.uci.edu/static/public/316/condition+based+"
-        "maintenance+of+naval+propulsion+plants.zip",
+        "https://raw.githubusercontent.com/luishpinto/cm-naval-propulsion-"
+        "plant/master/data.csv",
         "https://archive.ics.uci.edu/static/public/294/combined+cycle+power+"
         "plant.zip",
         "https://archive.ics.uci.edu/static/public/265/physicochemical+"
@@ -108,6 +110,8 @@ class UCIRegression(Dataset):
         target_transform: Optional[Callable] = None,
         dataset_name: str = "energy",
         download: bool = False,
+        test_split: float = 0.2,
+        seed: int = 42,
     ) -> None:
         super().__init__()
 
@@ -117,8 +121,8 @@ class UCIRegression(Dataset):
         self.train = train
         self.transform = transform
         self.target_transform = target_transform
-
-        # self.standardize = standardize
+        self.train_split = 1 - test_split
+        self.seed = seed
 
         if dataset_name not in self.uci_subsets:
             raise ValueError(
@@ -149,15 +153,15 @@ class UCIRegression(Dataset):
         )
 
     def _standardize(self):
+        self.data = (self.data - self.data_mean) / self.data_std
+        self.targets = (self.targets - self.target_mean) / self.target_std
+
+    def _compute_statistics(self):
         self.data_mean = self.data.mean(axis=0)
         self.data_std = self.data.std(axis=0)
         self.data_std[self.data_std == 0] = 1
-
         self.target_mean = self.targets.mean(axis=0)
         self.target_std = self.targets.std(axis=0)
-
-        self.data = (self.data - self.data_mean) / self.data_std
-        self.targets = (self.targets - self.target_mean) / self.target_std
 
     def download(self) -> None:
         """Download and extract dataset."""
@@ -170,7 +174,7 @@ class UCIRegression(Dataset):
                 "download."
             )
         download_root = self.root / self.root_appendix / self.dataset_name
-        if self.dataset_name == "boston-housing":
+        if self.dataset_name == "boston":
             download_url(
                 self.url,
                 root=download_root,
@@ -181,6 +185,12 @@ class UCIRegression(Dataset):
                 self.url,
                 root=download_root,
                 filename="kin8nm.csv",
+            )
+        elif self.dataset_name == "naval-propulsion-plant":
+            download_url(
+                self.url,
+                root=download_root,
+                filename="data.csv",
             )
         else:
             download_and_extract_archive(
@@ -194,7 +204,7 @@ class UCIRegression(Dataset):
     def _make_dataset(self) -> None:
         """Create dataset from extracted files."""
         path = self.root / self.root_appendix / self.dataset_name
-        if self.dataset_name == "boston-housing":
+        if self.dataset_name == "boston":
             array = pd.read_table(
                 path / "housing.data",
                 names=self.boston_column_names,
@@ -205,16 +215,18 @@ class UCIRegression(Dataset):
             array = pd.read_excel(path / "Concrete_Data.xls").to_numpy()
         elif self.dataset_name == "energy":
             array = pd.read_excel(path / "ENB2012_data.xlsx").to_numpy()
+            print(len(array))
         elif self.dataset_name == "kin8nm":
             array = pd.read_csv(path / "kin8nm.csv").to_numpy()
-        # elif self.dataset_name == "naval-propulsion-plant":
-        #     array = pd.read_csv(
-        #         path / "naval-propulsion-plant.csv",
-        #         header=None,
-        #     ).to_numpy()
+        elif self.dataset_name == "naval-propulsion-plant":
+            df = pd.read_csv(
+                path / "data.csv", header=None, sep=";", decimal=","
+            )
+            # convert Ex to 10^x and remove second target
+            array = df.apply(pd.to_numeric, errors="coerce").to_numpy()[:, :-1]
         # elif self.dataset_name == "power-plant":
         #     array = pd.read_excel(path / "Folds5x2_pp.xlsx").to_numpy()
-        elif self.dataset_name == "protein-tertiary-structure":
+        elif self.dataset_name == "protein":
             array = pd.read_csv(
                 path / "CASP.csv",
             ).to_numpy()
@@ -231,15 +243,35 @@ class UCIRegression(Dataset):
             ).to_numpy()
         else:
             raise ValueError("Dataset not implemented.")
-        self.data = torch.as_tensor(array[:, :-1]).float()
-        self.targets = torch.as_tensor(array[:, -1]).float()
+
+        gen = torch.Generator()
+        gen.manual_seed(self.seed)
+        array = torch.as_tensor(array).float()
+        indexes = torch.randperm(array.shape[0], generator=gen)
+        if self.dataset_name == "energy":
+            self.data = array[indexes][:, 2:-3]
+        else:
+            self.data = array[indexes][:, :-1]
+
+        if self.dataset_name == "energy":
+            self.targets = array[indexes][:, -2]
+        else:
+            self.targets = array[indexes][:, -1]
+
+        self._compute_statistics()
 
         if self.train:
-            self.data = self.data[: int(0.8 * len(self.data))]
-            self.targets = self.targets[: int(0.8 * len(self.targets))]
+            self.data = self.data[: int(self.train_split * len(self.data))]
+            self.targets = self.targets[
+                : int(self.train_split * len(self.targets))
+            ]
         else:
-            self.data = self.data[int(0.8 * len(self.data)) :]
-            self.targets = self.targets[int(0.8 * len(self.targets)) :]
+            self.data = self.data[int(self.train_split * len(self.data)) :]
+            self.targets = self.targets[
+                int(self.train_split * len(self.targets)) :
+            ]
+
+        np.savetxt(f"data_{self.train}.txt", self.data.numpy())
 
     def __getitem__(self, index: int) -> Tuple[torch.Tensor, torch.Tensor]:
         """Get sample and target for a given index."""
