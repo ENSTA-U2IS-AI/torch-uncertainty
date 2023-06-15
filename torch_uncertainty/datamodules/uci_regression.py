@@ -2,7 +2,7 @@
 from argparse import ArgumentParser
 from functools import partial
 from pathlib import Path
-from typing import Any, List, Optional, Union
+from typing import Any, Optional, Union
 
 from pytorch_lightning import LightningDataModule
 from torch.utils.data import DataLoader, Dataset, random_split
@@ -12,14 +12,34 @@ from ..datasets.uci_regression import UCIRegression
 
 # fmt: on
 class UCIDataModule(LightningDataModule):
+    """The UCI regression datasets.
+
+    Args:
+        root (string): Root directory of the datasets.
+        batch_size (int): The batch size for training and testing.
+        dataset_name (string, optional): The name of the dataset. One of
+            "boston-housing", "concrete", "energy", "kin8nm",
+            "naval-propulsion-plant", "power-plant", "protein",
+            "wine-quality-red", and "yacht".
+        val_split (float, optional): Share of validation samples. Defaults
+            to ``0``.
+        num_workers (int, optional): How many subprocesses to use for data
+            loading. Defaults to ``1``.
+        pin_memory (bool, optional): Whether to pin memory in the GPU. Defaults
+            to ``True``.
+        persistent_workers (bool, optional): Whether to use persistent workers.
+            Defaults to ``True``.
+    """
+
+    training_task = "regression"
+
     def __init__(
         self,
         root: Union[str, Path],
         batch_size: int,
         dataset_name: str,
-        val_split: int = 0,
+        val_split: Optional[float] = 0.0,
         num_workers: int = 1,
-        num_dataloaders: int = 1,
         pin_memory: bool = True,
         persistent_workers: bool = True,
         **kwargs,
@@ -32,7 +52,6 @@ class UCIDataModule(LightningDataModule):
         self.batch_size = batch_size
         self.val_split = val_split
         self.num_workers = num_workers
-        self.num_dataloaders = num_dataloaders
 
         self.pin_memory = pin_memory
         self.persistent_workers = persistent_workers
@@ -40,48 +59,65 @@ class UCIDataModule(LightningDataModule):
         self.dataset = partial(UCIRegression, dataset_name=dataset_name)
 
     def prepare_data(self) -> None:
-        self.dataset(root=self.root, train=True, download=True)
-        self.dataset(root=self.root, train=False, download=True)
+        """Download the dataset."""
+        self.dataset(root=self.root, download=True)
 
     def setup(self, stage: Optional[str] = None) -> None:
-        if stage == "fit" or stage is None:
-            full = self.dataset(
-                self.root,
-                train=True,
-                download=False,
-            )
-            self.train, self.val = random_split(
-                full,
-                [
-                    int(len(full) * (1 - self.val_split)),
-                    len(full) - int(len(full) * (1 - self.val_split)),
-                ],
-            )
-            if self.val_split == 0:
-                self.val = self.dataset(
-                    self.root,
-                    train=False,
-                    download=False,
-                )
-        elif stage == "test":
-            self.test = self.dataset(
-                self.root,
-                train=False,
-                download=False,
-            )
+        """Split the datasets into train, val, and test."""
+        full = self.dataset(
+            self.root,
+            download=False,
+        )
+        self.train, self.test, self.val = random_split(
+            full,
+            [
+                int(len(full) * (0.8 - self.val_split)),
+                int(len(full) * 0.2),
+                len(full)
+                - int(len(full) * 0.2)
+                - int(len(full) * (0.8 - self.val_split)),
+            ],
+        )
+        if self.val_split == 0:
+            self.val = self.test
 
     def train_dataloader(self) -> DataLoader:
+        """Get the training dataloader for UCI Regression.
+
+        Return:
+            DataLoader: UCI Regression training dataloader.
+        """
         return self._data_loader(self.train, shuffle=True)
 
     def val_dataloader(self) -> DataLoader:
+        """Get the validation dataloader for UCI Regression.
+
+        Return:
+            DataLoader: UCI Regression validation dataloader.
+        """
         return self._data_loader(self.val)
 
-    def test_dataloader(self) -> List[DataLoader]:
+    def test_dataloader(self) -> DataLoader:
+        """Get the test dataloader for UCI Regression.
+
+        Return:
+            DataLoader: UCI Regression test dataloader.
+        """
         return self._data_loader(self.test)
 
     def _data_loader(
         self, dataset: Dataset, shuffle: bool = False
     ) -> DataLoader:
+        """Create a dataloader for a given dataset.
+
+        Args:
+            dataset (Dataset): Dataset to create a dataloader for.
+            shuffle (bool, optional): Whether to shuffle the dataset. Defaults
+                to False.
+
+        Return:
+            DataLoader: Dataloader for the given dataset.
+        """
         return DataLoader(
             dataset,
             batch_size=self.batch_size,
