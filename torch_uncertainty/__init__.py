@@ -55,8 +55,10 @@ def cls_main(
         monitor = "hp/val_acc"
         mode = "max"
     elif problem_type == "regression":
-        monitor = "hp/val_gnll"
+        monitor = "hp/val_mse"
         mode = "min"
+    else:
+        raise ValueError("Unknown problem type.")
 
     if args.test is None and args.max_epochs is None:
         print(
@@ -86,6 +88,7 @@ def cls_main(
         mode=mode,
         save_last=True,
         save_weights_only=True,
+        save_top_k=50,
     )
 
     # Select the best model, monitor the lr and stop if NaN

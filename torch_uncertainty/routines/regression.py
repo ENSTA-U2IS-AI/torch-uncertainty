@@ -20,24 +20,32 @@ class RegressionSingle(pl.LightningModule):
         model: nn.Module,
         loss: nn.Module,
         optimization_procedure: Any,
+        dist_estimation: bool,
         **kwargs,
     ) -> None:
         super().__init__()
 
-        # model
         self.model = model
-        # loss
         self.loss = loss
-        # optimization procedure
         self.optimization_procedure = optimization_procedure
+        self.dist_estimation = dist_estimation
+
         # metrics
-        reg_metrics = MetricCollection(
-            {
-                "mse": MeanSquaredError(squared=False),
-                "gnll": GaussianNegativeLogLikelihood(),
-            },
-            compute_groups=False,
-        )
+        if dist_estimation:
+            reg_metrics = MetricCollection(
+                {
+                    "mse": MeanSquaredError(squared=False),
+                    "gnll": GaussianNegativeLogLikelihood(),
+                },
+                compute_groups=False,
+            )
+        else:
+            reg_metrics = MetricCollection(
+                {
+                    "mse": MeanSquaredError(squared=False),
+                },
+                compute_groups=False,
+            )
 
         self.val_metrics = reg_metrics.clone(prefix="hp/val_")
         self.test_reg_metrics = reg_metrics.clone(prefix="hp/test_")
@@ -70,9 +78,14 @@ class RegressionSingle(pl.LightningModule):
     ) -> STEP_OUTPUT:
         inputs, targets = batch
         logits = self.forward(inputs)
-        means = logits[:, 0]
-        vars = F.softplus(logits[:, 1])
-        loss = self.criterion(means, targets, vars)
+
+        if self.dist_estimation:
+            means = logits[:, 0]
+            vars = F.softplus(logits[:, 1])
+            loss = self.criterion(means, targets, vars)
+        else:
+            loss = self.criterion(logits, targets)
+
         self.log("train_loss", loss)
         return loss
 
@@ -81,10 +94,12 @@ class RegressionSingle(pl.LightningModule):
     ) -> None:
         inputs, targets = batch
         logits = self.forward(inputs)
-        means = logits[:, 0]
-        vars = F.softplus(logits[:, 1])
-
-        self.val_metrics.gnll.update(means, targets, vars)
+        if self.dist_estimation:
+            means = logits[:, 0]
+            vars = F.softplus(logits[:, 1])
+            self.val_metrics.gnll.update(means, targets, vars)
+        else:
+            means = logits
         self.val_metrics.mse.update(means, targets)
 
     def validation_epoch_end(
@@ -100,10 +115,12 @@ class RegressionSingle(pl.LightningModule):
     ) -> None:
         inputs, targets = batch
         logits = self.forward(inputs)
-        means = logits[:, 0]
-        vars = F.softplus(logits[:, 1])
-
-        self.test_reg_metrics.gnll.update(means, targets, vars)
+        if self.dist_estimation:
+            means = logits[:, 0]
+            vars = F.softplus(logits[:, 1])
+            self.test_reg_metrics.gnll.update(means, targets, vars)
+        else:
+            means = logits
         self.test_reg_metrics.mse.update(means, targets)
 
     def test_epoch_end(
