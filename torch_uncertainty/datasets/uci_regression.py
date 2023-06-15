@@ -4,6 +4,7 @@ from typing import Callable, Optional, Tuple, Union
 
 import pandas as pd
 import torch
+import torch.nn.functional as F
 from torch.utils.data import Dataset
 from torchvision.datasets.utils import (
     check_integrity,
@@ -11,22 +12,61 @@ from torchvision.datasets.utils import (
     download_url,
 )
 
-import numpy as np
-
-
 # fmt:on
+boston_column_names = [
+    "CRIM",
+    "ZN",
+    "INDUS",
+    "CHAS",
+    "NOX",
+    "RM",
+    "AGE",
+    "DIS",
+    "RAD",
+    "TAX",
+    "PTRATIO",
+    "B",
+    "LSTAT",
+    "MEDV",
+]
+
+energy_prediction_column_names = [
+    "Appliances",
+    "lights",
+    "T1",
+    "RH_1",
+    "T2",
+    "RH_2",
+    "T3",
+    "RH_3",
+    "T4",
+    "RH_4",
+    "T5",
+    "RH_5",
+    "T6",
+    "RH_6",
+    "T7",
+    "RH_7",
+    "T8",
+    "RH_8",
+    "T9",
+    "RH_9",
+    "T_out",
+]
+
+
 class UCIRegression(Dataset):
     """The UCI regression datasets.
 
     Args:
-        root (string): Root directory of the datasets.
+        root (str): Root directory of the datasets.
         train (bool, optional): If True, creates dataset from training set,
             otherwise creates from test set.
         transform (callable, optional): A function/transform that takes in a
             numpy array and returns a transformed version.
         target_transform (callable, optional): A function/transform that takes
             in the target and transforms it.
-        dataset_name (string, optional): The name of the dataset. One of
+        dataset_name (str, optional): The name of the dataset. One of
             "boston-housing", "concrete", "energy", "kin8nm",
             "naval-propulsion-plant", "power-plant", "protein",
             "wine-quality-red", and "yacht".
@@ -47,7 +87,8 @@ class UCIRegression(Dataset):
     uci_subsets = [
         "boston",
         "concrete",
-        "energy",
+        "energy-efficiency",
+        "energy-prediction",
         "kin8nm",
         "naval-propulsion-plant",
         "power-plant",
@@ -60,6 +101,7 @@ class UCIRegression(Dataset):
         "d4accdce7a25600298819f8e28e8d593",
         "eba3e28907d4515244165b6b2c311b7b",
         "2018fb7b50778fdc1304d50a78874579",
+        "d0f0f8ceaaf45df2233ce0600097bd84",
         "df08c665b7665809e74e32b107836a3a",
         "54f4febcf51bdba12e1ca63e28b3e973",
         "f5065a616eae05eb4ecae445ecf6e720",
@@ -73,6 +115,8 @@ class UCIRegression(Dataset):
         "https://archive.ics.uci.edu/static/public/165/concrete+compressive+"
         "strength.zip",
         "https://archive.ics.uci.edu/static/public/242/energy+efficiency.zip",
+        "https://archive.ics.uci.edu/static/public/374/appliances+energy+"
+        "prediction.zip",
         "https://www.openml.org/data/get_csv/3626/dataset_2175_kin8nm.arff",
         "https://raw.githubusercontent.com/luishpinto/cm-naval-propulsion-"
         "plant/master/data.csv",
@@ -85,32 +129,13 @@ class UCIRegression(Dataset):
         "hydrodynamics.zip",
     ]
 
-    boston_column_names = [
-        "CRIM",
-        "ZN",
-        "INDUS",
-        "CHAS",
-        "NOX",
-        "RM",
-        "AGE",
-        "DIS",
-        "RAD",
-        "TAX",
-        "PTRATIO",
-        "B",
-        "LSTAT",
-        "MEDV",
-    ]
-
     def __init__(
         self,
         root: Union[Path, str],
-        train: bool = True,
         transform: Optional[Callable] = None,
         target_transform: Optional[Callable] = None,
         dataset_name: str = "energy",
         download: bool = False,
-        test_split: float = 0.2,
         seed: int = 42,
     ) -> None:
         super().__init__()
@@ -118,10 +143,8 @@ class UCIRegression(Dataset):
         if isinstance(root, str):
             root = Path(root)
         self.root = root
-        self.train = train
         self.transform = transform
         self.target_transform = target_transform
-        self.train_split = 1 - test_split
         self.seed = seed
 
         if dataset_name not in self.uci_subsets:
@@ -207,15 +230,25 @@ class UCIRegression(Dataset):
         if self.dataset_name == "boston":
             array = pd.read_table(
                 path / "housing.data",
-                names=self.boston_column_names,
+                names=boston_column_names,
                 header=None,
                 delim_whitespace=True,
             )
         elif self.dataset_name == "concrete":
             array = pd.read_excel(path / "Concrete_Data.xls").to_numpy()
-        elif self.dataset_name == "energy":
+        elif self.dataset_name == "energy-efficiency":
+            try:
+                import openpyxl  # noqa: F401
+            except ImportError:
+                raise ImportError(
+                    "Energy dataset: Please install openpyxl manually to read "
+                    "the excel file."
+                )
             array = pd.read_excel(path / "ENB2012_data.xlsx").to_numpy()
-            print(len(array))
+        elif self.dataset_name == "energy-prediction":
+            array = pd.read_csv(path / "energydata_complete.csv")[
+                energy_prediction_column_names
+            ].to_numpy()
         elif self.dataset_name == "kin8nm":
             array = pd.read_csv(path / "kin8nm.csv").to_numpy()
         elif self.dataset_name == "naval-propulsion-plant":
@@ -247,38 +280,39 @@ class UCIRegression(Dataset):
         gen = torch.Generator()
         gen.manual_seed(self.seed)
         array = torch.as_tensor(array).float()
-        indexes = torch.randperm(array.shape[0], generator=gen)
-        if self.dataset_name == "energy":
-            self.data = array[indexes][:, 2:-3]
-        else:
-            self.data = array[indexes][:, :-1]
+        # indexes = torch.randperm(array.shape[0], generator=gen)
+        # array = array[indexes]
 
-        if self.dataset_name == "energy":
-            self.targets = array[indexes][:, -2]
+        if self.dataset_name == "energy-efficiency":
+            self.data = array[:, 2:-3]
+            self.targets = array[:, -2]
         else:
-            self.targets = array[indexes][:, -1]
+            self.data = array[:, :-1]
+            self.targets = array[:, -1]
 
         self._compute_statistics()
 
-        if self.train:
-            self.data = self.data[: int(self.train_split * len(self.data))]
-            self.targets = self.targets[
-                : int(self.train_split * len(self.targets))
-            ]
-        else:
-            self.data = self.data[int(self.train_split * len(self.data)) :]
-            self.targets = self.targets[
-                int(self.train_split * len(self.targets)) :
-            ]
+        if self.dataset_name == "energy-prediction":
+            self.data = F.pad(self.data, (0, 0, 13, 0), value=0)
 
-        np.savetxt(f"data_{self.train}.txt", self.data.numpy())
+    def __len__(self) -> int:  # noqa: 811
+        if self.dataset_name == "energy-prediction":
+            return self.data.shape[0] - 12
+        else:
+            return self.data.shape[0]
 
     def __getitem__(self, index: int) -> Tuple[torch.Tensor, torch.Tensor]:
         """Get sample and target for a given index."""
-        data = self.data[index]
-        if self.transform is not None:
-            data = self.transform(data)
-        target = self.targets[index]
-        if self.target_transform is not None:
-            target = self.target_transform(target)
+        if self.dataset_name == "energy-prediction":
+            data = self.data[index : index + 13, :]
+            target = self.data[index : index + 13, :]
+            return data, target
+
+        else:
+            data = self.data[index]
+            if self.transform is not None:
+                data = self.transform(data)
+            target = self.targets[index]
+            if self.target_transform is not None:
+                target = self.target_transform(target)
         return data, target
