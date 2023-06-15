@@ -1,7 +1,7 @@
 # fmt: off
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import Any, List, Optional, Union
+from typing import Any, List, Literal, Optional, Union
 
 import torch.nn as nn
 import torchvision.transforms as T
@@ -16,19 +16,42 @@ from ..transforms import Cutout
 
 # fmt: on
 class CIFAR10DataModule(LightningDataModule):
+    """DataModule for CIFAR10.
+
+    Args:
+        root (str): Root directory of the datasets.
+        batch_size (int): Number of samples per batch.
+        val_split (float): Share of samples to use for validation. Defaults
+            to ``0.0``.
+        num_workers (int): Number of workers to use for data loading. Defaults
+            to ``1``.
+        cutout (int): Size of cutout to apply to images. Defaults to ``None``.
+        enable_randaugment (bool): Whether to apply RandAugment. Defaults to
+            ``False``.
+        auto_augment (str): Which auto-augment to apply. Defaults to ``None``.
+        test_alt (str): Which test set to use. Defaults to ``None``.
+        corruption_severity (int): Severity of corruption to apply for
+            CIFAR10-C. Defaults to ``1``.
+        num_dataloaders (int): Number of dataloaders to use. Defaults to ``1``.
+        pin_memory (bool): Whether to pin memory. Defaults to ``True``.
+        persistent_workers (bool): Whether to use persistent workers. Defaults
+            to ``True``.
+    """
+
     num_classes = 10
     num_channels = 3
     input_shape = (3, 32, 32)
+    training_task = "classification"
 
     def __init__(
         self,
         root: Union[str, Path],
         batch_size: int,
-        val_split: int = 0,
+        val_split: float = 0.0,
         num_workers: int = 1,
-        cutout: int = None,
-        auto_augment: str = None,
-        test_alt: str = None,
+        cutout: int = Optional[None],
+        auto_augment: Optional[str] = None,
+        test_alt: Optional[Literal["c", "h"]] = None,
         corruption_severity: int = 1,
         num_dataloaders: int = 1,
         pin_memory: bool = True,
@@ -158,8 +181,9 @@ class CIFAR10DataModule(LightningDataModule):
             )
 
     def train_dataloader(self) -> DataLoader:
-        r"""Gets the training dataloader for CIFAR10.
-        Returns:
+        r"""Get the training dataloader for CIFAR10.
+
+        Return:
             DataLoader: CIFAR10 training dataloader.
         """
         if self.num_dataloaders > 1:
@@ -172,14 +196,16 @@ class CIFAR10DataModule(LightningDataModule):
 
     def val_dataloader(self) -> DataLoader:
         r"""Gets the validation dataloader for CIFAR10.
+
         Returns:
             DataLoader: CIFAR10 validation dataloader.
         """
         return self._data_loader(self.val)
 
     def test_dataloader(self) -> List[DataLoader]:
-        r"""Gets the test dataloaders for CIFAR10.
-        Returns:
+        r"""Get the test dataloaders for CIFAR10.
+
+        Return:
             List[DataLoader]: Dataloaders of the CIFAR10 test set (in
                 distribution data) and SVHN test split (out-of-distribution
                 data).
@@ -189,6 +215,16 @@ class CIFAR10DataModule(LightningDataModule):
     def _data_loader(
         self, dataset: Dataset, shuffle: bool = False
     ) -> DataLoader:
+        """Create a dataloader for a given dataset.
+
+        Args:
+            dataset (Dataset): Dataset to create a dataloader for.
+            shuffle (bool, optional): Whether to shuffle the dataset. Defaults
+                to False.
+
+        Return:
+            DataLoader: Dataloader for the given dataset.
+        """
         return DataLoader(
             dataset,
             batch_size=self.batch_size,

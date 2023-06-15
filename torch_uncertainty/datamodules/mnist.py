@@ -14,17 +14,33 @@ from torch_uncertainty.transforms import Cutout
 
 # fmt: on
 class MNISTDataModule(LightningDataModule):
+    """DataModule for MNIST.
+
+    Args:
+        root (str): Root directory of the datasets.
+        batch_size (int): Number of samples per batch.
+        val_split (float): Share of samples to use for validation. Defaults
+            to ``0.0``.
+        num_workers (int): Number of workers to use for data loading. Defaults
+            to ``1``.
+        cutout (int): Size of cutout to apply to images. Defaults to ``None``.
+        pin_memory (bool): Whether to pin memory. Defaults to ``True``.
+        persistent_workers (bool): Whether to use persistent workers. Defaults
+            to ``True``.
+    """
+
     num_classes = 10
     num_channels = 1
     input_shape = (1, 28, 28)
+    training_task = "classification"
 
     def __init__(
         self,
         root: Union[str, Path],
         batch_size: int,
-        val_split: int = 0,
+        val_split: float = 0.0,
         num_workers: int = 1,
-        cutout: int = None,
+        cutout: Optional[int] = None,
         pin_memory: bool = True,
         persistent_workers: bool = True,
         **kwargs,
@@ -66,6 +82,7 @@ class MNISTDataModule(LightningDataModule):
         )
 
     def prepare_data(self) -> None:
+        """Download the datasets."""
         self.dataset(self.root, train=True, download=True)
         self.dataset(self.root, train=False, download=True)
         self.ood_dataset(self.root, download=True)
@@ -106,22 +123,25 @@ class MNISTDataModule(LightningDataModule):
             )
 
     def train_dataloader(self) -> DataLoader:
-        r"""Gets the training dataloader for MNIST.
-        Returns:
+        r"""Get the training dataloader for MNIST.
+
+        Return:
             DataLoader: MNIST training dataloader.
         """
         return self._data_loader(self.train, shuffle=True)
 
     def val_dataloader(self) -> DataLoader:
-        r"""Gets the validation dataloader for MNIST.
-        Returns:
+        r"""Get the validation dataloader for MNIST.
+
+        Return:
             DataLoader: MNIST validation dataloader.
         """
         return self._data_loader(self.val)
 
     def test_dataloader(self) -> List[DataLoader]:
-        r"""Gets the test dataloaders for MNIST.
-        Returns:
+        r"""Get the test dataloaders for MNIST.
+
+        Return:
             List[DataLoader]: Dataloaders of the MNIST test set (in
                 distribution data) and FashionMNIST test split
                 (out-of-distribution data).
@@ -131,6 +151,16 @@ class MNISTDataModule(LightningDataModule):
     def _data_loader(
         self, dataset: Dataset, shuffle: bool = False
     ) -> DataLoader:
+        """Create a dataloader for a given dataset.
+
+        Args:
+            dataset (Dataset): Dataset to create a dataloader for.
+            shuffle (bool, optional): Whether to shuffle the dataset. Defaults
+                to False.
+
+        Return:
+            DataLoader: Dataloader for the given dataset.
+        """
         return DataLoader(
             dataset,
             batch_size=self.batch_size,

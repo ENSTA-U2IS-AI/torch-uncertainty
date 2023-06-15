@@ -17,6 +17,7 @@ from ..datasets import TinyImageNet
 class TinyImageNetDataModule(LightningDataModule):
     num_classes = 200
     num_channels = 3
+    training_task = "classification"
 
     def __init__(
         self,
@@ -99,22 +100,25 @@ class TinyImageNetDataModule(LightningDataModule):
             )
 
     def train_dataloader(self) -> DataLoader:
-        r"""Gets the training dataloader for TinyImageNet.
-        Returns:
+        r"""Get the training dataloader for TinyImageNet.
+
+        Return:
             DataLoader: TinyImageNet training dataloader.
         """
         return self._data_loader(self.train, shuffle=True)
 
     def val_dataloader(self) -> DataLoader:
-        r"""Gets the validation dataloader for TinyImageNet.
-        Returns:
+        r"""Get the validation dataloader for TinyImageNet.
+
+        Return:
             DataLoader: TinyImageNet validation dataloader.
         """
         return self._data_loader(self.val)
 
     def test_dataloader(self) -> List[DataLoader]:
-        r"""Gets test dataloaders for TinyImageNet.
-        Returns:
+        r"""Get test dataloaders for TinyImageNet.
+
+        Return:
             List[DataLoader]: TinyImageNet test set (in distribution data) and
             SVHN test split (out-of-distribution data).
         """
@@ -123,6 +127,16 @@ class TinyImageNetDataModule(LightningDataModule):
     def _data_loader(
         self, dataset: Dataset, shuffle: bool = False
     ) -> DataLoader:
+        """Create a dataloader for a given dataset.
+
+        Args:
+            dataset (Dataset): Dataset to create a dataloader for.
+            shuffle (bool, optional): Whether to shuffle the dataset. Defaults
+                to False.
+
+        Return:
+            DataLoader: Dataloader for the given dataset.
+        """
         return DataLoader(
             dataset,
             batch_size=self.batch_size,
