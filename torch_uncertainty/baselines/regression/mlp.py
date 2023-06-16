@@ -1,6 +1,6 @@
 # fmt: off
 from argparse import ArgumentParser
-from typing import Any, Literal
+from typing import Any, List, Literal
 
 import torch.nn as nn
 from pytorch_lightning import LightningModule
@@ -21,11 +21,13 @@ class MLP:
         loss: nn.Module,
         optimization_procedure: Any,
         version: Literal["vanilla"],
+        num_features: List[int],
         **kwargs,
     ) -> LightningModule:
         params = {
             "in_features": in_features,
             "num_outputs": num_outputs,
+            "num_features": num_features,
         }
 
         if version not in cls.versions.keys():
@@ -39,6 +41,7 @@ class MLP:
                 model=model,
                 loss=loss,
                 optimization_procedure=optimization_procedure,
+                dist_estimation=True,
                 **kwargs,
             )
 
@@ -50,6 +53,6 @@ class MLP:
             type=str,
             choices=cls.versions.keys(),
             default="vanilla",
-            help=f"Variation of ResNet. Choose among: {cls.versions.keys()}",
+            help=f"Variation of MLP. Choose among: {cls.versions.keys()}",
         )
         return parser
