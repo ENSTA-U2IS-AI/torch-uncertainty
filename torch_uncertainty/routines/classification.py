@@ -382,7 +382,7 @@ class ClassificationEnsemble(ClassificationSingle):
         logits = rearrange(logits, "(n b) c -> b n c", n=self.num_estimators)
 
         if self.binary_cls:
-            probs_per_est = F.sigmoid(logits).squeeze(-1)
+            probs_per_est = torch.sigmoid(logits).squeeze(-1)
         else:
             probs_per_est = F.softmax(logits, dim=-1)
 
@@ -400,7 +400,7 @@ class ClassificationEnsemble(ClassificationSingle):
         logits = rearrange(logits, "(n b) c -> b n c", n=self.num_estimators)
 
         if self.binary_cls:
-            probs_per_est = F.sigmoid(logits).squeeze(-1)
+            probs_per_est = torch.sigmoid(logits)
         else:
             probs_per_est = F.softmax(logits, dim=-1)
 
@@ -421,11 +421,13 @@ class ClassificationEnsemble(ClassificationSingle):
             ood_values = -confs
 
         if dataloader_idx is None or dataloader_idx == 0:
+            # squeeze if binary classification only for binary metrics
             self.test_cls_metrics.update(
-                probs,
+                probs.squeeze(-1) if self.binary_cls else probs,
                 targets,
             )
             self.test_entropy_id(probs)
+
             self.test_id_ens_metrics.update(probs_per_est)
             self.log(
                 "hp/test_entropy_id",
