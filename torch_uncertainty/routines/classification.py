@@ -169,7 +169,7 @@ class ClassificationSingle(pl.LightningModule):
         logits = self.forward(inputs)
 
         if self.binary_cls:
-            probs = torch.sigmoid(logits)
+            probs = torch.sigmoid(logits).squeeze(-1)
         else:
             probs = F.softmax(logits, dim=-1)
 
@@ -191,7 +191,7 @@ class ClassificationSingle(pl.LightningModule):
         logits = self.forward(inputs)
 
         if self.binary_cls:
-            probs = torch.sigmoid(logits)
+            probs = torch.sigmoid(logits).squeeze(-1)
         else:
             probs = F.softmax(logits, dim=-1)
         confs, _ = probs.max(dim=-1)
@@ -382,7 +382,7 @@ class ClassificationEnsemble(ClassificationSingle):
         logits = rearrange(logits, "(n b) c -> b n c", n=self.num_estimators)
 
         if self.binary_cls:
-            probs_per_est = F.sigmoid(logits)
+            probs_per_est = F.sigmoid(logits).squeeze(-1)
         else:
             probs_per_est = F.softmax(logits, dim=-1)
 
@@ -400,7 +400,7 @@ class ClassificationEnsemble(ClassificationSingle):
         logits = rearrange(logits, "(n b) c -> b n c", n=self.num_estimators)
 
         if self.binary_cls:
-            probs_per_est = F.sigmoid(logits)
+            probs_per_est = F.sigmoid(logits).squeeze(-1)
         else:
             probs_per_est = F.softmax(logits, dim=-1)
 

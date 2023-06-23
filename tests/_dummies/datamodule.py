@@ -12,7 +12,6 @@ from .dataset import DummyDataset
 
 # fmt: on
 class DummyDataModule(LightningDataModule):
-    num_classes = 10
     num_channels = 1
     image_size: int = 8
 
@@ -20,6 +19,7 @@ class DummyDataModule(LightningDataModule):
         self,
         root: Union[str, Path],
         batch_size: int,
+        num_classes: int = 10,
         num_workers: int = 1,
         pin_memory: bool = True,
         persistent_workers: bool = True,
@@ -31,6 +31,7 @@ class DummyDataModule(LightningDataModule):
 
         self.root: Path = root
         self.batch_size = batch_size
+        self.num_classes = num_classes
         self.num_workers = num_workers
         self.pin_memory = pin_memory
         self.persistent_workers = persistent_workers
@@ -42,28 +43,21 @@ class DummyDataModule(LightningDataModule):
         self.transform_test = T.ToTensor()
 
     def prepare_data(self) -> None:
-        self.dataset(
-            self.root,
-            num_channels=self.num_channels,
-            image_size=self.image_size,
-        )
-        self.ood_dataset(
-            self.root,
-            num_channels=self.num_channels,
-            image_size=self.image_size,
-        )
+        pass
 
     def setup(self, stage: Optional[str] = None) -> None:
         if stage == "fit" or stage is None:
             self.train = self.dataset(
                 self.root,
                 num_channels=self.num_channels,
+                num_classes=self.num_classes,
                 image_size=self.image_size,
                 transform=self.transform_train,
             )
             self.val = self.dataset(
                 self.root,
                 num_channels=self.num_channels,
+                num_classes=self.num_classes,
                 image_size=self.image_size,
                 transform=self.transform_test,
             )
@@ -71,12 +65,14 @@ class DummyDataModule(LightningDataModule):
             self.test = self.dataset(
                 self.root,
                 num_channels=self.num_channels,
+                num_classes=self.num_classes,
                 image_size=self.image_size,
                 transform=self.transform_test,
             )
             self.ood = self.ood_dataset(
                 self.root,
                 num_channels=self.num_channels,
+                num_classes=self.num_classes,
                 image_size=self.image_size,
                 transform=self.transform_test,
             )
