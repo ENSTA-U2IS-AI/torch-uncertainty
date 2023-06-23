@@ -16,6 +16,7 @@ def vgg11(
     norm: Optional[nn.Module] = nn.Identity,
     groups: int = 1,
     dropout: float = 0.5,
+    style: str = "imagenet",
 ) -> VGG:
     return _vgg(
         cfgs["A"],
@@ -24,6 +25,7 @@ def vgg11(
         norm=norm,
         groups=groups,
         dropout=dropout,
+        style=style,
     )
 
 
@@ -33,6 +35,7 @@ def vgg13(
     norm: Optional[nn.Module] = nn.Identity,
     groups: int = 1,
     dropout: float = 0.5,
+    style: str = "imagenet",
 ) -> VGG:
     return _vgg(
         cfgs["B"],
@@ -41,6 +44,7 @@ def vgg13(
         norm=norm,
         groups=groups,
         dropout=dropout,
+        style=style,
     )
 
 
@@ -50,6 +54,7 @@ def vgg16(
     norm: Optional[nn.Module] = nn.Identity,
     groups: int = 1,
     dropout: float = 0.5,
+    style: str = "imagenet",
 ) -> VGG:
     return _vgg(
         cfgs["D"],
@@ -58,6 +63,7 @@ def vgg16(
         norm=norm,
         groups=groups,
         dropout=dropout,
+        style=style,
     )
 
 
@@ -67,6 +73,7 @@ def vgg19(
     norm: Optional[nn.Module] = nn.Identity,
     groups: int = 1,
     dropout: float = 0.5,
+    style: str = "imagenet",
 ) -> VGG:
     return _vgg(
         cfgs["E"],
@@ -75,4 +82,5 @@ def vgg19(
         norm=norm,
         groups=groups,
         dropout=dropout,
+        style=style,
     )

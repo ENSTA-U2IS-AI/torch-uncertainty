@@ -20,6 +20,7 @@ class VGG(nn.Module):
         norm: Optional[nn.Module],
         groups: int,
         dropout: float,
+        style: str,
         **model_kwargs: Any,
     ) -> None:
         super().__init__()
@@ -35,11 +36,16 @@ class VGG(nn.Module):
 
         if self.linear_layer == PackedLinear:
             model_kwargs["rearrange"] = False
-        self.avgpool = nn.AdaptiveAvgPool2d(
-            (7, 7)
-        )  # TODO: for CIFAR, do not pool
+
+        if style == "imagenet":
+            self.avgpool = nn.AdaptiveAvgPool2d((7, 7))
+            kernel_surface = 7 * 7
+        else:
+            self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
+            kernel_surface = 1
+
         self.cls_head_layers = [
-            self.linear_layer(512 * 7 * 7, 4096, **model_kwargs),
+            self.linear_layer(512 * kernel_surface, 4096, **model_kwargs),
             nn.ReLU(True),
             nn.Dropout(p=dropout),
             self.linear_layer(4096, 4096, **model_kwargs),
@@ -82,7 +88,6 @@ class VGG(nn.Module):
             if v == "M":
                 layers.append(nn.MaxPool2d(kernel_size=2, stride=2))
             else:
-                v = int(v)
                 if i == 0 and self.conv2d_layer == PackedConv2d:
                     conv2d = self.conv2d_layer(
                         in_channels,
@@ -131,6 +136,7 @@ def _vgg(
     norm: Optional[nn.Module] = nn.Identity,
     groups: int = 1,
     dropout: float = 0.5,
+    style: str = "imagenet",
     **model_kwargs: Any,
 ) -> VGG:
     return VGG(
@@ -142,5 +148,6 @@ def _vgg(
         norm,
         groups,
         dropout,
+        style,
         **model_kwargs,
     )

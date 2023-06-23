@@ -105,6 +105,7 @@ class VGG:
         version: Literal["vanilla", "packed"],
         arch: int,
         num_estimators: Optional[int] = None,
+        style: str = "imagenet",
         groups: Optional[int] = 1,
         alpha: Optional[float] = None,
         gamma: Optional[int] = 1,
@@ -117,6 +118,7 @@ class VGG:
         params = {
             "in_channels": in_channels,
             "num_classes": num_classes,
+            "style": style,
             "groups": groups,
         }
 
@@ -128,6 +130,7 @@ class VGG:
                 {
                     "num_estimators": num_estimators,
                     "alpha": alpha,
+                    "style": style,
                     "gamma": gamma,
                 }
             )

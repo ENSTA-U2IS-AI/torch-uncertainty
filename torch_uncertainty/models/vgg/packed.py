@@ -25,6 +25,7 @@ def packed_vgg11(
     norm: Optional[nn.Module] = nn.Identity,
     groups: int = 1,
     dropout: float = 0.5,
+    style: str = "imagenet",
 ) -> VGG:
     return _vgg(
         cfgs["A"],
@@ -35,6 +36,7 @@ def packed_vgg11(
         norm=norm,
         groups=groups,
         dropout=dropout,
+        style=style,
         alpha=alpha,
         num_estimators=num_estimators,
         gamma=gamma,
@@ -50,6 +52,7 @@ def packed_vgg13(
     norm: Optional[nn.Module] = nn.Identity,
     groups: int = 1,
     dropout: float = 0.5,
+    style: str = "imagenet",
 ) -> VGG:
     return _vgg(
         cfgs["B"],
@@ -60,6 +63,7 @@ def packed_vgg13(
         norm=norm,
         groups=groups,
         dropout=dropout,
+        style=style,
         alpha=alpha,
         num_estimators=num_estimators,
         gamma=gamma,
@@ -75,6 +79,7 @@ def packed_vgg16(
     norm: Optional[nn.Module] = nn.Identity,
     groups: int = 1,
     dropout: float = 0.5,
+    style: str = "imagenet",
 ) -> VGG:
     return _vgg(
         cfgs["D"],
@@ -85,6 +90,7 @@ def packed_vgg16(
         norm=norm,
         groups=groups,
         dropout=dropout,
+        style=style,
         alpha=alpha,
         num_estimators=num_estimators,
         gamma=gamma,
@@ -100,6 +106,7 @@ def packed_vgg19(
     norm: Optional[nn.Module] = nn.Identity,
     groups: int = 1,
     dropout: float = 0.5,
+    style: str = "imagenet",
 ) -> VGG:
     return _vgg(
         cfgs["E"],
@@ -110,6 +117,7 @@ def packed_vgg19(
         norm=norm,
         groups=groups,
         dropout=dropout,
+        style=style,
         alpha=alpha,
         num_estimators=num_estimators,
         gamma=gamma,
