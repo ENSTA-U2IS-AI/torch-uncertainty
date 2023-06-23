@@ -371,6 +371,8 @@ class ClassificationEnsemble(ClassificationSingle):
         self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int
     ) -> STEP_OUTPUT:
         inputs, targets = batch
+
+        # eventual input repeat is done in the model
         targets = targets.repeat(self.num_estimators)
         return super().training_step((inputs, targets), batch_idx)
 

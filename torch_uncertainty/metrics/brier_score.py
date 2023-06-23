@@ -87,7 +87,6 @@ class BrierScore(Metric):
         if len(target.shape) == 1:
             target = F.one_hot(target, self.num_classes)
 
-        print("target", target.shape, "probs", probs.shape)
         if len(probs.shape) == 2:
             batch_size = probs.size(0)
         else:
