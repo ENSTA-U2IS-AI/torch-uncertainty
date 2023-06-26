@@ -2,7 +2,7 @@
 # flake8: noqa
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
-from typing import Literal, Type, Union
+from typing import Type, Union
 
 import pytorch_lightning as pl
 import torch
@@ -45,16 +45,16 @@ def cls_main(
     datamodule: pl.LightningDataModule,
     root: Union[Path, str],
     net_name: str,
-    problem_type: Literal["classification", "regression"],
     args: Namespace,
 ) -> None:
     if isinstance(root, str):
         root = Path(root)
 
-    if problem_type == "classification":
+    training_task = datamodule.training_task
+    if training_task == "classification":
         monitor = "hp/val_acc"
         mode = "max"
-    elif problem_type == "regression":
+    elif training_task == "regression":
         monitor = "hp/val_mse"
         mode = "min"
     else:
