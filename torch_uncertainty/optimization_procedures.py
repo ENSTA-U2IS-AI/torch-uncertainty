@@ -91,13 +91,13 @@ def optim_cifar100_resnet18(model: nn.Module) -> dict:
         model.parameters(),
         lr=0.1,
         momentum=0.9,
-        weight_decay=1e-4,
+        weight_decay=5e-4,
         nesterov=True,
     )
     scheduler = optim.lr_scheduler.MultiStepLR(
         optimizer,
-        milestones=[60, 120, 160],
-        gamma=0.2,
+        milestones=[25, 50],
+        gamma=0.1,
     )
     return {"optimizer": optimizer, "lr_scheduler": scheduler}
 
@@ -304,6 +304,13 @@ def get_procedure(
     elif arch_name == "wideresnet28x10":
         if ds_name == "cifar10" or ds_name == "cifar100":
             procedure = optim_cifar10_wideresnet
+        else:
+            raise NotImplementedError(f"Dataset {ds_name} not implemented.")
+    elif arch_name == "vgg16":
+        if ds_name == "cifar10":
+            procedure = optim_cifar10_vgg16
+        elif ds_name == "cifar100":
+            procedure = optim_cifar100_vgg16
         else:
             raise NotImplementedError(f"Dataset {ds_name} not implemented.")
     else:
