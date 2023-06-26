@@ -88,7 +88,6 @@ def cls_main(
         mode=mode,
         save_last=True,
         save_weights_only=True,
-        save_top_k=50,
     )
 
     # Select the best model, monitor the lr and stop if NaN

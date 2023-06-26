@@ -14,6 +14,7 @@ from .dataset import DummyDataset
 class DummyDataModule(LightningDataModule):
     num_channels = 1
     image_size: int = 8
+    training_task = "classification"
 
     def __init__(
         self,

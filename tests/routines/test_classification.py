@@ -32,7 +32,7 @@ class TestClassificationSingle:
                 **vars(args),
             )
 
-            cls_main(model, dm, root, "dummy", "classification", args)
+            cls_main(model, dm, root, "dummy", args)
 
     def test_cls_main_resnet_ood(self):
         root = Path(__file__).parent.absolute().parents[0]
@@ -52,7 +52,7 @@ class TestClassificationSingle:
                 **vars(args),
             )
 
-            cls_main(model, dm, root, "dummy", "classification", args)
+            cls_main(model, dm, root, "dummy", args)
 
 
 class TestClassificationEnsemble:
@@ -76,7 +76,7 @@ class TestClassificationEnsemble:
                 **vars(args),
             )
 
-            cls_main(model, dm, root, "dummy", "classification", args)
+            cls_main(model, dm, root, "dummy", args)
 
     def test_cls_main_resnet_ood(self):
         root = Path(__file__).parent.absolute().parents[0]
@@ -96,4 +96,4 @@ class TestClassificationEnsemble:
                 **vars(args),
             )
 
-            cls_main(model, dm, root, "dummy", "classification", args)
+            cls_main(model, dm, root, "dummy", args)
