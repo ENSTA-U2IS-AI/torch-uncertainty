@@ -34,9 +34,6 @@ class VGG(nn.Module):
 
         self.features = self._make_layers(vgg_cfg)
 
-        if self.linear_layer == PackedLinear:
-            model_kwargs["rearrange"] = False
-
         if style == "imagenet":
             self.avgpool = nn.AdaptiveAvgPool2d((7, 7))
             kernel_surface = 7 * 7
@@ -44,41 +41,38 @@ class VGG(nn.Module):
             self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
             kernel_surface = 1
 
-        self.cls_head_layers = [
-            self.linear_layer(512 * kernel_surface, 4096, **model_kwargs),
-            nn.ReLU(True),
-            nn.Dropout(p=dropout),
-            self.linear_layer(4096, 4096, **model_kwargs),
-            nn.ReLU(True),
-            nn.Dropout(p=dropout),
-        ]
-
         if self.linear_layer == PackedLinear:
-            last_linear = self.linear_layer(
+            last_linear = linear_layer(
                 4096, num_classes, last=True, **model_kwargs
             )
         else:
-            last_linear = self.linear_layer(4096, num_classes, **model_kwargs)
+            last_linear = linear_layer(4096, num_classes, **model_kwargs)
 
-        self.cls_head_layers.append(last_linear)
+        self.cls_head_layers = [
+            linear_layer(512 * kernel_surface, 4096, **model_kwargs),
+            nn.ReLU(True),
+            nn.Dropout(p=dropout),
+            linear_layer(4096, 4096, **model_kwargs),
+            nn.ReLU(True),
+            nn.Dropout(p=dropout),
+            last_linear,
+        ]
+
         self.cls_head = nn.Sequential(*self.cls_head_layers)
-
         self._init_weights()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.features(x)
-        x = self.avgpool(x)
-        x = torch.flatten(x, 1)
-        if self.linear_layer == PackedLinear:
-            x = x.unsqueeze(-1).unsqueeze(-1)
-        x = self.cls_head(x)
         if self.linear_layer == PackedLinear:
             x = rearrange(
                 x,
                 "e (m c) h w -> (m e) c h w",
                 m=self.model_kwargs["num_estimators"],
             )
+        x = self.avgpool(x)
+        x = torch.flatten(x, 1)
 
+        x = self.cls_head(x)
         return x
 
     def _make_layers(self, cfg) -> nn.Sequential:
@@ -104,7 +98,7 @@ class VGG(nn.Module):
                         v,
                         kernel_size=3,
                         padding=1,
-                        groups=self.groups,
+                        groups=self.groups if i != 0 else 1,
                         **self.model_kwargs,
                     )
                 layers.extend([conv2d, self.norm(v), nn.ReLU(inplace=True)])
@@ -113,7 +107,7 @@ class VGG(nn.Module):
 
     def _init_weights(self):
         for m in self.modules():
-            if isinstance(m, nn.Conv2d):
+            if isinstance(m, nn.Conv2d) or isinstance(m, PackedConv2d):
                 nn.init.kaiming_normal_(
                     m.weight, mode="fan_out", nonlinearity="relu"
                 )
@@ -122,7 +116,7 @@ class VGG(nn.Module):
             elif isinstance(m, nn.BatchNorm2d):
                 nn.init.constant_(m.weight, 1)
                 nn.init.constant_(m.bias, 0)
-            elif isinstance(m, nn.Linear):
+            elif isinstance(m, nn.Linear) or isinstance(m, PackedLinear):
                 nn.init.normal_(m.weight, 0, 0.01)
                 nn.init.constant_(m.bias, 0)
 
