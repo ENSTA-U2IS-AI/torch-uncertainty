@@ -70,6 +70,22 @@ def optim_cifar10_wideresnet(model: nn.Module) -> dict:
     return {"optimizer": optimizer, "lr_scheduler": scheduler}
 
 
+def optim_cifar10_vgg16(model: nn.Module) -> dict:
+    """optimizer to train a VGG16 on CIFAR-10"""
+    optimizer = optim.SGD(
+        model.parameters(),
+        lr=0.05,
+        momentum=0.9,
+        weight_decay=5e-4,
+    )
+    scheduler = optim.lr_scheduler.MultiStepLR(
+        optimizer,
+        milestones=[25, 50],
+        gamma=0.1,
+    )
+    return {"optimizer": optimizer, "lr_scheduler": scheduler}
+
+
 def optim_cifar100_resnet18(model: nn.Module) -> dict:
     optimizer = optim.SGD(
         model.parameters(),
@@ -95,6 +111,23 @@ def optim_cifar100_resnet50(model: nn.Module) -> dict:
         lr=0.1,
         momentum=0.9,
         weight_decay=5e-4,
+        nesterov=True,
+    )
+    scheduler = optim.lr_scheduler.MultiStepLR(
+        optimizer,
+        milestones=[60, 120, 160],
+        gamma=0.2,
+    )
+    return {"optimizer": optimizer, "lr_scheduler": scheduler}
+
+
+def optim_cifar100_vgg16(model: nn.Module) -> dict:
+    """optimizer to train a VGG16 on CIFAR-100"""
+    optimizer = optim.SGD(
+        model.parameters(),
+        lr=0.05,
+        momentum=0.9,
+        weight_decay=1e-4,
         nesterov=True,
     )
     scheduler = optim.lr_scheduler.MultiStepLR(
