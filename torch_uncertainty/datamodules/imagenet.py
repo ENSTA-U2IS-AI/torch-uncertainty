@@ -24,6 +24,7 @@ class ImageNetDataModule(LightningDataModule):
     def __init__(
         self,
         root: Union[str, Path],
+        ood_detection: bool,
         batch_size: int,
         ood_ds: str = "svhn",
         test_alt: Optional[str] = None,
@@ -41,6 +42,7 @@ class ImageNetDataModule(LightningDataModule):
             root = Path(root)
 
         self.root: Path = root
+        self.ood_detection = ood_detection
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.pin_memory = pin_memory
@@ -197,7 +199,10 @@ class ImageNetDataModule(LightningDataModule):
             List[DataLoader]: ImageNet test set (in distribution data) and
             Textures test split (out-of-distribution data).
         """
-        return [self._data_loader(self.test), self._data_loader(self.ood)]
+        dataloader = [self._data_loader(self.test)]
+        if self.ood_detection:
+            dataloader.append(self._data_loader(self.ood))
+        return dataloader
 
     def _data_loader(
         self, dataset: Dataset, shuffle: bool = False
@@ -231,6 +236,9 @@ class ImageNetDataModule(LightningDataModule):
         p.add_argument("--root", type=str, default="./data/")
         p.add_argument("--batch_size", type=int, default=256)
         p.add_argument("--num_workers", type=int, default=4)
+        p.add_argument(
+            "--evaluate_ood", dest="ood_detection", action="store_true"
+        )
         p.add_argument("--ood_ds", choices=cls.ood_datasets, default="svhn")
         p.add_argument("--test_alt", choices=cls.test_datasets, default=None)
         p.add_argument("--procedure", choices=["A3"], default=None)

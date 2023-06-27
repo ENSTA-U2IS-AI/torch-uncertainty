@@ -37,6 +37,7 @@ class MNISTDataModule(LightningDataModule):
     def __init__(
         self,
         root: Union[str, Path],
+        ood_detection: bool,
         batch_size: int,
         val_split: float = 0.0,
         num_workers: int = 1,
@@ -51,6 +52,7 @@ class MNISTDataModule(LightningDataModule):
             root = Path(root)
 
         self.root: Path = root
+        self.ood_detection = ood_detection
         self.batch_size = batch_size
         self.val_split = val_split
         self.num_workers = num_workers
@@ -146,7 +148,10 @@ class MNISTDataModule(LightningDataModule):
                 distribution data) and FashionMNIST test split
                 (out-of-distribution data).
         """
-        return [self._data_loader(self.test), self._data_loader(self.ood)]
+        dataloader = [self._data_loader(self.test)]
+        if self.ood_detection:
+            dataloader.append(self._data_loader(self.ood))
+        return dataloader
 
     def _data_loader(
         self, dataset: Dataset, shuffle: bool = False

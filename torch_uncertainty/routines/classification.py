@@ -253,9 +253,6 @@ class ClassificationSingle(pl.LightningModule):
         - ``--logits``: sets :attr:`use_logits` to ``True``.
         """
         parent_parser.add_argument(
-            "--evaluate_ood", dest="ood_detection", action="store_true"
-        )
-        parent_parser.add_argument(
             "--entropy", dest="use_entropy", action="store_true"
         )
         parent_parser.add_argument(
@@ -381,8 +378,7 @@ class ClassificationEnsemble(ClassificationSingle):
     ) -> None:
         inputs, targets = batch
         logits = self.forward(inputs)
-        logits = rearrange(logits, "(n b) c -> b n c", n=self.num_estimators)
-
+        logits = rearrange(logits, "(m b) c -> b m c", m=self.num_estimators)
         if self.binary_cls:
             probs_per_est = torch.sigmoid(logits).squeeze(-1)
         else:
@@ -395,7 +391,7 @@ class ClassificationEnsemble(ClassificationSingle):
         self,
         batch: Tuple[torch.Tensor, torch.Tensor],
         batch_idx: int,
-        dataloader_idx: int,
+        dataloader_idx: Optional[int] = None,
     ) -> None:
         inputs, targets = batch
         logits = self.forward(inputs)

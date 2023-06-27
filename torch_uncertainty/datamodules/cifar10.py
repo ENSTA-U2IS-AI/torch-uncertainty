@@ -46,6 +46,7 @@ class CIFAR10DataModule(LightningDataModule):
     def __init__(
         self,
         root: Union[str, Path],
+        ood_detection: bool,
         batch_size: int,
         val_split: float = 0.0,
         num_workers: int = 1,
@@ -63,6 +64,7 @@ class CIFAR10DataModule(LightningDataModule):
         if isinstance(root, str):
             root = Path(root)
         self.root: Path = root
+        self.ood_detection = ood_detection
         self.batch_size = batch_size
         self.val_split = val_split
         self.num_workers = num_workers
@@ -210,7 +212,10 @@ class CIFAR10DataModule(LightningDataModule):
                 distribution data) and SVHN test split (out-of-distribution
                 data).
         """
-        return [self._data_loader(self.test), self._data_loader(self.ood)]
+        dataloader = [self._data_loader(self.test)]
+        if self.ood_detection:
+            dataloader.append(self._data_loader(self.ood))
+        return dataloader
 
     def _data_loader(
         self, dataset: Dataset, shuffle: bool = False
@@ -245,6 +250,9 @@ class CIFAR10DataModule(LightningDataModule):
         p.add_argument("--batch_size", type=int, default=128)
         p.add_argument("--val_split", type=float, default=0.0)
         p.add_argument("--num_workers", type=int, default=4)
+        p.add_argument(
+            "--evaluate_ood", dest="ood_detection", action="store_true"
+        )
         p.add_argument("--cutout", type=int, default=0)
         p.add_argument("--auto_augment", type=str)
         p.add_argument("--test_alt", choices=["c", "h"], default=None)
