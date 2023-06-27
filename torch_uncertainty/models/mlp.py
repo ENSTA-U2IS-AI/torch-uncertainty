@@ -14,11 +14,22 @@ __all__ = [
 
 
 class _MLP(nn.Module):
+    """Multi-layer perceptron class.
+
+    Args:
+        in_features (int): Number of input features.
+        num_outputs (int): Number of output features.
+        hidden_dim (List[int]): Number of features for each hidden layer.
+        layer (nn.Module): Layer class.
+        activation (Callable): Activation function.
+        layer_args (Dict): Arguments for the layer class.
+    """
+
     def __init__(
         self,
         in_features: int,
         num_outputs: int,
-        num_features: List[int],
+        hidden_dim: List[int],
         layer: nn.Module,
         activation: Callable,
         layer_args: Dict,
@@ -28,7 +39,7 @@ class _MLP(nn.Module):
 
         layers = nn.ModuleList()
 
-        if len(num_features) == 0:
+        if len(hidden_dim) == 0:
             if layer == PackedLinear:
                 layers.append(
                     layer(
@@ -44,30 +55,23 @@ class _MLP(nn.Module):
         else:
             if layer == PackedLinear:
                 layers.append(
-                    layer(
-                        in_features, num_features[0], first=True, **layer_args
-                    )
+                    layer(in_features, hidden_dim[0], first=True, **layer_args)
                 )
             else:
-                layers.append(layer(in_features, num_features[0], **layer_args))
+                layers.append(layer(in_features, hidden_dim[0], **layer_args))
 
-            for i in range(1, len(num_features)):
+            for i in range(1, len(hidden_dim)):
                 layers.append(
-                    layer(num_features[i - 1], num_features[i], **layer_args)
+                    layer(hidden_dim[i - 1], hidden_dim[i], **layer_args)
                 )
 
             if layer == PackedLinear:
                 layers.append(
-                    layer(
-                        num_features[-1], num_outputs, last=True, **layer_args
-                    )
+                    layer(hidden_dim[-1], num_outputs, last=True, **layer_args)
                 )
             else:
-                layers.append(
-                    layer(num_features[-1], num_outputs, **layer_args)
-                )
+                layers.append(layer(hidden_dim[-1], num_outputs, **layer_args))
         self.layers = layers
-        print(self.layers)
 
     def forward(self, x: Tensor) -> Tensor:
         for layer in self.layers[:-1]:
@@ -79,15 +83,29 @@ class _MLP(nn.Module):
 def mlp(
     in_features: int,
     num_outputs: int,
-    num_features: List[int],
+    hidden_dim: List[int],
     layer: nn.Module = nn.Linear,
     activation: Callable = F.relu,
     layer_args: dict = {},
 ) -> _MLP:
+    """Multi-layer perceptron.
+
+    Args:
+        in_features (int): Number of input features.
+        num_outputs (int): Number of output features.
+        hidden_dim (List[int]): Number of features in each hidden layer.
+        layer (nn.Module, optional): Layer type. Defaults to nn.Linear.
+        activation (Callable, optional): Activation function. Defaults to
+            F.relu.
+        layer_args (dict, optional): Arguments for the layer. Defaults to {}.
+
+    Returns:
+        _MLP: A Multi-Layer-Perceptron model.
+    """
     return _MLP(
         in_features=in_features,
         num_outputs=num_outputs,
-        num_features=num_features,
+        hidden_dim=hidden_dim,
         layer=layer,
         activation=activation,
         layer_args=layer_args,
