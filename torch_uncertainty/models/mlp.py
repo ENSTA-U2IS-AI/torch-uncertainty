@@ -23,6 +23,7 @@ class _MLP(nn.Module):
         layer (nn.Module): Layer class.
         activation (Callable): Activation function.
         layer_args (Dict): Arguments for the layer class.
+        dropout (float): Dropout probability.
     """
 
     def __init__(
@@ -33,9 +34,11 @@ class _MLP(nn.Module):
         layer: nn.Module,
         activation: Callable,
         layer_args: Dict,
+        dropout: float,
     ) -> None:
         super().__init__()
         self.activation = activation
+        self.dropout = dropout
 
         layers = nn.ModuleList()
 
@@ -71,11 +74,13 @@ class _MLP(nn.Module):
                 )
             else:
                 layers.append(layer(hidden_dim[-1], num_outputs, **layer_args))
+
         self.layers = layers
 
     def forward(self, x: Tensor) -> Tensor:
         for layer in self.layers[:-1]:
-            x = self.activation(layer(x))
+            x = F.dropout(layer(x), p=self.dropout, training=self.training)
+            x = self.activation(x)
         out = self.layers[-1](x)
         return out
 
@@ -87,6 +92,7 @@ def mlp(
     layer: nn.Module = nn.Linear,
     activation: Callable = F.relu,
     layer_args: dict = {},
+    dropout: float = 0.0,
 ) -> _MLP:
     """Multi-layer perceptron.
 
@@ -98,6 +104,7 @@ def mlp(
         activation (Callable, optional): Activation function. Defaults to
             F.relu.
         layer_args (dict, optional): Arguments for the layer. Defaults to {}.
+        dropout (float, optional): Dropout probability. Defaults to 0.0.
 
     Returns:
         _MLP: A Multi-Layer-Perceptron model.
@@ -109,4 +116,5 @@ def mlp(
         layer=layer,
         activation=activation,
         layer_args=layer_args,
+        dropout=dropout,
     )
