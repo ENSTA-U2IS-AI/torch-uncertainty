@@ -204,9 +204,7 @@ class ClassificationSingle(pl.LightningModule):
             ood_values = -confs
 
         if dataloader_idx is None or dataloader_idx == 0:
-            self.test_cls_metrics.update(
-                probs, targets, num_classes=self.num_classes
-            )
+            self.test_cls_metrics.update(probs, targets)
             self.test_entropy_id(probs)
             self.log(
                 "hp/test_entropy_id",
