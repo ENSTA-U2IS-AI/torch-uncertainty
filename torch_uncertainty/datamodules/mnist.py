@@ -186,4 +186,7 @@ class MNISTDataModule(LightningDataModule):
         p.add_argument("--batch_size", type=int, default=128)
         p.add_argument("--val_split", type=int, default=0)
         p.add_argument("--num_workers", type=int, default=4)
+        p.add_argument(
+            "--evaluate_ood", dest="ood_detection", action="store_true"
+        )
         return parent_parser
