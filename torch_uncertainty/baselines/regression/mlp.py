@@ -1,18 +1,20 @@
 # fmt: off
 from argparse import ArgumentParser
-from typing import Any, List, Literal
+from typing import Any, List, Literal, Optional
 
 import torch.nn as nn
 from pytorch_lightning import LightningModule
 
-from ...models.mlp import mlp
-from ...routines.regression import RegressionSingle
+from ...models.mlp import mlp, packed_mlp
+from ...routines.regression import RegressionEnsemble, RegressionSingle
+from ..utils.parser_addons import add_packed_specific_args
 
 
 # fmt: on
 class MLP:
     single = ["vanilla"]
-    versions = {"vanilla": mlp}
+    ensemble = ["packed"]
+    versions = {"vanilla": mlp, "packed": packed_mlp}
 
     def __new__(
         cls,
@@ -20,20 +22,31 @@ class MLP:
         in_features: int,
         loss: nn.Module,
         optimization_procedure: Any,
-        version: Literal["vanilla"],
-        num_features: List[int],
+        version: Literal["vanilla", "packed"],
+        hidden_dims: List[int],
+        num_estimators: Optional[int] = 1,
+        alpha: Optional[float] = None,
+        gamma: Optional[int] = 1,
         **kwargs,
     ) -> LightningModule:
         params = {
             "in_features": in_features,
             "num_outputs": num_outputs,
-            "num_features": num_features,
+            "hidden_dims": hidden_dims,
         }
+
+        if version == "packed":
+            params |= {
+                "alpha": alpha,
+                "num_estimators": num_estimators,
+                "gamma": gamma,
+            }
 
         if version not in cls.versions.keys():
             raise ValueError(f"Unknown version: {version}")
 
         model = cls.versions[version](**params)
+
         kwargs.update(params)
         # routine specific parameters
         if version in cls.single:
@@ -44,10 +57,20 @@ class MLP:
                 dist_estimation=True,
                 **kwargs,
             )
+        elif version in cls.versions.keys():
+            return RegressionEnsemble(
+                model=model,
+                loss=loss,
+                optimization_procedure=optimization_procedure,
+                dist_estimation=True,
+                mode="mean",
+                **kwargs,
+            )
 
     @classmethod
     def add_model_specific_args(cls, parser: ArgumentParser) -> ArgumentParser:
-        parser = RegressionSingle.add_model_specific_args(parser)
+        parser = RegressionEnsemble.add_model_specific_args(parser)
+        parser = add_packed_specific_args(parser)
         parser.add_argument(
             "--version",
             type=str,

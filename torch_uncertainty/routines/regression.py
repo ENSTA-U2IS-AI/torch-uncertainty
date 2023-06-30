@@ -1,6 +1,6 @@
 # fmt: off
 from argparse import ArgumentParser, Namespace
-from typing import Any, List, Tuple, Union
+from typing import Any, List, Literal, Optional, Tuple, Union
 
 import pytorch_lightning as pl
 import torch
@@ -49,7 +49,7 @@ class RegressionSingle(pl.LightningModule):
             )
 
         self.val_metrics = reg_metrics.clone(prefix="hp/val_")
-        self.test_reg_metrics = reg_metrics.clone(prefix="hp/test_")
+        self.test_metrics = reg_metrics.clone(prefix="hp/test_")
 
     def configure_optimizers(self) -> Any:
         return self.optimization_procedure(self)
@@ -120,19 +120,19 @@ class RegressionSingle(pl.LightningModule):
         if self.dist_estimation:
             means = logits[:, 0]
             vars = F.softplus(logits[:, 1])
-            self.test_reg_metrics.gnll.update(means, targets, vars)
+            self.test_metrics.gnll.update(means, targets, vars)
         else:
             means = logits
 
-        self.test_reg_metrics.mse.update(means, targets)
+        self.test_metrics.mse.update(means, targets)
 
     def test_epoch_end(
         self, outputs: Union[EPOCH_OUTPUT, List[EPOCH_OUTPUT]]
     ) -> None:
         self.log_dict(
-            self.test_reg_metrics.compute(),
+            self.test_metrics.compute(),
         )
-        self.test_reg_metrics.reset()
+        self.test_metrics.reset()
 
     @staticmethod
     def add_model_specific_args(
@@ -144,21 +144,27 @@ class RegressionSingle(pl.LightningModule):
 class RegressionEnsemble(RegressionSingle):
     def __init__(
         self,
-        num_classes: int,
         model: nn.Module,
         loss: nn.Module,
         optimization_procedure: Any,
         num_estimators: int,
+        mode: Literal["mean", "mixture"],
         **kwargs,
     ) -> None:
         super().__init__(
-            num_classes=num_classes,
             model=model,
             loss=loss,
             optimization_procedure=optimization_procedure,
             **kwargs,
         )
 
+        if mode == "mixture":
+            raise NotImplementedError(
+                "Mixture of gaussians not implemented yet. Raise an issue if "
+                "needed."
+            )
+
+        self.mode = mode
         self.num_estimators = num_estimators
 
     def training_step(
@@ -175,33 +181,50 @@ class RegressionEnsemble(RegressionSingle):
     ) -> None:
         inputs, targets = batch
         logits = self.forward(inputs)
-        logits = rearrange(logits, "(m b) c -> b m c", m=self.num_estimators)
-        if self.binary_cls:
-            probs_per_est = torch.sigmoid(logits).squeeze(-1)
-        else:
-            probs_per_est = F.softmax(logits, dim=-1)
+        logits = rearrange(
+            logits, "(m b) dist -> b m dist", m=self.num_estimators
+        )
 
-        probs = probs_per_est.mean(dim=1)
-        self.val_cls_metrics.update(probs, targets)
+        if self.mode == "mean":
+            logits = logits.mean(dim=1)
+
+        if self.dist_estimation:
+            means = logits[:, 0]
+            vars = F.softplus(logits[:, 1])
+            self.val_metrics.gnll.update(means, targets, vars)
+        else:
+            means = logits
+
+        self.val_metrics.mse.update(means, targets)
 
     def test_step(
         self,
         batch: Tuple[torch.Tensor, torch.Tensor],
         batch_idx: int,
-        dataloader_idx: int,
+        dataloader_idx: Optional[int] = 0,
     ) -> None:
+        if dataloader_idx != 0:
+            raise NotImplementedError(
+                "OOD detection not implemented yet. Raise an issue if needed."
+            )
+
         inputs, targets = batch
         logits = self.forward(inputs)
-        logits = rearrange(logits, "(n b) c -> b n c", n=self.num_estimators)
+        logits = rearrange(
+            logits, "(m b) dist -> b m dist", m=self.num_estimators
+        )
+
+        if self.mode == "mean":
+            logits = logits.mean(dim=1)
 
         if self.dist_estimation:
             means = logits[:, 0]
             vars = F.softplus(logits[:, 1])
-            self.test_reg_metrics.gnll.update(means, targets, vars)
+            self.test_metrics.gnll.update(means, targets, vars)
         else:
             means = logits
 
-        self.test_reg_metrics.mse.update(means, targets)
+        self.test_metrics.mse.update(means, targets)
 
     @staticmethod
     def add_model_specific_args(
