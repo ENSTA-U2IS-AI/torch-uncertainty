@@ -6,7 +6,7 @@ import torch.nn.functional as F
 
 from ..layers.bayesian_layers import BayesConv2d, BayesLinear
 from ..layers.packed_layers import PackedConv2d, PackedLinear
-from .variational_model import Variational
+from .utils import Stochastic
 
 
 class LeNet(nn.Module):
@@ -41,7 +41,7 @@ class LeNet(nn.Module):
         return out
 
 
-@Variational
+@Stochastic
 class BayesianLeNet(LeNet):
     pass
 
