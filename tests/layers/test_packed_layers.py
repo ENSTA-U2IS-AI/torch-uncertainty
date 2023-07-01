@@ -8,7 +8,7 @@ from torch_uncertainty.layers.packed_layers import PackedConv2d, PackedLinear
 # fmt:on
 @pytest.fixture
 def feat_input() -> torch.Tensor:
-    feat = torch.rand((6, 1, 1))
+    feat = torch.rand((6, 1))
     return feat
 
 
@@ -36,12 +36,12 @@ class TestPackedLinear:
     def test_linear_one_estimator_no_rearrange(self, feat_input: torch.Tensor):
         layer = PackedLinear(6, 2, alpha=1, num_estimators=1, rearrange=False)
         out = layer(feat_input)
-        assert out.shape == torch.Size([2, 1, 1])
+        assert out.shape == torch.Size([2, 1])
 
     def test_linear_two_estimators_no_rearrange(self, feat_input: torch.Tensor):
         layer = PackedLinear(6, 2, alpha=1, num_estimators=2, rearrange=False)
         out = layer(feat_input)
-        assert out.shape == torch.Size([2, 1, 1])
+        assert out.shape == torch.Size([2, 1])
 
     def test_linear_one_estimator_rearrange(
         self, feat_input_one_rearrange: torch.Tensor
