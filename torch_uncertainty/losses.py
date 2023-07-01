@@ -38,10 +38,11 @@ class ELBO_Loss(nn.Module):
     """
 
     def __init__(
-        self, criterion: nn.Module, model: nn.Module, num_samples: int
+        self, criterion: nn.Module, kl_weight:float, model: nn.Module, num_samples: int
     ) -> None:
         super().__init__()
         self.criterion = criterion
+        self.kl_weight = kl_weight
         self.model = model
         self.num_samples = num_samples
         self._kl_div = KL_Loss(model)
@@ -51,5 +52,5 @@ class ELBO_Loss(nn.Module):
         for _ in range(self.num_samples):
             logits = self.model(input)
             loss = self.criterion(input, logits)
-            aggregated_elbo += loss + self._kl_div()
+            aggregated_elbo += loss + self.kl_weight*self._kl_div()
         return self._kl_div()
