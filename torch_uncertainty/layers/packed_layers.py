@@ -88,7 +88,6 @@ class PackedLinear(nn.Module):
         num_estimators: int,
         gamma: int = 1,
         bias: bool = True,
-        groups: int = 1,
         rearrange: bool = True,
         first: bool = False,
         last: bool = False,
@@ -100,6 +99,7 @@ class PackedLinear(nn.Module):
 
         check_packed_parameters_consistency(alpha, num_estimators, gamma)
 
+        self.first = first
         self.num_estimators = num_estimators
         self.rearrange = rearrange
 
@@ -110,7 +110,7 @@ class PackedLinear(nn.Module):
         )
 
         # Define the number of groups of the underlying convolution
-        actual_groups = num_estimators * gamma * groups
+        actual_groups = num_estimators * gamma if not first else 1
 
         # fix if not divisible by groups
         if extended_in_features % actual_groups:
@@ -122,7 +122,7 @@ class PackedLinear(nn.Module):
                 actual_groups
             )
 
-        self.conv1x1 = nn.Conv2d(
+        self.conv1x1 = nn.Conv1d(
             in_channels=extended_in_features,
             out_channels=extended_out_features,
             kernel_size=1,
@@ -136,17 +136,29 @@ class PackedLinear(nn.Module):
         )
 
     def _rearrange_forward(self, x: Tensor) -> Tensor:
-        x = x.unsqueeze(-1).unsqueeze(-1)
-        x = rearrange(x, "(m e) c h w -> e (m c) h w", m=self.num_estimators)
+        x = x.unsqueeze(-1)
+        if not self.first:
+            x = rearrange(x, "(m e) c h -> e (m c) h", m=self.num_estimators)
+
         x = self.conv1x1(x)
-        x = rearrange(x, "e (m c) h w -> (m e) c h w", m=self.num_estimators)
-        return x.squeeze(-1).squeeze(-1)
+        x = rearrange(x, "e (m c) h -> (m e) c h", m=self.num_estimators)
+        return x.squeeze(-1)
 
     def forward(self, input: Tensor) -> Tensor:
         if self.rearrange:
             return self._rearrange_forward(input)
         else:
             return self.conv1x1(input)
+
+    @property
+    def weight(self) -> Tensor:
+        r"""The weight of the underlying convolutional layer."""
+        return self.conv1x1.weight
+
+    @property
+    def bias(self) -> Tensor:
+        r"""The bias of the underlying convolutional layer."""
+        return self.conv1x1.bias
 
 
 class PackedConv1d(nn.Module):
@@ -274,6 +286,16 @@ class PackedConv2d(nn.Module):
 
     def forward(self, input: Tensor) -> Tensor:
         return self.conv(input)
+
+    @property
+    def weight(self) -> Tensor:
+        r"""The weight of the underlying convolutional layer."""
+        return self.conv.weight
+
+    @property
+    def bias(self) -> Tensor:
+        r"""The bias of the underlying convolutional layer."""
+        return self.conv.bias
 
 
 class PackedConv3d(nn.Module):
