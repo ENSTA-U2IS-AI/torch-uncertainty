@@ -193,7 +193,7 @@ class ClassificationSingle(pl.LightningModule):
         self,
         batch: Tuple[torch.Tensor, torch.Tensor],
         batch_idx: int,
-        dataloader_idx: Optional[int] = None,
+        dataloader_idx: Optional[int] = 0,
     ) -> None:
         inputs, targets = batch
         logits = self.forward(inputs)
@@ -211,7 +211,7 @@ class ClassificationSingle(pl.LightningModule):
         else:
             ood_values = -confs
 
-        if dataloader_idx is None or dataloader_idx == 0:
+        if dataloader_idx == 0:
             self.test_cls_metrics.update(probs, targets)
             self.test_entropy_id(probs)
             self.log(
@@ -397,7 +397,7 @@ class ClassificationEnsemble(ClassificationSingle):
         self,
         batch: Tuple[torch.Tensor, torch.Tensor],
         batch_idx: int,
-        dataloader_idx: Optional[int] = None,
+        dataloader_idx: Optional[int] = 0,
     ) -> None:
         inputs, targets = batch
         logits = self.forward(inputs)
@@ -424,7 +424,7 @@ class ClassificationEnsemble(ClassificationSingle):
         else:
             ood_values = -confs
 
-        if dataloader_idx is None or dataloader_idx == 0:
+        if dataloader_idx == 0:
             # squeeze if binary classification only for binary metrics
             self.test_cls_metrics.update(
                 probs.squeeze(-1) if self.binary_cls else probs,
