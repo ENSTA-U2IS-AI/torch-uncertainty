@@ -170,8 +170,8 @@ Textures
 * Authors: *Haoqi Wang, Zhizhong Li, Litong Feng, and Wayne Zhang**
 * Paper: `CVPR 2022 <https://arxiv.org/pdf/2203.10807.pdf>`__.
 
-Classic Models
---------------
+Architectures
+-------------
 
 ResNet
 ^^^^^^
