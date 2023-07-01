@@ -1,11 +1,13 @@
 # fmt: off
-from typing import Callable, Dict, List
+from typing import Callable, Dict, List, Union
 
 import torch.nn as nn
 import torch.nn.functional as F
 from torch import Tensor
 
+from ..layers.bayesian_layers import BayesLinear
 from ..layers.packed_layers import PackedLinear
+from ..models.utils import Stochastic
 
 # fmt: on
 __all__ = [
@@ -78,11 +80,43 @@ class _MLP(nn.Module):
         self.layers = layers
 
     def forward(self, x: Tensor) -> Tensor:
+        print("x", x)
         for layer in self.layers[:-1]:
             x = F.dropout(layer(x), p=self.dropout, training=self.training)
             x = self.activation(x)
         out = self.layers[-1](x)
+        print("output", out)
         return out
+
+
+@Stochastic
+class _StochasticMLP(_MLP):
+    pass
+
+
+def _mlp(
+    stochastic: bool,
+    in_features: int,
+    num_outputs: int,
+    hidden_dims: List[int],
+    layer_args: Dict = {},
+    layer: nn.Module = nn.Linear,
+    activation: Callable = F.relu,
+    dropout: float = 0.0,
+) -> Union[_MLP, _StochasticMLP]:
+    if not stochastic:
+        model = _MLP
+    else:
+        model = _StochasticMLP
+    return model(
+        in_features=in_features,
+        num_outputs=num_outputs,
+        hidden_dims=hidden_dims,
+        layer_args=layer_args,
+        layer=layer,
+        activation=activation,
+        dropout=dropout,
+    )
 
 
 def mlp(
@@ -108,7 +142,8 @@ def mlp(
     Returns:
         _MLP: A Multi-Layer-Perceptron model.
     """
-    return _MLP(
+    return _mlp(
+        False,
         in_features=in_features,
         num_outputs=num_outputs,
         hidden_dims=hidden_dims,
@@ -133,12 +168,31 @@ def packed_mlp(
         "alpha": alpha,
         "gamma": gamma,
     }
-    return _MLP(
+    return _mlp(
+        False,
         in_features=in_features,
         num_outputs=num_outputs,
         hidden_dims=hidden_dims,
         layer=PackedLinear,
         activation=activation,
         layer_args=layer_args,
+        dropout=dropout,
+    )
+
+
+def bayesian_mlp(
+    in_features: int,
+    num_outputs: int,
+    hidden_dims: List[int] = [],
+    activation: Callable = F.relu,
+    dropout: float = 0.0,
+) -> _StochasticMLP:
+    return _mlp(
+        True,
+        in_features=in_features,
+        num_outputs=num_outputs,
+        hidden_dims=hidden_dims,
+        layer=BayesLinear,
+        activation=activation,
         dropout=dropout,
     )

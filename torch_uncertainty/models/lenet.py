@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 
 import torch
 import torch.nn as nn
@@ -9,7 +9,7 @@ from ..layers.packed_layers import PackedConv2d, PackedLinear
 from .utils import Stochastic
 
 
-class LeNet(nn.Module):
+class _LeNet(nn.Module):
     def __init__(
         self,
         in_channels: int,
@@ -42,12 +42,12 @@ class LeNet(nn.Module):
 
 
 @Stochastic
-class BayesianLeNet(LeNet):
+class _StochasticLeNet(_LeNet):
     pass
 
 
 def _lenet(
-    bayesian: bool,
+    stochastic: bool,
     in_channels: int,
     num_classes: int,
     linear_layer: nn.Module = nn.Linear,
@@ -56,11 +56,11 @@ def _lenet(
     groups: int = 1,
     dropout: float = 0.0,
     **model_kwargs: Any,
-) -> LeNet:
-    if not bayesian:
-        model = LeNet
+) -> Union[_LeNet, _StochasticLeNet]:
+    if not stochastic:
+        model = _LeNet
     else:
-        model = BayesianLeNet
+        model = _StochasticLeNet
     return model(
         in_channels=in_channels,
         num_classes=num_classes,
@@ -80,7 +80,7 @@ def lenet(
     groups: int = 1,
     dropout: float = 0.0,
     **model_kwargs: Any,
-) -> LeNet:
+) -> _LeNet:
     return _lenet(
         False,
         in_channels=in_channels,
@@ -102,9 +102,9 @@ def packed_lenet(
     groups: int = 1,
     dropout: float = 0.0,
     **model_kwargs: Any,
-) -> LeNet:
+) -> _LeNet:
     return _lenet(
-        bayesian=False,
+        stochastic=False,
         in_channels=in_channels,
         num_classes=num_classes,
         linear_layer=PackedLinear,
@@ -124,9 +124,9 @@ def bayesian_lenet(
     groups: int = 1,
     dropout: float = 0.0,
     **model_kwargs: Any,
-) -> LeNet:
+) -> _LeNet:
     return _lenet(
-        bayesian=True,
+        stochastic=True,
         in_channels=in_channels,
         num_classes=num_classes,
         linear_layer=BayesLinear,
