@@ -26,6 +26,14 @@ class RegressionSingle(pl.LightningModule):
     ) -> None:
         super().__init__()
 
+        self.save_hyperparameters(
+            ignore=[
+                "model",
+                "loss",
+                "optimization_procedure",
+            ]
+        )
+
         self.model = model
         self.loss = loss
         self.optimization_procedure = optimization_procedure

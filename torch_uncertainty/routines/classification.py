@@ -60,6 +60,14 @@ class ClassificationSingle(pl.LightningModule):
     ) -> None:
         super().__init__()
 
+        self.save_hyperparameters(
+            ignore=[
+                "model",
+                "loss",
+                "optimization_procedure",
+            ]
+        )
+
         if (use_logits + use_entropy) > 1:
             raise ValueError("You cannot choose more than one OOD criterion.")
 
