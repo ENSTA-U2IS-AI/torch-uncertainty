@@ -7,7 +7,7 @@ import torch.nn as nn
 
 
 # fmt: on
-class DeepEnsembles(nn.Module):
+class _DeepEnsembles(nn.Module):
     def __init__(
         self,
         in_channels: int,
@@ -57,4 +57,4 @@ def deep_ensembles(
             raise ValueError("num_estimators must be at least 2.")
         models = [copy.deepcopy(models) for _ in range(num_estimators)]
 
-    return DeepEnsembles(models=models)
+    return _DeepEnsembles(models=models)
