@@ -303,7 +303,7 @@ class BayesConv2d(_BayesConvNd):
         prior_mu: float = 0.0,
         prior_sigma: float = 0.1,
         mu_init: float = 0.0,
-        sigma_init: float = 10.0,
+        sigma_init: float = 2.0,
         frozen: bool = False,
         groups: int = 1,
         bias: bool = True,

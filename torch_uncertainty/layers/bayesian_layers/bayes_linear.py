@@ -45,7 +45,7 @@ class BayesLinear(nn.Module):
         prior_mu: float = 0.0,
         prior_sigma: float = 0.1,
         mu_init: float = 0.0,
-        sigma_init: float = 10.0,
+        sigma_init: float = 2.0,
         frozen: bool = False,
         bias: bool = True,
         device=None,
@@ -100,8 +100,8 @@ class BayesLinear(nn.Module):
         init.normal_(self.weight_sigma, mean=self.sigma_init, std=0.1)
 
         if self.bias:
-            init.normal_(self.weight_mu, mean=self.mu_init, std=0.1)
-            init.normal_(self.weight_sigma, mean=self.sigma_init, std=0.1)
+            init.normal_(self.bias_mu, mean=self.mu_init, std=0.1)
+            init.normal_(self.bias_sigma, mean=self.sigma_init, std=0.1)
 
     def forward(self, input: Tensor):
         if self.frozen:
