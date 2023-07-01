@@ -218,8 +218,6 @@ class BayesConv1d(_BayesConvNd):
         dtype=None,
     ) -> None:
         factory_kwargs = {"device": device, "dtype": dtype}
-        # we create new variables below to make mypy happy since kernel_size has
-        # type Union[int, Tuple[int]] and kernel_size_ has type Tuple[int]
         kernel_size_ = _single(kernel_size)
         stride_ = _single(stride)
         padding_ = padding if isinstance(padding, str) else _single(padding)

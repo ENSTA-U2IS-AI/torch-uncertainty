@@ -45,5 +45,5 @@ class PriorDistribution(nn.Module):
         self.distribution = torch.distributions.Normal(0, sigma)
 
     def log_prior(self, w):
-        prob = torch.exp(self.distribution.log_prob(w))
-        return (torch.log(prob + 1e-6) - 0.5).sum()
+        log_prob = self.distribution.log_prob(w)
+        return (log_prob - 0.5).sum()
