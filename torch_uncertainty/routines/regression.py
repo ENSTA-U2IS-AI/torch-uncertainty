@@ -81,8 +81,8 @@ class RegressionSingle(pl.LightningModule):
         logits = self.forward(inputs)
 
         if self.dist_estimation:
-            means = logits[:, 0]
-            vars = F.softplus(logits[:, 1])
+            means = logits[..., 0]
+            vars = F.softplus(logits[..., 1])
             loss = self.criterion(means, targets, vars)
         else:
             loss = self.criterion(logits, targets)
@@ -96,8 +96,8 @@ class RegressionSingle(pl.LightningModule):
         inputs, targets = batch
         logits = self.forward(inputs)
         if self.dist_estimation:
-            means = logits[:, 0]
-            vars = F.softplus(logits[:, 1])
+            means = logits[..., 0]
+            vars = F.softplus(logits[..., 1])
             self.val_metrics.gnll.update(means, targets, vars)
         else:
             means = logits
@@ -118,8 +118,8 @@ class RegressionSingle(pl.LightningModule):
         inputs, targets = batch
         logits = self.forward(inputs)
         if self.dist_estimation:
-            means = logits[:, 0]
-            vars = F.softplus(logits[:, 1])
+            means = logits[..., 0]
+            vars = F.softplus(logits[..., 1])
             self.test_metrics.gnll.update(means, targets, vars)
         else:
             means = logits
@@ -149,6 +149,7 @@ class RegressionEnsemble(RegressionSingle):
         optimization_procedure: Any,
         num_estimators: int,
         mode: Literal["mean", "mixture"],
+        out_features: Optional[int] = 1,
         **kwargs,
     ) -> None:
         super().__init__(
@@ -166,6 +167,7 @@ class RegressionEnsemble(RegressionSingle):
 
         self.mode = mode
         self.num_estimators = num_estimators
+        self.out_features = out_features
 
     def training_step(
         self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int
@@ -181,16 +183,25 @@ class RegressionEnsemble(RegressionSingle):
     ) -> None:
         inputs, targets = batch
         logits = self.forward(inputs)
-        logits = rearrange(
-            logits, "(m b) dist -> b m dist", m=self.num_estimators
-        )
+
+        if self.out_features == 1:
+            logits = rearrange(
+                logits, "(m b) dist -> b m dist", m=self.num_estimators
+            )
+        else:
+            logits = rearrange(
+                logits,
+                "(m b) (f dist) -> b f m dist",
+                m=self.num_estimators,
+                f=self.out_features,
+            )
 
         if self.mode == "mean":
             logits = logits.mean(dim=1)
 
         if self.dist_estimation:
-            means = logits[:, 0]
-            vars = F.softplus(logits[:, 1])
+            means = logits[..., 0]
+            vars = F.softplus(logits[..., 1])
             self.val_metrics.gnll.update(means, targets, vars)
         else:
             means = logits
@@ -205,21 +216,31 @@ class RegressionEnsemble(RegressionSingle):
     ) -> None:
         if dataloader_idx != 0:
             raise NotImplementedError(
-                "OOD detection not implemented yet. Raise an issue if needed."
+                "Regression OOD detection not implemented yet. Raise an issue "
+                "if needed."
             )
 
         inputs, targets = batch
         logits = self.forward(inputs)
-        logits = rearrange(
-            logits, "(m b) dist -> b m dist", m=self.num_estimators
-        )
+
+        if self.out_features == 1:
+            logits = rearrange(
+                logits, "(m b) dist -> b m dist", m=self.num_estimators
+            )
+        else:
+            logits = rearrange(
+                logits,
+                "(m b) (f dist) -> b f m dist",
+                m=self.num_estimators,
+                f=self.out_features,
+            )
 
         if self.mode == "mean":
             logits = logits.mean(dim=1)
 
         if self.dist_estimation:
-            means = logits[:, 0]
-            vars = F.softplus(logits[:, 1])
+            means = logits[..., 0]
+            vars = F.softplus(logits[..., 1])
             self.test_metrics.gnll.update(means, targets, vars)
         else:
             means = logits
