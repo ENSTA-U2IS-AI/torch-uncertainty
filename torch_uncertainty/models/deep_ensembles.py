@@ -10,12 +10,10 @@ import torch.nn as nn
 class _DeepEnsembles(nn.Module):
     def __init__(
         self,
-        in_channels: int,
         models: List[nn.Module],
     ) -> None:
         super().__init__()
 
-        self.in_channels = in_channels
         self.models = models
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -43,7 +41,12 @@ def deep_ensembles(
         ValueError: If :attr:num_estimators is not specified and :attr:models
             is a module.
         ValueError: If :attr:num_estimators is less than 2 and :attr:models is
-            a module.
+            a list.
+
+    References:
+        Balaji Lakshminarayanan, Alexander Pritzel, and Charles Blundell.
+        Simple and scalable predictive uncertainty estimation using deep
+        ensembles. In NeurIPS, 2017.
     """
     if isinstance(models, list) and len(models) == 1:
         if num_estimators is None:
