@@ -2,7 +2,7 @@
 # flake8: noqa
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
-from typing import Type, Union
+from typing import Optional, Type, Union
 
 import pytorch_lightning as pl
 import torch
@@ -19,12 +19,28 @@ from .utils import get_version
 
 # fmt: on
 def init_args(
-    network: Type[pl.LightningModule], datamodule: Type[pl.LightningDataModule]
+    network: Optional[Type[pl.LightningModule]] = None,
+    datamodule: Optional[Type[pl.LightningDataModule]] = None,
 ) -> Namespace:
     parser = ArgumentParser("torch-uncertainty")
-    parser.add_argument("--seed", type=int, default=None)
-    parser.add_argument("--test", type=int, default=None)
-    parser.add_argument("--summary", dest="summary", action="store_true")
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=None,
+        help="Random seed to make the training deterministic.",
+    )
+    parser.add_argument(
+        "--test",
+        type=int,
+        default=None,
+        help="Run in test mode. Set to the checkpoint version number to test.",
+    )
+    parser.add_argument(
+        "--summary",
+        dest="summary",
+        action="store_true",
+        help="Print model summary",
+    )
     parser.add_argument("--log_graph", dest="log_graph", action="store_true")
     parser.add_argument(
         "--channels_last",
@@ -33,11 +49,13 @@ def init_args(
     )
 
     parser = pl.Trainer.add_argparse_args(parser)
-    parser = datamodule.add_argparse_args(parser)
-    parser = network.add_model_specific_args(parser)
-    args = parser.parse_args()
+    if network is not None:
+        parser = network.add_model_specific_args(parser)
 
-    return args
+    if datamodule is not None:
+        parser = datamodule.add_argparse_args(parser)
+
+    return parser.parse_args()
 
 
 def cls_main(
