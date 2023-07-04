@@ -17,7 +17,7 @@ class KL_Loss(nn.Module):
         super().__init__()
         self.model = model
 
-    def forward(self, input: Tensor, logits: Tensor) -> Tensor:
+    def forward(self) -> Tensor:
         return self._kl_div()
 
     def _kl_div(self) -> Tensor:
@@ -38,19 +38,22 @@ class ELBO_Loss(nn.Module):
     """
 
     def __init__(
-        self, criterion: nn.Module, kl_weight:float, model: nn.Module, num_samples: int
+        self,
+        model: nn.Module,
+        criterion: nn.Module,
+        kl_weight: float,
+        num_samples: int,
     ) -> None:
         super().__init__()
+        self.model = model
+        self._kl_div = KL_Loss(model)
         self.criterion = criterion
         self.kl_weight = kl_weight
-        self.model = model
         self.num_samples = num_samples
-        self._kl_div = KL_Loss(model)
 
-    def forward(self, input: Tensor, logits: Tensor) -> Tensor:
+    def forward(self, logits: Tensor, targets: Tensor) -> Tensor:
         aggregated_elbo = 0
         for _ in range(self.num_samples):
-            logits = self.model(input)
-            loss = self.criterion(input, logits)
-            aggregated_elbo += loss + self.kl_weight*self._kl_div()
-        return self._kl_div()
+            loss = self.criterion(logits, targets)
+            aggregated_elbo += loss + self.kl_weight * self._kl_div()
+        return aggregated_elbo / self.num_samples

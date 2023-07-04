@@ -21,7 +21,7 @@ class BayesLinear(nn.Module):
         mu_init (float, optional): Initial mean of the posterior distribution.
             Defaults to 0.0.
         sigma_init (float, optional): Initial standard deviation of the
-            posterior distribution. Defaults to 10.0.
+            posterior distribution. Defaults to 2.0.
         frozen (bool, optional): Whether to freeze the posterior distribution.
             Defaults to False.
         bias (bool, optional): Whether to use a bias term. Defaults to True.
@@ -43,9 +43,11 @@ class BayesLinear(nn.Module):
         in_features: int,
         out_features: int,
         prior_mu: float = 0.0,
-        prior_sigma: float = 0.1,
+        prior_sigma_1: float = 0.1,
+        prior_sigma_2: float = 0.4,
+        prior_pi=1,
         mu_init: float = 0.0,
-        sigma_init: float = 2.0,
+        sigma_init: float = -7.0,
         frozen: bool = False,
         bias: bool = True,
         device=None,
@@ -57,7 +59,9 @@ class BayesLinear(nn.Module):
         self.in_features = in_features
         self.out_features = out_features
         self.prior_mu = prior_mu
-        self.prior_sigma = prior_sigma
+        self.prior_sigma_1 = prior_sigma_1
+        self.prior_sigma_2 = prior_sigma_2
+        self.prior_pi = prior_pi
         self.mu_init = mu_init
         self.sigma_init = sigma_init
         self.frozen = frozen
@@ -90,12 +94,18 @@ class BayesLinear(nn.Module):
                 self.bias_mu, self.bias_sigma
             )
 
-        self.weight_prior_dist = PriorDistribution(self.prior_sigma)
-        self.bias_prior_dist = PriorDistribution(self.prior_sigma)
+        self.weight_prior_dist = PriorDistribution(
+            prior_sigma_1, prior_sigma_2, prior_pi
+        )
+        if self.bias:
+            self.bias_prior_dist = PriorDistribution(
+                prior_sigma_1, prior_sigma_2, prior_pi
+            )
         self.lprior = 0
         self.lvposterior = 0
 
     def reset_parameters(self) -> None:
+        # TODO: change init
         init.normal_(self.weight_mu, mean=self.mu_init, std=0.1)
         init.normal_(self.weight_sigma, mean=self.sigma_init, std=0.1)
 
