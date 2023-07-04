@@ -1,6 +1,6 @@
 # fmt: off
 from argparse import ArgumentParser, BooleanOptionalAction
-from typing import Any, Literal, Optional
+from typing import Any, Literal, Optional, Type
 
 import torch.nn as nn
 from pytorch_lightning import LightningModule
@@ -92,7 +92,7 @@ class WideResNet:
         cls,
         num_classes: int,
         in_channels: int,
-        loss: nn.Module,
+        loss: Type[nn.Module],
         optimization_procedure: Any,
         version: Literal["vanilla", "packed", "batched", "masked"],
         style: str = "imagenet",

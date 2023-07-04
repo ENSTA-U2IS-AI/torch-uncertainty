@@ -86,7 +86,7 @@ class TemperatureScaler(nn.Module):
             [self.temperature], lr=self.lr, max_iter=self.max_iter
         )
 
-        def eval() -> torch.Tensor:
+        def eval() -> float:
             optimizer.zero_grad()
             loss = self.criterion(self._scale(logits), labels)
             loss.backward()

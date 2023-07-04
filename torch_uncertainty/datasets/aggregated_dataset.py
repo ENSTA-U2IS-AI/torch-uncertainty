@@ -7,7 +7,7 @@ class AggregatedDataset(Dataset):
         super().__init__()
         self.dataset = dataset
         self.n_dataloaders = n_dataloaders
-        self.dataset_size = len(self.dataset)
+        self.dataset_size = len(dataset)
         self.offset = self.dataset_size // self.n_dataloaders
 
     def __getitem__(self, idx: int):

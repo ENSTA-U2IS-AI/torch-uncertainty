@@ -1,6 +1,6 @@
 # fmt:off
 import os
-from typing import Any, Callable
+from typing import Any, Callable, Optional
 
 import torch
 from torchvision.datasets import CIFAR10
@@ -37,9 +37,9 @@ class CIFAR10_H(CIFAR10):
     def __init__(
         self,
         root: str,
-        train: bool = None,
-        transform: Callable[..., Any] = None,
-        target_transform: Callable[..., Any] = None,
+        train: Optional[bool] = None,
+        transform: Optional[Callable[..., Any]] = None,
+        target_transform: Optional[Callable[..., Any]] = None,
         download: bool = False,
     ) -> None:
         print(

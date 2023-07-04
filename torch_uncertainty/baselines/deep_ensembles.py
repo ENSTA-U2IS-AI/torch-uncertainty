@@ -17,10 +17,13 @@ class DeepEnsembles:
 
     def __new__(
         cls,
+        in_channels: int,
+        num_classes: int,
         task: Literal["classification", "regression"],
         log_path: Union[str, Path],
         versions: List[int],
         backbone: Literal["resnet"],
+        num_estimators: int,
         use_entropy: bool = False,
         use_logits: bool = False,
         use_mi: bool = False,
@@ -48,9 +51,12 @@ class DeepEnsembles:
 
         if task == "classification":
             return ClassificationEnsemble(
+                in_channels=in_channels,
+                num_classes=num_classes,
                 model=de,
-                loss=None,
+                loss=None,  # TODO: Why None? We won't support training?
                 optimization_procedure=None,
+                num_estimators=num_estimators,
                 use_entropy=use_entropy,
                 use_logits=use_logits,
                 use_mi=use_mi,

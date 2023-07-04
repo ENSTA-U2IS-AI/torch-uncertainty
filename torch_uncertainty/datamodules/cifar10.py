@@ -50,7 +50,7 @@ class CIFAR10DataModule(LightningDataModule):
         batch_size: int,
         val_split: float = 0.0,
         num_workers: int = 1,
-        cutout: int = Optional[None],
+        cutout: Optional[int] = None,
         auto_augment: Optional[str] = None,
         test_alt: Optional[Literal["c", "h"]] = None,
         corruption_severity: int = 1,

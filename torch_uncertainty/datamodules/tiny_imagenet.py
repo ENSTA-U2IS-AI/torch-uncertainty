@@ -24,7 +24,7 @@ class TinyImageNetDataModule(LightningDataModule):
         root: Union[str, Path],
         ood_detection: bool,
         batch_size: int,
-        rand_augment_opt: str = None,
+        rand_augment_opt: Optional[str] = None,
         num_workers: int = 1,
         pin_memory: bool = True,
         persistent_workers: bool = True,

@@ -1,6 +1,6 @@
 # fmt: off
 from argparse import ArgumentParser
-from typing import Any, Literal, Optional
+from typing import Any, Literal, Optional, Type
 
 import torch.nn as nn
 from pytorch_lightning import LightningModule
@@ -100,15 +100,15 @@ class VGG:
         cls,
         num_classes: int,
         in_channels: int,
-        loss: nn.Module,
+        loss: Type[nn.Module],
         optimization_procedure: Any,
         version: Literal["vanilla", "packed"],
         arch: int,
         num_estimators: Optional[int] = None,
         style: str = "imagenet",
-        groups: Optional[int] = 1,
+        groups: int = 1,
         alpha: Optional[float] = None,
-        gamma: Optional[int] = 1,
+        gamma: int = 1,
         use_entropy: bool = False,
         use_logits: bool = False,
         use_mi: bool = False,

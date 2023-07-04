@@ -38,7 +38,7 @@ class UCIDataModule(LightningDataModule):
         root: Union[str, Path],
         batch_size: int,
         dataset_name: str,
-        val_split: Optional[float] = 0.0,
+        val_split: float = 0.0,
         num_workers: int = 1,
         pin_memory: bool = True,
         persistent_workers: bool = True,

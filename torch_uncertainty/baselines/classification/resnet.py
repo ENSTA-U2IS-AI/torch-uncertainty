@@ -1,7 +1,7 @@
 # fmt: off
 from argparse import ArgumentParser, BooleanOptionalAction
 from pathlib import Path
-from typing import Any, Literal, Optional, Union
+from typing import Any, Literal, Optional, Type, Union
 
 import torch
 import torch.nn as nn
@@ -142,16 +142,16 @@ class ResNet:
         cls,
         num_classes: int,
         in_channels: int,
-        loss: nn.Module,
+        loss: Type[nn.Module],
         optimization_procedure: Any,
         version: Literal["vanilla", "packed", "batched", "masked"],
         arch: int,
         style: str = "imagenet",
         num_estimators: Optional[int] = None,
-        groups: Optional[int] = 1,
+        groups: int = 1,
         scale: Optional[float] = None,
         alpha: Optional[float] = None,
-        gamma: Optional[int] = 1,
+        gamma: int = 1,
         use_entropy: bool = False,
         use_logits: bool = False,
         use_mi: bool = False,
