@@ -1,5 +1,5 @@
 # fmt: off
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Type, Union
 
 import torch
 import torch.nn as nn
@@ -15,9 +15,9 @@ class VGG(nn.Module):
         vgg_cfg: List[Union[str, int]],
         in_channels: int,
         num_classes: int,
-        linear_layer: nn.Module,
-        conv2d_layer: nn.Module,
-        norm: Optional[nn.Module],
+        linear_layer: Type[nn.Module],
+        conv2d_layer: Type[nn.Module],
+        norm: Type[nn.Module],
         groups: int,
         dropout: float,
         style: str,
@@ -125,9 +125,9 @@ def _vgg(
     vgg_cfg: Dict[str, List[Union[str, int]]],
     in_channels: int,
     num_classes: int,
-    linear_layer: nn.Module = nn.Linear,
-    conv2d_layer: nn.Module = nn.Conv2d,
-    norm: Optional[nn.Module] = nn.Identity,
+    linear_layer: Type[nn.Module] = nn.Linear,
+    conv2d_layer: Type[nn.Module] = nn.Conv2d,
+    norm: Type[nn.Module] = nn.Identity,
     groups: int = 1,
     dropout: float = 0.5,
     style: str = "imagenet",

@@ -1,5 +1,5 @@
 # fmt: off
-from typing import Optional
+from typing import Type
 
 from torch import nn
 
@@ -22,7 +22,7 @@ def packed_vgg11(
     alpha: int,
     num_estimators: int,
     gamma: int,
-    norm: Optional[nn.Module] = nn.Identity,
+    norm: Type[nn.Module] = nn.Identity,
     groups: int = 1,
     dropout: float = 0.5,
     style: str = "imagenet",
@@ -49,7 +49,7 @@ def packed_vgg13(
     alpha: int,
     num_estimators: int,
     gamma: int,
-    norm: Optional[nn.Module] = nn.Identity,
+    norm: Type[nn.Module] = nn.Identity,
     groups: int = 1,
     dropout: float = 0.5,
     style: str = "imagenet",
@@ -76,7 +76,7 @@ def packed_vgg16(
     alpha: int,
     num_estimators: int,
     gamma: int,
-    norm: Optional[nn.Module] = nn.Identity,
+    norm: Type[nn.Module] = nn.Identity,
     groups: int = 1,
     dropout: float = 0.5,
     style: str = "imagenet",
@@ -103,7 +103,7 @@ def packed_vgg19(
     alpha: int,
     num_estimators: int,
     gamma: int,
-    norm: Optional[nn.Module] = nn.Identity,
+    norm: Type[nn.Module] = nn.Identity,
     groups: int = 1,
     dropout: float = 0.5,
     style: str = "imagenet",

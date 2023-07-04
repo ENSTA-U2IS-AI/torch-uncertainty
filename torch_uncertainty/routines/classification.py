@@ -1,6 +1,6 @@
 # fmt: off
 from argparse import ArgumentParser, Namespace
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, List, Optional, Tuple, Type, Union
 
 import pytorch_lightning as pl
 import torch
@@ -19,6 +19,7 @@ from torchmetrics import (
 
 from ..metrics import (
     FPR95,
+    BrierScore,
     Disagreement,
     Entropy,
     MutualInformation,
@@ -51,7 +52,7 @@ class ClassificationSingle(pl.LightningModule):
         self,
         num_classes: int,
         model: nn.Module,
-        loss: nn.Module,
+        loss: Type[nn.Module],
         optimization_procedure: Any,
         ood_detection: bool = False,
         use_entropy: bool = False,
@@ -91,6 +92,7 @@ class ClassificationSingle(pl.LightningModule):
                 {
                     "acc": Accuracy(task="binary"),
                     "ece": CalibrationError(task="binary"),
+                    "brier": BrierScore(num_classes=1),
                 },
                 compute_groups=False,
             )
@@ -104,6 +106,7 @@ class ClassificationSingle(pl.LightningModule):
                     "ece": CalibrationError(
                         task="multiclass", num_classes=self.num_classes
                     ),
+                    "brier": BrierScore(num_classes=self.num_classes),
                 },
                 compute_groups=False,
             )
@@ -148,6 +151,7 @@ class ClassificationSingle(pl.LightningModule):
                     "hp/test_acc": 0,
                     "hp/test_nll": 0,
                     "hp/test_ece": 0,
+                    "hp/test_brier": 0,
                     "hp/test_entropy_id": 0,
                     "hp/test_entropy_ood": 0,
                     "hp/test_aupr": 0,
@@ -165,7 +169,6 @@ class ClassificationSingle(pl.LightningModule):
         # BCEWithLogitsLoss expects float targets
         if self.loss == nn.BCEWithLogitsLoss:
             targets = targets.float()
-
         loss = self.criterion(logits, targets)
         self.log("train_loss", loss)
         return loss
@@ -294,7 +297,7 @@ class ClassificationEnsemble(ClassificationSingle):
         self,
         num_classes: int,
         model: nn.Module,
-        loss: nn.Module,
+        loss: Type[nn.Module],
         optimization_procedure: Any,
         num_estimators: int,
         ood_detection: bool = False,
@@ -356,6 +359,7 @@ class ClassificationEnsemble(ClassificationSingle):
                     "hp/test_acc": 0,
                     "hp/test_nll": 0,
                     "hp/test_ece": 0,
+                    "hp/test_brier": 0,
                     "hp/test_entropy_id": 0,
                     "hp/test_entropy_ood": 0,
                     "hp/test_aupr": 0,

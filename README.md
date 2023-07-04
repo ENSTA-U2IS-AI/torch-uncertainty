@@ -62,7 +62,7 @@ To date, the following post-processing methods are implemented:
 
 ## Awesome Uncertainty repositories
 
-You may find a lot of information about modern uncertainty estimation techniques on the [Awesome Uncertainty in Deep Learning](https://github.com/ENSTA-U2IS/awesome-uncertainty-deeplearning).
+You may find a lot of papers about modern uncertainty estimation techniques on the [Awesome Uncertainty in Deep Learning](https://github.com/ENSTA-U2IS/awesome-uncertainty-deeplearning).
 
 ## Other References
 

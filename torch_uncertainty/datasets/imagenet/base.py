@@ -42,7 +42,7 @@ class ImageNetVariation(ImageFolder):
     def __init__(
         self,
         root: str,
-        split: str = None,
+        split: Optional[str] = None,
         transform: Optional[Callable] = None,
         target_transform: Optional[Callable] = None,
         download: bool = False,
@@ -77,13 +77,15 @@ class ImageNetVariation(ImageFolder):
                 self.tgz_md5,
             )
         elif isinstance(self.filename, list):  # ImageNet-C
-            integrity = True
+            integrity: bool = True
             for filename, md5 in zip(self.filename, self.tgz_md5):
                 integrity *= check_integrity(
                     self.root / self.root_appendix / Path(filename),
                     md5,
                 )
             return integrity
+        else:
+            raise ValueError("filename must be str or list")
 
     def download(self) -> None:
         """Download and extract dataset."""

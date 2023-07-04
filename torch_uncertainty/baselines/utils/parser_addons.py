@@ -45,6 +45,12 @@ def add_vgg_specific_args(parser: ArgumentParser) -> ArgumentParser:
         default=1,
         help="Number of groups",
     )
+    parser.add_argument(
+        "--dropout",
+        type=float,
+        default=0.1,
+        help="Dropout rate",
+    )
     return parser
 
 
@@ -62,6 +68,16 @@ def add_wideresnet_specific_args(parser: ArgumentParser) -> ArgumentParser:
         type=int,
         default=1,
         help="Number of groups",
+    )
+    return parser
+
+
+def add_mlp_specific_args(parser: ArgumentParser) -> ArgumentParser:
+    parser.add_argument(
+        "--dropout",
+        type=float,
+        default=0.1,
+        help="Dropout rate",
     )
     return parser
 

@@ -19,14 +19,14 @@ def get_ab(beta):
     return a, b
 
 
-def add(img1: Image, img2: Image, beta: float) -> Image:
+def add(img1: Image.Image, img2: Image.Image, beta: float) -> Image.Image:
     a, b = get_ab(beta)
     img1, img2 = img1 * 2 - 1, img2 * 2 - 1
     out = a * img1 + b * img2
     return (out + 1) / 2
 
 
-def multiply(img1: Image, img2: Image, beta: float) -> Image:
+def multiply(img1: Image.Image, img2: Image.Image, beta: float) -> Image.Image:
     a, b = get_ab(beta)
     img1, img2 = img1 * 2, img2 * 2
     out = (img1**a) * (img2.clip(1e-37) ** b)
@@ -70,6 +70,8 @@ class PixMix(nn.Module):
             allowed_augmentations = [
                 aug for aug in augmentations if not aug.corruption_overlap
             ]
+        else:
+            allowed_augmentations = augmentations
 
         self.aug_instances = []
         for aug in allowed_augmentations:
@@ -79,7 +81,7 @@ class PixMix(nn.Module):
             else:
                 self.aug_instances.append(aug())
 
-    def __call__(self, img: Image) -> np.ndarray:
+    def __call__(self, img: Image.Image) -> np.ndarray:
         if np.random.random() < 0.5:
             mixed = self.augment_input(img)
         else:
@@ -98,7 +100,7 @@ class PixMix(nn.Module):
             mixed = np.clip(mixed, 0, 1)
         return mixed
 
-    def _augment(self, image: Image) -> np.ndarray:
+    def _augment(self, image: Image.Image) -> np.ndarray:
         op = np.random.choice(self.aug_instances)
         if op.level_type == int:
             aug_level = self._sample_int(op.pixmix_max_level)
