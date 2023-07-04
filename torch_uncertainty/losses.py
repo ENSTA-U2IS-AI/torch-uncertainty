@@ -6,8 +6,9 @@ from .layers.bayesian_layers import bayesian_modules
 
 
 # fmt: on
-class KL_Loss(nn.Module):
-    """KL divergence loss for Bayesian Neural Networks
+class KLDiv(nn.Module):
+    """KL divergence loss for Bayesian Neural Networks. Gathers the KL from the
+    modules computed in the forward passes.
 
     Args:
         model (nn.Module): Bayesian Neural Network
@@ -30,12 +31,15 @@ class KL_Loss(nn.Module):
         return kl_divergence
 
 
-class ELBO_Loss(nn.Module):
-    """ELBO loss for Bayesian Neural Networks
+class ELBOLoss(nn.Module):
+    """ELBO loss for Bayesian Neural Networks. Use this loss function with the
+    objective that you seek to minimize as :attr:`criterion`.
 
     Args:
-        model (nn.Module): Bayesian Neural Network
-
+        model (nn.Module): The Bayesian Neural Network to compute the loss for
+        criterion (nn.Module): The loss function to use during training
+        kl_weight (float): The weight of the KL divergence term
+        num_samples (int): The number of samples to use for the ELBO loss
     """
 
     def __init__(
@@ -47,13 +51,24 @@ class ELBO_Loss(nn.Module):
     ) -> None:
         super().__init__()
         self.model = model
-        self._kl_div = KL_Loss(model)
+        self._kl_div = KLDiv(model)
         self.criterion = criterion
         self.kl_weight = kl_weight
         self.num_samples = num_samples
 
     def forward(self, logits: Tensor, targets: Tensor) -> Tensor:
-        aggregated_elbo = 0
+        """Gather the kl divergence from the bayesian modules and aggregate
+        the ELBO loss for a given network.
+
+        Args:
+            logits (Tensor): The output of the Bayesian Neural Network
+            targets (Tensor): The target values
+
+        Returns:
+            Tensor: The aggregated ELBO loss
+
+        """
+        aggregated_elbo = torch.zeros(1)
         for _ in range(self.num_samples):
             loss = self.criterion(logits, targets)
             aggregated_elbo += loss + self.kl_weight * self._kl_div()
