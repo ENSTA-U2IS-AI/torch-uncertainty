@@ -51,6 +51,7 @@ To date, the following baselines are implemented:
 - BatchEnsemble
 - Masksembles
 - Packed-Ensembles (see [blog post](https://medium.com/@adrien.lafage/make-your-neural-networks-more-reliable-with-packed-ensembles-7ad0b737a873))
+- Bayesian Neural Networks
 
 ### Post-processing methods
 

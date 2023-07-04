@@ -1,3 +1,4 @@
+# fmt: off
 from typing import Callable, Dict, Type, Union
 
 import torch
@@ -7,6 +8,9 @@ import torch.nn.functional as F
 from ..layers.bayesian_layers import BayesConv2d, BayesLinear
 from ..layers.packed_layers import PackedConv2d, PackedLinear
 from .utils import StochasticModel
+
+# fmt: on
+__all__ = ["lenet", "packed_lenet", "bayesian_lenet"]
 
 
 class _LeNet(nn.Module):

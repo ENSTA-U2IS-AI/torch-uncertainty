@@ -10,9 +10,7 @@ from ..layers.packed_layers import PackedLinear
 from ..models.utils import StochasticModel
 
 # fmt: on
-__all__ = [
-    "mlp",
-]
+__all__ = ["mlp", "packed_mlp", "bayesian_mlp"]
 
 
 class _MLP(nn.Module):
@@ -134,7 +132,6 @@ def mlp(
         layer (nn.Module, optional): Layer type. Defaults to nn.Linear.
         activation (Callable, optional): Activation function. Defaults to
             F.relu.
-        layer_args (dict, optional): Arguments for the layer. Defaults to {}.
         dropout (float, optional): Dropout probability. Defaults to 0.0.
 
     Returns:

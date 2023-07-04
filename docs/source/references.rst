@@ -8,6 +8,17 @@ Uncertainty Models
 
 The following uncertainty models are implemented.
 
+Bayesian Neural Networks
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+For Bayesian Neural Networks, consider citing:
+
+**Weight Uncertainty in Neural Networks**
+
+* Authors: *Charles Blundell, Julien Cornebise, Koray Kavukcuoglu, and Daan Wierstra*
+* Paper: `ICML 2015 <https://arxiv.org/pdf/1505.05424>`__.
+
+
 Deep Ensembles
 ^^^^^^^^^^^^^^
 

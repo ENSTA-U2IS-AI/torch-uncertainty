@@ -161,3 +161,16 @@ Metrics
     JensenShannonDivergence
     MutualInformation
     NegativeLogLikelihood
+
+Losses
+------
+
+.. currentmodule:: torch_uncertainty.losses
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: class.rst
+
+    KLDiv
+    ELBOLoss

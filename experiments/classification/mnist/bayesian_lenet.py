@@ -7,7 +7,7 @@ import torch.optim as optim
 
 from torch_uncertainty import cls_main, init_args
 from torch_uncertainty.datamodules import MNISTDataModule
-from torch_uncertainty.losses import ELBO_Loss
+from torch_uncertainty.losses import ELBOLoss
 from torch_uncertainty.models.lenet import bayesian_lenet
 from torch_uncertainty.routines.classification import ClassificationSingle
 
@@ -49,7 +49,7 @@ if __name__ == "__main__":
     # Here, the loss is a bit more complicated
     #   hyperparameters are from blitz.
     loss = partial(
-        ELBO_Loss,
+        ELBOLoss,
         model=model,
         criterion=nn.CrossEntropyLoss(),
         kl_weight=1 / 50000,
