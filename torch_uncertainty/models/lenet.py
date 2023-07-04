@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional, Union
+from typing import Callable, Dict, Type, Union
 
 import torch
 import torch.nn as nn
@@ -6,7 +6,7 @@ import torch.nn.functional as F
 
 from ..layers.bayesian_layers import BayesConv2d, BayesLinear
 from ..layers.packed_layers import PackedConv2d, PackedLinear
-from .utils import Stochastic
+from .utils import StochasticModel
 
 
 class _LeNet(nn.Module):
@@ -14,34 +14,58 @@ class _LeNet(nn.Module):
         self,
         in_channels: int,
         num_classes: int,
-        linear_layer: nn.Module,
-        conv2d_layer: nn.Module,
-        # activation: Callable,
+        linear_layer: Type[nn.Module],
+        conv2d_layer: Type[nn.Module],
         layer_args: Dict,
+        activation: Callable,
+        norm: Type[nn.Module],
+        groups: int,
         dropout: float,
     ) -> None:
         super().__init__()
-        self.conv1 = conv2d_layer(in_channels, 6, (5, 5))
-        self.conv2 = conv2d_layer(6, 16, (5, 5))
+        self.activation = activation
+        self.norm = norm()  # TODO: Fix when not Identity
+        self.dropout = dropout
+
+        self.conv1 = conv2d_layer(
+            in_channels, 6, (5, 5), groups=groups, **layer_args
+        )
+        self.conv2 = conv2d_layer(6, 16, (5, 5), groups=groups, **layer_args)
         self.pooling = nn.AdaptiveAvgPool2d((4, 4))
-        self.fc1 = linear_layer(256, 120)
-        self.fc2 = linear_layer(120, 84)
-        self.fc3 = linear_layer(84, num_classes)
+        self.fc1 = linear_layer(256, 120, **layer_args)
+        self.fc2 = linear_layer(120, 84, **layer_args)
+        self.fc3 = linear_layer(84, num_classes, **layer_args)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        out = F.relu(self.conv1(x))
+        out = F.dropout(
+            self.activation(self.norm(self.conv1(x))),
+            p=self.dropout,
+            training=self.training,
+        )
         out = F.max_pool2d(out, 2)
-        out = F.relu(self.conv2(out))
+        out = F.dropout(
+            self.activation(self.norm(self.conv2(out))),
+            p=self.dropout,
+            training=self.training,
+        )
         out = F.max_pool2d(out, 2)
         out = self.pooling(out)
         out = torch.flatten(out, 1)
-        out = F.relu(self.fc1(out))
-        out = F.relu(self.fc2(out))
+        out = F.dropout(
+            self.activation(self.norm(self.fc1(out))),
+            p=self.dropout,
+            training=self.training,
+        )
+        out = F.dropout(
+            self.activation(self.norm(self.fc2(out))),
+            p=self.dropout,
+            training=self.training,
+        )
         out = self.fc3(out)
         return out
 
 
-@Stochastic
+@StochasticModel
 class _StochasticLeNet(_LeNet):
     pass
 
@@ -50,12 +74,13 @@ def _lenet(
     stochastic: bool,
     in_channels: int,
     num_classes: int,
-    linear_layer: nn.Module = nn.Linear,
-    conv2d_layer: nn.Module = nn.Conv2d,
-    norm: Optional[nn.Module] = nn.Identity,
+    linear_layer: Type[nn.Module] = nn.Linear,
+    conv2d_layer: Type[nn.Module] = nn.Conv2d,
+    layer_args: Dict = {},
+    activation: Callable = nn.ReLU,
+    norm: Type[nn.Module] = nn.Identity,
     groups: int = 1,
     dropout: float = 0.0,
-    **model_kwargs: Any,
 ) -> Union[_LeNet, _StochasticLeNet]:
     if not stochastic:
         model = _LeNet
@@ -66,9 +91,10 @@ def _lenet(
         num_classes=num_classes,
         linear_layer=linear_layer,
         conv2d_layer=conv2d_layer,
-        # norm,
-        # groups,
-        layer_args=model_kwargs,
+        activation=activation,
+        norm=norm,
+        groups=groups,
+        layer_args=layer_args,
         dropout=dropout,
     )
 
@@ -76,10 +102,10 @@ def _lenet(
 def lenet(
     in_channels: int,
     num_classes: int,
-    norm: Optional[nn.Module] = nn.Identity,
+    activation: Callable = F.relu,
+    norm: Type[nn.Module] = nn.Identity,
     groups: int = 1,
     dropout: float = 0.0,
-    **model_kwargs: Any,
 ) -> _LeNet:
     return _lenet(
         False,
@@ -87,21 +113,24 @@ def lenet(
         num_classes=num_classes,
         linear_layer=nn.Linear,
         conv2d_layer=nn.Conv2d,
-        # norm,
-        # groups,
         layer_args={},
+        activation=activation,
+        norm=norm,
+        groups=groups,
         dropout=dropout,
-        **model_kwargs,
     )
 
 
 def packed_lenet(
     in_channels: int,
     num_classes: int,
-    norm: Optional[nn.Module] = nn.Identity,
+    num_estimators: int = 4,
+    alpha: float = 2,
+    gamma: float = 1,
+    activation: Callable = F.relu,
+    norm: Type[nn.Module] = nn.Identity,
     groups: int = 1,
     dropout: float = 0.0,
-    **model_kwargs: Any,
 ) -> _LeNet:
     return _lenet(
         stochastic=False,
@@ -109,21 +138,31 @@ def packed_lenet(
         num_classes=num_classes,
         linear_layer=PackedLinear,
         conv2d_layer=PackedConv2d,
-        # norm,
-        # groups,
-        layer_args={},
+        norm=norm,
+        layer_args={
+            "num_estimators": num_estimators,
+            "alpha": alpha,
+            "gamma": gamma,
+        },
+        activation=activation,
+        groups=groups,
         dropout=dropout,
-        **model_kwargs,
     )
 
 
 def bayesian_lenet(
     in_channels: int,
     num_classes: int,
-    norm: Optional[nn.Module] = nn.Identity,
+    # prior_mu: float = 0.0,
+    # prior_sigma_1: float = 0.1,
+    # prior_sigma_2: float = 0.1,
+    # prior_pi: float = 0.1,
+    # mu_init: float = 0.0,
+    # sigma_init: float = 10.0,
+    activation: Callable = F.relu,
+    norm: Type[nn.Module] = nn.Identity,
     groups: int = 1,
     dropout: float = 0.0,
-    **model_kwargs: Any,
 ) -> _LeNet:
     return _lenet(
         stochastic=True,
@@ -131,9 +170,14 @@ def bayesian_lenet(
         num_classes=num_classes,
         linear_layer=BayesLinear,
         conv2d_layer=BayesConv2d,
-        # norm,
-        # groups,
-        layer_args={},
+        norm=norm,
+        layer_args={
+            # "prior_mu": prior_mu,
+            # "prior_sigma": prior_sigma,
+            # "mu_init": mu_init,
+            # "sigma_init": sigma_init,
+        },
+        activation=activation,
+        groups=groups,
         dropout=dropout,
-        **model_kwargs,
     )
