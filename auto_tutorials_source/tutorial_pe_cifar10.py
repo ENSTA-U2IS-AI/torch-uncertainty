@@ -23,8 +23,8 @@ Here is an example of what the data looks like:
 
    cifar10
 
-Training a image Packed-Ensemble classifier
--------------------------------------------
+Training an image Packed-Ensemble classifier
+--------------------------------------------
 
 Here is the outline of the process:
 

@@ -1,4 +1,4 @@
 Tutorials
 =========
 
-Below is a gallery of examples.
+On this page, you will find tutorials for insight TorchUncertainty.
