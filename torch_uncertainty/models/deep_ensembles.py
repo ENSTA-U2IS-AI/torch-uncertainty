@@ -14,13 +14,14 @@ class _DeepEnsembles(nn.Module):
     ) -> None:
         super().__init__()
 
-        self.models = models
+        self.models = nn.ModuleList(models)
+        self.num_estimators = len(models)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         predictions = []
         for model in self.models:
             predictions.append(model.forward(x))
-        return torch.stack(predictions, dim=0)
+        return torch.cat(predictions, dim=0)
 
 
 def deep_ensembles(
