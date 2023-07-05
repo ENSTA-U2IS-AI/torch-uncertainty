@@ -4,3 +4,4 @@ from .cifar100 import CIFAR100DataModule
 from .imagenet import ImageNetDataModule
 from .mnist import MNISTDataModule
 from .tiny_imagenet import TinyImageNetDataModule
+from .uci_regression import UCIDataModule

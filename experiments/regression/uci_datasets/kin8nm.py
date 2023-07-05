@@ -4,9 +4,9 @@ from pathlib import Path
 import torch.nn as nn
 import torch.optim as optim
 
-from torch_uncertainty import cls_main, init_args
+from torch_uncertainty import cli_main, init_args
 from torch_uncertainty.baselines.regression.mlp import MLP
-from torch_uncertainty.datamodules.uci_regression import UCIDataModule
+from torch_uncertainty.datamodules import UCIDataModule
 
 
 # fmt: on
@@ -42,7 +42,8 @@ if __name__ == "__main__":
         hidden_dims=[100],
         loss=nn.GaussianNLLLoss,
         optimization_procedure=optim_regression,
+        dist_estimation=True,
         **vars(args),
     )
 
-    cls_main(model, dm, root, net_name, args)
+    cli_main(model, dm, root, net_name, args)

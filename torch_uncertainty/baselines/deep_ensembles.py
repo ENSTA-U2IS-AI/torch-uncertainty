@@ -78,7 +78,6 @@ class DeepEnsembles:
                 dist_estimation=True,
                 num_estimators=de.num_estimators,
                 mode="mean",
-                **kwargs,
             )
 
     @classmethod

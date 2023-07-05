@@ -55,6 +55,7 @@ class MLP:
         model = cls.versions[version](**params)
 
         kwargs.update(params)
+        kwargs.update({"version": version})
         # routine specific parameters
         if version in cls.single:
             return RegressionSingle(

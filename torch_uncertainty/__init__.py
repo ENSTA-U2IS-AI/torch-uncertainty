@@ -130,11 +130,11 @@ def cli_main(
             ckpt_file, _ = get_version(
                 root=(root / "logs" / net_name), version=args.test
             )
-            trainer.test(
+            test_values = trainer.test(
                 network, datamodule=datamodule, ckpt_path=str(ckpt_file)
             )
         else:
-            trainer.test(network, datamodule=datamodule)
+            test_values = trainer.test(network, datamodule=datamodule)
     else:
         # training and testing
         trainer.fit(network, datamodule)
