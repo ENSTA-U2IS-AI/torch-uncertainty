@@ -1,9 +1,15 @@
 # fmt: off
 from argparse import ArgumentParser
-from typing import Any, Literal, Optional, Type
+from pathlib import Path
+from typing import Any, Literal, Optional, Type, Union
 
+import torch
 import torch.nn as nn
 from pytorch_lightning import LightningModule
+from pytorch_lightning.core.saving import (
+    load_hparams_from_tags_csv,
+    load_hparams_from_yaml,
+)
 
 from ...models.vgg import (
     packed_vgg11,
@@ -158,6 +164,30 @@ class VGG:
                 use_variation_ratio=use_variation_ratio,
                 **kwargs,
             )
+
+    @classmethod
+    def load_from_checkpoint(
+        cls,
+        checkpoint_path: Union[str, Path],
+        hparams_file: Union[str, Path],
+        **kwargs,
+    ) -> LightningModule:
+        if hparams_file is not None:
+            extension = str(hparams_file).split(".")[-1]
+            if extension.lower() == "csv":
+                hparams = load_hparams_from_tags_csv(hparams_file)
+            elif extension.lower() in ("yml", "yaml"):
+                hparams = load_hparams_from_yaml(hparams_file)
+            else:
+                raise ValueError(
+                    ".csv, .yml or .yaml is required for `hparams_file`"
+                )
+
+        hparams.update(kwargs)
+        checkpoint = torch.load(checkpoint_path)
+        obj = cls(**hparams)
+        obj.load_state_dict(checkpoint["state_dict"])
+        return obj
 
     @classmethod
     def add_model_specific_args(cls, parser: ArgumentParser) -> ArgumentParser:

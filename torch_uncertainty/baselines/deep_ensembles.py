@@ -1,33 +1,41 @@
 # fmt: off
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import List, Literal, Union
+from typing import List, Literal, Optional, Union
 
 from pytorch_lightning import LightningModule
 
 from ..models import deep_ensembles
 from ..routines.classification import ClassificationEnsemble
+from ..routines.regression import RegressionEnsemble
 from ..utils import get_version
-from . import ResNet
+from .classification import VGG, ResNet, WideResNet
+from .regression import MLP
 
 
 # fmt: on
 class DeepEnsembles:
-    backbones = {"resnet": ResNet}
+    backbones = {
+        "mlp": MLP,
+        "resnet": ResNet,
+        "vgg": VGG,
+        "wideresnet": WideResNet,
+    }
 
     def __new__(
         cls,
-        in_channels: int,
-        num_classes: int,
         task: Literal["classification", "regression"],
         log_path: Union[str, Path],
         versions: List[int],
-        backbone: Literal["resnet"],
-        num_estimators: int,
+        backbone: Literal["mlp", "resnet", "vgg", "wideresnet"],
+        # num_estimators: int,
+        in_channels: Optional[int] = None,
+        num_classes: Optional[int] = None,
         use_entropy: bool = False,
         use_logits: bool = False,
         use_mi: bool = False,
         use_variation_ratio: bool = False,
+        **kwargs,
     ) -> LightningModule:
         if isinstance(log_path, str):
             log_path = Path(log_path)
@@ -56,14 +64,22 @@ class DeepEnsembles:
                 model=de,
                 loss=None,  # TODO: Why None? We won't support training?
                 optimization_procedure=None,
-                num_estimators=num_estimators,
+                num_estimators=de.num_estimators,
                 use_entropy=use_entropy,
                 use_logits=use_logits,
                 use_mi=use_mi,
                 use_variation_ratio=use_variation_ratio,
             )
         elif task == "regression":
-            raise NotImplementedError()
+            return RegressionEnsemble(
+                model=de,
+                loss=None,  # TODO: Why None? We won't support training?
+                optimization_procedure=None,
+                dist_estimation=True,
+                num_estimators=de.num_estimators,
+                mode="mean",
+                **kwargs,
+            )
 
     @classmethod
     def add_model_specific_args(cls, parser: ArgumentParser) -> ArgumentParser:

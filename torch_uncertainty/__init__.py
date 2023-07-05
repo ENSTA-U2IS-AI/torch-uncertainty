@@ -126,12 +126,15 @@ def cli_main(
         summary(network, input_size=list(datamodule.input_shape).insert(0, 1))
         test_values = {}
     elif args.test is not None:
-        ckpt_file, _ = get_version(
-            root=(root / "logs" / net_name), version=args.test
-        )
-        test_values = trainer.test(
-            network, datamodule=datamodule, ckpt_path=str(ckpt_file)
-        )
+        if args.test >= 0:
+            ckpt_file, _ = get_version(
+                root=(root / "logs" / net_name), version=args.test
+            )
+            trainer.test(
+                network, datamodule=datamodule, ckpt_path=str(ckpt_file)
+            )
+        else:
+            trainer.test(network, datamodule=datamodule)
     else:
         # training and testing
         trainer.fit(network, datamodule)
