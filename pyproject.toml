@@ -22,6 +22,7 @@ torchvision = "^0.14.1"
 timm = "^0.6.12"
 scipy = "^1.10.0"
 huggingface-hub = "^0.14.1"
+pandas = "^2.0.3"
 
 [tool.poetry.group.dev.dependencies]
 isort = "^5.12.0"

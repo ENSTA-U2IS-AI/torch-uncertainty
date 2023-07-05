@@ -20,6 +20,7 @@ setup(
         "timm=^0.6.12",
         "scipy=^1.10.0",
         "huggingface_hub=^0.14.1",
+        "pandas=^2.0.3",
     ],
     packages=find_packages(exclude=["experiments", "tests"]),
 )
