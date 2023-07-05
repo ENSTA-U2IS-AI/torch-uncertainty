@@ -93,7 +93,7 @@ class RegressionSingle(pl.LightningModule):
             vars = F.softplus(logits[..., 1])
             loss = self.criterion(means, targets, vars)
         else:
-            loss = self.criterion(logits, targets)
+            loss = self.criterion(logits.squeeze(-1), targets)
 
         self.log("train_loss", loss)
         return loss
@@ -108,7 +108,7 @@ class RegressionSingle(pl.LightningModule):
             vars = F.softplus(logits[..., 1])
             self.val_metrics.gnll.update(means, targets, vars)
         else:
-            means = logits
+            means = logits.squeeze(-1)
 
         self.val_metrics.mse.update(means, targets)
 
@@ -130,7 +130,7 @@ class RegressionSingle(pl.LightningModule):
             vars = F.softplus(logits[..., 1])
             self.test_metrics.gnll.update(means, targets, vars)
         else:
-            means = logits
+            means = logits.squeeze(-1)
 
         self.test_metrics.mse.update(means, targets)
 
@@ -155,6 +155,7 @@ class RegressionEnsemble(RegressionSingle):
         model: nn.Module,
         loss: nn.Module,
         optimization_procedure: Any,
+        dist_estimation: bool,
         num_estimators: int,
         mode: Literal["mean", "mixture"],
         out_features: Optional[int] = 1,
@@ -164,6 +165,7 @@ class RegressionEnsemble(RegressionSingle):
             model=model,
             loss=loss,
             optimization_procedure=optimization_procedure,
+            dist_estimation=dist_estimation,
             **kwargs,
         )
 
