@@ -131,6 +131,14 @@ CIFAR-10 H
 * Authors: *Joshua C. Peterson, Ruairidh M. Battleday, Thomas L. Griffiths, and Olga Russakovsky*
 * Paper: `ICCV 2019 <https://arxiv.org/pdf/1908.07086.pdf>`__.
 
+CIFAR-10 N / CIFAR-100 N
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+**Learning with Noisy Labels Revisited: A Study Using Real-World Human Annotations**
+
+* Authors: *Jiaheng Wei, Zhaowei Zhu, Hao Cheng, Tongliang Liu, Gang Niu, Yang Liu*
+* Paper: `ICLR 2022 <https://arxiv.org/pdf/2110.12088.pdf>`__.
+
 SVHN
 ^^^^
 

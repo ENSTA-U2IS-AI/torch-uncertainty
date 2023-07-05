@@ -28,8 +28,8 @@ class CIFAR10_H(CIFAR10):
             downloaded, it is not downloaded again. Defaults to False.
     """
 
-    htest_list = [["cifar-10h-probs.npy", "7b41f73eee90fdefc73bfc820ab29ba8"]]
-    url = (
+    h_test_list = ["cifar-10h-probs.npy", "7b41f73eee90fdefc73bfc820ab29ba8"]
+    h_url = (
         "https://github.com/jcpeterson/cifar-10h/raw/master/data/"
         "cifar10h-probs.npy"
     )
@@ -42,6 +42,8 @@ class CIFAR10_H(CIFAR10):
         target_transform: Optional[Callable[..., Any]] = None,
         download: bool = False,
     ) -> None:
+        if train:
+            raise ValueError("CIFAR10_H does not support training data.")
         print(
             "WARNING: CIFAR10_H cannot be used with Classification routines "
             "for now."
@@ -55,7 +57,7 @@ class CIFAR10_H(CIFAR10):
         )
 
         if download:
-            self.download()
+            self.download_h()
 
         if not self._check_specific_integrity():
             raise RuntimeError(
@@ -65,21 +67,21 @@ class CIFAR10_H(CIFAR10):
 
         self.targets = list(
             torch.as_tensor(
-                np.load(os.path.join(self.root, self.htest_list[0][0]))
+                np.load(os.path.join(self.root, self.h_test_list[0]))
             )
         )
 
     def _check_specific_integrity(self) -> bool:
-        for filename, md5 in self.htest_list:
-            fpath = os.path.join(self.root, filename)
-            if not check_integrity(fpath, md5):
-                return False
+        filename, md5 = self.h_test_list
+        fpath = os.path.join(self.root, filename)
+        if not check_integrity(fpath, md5):
+            return False
         return True
 
-    def download(self) -> None:
+    def download_h(self) -> None:
         download_url(
-            self.url,
+            self.h_url,
             self.root,
-            filename=self.htest_list[0][0],
-            md5=self.htest_list[0][1],
+            filename=self.h_test_list[0],
+            md5=self.h_test_list[1],
         )
