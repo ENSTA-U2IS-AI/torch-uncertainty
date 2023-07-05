@@ -1,6 +1,9 @@
 # fmt: off
+from typing import Optional
+
 import torch
 import torch.nn as nn
+from torch import Tensor
 
 import numpy as np
 
@@ -9,20 +12,20 @@ import numpy as np
 class TrainableDistribution(nn.Module):
     lsqrt2pi = torch.as_tensor(np.log(np.sqrt(2 * np.pi)))
 
-    def __init__(self, mu, rho):
+    def __init__(self, mu: Tensor, rho: Tensor) -> None:
         super().__init__()
         self.mu = nn.Parameter(mu)
         self.rho = nn.Parameter(rho)
         self.sigma = None
         self.weight = None
 
-    def sample(self):
+    def sample(self) -> Tensor:
         w_sample = torch.normal(mean=0, std=1, size=self.mu.shape)
         self.sigma = torch.log1p(torch.exp(self.rho))
         self.weight = self.mu + self.sigma * w_sample
         return self.weight
 
-    def log_posterior(self, weight=None):
+    def log_posterior(self, weight: Optional[Tensor] = None) -> Tensor:
         if self.weight is None or self.sigma is None:
             raise ValueError(
                 "Sample the weights before asking for the log posterior."
@@ -41,7 +44,7 @@ class TrainableDistribution(nn.Module):
 
 
 class PriorDistribution(nn.Module):
-    def __init__(self, sigma_1: float, sigma_2: float, pi: float):
+    def __init__(self, sigma_1: float, sigma_2: float, pi: float) -> None:
         super().__init__()
         mix = torch.distributions.Categorical(torch.tensor([pi, 1 - pi]))
         normals = torch.distributions.Normal(
@@ -49,5 +52,5 @@ class PriorDistribution(nn.Module):
         )
         self.distribution = torch.distributions.MixtureSameFamily(mix, normals)
 
-    def log_prior(self, w):
-        return self.distribution.log_prob(w).sum()
+    def log_prior(self, weight: Tensor) -> Tensor:
+        return self.distribution.log_prob(weight).sum()

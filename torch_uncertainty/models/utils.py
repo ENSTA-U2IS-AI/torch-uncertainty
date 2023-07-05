@@ -3,9 +3,8 @@ from ..layers.bayesian_layers import bayesian_modules
 
 def StochasticModel(Model):
     """Decorator for stochastic models. When applied to a model, it adds the
-    freeze and unfreeze methods to the model. Use freeze to freeze the
-    stochastic layers and obtain deterministic outputs. Use unfreeze to
-    unfreeze the stochastic layers and obtain stochastic outputs.
+    freeze and unfreeze methods to the model. Use freeze to obtain
+    deterministic outputs. Use unfreeze to obtain stochastic outputs.
     """
 
     def freeze(self):

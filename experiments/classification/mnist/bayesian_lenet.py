@@ -26,10 +26,7 @@ def optim_lenet(model: nn.Module) -> dict:
         model.parameters(),
         lr=1e-3,
     )
-    # scheduler = optim.lr_scheduler.CosineAnnealingLR(
-    #     optimizer=optimizer, T_max=100, eta_min=1e-6
-    # )
-    return {"optimizer": optimizer}  # , "scheduler": scheduler}
+    return {"optimizer": optimizer}
 
 
 if __name__ == "__main__":

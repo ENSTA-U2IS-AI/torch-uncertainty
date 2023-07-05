@@ -1,5 +1,5 @@
 # fmt: off
-from typing import Callable, Dict, Type, Union
+from typing import Callable, Dict, Optional, Type, Union
 
 import torch
 import torch.nn as nn
@@ -157,17 +157,31 @@ def packed_lenet(
 def bayesian_lenet(
     in_channels: int,
     num_classes: int,
-    # prior_mu: float = 0.0,
-    # prior_sigma_1: float = 0.1,
-    # prior_sigma_2: float = 0.1,
-    # prior_pi: float = 0.1,
-    # mu_init: float = 0.0,
-    # sigma_init: float = 10.0,
+    prior_mu: Optional[float] = None,
+    prior_sigma_1: Optional[float] = None,
+    prior_sigma_2: Optional[float] = None,
+    prior_pi: Optional[float] = None,
+    mu_init: Optional[float] = None,
+    sigma_init: Optional[float] = None,
     activation: Callable = F.relu,
     norm: Type[nn.Module] = nn.Identity,
     groups: int = 1,
     dropout: float = 0.0,
 ) -> _LeNet:
+    layers_args = {}
+    if prior_mu is not None:
+        layers_args["prior_mu"] = prior_mu
+    if prior_sigma_1 is not None:
+        layers_args["prior_sigma_1"] = prior_sigma_1
+    if prior_sigma_2 is not None:
+        layers_args["prior_sigma_2"] = prior_sigma_2
+    if prior_pi is not None:
+        layers_args["prior_pi"] = prior_pi
+    if mu_init is not None:
+        layers_args["mu_init"] = mu_init
+    if sigma_init is not None:
+        layers_args["sigma_init"] = sigma_init
+
     return _lenet(
         stochastic=True,
         in_channels=in_channels,
@@ -175,12 +189,7 @@ def bayesian_lenet(
         linear_layer=BayesLinear,
         conv2d_layer=BayesConv2d,
         norm=norm,
-        layer_args={
-            # "prior_mu": prior_mu,
-            # "prior_sigma": prior_sigma,
-            # "mu_init": mu_init,
-            # "sigma_init": sigma_init,
-        },
+        layer_args=layers_args,
         activation=activation,
         groups=groups,
         dropout=dropout,

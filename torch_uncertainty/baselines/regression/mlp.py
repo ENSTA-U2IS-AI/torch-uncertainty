@@ -33,7 +33,7 @@ class MLP:
         dist_estimation: bool,
         num_estimators: Optional[int] = 1,
         alpha: Optional[float] = None,
-        gamma: Optional[int] = 1,
+        gamma: int = 1,
         **kwargs,
     ) -> LightningModule:
         params = {

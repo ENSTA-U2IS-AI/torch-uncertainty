@@ -16,12 +16,15 @@ class BayesLinear(nn.Module):
         out_features (int): Number of output features
         prior_mu (float, optional): Mean of the prior distribution
             Defaults to 0.0.
-        prior_sigma (float, optional): Standard deviation of the prior
+        prior_sigma_1 (float, optional): Standard deviation of the first prior
             distribution. Defaults to 0.1.
+        prior_sigma_2 (float, optional): Standard deviation of the second prior
+            distribution. Defaults to 0.1.
+        prior_pi (float, optional): Mixture control variable. Defaults to 0.1.
         mu_init (float, optional): Initial mean of the posterior distribution.
             Defaults to 0.0.
         sigma_init (float, optional): Initial standard deviation of the
-            posterior distribution. Defaults to 2.0.
+            posterior distribution. Defaults to -7.0.
         frozen (bool, optional): Whether to freeze the posterior distribution.
             Defaults to False.
         bias (bool, optional): Whether to use a bias term. Defaults to True.
@@ -45,7 +48,7 @@ class BayesLinear(nn.Module):
         prior_mu: float = 0.0,
         prior_sigma_1: float = 0.1,
         prior_sigma_2: float = 0.4,
-        prior_pi=1,
+        prior_pi: float = 1,
         mu_init: float = 0.0,
         sigma_init: float = -7.0,
         frozen: bool = False,
@@ -113,7 +116,7 @@ class BayesLinear(nn.Module):
             init.normal_(self.bias_mu, mean=self.mu_init, std=0.1)
             init.normal_(self.bias_sigma, mean=self.sigma_init, std=0.1)
 
-    def forward(self, input: Tensor):
+    def forward(self, input: Tensor) -> Tensor:
         if self.frozen:
             return self._frozen_forward(input)
         else:
@@ -124,7 +127,7 @@ class BayesLinear(nn.Module):
             input, self.weight_mu, self.bias_mu if self.bias else None
         )
 
-    def _forward(self, input):
+    def _forward(self, input: Tensor) -> Tensor:
         weight = self.weight_sampler.sample()
 
         if self.bias:

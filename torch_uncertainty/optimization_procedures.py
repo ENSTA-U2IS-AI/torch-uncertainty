@@ -72,11 +72,10 @@ def optim_cifar10_wideresnet(model: nn.Module) -> dict:
 
 def optim_cifar10_vgg16(model: nn.Module) -> dict:
     """optimizer to train a VGG16 on CIFAR-10"""
-    optimizer = optim.SGD(
+    optimizer = optim.Adam(
         model.parameters(),
-        lr=0.05,
-        momentum=0.9,
-        weight_decay=5e-4,
+        lr=0.005,
+        weight_decay=1e-6,
     )
     scheduler = optim.lr_scheduler.MultiStepLR(
         optimizer,

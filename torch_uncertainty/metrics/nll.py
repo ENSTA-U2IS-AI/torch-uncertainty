@@ -113,6 +113,7 @@ class GaussianNegativeLogLikelihood(NegativeLogLikelihood):
     Inputs:
         - :attr:`probs`: :math:`(B, C)`
         - :attr:`target`: :math:`(B)`
+        - :attr:`var`: :math:`(B, C)`
 
         where :math:`B` is the batch size and :math:`C` is the number of
         classes.
@@ -130,11 +131,12 @@ class GaussianNegativeLogLikelihood(NegativeLogLikelihood):
     def update(
         self, probs: torch.Tensor, target: torch.Tensor, var: torch.Tensor
     ) -> None:
-        """Update state with prediction probabilities and targets.
+        """Update state with prediction mean, targets, and prediction varoance.
 
         Args:
             probs (torch.Tensor): Probabilities from the model.
             target (torch.Tensor): Ground truth labels.
+            var (torch.Tensor): Predicted variance from the model.
         """
         if self.reduction is None or self.reduction == "none":
             self.values.append(

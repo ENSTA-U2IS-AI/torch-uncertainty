@@ -258,7 +258,7 @@ class BayesConv1d(_BayesConvNd):
 
     def _conv_forward(
         self, input: Tensor, weight: Tensor, bias: Optional[Tensor]
-    ):
+    ) -> Tensor:
         if self.padding_mode != "zeros":
             return F.conv1d(
                 F.pad(
@@ -356,7 +356,7 @@ class BayesConv2d(_BayesConvNd):
 
     def _conv_forward(
         self, input: Tensor, weight: Tensor, bias: Optional[Tensor]
-    ):
+    ) -> Tensor:
         if self.padding_mode != "zeros":
             return F.conv2d(
                 F.pad(
@@ -454,7 +454,7 @@ class BayesConv3d(_BayesConvNd):
 
     def _conv_forward(
         self, input: Tensor, weight: Tensor, bias: Optional[Tensor]
-    ):
+    ) -> Tensor:
         if self.padding_mode != "zeros":
             return F.conv3d(
                 F.pad(
