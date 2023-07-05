@@ -156,7 +156,7 @@ class PackedLinear(nn.Module):
         return self.conv1x1.weight
 
     @property
-    def bias(self) -> Tensor:
+    def bias(self) -> Union[Tensor, None]:
         r"""The bias of the underlying convolutional layer."""
         return self.conv1x1.bias
 
@@ -293,7 +293,7 @@ class PackedConv2d(nn.Module):
         return self.conv.weight
 
     @property
-    def bias(self) -> Tensor:
+    def bias(self) -> Union[Tensor, None]:
         r"""The bias of the underlying convolutional layer."""
         return self.conv.bias
 

@@ -23,9 +23,11 @@ class TrainableDistribution(nn.Module):
         return self.weight
 
     def log_posterior(self, weight=None):
-        assert (
-            self.weight is not None
-        ), "Sample the weights before asking for the log posterior."
+        if self.weight is None or self.sigma is None:
+            raise ValueError(
+                "Sample the weights before asking for the log posterior."
+            )
+
         if weight is None:
             weight = self.weight
 
