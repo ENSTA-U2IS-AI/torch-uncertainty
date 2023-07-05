@@ -30,9 +30,9 @@ To train a BNN using TorchUncertainty, we have to load the following utilities f
 - the classification training routine in the torch_uncertainty.training.classification module
 - the bayesian objective: the ELBOLoss, which lies in the torch_uncertainty.losses file
 - the datamodule that handles dataloaders: MNISTDataModule, which lies in the torch_uncertainty.datamodule
-- the cli handler: cls_main and argument parser: init_args
+- the cli handler: cli_main and argument parser: init_args
 """
-from torch_uncertainty import cls_main, init_args
+from torch_uncertainty import cli_main, init_args
 from torch_uncertainty.datamodules import MNISTDataModule
 from torch_uncertainty.losses import ELBOLoss
 from torch_uncertainty.models.lenet import bayesian_lenet
@@ -125,7 +125,7 @@ baseline = ClassificationSingle(
 # name of the model for the logs and all the training arguments.
 # The dataset will be downloaded automatically in the root/data folder, and the
 # logs will be saved in the root/logs folder.
-cls_main(baseline, dm, root, net_name, args)
+cli_main(baseline, dm, root, net_name, args)
 
 ########################################################################
 # References

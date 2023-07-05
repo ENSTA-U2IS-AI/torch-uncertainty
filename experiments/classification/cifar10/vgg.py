@@ -3,7 +3,7 @@ from pathlib import Path
 
 import torch.nn as nn
 
-from torch_uncertainty import cls_main, init_args
+from torch_uncertainty import cli_main, init_args
 from torch_uncertainty.baselines import VGG
 from torch_uncertainty.datamodules import CIFAR10DataModule
 from torch_uncertainty.optimization_procedures import get_procedure
@@ -32,4 +32,4 @@ if __name__ == "__main__":
         **vars(args),
     )
 
-    cls_main(model, dm, root, net_name, args)
+    cli_main(model, dm, root, net_name, args)

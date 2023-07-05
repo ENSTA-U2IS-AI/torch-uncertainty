@@ -16,7 +16,7 @@ Procedure
 ^^^^^^^^^
 
 The library provides a full-fledged trainer which can be used directly, via
-CLI. To do so, create a file in the experiments folder and use the `cls_main`
+CLI. To do so, create a file in the experiments folder and use the `cli_main`
 routine, which takes as arguments:
 
 * a Lightning Module corresponding to the model, its own arguments, and
@@ -50,7 +50,7 @@ trains any ResNet architecture on CIFAR10:
 
     import torch.nn as nn
 
-    from torch_uncertainty import cls_main, init_args
+    from torch_uncertainty import cli_main, init_args
     from torch_uncertainty.baselines import ResNet
     from torch_uncertainty.datamodules import CIFAR10DataModule
     from torch_uncertainty.optimization_procedures import get_procedure
@@ -77,7 +77,7 @@ trains any ResNet architecture on CIFAR10:
         **vars(args),
     )
 
-    cls_main(model, dm, root, net_name, args)
+    cli_main(model, dm, root, net_name, args)
 
 Run this model with, for instance:
 

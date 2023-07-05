@@ -24,6 +24,7 @@ class MLP:
         optimization_procedure: Any,
         version: Literal["vanilla", "packed"],
         hidden_dims: List[int],
+        dist_estimation: bool,
         num_estimators: Optional[int] = 1,
         alpha: Optional[float] = None,
         gamma: Optional[int] = 1,
@@ -54,7 +55,7 @@ class MLP:
                 model=model,
                 loss=loss,
                 optimization_procedure=optimization_procedure,
-                dist_estimation=True,
+                dist_estimation=dist_estimation,
                 **kwargs,
             )
         elif version in cls.versions.keys():
@@ -62,7 +63,7 @@ class MLP:
                 model=model,
                 loss=loss,
                 optimization_procedure=optimization_procedure,
-                dist_estimation=True,
+                dist_estimation=dist_estimation,
                 mode="mean",
                 **kwargs,
             )

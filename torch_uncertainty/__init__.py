@@ -2,7 +2,7 @@
 # flake8: noqa
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
-from typing import Optional, Type, Union
+from typing import Dict, Optional, Type, Union
 
 import pytorch_lightning as pl
 import torch
@@ -58,13 +58,13 @@ def init_args(
     return parser.parse_args()
 
 
-def cls_main(
+def cli_main(
     network: pl.LightningModule,
     datamodule: pl.LightningDataModule,
     root: Union[Path, str],
     net_name: str,
     args: Namespace,
-) -> None:
+) -> Dict:
     if isinstance(root, str):
         root = Path(root)
 
@@ -86,7 +86,7 @@ def cls_main(
         args.max_epochs = 1
 
     if isinstance(args.seed, int):
-        pl.seed_everything(args.seed)
+        pl.seed_everything(args.seed, workers=True)
 
     if args.channels_last:
         network = network.to(memory_format=torch.channels_last)
@@ -124,12 +124,16 @@ def cls_main(
 
     if args.summary:
         summary(network, input_size=list(datamodule.input_shape).insert(0, 1))
+        test_values = {}
     elif args.test is not None:
         ckpt_file, _ = get_version(
             root=(root / "logs" / net_name), version=args.test
         )
-        trainer.test(network, datamodule=datamodule, ckpt_path=str(ckpt_file))
+        test_values = trainer.test(
+            network, datamodule=datamodule, ckpt_path=str(ckpt_file)
+        )
     else:
         # training and testing
         trainer.fit(network, datamodule)
-        trainer.test(datamodule=datamodule, ckpt_path="best")
+        test_values = trainer.test(datamodule=datamodule, ckpt_path="best")
+    return test_values
