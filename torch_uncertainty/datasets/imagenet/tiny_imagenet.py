@@ -2,8 +2,9 @@
 import os
 from collections import defaultdict
 from pathlib import Path
-from typing import Callable, Optional
+from typing import Callable, Literal, Optional
 
+import torch
 from PIL import Image
 from torch.utils.data import Dataset
 
@@ -80,34 +81,18 @@ class TinyImageNet(Dataset):
     def __init__(
         self,
         root: str,
-        split="train",
+        split: Literal["train", "val", "test"] = "train",
         transform: Optional[Callable] = None,
         target_transform: Optional[Callable] = None,
-        max_samples=None,
     ):
+        self.root = Path(root) / "tiny-imagenet-200"
+
         self.split = split
         self.label_idx = 1  # from [image, id, nid, box]
         self.transform = transform
         self.target_transform = target_transform
-        self.root = Path(root)
 
         self.IMAGE_SHAPE = (64, 64, 3)
-
-        self.samples = []
-        self.label_data = []
-
-        self.max_samples = max_samples
-        self.samples_num = len(self.samples)
-
-        if self.max_samples is not None:
-            self.samples_num = min(self.max_samples, self.samples_num)
-            self.samples = np.random.permutation(self.samples)[
-                : self.samples_num
-            ]
-
-        self.samples = np.zeros(
-            (self.samples_num,) + self.IMAGE_SHAPE, dtype=np.float32
-        )
 
         self.make_dataset(self.root)
 
@@ -116,17 +101,17 @@ class TinyImageNet(Dataset):
         self.samples = tinp.paths[self.split]
         self.samples_num = len(self.samples)
 
-        self.label_data = np.zeros((self.samples_num,), dtype=np.int)
+        labels = []
         for idx in range(self.samples_num):
             s = self.samples[idx]
-            # TODO: check that it works
             img = Image.open(s[0])
-            # img = mpimg.imread(s[0])
-            img = self._add_channels(img)
-            img = Image.fromarray(np.uint8(img))
+            img = self._add_channels(np.uint8(img))
+            img = Image.fromarray(img)
             self.samples[idx] = img
-            if self.split != "test":
-                self.label_data[idx] = s[self.label_idx]
+            labels.append(s[self.label_idx])
+
+        self.samples = self.samples
+        self.label_data = torch.as_tensor(labels).long()
 
     def _add_channels(self, img):
         while len(img.shape) < 3:  # third axis is the channels
