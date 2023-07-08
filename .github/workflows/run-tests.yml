@@ -60,7 +60,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        poetry install --with "dev docs"
+        pip install torch==1.13 && poetry install --with "dev docs"
 
     - name: Style checking
       run: |

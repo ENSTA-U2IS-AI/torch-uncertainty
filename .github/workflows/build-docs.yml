@@ -51,7 +51,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        poetry install --with docs
+        pip install torch==1.13 && poetry install --with docs
 
     - name: Sphinx build
       run: |
