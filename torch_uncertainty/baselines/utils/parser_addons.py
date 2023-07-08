@@ -5,12 +5,13 @@ from argparse import ArgumentParser
 # fmt: on
 def add_resnet_specific_args(parser: ArgumentParser) -> ArgumentParser:
     # style_choices = ["cifar", "imagenet", "robust"]
+    archs = [18, 34, 50, 101, 152]
     parser.add_argument(
         "--arch",
         type=int,
-        choices=[18, 34, 50, 101, 152],
+        choices=archs,
         default=18,
-        help=f"Architecture of ResNet. Choose among: {[18, 34, 50, 101, 152]}",
+        help=f"Architecture of ResNet. Choose among: {archs}",
     )
     # parser.add_argument(
     #     "--style",
@@ -24,6 +25,31 @@ def add_resnet_specific_args(parser: ArgumentParser) -> ArgumentParser:
         type=int,
         default=1,
         help="Number of groups",
+    )
+    return parser
+
+
+def add_vgg_specific_args(parser: ArgumentParser) -> ArgumentParser:
+    # style_choices = ["cifar", "imagenet", "robust"]
+    archs = [11, 13, 16, 19]
+    parser.add_argument(
+        "--arch",
+        type=int,
+        choices=archs,
+        default=11,
+        help=f"Architecture of VGG. Choose among: {archs}",
+    )
+    parser.add_argument(
+        "--groups",
+        type=int,
+        default=1,
+        help="Number of groups",
+    )
+    parser.add_argument(
+        "--dropout",
+        type=float,
+        default=0.1,
+        help="Dropout rate",
     )
     return parser
 
@@ -42,6 +68,16 @@ def add_wideresnet_specific_args(parser: ArgumentParser) -> ArgumentParser:
         type=int,
         default=1,
         help="Number of groups",
+    )
+    return parser
+
+
+def add_mlp_specific_args(parser: ArgumentParser) -> ArgumentParser:
+    parser.add_argument(
+        "--dropout",
+        type=float,
+        default=0.1,
+        help="Dropout rate",
     )
     return parser
 

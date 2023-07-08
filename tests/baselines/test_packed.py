@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 from torchinfo import summary
 
-from torch_uncertainty.baselines import ResNet, WideResNet
+from torch_uncertainty.baselines import VGG, ResNet, WideResNet
 from torch_uncertainty.optimization_procedures import (
     optim_cifar10_resnet18,
     optim_cifar10_resnet50,
@@ -113,3 +113,27 @@ class TestPackedWideBaseline:
         _ = net.criterion
         _ = net.configure_optimizers()
         _ = net(torch.rand(1, 3, 32, 32))
+
+
+class TestPackedVGGBaseline:
+    """Testing the PackedWideResNet baseline class."""
+
+    def test_packed(self):
+        net = VGG(
+            num_classes=10,
+            in_channels=3,
+            arch=13,
+            loss=nn.CrossEntropyLoss,
+            optimization_procedure=optim_cifar10_resnet50,
+            version="packed",
+            num_estimators=4,
+            alpha=2,
+            gamma=1,
+            groups=1,
+        )
+
+        summary(net)
+
+        _ = net.criterion
+        _ = net.configure_optimizers()
+        _ = net(torch.rand(2, 3, 32, 32))

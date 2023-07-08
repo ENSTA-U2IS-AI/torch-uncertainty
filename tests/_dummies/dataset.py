@@ -17,9 +17,9 @@ class DummyDataset(data.Dataset):
         transform: Callable[..., Any] | None = None,
         target_transform: Callable[..., Any] | None = None,
         num_channels: int = 3,
-        image_size: int = 32,
+        image_size: int = 4,
         num_classes: int = 10,
-        num_images: int = 10,
+        num_images: int = 2,
         **kwargs: Any,
     ) -> None:
         """Dummy dataset for testing purposes.
@@ -66,6 +66,9 @@ class DummyDataset(data.Dataset):
         self.targets = torch.randint(
             low=0, high=num_classes, size=(num_images,)
         )
+        self.targets = torch.arange(start=0, end=num_classes).repeat(
+            num_images // (num_classes) + 1
+        )[:num_images]
 
     def __getitem__(self, index: int) -> Tuple[Any, Any]:
         """

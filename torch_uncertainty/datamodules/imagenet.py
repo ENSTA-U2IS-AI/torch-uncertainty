@@ -19,16 +19,18 @@ class ImageNetDataModule(LightningDataModule):
     num_channels = 3
     test_datasets = ["r", "o", "a"]
     ood_datasets = ["inaturalist", "imagenet-o", "svhn", "textures"]
+    training_task = "classification"
 
     def __init__(
         self,
         root: Union[str, Path],
+        ood_detection: bool,
         batch_size: int,
         ood_ds: str = "svhn",
-        test_alt: str = None,
+        test_alt: Optional[str] = None,
         procedure: str = "A3",
         train_size: int = 224,
-        rand_augment_opt: str = None,
+        rand_augment_opt: Optional[str] = None,
         num_workers: int = 1,
         pin_memory: bool = True,
         persistent_workers: bool = True,
@@ -40,6 +42,7 @@ class ImageNetDataModule(LightningDataModule):
             root = Path(root)
 
         self.root: Path = root
+        self.ood_detection = ood_detection
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.pin_memory = pin_memory
@@ -174,30 +177,46 @@ class ImageNetDataModule(LightningDataModule):
                 )
 
     def train_dataloader(self) -> DataLoader:
-        r"""Gets the training dataloader for ImageNet.
-        Returns:
+        """Get the training dataloader for ImageNet.
+
+        Return:
             DataLoader: ImageNet training dataloader.
         """
         return self._data_loader(self.train, shuffle=True)
 
     def val_dataloader(self) -> DataLoader:
-        r"""Gets the validation dataloader for ImageNet.
-        Returns:
+        """Get the validation dataloader for ImageNet.
+
+        Return:
             DataLoader: ImageNet validation dataloader.
         """
         return self._data_loader(self.val)
 
     def test_dataloader(self) -> List[DataLoader]:
-        r"""Gets test dataloaders for ImageNet.
-        Returns:
+        """Get the test dataloaders for ImageNet.
+
+        Return:
             List[DataLoader]: ImageNet test set (in distribution data) and
             Textures test split (out-of-distribution data).
         """
-        return [self._data_loader(self.test), self._data_loader(self.ood)]
+        dataloader = [self._data_loader(self.test)]
+        if self.ood_detection:
+            dataloader.append(self._data_loader(self.ood))
+        return dataloader
 
     def _data_loader(
         self, dataset: Dataset, shuffle: bool = False
     ) -> DataLoader:
+        """Create a dataloader for a given dataset.
+
+        Args:
+            dataset (Dataset): Dataset to create a dataloader for.
+            shuffle (bool, optional): Whether to shuffle the dataset. Defaults
+                to False.
+
+        Return:
+            DataLoader: Dataloader for the given dataset.
+        """
         return DataLoader(
             dataset,
             batch_size=self.batch_size,
@@ -217,6 +236,9 @@ class ImageNetDataModule(LightningDataModule):
         p.add_argument("--root", type=str, default="./data/")
         p.add_argument("--batch_size", type=int, default=256)
         p.add_argument("--num_workers", type=int, default=4)
+        p.add_argument(
+            "--evaluate_ood", dest="ood_detection", action="store_true"
+        )
         p.add_argument("--ood_ds", choices=cls.ood_datasets, default="svhn")
         p.add_argument("--test_alt", choices=cls.test_datasets, default=None)
         p.add_argument("--procedure", choices=["A3"], default=None)

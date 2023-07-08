@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 from torchinfo import summary
 
-from torch_uncertainty.baselines import ResNet, WideResNet
+from torch_uncertainty.baselines import VGG, ResNet, WideResNet
 from torch_uncertainty.optimization_procedures import (
     optim_cifar10_resnet18,
     optim_cifar10_wideresnet,
@@ -43,6 +43,26 @@ class TestStandardWideBaseline:
             optimization_procedure=optim_cifar10_wideresnet,
             version="vanilla",
             style="cifar",
+            groups=1,
+        )
+        summary(net)
+
+        _ = net.criterion
+        _ = net.configure_optimizers()
+        _ = net(torch.rand(1, 3, 32, 32))
+
+
+class TestStandardVGGBaseline:
+    """Testing the ResNet baseline class."""
+
+    def test_standard(self):
+        net = VGG(
+            num_classes=10,
+            in_channels=3,
+            loss=nn.CrossEntropyLoss,
+            optimization_procedure=optim_cifar10_resnet18,
+            version="vanilla",
+            arch=11,
             groups=1,
         )
         summary(net)

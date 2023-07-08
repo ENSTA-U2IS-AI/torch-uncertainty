@@ -51,6 +51,7 @@ To date, the following baselines are implemented:
 - BatchEnsemble
 - Masksembles
 - Packed-Ensembles (see [blog post](https://medium.com/@adrien.lafage/make-your-neural-networks-more-reliable-with-packed-ensembles-7ad0b737a873))
+- Bayesian Neural Networks
 
 ### Post-processing methods
 
@@ -62,7 +63,7 @@ To date, the following post-processing methods are implemented:
 
 ## Awesome Uncertainty repositories
 
-You may find a lot of information about modern uncertainty estimation techniques on the [Awesome Uncertainty in Deep Learning](https://github.com/ENSTA-U2IS/awesome-uncertainty-deeplearning).
+You may find a lot of papers about modern uncertainty estimation techniques on the [Awesome Uncertainty in Deep Learning](https://github.com/ENSTA-U2IS/awesome-uncertainty-deeplearning).
 
 ## Other References
 

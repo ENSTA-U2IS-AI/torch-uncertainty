@@ -4,7 +4,7 @@ from pathlib import Path
 import torch.nn as nn
 from cli_test_helpers import ArgvContext
 
-from torch_uncertainty import cls_main, init_args
+from torch_uncertainty import cli_main, init_args
 from torch_uncertainty.baselines import ResNet, WideResNet
 from torch_uncertainty.datamodules import CIFAR10DataModule
 from torch_uncertainty.optimization_procedures import (
@@ -17,7 +17,7 @@ from torch_uncertainty.optimization_procedures import (
 class TestCLI:
     """Testing the CLI function."""
 
-    def test_cls_main_resnet(self):
+    def test_cli_main_resnet(self):
         root = Path(__file__).parent.absolute().parents[0]
         with ArgvContext("--style cifar"):
             args = init_args(ResNet, CIFAR10DataModule)
@@ -37,9 +37,9 @@ class TestCLI:
                 **vars(args),
             )
 
-            cls_main(model, dm, root, "std", args)
+            cli_main(model, dm, root, "std", args)
 
-    def test_cls_main_other_arguments(self):
+    def test_cli_main_other_arguments(self):
         root = Path(__file__).parent.absolute().parents[0]
         with ArgvContext(
             "--seed 42 --max_epochs 1 --channels_last --style cifar"
@@ -61,9 +61,9 @@ class TestCLI:
                 **vars(args),
             )
 
-            cls_main(model, dm, root, "std", args)
+            cli_main(model, dm, root, "std", args)
 
-    def test_cls_main_wideresnet(self):
+    def test_cli_main_wideresnet(self):
         root = Path(__file__).parent.absolute().parents[0]
         with ArgvContext("--style cifar"):
             args = init_args(WideResNet, CIFAR10DataModule)
@@ -82,4 +82,4 @@ class TestCLI:
                 **vars(args),
             )
 
-            cls_main(model, dm, root, "std", args)
+            cli_main(model, dm, root, "std", args)

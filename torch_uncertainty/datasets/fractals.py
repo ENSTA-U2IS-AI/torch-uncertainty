@@ -1,6 +1,6 @@
 # fmt: off
 from pathlib import Path
-from typing import Any, Callable, Tuple
+from typing import Any, Callable, Optional, Tuple
 
 from torchvision.datasets import ImageFolder
 from torchvision.datasets.utils import (
@@ -29,8 +29,8 @@ class Fractals(ImageFolder):
     def __init__(
         self,
         root: str,
-        transform: Callable[..., Any] = None,
-        target_transform: Callable[..., Any] = None,
+        transform: Optional[Callable[..., Any]] = None,
+        target_transform: Optional[Callable[..., Any]] = None,
         download: bool = False,
     ):
         if isinstance(root, str):

@@ -94,3 +94,56 @@ class NegativeLogLikelihood(Metric):
             return values.sum(dim=-1) / self.total
         else:  # reduction is None or "none"
             return values
+
+
+class GaussianNegativeLogLikelihood(NegativeLogLikelihood):
+    """The Gaussian Negative Log Likelihood Metric.
+
+    Args:
+        reduction (str, optional): Determines how to reduce over the
+            :math:`B`/batch dimension:
+
+            - ``'mean'`` [default]: Averages score across samples
+            - ``'sum'``: Sum score across samples
+            - ``'none'`` or ``None``: Returns score per sample
+
+        kwargs: Additional keyword arguments, see `Advanced metric settings
+            <https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metric-kwargs>`_.
+
+    Inputs:
+        - :attr:`probs`: :math:`(B, C)`
+        - :attr:`target`: :math:`(B)`
+        - :attr:`var`: :math:`(B, C)`
+
+        where :math:`B` is the batch size and :math:`C` is the number of
+        classes.
+
+    Warning:
+        Make sure that the probabilities in :attr:`probs` are normalized to sum
+        to one.
+
+    Raises:
+        ValueError:
+            If :attr:`reduction` is not one of ``'mean'``, ``'sum'``,
+            ``'none'`` or ``None``.
+    """
+
+    def update(
+        self, probs: torch.Tensor, target: torch.Tensor, var: torch.Tensor
+    ) -> None:
+        """Update state with prediction mean, targets, and prediction varoance.
+
+        Args:
+            probs (torch.Tensor): Probabilities from the model.
+            target (torch.Tensor): Ground truth labels.
+            var (torch.Tensor): Predicted variance from the model.
+        """
+        if self.reduction is None or self.reduction == "none":
+            self.values.append(
+                F.gaussian_nll_loss(probs, target, var, reduction="none")
+            )
+        else:
+            self.values += F.gaussian_nll_loss(
+                probs, target, var, reduction="sum"
+            )
+            self.total += target.size(0)

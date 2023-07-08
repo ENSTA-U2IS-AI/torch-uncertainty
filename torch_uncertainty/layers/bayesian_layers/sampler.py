@@ -1,32 +1,36 @@
 # fmt: off
+from typing import Optional
+
 import torch
 import torch.nn as nn
+from torch import Tensor
 
 import numpy as np
 
 
 # fmt: on
 class TrainableDistribution(nn.Module):
-    lsqrt2pi = np.log(np.sqrt(2 * np.pi))
+    lsqrt2pi = torch.as_tensor(np.log(np.sqrt(2 * np.pi)))
 
-    def __init__(self, mu, rho):
+    def __init__(self, mu: Tensor, rho: Tensor) -> None:
         super().__init__()
         self.mu = nn.Parameter(mu)
         self.rho = nn.Parameter(rho)
-        self.register_buffer("eps_w", torch.Tensor(self.mu.shape))
         self.sigma = None
         self.weight = None
 
-    def sample(self):
-        self.eps_w.data.normal_()
+    def sample(self) -> Tensor:
+        w_sample = torch.normal(mean=0, std=1, size=self.mu.shape)
         self.sigma = torch.log1p(torch.exp(self.rho))
-        self.weight = self.mu + self.sigma * self.eps_w
+        self.weight = self.mu + self.sigma * w_sample
         return self.weight
 
-    def log_posterior(self, weight=None):
-        assert (
-            self.weight is not None
-        ), "Sample the weights before asking for the log posterior."
+    def log_posterior(self, weight: Optional[Tensor] = None) -> Tensor:
+        if self.weight is None or self.sigma is None:
+            raise ValueError(
+                "Sample the weights before asking for the log posterior."
+            )
+
         if weight is None:
             weight = self.weight
 
@@ -40,10 +44,13 @@ class TrainableDistribution(nn.Module):
 
 
 class PriorDistribution(nn.Module):
-    def __init__(self, sigma: float):
+    def __init__(self, sigma_1: float, sigma_2: float, pi: float) -> None:
         super().__init__()
-        self.distribution = torch.distributions.Normal(0, sigma)
+        mix = torch.distributions.Categorical(torch.tensor([pi, 1 - pi]))
+        normals = torch.distributions.Normal(
+            torch.zeros(2), torch.as_tensor([sigma_1, sigma_2])
+        )
+        self.distribution = torch.distributions.MixtureSameFamily(mix, normals)
 
-    def log_prior(self, w):
-        prob = torch.exp(self.distribution.log_prob(w))
-        return (torch.log(prob + 1e-6) - 0.5).sum()
+    def log_prior(self, weight: Tensor) -> Tensor:
+        return self.distribution.log_prob(weight).sum()

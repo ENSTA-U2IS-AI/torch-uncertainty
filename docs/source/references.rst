@@ -8,6 +8,17 @@ Uncertainty Models
 
 The following uncertainty models are implemented.
 
+Bayesian Neural Networks
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+For Bayesian Neural Networks, consider citing:
+
+**Weight Uncertainty in Neural Networks**
+
+* Authors: *Charles Blundell, Julien Cornebise, Koray Kavukcuoglu, and Daan Wierstra*
+* Paper: `ICML 2015 <https://arxiv.org/pdf/1505.05424>`__.
+
+
 Deep Ensembles
 ^^^^^^^^^^^^^^
 
@@ -120,6 +131,14 @@ CIFAR-10 H
 * Authors: *Joshua C. Peterson, Ruairidh M. Battleday, Thomas L. Griffiths, and Olga Russakovsky*
 * Paper: `ICCV 2019 <https://arxiv.org/pdf/1908.07086.pdf>`__.
 
+CIFAR-10 N / CIFAR-100 N
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+**Learning with Noisy Labels Revisited: A Study Using Real-World Human Annotations**
+
+* Authors: *Jiaheng Wei, Zhaowei Zhu, Hao Cheng, Tongliang Liu, Gang Niu, Yang Liu*
+* Paper: `ICLR 2022 <https://arxiv.org/pdf/2110.12088.pdf>`__.
+
 SVHN
 ^^^^
 
@@ -170,8 +189,8 @@ Textures
 * Authors: *Haoqi Wang, Zhizhong Li, Litong Feng, and Wayne Zhang**
 * Paper: `CVPR 2022 <https://arxiv.org/pdf/2203.10807.pdf>`__.
 
-Classic Models
---------------
+Architectures
+-------------
 
 ResNet
 ^^^^^^

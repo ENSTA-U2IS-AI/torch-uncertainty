@@ -68,7 +68,9 @@ class _BayesConvNd(Module):
         padding: Tuple[int, ...],
         dilation: Tuple[int, ...],
         prior_mu: float,
-        prior_sigma: float,
+        prior_sigma_1: float,
+        prior_sigma_2: float,
+        prior_pi: float,
         mu_init: float,
         sigma_init: float,
         frozen: bool,
@@ -104,7 +106,9 @@ class _BayesConvNd(Module):
         self.padding = padding
         self.dilation = dilation
         self.prior_mu = prior_mu
-        self.prior_sigma = prior_sigma
+        self.prior_sigma_1 = prior_sigma_1
+        self.prior_sigma_2 = prior_sigma_2
+        self.prior_pi = prior_pi
         self.mu_init = mu_init
         self.sigma_init = sigma_init
         self.frozen = frozen
@@ -151,18 +155,24 @@ class _BayesConvNd(Module):
                 self.bias_mu, self.bias_sigma
             )
 
-        self.weight_prior_dist = PriorDistribution(self.prior_sigma)
-        self.bias_prior_dist = PriorDistribution(self.prior_sigma)
+        self.weight_prior_dist = PriorDistribution(
+            prior_sigma_1, prior_sigma_2, prior_pi
+        )
+        if self.bias:
+            self.bias_prior_dist = PriorDistribution(
+                prior_sigma_1, prior_sigma_2, prior_pi
+            )
         self.lprior = 0
         self.lvposterior = 0
 
     def reset_parameters(self) -> None:
+        # TODO: change init
         init.normal_(self.weight_mu, mean=self.mu_init, std=0.1)
         init.normal_(self.weight_sigma, mean=self.sigma_init, std=0.1)
 
         if self.bias:
-            init.normal_(self.weight_mu, mean=self.mu_init, std=0.1)
-            init.normal_(self.weight_sigma, mean=self.sigma_init, std=0.1)
+            init.normal_(self.bias_mu, mean=self.mu_init, std=0.1)
+            init.normal_(self.bias_sigma, mean=self.sigma_init, std=0.1)
 
     def freeze(self) -> None:
         """Freeze the layer by setting the frozen attribute to True."""
@@ -207,7 +217,9 @@ class BayesConv1d(_BayesConvNd):
         padding: Union[str, _size_1_t] = 0,
         dilation: _size_1_t = 1,
         prior_mu: float = 0.0,
-        prior_sigma: float = 0.1,
+        prior_sigma_1: float = 0.1,
+        prior_sigma_2: float = 0.002,
+        prior_pi: float = 1,
         mu_init: float = 0.0,
         sigma_init: float = 10.0,
         frozen: bool = False,
@@ -218,8 +230,6 @@ class BayesConv1d(_BayesConvNd):
         dtype=None,
     ) -> None:
         factory_kwargs = {"device": device, "dtype": dtype}
-        # we create new variables below to make mypy happy since kernel_size has
-        # type Union[int, Tuple[int]] and kernel_size_ has type Tuple[int]
         kernel_size_ = _single(kernel_size)
         stride_ = _single(stride)
         padding_ = padding if isinstance(padding, str) else _single(padding)
@@ -232,7 +242,9 @@ class BayesConv1d(_BayesConvNd):
             padding_,
             dilation_,
             prior_mu,
-            prior_sigma,
+            prior_sigma_1,
+            prior_sigma_2,
+            prior_pi,
             mu_init,
             sigma_init,
             frozen,
@@ -246,7 +258,7 @@ class BayesConv1d(_BayesConvNd):
 
     def _conv_forward(
         self, input: Tensor, weight: Tensor, bias: Optional[Tensor]
-    ):
+    ) -> Tensor:
         if self.padding_mode != "zeros":
             return F.conv1d(
                 F.pad(
@@ -303,9 +315,11 @@ class BayesConv2d(_BayesConvNd):
         padding: Union[str, _size_2_t] = 0,
         dilation: _size_2_t = 1,
         prior_mu: float = 0.0,
-        prior_sigma: float = 0.1,
+        prior_sigma_1: float = 0.1,
+        prior_sigma_2: float = 0.002,
+        prior_pi: float = 1,
         mu_init: float = 0.0,
-        sigma_init: float = 10.0,
+        sigma_init: float = -6.0,
         frozen: bool = False,
         groups: int = 1,
         bias: bool = True,
@@ -326,7 +340,9 @@ class BayesConv2d(_BayesConvNd):
             padding_,
             dilation_,
             prior_mu,
-            prior_sigma,
+            prior_sigma_1,
+            prior_sigma_2,
+            prior_pi,
             mu_init,
             sigma_init,
             frozen,
@@ -340,7 +356,7 @@ class BayesConv2d(_BayesConvNd):
 
     def _conv_forward(
         self, input: Tensor, weight: Tensor, bias: Optional[Tensor]
-    ):
+    ) -> Tensor:
         if self.padding_mode != "zeros":
             return F.conv2d(
                 F.pad(
@@ -397,7 +413,9 @@ class BayesConv3d(_BayesConvNd):
         padding: Union[str, _size_3_t] = 0,
         dilation: _size_3_t = 1,
         prior_mu: float = 0.0,
-        prior_sigma: float = 0.1,
+        prior_sigma_1: float = 0.1,
+        prior_sigma_2: float = 0.002,
+        prior_pi: float = 1,
         mu_init: float = 0.0,
         sigma_init: float = 10.0,
         frozen: bool = False,
@@ -420,7 +438,9 @@ class BayesConv3d(_BayesConvNd):
             padding_,
             dilation_,
             prior_mu,
-            prior_sigma,
+            prior_sigma_1,
+            prior_sigma_2,
+            prior_pi,
             mu_init,
             sigma_init,
             frozen,
@@ -434,7 +454,7 @@ class BayesConv3d(_BayesConvNd):
 
     def _conv_forward(
         self, input: Tensor, weight: Tensor, bias: Optional[Tensor]
-    ):
+    ) -> Tensor:
         if self.padding_mode != "zeros":
             return F.conv3d(
                 F.pad(
