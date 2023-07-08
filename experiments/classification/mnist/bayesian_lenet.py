@@ -12,8 +12,6 @@ from torch_uncertainty.models.lenet import bayesian_lenet
 from torch_uncertainty.routines.classification import ClassificationSingle
 
 # fmt: on
-
-
 def optim_lenet(model: nn.Module) -> dict:
     """Optimization procedure for LeNet.
 
