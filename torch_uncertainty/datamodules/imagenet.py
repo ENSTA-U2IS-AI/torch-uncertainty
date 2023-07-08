@@ -7,6 +7,7 @@ import torch.nn as nn
 import torchvision.transforms as T
 from pytorch_lightning import LightningDataModule
 from timm.data.auto_augment import rand_augment_transform
+from timm.data.mixup import Mixup
 from torch.utils.data import DataLoader, Dataset
 from torchvision.datasets import DTD, SVHN, ImageNet, INaturalist
 
@@ -79,6 +80,15 @@ class ImageNetDataModule(LightningDataModule):
                 main_transform = rand_augment_transform(rand_augment_opt, {})
             else:
                 main_transform = nn.Identity()
+        elif self.procedure == "ViT":
+            train_size = 224
+            main_transform = T.Compose(
+                [
+                    Mixup(mixup_alpha=0.2, cutmix_alpha=1.0),
+                    rand_augment_transform("rand-m9-n2-mstd0.5", {}),
+                ]
+            )
+
         elif self.procedure == "A3":
             print("Procedure A3")
             train_size = 160
@@ -241,7 +251,7 @@ class ImageNetDataModule(LightningDataModule):
         )
         p.add_argument("--ood_ds", choices=cls.ood_datasets, default="svhn")
         p.add_argument("--test_alt", choices=cls.test_datasets, default=None)
-        p.add_argument("--procedure", choices=["A3"], default=None)
+        p.add_argument("--procedure", choices=["ViT", "A3"], default=None)
         p.add_argument("--train_size", type=int, default=224)
         p.add_argument(
             "--rand_augment", dest="rand_augment_opt", type=str, default=None

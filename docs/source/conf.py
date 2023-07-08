@@ -24,6 +24,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx_copybutton",
     "sphinx_gallery.gen_gallery",
+    # "sphinx_gallery.load_style",
 ]
 
 sphinx_gallery_conf = {

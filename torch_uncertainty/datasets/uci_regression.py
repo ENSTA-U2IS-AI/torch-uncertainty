@@ -1,6 +1,7 @@
 # fmt: off
 from pathlib import Path
 from typing import Callable, Optional, Tuple, Union
+import numpy as np
 
 import pandas as pd
 import torch
@@ -51,7 +52,7 @@ energy_prediction_column_names = [
     "RH_8",
     "T9",
     "RH_9",
-    "T_out",
+    "T_out",  # Dropped
 ]
 
 
@@ -137,15 +138,16 @@ class UCIRegression(Dataset):
         dataset_name: str = "energy",
         download: bool = False,
         seed: int = 42,
+        shuffle: bool = True,
     ) -> None:
         super().__init__()
-
         if isinstance(root, str):
             root = Path(root)
         self.root = root
         self.transform = transform
         self.target_transform = target_transform
         self.seed = seed
+        self.shuffle = shuffle
 
         if dataset_name not in self.uci_subsets:
             raise ValueError(
@@ -162,8 +164,6 @@ class UCIRegression(Dataset):
             self.download()
 
         self._make_dataset()
-
-        self._standardize()
 
     def __len__(self) -> int:
         return self.data.shape[0]
@@ -277,11 +277,7 @@ class UCIRegression(Dataset):
         else:
             raise ValueError("Dataset not implemented.")
 
-        gen = torch.Generator()
-        gen.manual_seed(self.seed)
         array = torch.as_tensor(array).float()
-        # indexes = torch.randperm(array.shape[0], generator=gen)
-        # array = array[indexes]
 
         if self.dataset_name == "energy-efficiency":
             self.data = array[:, 2:-3]
@@ -291,15 +287,16 @@ class UCIRegression(Dataset):
             self.targets = array[:, -1]
 
         self._compute_statistics()
+        self._standardize()
 
         if self.dataset_name == "energy-prediction":
             self.data = F.pad(self.data, (0, 0, 13, 0), value=0)
 
-    def __len__(self) -> int:  # noqa: 811
-        if self.dataset_name == "energy-prediction":
-            return self.data.shape[0] - 12
-        else:
-            return self.data.shape[0]
+        if self.shuffle:
+            gen = torch.Generator()
+            gen.manual_seed(self.seed)
+            indexes = torch.randperm(array.shape[0], generator=gen)
+            array = array[indexes]
 
     def __getitem__(self, index: int) -> Tuple[torch.Tensor, torch.Tensor]:
         """Get sample and target for a given index."""
