@@ -27,7 +27,7 @@ See the [Reference page](https://torch-uncertainty.github.io/references.html) or
 
 ## Installation
 
-The package can be installed from PyPI:
+Install the desired pytorch version in your environment. Then, the package can be installed from PyPI:
 
 ```sh
 pip install torch-uncertainty
