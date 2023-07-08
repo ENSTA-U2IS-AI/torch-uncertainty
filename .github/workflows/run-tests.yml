@@ -60,7 +60,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install torch==1.13 && poetry install --with "dev docs"
+        pip install torch==1.13 --extra-index-url https://download.pytorch.org/whl/cpu && poetry install --with "dev docs"
 
     - name: Style checking
       run: |
