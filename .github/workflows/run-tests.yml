@@ -62,7 +62,7 @@ jobs:
       run: |
         poetry install --with dev
         pip uninstall -y torch torchvision 
-        pip install -y torch torchvision --extra-index-url https://download.pytorch.org/whl/cpu
+        pip install torch torchvision --extra-index-url https://download.pytorch.org/whl/cpu
 
     - name: Style checking
       run: |
