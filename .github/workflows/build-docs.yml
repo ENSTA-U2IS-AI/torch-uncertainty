@@ -52,8 +52,8 @@ jobs:
     - name: Install dependencies
       run: |
         poetry install --with docs
-        python3 -m pip uninstall torch torchvision -y
-        python3 -m pip install torch torchvision --extra-index-url https://download.pytorch.org/whl/cpu
+        poetry run pip3 uninstall torch torchvision -y
+        poetry run pip3 install torch torchvision --extra-index-url https://download.pytorch.org/whl/cpu
 
     - name: Sphinx build
       run: |
