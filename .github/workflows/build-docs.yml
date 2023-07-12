@@ -51,7 +51,8 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install . && pip install torch==1.13 torchvision --extra-index-url https://download.pytorch.org/whl/cpu
+        poetry install
+        pip install torch==1.13 torchvision --extra-index-url https://download.pytorch.org/whl/cpu
 
     - name: Sphinx build
       run: |
