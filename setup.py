@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-
+# flake8: noqa
 from setuptools import find_packages, setup
 
 setup(
@@ -21,6 +21,19 @@ setup(
         "scipy=^1.10.0",
         "huggingface_hub=^0.14.1",
         "pandas=^2.0.3",
+        "isort=^5.12.0",
+        "black=^23.1.0",
+        "flake8=^6.0.0",
+        "pytest-cov=^4.0.0",
+        "pre-commit=^3.0.4",
+        "pre-commit-hooks=^4.4.0",
+        "cli-test-helpers=^3.2.0",
+        "sphinx=^5.1.3",
+        "pytorch-sphinx-theme=git+https://github.com/torch-uncertainty/pytorch_sphinx_theme",
+        "sphinx-copybutton=^0.5.1",
+        "sphinx-gallery=^0.12.2",
+        "matplotlib=^3.7.1",
+        "sphinx-design=^0.3.0",
     ],
     packages=find_packages(exclude=["experiments", "tests"]),
 )

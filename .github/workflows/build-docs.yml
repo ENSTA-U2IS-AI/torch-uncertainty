@@ -51,11 +51,15 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install torch==1.13 --extra-index-url https://download.pytorch.org/whl/cpu && poetry install --with docs
+        pip install . && pip install torch==1.13 torchvision --extra-index-url https://download.pytorch.org/whl/cpu
 
     - name: Sphinx build
       run: |
         cd docs && poetry run make html
+
+    - name: Sphinx build
+      run: |
+        cd docs && make html
 
     - name: Deploy
       uses: peaceiris/actions-gh-pages@v3
