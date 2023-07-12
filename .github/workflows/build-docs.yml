@@ -51,7 +51,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        poetry install
+        poetry install --with docs
         pip uninstall -y torch torchvision 
         pip install -y torch torchvision --extra-index-url https://download.pytorch.org/whl/cpu
 
