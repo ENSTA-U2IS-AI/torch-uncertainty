@@ -177,7 +177,7 @@ class WideResNet:
         checkpoint_path: Union[str, Path],
         hparams_file: Union[str, Path],
         **kwargs,
-    ) -> LightningModule: # coverage: ignore
+    ) -> LightningModule:  # coverage: ignore
         if hparams_file is not None:
             extension = str(hparams_file).split(".")[-1]
             if extension.lower() == "csv":
