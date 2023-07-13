@@ -27,7 +27,9 @@ def stable_cumsum(arr: ArrayLike, rtol: float = 1e-05, atol: float = 1e-08):
     """
     out = np.cumsum(arr, dtype=np.float64)
     expected = np.sum(arr, dtype=np.float64)
-    if not np.allclose(out[-1], expected, rtol=rtol, atol=atol):
+    if not np.allclose(
+        out[-1], expected, rtol=rtol, atol=atol
+    ):  # coverage: ignore
         raise RuntimeError(
             "cumsum was found to be unstable: "
             "its last element does not correspond to sum"
