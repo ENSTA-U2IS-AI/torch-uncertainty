@@ -37,6 +37,10 @@ class TestNegativeLogLikelihood:
         res_sum = metric.compute()
         assert torch.all(res_sum == torch.zeros(2))
 
+    def test_bad_argument(self) -> None:
+        with pytest.raises(Exception):
+            _ = NegativeLogLikelihood(reduction="geometric_mean")
+
 
 class TestGaussianNegativeLogLikelihood:
     """Testing the NegativeLogLikelihood metric class."""

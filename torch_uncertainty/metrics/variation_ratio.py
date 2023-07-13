@@ -78,5 +78,7 @@ class VariationRatio(Metric):
             variation_ratio = variation_ratio.mean()
         elif self.reduction == "sum":
             variation_ratio = variation_ratio.sum()
+        else:  # None
+            pass
 
         return variation_ratio

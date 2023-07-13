@@ -203,6 +203,11 @@ class TestBrierScore:
         res = metric.compute()
         assert res == 0.5
 
+    def test_bad_input(self) -> None:
+        with pytest.raises(Exception):
+            metric = BrierScore(num_classes=2, reduction="none")
+            metric.update(torch.ones(2, 2, 2, 2), torch.ones(2, 2, 2, 2))
+
     def test_bad_argument(self):
         with pytest.raises(Exception):
             _ = BrierScore(num_classes=2, reduction="geometric_mean")

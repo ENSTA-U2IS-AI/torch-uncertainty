@@ -40,6 +40,11 @@ class TestVariationRatio:
         res = metric.compute()
         assert res == 0.0
 
+        metric = VariationRatio(probabilistic=False, reduction="none")
+        metric.update(agreement_probas)
+        res = metric.compute()
+        assert res == 0.0
+
     def test_compute_disagreement(
         self,
         agreement_probas_3est: torch.Tensor,
