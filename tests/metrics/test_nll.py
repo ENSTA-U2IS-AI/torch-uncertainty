@@ -43,4 +43,4 @@ class TestGaussianNegativeLogLikelihood:
         targets = torch.as_tensor([1, 10]).float()
         metric.update(means, targets, vars)
         res = metric.compute()
-        assert res == torch.log(vars).mean()/2
+        assert res == torch.log(vars).mean() / 2

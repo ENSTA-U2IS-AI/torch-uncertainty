@@ -139,6 +139,7 @@ class TestPackedVGGBaseline:
         _ = net.configure_optimizers()
         _ = net(torch.rand(2, 3, 32, 32))
 
+
 class TestPackedMLPBaseline:
     """Testing the Packed MLP baseline class."""
 
@@ -153,7 +154,7 @@ class TestPackedMLPBaseline:
             num_estimators=2,
             alpha=2,
             gamma=1,
-            dist_estimation=False
+            dist_estimation=False,
         )
         summary(net)
 

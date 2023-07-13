@@ -84,7 +84,7 @@ class TestStandardMLPBaseline:
             optimization_procedure=optim_cifar10_resnet18,
             version="vanilla",
             hidden_dims=[1],
-            dist_estimation=False
+            dist_estimation=False,
         )
         summary(net)
 
