@@ -111,16 +111,12 @@ class GaussianNegativeLogLikelihood(NegativeLogLikelihood):
             <https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metric-kwargs>`_.
 
     Inputs:
-        - :attr:`probs`: :math:`(B, C)`
-        - :attr:`target`: :math:`(B)`
-        - :attr:`var`: :math:`(B, C)`
+        - :attr:`mean`: :math:`(B, D)`
+        - :attr:`target`: :math:`(B, D)`
+        - :attr:`var`: :math:`(B, D)`
 
-        where :math:`B` is the batch size and :math:`C` is the number of
-        classes.
-
-    Warning:
-        Make sure that the probabilities in :attr:`probs` are normalized to sum
-        to one.
+        where :math:`B` is the batch size and :math:`D` is the number of
+        dimensions. :math:`D` is optional.
 
     Raises:
         ValueError:
@@ -129,21 +125,21 @@ class GaussianNegativeLogLikelihood(NegativeLogLikelihood):
     """
 
     def update(
-        self, probs: torch.Tensor, target: torch.Tensor, var: torch.Tensor
+        self, mean: torch.Tensor, target: torch.Tensor, var: torch.Tensor
     ) -> None:
         """Update state with prediction mean, targets, and prediction varoance.
 
         Args:
-            probs (torch.Tensor): Probabilities from the model.
+            mean (torch.Tensor): Probabilities from the model.
             target (torch.Tensor): Ground truth labels.
             var (torch.Tensor): Predicted variance from the model.
         """
         if self.reduction is None or self.reduction == "none":
             self.values.append(
-                F.gaussian_nll_loss(probs, target, var, reduction="none")
+                F.gaussian_nll_loss(mean, target, var, reduction="none")
             )
         else:
             self.values += F.gaussian_nll_loss(
-                probs, target, var, reduction="sum"
+                mean, target, var, reduction="sum"
             )
             self.total += target.size(0)
