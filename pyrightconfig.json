@@ -1,0 +1,13 @@
+{
+    "include": [
+      "torch_uncertainty",
+      "tests"
+    ],
+    
+    "exclude": [
+      "**/__pycache__",
+    ],
+  
+    "pythonVersion": "3.10",
+    "pythonPlatform": "Linux",
+  }
