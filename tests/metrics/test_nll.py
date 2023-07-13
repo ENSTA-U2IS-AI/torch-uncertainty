@@ -32,6 +32,11 @@ class TestNegativeLogLikelihood:
         res = metric.compute()
         assert res == 0
 
+        metric = NegativeLogLikelihood(reduction="none")
+        metric.update(probs_zero, targets_zero)
+        res_sum = metric.compute()
+        assert torch.all(res_sum == torch.zeros(2))
+
 
 class TestGaussianNegativeLogLikelihood:
     """Testing the NegativeLogLikelihood metric class."""
@@ -42,5 +47,15 @@ class TestGaussianNegativeLogLikelihood:
         vars = torch.as_tensor([1, 2]).float()
         targets = torch.as_tensor([1, 10]).float()
         metric.update(means, targets, vars)
-        res = metric.compute()
-        assert res == torch.log(vars).mean() / 2
+        res_mean = metric.compute()
+        assert res_mean == torch.log(vars).mean() / 2
+
+        metric = GaussianNegativeLogLikelihood(reduction="sum")
+        metric.update(means, targets, vars)
+        res_sum = metric.compute()
+        assert res_sum == torch.log(vars).sum() / 2
+
+        metric = GaussianNegativeLogLikelihood(reduction="none")
+        metric.update(means, targets, vars)
+        res_sum = metric.compute()
+        assert torch.all(res_sum == torch.log(vars) / 2)
