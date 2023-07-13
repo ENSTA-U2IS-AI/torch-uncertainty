@@ -185,7 +185,7 @@ class RegressionEnsemble(RegressionSingle):
         inputs, targets = batch
 
         # eventual input repeat is done in the model
-        targets = targets.repeat(self.num_estimators)
+        targets = targets.repeat((self.num_estimators, 1))
         return super().training_step((inputs, targets), batch_idx)
 
     def validation_step(  # type: ignore

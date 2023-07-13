@@ -6,7 +6,7 @@ from torchvision.datasets import MNIST
 from torch_uncertainty.datamodules import MNISTDataModule
 from torch_uncertainty.transforms import Cutout
 
-from .._dummies.dataset import DummyDataset
+from .._dummies.dataset import DummyClassificationDataset
 
 
 # fmt:on
@@ -26,7 +26,7 @@ class TestMNISTDataModule:
         assert dm.dataset == MNIST
         assert isinstance(dm.transform_train.transforms[0], Cutout)
 
-        dm.dataset = DummyDataset
+        dm.dataset = DummyClassificationDataset
         dm.prepare_data()
         dm.setup()
         dm.setup("test")

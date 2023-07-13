@@ -6,7 +6,7 @@ from torchvision.datasets import CIFAR100
 from torch_uncertainty.datamodules import CIFAR100DataModule
 from torch_uncertainty.transforms import Cutout
 
-from .._dummies.dataset import DummyDataset
+from .._dummies.dataset import DummyClassificationDataset
 
 
 # fmt:on
@@ -26,7 +26,7 @@ class TestCIFAR100DataModule:
         assert dm.dataset == CIFAR100
         assert isinstance(dm.transform_train.transforms[2], Cutout)
 
-        dm.dataset = DummyDataset
+        dm.dataset = DummyClassificationDataset
         dm.prepare_data()
         dm.setup()
         dm.setup("test")

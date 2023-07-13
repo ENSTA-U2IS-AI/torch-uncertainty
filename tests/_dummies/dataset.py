@@ -9,7 +9,7 @@ import numpy as np
 
 
 # fmt:on
-class DummyDataset(data.Dataset):
+class DummyClassificationDataset(data.Dataset):
     def __init__(
         self,
         root: str,
@@ -83,6 +83,59 @@ class DummyDataset(data.Dataset):
         # doing this so that it is consistent with all other datasets
         # to return a PIL Image
         img = Image.fromarray(img)
+
+        if self.transform is not None:
+            img = self.transform(img)
+
+        if self.target_transform is not None:
+            target = self.target_transform(target)
+
+        return img, target
+
+    def __len__(self) -> int:
+        return len(self.data)
+
+
+class DummyRegressionDataset(data.Dataset):
+    def __init__(
+        self,
+        root: str,
+        train: bool = True,
+        transform: Callable[..., Any] | None = None,
+        target_transform: Callable[..., Any] | None = None,
+        in_features: int = 3,
+        out_features: int = 10,
+        num_samples: int = 2,
+        **kwargs: Any,
+    ) -> None:
+        self.root = root
+        self.train = train  # training set or test set
+        self.transform = transform
+        self.target_transform = target_transform
+
+        self.data: Any = []
+        self.targets = []
+
+        input_shape = (num_samples, in_features)
+        output_shape = (num_samples, out_features)
+
+        self.data = torch.rand(
+            size=input_shape,
+        )
+
+        self.targets = torch.rand(
+            size=output_shape,
+        )
+
+    def __getitem__(self, index: int) -> Tuple[Any, Any]:
+        """
+        Args:
+            index (int): Index
+
+        Returns:
+            tuple: (image, target) where target is index of the target class.
+        """
+        img, target = self.data[index], self.targets[index]
 
         if self.transform is not None:
             img = self.transform(img)

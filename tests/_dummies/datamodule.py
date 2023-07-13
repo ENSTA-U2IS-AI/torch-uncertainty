@@ -7,11 +7,11 @@ import torchvision.transforms as T
 from pytorch_lightning import LightningDataModule
 from torch.utils.data import DataLoader, Dataset
 
-from .dataset import DummyDataset
+from .dataset import DummyClassificationDataset, DummyRegressionDataset
 
 
 # fmt: on
-class DummyDataModule(LightningDataModule):
+class DummyClassificationDataModule(LightningDataModule):
     num_channels = 1
     image_size: int = 8
     training_task = "classification"
@@ -37,8 +37,8 @@ class DummyDataModule(LightningDataModule):
         self.pin_memory = pin_memory
         self.persistent_workers = persistent_workers
 
-        self.dataset = DummyDataset
-        self.ood_dataset = DummyDataset
+        self.dataset = DummyClassificationDataset
+        self.ood_dataset = DummyClassificationDataset
 
         self.transform_train = T.ToTensor()
         self.transform_test = T.ToTensor()
@@ -79,27 +79,105 @@ class DummyDataModule(LightningDataModule):
             )
 
     def train_dataloader(self) -> DataLoader:
-        r"""Gets the training dataloader for DummyDataset.
-        Returns:
-            DataLoader: DummyDataset training dataloader.
-        """
         return self._data_loader(self.train, shuffle=True)
 
     def val_dataloader(self) -> DataLoader:
-        r"""Gets the validation dataloader for DummyDataset.
-        Returns:
-            DataLoader: DummyDataset validation dataloader.
-        """
         return self._data_loader(self.val)
 
     def test_dataloader(self) -> List[DataLoader]:
-        r"""Gets the test dataloaders for DummyDataset.
-        Returns:
-            List[DataLoader]: Dataloaders of the DummyDataset test set (in
-                distribution data) and SVHN test split (out-of-distribution
-                data).
-        """
         return [self._data_loader(self.test), self._data_loader(self.ood)]
+
+    def _data_loader(
+        self, dataset: Dataset, shuffle: bool = False
+    ) -> DataLoader:
+        return DataLoader(
+            dataset,
+            batch_size=self.batch_size,
+            shuffle=shuffle,
+            num_workers=self.num_workers,
+            pin_memory=self.pin_memory,
+            persistent_workers=self.persistent_workers,
+        )
+
+    @classmethod
+    def add_argparse_args(
+        cls,
+        parent_parser: ArgumentParser,
+        **kwargs: Any,
+    ) -> ArgumentParser:
+        p = parent_parser.add_argument_group("datamodule")
+        p.add_argument("--root", type=str, default="./data/")
+        p.add_argument("--batch_size", type=int, default=2)
+        p.add_argument("--num_workers", type=int, default=1)
+        return parent_parser
+
+
+class DummyRegressionDataModule(LightningDataModule):
+    in_features = 4
+    training_task = "regression"
+
+    def __init__(
+        self,
+        root: Union[str, Path],
+        batch_size: int,
+        out_features: int = 2,
+        num_workers: int = 1,
+        pin_memory: bool = True,
+        persistent_workers: bool = True,
+        **kwargs,
+    ) -> None:
+        super().__init__()
+
+        root = Path(root)
+
+        self.root: Path = root
+        self.batch_size = batch_size
+        self.out_features = out_features
+        self.num_workers = num_workers
+        self.pin_memory = pin_memory
+        self.persistent_workers = persistent_workers
+
+        self.dataset = DummyRegressionDataset
+        self.ood_dataset = DummyRegressionDataset
+
+        self.transform_train = None
+        self.transform_test = None
+
+    def prepare_data(self) -> None:
+        pass
+
+    def setup(self, stage: Optional[str] = None) -> None:
+        if stage == "fit" or stage is None:
+            self.train = self.dataset(
+                self.root,
+                out_features=self.out_features,
+                transform=self.transform_train,
+            )
+            self.val = self.dataset(
+                self.root,
+                out_features=self.out_features,
+                transform=self.transform_test,
+            )
+        elif stage == "test":
+            self.test = self.dataset(
+                self.root,
+                out_features=self.out_features,
+                transform=self.transform_test,
+            )
+            self.ood = self.ood_dataset(
+                self.root,
+                out_features=self.out_features,
+                transform=self.transform_test,
+            )
+
+    def train_dataloader(self) -> DataLoader:
+        return self._data_loader(self.train, shuffle=True)
+
+    def val_dataloader(self) -> DataLoader:
+        return self._data_loader(self.val)
+
+    def test_dataloader(self) -> Union[DataLoader, List[DataLoader]]:
+        return self._data_loader(self.test)
 
     def _data_loader(
         self, dataset: Dataset, shuffle: bool = False
