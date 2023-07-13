@@ -33,7 +33,7 @@ Install the desired pytorch version in your environment. Then, the package can b
 pip install torch-uncertainty
 ```
 
-If you aim to contribute (thank you!), checkout the [contribution page](https://torch-uncertainty.github.io/contributing.html).
+If you aim to contribute (thank you!), have a look at the [contribution page](https://torch-uncertainty.github.io/contributing.html).
 
 ## Getting Started and Documentation
 
