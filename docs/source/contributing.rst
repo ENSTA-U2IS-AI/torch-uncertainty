@@ -58,5 +58,5 @@ License
 -------
 
 If you feel that the current license is an obstacle to your contribution, let
-us know, and we may reconsider. However, the models’ weights are likely to stay
-Apache 2.0.
+us know, and we may reconsider. However, the models’ weights hosted on Hugging
+Face are likely to stay Apache 2.0.

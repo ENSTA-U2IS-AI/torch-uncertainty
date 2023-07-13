@@ -21,7 +21,7 @@ This package provides a multi-level API, including:
 - baselines available for training on your datasets
 - [pretrained weights](https://huggingface.co/torch-uncertainty) for these baselines on ImageNet and CIFAR (work in progress 🚧).
 - layers available for use in your networks
-- post-processing methods such as temperature scaling
+- scikit-learn style post-processing methods such as Temperature Scaling
 
 See the [Reference page](https://torch-uncertainty.github.io/references.html) or the [API reference](https://torch-uncertainty.github.io/api.html) for a more exhaustive list of the implemented methods, datasets, metrics, etc.
 

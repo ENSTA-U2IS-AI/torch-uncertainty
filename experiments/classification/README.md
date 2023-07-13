@@ -20,3 +20,11 @@ network impedes convergence for all tested hyperparameters.
 * ResNet
 * WideResNet
 * VGG
+
+### MNIST
+
+* LeNet
+
+### Tiny-ImageNet200
+
+* ResNet
