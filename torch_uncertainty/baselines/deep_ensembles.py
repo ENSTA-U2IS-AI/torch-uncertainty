@@ -62,7 +62,7 @@ class DeepEnsembles:
                 in_channels=in_channels,
                 num_classes=num_classes,
                 model=de,
-                loss=None,  # TODO: Why None? We won't support training?
+                loss=None,
                 optimization_procedure=None,
                 num_estimators=de.num_estimators,
                 use_entropy=use_entropy,
@@ -73,7 +73,7 @@ class DeepEnsembles:
         elif task == "regression":
             return RegressionEnsemble(
                 model=de,
-                loss=None,  # TODO: Why None? We won't support training?
+                loss=None,
                 optimization_procedure=None,
                 dist_estimation=True,
                 num_estimators=de.num_estimators,

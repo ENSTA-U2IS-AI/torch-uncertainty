@@ -126,7 +126,7 @@ class ImageNetDataModule(LightningDataModule):
         if self.test_alt is not None:
             self.data = self.dataset(
                 self.root,
-                split="test",
+                split="val",
                 download=True,
             )
         if self.ood_ds == "inaturalist":

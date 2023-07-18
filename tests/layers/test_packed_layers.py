@@ -62,17 +62,29 @@ class TestPackedLinear:
             5, 3, kernel_size=1, alpha=1, num_estimators=2, gamma=1
         )
 
-    def test_linear_alpha_neg(self):
+    def test_linear_alpha_error(self):
+        with pytest.raises(ValueError):
+            _ = PackedLinear(5, 2, alpha=None, num_estimators=1, rearrange=True)
+
         with pytest.raises(ValueError):
             _ = PackedLinear(5, 2, alpha=-1, num_estimators=1, rearrange=True)
 
-    def test_linear_gamma_float(self):
+    def test_linear_num_estimators_error(self):
+        with pytest.raises(ValueError):
+            _ = PackedLinear(5, 2, alpha=1, num_estimators=None, rearrange=True)
+
+        with pytest.raises(ValueError):
+            _ = PackedLinear(5, 2, alpha=1, num_estimators=1.5, rearrange=True)
+
+        with pytest.raises(ValueError):
+            _ = PackedLinear(5, 2, alpha=1, num_estimators=-1, rearrange=True)
+
+    def test_linear_gamma_error(self):
         with pytest.raises(ValueError):
             _ = PackedLinear(
                 5, 2, alpha=1, num_estimators=1, gamma=0.5, rearrange=True
             )
 
-    def test_linear_gamma_neg(self):
         with pytest.raises(ValueError):
             _ = PackedLinear(
                 5, 2, alpha=1, num_estimators=1, gamma=-1, rearrange=True

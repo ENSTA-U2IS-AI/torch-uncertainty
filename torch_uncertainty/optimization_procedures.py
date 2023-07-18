@@ -11,10 +11,13 @@ __all__ = [
     "optim_cifar10_resnet18",
     "optim_cifar10_resnet50",
     "optim_cifar10_wideresnet",
+    "optim_cifar10_vgg16",
     "optim_cifar100_resnet18",
     "optim_cifar100_resnet50",
+    "optim_cifar100_vgg16",
     "optim_imagenet_resnet50",
     "optim_imagenet_resnet50_A3",
+    "optim_regression",
 ]
 
 

@@ -2,7 +2,7 @@
 from argparse import ArgumentParser
 from functools import partial
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any, Optional, Tuple, Union
 
 from pytorch_lightning import LightningDataModule
 from torch.utils.data import DataLoader, Dataset, random_split
@@ -42,6 +42,7 @@ class UCIDataModule(LightningDataModule):
         num_workers: int = 1,
         pin_memory: bool = True,
         persistent_workers: bool = True,
+        input_shape: Optional[Tuple[int, ...]] = None,
         **kwargs,
     ) -> None:
         super().__init__()
@@ -57,6 +58,7 @@ class UCIDataModule(LightningDataModule):
         self.persistent_workers = persistent_workers
 
         self.dataset = partial(UCIRegression, dataset_name=dataset_name)
+        self.input_shape = input_shape
 
     def prepare_data(self) -> None:
         """Download the dataset."""

@@ -22,7 +22,7 @@ def load_hf(weight_id: str) -> Tuple[torch.Tensor, Dict]:
     # Load the weights
     weight_path = hf_hub_download(repo_id=repo_id, filename=f"{weight_id}.ckpt")
     weight = torch.load(weight_path)
-    if "state_dict" in weight:
+    if "state_dict" in weight:  # coverage: ignore
         weight = weight["state_dict"]
 
     # Load the config
