@@ -32,6 +32,7 @@ To train a BNN using TorchUncertainty, we have to load the following utilities f
 - the datamodule that handles dataloaders: MNISTDataModule, which lies in the torch_uncertainty.datamodule
 - the cli handler: cli_main and argument parser: init_args
 """
+
 from torch_uncertainty import cli_main, init_args
 from torch_uncertainty.datamodules import MNISTDataModule
 from torch_uncertainty.losses import ELBOLoss
@@ -45,6 +46,7 @@ from torch_uncertainty.routines.classification import ClassificationSingle
 
 # We also import ArgvContext to avoid using the jupyter arguments as cli
 # arguments, and therefore avoid errors.
+
 import torch.nn as nn
 import torch.optim as optim
 
@@ -57,6 +59,7 @@ from cli_test_helpers import ArgvContext
 # Creating the Optimizer Wrapper
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # We will use the Adam optimizer with the default learning rate of 0.001.
+
 def optim_lenet(model: nn.Module) -> dict:
     optimizer = optim.Adam(
         model.parameters(),
@@ -73,12 +76,14 @@ def optim_lenet(model: nn.Module) -> dict:
 # Trainer. We also create the datamodule that handles the MNIST dataset,
 # dataloaders and transforms. Finally, we also create the model using the
 # blueprint from torch_uncertainty.models. 
-root = Path(os.path.abspath("")).parent.absolute().parents[2]
 
-with ArgvContext("--max_epochs 10"): #TODO: understand why it doesn't work
+root = Path(os.path.abspath(""))
+
+with ArgvContext("--max_epochs 5"): #TODO: understand why it doesn't work
     args = init_args(datamodule=MNISTDataModule)
+    args.enable_progress_bar = False
+    args.verbose = False
 
-args.max_epochs = 10
 net_name = "bayesian-lenet-mnist"
 
 # datamodule
@@ -99,6 +104,7 @@ model = bayesian_lenet(dm.num_channels, dm.num_classes)
 # We then define the training routine using the classification training routine
 # from torch_uncertainty.training.classification. We provide the model, the ELBO
 # loss and the optimizer, as well as all the default arguments.
+
 loss = partial(
     ELBOLoss,
     model=model,
@@ -125,6 +131,7 @@ baseline = ClassificationSingle(
 # name of the model for the logs and all the training arguments.
 # The dataset will be downloaded automatically in the root/data folder, and the
 # logs will be saved in the root/logs folder.
+
 cli_main(baseline, dm, root, net_name, args)
 
 ########################################################################
