@@ -24,6 +24,7 @@ network impedes convergence for all tested hyperparameters.
 ### MNIST
 
 * LeNet
+* Bayesian LeNet
 
 ### Tiny-ImageNet200
 

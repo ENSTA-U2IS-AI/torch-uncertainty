@@ -93,7 +93,7 @@ class RegressionSingle(pl.LightningModule):
             vars = F.softplus(logits[..., 1])
             loss = self.criterion(means, targets, vars)
         else:
-            loss = self.criterion(logits.squeeze(-1), targets)
+            loss = self.criterion(logits, targets)
 
         self.log("train_loss", loss)
         return loss
@@ -107,6 +107,9 @@ class RegressionSingle(pl.LightningModule):
             means = logits[..., 0]
             vars = F.softplus(logits[..., 1])
             self.val_metrics.gnll.update(means, targets, vars)
+
+            if means.ndim == 1:
+                means = means.unsqueeze(-1)
         else:
             means = logits.squeeze(-1)
 
@@ -129,6 +132,9 @@ class RegressionSingle(pl.LightningModule):
             means = logits[..., 0]
             vars = F.softplus(logits[..., 1])
             self.test_metrics.gnll.update(means, targets, vars)
+
+            if means.ndim == 1:
+                means = means.unsqueeze(-1)
         else:
             means = logits.squeeze(-1)
 

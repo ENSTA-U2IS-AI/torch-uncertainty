@@ -5,3 +5,7 @@ Torch-Uncertainty proposes various benchmarks to evaluate the uncertainty estima
 ## Classification
 
 *Work in progress*
+
+## Regression
+
+*Work in progress*

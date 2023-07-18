@@ -67,6 +67,7 @@ class DummyRegressionBaseline:
         loss: nn.Module,
         optimization_procedure: Any,
         baseline_type: str = "single",
+        dist_estimation: bool = False,
         **kwargs,
     ) -> LightningModule:
         model = dummy_model(
@@ -81,7 +82,7 @@ class DummyRegressionBaseline:
                 model=model,
                 loss=loss,
                 optimization_procedure=optimization_procedure,
-                dist_estimation=False,
+                dist_estimation=dist_estimation,
                 **kwargs,
             )
         elif baseline_type == "ensemble":
@@ -90,7 +91,7 @@ class DummyRegressionBaseline:
                 model=model,
                 loss=loss,
                 optimization_procedure=optimization_procedure,
-                dist_estimation=False,
+                dist_estimation=dist_estimation,
                 mode="mean",
                 out_features=out_features,
                 **kwargs,
