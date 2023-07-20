@@ -3,12 +3,13 @@
 # For the full list of built-in configuration values, see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 from datetime import datetime
+
 import pytorch_sphinx_theme
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = "Torch Uncertainty"
+project = "TorchUncertainty"
 copyright = f"{str(datetime.utcnow().year)}, Adrien Lafage and Olivier Laurent"
 author = "Adrien Lafage and Olivier Laurent"
 release = "0.1.3"
