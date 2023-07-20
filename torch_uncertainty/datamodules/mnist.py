@@ -118,6 +118,8 @@ class MNISTDataModule(LightningDataModule):
                 download=False,
                 transform=self.transform_test,
             )
+
+        if self.ood_detection:
             self.ood = self.ood_dataset(
                 self.root,
                 download=False,

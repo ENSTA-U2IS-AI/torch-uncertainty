@@ -95,6 +95,8 @@ class TinyImageNetDataModule(LightningDataModule):
                 split="val",
                 transform=self.transform_test,
             )
+
+        if self.ood_detection:
             self.ood = self.ood_dataset(
                 self.root,
                 split="test",

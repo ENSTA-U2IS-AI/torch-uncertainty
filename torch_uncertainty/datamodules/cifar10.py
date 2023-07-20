@@ -130,7 +130,8 @@ class CIFAR10DataModule(LightningDataModule):
                 download=True,
             )
 
-        self.ood_dataset(self.root, split="test", download=True)
+        if self.ood_detection:
+            self.ood_dataset(self.root, split="test", download=True)
 
     def setup(self, stage: Optional[str] = None) -> None:
         if stage == "fit" or stage is None:
@@ -162,19 +163,13 @@ class CIFAR10DataModule(LightningDataModule):
                 download=False,
                 transform=self.transform_test,
             )
-            self.ood = self.ood_dataset(
-                self.root,
-                split="test",
-                download=False,
-                transform=self.transform_test,
-            )
         else:
             self.test = self.dataset(
                 self.root,
                 severity=self.corruption_severity,
                 transform=self.transform_test,
             )
-
+        if self.ood_detection:
             self.ood = self.ood_dataset(
                 self.root,
                 split="test",

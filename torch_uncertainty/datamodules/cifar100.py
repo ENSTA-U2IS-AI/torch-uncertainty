@@ -132,12 +132,13 @@ class CIFAR100DataModule(LightningDataModule):
             self.dataset(self.root, train=True, download=True)
             self.dataset(self.root, train=False, download=True)
 
-        self.ood_dataset(
-            self.root,
-            split="test",
-            download=True,
-            transform=self.transform_test,
-        )
+        if self.ood_detection:
+            self.ood_dataset(
+                self.root,
+                split="test",
+                download=True,
+                transform=self.transform_test,
+            )
 
     def setup(self, stage: Optional[str] = None) -> None:
         if stage == "fit" or stage is None:
@@ -176,12 +177,13 @@ class CIFAR100DataModule(LightningDataModule):
                     transform=self.transform_test,
                     severity=self.corruption_severity,
                 )
-            self.ood = self.ood_dataset(
-                self.root,
-                split="test",
-                download=False,
-                transform=self.transform_test,
-            )
+            if self.ood_detection:
+                self.ood = self.ood_dataset(
+                    self.root,
+                    split="test",
+                    download=False,
+                    transform=self.transform_test,
+                )
 
     def train_dataloader(self) -> DataLoader:
         """Get the training dataloader for CIFAR100.

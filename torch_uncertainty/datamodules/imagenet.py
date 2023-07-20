@@ -129,27 +129,28 @@ class ImageNetDataModule(LightningDataModule):
                 split="val",
                 download=True,
             )
-        if self.ood_ds == "inaturalist":
-            self.ood = self.ood_dataset(
-                self.root,
-                version="2021_valid",
-                download=True,
-                transform=self.transform_test,
-            )
-        elif self.ood_ds != "textures":
-            self.ood = self.ood_dataset(
-                self.root,
-                split="test",
-                download=True,
-                transform=self.transform_test,
-            )
-        else:
-            self.ood = self.ood_dataset(
-                self.root,
-                split="train",
-                download=True,
-                transform=self.transform_test,
-            )
+        if self.ood_detection:
+            if self.ood_ds == "inaturalist":
+                self.ood = self.ood_dataset(
+                    self.root,
+                    version="2021_valid",
+                    download=True,
+                    transform=self.transform_test,
+                )
+            elif self.ood_ds != "textures":
+                self.ood = self.ood_dataset(
+                    self.root,
+                    split="test",
+                    download=True,
+                    transform=self.transform_test,
+                )
+            else:
+                self.ood = self.ood_dataset(
+                    self.root,
+                    split="train",
+                    download=True,
+                    transform=self.transform_test,
+                )
 
     def setup(self, stage: Optional[str] = None) -> None:
         if stage == "fit" or stage is None:
@@ -173,6 +174,8 @@ class ImageNetDataModule(LightningDataModule):
                 split="val",
                 transform=self.transform_test,
             )
+
+        if self.ood_detection:
             if self.ood_ds == "inaturalist":
                 self.ood = self.ood_dataset(
                     self.root,
