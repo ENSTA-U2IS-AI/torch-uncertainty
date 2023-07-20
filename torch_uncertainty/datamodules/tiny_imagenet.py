@@ -75,7 +75,8 @@ class TinyImageNetDataModule(LightningDataModule):
             )
 
     def prepare_data(self) -> None:
-        self.ood_dataset(self.root, split="test", download=True)
+        if self.ood_detection:
+            self.ood_dataset(self.root, split="test", download=True)
 
     def setup(self, stage: Optional[str] = None) -> None:
         if stage == "fit" or stage is None:
