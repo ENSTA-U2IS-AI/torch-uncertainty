@@ -23,9 +23,11 @@ def optim_tiny(model: nn.Module) -> dict:
 
 
 if __name__ == "__main__":
-    root = Path(__file__).parent.absolute().parents[2]
-
     args = init_args(ResNet, TinyImageNetDataModule)
+    if args.root == "./data/":
+        root = Path(__file__).parent.absolute().parents[2]
+    else:
+        root = Path(args.root)
 
     net_name = f"{args.version}-resnet{args.arch}-tiny-imagenet"
 

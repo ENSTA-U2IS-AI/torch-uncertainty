@@ -28,9 +28,11 @@ def optim_lenet(model: nn.Module) -> dict:
 
 
 if __name__ == "__main__":
-    root = Path(__file__).parent.absolute().parents[2]
-
     args = init_args(datamodule=MNISTDataModule)
+    if args.root == "./data/":
+        root = Path(__file__).parent.absolute().parents[2]
+    else:
+        root = Path(args.root)
 
     net_name = "std-lenet-mnist"
 

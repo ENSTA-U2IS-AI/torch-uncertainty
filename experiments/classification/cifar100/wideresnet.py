@@ -10,9 +10,11 @@ from torch_uncertainty.optimization_procedures import get_procedure
 
 # fmt: on
 if __name__ == "__main__":
-    root = Path(__file__).parent.absolute().parents[2]
-
     args = init_args(WideResNet, CIFAR100DataModule)
+    if args.root == "./data/":
+        root = Path(__file__).parent.absolute().parents[2]
+    else:
+        root = Path(args.root)
 
     net_name = f"{args.version}-wideresnet{args.arch}-cifar10"
 
