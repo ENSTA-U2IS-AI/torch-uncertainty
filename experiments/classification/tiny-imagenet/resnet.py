@@ -43,6 +43,4 @@ if __name__ == "__main__":
         **vars(args),
     )
 
-    # torch.compile(model)
-
     cli_main(model, dm, root, net_name, args)
