@@ -208,6 +208,10 @@ class _BayesConvNd(Module):
 
 
 class BayesConv1d(_BayesConvNd):
+    """Bayesian Conv1d Layer with Mixture of Normals prior and Normal
+    posterior.
+    """
+
     def __init__(
         self,
         in_channels: int,
@@ -306,6 +310,10 @@ class BayesConv1d(_BayesConvNd):
 
 
 class BayesConv2d(_BayesConvNd):
+    """Bayesian Conv2d Layer with Mixture of Normals prior and Normal
+    posterior.
+    """
+
     def __init__(
         self,
         in_channels: int,
@@ -404,6 +412,10 @@ class BayesConv2d(_BayesConvNd):
 
 
 class BayesConv3d(_BayesConvNd):
+    """Bayesian Conv3d Layer with Mixture of Normals prior and Normal
+    posterior.
+    """
+
     def __init__(
         self,
         in_channels: int,

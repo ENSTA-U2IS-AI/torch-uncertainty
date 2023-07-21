@@ -14,18 +14,19 @@ Bayesian Neural Networks (BNNs) are a class of neural networks that can estimate
 
 For more information on Bayesian Neural Networks, we refer the reader to the following resources:
 
-- Weight Uncertainty in Neural Networks [ICML2015](https://arxiv.org/pdf/1505.05424.pdf)
-- Hands-on Bayesian Neural Networks - a Tutorial for Deep Learning Users [IEEE Computational Intelligence Magazine](https://arxiv.org/pdf/2007.06823.pdf)
+- Weight Uncertainty in Neural Networks `ICML2015 <https://arxiv.org/pdf/1505.05424.pdf>`_
+- Hands-on Bayesian Neural Networks - a Tutorial for Deep Learning Users `IEEE Computational Intelligence Magazine <https://arxiv.org/pdf/2007.06823.pdf>`_
 
 Training a Bayesian LeNet using TorchUncertainty models and PyTorch Lightning
 -----------------------------------------------------------------------------
 
-In this part, we train a bayesian LeNe, based on the already implemented method.
+In this part, we train a bayesian LeNet, based on the already implemented method.
 
 1. Loading the utilities
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 To train a BNN using TorchUncertainty, we have to load the following utilities from TorchUncertainty:
+
 - the model: bayesian_lenet, which lies in the torch_uncertainty.model module
 - the classification training routine in the torch_uncertainty.training.classification module
 - the bayesian objective: the ELBOLoss, which lies in the torch_uncertainty.losses file
@@ -39,11 +40,11 @@ from torch_uncertainty.losses import ELBOLoss
 from torch_uncertainty.models.lenet import bayesian_lenet
 from torch_uncertainty.routines.classification import ClassificationSingle
 
-########################################################################
+# %%
 # We will also need to define an optimizer using torch.optim as well as the 
 # neural network utils withing torch.nn, as well as the partial util to provide
 # the modified default arguments for the ELBO loss.
-
+#
 # We also import ArgvContext to avoid using the jupyter arguments as cli
 # arguments, and therefore avoid errors.
 
@@ -55,9 +56,9 @@ from pathlib import Path
 import os
 from cli_test_helpers import ArgvContext
 
-########################################################################
-# Creating the Optimizer Wrapper
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# %%
+# 2. Creating the Optimizer Wrapper
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # We will use the Adam optimizer with the default learning rate of 0.001.
 
 def optim_lenet(model: nn.Module) -> dict:
@@ -67,10 +68,10 @@ def optim_lenet(model: nn.Module) -> dict:
     )
     return {"optimizer": optimizer}
 
-########################################################################
-# Creating the necessary variables
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
+# %%
+# 3. Creating the necessary variables
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
 # In the following, we will need to define the root of the datasets and the
 # logs, and to fake parse the arguments needed for using the PyTorch Lightning
 # Trainer. We also create the datamodule that handles the MNIST dataset,
@@ -79,7 +80,7 @@ def optim_lenet(model: nn.Module) -> dict:
 
 root = Path(os.path.abspath(""))
 
-with ArgvContext("--max_epochs 5"): #TODO: understand why it doesn't work
+with ArgvContext("--max_epochs 2"):
     args = init_args(datamodule=MNISTDataModule)
     args.enable_progress_bar = False
     args.verbose = False
@@ -93,9 +94,9 @@ dm = MNISTDataModule(**vars(args))
 # model
 model = bayesian_lenet(dm.num_channels, dm.num_classes)
 
-########################################################################
-# The Loss and the Training Routine
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# %%
+# 4. The Loss and the Training Routine
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Then, we just have to define the loss to be used during training. To do this,
 # we redefine the default parameters from the ELBO loss using the partial
 # function from functools. We use the hyperparameters proposed in the blitz
@@ -122,8 +123,10 @@ baseline = ClassificationSingle(
     **vars(args),
 )
 
-########################################################################
-### Gathering Everything and Train the Model
+# %%
+# 5. Gathering Everything and Training the Model
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
 # Now that we have prepared all of this, we just have to gather everything in
 # the main function and to train the model using the PyTorch Lightning Trainer.
 # Specifically, it needs the baseline, that includes the model as well as the
@@ -132,20 +135,13 @@ baseline = ClassificationSingle(
 # The dataset will be downloaded automatically in the root/data folder, and the
 # logs will be saved in the root/logs folder.
 
-cli_main(baseline, dm, root, net_name, args)
+results = cli_main(baseline, dm, root, net_name, args)
 
-########################################################################
+# %%
 # References
 # ----------
-# **LeNet & MNIST:**
-# LeCun, Y., Bottou, L., Bengio, Y., & Haffner, P. (1998). Gradient-based
-# learning applied to document recognition.
-# [Proceedings of the IEEE](vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf).
-# **Bayesian Neural Networks:**
-# Weight Uncertainty in Neural Networks
-# [ICML2015](https://arxiv.org/pdf/1505.05424.pdf)
-# **The Adam optimizer:**
-# Kingma, Diederik P., and Jimmy Ba. "Adam: A method for stochastic optimization."
-# [ICLR 2015](https://arxiv.org/pdf/1412.6980.pdf)
-# The [Blitz library](https://github.com/piEsposito/blitz-bayesian-deep-learning/tree/master)
-# (for the hyperparameters)
+#
+# - **LeNet & MNIST:** LeCun, Y., Bottou, L., Bengio, Y., & Haffner, P. (1998). Gradient-based learning applied to document recognition. `Proceedings of the IEEE <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_
+# - **Bayesian Neural Networks:** Weight Uncertainty in Neural Networks `ICML2015 <https://arxiv.org/pdf/1505.05424.pdf>`_
+# - **The Adam optimizer:** Kingma, Diederik P., and Jimmy Ba. "Adam: A method for stochastic optimization." `ICLR 2015 <https://arxiv.org/pdf/1412.6980.pdf>`_
+# - **The Blitz** `library <https://github.com/piEsposito/blitz-bayesian-deep-learning>`_ (for the hyperparameters)

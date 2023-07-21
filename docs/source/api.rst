@@ -8,7 +8,7 @@ Baselines
 
 This API provides lightning-based models that can be easily trained and evaluated.
 
-.. currentmodule:: torch_uncertainty.baselines
+.. currentmodule:: torch_uncertainty.baselines.classification
 
 Classification
 ^^^^^^^^^^^^^^
@@ -19,121 +19,137 @@ Classification
     :template: class.rst
 
     ResNet
+    VGG
     WideResNet
 
-Models
-------
+.. currentmodule:: torch_uncertainty.baselines.regression
 
-This section encapsulates the model backbones currently supported by the library.
-
-ResNet
-^^^^^^
-
-.. currentmodule:: torch_uncertainty.models.resnet
-
-Concerning ResNet backbones, we provide building functions for ResNet18, ResNet34,
-ResNet50, ResNet101 and, ResNet152 (from `Deep Residual Learning for Image Recognition
-<https://arxiv.org/pdf/1512.03385.pdf>`_, CVPR 2016). 
-
-Vanilla
-~~~~~~~
+Regression
+^^^^^^^^^^
 
 .. autosummary::
     :toctree: generated/
     :nosignatures:
+    :template: class.rst
 
-    resnet18
-    resnet34
-    resnet50
-    resnet101
-    resnet152
+    MLP
 
-Packed-Ensembles
-~~~~~~~~~~~~~~~~
+.. Models
+.. ------
 
-.. autosummary::
-    :toctree: generated/
-    :nosignatures:
+.. This section encapsulates the model backbones currently supported by the library.
 
-    packed_resnet18
-    packed_resnet34
-    packed_resnet50
-    packed_resnet101
-    packed_resnet152
+.. ResNet
+.. ^^^^^^
 
-Masksembles
-~~~~~~~~~~~
+.. .. currentmodule:: torch_uncertainty.models.resnet
 
-.. autosummary::
-    :toctree: generated/
-    :nosignatures:
+.. Concerning ResNet backbones, we provide building functions for ResNet18, ResNet34,
+.. ResNet50, ResNet101 and, ResNet152 (from `Deep Residual Learning for Image Recognition
+.. <https://arxiv.org/pdf/1512.03385.pdf>`_, CVPR 2016). 
 
-    masked_resnet18
-    masked_resnet34
-    masked_resnet50
-    masked_resnet101
-    masked_resnet152
+.. Vanilla
+.. ~~~~~~~
 
-BatchEnsemble
-~~~~~~~~~~~~~
+.. .. autosummary::
+..     :toctree: generated/
+..     :nosignatures:
 
-.. autosummary::
-    :toctree: generated/
-    :nosignatures:
+..     resnet18
+..     resnet34
+..     resnet50
+..     resnet101
+..     resnet152
 
-    batched_resnet18
-    batched_resnet34
-    batched_resnet50
-    batched_resnet101
-    batched_resnet152
+.. Packed-Ensembles
+.. ~~~~~~~~~~~~~~~~
 
-Wide-ResNet
-^^^^^^^^^^^
+.. .. autosummary::
+..     :toctree: generated/
+..     :nosignatures:
 
-.. currentmodule:: torch_uncertainty.models.wideresnet
+..     packed_resnet18
+..     packed_resnet34
+..     packed_resnet50
+..     packed_resnet101
+..     packed_resnet152
 
-Concerning Wide-ResNet backbones, we provide building functions for Wide-ResNet28x10
-(from `Wide Residual Networks <https://arxiv.org/pdf/1605.07146.pdf>`_, British
-Machine Vision Conference 2016).
+.. Masksembles
+.. ~~~~~~~~~~~
 
-Vanilla
-~~~~~~~
+.. .. autosummary::
+..     :toctree: generated/
+..     :nosignatures:
 
-.. autosummary::
-    :toctree: generated/
-    :nosignatures:
+..     masked_resnet18
+..     masked_resnet34
+..     masked_resnet50
+..     masked_resnet101
+..     masked_resnet152
 
-    wideresnet28x10
+.. BatchEnsemble
+.. ~~~~~~~~~~~~~
 
-Packed-Ensembles
-~~~~~~~~~~~~~~~~
+.. .. autosummary::
+..     :toctree: generated/
+..     :nosignatures:
 
-.. autosummary::
-    :toctree: generated/
-    :nosignatures:
+..     batched_resnet18
+..     batched_resnet34
+..     batched_resnet50
+..     batched_resnet101
+..     batched_resnet152
 
-    packed_wideresnet28x10
+.. Wide-ResNet
+.. ^^^^^^^^^^^
 
-Masksembles
-~~~~~~~~~~~
+.. .. currentmodule:: torch_uncertainty.models.wideresnet
 
-.. autosummary::
-    :toctree: generated/
-    :nosignatures:
+.. Concerning Wide-ResNet backbones, we provide building functions for Wide-ResNet28x10
+.. (from `Wide Residual Networks <https://arxiv.org/pdf/1605.07146.pdf>`_, British
+.. Machine Vision Conference 2016).
 
-    masked_wideresnet28x10
+.. Vanilla
+.. ~~~~~~~
 
-BatchEnsemble
-~~~~~~~~~~~~~
+.. .. autosummary::
+..     :toctree: generated/
+..     :nosignatures:
 
-.. autosummary::
-    :toctree: generated/
-    :nosignatures:
+..     wideresnet28x10
 
-    batched_wideresnet28x10
+.. Packed-Ensembles
+.. ~~~~~~~~~~~~~~~~
+
+.. .. autosummary::
+..     :toctree: generated/
+..     :nosignatures:
+
+..     packed_wideresnet28x10
+
+.. Masksembles
+.. ~~~~~~~~~~~
+
+.. .. autosummary::
+..     :toctree: generated/
+..     :nosignatures:
+
+..     masked_wideresnet28x10
+
+.. BatchEnsemble
+.. ~~~~~~~~~~~~~
+
+.. .. autosummary::
+..     :toctree: generated/
+..     :nosignatures:
+
+..     batched_wideresnet28x10
 
 Layers
 ------
+
+Ensemble layers
+^^^^^^^^^^^^^^^
 
 .. currentmodule:: torch_uncertainty.layers
 
@@ -142,8 +158,28 @@ Layers
     :nosignatures:
     :template: class.rst
 
-    PackedConv2d
     PackedLinear
+    BatchLinear
+    MaskedLinear
+    PackedConv2d
+    BatchConv2d
+    MaskedConv2d
+
+
+Bayesian layers
+^^^^^^^^^^^^^^^
+
+.. currentmodule:: torch_uncertainty.layers.bayesian_layers
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: class.rst
+
+    BayesLinear
+    BayesConv1d
+    BayesConv2d
+    BayesConv3d
 
 Metrics
 -------

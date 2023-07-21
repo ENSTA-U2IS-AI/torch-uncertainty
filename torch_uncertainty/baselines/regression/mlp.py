@@ -18,6 +18,8 @@ from ..utils.parser_addons import add_packed_specific_args
 
 # fmt: on
 class MLP:
+    r"""MLP baseline for regression providing support for various versions."""
+
     single = ["vanilla"]
     ensemble = ["packed"]
     versions = {"vanilla": mlp, "packed": packed_mlp}
