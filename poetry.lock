@@ -2271,17 +2271,21 @@ theme-sbt = ["sphinx-book-theme (>=0.3.0,<0.4.0)"]
 
 [[package]]
 name = "sphinx-gallery"
-version = "0.12.2"
+version = "0.14.dev0"
 description = "A `Sphinx <https://www.sphinx-doc.org/en/master/>`_ extension that builds an HTML gallery of examples from any set of Python scripts."
 optional = false
 python-versions = ">=3.7"
-files = [
-    {file = "sphinx-gallery-0.12.2.tar.gz", hash = "sha256:3aaffb3a9491e3380ee269e05eaa384b7ae9f47b1071a34d2610d4e5ceb34b8b"},
-    {file = "sphinx_gallery-0.12.2-py3-none-any.whl", hash = "sha256:eb8afa1f3d0b1d53bb82829559adb2aa14455493d70b025569edb084a0d14ee5"},
-]
+files = []
+develop = false
 
 [package.dependencies]
-sphinx = ">=3"
+sphinx = ">=4"
+
+[package.source]
+type = "git"
+url = "https://github.com/sphinx-gallery/sphinx-gallery"
+reference = "HEAD"
+resolved_reference = "749a567cd00669d1d27a8bbd582b7c75213705e7"
 
 [[package]]
 name = "sphinxcontrib-applehelp"
@@ -2781,4 +2785,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.12"
-content-hash = "7afd12e97416106b1efb54b42cbc95f7ce9bbea8c02e9d37dbceb2fd311f0a3a"
+content-hash = "07745365fea689fc1f521c931c5213d5bd2c09b2298fca5202f264bdf2916e0c"
