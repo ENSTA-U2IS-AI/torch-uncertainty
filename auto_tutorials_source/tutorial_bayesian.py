@@ -73,9 +73,9 @@ def optim_lenet(model: nn.Module) -> dict:
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 # In the following, we will need to define the root of the datasets and the
-# logs, and to fake parse the arguments needed for using the PyTorch Lightning
+# logs, and to fake-parse the arguments needed for using the PyTorch Lightning
 # Trainer. We also create the datamodule that handles the MNIST dataset,
-# dataloaders and transforms. Finally, we also create the model using the
+# dataloaders and transforms. Finally, we create the model using the
 # blueprint from torch_uncertainty.models. 
 
 root = Path(os.path.abspath(""))
@@ -136,6 +136,40 @@ baseline = ClassificationSingle(
 # logs will be saved in the root/logs folder.
 
 results = cli_main(baseline, dm, root, net_name, args)
+
+# %%
+# 6. Testing the Model
+# ~~~~~~~~~~~~~~~~~~~~
+#
+# Now that the model is trained, let's test it on MNIST
+
+import torch
+import torchvision
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+
+def imshow(img):
+    npimg = img.numpy()
+    plt.imshow(np.transpose(npimg, (1, 2, 0)))
+    plt.show()
+
+dataiter = iter(dm.val_dataloader())
+images, labels = next(dataiter)
+
+# print images
+imshow(torchvision.utils.make_grid(images[:4, ...]))
+print('GroundTruth: ', ' '.join(f'{labels[j]}' for j in range(4)))
+
+logits = model(images)
+probs = torch.nn.functional.softmax(logits, dim=-1)
+
+_, predicted = torch.max(probs, 1)
+
+print(
+    'Predicted: ', ' '.join(f'{predicted[j]}' for j in range(4))
+)
 
 # %%
 # References
