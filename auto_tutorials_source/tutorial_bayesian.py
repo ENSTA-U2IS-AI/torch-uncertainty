@@ -20,18 +20,18 @@ For more information on Bayesian Neural Networks, we refer the reader to the fol
 Training a Bayesian LeNet using TorchUncertainty models and PyTorch Lightning
 -----------------------------------------------------------------------------
 
-In this part, we train a bayesian LeNet, based on the already implemented method.
+In this part, we train a bayesian LeNet, based on the model and routines already implemented in TU.
 
 1. Loading the utilities
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 To train a BNN using TorchUncertainty, we have to load the following utilities from TorchUncertainty:
 
+- the cli handler: cli_main and argument parser: init_args
 - the model: bayesian_lenet, which lies in the torch_uncertainty.model module
 - the classification training routine in the torch_uncertainty.training.classification module
 - the bayesian objective: the ELBOLoss, which lies in the torch_uncertainty.losses file
 - the datamodule that handles dataloaders: MNISTDataModule, which lies in the torch_uncertainty.datamodule
-- the cli handler: cli_main and argument parser: init_args
 """
 
 from torch_uncertainty import cli_main, init_args
@@ -48,12 +48,12 @@ from torch_uncertainty.routines.classification import ClassificationSingle
 # We also import ArgvContext to avoid using the jupyter arguments as cli
 # arguments, and therefore avoid errors.
 
-import torch.nn as nn
-import torch.optim as optim
-
+import os
 from functools import partial
 from pathlib import Path
-import os
+
+import torch.nn as nn
+import torch.optim as optim
 from cli_test_helpers import ArgvContext
 
 # %%
@@ -80,10 +80,11 @@ def optim_lenet(model: nn.Module) -> dict:
 
 root = Path(os.path.abspath(""))
 
-with ArgvContext("--max_epochs 2"):
+with ArgvContext("--max_epochs 1"):
     args = init_args(datamodule=MNISTDataModule)
     args.enable_progress_bar = False
     args.verbose = False
+    args.max_epochs = 1
 
 net_name = "bayesian-lenet-mnist"
 
@@ -143,10 +144,10 @@ results = cli_main(baseline, dm, root, net_name, args)
 #
 # Now that the model is trained, let's test it on MNIST
 
+import matplotlib.pyplot as plt
 import torch
 import torchvision
 
-import matplotlib.pyplot as plt
 import numpy as np
 
 
@@ -160,7 +161,7 @@ images, labels = next(dataiter)
 
 # print images
 imshow(torchvision.utils.make_grid(images[:4, ...]))
-print('GroundTruth: ', ' '.join(f'{labels[j]}' for j in range(4)))
+print('Ground truth: ', ' '.join(f'{labels[j]}' for j in range(4)))
 
 logits = model(images)
 probs = torch.nn.functional.softmax(logits, dim=-1)
@@ -168,7 +169,7 @@ probs = torch.nn.functional.softmax(logits, dim=-1)
 _, predicted = torch.max(probs, 1)
 
 print(
-    'Predicted: ', ' '.join(f'{predicted[j]}' for j in range(4))
+    'Predicted digits: ', ' '.join(f'{predicted[j]}' for j in range(4))
 )
 
 # %%
