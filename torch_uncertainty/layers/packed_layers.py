@@ -8,6 +8,38 @@ from torch.nn.common_types import _size_2_t
 
 
 # fmt: on
+def check_packed_parameters_consistency(
+    alpha: float, num_estimators: int, gamma: int
+) -> None:
+    if alpha is None:
+        raise ValueError("You must specify the value of the arg. `alpha`")
+
+    if alpha <= 0:
+        raise ValueError(f"Attribute `alpha` should be > 0, not {alpha}")
+
+    if num_estimators is None:
+        raise ValueError(
+            "You must specify the value of the arg. `num_estimators`"
+        )
+    if not isinstance(num_estimators, int):
+        raise ValueError(
+            "Attribute `num_estimators` should be an int, not "
+            f"{type(num_estimators)}"
+        )
+    if num_estimators <= 0:
+        raise ValueError(
+            "Attribute `num_estimators` should be >= 1, not "
+            f"{num_estimators}"
+        )
+
+    if not isinstance(gamma, int):
+        raise ValueError(
+            f"Attribute `gamma` should be an int, not " f"{type(gamma)}"
+        )
+    if gamma <= 0:
+        raise ValueError(f"Attribute `gamma` should be >= 1, not {gamma}")
+
+
 class PackedLinear(nn.Module):
     r"""Packed-Ensembles-style Linear layer.
 
@@ -26,6 +58,12 @@ class PackedLinear(nn.Module):
             channels to output channels. Defaults to ``1``.
         rearrange (bool, optional): Rearrange the input and outputs for
             compatibility with previous and later layers. Defaults to ``True``.
+
+    Explanation Note:
+        Increasing :attr:`alpha` will increase the number of channels of the
+        ensemble, increasing its representation capacity. Increasing
+        :attr:`gamma` will increase the number of groups in the network and
+        therefore reduce the number of parameters.
 
     Note:
         Each ensemble member will only see
@@ -50,7 +88,6 @@ class PackedLinear(nn.Module):
         num_estimators: int,
         gamma: int = 1,
         bias: bool = True,
-        groups: int = 1,
         rearrange: bool = True,
         first: bool = False,
         last: bool = False,
@@ -60,16 +97,9 @@ class PackedLinear(nn.Module):
         factory_kwargs = {"device": device, "dtype": dtype}
         super().__init__()
 
-        if alpha <= 0:
-            raise ValueError(f"Attribute `alpha` should be > 0, not {alpha}")
+        check_packed_parameters_consistency(alpha, num_estimators, gamma)
 
-        if not isinstance(gamma, int):
-            raise ValueError(
-                f"Attribute `gamma` should be an int, not " f"{type(gamma)}"
-            )
-        if gamma <= 0:
-            raise ValueError(f"Attribute `gamma` should be >= 1, not {gamma}")
-
+        self.first = first
         self.num_estimators = num_estimators
         self.rearrange = rearrange
 
@@ -80,7 +110,7 @@ class PackedLinear(nn.Module):
         )
 
         # Define the number of groups of the underlying convolution
-        actual_groups = num_estimators * gamma * groups
+        actual_groups = num_estimators * gamma if not first else 1
 
         # fix if not divisible by groups
         if extended_in_features % actual_groups:
@@ -92,7 +122,7 @@ class PackedLinear(nn.Module):
                 actual_groups
             )
 
-        self.conv1x1 = nn.Conv2d(
+        self.conv1x1 = nn.Conv1d(
             in_channels=extended_in_features,
             out_channels=extended_out_features,
             kernel_size=1,
@@ -106,17 +136,47 @@ class PackedLinear(nn.Module):
         )
 
     def _rearrange_forward(self, x: Tensor) -> Tensor:
-        x = x.unsqueeze(-1).unsqueeze(-1)
-        x = rearrange(x, "(m e) c h w -> e (m c) h w", m=self.num_estimators)
+        x = x.unsqueeze(-1)
+        if not self.first:
+            x = rearrange(x, "(m e) c h -> e (m c) h", m=self.num_estimators)
+
         x = self.conv1x1(x)
-        x = rearrange(x, "e (m c) h w -> (m e) c h w", m=self.num_estimators)
-        return x.squeeze(-1).squeeze(-1)
+        x = rearrange(x, "e (m c) h -> (m e) c h", m=self.num_estimators)
+        return x.squeeze(-1)
 
     def forward(self, input: Tensor) -> Tensor:
         if self.rearrange:
             return self._rearrange_forward(input)
         else:
             return self.conv1x1(input)
+
+    @property
+    def weight(self) -> Tensor:
+        r"""The weight of the underlying convolutional layer."""
+        return self.conv1x1.weight
+
+    @property
+    def bias(self) -> Union[Tensor, None]:
+        r"""The bias of the underlying convolutional layer."""
+        return self.conv1x1.bias
+
+
+class PackedConv1d(nn.Module):
+    r"""Packed-Ensembles-style Conv1d layer.
+
+    Warning:
+        Not yet implemented (open an issue if desired).
+    """
+
+    def __init__(self, **kwargs) -> None:
+        raise NotImplementedError(
+            "Open an issue if you would like this layer to be implemented."
+        )
+
+    def forward(self, input: Tensor) -> Tensor:
+        raise NotImplementedError(
+            "Open an issue if you would like this layer to be implemented."
+        )
 
 
 class PackedConv2d(nn.Module):
@@ -141,6 +201,12 @@ class PackedConv2d(nn.Module):
             hannels per group.
         bias (bool, optional): If ``True``, adds a learnable bias to the
             output. Defaults to ``True``.
+
+    Explanation Note:
+        Increasing :attr:`alpha` will increase the number of channels of the
+        ensemble, increasing its representation capacity. Increasing
+        :attr:`gamma` will increase the number of groups in the network and
+        therefore reduce the number of parameters.
 
     Note:
         Each ensemble member will only see
@@ -174,15 +240,7 @@ class PackedConv2d(nn.Module):
         factory_kwargs = {"device": device, "dtype": dtype}
         super().__init__()
 
-        if alpha <= 0:
-            raise ValueError(f"Attribute `alpha` should be > 0, not {alpha}")
-
-        if not isinstance(gamma, int):
-            raise ValueError(
-                f"Attribute `gamma` should be an int, not " f"{type(gamma)}"
-            )
-        if gamma <= 0:
-            raise ValueError(f"Attribute `gamma` should be >= 1, not {gamma}")
+        check_packed_parameters_consistency(alpha, num_estimators, gamma)
 
         self.num_estimators = num_estimators
 
@@ -228,6 +286,16 @@ class PackedConv2d(nn.Module):
 
     def forward(self, input: Tensor) -> Tensor:
         return self.conv(input)
+
+    @property
+    def weight(self) -> Tensor:
+        r"""The weight of the underlying convolutional layer."""
+        return self.conv.weight
+
+    @property
+    def bias(self) -> Union[Tensor, None]:
+        r"""The bias of the underlying convolutional layer."""
+        return self.conv.bias
 
 
 class PackedConv3d(nn.Module):

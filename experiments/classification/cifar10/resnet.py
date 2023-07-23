@@ -3,16 +3,18 @@ from pathlib import Path
 
 import torch.nn as nn
 
-from torch_uncertainty import cls_main, init_args
+from torch_uncertainty import cli_main, init_args
 from torch_uncertainty.baselines import ResNet
 from torch_uncertainty.datamodules import CIFAR10DataModule
 from torch_uncertainty.optimization_procedures import get_procedure
 
 # fmt: on
 if __name__ == "__main__":
-    root = Path(__file__).parent.absolute().parents[2]
-
     args = init_args(ResNet, CIFAR10DataModule)
+    if args.root == "./data/":
+        root = Path(__file__).parent.absolute().parents[2]
+    else:
+        root = Path(args.root)
 
     net_name = f"{args.version}-resnet{args.arch}-cifar10"
 
@@ -28,8 +30,8 @@ if __name__ == "__main__":
         optimization_procedure=get_procedure(
             f"resnet{args.arch}", "cifar10", args.version
         ),
-        imagenet_structure=False,
+        style="cifar",
         **vars(args),
     )
 
-    cls_main(model, dm, root, net_name, args)
+    cli_main(model, dm, root, net_name, args)

@@ -79,7 +79,7 @@ class _MaskedWide(nn.Module):
         scale: float = 2.0,
         groups: int = 1,
         dropout_rate: float = 0.0,
-        imagenet_structure: bool = True,
+        style: str = "imagenet",
     ):
         super().__init__()
         self.num_estimators = num_estimators
@@ -91,7 +91,7 @@ class _MaskedWide(nn.Module):
 
         nStages = [16, 16 * k, 32 * k, 64 * k]
 
-        if imagenet_structure:
+        if style == "imagenet":
             self.conv1 = nn.Conv2d(
                 in_channels,
                 nStages[0],
@@ -112,7 +112,7 @@ class _MaskedWide(nn.Module):
                 groups=1,
             )
 
-        if imagenet_structure:
+        if style == "imagenet":
             self.optional_pool = nn.MaxPool2d(
                 kernel_size=3, stride=2, padding=1
             )
@@ -210,7 +210,7 @@ def masked_wideresnet28x10(
     scale: float,
     groups: int,
     num_classes: int,
-    imagenet_structure: bool = True,
+    style: str = "imagenet",
 ) -> _MaskedWide:
     """Masksembles of Wide-ResNet-28x10 from `Wide Residual Networks
     <https://arxiv.org/pdf/1605.07146.pdf>`_.
@@ -221,7 +221,7 @@ def masked_wideresnet28x10(
         scale (float): Expansion factor affecting the width of the estimators.
         groups (int): Number of groups within each estimator.
         num_classes (int): Number of classes to predict.
-        imagenet_structure (bool, optional): Whether to use the ImageNet
+        style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
 
     Returns:
@@ -236,5 +236,5 @@ def masked_wideresnet28x10(
         num_estimators=num_estimators,
         scale=scale,
         groups=groups,
-        imagenet_structure=imagenet_structure,
+        style=style,
     )

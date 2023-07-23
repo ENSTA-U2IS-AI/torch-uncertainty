@@ -2,9 +2,11 @@
 .vscode/
 data/
 logs/
+lightning_logs/
 docs/*/generated/
 docs/*/auto_tutorials/
 *.pth
+*.out
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

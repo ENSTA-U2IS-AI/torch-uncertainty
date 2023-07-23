@@ -28,6 +28,12 @@ To update the package, run:
 From source
 -----------
 
+To install the project from source, you may use `Poetry <https://python-poetry.org/>`_
+or install the package using pip directly.
+
+With poetry
+^^^^^^^^^^^
+
 **Installing Poetry**
 
 Installation guidelines for poetry are available `here <https://python-poetry.org/docs/>`_.
@@ -64,10 +70,36 @@ Install the package using poetry:
 
 Depending on your system, you may encounter poetry errors. If so, kill the 
 process and add :bash:`PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring`
-at the beginning of every :bash:`poetry install` command.
+at the beginning of every :bash:`poetry` command.
 
 To update the package, run:
 
 .. parsed-literal::
 
     git pull && poetry update
+
+With pip
+^^^^^^^^
+
+Clone the repository with:
+
+.. parsed-literal::
+
+    git clone https://github.com/ENSTA-U2IS/torch-uncertainty.git
+    cd torch-uncertainty
+
+Create a new conda environment and activate it:
+
+.. parsed-literal::
+
+    conda create -n uncertainty python=3.10
+    conda activate uncertainty
+
+Install the package using pip in editable mode:
+
+.. parsed-literal::
+
+    pip install -e .
+
+For now, you will have to install the optional dependencies manually.
+Check the pyproject.toml file for the list of dependencies.

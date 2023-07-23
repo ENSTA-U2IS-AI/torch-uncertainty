@@ -1,6 +1,6 @@
 # flake8: noqa
-from .baseline import DummyBaseline
-from .datamodule import DummyDataModule
-from .dataset import DummyDataset
+from .baseline import DummyClassificationBaseline, DummyRegressionBaseline
+from .datamodule import DummyClassificationDataModule, DummyRegressionDataModule
+from .dataset import DummyClassificationDataset, DummyRegressionDataset
 from .model import dummy_model
 from .transform import DummyTransform

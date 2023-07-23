@@ -2,7 +2,7 @@
 # flake8: noqa
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
-from typing import Type, Union
+from typing import Dict, Optional, Type, Union
 
 import pytorch_lightning as pl
 import torch
@@ -19,12 +19,28 @@ from .utils import get_version
 
 # fmt: on
 def init_args(
-    network: Type[pl.LightningModule], datamodule: Type[pl.LightningDataModule]
+    network: Optional[Type[pl.LightningModule]] = None,
+    datamodule: Optional[Type[pl.LightningDataModule]] = None,
 ) -> Namespace:
     parser = ArgumentParser("torch-uncertainty")
-    parser.add_argument("--seed", type=int, default=None)
-    parser.add_argument("--test", type=int, default=None)
-    parser.add_argument("--summary", dest="summary", action="store_true")
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=None,
+        help="Random seed to make the training deterministic.",
+    )
+    parser.add_argument(
+        "--test",
+        type=int,
+        default=None,
+        help="Run in test mode. Set to the checkpoint version number to test.",
+    )
+    parser.add_argument(
+        "--summary",
+        dest="summary",
+        action="store_true",
+        help="Print model summary",
+    )
     parser.add_argument("--log_graph", dest="log_graph", action="store_true")
     parser.add_argument(
         "--channels_last",
@@ -33,24 +49,36 @@ def init_args(
     )
 
     parser = pl.Trainer.add_argparse_args(parser)
-    parser = datamodule.add_argparse_args(parser)
-    parser = network.add_model_specific_args(parser)
-    args = parser.parse_args()
+    if network is not None:
+        parser = network.add_model_specific_args(parser)
 
-    return args
+    if datamodule is not None:
+        parser = datamodule.add_argparse_args(parser)
+
+    return parser.parse_args()
 
 
-def cls_main(
+def cli_main(
     network: pl.LightningModule,
     datamodule: pl.LightningDataModule,
     root: Union[Path, str],
     net_name: str,
     args: Namespace,
-) -> None:
+) -> Dict:
     if isinstance(root, str):
         root = Path(root)
 
-    if args.max_epochs is None:
+    training_task = datamodule.training_task
+    if training_task == "classification":
+        monitor = "hp/val_acc"
+        mode = "max"
+    elif training_task == "regression":
+        monitor = "hp/val_mse"
+        mode = "min"
+    else:
+        raise ValueError("Unknown problem type.")
+
+    if args.test is None and args.max_epochs is None:
         print(
             "Setting max_epochs to 1 for testing purposes. Set max_epochs "
             "manually to train the model."
@@ -58,7 +86,7 @@ def cls_main(
         args.max_epochs = 1
 
     if isinstance(args.seed, int):
-        pl.seed_everything(args.seed)
+        pl.seed_everything(args.seed, workers=True)
 
     if args.channels_last:
         network = network.to(memory_format=torch.channels_last)
@@ -74,8 +102,8 @@ def cls_main(
 
     # callbacks
     save_checkpoints = ModelCheckpoint(
-        monitor="hp/val_acc",
-        mode="max",
+        monitor=monitor,
+        mode=mode,
         save_last=True,
         save_weights_only=True,
     )
@@ -84,7 +112,7 @@ def cls_main(
     callbacks = [
         save_checkpoints,
         LearningRateMonitor(logging_interval="step"),
-        EarlyStopping(monitor="hp/val_nll", patience=np.inf, check_finite=True),
+        EarlyStopping(monitor=monitor, patience=np.inf, check_finite=True),
     ]
     # trainer
     trainer = pl.Trainer.from_argparse_args(
@@ -96,12 +124,19 @@ def cls_main(
 
     if args.summary:
         summary(network, input_size=list(datamodule.input_shape).insert(0, 1))
+        test_values = {}
     elif args.test is not None:
-        ckpt_file, _ = get_version(
-            root=(root / "logs" / net_name), version=args.test
-        )
-        trainer.test(network, datamodule=datamodule, ckpt_path=str(ckpt_file))
+        if args.test >= 0:
+            ckpt_file, _ = get_version(
+                root=(root / "logs" / net_name), version=args.test
+            )
+            test_values = trainer.test(
+                network, datamodule=datamodule, ckpt_path=str(ckpt_file)
+            )
+        else:
+            test_values = trainer.test(network, datamodule=datamodule)
     else:
         # training and testing
         trainer.fit(network, datamodule)
-        trainer.test(datamodule=datamodule, ckpt_path="best")
+        test_values = trainer.test(datamodule=datamodule, ckpt_path="best")
+    return test_values

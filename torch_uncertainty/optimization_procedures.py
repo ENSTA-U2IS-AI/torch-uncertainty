@@ -11,10 +11,13 @@ __all__ = [
     "optim_cifar10_resnet18",
     "optim_cifar10_resnet50",
     "optim_cifar10_wideresnet",
+    "optim_cifar10_vgg16",
     "optim_cifar100_resnet18",
     "optim_cifar100_resnet50",
+    "optim_cifar100_vgg16",
     "optim_imagenet_resnet50",
     "optim_imagenet_resnet50_A3",
+    "optim_regression",
 ]
 
 
@@ -70,18 +73,33 @@ def optim_cifar10_wideresnet(model: nn.Module) -> dict:
     return {"optimizer": optimizer, "lr_scheduler": scheduler}
 
 
+def optim_cifar10_vgg16(model: nn.Module) -> dict:
+    """optimizer to train a VGG16 on CIFAR-10"""
+    optimizer = optim.Adam(
+        model.parameters(),
+        lr=0.005,
+        weight_decay=1e-6,
+    )
+    scheduler = optim.lr_scheduler.MultiStepLR(
+        optimizer,
+        milestones=[25, 50],
+        gamma=0.1,
+    )
+    return {"optimizer": optimizer, "lr_scheduler": scheduler}
+
+
 def optim_cifar100_resnet18(model: nn.Module) -> dict:
     optimizer = optim.SGD(
         model.parameters(),
         lr=0.1,
         momentum=0.9,
-        weight_decay=1e-4,
+        weight_decay=5e-4,
         nesterov=True,
     )
     scheduler = optim.lr_scheduler.MultiStepLR(
         optimizer,
-        milestones=[60, 120, 160],
-        gamma=0.2,
+        milestones=[25, 50],
+        gamma=0.1,
     )
     return {"optimizer": optimizer, "lr_scheduler": scheduler}
 
@@ -95,6 +113,23 @@ def optim_cifar100_resnet50(model: nn.Module) -> dict:
         lr=0.1,
         momentum=0.9,
         weight_decay=5e-4,
+        nesterov=True,
+    )
+    scheduler = optim.lr_scheduler.MultiStepLR(
+        optimizer,
+        milestones=[60, 120, 160],
+        gamma=0.2,
+    )
+    return {"optimizer": optimizer, "lr_scheduler": scheduler}
+
+
+def optim_cifar100_vgg16(model: nn.Module) -> dict:
+    """optimizer to train a VGG16 on CIFAR-100"""
+    optimizer = optim.SGD(
+        model.parameters(),
+        lr=0.05,
+        momentum=0.9,
+        weight_decay=1e-4,
         nesterov=True,
     )
     scheduler = optim.lr_scheduler.MultiStepLR(
@@ -179,6 +214,21 @@ def optim_imagenet_resnet50_A3(
     }
 
 
+def optim_regression(
+    model: nn.Module,
+    learning_rate: float = 1e-2,
+) -> dict:
+    optimizer = optim.SGD(
+        model.parameters(),
+        lr=learning_rate,
+        weight_decay=0,
+    )
+    return {
+        "optimizer": optimizer,
+        "monitor": "hp/val_nll",
+    }
+
+
 def batch_ensemble_wrapper(model: nn.Module, optimization_procedure: Callable):
     procedure = optimization_procedure(model)
     param_optimizer = procedure["optimizer"]
@@ -219,7 +269,10 @@ def batch_ensemble_wrapper(model: nn.Module, optimization_procedure: Callable):
 
 
 def get_procedure(
-    arch_name: str, ds_name: str, model_name: str = ""
+    arch_name: str,
+    ds_name: str,
+    model_name: str = "",
+    imagenet_recipe: str = None,
 ) -> Callable:
     """Get the optimization procedure for a given architecture and dataset.
 
@@ -243,11 +296,23 @@ def get_procedure(
             procedure = optim_cifar10_resnet50
         elif ds_name == "cifar100":
             procedure = optim_cifar100_resnet50
+        elif ds_name == "imagenet":
+            if imagenet_recipe is not None and imagenet_recipe == "A3":
+                procedure = optim_imagenet_resnet50_A3
+            else:
+                procedure = optim_imagenet_resnet50
         else:
             raise NotImplementedError(f"Dataset {ds_name} not implemented.")
     elif arch_name == "wideresnet28x10":
         if ds_name == "cifar10" or ds_name == "cifar100":
             procedure = optim_cifar10_wideresnet
+        else:
+            raise NotImplementedError(f"Dataset {ds_name} not implemented.")
+    elif arch_name == "vgg16":
+        if ds_name == "cifar10":
+            procedure = optim_cifar10_vgg16
+        elif ds_name == "cifar100":
+            procedure = optim_cifar100_vgg16
         else:
             raise NotImplementedError(f"Dataset {ds_name} not implemented.")
     else:

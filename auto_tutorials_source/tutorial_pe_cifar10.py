@@ -23,8 +23,8 @@ Here is an example of what the data looks like:
 
    cifar10
 
-Training a image Packed-Ensemble classifier
--------------------------------------------
+Training an image Packed-Ensemble classifier
+--------------------------------------------
 
 Here is the outline of the process:
 
@@ -45,11 +45,11 @@ import torchvision.transforms as transforms
 
 torch.set_num_threads(1)
 
-########################################################################
+# %%
 # The output of torchvision datasets are PILImage images of range [0, 1].
 # We transform them to Tensors of normalized range [-1, 1].
 
-########################################################################
+# %%
 # .. note::
 #     If running on Windows and you get a BrokenPipeError, try setting
 #     the num_worker of torch.utils.data.DataLoader() to 0.
@@ -73,7 +73,7 @@ testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size,
 classes = ('plane', 'car', 'bird', 'cat',
            'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
-########################################################################
+# %%
 # Let us show some of the training images, for fun.
 
 import matplotlib.pyplot as plt
@@ -100,7 +100,7 @@ imshow(torchvision.utils.make_grid(images))
 print(' '.join(f'{classes[labels[j]]:5s}' for j in range(batch_size)))
 
 
-########################################################################
+# %%
 # 2. Define a Packed-Ensemble from a vanilla classifier
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 # First we define a vanilla classifier for CIFAR10 for reference. We will use a
@@ -131,7 +131,7 @@ class Net(nn.Module):
 
 net = Net()
 
-########################################################################
+# %%
 # Let's modify the vanilla classifier into a Packed-Ensemble classifier of 
 # parameters :math:`M=4,\ \alpha=2\text{ and }\gamma=1`.
 
@@ -169,7 +169,7 @@ class PackedNet(nn.Module):
 
 packed_net = PackedNet()
 
-########################################################################
+# %%
 # 3. Define a Loss function and optimizer
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 # Let's use a Classification Cross-Entropy loss and SGD with momentum.
@@ -179,7 +179,7 @@ import torch.optim as optim
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.SGD(packed_net.parameters(), lr=0.001, momentum=0.9)
 
-########################################################################
+# %%
 # 4. Train the Packed-Ensemble on the training data
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 # Let's train the Packed-Ensemble on the training data.
@@ -207,13 +207,13 @@ for epoch in range(2):  # loop over the dataset multiple times
 
 print('Finished Training')
 
-########################################################################
+# %%
 # Save our trained model:
 
 PATH = './cifar_packed_net.pth'
 torch.save(packed_net.state_dict(), PATH)
 
-########################################################################
+# %%
 # 5. Test the Packed-Ensemble on the test data
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 # Let us display an image from the test set to get familiar.
@@ -225,14 +225,14 @@ images, labels = next(dataiter)
 imshow(torchvision.utils.make_grid(images))
 print('GroundTruth: ', ' '.join(f'{classes[labels[j]]:5s}' for j in range(batch_size)))
 
-########################################################################
+# %%
 # Next, let us load back in our saved model (note: saving and re-loading the
 # model wasn't necessary here, we only did it to illustrate how to do so):
 
 packed_net = PackedNet()
 packed_net.load_state_dict(torch.load(PATH))
 
-########################################################################
+# %%
 # Let us see what the Packed-Ensemble thinks these examples above are:
 
 logits = packed_net(images)
@@ -246,5 +246,5 @@ print(
     'Predicted: ', ' '.join(f'{classes[predicted[j]]:5s}' for j in range(batch_size))
 )
 
-########################################################################
+# %%
 # The results seem pretty good.

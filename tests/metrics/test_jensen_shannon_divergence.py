@@ -10,9 +10,8 @@ from torch_uncertainty.metrics import JensenShannonDivergence
 # fmt:on
 @pytest.fixture
 def disagreement_probas() -> torch.Tensor:
-    """Return a vector with mean entropy ~ln(2) and entropy of mean =0."""
+    """Return a vector with mean entropy ~ln(2) and entropy of mean=0."""
     vec = torch.as_tensor([[[1e-8, 1 - 1e-8], [1 - 1e-8, 1e-8]]])
-    print(vec.shape)
     return vec
 
 
@@ -52,3 +51,9 @@ class TestJensenShannonDivergence:
             metric.update(agreement_probas)
             res = metric.compute()
             assert res == 0.5
+
+    def test_bad_argument_reduction(self):
+        with pytest.raises(Exception):
+            _ = JensenShannonDivergence(
+                num_classes=2, reduction="geometric_mean"
+            )

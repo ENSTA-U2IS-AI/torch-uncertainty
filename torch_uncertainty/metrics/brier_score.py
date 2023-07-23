@@ -81,19 +81,26 @@ class BrierScore(Metric):
 
         Args:
             probs (torch.Tensor): A probability tensor of shape
-                (num_estimators, batch, num_classes) or
+                (batch, num_estimators, num_classes) or
                 (batch, num_classes)
         """
-        if len(target.shape) == 1:
+        if target.ndim == 1:
             target = F.one_hot(target, self.num_classes)
 
-        print("target", target.shape, "probs", probs.shape)
-        if len(probs.shape) == 2:
+        if self.num_classes == 1:
+            probs = probs.unsqueeze(-1)
+
+        if probs.ndim == 2:
             batch_size = probs.size(0)
-        else:
+        elif probs.ndim == 3:
             batch_size = probs.size(0)
             self.num_estimators = probs.size(1)
             target = target.unsqueeze(1).repeat(1, self.num_estimators, 1)
+        else:
+            raise ValueError(
+                f"Expected `probs` to be of shape (batch, num_classes) or "
+                f"(batch, num_estimators, num_classes) but got {probs.shape}"
+            )
 
         brier_score = F.mse_loss(probs, target, reduction="none").sum(dim=-1)
 

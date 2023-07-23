@@ -8,7 +8,7 @@ from torch_uncertainty.post_processing import TemperatureScaler
 
 
 # fmt: on
-def dummy_model(x):
+def identity_model(x):
     return x
 
 
@@ -32,7 +32,7 @@ class TestTemperatureScaler:
 
         scaler = TemperatureScaler(init_val=2, lr=1, max_iter=10)
         assert scaler.temperature.item() == 2.0
-        scaler.fit(dummy_model, loader)
+        scaler.fit(identity_model, loader)
         assert scaler.temperature.item() > 10  # best is +inf
         assert (
             torch.sum(
@@ -46,6 +46,7 @@ class TestTemperatureScaler:
             ** 2
             < 0.001
         )
+        scaler.fit_predict(identity_model, loader, progress=False)
 
     def test_negative_initvalue(self):
         with pytest.raises(ValueError):

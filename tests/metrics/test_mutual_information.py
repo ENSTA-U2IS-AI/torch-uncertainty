@@ -51,6 +51,13 @@ class TestMutualInformation:
         res = metric.compute()
         assert res == pytest.approx(math.log(2), 1e-5)
 
+        metric = MutualInformation(reduction=None)
+        metric.update(agreement_probas)
+        metric.update(disagreement_probas)
+        res = metric.compute()
+        assert res[0] == pytest.approx(0, 1e-5)
+        assert res[1] == pytest.approx(math.log(2), 1e-5)
+
     def test_bad_argument(self):
         with pytest.raises(Exception):
             _ = MutualInformation("geometric_mean")

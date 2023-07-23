@@ -7,6 +7,7 @@ import torch.nn as nn
 import torchvision.transforms as T
 from pytorch_lightning import LightningDataModule
 from timm.data.auto_augment import rand_augment_transform
+from timm.data.mixup import Mixup
 from torch.utils.data import DataLoader, Dataset
 from torchvision.datasets import DTD, SVHN, ImageNet, INaturalist
 
@@ -19,16 +20,18 @@ class ImageNetDataModule(LightningDataModule):
     num_channels = 3
     test_datasets = ["r", "o", "a"]
     ood_datasets = ["inaturalist", "imagenet-o", "svhn", "textures"]
+    training_task = "classification"
 
     def __init__(
         self,
         root: Union[str, Path],
+        ood_detection: bool,
         batch_size: int,
         ood_ds: str = "svhn",
-        test_alt: str = None,
+        test_alt: Optional[str] = None,
         procedure: str = "A3",
         train_size: int = 224,
-        rand_augment_opt: str = None,
+        rand_augment_opt: Optional[str] = None,
         num_workers: int = 1,
         pin_memory: bool = True,
         persistent_workers: bool = True,
@@ -40,6 +43,7 @@ class ImageNetDataModule(LightningDataModule):
             root = Path(root)
 
         self.root: Path = root
+        self.ood_detection = ood_detection
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.pin_memory = pin_memory
@@ -76,6 +80,15 @@ class ImageNetDataModule(LightningDataModule):
                 main_transform = rand_augment_transform(rand_augment_opt, {})
             else:
                 main_transform = nn.Identity()
+        elif self.procedure == "ViT":
+            train_size = 224
+            main_transform = T.Compose(
+                [
+                    Mixup(mixup_alpha=0.2, cutmix_alpha=1.0),
+                    rand_augment_transform("rand-m9-n2-mstd0.5", {}),
+                ]
+            )
+
         elif self.procedure == "A3":
             print("Procedure A3")
             train_size = 160
@@ -113,30 +126,31 @@ class ImageNetDataModule(LightningDataModule):
         if self.test_alt is not None:
             self.data = self.dataset(
                 self.root,
-                split="test",
+                split="val",
                 download=True,
             )
-        if self.ood_ds == "inaturalist":
-            self.ood = self.ood_dataset(
-                self.root,
-                version="2021_valid",
-                download=True,
-                transform=self.transform_test,
-            )
-        elif self.ood_ds != "textures":
-            self.ood = self.ood_dataset(
-                self.root,
-                split="test",
-                download=True,
-                transform=self.transform_test,
-            )
-        else:
-            self.ood = self.ood_dataset(
-                self.root,
-                split="train",
-                download=True,
-                transform=self.transform_test,
-            )
+        if self.ood_detection:
+            if self.ood_ds == "inaturalist":
+                self.ood = self.ood_dataset(
+                    self.root,
+                    version="2021_valid",
+                    download=True,
+                    transform=self.transform_test,
+                )
+            elif self.ood_ds != "textures":
+                self.ood = self.ood_dataset(
+                    self.root,
+                    split="test",
+                    download=True,
+                    transform=self.transform_test,
+                )
+            else:
+                self.ood = self.ood_dataset(
+                    self.root,
+                    split="train",
+                    download=True,
+                    transform=self.transform_test,
+                )
 
     def setup(self, stage: Optional[str] = None) -> None:
         if stage == "fit" or stage is None:
@@ -160,6 +174,8 @@ class ImageNetDataModule(LightningDataModule):
                 split="val",
                 transform=self.transform_test,
             )
+
+        if self.ood_detection:
             if self.ood_ds == "inaturalist":
                 self.ood = self.ood_dataset(
                     self.root,
@@ -174,30 +190,46 @@ class ImageNetDataModule(LightningDataModule):
                 )
 
     def train_dataloader(self) -> DataLoader:
-        r"""Gets the training dataloader for ImageNet.
-        Returns:
+        """Get the training dataloader for ImageNet.
+
+        Return:
             DataLoader: ImageNet training dataloader.
         """
         return self._data_loader(self.train, shuffle=True)
 
     def val_dataloader(self) -> DataLoader:
-        r"""Gets the validation dataloader for ImageNet.
-        Returns:
+        """Get the validation dataloader for ImageNet.
+
+        Return:
             DataLoader: ImageNet validation dataloader.
         """
         return self._data_loader(self.val)
 
     def test_dataloader(self) -> List[DataLoader]:
-        r"""Gets test dataloaders for ImageNet.
-        Returns:
+        """Get the test dataloaders for ImageNet.
+
+        Return:
             List[DataLoader]: ImageNet test set (in distribution data) and
             Textures test split (out-of-distribution data).
         """
-        return [self._data_loader(self.test), self._data_loader(self.ood)]
+        dataloader = [self._data_loader(self.test)]
+        if self.ood_detection:
+            dataloader.append(self._data_loader(self.ood))
+        return dataloader
 
     def _data_loader(
         self, dataset: Dataset, shuffle: bool = False
     ) -> DataLoader:
+        """Create a dataloader for a given dataset.
+
+        Args:
+            dataset (Dataset): Dataset to create a dataloader for.
+            shuffle (bool, optional): Whether to shuffle the dataset. Defaults
+                to False.
+
+        Return:
+            DataLoader: Dataloader for the given dataset.
+        """
         return DataLoader(
             dataset,
             batch_size=self.batch_size,
@@ -217,9 +249,12 @@ class ImageNetDataModule(LightningDataModule):
         p.add_argument("--root", type=str, default="./data/")
         p.add_argument("--batch_size", type=int, default=256)
         p.add_argument("--num_workers", type=int, default=4)
+        p.add_argument(
+            "--evaluate_ood", dest="ood_detection", action="store_true"
+        )
         p.add_argument("--ood_ds", choices=cls.ood_datasets, default="svhn")
         p.add_argument("--test_alt", choices=cls.test_datasets, default=None)
-        p.add_argument("--procedure", choices=["A3"], default=None)
+        p.add_argument("--procedure", choices=["ViT", "A3"], default=None)
         p.add_argument("--train_size", type=int, default=224)
         p.add_argument(
             "--rand_augment", dest="rand_augment_opt", type=str, default=None

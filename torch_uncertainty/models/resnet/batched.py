@@ -156,14 +156,14 @@ class _BatchedResNet(nn.Module):
         groups: int = 1,
         num_classes=10,
         width_multiplier: int = 1,
-        imagenet_structure: bool = True,
+        style: str = "imagenet",
     ):
         super().__init__()
         self.in_planes = 64 * width_multiplier
         self.num_estimators = num_estimators
 
         self.width_multiplier = width_multiplier
-        if imagenet_structure:
+        if style == "imagenet":
             self.conv1 = BatchConv2d(
                 3,
                 64 * self.width_multiplier,
@@ -187,7 +187,7 @@ class _BatchedResNet(nn.Module):
             )
         self.bn1 = nn.BatchNorm2d(64 * self.width_multiplier)
 
-        if imagenet_structure:
+        if style == "imagenet":
             self.optional_pool = nn.MaxPool2d(
                 kernel_size=3, stride=2, padding=1
             )
@@ -272,7 +272,7 @@ def batched_resnet18(
     num_estimators: int,
     groups: int,
     num_classes: int,
-    imagenet_structure: bool = True,
+    style: str = "imagenet",
 ) -> _BatchedResNet:
     """BatchEnsemble of ResNet-18 from `Deep Residual Learning for Image
     Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -293,7 +293,7 @@ def batched_resnet18(
         num_estimators=num_estimators,
         num_classes=num_classes,
         groups=groups,
-        imagenet_structure=imagenet_structure,
+        style=style,
     )
 
 
@@ -302,7 +302,7 @@ def batched_resnet34(
     num_estimators: int,
     groups: int,
     num_classes: int,
-    imagenet_structure: bool = True,
+    style: str = "imagenet",
 ) -> _BatchedResNet:
     """BatchEnsemble of ResNet-34 from `Deep Residual Learning for Image
     Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -323,7 +323,7 @@ def batched_resnet34(
         num_estimators=num_estimators,
         num_classes=num_classes,
         groups=groups,
-        imagenet_structure=imagenet_structure,
+        style=style,
     )
 
 
@@ -333,7 +333,7 @@ def batched_resnet50(
     groups: int,
     num_classes: int,
     width_multiplier: int = 1,
-    imagenet_structure: bool = True,
+    style: str = "imagenet",
 ) -> _BatchedResNet:
     """BatchEnsemble of ResNet-50 from `Deep Residual Learning for Image
     Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -355,7 +355,7 @@ def batched_resnet50(
         num_classes=num_classes,
         width_multiplier=width_multiplier,
         groups=groups,
-        imagenet_structure=imagenet_structure,
+        style=style,
     )
 
 
@@ -364,7 +364,7 @@ def batched_resnet101(
     num_estimators: int,
     groups: int,
     num_classes: int,
-    imagenet_structure: bool = True,
+    style: str = "imagenet",
 ) -> _BatchedResNet:
     """BatchEnsemble of ResNet-101 from `Deep Residual Learning for Image
     Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -385,7 +385,7 @@ def batched_resnet101(
         num_estimators=num_estimators,
         num_classes=num_classes,
         groups=groups,
-        imagenet_structure=imagenet_structure,
+        style=style,
     )
 
 
@@ -394,7 +394,7 @@ def batched_resnet152(
     num_estimators: int,
     groups: int,
     num_classes: int,
-    imagenet_structure: bool = True,
+    style: str = "imagenet",
 ) -> _BatchedResNet:
     """BatchEnsemble of ResNet-152 from `Deep Residual Learning for Image
     Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -404,7 +404,7 @@ def batched_resnet152(
         num_estimators (int): Number of estimators in the ensemble.
         groups (int): Number of groups within each estimator.
         num_classes (int): Number of classes to predict.
-        imagenet_structure (bool, optional): Whether to use the ImageNet
+        style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
 
     Returns:
@@ -417,5 +417,5 @@ def batched_resnet152(
         num_estimators=num_estimators,
         num_classes=num_classes,
         groups=groups,
-        imagenet_structure=imagenet_structure,
+        style=style,
     )

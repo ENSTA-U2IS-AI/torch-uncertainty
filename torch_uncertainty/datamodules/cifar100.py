@@ -1,7 +1,7 @@
 # fmt: off
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import Any, List, Optional, Union
+from typing import Any, List, Literal, Optional, Union
 
 import torch
 import torch.nn as nn
@@ -17,20 +17,44 @@ from ..transforms import Cutout
 
 # fmt: on
 class CIFAR100DataModule(LightningDataModule):
+    """DataModule for CIFAR100.
+
+    Args:
+        root (str): Root directory of the datasets.
+        batch_size (int): Number of samples per batch.
+        val_split (float): Share of samples to use for validation. Defaults
+            to ``0.0``.
+        num_workers (int): Number of workers to use for data loading. Defaults
+            to ``1``.
+        cutout (int): Size of cutout to apply to images. Defaults to ``None``.
+        enable_randaugment (bool): Whether to apply RandAugment. Defaults to
+            ``False``.
+        auto_augment (str): Which auto-augment to apply. Defaults to ``None``.
+        test_alt (str): Which test set to use. Defaults to ``None``.
+        corruption_severity (int): Severity of corruption to apply to
+            CIFAR100-C. Defaults to ``1``.
+        num_dataloaders (int): Number of dataloaders to use. Defaults to ``1``.
+        pin_memory (bool): Whether to pin memory. Defaults to ``True``.
+        persistent_workers (bool): Whether to use persistent workers. Defaults
+            to ``True``.
+    """
+
     num_classes = 100
     num_channels = 3
     input_shape = (3, 32, 32)
+    training_task = "classification"
 
     def __init__(
         self,
         root: Union[str, Path],
+        ood_detection: bool,
         batch_size: int,
-        val_split: int = 0,
+        val_split: float = 0.0,
         num_workers: int = 1,
-        cutout: int = None,
+        cutout: Optional[int] = None,
         enable_randaugment: bool = False,
-        auto_augment: str = None,
-        test_alt: str = None,
+        auto_augment: Optional[str] = None,
+        test_alt: Optional[Literal["c"]] = None,
         corruption_severity: int = 1,
         num_dataloaders: int = 1,
         pin_memory: bool = True,
@@ -43,6 +67,7 @@ class CIFAR100DataModule(LightningDataModule):
             root = Path(root)
 
         self.root: Path = root
+        self.ood_detection = ood_detection
         self.batch_size = batch_size
         self.val_split = val_split
         self.num_workers = num_workers
@@ -107,12 +132,13 @@ class CIFAR100DataModule(LightningDataModule):
             self.dataset(self.root, train=True, download=True)
             self.dataset(self.root, train=False, download=True)
 
-        self.ood_dataset(
-            self.root,
-            split="test",
-            download=True,
-            transform=self.transform_test,
-        )
+        if self.ood_detection:
+            self.ood_dataset(
+                self.root,
+                split="test",
+                download=True,
+                transform=self.transform_test,
+            )
 
     def setup(self, stage: Optional[str] = None) -> None:
         if stage == "fit" or stage is None:
@@ -124,7 +150,11 @@ class CIFAR100DataModule(LightningDataModule):
                 transform=self.transform_train,
             )
             self.train, self.val = random_split(
-                full, [len(full) - self.val_split, self.val_split]
+                full,
+                [
+                    int(len(full) * (1 - self.val_split)),
+                    len(full) - int(len(full) * (1 - self.val_split)),
+                ],
             )
             if self.val_split == 0:
                 self.val = self.dataset(
@@ -147,16 +177,18 @@ class CIFAR100DataModule(LightningDataModule):
                     transform=self.transform_test,
                     severity=self.corruption_severity,
                 )
-            self.ood = self.ood_dataset(
-                self.root,
-                split="test",
-                download=False,
-                transform=self.transform_test,
-            )
+            if self.ood_detection:
+                self.ood = self.ood_dataset(
+                    self.root,
+                    split="test",
+                    download=False,
+                    transform=self.transform_test,
+                )
 
     def train_dataloader(self) -> DataLoader:
-        r"""Gets the training dataloader for CIFAR100.
-        Returns:
+        """Get the training dataloader for CIFAR100.
+
+        Return:
             DataLoader: CIFAR100 training dataloader.
         """
         if self.num_dataloaders > 1:
@@ -168,24 +200,39 @@ class CIFAR100DataModule(LightningDataModule):
             return self._data_loader(self.train, shuffle=True)
 
     def val_dataloader(self) -> DataLoader:
-        r"""Gets the validation dataloader for CIFAR100.
-        Returns:
+        """Get the validation dataloader for CIFAR100.
+
+        Return:
             DataLoader: CIFAR100 validation dataloader.
         """
         return self._data_loader(self.val)
 
     def test_dataloader(self) -> List[DataLoader]:
-        r"""Gets the test dataloaders for CIFAR100.
-        Returns:
+        """Get the test dataloaders for CIFAR100.
+
+        Return:
             List[DataLoader]: Dataloaders of the CIFAR100 test set (in
                 distribution data) and SVHN test split (out-of-distribution
                 data).
         """
-        return [self._data_loader(self.test), self._data_loader(self.ood)]
+        dataloader = [self._data_loader(self.test)]
+        if self.ood_detection:
+            dataloader.append(self._data_loader(self.ood))
+        return dataloader
 
     def _data_loader(
         self, dataset: Dataset, shuffle: bool = False
     ) -> DataLoader:
+        """Create a dataloader for a given dataset.
+
+        Args:
+            dataset (Dataset): Dataset to create a dataloader for.
+            shuffle (bool, optional): Whether to shuffle the dataset. Defaults
+                to False.
+
+        Return:
+            DataLoader: Dataloader for the given dataset.
+        """
         return DataLoader(
             dataset,
             batch_size=self.batch_size,
@@ -204,8 +251,11 @@ class CIFAR100DataModule(LightningDataModule):
         p = parent_parser.add_argument_group("datamodule")
         p.add_argument("--root", type=str, default="./data/")
         p.add_argument("--batch_size", type=int, default=128)
-        p.add_argument("--val_split", type=int, default=0)
+        p.add_argument("--val_split", type=float, default=0.0)
         p.add_argument("--num_workers", type=int, default=4)
+        p.add_argument(
+            "--evaluate_ood", dest="ood_detection", action="store_true"
+        )
         p.add_argument("--cutout", type=int, default=0)
         p.add_argument(
             "--randaugment", dest="enable_randaugment", action="store_true"

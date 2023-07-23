@@ -5,18 +5,18 @@ Quickstart
     :language: bash
 
 Torch Uncertainty comes with different usage levels ranging from specific
-PyTorch layers to ready to train lightning-based models. The following
+PyTorch layers to ready to train Lightning-based models. The following
 presents a short introduction to each one of them. Let's start with the
 highest-level usage.
 
-Using the lightning-based CLI tool
+Using the Lightning-based CLI tool
 ----------------------------------
 
 Procedure
 ^^^^^^^^^
 
 The library provides a full-fledged trainer which can be used directly, via
-CLI. To do so, create a file in the experiments folder and use the `cls_main`
+CLI. To do so, create a file in the experiments folder and use the `cli_main`
 routine, which takes as arguments:
 
 * a Lightning Module corresponding to the model, its own arguments, and
@@ -50,7 +50,7 @@ trains any ResNet architecture on CIFAR10:
 
     import torch.nn as nn
 
-    from torch_uncertainty import cls_main, init_args
+    from torch_uncertainty import cli_main, init_args
     from torch_uncertainty.baselines import ResNet
     from torch_uncertainty.datamodules import CIFAR10DataModule
     from torch_uncertainty.optimization_procedures import get_procedure
@@ -77,7 +77,7 @@ trains any ResNet architecture on CIFAR10:
         **vars(args),
     )
 
-    cls_main(model, dm, root, net_name, args)
+    cli_main(model, dm, root, net_name, args)
 
 Run this model with, for instance:
 
@@ -88,7 +88,7 @@ Run this model with, for instance:
 You may replace the architecture (which should be a Lightning Module), the
 Datamodule (a Lightning Datamodule), the loss or the optimization procedure to your likings.
 
-Using the pytorch-based models
+Using the PyTorch-based models
 ------------------------------
 
 Procedure
@@ -118,7 +118,7 @@ backbone with the following code:
         num_classes = 10,
     )
 
-Using the pytorch-based layers
+Using the PyTorch-based layers
 ------------------------------
 
 Procedure

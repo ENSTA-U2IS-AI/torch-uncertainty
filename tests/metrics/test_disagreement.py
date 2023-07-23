@@ -55,3 +55,7 @@ class TestDisagreement:
         metric.update(disagreement_probas_3)
         res = metric.compute()
         assert res == pytest.approx(2 / 3, 1e-6)
+
+    def test_bad_argument_reduction(self):
+        with pytest.raises(Exception):
+            _ = Disagreement(num_classes=2, reduction="geometric_mean")

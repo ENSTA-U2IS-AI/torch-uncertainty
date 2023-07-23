@@ -21,19 +21,19 @@ This package provides a multi-level API, including:
 - baselines available for training on your datasets
 - [pretrained weights](https://huggingface.co/torch-uncertainty) for these baselines on ImageNet and CIFAR (work in progress 🚧).
 - layers available for use in your networks
-- post-processing methods such as temperature scaling
+- scikit-learn style post-processing methods such as Temperature Scaling
 
 See the [Reference page](https://torch-uncertainty.github.io/references.html) or the [API reference](https://torch-uncertainty.github.io/api.html) for a more exhaustive list of the implemented methods, datasets, metrics, etc.
 
 ## Installation
 
-The package can be installed from PyPI:
+Install the desired pytorch version in your environment. Then, the package can be installed from PyPI:
 
 ```sh
 pip install torch-uncertainty
 ```
 
-If you aim to contribute (thank you!), checkout the [contribution page](https://torch-uncertainty.github.io/contributing.html).
+If you aim to contribute (thank you!), have a look at the [contribution page](https://torch-uncertainty.github.io/contributing.html).
 
 ## Getting Started and Documentation
 
@@ -51,6 +51,7 @@ To date, the following baselines are implemented:
 - BatchEnsemble
 - Masksembles
 - Packed-Ensembles (see [blog post](https://medium.com/@adrien.lafage/make-your-neural-networks-more-reliable-with-packed-ensembles-7ad0b737a873))
+- Bayesian Neural Networks
 
 ### Post-processing methods
 
@@ -62,7 +63,7 @@ To date, the following post-processing methods are implemented:
 
 ## Awesome Uncertainty repositories
 
-You may find a lot of information about modern uncertainty estimation techniques on the [Awesome Uncertainty in Deep Learning](https://github.com/ENSTA-U2IS/awesome-uncertainty-deeplearning).
+You may find a lot of papers about modern uncertainty estimation techniques on the [Awesome Uncertainty in Deep Learning](https://github.com/ENSTA-U2IS/awesome-uncertainty-deeplearning).
 
 ## Other References
 

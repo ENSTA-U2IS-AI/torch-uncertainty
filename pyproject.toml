@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "torch_uncertainty"
-version = "0.1.2"
+version = "0.1.3"
 description = "A PyTorch Library for benchmarking and leveraging efficient predictive uncertainty quantification techniques."
 authors = [
     "ENSTA U2IS <olivier.laurent@ensta-paris.fr>",
@@ -14,30 +14,35 @@ packages = [{include = "torch_uncertainty"}]
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.12"
+timm = ">=0.6.12"
 pytorch-lightning = "^1.9.0"
-tensorboard = "^2.11.2"
-einops = "^0.6.0"
-torchinfo = "^1.7.1"
-torchvision = "^0.14.1"
-timm = "^0.6.12"
+tensorboard = ">=2.11.2"
+einops = ">=0.6.0"
+torchinfo = ">=1.7.1"
 scipy = "^1.10.0"
 huggingface-hub = "^0.14.1"
+pandas = "^2.0.3"
+
+[tool.poetry.group.dev]
+optional = true
 
 [tool.poetry.group.dev.dependencies]
 isort = "^5.12.0"
 black = "^23.1.0"
 flake8 = "^6.0.0"
-mypy = "^0.991"
 pytest-cov = "^4.0.0"
 pre-commit = "^3.0.4"
 pre-commit-hooks = "^4.4.0"
 cli-test-helpers = "^3.2.0"
 
+[tool.poetry.group.docs]
+optional = true
+
 [tool.poetry.group.docs.dependencies]
 sphinx = "^5.1.3"
 pytorch-sphinx-theme = {git = "https://github.com/torch-uncertainty/pytorch_sphinx_theme"}
 sphinx-copybutton = "^0.5.1"
-sphinx-gallery = "^0.12.2"
+sphinx-gallery = {git = "https://github.com/sphinx-gallery/sphinx-gallery"}
 matplotlib = "^3.7.1"
 sphinx-design = "^0.3.0"
 

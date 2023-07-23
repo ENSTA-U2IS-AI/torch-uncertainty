@@ -69,7 +69,7 @@ class _Wide(nn.Module):
         num_classes: int,
         dropout_rate: float,
         groups: int = 1,
-        imagenet_structure: bool = True,
+        style: str = "imagenet",
     ):
         super().__init__()
         self.in_planes = 16
@@ -80,7 +80,7 @@ class _Wide(nn.Module):
 
         nStages = [16, 16 * k, 32 * k, 64 * k]
 
-        if imagenet_structure:
+        if style == "imagenet":
             self.conv1 = nn.Conv2d(
                 in_channels,
                 nStages[0],
@@ -101,7 +101,7 @@ class _Wide(nn.Module):
                 bias=True,
             )
 
-        if imagenet_structure:
+        if style == "imagenet":
             self.optional_pool = nn.MaxPool2d(
                 kernel_size=3, stride=2, padding=1
             )
@@ -186,7 +186,7 @@ def wideresnet28x10(
     in_channels: int,
     num_classes: int,
     groups: int = 1,
-    imagenet_structure: bool = True,
+    style: str = "imagenet",
 ) -> nn.Module:
     """Wide-ResNet-28x10 from `Wide Residual Networks
     <https://arxiv.org/pdf/1605.07146.pdf>`_.
@@ -196,7 +196,7 @@ def wideresnet28x10(
         num_classes (int): Number of classes to predict.
         groups (int, optional): Number of groups in convolutions. Defaults to
             ``1``.
-        imagenet_structure (bool, optional): Whether to use the ImageNet
+        style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
 
     Returns:
@@ -209,5 +209,5 @@ def wideresnet28x10(
         dropout_rate=0.3,
         num_classes=num_classes,
         groups=groups,
-        imagenet_structure=imagenet_structure,
+        style=style,
     )

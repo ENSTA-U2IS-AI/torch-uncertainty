@@ -14,17 +14,34 @@ from torch_uncertainty.transforms import Cutout
 
 # fmt: on
 class MNISTDataModule(LightningDataModule):
+    """DataModule for MNIST.
+
+    Args:
+        root (str): Root directory of the datasets.
+        batch_size (int): Number of samples per batch.
+        val_split (float): Share of samples to use for validation. Defaults
+            to ``0.0``.
+        num_workers (int): Number of workers to use for data loading. Defaults
+            to ``1``.
+        cutout (int): Size of cutout to apply to images. Defaults to ``None``.
+        pin_memory (bool): Whether to pin memory. Defaults to ``True``.
+        persistent_workers (bool): Whether to use persistent workers. Defaults
+            to ``True``.
+    """
+
     num_classes = 10
     num_channels = 1
     input_shape = (1, 28, 28)
+    training_task = "classification"
 
     def __init__(
         self,
         root: Union[str, Path],
+        ood_detection: bool,
         batch_size: int,
-        val_split: int = 0,
+        val_split: float = 0.0,
         num_workers: int = 1,
-        cutout: int = None,
+        cutout: Optional[int] = None,
         pin_memory: bool = True,
         persistent_workers: bool = True,
         **kwargs,
@@ -35,6 +52,7 @@ class MNISTDataModule(LightningDataModule):
             root = Path(root)
 
         self.root: Path = root
+        self.ood_detection = ood_detection
         self.batch_size = batch_size
         self.val_split = val_split
         self.num_workers = num_workers
@@ -66,6 +84,7 @@ class MNISTDataModule(LightningDataModule):
         )
 
     def prepare_data(self) -> None:
+        """Download the datasets."""
         self.dataset(self.root, train=True, download=True)
         self.dataset(self.root, train=False, download=True)
         self.ood_dataset(self.root, download=True)
@@ -79,7 +98,11 @@ class MNISTDataModule(LightningDataModule):
                 transform=self.transform_train,
             )
             self.train, self.val = random_split(
-                full, [len(full) - self.val_split, self.val_split]
+                full,
+                [
+                    int(len(full) * (1 - self.val_split)),
+                    len(full) - int(len(full) * (1 - self.val_split)),
+                ],
             )
             if self.val_split == 0:
                 self.val = self.dataset(
@@ -95,6 +118,8 @@ class MNISTDataModule(LightningDataModule):
                 download=False,
                 transform=self.transform_test,
             )
+
+        if self.ood_detection:
             self.ood = self.ood_dataset(
                 self.root,
                 download=False,
@@ -102,31 +127,47 @@ class MNISTDataModule(LightningDataModule):
             )
 
     def train_dataloader(self) -> DataLoader:
-        r"""Gets the training dataloader for MNIST.
-        Returns:
+        r"""Get the training dataloader for MNIST.
+
+        Return:
             DataLoader: MNIST training dataloader.
         """
         return self._data_loader(self.train, shuffle=True)
 
     def val_dataloader(self) -> DataLoader:
-        r"""Gets the validation dataloader for MNIST.
-        Returns:
+        r"""Get the validation dataloader for MNIST.
+
+        Return:
             DataLoader: MNIST validation dataloader.
         """
         return self._data_loader(self.val)
 
     def test_dataloader(self) -> List[DataLoader]:
-        r"""Gets the test dataloaders for MNIST.
-        Returns:
+        r"""Get the test dataloaders for MNIST.
+
+        Return:
             List[DataLoader]: Dataloaders of the MNIST test set (in
                 distribution data) and FashionMNIST test split
                 (out-of-distribution data).
         """
-        return [self._data_loader(self.test), self._data_loader(self.ood)]
+        dataloader = [self._data_loader(self.test)]
+        if self.ood_detection:
+            dataloader.append(self._data_loader(self.ood))
+        return dataloader
 
     def _data_loader(
         self, dataset: Dataset, shuffle: bool = False
     ) -> DataLoader:
+        """Create a dataloader for a given dataset.
+
+        Args:
+            dataset (Dataset): Dataset to create a dataloader for.
+            shuffle (bool, optional): Whether to shuffle the dataset. Defaults
+                to False.
+
+        Return:
+            DataLoader: Dataloader for the given dataset.
+        """
         return DataLoader(
             dataset,
             batch_size=self.batch_size,
@@ -147,4 +188,7 @@ class MNISTDataModule(LightningDataModule):
         p.add_argument("--batch_size", type=int, default=128)
         p.add_argument("--val_split", type=int, default=0)
         p.add_argument("--num_workers", type=int, default=4)
+        p.add_argument(
+            "--evaluate_ood", dest="ood_detection", action="store_true"
+        )
         return parent_parser

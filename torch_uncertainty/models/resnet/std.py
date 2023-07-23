@@ -73,7 +73,9 @@ class BasicBlock(nn.Module):
 class Bottleneck(nn.Module):
     expansion = 4
 
-    def __init__(self, in_planes, planes, stride=1, groups=1):
+    def __init__(
+        self, in_planes: int, planes: int, stride: int = 1, groups: int = 1
+    ):
         super(Bottleneck, self).__init__()
 
         self.conv1 = nn.Conv2d(
@@ -134,14 +136,14 @@ class _ResNet(nn.Module):
         in_channels: int,
         num_classes: int,
         groups: int,
-        imagenet_structure: bool = True,
+        style: str = "imagenet",
     ) -> None:
         super().__init__()
 
         self.in_planes = 64
         block_planes = self.in_planes
 
-        if imagenet_structure:
+        if style == "imagenet":
             self.conv1 = nn.Conv2d(
                 in_channels,
                 block_planes,
@@ -164,7 +166,7 @@ class _ResNet(nn.Module):
 
         self.bn1 = nn.BatchNorm2d(block_planes)
 
-        if imagenet_structure:
+        if style == "imagenet":
             self.optional_pool = nn.MaxPool2d(
                 kernel_size=3, stride=2, padding=1
             )
@@ -247,7 +249,7 @@ def resnet18(
     in_channels: int,
     num_classes: int,
     groups: int = 1,
-    imagenet_structure: bool = True,
+    style: str = "imagenet",
 ) -> _ResNet:
     """ResNet-18 from `Deep Residual Learning for Image Recognition
     <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -256,7 +258,7 @@ def resnet18(
         in_channels (int): Number of input channels.
         num_classes (int): Number of classes to predict.
         groups (int): Number of groups in convolutions. Defaults to 1.
-        imagenet_structure (bool, optional): Whether to use the ImageNet
+        style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
 
     Returns:
@@ -268,7 +270,7 @@ def resnet18(
         in_channels=in_channels,
         num_classes=num_classes,
         groups=groups,
-        imagenet_structure=imagenet_structure,
+        style=style,
     )
 
 
@@ -276,7 +278,7 @@ def resnet34(
     in_channels: int,
     num_classes: int,
     groups: int = 1,
-    imagenet_structure: bool = True,
+    style: str = "imagenet",
 ) -> _ResNet:
     """ResNet-34 from `Deep Residual Learning for Image Recognition
     <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -285,7 +287,7 @@ def resnet34(
         in_channels (int): Number of input channels.
         num_classes (int): Number of classes to predict.
         groups (int): Number of groups in convolutions. Defaults to 1.
-        imagenet_structure (bool, optional): Whether to use the ImageNet
+        style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
 
     Returns:
@@ -297,7 +299,7 @@ def resnet34(
         in_channels=in_channels,
         groups=groups,
         num_classes=num_classes,
-        imagenet_structure=imagenet_structure,
+        style=style,
     )
 
 
@@ -305,7 +307,7 @@ def resnet50(
     in_channels: int,
     num_classes: int,
     groups: int = 1,
-    imagenet_structure: bool = True,
+    style: str = "imagenet",
 ) -> _ResNet:
     """ResNet-50 from `Deep Residual Learning for Image Recognition
     <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -314,7 +316,7 @@ def resnet50(
         in_channels (int): Number of input channels.
         num_classes (int): Number of classes to predict.
         groups (int): Number of groups in convolutions. Defaults to 1.
-        imagenet_structure (bool, optional): Whether to use the ImageNet
+        style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
 
     Returns:
@@ -326,7 +328,7 @@ def resnet50(
         in_channels=in_channels,
         groups=groups,
         num_classes=num_classes,
-        imagenet_structure=imagenet_structure,
+        style=style,
     )
 
 
@@ -334,7 +336,7 @@ def resnet101(
     in_channels: int,
     num_classes: int,
     groups: int = 1,
-    imagenet_structure: bool = True,
+    style: str = "imagenet",
 ) -> _ResNet:
     """ResNet-101 from `Deep Residual Learning for Image Recognition
     <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -343,7 +345,7 @@ def resnet101(
         in_channels (int): Number of input channels.
         num_classes (int): Number of classes to predict.
         groups (int): Number of groups in convolutions. Defaults to 1.
-        imagenet_structure (bool, optional): Whether to use the ImageNet
+        style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
 
     Returns:
@@ -355,7 +357,7 @@ def resnet101(
         in_channels=in_channels,
         groups=groups,
         num_classes=num_classes,
-        imagenet_structure=imagenet_structure,
+        style=style,
     )
 
 
@@ -363,7 +365,7 @@ def resnet152(
     in_channels: int,
     num_classes: int,
     groups: int = 1,
-    imagenet_structure: bool = True,
+    style: str = "imagenet",
 ) -> _ResNet:
     """ResNet-152 from `Deep Residual Learning for Image Recognition
     <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -373,7 +375,7 @@ def resnet152(
         num_classes (int): Number of classes to predict.
         groups (int, optional): Number of groups in convolutions. Defaults to
             ``1``.
-        imagenet_structure (bool, optional): Whether to use the ImageNet
+        style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
 
     Returns:
@@ -385,5 +387,5 @@ def resnet152(
         in_channels=in_channels,
         num_classes=num_classes,
         groups=groups,
-        imagenet_structure=imagenet_structure,
+        style=style,
     )

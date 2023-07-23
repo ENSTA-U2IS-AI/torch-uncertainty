@@ -3,6 +3,7 @@
 import pytest
 
 from torch_uncertainty.models.resnet import resnet18, resnet50
+from torch_uncertainty.models.vgg import vgg16
 from torch_uncertainty.models.wideresnet import wideresnet28x10
 from torch_uncertainty.optimization_procedures import *
 from torch_uncertainty.optimization_procedures import get_procedure
@@ -21,8 +22,13 @@ class TestOptProcedures:
         procedure(model)
 
     def test_optim_cifar10_wideresnet(self):
-        procedure = get_procedure("wideresnet28x10", "cifar100", "batched")
+        procedure = get_procedure("wideresnet28x10", "cifar10", "batched")
         model = wideresnet28x10(in_channels=3, num_classes=10)
+        procedure(model)
+
+    def test_optim_cifar10_vgg16(self):
+        procedure = get_procedure("vgg16", "cifar10", "standard")
+        model = vgg16(in_channels=3, num_classes=10)
         procedure(model)
 
     def test_optim_cifar100_resnet18(self):
@@ -38,6 +44,11 @@ class TestOptProcedures:
     def test_optim_cifar100_wideresnet(self):
         procedure = get_procedure("wideresnet28x10", "cifar100")
         model = wideresnet28x10(in_channels=3, num_classes=100)
+        procedure(model)
+
+    def test_optim_cifar100_vgg16(self):
+        procedure = get_procedure("vgg16", "cifar100", "standard")
+        model = vgg16(in_channels=3, num_classes=100)
         procedure(model)
 
     def test_optim_imagenet_resnet50(self):
