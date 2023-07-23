@@ -18,8 +18,8 @@ class TrainableDistribution(nn.Module):
         rho: Tensor,
     ) -> None:
         super().__init__()
-        self.mu = nn.Parameter(mu)
-        self.rho = nn.Parameter(rho)
+        self.mu = mu
+        self.rho = rho
         self.sigma = None
         self.weight = None
 

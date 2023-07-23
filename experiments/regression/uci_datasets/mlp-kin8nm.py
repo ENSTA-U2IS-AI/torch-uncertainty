@@ -25,9 +25,11 @@ def optim_regression(
 
 
 if __name__ == "__main__":
-    root = Path(__file__).parent.absolute().parents[2]
-
     args = init_args(MLP, UCIDataModule)
+    if args.root == "./data/":
+        root = Path(__file__).parent.absolute().parents[2]
+    else:
+        root = Path(args.root)
 
     net_name = "mlp-kin8nm"
 

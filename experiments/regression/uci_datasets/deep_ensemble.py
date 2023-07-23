@@ -7,9 +7,11 @@ from torch_uncertainty.datamodules import UCIDataModule
 
 # fmt: on
 if __name__ == "__main__":
-    root = Path(__file__).parent.absolute().parents[2]
-
     args = init_args(DeepEnsembles, UCIDataModule)
+    if args.root == "./data/":
+        root = Path(__file__).parent.absolute().parents[2]
+    else:
+        root = Path(args.root)
 
     net_name = f"de-{args.backbone}-kin8nm"
 
