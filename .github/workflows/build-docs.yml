@@ -59,10 +59,6 @@ jobs:
       run: |
         cd docs && poetry run make html
 
-    - name: Sphinx build
-      run: |
-        cd docs && make html
-
     - name: Deploy
       uses: peaceiris/actions-gh-pages@v3
       with:
