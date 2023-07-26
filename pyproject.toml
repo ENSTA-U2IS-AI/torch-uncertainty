@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "torch_uncertainty"
-version = "0.1.3"
+version = "0.1.4"
 description = "A PyTorch Library for benchmarking and leveraging efficient predictive uncertainty quantification techniques."
 authors = [
     "ENSTA U2IS <olivier.laurent@ensta-paris.fr>",
