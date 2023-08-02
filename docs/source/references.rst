@@ -115,8 +115,8 @@ CIFAR-10 & CIFAR-100
 * Paper: `MIT Tech Report <https://www.cs.toronto.edu/~kriz/learning-features-2009-TR.pdf>`__.
 
 
-CIFAR-C
-^^^^^^^
+CIFAR-C, Tiny-ImageNet-C, ImageNet-C
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **Benchmarking neural network robustness to common corruptions and perturbations**
 
