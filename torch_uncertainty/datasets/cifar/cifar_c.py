@@ -11,9 +11,8 @@ from torchvision.datasets.utils import (
 
 import numpy as np
 
+
 # fmt:on
-
-
 class CIFAR10_C(VisionDataset):
     """The corrupted CIFAR-10-C Dataset.
 
@@ -91,7 +90,7 @@ class CIFAR10_C(VisionDataset):
         root: str,
         transform: Optional[Callable] = None,
         target_transform: Optional[Callable] = None,
-        subset: str = "brightness",
+        subset: str = "all",
         severity: int = 1,
         download: bool = False,
     ):
