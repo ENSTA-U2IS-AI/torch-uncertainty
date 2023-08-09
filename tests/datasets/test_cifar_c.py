@@ -1,21 +1,21 @@
 # fmt:off
 import pytest
 
-from torch_uncertainty.datasets import CIFAR10_C, CIFAR100_C
+from torch_uncertainty.datasets import CIFAR10C, CIFAR100C
 
 
 # fmt:on
-class TestCIFAR10_C:
-    """Testing the CIFAR10_C dataset class."""
+class TestCIFAR10C:
+    """Testing the CIFAR10C dataset class."""
 
     def test_nodataset(self):
         with pytest.raises(RuntimeError):
-            _ = CIFAR10_C("./.data")
+            _ = CIFAR10C("./.data")
 
 
-class TestCIFAR100_C:
-    """Testing the CIFAR100_C dataset class."""
+class TestCIFAR100C:
+    """Testing the CIFAR100C dataset class."""
 
     def test_nodataset(self):
         with pytest.raises(RuntimeError):
-            _ = CIFAR100_C("./.data")
+            _ = CIFAR100C("./.data")

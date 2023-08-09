@@ -11,7 +11,7 @@ from torchvision.datasets.utils import (
 
 
 # fmt:on
-class CIFAR10_N(CIFAR10):
+class CIFAR10N(CIFAR10):
     """`CIFAR-10N <https://github.com/UCSC-REAL/cifar-10-100n>`_ Dataset.
 
     Args:
@@ -86,7 +86,7 @@ class CIFAR10_N(CIFAR10):
         )
 
 
-class CIFAR100_N(CIFAR100):
+class CIFAR100N(CIFAR100):
     n_test_list = ["CIFAR-N-1.zip", "666bf3cff3a944c245f2b6f62af4b919"]
     n_url = "http://www.yliuu.com/web-cifarN/files/CIFAR-N-1.zip"
     filename = "CIFAR-N/CIFAR-100_human.pt"

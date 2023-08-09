@@ -11,7 +11,7 @@ from torchvision.datasets.utils import (
 
 
 # fmt:on
-class TinyImageNet(ImageFolder):
+class TinyImageNetC(ImageFolder):
     """The corrupted TinyImageNet-C Dataset.
 
     Args:

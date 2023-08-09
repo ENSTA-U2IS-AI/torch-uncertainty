@@ -13,7 +13,7 @@ from .._dummies.dataset import DummyClassificationDataset
 class TestCIFAR10DataModule:
     """Testing the CIFAR10DataModule datamodule class."""
 
-    def test_cifar10_cutout(self):
+    def test_CIFAR10Cutout(self):
         parser = ArgumentParser()
         parser = CIFAR10DataModule.add_argparse_args(parser)
 
