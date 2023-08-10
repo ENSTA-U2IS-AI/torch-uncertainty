@@ -21,7 +21,7 @@ class TestTemperatureScaler:
 
         logits = torch.tensor([[1, 2, 3]], dtype=torch.float32)
 
-        assert scaler.temperature.item() == 1.0
+        assert scaler.temperature[0].item() == 1.0
         assert torch.all(scaler(logits) == logits)
 
     def test_fit_biased(self):
@@ -31,9 +31,9 @@ class TestTemperatureScaler:
         loader = DataLoader(list(zip(inputs, labels)))
 
         scaler = TemperatureScaler(init_val=2, lr=1, max_iter=10)
-        assert scaler.temperature.item() == 2.0
+        assert scaler.temperature[0] == 2.0
         scaler.fit(identity_model, loader)
-        assert scaler.temperature.item() > 10  # best is +inf
+        assert scaler.temperature[0] > 10  # best is +inf
         assert (
             torch.sum(
                 (

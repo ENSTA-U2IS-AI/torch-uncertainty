@@ -3,8 +3,8 @@
 from setuptools import find_packages, setup
 
 setup(
-    name="torch-uncertainty",
-    version="0.1.3",
+    name="torch_uncertainty",
+    version="0.1.4",
     description="A PyTorch Library for benchmarking and leveraging efficient"
     "predictive uncertainty quantification techniques.",
     author="Adrien Lafage & Olivier Laurent",

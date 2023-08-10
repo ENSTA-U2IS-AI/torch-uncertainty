@@ -10,7 +10,7 @@ import numpy as np
 
 
 # fmt:on
-class CIFAR10_H(CIFAR10):
+class CIFAR10H(CIFAR10):
     """`CIFAR-10H <https://github.com/jcpeterson/cifar-10h>`_ Dataset.
 
     Args:
@@ -43,9 +43,9 @@ class CIFAR10_H(CIFAR10):
         download: bool = False,
     ) -> None:
         if train:
-            raise ValueError("CIFAR10_H does not support training data.")
+            raise ValueError("CIFAR10H does not support training data.")
         print(
-            "WARNING: CIFAR10_H cannot be used with Classification routines "
+            "WARNING: CIFAR10H cannot be used with Classification routines "
             "for now."
         )
         super().__init__(

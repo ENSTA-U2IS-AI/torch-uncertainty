@@ -210,3 +210,17 @@ Losses
 
     KLDiv
     ELBOLoss
+
+Post-Processing Methods
+-----------------------
+
+.. currentmodule:: torch_uncertainty.post_processing
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: class.rst
+
+    TemperatureScaler
+    VectorScaler
+    MatrixScaler

@@ -11,7 +11,7 @@ from timm.data.auto_augment import rand_augment_transform
 from torch.utils.data import DataLoader, Dataset, random_split
 from torchvision.datasets import CIFAR100, SVHN
 
-from ..datasets import CIFAR100_C, AggregatedDataset
+from ..datasets import CIFAR100C, AggregatedDataset
 from ..transforms import Cutout
 
 
@@ -77,7 +77,7 @@ class CIFAR100DataModule(LightningDataModule):
         self.persistent_workers = persistent_workers
 
         if test_alt == "c":
-            self.dataset = CIFAR100_C
+            self.dataset = CIFAR100C
         else:
             self.dataset = CIFAR100
 

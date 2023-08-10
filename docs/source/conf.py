@@ -12,7 +12,7 @@ import pytorch_sphinx_theme
 project = "TorchUncertainty"
 copyright = f"{str(datetime.utcnow().year)}, Adrien Lafage and Olivier Laurent"
 author = "Adrien Lafage and Olivier Laurent"
-release = "0.1.3"
+release = "0.1.4"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

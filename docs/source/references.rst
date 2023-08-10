@@ -75,10 +75,10 @@ For Packed-Ensembles, consider citing:
 Post-Processing Methods
 -----------------------
 
-Temperature scaling
-^^^^^^^^^^^^^^^^^^^
+Temperature, Vector, & Matrix scaling
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-For temperature scaling, consider citing:
+For temperature & vector scaling, consider citing:
 
 **On Calibration of Modern Neural Networks**
 
@@ -115,8 +115,8 @@ CIFAR-10 & CIFAR-100
 * Paper: `MIT Tech Report <https://www.cs.toronto.edu/~kriz/learning-features-2009-TR.pdf>`__.
 
 
-CIFAR-C
-^^^^^^^
+CIFAR-C, Tiny-ImageNet-C, ImageNet-C
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **Benchmarking neural network robustness to common corruptions and perturbations**
 

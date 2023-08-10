@@ -9,9 +9,9 @@
 [![Code style: black](https://img.shields.io/badge/code%20style-black-black.svg)](https://github.com/psf/black)
 </div>
 
-_TorchUncertainty_ is a package designed to help you leverage uncertainty quantification techniques and make your neural networks more reliable. It aims at including as many methods as possible, so reach out to add yours!
+_TorchUncertainty_ is a package designed to help you leverage uncertainty quantification techniques and make your neural networks more reliable. It aims at being collaborative and including as many methods as possible, so reach out to add yours!
 
-:construction: _TorchUncertainty_ is in early development :construction: - expect massive changes but do reach out to us and contribute if you are interested by the project!
+:construction: _TorchUncertainty_ is in early development :construction: - expect massive changes but reach out and contribute if you are interested by the project!
 
 ---
 
@@ -57,10 +57,15 @@ To date, the following baselines are implemented:
 
 To date, the following post-processing methods are implemented:
 
-- Temperature scaling
+- Temperature, Vector, & Matrix scaling
 
 ## Tutorials
 
+We provide the following tutorials in our documentation:
+
+- [From a Vanilla Classifier to a Packed-Ensemble](https://torch-uncertainty.github.io/auto_tutorials/tutorial_pe_cifar10.html)
+- [Training a Bayesian Neural Network in 3 minutes](https://torch-uncertainty.github.io/auto_tutorials/tutorial_bayesian.html)
+  
 ## Awesome Uncertainty repositories
 
 You may find a lot of papers about modern uncertainty estimation techniques on the [Awesome Uncertainty in Deep Learning](https://github.com/ENSTA-U2IS/awesome-uncertainty-deeplearning).
