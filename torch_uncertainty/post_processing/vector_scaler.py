@@ -8,13 +8,16 @@ from tqdm import tqdm
 
 
 # fmt: on
-class TemperatureScaler(nn.Module):
+class VectorScaler(nn.Module):
     """
-    Temperature scaling post-processing for calibrated probabilities.
+    Vector scaling post-processing for calibrated probabilities.
 
     Args:
-        init_value (float, optional): Initial value for the temperature.
+        num_classes (int): Number of classes.
+        init_w (float, optional): Initial value for the weights.
             Defaults to 1.
+        init_b (float, optional): Initial value for the bias.
+            Defaults to 0.
         lr (float, optional): Learning rate for the optimizer. Defaults to 0.1.
         max_iter (int, optional): Maximum number of iterations for the
             optimizer. Defaults to 100.
@@ -25,8 +28,6 @@ class TemperatureScaler(nn.Module):
         Guo, C., Pleiss, G., Sun, Y., & Weinberger, K. Q. On calibration
             of modern neural networks. In ICML 2017.
 
-    Note:
-        Inspired by `<https://github.com/gpleiss/temperature_scaling>`_
     """
 
     criterion = nn.CrossEntropyLoss()
@@ -34,18 +35,29 @@ class TemperatureScaler(nn.Module):
 
     def __init__(
         self,
-        init_val: float = 1,
+        num_classes: int,
+        init_w: float = 1,
+        init_b: float = 0,
         lr: float = 0.1,
-        max_iter: int = 100,
+        max_iter: int = 200,
         device: Optional[Literal["cpu", "cuda"]] = None,
     ) -> None:
         super().__init__()
         self.device = device
-        if init_val <= 0:
-            raise ValueError("Initial temperature value must be positive.")
 
-        self.temperature = nn.Parameter(
-            torch.ones(1, device=device) * init_val, requires_grad=True
+        if not isinstance(num_classes, int):
+            raise ValueError("num_classes must be an integer.")
+        if num_classes <= 0:
+            raise ValueError("The number of classes must be positive.")
+        self.num_classes = num_classes
+
+        self.temp_w = nn.Parameter(
+            torch.ones(num_classes, device=device) * init_w,
+            requires_grad=True,
+        )
+        self.temp_b = nn.Parameter(
+            torch.ones(num_classes, device=device) * init_b,
+            requires_grad=True,
         )
 
         if lr <= 0:
@@ -56,18 +68,21 @@ class TemperatureScaler(nn.Module):
             raise ValueError("Max iterations must be positive.")
         self.max_iter = int(max_iter)
 
-    def set_temperature(self, val: float) -> None:
+    def set_temperature(self, val_w: float, val_b: float) -> None:
         """
         Set the temperature to a fixed value.
 
         Args:
-            val (float): Temperature value.
+            val_w (float): Weight temperature value.
+            val_b (float): Bias temperature value.
         """
-        if val <= 0:
-            raise ValueError("Temperature value must be positive.")
-
-        self.temperature = nn.Parameter(
-            torch.ones(1, device=self.device) * val, requires_grad=True
+        self.temp_w = nn.Parameter(
+            torch.ones(self.num_classes, device=self.device) * val_w,
+            requires_grad=True,
+        )
+        self.temp_b = nn.Parameter(
+            torch.ones(self.num_classes, device=self.device) * val_b,
+            requires_grad=True,
         )
 
     def fit(
@@ -76,9 +91,9 @@ class TemperatureScaler(nn.Module):
         calib_loader: DataLoader,
         save_logits: bool = False,
         progress: bool = True,
-    ) -> "TemperatureScaler":
+    ) -> "VectorScaler":
         """
-        Fit the temperature to the calibration data.
+        Fit the temperature vectors to the calibration data.
 
         Args:
             model (nn.Module): Model to calibrate.
@@ -89,7 +104,7 @@ class TemperatureScaler(nn.Module):
                 Defaults to True.
 
         Returns:
-            TemperatureScaler: Calibrated scaler.
+            VectorScaler: Calibrated scaler.
         """
         logits_list = []
         labels_list = []
@@ -103,7 +118,7 @@ class TemperatureScaler(nn.Module):
         labels = torch.cat(labels_list).detach().to(self.device)
 
         optimizer = optim.LBFGS(
-            [self.temperature], lr=self.lr, max_iter=self.max_iter
+            [self.temp_w, self.temp_b], lr=self.lr, max_iter=self.max_iter
         )
 
         def calib_eval() -> float:
@@ -123,7 +138,7 @@ class TemperatureScaler(nn.Module):
         with torch.no_grad():
             if not self.trained:
                 print(
-                    "TemperatureScaler has not been trained yet. Returning a "
+                    "VectorScaler has not been trained yet. Returning a "
                     "manually tempered input."
                 )
             return self._scale(logits)
@@ -138,10 +153,7 @@ class TemperatureScaler(nn.Module):
         Returns:
             torch.Tensor: Scaled logits.
         """
-        temperature = self.temperature.unsqueeze(1).expand(
-            logits.size(0), logits.size(1)
-        )
-        return logits / temperature
+        return self.temp_w * logits + self.temp_b
 
     def fit_predict(
         self, model: nn.Module, calib_loader: DataLoader, progress: bool = True
