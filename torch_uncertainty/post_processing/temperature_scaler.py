@@ -2,13 +2,14 @@
 from typing import Literal, Optional
 
 import torch
-from torch import nn, optim
+from torch import nn
 from torch.utils.data import DataLoader
-from tqdm import tqdm
+
+from .scaler import Scaler
 
 
 # fmt: on
-class TemperatureScaler(nn.Module):
+class TemperatureScaler(Scaler):
     """
     Temperature scaling post-processing for calibrated probabilities.
 
@@ -29,9 +30,6 @@ class TemperatureScaler(nn.Module):
         Inspired by `<https://github.com/gpleiss/temperature_scaling>`_
     """
 
-    criterion = nn.CrossEntropyLoss()
-    trained = False
-
     def __init__(
         self,
         init_val: float = 1,
@@ -39,22 +37,12 @@ class TemperatureScaler(nn.Module):
         max_iter: int = 100,
         device: Optional[Literal["cpu", "cuda"]] = None,
     ) -> None:
-        super().__init__()
-        self.device = device
+        super().__init__(lr=lr, max_iter=max_iter, device=device)
+
         if init_val <= 0:
             raise ValueError("Initial temperature value must be positive.")
 
-        self.temperature = nn.Parameter(
-            torch.ones(1, device=device) * init_val, requires_grad=True
-        )
-
-        if lr <= 0:
-            raise ValueError("Learning rate must be positive.")
-        self.lr = lr
-
-        if max_iter <= 0:
-            raise ValueError("Max iterations must be positive.")
-        self.max_iter = int(max_iter)
+        self.set_temperature(init_val)
 
     def set_temperature(self, val: float) -> None:
         """
@@ -66,67 +54,9 @@ class TemperatureScaler(nn.Module):
         if val <= 0:
             raise ValueError("Temperature value must be positive.")
 
-        self.temperature = nn.Parameter(
+        self.temp = nn.Parameter(
             torch.ones(1, device=self.device) * val, requires_grad=True
         )
-
-    def fit(
-        self,
-        model: nn.Module,
-        calib_loader: DataLoader,
-        save_logits: bool = False,
-        progress: bool = True,
-    ) -> "TemperatureScaler":
-        """
-        Fit the temperature to the calibration data.
-
-        Args:
-            model (nn.Module): Model to calibrate.
-            calib_loader (DataLoader): Calibration dataloader.
-            save_logits (bool, optional): Whether to save the logits and
-                labels. Defaults to False.
-            progress (bool, optional): Whether to show a progress bar.
-                Defaults to True.
-
-        Returns:
-            TemperatureScaler: Calibrated scaler.
-        """
-        logits_list = []
-        labels_list = []
-        with torch.no_grad():
-            for input, label in tqdm(calib_loader, disable=not progress):
-                input = input.to(self.device)
-                logits = model(input)
-                logits_list.append(logits)
-                labels_list.append(label)
-        logits = torch.cat(logits_list).detach().to(self.device)
-        labels = torch.cat(labels_list).detach().to(self.device)
-
-        optimizer = optim.LBFGS(
-            [self.temperature], lr=self.lr, max_iter=self.max_iter
-        )
-
-        def calib_eval() -> float:
-            optimizer.zero_grad()
-            loss = self.criterion(self._scale(logits), labels)
-            loss.backward()
-            return loss
-
-        optimizer.step(calib_eval)
-        self.trained = True
-        if save_logits:
-            self.logits = logits
-            self.labels = labels
-        return self
-
-    def forward(self, logits: torch.Tensor) -> torch.Tensor:
-        with torch.no_grad():
-            if not self.trained:
-                print(
-                    "TemperatureScaler has not been trained yet. Returning a "
-                    "manually tempered input."
-                )
-            return self._scale(logits)
 
     def _scale(self, logits: torch.Tensor) -> torch.Tensor:
         """
@@ -138,8 +68,10 @@ class TemperatureScaler(nn.Module):
         Returns:
             torch.Tensor: Scaled logits.
         """
-        temperature = self.temperature.unsqueeze(1).expand(
-            logits.size(0), logits.size(1)
+        temperature = (
+            self.temperature[0]
+            .unsqueeze(1)
+            .expand(logits.size(0), logits.size(1))
         )
         return logits / temperature
 
@@ -149,3 +81,8 @@ class TemperatureScaler(nn.Module):
         self.fit(model, calib_loader, save_logits=True, progress=progress)
         calib_logits = self(self.logits)
         return calib_logits
+
+    @property
+    def temperature(self) -> list:
+        print("in call")
+        return [self.temp]

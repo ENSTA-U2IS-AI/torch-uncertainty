@@ -223,3 +223,4 @@ Post-Processing Methods
 
     TemperatureScaler
     VectorScaler
+    MatrixScaler

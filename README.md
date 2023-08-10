@@ -57,7 +57,7 @@ To date, the following baselines are implemented:
 
 To date, the following post-processing methods are implemented:
 
-- Temperature & Vector scaling
+- Temperature, Vector, & Matrix scaling
 
 ## Tutorials
 

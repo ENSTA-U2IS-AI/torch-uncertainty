@@ -8,9 +8,9 @@ from .scaler import Scaler
 
 
 # fmt: on
-class VectorScaler(Scaler):
+class MatrixScaler(Scaler):
     """
-    Vector scaling post-processing for calibrated probabilities.
+    Matrix scaling post-processing for calibrated probabilities.
 
     Args:
         num_classes (int): Number of classes.
@@ -57,8 +57,10 @@ class VectorScaler(Scaler):
             val_w (float): Weight temperature value.
             val_b (float): Bias temperature value.
         """
+        diag = torch.ones(self.num_classes, device=self.device)
+
         self.temp_w = nn.Parameter(
-            torch.ones(self.num_classes, device=self.device) * val_w,
+            diag * val_w,
             requires_grad=True,
         )
         self.temp_b = nn.Parameter(
@@ -76,7 +78,7 @@ class VectorScaler(Scaler):
         Returns:
             torch.Tensor: Scaled logits.
         """
-        return self.temp_w * logits + self.temp_b
+        return self.temp_w @ logits + self.temp_b
 
     @property
     def temperature(self) -> list:

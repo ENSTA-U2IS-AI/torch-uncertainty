@@ -75,8 +75,8 @@ For Packed-Ensembles, consider citing:
 Post-Processing Methods
 -----------------------
 
-Temperature & Vector scaling
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Temperature, Vector, & Matrix scaling
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 For temperature & vector scaling, consider citing:
 
