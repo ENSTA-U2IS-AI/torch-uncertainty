@@ -33,6 +33,9 @@ class MNISTC(VisionDataset):
         Mu, Norman, and Justin Gilmer. "MNIST-C: A robustness benchmark for
             computer vision." In ICMLW 2019.
 
+    License:
+        The dataset is released under the Creative Commons Attribution 4.0 
+
     Note:
         This dataset does not contain severity levels. Raise an issue if you
             want someone to investigate this.
