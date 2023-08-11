@@ -52,8 +52,8 @@ dm.setup("test")
 dataloader = dm.test_dataloader()[0]
 
 #%%
-# 4. Iterate on the Dataloader and compute the ECE
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# 4. Iterating on the Dataloader and compute the ECE
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 # We first split the original test set into a calibration set and a test set for proper evaluation.
 #
@@ -81,8 +81,8 @@ cal = ece.compute()
 print(f"ECE before scaling - {cal*100:.3}%.")
 
 #%%
-# 5. Fit the Scaler to Improve the Calibration
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# 5. Fittin the Scaler to Improve the Calibration
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 # The TemperatureScaler has one parameter that can be used to temper the softmax.
 # We minimize the tempered cross-entropy on a calibration set that we define here as
@@ -93,8 +93,8 @@ scaler = TemperatureScaler()
 scaler = scaler.fit(model=model, calib_loader=cal_dataloader)
 
 #%%
-# 6. Iterate again to compute the improved ECE
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# 6. Iterating again to compute the improved ECE
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 # We create a wrapper of the original model and the scaler using torch.nn.Sequential.
 # This is possible because the scaler is derived from nn.Module.
@@ -130,5 +130,5 @@ print(f"ECE after scaling - {cal*100:.3}%.")
 # References
 # ----------
 #
-# - **Expected Calibration Error:** Naeini, M. P., Cooper, G. F., & Hauskrecht, M. (2015). Obtaining Well Calibrated Probabilities Using Bayesian Binning. In `AAAI 2015 <https://arxiv.org/pdf/1411.0160.pdf>`_
-# - **Temperature Scaling:** Guo, C., Pleiss, G., Sun, Y., & Weinberger, K. Q. (2017). On calibration of modern neural networks. In `ICML 2017 <https://arxiv.org/pdf/1706.04599.pdf>`_
+# - **Expected Calibration Error:** Naeini, M. P., Cooper, G. F., & Hauskrecht, M. (2015). Obtaining Well Calibrated Probabilities Using Bayesian Binning. In `AAAI 2015 <https://arxiv.org/pdf/1411.0160.pdf>`_.
+# - **Temperature Scaling:** Guo, C., Pleiss, G., Sun, Y., & Weinberger, K. Q. (2017). On calibration of modern neural networks. In `ICML 2017 <https://arxiv.org/pdf/1706.04599.pdf>`_.
