@@ -3,7 +3,6 @@ from typing import Literal, Optional
 
 import torch
 from torch import nn
-from torch.utils.data import DataLoader
 
 from .scaler import Scaler
 
@@ -74,13 +73,6 @@ class TemperatureScaler(Scaler):
             .expand(logits.size(0), logits.size(1))
         )
         return logits / temperature
-
-    def fit_predict(
-        self, model: nn.Module, calib_loader: DataLoader, progress: bool = True
-    ) -> torch.Tensor:
-        self.fit(model, calib_loader, save_logits=True, progress=progress)
-        calib_logits = self(self.logits)
-        return calib_logits
 
     @property
     def temperature(self) -> list:
