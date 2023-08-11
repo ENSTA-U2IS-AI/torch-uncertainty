@@ -5,6 +5,9 @@
 From a Vanilla Classifier to a Packed-Ensemble
 ==============================================
 
+This tutorial is heavily inspired by PyTorch's `Training a Classifier <https://pytorch.org/tutorials/beginner/blitz/cifar10_tutorial.html#test-the-network-on-the-test-data>`_
+tutorial.
+
 Let's dive step by step into the process to modify a vanilla classifier into a
 packed-ensemble classifier.
 

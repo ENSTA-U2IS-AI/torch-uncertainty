@@ -1,7 +1,7 @@
 # fmt: off
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import Any, List, Optional, Union
+from typing import Any, List, Literal, Optional, Union
 
 import torchvision.transforms as T
 from pytorch_lightning import LightningDataModule
@@ -9,7 +9,8 @@ from torch import nn
 from torch.utils.data import DataLoader, Dataset, random_split
 from torchvision.datasets import MNIST, FashionMNIST
 
-from torch_uncertainty.transforms import Cutout
+from ..datasets import MNISTC
+from ..transforms import Cutout
 
 
 # fmt: on
@@ -24,6 +25,7 @@ class MNISTDataModule(LightningDataModule):
         num_workers (int): Number of workers to use for data loading. Defaults
             to ``1``.
         cutout (int): Size of cutout to apply to images. Defaults to ``None``.
+        test_alt (str): Which test set to use. Defaults to ``None``.
         pin_memory (bool): Whether to pin memory. Defaults to ``True``.
         persistent_workers (bool): Whether to use persistent workers. Defaults
             to ``True``.
@@ -42,6 +44,7 @@ class MNISTDataModule(LightningDataModule):
         val_split: float = 0.0,
         num_workers: int = 1,
         cutout: Optional[int] = None,
+        test_alt: Optional[Literal["c"]] = None,
         pin_memory: bool = True,
         persistent_workers: bool = True,
         **kwargs,
@@ -58,9 +61,13 @@ class MNISTDataModule(LightningDataModule):
         self.num_workers = num_workers
         self.pin_memory = pin_memory
         self.persistent_workers = persistent_workers
-        self.dataset = MNIST
+
+        if test_alt == "c":
+            self.dataset = MNISTC
+        else:
+            self.dataset = MNIST
+
         self.ood_dataset = FashionMNIST
-        self.num_classes = 10
 
         if cutout:
             main_transform = Cutout(cutout)
@@ -87,7 +94,9 @@ class MNISTDataModule(LightningDataModule):
         """Download the datasets."""
         self.dataset(self.root, train=True, download=True)
         self.dataset(self.root, train=False, download=True)
-        self.ood_dataset(self.root, download=True)
+
+        if self.ood_detection:
+            self.ood_dataset(self.root, download=True)
 
     def setup(self, stage: Optional[str] = None) -> None:
         if stage == "fit" or stage is None:
@@ -111,7 +120,7 @@ class MNISTDataModule(LightningDataModule):
                     download=False,
                     transform=self.transform_test,
                 )
-        if stage == "test":
+        elif stage == "test":
             self.test = self.dataset(
                 self.root,
                 train=False,
@@ -191,4 +200,5 @@ class MNISTDataModule(LightningDataModule):
         p.add_argument(
             "--evaluate_ood", dest="ood_detection", action="store_true"
         )
+        p.add_argument("--test_alt", choices=["c"], default=None)
         return parent_parser
