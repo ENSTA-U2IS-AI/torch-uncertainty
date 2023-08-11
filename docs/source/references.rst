@@ -155,23 +155,13 @@ ImageNet
 * Authors: *Jia Deng, Wei Dong, Richard Socher, Li-Jia Li, Kai Li, and Li Fei-Fei*
 * Paper: `CVPR 2009 <https://www.image-net.org/static_files/papers/imagenet_cvpr09.pdf>`__.
 
-ImageNet-A
+ImageNet-A & ImageNet-0
 ^^^^^^^^^^
 
 **Natural adversarial examples**
 
 * Authors: *Dan Hendrycks, Kevin Zhao, Steven Basart, Jacob Steinhardt, and Dawn Song*
 * Paper: `CVPR 2021 <https://arxiv.org/pdf/1907.07174.pdf>`__.
-
-
-ImageNet-O
-^^^^^^^^^^
-
-**Natural adversarial examples**
-
-* Authors: *Dan Hendrycks, Kevin Zhao, Steven Basart, Jacob Steinhardt, and Dawn Song*
-* Paper: `CVPR 2021 <https://arxiv.org/pdf/1907.07174.pdf>`__.
-
 
 ImageNet-R
 ^^^^^^^^^^

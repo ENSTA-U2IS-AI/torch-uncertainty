@@ -84,5 +84,4 @@ class TemperatureScaler(Scaler):
 
     @property
     def temperature(self) -> list:
-        print("in call")
         return [self.temp]
