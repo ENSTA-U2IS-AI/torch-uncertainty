@@ -9,4 +9,5 @@ from .imagenet import (
     TinyImageNet,
     TinyImageNetC,
 )
+from .mnist_c import MNISTC
 from .uci_regression import UCIRegression

@@ -106,6 +106,22 @@ Datasets
 
 The following datasets are used/implemented.
 
+MNIST
+^^^^^
+
+**Gradient-based learning applied to document recognition** 
+
+* Authors: *Yann LeCun, Leon Bottou, Yoshua Bengio, and Patrick Haffner*
+* Paper: `Proceedings of the IEEE 1998 <http://yann.lecun.com/exdb/publis/pdf/lecun-98.pdf>`__.
+
+MNIST-C
+^^^^^^^
+
+**MNIST-C: A Robustness Benchmark for Computer Vision**
+
+* Authors: *Norman Mu, and Justin Gilmer*
+* Paper: `ICMLW 2019 <https://arxiv.org/pdf/1906.02337.pdf>`__.
+
 CIFAR-10 & CIFAR-100
 ^^^^^^^^^^^^^^^^^^^^
 

@@ -107,19 +107,23 @@ class CIFAR10C(VisionDataset):
                 "Dataset not found. You can use download=True to download it."
             )
 
-        super().__init__(root=root / self.base_folder, transform=transform)
-        assert (
-            subset in ["all"] + self.cifarc_subsets
-        ), f"The subset '{subset}' does not exist in CIFAR-C."
+        super().__init__(
+            root=root / self.base_folder,
+            transform=transform,
+            target_transform=target_transform,
+        )
+        if not (subset in ["all"] + self.cifarc_subsets):
+            raise ValueError(
+                f"The subset '{subset}' does not exist in CIFAR-C."
+            )
         self.subset = subset
         self.severity = severity
 
-        self.transform = transform
-        self.target_transform = target_transform
-
-        assert severity in list(
-            range(1, 6)
-        ), "Corruptions severity should be chosen between 1 and 5 included."
+        if severity not in list(range(1, 6)):
+            raise ValueError(
+                "Corruptions severity should be chosen between 1 and 5 "
+                "included."
+            )
         samples, labels = self.make_dataset(
             self.root, self.subset, self.severity
         )
