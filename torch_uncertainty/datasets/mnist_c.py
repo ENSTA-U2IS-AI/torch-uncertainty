@@ -34,7 +34,7 @@ class MNISTC(VisionDataset):
             computer vision." In ICMLW 2019.
 
     License:
-        The dataset is released under the Creative Commons Attribution 4.0 
+        The dataset is released under the Creative Commons Attribution 4.0.
 
     Note:
         This dataset does not contain severity levels. Raise an issue if you
