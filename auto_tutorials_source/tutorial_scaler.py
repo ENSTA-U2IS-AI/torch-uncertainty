@@ -31,7 +31,7 @@ from torch_uncertainty.post_processing import TemperatureScaler
 # 2. Downloading a Pre-trained Model
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
-# We will use a model from https://github.com/chenyaofo/pytorch-cifar-models (thank you!)
+# To avoid training a model on CIFAR-100 from scratch, we will use here a model from https://github.com/chenyaofo/pytorch-cifar-models (thank you!)
 # This can be done in a one liner:
 
 model = torch.hub.load("chenyaofo/pytorch-cifar-models", "cifar100_resnet20", pretrained=True)
@@ -52,10 +52,10 @@ dm.setup("test")
 dataloader = dm.test_dataloader()[0]
 
 #%%
-# 4. Interate on the Dataloader and compute the ECE
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# 4. Iterate on the Dataloader and compute the ECE
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
-# We split the original test set into a calibration set and a test set for proper evaluation.
+# We first split the original test set into a calibration set and a test set for proper evaluation.
 #
 # When computing the ECE, you need to provide the likelihoods associated with the inputs.
 # To do this, just call PyTorch's softmax.
@@ -86,19 +86,20 @@ print(f"ECE before scaling - {cal*100:.3}%.")
 #
 # The TemperatureScaler has one parameter that can be used to temper the softmax.
 # We minimize the tempered cross-entropy on a calibration set that we define here as
-# a subset of the test set and containing 10000 data.
+# a subset of the test set and containing 1000 data.
 
 # Fit the scaler on the calibration dataset
 scaler = TemperatureScaler()
 scaler = scaler.fit(model=model, calib_loader=cal_dataloader)
 
 #%%
-# 6. Interate again to compute the improved ECE
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# 6. Iterate again to compute the improved ECE
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 # We create a wrapper of the original model and the scaler using torch.nn.Sequential.
+# This is possible because the scaler is derived from nn.Module.
 #
-# Note that you will need to first reset the ece to avoid mixing the scores of the previous and current iterations.
+# Note that you will need to first reset the ECE metric to avoid mixing the scores of the previous and current iterations.
 
 # Create the calibrated model
 cal_model = torch.nn.Sequential(model, scaler)
@@ -117,6 +118,13 @@ print(f"ECE after scaling - {cal*100:.3}%.")
 
 # %%
 # The top-label calibration should be improved.
+#
+# Notes
+# -----
+#
+# Temperature scaling is very efficient when the calibration set is representative of the test set.
+# In this case, we say that the calibration and test set are drawn from the same distribution.
+# However, this may not be True in real-world cases where dataset shift could happen.
 
 # %%
 # References
