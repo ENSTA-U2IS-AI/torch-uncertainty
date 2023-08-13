@@ -24,9 +24,6 @@ class TemperatureScaler(Scaler):
     Reference:
         Guo, C., Pleiss, G., Sun, Y., & Weinberger, K. Q. On calibration
             of modern neural networks. In ICML 2017.
-
-    Note:
-        Inspired by `<https://github.com/gpleiss/temperature_scaling>`_
     """
 
     def __init__(
