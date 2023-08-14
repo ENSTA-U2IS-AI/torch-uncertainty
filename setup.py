@@ -5,8 +5,9 @@ from setuptools import find_packages, setup
 setup(
     name="torch_uncertainty",
     version="0.1.4",
-    description="A PyTorch Library for benchmarking and leveraging efficient"
-    "predictive uncertainty quantification techniques.",
+    description="TorchUncertainty: A maintained and collaborative PyTorch"
+    "Library for benchmarking and leveraging predictive uncertainty"
+    "quantification techniques.",
     author="Adrien Lafage & Olivier Laurent",
     author_email="olivier.laurent@ensta-paris.fr",
     url="https://torch-uncertainty.github.io/",
