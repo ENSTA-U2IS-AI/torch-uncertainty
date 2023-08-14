@@ -32,8 +32,7 @@ class CIFAR10C(VisionDataset):
 
     References:
         Benchmarking neural network robustness to common corruptions and
-            perturbations. Dan Hendrycks and Thomas Dietterich.
-            In ICLR, 2019.
+        perturbations. Dan Hendrycks and Thomas Dietterich. In ICLR, 2019.
     """
 
     base_folder = "CIFAR-10-C"
