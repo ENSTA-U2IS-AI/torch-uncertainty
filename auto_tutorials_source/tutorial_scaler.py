@@ -135,7 +135,7 @@ print(f"ECE after scaling - {cal*100:.3}%.")
 # The top-label calibration should be improved.
 #
 # Notes
-# -----
+# ~~~~~
 #
 # Temperature scaling is very efficient when the calibration set is representative of the test set.
 # In this case, we say that the calibration and test set are drawn from the same distribution.
@@ -143,7 +143,7 @@ print(f"ECE after scaling - {cal*100:.3}%.")
 
 # %%
 # References
-# ----------
+# ~~~~~~~~~~
 #
 # - **Expected Calibration Error:** Naeini, M. P., Cooper, G. F., & Hauskrecht, M. (2015). Obtaining Well Calibrated Probabilities Using Bayesian Binning. In `AAAI 2015 <https://arxiv.org/pdf/1411.0160.pdf>`_.
 # - **Temperature Scaling:** Guo, C., Pleiss, G., Sun, Y., & Weinberger, K. Q. (2017). On calibration of modern neural networks. In `ICML 2017 <https://arxiv.org/pdf/1706.04599.pdf>`_.
