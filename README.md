@@ -9,7 +9,7 @@
 [![Code style: black](https://img.shields.io/badge/code%20style-black-black.svg)](https://github.com/psf/black)
 </div>
 
-_TorchUncertainty_ is a package designed to help you leverage uncertainty quantification techniques and make your neural networks more reliable. It aims at being collaborative and including as many methods as possible, so reach out to add yours!
+_TorchUncertainty_ is a package designed to help you leverage uncertainty quantification techniques and make your deep neural networks more reliable. It aims at being collaborative and including as many methods as possible, so reach out to add yours!
 
 :construction: _TorchUncertainty_ is in early development :construction: - expect massive changes but reach out and contribute if you are interested by the project!
 
@@ -18,7 +18,7 @@ _TorchUncertainty_ is a package designed to help you leverage uncertainty quanti
 This package provides a multi-level API, including:
 
 - ready-to-train baselines on research datasets, such as ImageNet and CIFAR
-- baselines available for training on your datasets
+- deep learning baselines available for training on your datasets
 - [pretrained weights](https://huggingface.co/torch-uncertainty) for these baselines on ImageNet and CIFAR (work in progress 🚧).
 - layers available for use in your networks
 - scikit-learn style post-processing methods such as Temperature Scaling
@@ -45,7 +45,7 @@ A quickstart is available at [torch-uncertainty.github.io/quickstart](https://to
 
 ### Baselines
 
-To date, the following baselines are implemented:
+To date, the following deep learning baselines are implemented:
 
 - Deep Ensembles
 - BatchEnsemble
