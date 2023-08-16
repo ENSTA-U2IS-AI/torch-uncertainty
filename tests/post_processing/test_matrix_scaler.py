@@ -23,6 +23,8 @@ class TestMatrixScaler:
         assert scaler.temp_b.item() == 0.0
         assert torch.all(scaler(logits) == logits)
 
+        scaler.temperature
+
     def test_negative_numclasses(self):
         with pytest.raises(ValueError):
             MatrixScaler(num_classes=-1)

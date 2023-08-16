@@ -149,7 +149,11 @@ class TestColor:
 
     def test_PIL(self, img_input):
         aug = Color()
-        _ = aug(img_input, 2)
+        aug(img_input, 2)
+
+    def test_tensor(self):
+        aug = Color()
+        aug(torch.rand(3, 28, 28), 2)
 
     def test_failures(self, img_input):
         aug = Color()

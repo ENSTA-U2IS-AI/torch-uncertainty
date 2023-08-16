@@ -59,6 +59,10 @@ class TestOptProcedures:
         model = resnet50(in_channels=3, num_classes=1000)
         optim_imagenet_resnet50_A3(model)
 
+    def test_optim_regression(self):
+        model = resnet18(in_channels=3, num_classes=1)
+        optim_regression(model)
+
     def test_optim_unknown(self):
         with pytest.raises(NotImplementedError):
             _ = get_procedure("unknown", "cifar100")
