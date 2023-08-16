@@ -27,10 +27,17 @@ class TestCIFAR10DataModule:
         assert isinstance(dm.transform_train.transforms[2], Cutout)
 
         dm.dataset = DummyClassificationDataset
+        dm.ood_dataset = DummyClassificationDataset
+
         dm.prepare_data()
         dm.setup()
         dm.setup("test")
 
         dm.train_dataloader()
         dm.val_dataloader()
+        dm.test_dataloader()
+
+        dm.ood_detection = True
+        dm.prepare_data()
+        dm.setup("test")
         dm.test_dataloader()
