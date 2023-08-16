@@ -21,7 +21,7 @@ Monte Carlo dropout, ensemble methods, etc.
 
 If you are interested in contributing to torch_uncertainty, we first advise you
 to follow the following steps to reproduce a clean development environment
-ensuring continuous integration does not break.
+ensuring that continuous integration does not break.
 
 1. Install poetry on your workstation.
 2. Clone the repository.
@@ -42,7 +42,7 @@ imports. The pre-commit hooks will ensure that your code is properly formatted
 and linted before committing.
 
 Before submitting a final pull request, that we will review, please try your
-best not to reduce the code coverage and do document your code.
+best not to reduce the code coverage and document your code.
 
 If you implement a method, please add a reference to the corresponding paper in the ["References" page](https://torch-uncertainty.github.io/references.html).
 
