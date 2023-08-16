@@ -167,7 +167,8 @@ class ClassificationSingle(pl.LightningModule):
         logits = self.forward(inputs)
 
         # BCEWithLogitsLoss expects float targets
-        if self.loss == nn.BCEWithLogitsLoss:
+        if self.binary_cls and self.loss == nn.BCEWithLogitsLoss:
+            logits = logits.squeeze(-1)
             targets = targets.float()
         loss = self.criterion(logits, targets)
         self.log("train_loss", loss)
@@ -205,10 +206,10 @@ class ClassificationSingle(pl.LightningModule):
             probs = torch.sigmoid(logits).squeeze(-1)
         else:
             probs = F.softmax(logits, dim=-1)
-        confs, _ = probs.max(dim=-1)
+        confs = probs.max(dim=-1)[0]
 
         if self.use_logits:
-            ood_values, _ = -logits.max(dim=-1)
+            ood_values = -logits.max(dim=-1)[0]
         elif self.use_entropy:
             ood_values = torch.special.entr(probs).sum(dim=-1)
         else:
@@ -257,7 +258,6 @@ class ClassificationSingle(pl.LightningModule):
     ) -> ArgumentParser:
         """Defines the routine's attributes via command-line options:
 
-        - ``--evaluate_ood``: sets :attr:`ood_detection` to ``True``.
         - ``--entropy``: sets :attr:`use_entropy` to ``True``.
         - ``--logits``: sets :attr:`use_logits` to ``True``.
         """
@@ -413,10 +413,10 @@ class ClassificationEnsemble(ClassificationSingle):
             probs_per_est = F.softmax(logits, dim=-1)
 
         probs = probs_per_est.mean(dim=1)
-        confs, _ = probs.max(-1)
+        confs = probs.max(-1)[0]
 
         if self.use_logits:
-            ood_values, _ = -logits.mean(dim=1).max(dim=-1)
+            ood_values = -logits.mean(dim=1).max(dim=-1)[0]
         elif self.use_entropy:
             ood_values = torch.special.entr(probs).sum(dim=-1).mean(dim=1)
         elif self.use_mi:
