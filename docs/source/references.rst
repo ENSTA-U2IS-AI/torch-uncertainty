@@ -172,7 +172,7 @@ ImageNet
 * Paper: `CVPR 2009 <https://www.image-net.org/static_files/papers/imagenet_cvpr09.pdf>`__.
 
 ImageNet-A & ImageNet-0
-^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^
 
 **Natural adversarial examples**
 

@@ -65,7 +65,7 @@ dataloader = dm.test_dataloader()[0]
 
 # %%
 # 4. Iterating on the Dataloader and Computing the ECE
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 # We first split the original test set into a calibration set and a test set for proper evaluation.
 #
