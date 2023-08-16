@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# fmt: off
 # flake: noqa
 """
 Train a Bayesian Neural Network in Three Minutes
@@ -41,7 +40,7 @@ from torch_uncertainty.models.lenet import bayesian_lenet
 from torch_uncertainty.routines.classification import ClassificationSingle
 
 # %%
-# We will also need to define an optimizer using torch.optim as well as the 
+# We will also need to define an optimizer using torch.optim as well as the
 # neural network utils withing torch.nn, as well as the partial util to provide
 # the modified default arguments for the ELBO loss.
 #
@@ -61,12 +60,14 @@ from cli_test_helpers import ArgvContext
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # We will use the Adam optimizer with the default learning rate of 0.001.
 
+
 def optim_lenet(model: nn.Module) -> dict:
     optimizer = optim.Adam(
         model.parameters(),
         lr=1e-3,
     )
     return {"optimizer": optimizer}
+
 
 # %%
 # 3. Creating the necessary variables
@@ -76,15 +77,18 @@ def optim_lenet(model: nn.Module) -> dict:
 # logs, and to fake-parse the arguments needed for using the PyTorch Lightning
 # Trainer. We also create the datamodule that handles the MNIST dataset,
 # dataloaders and transforms. Finally, we create the model using the
-# blueprint from torch_uncertainty.models. 
+# blueprint from torch_uncertainty.models.
 
 root = Path(os.path.abspath(""))
 
-with ArgvContext("--max_epochs 1"):
+# We mock the arguments for the trainer
+with ArgvContext(
+    "file.py",
+    "--max_epochs 1",
+    "--enable_progress_bar=False",
+    "--verbose=False",
+):
     args = init_args(datamodule=MNISTDataModule)
-    args.enable_progress_bar = False
-    args.verbose = False
-    args.max_epochs = 1
 
 net_name = "bayesian-lenet-mnist"
 
@@ -156,21 +160,20 @@ def imshow(img):
     plt.imshow(np.transpose(npimg, (1, 2, 0)))
     plt.show()
 
+
 dataiter = iter(dm.val_dataloader())
 images, labels = next(dataiter)
 
 # print images
 imshow(torchvision.utils.make_grid(images[:4, ...]))
-print('Ground truth: ', ' '.join(f'{labels[j]}' for j in range(4)))
+print("Ground truth: ", " ".join(f"{labels[j]}" for j in range(4)))
 
 logits = model(images)
 probs = torch.nn.functional.softmax(logits, dim=-1)
 
 _, predicted = torch.max(probs, 1)
 
-print(
-    'Predicted digits: ', ' '.join(f'{predicted[j]}' for j in range(4))
-)
+print("Predicted digits: ", " ".join(f"{predicted[j]}" for j in range(4)))
 
 # %%
 # References
