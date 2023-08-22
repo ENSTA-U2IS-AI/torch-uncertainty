@@ -10,7 +10,7 @@ contributors to help us build a comprehensive library for uncertainty
 quantification in PyTorch.
 
 We are particularly open to any comment that you would have on this project.
-In particular, we are open to changing these guidelines as the project evolves.
+Specifically, we are open to changing these guidelines as the project evolves.
 
 The scope of TorchUncertainty
 -----------------------------
@@ -49,9 +49,9 @@ Post-processing methods
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 For now, we intend to follow scikit-learn style API for post-processing
-methods (except that we use a validation dataloader for now). You can get
+methods (except that we use a validation dataset for now). You can get
 inspiration from the already implemented
-`temperature-scaling <https://github.com/ENSTA-U2IS/torch-uncertainty/blob/dev/torch_uncertainty/post_processing/temperature_scaler.py>`_.
+`temperature-scaling <https://github.com/ENSTA-U2IS/torch-uncertainty/blob/dev/torch_uncertainty/post_processing/calibration/temperature_scaler.py>`_.
 
 
 License
