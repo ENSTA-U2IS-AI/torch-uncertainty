@@ -122,6 +122,11 @@ MNIST-C
 * Authors: *Norman Mu, and Justin Gilmer*
 * Paper: `ICMLW 2019 <https://arxiv.org/pdf/1906.02337.pdf>`__.
 
+Not-MNIST
+^^^^^^^^^
+
+* Author: *Yaroslav Bulatov*
+
 CIFAR-10 & CIFAR-100
 ^^^^^^^^^^^^^^^^^^^^
 
