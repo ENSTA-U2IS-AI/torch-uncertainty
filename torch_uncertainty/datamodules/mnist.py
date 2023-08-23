@@ -9,7 +9,7 @@ from torch import nn
 from torch.utils.data import DataLoader, Dataset, random_split
 from torchvision.datasets import MNIST, FashionMNIST
 
-from ..datasets import MNISTC
+from ..datasets import MNISTC, NotMNIST
 from ..transforms import Cutout
 
 
@@ -20,6 +20,9 @@ class MNISTDataModule(LightningDataModule):
     Args:
         root (str): Root directory of the datasets.
         batch_size (int): Number of samples per batch.
+        ood_ds (str): Which out-of-distribution dataset to use. Defaults to
+            ``"fashion"``; `fashion` stands for FashionMNIST and `not` for
+            notMNIST.
         val_split (float): Share of samples to use for validation. Defaults
             to ``0.0``.
         num_workers (int): Number of workers to use for data loading. Defaults
@@ -35,12 +38,14 @@ class MNISTDataModule(LightningDataModule):
     num_channels = 1
     input_shape = (1, 28, 28)
     training_task = "classification"
+    ood_datasets = ["fashion", "not"]
 
     def __init__(
         self,
         root: Union[str, Path],
         ood_detection: bool,
         batch_size: int,
+        ood_ds: Literal["fashion", "not"] = "fashion",
         val_split: float = 0.0,
         num_workers: int = 1,
         cutout: Optional[int] = None,
@@ -67,7 +72,14 @@ class MNISTDataModule(LightningDataModule):
         else:
             self.dataset = MNIST
 
-        self.ood_dataset = FashionMNIST
+        if ood_ds == "fashion":
+            self.ood_dataset = FashionMNIST
+        elif ood_ds == "not":
+            self.ood_dataset = NotMNIST
+        else:
+            raise ValueError(
+                f"`ood_ds` should be `fashion` or `not`. Got {ood_ds}."
+            )
 
         if cutout:
             main_transform = Cutout(cutout)
@@ -200,5 +212,6 @@ class MNISTDataModule(LightningDataModule):
         p.add_argument(
             "--evaluate_ood", dest="ood_detection", action="store_true"
         )
+        p.add_argument("--ood_ds", choices=cls.ood_datasets, default="svhn")
         p.add_argument("--test_alt", choices=["c"], default=None)
         return parent_parser

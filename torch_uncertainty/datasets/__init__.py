@@ -10,4 +10,5 @@ from .imagenet import (
     TinyImageNetC,
 )
 from .mnist_c import MNISTC
+from .not_mnist import NotMNIST
 from .uci_regression import UCIRegression
