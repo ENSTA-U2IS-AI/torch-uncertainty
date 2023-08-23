@@ -13,6 +13,12 @@ def add_resnet_specific_args(parser: ArgumentParser) -> ArgumentParser:
         default=18,
         help=f"Architecture of ResNet. Choose among: {archs}",
     )
+    parser.add_argument(
+        "--dropout_rate",
+        type=float,
+        default=0.0,
+        help="Dropout rate",
+    )
     # parser.add_argument(
     #     "--style",
     #     type=str,

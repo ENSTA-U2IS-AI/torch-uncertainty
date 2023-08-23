@@ -212,6 +212,6 @@ class MNISTDataModule(LightningDataModule):
         p.add_argument(
             "--evaluate_ood", dest="ood_detection", action="store_true"
         )
-        p.add_argument("--ood_ds", choices=cls.ood_datasets, default="svhn")
+        p.add_argument("--ood_ds", choices=cls.ood_datasets, default="fashion")
         p.add_argument("--test_alt", choices=["c"], default=None)
         return parent_parser

@@ -23,6 +23,7 @@ class BasicBlock(nn.Module):
         in_planes: int,
         planes: int,
         stride: int = 1,
+        dropout_rate: float = 0,
         groups: int = 1,
     ):
         super(BasicBlock, self).__init__()
@@ -37,6 +38,10 @@ class BasicBlock(nn.Module):
             bias=False,
         )
         self.bn1 = nn.BatchNorm2d(planes)
+
+        # As in timm
+        self.dropout = nn.Dropout2d(p=dropout_rate)
+
         self.conv2 = nn.Conv2d(
             planes,
             planes,
@@ -63,7 +68,7 @@ class BasicBlock(nn.Module):
             )
 
     def forward(self, x: Tensor) -> Tensor:
-        out = F.relu(self.bn1(self.conv1(x)))
+        out = F.relu(self.dropout(self.bn1(self.conv1(x))))
         out = self.bn2(self.conv2(out))
         out += self.shortcut(x)
         out = F.relu(out)
@@ -74,7 +79,12 @@ class Bottleneck(nn.Module):
     expansion = 4
 
     def __init__(
-        self, in_planes: int, planes: int, stride: int = 1, groups: int = 1
+        self,
+        in_planes: int,
+        planes: int,
+        stride: int = 1,
+        dropout_rate: float = 0,
+        groups: int = 1,
     ):
         super(Bottleneck, self).__init__()
 
@@ -96,6 +106,7 @@ class Bottleneck(nn.Module):
             bias=False,
         )
         self.bn2 = nn.BatchNorm2d(planes)
+        self.dropout = nn.Dropout2d(p=dropout_rate)
         self.conv3 = nn.Conv2d(
             planes,
             self.expansion * planes,
@@ -121,11 +132,61 @@ class Bottleneck(nn.Module):
 
     def forward(self, x: Tensor) -> Tensor:
         out = F.relu(self.bn1(self.conv1(x)))
-        out = F.relu(self.bn2(self.conv2(out)))
+        out = F.relu(self.dropout(self.bn2(self.conv2(out))))
         out = self.bn3(self.conv3(out))
         out += self.shortcut(x)
         out = F.relu(out)
         return out
+
+
+# class RobustBottleneck(nn.Module):
+#     """Robust Bottleneck from "Can CNNs be more robust than transformers?"
+#     This corresponds to ResNet-Up-Inverted-DW in the paper.
+#     """
+
+#     expansion = 4
+
+#     def __init__(
+#         self,
+#         in_planes: int,
+#         planes: int,
+#         stride: int = 1,
+#         dropout_rate: float = 0,
+#         groups: int = 1,
+#     ):
+#         super().__init__()
+#         self.conv1 = nn.Conv2d(
+#             in_planes,
+#             planes,
+#             kernel_size=11,
+#             padding=5,
+#             groups=in_planes,
+#             stride=stride,
+#             bias=False,
+#         )
+#         self.bn1 = nn.BatchNorm2d(planes)
+#         self.conv2 = nn.Conv2d(
+#             planes,
+#             self.expansion * planes,
+#             kernel_size=1,
+#             groups=groups,
+#             bias=True,
+#         )
+#         self.conv3 = nn.Conv2d(
+#             self.expansion * planes,
+#             planes,
+#             kernel_size=1,
+#             groups=groups,
+#             bias=True,
+#         )
+#         self.shortcut = nn.Sequential()
+
+#     def forward(self, x: Tensor) -> Tensor:
+#         out = self.bn1(self.conv1(x))
+#         out = F.relu(self.conv2(out))
+#         out = self.conv3(out)
+#         out += self.shortcut(x)
+#         return out
 
 
 class _ResNet(nn.Module):
@@ -135,6 +196,7 @@ class _ResNet(nn.Module):
         num_blocks: List[int],
         in_channels: int,
         num_classes: int,
+        dropout_rate: float,
         groups: int,
         style: str = "imagenet",
     ) -> None:
@@ -178,6 +240,7 @@ class _ResNet(nn.Module):
             block_planes,
             num_blocks[0],
             stride=1,
+            dropout_rate=dropout_rate,
             groups=groups,
         )
         self.layer2 = self._make_layer(
@@ -185,6 +248,7 @@ class _ResNet(nn.Module):
             block_planes * 2,
             num_blocks[1],
             stride=2,
+            dropout_rate=dropout_rate,
             groups=groups,
         )
         self.layer3 = self._make_layer(
@@ -192,6 +256,7 @@ class _ResNet(nn.Module):
             block_planes * 4,
             num_blocks[2],
             stride=2,
+            dropout_rate=dropout_rate,
             groups=groups,
         )
         self.layer4 = self._make_layer(
@@ -199,6 +264,7 @@ class _ResNet(nn.Module):
             block_planes * 8,
             num_blocks[3],
             stride=2,
+            dropout_rate=dropout_rate,
             groups=groups,
         )
 
@@ -216,6 +282,7 @@ class _ResNet(nn.Module):
         planes: int,
         num_blocks: int,
         stride: int,
+        dropout_rate: float,
         groups: int,
     ) -> nn.Module:
         strides = [stride] + [1] * (num_blocks - 1)
@@ -226,6 +293,7 @@ class _ResNet(nn.Module):
                     in_planes=self.in_planes,
                     planes=planes,
                     stride=stride,
+                    dropout_rate=dropout_rate,
                     groups=groups,
                 )
             )
@@ -248,6 +316,7 @@ class _ResNet(nn.Module):
 def resnet18(
     in_channels: int,
     num_classes: int,
+    dropout_rate: float = 0,
     groups: int = 1,
     style: str = "imagenet",
 ) -> _ResNet:
@@ -257,6 +326,7 @@ def resnet18(
     Args:
         in_channels (int): Number of input channels.
         num_classes (int): Number of classes to predict.
+        dropout_rate (float): Dropout rate. Defaults to 0.
         groups (int): Number of groups in convolutions. Defaults to 1.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
@@ -269,6 +339,7 @@ def resnet18(
         num_blocks=[2, 2, 2, 2],
         in_channels=in_channels,
         num_classes=num_classes,
+        dropout_rate=dropout_rate,
         groups=groups,
         style=style,
     )
@@ -277,6 +348,7 @@ def resnet18(
 def resnet34(
     in_channels: int,
     num_classes: int,
+    dropout_rate: float = 0,
     groups: int = 1,
     style: str = "imagenet",
 ) -> _ResNet:
@@ -286,6 +358,7 @@ def resnet34(
     Args:
         in_channels (int): Number of input channels.
         num_classes (int): Number of classes to predict.
+        dropout_rate (float): Dropout rate. Defaults to 0.
         groups (int): Number of groups in convolutions. Defaults to 1.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
@@ -297,8 +370,9 @@ def resnet34(
         block=BasicBlock,
         num_blocks=[3, 4, 6, 3],
         in_channels=in_channels,
-        groups=groups,
         num_classes=num_classes,
+        dropout_rate=dropout_rate,
+        groups=groups,
         style=style,
     )
 
@@ -306,6 +380,7 @@ def resnet34(
 def resnet50(
     in_channels: int,
     num_classes: int,
+    dropout_rate: float = 0,
     groups: int = 1,
     style: str = "imagenet",
 ) -> _ResNet:
@@ -315,6 +390,7 @@ def resnet50(
     Args:
         in_channels (int): Number of input channels.
         num_classes (int): Number of classes to predict.
+        dropout_rate (float): Dropout rate. Defaults to 0.
         groups (int): Number of groups in convolutions. Defaults to 1.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
@@ -326,8 +402,9 @@ def resnet50(
         block=Bottleneck,
         num_blocks=[3, 4, 6, 3],
         in_channels=in_channels,
-        groups=groups,
         num_classes=num_classes,
+        dropout_rate=dropout_rate,
+        groups=groups,
         style=style,
     )
 
@@ -335,6 +412,7 @@ def resnet50(
 def resnet101(
     in_channels: int,
     num_classes: int,
+    dropout_rate: float = 0,
     groups: int = 1,
     style: str = "imagenet",
 ) -> _ResNet:
@@ -344,6 +422,7 @@ def resnet101(
     Args:
         in_channels (int): Number of input channels.
         num_classes (int): Number of classes to predict.
+        dropout_rate (float): Dropout rate. Defaults to 0.
         groups (int): Number of groups in convolutions. Defaults to 1.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
@@ -355,8 +434,9 @@ def resnet101(
         block=Bottleneck,
         num_blocks=[3, 4, 23, 3],
         in_channels=in_channels,
-        groups=groups,
         num_classes=num_classes,
+        dropout_rate=dropout_rate,
+        groups=groups,
         style=style,
     )
 
@@ -364,6 +444,7 @@ def resnet101(
 def resnet152(
     in_channels: int,
     num_classes: int,
+    dropout_rate: float = 0,
     groups: int = 1,
     style: str = "imagenet",
 ) -> _ResNet:
@@ -373,6 +454,7 @@ def resnet152(
     Args:
         in_channels (int): Number of input channels.
         num_classes (int): Number of classes to predict.
+        dropout_rate (float): Dropout rate. Defaults to 0.
         groups (int, optional): Number of groups in convolutions. Defaults to
             ``1``.
         style (bool, optional): Whether to use the ImageNet
@@ -386,6 +468,7 @@ def resnet152(
         num_blocks=[3, 8, 36, 3],
         in_channels=in_channels,
         num_classes=num_classes,
+        dropout_rate=dropout_rate,
         groups=groups,
         style=style,
     )

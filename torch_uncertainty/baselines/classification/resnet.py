@@ -148,6 +148,7 @@ class ResNet:
         arch: int,
         style: str = "imagenet",
         num_estimators: Optional[int] = None,
+        dropout_rate: float = 0.0,
         groups: int = 1,
         scale: Optional[float] = None,
         alpha: Optional[float] = None,
@@ -169,7 +170,13 @@ class ResNet:
         if version not in cls.versions.keys():
             raise ValueError(f"Unknown version: {version}")
 
-        if version == "packed":
+        if version == "vanilla":
+            params.update(
+                {
+                    "dropout_rate": dropout_rate,
+                }
+            )
+        elif version == "packed":
             params.update(
                 {
                     "num_estimators": num_estimators,
@@ -191,6 +198,8 @@ class ResNet:
                     "scale": scale,
                 }
             )
+        else:
+            raise ValueError(f"Unknown version: {version}.")
 
         model = cls.versions[version][cls.archs.index(arch)](**params)
         kwargs.update(params)
