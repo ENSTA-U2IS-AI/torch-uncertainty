@@ -24,7 +24,7 @@ class TestClassificationSingle:
 
     def test_cli_main_dummy_binary(self):
         root = Path(__file__).parent.absolute().parents[0]
-        with ArgvContext("file.py", "--logits"):
+        with ArgvContext("file.py --logits"):
             args = init_args(
                 DummyClassificationBaseline, DummyClassificationDataModule
             )
@@ -46,7 +46,7 @@ class TestClassificationSingle:
 
     def test_cli_main_dummy_ood(self):
         root = Path(__file__).parent.absolute().parents[0]
-        with ArgvContext("file.py", "--evaluate_ood", "--entropy"):
+        with ArgvContext("file.py --evaluate_ood --entropy"):
             args = init_args(
                 DummyClassificationBaseline, DummyClassificationDataModule
             )
@@ -78,7 +78,7 @@ class TestClassificationEnsemble:
 
     def test_cli_main_dummy_binary(self):
         root = Path(__file__).parent.absolute().parents[0]
-        with ArgvContext("file.py", "--mutual_information"):
+        with ArgvContext("file.py --mutual_information"):
             args = init_args(
                 DummyClassificationBaseline, DummyClassificationDataModule
             )
@@ -100,7 +100,7 @@ class TestClassificationEnsemble:
 
     def test_cli_main_dummy_ood(self):
         root = Path(__file__).parent.absolute().parents[0]
-        with ArgvContext("file.py", "--evaluate_ood", "--variation_ratio"):
+        with ArgvContext("file.py --evaluate_ood --variation_ratio"):
             args = init_args(
                 DummyClassificationBaseline, DummyClassificationDataModule
             )

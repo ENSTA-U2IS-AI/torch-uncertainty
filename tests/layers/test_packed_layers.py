@@ -19,12 +19,6 @@ def feat_input_one_rearrange() -> torch.Tensor:
 
 
 @pytest.fixture
-def feat_input_two_rearrange() -> torch.Tensor:
-    feat = torch.rand((2 * 3, 5))
-    return feat
-
-
-@pytest.fixture
 def img_input() -> torch.Tensor:
     img = torch.rand((5, 6, 3, 3))
     return img
@@ -50,12 +44,11 @@ class TestPackedLinear:
         out = layer(feat_input_one_rearrange)
         assert out.shape == torch.Size([3, 2])
 
-    def test_linear_two_estimator_rearrange(
-        self, feat_input_two_rearrange: torch.Tensor
-    ):
-        layer = PackedLinear(5, 2, alpha=1, num_estimators=1, rearrange=True)
-        out = layer(feat_input_two_rearrange)
-        assert out.shape == torch.Size([6, 2])
+    def test_linear_two_estimator_rearrange_not_divisible(self):
+        feat = torch.rand((2 * 3, 3))
+        layer = PackedLinear(5, 1, alpha=1, num_estimators=2, rearrange=True)
+        out = layer(feat)
+        assert out.shape == torch.Size([6, 1])
 
     def test_linear_extend(self):
         _ = PackedConv2d(
