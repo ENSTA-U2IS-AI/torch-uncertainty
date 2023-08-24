@@ -11,7 +11,7 @@
 
 _TorchUncertainty_ is a package designed to help you leverage uncertainty quantification techniques and make your deep neural networks more reliable. It aims at being collaborative and including as many methods as possible, so reach out to add yours!
 
-:construction: _TorchUncertainty_ is in early development :construction: - expect massive changes but reach out and contribute if you are interested by the project!
+:construction: _TorchUncertainty_ is in early development :construction: - expect massive changes, but reach out and contribute if you are interested in the project! **Please raise an issue if you have any bugs or difficulties.**
 
 ---
 
@@ -27,11 +27,13 @@ See the [Reference page](https://torch-uncertainty.github.io/references.html) or
 
 ## Installation
 
-Install the desired pytorch version in your environment. Then, the package can be installed from PyPI:
+The package can be installed from PyPI:
 
 ```sh
 pip install torch-uncertainty
 ```
+
+Then, install the desired PyTorch version in your environment.
 
 If you aim to contribute (thank you!), have a look at the [contribution page](https://torch-uncertainty.github.io/contributing.html).
 
@@ -45,7 +47,7 @@ A quickstart is available at [torch-uncertainty.github.io/quickstart](https://to
 
 ### Baselines
 
-To date, the following deep learning baselines are implemented:
+To date, the following deep learning baselines have been implemented:
 
 - Deep Ensembles
 - BatchEnsemble
@@ -55,7 +57,7 @@ To date, the following deep learning baselines are implemented:
 
 ### Post-processing methods
 
-To date, the following post-processing methods are implemented:
+To date, the following post-processing methods have been implemented:
 
 - Temperature, Vector, & Matrix scaling
 
