@@ -9,12 +9,12 @@ import torch.nn.functional as F
 from einops import rearrange
 from pytorch_lightning.utilities.memory import get_model_size_mb
 from pytorch_lightning.utilities.types import EPOCH_OUTPUT, STEP_OUTPUT
-from torchmetrics import (
-    AUROC,
-    Accuracy,
-    AveragePrecision,
-    CalibrationError,
-    MetricCollection,
+from torchmetrics import Accuracy, CalibrationError, MetricCollection
+from torchmetrics.classification import (
+    BinaryAccuracy,
+    BinaryAUROC,
+    BinaryAveragePrecision,
+    BinaryCalibrationError,
 )
 
 from ..metrics import (
@@ -90,8 +90,8 @@ class ClassificationSingle(pl.LightningModule):
         if self.binary_cls:
             cls_metrics = MetricCollection(
                 {
-                    "acc": Accuracy(task="binary"),
-                    "ece": CalibrationError(task="binary"),
+                    "acc": BinaryAccuracy(),
+                    "ece": BinaryCalibrationError(),
                     "brier": BrierScore(num_classes=1),
                 },
                 compute_groups=False,
@@ -120,8 +120,8 @@ class ClassificationSingle(pl.LightningModule):
             ood_metrics = MetricCollection(
                 {
                     "fpr95": FPR95(pos_label=1),
-                    "auroc": AUROC(task="binary"),
-                    "aupr": AveragePrecision(task="binary"),
+                    "auroc": BinaryAUROC(),
+                    "aupr": BinaryAveragePrecision(),
                 },
                 compute_groups=[["auroc", "aupr"], ["fpr95"]],
             )
