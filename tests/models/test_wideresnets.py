@@ -7,18 +7,18 @@ class TestPackedResnet:
     """Testing the WideResNet packed class."""
 
     def test_main(self):
-        packed_wideresnet28x10(1, 2, 2, 1, 1, 10, style="cifar")
+        packed_wideresnet28x10(1, 2, 2, 1, 1, 10, style="imagenet")
 
 
 class TestMaskedWide:
     """Testing the WideResNet masked class."""
 
     def test_main(self):
-        masked_wideresnet28x10(1, 2, 2, 1, 10, style="cifar")
+        masked_wideresnet28x10(1, 2, 2, 1, 10, style="imagenet")
 
 
 class TestBatchedWide:
     """Testing the WideResNet batched class."""
 
     def test_main(self):
-        batched_wideresnet28x10(1, 2, 1, 10, style="cifar")
+        batched_wideresnet28x10(1, 2, 1, 10, style="imagenet")
