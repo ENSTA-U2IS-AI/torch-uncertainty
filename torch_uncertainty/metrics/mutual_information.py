@@ -36,7 +36,8 @@ class MutualInformation(Metric):
 
     Note:
         A higher mutual information can be interpreted as a higher epistemic
-        uncertainty.
+        uncertainty. The Mutual Information is also computationally equivalent
+        to the Generalized Jensen-Shannon Divergence (GJSD).
 
     Warning:
         Make sure that the probabilities in :attr:`probs` are normalized to sum
