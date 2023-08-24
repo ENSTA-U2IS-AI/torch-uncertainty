@@ -164,6 +164,10 @@ class VGG:
                 use_variation_ratio=use_variation_ratio,
                 **kwargs,
             )
+        else:
+            raise ValueError(
+                f"{version} is not in {cls.single} nor {cls.ensemble}."
+            )
 
     @classmethod
     def load_from_checkpoint(

@@ -169,10 +169,7 @@ class _MaskedResNet(nn.Module):
         self.in_channels = in_channels
         self.num_estimators = num_estimators
         self.in_planes = 64
-        if self.in_planes % self.num_estimators:
-            self.in_planes += (
-                self.num_estimators - self.in_planes % self.num_estimators
-            )
+
         block_planes = self.in_planes
 
         if style == "imagenet":

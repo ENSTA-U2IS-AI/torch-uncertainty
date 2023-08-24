@@ -41,7 +41,6 @@ class BasicBlock(nn.Module):
 
         # As in timm
         self.dropout = nn.Dropout2d(p=dropout_rate)
-
         self.conv2 = nn.Conv2d(
             planes,
             planes,
