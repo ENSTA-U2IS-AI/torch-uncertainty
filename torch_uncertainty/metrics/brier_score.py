@@ -30,7 +30,7 @@ class BrierScore(Metric):
         and :math:`N` is the number of estimators.
 
     Note:
-        If :attr:`probs` is a 3D tensor, then the metrics computes the mean of
+        If :attr:`probs` is a 3D tensor, then the metric computes the mean of
         the Brier score over the estimators ie. :math:`t = \frac{1}{N}
         \sum_{i=0}^{N-1} BrierScore(probs[:,i,:], target)`.
 

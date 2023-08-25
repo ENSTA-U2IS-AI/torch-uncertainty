@@ -10,6 +10,11 @@ from torch_uncertainty.models.resnet.masked import (
     masked_resnet101,
     masked_resnet152,
 )
+from torch_uncertainty.models.resnet.mimo import (
+    mimo_resnet34,
+    mimo_resnet101,
+    mimo_resnet152,
+)
 from torch_uncertainty.models.resnet.packed import (
     packed_resnet34,
     packed_resnet101,
@@ -70,3 +75,14 @@ class TestBatchedResnet:
         batched_resnet34(1, 2, 1, 10)
         batched_resnet101(1, 2, 1, 10)
         batched_resnet152(1, 2, 1, 10)
+
+
+class TestMIMOResnet:
+    """Testing the ResNet mimo class."""
+
+    def test_main(self):
+        model = mimo_resnet34(1, 10, 2, style="cifar")
+        model.train()
+        model(torch.rand((2, 1, 28, 28)))
+        mimo_resnet101(1, 10, 2)
+        mimo_resnet152(1, 10, 2)
