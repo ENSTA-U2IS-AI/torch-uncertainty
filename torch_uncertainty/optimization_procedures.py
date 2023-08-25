@@ -1,6 +1,6 @@
 # fmt: off
 from functools import partial
-from typing import Callable
+from typing import Callable, Optional
 
 import torch.nn as nn
 import torch.optim as optim
@@ -167,7 +167,7 @@ def optim_imagenet_resnet50(
 
 
 def optim_imagenet_resnet50_A3(
-    model: nn.Module, effective_batch_size: int = None
+    model: nn.Module, effective_batch_size: Optional[int] = None
 ) -> dict:
     """
     Training procedure proposed in ResNet strikes back: An improved training
@@ -272,7 +272,7 @@ def get_procedure(
     arch_name: str,
     ds_name: str,
     model_name: str = "",
-    imagenet_recipe: str = None,
+    imagenet_recipe: Optional[str] = None,
 ) -> Callable:
     """Get the optimization procedure for a given architecture and dataset.
 
@@ -280,6 +280,8 @@ def get_procedure(
         arch_name (str): The name of the architecture.
         ds_name (str): The name of the dataset.
         model_name (str, optional): The name of the model. Defaults to "".
+        imagenet_recipe (str, optional): The recipe to use for
+            ImageNet. Defaults to None.
 
     Returns:
         callable: The optimization procedure.

@@ -15,7 +15,7 @@ def load_hf(weight_id: str) -> Tuple[torch.Tensor, Dict]:
         weight_id (str): The id of the model to load.
 
     Returns:
-        Tuple[torch.Tensor, Dict]: The model weights and config.
+        Tuple[Tensor, Dict]: The model weights and config.
 
     Note - License:
         TorchUncertainty's weights are released under the Apache 2.0 license.
