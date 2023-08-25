@@ -5,7 +5,7 @@ on:
     branches:
       - main
       - dev
-  pull_request_target:
+  pull_request:
   schedule:
     - cron: "42 7 * * 0"
   workflow_dispatch:
@@ -76,7 +76,7 @@ jobs:
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
-      if: ${{ github.event_name != 'pull_request_target' }}
+      if: ${{ github.event_name != 'pull_request' }}
       continue-on-error: true
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
