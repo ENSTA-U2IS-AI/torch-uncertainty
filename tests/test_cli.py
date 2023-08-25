@@ -1,4 +1,5 @@
 # fmt: off
+import sys
 from pathlib import Path
 
 import pytest
@@ -47,8 +48,13 @@ class TestCLI:
     def test_cli_main_other_arguments(self):
         root = Path(__file__).parent.absolute().parents[0]
         with ArgvContext(
-            "file.py --seed 42 --max_epochs 1 --channels_last",
+            "file.py",
+            "--seed",
+            "42",
+            "--max_epochs",
+            "1",
         ):
+            print(sys.orig_argv, sys.argv)
             args = init_args(ResNet, CIFAR10DataModule)
 
             # datamodule

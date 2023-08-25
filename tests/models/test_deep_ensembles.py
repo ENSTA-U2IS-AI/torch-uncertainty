@@ -25,10 +25,10 @@ class TestDeepEnsemblesModel:
         with pytest.raises(ValueError):
             deep_ensembles([model_1, model_2], num_estimators=2)
 
-    # def test_list_singleton(self):
-    #     model_1 = dummy_model(1, 10, 1)
-    #     with pytest.raises(ValueError):
-    #         deep_ensembles([model_1], num_estimators=1)
+    def test_list_singleton(self):
+        model_1 = dummy_model(1, 10, 1)
+        with pytest.raises(ValueError):
+            deep_ensembles([model_1], num_estimators=1)
 
     def test_model_and_no_num_estimator(self):
         model_1 = dummy_model(1, 10, 1)
