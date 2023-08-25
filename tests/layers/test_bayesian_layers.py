@@ -8,6 +8,9 @@ from torch_uncertainty.layers.bayesian_layers import (
     BayesConv3d,
     BayesLinear,
 )
+from torch_uncertainty.layers.bayesian_layers.sampler import (
+    TrainableDistribution,
+)
 
 
 # fmt:on
@@ -83,7 +86,9 @@ class TestBayesConv1d:
         assert out.shape == torch.Size([2, 10])
 
     def test_conv1_even(self, feat_input_even: torch.Tensor) -> None:
-        layer = BayesConv1d(8, 2, kernel_size=1, sigma_init=0)
+        layer = BayesConv1d(
+            8, 2, kernel_size=1, sigma_init=0, padding_mode="reflect"
+        )
         out = layer(feat_input_even)
         assert out.shape == torch.Size([2, 10])
 
@@ -105,7 +110,9 @@ class TestBayesConv2d:
         assert out.shape == torch.Size([5, 2, 3, 3])
 
     def test_conv2_even(self, img_input_even: torch.Tensor) -> None:
-        layer = BayesConv2d(10, 2, kernel_size=1, sigma_init=0)
+        layer = BayesConv2d(
+            10, 2, kernel_size=1, sigma_init=0, padding_mode="reflect"
+        )
         out = layer(img_input_even)
         assert out.shape == torch.Size([8, 2, 3, 3])
 
@@ -127,9 +134,20 @@ class TestBayesConv3d:
         assert out.shape == torch.Size([1, 2, 3, 3, 3])
 
     def test_conv3_even(self, cube_input_even: torch.Tensor) -> None:
-        layer = BayesConv3d(10, 2, kernel_size=1, sigma_init=0)
+        layer = BayesConv3d(
+            10, 2, kernel_size=1, sigma_init=0, padding_mode="reflect"
+        )
         out = layer(cube_input_even)
         assert out.shape == torch.Size([2, 2, 3, 3, 3])
 
         layer.freeze()
         out = layer(cube_input_even)
+
+
+class TestTrainableDistribution:
+    """Testing the TrainableDistribution class."""
+
+    def test_error(self) -> None:
+        sampler = TrainableDistribution(torch.ones(1), torch.ones(1))
+        with pytest.raises(ValueError):
+            sampler.log_posterior()
