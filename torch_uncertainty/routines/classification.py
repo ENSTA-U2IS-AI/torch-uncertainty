@@ -55,6 +55,7 @@ class ClassificationSingle(pl.LightningModule):
         model: nn.Module,
         loss: Type[nn.Module],
         optimization_procedure: Any,
+        format_batch_fn: nn.Module = nn.Identity(),
         mixup_alpha: float = 0,
         cutmix_alpha: float = 0,
         ood_detection: bool = False,
@@ -88,6 +89,8 @@ class ClassificationSingle(pl.LightningModule):
         self.loss = loss
         # optimization procedure
         self.optimization_procedure = optimization_procedure
+        # batch format
+        self.format_batch_fn = format_batch_fn
 
         # metrics
         if self.binary_cls:
@@ -178,8 +181,8 @@ class ClassificationSingle(pl.LightningModule):
     def training_step(
         self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int
     ) -> STEP_OUTPUT:
-        inputs, targets = batch
-        inputs, targets = self.mixup(inputs, targets)
+        batch = self.mixup(*batch)
+        inputs, targets = self.format_batch_fn(batch)
         logits = self.forward(inputs)
 
         # BCEWithLogitsLoss expects float targets
@@ -325,6 +328,7 @@ class ClassificationEnsemble(ClassificationSingle):
         loss: Type[nn.Module],
         optimization_procedure: Any,
         num_estimators: int,
+        format_batch_fn: nn.Module = nn.Identity(),
         mixup_alpha: float = 0,
         cutmix_alpha: float = 0,
         ood_detection: bool = False,
@@ -339,6 +343,7 @@ class ClassificationEnsemble(ClassificationSingle):
             model=model,
             loss=loss,
             optimization_procedure=optimization_procedure,
+            format_batch_fn=format_batch_fn,
             mixup_alpha=mixup_alpha,
             cutmix_alpha=cutmix_alpha,
             ood_detection=ood_detection,
@@ -406,11 +411,11 @@ class ClassificationEnsemble(ClassificationSingle):
     def training_step(
         self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int
     ) -> STEP_OUTPUT:
-        inputs, targets = batch
-        inputs, targets = self.mixup(inputs, targets)
+        batch = self.mixup(*batch)
+        inputs, targets = self.format_batch_fn(batch)
 
         # eventual input repeat is done in the model
-        targets = targets.repeat(self.num_estimators)
+        # targets = targets.repeat(self.num_estimators)
 
         # Computing logits
         logits = self.forward(inputs)

@@ -1,5 +1,5 @@
 # fmt: off
-from typing import List, Optional, Union
+from typing import List, Optional, Tuple, Union
 
 import torchvision.transforms.functional as F
 from PIL import Image, ImageEnhance
@@ -250,3 +250,13 @@ class Color(nn.Module):
         if isinstance(img, Tensor):
             img = F.to_pil_image(img)
         return ImageEnhance.Color(img).enhance(level)
+
+
+class RepeatTarget(nn.Module):
+    def __init__(self, num_repeats: int) -> None:
+        super().__init__()
+        self.num_repeats = num_repeats
+
+    def forward(self, batch: Tuple[Tensor, Tensor]) -> Tensor:
+        inputs, targets = batch
+        return inputs, targets.repeat(self.num_repeats)
