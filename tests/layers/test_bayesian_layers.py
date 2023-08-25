@@ -147,7 +147,7 @@ class TestBayesConv3d:
 class TestTrainableDistribution:
     """Testing the TrainableDistribution class."""
 
-    def test_error(self) -> None:
+    def test_log_posterior(self) -> None:
         sampler = TrainableDistribution(torch.ones(1), torch.ones(1))
         with pytest.raises(ValueError):
             sampler.log_posterior()
