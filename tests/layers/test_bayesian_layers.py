@@ -89,11 +89,20 @@ class TestBayesConv1d:
         layer = BayesConv1d(
             8, 2, kernel_size=1, sigma_init=0, padding_mode="reflect"
         )
+        print(layer)
         out = layer(feat_input_even)
         assert out.shape == torch.Size([2, 10])
 
         layer.freeze()
         out = layer(feat_input_even)
+
+        layer.__setstate__({"padding_mode": "replicate"})
+
+    def test_error(self):
+        with pytest.raises(ValueError):
+            BayesConv1d(
+                8, 2, kernel_size=1, sigma_init=0, padding_mode="random"
+            )
 
 
 class TestBayesConv2d:
@@ -113,6 +122,7 @@ class TestBayesConv2d:
         layer = BayesConv2d(
             10, 2, kernel_size=1, sigma_init=0, padding_mode="reflect"
         )
+        print(layer)
         out = layer(img_input_even)
         assert out.shape == torch.Size([8, 2, 3, 3])
 
@@ -130,6 +140,7 @@ class TestBayesConv3d:
         assert out.shape == torch.Size([1, 2, 3, 3, 3])
 
         layer = BayesConv3d(10, 2, kernel_size=1, sigma_init=0, bias=False)
+        print(layer)
         out = layer(cube_input_odd)
         assert out.shape == torch.Size([1, 2, 3, 3, 3])
 
@@ -137,6 +148,7 @@ class TestBayesConv3d:
         layer = BayesConv3d(
             10, 2, kernel_size=1, sigma_init=0, padding_mode="reflect"
         )
+        print(layer)
         out = layer(cube_input_even)
         assert out.shape == torch.Size([2, 2, 3, 3, 3])
 
