@@ -13,6 +13,7 @@ from torch_uncertainty.routines.regression import (
     RegressionEnsemble,
     RegressionSingle,
 )
+from torch_uncertainty.transforms import RepeatTarget
 
 from .model import dummy_model
 
@@ -40,6 +41,7 @@ class DummyClassificationBaseline:
                 model=model,
                 loss=loss,
                 optimization_procedure=optimization_procedure,
+                format_batch_fn=nn.Identity(),
                 **kwargs,
             )
         elif baseline_type == "ensemble":
@@ -49,6 +51,7 @@ class DummyClassificationBaseline:
                 model=model,
                 loss=loss,
                 optimization_procedure=optimization_procedure,
+                format_batch_fn=RepeatTarget(2),
                 **kwargs,
             )
 

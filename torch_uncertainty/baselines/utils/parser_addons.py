@@ -112,3 +112,19 @@ def add_masked_specific_args(parser: ArgumentParser) -> ArgumentParser:
         help="Scale for Masksembles",
     )
     return parser
+
+
+def add_mimo_specific_args(parser: ArgumentParser) -> ArgumentParser:
+    parser.add_argument(
+        "--rho",
+        type=float,
+        default=0.0,
+        help="Rho for MIMO",
+    )
+    parser.add_argument(
+        "--batch_repeat",
+        type=int,
+        default=1,
+        help="Batch repeat for MIMO",
+    )
+    return parser
