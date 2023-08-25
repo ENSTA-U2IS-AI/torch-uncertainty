@@ -52,6 +52,7 @@ To date, the following deep learning baselines have been implemented:
 - Deep Ensembles
 - BatchEnsemble
 - Masksembles
+- MIMO
 - Packed-Ensembles (see [blog post](https://medium.com/@adrien.lafage/make-your-neural-networks-more-reliable-with-packed-ensembles-7ad0b737a873))
 - Bayesian Neural Networks
 
