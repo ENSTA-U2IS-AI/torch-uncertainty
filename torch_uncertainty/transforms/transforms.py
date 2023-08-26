@@ -1,7 +1,9 @@
 # fmt: off
 from typing import List, Optional, Tuple, Union
 
+import torch
 import torchvision.transforms.functional as F
+from einops import rearrange
 from PIL import Image, ImageEnhance
 from torch import Tensor, nn
 
@@ -255,8 +257,73 @@ class Color(nn.Module):
 class RepeatTarget(nn.Module):
     def __init__(self, num_repeats: int) -> None:
         super().__init__()
+
+        if not isinstance(num_repeats, int):
+            raise ValueError("num_repeats must be an integer.")
+        if num_repeats <= 0:
+            raise ValueError("num_repeats must be greater than 0.")
+
         self.num_repeats = num_repeats
 
     def forward(self, batch: Tuple[Tensor, Tensor]) -> Tensor:
         inputs, targets = batch
         return inputs, targets.repeat(self.num_repeats)
+
+
+class MIMOBatchFormat(nn.Module):
+    def __init__(
+        self, num_estimators: int, rho: float = 0.0, batch_repeat: int = 1
+    ) -> None:
+        super().__init__()
+
+        if num_estimators <= 0:
+            raise ValueError("num_estimators must be greater than 0.")
+        if not (0.0 <= rho <= 1.0):
+            raise ValueError("rho must be between 0 and 1.")
+        if batch_repeat <= 0:
+            raise ValueError("batch_repeat must be greater than 0.")
+
+        self.num_estimators = num_estimators
+        self.rho = rho
+        self.batch_repeat = batch_repeat
+
+    def shuffle(self, inputs: Tensor):
+        idx = torch.randperm(inputs.nelement(), device=inputs.device)
+        return inputs.view(-1)[idx].view(inputs.size())
+
+    def forward(self, batch: Tuple[Tensor, Tensor]) -> Tensor:
+        inputs, targets = batch
+        indexes = torch.arange(
+            0, inputs.shape[0], device=inputs.device, dtype=torch.int64
+        ).repeat(self.batch_repeat)
+        main_shuffle = self.shuffle(indexes)
+        threshold_shuffle = int(main_shuffle.shape[0] * (1.0 - self.rho))
+        shuffle_indices = [
+            torch.concat(
+                [
+                    self.shuffle(main_shuffle[:threshold_shuffle]),
+                    main_shuffle[threshold_shuffle:],
+                ],
+                axis=0,
+            )
+            for _ in range(self.num_estimators)
+        ]
+        inputs = torch.stack(
+            [
+                torch.index_select(inputs, dim=0, index=indices)
+                for indices in shuffle_indices
+            ],
+            axis=0,
+        )
+        targets = torch.stack(
+            [
+                torch.index_select(targets, dim=0, index=indices)
+                for indices in shuffle_indices
+            ],
+            axis=0,
+        )
+        inputs = rearrange(
+            inputs, "m b c h w -> (m b) c h w", m=self.num_estimators
+        )
+        targets = rearrange(targets, "m b -> (m b)", m=self.num_estimators)
+        return inputs, targets
