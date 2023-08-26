@@ -78,7 +78,7 @@ class TestBatchedResnet:
 
 
 class TestMIMOResnet:
-    """Testing the ResNet mimo class."""
+    """Testing the ResNet MIMO class."""
 
     def test_main(self):
         model = mimo_resnet34(1, 10, 2, style="cifar")
