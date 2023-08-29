@@ -4,7 +4,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="torch_uncertainty",
-    version="0.1.4",
+    version="0.1.5",
     description="TorchUncertainty: A maintained and collaborative PyTorch"
     "Library for benchmarking and leveraging predictive uncertainty"
     "quantification techniques.",
