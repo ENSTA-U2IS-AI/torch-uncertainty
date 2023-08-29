@@ -84,9 +84,10 @@ root = Path(os.path.abspath(""))
 # We mock the arguments for the trainer
 with ArgvContext(
     "file.py",
-    "--max_epochs 1",
-    "--enable_progress_bar=False",
-    "--verbose=False",
+    "--max_epochs",
+    "1",
+    "--enable_progress_bar",
+    "False",
 ):
     args = init_args(datamodule=MNISTDataModule)
 

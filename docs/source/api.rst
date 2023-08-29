@@ -194,7 +194,6 @@ Metrics
     BrierScore
     Disagreement
     Entropy
-    JensenShannonDivergence
     MutualInformation
     NegativeLogLikelihood
 
