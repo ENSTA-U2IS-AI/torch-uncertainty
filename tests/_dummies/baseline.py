@@ -13,6 +13,7 @@ from torch_uncertainty.routines.regression import (
     RegressionEnsemble,
     RegressionSingle,
 )
+from torch_uncertainty.transforms import RepeatTarget
 
 from .model import dummy_model
 
@@ -40,23 +41,27 @@ class DummyClassificationBaseline:
                 model=model,
                 loss=loss,
                 optimization_procedure=optimization_procedure,
+                format_batch_fn=nn.Identity(),
                 **kwargs,
             )
         elif baseline_type == "ensemble":
+            kwargs["num_estimators"] = 2
             return ClassificationEnsemble(
                 num_classes=num_classes,
-                num_estimators=2,
                 model=model,
                 loss=loss,
                 optimization_procedure=optimization_procedure,
+                format_batch_fn=RepeatTarget(2),
                 **kwargs,
             )
 
-    @staticmethod
+    @classmethod
     def add_model_specific_args(
-        parent_parser: ArgumentParser,
+        cls,
+        parser: ArgumentParser,
     ) -> ArgumentParser:
-        return parent_parser
+        parser = ClassificationEnsemble.add_model_specific_args(parser)
+        return parser
 
 
 class DummyRegressionBaseline:
@@ -86,8 +91,8 @@ class DummyRegressionBaseline:
                 **kwargs,
             )
         elif baseline_type == "ensemble":
+            kwargs["num_estimators"] = 2
             return RegressionEnsemble(
-                num_estimators=2,
                 model=model,
                 loss=loss,
                 optimization_procedure=optimization_procedure,
@@ -97,8 +102,10 @@ class DummyRegressionBaseline:
                 **kwargs,
             )
 
-    @staticmethod
+    @classmethod
     def add_model_specific_args(
-        parent_parser: ArgumentParser,
+        cls,
+        parser: ArgumentParser,
     ) -> ArgumentParser:
-        return parent_parser
+        parser = ClassificationEnsemble.add_model_specific_args(parser)
+        return parser

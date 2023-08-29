@@ -47,6 +47,11 @@ def init_args(
         action="store_true",
         help="Use channels last memory format",
     )
+    parser.add_argument(
+        "--enable_resume",
+        action="store_true",
+        help="Allow resuming the training (save optimizer's states)",
+    )
 
     parser = pl.Trainer.add_argparse_args(parser)
     if network is not None:
@@ -105,7 +110,7 @@ def cli_main(
         monitor=monitor,
         mode=mode,
         save_last=True,
-        save_weights_only=True,
+        save_weights_only=not args.enable_resume,
     )
 
     # Select the best model, monitor the lr and stop if NaN
@@ -138,5 +143,8 @@ def cli_main(
     else:
         # training and testing
         trainer.fit(network, datamodule)
-        test_values = trainer.test(datamodule=datamodule, ckpt_path="best")
+        if args.fast_dev_run is False:
+            test_values = trainer.test(datamodule=datamodule, ckpt_path="best")
+        else:
+            test_values = {}
     return test_values

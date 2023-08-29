@@ -23,22 +23,25 @@ class MutualInformation(Metric):
             <https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metric-kwargs>`_.
 
     Inputs:
-        - :attr:`probs`: :math:`(B, N, C)`
+        - :attr:`probs`: the likelihoods provided by the ensemble as a Tensor
+            of shape :math:`(B, N, C)`,
 
-        where :math:`B` is the batch size, :math:`C` is the number of classes
-        and :math:`N` is the number of estimators.
-
-    Note:
-        A higher mutual information means a higher uncertainty.
-
-    Warning:
-        Make sure that the probabilities in :attr:`probs` are normalized to sum
-        to one.
+            where :math:`B` is the batch size, :math:`N` is the number of
+            estimators, and :math:`C` is the number of classes.
 
     Raises:
         ValueError:
             If :attr:`reduction` is not one of ``'mean'``, ``'sum'``,
             ``'none'`` or ``None``.
+
+    Note:
+        A higher mutual information can be interpreted as a higher epistemic
+        uncertainty. The Mutual Information is also computationally equivalent
+        to the Generalized Jensen-Shannon Divergence (GJSD).
+
+    Warning:
+        Make sure that the probabilities in :attr:`probs` are normalized to sum
+        to one.
     """
 
     is_differentiable: bool = False
@@ -74,7 +77,10 @@ class MutualInformation(Metric):
         probabilities.
 
         Args:
-            probs (torch.Tensor): Probabilities from the ensemble.
+            probs (torch.Tensor): Likelihoods from the ensemble of shape
+                :math:`(B, N, C)`, where :math:`B` is the batch size,
+                :math:`N` is the number of estimators and :math:`C` is the
+                number of classes.
         """
         batch_size = probs.size(0)
 

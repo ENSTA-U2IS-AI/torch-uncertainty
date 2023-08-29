@@ -182,7 +182,7 @@ class _BayesConvNd(Module):
         """Unfreeze the layer by setting the frozen attribute to False."""
         self.frozen = False
 
-    def extra_repr(self):
+    def extra_repr(self):  # coverage: ignore
         s = (
             "{in_channels}, {out_channels}, kernel_size={kernel_size}"
             ", stride={stride}"

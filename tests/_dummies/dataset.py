@@ -1,4 +1,5 @@
 # fmt:off
+from pathlib import Path
 from typing import Any, Callable, Tuple
 
 import torch
@@ -12,7 +13,7 @@ import numpy as np
 class DummyClassificationDataset(data.Dataset):
     def __init__(
         self,
-        root: str,
+        root: Path,
         train: bool = True,
         transform: Callable[..., Any] | None = None,
         target_transform: Callable[..., Any] | None = None,

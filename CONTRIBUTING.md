@@ -5,7 +5,7 @@ contributors to help us build a comprehensive library for uncertainty
 quantification in PyTorch.
 
 We are particularly open to any comment that you would have on this project.
-In particular, we are open to changing these guidelines as the project evolves.
+Specifically, we are open to changing these guidelines as the project evolves.
 
 ## The scope of TorchUncertainty
 
@@ -21,7 +21,7 @@ Monte Carlo dropout, ensemble methods, etc.
 
 If you are interested in contributing to torch_uncertainty, we first advise you
 to follow the following steps to reproduce a clean development environment
-ensuring continuous integration does not break.
+ensuring that continuous integration does not break.
 
 1. Install poetry on your workstation.
 2. Clone the repository.
@@ -37,21 +37,21 @@ poetry install --with dev
 pre-commit install
 ```
 
-We are using black for code formatting, flake8 for linting, and isort for the
-imports. The pre-commit hooks will ensure that your code is properly formatted
+We are using `black` for code formatting, `flake8` for linting, and `isort` for the
+imports. The `pre-commit` hooks will ensure that your code is properly formatted
 and linted before committing.
 
 Before submitting a final pull request, that we will review, please try your
-best not to reduce the code coverage and do document your code.
+best not to reduce the code coverage and document your code.
 
 If you implement a method, please add a reference to the corresponding paper in the ["References" page](https://torch-uncertainty.github.io/references.html).
 
 ### Post-processing methods
 
 For now, we intend to follow scikit-learn style API for post-processing
-methods (except that we use a validation dataloader for now). You can get
+methods (except that we use a validation dataset for now). You can get
 inspiration from the already implemented
-[temperature-scaling](https://github.com/ENSTA-U2IS/torch-uncertainty/blob/dev/torch_uncertainty/post_processing/temperature_scaler.py).
+[temperature-scaling](https://github.com/ENSTA-U2IS/torch-uncertainty/blob/dev/torch_uncertainty/post_processing/calibration/temperature_scaler.py).
 
 ## License
 

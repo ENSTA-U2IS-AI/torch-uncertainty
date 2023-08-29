@@ -163,7 +163,6 @@ class MNISTC(VisionDataset):
     def _check_integrity(self) -> bool:
         """Check the integrity of the dataset."""
         fpath = os.path.join(self.root, self.filename)
-        print(fpath)
         if not check_integrity(fpath, self.zip_md5):
             return False
         return True

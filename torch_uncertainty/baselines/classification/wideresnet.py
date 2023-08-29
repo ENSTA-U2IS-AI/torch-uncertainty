@@ -14,6 +14,7 @@ from pytorch_lightning.core.saving import (
 from ...models.wideresnet import (
     batched_wideresnet28x10,
     masked_wideresnet28x10,
+    mimo_wideresnet28x10,
     packed_wideresnet28x10,
     wideresnet28x10,
 )
@@ -21,8 +22,10 @@ from ...routines.classification import (
     ClassificationEnsemble,
     ClassificationSingle,
 )
+from ...transforms import MIMOBatchFormat, RepeatTarget
 from ..utils.parser_addons import (
     add_masked_specific_args,
+    add_mimo_specific_args,
     add_packed_specific_args,
     add_wideresnet_specific_args,
 )
@@ -48,6 +51,7 @@ class WideResNet:
             - ``"packed"``: Packed-Ensembles Wide-ResNet
             - ``"batched"``: BatchEnsemble Wide-ResNet
             - ``"masked"``: Masksemble Wide-ResNet
+            - ``"mimo"``: MIMO ResNet
 
         style (bool, optional): (str, optional): Which ResNet style to use.
         Defaults to ``imagenet``.
@@ -65,6 +69,11 @@ class WideResNet:
         gamma (int, optional): Number of groups within each estimator. Only
             used if :attr:`version` is ``"packed"`` and scales with
             :attr:`groups`. Defaults to ``1s``.
+        rho (float, optional): Probability that all estimators share the same
+            input. Only used if :attr:`version` is ``"mimo"``. Defaults to
+            ``1``.
+        batch_repeat (int, optional): Number of times to repeat the batch. Only
+            used if :attr:`version` is ``"mimo"``. Defaults to ``1``.
         use_entropy (bool, optional): Indicates whether to use the entropy
             values as the OOD criterion or not. Defaults to ``False``.
         use_logits (bool, optional): Indicates whether to use the logits as the
@@ -86,12 +95,13 @@ class WideResNet:
             evaluation.
     """
     single = ["vanilla"]
-    ensemble = ["packed", "batched", "masked"]
+    ensemble = ["packed", "batched", "masked", "mimo"]
     versions = {
         "vanilla": [wideresnet28x10],
         "packed": [packed_wideresnet28x10],
         "batched": [batched_wideresnet28x10],
         "masked": [masked_wideresnet28x10],
+        "mimo": [mimo_wideresnet28x10],
     }
 
     def __new__(
@@ -100,13 +110,15 @@ class WideResNet:
         in_channels: int,
         loss: Type[nn.Module],
         optimization_procedure: Any,
-        version: Literal["vanilla", "packed", "batched", "masked"],
+        version: Literal["vanilla", "packed", "batched", "masked", "mimo"],
         style: str = "imagenet",
         num_estimators: Optional[int] = None,
         groups: Optional[int] = None,
         scale: Optional[float] = None,
         alpha: Optional[int] = None,
         gamma: Optional[int] = None,
+        rho: float = 1.0,
+        batch_repeat: int = 1,
         use_entropy: bool = False,
         use_logits: bool = False,
         use_mi: bool = False,
@@ -121,6 +133,8 @@ class WideResNet:
             "groups": groups,
         }
 
+        format_batch_fn = nn.Identity()
+
         if version not in cls.versions.keys():
             raise ValueError(f"Unknown version: {version}")
 
@@ -133,18 +147,32 @@ class WideResNet:
                     "gamma": gamma,
                 }
             )
+            format_batch_fn = RepeatTarget(num_repeats=num_estimators)
         elif version == "batched":
             params.update(
                 {
                     "num_estimators": num_estimators,
                 }
             )
+            format_batch_fn = RepeatTarget(num_repeats=num_estimators)
         elif version == "masked":
             params.update(
                 {
                     "num_estimators": num_estimators,
                     "scale": scale,
                 }
+            )
+            format_batch_fn = RepeatTarget(num_repeats=num_estimators)
+        elif version == "mimo":
+            params.update(
+                {
+                    "num_estimators": num_estimators,
+                }
+            )
+            format_batch_fn = MIMOBatchFormat(
+                num_estimators=num_estimators,
+                rho=rho,
+                batch_repeat=batch_repeat,
             )
 
         model = cls.versions[version][0](**params)
@@ -155,6 +183,7 @@ class WideResNet:
                 model=model,
                 loss=loss,
                 optimization_procedure=optimization_procedure,
+                format_batch_fn=format_batch_fn,
                 use_entropy=use_entropy,
                 use_logits=use_logits,
                 **kwargs,
@@ -164,11 +193,16 @@ class WideResNet:
                 model=model,
                 loss=loss,
                 optimization_procedure=optimization_procedure,
+                format_batch_fn=format_batch_fn,
                 use_entropy=use_entropy,
                 use_logits=use_logits,
                 use_mi=use_mi,
                 use_variation_ratio=use_variation_ratio,
                 **kwargs,
+            )
+        else:
+            raise ValueError(
+                f"{version} is not in {cls.single} nor {cls.ensemble}."
             )
 
     @classmethod
@@ -201,6 +235,7 @@ class WideResNet:
         parser = add_wideresnet_specific_args(parser)
         parser = add_packed_specific_args(parser)
         parser = add_masked_specific_args(parser)
+        parser = add_mimo_specific_args(parser)
         parser.add_argument(
             "--version",
             type=str,

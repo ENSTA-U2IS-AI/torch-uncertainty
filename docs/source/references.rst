@@ -122,6 +122,11 @@ MNIST-C
 * Authors: *Norman Mu, and Justin Gilmer*
 * Paper: `ICMLW 2019 <https://arxiv.org/pdf/1906.02337.pdf>`__.
 
+Not-MNIST
+^^^^^^^^^
+
+* Author: *Yaroslav Bulatov*
+
 CIFAR-10 & CIFAR-100
 ^^^^^^^^^^^^^^^^^^^^
 
@@ -172,7 +177,7 @@ ImageNet
 * Paper: `CVPR 2009 <https://www.image-net.org/static_files/papers/imagenet_cvpr09.pdf>`__.
 
 ImageNet-A & ImageNet-0
-^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^
 
 **Natural adversarial examples**
 

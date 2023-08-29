@@ -19,6 +19,7 @@ class DummyClassificationDataModule(LightningDataModule):
     def __init__(
         self,
         root: Union[str, Path],
+        ood_detection: bool,
         batch_size: int,
         num_classes: int = 10,
         num_workers: int = 1,
@@ -31,6 +32,7 @@ class DummyClassificationDataModule(LightningDataModule):
         root = Path(root)
 
         self.root: Path = root
+        self.ood_detection = ood_detection
         self.batch_size = batch_size
         self.num_classes = num_classes
         self.num_workers = num_workers
@@ -84,8 +86,11 @@ class DummyClassificationDataModule(LightningDataModule):
     def val_dataloader(self) -> DataLoader:
         return self._data_loader(self.val)
 
-    def test_dataloader(self) -> List[DataLoader]:
-        return [self._data_loader(self.test), self._data_loader(self.ood)]
+    def test_dataloader(self) -> Union[DataLoader, List[DataLoader]]:
+        dataloader = [self._data_loader(self.test)]
+        if self.ood_detection:
+            dataloader.append(self._data_loader(self.ood))
+        return dataloader
 
     def _data_loader(
         self, dataset: Dataset, shuffle: bool = False
@@ -109,6 +114,9 @@ class DummyClassificationDataModule(LightningDataModule):
         p.add_argument("--root", type=str, default="./data/")
         p.add_argument("--batch_size", type=int, default=2)
         p.add_argument("--num_workers", type=int, default=1)
+        p.add_argument(
+            "--evaluate_ood", dest="ood_detection", action="store_true"
+        )
         return parent_parser
 
 
@@ -119,6 +127,7 @@ class DummyRegressionDataModule(LightningDataModule):
     def __init__(
         self,
         root: Union[str, Path],
+        ood_detection: bool,
         batch_size: int,
         out_features: int = 2,
         num_workers: int = 1,
@@ -128,9 +137,10 @@ class DummyRegressionDataModule(LightningDataModule):
     ) -> None:
         super().__init__()
 
-        root = Path(root)
-
+        if isinstance(root, str):
+            root = Path(root)
         self.root: Path = root
+        self.ood_detection = ood_detection
         self.batch_size = batch_size
         self.out_features = out_features
         self.num_workers = num_workers
@@ -164,6 +174,7 @@ class DummyRegressionDataModule(LightningDataModule):
                 out_features=self.out_features,
                 transform=self.transform_test,
             )
+        if self.ood_detection:
             self.ood = self.ood_dataset(
                 self.root,
                 out_features=self.out_features,
@@ -177,7 +188,10 @@ class DummyRegressionDataModule(LightningDataModule):
         return self._data_loader(self.val)
 
     def test_dataloader(self) -> Union[DataLoader, List[DataLoader]]:
-        return self._data_loader(self.test)
+        dataloader = [self._data_loader(self.test)]
+        if self.ood_detection:
+            dataloader.append(self._data_loader(self.ood))
+        return dataloader
 
     def _data_loader(
         self, dataset: Dataset, shuffle: bool = False
@@ -201,4 +215,7 @@ class DummyRegressionDataModule(LightningDataModule):
         p.add_argument("--root", type=str, default="./data/")
         p.add_argument("--batch_size", type=int, default=2)
         p.add_argument("--num_workers", type=int, default=1)
+        p.add_argument(
+            "--evaluate_ood", dest="ood_detection", action="store_true"
+        )
         return parent_parser

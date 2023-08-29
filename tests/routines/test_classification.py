@@ -1,11 +1,16 @@
 # fmt:off
 from pathlib import Path
 
+import pytest
 import torch.nn as nn
 from cli_test_helpers import ArgvContext
 
 from torch_uncertainty import cli_main, init_args
 from torch_uncertainty.optimization_procedures import optim_cifar10_resnet18
+from torch_uncertainty.routines.classification import (
+    ClassificationEnsemble,
+    ClassificationSingle,
+)
 
 from .._dummies import (
     DummyClassificationBaseline,
@@ -19,7 +24,7 @@ class TestClassificationSingle:
 
     def test_cli_main_dummy_binary(self):
         root = Path(__file__).parent.absolute().parents[0]
-        with ArgvContext(""):
+        with ArgvContext("file.py", "--logits"):
             args = init_args(
                 DummyClassificationBaseline, DummyClassificationDataModule
             )
@@ -31,7 +36,7 @@ class TestClassificationSingle:
             model = DummyClassificationBaseline(
                 num_classes=dm.num_classes,
                 in_channels=dm.num_channels,
-                loss=nn.CrossEntropyLoss,
+                loss=nn.BCEWithLogitsLoss,
                 optimization_procedure=optim_cifar10_resnet18,
                 baseline_type="single",
                 **vars(args),
@@ -41,7 +46,7 @@ class TestClassificationSingle:
 
     def test_cli_main_dummy_ood(self):
         root = Path(__file__).parent.absolute().parents[0]
-        with ArgvContext("--evaluate_ood"):
+        with ArgvContext("file.py", "--evaluate_ood", "--entropy"):
             args = init_args(
                 DummyClassificationBaseline, DummyClassificationDataModule
             )
@@ -60,6 +65,12 @@ class TestClassificationSingle:
             )
 
             cli_main(model, dm, root, "dummy", args)
+
+    def test_classification_failures(self):
+        with pytest.raises(ValueError):
+            ClassificationSingle(
+                10, nn.Module(), None, None, use_entropy=True, use_logits=True
+            )
 
 
 class TestClassificationEnsemble:
@@ -67,7 +78,7 @@ class TestClassificationEnsemble:
 
     def test_cli_main_dummy_binary(self):
         root = Path(__file__).parent.absolute().parents[0]
-        with ArgvContext(""):
+        with ArgvContext("file.py", "--mutual_information"):
             args = init_args(
                 DummyClassificationBaseline, DummyClassificationDataModule
             )
@@ -79,7 +90,7 @@ class TestClassificationEnsemble:
             model = DummyClassificationBaseline(
                 num_classes=dm.num_classes,
                 in_channels=dm.num_channels,
-                loss=nn.CrossEntropyLoss,
+                loss=nn.BCEWithLogitsLoss,
                 optimization_procedure=optim_cifar10_resnet18,
                 baseline_type="ensemble",
                 **vars(args),
@@ -89,7 +100,7 @@ class TestClassificationEnsemble:
 
     def test_cli_main_dummy_ood(self):
         root = Path(__file__).parent.absolute().parents[0]
-        with ArgvContext("--evaluate_ood"):
+        with ArgvContext("file.py", "--evaluate_ood", "--variation_ratio"):
             args = init_args(
                 DummyClassificationBaseline, DummyClassificationDataModule
             )
@@ -108,3 +119,15 @@ class TestClassificationEnsemble:
             )
 
             cli_main(model, dm, root, "dummy", args)
+
+    def test_classification_failures(self):
+        with pytest.raises(ValueError):
+            ClassificationEnsemble(
+                10,
+                nn.Module(),
+                None,
+                None,
+                2,
+                use_entropy=True,
+                use_logits=True,
+            )

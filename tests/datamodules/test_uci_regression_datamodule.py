@@ -26,3 +26,6 @@ class TestUCIDataModule:
         dm.train_dataloader()
         dm.val_dataloader()
         dm.test_dataloader()
+
+        dm.val_split = 0
+        dm.setup()

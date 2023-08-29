@@ -1,4 +1,6 @@
 # fmt: off
+from typing import Type
+
 import torch.nn as nn
 import torch.nn.functional as F
 
@@ -81,7 +83,7 @@ class _BatchedWide(nn.Module):
         self.in_planes = 16
 
         assert (depth - 4) % 6 == 0, "Wide-resnet depth should be 6n+4."
-        n = (depth - 4) / 6
+        n = (depth - 4) // 6
         k = widen_factor
 
         nStages = [16, 16 * k, 32 * k, 64 * k]
@@ -156,7 +158,7 @@ class _BatchedWide(nn.Module):
 
     def _wide_layer(
         self,
-        block: nn.Module,
+        block: Type[nn.Module],
         planes: int,
         num_blocks: int,
         dropout_rate: float,

@@ -16,7 +16,7 @@ class TestRegressionSingle:
 
     def test_cli_main_dummy_dist(self):
         root = Path(__file__).parent.absolute().parents[0]
-        with ArgvContext(""):
+        with ArgvContext("file.py"):
             args = init_args(DummyRegressionBaseline, DummyRegressionDataModule)
 
             # datamodule
@@ -37,7 +37,7 @@ class TestRegressionSingle:
 
     def test_cli_main_dummy(self):
         root = Path(__file__).parent.absolute().parents[0]
-        with ArgvContext(""):
+        with ArgvContext("file.py"):
             args = init_args(DummyRegressionBaseline, DummyRegressionDataModule)
 
             # datamodule
@@ -61,7 +61,7 @@ class TestRegressionEnsemble:
 
     def test_cli_main_dummy(self):
         root = Path(__file__).parent.absolute().parents[0]
-        with ArgvContext(""):
+        with ArgvContext("file.py"):
             args = init_args(DummyRegressionBaseline, DummyRegressionDataModule)
 
             # datamodule

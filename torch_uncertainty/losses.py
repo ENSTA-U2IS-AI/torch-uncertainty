@@ -12,7 +12,6 @@ class KLDiv(nn.Module):
 
     Args:
         model (nn.Module): Bayesian Neural Network
-
     """
 
     def __init__(self, model: nn.Module) -> None:
@@ -53,7 +52,23 @@ class ELBOLoss(nn.Module):
         self.model = model
         self._kl_div = KLDiv(model)
         self.criterion = criterion
+
+        if kl_weight < 0:
+            raise ValueError(
+                f"The KL weight should be non-negative. Got {kl_weight}."
+            )
         self.kl_weight = kl_weight
+
+        if num_samples < 1:
+            raise ValueError(
+                "The number of samples should not be lower than 1."
+                f"Got {num_samples}."
+            )
+        if not isinstance(num_samples, int):
+            raise TypeError(
+                "The number of samples should be an integer. "
+                f"Got {type(num_samples)}."
+            )
         self.num_samples = num_samples
 
     def forward(self, logits: Tensor, targets: Tensor) -> Tensor:
@@ -66,7 +81,6 @@ class ELBOLoss(nn.Module):
 
         Returns:
             Tensor: The aggregated ELBO loss
-
         """
         aggregated_elbo = torch.zeros(1)
         for _ in range(self.num_samples):

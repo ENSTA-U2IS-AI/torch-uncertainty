@@ -14,7 +14,7 @@ if __name__ == "__main__":
 
     args = init_args(WideResNet, CIFAR10DataModule)
 
-    net_name = f"{args.version}-wideresnet{args.arch}-cifar10"
+    net_name = f"{args.version}-wideresnet28x10-cifar10"
 
     # datamodule
     args.root = str(root / "data")
@@ -26,7 +26,7 @@ if __name__ == "__main__":
         in_channels=dm.num_channels,
         loss=nn.CrossEntropyLoss,
         optimization_procedure=get_procedure(
-            f"resnet{args.arch}", "cifar10", args.version
+            "wideresnet28x10", "cifar10", args.version
         ),
         style="cifar",
         **vars(args),

@@ -2,7 +2,6 @@
 import pytest
 import torch
 from torch import softmax
-from torch.utils.data import DataLoader
 
 from torch_uncertainty.post_processing import TemperatureScaler
 
@@ -28,11 +27,11 @@ class TestTemperatureScaler:
         inputs = torch.as_tensor([0.6, 0.4]).repeat(10, 1)
         labels = torch.as_tensor([0.5, 0.5]).repeat(10, 1)
 
-        loader = DataLoader(list(zip(inputs, labels)))
+        calibration_set = list(zip(inputs, labels))
 
         scaler = TemperatureScaler(init_val=2, lr=1, max_iter=10)
         assert scaler.temperature[0] == 2.0
-        scaler.fit(identity_model, loader)
+        scaler.fit(identity_model, calibration_set)
         assert scaler.temperature[0] > 10  # best is +inf
         assert (
             torch.sum(
@@ -46,7 +45,7 @@ class TestTemperatureScaler:
             ** 2
             < 0.001
         )
-        scaler.fit_predict(identity_model, loader, progress=False)
+        scaler.fit_predict(identity_model, calibration_set, progress=False)
 
     def test_negative_initvalue(self):
         with pytest.raises(ValueError):

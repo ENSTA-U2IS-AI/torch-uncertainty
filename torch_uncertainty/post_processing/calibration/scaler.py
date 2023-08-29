@@ -3,7 +3,7 @@ from typing import Literal, Optional
 
 import torch
 from torch import nn, optim
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 
 
@@ -47,7 +47,7 @@ class Scaler(nn.Module):
     def fit(
         self,
         model: nn.Module,
-        calib_loader: DataLoader,
+        calibration_set: Dataset,
         save_logits: bool = False,
         progress: bool = True,
     ) -> "Scaler":
@@ -56,7 +56,7 @@ class Scaler(nn.Module):
 
         Args:
             model (nn.Module): Model to calibrate.
-            calib_loader (DataLoader): Calibration dataloader.
+            calibration_set (Dataset): Calibration dataset.
             save_logits (bool, optional): Whether to save the logits and
                 labels. Defaults to False.
             progress (bool, optional): Whether to show a progress bar.
@@ -67,8 +67,11 @@ class Scaler(nn.Module):
         """
         logits_list = []
         labels_list = []
+        calibration_dl = DataLoader(
+            calibration_set, batch_size=32, shuffle=False, drop_last=False
+        )
         with torch.no_grad():
-            for input, label in tqdm(calib_loader, disable=not progress):
+            for input, label in tqdm(calibration_dl, disable=not progress):
                 input = input.to(self.device)
                 logits = model(input)
                 logits_list.append(logits)
@@ -115,9 +118,12 @@ class Scaler(nn.Module):
         raise NotImplementedError()
 
     def fit_predict(
-        self, model: nn.Module, calib_loader: DataLoader, progress: bool = True
+        self,
+        model: nn.Module,
+        calibration_set: Dataset,
+        progress: bool = True,
     ) -> torch.Tensor:
-        self.fit(model, calib_loader, save_logits=True, progress=progress)
+        self.fit(model, calibration_set, save_logits=True, progress=progress)
         calib_logits = self(self.logits)
         return calib_logits
 

@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# fmt: off
 # flake: noqa
 """
 Improve Top-label Calibration with Temperature Scaling
@@ -49,12 +48,12 @@ weights, config = load_hf("resnet18_c100")
 # Load the weights in the pre-built model
 model.load_state_dict(weights)
 
-#%%
+# %%
 # 3. Setting up the Datamodule and Dataloaders
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
-# To get the dataloader from the datamodule, just call prepare_data, setup, and 
-# extract the first element of the test dataloader list. There are more than one 
+# To get the dataloader from the datamodule, just call prepare_data, setup, and
+# extract the first element of the test dataloader list. There are more than one
 # element if `:attr:ood_detection` is True.
 
 dm = CIFAR100DataModule(root="./data", ood_detection=False, batch_size=32)
@@ -64,9 +63,9 @@ dm.setup("test")
 # Get the full test dataloader (unused in this tutorial)
 dataloader = dm.test_dataloader()[0]
 
-#%%
+# %%
 # 4. Iterating on the Dataloader and Computing the ECE
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 # We first split the original test set into a calibration set and a test set for proper evaluation.
 #
@@ -77,8 +76,10 @@ from torch.utils.data import DataLoader, random_split
 
 # Split datasets
 dataset = dm.test
-cal_dataset, test_dataset = random_split(dataset, [1000, len(dataset)-1000])
-cal_dataloader, test_dataloader = DataLoader(cal_dataset, batch_size=32), DataLoader(test_dataset, batch_size=32)
+cal_dataset, test_dataset = random_split(dataset, [1000, len(dataset) - 1000])
+cal_dataloader, test_dataloader = DataLoader(cal_dataset, batch_size=32), DataLoader(
+    test_dataset, batch_size=32
+)
 
 # Initialize the ECE
 ece = CalibrationError(task="multiclass", num_classes=100)
@@ -93,7 +94,7 @@ cal = ece.compute()
 
 print(f"ECE before scaling - {cal*100:.3}%.")
 
-#%%
+# %%
 # 5. Fitting the Scaler to Improve the Calibration
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
@@ -106,7 +107,7 @@ print(f"ECE before scaling - {cal*100:.3}%.")
 scaler = TemperatureScaler()
 scaler = scaler.fit(model=model, calib_loader=cal_dataloader)
 
-#%%
+# %%
 # 6. Iterating Again to Compute the Improved ECE
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
@@ -135,7 +136,7 @@ print(f"ECE after scaling - {cal*100:.3}%.")
 # The top-label calibration should be improved.
 #
 # Notes
-# -----
+# ~~~~~
 #
 # Temperature scaling is very efficient when the calibration set is representative of the test set.
 # In this case, we say that the calibration and test set are drawn from the same distribution.
@@ -143,7 +144,7 @@ print(f"ECE after scaling - {cal*100:.3}%.")
 
 # %%
 # References
-# ----------
+# ~~~~~~~~~~
 #
 # - **Expected Calibration Error:** Naeini, M. P., Cooper, G. F., & Hauskrecht, M. (2015). Obtaining Well Calibrated Probabilities Using Bayesian Binning. In `AAAI 2015 <https://arxiv.org/pdf/1411.0160.pdf>`_.
 # - **Temperature Scaling:** Guo, C., Pleiss, G., Sun, Y., & Weinberger, K. Q. (2017). On calibration of modern neural networks. In `ICML 2017 <https://arxiv.org/pdf/1706.04599.pdf>`_.

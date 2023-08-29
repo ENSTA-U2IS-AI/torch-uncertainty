@@ -9,16 +9,16 @@
 [![Code style: black](https://img.shields.io/badge/code%20style-black-black.svg)](https://github.com/psf/black)
 </div>
 
-_TorchUncertainty_ is a package designed to help you leverage uncertainty quantification techniques and make your neural networks more reliable. It aims at being collaborative and including as many methods as possible, so reach out to add yours!
+_TorchUncertainty_ is a package designed to help you leverage uncertainty quantification techniques and make your deep neural networks more reliable. It aims at being collaborative and including as many methods as possible, so reach out to add yours!
 
-:construction: _TorchUncertainty_ is in early development :construction: - expect massive changes but reach out and contribute if you are interested by the project!
+:construction: _TorchUncertainty_ is in early development :construction: - expect massive changes, but reach out and contribute if you are interested in the project! **Please raise an issue if you have any bugs or difficulties.**
 
 ---
 
 This package provides a multi-level API, including:
 
 - ready-to-train baselines on research datasets, such as ImageNet and CIFAR
-- baselines available for training on your datasets
+- deep learning baselines available for training on your datasets
 - [pretrained weights](https://huggingface.co/torch-uncertainty) for these baselines on ImageNet and CIFAR (work in progress 🚧).
 - layers available for use in your networks
 - scikit-learn style post-processing methods such as Temperature Scaling
@@ -27,11 +27,13 @@ See the [Reference page](https://torch-uncertainty.github.io/references.html) or
 
 ## Installation
 
-Install the desired pytorch version in your environment. Then, the package can be installed from PyPI:
+The package can be installed from PyPI:
 
 ```sh
 pip install torch-uncertainty
 ```
+
+Then, install the desired PyTorch version in your environment.
 
 If you aim to contribute (thank you!), have a look at the [contribution page](https://torch-uncertainty.github.io/contributing.html).
 
@@ -45,17 +47,18 @@ A quickstart is available at [torch-uncertainty.github.io/quickstart](https://to
 
 ### Baselines
 
-To date, the following baselines are implemented:
+To date, the following deep learning baselines have been implemented:
 
 - Deep Ensembles
 - BatchEnsemble
 - Masksembles
+- MIMO
 - Packed-Ensembles (see [blog post](https://medium.com/@adrien.lafage/make-your-neural-networks-more-reliable-with-packed-ensembles-7ad0b737a873))
 - Bayesian Neural Networks
 
 ### Post-processing methods
 
-To date, the following post-processing methods are implemented:
+To date, the following post-processing methods have been implemented:
 
 - Temperature, Vector, & Matrix scaling
 

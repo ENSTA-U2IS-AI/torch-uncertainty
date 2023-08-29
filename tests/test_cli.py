@@ -1,6 +1,8 @@
 # fmt: off
+import sys
 from pathlib import Path
 
+import pytest
 import torch.nn as nn
 from cli_test_helpers import ArgvContext
 
@@ -22,7 +24,7 @@ class TestCLI:
 
     def test_cli_main_resnet(self):
         root = Path(__file__).parent.absolute().parents[0]
-        with ArgvContext("--style cifar"):
+        with ArgvContext("file.py"):
             args = init_args(ResNet, CIFAR10DataModule)
 
             # datamodule
@@ -35,6 +37,7 @@ class TestCLI:
             model = ResNet(
                 num_classes=dm.num_classes,
                 in_channels=dm.num_channels,
+                style="cifar",
                 loss=nn.CrossEntropyLoss,
                 optimization_procedure=optim_cifar10_resnet18,
                 **vars(args),
@@ -45,8 +48,13 @@ class TestCLI:
     def test_cli_main_other_arguments(self):
         root = Path(__file__).parent.absolute().parents[0]
         with ArgvContext(
-            "--seed 42 --max_epochs 1 --channels_last --style cifar"
+            "file.py",
+            "--seed",
+            "42",
+            "--max_epochs",
+            "1",
         ):
+            print(sys.orig_argv, sys.argv)
             args = init_args(ResNet, CIFAR10DataModule)
 
             # datamodule
@@ -59,6 +67,7 @@ class TestCLI:
             model = ResNet(
                 num_classes=dm.num_classes,
                 in_channels=dm.num_channels,
+                style="cifar",
                 loss=nn.CrossEntropyLoss,
                 optimization_procedure=optim_cifar10_resnet18,
                 **vars(args),
@@ -68,7 +77,7 @@ class TestCLI:
 
     def test_cli_main_wideresnet(self):
         root = Path(__file__).parent.absolute().parents[0]
-        with ArgvContext("--style cifar"):
+        with ArgvContext("file.py"):
             args = init_args(WideResNet, CIFAR10DataModule)
 
             # datamodule
@@ -89,7 +98,7 @@ class TestCLI:
 
     def test_cli_main_vgg(self):
         root = Path(__file__).parent.absolute().parents[0]
-        with ArgvContext("--style cifar"):
+        with ArgvContext("file.py"):
             args = init_args(VGG, CIFAR10DataModule)
 
             # datamodule
@@ -109,12 +118,12 @@ class TestCLI:
             cli_main(model, dm, root, "std", args)
 
     def test_cli_main_mlp(self):
-        root = Path(__file__).parent.absolute().parents[0]
-        with ArgvContext(""):
+        root = str(Path(__file__).parent.absolute().parents[0])
+        with ArgvContext("file.py"):
             args = init_args(MLP, UCIDataModule)
 
             # datamodule
-            args.root = root / "data"
+            args.root = root + "/data"
             dm = UCIDataModule(
                 dataset_name="kin8nm", input_shape=(1, 5), **vars(args)
             )
@@ -132,3 +141,30 @@ class TestCLI:
             )
 
             cli_main(model, dm, root, "std", args)
+
+    def test_cli_other_training_task(self):
+        root = Path(__file__).parent.absolute().parents[0]
+        with ArgvContext("file.py"):
+            args = init_args(MLP, UCIDataModule)
+
+            # datamodule
+            args.root = root / "/data"
+            dm = UCIDataModule(
+                dataset_name="kin8nm", input_shape=(1, 5), **vars(args)
+            )
+
+            dm.training_task = "time-series-regression"
+
+            args.summary = True
+
+            model = MLP(
+                num_outputs=1,
+                in_features=5,
+                hidden_dims=[],
+                dist_estimation=False,
+                loss=nn.MSELoss,
+                optimization_procedure=optim_regression,
+                **vars(args),
+            )
+            with pytest.raises(ValueError):
+                cli_main(model, dm, root, "std", args)

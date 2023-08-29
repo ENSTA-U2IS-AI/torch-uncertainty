@@ -9,12 +9,13 @@ import torch.nn.functional as F
 from einops import rearrange
 from pytorch_lightning.utilities.memory import get_model_size_mb
 from pytorch_lightning.utilities.types import EPOCH_OUTPUT, STEP_OUTPUT
-from torchmetrics import (
-    AUROC,
-    Accuracy,
-    AveragePrecision,
-    CalibrationError,
-    MetricCollection,
+from timm.data import Mixup
+from torchmetrics import Accuracy, CalibrationError, MetricCollection
+from torchmetrics.classification import (
+    BinaryAccuracy,
+    BinaryAUROC,
+    BinaryAveragePrecision,
+    BinaryCalibrationError,
 )
 
 from ..metrics import (
@@ -54,6 +55,9 @@ class ClassificationSingle(pl.LightningModule):
         model: nn.Module,
         loss: Type[nn.Module],
         optimization_procedure: Any,
+        format_batch_fn: nn.Module = nn.Identity(),
+        mixup_alpha: float = 0,
+        cutmix_alpha: float = 0,
         ood_detection: bool = False,
         use_entropy: bool = False,
         use_logits: bool = False,
@@ -66,6 +70,7 @@ class ClassificationSingle(pl.LightningModule):
                 "model",
                 "loss",
                 "optimization_procedure",
+                "format_batch_fn",
             ]
         )
 
@@ -85,13 +90,15 @@ class ClassificationSingle(pl.LightningModule):
         self.loss = loss
         # optimization procedure
         self.optimization_procedure = optimization_procedure
+        # batch format
+        self.format_batch_fn = format_batch_fn
 
         # metrics
         if self.binary_cls:
             cls_metrics = MetricCollection(
                 {
-                    "acc": Accuracy(task="binary"),
-                    "ece": CalibrationError(task="binary"),
+                    "acc": BinaryAccuracy(),
+                    "ece": BinaryCalibrationError(),
                     "brier": BrierScore(num_classes=1),
                 },
                 compute_groups=False,
@@ -120,13 +127,25 @@ class ClassificationSingle(pl.LightningModule):
             ood_metrics = MetricCollection(
                 {
                     "fpr95": FPR95(pos_label=1),
-                    "auroc": AUROC(task="binary"),
-                    "aupr": AveragePrecision(task="binary"),
+                    "auroc": BinaryAUROC(),
+                    "aupr": BinaryAveragePrecision(),
                 },
                 compute_groups=[["auroc", "aupr"], ["fpr95"]],
             )
             self.test_ood_metrics = ood_metrics.clone(prefix="hp/test_")
             self.test_entropy_ood = Entropy()
+
+        if mixup_alpha < 0 or cutmix_alpha < 0:
+            raise ValueError(
+                "Cutmix alpha and Mixup alpha must be positive."
+                f"Got {mixup_alpha} and {cutmix_alpha}."
+            )
+        elif mixup_alpha > 0 or cutmix_alpha > 0:
+            self.mixup = Mixup(
+                mixup_alpha=mixup_alpha, cutmix_alpha=cutmix_alpha
+            )
+        else:
+            self.mixup = lambda x, y: (x, y)
 
     def configure_optimizers(self) -> Any:
         return self.optimization_procedure(self)
@@ -163,12 +182,15 @@ class ClassificationSingle(pl.LightningModule):
     def training_step(
         self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int
     ) -> STEP_OUTPUT:
-        inputs, targets = batch
+        batch = self.mixup(*batch)
+        inputs, targets = self.format_batch_fn(batch)
         logits = self.forward(inputs)
 
         # BCEWithLogitsLoss expects float targets
-        if self.loss == nn.BCEWithLogitsLoss:
+        if self.binary_cls and self.loss == nn.BCEWithLogitsLoss:
+            logits = logits.squeeze(-1)
             targets = targets.float()
+
         loss = self.criterion(logits, targets)
         self.log("train_loss", loss)
         return loss
@@ -205,10 +227,10 @@ class ClassificationSingle(pl.LightningModule):
             probs = torch.sigmoid(logits).squeeze(-1)
         else:
             probs = F.softmax(logits, dim=-1)
-        confs, _ = probs.max(dim=-1)
+        confs = probs.max(dim=-1)[0]
 
         if self.use_logits:
-            ood_values, _ = -logits.max(dim=-1)
+            ood_values = -logits.max(dim=-1)[0]
         elif self.use_entropy:
             ood_values = torch.special.entr(probs).sum(dim=-1)
         else:
@@ -257,10 +279,17 @@ class ClassificationSingle(pl.LightningModule):
     ) -> ArgumentParser:
         """Defines the routine's attributes via command-line options:
 
-        - ``--evaluate_ood``: sets :attr:`ood_detection` to ``True``.
+        - ``--mixup``: sets :attr:`mixup_alpha` for Mixup
+        - ``--cutmix``: sets :attr:`cutmix_alpha` for Cutmix
         - ``--entropy``: sets :attr:`use_entropy` to ``True``.
         - ``--logits``: sets :attr:`use_logits` to ``True``.
         """
+        parent_parser.add_argument(
+            "--mixup", dest="mixup_alpha", type=float, default=0
+        )
+        parent_parser.add_argument(
+            "--cutmix", dest="cutmix_alpha", type=float, default=0
+        )
         parent_parser.add_argument(
             "--entropy", dest="use_entropy", action="store_true"
         )
@@ -300,6 +329,9 @@ class ClassificationEnsemble(ClassificationSingle):
         loss: Type[nn.Module],
         optimization_procedure: Any,
         num_estimators: int,
+        format_batch_fn: nn.Module = nn.Identity(),
+        mixup_alpha: float = 0,
+        cutmix_alpha: float = 0,
         ood_detection: bool = False,
         use_entropy: bool = False,
         use_logits: bool = False,
@@ -312,6 +344,9 @@ class ClassificationEnsemble(ClassificationSingle):
             model=model,
             loss=loss,
             optimization_procedure=optimization_procedure,
+            format_batch_fn=format_batch_fn,
+            mixup_alpha=mixup_alpha,
+            cutmix_alpha=cutmix_alpha,
             ood_detection=ood_detection,
             use_entropy=use_entropy,
             use_logits=use_logits,
@@ -377,11 +412,23 @@ class ClassificationEnsemble(ClassificationSingle):
     def training_step(
         self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int
     ) -> STEP_OUTPUT:
-        inputs, targets = batch
+        batch = self.mixup(*batch)
+        inputs, targets = self.format_batch_fn(batch)
 
         # eventual input repeat is done in the model
-        targets = targets.repeat(self.num_estimators)
-        return super().training_step((inputs, targets), batch_idx)
+        # targets = targets.repeat(self.num_estimators)
+
+        # Computing logits
+        logits = self.forward(inputs)
+
+        # BCEWithLogitsLoss expects float targets
+        if self.binary_cls and self.loss == nn.BCEWithLogitsLoss:
+            logits = logits.squeeze(-1)
+            targets = targets.float()
+
+        loss = self.criterion(logits, targets)
+        self.log("train_loss", loss)
+        return loss
 
     def validation_step(  # type: ignore
         self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int
@@ -413,10 +460,10 @@ class ClassificationEnsemble(ClassificationSingle):
             probs_per_est = F.softmax(logits, dim=-1)
 
         probs = probs_per_est.mean(dim=1)
-        confs, _ = probs.max(-1)
+        confs = probs.max(-1)[0]
 
         if self.use_logits:
-            ood_values, _ = -logits.mean(dim=1).max(dim=-1)
+            ood_values = -logits.mean(dim=1).max(dim=-1)[0]
         elif self.use_entropy:
             ood_values = torch.special.entr(probs).sum(dim=-1).mean(dim=1)
         elif self.use_mi:
