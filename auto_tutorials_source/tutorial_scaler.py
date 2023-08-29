@@ -71,12 +71,15 @@ dataloader = dm.test_dataloader()[0]
 #
 # When computing the ECE, you need to provide the likelihoods associated with the inputs.
 # To do this, just call PyTorch's softmax.
+#
+# To avoid lengthy computations (without GPU), we restrict the calibration computation to a subset
+# of the test set.
 
 from torch.utils.data import DataLoader, random_split
 
 # Split datasets
 dataset = dm.test
-cal_dataset, test_dataset = random_split(dataset, [1000, len(dataset) - 1000])
+cal_dataset, test_dataset, other = random_split(dataset, [1000, 1000, len(dataset) - 2000])
 test_dataloader = DataLoader(test_dataset, batch_size=32)
 
 # Initialize the ECE
