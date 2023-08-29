@@ -77,9 +77,7 @@ from torch.utils.data import DataLoader, random_split
 # Split datasets
 dataset = dm.test
 cal_dataset, test_dataset = random_split(dataset, [1000, len(dataset) - 1000])
-cal_dataloader, test_dataloader = DataLoader(cal_dataset, batch_size=32), DataLoader(
-    test_dataset, batch_size=32
-)
+test_dataloader = DataLoader(test_dataset, batch_size=32)
 
 # Initialize the ECE
 ece = CalibrationError(task="multiclass", num_classes=100)
@@ -105,7 +103,7 @@ print(f"ECE before scaling - {cal*100:.3}%.")
 
 # Fit the scaler on the calibration dataset
 scaler = TemperatureScaler()
-scaler = scaler.fit(model=model, calib_loader=cal_dataloader)
+scaler = scaler.fit(model=model, calibration_set=cal_dataset)
 
 # %%
 # 6. Iterating Again to Compute the Improved ECE
