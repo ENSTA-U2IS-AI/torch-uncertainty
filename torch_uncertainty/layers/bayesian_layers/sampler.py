@@ -37,7 +37,7 @@ class TrainableDistribution(nn.Module):
                 "Sample the weights before asking for the log posterior."
             )
 
-        if weight is None:
+        if weight is None:  # coverage: ignore
             weight = self.weight
 
         lposterior = (

@@ -3,6 +3,7 @@ import pytest
 import torch
 import torch.nn as nn
 
+from torch_uncertainty.layers.bayesian_layers import BayesLinear
 from torch_uncertainty.losses import ELBOLoss
 
 
@@ -11,7 +12,7 @@ class TestELBOLoss:
     """Testing the ELBOLoss class."""
 
     def test_main(self):
-        model = nn.Linear(1, 1)
+        model = BayesLinear(1, 1)
         criterion = nn.BCEWithLogitsLoss()
 
         with pytest.raises(ValueError):
@@ -25,4 +26,11 @@ class TestELBOLoss:
 
         loss = ELBOLoss(model, criterion, kl_weight=1e-5, num_samples=1)
 
+        loss(model(torch.randn(1, 1)), torch.randn(1, 1))
+
+    def test_no_bayes(self):
+        model = nn.Linear(1, 1)
+        criterion = nn.BCEWithLogitsLoss()
+
+        loss = ELBOLoss(model, criterion, kl_weight=1e-5, num_samples=1)
         loss(model(torch.randn(1, 1)), torch.randn(1, 1))

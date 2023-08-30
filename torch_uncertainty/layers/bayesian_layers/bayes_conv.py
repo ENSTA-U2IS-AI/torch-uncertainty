@@ -37,7 +37,7 @@ class _BayesConvNd(Module):
 
     def _conv_forward(
         self, input: Tensor, weight: Tensor, bias: Optional[Tensor]
-    ) -> Tensor:
+    ) -> Tensor:  # coverage: ignore
         ...
 
     in_channels: int
@@ -203,7 +203,7 @@ class _BayesConvNd(Module):
 
     def __setstate__(self, state):
         super().__setstate__(state)
-        if not hasattr(self, "padding_mode"):
+        if not hasattr(self, "padding_mode"):  # coverage: ignore
             self.padding_mode = "zeros"
 
 
