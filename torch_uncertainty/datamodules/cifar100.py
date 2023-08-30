@@ -127,7 +127,7 @@ class CIFAR100DataModule(LightningDataModule):
             ]
         )
 
-    def prepare_data(self) -> None:
+    def prepare_data(self) -> None:  # coverage: ignore
         if self.test_alt is None:
             self.dataset(self.root, train=True, download=True)
             self.dataset(self.root, train=False, download=True)
@@ -142,7 +142,8 @@ class CIFAR100DataModule(LightningDataModule):
 
     def setup(self, stage: Optional[str] = None) -> None:
         if stage == "fit" or stage is None:
-            assert self.test_alt != "c", "CIFAR-C can only be used in testing."
+            if self.test_alt == "c":
+                raise ValueError("CIFAR-C can only be used in testing.")
             full = self.dataset(
                 self.root,
                 train=True,
@@ -184,6 +185,8 @@ class CIFAR100DataModule(LightningDataModule):
                     download=False,
                     transform=self.transform_test,
                 )
+        else:
+            raise ValueError(f"Stage {stage} is not supported.")
 
     def train_dataloader(self) -> DataLoader:
         """Get the training dataloader for CIFAR100.

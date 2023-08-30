@@ -84,6 +84,12 @@ class CIFAR10DataModule(LightningDataModule):
         self.corruption_severity = corruption_severity
         self.ood_dataset = SVHN
 
+        if (cutout is not None) + int(auto_augment is not None) > 1:
+            raise ValueError(
+                "Only one data augmentation can be chosen at a time. Raise a "
+                "GitHub issue if needed."
+            )
+
         if cutout:
             main_transform = Cutout(cutout)
         elif auto_augment:
@@ -114,7 +120,7 @@ class CIFAR10DataModule(LightningDataModule):
             ]
         )
 
-    def prepare_data(self) -> None:
+    def prepare_data(self) -> None:  # coverage: ignore
         if self.test_alt is None:
             self.dataset(self.root, train=True, download=True)
             self.dataset(self.root, train=False, download=True)
@@ -135,7 +141,8 @@ class CIFAR10DataModule(LightningDataModule):
 
     def setup(self, stage: Optional[str] = None) -> None:
         if stage == "fit" or stage is None:
-            assert self.test_alt != "c", "CIFAR-C can only be used in testing."
+            if self.test_alt == "c" or self.test_alt == "h":
+                raise ValueError("CIFAR-C and H can only be used in testing.")
             full = self.dataset(
                 self.root,
                 train=True,
@@ -157,25 +164,28 @@ class CIFAR10DataModule(LightningDataModule):
                     transform=self.transform_test,
                 )
         elif stage == "test":
-            self.test = self.dataset(
-                self.root,
-                train=False,
-                download=False,
-                transform=self.transform_test,
-            )
+            if self.test_alt is None:
+                self.test = self.dataset(
+                    self.root,
+                    train=False,
+                    download=False,
+                    transform=self.transform_test,
+                )
+            else:
+                self.test = self.dataset(
+                    self.root,
+                    transform=self.transform_test,
+                    severity=self.corruption_severity,
+                )
+            if self.ood_detection:
+                self.ood = self.ood_dataset(
+                    self.root,
+                    split="test",
+                    download=False,
+                    transform=self.transform_test,
+                )
         else:
-            self.test = self.dataset(
-                self.root,
-                severity=self.corruption_severity,
-                transform=self.transform_test,
-            )
-        if self.ood_detection:
-            self.ood = self.ood_dataset(
-                self.root,
-                split="test",
-                download=False,
-                transform=self.transform_test,
-            )
+            raise ValueError(f"Stage {stage} is not supported.")
 
     def train_dataloader(self) -> DataLoader:
         r"""Get the training dataloader for CIFAR10.

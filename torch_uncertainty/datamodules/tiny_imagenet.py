@@ -74,7 +74,7 @@ class TinyImageNetDataModule(LightningDataModule):
                 f" make sure the folder contains a subfolder named {split}"
             )
 
-    def prepare_data(self) -> None:
+    def prepare_data(self) -> None:  # coverage: ignore
         if self.ood_detection:
             self.ood_dataset(self.root, split="test", download=True)
 

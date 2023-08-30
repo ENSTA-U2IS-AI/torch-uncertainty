@@ -59,6 +59,8 @@ class ImageNetDataModule(LightningDataModule):
             self.dataset = ImageNetO
         elif test_alt == "a":
             self.dataset = ImageNetA
+        else:
+            raise ValueError(f"The alternative {test_alt} is not known.")
 
         if ood_ds == "inaturalist":
             self.ood_dataset = INaturalist
@@ -122,7 +124,7 @@ class ImageNetDataModule(LightningDataModule):
                 f" make sure the folder contains a subfolder named {split}"
             )
 
-    def prepare_data(self) -> None:
+    def prepare_data(self) -> None:  # coverage: ignore
         if self.test_alt is not None:
             self.data = self.dataset(
                 self.root,
