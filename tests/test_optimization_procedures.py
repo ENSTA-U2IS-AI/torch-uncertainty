@@ -52,12 +52,14 @@ class TestOptProcedures:
         procedure(model)
 
     def test_optim_imagenet_resnet50(self):
+        procedure = get_procedure("resnet50", "imagenet", "standard", "A3")
         model = resnet50(in_channels=3, num_classes=1000)
-        optim_imagenet_resnet50(model)
+        procedure(model, effective_batch_size=64)
+        procedure(model)
 
-    def test_optim_imagenet_resnet50_A3(self):
+        procedure = get_procedure("resnet50", "imagenet", "standard")
         model = resnet50(in_channels=3, num_classes=1000)
-        optim_imagenet_resnet50_A3(model)
+        procedure(model)
 
     def test_optim_regression(self):
         model = resnet18(in_channels=3, num_classes=1)

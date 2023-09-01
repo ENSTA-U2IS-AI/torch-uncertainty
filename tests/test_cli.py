@@ -48,11 +48,7 @@ class TestCLI:
     def test_cli_main_other_arguments(self):
         root = Path(__file__).parent.absolute().parents[0]
         with ArgvContext(
-            "file.py",
-            "--seed",
-            "42",
-            "--max_epochs",
-            "1",
+            "file.py", "--seed", "42", "--max_epochs", "1", "--channels_last"
         ):
             print(sys.orig_argv, sys.argv)
             args = init_args(ResNet, CIFAR10DataModule)
@@ -168,3 +164,7 @@ class TestCLI:
             )
             with pytest.raises(ValueError):
                 cli_main(model, dm, root, "std", args)
+
+    def test_init_args_void(self):
+        with ArgvContext("file.py"):
+            init_args()
