@@ -182,6 +182,15 @@ class _BayesConvNd(Module):
         """Unfreeze the layer by setting the frozen attribute to False."""
         self.frozen = False
 
+    def sample(self) -> Tuple[Tensor, Optional[Tensor]]:
+        """Sample the bayesian layer's posterior."""
+        weight = self.weight_sampler.sample()
+        if self.bias:
+            bias = self.bias_sampler.sample()
+        else:
+            bias = None
+        return weight, bias
+
     def extra_repr(self):  # coverage: ignore
         s = (
             "{in_channels}, {out_channels}, kernel_size={kernel_size}"
