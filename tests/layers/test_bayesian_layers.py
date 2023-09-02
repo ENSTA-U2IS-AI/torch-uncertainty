@@ -58,10 +58,12 @@ class TestBayesLinear:
         print(layer)
         out = layer(feat_input_odd)
         assert out.shape == torch.Size([5, 2])
+        layer.sample
 
         layer = BayesLinear(10, 2, sigma_init=0, bias=False)
         out = layer(feat_input_odd)
         assert out.shape == torch.Size([5, 2])
+        layer.sample
 
     def test_linear_even(self, feat_input_even: torch.Tensor) -> None:
         layer = BayesLinear(10, 2, sigma_init=0)
@@ -113,10 +115,12 @@ class TestBayesConv2d:
         print(layer)
         out = layer(img_input_odd)
         assert out.shape == torch.Size([5, 2, 3, 3])
+        layer.sample
 
         layer = BayesConv2d(10, 2, kernel_size=1, sigma_init=0, bias=False)
         out = layer(img_input_odd)
         assert out.shape == torch.Size([5, 2, 3, 3])
+        layer.sample
 
     def test_conv2_even(self, img_input_even: torch.Tensor) -> None:
         layer = BayesConv2d(
