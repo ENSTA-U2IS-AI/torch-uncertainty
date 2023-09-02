@@ -2,8 +2,8 @@
 from argparse import ArgumentParser
 from typing import Any
 
-import torch.nn as nn
 from pytorch_lightning import LightningModule
+from torch import nn
 
 from torch_uncertainty.routines.classification import (
     ClassificationEnsemble,

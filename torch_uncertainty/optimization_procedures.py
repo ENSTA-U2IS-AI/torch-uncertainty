@@ -2,9 +2,9 @@
 from functools import partial
 from typing import Callable, Optional
 
-import torch.nn as nn
 import torch.optim as optim
 from timm.optim import Lamb
+from torch import nn
 
 # fmt:on
 __all__ = [

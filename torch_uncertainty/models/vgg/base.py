@@ -2,8 +2,8 @@
 from typing import Any, Dict, List, Type, Union
 
 import torch
-import torch.nn as nn
 from einops import rearrange
+from torch import nn
 
 from ...layers.packed_layers import PackedConv2d, PackedLinear
 

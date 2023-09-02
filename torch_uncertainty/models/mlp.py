@@ -1,9 +1,8 @@
 # fmt: off
 from typing import Callable, Dict, List, Type, Union
 
-import torch.nn as nn
 import torch.nn.functional as F
-from torch import Tensor
+from torch import Tensor, nn
 
 from ..layers.bayesian_layers import BayesLinear
 from ..layers.packed_layers import PackedLinear

@@ -2,8 +2,8 @@
 from typing import Callable, Dict, Optional, Type, Union
 
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
+from torch import nn
 
 from ..layers.bayesian_layers import BayesConv2d, BayesLinear
 from ..layers.packed_layers import PackedConv2d, PackedLinear

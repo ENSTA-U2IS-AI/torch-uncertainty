@@ -1,8 +1,8 @@
 # fmt: off
 from typing import Type
 
-import torch.nn as nn
 import torch.nn.functional as F
+from torch import nn
 
 # fmt: on
 __all__ = [
