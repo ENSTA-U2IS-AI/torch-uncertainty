@@ -5,7 +5,7 @@ import torch
 from einops import rearrange
 from torch import nn
 
-from ...layers.packed_layers import PackedConv2d, PackedLinear
+from ...layers.packed import PackedConv2d, PackedLinear
 
 
 # fmt: on

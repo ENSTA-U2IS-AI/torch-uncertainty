@@ -2,15 +2,13 @@
 import pytest
 import torch
 
-from torch_uncertainty.layers.bayesian_layers import (
+from torch_uncertainty.layers.bayesian import (
     BayesConv1d,
     BayesConv2d,
     BayesConv3d,
     BayesLinear,
 )
-from torch_uncertainty.layers.bayesian_layers.sampler import (
-    TrainableDistribution,
-)
+from torch_uncertainty.layers.bayesian.sampler import TrainableDistribution
 
 
 # fmt:on

@@ -1,7 +1,7 @@
 # fmt: off
 from torch import nn
 
-from ..layers.bayesian_layers import bayesian_modules
+from ..layers.bayesian import bayesian_modules
 
 
 # fmt: on

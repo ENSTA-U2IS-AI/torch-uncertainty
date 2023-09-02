@@ -3,7 +3,7 @@ import pytest
 import torch
 from torch import nn
 
-from torch_uncertainty.layers.bayesian_layers import BayesLinear
+from torch_uncertainty.layers.bayesian import BayesLinear
 from torch_uncertainty.losses import ELBOLoss
 
 

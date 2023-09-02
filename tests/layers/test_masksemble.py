@@ -2,10 +2,7 @@
 import pytest
 import torch
 
-from torch_uncertainty.layers.masksembles_layers import (
-    MaskedConv2d,
-    MaskedLinear,
-)
+from torch_uncertainty.layers.masksembles import MaskedConv2d, MaskedLinear
 
 
 # fmt:on

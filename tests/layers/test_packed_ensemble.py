@@ -2,7 +2,7 @@
 import pytest
 import torch
 
-from torch_uncertainty.layers.packed_layers import PackedConv2d, PackedLinear
+from torch_uncertainty.layers.packed import PackedConv2d, PackedLinear
 
 
 # fmt:on
