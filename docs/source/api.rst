@@ -169,7 +169,7 @@ Ensemble layers
 Bayesian layers
 ^^^^^^^^^^^^^^^
 
-.. currentmodule:: torch_uncertainty.layers.bayesian_layers
+.. currentmodule:: torch_uncertainty.layers.bayesian
 
 .. autosummary::
     :toctree: generated/
