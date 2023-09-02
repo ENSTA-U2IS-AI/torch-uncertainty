@@ -26,6 +26,9 @@ class KLDiv(nn.Module):
         kl_divergence = torch.zeros(1)
         for module in self.model.modules():
             if isinstance(module, bayesian_modules):
+                kl_divergence = kl_divergence.to(
+                    device=module.lvposterior.device
+                )
                 kl_divergence += module.lvposterior - module.lprior
         return kl_divergence
 
@@ -82,7 +85,7 @@ class ELBOLoss(nn.Module):
         Returns:
             Tensor: The aggregated ELBO loss
         """
-        aggregated_elbo = torch.zeros(1)
+        aggregated_elbo = torch.zeros(1, device=logits.device)
         for _ in range(self.num_samples):
             loss = self.criterion(logits, targets)
             aggregated_elbo += loss + self.kl_weight * self._kl_div()
