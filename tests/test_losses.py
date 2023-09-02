@@ -1,7 +1,7 @@
 # fmt: off
 import pytest
 import torch
-import torch.nn as nn
+from torch import nn
 
 from torch_uncertainty.layers.bayesian_layers import BayesLinear
 from torch_uncertainty.losses import ELBOLoss

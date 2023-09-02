@@ -1,8 +1,8 @@
 # fmt: off
 from typing import Type
 
-import torch.nn as nn
 import torch.nn.functional as F
+from torch import nn
 
 from ...layers import BatchConv2d, BatchLinear
 

@@ -3,8 +3,7 @@
 from typing import Any, Union
 
 import torch
-import torch.nn as nn
-from torch import Tensor
+from torch import Tensor, nn
 from torch.nn.common_types import _size_2_t
 
 import numpy as np

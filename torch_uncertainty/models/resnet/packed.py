@@ -1,10 +1,9 @@
 # fmt: off
 from typing import Any, Dict, List, Type, Union
 
-import torch.nn as nn
 import torch.nn.functional as F
 from einops import rearrange
-from torch import Tensor
+from torch import Tensor, nn
 
 from ...layers import PackedConv2d, PackedLinear
 from ...utils import load_hf

@@ -3,10 +3,10 @@ from argparse import ArgumentParser
 from pathlib import Path
 from typing import Any, List, Optional, Union
 
-import torch.nn as nn
 import torchvision.transforms as T
 from pytorch_lightning import LightningDataModule
 from timm.data.auto_augment import rand_augment_transform
+from torch import nn
 from torch.utils.data import DataLoader, Dataset
 from torchvision.datasets import SVHN
 

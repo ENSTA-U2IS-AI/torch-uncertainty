@@ -4,12 +4,12 @@ from typing import Any, List, Optional, Tuple, Type, Union
 
 import pytorch_lightning as pl
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 from einops import rearrange
 from pytorch_lightning.utilities.memory import get_model_size_mb
 from pytorch_lightning.utilities.types import EPOCH_OUTPUT, STEP_OUTPUT
 from timm.data import Mixup
+from torch import nn
 from torchmetrics import Accuracy, CalibrationError, MetricCollection
 from torchmetrics.classification import (
     BinaryAccuracy,

@@ -51,7 +51,7 @@ import os
 from functools import partial
 from pathlib import Path
 
-import torch.nn as nn
+from torch import nn
 import torch.optim as optim
 from cli_test_helpers import ArgvContext
 

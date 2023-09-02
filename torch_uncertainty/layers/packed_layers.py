@@ -1,9 +1,8 @@
 # fmt: off
 from typing import Any, Union
 
-import torch.nn as nn
 from einops import rearrange
-from torch import Tensor
+from torch import Tensor, nn
 from torch.nn.common_types import _size_2_t
 
 

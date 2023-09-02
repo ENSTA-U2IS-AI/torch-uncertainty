@@ -1,6 +1,6 @@
 # fmt:off
 import pytest
-import torch.nn as nn
+from torch import nn
 
 from torch_uncertainty.baselines import ResNet, WideResNet
 from torch_uncertainty.optimization_procedures import (

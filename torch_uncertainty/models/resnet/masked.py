@@ -1,9 +1,8 @@
 # fmt: off
 from typing import List, Type, Union
 
-import torch.nn as nn
 import torch.nn.functional as F
-from torch import Tensor
+from torch import Tensor, nn
 
 from ...layers import MaskedConv2d, MaskedLinear
 

@@ -48,7 +48,7 @@ trains any ResNet architecture on CIFAR10:
 
     from pathlib import Path
 
-    import torch.nn as nn
+    from torch import nn
 
     from torch_uncertainty import cli_main, init_args
     from torch_uncertainty.baselines import ResNet

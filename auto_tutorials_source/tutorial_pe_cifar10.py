@@ -125,7 +125,7 @@ print(" ".join(f"{classes[labels[j]]:5s}" for j in range(batch_size)))
 # First we define a vanilla classifier for CIFAR10 for reference. We will use a
 # convolutional neural network.
 
-import torch.nn as nn
+from torch import nn
 import torch.nn.functional as F
 
 

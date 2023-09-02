@@ -1,8 +1,8 @@
 # fmt:off
 from pathlib import Path
 
-import torch.nn as nn
 from cli_test_helpers import ArgvContext
+from torch import nn
 
 from torch_uncertainty import cli_main, init_args
 from torch_uncertainty.optimization_procedures import optim_cifar10_resnet18

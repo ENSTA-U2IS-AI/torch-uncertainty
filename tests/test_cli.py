@@ -3,8 +3,8 @@ import sys
 from pathlib import Path
 
 import pytest
-import torch.nn as nn
 from cli_test_helpers import ArgvContext
+from torch import nn
 
 from torch_uncertainty import cli_main, init_args
 from torch_uncertainty.baselines import VGG, ResNet, WideResNet

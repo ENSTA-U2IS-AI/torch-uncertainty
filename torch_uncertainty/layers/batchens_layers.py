@@ -3,7 +3,7 @@ import math
 from typing import Optional, Tuple, Union
 
 import torch
-import torch.nn as nn
+from torch import nn
 from torch.nn.common_types import _size_2_t
 from torch.nn.modules.utils import _pair
 
