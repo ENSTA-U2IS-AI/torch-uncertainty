@@ -61,4 +61,11 @@ class TestStochasticModel:
         model.unfreeze()
         assert not model.layer.frozen
 
-        model.sample()
+        state = model.sample()[0]
+        keys = state.keys()
+        assert list(keys) == [
+            "layer.weight",
+            "layer.bias",
+            "layer2.weight",
+            "layer2.bias",
+        ]

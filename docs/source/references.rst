@@ -78,7 +78,7 @@ Post-Processing Methods
 Temperature, Vector, & Matrix scaling
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-For temperature & vector scaling, consider citing:
+For temperature, vector, & matrix scaling, consider citing:
 
 **On Calibration of Modern Neural Networks**
 
@@ -218,3 +218,11 @@ Wide-ResNet
 
 * Authors: *Sergey Zagoruyko and Nikos Komodakis*
 * Paper: `BMVC 2016 <https://arxiv.org/pdf/1605.07146.pdf>`__.
+
+VGG
+^^^
+
+**Very Deep Convolutional Networks for Large-Scale Image Recognition**
+
+* Authors: *Karen Simonyan and Andrew Zisserman*
+* Paper: `ICLR 2015 <https://arxiv.org/pdf/1409.1556.pdf>`__.

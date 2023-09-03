@@ -29,7 +29,10 @@ def StochasticModel(model: nn.Module) -> nn.Module:
                     state = module.state_dict()
                     if not len(state):  # no parameter
                         break
-                    model[module_name] |= module.state_dict()
+                    model |= {
+                        module_name + "." + key: val
+                        for key, val in module.state_dict().items()
+                    }
         return sampled_models
 
     setattr(model, "sample", sample)
