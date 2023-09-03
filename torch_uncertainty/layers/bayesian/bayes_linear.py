@@ -42,6 +42,8 @@ class BayesLinear(nn.Module):
     in_features: int
     out_features: int
     weight: Tensor
+    lprior: Tensor
+    lvposterior: Tensor
 
     def __init__(
         self,
@@ -105,8 +107,6 @@ class BayesLinear(nn.Module):
             self.bias_prior_dist = PriorDistribution(
                 prior_sigma_1, prior_sigma_2, prior_pi
             )
-        self.lprior = 0
-        self.lvposterior = 0
 
     def reset_parameters(self) -> None:
         # TODO: change init

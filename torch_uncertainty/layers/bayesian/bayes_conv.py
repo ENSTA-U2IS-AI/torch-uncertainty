@@ -58,6 +58,8 @@ class _BayesConvNd(Module):
     padding_mode: str
     weight: Tensor
     bias: Optional[Tensor]
+    lprior: Tensor
+    lvposterior: Tensor
 
     def __init__(
         self,
@@ -161,8 +163,6 @@ class _BayesConvNd(Module):
             self.bias_prior_dist = PriorDistribution(
                 prior_sigma_1, prior_sigma_2, prior_pi
             )
-        self.lprior = 0
-        self.lvposterior = 0
 
     def reset_parameters(self) -> None:
         # TODO: change init

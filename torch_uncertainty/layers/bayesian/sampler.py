@@ -2,7 +2,7 @@
 from typing import Optional
 
 import torch
-from torch import Tensor, nn
+from torch import Tensor, distributions, nn
 
 import numpy as np
 
@@ -62,9 +62,9 @@ class PriorDistribution(nn.Module):
 
     def log_prior(self, weight: Tensor) -> Tensor:
         self.convert(weight.device)
-        mix = torch.distributions.Categorical(self.pi)
-        normals = torch.distributions.Normal(self.mus, self.sigmas)
-        self.distribution = torch.distributions.MixtureSameFamily(mix, normals)
+        mix = distributions.Categorical(self.pi)
+        normals = distributions.Normal(self.mus, self.sigmas)
+        self.distribution = distributions.MixtureSameFamily(mix, normals)
         return self.distribution.log_prob(weight).sum()
 
     def convert(self, device) -> None:
