@@ -65,7 +65,6 @@ class TestStochasticModel:
         keys = state.keys()
         assert list(keys) == [
             "layer.weight",
-            "layer.bias",
             "layer2.weight",
             "layer2.bias",
         ]

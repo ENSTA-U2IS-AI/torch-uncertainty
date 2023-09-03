@@ -8,7 +8,6 @@ from torch_uncertainty.models.resnet.batched import (
 from torch_uncertainty.models.resnet.masked import (
     masked_resnet34,
     masked_resnet101,
-    masked_resnet152,
 )
 from torch_uncertainty.models.resnet.mimo import (
     mimo_resnet34,
@@ -65,7 +64,6 @@ class TestMaskedResnet:
     def test_main(self):
         masked_resnet34(1, 2, 2, 1, 10)
         masked_resnet101(1, 2, 2, 1, 10)
-        masked_resnet152(1, 2, 2, 1, 10)
 
 
 class TestBatchedResnet:

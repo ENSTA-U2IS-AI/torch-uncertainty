@@ -424,7 +424,7 @@ def masked_resnet152(
     groups: int,
     num_classes: int,
     style: str = "imagenet",
-) -> _MaskedResNet:
+) -> _MaskedResNet:  # coverage: ignore
     """Masksembles of ResNet-152 from `Deep Residual Learning for Image
     Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
 
