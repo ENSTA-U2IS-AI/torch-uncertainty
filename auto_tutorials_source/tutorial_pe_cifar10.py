@@ -193,7 +193,7 @@ packed_net = PackedNet()
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 # Let's use a Classification Cross-Entropy loss and SGD with momentum.
 
-import torch.optim as optim
+from torch import optim
 
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.SGD(packed_net.parameters(), lr=0.001, momentum=0.9)

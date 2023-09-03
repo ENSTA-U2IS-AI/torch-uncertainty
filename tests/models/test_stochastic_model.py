@@ -28,7 +28,7 @@ class DummyModelConv(torch.nn.Module):
 class DummyModelMix(torch.nn.Module):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.layer = BayesConv2d(1, 10, 1)
+        self.layer = BayesConv2d(1, 10, 1, bias=False)
         self.relu = torch.nn.ReLU()
         self.layer2 = torch.nn.Conv2d(10, 1, 1)
 

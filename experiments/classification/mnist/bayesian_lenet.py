@@ -2,8 +2,7 @@
 from functools import partial
 from pathlib import Path
 
-import torch.optim as optim
-from torch import nn
+from torch import nn, optim
 
 from torch_uncertainty import cli_main, init_args
 from torch_uncertainty.datamodules import MNISTDataModule
