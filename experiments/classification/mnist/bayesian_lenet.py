@@ -47,7 +47,6 @@ if __name__ == "__main__":
     #   hyperparameters are from blitz.
     loss = partial(
         ELBOLoss,
-        model=model,
         criterion=nn.CrossEntropyLoss(),
         kl_weight=1 / 50000,
         num_samples=3,

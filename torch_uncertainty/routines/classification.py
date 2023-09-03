@@ -1,5 +1,6 @@
 # fmt: off
 from argparse import ArgumentParser, Namespace
+from functools import partial
 from typing import Any, List, Optional, Tuple, Type, Union
 
 import pytorch_lightning as pl
@@ -17,6 +18,8 @@ from torchmetrics.classification import (
     BinaryAveragePrecision,
     BinaryCalibrationError,
 )
+
+from torch_uncertainty.losses import ELBOLoss
 
 from ..metrics import (
     FPR95,
@@ -152,6 +155,8 @@ class ClassificationSingle(pl.LightningModule):
 
     @property
     def criterion(self) -> nn.Module:
+        if isinstance(self.loss, partial) and self.loss.func == ELBOLoss:
+            self.loss = partial(self.loss, model=self.model)
         return self.loss()
 
     def forward(self, input: torch.Tensor) -> torch.Tensor:

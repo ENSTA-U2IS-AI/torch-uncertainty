@@ -115,7 +115,6 @@ class _BayesConvNd(Module):
         self.output_padding = output_padding
         self.groups = groups
         self.padding_mode = padding_mode
-        self.bias = bias
 
         self._reversed_padding_repeated_twice = _reverse_repeat_tuple(
             self.padding, 2
@@ -134,7 +133,7 @@ class _BayesConvNd(Module):
             )
         )
 
-        if self.bias:
+        if bias:
             self.bias_mu = Parameter(
                 torch.empty(out_channels, **factory_kwargs)
             )
@@ -150,7 +149,7 @@ class _BayesConvNd(Module):
         self.weight_sampler = TrainableDistribution(
             self.weight_mu, self.weight_sigma
         )
-        if self.bias:
+        if bias:
             self.bias_sampler = TrainableDistribution(
                 self.bias_mu, self.bias_sigma
             )
@@ -158,7 +157,7 @@ class _BayesConvNd(Module):
         self.weight_prior_dist = PriorDistribution(
             prior_sigma_1, prior_sigma_2, prior_pi
         )
-        if self.bias:
+        if bias:
             self.bias_prior_dist = PriorDistribution(
                 prior_sigma_1, prior_sigma_2, prior_pi
             )
@@ -170,7 +169,7 @@ class _BayesConvNd(Module):
         init.normal_(self.weight_mu, mean=self.mu_init, std=0.1)
         init.normal_(self.weight_sigma, mean=self.sigma_init, std=0.1)
 
-        if self.bias:
+        if self.bias_mu is not None:
             init.normal_(self.bias_mu, mean=self.mu_init, std=0.1)
             init.normal_(self.bias_sigma, mean=self.sigma_init, std=0.1)
 
@@ -185,7 +184,7 @@ class _BayesConvNd(Module):
     def sample(self) -> Tuple[Tensor, Optional[Tensor]]:
         """Sample the bayesian layer's posterior."""
         weight = self.weight_sampler.sample()
-        if self.bias:
+        if self.bias_mu is not None:
             bias = self.bias_sampler.sample()
         else:
             bias = None
@@ -204,7 +203,7 @@ class _BayesConvNd(Module):
             s += ", output_padding={output_padding}"
         if self.groups != 1:
             s += ", groups={groups}"
-        if self.bias is None:
+        if self.bias_mu is None:
             s += ", bias=False"
         if self.padding_mode != "zeros":
             s += ", padding_mode={padding_mode}"
@@ -303,7 +302,7 @@ class BayesConv1d(_BayesConvNd):
         else:
             weight = self.weight_sampler.sample()
 
-            if self.bias:
+            if self.bias_mu is not None:
                 bias = self.bias_sampler.sample()
                 bias_lposterior = self.bias_sampler.log_posterior()
                 bias_lprior = self.bias_prior_dist.log_prior(bias)
@@ -405,7 +404,7 @@ class BayesConv2d(_BayesConvNd):
         else:
             weight = self.weight_sampler.sample()
 
-            if self.bias:
+            if self.bias_mu is not None:
                 bias = self.bias_sampler.sample()
                 bias_lposterior = self.bias_sampler.log_posterior()
                 bias_lprior = self.bias_prior_dist.log_prior(bias)
@@ -507,7 +506,7 @@ class BayesConv3d(_BayesConvNd):
         else:
             weight = self.weight_sampler.sample()
 
-            if self.bias:
+            if self.bias_mu is not None:
                 bias = self.bias_sampler.sample()
                 bias_lposterior = self.bias_sampler.log_posterior()
                 bias_lprior = self.bias_prior_dist.log_prior(bias)

@@ -70,7 +70,6 @@ class BayesLinear(nn.Module):
         self.mu_init = mu_init
         self.sigma_init = sigma_init
         self.frozen = frozen
-        self.bias = bias
 
         self.weight_mu = nn.Parameter(
             torch.empty((out_features, in_features), **factory_kwargs)
@@ -79,7 +78,7 @@ class BayesLinear(nn.Module):
             torch.empty((out_features, in_features), **factory_kwargs)
         )
 
-        if self.bias:
+        if bias:
             self.bias_mu = nn.Parameter(
                 torch.empty(out_features, **factory_kwargs)
             )
@@ -94,7 +93,7 @@ class BayesLinear(nn.Module):
         self.weight_sampler = TrainableDistribution(
             self.weight_mu, self.weight_sigma
         )
-        if self.bias:
+        if bias:
             self.bias_sampler = TrainableDistribution(
                 self.bias_mu, self.bias_sigma
             )
@@ -102,7 +101,7 @@ class BayesLinear(nn.Module):
         self.weight_prior_dist = PriorDistribution(
             prior_sigma_1, prior_sigma_2, prior_pi
         )
-        if self.bias:
+        if bias:
             self.bias_prior_dist = PriorDistribution(
                 prior_sigma_1, prior_sigma_2, prior_pi
             )
@@ -114,7 +113,7 @@ class BayesLinear(nn.Module):
         init.normal_(self.weight_mu, mean=self.mu_init, std=0.1)
         init.normal_(self.weight_sigma, mean=self.sigma_init, std=0.1)
 
-        if self.bias:
+        if self.bias_mu is not None:
             init.normal_(self.bias_mu, mean=self.mu_init, std=0.1)
             init.normal_(self.bias_sigma, mean=self.sigma_init, std=0.1)
 
@@ -125,14 +124,12 @@ class BayesLinear(nn.Module):
             return self._forward(input)
 
     def _frozen_forward(self, input):
-        return F.linear(
-            input, self.weight_mu, self.bias_mu if self.bias else None
-        )
+        return F.linear(input, self.weight_mu, self.bias_mu)
 
     def _forward(self, input: Tensor) -> Tensor:
         weight = self.weight_sampler.sample()
 
-        if self.bias:
+        if self.bias_mu is not None:
             bias = self.bias_sampler.sample()
             bias_lposterior = self.bias_sampler.log_posterior()
             bias_lprior = self.bias_prior_dist.log_prior(bias)
@@ -155,7 +152,7 @@ class BayesLinear(nn.Module):
     def sample(self) -> Tuple[Tensor, Optional[Tensor]]:
         """Sample the bayesian layer's posterior."""
         weight = self.weight_sampler.sample()
-        if self.bias:
+        if self.bias_mu is not None:
             bias = self.bias_sampler.sample()
         else:
             bias = None
@@ -163,5 +160,5 @@ class BayesLinear(nn.Module):
 
     def extra_repr(self) -> str:
         return "in_features={}, out_features={}, bias={}".format(
-            self.in_features, self.out_features, self.bias is not None
+            self.in_features, self.out_features, self.bias_mu is not None
         )
