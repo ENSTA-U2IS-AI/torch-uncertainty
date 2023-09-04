@@ -1,6 +1,6 @@
 # fmt: off
-import torch.nn as nn
 import torch.nn.functional as F
+from torch import nn
 
 from ...layers import MaskedConv2d, MaskedLinear
 

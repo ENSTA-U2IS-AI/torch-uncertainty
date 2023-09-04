@@ -3,7 +3,7 @@ from typing import Type
 
 from torch import nn
 
-from ...layers.packed_layers import PackedConv2d, PackedLinear
+from ...layers.packed import PackedConv2d, PackedLinear
 from .base import VGG, _vgg
 from .configs import cfgs
 
@@ -107,7 +107,7 @@ def packed_vgg19(
     groups: int = 1,
     dropout: float = 0.5,
     style: str = "imagenet",
-) -> VGG:
+) -> VGG:  # coverage: ignore
     return _vgg(
         cfgs["E"],
         in_channels=in_channels,

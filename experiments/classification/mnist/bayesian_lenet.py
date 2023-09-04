@@ -2,8 +2,7 @@
 from functools import partial
 from pathlib import Path
 
-import torch.nn as nn
-import torch.optim as optim
+from torch import nn, optim
 
 from torch_uncertainty import cli_main, init_args
 from torch_uncertainty.datamodules import MNISTDataModule
@@ -48,7 +47,6 @@ if __name__ == "__main__":
     #   hyperparameters are from blitz.
     loss = partial(
         ELBOLoss,
-        model=model,
         criterion=nn.CrossEntropyLoss(),
         kl_weight=1 / 50000,
         num_samples=3,

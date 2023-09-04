@@ -75,7 +75,7 @@ jobs:
 
     - name: Test with pytest and compute coverage
       run: |
-        poetry run pytest --cov --cov-report xml
+        poetry run pytest --cov --cov-report xml --durations 10
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3

@@ -1,8 +1,7 @@
 # fmt: off
 from pathlib import Path
 
-import torch.nn as nn
-import torch.optim as optim
+from torch import nn, optim
 
 from torch_uncertainty import cli_main, init_args
 from torch_uncertainty.baselines.regression.mlp import MLP

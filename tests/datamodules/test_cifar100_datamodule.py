@@ -1,6 +1,7 @@
 # fmt:off
 from argparse import ArgumentParser
 
+import pytest
 from torchvision.datasets import CIFAR100
 
 from torch_uncertainty.datamodules import CIFAR100DataModule
@@ -41,3 +42,33 @@ class TestCIFAR100DataModule:
         dm.prepare_data()
         dm.setup("test")
         dm.test_dataloader()
+
+        args.test_alt = "c"
+        dm = CIFAR100DataModule(**vars(args))
+        dm.dataset = DummyClassificationDataset
+        with pytest.raises(ValueError):
+            dm.setup()
+
+        args.test_alt = None
+        args.num_dataloaders = 2
+        args.val_split = 0.1
+        dm = CIFAR100DataModule(**vars(args))
+        dm.dataset = DummyClassificationDataset
+        dm.ood_dataset = DummyClassificationDataset
+        dm.ood_dataset = DummyClassificationDataset
+        dm.setup()
+        dm.setup("test")
+        dm.train_dataloader()
+
+        args.num_dataloaders = 1
+        args.cutout = 8
+        args.enable_randaugment = True
+        with pytest.raises(ValueError):
+            dm = CIFAR100DataModule(**vars(args))
+
+        args.cutout = None
+        dm = CIFAR100DataModule(**vars(args))
+        args.enable_randaugment = False
+
+        args.auto_augment = "rand-m9-n2-mstd0.5"
+        dm = CIFAR100DataModule(**vars(args))

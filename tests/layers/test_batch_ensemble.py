@@ -2,7 +2,7 @@
 import pytest
 import torch
 
-from torch_uncertainty.layers.batchens_layers import BatchConv2d, BatchLinear
+from torch_uncertainty.layers.batch_ensemble import BatchConv2d, BatchLinear
 
 
 # fmt:on

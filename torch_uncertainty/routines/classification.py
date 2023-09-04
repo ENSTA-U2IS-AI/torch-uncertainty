@@ -1,15 +1,16 @@
 # fmt: off
 from argparse import ArgumentParser, Namespace
+from functools import partial
 from typing import Any, List, Optional, Tuple, Type, Union
 
 import pytorch_lightning as pl
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 from einops import rearrange
 from pytorch_lightning.utilities.memory import get_model_size_mb
 from pytorch_lightning.utilities.types import EPOCH_OUTPUT, STEP_OUTPUT
 from timm.data import Mixup
+from torch import nn
 from torchmetrics import Accuracy, CalibrationError, MetricCollection
 from torchmetrics.classification import (
     BinaryAccuracy,
@@ -17,6 +18,8 @@ from torchmetrics.classification import (
     BinaryAveragePrecision,
     BinaryCalibrationError,
 )
+
+from torch_uncertainty.losses import ELBOLoss
 
 from ..metrics import (
     FPR95,
@@ -152,6 +155,8 @@ class ClassificationSingle(pl.LightningModule):
 
     @property
     def criterion(self) -> nn.Module:
+        if isinstance(self.loss, partial) and self.loss.func == ELBOLoss:
+            self.loss = partial(self.loss, model=self.model)
         return self.loss()
 
     def forward(self, input: torch.Tensor) -> torch.Tensor:

@@ -4,12 +4,12 @@ from pathlib import Path
 from typing import Any, List, Literal, Optional, Union
 
 import torch
-import torch.nn as nn
 from pytorch_lightning import LightningModule
 from pytorch_lightning.core.saving import (
     load_hparams_from_tags_csv,
     load_hparams_from_yaml,
 )
+from torch import nn
 
 from ...models.mlp import mlp, packed_mlp
 from ...routines.regression import RegressionEnsemble, RegressionSingle

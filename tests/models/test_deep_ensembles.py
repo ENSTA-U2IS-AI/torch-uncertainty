@@ -29,6 +29,7 @@ class TestDeepEnsemblesModel:
         model_1 = dummy_model(1, 10, 1)
 
         deep_ensembles([model_1], num_estimators=2)
+        deep_ensembles(model_1, num_estimators=2)
 
         with pytest.raises(ValueError):
             deep_ensembles([model_1], num_estimators=1)

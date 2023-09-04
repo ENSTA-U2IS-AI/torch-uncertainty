@@ -12,7 +12,7 @@ import pytorch_sphinx_theme
 project = "TorchUncertainty"
 copyright = f"{str(datetime.utcnow().year)}, Adrien Lafage and Olivier Laurent"
 author = "Adrien Lafage and Olivier Laurent"
-release = "0.1.4"
+release = "0.1.5"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -23,6 +23,7 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
     "sphinx.ext.napoleon",
+    "sphinx.ext.viewcode",
     "sphinx_copybutton",
     "sphinx_gallery.gen_gallery",
     # "sphinx_gallery.load_style",

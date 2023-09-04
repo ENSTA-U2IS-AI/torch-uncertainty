@@ -125,7 +125,7 @@ print(" ".join(f"{classes[labels[j]]:5s}" for j in range(batch_size)))
 # First we define a vanilla classifier for CIFAR10 for reference. We will use a
 # convolutional neural network.
 
-import torch.nn as nn
+from torch import nn
 import torch.nn.functional as F
 
 
@@ -193,7 +193,7 @@ packed_net = PackedNet()
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 # Let's use a Classification Cross-Entropy loss and SGD with momentum.
 
-import torch.optim as optim
+from torch import optim
 
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.SGD(packed_net.parameters(), lr=0.001, momentum=0.9)

@@ -1,7 +1,7 @@
 # fmt:off
 import pytest
 import torch
-import torch.nn as nn
+from torch import nn
 from torchinfo import summary
 
 from torch_uncertainty.baselines import ResNet, WideResNet

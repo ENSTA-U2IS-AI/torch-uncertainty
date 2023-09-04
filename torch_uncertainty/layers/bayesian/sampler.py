@@ -2,15 +2,14 @@
 from typing import Optional
 
 import torch
-import torch.nn as nn
-from torch import Tensor
+from torch import Tensor, distributions, nn
 
 import numpy as np
 
 
 # fmt: on
 class TrainableDistribution(nn.Module):
-    lsqrt2pi = torch.as_tensor(np.log(np.sqrt(2 * np.pi)))
+    lsqrt2pi = torch.tensor(np.log(np.sqrt(2 * np.pi)))
 
     def __init__(
         self,
@@ -37,7 +36,7 @@ class TrainableDistribution(nn.Module):
                 "Sample the weights before asking for the log posterior."
             )
 
-        if weight is None:
+        if weight is None:  # coverage: ignore
             weight = self.weight
 
         lposterior = (
@@ -59,13 +58,13 @@ class PriorDistribution(nn.Module):
         super().__init__()
         self.pi = torch.tensor([pi, 1 - pi])
         self.mus = torch.zeros(2)
-        self.sigmas = torch.as_tensor([sigma_1, sigma_2])
+        self.sigmas = torch.tensor([sigma_1, sigma_2])
 
     def log_prior(self, weight: Tensor) -> Tensor:
         self.convert(weight.device)
-        mix = torch.distributions.Categorical(self.pi)
-        normals = torch.distributions.Normal(self.mus, self.sigmas)
-        self.distribution = torch.distributions.MixtureSameFamily(mix, normals)
+        mix = distributions.Categorical(self.pi)
+        normals = distributions.Normal(self.mus, self.sigmas)
+        self.distribution = distributions.MixtureSameFamily(mix, normals)
         return self.distribution.log_prob(weight).sum()
 
     def convert(self, device) -> None:

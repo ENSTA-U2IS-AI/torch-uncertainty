@@ -3,11 +3,11 @@ from argparse import ArgumentParser
 from pathlib import Path
 from typing import Any, List, Optional, Union
 
-import torch.nn as nn
 import torchvision.transforms as T
 from pytorch_lightning import LightningDataModule
 from timm.data.auto_augment import rand_augment_transform
 from timm.data.mixup import Mixup
+from torch import nn
 from torch.utils.data import DataLoader, Dataset
 from torchvision.datasets import DTD, SVHN, ImageNet, INaturalist
 
@@ -59,6 +59,8 @@ class ImageNetDataModule(LightningDataModule):
             self.dataset = ImageNetO
         elif test_alt == "a":
             self.dataset = ImageNetA
+        else:
+            raise ValueError(f"The alternative {test_alt} is not known.")
 
         if ood_ds == "inaturalist":
             self.ood_dataset = INaturalist
@@ -122,7 +124,7 @@ class ImageNetDataModule(LightningDataModule):
                 f" make sure the folder contains a subfolder named {split}"
             )
 
-    def prepare_data(self) -> None:
+    def prepare_data(self) -> None:  # coverage: ignore
         if self.test_alt is not None:
             self.data = self.dataset(
                 self.root,

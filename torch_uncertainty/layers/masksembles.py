@@ -3,8 +3,7 @@
 from typing import Any, Union
 
 import torch
-import torch.nn as nn
-from torch import Tensor
+from torch import Tensor, nn
 from torch.nn.common_types import _size_2_t
 
 import numpy as np
@@ -185,7 +184,7 @@ class MaskedLinear(nn.Module):
         Be sure to apply a repeat on the batch at the start of the training
         if you use `MaskedLinear`.
 
-    References:
+    Reference:
         `Masksembles for Uncertainty Estimation`, Nikita Durasov, Timur
         Bagautdinov, Pierre Baque, Pascal Fua.
     """
@@ -244,7 +243,7 @@ class MaskedConv2d(nn.Module):
         Be sure to apply a repeat on the batch at the start of the training
         if you use `MaskedConv2d`.
 
-    References:
+    Reference:
         `Masksembles for Uncertainty Estimation`, Nikita Durasov, Timur
         Bagautdinov, Pierre Baque, Pascal Fua.
     """

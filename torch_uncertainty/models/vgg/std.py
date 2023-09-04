@@ -74,7 +74,7 @@ def vgg19(
     groups: int = 1,
     dropout: float = 0.5,
     style: str = "imagenet",
-) -> VGG:
+) -> VGG:  # coverage: ignore
     return _vgg(
         cfgs["E"],
         in_channels=in_channels,

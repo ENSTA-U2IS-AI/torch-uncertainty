@@ -1,9 +1,8 @@
 # fmt: off
 from typing import List, Type, Union
 
-import torch.nn as nn
 import torch.nn.functional as F
-from torch import Tensor
+from torch import Tensor, nn
 
 from ...layers import MaskedConv2d, MaskedLinear
 
@@ -425,7 +424,7 @@ def masked_resnet152(
     groups: int,
     num_classes: int,
     style: str = "imagenet",
-) -> _MaskedResNet:
+) -> _MaskedResNet:  # coverage: ignore
     """Masksembles of ResNet-152 from `Deep Residual Learning for Image
     Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
 

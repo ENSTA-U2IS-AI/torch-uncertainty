@@ -102,7 +102,7 @@ class MNISTDataModule(LightningDataModule):
             ]
         )
 
-    def prepare_data(self) -> None:
+    def prepare_data(self) -> None:  # coverage: ignore
         """Download the datasets."""
         self.dataset(self.root, train=True, download=True)
         self.dataset(self.root, train=False, download=True)

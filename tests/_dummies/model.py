@@ -1,8 +1,7 @@
 # fmt: off
 
 import torch
-import torch.nn as nn
-from torch import Tensor
+from torch import Tensor, nn
 
 # fmt: on
 __all__ = [
@@ -28,10 +27,8 @@ class _Dummy(nn.Module):
 
     def forward(self, x: Tensor) -> Tensor:
         out = self.linear(
-            torch.as_tensor(
-                torch.ones(
-                    (x.shape[0] * self.num_estimators, 1), dtype=torch.float32
-                )
+            torch.ones(
+                (x.shape[0] * self.num_estimators, 1), dtype=torch.float32
             )
         )
         return out

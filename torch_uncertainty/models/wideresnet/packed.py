@@ -1,9 +1,9 @@
 # fmt: off
 from typing import Type
 
-import torch.nn as nn
 import torch.nn.functional as F
 from einops import rearrange
+from torch import nn
 
 from ...layers import PackedConv2d, PackedLinear
 
