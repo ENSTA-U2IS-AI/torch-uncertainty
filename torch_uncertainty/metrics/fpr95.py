@@ -119,6 +119,6 @@ class FPR95(Metric):
 
         cutoff = np.argmin(np.abs(recall - 0.95))
 
-        return torch.as_tensor(
+        return torch.tensor(
             fps[cutoff] / (np.sum(np.logical_not(labels))), dtype=torch.float32
         )

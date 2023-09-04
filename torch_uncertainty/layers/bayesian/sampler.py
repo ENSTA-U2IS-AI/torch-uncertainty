@@ -9,7 +9,7 @@ import numpy as np
 
 # fmt: on
 class TrainableDistribution(nn.Module):
-    lsqrt2pi = torch.as_tensor(np.log(np.sqrt(2 * np.pi)))
+    lsqrt2pi = torch.tensor(np.log(np.sqrt(2 * np.pi)))
 
     def __init__(
         self,
@@ -58,7 +58,7 @@ class PriorDistribution(nn.Module):
         super().__init__()
         self.pi = torch.tensor([pi, 1 - pi])
         self.mus = torch.zeros(2)
-        self.sigmas = torch.as_tensor([sigma_1, sigma_2])
+        self.sigmas = torch.tensor([sigma_1, sigma_2])
 
     def log_prior(self, weight: Tensor) -> Tensor:
         self.convert(weight.device)
