@@ -13,15 +13,6 @@ class BatchLinear(nn.Module):
     r"""Applies a linear transformation using BatchEnsemble method to the
     incoming data: :math:`y=(x\circ \hat{R})W^{T}\circ \hat{S} + \hat{b}`.
 
-    Source:
-        Introduced by the paper `BatchEnsemble: An Alternative Approach to
-        Efficient Ensemble and Lifelong Learning
-        <https://arxiv.org/abs/2002.06715>`_, we present here an implementation
-        of a Linear BatchEnsemble layer in `PyTorch <https://pytorch.org>`_
-        heavily inspired by its `official implementation
-        <https://github.com/google/edward2>`_ in `TensorFlow
-        <https://www.tensorflow.org>`_.
-
     Args:
         in_features (int): size of each input sample.
         out_features (int): size of each output sample.
@@ -29,6 +20,15 @@ class BatchLinear(nn.Module):
             :math:`M` here.
         bias (bool, optional): if ``True``, adds a learnable bias to the
             output. Defaults to ``True``.
+
+    Reference:
+        Introduced by the paper `BatchEnsemble: An Alternative Approach to
+        Efficient Ensemble and Lifelong Learning
+        <https://arxiv.org/abs/2002.06715>`_, we present here an implementation
+        of a Linear BatchEnsemble layer in `PyTorch <https://pytorch.org>`_
+        heavily inspired by its `official implementation
+        <https://github.com/google/edward2>`_ in `TensorFlow
+        <https://www.tensorflow.org>`_.
 
     Attributes:
         weight:   the learnable weights (:math:`W`) of shape
@@ -172,7 +172,7 @@ class BatchConv2d(nn.Module):
         \text{weight}(C_{\text{out}_j}, k)\star (\text{input}(N_i, k)
         \times \hat{R}(N_i, k))
 
-    Source:
+    Reference:
         Introduced by the paper `BatchEnsemble: An Alternative Approach to
         Efficient Ensemble and Lifelong Learning
         <https://arxiv.org/abs/2002.06715>`_, we present here an implementation

@@ -35,7 +35,7 @@ class BayesLinear(nn.Module):
 
     Paper Reference:
         Blundell, Charles, et al. "Weight uncertainty in neural networks"
-            ICML 2015.
+        ICML 2015.
     """
 
     __constants__ = ["in_features", "out_features"]

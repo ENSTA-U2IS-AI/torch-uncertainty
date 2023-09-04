@@ -26,7 +26,7 @@ class VectorScaler(Scaler):
 
     Reference:
         Guo, C., Pleiss, G., Sun, Y., & Weinberger, K. Q. On calibration
-            of modern neural networks. In ICML 2017.
+        of modern neural networks. In ICML 2017.
 
     """
 
