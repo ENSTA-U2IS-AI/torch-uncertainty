@@ -89,5 +89,5 @@ class ELBOLoss(nn.Module):
         for _ in range(self.num_samples):
             logits = self.model(inputs)
             aggregated_elbo += self.criterion(logits, targets)
-            aggregated_elbo += self.kl_weight * self._kl_div().cuda()
+            aggregated_elbo += self.kl_weight * self._kl_div()
         return aggregated_elbo / self.num_samples
