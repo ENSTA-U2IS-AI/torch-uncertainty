@@ -74,19 +74,20 @@ class ELBOLoss(nn.Module):
             )
         self.num_samples = num_samples
 
-    def forward(self, logits: Tensor, targets: Tensor) -> Tensor:
+    def forward(self, inputs: Tensor, targets: Tensor) -> Tensor:
         """Gather the kl divergence from the bayesian modules and aggregate
         the ELBO loss for a given network.
 
         Args:
-            logits (Tensor): The output of the Bayesian Neural Network
+            inputs (Tensor): The *inputs* of the Bayesian Neural Network
             targets (Tensor): The target values
 
         Returns:
             Tensor: The aggregated ELBO loss
         """
-        aggregated_elbo = torch.zeros(1, device=logits.device)
+        aggregated_elbo = torch.zeros(1, device=inputs.device)
         for _ in range(self.num_samples):
-            loss = self.criterion(logits, targets)
-            aggregated_elbo += loss + self.kl_weight * self._kl_div()
+            logits = self.model(inputs)
+            aggregated_elbo += self.criterion(logits, targets)
+            aggregated_elbo += self.kl_weight * self._kl_div().cuda()
         return aggregated_elbo / self.num_samples

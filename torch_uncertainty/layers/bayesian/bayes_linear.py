@@ -16,8 +16,6 @@ class BayesLinear(nn.Module):
     Args:
         in_features (int): Number of input features
         out_features (int): Number of output features
-        prior_mu (float, optional): Mean of the prior distribution
-            Defaults to 0.0.
         prior_sigma_1 (float, optional): Standard deviation of the first prior
             distribution. Defaults to 0.1.
         prior_sigma_2 (float, optional): Standard deviation of the second prior
@@ -49,7 +47,6 @@ class BayesLinear(nn.Module):
         self,
         in_features: int,
         out_features: int,
-        prior_mu: float = 0.0,
         prior_sigma_1: float = 0.1,
         prior_sigma_2: float = 0.4,
         prior_pi: float = 1,
@@ -65,7 +62,6 @@ class BayesLinear(nn.Module):
 
         self.in_features = in_features
         self.out_features = out_features
-        self.prior_mu = prior_mu
         self.prior_sigma_1 = prior_sigma_1
         self.prior_sigma_2 = prior_sigma_2
         self.prior_pi = prior_pi
