@@ -128,7 +128,7 @@ class CIFAR10C(VisionDataset):
         )
 
         self.samples = samples
-        self.labels = labels
+        self.labels = labels.astype(np.int64)
 
     def make_dataset(
         self, root: Path, subset: str, severity: int
