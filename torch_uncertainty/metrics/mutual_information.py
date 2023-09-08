@@ -39,6 +39,9 @@ class MutualInformation(Metric):
         uncertainty. The Mutual Information is also computationally equivalent
         to the Generalized Jensen-Shannon Divergence (GJSD).
 
+        The implementation of the mutual information clamps results to zero to
+        avoid negative values that could appear due to numerical instabilities
+
     Warning:
         Make sure that the probabilities in :attr:`probs` are normalized to sum
         to one.
@@ -100,7 +103,7 @@ class MutualInformation(Metric):
         """Computes Mutual Information based on inputs passed in to ``update``
         previously.
         """
-        values = dim_zero_cat(self.values)
+        values = torch.clamp(dim_zero_cat(self.values), min=0)
         if self.reduction == "sum":
             return values.sum(dim=-1)
         elif self.reduction == "mean":
