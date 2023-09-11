@@ -150,12 +150,18 @@ class ClassificationSingle(pl.LightningModule):
         else:
             self.mixup = lambda x, y: (x, y)
 
+        # Handle ELBO special cases
+        self.is_elbo = (
+            isinstance(self.loss, partial) and self.loss.func == ELBOLoss
+        )
+        # print(self.is_elbo)
+
     def configure_optimizers(self) -> Any:
         return self.optimization_procedure(self)
 
     @property
     def criterion(self) -> nn.Module:
-        if isinstance(self.loss, partial) and self.loss.func == ELBOLoss:
+        if self.is_elbo:
             self.loss = partial(self.loss, model=self.model)
         return self.loss()
 
@@ -189,14 +195,17 @@ class ClassificationSingle(pl.LightningModule):
     ) -> STEP_OUTPUT:
         batch = self.mixup(*batch)
         inputs, targets = self.format_batch_fn(batch)
-        logits = self.forward(inputs)
 
-        # BCEWithLogitsLoss expects float targets
-        if self.binary_cls and self.loss == nn.BCEWithLogitsLoss:
-            logits = logits.squeeze(-1)
-            targets = targets.float()
+        if self.is_elbo:
+            loss = self.criterion(inputs, targets)
+        else:
+            logits = self.forward(inputs)
+            # BCEWithLogitsLoss expects float targets
+            if self.binary_cls and self.loss == nn.BCEWithLogitsLoss:
+                logits = logits.squeeze(-1)
+                targets = targets.float()
 
-        loss = self.criterion(logits, targets)
+            loss = self.criterion(logits, targets)
         self.log("train_loss", loss)
         return loss
 

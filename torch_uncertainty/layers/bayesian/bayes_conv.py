@@ -69,7 +69,6 @@ class _BayesConvNd(Module):
         stride: Tuple[int, ...],
         padding: Tuple[int, ...],
         dilation: Tuple[int, ...],
-        prior_mu: float,
         prior_sigma_1: float,
         prior_sigma_2: float,
         prior_pi: float,
@@ -107,7 +106,6 @@ class _BayesConvNd(Module):
         self.stride = stride
         self.padding = padding
         self.dilation = dilation
-        self.prior_mu = prior_mu
         self.prior_sigma_1 = prior_sigma_1
         self.prior_sigma_2 = prior_sigma_2
         self.prior_pi = prior_pi
@@ -146,6 +144,14 @@ class _BayesConvNd(Module):
             self.register_parameter("bias_mu", None)
             self.register_parameter("bias_sigma", None)
 
+        self.weight_prior_dist = PriorDistribution(
+            prior_sigma_1, prior_sigma_2, prior_pi
+        )
+        if bias:
+            self.bias_prior_dist = PriorDistribution(
+                prior_sigma_1, prior_sigma_2, prior_pi
+            )
+
         self.reset_parameters()
 
         self.weight_sampler = TrainableDistribution(
@@ -154,14 +160,6 @@ class _BayesConvNd(Module):
         if bias:
             self.bias_sampler = TrainableDistribution(
                 self.bias_mu, self.bias_sigma
-            )
-
-        self.weight_prior_dist = PriorDistribution(
-            prior_sigma_1, prior_sigma_2, prior_pi
-        )
-        if bias:
-            self.bias_prior_dist = PriorDistribution(
-                prior_sigma_1, prior_sigma_2, prior_pi
             )
 
     def reset_parameters(self) -> None:
@@ -228,12 +226,11 @@ class BayesConv1d(_BayesConvNd):
         stride: _size_1_t = 1,
         padding: Union[str, _size_1_t] = 0,
         dilation: _size_1_t = 1,
-        prior_mu: float = 0.0,
         prior_sigma_1: float = 0.1,
         prior_sigma_2: float = 0.002,
         prior_pi: float = 1,
         mu_init: float = 0.0,
-        sigma_init: float = 10.0,
+        sigma_init: float = -6.0,
         frozen: bool = False,
         groups: int = 1,
         bias: bool = True,
@@ -253,7 +250,6 @@ class BayesConv1d(_BayesConvNd):
             stride_,
             padding_,
             dilation_,
-            prior_mu,
             prior_sigma_1,
             prior_sigma_2,
             prior_pi,
@@ -330,7 +326,6 @@ class BayesConv2d(_BayesConvNd):
         stride: _size_2_t = 1,
         padding: Union[str, _size_2_t] = 0,
         dilation: _size_2_t = 1,
-        prior_mu: float = 0.0,
         prior_sigma_1: float = 0.1,
         prior_sigma_2: float = 0.002,
         prior_pi: float = 1,
@@ -355,7 +350,6 @@ class BayesConv2d(_BayesConvNd):
             stride_,
             padding_,
             dilation_,
-            prior_mu,
             prior_sigma_1,
             prior_sigma_2,
             prior_pi,
@@ -432,7 +426,6 @@ class BayesConv3d(_BayesConvNd):
         stride: _size_3_t = 1,
         padding: Union[str, _size_3_t] = 0,
         dilation: _size_3_t = 1,
-        prior_mu: float = 0.0,
         prior_sigma_1: float = 0.1,
         prior_sigma_2: float = 0.002,
         prior_pi: float = 1,
@@ -457,7 +450,6 @@ class BayesConv3d(_BayesConvNd):
             stride_,
             padding_,
             dilation_,
-            prior_mu,
             prior_sigma_1,
             prior_sigma_2,
             prior_pi,
