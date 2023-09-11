@@ -63,7 +63,7 @@ class Scaler(nn.Module):
                 Defaults to True.
 
         Returns:
-            TemperatureScaler: Calibrated scaler.
+            Scaler: Calibrated scaler.
         """
         logits_list = []
         labels_list = []
