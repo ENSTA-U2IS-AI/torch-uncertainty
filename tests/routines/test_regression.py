@@ -29,7 +29,7 @@ class TestRegressionSingle:
                 loss=nn.GaussianNLLLoss,
                 optimization_procedure=optim_cifar10_resnet18,
                 baseline_type="single",
-                dist_estimation=True,
+                dist_estimation=2,
                 **vars(args),
             )
 

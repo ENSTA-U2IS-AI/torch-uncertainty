@@ -32,7 +32,7 @@ class MLP:
         optimization_procedure: Any,
         version: Literal["vanilla", "packed"],
         hidden_dims: List[int],
-        dist_estimation: bool,
+        dist_estimation: int,
         num_estimators: Optional[int] = 1,
         alpha: Optional[float] = None,
         gamma: int = 1,
