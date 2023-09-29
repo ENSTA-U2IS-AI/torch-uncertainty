@@ -91,3 +91,31 @@ class ELBOLoss(nn.Module):
             aggregated_elbo += self.criterion(logits, targets)
             aggregated_elbo += self.kl_weight * self._kl_div()
         return aggregated_elbo / self.num_samples
+
+
+class NIGLoss(nn.Module):
+    def __init__(self, reg_weight: float) -> None:
+        super().__init__()
+        self.reg_weight = reg_weight
+
+    def _nig_nll(self, gamma, v, alpha, beta, targets):
+        Gamma = 2 * beta * (1 + v)
+        nll = (
+            0.5 * torch.log(torch.pi / v)
+            - alpha * Gamma.log()
+            + (alpha + 0.5) * torch.log(Gamma + v * (targets - gamma) ** 2)
+            + torch.lgamma(alpha)
+            - torch.lgamma(alpha + 0.5)
+        )
+        return nll.mean()
+
+    def _nig_reg(self, gamma, v, alpha, targets):
+        reg = torch.norm(targets - gamma, 1, dim=1, keepdim=True) * (
+            2 * v + alpha
+        )
+        return reg.mean()
+
+    def forward(self, gamma, v, alpha, beta, targets):
+        loss_nll = self._nig_nll(gamma, v, alpha, beta, targets)
+        loss_reg = self._nig_reg(gamma, v, alpha, targets)
+        return loss_nll + self.reg_weight * loss_reg

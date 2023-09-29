@@ -48,7 +48,13 @@ class RegressionSingle(pl.LightningModule):
             raise ValueError("")
 
         if dist_estimation == 4:
-            pass
+            reg_metrics = MetricCollection(
+                {
+                    "mse": MeanSquaredError(squared=False),
+                    "gnll": GaussianNegativeLogLikelihood(),
+                },
+                compute_groups=False,
+            )
         elif dist_estimation == 2:
             reg_metrics = MetricCollection(
                 {
@@ -97,7 +103,13 @@ class RegressionSingle(pl.LightningModule):
         inputs, targets = batch
         logits = self.forward(inputs)
 
-        if self.dist_estimation == 2:
+        if self.dist_estimation == 4:
+            means, v, alpha, beta = logits.split(1, dim=-1)
+            v = F.softplus(v)
+            alpha = 1 + F.softplus(alpha)
+            beta = F.softplus(beta)
+            loss = self.criterion(means, v, alpha, beta, targets)
+        elif self.dist_estimation == 2:
             means = logits[..., 0]
             vars = F.softplus(logits[..., 1])
             loss = self.criterion(means, targets, vars)
@@ -112,7 +124,13 @@ class RegressionSingle(pl.LightningModule):
     ) -> None:
         inputs, targets = batch
         logits = self.forward(inputs)
-        if self.dist_estimation == 2:
+        if self.dist_estimation == 4:
+            means = logits[..., 0]
+            alpha = 1 + F.softplus(logits[..., 2])
+            beta = F.softplus(logits[..., 3])
+            vars = beta / (alpha - 1)
+            self.val_metrics.gnll.update(means, targets, vars)
+        elif self.dist_estimation == 2:
             means = logits[..., 0]
             vars = F.softplus(logits[..., 1])
             self.val_metrics.gnll.update(means, targets, vars)
@@ -137,7 +155,14 @@ class RegressionSingle(pl.LightningModule):
     ) -> None:
         inputs, targets = batch
         logits = self.forward(inputs)
-        if self.dist_estimation == 2:
+
+        if self.dist_estimation == 4:
+            means = logits[..., 0]
+            alpha = 1 + F.softplus(logits[..., 2])
+            beta = F.softplus(logits[..., 3])
+            vars = beta / (alpha - 1)
+            self.test_metrics.gnll.update(means, targets, vars)
+        elif self.dist_estimation == 2:
             means = logits[..., 0]
             vars = F.softplus(logits[..., 1])
             self.test_metrics.gnll.update(means, targets, vars)
