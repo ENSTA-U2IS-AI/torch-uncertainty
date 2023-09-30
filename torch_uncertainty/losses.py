@@ -96,6 +96,12 @@ class ELBOLoss(nn.Module):
 class NIGLoss(nn.Module):
     def __init__(self, reg_weight: float) -> None:
         super().__init__()
+
+        if reg_weight < 0:
+            raise ValueError(
+                "The regularization weight should be non-negative. "
+                f"Got {reg_weight}."
+            )
         self.reg_weight = reg_weight
 
     def _nig_nll(self, gamma, v, alpha, beta, targets):

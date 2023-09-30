@@ -130,6 +130,9 @@ class RegressionSingle(pl.LightningModule):
             beta = F.softplus(logits[..., 3])
             vars = beta / (alpha - 1)
             self.val_metrics.gnll.update(means, targets, vars)
+
+            if means.ndim == 1:
+                means = means.unsqueeze(-1)
         elif self.dist_estimation == 2:
             means = logits[..., 0]
             vars = F.softplus(logits[..., 1])
@@ -162,6 +165,9 @@ class RegressionSingle(pl.LightningModule):
             beta = F.softplus(logits[..., 3])
             vars = beta / (alpha - 1)
             self.test_metrics.gnll.update(means, targets, vars)
+
+            if means.ndim == 1:
+                means = means.unsqueeze(-1)
         elif self.dist_estimation == 2:
             means = logits[..., 0]
             vars = F.softplus(logits[..., 1])

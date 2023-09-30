@@ -4,7 +4,7 @@ import torch
 from torch import nn
 
 from torch_uncertainty.layers.bayesian import BayesLinear
-from torch_uncertainty.losses import ELBOLoss
+from torch_uncertainty.losses import ELBOLoss, NIGLoss
 
 
 # fmt: on
@@ -34,3 +34,14 @@ class TestELBOLoss:
 
         loss = ELBOLoss(model, criterion, kl_weight=1e-5, num_samples=1)
         loss(model(torch.randn(1, 1)), torch.randn(1, 1))
+
+
+# fmt: on
+class TestNIGLoss:
+    def test_main(self):
+        with pytest.raises(ValueError):
+            NIGLoss(reg_weight=-1)
+
+        loss = NIGLoss(reg_weight=1e-2)
+
+        loss(*torch.rand((1, 4)).split(1, dim=-1), torch.randn(1, 1))
