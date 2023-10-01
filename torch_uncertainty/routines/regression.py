@@ -37,15 +37,29 @@ class RegressionSingle(pl.LightningModule):
         self.model = model
         self.loss = loss
         self.optimization_procedure = optimization_procedure
-        self.dist_estimation = dist_estimation
 
         # metrics
-        if isinstance(dist_estimation, (float, int)):
-            dist_estimation = int(dist_estimation)
+        if isinstance(dist_estimation, int):
             if dist_estimation <= 0:
-                raise ValueError("")
+                raise ValueError(
+                    "Expected the argument ``dist_estimation`` to be integer "
+                    f" larger than 0, but got {dist_estimation}."
+                )
         else:
-            raise ValueError("")
+            raise TypeError(
+                "Expected the argument ``dist_estimation`` to be integer, but "
+                f"got {type(dist_estimation)}"
+            )
+
+        out_features = list(self.model.parameters())[-1].size(0)
+        if dist_estimation > out_features:
+            raise ValueError(
+                "Expected argument ``dist_estimation`` to be an int lower or "
+                f"equal than the size of the output layer, but got "
+                f"{dist_estimation} and {out_features}."
+            )
+
+        self.dist_estimation = dist_estimation
 
         if dist_estimation == 4:
             reg_metrics = MetricCollection(
@@ -131,8 +145,7 @@ class RegressionSingle(pl.LightningModule):
             vars = beta / (alpha - 1)
             self.val_metrics.gnll.update(means, targets, vars)
 
-            if means.ndim == 1:
-                means = means.unsqueeze(-1)
+            targets = targets.view(means.size())
         elif self.dist_estimation == 2:
             means = logits[..., 0]
             vars = F.softplus(logits[..., 1])
@@ -166,8 +179,7 @@ class RegressionSingle(pl.LightningModule):
             vars = beta / (alpha - 1)
             self.test_metrics.gnll.update(means, targets, vars)
 
-            if means.ndim == 1:
-                means = means.unsqueeze(-1)
+            targets = targets.view(means.size())
         elif self.dist_estimation == 2:
             means = logits[..., 0]
             vars = F.softplus(logits[..., 1])

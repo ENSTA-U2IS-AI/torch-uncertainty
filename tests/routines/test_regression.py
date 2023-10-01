@@ -2,6 +2,7 @@
 from functools import partial
 from pathlib import Path
 
+import pytest
 from cli_test_helpers import ArgvContext
 from torch import nn
 
@@ -82,6 +83,34 @@ class TestRegressionSingle:
             )
 
             cli_main(model, dm, root, "dummy", args)
+
+    def test_regression_failures(self):
+        with pytest.raises(ValueError):
+            DummyRegressionBaseline(
+                in_features=10,
+                out_features=3,
+                loss=nn.GaussianNLLLoss,
+                optimization_procedure=optim_cifar10_resnet18,
+                dist_estimation=4,
+            )
+
+        with pytest.raises(ValueError):
+            DummyRegressionBaseline(
+                in_features=10,
+                out_features=3,
+                loss=nn.GaussianNLLLoss,
+                optimization_procedure=optim_cifar10_resnet18,
+                dist_estimation=-4,
+            )
+
+        with pytest.raises(TypeError):
+            DummyRegressionBaseline(
+                in_features=10,
+                out_features=4,
+                loss=nn.GaussianNLLLoss,
+                optimization_procedure=optim_cifar10_resnet18,
+                dist_estimation=4.2,
+            )
 
 
 class TestRegressionEnsemble:
