@@ -26,7 +26,6 @@ To train a MLP with the NIG loss function using TorchUncertainty, we have to loa
 - the datamodule that handles dataloaders: CubicDataModule, which lies in the torch_uncertainty.datamodules
 """
 
-
 from torch_uncertainty import cli_main, init_args
 from torch_uncertainty.baselines.regression.mlp import mlp
 from torch_uncertainty.datamodules.cubic_regression import CubicDataModule
@@ -41,7 +40,6 @@ from torch_uncertainty.routines.regression import RegressionSingle
 # We also import ArgvContext to avoid using the jupyter arguments as cli
 # arguments, and therefore avoid errors.
 
-
 import os
 from functools import partial
 from pathlib import Path
@@ -50,16 +48,14 @@ import torch
 from cli_test_helpers import ArgvContext
 from torch import nn, optim
 
-
 # %%
 # 2. Creating the Optimizer Wrapper
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # We will use the Adam optimizer with the default learning rate of 0.001.
 
-
 def optim_regression(
     model: nn.Module,
-    learning_rate: float = 5e-3,
+    learning_rate: float = 5e-4,
 ) -> dict:
     optimizer = optim.Adam(
         model.parameters(),
@@ -70,7 +66,6 @@ def optim_regression(
         "optimizer": optimizer,
     }
 
-
 # %%
 # 3. Creating the necessary variables
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -80,28 +75,27 @@ def optim_regression(
 # also use the same synthetic regression task example as that used in the
 # original DER paper.
 
-
 root = Path(os.path.abspath(""))
 
 # We mock the arguments for the trainer
 with ArgvContext(
     "file.py",
     "--max_epochs",
-    "500",
+    "100",
+    "--batch_size",
+    "32",
     "--enable_progress_bar",
     "False",
-    "--batch_size",
-    "128",
 ):
     args = init_args(datamodule=CubicDataModule)
 
 net_name = "der-mlp-cubic"
 
 # datamodule
-datamodule = CubicDataModule(num_samples=5000, **vars(args))
+datamodule = CubicDataModule(num_samples=1000, **vars(args))
 
 # model
-model = mlp(in_features=1, num_outputs=4, hidden_dims=[64, 10])
+model = mlp(in_features=1, num_outputs=4, hidden_dims=[64, 64])
 
 # %%
 # 4. The Loss and the Training Routine
@@ -127,7 +121,6 @@ baseline = RegressionSingle(
     **vars(args),
 )
 
-
 # %%
 # 5. Gathering Everything and Training the Model
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -138,12 +131,11 @@ results = cli_main(baseline, datamodule, root, net_name, args)
 # 6. Testing the Model
 # ~~~~~~~~~~~~~~~~~~~~
 
-
 import matplotlib.pyplot as plt
 from torch.nn import functional as F
 
 with torch.no_grad():
-    x = torch.linspace(-10, 10, 1000).unsqueeze(-1)
+    x = torch.linspace(-7, 7, 1000).unsqueeze(-1)
 
     logits = model(x)
     means, v, alpha, beta = logits.split(1, dim=-1)
