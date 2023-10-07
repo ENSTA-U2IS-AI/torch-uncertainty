@@ -306,8 +306,9 @@ class _ResNet(nn.Module):
                 m.train()
 
     def forward(self, x: Tensor) -> Tensor:
-        if self.num_estimators is not None and not self.training:
-            self.enable_dropout()
+        if self.num_estimators is not None:
+            if not self.training:
+                self.enable_dropout()
             x = x.repeat(self.num_estimators, 1, 1, 1)
 
         out = F.relu(self.bn1(self.conv1(x)))
