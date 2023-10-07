@@ -20,7 +20,7 @@ In this part, we train a neural network, based on the model and routines already
 To train a MLP with the NIG loss function using TorchUncertainty, we have to load the following utilities from TorchUncertainty:
 
 - the cli handler: cli_main and argument parser: init_args
-- the model: bayesian_lenet, which lies in the torch_uncertainty.baselines.regression.mlp module.
+- the model: mlp, which lies in the torch_uncertainty.baselines.regression.mlp module.
 - the regression training routine in the torch_uncertainty.routines.regression module.
 - the evidential objective: the NIGLoss, which lies in the torch_uncertainty.losses file
 - the datamodule that handles dataloaders: CubicDataModule, which lies in the torch_uncertainty.datamodules
