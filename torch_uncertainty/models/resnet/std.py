@@ -198,12 +198,14 @@ class _ResNet(nn.Module):
         groups: int,
         style: str = "imagenet",
         num_estimators: Optional[int] = None,
+        enable_last_layer_dropout: Optional[bool] = False,
     ) -> None:
         super().__init__()
 
         self.in_planes = 64
         block_planes = self.in_planes
         self.num_estimators = num_estimators
+        self.enable_last_layer_dropout = enable_last_layer_dropout
 
         if style == "imagenet":
             self.conv1 = nn.Conv2d(
@@ -301,8 +303,18 @@ class _ResNet(nn.Module):
         return nn.Sequential(*layers)
 
     def enable_dropout(self) -> None:
+        # filter all modules whose class name starts with `Dropout`
+        filtered_modules = []
         for m in self.modules():
             if m.__class__.__name__.startswith("Dropout"):
+                filtered_modules += [m]
+
+        if self.enable_last_layer_dropout:
+            # set only the last filtered module to training mode
+            filtered_modules[-1].train()
+        else:
+            # set all filtered modules to training mode
+            for m in filtered_modules:
                 m.train()
 
     def forward(self, x: Tensor) -> Tensor:
