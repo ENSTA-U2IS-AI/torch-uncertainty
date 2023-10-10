@@ -22,7 +22,7 @@ In this part, we train a ResNet with dropout layers, based on the model and rout
 First, we have to load the following utilities from TorchUncertainty:
 
 - the cli handler: cli_main and argument parser: init_args
-- the model: bayesian_lenet, which lies in the torch_uncertainty.models.resnet module
+- the model: resnet18, which lies in the torch_uncertainty.models.resnet module
 - the classification training routine in the torch_uncertainty.training.classification module
 - the datamodule that handles dataloaders: MNISTDataModule, which lies in the torch_uncertainty.datamodule
 - the optimizer wrapper in the torch_uncertainty.optimization_procedures module.
