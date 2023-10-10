@@ -9,7 +9,7 @@ import torch.nn.functional as F
 from einops import rearrange
 from pytorch_lightning.utilities.memory import get_model_size_mb
 from pytorch_lightning.utilities.types import EPOCH_OUTPUT, STEP_OUTPUT
-from timm.data import Mixup
+from timm.data import Mixup as timm_Mixup
 from torch import nn
 from torchmetrics import Accuracy, CalibrationError, MetricCollection
 from torchmetrics.classification import (
@@ -30,6 +30,7 @@ from ..metrics import (
     NegativeLogLikelihood,
     VariationRatio,
 )
+from ..transforms import Mixup, MixupIO, RegMixup, WarpingMixup
 
 
 # fmt:on
@@ -59,6 +60,11 @@ class ClassificationSingle(pl.LightningModule):
         loss: Type[nn.Module],
         optimization_procedure: Any,
         format_batch_fn: nn.Module = nn.Identity(),
+        mixtype: str = "erm",
+        mixmode: str = "elem",
+        dist_sim: str = "emb",
+        kernel_tau_max: float = 1.0,
+        kernel_tau_std: float = 0.5,
         mixup_alpha: float = 0,
         cutmix_alpha: float = 0,
         ood_detection: bool = False,
@@ -143,12 +149,47 @@ class ClassificationSingle(pl.LightningModule):
                 "Cutmix alpha and Mixup alpha must be positive."
                 f"Got {mixup_alpha} and {cutmix_alpha}."
             )
-        elif mixup_alpha > 0 or cutmix_alpha > 0:
-            self.mixup = Mixup(
-                mixup_alpha=mixup_alpha, cutmix_alpha=cutmix_alpha
-            )
-        else:
+
+        self.mixtype = mixtype
+        self.mixmode = mixmode
+        self.dist_sim = dist_sim
+
+        if self.mixtype == "erm":
             self.mixup = lambda x, y: (x, y)
+        elif self.mixtype == "timm":
+            self.mixup = timm_Mixup(
+                mixup_alpha=mixup_alpha,
+                cutmix_alpha=cutmix_alpha,
+                mode=self.mixmode,
+                num_classes=self.num_classes,
+            )
+        elif self.mixtype == "mixup":
+            self.mixup = Mixup(
+                alpha=mixup_alpha,
+                mode=self.mixmode,
+                num_classes=self.num_classes,
+            )
+        elif self.mixtype == "mixup_io":
+            self.mixup = MixupIO(
+                alpha=mixup_alpha,
+                mode=self.mixmode,
+                num_classes=self.num_classes,
+            )
+        elif self.mixtype == "regmixup":
+            self.mixup = RegMixup(
+                alpha=mixup_alpha,
+                mode=self.mixmode,
+                num_classes=self.num_classes,
+            )
+        elif self.mixtype == "kernel_warping":
+            self.mixup = WarpingMixup(
+                alpha=mixup_alpha,
+                mode=self.mixmode,
+                num_classes=self.num_classes,
+                apply_kernel=True,
+                tau_max=kernel_tau_max,
+                tau_std=kernel_tau_std,
+            )
 
         # Handle ELBO special cases
         self.is_elbo = (
@@ -193,7 +234,17 @@ class ClassificationSingle(pl.LightningModule):
     def training_step(
         self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int
     ) -> STEP_OUTPUT:
-        batch = self.mixup(*batch)
+        if self.mixtype == "kernel_warping":
+            if self.dist_sim == "emb":
+                with torch.no_grad():
+                    feats = self.model.feats_forward(batch[0])
+
+                self.mixup(*batch, feats)
+            elif self.dist_sim == "inp":
+                self.mixup(*batch, batch[0])
+        else:
+            batch = self.mixup(*batch)
+
         inputs, targets = self.format_batch_fn(batch)
 
         if self.is_elbo:
@@ -299,16 +350,31 @@ class ClassificationSingle(pl.LightningModule):
         - ``--logits``: sets :attr:`use_logits` to ``True``.
         """
         parent_parser.add_argument(
-            "--mixup", dest="mixup_alpha", type=float, default=0
+            "--mixup_alpha", dest="mixup_alpha", type=float, default=0
         )
         parent_parser.add_argument(
-            "--cutmix", dest="cutmix_alpha", type=float, default=0
+            "--cutmix_alpha", dest="cutmix_alpha", type=float, default=0
         )
         parent_parser.add_argument(
             "--entropy", dest="use_entropy", action="store_true"
         )
         parent_parser.add_argument(
             "--logits", dest="use_logits", action="store_true"
+        )
+        parent_parser.add_argument(
+            "--mixtype", dest="mixtype", type=str, default="erm"
+        )
+        parent_parser.add_argument(
+            "--mixmode", dest="mixmode", type=str, default="elem"
+        )
+        parent_parser.add_argument(
+            "--dist_sim", dest="dist_sim", type=str, default="emb"
+        )
+        parent_parser.add_argument(
+            "--kernel_tau_max", dest="kernel_tau_max", type=float, default=1.0
+        )
+        parent_parser.add_argument(
+            "--kernel_tau_std", dest="kernel_tau_std", type=float, default=0.5
         )
         return parent_parser
 

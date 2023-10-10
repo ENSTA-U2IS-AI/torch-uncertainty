@@ -29,3 +29,5 @@ augmentations = [
     Color,
     Sharpness,
 ]
+
+from .mixup import Mixup, MixupIO, RegMixup, WarpingMixup
