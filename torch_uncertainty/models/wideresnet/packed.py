@@ -20,13 +20,12 @@ class WideBasicBlock(nn.Module):
         planes: int,
         dropout_rate: float,
         stride: int = 1,
-        alpha: float = 2,
+        alpha: int = 2,
         num_estimators: int = 4,
         gamma: int = 1,
         groups: int = 1,
     ):
         super().__init__()
-        self.bn1 = nn.BatchNorm2d(alpha * in_planes)
         self.conv1 = PackedConv2d(
             in_planes,
             planes,
@@ -39,7 +38,7 @@ class WideBasicBlock(nn.Module):
             bias=False,
         )
         self.dropout = nn.Dropout(p=dropout_rate)
-        self.bn2 = nn.BatchNorm2d(alpha * planes)
+        self.bn1 = nn.BatchNorm2d(alpha * planes)
         self.conv2 = PackedConv2d(
             planes,
             planes,
@@ -67,11 +66,13 @@ class WideBasicBlock(nn.Module):
                     bias=True,
                 ),
             )
+        self.bn2 = nn.BatchNorm2d(alpha * planes)
 
     def forward(self, x):
-        out = self.dropout(self.conv1(F.relu(self.bn1(x))))
-        out = self.conv2(F.relu(self.bn2(out)))
+        out = F.relu(self.bn1(self.dropout(self.conv1(x))))
+        out = self.conv2(out)
         out += self.shortcut(x)
+        out = F.relu(self.bn2(out))
         return out
 
 
@@ -128,6 +129,8 @@ class _PackedWide(nn.Module):
                 first=True,
             )
 
+        self.bn1 = nn.BatchNorm2d(nStages[0] * alpha)
+
         if style == "imagenet":
             self.optional_pool = nn.MaxPool2d(
                 kernel_size=3, stride=2, padding=1
@@ -168,7 +171,6 @@ class _PackedWide(nn.Module):
             gamma=gamma,
             groups=groups,
         )
-        self.bn1 = nn.BatchNorm2d(nStages[3] * alpha, momentum=0.9)
 
         self.pool = nn.AdaptiveAvgPool2d(output_size=1)
         self.flatten = nn.Flatten(1)
@@ -188,7 +190,7 @@ class _PackedWide(nn.Module):
         num_blocks: int,
         dropout_rate: float,
         stride: int,
-        alpha: float,
+        alpha: int,
         num_estimators: int,
         gamma: int,
         groups: int,
@@ -214,19 +216,17 @@ class _PackedWide(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x):
-        out = self.conv1(x)
+        out = F.relu(self.bn1(self.conv1(x)))
         out = self.optional_pool(out)
         out = self.layer1(out)
         out = self.layer2(out)
         out = self.layer3(out)
-        out = F.relu(self.bn1(out))
         out = rearrange(
             out, "e (m c) h w -> (m e) c h w", m=self.num_estimators
         )
         out = self.pool(out)
         out = self.flatten(out)
         out = self.linear(out)
-
         return out
 
 
