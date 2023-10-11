@@ -3,7 +3,7 @@ from typing import Any, Union
 
 from einops import rearrange
 from torch import Tensor, nn
-from torch.nn.common_types import _size_1_t, _size_2_t
+from torch.nn.common_types import _size_1_t, _size_2_t, _size_3_t
 
 
 # fmt: on
@@ -179,7 +179,7 @@ class PackedConv1d(nn.Module):
         groups (int, optional): Number of blocked connexions from input
             channels to output channels for each estimator. Defaults to ``1``.
         minimum_channels_per_group (int, optional): Smallest possible number of
-            hannels per group.
+            channels per group.
         bias (bool, optional): If ``True``, adds a learnable bias to the
             output. Defaults to ``True``.
 
@@ -299,7 +299,7 @@ class PackedConv2d(nn.Module):
         groups (int, optional): Number of blocked connexions from input
             channels to output channels for each estimator. Defaults to ``1``.
         minimum_channels_per_group (int, optional): Smallest possible number of
-            hannels per group.
+            channels per group.
         bias (bool, optional): If ``True``, adds a learnable bias to the
             output. Defaults to ``True``.
 
@@ -403,16 +403,118 @@ class PackedConv2d(nn.Module):
 class PackedConv3d(nn.Module):
     r"""Packed-Ensembles-style Conv3d layer.
 
-    Warning:
-        Not yet implemented (open an issue if desired).
+    Args:
+        in_channels (int): Number of channels in the input image.
+        out_channels (int): Number of channels produced by the convolution.
+        kernel_size (int or tuple): Size of the convolving kernel.
+        alpha (float): The channel multiplier of the convolutional layer.
+        num_estimators (int): Number of estimators in the ensemble.
+        gamma (int, optional): Defaults to ``1``.
+        stride (int or tuple, optional): Stride of the convolution.
+            Defaults to ``1``.
+        padding (int, tuple or str, optional): Padding added to all six sides
+            of the input. Defaults to ``0``.
+        dilation (int or tuple, optional): Spacing between kernel elements.
+            Defaults to ``1``.
+        groups (int, optional): Number of blocked connexions from input
+            channels to output channels for each estimator. Defaults to ``1``.
+        minimum_channels_per_group (int, optional): Smallest possible number of
+            channels per group.
+        bias (bool, optional): If ``True``, adds a learnable bias to the
+            output. Defaults to ``True``.
+
+    Explanation Note:
+        Increasing :attr:`alpha` will increase the number of channels of the
+        ensemble, increasing its representation capacity. Increasing
+        :attr:`gamma` will increase the number of groups in the network and
+        therefore reduce the number of parameters.
+
+    Note:
+        Each ensemble member will only see
+        :math:`\frac{\text{in_channels}}{\text{num_estimators}}` channels,
+        so when using :attr:`groups` you should make sure that
+        :attr:`in_channels` and :attr:`out_channels` are both divisible by
+        :attr:`num_estimators` :math:`\times`:attr:`gamma` :math:`\times`
+        :attr:`groups`. However, the number of input and output channels will
+        be changed to comply with this constraint.
     """
 
-    def __init__(self, **kwargs) -> None:
-        raise NotImplementedError(
-            "Open an issue if you would like this layer to be implemented."
+    def __init__(
+        self,
+        in_channels: int,
+        out_channels: int,
+        kernel_size: _size_3_t,
+        alpha: float,
+        num_estimators: int,
+        gamma: int = 1,
+        stride: _size_3_t = 1,
+        padding: Union[str, _size_3_t] = 0,
+        dilation: _size_3_t = 1,
+        groups: int = 1,
+        minimum_channels_per_group: int = 64,
+        bias: bool = True,
+        padding_mode: str = "zeros",
+        first: bool = False,
+        last: bool = False,
+        device: Union[Any, None] = None,
+        dtype: Union[Any, None] = None,
+    ) -> None:
+        factory_kwargs = {"device": device, "dtype": dtype}
+        super().__init__()
+
+        check_packed_parameters_consistency(alpha, num_estimators, gamma)
+
+        self.num_estimators = num_estimators
+
+        # Define the number of channels of the underlying convolution
+        extended_in_channels = int(in_channels * (1 if first else alpha))
+        extended_out_channels = int(
+            out_channels * (num_estimators if last else alpha)
+        )
+
+        # Define the number of groups of the underlying convolution
+        actual_groups = 1 if first else gamma * groups * num_estimators
+
+        while (
+            extended_in_channels % actual_groups != 0
+            or extended_in_channels // actual_groups
+            < minimum_channels_per_group
+        ) and actual_groups // (groups * num_estimators) > 1:
+            gamma -= 1
+            actual_groups = gamma * groups * num_estimators
+
+        # fix if not divisible by groups
+        if extended_in_channels % actual_groups:
+            extended_in_channels += (
+                num_estimators - extended_in_channels % actual_groups
+            )
+        if extended_out_channels % actual_groups:
+            extended_out_channels += (
+                num_estimators - extended_out_channels % actual_groups
+            )
+
+        self.conv = nn.Conv3d(
+            in_channels=extended_in_channels,
+            out_channels=extended_out_channels,
+            kernel_size=kernel_size,
+            stride=stride,
+            padding=padding,
+            dilation=dilation,
+            groups=actual_groups,
+            bias=bias,
+            padding_mode=padding_mode,
+            **factory_kwargs,
         )
 
     def forward(self, input: Tensor) -> Tensor:
-        raise NotImplementedError(
-            "Open an issue if you would like this layer to be implemented."
-        )
+        return self.conv(input)
+
+    @property
+    def weight(self) -> Tensor:
+        r"""The weight of the underlying convolutional layer."""
+        return self.conv.weight
+
+    @property
+    def bias(self) -> Union[Tensor, None]:
+        r"""The bias of the underlying convolutional layer."""
+        return self.conv.bias

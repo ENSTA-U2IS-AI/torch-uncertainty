@@ -5,6 +5,7 @@ import torch
 from torch_uncertainty.layers.packed import (
     PackedConv1d,
     PackedConv2d,
+    PackedConv3d,
     PackedLinear,
 )
 
@@ -32,6 +33,12 @@ def seq_input() -> torch.Tensor:
 def img_input() -> torch.Tensor:
     img = torch.rand((5, 6, 3, 3))
     return img
+
+
+@pytest.fixture
+def voxels_input() -> torch.Tensor:
+    voxels = torch.rand((5, 6, 3, 3, 3))
+    return voxels
 
 
 class TestPackedLinear:
@@ -192,5 +199,56 @@ class TestPackedConv2d:
     def test_conv_gamma_neg(self):
         with pytest.raises(ValueError):
             _ = PackedConv2d(
+                5, 2, kernel_size=1, alpha=1, num_estimators=1, gamma=-0.5
+            )
+
+
+class TestPackedConv3d:
+    """Testing the PackedConv3d layer class."""
+
+    def test_conv_one_estimator(self, voxels_input: torch.Tensor):
+        layer = PackedConv3d(6, 2, alpha=1, num_estimators=1, kernel_size=1)
+        out = layer(voxels_input)
+        assert out.shape == torch.Size([5, 2, 3, 3, 3])
+
+    def test_conv_two_estimators(self, voxels_input: torch.Tensor):
+        layer = PackedConv3d(6, 2, alpha=1, num_estimators=2, kernel_size=1)
+        out = layer(voxels_input)
+        assert out.shape == torch.Size([5, 2, 3, 3, 3])
+
+    def test_conv_one_estimator_gamma2(self, voxels_input: torch.Tensor):
+        layer = PackedConv3d(
+            6, 2, alpha=1, num_estimators=1, kernel_size=1, gamma=2
+        )
+        out = layer(voxels_input)
+        assert out.shape == torch.Size([5, 2, 3, 3, 3])
+        assert layer.conv.groups == 1  # and not 2
+
+    def test_conv_two_estimators_gamma2(self, voxels_input: torch.Tensor):
+        layer = PackedConv3d(
+            6, 2, alpha=1, num_estimators=2, kernel_size=1, gamma=2
+        )
+        out = layer(voxels_input)
+        assert out.shape == torch.Size([5, 2, 3, 3, 3])
+        assert layer.conv.groups == 2  # and not 4
+
+    def test_conv_extend(self):
+        _ = PackedConv3d(
+            5, 3, kernel_size=1, alpha=1, num_estimators=2, gamma=1
+        )
+
+    def test_conv_alpha_neg(self):
+        with pytest.raises(ValueError):
+            _ = PackedConv3d(5, 2, kernel_size=1, alpha=-1, num_estimators=1)
+
+    def test_conv_gamma_float(self):
+        with pytest.raises(ValueError):
+            _ = PackedConv3d(
+                5, 2, kernel_size=1, alpha=1, num_estimators=1, gamma=0.5
+            )
+
+    def test_conv_gamma_neg(self):
+        with pytest.raises(ValueError):
+            _ = PackedConv3d(
                 5, 2, kernel_size=1, alpha=1, num_estimators=1, gamma=-0.5
             )
