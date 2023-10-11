@@ -7,7 +7,7 @@ from typing import Any, Optional, Tuple, Union
 from pytorch_lightning import LightningDataModule
 from torch.utils.data import DataLoader, Dataset, random_split
 
-from ..datasets.regression.uci_regression import UCIRegression
+from ..datasets.regression import UCIRegression
 
 
 # fmt: on
