@@ -52,4 +52,6 @@ class TestNIGLoss:
         inputs = torch.tensor([[1.0, 1.0, 1.0, 1.0]], dtype=torch.float32)
         targets = torch.tensor([[1.0]], dtype=torch.float32)
 
-        assert loss(*inputs.split(1, dim=-1), targets) == 2 * math.log(2)
+        assert loss(*inputs.split(1, dim=-1), targets) == pytest.approx(
+            2 * math.log(2)
+        )
