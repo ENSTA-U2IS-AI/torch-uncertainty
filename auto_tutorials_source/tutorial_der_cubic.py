@@ -2,8 +2,8 @@
 # coding: utf-8
 
 """
-Deep Evidential Regression Tutorial
-===================================
+Deep Evidential Regression on a Toy Example
+===========================================
 
 This tutorial aims to provide an introductory overview of Deep Evidential Regression (DER) using a practical example. We demonstrate an application of DER by tackling the toy-problem of fitting :math:`y=x^3` using a Multi-Layer Perceptron (MLP) neural network model. The output layer of the MLP has four outputs, and is trained by minimizing the Normal Inverse-Gamma (NIG) loss function.
 
