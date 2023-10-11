@@ -10,7 +10,7 @@ from torch import nn
 from torch.utils.data import DataLoader, Dataset
 from torchvision.datasets import SVHN
 
-from ..datasets import TinyImageNet
+from ..datasets.classification import TinyImageNet
 
 
 # fmt: on

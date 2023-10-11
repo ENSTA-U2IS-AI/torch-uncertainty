@@ -1,5 +1,5 @@
 # fmt: off
-from torch_uncertainty.datasets.imagenet.base import ImageNetVariation
+from .base import ImageNetVariation
 
 
 # fmt:on

@@ -11,7 +11,8 @@ from torch import nn
 from torch.utils.data import DataLoader, Dataset, random_split
 from torchvision.datasets import CIFAR100, SVHN
 
-from ..datasets import CIFAR100C, AggregatedDataset
+from ..datasets import AggregatedDataset
+from ..datasets.classification import CIFAR100C
 from ..transforms import Cutout
 
 

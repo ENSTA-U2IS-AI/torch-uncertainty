@@ -8,6 +8,17 @@ Uncertainty Models
 
 The following uncertainty models are implemented.
 
+Deep Evidential Regression
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For Deep Evidential Regression, consider citing:
+
+**Deep Evidential Regression**
+
+* Authors: *Alexander Amini, Wilko Schwarting, Ava Soleimany, Daniela Rus*
+* Paper: `NeurIPS 2020 <https://arxiv.org/pdf/1910.02600>`__.
+
+
 Bayesian Neural Networks
 ^^^^^^^^^^^^^^^^^^^^^^^^
 

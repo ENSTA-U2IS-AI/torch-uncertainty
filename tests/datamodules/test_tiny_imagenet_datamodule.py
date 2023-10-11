@@ -2,7 +2,7 @@
 from argparse import ArgumentParser
 
 from torch_uncertainty.datamodules import TinyImageNetDataModule
-from torch_uncertainty.datasets import TinyImageNet
+from torch_uncertainty.datasets.classification import TinyImageNet
 
 from .._dummies.dataset import DummyClassificationDataset
 

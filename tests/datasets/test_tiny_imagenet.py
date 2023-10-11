@@ -1,7 +1,7 @@
 # fmt:off
 import pytest
 
-from torch_uncertainty.datasets import TinyImageNet
+from torch_uncertainty.datasets.classification import TinyImageNet
 
 
 # fmt:on
