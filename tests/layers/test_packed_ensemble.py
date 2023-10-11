@@ -2,7 +2,11 @@
 import pytest
 import torch
 
-from torch_uncertainty.layers.packed import PackedConv2d, PackedLinear
+from torch_uncertainty.layers.packed import (
+    PackedConv1d,
+    PackedConv2d,
+    PackedLinear,
+)
 
 
 # fmt:on
@@ -16,6 +20,12 @@ def feat_input() -> torch.Tensor:
 def feat_input_one_rearrange() -> torch.Tensor:
     feat = torch.rand((1 * 3, 5))
     return feat
+
+
+@pytest.fixture
+def seq_input() -> torch.Tensor:
+    seq = torch.rand((5, 6, 3))
+    return seq
 
 
 @pytest.fixture
@@ -81,6 +91,57 @@ class TestPackedLinear:
         with pytest.raises(ValueError):
             _ = PackedLinear(
                 5, 2, alpha=1, num_estimators=1, gamma=-1, rearrange=True
+            )
+
+
+class TestPackedConv1d:
+    """Testing the PackedConv1d layer class."""
+
+    def test_conv_one_estimator(self, seq_input: torch.Tensor):
+        layer = PackedConv1d(6, 2, alpha=1, num_estimators=1, kernel_size=1)
+        out = layer(seq_input)
+        assert out.shape == torch.Size([5, 2, 3])
+
+    def test_conv_two_estimators(self, seq_input: torch.Tensor):
+        layer = PackedConv1d(6, 2, alpha=1, num_estimators=2, kernel_size=1)
+        out = layer(seq_input)
+        assert out.shape == torch.Size([5, 2, 3])
+
+    def test_conv_one_estimator_gamma2(self, seq_input: torch.Tensor):
+        layer = PackedConv1d(
+            6, 2, alpha=1, num_estimators=1, kernel_size=1, gamma=2
+        )
+        out = layer(seq_input)
+        assert out.shape == torch.Size([5, 2, 3])
+        assert layer.conv.groups == 1  # and not 2
+
+    def test_conv_two_estimators_gamma2(self, seq_input: torch.Tensor):
+        layer = PackedConv1d(
+            6, 2, alpha=1, num_estimators=2, kernel_size=1, gamma=2
+        )
+        out = layer(seq_input)
+        assert out.shape == torch.Size([5, 2, 3])
+        assert layer.conv.groups == 2  # and not 4
+
+    def test_conv_extend(self):
+        _ = PackedConv1d(
+            5, 3, kernel_size=1, alpha=1, num_estimators=2, gamma=1
+        )
+
+    def test_conv_alpha_neg(self):
+        with pytest.raises(ValueError):
+            _ = PackedConv1d(5, 2, kernel_size=1, alpha=-1, num_estimators=1)
+
+    def test_conv_gamma_float(self):
+        with pytest.raises(ValueError):
+            _ = PackedConv1d(
+                5, 2, kernel_size=1, alpha=1, num_estimators=1, gamma=0.5
+            )
+
+    def test_conv_gamma_neg(self):
+        with pytest.raises(ValueError):
+            _ = PackedConv1d(
+                5, 2, kernel_size=1, alpha=1, num_estimators=1, gamma=-0.5
             )
 
 
