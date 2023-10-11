@@ -172,8 +172,8 @@ class PackedConv1d(nn.Module):
         gamma (int, optional): Defaults to ``1``.
         stride (int or tuple, optional): Stride of the convolution.
             Defaults to ``1``.
-        padding (int, tuple or str, optional): Padding added to all four sides
-            of the input. Defaults to ``0``.
+        padding (int, tuple or str, optional): Padding added to both sides of
+            the input. Defaults to ``0``.
         dilation (int or tuple, optional): Spacing between kernel elements.
             Defaults to ``1``.
         groups (int, optional): Number of blocked connexions from input
