@@ -46,6 +46,10 @@ best not to reduce the code coverage and document your code.
 
 If you implement a method, please add a reference to the corresponding paper in the ["References" page](https://torch-uncertainty.github.io/references.html).
 
+### Datasets & Datamodules
+
+We intend to include datamodules for the most popular datasets only.
+
 ### Post-processing methods
 
 For now, we intend to follow scikit-learn style API for post-processing
