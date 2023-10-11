@@ -1,4 +1,3 @@
-# fmt: off
 from argparse import ArgumentParser
 from pathlib import Path
 from typing import Any, List, Optional, Union
@@ -7,10 +6,10 @@ import torchvision.transforms as T
 from pytorch_lightning import LightningDataModule
 from timm.data.auto_augment import rand_augment_transform
 from torch import nn
-from torch.utils.data import DataLoader, Dataset
-from torchvision.datasets import SVHN
+from torch.utils.data import ConcatDataset, DataLoader, Dataset
+from torchvision.datasets import DTD, SVHN
 
-from ..datasets.classification import TinyImageNet
+from ..datasets.classification import ImageNetO, TinyImageNet
 
 
 # fmt: on
@@ -24,6 +23,7 @@ class TinyImageNetDataModule(LightningDataModule):
         root: Union[str, Path],
         ood_detection: bool,
         batch_size: int,
+        ood_ds: str = "svhn",
         rand_augment_opt: Optional[str] = None,
         num_workers: int = 1,
         pin_memory: bool = True,
@@ -41,8 +41,16 @@ class TinyImageNetDataModule(LightningDataModule):
         self.num_workers = num_workers
         self.pin_memory = pin_memory
         self.persistent_workers = persistent_workers
+        self.ood_ds = ood_ds
+
         self.dataset = TinyImageNet
-        self.ood_dataset = SVHN
+
+        if ood_ds == "imagenet-o":
+            self.ood_dataset = ImageNetO
+        elif ood_ds == "svhn":
+            self.ood_dataset = SVHN
+        elif ood_ds == "textures":
+            self.ood_dataset = DTD
 
         if rand_augment_opt is not None:
             main_transform = rand_augment_transform(rand_augment_opt, {})
@@ -61,7 +69,8 @@ class TinyImageNetDataModule(LightningDataModule):
 
         self.transform_test = T.Compose(
             [
-                T.Resize(64),
+                T.Resize(72),
+                T.CenterCrop(64),
                 T.ToTensor(),
                 T.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
             ]
@@ -76,7 +85,36 @@ class TinyImageNetDataModule(LightningDataModule):
 
     def prepare_data(self) -> None:  # coverage: ignore
         if self.ood_detection:
-            self.ood_dataset(self.root, split="test", download=True)
+            if self.ood_ds != "textures":
+                self.ood_dataset(
+                    self.root,
+                    split="test",
+                    download=True,
+                    transform=self.transform_test,
+                )
+            else:
+                ConcatDataset(
+                    [
+                        self.ood_dataset(
+                            self.root,
+                            split="train",
+                            download=True,
+                            transform=self.transform_test,
+                        ),
+                        self.ood_dataset(
+                            self.root,
+                            split="val",
+                            download=True,
+                            transform=self.transform_test,
+                        ),
+                        self.ood_dataset(
+                            self.root,
+                            split="test",
+                            download=True,
+                            transform=self.transform_test,
+                        ),
+                    ]
+                )
 
     def setup(self, stage: Optional[str] = None) -> None:
         if stage == "fit" or stage is None:
@@ -98,11 +136,35 @@ class TinyImageNetDataModule(LightningDataModule):
             )
 
         if self.ood_detection:
-            self.ood = self.ood_dataset(
-                self.root,
-                split="test",
-                transform=self.transform_test,
-            )
+            if self.ood_ds == "textures":
+                self.ood = ConcatDataset(
+                    [
+                        self.ood_dataset(
+                            self.root,
+                            split="train",
+                            download=True,
+                            transform=self.transform_test,
+                        ),
+                        self.ood_dataset(
+                            self.root,
+                            split="val",
+                            download=True,
+                            transform=self.transform_test,
+                        ),
+                        self.ood_dataset(
+                            self.root,
+                            split="test",
+                            download=True,
+                            transform=self.transform_test,
+                        ),
+                    ]
+                )
+            else:
+                self.ood = self.ood_dataset(
+                    self.root,
+                    split="test",
+                    transform=self.transform_test,
+                )
 
     def train_dataloader(self) -> DataLoader:
         r"""Get the training dataloader for TinyImageNet.
