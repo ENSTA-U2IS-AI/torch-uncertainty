@@ -1,4 +1,6 @@
 # fmt: off
+import math
+
 import pytest
 import torch
 from torch import nn
@@ -42,6 +44,12 @@ class TestNIGLoss:
         with pytest.raises(ValueError):
             NIGLoss(reg_weight=-1)
 
+        with pytest.raises(ValueError):
+            NIGLoss(reg_weight=1.0, reduction="tttt")
+
         loss = NIGLoss(reg_weight=1e-2)
 
-        loss(*torch.rand((1, 4)).split(1, dim=-1), torch.randn(1, 1))
+        inputs = torch.tensor([[1.0, 1.0, 1.0, 1.0]], dtype=torch.float32)
+        targets = torch.tensor([[1.0]], dtype=torch.float32)
+
+        assert loss(*inputs.split(1, dim=-1), targets) == 2 * math.log(2)
