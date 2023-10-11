@@ -154,7 +154,7 @@ class TestPackedMLPBaseline:
             num_estimators=2,
             alpha=2,
             gamma=1,
-            dist_estimation=False,
+            dist_estimation=1,
         )
         summary(net)
 

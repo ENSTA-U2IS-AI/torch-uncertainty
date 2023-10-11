@@ -1,4 +1,6 @@
 # fmt:off
+from typing import Optional
+
 import torch
 from torch import Tensor, nn
 
@@ -91,3 +93,61 @@ class ELBOLoss(nn.Module):
             aggregated_elbo += self.criterion(logits, targets)
             aggregated_elbo += self.kl_weight * self._kl_div()
         return aggregated_elbo / self.num_samples
+
+
+class NIGLoss(nn.Module):
+    """The Normal Inverse-Gamma loss.
+
+    Args:
+        reg_weight (float): The weight of the regularization term.
+        reduction (str, optional): specifies the reduction to apply to the
+        output:``'none'`` | ``'mean'`` | ``'sum'``.
+
+    Reference:
+        Amini, A., Schwarting, W., Soleimany, A., & Rus, D. (2019). Deep
+        evidential regression. https://arxiv.org/abs/1910.02600.
+    """
+
+    def __init__(
+        self, reg_weight: float, reduction: Optional[str] = "mean"
+    ) -> None:
+        super().__init__()
+
+        if reg_weight < 0:
+            raise ValueError(
+                "The regularization weight should be non-negative, but got "
+                f"{reg_weight}."
+            )
+        self.reg_weight = reg_weight
+        if reduction != "none" and reduction != "mean" and reduction != "sum":
+            raise ValueError(f"{reduction} is not a valid value for reduction.")
+        self.reduction = reduction
+
+    def _nig_nll(self, gamma, v, alpha, beta, targets):
+        Gamma = 2 * beta * (1 + v)
+        nll = (
+            0.5 * torch.log(torch.pi / v)
+            - alpha * Gamma.log()
+            + (alpha + 0.5) * torch.log(Gamma + v * (targets - gamma) ** 2)
+            + torch.lgamma(alpha)
+            - torch.lgamma(alpha + 0.5)
+        )
+        return nll
+
+    def _nig_reg(self, gamma, v, alpha, targets):
+        reg = torch.norm(targets - gamma, 1, dim=1, keepdim=True) * (
+            2 * v + alpha
+        )
+        return reg
+
+    def forward(self, gamma, v, alpha, beta, targets):
+        loss_nll = self._nig_nll(gamma, v, alpha, beta, targets)
+        loss_reg = self._nig_reg(gamma, v, alpha, targets)
+        loss = loss_nll + self.reg_weight * loss_reg
+
+        if self.reduction == "mean":
+            return loss.mean()
+        elif self.reduction == "sum":
+            return loss.sum()
+        else:
+            return loss

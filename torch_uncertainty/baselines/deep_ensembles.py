@@ -75,7 +75,7 @@ class DeepEnsembles:
                 model=de,
                 loss=None,
                 optimization_procedure=None,
-                dist_estimation=True,
+                dist_estimation=2,
                 num_estimators=de.num_estimators,
                 mode="mean",
             )

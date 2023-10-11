@@ -9,7 +9,7 @@ from torch import nn
 from torch.utils.data import DataLoader, Dataset, random_split
 from torchvision.datasets import MNIST, FashionMNIST
 
-from ..datasets import MNISTC, NotMNIST
+from ..datasets.classification import MNISTC, NotMNIST
 from ..transforms import Cutout
 
 

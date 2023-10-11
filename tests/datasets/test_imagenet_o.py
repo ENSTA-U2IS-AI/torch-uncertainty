@@ -1,7 +1,7 @@
 # fmt:off
 import pytest
 
-from torch_uncertainty.datasets import ImageNetO
+from torch_uncertainty.datasets.classification import ImageNetO
 
 
 # fmt:on
