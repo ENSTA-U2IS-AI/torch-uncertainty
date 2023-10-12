@@ -4,7 +4,7 @@
 Train a ResNet with Monte-Carlo Dropout
 =======================================
 
-In this tutorial, we'll train a ResNet classifier on the MNIST dataset using Monte-Carlo Dropout (MCD), a computationally efficient Bayesian approximation method. To estimate the predictive mean and uncertainty (variance), we perform multiple forward passes through the network with dropout layers enabled in 'train' mode.
+In this tutorial, we'll train a ResNet classifier on the MNIST dataset using Monte-Carlo Dropout (MC Dropout), a computationally efficient Bayesian approximation method. To estimate the predictive mean and uncertainty (variance), we perform multiple forward passes through the network with dropout layers enabled in ``train`` mode.
 
 For more information on Monte-Carlo Dropout, we refer the reader to the following resources:
 
@@ -57,6 +57,9 @@ from cli_test_helpers import ArgvContext
 # Trainer. We also create the datamodule that handles the MNIST dataset,
 # dataloaders and transforms. Finally, we create the model using the
 # blueprint from torch_uncertainty.models.
+# 
+# It is important to specify the arguments ``version`` as ``mc-dropout``,
+# ``num_estimators`` and the ``dropout_rate`` to use Monte Carlo dropout.
 
 root = Path(os.path.abspath(""))
 
@@ -65,8 +68,8 @@ with ArgvContext(
     "file.py",
     "--max_epochs",
     "1",
-    # "--enable_progress_bar",
-    # "False",
+    "--enable_progress_bar",
+    "False",
     "--version",
     "mc-dropout",
     "--dropout_rate",
@@ -76,7 +79,7 @@ with ArgvContext(
 ):
     args = init_args(network=ResNet, datamodule=MNISTDataModule)
 
-net_name = "mc-dropout-resnet-mnist"
+net_name = "mc-dropout-resnet18-mnist"
 
 # datamodule
 args.root = str(root / "data")
@@ -93,7 +96,7 @@ model = resnet18(
 # %%
 # 3. The Loss and the Training Routine
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# This is a classification model, and we use CrossEntropyLoss as the likelihood.
+# This is a classification problem, and we use CrossEntropyLoss as the likelihood.
 # We define the training routine using the classification training routine from
 # torch_uncertainty.training.classification. We provide the number of classes
 # and channels, the optimizer wrapper, the dropout rate, and the number of
