@@ -11,6 +11,7 @@ from pytorch_lightning.utilities.memory import get_model_size_mb
 from pytorch_lightning.utilities.types import EPOCH_OUTPUT, STEP_OUTPUT
 from timm.data import Mixup as timm_Mixup
 from torch import nn
+from torch.utils.data import Dataset
 from torchmetrics import Accuracy, CalibrationError, MetricCollection
 from torchmetrics.classification import (
     BinaryAccuracy,
@@ -30,6 +31,7 @@ from ..metrics import (
     NegativeLogLikelihood,
     VariationRatio,
 )
+from ..post_processing import TemperatureScaler
 from ..transforms import Mixup, MixupIO, RegMixup, WarpingMixup
 
 
@@ -70,6 +72,7 @@ class ClassificationSingle(pl.LightningModule):
         ood_detection: bool = False,
         use_entropy: bool = False,
         use_logits: bool = False,
+        calibration_set: Dataset | None = None,
         **kwargs,
     ) -> None:
         super().__init__()
@@ -90,6 +93,8 @@ class ClassificationSingle(pl.LightningModule):
         self.ood_detection = ood_detection
         self.use_logits = use_logits
         self.use_entropy = use_entropy
+
+        self.calibration_set = calibration_set
 
         self.binary_cls = num_classes == 1
 
@@ -129,6 +134,9 @@ class ClassificationSingle(pl.LightningModule):
 
         self.val_cls_metrics = cls_metrics.clone(prefix="hp/val_")
         self.test_cls_metrics = cls_metrics.clone(prefix="hp/test_")
+
+        if self.calibration_set is not None:
+            self.ts_cls_metrics = cls_metrics.clone(prefix="hp/ts_")
 
         self.test_entropy_id = Entropy()
 
@@ -228,6 +236,9 @@ class ClassificationSingle(pl.LightningModule):
                     "hp/test_aupr": 0,
                     "hp/test_auroc": 0,
                     "hp/test_fpr95": 0,
+                    "hp/ts_test_nll": 0,
+                    "hp/ts_test_ece": 0,
+                    "hp/ts_test_brier": 0,
                 },
             )
 
@@ -237,11 +248,11 @@ class ClassificationSingle(pl.LightningModule):
         if self.mixtype == "kernel_warping":
             if self.dist_sim == "emb":
                 with torch.no_grad():
-                    feats = self.model.feats_forward(batch[0])
+                    feats = self.model.feats_forward(batch[0]).detach()
 
-                self.mixup(*batch, feats)
+                batch = self.mixup(*batch, feats)
             elif self.dist_sim == "inp":
-                self.mixup(*batch, batch[0])
+                batch = self.mixup(*batch, batch[0])
         else:
             batch = self.mixup(*batch)
 
@@ -301,6 +312,15 @@ class ClassificationSingle(pl.LightningModule):
         else:
             ood_values = -confs
 
+        if (
+            self.calibration_set is not None
+            and self.scaler is not None
+            and self.cal_model is not None
+        ):
+            cal_logits = self.cal_model(inputs)
+            cal_probs = F.softmax(cal_logits, dim=-1)
+            self.ts_cls_metrics.update(cal_probs, targets)
+
         if dataloader_idx == 0:
             self.test_cls_metrics.update(probs, targets)
             self.test_entropy_id(probs)
@@ -332,11 +352,30 @@ class ClassificationSingle(pl.LightningModule):
         )
         self.test_cls_metrics.reset()
 
+        if (
+            self.calibration_set is not None
+            and self.scaler is not None
+            and self.cal_model is not None
+        ):
+            self.log_dict(self.ts_cls_metrics.compute())
+            self.ts_cls_metrics.reset()
+
         if self.ood_detection:
             self.log_dict(
                 self.test_ood_metrics.compute(),
             )
             self.test_ood_metrics.reset()
+
+    def on_test_start(self) -> None:
+        if self.calibration_set is not None:
+            with torch.enable_grad():
+                self.scaler = TemperatureScaler(device=self.device).fit(
+                    model=self.model, calibration_set=self.calibration_set()
+                )
+            self.cal_model = torch.nn.Sequential(self.model, self.scaler)
+        else:
+            self.scaler = None
+            self.cal_model = None
 
     @staticmethod
     def add_model_specific_args(
@@ -376,6 +415,7 @@ class ClassificationSingle(pl.LightningModule):
         parent_parser.add_argument(
             "--kernel_tau_std", dest="kernel_tau_std", type=float, default=0.5
         )
+
         return parent_parser
 
 

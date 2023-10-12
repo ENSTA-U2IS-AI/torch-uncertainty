@@ -22,6 +22,13 @@ if __name__ == "__main__":
     args.root = str(root / "data")
     dm = CIFAR10DataModule(**vars(args))
 
+    if args.opt_temp_scaling:
+        args.calibration_set = dm.get_test_set
+    elif args.val_temp_scaling:
+        args.calibration_set = dm.get_val_set
+    else:
+        args.calibration_set = None
+
     # model
     model = ResNet(
         num_classes=dm.num_classes,
@@ -34,4 +41,4 @@ if __name__ == "__main__":
         **vars(args),
     )
 
-    cli_main(model, dm, root, net_name, args)
+    cli_main(model, dm, args.exp_dir, net_name, args)

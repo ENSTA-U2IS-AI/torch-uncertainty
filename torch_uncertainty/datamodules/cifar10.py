@@ -244,6 +244,12 @@ class CIFAR10DataModule(LightningDataModule):
             persistent_workers=self.persistent_workers,
         )
 
+    def get_test_set(self) -> Dataset:
+        return self.test
+
+    def get_val_set(self) -> Dataset:
+        return self.val
+
     @classmethod
     def add_argparse_args(
         cls,

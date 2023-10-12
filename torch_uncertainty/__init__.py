@@ -52,7 +52,18 @@ def init_args(
         action="store_true",
         help="Allow resuming the training (save optimizer's states)",
     )
-
+    parser.add_argument(
+        "--exp_dir",
+        type=str,
+        default="logs/",
+        help="Directory to store experiment files",
+    )
+    parser.add_argument(
+        "--opt_temp_scaling", action="store_true", default=False
+    )
+    parser.add_argument(
+        "--val_temp_scaling", action="store_true", default=False
+    )
     parser = pl.Trainer.add_argparse_args(parser)
     if network is not None:
         parser = network.add_model_specific_args(parser)
@@ -98,7 +109,7 @@ def cli_main(
 
     # logger
     tb_logger = TensorBoardLogger(
-        str(root / "logs"),
+        str(root),
         name=net_name,
         default_hp_metric=False,
         log_graph=args.log_graph,
@@ -125,6 +136,7 @@ def cli_main(
         callbacks=callbacks,
         logger=tb_logger,
         deterministic=(args.seed is not None),
+        inference_mode=args.opt_temp_scaling or args.val_temp_scaling,
     )
 
     if args.summary:
@@ -133,7 +145,7 @@ def cli_main(
     elif args.test is not None:
         if args.test >= 0:
             ckpt_file, _ = get_version(
-                root=(root / "logs" / net_name), version=args.test
+                root=(root / net_name), version=args.test
             )
             test_values = trainer.test(
                 network, datamodule=datamodule, ckpt_path=str(ckpt_file)

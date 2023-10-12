@@ -64,12 +64,13 @@ class TemperatureScaler(Scaler):
         Returns:
             torch.Tensor: Scaled logits.
         """
-        temperature = (
-            self.temperature[0]
-            .unsqueeze(1)
-            .expand(logits.size(0), logits.size(1))
-        )
-        return logits / temperature
+        with torch.enable_grad():
+            temperature = (
+                self.temperature[0]
+                .unsqueeze(1)
+                .expand(logits.size(0), logits.size(1))
+            )
+            return logits / temperature
 
     @property
     def temperature(self) -> list:
