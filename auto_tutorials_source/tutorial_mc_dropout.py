@@ -109,6 +109,7 @@ baseline = ClassificationEnsemble(
     model=model,
     loss=nn.CrossEntropyLoss,
     optimization_procedure=optim_cifar10_resnet18,
+    format_batch_fn=format_batch_fn,
     **vars(args),
 )
 
