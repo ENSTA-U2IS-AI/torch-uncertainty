@@ -6,6 +6,32 @@ from torch import nn
 from ..layers.bayesian import bayesian_modules
 
 
+def enable_dropout(model: nn.Module, enable_last_layer_dropout: bool = False):
+    """Function to enable or disable dropout layers during inference-time.
+
+    Args:
+        model (nn.Module, required): PyTorch model.
+        enable_last_layer_dropout (bool, optional): If set to True, only the
+            last dropout layer will be in `eval` mode, otherwise, if set to
+            False, all dropout layers in the model will be set
+            to `eval` mode.
+    """
+
+    # filter all modules whose class name starts with `Dropout`
+    filtered_modules = []
+    for m in model.modules():
+        if m.__class__.__name__.startswith("Dropout"):
+            filtered_modules += [m]
+
+    if enable_last_layer_dropout:
+        # set only the last filtered module to training mode
+        filtered_modules[-1].train()
+    else:
+        # set all filtered modules to training mode
+        for m in filtered_modules:
+            m.train()
+
+
 # fmt: on
 def StochasticModel(model: nn.Module) -> nn.Module:
     """Decorator for stochastic models. When applied to a model, it adds the

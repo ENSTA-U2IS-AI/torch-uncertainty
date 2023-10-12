@@ -4,6 +4,8 @@ from typing import List, Optional, Type, Union
 import torch.nn.functional as F
 from torch import Tensor, nn
 
+from ..utils import enable_dropout
+
 # fmt: on
 __all__ = [
     "resnet18",
@@ -302,25 +304,10 @@ class _ResNet(nn.Module):
             self.in_planes = planes * block.expansion
         return nn.Sequential(*layers)
 
-    def enable_dropout(self) -> None:
-        # filter all modules whose class name starts with `Dropout`
-        filtered_modules = []
-        for m in self.modules():
-            if m.__class__.__name__.startswith("Dropout"):
-                filtered_modules += [m]
-
-        if self.enable_last_layer_dropout:
-            # set only the last filtered module to training mode
-            filtered_modules[-1].train()
-        else:
-            # set all filtered modules to training mode
-            for m in filtered_modules:
-                m.train()
-
     def forward(self, x: Tensor) -> Tensor:
         if self.num_estimators is not None:
             if not self.training:
-                self.enable_dropout()
+                enable_dropout(self, self.enable_last_layer_dropout)
             x = x.repeat(self.num_estimators, 1, 1, 1)
 
         out = F.relu(self.bn1(self.conv1(x)))
