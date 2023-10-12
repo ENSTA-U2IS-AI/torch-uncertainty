@@ -21,7 +21,7 @@ class RegressionSingle(pl.LightningModule):
         model: nn.Module,
         loss: nn.Module,
         optimization_procedure: Any,
-        dist_estimation: bool,
+        dist_estimation: int,
         **kwargs,
     ) -> None:
         super().__init__()
@@ -37,10 +37,39 @@ class RegressionSingle(pl.LightningModule):
         self.model = model
         self.loss = loss
         self.optimization_procedure = optimization_procedure
-        self.dist_estimation = dist_estimation
 
         # metrics
-        if dist_estimation:
+        if isinstance(dist_estimation, int):
+            if dist_estimation <= 0:
+                raise ValueError(
+                    "Expected the argument ``dist_estimation`` to be integer "
+                    f" larger than 0, but got {dist_estimation}."
+                )
+        else:
+            raise TypeError(
+                "Expected the argument ``dist_estimation`` to be integer, but "
+                f"got {type(dist_estimation)}"
+            )
+
+        out_features = list(self.model.parameters())[-1].size(0)
+        if dist_estimation > out_features:
+            raise ValueError(
+                "Expected argument ``dist_estimation`` to be an int lower or "
+                f"equal than the size of the output layer, but got "
+                f"{dist_estimation} and {out_features}."
+            )
+
+        self.dist_estimation = dist_estimation
+
+        if dist_estimation == 4:
+            reg_metrics = MetricCollection(
+                {
+                    "mse": MeanSquaredError(squared=False),
+                    "gnll": GaussianNegativeLogLikelihood(),
+                },
+                compute_groups=False,
+            )
+        elif dist_estimation == 2:
             reg_metrics = MetricCollection(
                 {
                     "mse": MeanSquaredError(squared=False),
@@ -88,7 +117,13 @@ class RegressionSingle(pl.LightningModule):
         inputs, targets = batch
         logits = self.forward(inputs)
 
-        if self.dist_estimation:
+        if self.dist_estimation == 4:
+            means, v, alpha, beta = logits.split(1, dim=-1)
+            v = F.softplus(v)
+            alpha = 1 + F.softplus(alpha)
+            beta = F.softplus(beta)
+            loss = self.criterion(means, v, alpha, beta, targets)
+        elif self.dist_estimation == 2:
             means = logits[..., 0]
             vars = F.softplus(logits[..., 1])
             loss = self.criterion(means, targets, vars)
@@ -103,7 +138,15 @@ class RegressionSingle(pl.LightningModule):
     ) -> None:
         inputs, targets = batch
         logits = self.forward(inputs)
-        if self.dist_estimation:
+        if self.dist_estimation == 4:
+            means = logits[..., 0]
+            alpha = 1 + F.softplus(logits[..., 2])
+            beta = F.softplus(logits[..., 3])
+            vars = beta / (alpha - 1)
+            self.val_metrics.gnll.update(means, targets, vars)
+
+            targets = targets.view(means.size())
+        elif self.dist_estimation == 2:
             means = logits[..., 0]
             vars = F.softplus(logits[..., 1])
             self.val_metrics.gnll.update(means, targets, vars)
@@ -128,7 +171,16 @@ class RegressionSingle(pl.LightningModule):
     ) -> None:
         inputs, targets = batch
         logits = self.forward(inputs)
-        if self.dist_estimation:
+
+        if self.dist_estimation == 4:
+            means = logits[..., 0]
+            alpha = 1 + F.softplus(logits[..., 2])
+            beta = F.softplus(logits[..., 3])
+            vars = beta / (alpha - 1)
+            self.test_metrics.gnll.update(means, targets, vars)
+
+            targets = targets.view(means.size())
+        elif self.dist_estimation == 2:
             means = logits[..., 0]
             vars = F.softplus(logits[..., 1])
             self.test_metrics.gnll.update(means, targets, vars)
@@ -161,7 +213,7 @@ class RegressionEnsemble(RegressionSingle):
         model: nn.Module,
         loss: nn.Module,
         optimization_procedure: Any,
-        dist_estimation: bool,
+        dist_estimation: int,
         num_estimators: int,
         mode: Literal["mean", "mixture"],
         out_features: Optional[int] = 1,
@@ -215,7 +267,7 @@ class RegressionEnsemble(RegressionSingle):
         if self.mode == "mean":
             logits = logits.mean(dim=1)
 
-        if self.dist_estimation:
+        if self.dist_estimation == 2:
             means = logits[..., 0]
             vars = F.softplus(logits[..., 1])
             self.val_metrics.gnll.update(means, targets, vars)
@@ -254,7 +306,7 @@ class RegressionEnsemble(RegressionSingle):
         if self.mode == "mean":
             logits = logits.mean(dim=1)
 
-        if self.dist_estimation:
+        if self.dist_estimation == 2:
             means = logits[..., 0]
             vars = F.softplus(logits[..., 1])
             self.test_metrics.gnll.update(means, targets, vars)

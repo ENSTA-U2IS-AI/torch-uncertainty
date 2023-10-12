@@ -23,9 +23,9 @@ packages = [{ include = "torch_uncertainty" }]
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.12"
+torch = "=2.0.0"
 timm = ">=0.6.12"
 pytorch-lightning = "^1.9.0"
-torch = ">=2.0.0, !=2.0.1"
 tensorboard = ">=2.11.2"
 einops = ">=0.6.0"
 torchinfo = ">=1.7.1"
