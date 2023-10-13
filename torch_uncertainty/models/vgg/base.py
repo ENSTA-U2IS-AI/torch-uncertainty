@@ -6,6 +6,7 @@ from einops import rearrange
 from torch import nn
 
 from ...layers.packed import PackedConv2d, PackedLinear
+from ..utils import enable_dropout
 
 
 # fmt: on
@@ -30,6 +31,14 @@ class VGG(nn.Module):
         self.conv2d_layer = conv2d_layer
         self.norm = norm
         self.groups = groups
+
+        if self.conv2d_layer == PackedConv2d:
+            self.num_estimators = model_kwargs.get("num_estimators")
+        else:
+            self.num_estimators = model_kwargs.pop("num_estimators")
+        self.enable_last_layer_dropout = model_kwargs.pop(
+            "enable_last_layer_dropout", False
+        )
         self.model_kwargs = model_kwargs
 
         self.features = self._make_layers(vgg_cfg)
@@ -62,7 +71,17 @@ class VGG(nn.Module):
         self._init_weights()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        if (
+            self.num_estimators is not None
+            and self.linear_layer != PackedLinear
+        ):
+            if not self.training:
+                if self.enable_last_layer_dropout is not None:
+                    enable_dropout(self, self.enable_last_layer_dropout)
+            x = x.repeat(self.num_estimators, 1, 1, 1)
+
         x = self.features(x)
+
         if self.linear_layer == PackedLinear:
             x = rearrange(
                 x,

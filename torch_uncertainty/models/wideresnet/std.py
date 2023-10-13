@@ -4,6 +4,8 @@ from typing import Type
 import torch.nn.functional as F
 from torch import nn
 
+from ..utils import enable_dropout
+
 # fmt: on
 __all__ = [
     "wideresnet28x10",
@@ -70,9 +72,13 @@ class _Wide(nn.Module):
         dropout_rate: float,
         groups: int = 1,
         style: str = "imagenet",
+        num_estimators: int = None,
+        enable_last_layer_dropout: bool = False,
     ):
         super().__init__()
         self.in_planes = 16
+        self.num_estimators = num_estimators
+        self.enable_last_layer_dropout = enable_last_layer_dropout
 
         assert (depth - 4) % 6 == 0, "Wide-resnet depth should be 6n+4."
         num_blocks = int((depth - 4) / 6)
@@ -169,6 +175,12 @@ class _Wide(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x):
+        if self.num_estimators is not None:
+            if not self.training:
+                if self.enable_last_layer_dropout is not None:
+                    enable_dropout(self, self.enable_last_layer_dropout)
+            x = x.repeat(self.num_estimators, 1, 1, 1)
+
         out = self.conv1(x)
         out = self.optional_pool(out)
         out = self.layer1(out)
@@ -186,7 +198,10 @@ def wideresnet28x10(
     in_channels: int,
     num_classes: int,
     groups: int = 1,
+    dropout_rate: float = 0.0,
     style: str = "imagenet",
+    num_estimators: int = None,
+    enable_last_layer_dropout: bool = False,
 ) -> nn.Module:
     """Wide-ResNet-28x10 from `Wide Residual Networks
     <https://arxiv.org/pdf/1605.07146.pdf>`_.
@@ -206,8 +221,10 @@ def wideresnet28x10(
         depth=28,
         widen_factor=10,
         in_channels=in_channels,
-        dropout_rate=0.3,
+        dropout_rate=dropout_rate,
         num_classes=num_classes,
         groups=groups,
         style=style,
+        num_estimators=num_estimators,
+        enable_last_layer_dropout=enable_last_layer_dropout,
     )

@@ -8,6 +8,22 @@ class TestStdVGG:
     def test_main(self):
         vgg13(1, 10, style="cifar")
 
+    def test_mc_dropout(self):
+        vgg13(
+            in_channels=1,
+            num_classes=10,
+            style="cifar",
+            num_estimators=3,
+            enable_last_layer_dropout=True,
+        )
+        vgg13(
+            in_channels=1,
+            num_classes=10,
+            style="cifar",
+            num_estimators=3,
+            enable_last_layer_dropout=False,
+        )
+
 
 class TestPackedVGG:
     """Testing the VGG packed class."""

@@ -17,6 +17,8 @@ def vgg11(
     groups: int = 1,
     dropout: float = 0.5,
     style: str = "imagenet",
+    num_estimators: int = None,
+    enable_last_layer_dropout: bool = False,
 ) -> VGG:
     return _vgg(
         cfgs["A"],
@@ -26,6 +28,8 @@ def vgg11(
         groups=groups,
         dropout=dropout,
         style=style,
+        num_estimators=num_estimators,
+        enable_last_layer_dropout=enable_last_layer_dropout,
     )
 
 
@@ -36,6 +40,8 @@ def vgg13(
     groups: int = 1,
     dropout: float = 0.5,
     style: str = "imagenet",
+    num_estimators: int = None,
+    enable_last_layer_dropout: bool = False,
 ) -> VGG:
     return _vgg(
         cfgs["B"],
@@ -45,6 +51,8 @@ def vgg13(
         groups=groups,
         dropout=dropout,
         style=style,
+        num_estimators=num_estimators,
+        enable_last_layer_dropout=enable_last_layer_dropout,
     )
 
 
@@ -55,6 +63,8 @@ def vgg16(
     groups: int = 1,
     dropout: float = 0.5,
     style: str = "imagenet",
+    num_estimators: int = None,
+    enable_last_layer_dropout: bool = False,
 ) -> VGG:
     return _vgg(
         cfgs["D"],
@@ -64,6 +74,8 @@ def vgg16(
         groups=groups,
         dropout=dropout,
         style=style,
+        num_estimators=num_estimators,
+        enable_last_layer_dropout=enable_last_layer_dropout,
     )
 
 
@@ -74,6 +86,8 @@ def vgg19(
     groups: int = 1,
     dropout: float = 0.5,
     style: str = "imagenet",
+    num_estimators: int = None,
+    enable_last_layer_dropout: bool = False,
 ) -> VGG:  # coverage: ignore
     return _vgg(
         cfgs["E"],
@@ -83,4 +97,6 @@ def vgg19(
         groups=groups,
         dropout=dropout,
         style=style,
+        num_estimators=num_estimators,
+        enable_last_layer_dropout=enable_last_layer_dropout,
     )

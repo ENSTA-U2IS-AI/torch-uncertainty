@@ -30,6 +30,7 @@ class _MIMOWide(_Wide):
             dropout_rate=dropout_rate,
             groups=groups,
             style=style,
+            num_estimators=num_estimators,
         )
 
         self.num_estimators = num_estimators
@@ -50,6 +51,7 @@ def mimo_wideresnet28x10(
     num_estimators: int,
     groups: int = 1,
     style: str = "imagenet",
+    **model_kwargs,
 ) -> _MIMOWide:
     return _MIMOWide(
         depth=28,
@@ -60,4 +62,5 @@ def mimo_wideresnet28x10(
         dropout_rate=0.3,
         groups=groups,
         style=style,
+        **model_kwargs,
     )

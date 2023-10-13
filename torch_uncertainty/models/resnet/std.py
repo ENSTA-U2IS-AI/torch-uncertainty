@@ -1,5 +1,5 @@
 # fmt: off
-from typing import List, Optional, Type, Union
+from typing import List, Type, Union
 
 import torch.nn.functional as F
 from torch import Tensor, nn
@@ -199,8 +199,8 @@ class _ResNet(nn.Module):
         dropout_rate: float,
         groups: int,
         style: str = "imagenet",
-        num_estimators: Optional[int] = None,
-        enable_last_layer_dropout: Optional[bool] = False,
+        num_estimators: int = None,
+        enable_last_layer_dropout: bool = False,
     ) -> None:
         super().__init__()
 
@@ -307,7 +307,8 @@ class _ResNet(nn.Module):
     def forward(self, x: Tensor) -> Tensor:
         if self.num_estimators is not None:
             if not self.training:
-                enable_dropout(self, self.enable_last_layer_dropout)
+                if self.enable_last_layer_dropout is not None:
+                    enable_dropout(self, self.enable_last_layer_dropout)
             x = x.repeat(self.num_estimators, 1, 1, 1)
 
         out = F.relu(self.bn1(self.conv1(x)))
@@ -328,7 +329,8 @@ def resnet18(
     dropout_rate: float = 0,
     groups: int = 1,
     style: str = "imagenet",
-    num_estimators: Optional[int] = None,
+    num_estimators: int = None,
+    enable_last_layer_dropout: bool = False,
 ) -> _ResNet:
     """ResNet-18 from `Deep Residual Learning for Image Recognition
     <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -353,6 +355,7 @@ def resnet18(
         groups=groups,
         style=style,
         num_estimators=num_estimators,
+        enable_last_layer_dropout=enable_last_layer_dropout,
     )
 
 
@@ -362,7 +365,8 @@ def resnet34(
     dropout_rate: float = 0,
     groups: int = 1,
     style: str = "imagenet",
-    num_estimators: Optional[int] = None,
+    num_estimators: int = None,
+    enable_last_layer_dropout: bool = False,
 ) -> _ResNet:
     """ResNet-34 from `Deep Residual Learning for Image Recognition
     <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -387,6 +391,7 @@ def resnet34(
         groups=groups,
         style=style,
         num_estimators=num_estimators,
+        enable_last_layer_dropout=enable_last_layer_dropout,
     )
 
 
@@ -396,7 +401,8 @@ def resnet50(
     dropout_rate: float = 0,
     groups: int = 1,
     style: str = "imagenet",
-    num_estimators: Optional[int] = None,
+    num_estimators: int = None,
+    enable_last_layer_dropout: bool = False,
 ) -> _ResNet:
     """ResNet-50 from `Deep Residual Learning for Image Recognition
     <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -421,6 +427,7 @@ def resnet50(
         groups=groups,
         style=style,
         num_estimators=num_estimators,
+        enable_last_layer_dropout=enable_last_layer_dropout,
     )
 
 
@@ -430,7 +437,8 @@ def resnet101(
     dropout_rate: float = 0,
     groups: int = 1,
     style: str = "imagenet",
-    num_estimators: Optional[int] = None,
+    num_estimators: int = None,
+    enable_last_layer_dropout: bool = False,
 ) -> _ResNet:
     """ResNet-101 from `Deep Residual Learning for Image Recognition
     <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -455,6 +463,7 @@ def resnet101(
         groups=groups,
         style=style,
         num_estimators=num_estimators,
+        enable_last_layer_dropout=enable_last_layer_dropout,
     )
 
 
@@ -464,7 +473,8 @@ def resnet152(
     dropout_rate: float = 0,
     groups: int = 1,
     style: str = "imagenet",
-    num_estimators: Optional[int] = None,
+    num_estimators: int = None,
+    enable_last_layer_dropout: bool = False,
 ) -> _ResNet:
     """ResNet-152 from `Deep Residual Learning for Image Recognition
     <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -490,4 +500,5 @@ def resnet152(
         groups=groups,
         style=style,
         num_estimators=num_estimators,
+        enable_last_layer_dropout=enable_last_layer_dropout,
     )
