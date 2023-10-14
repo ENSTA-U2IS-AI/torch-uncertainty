@@ -2,7 +2,6 @@
 from typing import List, Tuple
 
 import matplotlib.pyplot as plt
-import seaborn as sns
 import torch
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
@@ -91,13 +90,14 @@ class CalibrationPlot:
         )
         val = torch.nn.functional.one_hot(val.long(), num_classes=10)
 
+        # add 1e-6 to avoid division NaNs
         self.values = (
             val.T.float()
             @ torch.sum(
                 acc.unsqueeze(1) * torch.nn.functional.one_hot(inverse).float(),
                 0,
             )
-            / (val.T @ counts).float()
+            / (val.T @ counts + 1e-6).float()
         )
 
     def plot(self) -> Tuple[Figure, Axes]:
@@ -108,15 +108,19 @@ class CalibrationPlot:
         """
         plt.rc("axes", axisbelow=True)
         fig, ax = plt.subplots(1, figsize=self.figsize)
-        sns.histplot(
+        ax.hist(
             x=[self.bin_width * i for i in range(self.num_bins)],
             weights=self.values,
             bins=[self.bin_width * i for i in range(self.num_bins + 1)],
+            alpha=0.7,
+            linewidth=1,
+            edgecolor="#0d559f",
+            color="#1f77b4",
         )
-        plt.plot([0, 1], [0, 1], "--", color="black")
+        ax.plot([0, 1], [0, 1], "--", color="black")
         plt.grid(True, linestyle="--", alpha=0.7, zorder=0)
         ax.set_xlabel("Top-class Confidence", fontsize=16)
-        ax.set_ylabel("Actual Success-rate", fontsize=16)
+        ax.set_ylabel("Success Rate", fontsize=16)
         ax.set_xlim(0, 1)
         ax.set_ylim(0, 1)
         ax.set_aspect("equal", "box")
@@ -158,14 +162,22 @@ def plot_hist(
     Returns:
         Tuple[Figure, Axes]: The figure and axes of the plot.
     """
-    fig, ax = plt.subplots(1, dpi=dpi)
-    ax.hist(
-        conf,
-        bins=bins,
-        density=True,
-        label=["In-distribution", "Out-of-Distribution"],
-    )
+    plt.rc("axes", axisbelow=True)
+    fig, ax = plt.subplots(1, figsize=(7, 5), dpi=dpi)
+    for i in [1, 0]:
+        ax.hist(
+            conf[i],
+            bins=bins,
+            density=True,
+            label=["In-distribution", "Out-of-Distribution"][i],
+            alpha=0.4,
+            linewidth=1,
+            edgecolor=["#0d559f", "#d45f00"][i],
+            color=["#1f77b4", "#ff7f0e"][i],
+        )
+
     ax.set_title(title)
+    plt.grid(True, linestyle="--", alpha=0.7, zorder=0)
     plt.legend()
     fig.tight_layout()
     return fig, ax

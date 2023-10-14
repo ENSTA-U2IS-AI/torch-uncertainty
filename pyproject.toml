@@ -32,7 +32,6 @@ torchinfo = ">=1.7.1"
 scipy = "^1.10.0"
 huggingface-hub = "^0.14.1"
 pandas = "^2.0.3"
-seaborn = "^0.13.0"
 
 [tool.poetry.group.dev]
 optional = true
