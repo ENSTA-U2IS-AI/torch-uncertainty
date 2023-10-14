@@ -68,8 +68,15 @@ class CalibrationPlot:
             preds (torch.Tensor): The prediction likelihoods (<1).
             targets (torch.Tensor): The targets.
         """
-        self.conf.append(preds.max(-1).values.cpu())
-        self.acc.append((preds.argmax(-1) == targets).cpu())
+        if preds.ndim == 1:  # binary classification
+            self.conf.append(preds)
+        else:
+            self.conf.append(preds.max(-1).values.cpu())
+
+        if preds.ndim == 1:  # binary classification
+            self.acc.append((preds.round() == targets).cpu())
+        else:
+            self.acc.append((preds.argmax(-1) == targets).cpu())
 
     def compute(self) -> None:
         """Compute the calibration plot."""
@@ -99,21 +106,27 @@ class CalibrationPlot:
         Returns:
             Tuple[Figure, Axes]: The figure and axes of the plot.
         """
+        plt.rc("axes", axisbelow=True)
         fig, ax = plt.subplots(1, figsize=self.figsize)
         sns.histplot(
             x=[self.bin_width * i for i in range(self.num_bins)],
             weights=self.values,
             bins=[self.bin_width * i for i in range(self.num_bins + 1)],
         )
-        ax.set_xlabel("Confidence")
-        ax.set_ylabel("Probability Density")
+        plt.plot([0, 1], [0, 1], "--", color="black")
+        plt.grid(True, linestyle="--", alpha=0.7, zorder=0)
+        ax.set_xlabel("Top-class Confidence", fontsize=16)
+        ax.set_ylabel("Actual Success-rate", fontsize=16)
+        ax.set_xlim(0, 1)
+        ax.set_ylim(0, 1)
+        ax.set_aspect("equal", "box")
+        fig.tight_layout()
         return fig, ax
 
     def __call__(
         self, preds: torch.Tensor, targets: torch.Tensor
     ) -> Tuple[Figure, Axes]:
         """Update, compute, and plot the calibration plot.
-
 
         Args:
             preds (torch.Tensor): The prediction likelihoods (<1).

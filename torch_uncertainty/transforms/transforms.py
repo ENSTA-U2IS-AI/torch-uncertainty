@@ -259,9 +259,13 @@ class RepeatTarget(nn.Module):
         super().__init__()
 
         if not isinstance(num_repeats, int):
-            raise ValueError("num_repeats must be an integer.")
+            raise ValueError(
+                f"num_repeats must be an integer. Got {num_repeats}."
+            )
         if num_repeats <= 0:
-            raise ValueError("num_repeats must be greater than 0.")
+            raise ValueError(
+                f"num_repeats must be greater than 0. Got {num_repeats}."
+            )
 
         self.num_repeats = num_repeats
 

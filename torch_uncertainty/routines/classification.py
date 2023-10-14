@@ -7,6 +7,7 @@ import pytorch_lightning as pl
 import torch
 import torch.nn.functional as F
 from einops import rearrange
+from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.utilities.memory import get_model_size_mb
 from pytorch_lightning.utilities.types import EPOCH_OUTPUT, STEP_OUTPUT
 from timm.data import Mixup
@@ -30,6 +31,7 @@ from ..metrics import (
     NegativeLogLikelihood,
     VariationRatio,
 )
+from ..visualization import CalibrationPlot
 
 
 # fmt:on
@@ -87,11 +89,8 @@ class ClassificationSingle(pl.LightningModule):
 
         self.binary_cls = num_classes == 1
 
-        # model
         self.model = model
-        # loss
         self.loss = loss
-        # optimization procedure
         self.optimization_procedure = optimization_procedure
         # batch format
         self.format_batch_fn = format_batch_fn
@@ -150,11 +149,12 @@ class ClassificationSingle(pl.LightningModule):
         else:
             self.mixup = lambda x, y: (x, y)
 
+        self.cal_plot = CalibrationPlot()
+
         # Handle ELBO special cases
         self.is_elbo = (
             isinstance(self.loss, partial) and self.loss.func == ELBOLoss
         )
-        # print(self.is_elbo)
 
     def configure_optimizers(self) -> Any:
         return self.optimization_procedure(self)
@@ -241,6 +241,8 @@ class ClassificationSingle(pl.LightningModule):
             probs = torch.sigmoid(logits).squeeze(-1)
         else:
             probs = F.softmax(logits, dim=-1)
+
+        self.cal_plot.update(probs, targets)
         confs = probs.max(dim=-1)[0]
 
         if self.use_logits:
@@ -286,6 +288,12 @@ class ClassificationSingle(pl.LightningModule):
                 self.test_ood_metrics.compute(),
             )
             self.test_ood_metrics.reset()
+
+        if isinstance(self.logger, TensorBoardLogger):
+            self.cal_plot.compute()
+            self.logger.experiment.add_figure(
+                "Calibration Plot", self.cal_plot.plot()[0]
+            )
 
     @staticmethod
     def add_model_specific_args(
@@ -427,12 +435,9 @@ class ClassificationEnsemble(ClassificationSingle):
         self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int
     ) -> STEP_OUTPUT:
         batch = self.mixup(*batch)
-        inputs, targets = self.format_batch_fn(batch)
 
         # eventual input repeat is done in the model
-        # targets = targets.repeat(self.num_estimators)
-
-        # Computing logits
+        inputs, targets = self.format_batch_fn(batch)
         logits = self.forward(inputs)
 
         # BCEWithLogitsLoss expects float targets
@@ -474,6 +479,7 @@ class ClassificationEnsemble(ClassificationSingle):
             probs_per_est = F.softmax(logits, dim=-1)
 
         probs = probs_per_est.mean(dim=1)
+        self.cal_plot.update(probs, targets)
         confs = probs.max(-1)[0]
 
         if self.use_logits:
