@@ -1,5 +1,5 @@
 # fmt: off
-from typing import Any, Tuple
+from typing import List, Tuple
 
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -141,7 +141,7 @@ class CalibrationPlot:
 
 
 def plot_hist(
-    conf: Any,
+    conf: List[torch.Tensor],
     bins: int = 20,
     title: str = "Histogram with 'auto' bins",
     dpi: int = 60,
