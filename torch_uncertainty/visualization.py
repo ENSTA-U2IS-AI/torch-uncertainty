@@ -77,8 +77,12 @@ class CalibrationPlot:
         else:
             self.acc.append((preds.argmax(-1) == targets).cpu())
 
-    def compute(self) -> None:
-        """Compute the calibration plot."""
+    def compute(self) -> Tuple[Figure, Axes]:
+        """Compute and plot the calibration figure.
+
+        Returns:
+            Tuple[Figure, Axes]: The figure and axes of the plot.
+        """
         confidence = torch.cat(self.conf)
         acc = torch.cat(self.acc)
 
@@ -88,41 +92,45 @@ class CalibrationPlot:
         val, inverse, counts = bin_ids.unique(
             return_inverse=True, return_counts=True
         )
-        val = torch.nn.functional.one_hot(val.long(), num_classes=10)
+        val_oh = torch.nn.functional.one_hot(val.long(), num_classes=10)
 
         # add 1e-6 to avoid division NaNs
-        self.values = (
-            val.T.float()
+        values = (
+            val_oh.T.float()
             @ torch.sum(
                 acc.unsqueeze(1) * torch.nn.functional.one_hot(inverse).float(),
                 0,
             )
-            / (val.T @ counts + 1e-6).float()
+            / (val_oh.T @ counts + 1e-6).float()
         )
+        counts_all = (val_oh.T @ counts).float()
+        total = torch.sum(counts)
 
-    def plot(self) -> Tuple[Figure, Axes]:
-        """Plot the calibration.
-
-        Returns:
-            Tuple[Figure, Axes]: The figure and axes of the plot.
-        """
         plt.rc("axes", axisbelow=True)
         fig, ax = plt.subplots(1, figsize=self.figsize)
         ax.hist(
-            x=[self.bin_width * i for i in range(self.num_bins)],
-            weights=self.values,
-            bins=[self.bin_width * i for i in range(self.num_bins + 1)],
+            x=[self.bin_width * i * 100 for i in range(self.num_bins)],
+            weights=values * 100,
+            bins=[self.bin_width * i * 100 for i in range(self.num_bins + 1)],
             alpha=0.7,
             linewidth=1,
             edgecolor="#0d559f",
             color="#1f77b4",
         )
-        ax.plot([0, 1], [0, 1], "--", color="black")
+        for i, count in enumerate(counts_all):
+            ax.text(
+                3.0 + 9.9 * i,
+                1,
+                f"{int(count/total*100)}%",
+                fontsize=8,
+            )
+
+        ax.plot([0, 100], [0, 100], "--", color="#0d559f")
         plt.grid(True, linestyle="--", alpha=0.7, zorder=0)
-        ax.set_xlabel("Top-class Confidence", fontsize=16)
-        ax.set_ylabel("Success Rate", fontsize=16)
-        ax.set_xlim(0, 1)
-        ax.set_ylim(0, 1)
+        ax.set_xlabel("Top-class Confidence (%)", fontsize=16)
+        ax.set_ylabel("Success Rate (%)", fontsize=16)
+        ax.set_xlim(0, 100)
+        ax.set_ylim(0, 100)
         ax.set_aspect("equal", "box")
         fig.tight_layout()
         return fig, ax
@@ -140,8 +148,7 @@ class CalibrationPlot:
             Tuple[Figure, Axes]: The figure and axes of the plot.
         """
         self.update(preds, targets)
-        self.compute()
-        return self.plot()
+        return self.compute()
 
 
 def plot_hist(

@@ -291,9 +291,8 @@ class ClassificationSingle(pl.LightningModule):
             self.test_ood_metrics.reset()
 
         if isinstance(self.logger, TensorBoardLogger):
-            self.cal_plot.compute()
             self.logger.experiment.add_figure(
-                "Calibration Plot", self.cal_plot.plot()[0]
+                "Calibration Plot", self.cal_plot.compute()[0]
             )
 
             if self.ood_detection:
@@ -569,9 +568,8 @@ class ClassificationEnsemble(ClassificationSingle):
             self.test_ood_ens_metrics.reset()
 
         if isinstance(self.logger, TensorBoardLogger):
-            self.cal_plot.compute()
             self.logger.experiment.add_figure(
-                "Calibration Plot", self.cal_plot.plot()[0]
+                "Calibration Plot", self.cal_plot.compute()[0]
             )
 
             if self.ood_detection:

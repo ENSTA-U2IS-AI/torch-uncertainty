@@ -106,7 +106,6 @@ print(f"ECE before scaling - {cal*100:.3}%.")
 
 # Compute and plot the calibration figure
 cal_plot.compute()
-cal_plot.plot()
 
 # %%
 # 5. Fitting the Scaler to Improve the Calibration
@@ -148,7 +147,6 @@ cal = ece.compute()
 print(f"ECE after scaling - {cal*100:.3}%.")
 
 cal_plot.compute()
-cal_plot.plot()
 
 # %%
 # The top-label calibration should be improved.
