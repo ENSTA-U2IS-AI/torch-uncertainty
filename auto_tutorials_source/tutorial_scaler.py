@@ -33,7 +33,7 @@ from torch_uncertainty.datamodules import CIFAR100DataModule
 from torch_uncertainty.models.resnet import resnet18
 from torch_uncertainty.post_processing import TemperatureScaler
 from torch_uncertainty.utils import load_hf
-from torch_uncertainty.visualization import CalibrationPlot
+from torch_uncertainty.plotting_utils import CalibrationPlot
 
 # %%
 # 2. Loading a model from TorchUncertainty's HF

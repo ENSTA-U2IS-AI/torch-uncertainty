@@ -31,7 +31,7 @@ from ..metrics import (
     NegativeLogLikelihood,
     VariationRatio,
 )
-from ..visualization import CalibrationPlot, plot_hist
+from ..plotting_utils import CalibrationPlot, plot_hist
 
 
 # fmt:on
