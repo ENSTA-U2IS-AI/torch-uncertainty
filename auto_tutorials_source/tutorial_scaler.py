@@ -104,7 +104,9 @@ for sample, target in test_dataloader:
 cal = ece.compute()
 print(f"ECE before scaling - {cal*100:.3}%.")
 
-# Compute and plot the calibration figure
+# %%
+# We also compute and plot the top-label calibration figure. We see that the
+# model is not well calibrated.
 cal_plot.compute()
 
 # %%
@@ -146,6 +148,9 @@ for sample, target in test_dataloader:
 cal = ece.compute()
 print(f"ECE after scaling - {cal*100:.3}%.")
 
+# %%
+# We finally compute and plot the scaled top-label calibration figure. We see
+# that the model is now better calibrated.
 cal_plot.compute()
 
 # %%
