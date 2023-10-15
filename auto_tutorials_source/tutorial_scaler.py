@@ -22,6 +22,8 @@ In this tutorial, we will need:
 - a ResNet 18 as starting model 
 - the temperature scaler to improve the top-label calibration
 - a utility to download hf models easily
+- the calibration plot to visualize the calibration. If you use the classification routine, 
+    the plots will be automatically available in the tensorboard logs.
 """
 
 import torch
@@ -31,6 +33,7 @@ from torch_uncertainty.datamodules import CIFAR100DataModule
 from torch_uncertainty.models.resnet import resnet18
 from torch_uncertainty.post_processing import TemperatureScaler
 from torch_uncertainty.utils import load_hf
+from torch_uncertainty.plotting_utils import CalibrationPlot
 
 # %%
 # 2. Loading a model from TorchUncertainty's HF
@@ -63,6 +66,9 @@ dm.setup("test")
 # Get the full test dataloader (unused in this tutorial)
 dataloader = dm.test_dataloader()[0]
 
+# create the calibration plot utility
+cal_plot = CalibrationPlot()
+
 # %%
 # 4. Iterating on the Dataloader and Computing the ECE
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -79,7 +85,9 @@ from torch.utils.data import DataLoader, random_split
 
 # Split datasets
 dataset = dm.test
-cal_dataset, test_dataset, other = random_split(dataset, [1000, 1000, len(dataset) - 2000])
+cal_dataset, test_dataset, other = random_split(
+    dataset, [1000, 1000, len(dataset) - 2000]
+)
 test_dataloader = DataLoader(test_dataset, batch_size=32)
 
 # Initialize the ECE
@@ -88,12 +96,18 @@ ece = CalibrationError(task="multiclass", num_classes=100)
 # Iterate on the calibration dataloader
 for sample, target in test_dataloader:
     logits = model(sample)
-    ece.update(logits.softmax(-1), target)
+    probs = logits.softmax(-1)
+    ece.update(probs, target)
+    cal_plot.update(probs, target)
 
 # Compute & print the calibration error
 cal = ece.compute()
-
 print(f"ECE before scaling - {cal*100:.3}%.")
+
+# %%
+# We also compute and plot the top-label calibration figure. We see that the
+# model is not well calibrated.
+cal_plot.compute()
 
 # %%
 # 5. Fitting the Scaler to Improve the Calibration
@@ -127,11 +141,17 @@ ece.reset()
 # Iterate on the test dataloader
 for sample, target in test_dataloader:
     logits = cal_model(sample)
-    ece.update(logits.softmax(-1), target)
+    probs = logits.softmax(-1)
+    ece.update(probs, target)
+    cal_plot.update(probs, target)
 
 cal = ece.compute()
-
 print(f"ECE after scaling - {cal*100:.3}%.")
+
+# %%
+# We finally compute and plot the scaled top-label calibration figure. We see
+# that the model is now better calibrated.
+cal_plot.compute()
 
 # %%
 # The top-label calibration should be improved.
