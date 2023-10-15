@@ -113,9 +113,9 @@ class VGG(nn.Module):
                 )
                 if m.bias is not None:  # coverage: ignore
                     nn.init.constant_(m.bias, 0)
-            elif isinstance(m, nn.BatchNorm2d):
+            elif isinstance(m, nn.BatchNorm2d):  # coverage: ignore
                 nn.init.constant_(m.weight, 1)
-                if m.bias is not None:  # coverage: ignore
+                if m.bias is not None:
                     nn.init.constant_(m.bias, 0)
             elif isinstance(m, nn.Linear) or isinstance(m, PackedLinear):
                 nn.init.normal_(m.weight, 0, 0.01)

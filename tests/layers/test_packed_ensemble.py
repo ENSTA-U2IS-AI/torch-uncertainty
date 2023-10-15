@@ -108,6 +108,8 @@ class TestPackedConv1d:
         layer = PackedConv1d(6, 2, alpha=1, num_estimators=1, kernel_size=1)
         out = layer(seq_input)
         assert out.shape == torch.Size([5, 2, 3])
+        assert layer.weight.shape == torch.Size([2, 6, 1])
+        assert layer.bias.shape == torch.Size([2])
 
     def test_conv_two_estimators(self, seq_input: torch.Tensor):
         layer = PackedConv1d(6, 2, alpha=1, num_estimators=2, kernel_size=1)
@@ -210,6 +212,8 @@ class TestPackedConv3d:
         layer = PackedConv3d(6, 2, alpha=1, num_estimators=1, kernel_size=1)
         out = layer(voxels_input)
         assert out.shape == torch.Size([5, 2, 3, 3, 3])
+        assert layer.weight.shape == torch.Size([2, 6, 1, 1, 1])
+        assert layer.bias.shape == torch.Size([2])
 
     def test_conv_two_estimators(self, voxels_input: torch.Tensor):
         layer = PackedConv3d(6, 2, alpha=1, num_estimators=2, kernel_size=1)

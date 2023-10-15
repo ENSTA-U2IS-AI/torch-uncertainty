@@ -26,7 +26,7 @@ class DeepEnsembles:
         cls,
         task: Literal["classification", "regression"],
         log_path: Union[str, Path],
-        versions: List[int],
+        checkpoint_ids: List[int],
         backbone: Literal["mlp", "resnet", "vgg", "wideresnet"],
         # num_estimators: int,
         in_channels: Optional[int] = None,
@@ -43,7 +43,7 @@ class DeepEnsembles:
         backbone_cls = cls.backbones[backbone]
 
         models = []
-        for version in versions:
+        for version in checkpoint_ids:
             ckpt_file, hparams_file = get_version(
                 root=log_path, version=version
             )

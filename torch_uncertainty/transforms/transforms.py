@@ -125,7 +125,7 @@ class Shear(nn.Module):
         self.fill = fill
 
     def forward(
-        self, img: Union[Tensor, Image.Image], level: float
+        self, img: Union[Tensor, Image.Image], level: int
     ) -> Union[Tensor, Image.Image]:
         if (
             self.random_direction and np.random.uniform() > 0.5
@@ -213,7 +213,7 @@ class Brightness(nn.Module):
         super().__init__()
 
     def forward(
-        self, img: Union[Tensor, Image.Image], level=float
+        self, img: Union[Tensor, Image.Image], level: float
     ) -> Union[Tensor, Image.Image]:
         if level < 0:
             raise ValueError("Level must be greater than 0.")

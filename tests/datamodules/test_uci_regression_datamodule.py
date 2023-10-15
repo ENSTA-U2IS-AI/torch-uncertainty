@@ -1,5 +1,6 @@
 # fmt:off
 from argparse import ArgumentParser
+from functools import partial
 
 from torch_uncertainty.datamodules import UCIDataModule
 
@@ -18,8 +19,9 @@ class TestUCIDataModule:
 
         dm = UCIDataModule(dataset_name="kin8nm", **vars(args))
 
-        dm.dataset = DummyRegressionDataset
+        dm.dataset = partial(DummyRegressionDataset, num_samples=64)
         dm.prepare_data()
+        dm.val_split = 0.5
         dm.setup()
         dm.setup("test")
 
