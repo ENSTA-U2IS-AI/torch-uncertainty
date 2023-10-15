@@ -44,7 +44,15 @@ and linted before committing.
 Before submitting a final pull request, that we will review, please try your
 best not to reduce the code coverage and document your code.
 
-If you implement a method, please add a reference to the corresponding paper in the ["References" page](https://torch-uncertainty.github.io/references.html).
+Try to include an emoji at the start of each commit message following the suggestions
+from [this page](https://gist.github.com/parmentf/035de27d6ed1dce0b36a).
+
+If you implement a method, please add a reference to the corresponding paper in the
+["References" page](https://torch-uncertainty.github.io/references.html).
+
+### Datasets & Datamodules
+
+We intend to include datamodules for the most popular datasets only.
 
 ### Post-processing methods
 

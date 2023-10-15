@@ -1,4 +1,6 @@
 # fmt: off
+from typing import Type
+
 import torch.nn.functional as F
 from torch import nn
 
@@ -22,7 +24,6 @@ class WideBasicBlock(nn.Module):
         groups: int = 1,
     ):
         super().__init__()
-        self.bn1 = nn.BatchNorm2d(in_planes)
         self.conv1 = MaskedConv2d(
             in_planes,
             planes,
@@ -34,7 +35,7 @@ class WideBasicBlock(nn.Module):
             groups=groups,
         )
         self.dropout = nn.Dropout(p=dropout_rate)
-        self.bn2 = nn.BatchNorm2d(planes)
+        self.bn1 = nn.BatchNorm2d(planes)
         self.conv2 = MaskedConv2d(
             planes,
             planes,
@@ -60,11 +61,13 @@ class WideBasicBlock(nn.Module):
                     groups=groups,
                 ),
             )
+        self.bn2 = nn.BatchNorm2d(planes)
 
     def forward(self, x):
-        out = self.dropout(self.conv1(F.relu(self.bn1(x))))
-        out = self.conv2(F.relu(self.bn2(out)))
+        out = F.relu(self.bn1(self.dropout(self.conv1(x))))
+        out = self.conv2(out)
         out += self.shortcut(x)
+        out = F.relu(self.bn2(out))
         return out
 
 
@@ -86,7 +89,7 @@ class _MaskedWide(nn.Module):
         self.in_planes = 16
 
         assert (depth - 4) % 6 == 0, "Wide-resnet depth should be 6n+4."
-        n = (depth - 4) / 6
+        n = (depth - 4) // 6
         k = widen_factor
 
         nStages = [16, 16 * k, 32 * k, 64 * k]
@@ -111,6 +114,8 @@ class _MaskedWide(nn.Module):
                 bias=True,
                 groups=1,
             )
+
+        self.bn1 = nn.BatchNorm2d(nStages[0])
 
         if style == "imagenet":
             self.optional_pool = nn.MaxPool2d(
@@ -149,7 +154,6 @@ class _MaskedWide(nn.Module):
             scale=scale,
             groups=groups,
         )
-        self.bn1 = nn.BatchNorm2d(nStages[3])
 
         self.pool = nn.AdaptiveAvgPool2d(output_size=1)
         self.flatten = nn.Flatten(1)
@@ -160,7 +164,7 @@ class _MaskedWide(nn.Module):
 
     def _wide_layer(
         self,
-        block: nn.Module,
+        block: Type[nn.Module],
         planes: int,
         num_blocks: int,
         dropout_rate: float,
@@ -190,17 +194,14 @@ class _MaskedWide(nn.Module):
 
     def forward(self, x):
         out = x.repeat(self.num_estimators, 1, 1, 1)
-        out = self.conv1(out)
+        out = F.relu(self.bn1(self.conv1(out)))
         out = self.optional_pool(out)
         out = self.layer1(out)
         out = self.layer2(out)
         out = self.layer3(out)
-        out = F.relu(self.bn1(out))
-
         out = self.pool(out)
         out = self.flatten(out)
         out = self.linear(out)
-
         return out
 
 

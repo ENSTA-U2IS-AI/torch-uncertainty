@@ -10,7 +10,8 @@ from torch import nn
 from torch.utils.data import DataLoader, Dataset, random_split
 from torchvision.datasets import CIFAR10, SVHN
 
-from ..datasets import CIFAR10C, CIFAR10H, AggregatedDataset
+from ..datasets import AggregatedDataset
+from ..datasets.classification import CIFAR10C, CIFAR10H
 from ..transforms import Cutout
 
 
@@ -152,8 +153,8 @@ class CIFAR10DataModule(LightningDataModule):
             self.train, self.val = random_split(
                 full,
                 [
-                    int(len(full) * (1 - self.val_split)),
-                    len(full) - int(len(full) * (1 - self.val_split)),
+                    1 - self.val_split,
+                    self.val_split,
                 ],
             )
             if self.val_split == 0:

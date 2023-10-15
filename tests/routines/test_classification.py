@@ -1,4 +1,5 @@
 # fmt:off
+from functools import partial
 from pathlib import Path
 
 import pytest
@@ -6,6 +7,7 @@ from cli_test_helpers import ArgvContext
 from torch import nn
 
 from torch_uncertainty import cli_main, init_args
+from torch_uncertainty.losses import ELBOLoss
 from torch_uncertainty.optimization_procedures import optim_cifar10_resnet18
 from torch_uncertainty.routines.classification import (
     ClassificationEnsemble,
@@ -46,6 +48,31 @@ class TestClassificationSingle:
 
     def test_cli_main_dummy_ood(self):
         root = Path(__file__).parent.absolute().parents[0]
+        with ArgvContext("file.py"):
+            args = init_args(
+                DummyClassificationBaseline, DummyClassificationDataModule
+            )
+
+            # datamodule
+            args.root = str(root / "data")
+            dm = DummyClassificationDataModule(**vars(args))
+            loss = partial(
+                ELBOLoss,
+                criterion=nn.CrossEntropyLoss(),
+                kl_weight=1e-5,
+                num_samples=2,
+            )
+            model = DummyClassificationBaseline(
+                num_classes=dm.num_classes,
+                in_channels=dm.num_channels,
+                loss=loss,
+                optimization_procedure=optim_cifar10_resnet18,
+                baseline_type="single",
+                **vars(args),
+            )
+
+            cli_main(model, dm, root, "dummy", args)
+
         with ArgvContext("file.py", "--evaluate_ood", "--entropy"):
             args = init_args(
                 DummyClassificationBaseline, DummyClassificationDataModule
@@ -89,11 +116,16 @@ class TestClassificationEnsemble:
             # datamodule
             args.root = str(root / "data")
             dm = DummyClassificationDataModule(num_classes=1, **vars(args))
-
+            loss = partial(
+                ELBOLoss,
+                criterion=nn.CrossEntropyLoss(),
+                kl_weight=1e-5,
+                num_samples=1,
+            )
             model = DummyClassificationBaseline(
                 num_classes=dm.num_classes,
                 in_channels=dm.num_channels,
-                loss=nn.BCEWithLogitsLoss,
+                loss=loss,
                 optimization_procedure=optim_cifar10_resnet18,
                 baseline_type="ensemble",
                 **vars(args),
@@ -123,6 +155,46 @@ class TestClassificationEnsemble:
 
     def test_cli_main_dummy_ood(self):
         root = Path(__file__).parent.absolute().parents[0]
+        with ArgvContext("file.py", "--logits"):
+            args = init_args(
+                DummyClassificationBaseline, DummyClassificationDataModule
+            )
+
+            # datamodule
+            args.root = str(root / "data")
+            dm = DummyClassificationDataModule(**vars(args))
+
+            model = DummyClassificationBaseline(
+                num_classes=dm.num_classes,
+                in_channels=dm.num_channels,
+                loss=nn.CrossEntropyLoss,
+                optimization_procedure=optim_cifar10_resnet18,
+                baseline_type="ensemble",
+                **vars(args),
+            )
+
+            cli_main(model, dm, root, "dummy", args)
+
+        with ArgvContext("file.py", "--evaluate_ood", "--entropy"):
+            args = init_args(
+                DummyClassificationBaseline, DummyClassificationDataModule
+            )
+
+            # datamodule
+            args.root = str(root / "data")
+            dm = DummyClassificationDataModule(**vars(args))
+
+            model = DummyClassificationBaseline(
+                num_classes=dm.num_classes,
+                in_channels=dm.num_channels,
+                loss=nn.CrossEntropyLoss,
+                optimization_procedure=optim_cifar10_resnet18,
+                baseline_type="ensemble",
+                **vars(args),
+            )
+
+            cli_main(model, dm, root, "dummy", args)
+
         with ArgvContext("file.py", "--evaluate_ood", "--variation_ratio"):
             args = init_args(
                 DummyClassificationBaseline, DummyClassificationDataModule

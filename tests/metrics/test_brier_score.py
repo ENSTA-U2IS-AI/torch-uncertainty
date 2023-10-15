@@ -59,7 +59,7 @@ def vec2D_5classes_target1D() -> torch.Tensor:
 @pytest.fixture
 def vec3D() -> torch.Tensor:
     """
-    Return a torch tensor with a mean BrierScore of 0 and an BrierScore of
+    Return a torch tensor with a mean BrierScore of 0 and a BrierScore of
         the mean of 0.5 to test the `ensemble` parameter of `BrierScore`.
     """
     vec = torch.as_tensor([[0.0, 1.0], [1.0, 0.0]])

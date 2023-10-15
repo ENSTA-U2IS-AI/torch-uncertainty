@@ -9,7 +9,7 @@ from torch import nn
 from torch.utils.data import DataLoader, Dataset, random_split
 from torchvision.datasets import MNIST, FashionMNIST
 
-from ..datasets import MNISTC, NotMNIST
+from ..datasets.classification import MNISTC, NotMNIST
 from ..transforms import Cutout
 
 
@@ -121,8 +121,8 @@ class MNISTDataModule(LightningDataModule):
             self.train, self.val = random_split(
                 full,
                 [
-                    int(len(full) * (1 - self.val_split)),
-                    len(full) - int(len(full) * (1 - self.val_split)),
+                    1 - self.val_split,
+                    self.val_split,
                 ],
             )
             if self.val_split == 0:

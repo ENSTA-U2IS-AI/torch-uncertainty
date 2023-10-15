@@ -11,7 +11,7 @@
 
 _TorchUncertainty_ is a package designed to help you leverage uncertainty quantification techniques and make your deep neural networks more reliable. It aims at being collaborative and including as many methods as possible, so reach out to add yours!
 
-:construction: _TorchUncertainty_ is in early development :construction: - expect massive changes, but reach out and contribute if you are interested in the project! **Please raise an issue if you have any bugs or difficulties.**
+:construction: _TorchUncertainty_ is in early development :construction: - expect changes, but reach out and contribute if you are interested in the project! **Please raise an issue if you have any bugs or difficulties.**
 
 ---
 
@@ -55,6 +55,7 @@ To date, the following deep learning baselines have been implemented:
 - MIMO
 - Packed-Ensembles (see [blog post](https://medium.com/@adrien.lafage/make-your-neural-networks-more-reliable-with-packed-ensembles-7ad0b737a873))
 - Bayesian Neural Networks :construction: Work in progress :construction:
+- Deep Evidential Regression
 
 ### Post-processing methods
 
@@ -69,6 +70,7 @@ We provide the following tutorials in our documentation:
 - [From a Vanilla Classifier to a Packed-Ensemble](https://torch-uncertainty.github.io/auto_tutorials/tutorial_pe_cifar10.html)
 - [Training a Bayesian Neural Network in 3 minutes](https://torch-uncertainty.github.io/auto_tutorials/tutorial_bayesian.html)
 - [Improve Top-label Calibration with Temperature Scaling](https://torch-uncertainty.github.io/auto_tutorials/tutorial_scaler.html)
+- [Deep Evidential Regression on a Toy Example](https://torch-uncertainty.github.io/auto_tutorials/tutorial_der_cubic.html)
   
 ## Awesome Uncertainty repositories
 

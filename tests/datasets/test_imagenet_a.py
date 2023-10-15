@@ -1,7 +1,7 @@
 # fmt:off
 import pytest
 
-from torch_uncertainty.datasets import ImageNetA
+from torch_uncertainty.datasets.classification import ImageNetA
 
 
 # fmt:on

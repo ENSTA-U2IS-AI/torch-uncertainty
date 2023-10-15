@@ -22,7 +22,6 @@ class WideBasicBlock(nn.Module):
         groups=1,
     ):
         super().__init__()
-        self.bn1 = nn.BatchNorm2d(in_planes)
         self.conv1 = nn.Conv2d(
             in_planes,
             planes,
@@ -32,7 +31,7 @@ class WideBasicBlock(nn.Module):
             bias=False,
         )
         self.dropout = nn.Dropout(p=dropout_rate)
-        self.bn2 = nn.BatchNorm2d(planes)
+        self.bn1 = nn.BatchNorm2d(planes)
         self.conv2 = nn.Conv2d(
             planes,
             planes,
@@ -54,11 +53,13 @@ class WideBasicBlock(nn.Module):
                     bias=True,
                 ),
             )
+        self.bn2 = nn.BatchNorm2d(planes)
 
     def forward(self, x):
-        out = self.dropout(self.conv1(F.relu(self.bn1(x))))
-        out = self.conv2(F.relu(self.bn2(out)))
+        out = F.relu(self.bn1(self.dropout(self.conv1(x))))
+        out = self.conv2(out)
         out += self.shortcut(x)
+        out = F.relu(self.bn2(out))
         return out
 
 
@@ -107,6 +108,8 @@ class _Wide(nn.Module):
                 bias=True,
             )
 
+        self.bn1 = nn.BatchNorm2d(nStages[0])
+
         if style == "imagenet":
             self.optional_pool = nn.MaxPool2d(
                 kernel_size=3, stride=2, padding=1
@@ -138,7 +141,6 @@ class _Wide(nn.Module):
             stride=2,
             groups=groups,
         )
-        self.bn1 = nn.BatchNorm2d(nStages[3], momentum=0.9)
 
         self.pool = nn.AdaptiveAvgPool2d(output_size=1)
         self.flatten = nn.Flatten(1)
@@ -181,16 +183,14 @@ class _Wide(nn.Module):
                     enable_dropout(self, self.enable_last_layer_dropout)
             x = x.repeat(self.num_estimators, 1, 1, 1)
 
-        out = self.conv1(x)
+        out = F.relu(self.bn1(self.conv1(x)))
         out = self.optional_pool(out)
         out = self.layer1(out)
         out = self.layer2(out)
         out = self.layer3(out)
-        out = F.relu(self.bn1(out))
         out = self.pool(out)
         out = self.flatten(out)
         out = self.linear(out)
-
         return out
 
 

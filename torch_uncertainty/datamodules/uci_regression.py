@@ -5,9 +5,10 @@ from pathlib import Path
 from typing import Any, Optional, Tuple, Union
 
 from pytorch_lightning import LightningDataModule
+from torch import Generator
 from torch.utils.data import DataLoader, Dataset, random_split
 
-from ..datasets.uci_regression import UCIRegression
+from ..datasets.regression import UCIRegression
 
 
 # fmt: on
@@ -43,6 +44,7 @@ class UCIDataModule(LightningDataModule):
         pin_memory: bool = True,
         persistent_workers: bool = True,
         input_shape: Optional[Tuple[int, ...]] = None,
+        split_seed: int = 42,
         **kwargs,
     ) -> None:
         super().__init__()
@@ -57,8 +59,11 @@ class UCIDataModule(LightningDataModule):
         self.pin_memory = pin_memory
         self.persistent_workers = persistent_workers
 
-        self.dataset = partial(UCIRegression, dataset_name=dataset_name)
+        self.dataset = partial(
+            UCIRegression, dataset_name=dataset_name, seed=split_seed
+        )
         self.input_shape = input_shape
+        self.gen = Generator().manual_seed(split_seed)
 
     def prepare_data(self) -> None:
         """Download the dataset."""
@@ -73,12 +78,11 @@ class UCIDataModule(LightningDataModule):
         self.train, self.test, self.val = random_split(
             full,
             [
-                int(len(full) * (0.8 - self.val_split)),
-                int(len(full) * 0.2),
-                len(full)
-                - int(len(full) * 0.2)
-                - int(len(full) * (0.8 - self.val_split)),
+                0.8 - self.val_split,
+                0.2,
+                self.val_split,
             ],
+            generator=self.gen,
         )
         if self.val_split == 0:
             self.val = self.test
