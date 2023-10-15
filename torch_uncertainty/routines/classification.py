@@ -456,7 +456,16 @@ class ClassificationEnsemble(ClassificationSingle):
         self, batch: Tuple[Tensor, Tensor], batch_idx: int
     ) -> STEP_OUTPUT:
         batch = self.mixup(*batch)
+        # eventual input repeat is done in the model
 
+        if self.is_elbo:
+            loss = self.criterion(inputs, targets)
+        else:
+            logits = self.forward(inputs)
+            # BCEWithLogitsLoss expects float targets
+            if self.binary_cls and self.loss == nn.BCEWithLogitsLoss:
+                logits = logits.squeeze(-1)
+                targets = targets.float()
         # eventual input repeat is done in the model
         inputs, targets = self.format_batch_fn(batch)
         logits = self.forward(inputs)
@@ -466,7 +475,8 @@ class ClassificationEnsemble(ClassificationSingle):
             logits = logits.squeeze(-1)
             targets = targets.float()
 
-        loss = self.criterion(logits, targets)
+            loss = self.criterion(logits, targets)
+
         self.log("train_loss", loss)
         return loss
 
@@ -506,7 +516,9 @@ class ClassificationEnsemble(ClassificationSingle):
         if self.use_logits:
             ood_values = -logits.mean(dim=1).max(dim=-1)[0]
         elif self.use_entropy:
-            ood_values = torch.special.entr(probs).sum(dim=-1).mean(dim=1)
+            ood_values = (
+                torch.special.entr(probs_per_est).sum(dim=-1).mean(dim=1)
+            )
         elif self.use_mi:
             mi_metric = MutualInformation(reduction="none")
             ood_values = mi_metric(probs_per_est)

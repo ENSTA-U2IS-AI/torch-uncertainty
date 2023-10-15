@@ -153,8 +153,8 @@ class CIFAR10DataModule(LightningDataModule):
             self.train, self.val = random_split(
                 full,
                 [
-                    int(len(full) * (1 - self.val_split)),
-                    len(full) - int(len(full) * (1 - self.val_split)),
+                    1 - self.val_split,
+                    self.val_split,
                 ],
             )
             if self.val_split == 0:

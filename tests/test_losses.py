@@ -55,3 +55,23 @@ class TestNIGLoss:
         assert loss(*inputs.split(1, dim=-1), targets) == pytest.approx(
             2 * math.log(2)
         )
+
+        loss = NIGLoss(
+            reg_weight=1e-2,
+            reduction="sum",
+        )
+
+        assert loss(
+            *inputs.repeat(2, 1).split(1, dim=-1),
+            targets.repeat(2, 1),
+        ) == pytest.approx(4 * math.log(2))
+
+        loss = NIGLoss(
+            reg_weight=1e-2,
+            reduction="none",
+        )
+
+        assert loss(
+            *inputs.repeat(2, 1).split(1, dim=-1),
+            targets.repeat(2, 1),
+        ) == pytest.approx([2 * math.log(2), 2 * math.log(2)])
