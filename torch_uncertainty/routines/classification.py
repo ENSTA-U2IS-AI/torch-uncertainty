@@ -457,6 +457,7 @@ class ClassificationEnsemble(ClassificationSingle):
     ) -> STEP_OUTPUT:
         batch = self.mixup(*batch)
         # eventual input repeat is done in the model
+        inputs, targets = self.format_batch_fn(batch)
 
         if self.is_elbo:
             loss = self.criterion(inputs, targets)
@@ -466,14 +467,6 @@ class ClassificationEnsemble(ClassificationSingle):
             if self.binary_cls and self.loss == nn.BCEWithLogitsLoss:
                 logits = logits.squeeze(-1)
                 targets = targets.float()
-        # eventual input repeat is done in the model
-        inputs, targets = self.format_batch_fn(batch)
-        logits = self.forward(inputs)
-
-        # BCEWithLogitsLoss expects float targets
-        if self.binary_cls and self.loss == nn.BCEWithLogitsLoss:
-            logits = logits.squeeze(-1)
-            targets = targets.float()
 
             loss = self.criterion(logits, targets)
 
