@@ -27,7 +27,7 @@ class CIFAR10DataModule(LightningDataModule):
         num_workers (int): Number of workers to use for data loading. Defaults
             to ``1``.
         cutout (int): Size of cutout to apply to images. Defaults to ``None``.
-        enable_randaugment (bool): Whether to apply RandAugment. Defaults to
+        randaugment (bool): Whether to apply RandAugment. Defaults to
             ``False``.
         auto_augment (str): Which auto-augment to apply. Defaults to ``None``.
         test_alt (str): Which test set to use. Defaults to ``None``.
@@ -150,14 +150,16 @@ class CIFAR10DataModule(LightningDataModule):
                 download=False,
                 transform=self.transform_train,
             )
-            self.train, self.val = random_split(
-                full,
-                [
-                    1 - self.val_split,
-                    self.val_split,
-                ],
-            )
-            if self.val_split == 0:
+            if self.val_split:
+                self.train, self.val = random_split(
+                    full,
+                    [
+                        1 - self.val_split,
+                        self.val_split,
+                    ],
+                )
+            else:
+                self.train = full
                 self.val = self.dataset(
                     self.root,
                     train=False,
