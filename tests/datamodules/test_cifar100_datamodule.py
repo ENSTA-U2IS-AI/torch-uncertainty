@@ -62,13 +62,13 @@ class TestCIFAR100DataModule:
 
         args.num_dataloaders = 1
         args.cutout = 8
-        args.enable_randaugment = True
+        args.randaugment = True
         with pytest.raises(ValueError):
             dm = CIFAR100DataModule(**vars(args))
 
         args.cutout = None
         dm = CIFAR100DataModule(**vars(args))
-        args.enable_randaugment = False
+        args.randaugment = False
 
         args.auto_augment = "rand-m9-n2-mstd0.5"
         dm = CIFAR100DataModule(**vars(args))
