@@ -1,20 +1,20 @@
 # -*- coding: utf-8 -*-
 # flake: noqa
 """
-Train a ResNet with Monte-Carlo Dropout
-=======================================
+Training a LeNet with Monte-Carlo Dropout
+==========================================
 
-In this tutorial, we'll train a ResNet classifier on the MNIST dataset using Monte-Carlo Dropout (MC Dropout), a computationally efficient Bayesian approximation method. To estimate the predictive mean and uncertainty (variance), we perform multiple forward passes through the network with dropout layers enabled in ``train`` mode.
+In this tutorial, we'll train a LeNet classifier on the MNIST dataset using Monte-Carlo Dropout (MC Dropout), a computationally efficient Bayesian approximation method. To estimate the predictive mean and uncertainty (variance), we perform multiple forward passes through the network with dropout layers enabled in ``train`` mode.
 
 For more information on Monte-Carlo Dropout, we refer the reader to the following resources:
 
 - What Uncertainties Do We Need in Bayesian Deep Learning for Computer Vision? `NeurIPS 2017 <https://browse.arxiv.org/pdf/1703.04977.pdf>`_
 - Dropout as a Bayesian Approximation: Representing Model Uncertainty in Deep Learning `PMLR 2016 <https://browse.arxiv.org/pdf/1506.02142.pdf>`_
 
-Training a ResNet with MC Dropout using TorchUncertainty models and PyTorch Lightning
+Training a LeNet with MC Dropout using TorchUncertainty models and PyTorch Lightning
 -------------------------------------------------------------------------------------
 
-In this part, we train a ResNet with dropout layers, based on the model and routines already implemented in TU.
+In this part, we train a LeNet with dropout layers, based on the model and routines already implemented in TU.
 
 1. Loading the utilities
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -22,7 +22,7 @@ In this part, we train a ResNet with dropout layers, based on the model and rout
 First, we have to load the following utilities from TorchUncertainty:
 
 - the cli handler: cli_main and argument parser: init_args
-- the model: resnet18, which lies in the torch_uncertainty.models.resnet module
+- the model: LeNet, which lies in torch_uncertainty.models
 - the classification training routine in the torch_uncertainty.training.classification module
 - the datamodule that handles dataloaders: MNISTDataModule, which lies in the torch_uncertainty.datamodule
 - the optimizer wrapper in the torch_uncertainty.optimization_procedures module.
@@ -31,7 +31,7 @@ First, we have to load the following utilities from TorchUncertainty:
 from torch_uncertainty import cli_main, init_args
 from torch_uncertainty.datamodules import MNISTDataModule
 from torch_uncertainty.baselines import ResNet
-from torch_uncertainty.models.resnet import resnet18
+from torch_uncertainty.models.lenet import lenet
 from torch_uncertainty.routines.classification import ClassificationEnsemble
 from torch_uncertainty.optimization_procedures import optim_cifar10_resnet18
 
@@ -57,7 +57,7 @@ from cli_test_helpers import ArgvContext
 # Trainer. We also create the datamodule that handles the MNIST dataset,
 # dataloaders and transforms. Finally, we create the model using the
 # blueprint from torch_uncertainty.models.
-# 
+#
 # It is important to specify the arguments ``version`` as ``mc-dropout``,
 # ``num_estimators`` and the ``dropout_rate`` to use Monte Carlo dropout.
 
@@ -73,22 +73,22 @@ with ArgvContext(
     "--version",
     "mc-dropout",
     "--dropout_rate",
-    "0.4",
+    "0.5",
     "--num_estimators",
-    "11",
+    "16",
 ):
     args = init_args(network=ResNet, datamodule=MNISTDataModule)
 
-net_name = "mc-dropout-resnet18-mnist"
+net_name = "mc-dropout-lenet-mnist"
 
 # datamodule
 args.root = str(root / "data")
 dm = MNISTDataModule(**vars(args))
 
 
-model = resnet18(
-    num_classes=dm.num_classes,
+model = lenet(
     in_channels=dm.num_channels,
+    num_classes=dm.num_classes,
     dropout_rate=args.dropout_rate,
     num_estimators=args.num_estimators,
 )
@@ -103,16 +103,11 @@ model = resnet18(
 # forward passes to perform through the network, as well as all the default
 # arguments.
 
-from torch_uncertainty.transforms import RepeatTarget
-
-format_batch_fn = RepeatTarget(num_repeats=args.num_estimators)
-
 baseline = ClassificationEnsemble(
     num_classes=dm.num_classes,
     model=model,
     loss=nn.CrossEntropyLoss,
     optimization_procedure=optim_cifar10_resnet18,
-    format_batch_fn=format_batch_fn,
     **vars(args),
 )
 
@@ -125,13 +120,15 @@ results = cli_main(baseline, dm, root, net_name, args)
 # %%
 # 6. Testing the Model
 # ~~~~~~~~~~~~~~~~~~~~
-# Now that the model is trained, let's test it on MNIST
+# Now that the model is trained, let's test it on MNIST. Don't forget to call
+# .eval() to enable dropout at inference.
 
 import matplotlib.pyplot as plt
 import torch
 import torchvision
 
 import numpy as np
+
 
 def imshow(img):
     npimg = img.numpy()
@@ -146,9 +143,18 @@ images, labels = next(dataiter)
 imshow(torchvision.utils.make_grid(images[:4, ...]))
 print("Ground truth: ", " ".join(f"{labels[j]}" for j in range(4)))
 
-logits = model(images)
+baseline.eval()
+logits = baseline(images).reshape(16, 128, 10)
+
 probs = torch.nn.functional.softmax(logits, dim=-1)
 
-_, predicted = torch.max(probs, 1)
 
-print("Predicted digits: ", " ".join(f"{predicted[j]}" for j in range(4)))
+for j in range(4):
+    values, predicted = torch.max(probs[:, j], 1)
+    print(
+        f"Predicted digits for the image {j}: ",
+        " ".join([str(image_id.item()) for image_id in predicted]),
+    )
+
+# %% We see that there is some disagreement between the samples of the dropout
+# approximation of the posterior distribution.

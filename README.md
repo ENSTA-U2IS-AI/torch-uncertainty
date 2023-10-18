@@ -51,6 +51,7 @@ A quickstart is available at [torch-uncertainty.github.io/quickstart](https://to
 To date, the following deep learning baselines have been implemented:
 
 - Deep Ensembles
+- MC-Dropout
 - BatchEnsemble
 - Masksembles
 - MIMO
@@ -72,6 +73,7 @@ We provide the following tutorials in our documentation:
 - [Training a Bayesian Neural Network in 3 minutes](https://torch-uncertainty.github.io/auto_tutorials/tutorial_bayesian.html)
 - [Improve Top-label Calibration with Temperature Scaling](https://torch-uncertainty.github.io/auto_tutorials/tutorial_scaler.html)
 - [Deep Evidential Regression on a Toy Example](https://torch-uncertainty.github.io/auto_tutorials/tutorial_der_cubic.html)
+- [Training a LeNet with Monte-Carlo Dropout](https://torch-uncertainty.github.io/auto_tutorials/tutorial_mc_dropout.html)
   
 ## Awesome Uncertainty repositories
 
