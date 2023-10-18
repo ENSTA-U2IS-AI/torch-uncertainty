@@ -2,7 +2,7 @@
 from typing import Type
 
 import torch.nn.functional as F
-from torch import nn
+from torch import Tensor, nn
 
 from ..utils import enable_dropout
 
@@ -15,12 +15,12 @@ __all__ = [
 class WideBasicBlock(nn.Module):
     def __init__(
         self,
-        in_planes,
-        planes,
-        dropout_rate,
-        stride=1,
-        groups=1,
-    ):
+        in_planes: int,
+        planes: int,
+        dropout_rate: float,
+        stride: int = 1,
+        groups: int = 1,
+    ) -> None:
         super().__init__()
         self.conv1 = nn.Conv2d(
             in_planes,
@@ -55,7 +55,7 @@ class WideBasicBlock(nn.Module):
             )
         self.bn2 = nn.BatchNorm2d(planes)
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         out = F.relu(self.bn1(self.dropout(self.conv1(x))))
         out = self.conv2(out)
         out += self.shortcut(x)
@@ -64,6 +64,15 @@ class WideBasicBlock(nn.Module):
 
 
 class _Wide(nn.Module):
+    """WideResNet from `Wide Residual Networks`.
+
+    Note:
+        if `dropout_rate` and `num_estimators` are set, the model will sample
+        from the dropout distribution during inference. If `last_layer_dropout`
+        is set, only the last layer will be sampled from the dropout
+        distribution during inference.
+    """
+
     def __init__(
         self,
         depth: int,
@@ -74,12 +83,12 @@ class _Wide(nn.Module):
         groups: int = 1,
         style: str = "imagenet",
         num_estimators: int = None,
-        enable_last_layer_dropout: bool = False,
-    ):
+        last_layer_dropout: bool = False,
+    ) -> None:
         super().__init__()
         self.in_planes = 16
         self.num_estimators = num_estimators
-        self.enable_last_layer_dropout = enable_last_layer_dropout
+        self.last_layer_dropout = last_layer_dropout
 
         assert (depth - 4) % 6 == 0, "Wide-resnet depth should be 6n+4."
         num_blocks = int((depth - 4) / 6)
@@ -158,7 +167,7 @@ class _Wide(nn.Module):
         dropout_rate: float,
         stride: int,
         groups,
-    ):
+    ) -> nn.Module:
         strides = [stride] + [1] * (int(num_blocks) - 1)
         layers = []
 
@@ -176,13 +185,8 @@ class _Wide(nn.Module):
 
         return nn.Sequential(*layers)
 
-    def forward(self, x):
-        if self.num_estimators is not None:
-            if not self.training:
-                if self.enable_last_layer_dropout is not None:
-                    enable_dropout(self, self.enable_last_layer_dropout)
-            x = x.repeat(self.num_estimators, 1, 1, 1)
-
+    def forward(self, x: Tensor) -> Tensor:
+        x = self.handle_dropout(x)
         out = F.relu(self.bn1(self.conv1(x)))
         out = self.optional_pool(out)
         out = self.layer1(out)
@@ -193,6 +197,14 @@ class _Wide(nn.Module):
         out = self.linear(out)
         return out
 
+    def handle_dropout(self, x: Tensor) -> Tensor:
+        if self.num_estimators is not None:
+            if not self.training:
+                if self.last_layer_dropout is not None:
+                    enable_dropout(self, self.last_layer_dropout)
+            x = x.repeat(self.num_estimators, 1, 1, 1)
+        return x
+
 
 def wideresnet28x10(
     in_channels: int,
@@ -201,7 +213,7 @@ def wideresnet28x10(
     dropout_rate: float = 0.0,
     style: str = "imagenet",
     num_estimators: int = None,
-    enable_last_layer_dropout: bool = False,
+    last_layer_dropout: bool = False,
 ) -> nn.Module:
     """Wide-ResNet-28x10 from `Wide Residual Networks
     <https://arxiv.org/pdf/1605.07146.pdf>`_.
@@ -213,6 +225,10 @@ def wideresnet28x10(
             ``1``.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
+        num_estimators (int, optional): Number of samples to draw from the
+            dropout distribution. Defaults to ``None``.
+        last_layer_dropout (bool, optional): Whether to apply dropout to the
+            last layer during inference. Defaults to ``False``.
 
     Returns:
         _Wide: A Wide-ResNet-28x10.
@@ -226,5 +242,5 @@ def wideresnet28x10(
         groups=groups,
         style=style,
         num_estimators=num_estimators,
-        enable_last_layer_dropout=enable_last_layer_dropout,
+        last_layer_dropout=last_layer_dropout,
     )

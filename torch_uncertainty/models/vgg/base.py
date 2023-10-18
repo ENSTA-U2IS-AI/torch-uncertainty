@@ -36,9 +36,7 @@ class VGG(nn.Module):
             self.num_estimators = model_kwargs.get("num_estimators")
         else:
             self.num_estimators = model_kwargs.pop("num_estimators")
-        self.enable_last_layer_dropout = model_kwargs.pop(
-            "enable_last_layer_dropout", False
-        )
+        self.last_layer_dropout = model_kwargs.pop("last_layer_dropout", False)
         self.model_kwargs = model_kwargs
 
         self.features = self._make_layers(vgg_cfg)
@@ -76,8 +74,8 @@ class VGG(nn.Module):
             and self.linear_layer != PackedLinear
         ):
             if not self.training:
-                if self.enable_last_layer_dropout is not None:
-                    enable_dropout(self, self.enable_last_layer_dropout)
+                if self.last_layer_dropout is not None:
+                    enable_dropout(self, self.last_layer_dropout)
             x = x.repeat(self.num_estimators, 1, 1, 1)
 
         x = self.features(x)

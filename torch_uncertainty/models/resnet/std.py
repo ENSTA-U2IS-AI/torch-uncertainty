@@ -26,7 +26,7 @@ class BasicBlock(nn.Module):
         stride: int = 1,
         dropout_rate: float = 0,
         groups: int = 1,
-    ):
+    ) -> None:
         super(BasicBlock, self).__init__()
 
         self.conv1 = nn.Conv2d(
@@ -85,7 +85,7 @@ class Bottleneck(nn.Module):
         stride: int = 1,
         dropout_rate: float = 0,
         groups: int = 1,
-    ):
+    ) -> None:
         super(Bottleneck, self).__init__()
 
         self.conv1 = nn.Conv2d(
@@ -190,6 +190,15 @@ class Bottleneck(nn.Module):
 
 
 class _ResNet(nn.Module):
+    """ResNet from `Deep Residual Learning for Image Recognition`.
+
+    Note:
+        if `dropout_rate` and `num_estimators` are set, the model will sample
+        from the dropout distribution during inference. If `last_layer_dropout`
+        is set, only the last layer will be sampled from the dropout
+        distribution during inference.
+    """
+
     def __init__(
         self,
         block: Type[Union[BasicBlock, Bottleneck]],
@@ -200,14 +209,14 @@ class _ResNet(nn.Module):
         groups: int,
         style: str = "imagenet",
         num_estimators: int = None,
-        enable_last_layer_dropout: bool = False,
+        last_layer_dropout: bool = False,
     ) -> None:
         super().__init__()
 
         self.in_planes = 64
         block_planes = self.in_planes
         self.num_estimators = num_estimators
-        self.enable_last_layer_dropout = enable_last_layer_dropout
+        self.last_layer_dropout = last_layer_dropout
 
         if style == "imagenet":
             self.conv1 = nn.Conv2d(
@@ -305,12 +314,7 @@ class _ResNet(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x: Tensor) -> Tensor:
-        if self.num_estimators is not None:
-            if not self.training:
-                if self.enable_last_layer_dropout is not None:
-                    enable_dropout(self, self.enable_last_layer_dropout)
-            x = x.repeat(self.num_estimators, 1, 1, 1)
-
+        x = self.handle_dropout(x)
         out = F.relu(self.bn1(self.conv1(x)))
         out = self.optional_pool(out)
         out = self.layer1(out)
@@ -322,6 +326,14 @@ class _ResNet(nn.Module):
         out = self.linear(out)
         return out
 
+    def handle_dropout(self, x: Tensor) -> Tensor:
+        if self.num_estimators is not None:
+            if not self.training:
+                if self.last_layer_dropout is not None:
+                    enable_dropout(self, self.last_layer_dropout)
+            x = x.repeat(self.num_estimators, 1, 1, 1)
+        return x
+
 
 def resnet18(
     in_channels: int,
@@ -330,7 +342,7 @@ def resnet18(
     groups: int = 1,
     style: str = "imagenet",
     num_estimators: int = None,
-    enable_last_layer_dropout: bool = False,
+    last_layer_dropout: bool = False,
 ) -> _ResNet:
     """ResNet-18 from `Deep Residual Learning for Image Recognition
     <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -342,6 +354,10 @@ def resnet18(
         groups (int): Number of groups in convolutions. Defaults to 1.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
+        num_estimators (int, optional): Number of samples to draw from the
+            dropout distribution. Defaults to ``None``.
+        last_layer_dropout (bool, optional): Whether to apply dropout to the
+            last layer during inference. Defaults to ``False``.
 
     Returns:
         _ResNet: A ResNet-18.
@@ -355,7 +371,7 @@ def resnet18(
         groups=groups,
         style=style,
         num_estimators=num_estimators,
-        enable_last_layer_dropout=enable_last_layer_dropout,
+        last_layer_dropout=last_layer_dropout,
     )
 
 
@@ -366,7 +382,7 @@ def resnet34(
     groups: int = 1,
     style: str = "imagenet",
     num_estimators: int = None,
-    enable_last_layer_dropout: bool = False,
+    last_layer_dropout: bool = False,
 ) -> _ResNet:
     """ResNet-34 from `Deep Residual Learning for Image Recognition
     <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -378,6 +394,10 @@ def resnet34(
         groups (int): Number of groups in convolutions. Defaults to 1.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
+        num_estimators (int, optional): Number of samples to draw from the
+            dropout distribution. Defaults to ``None``.
+        last_layer_dropout (bool, optional): Whether to apply dropout to the
+            last layer during inference. Defaults to ``False``.
 
     Returns:
         _ResNet: A ResNet-34.
@@ -391,7 +411,7 @@ def resnet34(
         groups=groups,
         style=style,
         num_estimators=num_estimators,
-        enable_last_layer_dropout=enable_last_layer_dropout,
+        last_layer_dropout=last_layer_dropout,
     )
 
 
@@ -402,7 +422,7 @@ def resnet50(
     groups: int = 1,
     style: str = "imagenet",
     num_estimators: int = None,
-    enable_last_layer_dropout: bool = False,
+    last_layer_dropout: bool = False,
 ) -> _ResNet:
     """ResNet-50 from `Deep Residual Learning for Image Recognition
     <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -414,6 +434,10 @@ def resnet50(
         groups (int): Number of groups in convolutions. Defaults to 1.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
+        num_estimators (int, optional): Number of samples to draw from the
+            dropout distribution. Defaults to ``None``.
+        last_layer_dropout (bool, optional): Whether to apply dropout to the
+            last layer during inference. Defaults to ``False``.
 
     Returns:
         _ResNet: A ResNet-50.
@@ -427,7 +451,7 @@ def resnet50(
         groups=groups,
         style=style,
         num_estimators=num_estimators,
-        enable_last_layer_dropout=enable_last_layer_dropout,
+        last_layer_dropout=last_layer_dropout,
     )
 
 
@@ -438,7 +462,7 @@ def resnet101(
     groups: int = 1,
     style: str = "imagenet",
     num_estimators: int = None,
-    enable_last_layer_dropout: bool = False,
+    last_layer_dropout: bool = False,
 ) -> _ResNet:
     """ResNet-101 from `Deep Residual Learning for Image Recognition
     <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -450,6 +474,10 @@ def resnet101(
         groups (int): Number of groups in convolutions. Defaults to 1.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
+        num_estimators (int, optional): Number of samples to draw from the
+            dropout distribution. Defaults to ``None``.
+        last_layer_dropout (bool, optional): Whether to apply dropout to the
+            last layer during inference. Defaults to ``False``.
 
     Returns:
         _ResNet: A ResNet-101.
@@ -463,7 +491,7 @@ def resnet101(
         groups=groups,
         style=style,
         num_estimators=num_estimators,
-        enable_last_layer_dropout=enable_last_layer_dropout,
+        last_layer_dropout=last_layer_dropout,
     )
 
 
@@ -474,7 +502,7 @@ def resnet152(
     groups: int = 1,
     style: str = "imagenet",
     num_estimators: int = None,
-    enable_last_layer_dropout: bool = False,
+    last_layer_dropout: bool = False,
 ) -> _ResNet:
     """ResNet-152 from `Deep Residual Learning for Image Recognition
     <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -487,6 +515,10 @@ def resnet152(
             ``1``.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
+        num_estimators (int, optional): Number of samples to draw from the
+            dropout distribution. Defaults to ``None``.
+        last_layer_dropout (bool, optional): Whether to apply dropout to the
+            last layer during inference. Defaults to ``False``.
 
     Returns:
         _ResNet: A ResNet-152.
@@ -500,5 +532,5 @@ def resnet152(
         groups=groups,
         style=style,
         num_estimators=num_estimators,
-        enable_last_layer_dropout=enable_last_layer_dropout,
+        last_layer_dropout=last_layer_dropout,
     )
