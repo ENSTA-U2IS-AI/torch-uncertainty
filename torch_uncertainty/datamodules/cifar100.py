@@ -151,14 +151,16 @@ class CIFAR100DataModule(LightningDataModule):
                 download=False,
                 transform=self.transform_train,
             )
-            self.train, self.val = random_split(
-                full,
-                [
-                    1 - self.val_split,
-                    self.val_split,
-                ],
-            )
-            if self.val_split == 0:
+            if self.val_split:
+                self.train, self.val = random_split(
+                    full,
+                    [
+                        1 - self.val_split,
+                        self.val_split,
+                    ],
+                )
+            else:
+                self.train = full
                 self.val = self.dataset(
                     self.root,
                     train=False,

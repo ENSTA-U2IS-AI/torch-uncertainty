@@ -18,6 +18,9 @@ class TestELBOLoss:
         criterion = nn.BCEWithLogitsLoss()
 
         with pytest.raises(ValueError):
+            ELBOLoss(model, nn.BCEWithLogitsLoss, kl_weight=1, num_samples=1)
+
+        with pytest.raises(ValueError):
             ELBOLoss(model, criterion, kl_weight=-1, num_samples=1)
 
         with pytest.raises(ValueError):
