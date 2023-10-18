@@ -6,7 +6,7 @@ from einops import rearrange
 from torch import Tensor, nn
 
 from ...layers.packed import PackedConv2d, PackedLinear
-from ..utils import enable_dropout
+from ..utils import toggle_dropout
 
 
 # fmt: on
@@ -137,7 +137,7 @@ class VGG(nn.Module):
         if self.num_estimators is not None:
             if not self.training:
                 if self.last_layer_dropout is not None:
-                    enable_dropout(self, self.last_layer_dropout)
+                    toggle_dropout(self, self.last_layer_dropout)
                 x = x.repeat(self.num_estimators, 1, 1, 1)
         return x
 

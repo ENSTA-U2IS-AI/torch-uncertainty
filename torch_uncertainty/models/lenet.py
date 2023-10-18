@@ -7,7 +7,7 @@ from torch import Tensor, nn
 
 from ..layers.bayesian import BayesConv2d, BayesLinear
 from ..layers.packed import PackedConv2d, PackedLinear
-from .utils import StochasticModel, enable_dropout
+from .utils import StochasticModel, toggle_dropout
 
 # fmt: on
 __all__ = ["lenet", "packed_lenet", "bayesian_lenet"]
@@ -73,7 +73,7 @@ class _LeNet(nn.Module):
         if self.num_estimators is not None:
             if not self.training:
                 if self.last_layer_dropout is not None:
-                    enable_dropout(self, self.last_layer_dropout)
+                    toggle_dropout(self, self.last_layer_dropout)
                 x = x.repeat(self.num_estimators, 1, 1, 1)
         return x
 

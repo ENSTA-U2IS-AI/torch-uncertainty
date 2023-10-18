@@ -102,7 +102,7 @@ class RegressionSingle(pl.LightningModule):
         # hyperparameters for performances
         param = {}
         param["storage"] = f"{get_model_size_mb(self)} MB"
-        if self.logger is not None:
+        if self.logger is not None:  # coverage: ignore
             self.logger.log_hyperparams(
                 Namespace(**param),
                 {

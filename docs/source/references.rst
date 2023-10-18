@@ -1,7 +1,7 @@
 References
 ==========
 
-Please find an exhaustive list of the references of the models, metrics, and datasets used in this library through the sections below.
+Please find an exhaustive list of the references of the models, metrics, and datasets used in this library in the sections below.
 
 Uncertainty Models
 ------------------

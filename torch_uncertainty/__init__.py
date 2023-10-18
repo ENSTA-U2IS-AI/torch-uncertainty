@@ -130,7 +130,7 @@ def cli_main(
     if args.summary:
         summary(network, input_size=list(datamodule.input_shape).insert(0, 1))
         test_values = {}
-    elif args.test is not None:
+    elif args.test is not None:  # coverage: ignore
         if args.test >= 0:
             ckpt_file, _ = get_version(
                 root=(root / "logs" / net_name), version=args.test

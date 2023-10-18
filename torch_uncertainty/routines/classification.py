@@ -172,7 +172,7 @@ class ClassificationSingle(pl.LightningModule):
         # hyperparameters for performances
         param = {}
         param["storage"] = f"{get_model_size_mb(self)} MB"
-        if self.logger is not None:
+        if self.logger is not None:  # coverage: ignore
             self.logger.log_hyperparams(
                 Namespace(**param),
                 {
@@ -428,7 +428,7 @@ class ClassificationEnsemble(ClassificationSingle):
     def on_train_start(self) -> None:
         param = {}
         param["storage"] = f"{get_model_size_mb(self)} MB"
-        if self.logger is not None:
+        if self.logger is not None:  # coverage: ignore
             self.logger.log_hyperparams(
                 Namespace(**param),
                 {

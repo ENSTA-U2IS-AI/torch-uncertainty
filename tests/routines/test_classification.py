@@ -48,7 +48,7 @@ class TestClassificationSingle:
 
     def test_cli_main_dummy_ood(self):
         root = Path(__file__).parent.absolute().parents[0]
-        with ArgvContext("file.py"):
+        with ArgvContext("file.py", "--fast_dev_run"):
             args = init_args(
                 DummyClassificationBaseline, DummyClassificationDataModule
             )

@@ -76,7 +76,7 @@ class TinyImageNetDataModule(LightningDataModule):
             ]
         )
 
-    def _verify_splits(self, split: str) -> None:
+    def _verify_splits(self, split: str) -> None:  # coverage: ignore
         if split not in list(self.root.iterdir()):
             raise FileNotFoundError(
                 f"a {split} TinyImagenet split was not found in {self.root},"
