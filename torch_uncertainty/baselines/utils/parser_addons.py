@@ -19,13 +19,6 @@ def add_resnet_specific_args(parser: ArgumentParser) -> ArgumentParser:
         default=0.0,
         help="Dropout rate",
     )
-    # parser.add_argument(
-    #     "--style",
-    #     type=str,
-    #     choices=style_choices,
-    #     default="imagenet",
-    #     help=f"Variation of ResNet. Choose among: {style_choices}",
-    # )
     parser.add_argument(
         "--groups",
         type=int,
@@ -52,7 +45,7 @@ def add_vgg_specific_args(parser: ArgumentParser) -> ArgumentParser:
         help="Number of groups",
     )
     parser.add_argument(
-        "--dropout",
+        "--dropout_rate",
         type=float,
         default=0.1,
         help="Dropout rate",
@@ -62,13 +55,12 @@ def add_vgg_specific_args(parser: ArgumentParser) -> ArgumentParser:
 
 def add_wideresnet_specific_args(parser: ArgumentParser) -> ArgumentParser:
     # style_choices = ["cifar", "imagenet"]
-    # parser.add_argument(
-    #     "--style",
-    #     type=str,
-    #     choices=style_choices,
-    #     default="imagenet",
-    #     help=f"Variation of ResNet. Choose among: {style_choices}",
-    # )
+    parser.add_argument(
+        "--dropout_rate",
+        type=float,
+        default=0.3,
+        help="Dropout rate",
+    )
     parser.add_argument(
         "--groups",
         type=int,
@@ -80,7 +72,7 @@ def add_wideresnet_specific_args(parser: ArgumentParser) -> ArgumentParser:
 
 def add_mlp_specific_args(parser: ArgumentParser) -> ArgumentParser:
     parser.add_argument(
-        "--dropout",
+        "--dropout_rate",
         type=float,
         default=0.1,
         help="Dropout rate",

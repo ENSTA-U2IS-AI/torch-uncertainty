@@ -202,7 +202,7 @@ class _Wide(nn.Module):
             if not self.training:
                 if self.last_layer_dropout is not None:
                     enable_dropout(self, self.last_layer_dropout)
-            x = x.repeat(self.num_estimators, 1, 1, 1)
+                x = x.repeat(self.num_estimators, 1, 1, 1)
         return x
 
 

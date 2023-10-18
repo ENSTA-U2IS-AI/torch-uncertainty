@@ -8,7 +8,7 @@ class TestMonteCarloDropout:
     """Testing the ResNet std class."""
 
     def test_resnet(self):
-        resnet34(1, 10, 0.5, num_estimators=10)
+        resnet34(1, 10, dropout_rate=0.5, num_estimators=10)
 
         model = resnet34(1, 10, 1)
         model.eval()
@@ -20,9 +20,9 @@ class TestMonteCarloDropout:
                 assert m.training
 
     def test_vgg(self):
-        vgg11(1, 10, dropout=0.5, num_estimators=10)
+        vgg11(1, 10, dropout_rate=0.5, num_estimators=10)
 
-        model = vgg11(1, 10, dropout=0.5, num_estimators=10)
+        model = vgg11(1, 10, dropout_rate=0.5, num_estimators=10)
         model.eval()
 
         enable_dropout(model)

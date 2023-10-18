@@ -168,11 +168,11 @@ class ResNet:
         optimization_procedure: Any,
         version: Literal[
             "vanilla",
+            "mc-dropout",
             "packed",
             "batched",
             "masked",
             "mimo",
-            "mc-dropout",
         ],
         arch: int,
         style: str = "imagenet",
@@ -207,6 +207,13 @@ class ResNet:
             params.update(
                 {
                     "dropout_rate": dropout_rate,
+                }
+            )
+        elif version == "mc-dropout":
+            params.update(
+                {
+                    "dropout_rate": dropout_rate,
+                    "num_estimators": num_estimators,
                 }
             )
         elif version == "packed":
@@ -245,14 +252,6 @@ class ResNet:
                 rho=rho,
                 batch_repeat=batch_repeat,
             )
-        elif version == "mc-dropout":
-            params.update(
-                {
-                    "dropout_rate": dropout_rate,
-                    "num_estimators": num_estimators,
-                }
-            )
-            format_batch_fn = RepeatTarget(num_repeats=num_estimators)
 
         model = cls.versions[version][cls.archs.index(arch)](**params)
         kwargs.update(params)

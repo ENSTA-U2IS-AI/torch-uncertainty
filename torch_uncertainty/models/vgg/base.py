@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Type, Union
 
 import torch
 from einops import rearrange
-from torch import nn
+from torch import Tensor, nn
 
 from ...layers.packed import PackedConv2d, PackedLinear
 from ..utils import enable_dropout
@@ -20,7 +20,7 @@ class VGG(nn.Module):
         conv2d_layer: Type[nn.Module],
         norm: Type[nn.Module],
         groups: int,
-        dropout: float,
+        dropout_rate: float,
         style: str,
         **model_kwargs: Any,
     ) -> None:
@@ -58,41 +58,34 @@ class VGG(nn.Module):
         self.cls_head_layers = [
             linear_layer(512 * kernel_surface, 4096, **model_kwargs),
             nn.ReLU(True),
-            nn.Dropout(p=dropout),
+            nn.Dropout(p=dropout_rate),
             linear_layer(4096, 4096, **model_kwargs),
             nn.ReLU(True),
-            nn.Dropout(p=dropout),
+            nn.Dropout(p=dropout_rate),
             last_linear,
         ]
 
         self.cls_head = nn.Sequential(*self.cls_head_layers)
         self._init_weights()
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        if (
-            self.num_estimators is not None
-            and self.linear_layer != PackedLinear
-        ):
-            if not self.training:
-                if self.last_layer_dropout is not None:
-                    enable_dropout(self, self.last_layer_dropout)
-            x = x.repeat(self.num_estimators, 1, 1, 1)
+    def _init_weights(self) -> None:
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d) or isinstance(m, PackedConv2d):
+                nn.init.kaiming_normal_(
+                    m.weight, mode="fan_out", nonlinearity="relu"
+                )
+                if m.bias is not None:  # coverage: ignore
+                    nn.init.constant_(m.bias, 0)
+            elif isinstance(m, nn.BatchNorm2d):  # coverage: ignore
+                nn.init.constant_(m.weight, 1)
+                if m.bias is not None:
+                    nn.init.constant_(m.bias, 0)
+            elif isinstance(m, nn.Linear) or isinstance(m, PackedLinear):
+                nn.init.normal_(m.weight, 0, 0.01)
+                if m.bias is not None:  # coverage: ignore
+                    nn.init.constant_(m.bias, 0)
 
-        x = self.features(x)
-
-        if self.linear_layer == PackedLinear:
-            x = rearrange(
-                x,
-                "e (m c) h w -> (m e) c h w",
-                m=self.model_kwargs["num_estimators"],
-            )
-        x = self.avgpool(x)
-        x = torch.flatten(x, 1)
-
-        x = self.cls_head(x)
-        return x
-
-    def _make_layers(self, cfg) -> nn.Sequential:
+    def _make_layers(self, cfg: List) -> nn.Sequential:
         layers: List[nn.Module] = []
         in_channels = self.in_channels
         for i, v in enumerate(cfg):
@@ -122,22 +115,31 @@ class VGG(nn.Module):
                 in_channels = v
         return nn.Sequential(*layers)
 
-    def _init_weights(self):
-        for m in self.modules():
-            if isinstance(m, nn.Conv2d) or isinstance(m, PackedConv2d):
-                nn.init.kaiming_normal_(
-                    m.weight, mode="fan_out", nonlinearity="relu"
-                )
-                if m.bias is not None:  # coverage: ignore
-                    nn.init.constant_(m.bias, 0)
-            elif isinstance(m, nn.BatchNorm2d):  # coverage: ignore
-                nn.init.constant_(m.weight, 1)
-                if m.bias is not None:
-                    nn.init.constant_(m.bias, 0)
-            elif isinstance(m, nn.Linear) or isinstance(m, PackedLinear):
-                nn.init.normal_(m.weight, 0, 0.01)
-                if m.bias is not None:  # coverage: ignore
-                    nn.init.constant_(m.bias, 0)
+    def forward(self, x: Tensor) -> Tensor:
+        if self.linear_layer != PackedLinear:
+            x = self.handle_dropout(x)
+
+        x = self.features(x)
+
+        if self.linear_layer == PackedLinear:
+            x = rearrange(
+                x,
+                "e (m c) h w -> (m e) c h w",
+                m=self.model_kwargs["num_estimators"],
+            )
+        x = self.avgpool(x)
+        x = torch.flatten(x, 1)
+
+        x = self.cls_head(x)
+        return x
+
+    def handle_dropout(self, x: Tensor) -> Tensor:
+        if self.num_estimators is not None:
+            if not self.training:
+                if self.last_layer_dropout is not None:
+                    enable_dropout(self, self.last_layer_dropout)
+                x = x.repeat(self.num_estimators, 1, 1, 1)
+        return x
 
 
 def _vgg(
@@ -148,7 +150,7 @@ def _vgg(
     conv2d_layer: Type[nn.Module] = nn.Conv2d,
     norm: Type[nn.Module] = nn.Identity,
     groups: int = 1,
-    dropout: float = 0.5,
+    dropout_rate: float = 0.5,
     style: str = "imagenet",
     **model_kwargs: Any,
 ) -> VGG:
@@ -160,7 +162,7 @@ def _vgg(
         conv2d_layer,
         norm,
         groups,
-        dropout,
+        dropout_rate,
         style,
         **model_kwargs,
     )

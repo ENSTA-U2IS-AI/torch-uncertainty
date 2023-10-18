@@ -24,7 +24,7 @@ def packed_vgg11(
     gamma: int,
     norm: Type[nn.Module] = nn.Identity,
     groups: int = 1,
-    dropout: float = 0.5,
+    dropout_rate: float = 0.5,
     style: str = "imagenet",
 ) -> VGG:
     return _vgg(
@@ -35,7 +35,7 @@ def packed_vgg11(
         conv2d_layer=PackedConv2d,
         norm=norm,
         groups=groups,
-        dropout=dropout,
+        dropout_rate=dropout_rate,
         style=style,
         alpha=alpha,
         num_estimators=num_estimators,
@@ -51,7 +51,7 @@ def packed_vgg13(
     gamma: int,
     norm: Type[nn.Module] = nn.Identity,
     groups: int = 1,
-    dropout: float = 0.5,
+    dropout_rate: float = 0.5,
     style: str = "imagenet",
 ) -> VGG:
     return _vgg(
@@ -62,7 +62,7 @@ def packed_vgg13(
         conv2d_layer=PackedConv2d,
         norm=norm,
         groups=groups,
-        dropout=dropout,
+        dropout_rate=dropout_rate,
         style=style,
         alpha=alpha,
         num_estimators=num_estimators,
@@ -78,7 +78,7 @@ def packed_vgg16(
     gamma: int,
     norm: Type[nn.Module] = nn.Identity,
     groups: int = 1,
-    dropout: float = 0.5,
+    dropout_rate: float = 0.5,
     style: str = "imagenet",
 ) -> VGG:
     return _vgg(
@@ -89,7 +89,7 @@ def packed_vgg16(
         conv2d_layer=PackedConv2d,
         norm=norm,
         groups=groups,
-        dropout=dropout,
+        dropout_rate=dropout_rate,
         style=style,
         alpha=alpha,
         num_estimators=num_estimators,
@@ -105,7 +105,7 @@ def packed_vgg19(
     gamma: int,
     norm: Type[nn.Module] = nn.Identity,
     groups: int = 1,
-    dropout: float = 0.5,
+    dropout_rate: float = 0.5,
     style: str = "imagenet",
 ) -> VGG:  # coverage: ignore
     return _vgg(
@@ -116,7 +116,7 @@ def packed_vgg19(
         conv2d_layer=PackedConv2d,
         norm=norm,
         groups=groups,
-        dropout=dropout,
+        dropout_rate=dropout_rate,
         style=style,
         alpha=alpha,
         num_estimators=num_estimators,
