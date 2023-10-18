@@ -210,7 +210,7 @@ def wideresnet28x10(
     in_channels: int,
     num_classes: int,
     groups: int = 1,
-    dropout_rate: float = 0.0,
+    dropout_rate: float = 0.3,
     style: str = "imagenet",
     num_estimators: int = None,
     last_layer_dropout: bool = False,
