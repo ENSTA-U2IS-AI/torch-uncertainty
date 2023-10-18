@@ -568,6 +568,11 @@ class ClassificationEnsemble(ClassificationSingle):
 
         if self.ood_detection:
             self.log_dict(
+                self.test_ood_metrics.compute(),
+            )
+            self.test_ood_metrics.reset()
+
+            self.log_dict(
                 self.test_ood_ens_metrics.compute(),
             )
             self.test_ood_ens_metrics.reset()
