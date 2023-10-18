@@ -4,6 +4,29 @@ from torch_uncertainty.models.wideresnet.batched import batched_wideresnet28x10
 from torch_uncertainty.models.wideresnet.masked import masked_wideresnet28x10
 from torch_uncertainty.models.wideresnet.mimo import mimo_wideresnet28x10
 from torch_uncertainty.models.wideresnet.packed import packed_wideresnet28x10
+from torch_uncertainty.models.wideresnet.std import wideresnet28x10
+
+
+class TestMonteCarloDropoutResnet:
+    """Testing the WideResNet MC Dropout."""
+
+    def test_main(self):
+        wideresnet28x10(
+            in_channels=1,
+            num_classes=2,
+            groups=1,
+            style="imagenet",
+            num_estimators=3,
+            last_layer_dropout=True,
+        )
+        wideresnet28x10(
+            in_channels=1,
+            num_classes=2,
+            groups=1,
+            style="imagenet",
+            num_estimators=3,
+            last_layer_dropout=False,
+        )
 
 
 class TestPackedResnet:

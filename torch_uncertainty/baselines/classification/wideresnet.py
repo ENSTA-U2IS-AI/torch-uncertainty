@@ -48,16 +48,18 @@ class WideResNet:
             Determines which Wide-ResNet version to use:
 
             - ``"vanilla"``: original Wide-ResNet
+            - ``"mc-dropout"``: Monte Carlo Dropout Wide-ResNet
             - ``"packed"``: Packed-Ensembles Wide-ResNet
             - ``"batched"``: BatchEnsemble Wide-ResNet
             - ``"masked"``: Masksemble Wide-ResNet
-            - ``"mimo"``: MIMO ResNet
+            - ``"mimo"``: MIMO Wide-ResNet
 
         style (bool, optional): (str, optional): Which ResNet style to use.
         Defaults to ``imagenet``.
         num_estimators (int, optional): Number of estimators in the ensemble.
             Only used if :attr:`version` is either ``"packed"``, ``"batched"``
             or ``"masked"`` Defaults to ``None``.
+        dropout_rate (float, optional): Dropout rate. Defaults to ``0.0``.
         groups (int, optional): Number of groups in convolutions. Defaults to
             ``1``.
         scale (float, optional): Expansion factor affecting the width of the
@@ -95,9 +97,10 @@ class WideResNet:
             evaluation.
     """
     single = ["vanilla"]
-    ensemble = ["packed", "batched", "masked", "mimo"]
+    ensemble = ["packed", "batched", "masked", "mimo", "mc-dropout"]
     versions = {
         "vanilla": [wideresnet28x10],
+        "mc-dropout": [wideresnet28x10],
         "packed": [packed_wideresnet28x10],
         "batched": [batched_wideresnet28x10],
         "masked": [masked_wideresnet28x10],
@@ -113,6 +116,7 @@ class WideResNet:
         version: Literal["vanilla", "packed", "batched", "masked", "mimo"],
         style: str = "imagenet",
         num_estimators: Optional[int] = None,
+        dropout_rate: float = 0.0,
         groups: Optional[int] = None,
         scale: Optional[float] = None,
         alpha: Optional[int] = None,
@@ -139,7 +143,20 @@ class WideResNet:
             raise ValueError(f"Unknown version: {version}")
 
         # version specific params
-        if version == "packed":
+        if version == "vanilla":
+            params.update(
+                {
+                    "dropout_rate": dropout_rate,
+                }
+            )
+        elif version == "mc-dropout":
+            params.update(
+                {
+                    "dropout_rate": dropout_rate,
+                    "num_estimators": num_estimators,
+                }
+            )
+        elif version == "packed":
             params.update(
                 {
                     "num_estimators": num_estimators,
