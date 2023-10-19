@@ -51,7 +51,6 @@ class VGG:
             - ``"vanilla"``: original VGG
             - ``"mc-dropout"``: Monte Carlo Dropout VGG
             - ``"packed"``: Packed-Ensembles VGG
-            - ``"batched"``: BatchEnsemble VGG
 
         arch (int):
             Determines which VGG architecture to use:
@@ -92,7 +91,7 @@ class VGG:
     """
 
     single = ["vanilla"]
-    ensemble = ["mc-dropout", "packed", "batched"]
+    ensemble = ["mc-dropout", "packed"]
     versions = {
         "vanilla": [vgg11, vgg13, vgg16, vgg19],
         "mc-dropout": [vgg11, vgg13, vgg16, vgg19],
@@ -174,7 +173,7 @@ class VGG:
                 use_logits=use_logits,
                 **kwargs,
             )
-        elif version in cls.ensemble:
+        else:  # version in cls.ensemble
             return ClassificationEnsemble(
                 model=model,
                 loss=loss,
@@ -185,10 +184,6 @@ class VGG:
                 use_mi=use_mi,
                 use_variation_ratio=use_variation_ratio,
                 **kwargs,
-            )
-        else:
-            raise ValueError(
-                f"{version} is not in {cls.single} nor {cls.ensemble}."
             )
 
     @classmethod

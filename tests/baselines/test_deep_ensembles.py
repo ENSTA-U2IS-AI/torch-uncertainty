@@ -23,3 +23,18 @@ class TestDeepEnsembles:
         )
         parser = ArgumentParser()
         DeepEnsembles.add_model_specific_args(parser)
+
+        # DeepEnsembles(
+        #     task="regression",
+        #     log_path=".",
+        #     checkpoint_ids=[],
+        #     backbone="resnet",
+        #     in_channels=3,
+        #     num_classes=10,
+        #     version="vanilla",
+        #     arch=18,
+        #     style="cifar",
+        #     groups=1,
+        # )
+        # parser = ArgumentParser()
+        # DeepEnsembles.add_model_specific_args(parser)

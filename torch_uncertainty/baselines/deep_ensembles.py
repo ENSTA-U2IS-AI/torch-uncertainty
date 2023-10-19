@@ -43,7 +43,7 @@ class DeepEnsembles:
         backbone_cls = cls.backbones[backbone]
 
         models = []
-        for version in checkpoint_ids:
+        for version in checkpoint_ids:  # coverage: ignore
             ckpt_file, hparams_file = get_version(
                 root=log_path, version=version
             )

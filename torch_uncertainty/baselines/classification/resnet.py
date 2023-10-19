@@ -267,7 +267,7 @@ class ResNet:
                 use_logits=use_logits,
                 **kwargs,
             )
-        elif version in cls.ensemble:
+        else:  # version in cls.ensemble
             return ClassificationEnsemble(
                 model=model,
                 loss=loss,
@@ -278,10 +278,6 @@ class ResNet:
                 use_mi=use_mi,
                 use_variation_ratio=use_variation_ratio,
                 **kwargs,
-            )
-        else:
-            raise ValueError(
-                f"{version} is not in {cls.single} nor {cls.ensemble}."
             )
 
     @classmethod

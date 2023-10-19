@@ -113,7 +113,9 @@ class WideResNet:
         in_channels: int,
         loss: Type[nn.Module],
         optimization_procedure: Any,
-        version: Literal["vanilla", "packed", "batched", "masked", "mimo"],
+        version: Literal[
+            "vanilla", "mc-dropout", "packed", "batched", "masked", "mimo"
+        ],
         style: str = "imagenet",
         num_estimators: Optional[int] = None,
         dropout_rate: float = 0.0,
@@ -205,7 +207,7 @@ class WideResNet:
                 use_logits=use_logits,
                 **kwargs,
             )
-        elif version in cls.ensemble:
+        else:  # version in cls.ensemble
             return ClassificationEnsemble(
                 model=model,
                 loss=loss,
@@ -216,10 +218,6 @@ class WideResNet:
                 use_mi=use_mi,
                 use_variation_ratio=use_variation_ratio,
                 **kwargs,
-            )
-        else:
-            raise ValueError(
-                f"{version} is not in {cls.single} nor {cls.ensemble}."
             )
 
     @classmethod
