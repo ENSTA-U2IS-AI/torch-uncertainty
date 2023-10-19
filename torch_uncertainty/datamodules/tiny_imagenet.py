@@ -51,6 +51,10 @@ class TinyImageNetDataModule(LightningDataModule):
             self.ood_dataset = SVHN
         elif ood_ds == "textures":
             self.ood_dataset = DTD
+        else:
+            raise ValueError(
+                f"OOD dataset {ood_ds} not supported for TinyImageNet."
+            )
 
         if rand_augment_opt is not None:
             main_transform = rand_augment_transform(rand_augment_opt, {})

@@ -1,5 +1,6 @@
 # fmt:off
 from argparse import ArgumentParser
+from pathlib import Path
 
 import pytest
 from torchvision.datasets import CIFAR100
@@ -44,6 +45,8 @@ class TestCIFAR100DataModule:
         dm.test_dataloader()
 
         args.test_alt = "c"
+        args.cutout = 0
+        args.root = Path(args.root)
         dm = CIFAR100DataModule(**vars(args))
         dm.dataset = DummyClassificationDataset
         with pytest.raises(ValueError):
@@ -59,6 +62,8 @@ class TestCIFAR100DataModule:
         dm.setup()
         dm.setup("test")
         dm.train_dataloader()
+        with pytest.raises(ValueError):
+            dm.setup("other")
 
         args.num_dataloaders = 1
         args.cutout = 8
