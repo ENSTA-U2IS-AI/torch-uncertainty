@@ -21,6 +21,7 @@ class TestStandardBaseline:
             loss=nn.CrossEntropyLoss,
             optimization_procedure=optim_cifar10_resnet18,
             version="mc-dropout",
+            num_estimators=4,
             arch=18,
             style="cifar",
             groups=1,
@@ -42,6 +43,7 @@ class TestStandardWideBaseline:
             loss=nn.CrossEntropyLoss,
             optimization_procedure=optim_cifar10_wideresnet,
             version="mc-dropout",
+            num_estimators=4,
             style="cifar",
             groups=1,
         )
@@ -62,6 +64,7 @@ class TestStandardVGGBaseline:
             loss=nn.CrossEntropyLoss,
             optimization_procedure=optim_cifar10_resnet18,
             version="mc-dropout",
+            num_estimators=4,
             arch=11,
             groups=1,
         )

@@ -22,7 +22,7 @@ class TestMNISTDataModule:
         # Simulate that cutout is set to 16
         args = parser.parse_args("")
         args.cutout = 16
-
+        args.val_split = 0.1
         dm = MNISTDataModule(**vars(args))
 
         assert dm.dataset == MNIST
@@ -31,6 +31,7 @@ class TestMNISTDataModule:
         args.root = str(args.root)
         args.ood_ds = "not"
         args.cutout = 0
+        args.val_split = 0
         dm = MNISTDataModule(**vars(args))
         assert isinstance(dm.transform_train.transforms[0], nn.Identity)
 
