@@ -25,6 +25,7 @@ from ...routines.classification import (
     ClassificationEnsemble,
     ClassificationSingle,
 )
+from ...transforms import RepeatTarget
 from ..utils.parser_addons import (
     add_packed_specific_args,
     add_vgg_specific_args,
@@ -48,8 +49,8 @@ class VGG:
             Determines which VGG version to use:
 
             - ``"vanilla"``: original VGG
+            - ``"mc-dropout"``: Monte Carlo Dropout VGG
             - ``"packed"``: Packed-Ensembles VGG
-            - ``"batched"``: BatchEnsemble VGG
 
         arch (int):
             Determines which VGG architecture to use:
@@ -90,9 +91,10 @@ class VGG:
     """
 
     single = ["vanilla"]
-    ensemble = ["packed", "batched"]
+    ensemble = ["mc-dropout", "packed"]
     versions = {
         "vanilla": [vgg11, vgg13, vgg16, vgg19],
+        "mc-dropout": [vgg11, vgg13, vgg16, vgg19],
         "packed": [
             packed_vgg11,
             packed_vgg13,
@@ -108,9 +110,10 @@ class VGG:
         in_channels: int,
         loss: Type[nn.Module],
         optimization_procedure: Any,
-        version: Literal["vanilla", "packed"],
+        version: Literal["vanilla", "mc-dropout", "packed"],
         arch: int,
         num_estimators: Optional[int] = None,
+        dropout_rate: float = 0.0,
         style: str = "imagenet",
         groups: int = 1,
         alpha: Optional[float] = None,
@@ -131,7 +134,22 @@ class VGG:
         if version not in cls.versions.keys():
             raise ValueError(f"Unknown version: {version}")
 
-        if version == "packed":
+        format_batch_fn = nn.Identity()
+
+        if version == "vanilla":
+            params.update(
+                {
+                    "dropout_rate": dropout_rate,
+                }
+            )
+        elif version == "mc-dropout":
+            params.update(
+                {
+                    "dropout_rate": dropout_rate,
+                    "num_estimators": num_estimators,
+                }
+            )
+        elif version == "packed":
             params.update(
                 {
                     "num_estimators": num_estimators,
@@ -140,6 +158,7 @@ class VGG:
                     "gamma": gamma,
                 }
             )
+            format_batch_fn = RepeatTarget(num_repeats=num_estimators)
 
         model = cls.versions[version][cls.archs.index(arch)](**params)
         kwargs.update(params)
@@ -149,24 +168,22 @@ class VGG:
                 model=model,
                 loss=loss,
                 optimization_procedure=optimization_procedure,
+                format_batch_fn=format_batch_fn,
                 use_entropy=use_entropy,
                 use_logits=use_logits,
                 **kwargs,
             )
-        elif version in cls.ensemble:
+        else:  # version in cls.ensemble
             return ClassificationEnsemble(
                 model=model,
                 loss=loss,
                 optimization_procedure=optimization_procedure,
+                format_batch_fn=format_batch_fn,
                 use_entropy=use_entropy,
                 use_logits=use_logits,
                 use_mi=use_mi,
                 use_variation_ratio=use_variation_ratio,
                 **kwargs,
-            )
-        else:
-            raise ValueError(
-                f"{version} is not in {cls.single} nor {cls.ensemble}."
             )
 
     @classmethod

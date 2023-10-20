@@ -21,7 +21,7 @@ class _MIMOWide(_Wide):
         dropout_rate: float,
         groups: int = 1,
         style: str = "imagenet",
-    ):
+    ) -> None:
         super().__init__(
             depth,
             widen_factor=widen_factor,
@@ -30,6 +30,7 @@ class _MIMOWide(_Wide):
             dropout_rate=dropout_rate,
             groups=groups,
             style=style,
+            num_estimators=num_estimators,
         )
 
         self.num_estimators = num_estimators

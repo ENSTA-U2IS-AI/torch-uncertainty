@@ -3,7 +3,7 @@ from typing import Type
 
 import torch.nn.functional as F
 from einops import rearrange
-from torch import nn
+from torch import Tensor, nn
 
 from ...layers import PackedConv2d, PackedLinear
 
@@ -24,7 +24,7 @@ class WideBasicBlock(nn.Module):
         num_estimators: int = 4,
         gamma: int = 1,
         groups: int = 1,
-    ):
+    ) -> None:
         super().__init__()
         self.conv1 = PackedConv2d(
             in_planes,
@@ -68,7 +68,7 @@ class WideBasicBlock(nn.Module):
             )
         self.bn2 = nn.BatchNorm2d(alpha * planes)
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         out = F.relu(self.bn1(self.dropout(self.conv1(x))))
         out = self.conv2(out)
         out += self.shortcut(x)
@@ -89,7 +89,7 @@ class _PackedWide(nn.Module):
         groups: int = 1,
         dropout_rate: float = 0,
         style: str = "imagenet",
-    ):
+    ) -> None:
         super().__init__()
         self.num_estimators = num_estimators
         self.in_planes = 16
@@ -194,7 +194,7 @@ class _PackedWide(nn.Module):
         num_estimators: int,
         gamma: int,
         groups: int,
-    ):
+    ) -> nn.Module:
         strides = [stride] + [1] * (int(num_blocks) - 1)
         layers = []
 
@@ -215,7 +215,7 @@ class _PackedWide(nn.Module):
 
         return nn.Sequential(*layers)
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         out = F.relu(self.bn1(self.conv1(x)))
         out = self.optional_pool(out)
         out = self.layer1(out)

@@ -7,10 +7,11 @@ import pytorch_lightning as pl
 import torch
 import torch.nn.functional as F
 from einops import rearrange
+from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.utilities.memory import get_model_size_mb
 from pytorch_lightning.utilities.types import EPOCH_OUTPUT, STEP_OUTPUT
 from timm.data import Mixup
-from torch import nn
+from torch import Tensor, nn
 from torchmetrics import Accuracy, CalibrationError, MetricCollection
 from torchmetrics.classification import (
     BinaryAccuracy,
@@ -30,6 +31,7 @@ from ..metrics import (
     NegativeLogLikelihood,
     VariationRatio,
 )
+from ..plotting_utils import CalibrationPlot, plot_hist
 
 
 # fmt:on
@@ -87,11 +89,8 @@ class ClassificationSingle(pl.LightningModule):
 
         self.binary_cls = num_classes == 1
 
-        # model
         self.model = model
-        # loss
         self.loss = loss
-        # optimization procedure
         self.optimization_procedure = optimization_procedure
         # batch format
         self.format_batch_fn = format_batch_fn
@@ -150,11 +149,12 @@ class ClassificationSingle(pl.LightningModule):
         else:
             self.mixup = lambda x, y: (x, y)
 
+        self.cal_plot = CalibrationPlot()
+
         # Handle ELBO special cases
         self.is_elbo = (
             isinstance(self.loss, partial) and self.loss.func == ELBOLoss
         )
-        # print(self.is_elbo)
 
     def configure_optimizers(self) -> Any:
         return self.optimization_procedure(self)
@@ -165,14 +165,14 @@ class ClassificationSingle(pl.LightningModule):
             self.loss = partial(self.loss, model=self.model)
         return self.loss()
 
-    def forward(self, input: torch.Tensor) -> torch.Tensor:
+    def forward(self, input: Tensor) -> Tensor:
         return self.model.forward(input)
 
     def on_train_start(self) -> None:
         # hyperparameters for performances
         param = {}
         param["storage"] = f"{get_model_size_mb(self)} MB"
-        if self.logger is not None:
+        if self.logger is not None:  # coverage: ignore
             self.logger.log_hyperparams(
                 Namespace(**param),
                 {
@@ -191,7 +191,7 @@ class ClassificationSingle(pl.LightningModule):
             )
 
     def training_step(
-        self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int
+        self, batch: Tuple[Tensor, Tensor], batch_idx: int
     ) -> STEP_OUTPUT:
         batch = self.mixup(*batch)
         inputs, targets = self.format_batch_fn(batch)
@@ -210,7 +210,7 @@ class ClassificationSingle(pl.LightningModule):
         return loss
 
     def validation_step(
-        self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int
+        self, batch: Tuple[Tensor, Tensor], batch_idx: int
     ) -> None:
         inputs, targets = batch
         logits = self.forward(inputs)
@@ -230,10 +230,10 @@ class ClassificationSingle(pl.LightningModule):
 
     def test_step(
         self,
-        batch: Tuple[torch.Tensor, torch.Tensor],
+        batch: Tuple[Tensor, Tensor],
         batch_idx: int,
         dataloader_idx: Optional[int] = 0,
-    ) -> None:
+    ) -> Tensor:
         inputs, targets = batch
         logits = self.forward(inputs)
 
@@ -241,6 +241,8 @@ class ClassificationSingle(pl.LightningModule):
             probs = torch.sigmoid(logits).squeeze(-1)
         else:
             probs = F.softmax(logits, dim=-1)
+
+        self.cal_plot.update(probs, targets)
         confs = probs.max(dim=-1)[0]
 
         if self.use_logits:
@@ -272,6 +274,7 @@ class ClassificationSingle(pl.LightningModule):
                 on_epoch=True,
                 add_dataloader_idx=False,
             )
+        return logits
 
     def test_epoch_end(
         self, outputs: Union[EPOCH_OUTPUT, List[EPOCH_OUTPUT]]
@@ -286,6 +289,33 @@ class ClassificationSingle(pl.LightningModule):
                 self.test_ood_metrics.compute(),
             )
             self.test_ood_metrics.reset()
+
+        if isinstance(self.logger, TensorBoardLogger):
+            self.logger.experiment.add_figure(
+                "Calibration Plot", self.cal_plot.compute()[0]
+            )
+
+            if self.ood_detection:
+                id_logits = torch.cat(outputs[0], 0).float().cpu()
+                ood_logits = torch.cat(outputs[1], 0).float().cpu()
+
+                id_probs = F.softmax(id_logits, dim=-1)
+                ood_probs = F.softmax(ood_logits, dim=-1)
+
+                logits_fig = plot_hist(
+                    [id_logits.max(-1).values, ood_logits.max(-1).values],
+                    20,
+                    "Histogram of the logits",
+                )[0]
+                probs_fig = plot_hist(
+                    [id_probs.max(-1).values, ood_probs.max(-1).values],
+                    20,
+                    "Histogram of the likelihoods",
+                )[0]
+                self.logger.experiment.add_figure("Logit Histogram", logits_fig)
+                self.logger.experiment.add_figure(
+                    "Likelihood Histogram", probs_fig
+                )
 
     @staticmethod
     def add_model_specific_args(
@@ -396,10 +426,9 @@ class ClassificationEnsemble(ClassificationSingle):
             )
 
     def on_train_start(self) -> None:
-        # hyperparameters for performances
         param = {}
         param["storage"] = f"{get_model_size_mb(self)} MB"
-        if self.logger is not None:
+        if self.logger is not None:  # coverage: ignore
             self.logger.log_hyperparams(
                 Namespace(**param),
                 {
@@ -424,28 +453,28 @@ class ClassificationEnsemble(ClassificationSingle):
             )
 
     def training_step(
-        self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int
+        self, batch: Tuple[Tensor, Tensor], batch_idx: int
     ) -> STEP_OUTPUT:
         batch = self.mixup(*batch)
+        # eventual input repeat is done in the model
         inputs, targets = self.format_batch_fn(batch)
 
-        # eventual input repeat is done in the model
-        # targets = targets.repeat(self.num_estimators)
+        if self.is_elbo:
+            loss = self.criterion(inputs, targets)
+        else:
+            logits = self.forward(inputs)
+            # BCEWithLogitsLoss expects float targets
+            if self.binary_cls and self.loss == nn.BCEWithLogitsLoss:
+                logits = logits.squeeze(-1)
+                targets = targets.float()
 
-        # Computing logits
-        logits = self.forward(inputs)
+            loss = self.criterion(logits, targets)
 
-        # BCEWithLogitsLoss expects float targets
-        if self.binary_cls and self.loss == nn.BCEWithLogitsLoss:
-            logits = logits.squeeze(-1)
-            targets = targets.float()
-
-        loss = self.criterion(logits, targets)
         self.log("train_loss", loss)
         return loss
 
     def validation_step(  # type: ignore
-        self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int
+        self, batch: Tuple[Tensor, Tensor], batch_idx: int
     ) -> None:
         inputs, targets = batch
         logits = self.forward(inputs)
@@ -460,10 +489,10 @@ class ClassificationEnsemble(ClassificationSingle):
 
     def test_step(
         self,
-        batch: Tuple[torch.Tensor, torch.Tensor],
+        batch: Tuple[Tensor, Tensor],
         batch_idx: int,
         dataloader_idx: Optional[int] = 0,
-    ) -> None:
+    ) -> Tensor:
         inputs, targets = batch
         logits = self.forward(inputs)
         logits = rearrange(logits, "(n b) c -> b n c", n=self.num_estimators)
@@ -474,12 +503,15 @@ class ClassificationEnsemble(ClassificationSingle):
             probs_per_est = F.softmax(logits, dim=-1)
 
         probs = probs_per_est.mean(dim=1)
+        self.cal_plot.update(probs, targets)
         confs = probs.max(-1)[0]
 
         if self.use_logits:
             ood_values = -logits.mean(dim=1).max(dim=-1)[0]
         elif self.use_entropy:
-            ood_values = torch.special.entr(probs).sum(dim=-1).mean(dim=1)
+            ood_values = (
+                torch.special.entr(probs_per_est).sum(dim=-1).mean(dim=1)
+            )
         elif self.use_mi:
             mi_metric = MutualInformation(reduction="none")
             ood_values = mi_metric(probs_per_est)
@@ -519,11 +551,16 @@ class ClassificationEnsemble(ClassificationSingle):
                 on_epoch=True,
                 add_dataloader_idx=False,
             )
+        return logits
 
     def test_epoch_end(
         self, outputs: Union[EPOCH_OUTPUT, List[EPOCH_OUTPUT]]
     ) -> None:
-        super().test_epoch_end(outputs)
+        self.log_dict(
+            self.test_cls_metrics.compute(),
+        )
+        self.test_cls_metrics.reset()
+
         self.log_dict(
             self.test_id_ens_metrics.compute(),
         )
@@ -531,9 +568,49 @@ class ClassificationEnsemble(ClassificationSingle):
 
         if self.ood_detection:
             self.log_dict(
+                self.test_ood_metrics.compute(),
+            )
+            self.test_ood_metrics.reset()
+
+            self.log_dict(
                 self.test_ood_ens_metrics.compute(),
             )
             self.test_ood_ens_metrics.reset()
+
+        if isinstance(self.logger, TensorBoardLogger):
+            self.logger.experiment.add_figure(
+                "Calibration Plot", self.cal_plot.compute()[0]
+            )
+
+            if self.ood_detection:
+                id_logits = torch.cat(outputs[0], 0).float().cpu()
+                ood_logits = torch.cat(outputs[1], 0).float().cpu()
+
+                print(id_logits.shape)
+
+                id_probs = F.softmax(id_logits, dim=-1)
+                ood_probs = F.softmax(ood_logits, dim=-1)
+
+                logits_fig = plot_hist(
+                    [
+                        id_logits.mean(1).max(-1).values,
+                        ood_logits.mean(1).max(-1).values,
+                    ],
+                    20,
+                    "Histogram of the logits",
+                )[0]
+                probs_fig = plot_hist(
+                    [
+                        id_probs.mean(1).max(-1).values,
+                        ood_probs.mean(1).max(-1).values,
+                    ],
+                    20,
+                    "Histogram of the likelihoods",
+                )[0]
+                self.logger.experiment.add_figure("Logit Histogram", logits_fig)
+                self.logger.experiment.add_figure(
+                    "Likelihood Histogram", probs_fig
+                )
 
     @staticmethod
     def add_model_specific_args(

@@ -72,6 +72,7 @@ class ResNet:
             - ``"batched"``: BatchEnsemble ResNet
             - ``"masked"``: Masksemble ResNet
             - ``"mimo"``: MIMO ResNet
+            - ``"mc-dropout"``: Monte-Carlo Dropout ResNet
 
         arch (int):
             Determines which ResNet architecture to use:
@@ -85,8 +86,8 @@ class ResNet:
         style (str, optional): Which ResNet style to use. Defaults to
         ``imagenet``.
         num_estimators (int, optional): Number of estimators in the ensemble.
-            Only used if :attr:`version` is either ``"packed"``, ``"batched"``
-            or ``"masked"`` Defaults to ``None``.
+            Only used if :attr:`version` is either ``"packed"``, ``"batched"``,
+            ``"masked"`` or ``"mc-dropout"`` Defaults to ``None``.
         groups (int, optional): Number of groups in convolutions. Defaults to
             ``1``.
         scale (float, optional): Expansion factor affecting the width of the
@@ -117,14 +118,14 @@ class ResNet:
 
     Raises:
         ValueError: If :attr:`version` is not either ``"vanilla"``,
-            ``"packed"``, ``"batched"`` or ``"masked"``.
+            ``"packed"``, ``"batched"``, ``"masked"`` or ``"mc-dropout"``.
 
     Returns:
         LightningModule: ResNet baseline ready for training and evaluation.
     """
 
     single = ["vanilla"]
-    ensemble = ["packed", "batched", "masked", "mimo"]
+    ensemble = ["packed", "batched", "masked", "mimo", "mc-dropout"]
     versions = {
         "vanilla": [resnet18, resnet34, resnet50, resnet101, resnet152],
         "packed": [
@@ -155,6 +156,7 @@ class ResNet:
             mimo_resnet101,
             mimo_resnet152,
         ],
+        "mc-dropout": [resnet18, resnet34, resnet50, resnet101, resnet152],
     }
     archs = [18, 34, 50, 101, 152]
 
@@ -164,7 +166,14 @@ class ResNet:
         in_channels: int,
         loss: Type[nn.Module],
         optimization_procedure: Any,
-        version: Literal["vanilla", "packed", "batched", "masked", "mimo"],
+        version: Literal[
+            "vanilla",
+            "mc-dropout",
+            "packed",
+            "batched",
+            "masked",
+            "mimo",
+        ],
         arch: int,
         style: str = "imagenet",
         num_estimators: Optional[int] = None,
@@ -198,6 +207,13 @@ class ResNet:
             params.update(
                 {
                     "dropout_rate": dropout_rate,
+                }
+            )
+        elif version == "mc-dropout":
+            params.update(
+                {
+                    "dropout_rate": dropout_rate,
+                    "num_estimators": num_estimators,
                 }
             )
         elif version == "packed":
@@ -251,7 +267,7 @@ class ResNet:
                 use_logits=use_logits,
                 **kwargs,
             )
-        elif version in cls.ensemble:
+        else:  # version in cls.ensemble
             return ClassificationEnsemble(
                 model=model,
                 loss=loss,
@@ -262,10 +278,6 @@ class ResNet:
                 use_mi=use_mi,
                 use_variation_ratio=use_variation_ratio,
                 **kwargs,
-            )
-        else:
-            raise ValueError(
-                f"{version} is not in {cls.single} nor {cls.ensemble}."
             )
 
     @classmethod

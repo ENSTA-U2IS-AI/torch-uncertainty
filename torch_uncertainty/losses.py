@@ -56,6 +56,12 @@ class ELBOLoss(nn.Module):
         super().__init__()
         self.model = model
         self._kl_div = KLDiv(model)
+
+        if isinstance(criterion, type):
+            raise ValueError(
+                "The criterion should be an instance of a class."
+                f"Got {criterion}."
+            )
         self.criterion = criterion
 
         if kl_weight < 0:
@@ -123,7 +129,14 @@ class NIGLoss(nn.Module):
             raise ValueError(f"{reduction} is not a valid value for reduction.")
         self.reduction = reduction
 
-    def _nig_nll(self, gamma, v, alpha, beta, targets):
+    def _nig_nll(
+        self,
+        gamma: Tensor,
+        v: Tensor,
+        alpha: Tensor,
+        beta: Tensor,
+        targets: Tensor,
+    ) -> Tensor:
         Gamma = 2 * beta * (1 + v)
         nll = (
             0.5 * torch.log(torch.pi / v)
@@ -134,13 +147,22 @@ class NIGLoss(nn.Module):
         )
         return nll
 
-    def _nig_reg(self, gamma, v, alpha, targets):
+    def _nig_reg(
+        self, gamma: Tensor, v: Tensor, alpha: Tensor, targets: Tensor
+    ) -> Tensor:
         reg = torch.norm(targets - gamma, 1, dim=1, keepdim=True) * (
             2 * v + alpha
         )
         return reg
 
-    def forward(self, gamma, v, alpha, beta, targets):
+    def forward(
+        self,
+        gamma: Tensor,
+        v: Tensor,
+        alpha: Tensor,
+        beta: Tensor,
+        targets: Tensor,
+    ) -> Tensor:
         loss_nll = self._nig_nll(gamma, v, alpha, beta, targets)
         loss_reg = self._nig_reg(gamma, v, alpha, targets)
         loss = loss_nll + self.reg_weight * loss_reg

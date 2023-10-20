@@ -39,6 +39,15 @@ class TestStdResnet:
         with torch.no_grad():
             model(torch.randn(2, 1, 32, 32))
 
+    def test_mc_dropout(self):
+        resnet34(1, 10, 1, num_estimators=5)
+        resnet101(1, 10, 1, num_estimators=5)
+        resnet152(1, 10, 1, num_estimators=5)
+
+        model = resnet50(1, 10, 1, num_estimators=5)
+        with torch.no_grad():
+            model(torch.randn(2, 1, 32, 32))
+
 
 class TestPackedResnet:
     """Testing the ResNet packed class."""
