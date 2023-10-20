@@ -135,11 +135,12 @@ def cli_main(
                 name=net_name,
                 default_hp_metric=False,
                 log_graph=args.log_graph,
-                version=args.test,
+                version=f"fold_{i}",
             )
 
             # callbacks
             save_checkpoints = ModelCheckpoint(
+                dirpath=tb_logger.log_dir,
                 monitor=monitor,
                 mode=mode,
                 save_last=True,

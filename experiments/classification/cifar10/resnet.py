@@ -25,11 +25,11 @@ if __name__ == "__main__":
     dm = CIFAR10DataModule(**vars(args))
 
     if args.opt_temp_scaling:
-        args.calibration_set = dm.get_test_set
+        calibration_set = dm.get_test_set
     elif args.val_temp_scaling:
-        args.calibration_set = dm.get_val_set
+        calibration_set = dm.get_val_set
     else:
-        args.calibration_set = None
+        calibration_set = None
 
     if args.use_cv:
         list_dm = dm.make_cross_val_splits(args.n_splits, args.train_over)
@@ -44,6 +44,7 @@ if __name__ == "__main__":
                         f"resnet{args.arch}", "cifar10", args.version
                     ),
                     style="cifar",
+                    calibration_set=calibration_set,
                     **vars(args),
                 )
             )

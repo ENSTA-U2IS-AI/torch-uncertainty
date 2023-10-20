@@ -6,6 +6,7 @@ from torch import nn, optim
 from torch_uncertainty import cli_main, init_args
 from torch_uncertainty.baselines import ResNet
 from torch_uncertainty.datamodules import TinyImageNetDataModule
+from torch_uncertainty.optimization_procedures import get_procedure
 from torch_uncertainty.utils import csv_writter
 
 
@@ -38,11 +39,11 @@ if __name__ == "__main__":
     dm = TinyImageNetDataModule(**vars(args))
 
     if args.opt_temp_scaling:
-        args.calibration_set = dm.get_test_set
+        calibration_set = dm.get_test_set
     elif args.val_temp_scaling:
-        args.calibration_set = dm.get_val_set
+        calibration_set = dm.get_val_set
     else:
-        args.calibration_set = None
+        calibration_set = None
 
     if args.use_cv:
         list_dm = dm.make_cross_val_splits(args.n_splits, args.train_over)
@@ -53,8 +54,11 @@ if __name__ == "__main__":
                     num_classes=list_dm[i].dm.num_classes,
                     in_channels=list_dm[i].dm.num_channels,
                     loss=nn.CrossEntropyLoss,
-                    optimization_procedure=optim_tiny,
+                    optimization_procedure=get_procedure(
+                        f"resnet{args.arch}", "tiny-imagenet", args.version
+                    ),
                     style="cifar",
+                    calibration_set=calibration_set,
                     **vars(args),
                 )
             )

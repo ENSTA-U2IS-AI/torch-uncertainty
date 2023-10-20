@@ -82,6 +82,7 @@ class ClassificationSingle(pl.LightningModule):
                 "loss",
                 "optimization_procedure",
                 "format_batch_fn",
+                "calibration_set",
             ]
         )
 
