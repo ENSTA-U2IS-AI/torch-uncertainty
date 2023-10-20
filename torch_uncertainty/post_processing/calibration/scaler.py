@@ -31,7 +31,7 @@ class Scaler(nn.Module):
         self,
         lr: float = 0.1,
         max_iter: int = 100,
-        device: Optional[Literal["cpu", "cuda"]] = None,
+        device: Optional[Literal["cpu", "cuda"] | torch.device] = None,
     ) -> None:
         super().__init__()
         self.device = device
@@ -79,20 +79,17 @@ class Scaler(nn.Module):
         logits = torch.cat(logits_list).detach().to(self.device)
         labels = torch.cat(labels_list).detach().to(self.device)
 
-        with torch.enable_grad():
-            optimizer = optim.LBFGS(
-                self.temperature, lr=self.lr, max_iter=self.max_iter
-            )
+        optimizer = optim.LBFGS(
+            self.temperature, lr=self.lr, max_iter=self.max_iter
+        )
 
         def calib_eval() -> float:
-            with torch.enable_grad():
-                optimizer.zero_grad()
-                loss = self.criterion(self._scale(logits), labels)
-                loss.backward()
-                return loss
+            optimizer.zero_grad()
+            loss = self.criterion(self._scale(logits), labels)
+            loss.backward()
+            return loss
 
-        with torch.enable_grad():
-            optimizer.step(calib_eval)
+        optimizer.step(calib_eval)
         self.trained = True
         if save_logits:
             self.logits = logits
@@ -108,7 +105,6 @@ class Scaler(nn.Module):
                 )
             return self._scale(logits)
 
-    @torch.enable_grad()
     def _scale(self, logits: torch.Tensor) -> torch.Tensor:
         """
         Scale the logits with the optimal temperature.

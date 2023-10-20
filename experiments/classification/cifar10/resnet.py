@@ -7,6 +7,7 @@ from torch_uncertainty import cli_main, init_args
 from torch_uncertainty.baselines import ResNet
 from torch_uncertainty.datamodules import CIFAR10DataModule
 from torch_uncertainty.optimization_procedures import get_procedure
+from torch_uncertainty.utils import csv_writter
 
 # fmt: on
 if __name__ == "__main__":
@@ -16,7 +17,8 @@ if __name__ == "__main__":
     else:
         root = Path(args.root)
 
-    net_name = f"{args.version}-resnet{args.arch}-cifar10"
+    if args.exp_name == "":
+        args.exp_name = f"{args.version}-resnet{args.arch}-cifar10"
 
     # datamodule
     args.root = str(root / "data")
@@ -29,16 +31,43 @@ if __name__ == "__main__":
     else:
         args.calibration_set = None
 
-    # model
-    model = ResNet(
-        num_classes=dm.num_classes,
-        in_channels=dm.num_channels,
-        loss=nn.CrossEntropyLoss,
-        optimization_procedure=get_procedure(
-            f"resnet{args.arch}", "cifar10", args.version
-        ),
-        style="cifar",
-        **vars(args),
-    )
+    if args.use_cv:
+        list_dm = dm.make_cross_val_splits(args.n_splits, args.train_over)
+        list_model = []
+        for i in range(len(list_dm)):
+            list_model.append(
+                ResNet(
+                    num_classes=list_dm[i].dm.num_classes,
+                    in_channels=list_dm[i].dm.num_channels,
+                    loss=nn.CrossEntropyLoss,
+                    optimization_procedure=get_procedure(
+                        f"resnet{args.arch}", "cifar10", args.version
+                    ),
+                    style="cifar",
+                    **vars(args),
+                )
+            )
 
-    cli_main(model, dm, args.exp_dir, net_name, args)
+        results = cli_main(
+            list_model, list_dm, args.exp_dir, args.exp_name, args
+        )
+    else:
+        # model
+        model = ResNet(
+            num_classes=dm.num_classes,
+            in_channels=dm.num_channels,
+            loss=nn.CrossEntropyLoss,
+            optimization_procedure=get_procedure(
+                f"resnet{args.arch}", "cifar10", args.version
+            ),
+            style="cifar",
+            **vars(args),
+        )
+
+        results = cli_main(model, dm, args.exp_dir, args.exp_name, args)
+
+    for dict_result in results:
+        csv_writter(
+            Path(args.exp_dir) / Path(args.exp_name) / "results.csv",
+            dict_result,
+        )

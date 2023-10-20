@@ -1,6 +1,6 @@
 # fmt: off
 from argparse import ArgumentParser, Namespace
-from typing import Any, List, Literal, Optional, Tuple, Union
+from typing import Any, List, Literal, Optional, Tuple, Type, Union
 
 import pytorch_lightning as pl
 import torch
@@ -19,7 +19,7 @@ class RegressionSingle(pl.LightningModule):
     def __init__(
         self,
         model: nn.Module,
-        loss: nn.Module,
+        loss: Type[nn.Module],
         optimization_procedure: Any,
         dist_estimation: int,
         **kwargs,
@@ -211,7 +211,7 @@ class RegressionEnsemble(RegressionSingle):
     def __init__(
         self,
         model: nn.Module,
-        loss: nn.Module,
+        loss: Type[nn.Module],
         optimization_procedure: Any,
         dist_estimation: int,
         num_estimators: int,

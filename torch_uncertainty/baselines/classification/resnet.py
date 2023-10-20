@@ -52,7 +52,7 @@ from ..utils.parser_addons import (
 
 
 # fmt: on
-class ResNet:
+class ResNet(LightningModule):
     r"""ResNet backbone baseline for classification providing support for
     various versions and architectures.
 

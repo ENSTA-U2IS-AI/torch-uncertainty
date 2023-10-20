@@ -1,7 +1,7 @@
 # fmt: off
 from argparse import ArgumentParser, Namespace
 from functools import partial
-from typing import Any, List, Optional, Tuple, Type, Union
+from typing import Any, Callable, List, Optional, Tuple, Type, Union
 
 import pytorch_lightning as pl
 import torch
@@ -11,7 +11,6 @@ from pytorch_lightning.utilities.memory import get_model_size_mb
 from pytorch_lightning.utilities.types import EPOCH_OUTPUT, STEP_OUTPUT
 from timm.data import Mixup as timm_Mixup
 from torch import nn
-from torch.utils.data import Dataset
 from torchmetrics import Accuracy, CalibrationError, MetricCollection
 from torchmetrics.classification import (
     BinaryAccuracy,
@@ -72,7 +71,7 @@ class ClassificationSingle(pl.LightningModule):
         ood_detection: bool = False,
         use_entropy: bool = False,
         use_logits: bool = False,
-        calibration_set: Dataset | None = None,
+        calibration_set: Optional[Callable] = None,
         **kwargs,
     ) -> None:
         super().__init__()
@@ -368,10 +367,9 @@ class ClassificationSingle(pl.LightningModule):
 
     def on_test_start(self) -> None:
         if self.calibration_set is not None:
-            with torch.enable_grad():
-                self.scaler = TemperatureScaler(device=self.device).fit(
-                    model=self.model, calibration_set=self.calibration_set()
-                )
+            self.scaler = TemperatureScaler(device=self.device).fit(
+                model=self.model, calibration_set=self.calibration_set()
+            )
             self.cal_model = torch.nn.Sequential(self.model, self.scaler)
         else:
             self.scaler = None

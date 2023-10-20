@@ -1,6 +1,6 @@
 # fmt: off
 from argparse import ArgumentParser
-from typing import Any
+from typing import Any, Type
 
 from pytorch_lightning import LightningModule
 from torch import nn
@@ -19,12 +19,12 @@ from .model import dummy_model
 
 
 # fmt: on
-class DummyClassificationBaseline:
+class DummyClassificationBaseline(LightningModule):
     def __new__(
         cls,
         num_classes: int,
         in_channels: int,
-        loss: nn.Module,
+        loss: Type[nn.Module],
         optimization_procedure: Any,
         baseline_type: str = "single",
         **kwargs,
@@ -64,12 +64,12 @@ class DummyClassificationBaseline:
         return parser
 
 
-class DummyRegressionBaseline:
+class DummyRegressionBaseline(LightningModule):
     def __new__(
         cls,
         in_features: int,
         out_features: int,
-        loss: nn.Module,
+        loss: Type[nn.Module],
         optimization_procedure: Any,
         baseline_type: str = "single",
         dist_estimation: int = 1,

@@ -32,7 +32,7 @@ from ..utils.parser_addons import (
 
 
 # fmt: on
-class VGG:
+class VGG(LightningModule):
     r"""VGG backbone baseline for classification providing support for
     various versions and architectures.
 

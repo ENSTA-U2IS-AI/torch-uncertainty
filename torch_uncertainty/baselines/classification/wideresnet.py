@@ -32,7 +32,7 @@ from ..utils.parser_addons import (
 
 
 # fmt: on
-class WideResNet:
+class WideResNet(LightningModule):
     r"""Wide-ResNet28x10 backbone baseline for classification providing support
     for various versions.
 
