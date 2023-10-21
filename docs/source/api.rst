@@ -159,10 +159,10 @@ Ensemble layers
     :template: class.rst
 
     PackedLinear
-    BatchLinear
-    MaskedLinear
     PackedConv2d
+    BatchLinear
     BatchConv2d
+    MaskedLinear
     MaskedConv2d
 
 
@@ -196,6 +196,8 @@ Metrics
     Entropy
     MutualInformation
     NegativeLogLikelihood
+    GaussianNegativeLogLikelihood
+    FPR95
 
 Losses
 ------
@@ -209,6 +211,7 @@ Losses
 
     KLDiv
     ELBOLoss
+    NIGLoss
 
 Post-Processing Methods
 -----------------------
