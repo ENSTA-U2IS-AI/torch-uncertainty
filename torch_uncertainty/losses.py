@@ -182,7 +182,6 @@ class DECLoss(nn.Module):
         annealing_step (int): Annealing step for the weight of the
         regularization term.
         reg_weight (float): Fixed weight of the regularization term.
-        num_classes (int): Number of classes in classification.
         loss_type (str, optional): Specifies the loss type to apply to the
         Dirichlet parameters: ``'mse'`` | ``'log'`` | ``'digamma'``.
         reduction (str, optional): Specifies the reduction to apply to the
@@ -198,18 +197,10 @@ class DECLoss(nn.Module):
         self,
         annealing_step: int = None,
         reg_weight: float = None,
-        num_classes: int = 10,
         loss_type: Optional[str] = "log",
         reduction: Optional[str] = "mean",
     ) -> None:
         super().__init__()
-
-        if num_classes < 0:
-            raise ValueError(
-                "The number of classes should be non-negative, but got "
-                f"{num_classes}."
-            )
-        self.num_classes = num_classes
 
         if reg_weight and (reg_weight < 0):
             raise ValueError(
@@ -283,13 +274,14 @@ class DECLoss(nn.Module):
         evidence: Tensor,
         targets: Tensor,
     ) -> Tensor:
+        num_classes = evidence.size()[-1]
         evidence = torch.relu(evidence)
         alpha = evidence + 1.0
 
         kl_alpha = (alpha - 1) * (1 - targets) + 1
 
         ones = torch.ones(
-            [1, self.num_classes], dtype=torch.float32, device=evidence.device
+            [1, num_classes], dtype=torch.float32, device=evidence.device
         )
         sum_kl_alpha = torch.sum(kl_alpha, dim=1, keepdim=True)
         first_term = (
@@ -317,7 +309,8 @@ class DECLoss(nn.Module):
     def forward(
         self, evidence: Tensor, targets: Tensor, epoch_num: int = None
     ) -> Tensor:
-        targets = self._one_hot_embedding(targets, self.num_classes)
+        num_classes = evidence.size()[-1]
+        targets = self._one_hot_embedding(targets, num_classes)
         if self.loss_type == "mse":
             loss_dirichlet = self._mse_loss(evidence, targets)
         elif self.loss_type == "log":
