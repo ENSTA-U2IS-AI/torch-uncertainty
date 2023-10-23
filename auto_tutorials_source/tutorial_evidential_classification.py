@@ -71,14 +71,14 @@ def optim_lenet(model: nn.Module) -> dict:
 # In the following, we need to define the root of the logs, and to
 # fake-parse the arguments needed for using the PyTorch Lightning Trainer. We
 # also use the same MNIST classification example as that used in the
-# original DEC paper. We only train for 10 epochs for the sake of time.
+# original DEC paper. We only train for 5 epochs for the sake of time.
 root = Path(os.path.abspath(""))
 
 # We mock the arguments for the trainer. Replace with 25 epochs on your machine.
 with ArgvContext(
     "file.py",
     "--max_epochs",
-    "10",
+    "5",
     "--enable_progress_bar",
     "True",
 ):
@@ -140,10 +140,34 @@ import torchvision.transforms.functional as F
 import numpy as np
 
 
-def imshow(img):
+def imshow(img) -> None:
     npimg = img.numpy()
     plt.imshow(np.transpose(npimg, (1, 2, 0)))
     plt.show()
+
+
+def rotated_mnist(angle: int) -> None:
+    """Rotate MNIST images and show images and confidence.
+
+    Args:
+        angle: Rotation angle in degrees.
+    """
+    rotated_images = F.rotate(images, angle)
+    # print rotated images
+    imshow(torchvision.utils.make_grid(rotated_images[:4, ...]))
+    print("Ground truth: ", " ".join(f"{labels[j]}" for j in range(4)))
+
+    evidence = baseline(rotated_images)
+    alpha = torch.relu(evidence) + 1
+    strength = torch.sum(alpha, dim=1, keepdim=True)
+    probs = alpha / strength
+    entropy = -1 * torch.sum(probs * torch.log(probs), dim=1, keepdim=True)
+    for j in range(4):
+        predicted = torch.argmax(probs[j, :])
+        print(
+            f"Predicted digits for the image {j}: {predicted} with strength "
+            f"{strength[j,0]:.3} and entropy {entropy[j,0]:.3}."
+        )
 
 
 dataiter = iter(dm.val_dataloader())
@@ -151,57 +175,9 @@ images, labels = next(dataiter)
 
 with torch.no_grad():
     baseline.eval()
-
-    # print original images
-    imshow(torchvision.utils.make_grid(images[:4, ...]))
-    print("Ground truth: ", " ".join(f"{labels[j]}" for j in range(4)))
-    evidence = baseline(images)
-    alpha = torch.relu(evidence) + 1
-    strength = torch.sum(alpha, dim=1, keepdim=True)
-    probs = alpha / strength
-    entropy = -1 * torch.sum(probs * torch.log(probs), dim=1, keepdim=True)
-    for j in range(4):
-        predicted = torch.argmax(probs[j, :])
-        print(
-            f"Predicted digits for the image {j}: {predicted} with strength "
-            f"{strength[j,0]:.3} and entropy {entropy[j,0]:.3}."
-        )
-
-    # rotate the images by 45 degrees
-    rotated_images = F.rotate(images, 45)
-    # print rotated images
-    imshow(torchvision.utils.make_grid(rotated_images[:4, ...]))
-    print("Ground truth: ", " ".join(f"{labels[j]}" for j in range(4)))
-
-    evidence = baseline(rotated_images)
-    alpha = torch.relu(evidence) + 1
-    strength = torch.sum(alpha, dim=1, keepdim=True)
-    probs = alpha / strength
-    entropy = -1 * torch.sum(probs * torch.log(probs), dim=1, keepdim=True)
-    for j in range(4):
-        predicted = torch.argmax(probs[j, :])
-        print(
-            f"Predicted digits for the image {j}: {predicted} with strength "
-            f"{strength[j,0]:.3} and entropy {entropy[j,0]:.3}."
-        )
-
-    # rotate the images by 90 degrees
-    rotated_images = F.rotate(images, 90)
-    # print rotated images
-    imshow(torchvision.utils.make_grid(rotated_images[:4, ...]))
-    print("Ground truth: ", " ".join(f"{labels[j]}" for j in range(4)))
-
-    evidence = baseline(rotated_images)
-    alpha = torch.relu(evidence) + 1
-    strength = torch.sum(alpha, dim=1, keepdim=True)
-    probs = alpha / strength
-    entropy = -1 * torch.sum(probs * torch.log(probs), dim=1, keepdim=True)
-    for j in range(4):
-        predicted = torch.argmax(probs[j, :])
-        print(
-            f"Predicted digits for the image {j}: {predicted} with strength "
-            f"{strength[j,0]:.3} and entropy {entropy[j,0]:.3}."
-        )
+    rotated_mnist(0)
+    rotated_mnist(45)
+    rotated_mnist(90)
 
 
 # %%
