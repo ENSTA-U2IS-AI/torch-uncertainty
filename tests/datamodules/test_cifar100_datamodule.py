@@ -1,5 +1,6 @@
 # fmt:off
 from argparse import ArgumentParser
+from pathlib import Path
 
 import pytest
 from torchvision.datasets import CIFAR100
@@ -14,7 +15,7 @@ from .._dummies.dataset import DummyClassificationDataset
 class TestCIFAR100DataModule:
     """Testing the CIFAR100DataModule datamodule class."""
 
-    def test_cifar100_cutout(self):
+    def test_cifar100(self):
         parser = ArgumentParser()
         parser = CIFAR100DataModule.add_argparse_args(parser)
 
@@ -44,6 +45,8 @@ class TestCIFAR100DataModule:
         dm.test_dataloader()
 
         args.test_alt = "c"
+        args.cutout = 0
+        args.root = Path(args.root)
         dm = CIFAR100DataModule(**vars(args))
         dm.dataset = DummyClassificationDataset
         with pytest.raises(ValueError):
@@ -59,16 +62,18 @@ class TestCIFAR100DataModule:
         dm.setup()
         dm.setup("test")
         dm.train_dataloader()
+        with pytest.raises(ValueError):
+            dm.setup("other")
 
         args.num_dataloaders = 1
         args.cutout = 8
-        args.enable_randaugment = True
+        args.randaugment = True
         with pytest.raises(ValueError):
             dm = CIFAR100DataModule(**vars(args))
 
         args.cutout = None
         dm = CIFAR100DataModule(**vars(args))
-        args.enable_randaugment = False
+        args.randaugment = False
 
         args.auto_augment = "rand-m9-n2-mstd0.5"
         dm = CIFAR100DataModule(**vars(args))

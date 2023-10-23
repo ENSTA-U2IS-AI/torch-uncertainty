@@ -52,6 +52,10 @@ class TinyImageNetDataModule(AbstractDataModule):
             self.ood_dataset = SVHN
         elif ood_ds == "textures":
             self.ood_dataset = DTD
+        else:
+            raise ValueError(
+                f"OOD dataset {ood_ds} not supported for TinyImageNet."
+            )
 
         if rand_augment_opt is not None:
             main_transform = rand_augment_transform(rand_augment_opt, {})
@@ -77,7 +81,7 @@ class TinyImageNetDataModule(AbstractDataModule):
             ]
         )
 
-    def _verify_splits(self, split: str) -> None:
+    def _verify_splits(self, split: str) -> None:  # coverage: ignore
         if split not in list(self.root.iterdir()):
             raise FileNotFoundError(
                 f"a {split} TinyImagenet split was not found in {self.root},"

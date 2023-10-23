@@ -72,14 +72,13 @@ class TestPackedLinear:
             5, 3, kernel_size=1, alpha=1, num_estimators=2, gamma=1
         )
 
-    def test_linear_alpha_error(self):
+    def test_linear_failures(self):
         with pytest.raises(ValueError):
             _ = PackedLinear(5, 2, alpha=None, num_estimators=1, rearrange=True)
 
         with pytest.raises(ValueError):
             _ = PackedLinear(5, 2, alpha=-1, num_estimators=1, rearrange=True)
 
-    def test_linear_num_estimators_error(self):
         with pytest.raises(ValueError):
             _ = PackedLinear(5, 2, alpha=1, num_estimators=None, rearrange=True)
 
@@ -89,7 +88,6 @@ class TestPackedLinear:
         with pytest.raises(ValueError):
             _ = PackedLinear(5, 2, alpha=1, num_estimators=-1, rearrange=True)
 
-    def test_linear_gamma_error(self):
         with pytest.raises(ValueError):
             _ = PackedLinear(
                 5, 2, alpha=1, num_estimators=1, gamma=0.5, rearrange=True
@@ -108,6 +106,8 @@ class TestPackedConv1d:
         layer = PackedConv1d(6, 2, alpha=1, num_estimators=1, kernel_size=1)
         out = layer(seq_input)
         assert out.shape == torch.Size([5, 2, 3])
+        assert layer.weight.shape == torch.Size([2, 6, 1])
+        assert layer.bias.shape == torch.Size([2])
 
     def test_conv_two_estimators(self, seq_input: torch.Tensor):
         layer = PackedConv1d(6, 2, alpha=1, num_estimators=2, kernel_size=1)
@@ -135,17 +135,15 @@ class TestPackedConv1d:
             5, 3, kernel_size=1, alpha=1, num_estimators=2, gamma=1
         )
 
-    def test_conv_alpha_neg(self):
+    def test_conv1_failures(self):
         with pytest.raises(ValueError):
             _ = PackedConv1d(5, 2, kernel_size=1, alpha=-1, num_estimators=1)
 
-    def test_conv_gamma_float(self):
         with pytest.raises(ValueError):
             _ = PackedConv1d(
                 5, 2, kernel_size=1, alpha=1, num_estimators=1, gamma=0.5
             )
 
-    def test_conv_gamma_neg(self):
         with pytest.raises(ValueError):
             _ = PackedConv1d(
                 5, 2, kernel_size=1, alpha=1, num_estimators=1, gamma=-0.5
@@ -186,17 +184,15 @@ class TestPackedConv2d:
             5, 3, kernel_size=1, alpha=1, num_estimators=2, gamma=1
         )
 
-    def test_conv_alpha_neg(self):
+    def test_conv2_failures(self):
         with pytest.raises(ValueError):
             _ = PackedConv2d(5, 2, kernel_size=1, alpha=-1, num_estimators=1)
 
-    def test_conv_gamma_float(self):
         with pytest.raises(ValueError):
             _ = PackedConv2d(
                 5, 2, kernel_size=1, alpha=1, num_estimators=1, gamma=0.5
             )
 
-    def test_conv_gamma_neg(self):
         with pytest.raises(ValueError):
             _ = PackedConv2d(
                 5, 2, kernel_size=1, alpha=1, num_estimators=1, gamma=-0.5
@@ -210,6 +206,8 @@ class TestPackedConv3d:
         layer = PackedConv3d(6, 2, alpha=1, num_estimators=1, kernel_size=1)
         out = layer(voxels_input)
         assert out.shape == torch.Size([5, 2, 3, 3, 3])
+        assert layer.weight.shape == torch.Size([2, 6, 1, 1, 1])
+        assert layer.bias.shape == torch.Size([2])
 
     def test_conv_two_estimators(self, voxels_input: torch.Tensor):
         layer = PackedConv3d(6, 2, alpha=1, num_estimators=2, kernel_size=1)
@@ -237,17 +235,15 @@ class TestPackedConv3d:
             5, 3, kernel_size=1, alpha=1, num_estimators=2, gamma=1
         )
 
-    def test_conv_alpha_neg(self):
+    def test_conv3_failures(self):
         with pytest.raises(ValueError):
             _ = PackedConv3d(5, 2, kernel_size=1, alpha=-1, num_estimators=1)
 
-    def test_conv_gamma_float(self):
         with pytest.raises(ValueError):
             _ = PackedConv3d(
                 5, 2, kernel_size=1, alpha=1, num_estimators=1, gamma=0.5
             )
 
-    def test_conv_gamma_neg(self):
         with pytest.raises(ValueError):
             _ = PackedConv3d(
                 5, 2, kernel_size=1, alpha=1, num_estimators=1, gamma=-0.5

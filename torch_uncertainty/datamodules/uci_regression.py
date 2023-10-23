@@ -76,11 +76,9 @@ class UCIDataModule(AbstractDataModule):
         self.train, self.test, self.val = random_split(
             full,
             [
-                int(len(full) * (0.8 - self.val_split)),
-                int(len(full) * 0.2),
-                len(full)
-                - int(len(full) * 0.2)
-                - int(len(full) * (0.8 - self.val_split)),
+                0.8 - self.val_split,
+                0.2,
+                self.val_split,
             ],
             generator=self.gen,
         )

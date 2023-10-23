@@ -14,7 +14,7 @@ from .dataset import DummyClassificationDataset, DummyRegressionDataset
 # fmt: on
 class DummyClassificationDataModule(AbstractDataModule):
     num_channels = 1
-    image_size: int = 8
+    image_size: int = 4
     training_task = "classification"
 
     def __init__(
@@ -22,7 +22,7 @@ class DummyClassificationDataModule(AbstractDataModule):
         root: Union[str, Path],
         ood_detection: bool,
         batch_size: int,
-        num_classes: int = 10,
+        num_classes: int = 2,
         num_workers: int = 1,
         pin_memory: bool = True,
         persistent_workers: bool = True,

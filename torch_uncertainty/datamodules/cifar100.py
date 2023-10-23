@@ -31,7 +31,7 @@ class CIFAR100DataModule(AbstractDataModule):
         num_workers (int): Number of workers to use for data loading. Defaults
             to ``1``.
         cutout (int): Size of cutout to apply to images. Defaults to ``None``.
-        enable_randaugment (bool): Whether to apply RandAugment. Defaults to
+        randaugment (bool): Whether to apply RandAugment. Defaults to
             ``False``.
         auto_augment (str): Which auto-augment to apply. Defaults to ``None``.
         test_alt (str): Which test set to use. Defaults to ``None``.
@@ -56,7 +56,7 @@ class CIFAR100DataModule(AbstractDataModule):
         val_split: float = 0.0,
         num_workers: int = 1,
         cutout: Optional[int] = None,
-        enable_randaugment: bool = False,
+        randaugment: bool = False,
         auto_augment: Optional[str] = None,
         test_alt: Optional[Literal["c"]] = None,
         corruption_severity: int = 1,
@@ -88,7 +88,7 @@ class CIFAR100DataModule(AbstractDataModule):
 
         self.corruption_severity = corruption_severity
 
-        if (cutout is not None) + enable_randaugment + int(
+        if (cutout is not None) + randaugment + int(
             auto_augment is not None
         ) > 1:
             raise ValueError(
@@ -98,7 +98,7 @@ class CIFAR100DataModule(AbstractDataModule):
 
         if cutout:
             main_transform = Cutout(cutout)
-        elif enable_randaugment:
+        elif randaugment:
             main_transform = T.RandAugment(num_ops=2, magnitude=20)
         elif auto_augment:
             main_transform = rand_augment_transform(auto_augment, {})
@@ -151,14 +151,16 @@ class CIFAR100DataModule(AbstractDataModule):
                 download=False,
                 transform=self.transform_train,
             )
-            self.train, self.val = random_split(
-                full,
-                [
-                    int(len(full) * (1 - self.val_split)),
-                    len(full) - int(len(full) * (1 - self.val_split)),
-                ],
-            )
-            if self.val_split == 0:
+            if self.val_split:
+                self.train, self.val = random_split(
+                    full,
+                    [
+                        1 - self.val_split,
+                        self.val_split,
+                    ],
+                )
+            else:
+                self.train = full
                 self.val = self.dataset(
                     self.root,
                     train=False,
@@ -231,9 +233,7 @@ class CIFAR100DataModule(AbstractDataModule):
 
         # Arguments for CIFAR100
         p.add_argument("--cutout", type=int, default=0)
-        p.add_argument(
-            "--randaugment", dest="enable_randaugment", action="store_true"
-        )
+        p.add_argument("--randaugment", dest="randaugment", action="store_true")
         p.add_argument("--auto_augment", type=str)
         p.add_argument("--test_alt", choices=["c"], default=None)
         p.add_argument(

@@ -15,8 +15,10 @@ def vgg11(
     num_classes: int,
     norm: Type[nn.Module] = nn.Identity,
     groups: int = 1,
-    dropout: float = 0.5,
+    dropout_rate: float = 0.5,
     style: str = "imagenet",
+    num_estimators: int = None,
+    last_layer_dropout: bool = False,
 ) -> VGG:
     return _vgg(
         cfgs["A"],
@@ -24,8 +26,10 @@ def vgg11(
         num_classes=num_classes,
         norm=norm,
         groups=groups,
-        dropout=dropout,
+        dropout_rate=dropout_rate,
         style=style,
+        num_estimators=num_estimators,
+        last_layer_dropout=last_layer_dropout,
     )
 
 
@@ -34,8 +38,10 @@ def vgg13(
     num_classes: int,
     norm: Type[nn.Module] = nn.Identity,
     groups: int = 1,
-    dropout: float = 0.5,
+    dropout_rate: float = 0.5,
     style: str = "imagenet",
+    num_estimators: int = None,
+    last_layer_dropout: bool = False,
 ) -> VGG:
     return _vgg(
         cfgs["B"],
@@ -43,8 +49,10 @@ def vgg13(
         num_classes=num_classes,
         norm=norm,
         groups=groups,
-        dropout=dropout,
+        dropout_rate=dropout_rate,
         style=style,
+        num_estimators=num_estimators,
+        last_layer_dropout=last_layer_dropout,
     )
 
 
@@ -53,8 +61,10 @@ def vgg16(
     num_classes: int,
     norm: Type[nn.Module] = nn.Identity,
     groups: int = 1,
-    dropout: float = 0.5,
+    dropout_rate: float = 0.5,
     style: str = "imagenet",
+    num_estimators: int = None,
+    last_layer_dropout: bool = False,
 ) -> VGG:
     return _vgg(
         cfgs["D"],
@@ -62,8 +72,10 @@ def vgg16(
         num_classes=num_classes,
         norm=norm,
         groups=groups,
-        dropout=dropout,
+        dropout_rate=dropout_rate,
         style=style,
+        num_estimators=num_estimators,
+        last_layer_dropout=last_layer_dropout,
     )
 
 
@@ -72,8 +84,10 @@ def vgg19(
     num_classes: int,
     norm: Type[nn.Module] = nn.Identity,
     groups: int = 1,
-    dropout: float = 0.5,
+    dropout_rate: float = 0.5,
     style: str = "imagenet",
+    num_estimators: int = None,
+    last_layer_dropout: bool = False,
 ) -> VGG:  # coverage: ignore
     return _vgg(
         cfgs["E"],
@@ -81,6 +95,8 @@ def vgg19(
         num_classes=num_classes,
         norm=norm,
         groups=groups,
-        dropout=dropout,
+        dropout_rate=dropout_rate,
         style=style,
+        num_estimators=num_estimators,
+        last_layer_dropout=last_layer_dropout,
     )

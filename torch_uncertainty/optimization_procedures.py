@@ -420,21 +420,21 @@ def get_procedure(
             else:
                 procedure = optim_imagenet_resnet50
         else:
-            raise NotImplementedError(f"Dataset {ds_name} not implemented.")
+            raise NotImplementedError(f"No recipe for dataset: {ds_name}.")
     elif arch_name == "wideresnet28x10":
         if ds_name == "cifar10" or ds_name == "cifar100":
             procedure = optim_cifar10_wideresnet
         else:
-            raise NotImplementedError(f"Dataset {ds_name} not implemented.")
-    elif arch_name == "vgg16":
+            raise NotImplementedError(f"No recipe for dataset: {ds_name}.")
+    elif "vgg" in arch_name:
         if ds_name == "cifar10":
             procedure = optim_cifar10_vgg16
         elif ds_name == "cifar100":
             procedure = optim_cifar100_vgg16
         else:
-            raise NotImplementedError(f"Dataset {ds_name} not implemented.")
+            raise NotImplementedError(f"No recipe for dataset: {ds_name}.")
     else:
-        raise NotImplementedError(f"Architecture {arch_name} not implemented.")
+        raise NotImplementedError(f"No recipe for architecture: {arch_name}.")
 
     if model_name == "batched":
         procedure = partial(

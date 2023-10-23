@@ -18,6 +18,9 @@ class TestELBOLoss:
         criterion = nn.BCEWithLogitsLoss()
 
         with pytest.raises(ValueError):
+            ELBOLoss(model, nn.BCEWithLogitsLoss, kl_weight=1, num_samples=1)
+
+        with pytest.raises(ValueError):
             ELBOLoss(model, criterion, kl_weight=-1, num_samples=1)
 
         with pytest.raises(ValueError):
@@ -55,3 +58,23 @@ class TestNIGLoss:
         assert loss(*inputs.split(1, dim=-1), targets) == pytest.approx(
             2 * math.log(2)
         )
+
+        loss = NIGLoss(
+            reg_weight=1e-2,
+            reduction="sum",
+        )
+
+        assert loss(
+            *inputs.repeat(2, 1).split(1, dim=-1),
+            targets.repeat(2, 1),
+        ) == pytest.approx(4 * math.log(2))
+
+        loss = NIGLoss(
+            reg_weight=1e-2,
+            reduction="none",
+        )
+
+        assert loss(
+            *inputs.repeat(2, 1).split(1, dim=-1),
+            targets.repeat(2, 1),
+        ) == pytest.approx([2 * math.log(2), 2 * math.log(2)])
