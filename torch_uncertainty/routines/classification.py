@@ -31,9 +31,9 @@ from ..metrics import (
     NegativeLogLikelihood,
     VariationRatio,
 )
+from ..plotting_utils import CalibrationPlot, plot_hist
 from ..post_processing import TemperatureScaler
 from ..transforms import Mixup, MixupIO, RegMixup, WarpingMixup
-from ..plotting_utils import CalibrationPlot, plot_hist
 
 
 # fmt:on
