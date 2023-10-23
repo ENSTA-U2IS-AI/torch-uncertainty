@@ -17,10 +17,10 @@ The scope of TorchUncertainty
 
 TorchUncertainty can host every method - if possible linked to a paper -
 roughly contained in the following fields:
-- uncertainty quantification in general, including Bayesian deep learning,
+* uncertainty quantification in general, including Bayesian deep learning,
 Monte Carlo dropout, ensemble methods, etc.
-- Out-of-distribution detection methods
-- Applications (e.g. object detection, segmentation, etc.)
+* Out-of-distribution detection methods
+* Applications (e.g. object detection, segmentation, etc.)
 
 Common guidelines
 -----------------
