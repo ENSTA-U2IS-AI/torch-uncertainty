@@ -8,6 +8,17 @@ Uncertainty Models
 
 The following uncertainty models are implemented.
 
+Deep Evidential Classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For Deep Evidential Classification, consider citing:
+
+**Evidential Deep Learning to Quantify Classification Uncertainty**
+
+* Authors: *Murat Sensoy, Lance Kaplan, Melih Kandemir*
+* Paper: `NeurIPS 2018 <https://arxiv.org/pdf/1806.01768>`__.
+
+
 Deep Evidential Regression
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 

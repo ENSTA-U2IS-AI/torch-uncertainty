@@ -173,3 +173,198 @@ class NIGLoss(nn.Module):
             return loss.sum()
         else:
             return loss
+
+
+class DECLoss(nn.Module):
+    """The deep evidential classification loss.
+
+    Args:
+        annealing_step (int): Annealing step for the weight of the
+        regularization term.
+        reg_weight (float): Fixed weight of the regularization term.
+        num_classes (int): Number of classes in classification.
+        loss_type (str, optional): Specifies the loss type to apply to the
+        Dirichlet parameters: ``'mse'`` | ``'log'`` | ``'digamma'``.
+        reduction (str, optional): Specifies the reduction to apply to the
+        output:``'none'`` | ``'mean'`` | ``'sum'``.
+
+    Reference:
+        Sensoy, M., Kaplan, L., & Kandemir, M. (2018). Evidential deep
+        learning to quantify classification uncertainty.
+        https://arxiv.org/abs/1806.01768.
+    """
+
+    def __init__(
+        self,
+        annealing_step: int = None,
+        reg_weight: float = None,
+        num_classes: int = 10,
+        loss_type: Optional[str] = "log",
+        reduction: Optional[str] = "mean",
+    ) -> None:
+        super().__init__()
+
+        if num_classes < 0:
+            raise ValueError(
+                "The number of classes should be non-negative, but got "
+                f"{num_classes}."
+            )
+        self.num_classes = num_classes
+
+        if reg_weight and (reg_weight < 0):
+            raise ValueError(
+                "The regularization weight should be non-negative, but got "
+                f"{reg_weight}."
+            )
+        self.reg_weight = reg_weight
+
+        if annealing_step and (annealing_step <= 0):
+            raise ValueError(
+                "The annealing step should be positive, but got "
+                f"{annealing_step}."
+            )
+        self.annealing_step = annealing_step
+
+        if reduction != "none" and reduction != "mean" and reduction != "sum":
+            raise ValueError(f"{reduction} is not a valid value for reduction.")
+        self.reduction = reduction
+
+        if loss_type != "mse" and loss_type != "log" and loss_type != "digamma":
+            raise ValueError(
+                f"{loss_type} is not a valid value for mse/log/digamma loss."
+            )
+        self.loss_type = loss_type
+
+    def _mse_loss(self, evidence: Tensor, targets: Tensor) -> Tensor:
+        evidence = torch.relu(evidence)
+        alpha = evidence + 1.0
+        strength = torch.sum(alpha, dim=1, keepdim=True)
+
+        loglikelihood_err = torch.sum(
+            (targets - (alpha / strength)) ** 2, dim=1, keepdim=True
+        )
+        loglikelihood_var = torch.sum(
+            alpha * (strength - alpha) / (strength * strength * (strength + 1)),
+            dim=1,
+            keepdim=True,
+        )
+        loss = loglikelihood_err + loglikelihood_var
+
+        return loss
+
+    def _log_loss(self, evidence: Tensor, targets: Tensor) -> Tensor:
+        evidence = torch.relu(evidence)
+        alpha = evidence + 1.0
+        strength = alpha.sum(dim=-1, keepdim=True)
+
+        loss = torch.sum(
+            targets * (torch.log(strength) - torch.log(alpha)),
+            dim=1,
+            keepdim=True,
+        )
+
+        return loss
+
+    def _digamma_loss(self, evidence: Tensor, targets: Tensor) -> Tensor:
+        evidence = torch.relu(evidence)
+        alpha = evidence + 1.0
+        strength = alpha.sum(dim=-1, keepdim=True)
+
+        loss = torch.sum(
+            targets * (torch.digamma(strength) - torch.digamma(alpha)),
+            dim=1,
+            keepdim=True,
+        )
+
+        return loss
+
+    def _kldiv_reg(
+        self,
+        evidence: Tensor,
+        targets: Tensor,
+    ) -> Tensor:
+        evidence = torch.relu(evidence)
+        alpha = evidence + 1.0
+
+        kl_alpha = (alpha - 1) * (1 - targets) + 1
+
+        ones = torch.ones(
+            [1, self.num_classes], dtype=torch.float32, device=evidence.device
+        )
+        sum_kl_alpha = torch.sum(kl_alpha, dim=1, keepdim=True)
+        first_term = (
+            torch.lgamma(sum_kl_alpha)
+            - torch.lgamma(kl_alpha).sum(dim=1, keepdim=True)
+            + torch.lgamma(ones).sum(dim=1, keepdim=True)
+            - torch.lgamma(ones.sum(dim=1, keepdim=True))
+        )
+        second_term = (
+            (kl_alpha - ones)
+            .mul(torch.digamma(kl_alpha) - torch.digamma(sum_kl_alpha))
+            .sum(dim=1, keepdim=True)
+        )
+        loss = first_term + second_term
+
+        return loss
+
+    def _one_hot_embedding(
+        self, targets: Tensor, num_classes: int = 10
+    ) -> Tensor:
+        # Convert to One Hot Encoding
+        y = torch.eye(num_classes)
+        return y[targets]
+
+    def forward(
+        self, evidence: Tensor, targets: Tensor, epoch_num: int = None
+    ) -> Tensor:
+        targets = self._one_hot_embedding(targets, self.num_classes)
+        if self.loss_type == "mse":
+            loss_dirichlet = self._mse_loss(evidence, targets)
+        elif self.loss_type == "log":
+            loss_dirichlet = self._log_loss(evidence, targets)
+        elif self.loss_type == "digamma":
+            loss_dirichlet = self._digamma_loss(evidence, targets)
+
+        if self.reg_weight is None and self.annealing_step is None:
+            annealing_coef = 0
+        elif (
+            self.reg_weight is None
+            and self.annealing_step > 0
+            and epoch_num > 0
+        ):
+            annealing_coef = torch.min(
+                torch.tensor(1.0, dtype=torch.float32),
+                torch.tensor(
+                    epoch_num / self.annealing_step, dtype=torch.float32
+                ),
+            )
+        elif (
+            self.reg_weight is None
+            and self.annealing_step > 0
+            and epoch_num is None
+        ):
+            raise ValueError(
+                "The epoch num should be positive when \
+                annealing_step is settled, but got "
+                f"{epoch_num}."
+            )
+        elif self.annealing_step is None and self.reg_weight > 0:
+            annealing_coef = self.reg_weight
+        else:
+            annealing_coef = torch.min(
+                torch.tensor(1.0, dtype=torch.float32),
+                torch.tensor(
+                    epoch_num / self.annealing_step, dtype=torch.float32
+                ),
+            )
+
+        loss_reg = self._kldiv_reg(evidence, targets)
+
+        loss = loss_dirichlet + annealing_coef * loss_reg
+
+        if self.reduction == "mean":
+            return loss.mean()
+        elif self.reduction == "sum":
+            return loss.sum()
+        else:
+            return loss
