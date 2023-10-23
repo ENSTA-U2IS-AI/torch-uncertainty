@@ -28,7 +28,7 @@ if __name__ == "__main__":
         in_channels=dm.num_channels,
         loss=nn.CrossEntropyLoss,
         optimization_procedure=get_procedure(
-            f"wideresnet28x10", "cifar100", args.version
+            "wideresnet28x10", "cifar100", args.version
         ),
         style="cifar",
         **vars(args),

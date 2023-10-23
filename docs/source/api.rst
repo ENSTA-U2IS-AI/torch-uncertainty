@@ -212,6 +212,7 @@ Losses
     KLDiv
     ELBOLoss
     NIGLoss
+    DECLoss
 
 Post-Processing Methods
 -----------------------

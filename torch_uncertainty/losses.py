@@ -221,7 +221,7 @@ class DECLoss(nn.Module):
             raise ValueError(f"{reduction} is not a valid value for reduction.")
         self.reduction = reduction
 
-        if not loss_type in ["mse", "log", "digamma"]:
+        if loss_type not in ["mse", "log", "digamma"]:
             raise ValueError(
                 f"{loss_type} is not a valid value for mse/log/digamma loss."
             )
