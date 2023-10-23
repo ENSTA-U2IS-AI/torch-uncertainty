@@ -74,6 +74,7 @@ We provide the following tutorials in our documentation:
 - [Improve Top-label Calibration with Temperature Scaling](https://torch-uncertainty.github.io/auto_tutorials/tutorial_scaler.html)
 - [Deep Evidential Regression on a Toy Example](https://torch-uncertainty.github.io/auto_tutorials/tutorial_der_cubic.html)
 - [Training a LeNet with Monte-Carlo Dropout](https://torch-uncertainty.github.io/auto_tutorials/tutorial_mc_dropout.html)
+- [Deep Evidential Classification on a Toy Example](https://torch-uncertainty.github.io/auto_tutorials/tutorial_evidential_classification.html)
   
 ## Awesome Uncertainty repositories
 

@@ -30,7 +30,6 @@ First, we have to load the following utilities from TorchUncertainty:
 
 from torch_uncertainty import cli_main, init_args
 from torch_uncertainty.datamodules import MNISTDataModule
-from torch_uncertainty.baselines import ResNet
 from torch_uncertainty.models.lenet import lenet
 from torch_uncertainty.routines.classification import ClassificationEnsemble
 from torch_uncertainty.optimization_procedures import optim_cifar10_resnet18
@@ -42,7 +41,6 @@ from torch_uncertainty.optimization_procedures import optim_cifar10_resnet18
 # arguments, and therefore avoid errors.
 
 import os
-from functools import partial
 from pathlib import Path
 
 from torch import nn
@@ -77,7 +75,7 @@ with ArgvContext(
     "--num_estimators",
     "16",
 ):
-    args = init_args(network=ResNet, datamodule=MNISTDataModule)
+    args = init_args(datamodule=MNISTDataModule)
 
 net_name = "mc-dropout-lenet-mnist"
 
