@@ -107,7 +107,8 @@ print(f"ECE before scaling - {cal*100:.3}%.")
 # %%
 # We also compute and plot the top-label calibration figure. We see that the
 # model is not well calibrated.
-cal_plot.compute()
+fig, ax = cal_plot.compute()
+fig.show()
 
 # %%
 # 5. Fitting the Scaler to Improve the Calibration
@@ -151,7 +152,8 @@ print(f"ECE after scaling - {cal*100:.3}%.")
 # %%
 # We finally compute and plot the scaled top-label calibration figure. We see
 # that the model is now better calibrated.
-cal_plot.compute()
+fig, ax = cal_plot.compute()
+fig.show()
 
 # %%
 # The top-label calibration should be improved.

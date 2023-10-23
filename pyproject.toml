@@ -56,6 +56,7 @@ sphinx-copybutton = "^0.5.1"
 sphinx-gallery = "^0.14.0"
 matplotlib = "^3.7.1"
 sphinx-design = "^0.3.0"
+sphinx-codeautolink = "^0.15.0"
 
 [build-system]
 requires = ["poetry-core"]
