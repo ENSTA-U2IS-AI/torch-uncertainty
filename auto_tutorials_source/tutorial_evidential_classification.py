@@ -3,14 +3,14 @@
 
 """
 Deep Evidential Classification on a Toy Example
-===========================================
+===============================================
 
 This tutorial aims to provide an introductory overview of Deep Evidential Classification (DEC) using a practical example. We demonstrate an application of DEC by tackling the toy-problem of fitting the MNIST dataset using a Multi-Layer Perceptron (MLP) neural network model. The output of the MLP is modeled as a Dirichlet distribution. The MLP is trained by minimizing the DEC loss function, composed of a Bayesian risk square error loss and a regularization term based on KL Divergence.
 
 DEC represents an evidential approach to quantifying uncertainty in neural network classification models. This method involves introducing prior distributions over the parameters of the Categorical likelihood function. Then, the MLP model estimates the parameters of the evidential distribution.
 
-Training a LeNet with DEC using TorchUncertainty models and PyTorch Lightning
----------------------------------------------------------------------------
+Training a LeNet with DEC using TorchUncertainty models
+-------------------------------------------------------
 
 In this part, we train a neural network, based on the model and routines already implemented in TU.
 
@@ -24,15 +24,14 @@ To train a LeNet with the DEC loss function using TorchUncertainty, we have to l
 - the classification training routine in the torch_uncertainty.training.classification module
 - the evidential objective: the DECLoss, which lies in the torch_uncertainty.losses file
 - the datamodule that handles dataloaders: MNISTDataModule, which lies in the torch_uncertainty.datamodule
-- the optimizer wrapper in the torch_uncertainty.optimization_procedures module.
 """
 
+# %%
 from torch_uncertainty import cli_main, init_args
-from torch_uncertainty.datamodules import MNISTDataModule
-from torch_uncertainty.losses import DECLoss
-from torch_uncertainty.baselines import ResNet
 from torch_uncertainty.models.lenet import lenet
 from torch_uncertainty.routines.classification import ClassificationSingle
+from torch_uncertainty.losses import DECLoss
+from torch_uncertainty.datamodules import MNISTDataModule
 
 
 # %%
@@ -56,14 +55,12 @@ from torch import nn, optim
 # 2. Creating the Optimizer Wrapper
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # We follow the official implementation in DEC, use the Adam optimizer
-# with the default learning rate of 0.001 and a scheduler for the learning rate
+# with the default learning rate of 0.001 and a step scheduler.
 def optim_lenet(model: nn.Module) -> dict:
-    optimizer = optim.Adam(
-        model.parameters(),
-        lr=1e-3,
-        weight_decay=0.005
+    optimizer = optim.Adam(model.parameters(), lr=1e-3, weight_decay=0.005)
+    exp_lr_scheduler = optim.lr_scheduler.StepLR(
+        optimizer, step_size=7, gamma=0.1
     )
-    exp_lr_scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
     return {"optimizer": optimizer, "lr_scheduler": exp_lr_scheduler}
 
 
@@ -74,20 +71,18 @@ def optim_lenet(model: nn.Module) -> dict:
 # In the following, we need to define the root of the logs, and to
 # fake-parse the arguments needed for using the PyTorch Lightning Trainer. We
 # also use the same MNIST classification example as that used in the
-# original DEC paper.
+# original DEC paper. We only train for 10 epochs for the sake of time.
 root = Path(os.path.abspath(""))
 
-# We mock the arguments for the trainer
+# We mock the arguments for the trainer. Replace with 25 epochs on your machine.
 with ArgvContext(
     "file.py",
     "--max_epochs",
-    "25",
+    "10",
     "--enable_progress_bar",
     "True",
-    "--version",
-    "vanilla",
 ):
-    args = init_args(network=ResNet, datamodule=MNISTDataModule)
+    args = init_args(datamodule=MNISTDataModule)
 
 net_name = "dec-lenet-mnist"
 
@@ -107,8 +102,8 @@ model = lenet(
 # Next, we need to define the loss to be used during training. To do this, we
 # redefine the default parameters for the DEC loss using the partial
 # function from functools. After that, we define the training routine using
-# the single classification model training routine from 
-# torch_uncertainty.routines.classification.ClassificationSingle. 
+# the single classification model training routine from
+# torch_uncertainty.routines.classification.ClassificationSingle.
 # In this routine, we provide the model, the DEC loss, the optimizer,
 # and all the default arguments.
 
@@ -163,29 +158,31 @@ with torch.no_grad():
     evidence = baseline(images)
     alpha = torch.relu(evidence) + 1
     strength = torch.sum(alpha, dim=1, keepdim=True)
-    probs = alpha/strength
-    entropy = -1 * torch.sum(probs * torch.log(probs), dim = 1, keepdim=True)
+    probs = alpha / strength
+    entropy = -1 * torch.sum(probs * torch.log(probs), dim=1, keepdim=True)
     for j in range(4):
         predicted = torch.argmax(probs[j, :])
         print(
-            f"Predicted digits for the image {j}: {predicted} with strength {strength[j,0]} and entropy {entropy[j,0]}."
+            f"Predicted digits for the image {j}: {predicted} with strength "
+            f"{strength[j,0]:.3} and entropy {entropy[j,0]:.3}."
         )
-    
+
     # rotate the images by 45 degrees
     rotated_images = F.rotate(images, 45)
     # print rotated images
     imshow(torchvision.utils.make_grid(rotated_images[:4, ...]))
     print("Ground truth: ", " ".join(f"{labels[j]}" for j in range(4)))
-    
+
     evidence = baseline(rotated_images)
     alpha = torch.relu(evidence) + 1
     strength = torch.sum(alpha, dim=1, keepdim=True)
-    probs = alpha/strength
-    entropy = -1 * torch.sum(probs * torch.log(probs), dim = 1, keepdim=True)
+    probs = alpha / strength
+    entropy = -1 * torch.sum(probs * torch.log(probs), dim=1, keepdim=True)
     for j in range(4):
         predicted = torch.argmax(probs[j, :])
         print(
-            f"Predicted digits for the image {j}: {predicted} with strength {strength[j,0]} and entropy {entropy[j,0]}."
+            f"Predicted digits for the image {j}: {predicted} with strength "
+            f"{strength[j,0]:.3} and entropy {entropy[j,0]:.3}."
         )
 
     # rotate the images by 90 degrees
@@ -193,16 +190,17 @@ with torch.no_grad():
     # print rotated images
     imshow(torchvision.utils.make_grid(rotated_images[:4, ...]))
     print("Ground truth: ", " ".join(f"{labels[j]}" for j in range(4)))
-    
+
     evidence = baseline(rotated_images)
     alpha = torch.relu(evidence) + 1
     strength = torch.sum(alpha, dim=1, keepdim=True)
-    probs = alpha/strength
-    entropy = -1 * torch.sum(probs * torch.log(probs), dim = 1, keepdim=True)
+    probs = alpha / strength
+    entropy = -1 * torch.sum(probs * torch.log(probs), dim=1, keepdim=True)
     for j in range(4):
         predicted = torch.argmax(probs[j, :])
         print(
-            f"Predicted digits for the image {j}: {predicted} with strength {strength[j,0]} and entropy {entropy[j,0]}."
+            f"Predicted digits for the image {j}: {predicted} with strength "
+            f"{strength[j,0]:.3} and entropy {entropy[j,0]:.3}."
         )
 
 
