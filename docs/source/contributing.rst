@@ -15,7 +15,7 @@ Specifically, we are open to changing these guidelines as the project evolves.
 The scope of TorchUncertainty
 -----------------------------
 
-TorchUncertainty can host every method - if possible linked to a paper -
+TorchUncertainty can host any method - if possible linked to a paper - and
 roughly contained in the following fields:
 * uncertainty quantification in general, including Bayesian deep learning,
 Monte Carlo dropout, ensemble methods, etc.
@@ -37,6 +37,9 @@ ensuring continuous integration does not break.
 3. Install torch-uncertainty in editable mode poetry with dev packages:
    :bash:`poetry install --with dev`
 4. Install pre-commit hooks with :bash:`pre-commit install`
+
+If you have issues with poetry, add :bash:`PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring`
+at the beginning of every :bash:`poetry` command.
 
 Build the documentation locally
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

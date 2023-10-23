@@ -39,6 +39,9 @@ poetry install --with dev
 pre-commit install
 ```
 
+If you have issues with poetry, add `PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring`
+at the beginning of every`poetry` command.
+
 ### Build the documentation locally
 
 To build the documentation, reinstall TorchUncertainty with the packages of the docs

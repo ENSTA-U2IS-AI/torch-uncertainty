@@ -70,7 +70,11 @@ Install the package using poetry:
 
 Depending on your system, you may encounter poetry errors. If so, kill the 
 process and add :bash:`PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring`
-at the beginning of every :bash:`poetry` command.
+at the beginning of every :bash:`poetry` command, eg:
+
+.. parsed-literal::
+
+    PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring poetry install
 
 To update the package, run:
 
