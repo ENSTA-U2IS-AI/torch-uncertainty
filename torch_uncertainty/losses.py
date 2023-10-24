@@ -311,12 +311,18 @@ class DECLoss(nn.Module):
                 f"{current_epoch}."
             )
 
-        targets = F.one_hot(targets, evidence.size()[-1])
+        if targets.ndim != 1:  # if no mixup or cutmix
+            raise NotImplementedError(
+                "DECLoss does not yet support mixup/cutmix."
+            )
+        else:  # TODO: handle binary
+            targets = F.one_hot(targets, num_classes=evidence.size()[-1])
+
         if self.loss_type == "mse":
             loss_dirichlet = self._mse_loss(evidence, targets)
         elif self.loss_type == "log":
             loss_dirichlet = self._log_loss(evidence, targets)
-        elif self.loss_type == "digamma":
+        else:  # self.loss_type == "digamma"
             loss_dirichlet = self._digamma_loss(evidence, targets)
 
         if self.reg_weight is None and self.annealing_step is None:

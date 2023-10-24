@@ -253,11 +253,12 @@ class ClassificationSingle(pl.LightningModule):
         self.cal_plot.update(probs, targets)
         confs = probs.max(dim=-1)[0]
 
-        ood_values = -confs
         if self.use_logits:
-            ood_values = -logits.max(dim=-1)[0]
+            ood_scores = -logits.max(dim=-1)[0]
         elif self.use_entropy:
-            ood_values = torch.special.entr(probs).sum(dim=-1)
+            ood_scores = torch.special.entr(probs).sum(dim=-1)
+        else:
+            ood_scores = -confs
 
         if dataloader_idx == 0:
             self.test_cls_metrics.update(probs, targets)
@@ -270,10 +271,10 @@ class ClassificationSingle(pl.LightningModule):
             )
             if self.ood_detection:
                 self.test_ood_metrics.update(
-                    ood_values, torch.zeros_like(targets)
+                    ood_scores, torch.zeros_like(targets)
                 )
         elif self.ood_detection and dataloader_idx == 1:
-            self.test_ood_metrics.update(ood_values, torch.ones_like(targets))
+            self.test_ood_metrics.update(ood_scores, torch.ones_like(targets))
             self.test_entropy_ood(probs)
             self.log(
                 "hp/test_entropy_ood",
@@ -517,19 +518,19 @@ class ClassificationEnsemble(ClassificationSingle):
         confs = probs.max(-1)[0]
 
         if self.use_logits:
-            ood_values = -logits.mean(dim=1).max(dim=-1)[0]
+            ood_scores = -logits.mean(dim=1).max(dim=-1)[0]
         elif self.use_entropy:
-            ood_values = (
+            ood_scores = (
                 torch.special.entr(probs_per_est).sum(dim=-1).mean(dim=1)
             )
         elif self.use_mi:
             mi_metric = MutualInformation(reduction="none")
-            ood_values = mi_metric(probs_per_est)
+            ood_scores = mi_metric(probs_per_est)
         elif self.use_variation_ratio:
             vr_metric = VariationRatio(reduction="none", probabilistic=False)
-            ood_values = vr_metric(probs_per_est.transpose(0, 1))
+            ood_scores = vr_metric(probs_per_est.transpose(0, 1))
         else:
-            ood_values = -confs
+            ood_scores = -confs
 
         if dataloader_idx == 0:
             # squeeze if binary classification only for binary metrics
@@ -549,10 +550,10 @@ class ClassificationEnsemble(ClassificationSingle):
 
             if self.ood_detection:
                 self.test_ood_metrics.update(
-                    ood_values, torch.zeros_like(targets)
+                    ood_scores, torch.zeros_like(targets)
                 )
         elif self.ood_detection and dataloader_idx == 1:
-            self.test_ood_metrics.update(ood_values, torch.ones_like(targets))
+            self.test_ood_metrics.update(ood_scores, torch.ones_like(targets))
             self.test_entropy_ood(probs)
             self.test_ood_ens_metrics.update(probs_per_est)
             self.log(
