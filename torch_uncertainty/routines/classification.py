@@ -20,7 +20,7 @@ from torchmetrics.classification import (
     BinaryCalibrationError,
 )
 
-from torch_uncertainty.losses import ELBOLoss, DECLoss
+from torch_uncertainty.losses import DECLoss, ELBOLoss
 
 from ..metrics import (
     FPR95,

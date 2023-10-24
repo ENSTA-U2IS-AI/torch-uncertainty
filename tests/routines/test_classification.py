@@ -7,7 +7,7 @@ from cli_test_helpers import ArgvContext
 from torch import nn
 
 from torch_uncertainty import cli_main, init_args
-from torch_uncertainty.losses import ELBOLoss, DECLoss
+from torch_uncertainty.losses import DECLoss, ELBOLoss
 from torch_uncertainty.optimization_procedures import optim_cifar10_resnet18
 from torch_uncertainty.routines.classification import (
     ClassificationEnsemble,
@@ -31,7 +31,6 @@ class TestClassificationSingle:
                 DummyClassificationBaseline, DummyClassificationDataModule
             )
 
-            # datamodule
             args.root = str(root / "data")
             dm = DummyClassificationDataModule(num_classes=1, **vars(args))
 
@@ -43,7 +42,6 @@ class TestClassificationSingle:
                 baseline_type="single",
                 **vars(args),
             )
-
             cli_main(model, dm, root, "dummy", args)
 
     def test_cli_main_dummy_ood(self):
@@ -53,7 +51,6 @@ class TestClassificationSingle:
                 DummyClassificationBaseline, DummyClassificationDataModule
             )
 
-            # datamodule
             args.root = str(root / "data")
             dm = DummyClassificationDataModule(**vars(args))
             loss = partial(
@@ -70,7 +67,6 @@ class TestClassificationSingle:
                 baseline_type="single",
                 **vars(args),
             )
-
             cli_main(model, dm, root, "dummy", args)
 
         with ArgvContext("file.py", "--evaluate_ood", "--entropy"):
@@ -78,7 +74,6 @@ class TestClassificationSingle:
                 DummyClassificationBaseline, DummyClassificationDataModule
             )
 
-            # datamodule
             args.root = str(root / "data")
             dm = DummyClassificationDataModule(**vars(args))
 
@@ -90,7 +85,6 @@ class TestClassificationSingle:
                 baseline_type="single",
                 **vars(args),
             )
-
             cli_main(model, dm, root, "dummy", args)
 
     def test_classification_failures(self):
