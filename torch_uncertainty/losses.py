@@ -340,4 +340,3 @@ class DECLoss(nn.Module):
         elif self.reduction == "sum":
             loss = loss.sum()
         return loss
-    
