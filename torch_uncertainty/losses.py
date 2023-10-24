@@ -190,7 +190,7 @@ class DECLoss(nn.Module):
 
     Reference:
         Sensoy, M., Kaplan, L., & Kandemir, M. (2018). Evidential deep
-        learning to quantify classification uncertainty.
+        learning to quantify classification uncertainty. NeurIPS 2018.
         https://arxiv.org/abs/1806.01768.
     """
 
