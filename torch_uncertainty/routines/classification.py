@@ -20,7 +20,7 @@ from torchmetrics.classification import (
     BinaryCalibrationError,
 )
 
-from torch_uncertainty.losses import ELBOLoss
+from torch_uncertainty.losses import DECLoss, ELBOLoss
 
 from ..metrics import (
     FPR95,
@@ -205,6 +205,11 @@ class ClassificationSingle(pl.LightningModule):
             isinstance(self.loss, partial) and self.loss.func == ELBOLoss
         )
 
+        # DEC
+        self.is_dec = self.loss == DECLoss or (
+            isinstance(self.loss, partial) and self.loss.func == DECLoss
+        )
+
     def configure_optimizers(self) -> Any:
         return self.optimization_procedure(self)
 
@@ -267,7 +272,10 @@ class ClassificationSingle(pl.LightningModule):
                 logits = logits.squeeze(-1)
                 targets = targets.float()
 
-            loss = self.criterion(logits, targets)
+            if not self.is_dec:
+                loss = self.criterion(logits, targets)
+            else:
+                loss = self.criterion(logits, targets, self.current_epoch)
         self.log("train_loss", loss)
         return loss
 
@@ -573,7 +581,10 @@ class ClassificationEnsemble(ClassificationSingle):
                 logits = logits.squeeze(-1)
                 targets = targets.float()
 
-            loss = self.criterion(logits, targets)
+            if not self.is_dec:
+                loss = self.criterion(logits, targets)
+            else:
+                loss = self.criterion(logits, targets, self.current_epoch)
 
         self.log("train_loss", loss)
         return loss
