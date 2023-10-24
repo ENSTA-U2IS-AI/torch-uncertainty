@@ -253,12 +253,11 @@ class ClassificationSingle(pl.LightningModule):
         self.cal_plot.update(probs, targets)
         confs = probs.max(dim=-1)[0]
 
+        ood_values = -confs
         if self.use_logits:
             ood_values = -logits.max(dim=-1)[0]
         elif self.use_entropy:
             ood_values = torch.special.entr(probs).sum(dim=-1)
-        else:
-            ood_values = -confs
 
         if dataloader_idx == 0:
             self.test_cls_metrics.update(probs, targets)

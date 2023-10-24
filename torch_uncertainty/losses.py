@@ -321,17 +321,6 @@ class DECLoss(nn.Module):
 
         if self.reg_weight is None and self.annealing_step is None:
             annealing_coef = 0
-        elif (
-            self.reg_weight is None
-            and self.annealing_step > 0
-            and current_epoch > 0
-        ):
-            annealing_coef = torch.min(
-                torch.tensor(1.0, dtype=evidence.dtype),
-                torch.tensor(
-                    current_epoch / self.annealing_step, dtype=evidence.dtype
-                ),
-            )
         elif self.annealing_step is None and self.reg_weight > 0:
             annealing_coef = self.reg_weight
         else:
@@ -347,8 +336,7 @@ class DECLoss(nn.Module):
         loss = loss_dirichlet + annealing_coef * loss_reg
 
         if self.reduction == "mean":
-            return loss.mean()
+            loss = loss.mean()
         elif self.reduction == "sum":
-            return loss.sum()
-        else:
-            return loss
+            loss = loss.sum()
+        return loss
