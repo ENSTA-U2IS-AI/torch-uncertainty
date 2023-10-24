@@ -79,7 +79,7 @@ jobs:
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
-      if: ${{ github.event_name != 'pull_request' }}
+      if: ${{ github.event_name != 'pull_request' || github.base_ref == 'dev' }}
       continue-on-error: true
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
