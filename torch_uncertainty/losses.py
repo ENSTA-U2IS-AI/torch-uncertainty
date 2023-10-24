@@ -300,6 +300,17 @@ class DECLoss(nn.Module):
         targets: Tensor,
         current_epoch: Optional[int] = None,
     ) -> Tensor:
+        if (
+            self.annealing_step is not None
+            and self.annealing_step > 0
+            and current_epoch is None
+        ):
+            raise ValueError(
+                "The epoch num should be positive when \
+                annealing_step is settled, but got "
+                f"{current_epoch}."
+            )
+
         targets = F.one_hot(targets, evidence.size()[-1])
         if self.loss_type == "mse":
             loss_dirichlet = self._mse_loss(evidence, targets)
@@ -320,16 +331,6 @@ class DECLoss(nn.Module):
                 torch.tensor(
                     current_epoch / self.annealing_step, dtype=evidence.dtype
                 ),
-            )
-        elif (
-            self.reg_weight is None
-            and self.annealing_step > 0
-            and current_epoch is None
-        ):
-            raise ValueError(
-                "The epoch num should be positive when \
-                annealing_step is settled, but got "
-                f"{current_epoch}."
             )
         elif self.annealing_step is None and self.reg_weight > 0:
             annealing_coef = self.reg_weight
