@@ -3,13 +3,13 @@ repos:
   hooks:
   - id: end-of-file-fixer
     name: end-of-file-fixer
-    language: system
     entry: end-of-file-fixer
+    language: system
     types: [text]
   - id: check-toml
     name: check-toml
-    language: system
     entry: check-toml
+    language: system
     types: [toml]
   - id: check-yaml
     name: check-yaml
@@ -24,22 +24,19 @@ repos:
     name: check-added-large-files
     entry: check-added-large-files
     language: system
-  - id: black
-    name: black
-    language: system
-    entry: black
-    types: [python]
+  - id: ruff-check
+    name: ruff-check 
+    entry: ruff check
+    language: python
+    types_or: [python, pyi]
+    require_serial: true
+    args: [--force-exclude, --fix, --exit-non-zero-on-fix]
     exclude: ^auto_tutorials_source/
-  - id: flake8
-    name: flake8
-    language: system
-    entry: flake8
-    types: [python]
-  - id: isort
-    name: isort
-    language: system
-    entry: isort
-    types: [python]
+  - id: ruff-format
+    name: ruff-format
+    entry: ruff format
+    language: python
+    types_or: [python, pyi]
     exclude: ^auto_tutorials_source/
   - id: pytest-check
     name: pytest-check
