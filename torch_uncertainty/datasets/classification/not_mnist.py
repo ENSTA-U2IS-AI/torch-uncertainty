@@ -49,7 +49,7 @@ class NotMNIST(ImageFolder):
         if isinstance(root, str):
             self.root = Path(root)
 
-        if not (subset in self.subsets):
+        if subset not in self.subsets:
             raise ValueError(
                 f"The subset '{subset}' does not exist for notMNIST."
             )
