@@ -597,8 +597,6 @@ class ClassificationEnsemble(ClassificationSingle):
                 id_logits = torch.cat(outputs[0], 0).float().cpu()
                 ood_logits = torch.cat(outputs[1], 0).float().cpu()
 
-                print(id_logits.shape)
-
                 id_probs = F.softmax(id_logits, dim=-1)
                 ood_probs = F.softmax(ood_logits, dim=-1)
 
