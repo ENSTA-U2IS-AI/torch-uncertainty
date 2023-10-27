@@ -96,6 +96,7 @@ class WideResNet(LightningModule):
         LightningModule: Wide-ResNet baseline ready for training and
             evaluation.
     """
+
     single = ["vanilla"]
     ensemble = ["packed", "batched", "masked", "mimo", "mc-dropout"]
     versions = {

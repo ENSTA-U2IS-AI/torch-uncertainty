@@ -63,8 +63,8 @@ Optionally, specify :bash:`html-noplot` instead of :bash:`html` to avoid running
 Guidelines
 ^^^^^^^^^^
 
-We are using black for code formatting, flake8 for linting, and isort for the
-imports. The pre-commit hooks will ensure that your code is properly formatted
+We are using ruff for code formatting, linting, and
+imports (as a drop-in replacement for black, isort, and flake8). The pre-commit hooks will ensure that your code is properly formatted
 and linted before committing.
 
 Before submitting a final pull request, that we will review, please try your

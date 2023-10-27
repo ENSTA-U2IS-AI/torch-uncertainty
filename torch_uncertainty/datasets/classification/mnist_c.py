@@ -93,7 +93,7 @@ class MNISTC(VisionDataset):
             transform=transform,
             target_transform=target_transform,
         )
-        if not (subset in ["all"] + self.mnistc_subsets):
+        if subset not in ["all"] + self.mnistc_subsets:
             raise ValueError(
                 f"The subset '{subset}' does not exist in MNIST-C."
             )
