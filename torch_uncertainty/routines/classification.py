@@ -481,6 +481,9 @@ class ClassificationEnsemble(ClassificationSingle):
             else:
                 loss = self.criterion(logits, targets, self.current_epoch)
 
+            # compensate for mean on the estimators
+            loss *= self.num_estimators
+
         self.log("train_loss", loss)
         return loss
 
