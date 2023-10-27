@@ -74,8 +74,7 @@ class TinyImageNetDataModule(AbstractDataModule):
 
         self.transform_test = T.Compose(
             [
-                T.Resize(72),
-                T.CenterCrop(64),
+                T.Resize(64),
                 T.ToTensor(),
                 T.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
             ]

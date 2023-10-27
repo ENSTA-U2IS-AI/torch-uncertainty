@@ -62,6 +62,7 @@ if __name__ == "__main__":
                 f"resnet{args.arch}", "cifar10", args.version
             ),
             style="cifar",
+            calibration_set=calibration_set,
             **vars(args),
         )
 

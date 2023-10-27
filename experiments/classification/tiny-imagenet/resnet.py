@@ -72,7 +72,10 @@ if __name__ == "__main__":
             num_classes=dm.num_classes,
             in_channels=dm.num_channels,
             loss=nn.CrossEntropyLoss,
-            optimization_procedure=optim_tiny,
+            optimization_procedure=get_procedure(
+                f"resnet{args.arch}", "tiny-imagenet", args.version
+            ),
+            calibration_set=calibration_set,
             style="cifar",
             **vars(args),
         )

@@ -38,6 +38,9 @@ def init_args(
         help="Run in test mode. Set to the checkpoint version number to test.",
     )
     parser.add_argument(
+        "--ckpt", type=int, default=None, help="The number of the checkpoint"
+    )
+    parser.add_argument(
         "--summary",
         dest="summary",
         action="store_true",
@@ -67,10 +70,16 @@ def init_args(
         help="Name of the experiment folder",
     )
     parser.add_argument(
-        "--opt_temp_scaling", action="store_true", default=False
+        "--opt_temp_scaling",
+        action="store_true",
+        default=False,
+        help="Compute optimal temperature on the test set",
     )
     parser.add_argument(
-        "--val_temp_scaling", action="store_true", default=False
+        "--val_temp_scaling",
+        action="store_true",
+        default=False,
+        help="Compute temperature on the validation set",
     )
     parser = pl.Trainer.add_argparse_args(parser)
     if network is not None:
@@ -145,15 +154,6 @@ def cli_main(
                 mode=mode,
                 save_last=True,
                 save_weights_only=not args.enable_resume,
-            )
-
-    if args.summary:
-        summary(network, input_size=list(datamodule.input_shape).insert(0, 1))
-        test_values = {}
-    elif args.test is not None:  # coverage: ignore
-        if args.test >= 0:
-            ckpt_file, _ = get_version(
-                root=(root / "logs" / net_name), version=args.test
             )
 
             # Select the best model, monitor the lr and stop if NaN
@@ -231,7 +231,9 @@ def cli_main(
         elif args.test is not None:
             if args.test >= 0:
                 ckpt_file, _ = get_version(
-                    root=(root / net_name), version=args.test
+                    root=(root / net_name),
+                    version=args.test,
+                    checkpoint=args.ckpt,
                 )
                 test_values = trainer.test(
                     network, datamodule=datamodule, ckpt_path=str(ckpt_file)
