@@ -7,7 +7,7 @@ from cli_test_helpers import ArgvContext
 from torch import nn
 
 from torch_uncertainty import cli_main, init_args
-from torch_uncertainty.losses import NIGLoss
+from torch_uncertainty.losses import NIGLoss, BetaNLL
 from torch_uncertainty.optimization_procedures import optim_cifar10_resnet18
 
 from .._dummies import DummyRegressionBaseline, DummyRegressionDataModule
@@ -63,6 +63,32 @@ class TestRegressionSingle:
             )
 
             cli_main(model, dm, root, "dummy_der", args)
+
+    def test_cli_main_dummy_dist_betanll(self):
+        root = Path(__file__).parent.absolute().parents[0]
+        with ArgvContext("file.py"):
+            args = init_args(DummyRegressionBaseline, DummyRegressionDataModule)
+
+            # datamodule
+            args.root = str(root / "data")
+            dm = DummyRegressionDataModule(out_features=1, **vars(args))
+
+            loss = partial(
+                BetaNLL,
+                beta=0.5,
+            )
+
+            model = DummyRegressionBaseline(
+                in_features=dm.in_features,
+                out_features=2,
+                loss=loss,
+                optimization_procedure=optim_cifar10_resnet18,
+                baseline_type="single",
+                dist_estimation=2,
+                **vars(args),
+            )
+
+            cli_main(model, dm, root, "dummy_betanll", args)
 
     def test_cli_main_dummy(self):
         root = Path(__file__).parent.absolute().parents[0]

@@ -19,6 +19,17 @@ For Deep Evidential Classification, consider citing:
 * Paper: `NeurIPS 2018 <https://arxiv.org/pdf/1806.01768>`__.
 
 
+Beta NLL in Deep Regression
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For Beta NLL in Deep Regression, consider citing:
+
+**On the Pitfalls of Heteroscedastic Uncertainty Estimation with Probabilistic Neural Networks**
+
+* Authors: *Maximilian Seitzer, Arash Tavakoli, Dimitrije Antic, Georg Martius*
+* Paper: `ICLR 2022 <https://arxiv.org/abs/2203.09168>`__.
+
+
 Deep Evidential Regression
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
