@@ -87,12 +87,16 @@ class CalibrationPlot:
         acc = torch.cat(self.acc)
 
         bin_ids = torch.round(
-            torch.clamp(confidence * self.num_bins, 0, self.num_bins - 1 - 1e-5)
+            torch.clamp(
+                confidence * self.num_bins, 1e-5, self.num_bins - 1 - 1e-5
+            )
         )
         val, inverse, counts = bin_ids.unique(
             return_inverse=True, return_counts=True
         )
-        val_oh = torch.nn.functional.one_hot(val.long(), num_classes=10)
+        val_oh = torch.nn.functional.one_hot(
+            val.long(), num_classes=self.num_bins
+        )
 
         # add 1e-6 to avoid division NaNs
         values = (
