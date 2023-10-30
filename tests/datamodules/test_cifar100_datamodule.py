@@ -39,7 +39,7 @@ class TestCIFAR100DataModule:
         dm.val_dataloader()
         dm.test_dataloader()
 
-        dm.ood_detection = True
+        dm.evaluate_ood = True
         dm.prepare_data()
         dm.setup("test")
         dm.test_dataloader()

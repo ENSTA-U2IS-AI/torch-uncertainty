@@ -20,7 +20,7 @@ class TinyImageNetDataModule(LightningDataModule):
     def __init__(
         self,
         root: Union[str, Path],
-        ood_detection: bool,
+        evaluate_ood: bool,
         batch_size: int,
         ood_ds: str = "svhn",
         rand_augment_opt: Optional[str] = None,
@@ -35,7 +35,7 @@ class TinyImageNetDataModule(LightningDataModule):
             root = Path(root)
 
         self.root: Path = root
-        self.ood_detection = ood_detection
+        self.evaluate_ood = evaluate_ood
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.pin_memory = pin_memory
@@ -51,9 +51,7 @@ class TinyImageNetDataModule(LightningDataModule):
         elif ood_ds == "textures":
             self.ood_dataset = DTD
         else:
-            raise ValueError(
-                f"OOD dataset {ood_ds} not supported for TinyImageNet."
-            )
+            raise ValueError(f"OOD dataset {ood_ds} not supported for TinyImageNet.")
 
         if rand_augment_opt is not None:
             main_transform = rand_augment_transform(rand_augment_opt, {})
@@ -87,7 +85,7 @@ class TinyImageNetDataModule(LightningDataModule):
             )
 
     def prepare_data(self) -> None:  # coverage: ignore
-        if self.ood_detection:
+        if self.evaluate_ood:
             if self.ood_ds != "textures":
                 self.ood_dataset(
                     self.root,
@@ -138,7 +136,7 @@ class TinyImageNetDataModule(LightningDataModule):
                 transform=self.transform_test,
             )
 
-        if self.ood_detection:
+        if self.evaluate_ood:
             if self.ood_ds == "textures":
                 self.ood = ConcatDataset(
                     [
@@ -193,13 +191,11 @@ class TinyImageNetDataModule(LightningDataModule):
             SVHN test split (out-of-distribution data).
         """
         dataloader = [self._data_loader(self.test)]
-        if self.ood_detection:
+        if self.evaluate_ood:
             dataloader.append(self._data_loader(self.ood))
         return dataloader
 
-    def _data_loader(
-        self, dataset: Dataset, shuffle: bool = False
-    ) -> DataLoader:
+    def _data_loader(self, dataset: Dataset, shuffle: bool = False) -> DataLoader:
         """Create a dataloader for a given dataset.
 
         Args:
@@ -229,9 +225,7 @@ class TinyImageNetDataModule(LightningDataModule):
         p.add_argument("--root", type=str, default="./data/")
         p.add_argument("--batch_size", type=int, default=256)
         p.add_argument("--num_workers", type=int, default=4)
-        p.add_argument(
-            "--evaluate_ood", dest="ood_detection", action="store_true"
-        )
+        p.add_argument("--evaluate_ood", action="store_true")
         p.add_argument(
             "--rand_augment", dest="rand_augment_opt", type=str, default=None
         )

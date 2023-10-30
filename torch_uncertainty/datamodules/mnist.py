@@ -41,7 +41,7 @@ class MNISTDataModule(LightningDataModule):
     def __init__(
         self,
         root: Union[str, Path],
-        ood_detection: bool,
+        evaluate_ood: bool,
         batch_size: int,
         ood_ds: Literal["fashion", "not"] = "fashion",
         val_split: float = 0.0,
@@ -58,7 +58,7 @@ class MNISTDataModule(LightningDataModule):
             root = Path(root)
 
         self.root: Path = root
-        self.ood_detection = ood_detection
+        self.evaluate_ood = evaluate_ood
         self.batch_size = batch_size
         self.val_split = val_split
         self.num_workers = num_workers
@@ -75,9 +75,7 @@ class MNISTDataModule(LightningDataModule):
         elif ood_ds == "not":
             self.ood_dataset = NotMNIST
         else:
-            raise ValueError(
-                f"`ood_ds` should be `fashion` or `not`. Got {ood_ds}."
-            )
+            raise ValueError(f"`ood_ds` should be `fashion` or `not`. Got {ood_ds}.")
 
         if cutout:
             main_transform = Cutout(cutout)
@@ -105,7 +103,7 @@ class MNISTDataModule(LightningDataModule):
         self.dataset(self.root, train=True, download=True)
         self.dataset(self.root, train=False, download=True)
 
-        if self.ood_detection:
+        if self.evaluate_ood:
             self.ood_dataset(self.root, download=True)
 
     def setup(self, stage: Optional[str] = None) -> None:
@@ -140,7 +138,7 @@ class MNISTDataModule(LightningDataModule):
                 transform=self.transform_test,
             )
 
-        if self.ood_detection:
+        if self.evaluate_ood:
             self.ood = self.ood_dataset(
                 self.root,
                 download=False,
@@ -172,13 +170,11 @@ class MNISTDataModule(LightningDataModule):
                 (out-of-distribution data).
         """
         dataloader = [self._data_loader(self.test)]
-        if self.ood_detection:
+        if self.evaluate_ood:
             dataloader.append(self._data_loader(self.ood))
         return dataloader
 
-    def _data_loader(
-        self, dataset: Dataset, shuffle: bool = False
-    ) -> DataLoader:
+    def _data_loader(self, dataset: Dataset, shuffle: bool = False) -> DataLoader:
         """Create a dataloader for a given dataset.
 
         Args:
@@ -209,9 +205,7 @@ class MNISTDataModule(LightningDataModule):
         p.add_argument("--batch_size", type=int, default=128)
         p.add_argument("--val_split", type=int, default=0)
         p.add_argument("--num_workers", type=int, default=4)
-        p.add_argument(
-            "--evaluate_ood", dest="ood_detection", action="store_true"
-        )
+        p.add_argument("--evaluate_ood", action="store_true")
         p.add_argument("--ood_ds", choices=cls.ood_datasets, default="fashion")
         p.add_argument("--test_alt", choices=["c"], default=None)
         return parent_parser

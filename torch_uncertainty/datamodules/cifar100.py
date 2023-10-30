@@ -46,7 +46,7 @@ class CIFAR100DataModule(LightningDataModule):
     def __init__(
         self,
         root: Union[str, Path],
-        ood_detection: bool,
+        evaluate_ood: bool,
         batch_size: int,
         val_split: float = 0.0,
         num_workers: int = 1,
@@ -66,7 +66,7 @@ class CIFAR100DataModule(LightningDataModule):
             root = Path(root)
 
         self.root: Path = root
-        self.ood_detection = ood_detection
+        self.evaluate_ood = evaluate_ood
         self.batch_size = batch_size
         self.val_split = val_split
         self.num_workers = num_workers
@@ -86,9 +86,7 @@ class CIFAR100DataModule(LightningDataModule):
 
         self.corruption_severity = corruption_severity
 
-        if (cutout is not None) + randaugment + int(
-            auto_augment is not None
-        ) > 1:
+        if (cutout is not None) + randaugment + int(auto_augment is not None) > 1:
             raise ValueError(
                 "Only one data augmentation can be chosen at a time. Raise a "
                 "GitHub issue if needed."
@@ -131,7 +129,7 @@ class CIFAR100DataModule(LightningDataModule):
             self.dataset(self.root, train=True, download=True)
             self.dataset(self.root, train=False, download=True)
 
-        if self.ood_detection:
+        if self.evaluate_ood:
             self.ood_dataset(
                 self.root,
                 split="test",
@@ -179,7 +177,7 @@ class CIFAR100DataModule(LightningDataModule):
                     transform=self.transform_test,
                     severity=self.corruption_severity,
                 )
-            if self.ood_detection:
+            if self.evaluate_ood:
                 self.ood = self.ood_dataset(
                     self.root,
                     split="test",
@@ -220,13 +218,11 @@ class CIFAR100DataModule(LightningDataModule):
                 data).
         """
         dataloader = [self._data_loader(self.test)]
-        if self.ood_detection:
+        if self.evaluate_ood:
             dataloader.append(self._data_loader(self.ood))
         return dataloader
 
-    def _data_loader(
-        self, dataset: Dataset, shuffle: bool = False
-    ) -> DataLoader:
+    def _data_loader(self, dataset: Dataset, shuffle: bool = False) -> DataLoader:
         """Create a dataloader for a given dataset.
 
         Args:
@@ -257,14 +253,10 @@ class CIFAR100DataModule(LightningDataModule):
         p.add_argument("--batch_size", type=int, default=128)
         p.add_argument("--val_split", type=float, default=0.0)
         p.add_argument("--num_workers", type=int, default=4)
-        p.add_argument(
-            "--evaluate_ood", dest="ood_detection", action="store_true"
-        )
+        p.add_argument("--evaluate_ood", action="store_true")
         p.add_argument("--cutout", type=int, default=0)
         p.add_argument("--randaugment", dest="randaugment", action="store_true")
         p.add_argument("--auto_augment", type=str)
         p.add_argument("--test_alt", choices=["c"], default=None)
-        p.add_argument(
-            "--severity", dest="corruption_severity", type=int, default=1
-        )
+        p.add_argument("--severity", dest="corruption_severity", type=int, default=1)
         return parent_parser
