@@ -1,4 +1,3 @@
-# fmt: off
 from argparse import ArgumentParser, Namespace
 from functools import partial
 from typing import Any, List, Optional, Tuple, Type, Union
@@ -20,7 +19,7 @@ from torchmetrics.classification import (
     BinaryCalibrationError,
 )
 
-from torch_uncertainty.losses import ELBOLoss
+from torch_uncertainty.losses import DECLoss, ELBOLoss
 
 from ..metrics import (
     FPR95,
@@ -34,11 +33,10 @@ from ..metrics import (
 from ..plotting_utils import CalibrationPlot, plot_hist
 
 
-# fmt:on
 class ClassificationSingle(pl.LightningModule):
     """
     Args:
-        ood_detection (bool, optional): Indicates whether to evaluate the OOD
+        evaluate_ood (bool, optional): Indicates whether to evaluate the OOD
             detection performance or not. Defaults to ``False``.
         use_entropy (bool, optional): Indicates whether to use the entropy
             values as the OOD criterion or not. Defaults to ``False``.
@@ -63,7 +61,7 @@ class ClassificationSingle(pl.LightningModule):
         format_batch_fn: nn.Module = nn.Identity(),
         mixup_alpha: float = 0,
         cutmix_alpha: float = 0,
-        ood_detection: bool = False,
+        evaluate_ood: bool = False,
         use_entropy: bool = False,
         use_logits: bool = False,
         **kwargs,
@@ -83,7 +81,7 @@ class ClassificationSingle(pl.LightningModule):
             raise ValueError("You cannot choose more than one OOD criterion.")
 
         self.num_classes = num_classes
-        self.ood_detection = ood_detection
+        self.evaluate_ood = evaluate_ood
         self.use_logits = use_logits
         self.use_entropy = use_entropy
 
@@ -125,7 +123,7 @@ class ClassificationSingle(pl.LightningModule):
 
         self.test_entropy_id = Entropy()
 
-        if self.ood_detection:
+        if self.evaluate_ood:
             ood_metrics = MetricCollection(
                 {
                     "fpr95": FPR95(pos_label=1),
@@ -154,6 +152,11 @@ class ClassificationSingle(pl.LightningModule):
         # Handle ELBO special cases
         self.is_elbo = (
             isinstance(self.loss, partial) and self.loss.func == ELBOLoss
+        )
+
+        # DEC
+        self.is_dec = self.loss == DECLoss or (
+            isinstance(self.loss, partial) and self.loss.func == DECLoss
         )
 
     def configure_optimizers(self) -> Any:
@@ -205,7 +208,10 @@ class ClassificationSingle(pl.LightningModule):
                 logits = logits.squeeze(-1)
                 targets = targets.float()
 
-            loss = self.criterion(logits, targets)
+            if not self.is_dec:
+                loss = self.criterion(logits, targets)
+            else:
+                loss = self.criterion(logits, targets, self.current_epoch)
         self.log("train_loss", loss)
         return loss
 
@@ -246,11 +252,11 @@ class ClassificationSingle(pl.LightningModule):
         confs = probs.max(dim=-1)[0]
 
         if self.use_logits:
-            ood_values = -logits.max(dim=-1)[0]
+            ood_scores = -logits.max(dim=-1)[0]
         elif self.use_entropy:
-            ood_values = torch.special.entr(probs).sum(dim=-1)
+            ood_scores = torch.special.entr(probs).sum(dim=-1)
         else:
-            ood_values = -confs
+            ood_scores = -confs
 
         if dataloader_idx == 0:
             self.test_cls_metrics.update(probs, targets)
@@ -261,12 +267,12 @@ class ClassificationSingle(pl.LightningModule):
                 on_epoch=True,
                 add_dataloader_idx=False,
             )
-            if self.ood_detection:
+            if self.evaluate_ood:
                 self.test_ood_metrics.update(
-                    ood_values, torch.zeros_like(targets)
+                    ood_scores, torch.zeros_like(targets)
                 )
-        elif self.ood_detection and dataloader_idx == 1:
-            self.test_ood_metrics.update(ood_values, torch.ones_like(targets))
+        elif self.evaluate_ood and dataloader_idx == 1:
+            self.test_ood_metrics.update(ood_scores, torch.ones_like(targets))
             self.test_entropy_ood(probs)
             self.log(
                 "hp/test_entropy_ood",
@@ -284,7 +290,7 @@ class ClassificationSingle(pl.LightningModule):
         )
         self.test_cls_metrics.reset()
 
-        if self.ood_detection:
+        if self.evaluate_ood:
             self.log_dict(
                 self.test_ood_metrics.compute(),
             )
@@ -295,7 +301,7 @@ class ClassificationSingle(pl.LightningModule):
                 "Calibration Plot", self.cal_plot.compute()[0]
             )
 
-            if self.ood_detection:
+            if self.evaluate_ood:
                 id_logits = torch.cat(outputs[0], 0).float().cpu()
                 ood_logits = torch.cat(outputs[1], 0).float().cpu()
 
@@ -346,7 +352,7 @@ class ClassificationSingle(pl.LightningModule):
 class ClassificationEnsemble(ClassificationSingle):
     """
     Args:
-        ood_detection (bool, optional): Indicates whether to evaluate the OOD
+        evaluate_ood (bool, optional): Indicates whether to evaluate the OOD
             detection performance or not. Defaults to ``False``.
         use_entropy (bool, optional): Indicates whether to use the entropy
             values as the OOD criterion or not. Defaults to ``False``.
@@ -376,7 +382,7 @@ class ClassificationEnsemble(ClassificationSingle):
         format_batch_fn: nn.Module = nn.Identity(),
         mixup_alpha: float = 0,
         cutmix_alpha: float = 0,
-        ood_detection: bool = False,
+        evaluate_ood: bool = False,
         use_entropy: bool = False,
         use_logits: bool = False,
         use_mi: bool = False,
@@ -391,7 +397,7 @@ class ClassificationEnsemble(ClassificationSingle):
             format_batch_fn=format_batch_fn,
             mixup_alpha=mixup_alpha,
             cutmix_alpha=cutmix_alpha,
-            ood_detection=ood_detection,
+            evaluate_ood=evaluate_ood,
             use_entropy=use_entropy,
             use_logits=use_logits,
             **kwargs,
@@ -420,7 +426,7 @@ class ClassificationEnsemble(ClassificationSingle):
         )
         self.test_id_ens_metrics = ens_metrics.clone(prefix="hp/test_id_ens_")
 
-        if self.ood_detection:
+        if self.evaluate_ood:
             self.test_ood_ens_metrics = ens_metrics.clone(
                 prefix="hp/test_ood_ens_"
             )
@@ -468,7 +474,10 @@ class ClassificationEnsemble(ClassificationSingle):
                 logits = logits.squeeze(-1)
                 targets = targets.float()
 
-            loss = self.criterion(logits, targets)
+            if not self.is_dec:
+                loss = self.criterion(logits, targets)
+            else:
+                loss = self.criterion(logits, targets, self.current_epoch)
 
         self.log("train_loss", loss)
         return loss
@@ -507,19 +516,19 @@ class ClassificationEnsemble(ClassificationSingle):
         confs = probs.max(-1)[0]
 
         if self.use_logits:
-            ood_values = -logits.mean(dim=1).max(dim=-1)[0]
+            ood_scores = -logits.mean(dim=1).max(dim=-1)[0]
         elif self.use_entropy:
-            ood_values = (
+            ood_scores = (
                 torch.special.entr(probs_per_est).sum(dim=-1).mean(dim=1)
             )
         elif self.use_mi:
             mi_metric = MutualInformation(reduction="none")
-            ood_values = mi_metric(probs_per_est)
+            ood_scores = mi_metric(probs_per_est)
         elif self.use_variation_ratio:
             vr_metric = VariationRatio(reduction="none", probabilistic=False)
-            ood_values = vr_metric(probs_per_est.transpose(0, 1))
+            ood_scores = vr_metric(probs_per_est.transpose(0, 1))
         else:
-            ood_values = -confs
+            ood_scores = -confs
 
         if dataloader_idx == 0:
             # squeeze if binary classification only for binary metrics
@@ -537,12 +546,12 @@ class ClassificationEnsemble(ClassificationSingle):
                 add_dataloader_idx=False,
             )
 
-            if self.ood_detection:
+            if self.evaluate_ood:
                 self.test_ood_metrics.update(
-                    ood_values, torch.zeros_like(targets)
+                    ood_scores, torch.zeros_like(targets)
                 )
-        elif self.ood_detection and dataloader_idx == 1:
-            self.test_ood_metrics.update(ood_values, torch.ones_like(targets))
+        elif self.evaluate_ood and dataloader_idx == 1:
+            self.test_ood_metrics.update(ood_scores, torch.ones_like(targets))
             self.test_entropy_ood(probs)
             self.test_ood_ens_metrics.update(probs_per_est)
             self.log(
@@ -566,7 +575,7 @@ class ClassificationEnsemble(ClassificationSingle):
         )
         self.test_id_ens_metrics.reset()
 
-        if self.ood_detection:
+        if self.evaluate_ood:
             self.log_dict(
                 self.test_ood_metrics.compute(),
             )
@@ -582,11 +591,9 @@ class ClassificationEnsemble(ClassificationSingle):
                 "Calibration Plot", self.cal_plot.compute()[0]
             )
 
-            if self.ood_detection:
+            if self.evaluate_ood:
                 id_logits = torch.cat(outputs[0], 0).float().cpu()
                 ood_logits = torch.cat(outputs[1], 0).float().cpu()
-
-                print(id_logits.shape)
 
                 id_probs = F.softmax(id_logits, dim=-1)
                 ood_probs = F.softmax(ood_logits, dim=-1)

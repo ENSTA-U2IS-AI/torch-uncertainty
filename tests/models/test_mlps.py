@@ -1,8 +1,6 @@
-# fmt: off
 from torch_uncertainty.models.mlp import bayesian_mlp, packed_mlp
 
 
-# fmt: on
 class TestMLPModel:
     """Testing the mlp models."""
 

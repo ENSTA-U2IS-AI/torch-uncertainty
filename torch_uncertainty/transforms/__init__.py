@@ -1,4 +1,4 @@
-# flake8: noqa
+# ruff: noqa: F401
 from .cutout import Cutout
 from .transforms import (
     AutoContrast,

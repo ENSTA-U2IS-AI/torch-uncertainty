@@ -6,7 +6,6 @@ from torchmetrics import Metric
 from torchmetrics.utilities.data import dim_zero_cat
 
 
-# fmt:on
 class MutualInformation(Metric):
     """The Mutual Information Metric to estimate the epistemic uncertainty of
     an ensemble of estimators.

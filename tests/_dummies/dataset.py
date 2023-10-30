@@ -9,7 +9,6 @@ from PIL import Image
 import numpy as np
 
 
-# fmt:on
 class DummyClassificationDataset(data.Dataset):
     def __init__(
         self,

@@ -1,6 +1,6 @@
 name: Tests
 
-on: 
+on:
   push:
     branches:
       - main
@@ -63,15 +63,14 @@ jobs:
 
     - name: Install dependencies
       run: |
-        poetry install --with dev --with docs
+        poetry install --with dev,docs
         poetry run pip3 uninstall torch torchvision -y
         poetry run pip3 install torch torchvision --extra-index-url https://download.pytorch.org/whl/cpu
 
-    - name: Style checking
+    - name: Check style & format
       run: |
-        poetry run flake8 torch_uncertainty tests
-        poetry run isort --check-only torch_uncertainty tests
-        poetry run black --check torch_uncertainty tests
+        poetry run ruff check torch_uncertainty tests --no-fix --exit-non-zero-on-fix
+        poetry run ruff format torch_uncertainty tests --check
 
     - name: Test with pytest and compute coverage
       run: |
@@ -79,7 +78,7 @@ jobs:
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
-      if: ${{ github.event_name != 'pull_request' }}
+      if: ${{ github.event_name != 'pull_request' || github.base_ref == 'dev' }}
       continue-on-error: true
       with:
         token: ${{ secrets.CODECOV_TOKEN }}

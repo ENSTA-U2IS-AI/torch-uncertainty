@@ -1,11 +1,9 @@
-# fmt: off
 from pathlib import Path
 
 from torch_uncertainty import cli_main, init_args
 from torch_uncertainty.baselines import DeepEnsembles
 from torch_uncertainty.datamodules import UCIDataModule
 
-# fmt: on
 if __name__ == "__main__":
     args = init_args(DeepEnsembles, UCIDataModule)
     if args.root == "./data/":

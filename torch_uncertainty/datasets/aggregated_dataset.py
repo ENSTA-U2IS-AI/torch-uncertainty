@@ -1,9 +1,7 @@
-# fmt: off
 import torch
 from torch.utils.data import Dataset
 
 
-# fmt: on
 class AggregatedDataset(Dataset):
     """Virtually interlace multiple copies of a dataset to train ensembles with
     different batch orders.

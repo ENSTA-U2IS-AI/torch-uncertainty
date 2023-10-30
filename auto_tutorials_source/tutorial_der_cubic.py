@@ -184,4 +184,4 @@ plt.grid()
 # References
 # ----------
 #
-# - **Deep Evidential Regression:** Alexander Amini, Wilko Schwarting, Ava Soleimany, & Daniela Rus (2022). Deep Evidential Regression `NeurIPS 2020 <https://arxiv.org/pdf/1910.02600>`_
+# - **Deep Evidential Regression:** Alexander Amini, Wilko Schwarting, Ava Soleimany, & Daniela Rus (2022). Deep Evidential Regression. `NeurIPS 2020 <https://arxiv.org/pdf/1910.02600>`_.

@@ -11,7 +11,7 @@ from torch_uncertainty.optimization_procedures import (
 )
 
 
-# fmt:on
+
 class TestBatchedBaseline:
     """Testing the BatchedResNet baseline class."""
 

@@ -12,7 +12,7 @@ from torch_uncertainty.optimization_procedures import (
 )
 
 
-# fmt:on
+
 class TestMaskedBaseline:
     """Testing the MaskedResNet baseline class."""
 

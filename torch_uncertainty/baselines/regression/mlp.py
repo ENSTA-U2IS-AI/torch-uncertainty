@@ -1,4 +1,3 @@
-# fmt: off
 from argparse import ArgumentParser
 from pathlib import Path
 from typing import Any, List, Literal, Optional, Union
@@ -16,7 +15,6 @@ from ...routines.regression import RegressionEnsemble, RegressionSingle
 from ..utils.parser_addons import add_packed_specific_args
 
 
-# fmt: on
 class MLP:
     r"""MLP baseline for regression providing support for various versions."""
 

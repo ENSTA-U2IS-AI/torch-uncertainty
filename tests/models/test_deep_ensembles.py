@@ -1,4 +1,3 @@
-# fmt: off
 import pytest
 import torch
 
@@ -7,7 +6,6 @@ from torch_uncertainty.models import deep_ensembles
 from .._dummies import dummy_model
 
 
-# fmt: on
 class TestDeepEnsemblesModel:
     """Testing the deep_ensembles function."""
 

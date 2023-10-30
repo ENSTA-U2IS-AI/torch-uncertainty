@@ -1,4 +1,3 @@
-# fmt: off
 from pathlib import Path
 
 from torch import nn
@@ -8,7 +7,6 @@ from torch_uncertainty.baselines import WideResNet
 from torch_uncertainty.datamodules import CIFAR100DataModule
 from torch_uncertainty.optimization_procedures import get_procedure
 
-# fmt: on
 if __name__ == "__main__":
     args = init_args(WideResNet, CIFAR100DataModule)
     if args.root == "./data/":
@@ -28,7 +26,7 @@ if __name__ == "__main__":
         in_channels=dm.num_channels,
         loss=nn.CrossEntropyLoss,
         optimization_procedure=get_procedure(
-            f"wideresnet28x10", "cifar100", args.version
+            "wideresnet28x10", "cifar100", args.version
         ),
         style="cifar",
         **vars(args),

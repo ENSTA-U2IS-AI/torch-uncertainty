@@ -1,5 +1,4 @@
-# fmt: off
-# flake8: noqa
+# ruff: noqa: F401
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
 from typing import Dict, Optional, Type, Union
@@ -17,7 +16,6 @@ import numpy as np
 from .utils import get_version
 
 
-# fmt: on
 def init_args(
     network: Optional[Type[pl.LightningModule]] = None,
     datamodule: Optional[Type[pl.LightningDataModule]] = None,

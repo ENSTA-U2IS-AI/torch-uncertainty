@@ -7,7 +7,7 @@ from cli_test_helpers import ArgvContext
 from torch import nn
 
 from torch_uncertainty import cli_main, init_args
-from torch_uncertainty.losses import ELBOLoss
+from torch_uncertainty.losses import DECLoss, ELBOLoss
 from torch_uncertainty.optimization_procedures import optim_cifar10_resnet18
 from torch_uncertainty.routines.classification import (
     ClassificationEnsemble,
@@ -20,18 +20,17 @@ from .._dummies import (
 )
 
 
-# fmt:on
+
 class TestClassificationSingle:
     """Testing the classification routine with a single model."""
 
     def test_cli_main_dummy_binary(self):
         root = Path(__file__).parent.absolute().parents[0]
-        with ArgvContext("file.py", "--logits"):
+        with ArgvContext("file.py"):
             args = init_args(
                 DummyClassificationBaseline, DummyClassificationDataModule
             )
 
-            # datamodule
             args.root = str(root / "data")
             dm = DummyClassificationDataModule(num_classes=1, **vars(args))
 
@@ -43,7 +42,24 @@ class TestClassificationSingle:
                 baseline_type="single",
                 **vars(args),
             )
+            cli_main(model, dm, root, "dummy", args)
 
+        with ArgvContext("file.py", "--logits"):
+            args = init_args(
+                DummyClassificationBaseline, DummyClassificationDataModule
+            )
+
+            args.root = str(root / "data")
+            dm = DummyClassificationDataModule(num_classes=1, **vars(args))
+
+            model = DummyClassificationBaseline(
+                num_classes=dm.num_classes,
+                in_channels=dm.num_channels,
+                loss=nn.BCEWithLogitsLoss,
+                optimization_procedure=optim_cifar10_resnet18,
+                baseline_type="single",
+                **vars(args),
+            )
             cli_main(model, dm, root, "dummy", args)
 
     def test_cli_main_dummy_ood(self):
@@ -53,7 +69,6 @@ class TestClassificationSingle:
                 DummyClassificationBaseline, DummyClassificationDataModule
             )
 
-            # datamodule
             args.root = str(root / "data")
             dm = DummyClassificationDataModule(**vars(args))
             loss = partial(
@@ -70,28 +85,50 @@ class TestClassificationSingle:
                 baseline_type="single",
                 **vars(args),
             )
-
             cli_main(model, dm, root, "dummy", args)
 
-        with ArgvContext("file.py", "--evaluate_ood", "--entropy"):
+        with ArgvContext(
+            "file.py",
+            "--evaluate_ood",
+            "--entropy",
+        ):
             args = init_args(
                 DummyClassificationBaseline, DummyClassificationDataModule
             )
 
-            # datamodule
             args.root = str(root / "data")
             dm = DummyClassificationDataModule(**vars(args))
 
             model = DummyClassificationBaseline(
                 num_classes=dm.num_classes,
                 in_channels=dm.num_channels,
-                loss=nn.CrossEntropyLoss,
+                loss=DECLoss,
                 optimization_procedure=optim_cifar10_resnet18,
                 baseline_type="single",
                 **vars(args),
             )
-
             cli_main(model, dm, root, "dummy", args)
+
+        with ArgvContext(
+            "file.py", "--evaluate_ood", "--entropy", "--cutmix", "0.5"
+        ):
+            args = init_args(
+                DummyClassificationBaseline, DummyClassificationDataModule
+            )
+
+            args.root = str(root / "data")
+            dm = DummyClassificationDataModule(**vars(args))
+
+            model = DummyClassificationBaseline(
+                num_classes=dm.num_classes,
+                in_channels=dm.num_channels,
+                loss=DECLoss,
+                optimization_procedure=optim_cifar10_resnet18,
+                baseline_type="single",
+                **vars(args),
+            )
+            with pytest.raises(NotImplementedError):
+                cli_main(model, dm, root, "dummy", args)
 
     def test_classification_failures(self):
         with pytest.raises(ValueError):
@@ -187,7 +224,7 @@ class TestClassificationEnsemble:
             model = DummyClassificationBaseline(
                 num_classes=dm.num_classes,
                 in_channels=dm.num_channels,
-                loss=nn.CrossEntropyLoss,
+                loss=DECLoss,
                 optimization_procedure=optim_cifar10_resnet18,
                 baseline_type="ensemble",
                 **vars(args),

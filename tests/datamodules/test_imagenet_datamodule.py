@@ -9,7 +9,7 @@ from torch_uncertainty.datamodules import ImageNetDataModule
 from .._dummies.dataset import DummyClassificationDataset
 
 
-# fmt:on
+
 class TestImageNetDataModule:
     """Testing the ImageNetDataModule datamodule class."""
 
@@ -32,7 +32,7 @@ class TestImageNetDataModule:
         dm.val_dataloader()
         dm.test_dataloader()
 
-        dm.ood_detection = True
+        dm.evaluate_ood = True
         dm.prepare_data()
         dm.setup("test")
         dm.test_dataloader()

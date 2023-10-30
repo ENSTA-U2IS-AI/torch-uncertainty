@@ -1,4 +1,3 @@
-# fmt: off
 from typing import Type
 
 import torch.nn.functional as F
@@ -6,7 +5,6 @@ from torch import Tensor, nn
 
 from ...layers import BatchConv2d, BatchLinear
 
-# fmt: on
 __all__ = [
     "batched_wideresnet28x10",
 ]

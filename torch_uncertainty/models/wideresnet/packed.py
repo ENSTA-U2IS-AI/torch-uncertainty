@@ -1,4 +1,3 @@
-# fmt: off
 from typing import Type
 
 import torch.nn.functional as F
@@ -7,7 +6,7 @@ from torch import Tensor, nn
 
 from ...layers import PackedConv2d, PackedLinear
 
-# fmt: on
+
 __all__ = [
     "packed_wideresnet28x10",
 ]

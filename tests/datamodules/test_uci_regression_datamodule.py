@@ -7,7 +7,7 @@ from torch_uncertainty.datamodules import UCIDataModule
 from .._dummies.dataset import DummyRegressionDataset
 
 
-# fmt:on
+
 class TestUCIDataModule:
     """Testing the UCIDataModule datamodule class."""
 

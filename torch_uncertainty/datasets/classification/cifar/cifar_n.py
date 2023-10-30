@@ -10,7 +10,6 @@ from torchvision.datasets.utils import (
 )
 
 
-# fmt:on
 class CIFAR10N(CIFAR10):
     """`CIFAR-10N <https://github.com/UCSC-REAL/cifar-10-100n>`_ Dataset.
 

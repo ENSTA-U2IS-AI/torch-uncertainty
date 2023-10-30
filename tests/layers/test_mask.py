@@ -5,7 +5,7 @@ import torch
 from torch_uncertainty.layers.masksembles import MaskedConv2d, MaskedLinear
 
 
-# fmt:on
+
 @pytest.fixture
 def feat_input_odd() -> torch.Tensor:
     feat = torch.rand((5, 10))

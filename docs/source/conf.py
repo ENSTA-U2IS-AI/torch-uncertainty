@@ -22,9 +22,11 @@ extensions = [
     "sphinx.ext.mathjax",
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
+    # "sphinx.ext.intersphinx",  # for links to the API in the tutorials
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
     "sphinx_copybutton",
+    "sphinx_codeautolink",
     "sphinx_gallery.gen_gallery",
     # "sphinx_gallery.load_style",
 ]
@@ -41,11 +43,15 @@ sphinx_gallery_conf = {
         "# https://pytorch.org/tutorials/beginner/colab\n"
         "%matplotlib inline"
     ),
+    "reference_url": {
+        "sphinx_gallery": None,
+    },
 }
 
 
 autosummary_generate = True
 napoleon_use_ivar = True
+
 # Disable docstring inheritance
 autodoc_inherit_docstrings = False
 

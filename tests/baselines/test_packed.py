@@ -13,7 +13,7 @@ from torch_uncertainty.optimization_procedures import (
 )
 
 
-# fmt:on
+
 class TestPackedBaseline:
     """Testing the PackedResNet baseline class."""
 

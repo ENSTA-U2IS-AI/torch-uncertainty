@@ -11,7 +11,6 @@ from torch.utils.data import Dataset
 import numpy as np
 
 
-# fmt:on
 class TinyImageNet(Dataset):
     """Inspired by
     https://gist.github.com/z-a-f/b862013c0dc2b540cf96a123a6766e54.

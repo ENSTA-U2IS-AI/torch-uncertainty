@@ -1,6 +1,5 @@
-# fmt: off
 from argparse import ArgumentParser
-from typing import Any
+from typing import Any, Type
 
 from pytorch_lightning import LightningModule
 from torch import nn
@@ -18,13 +17,12 @@ from torch_uncertainty.transforms import RepeatTarget
 from .model import dummy_model
 
 
-# fmt: on
 class DummyClassificationBaseline:
     def __new__(
         cls,
         num_classes: int,
         in_channels: int,
-        loss: nn.Module,
+        loss: Type[nn.Module],
         optimization_procedure: Any,
         baseline_type: str = "single",
         **kwargs,

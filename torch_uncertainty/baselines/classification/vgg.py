@@ -1,4 +1,3 @@
-# fmt: off
 from argparse import ArgumentParser
 from pathlib import Path
 from typing import Any, Literal, Optional, Type, Union
@@ -32,7 +31,6 @@ from ..utils.parser_addons import (
 )
 
 
-# fmt: on
 class VGG:
     r"""VGG backbone baseline for classification providing support for
     various versions and architectures.

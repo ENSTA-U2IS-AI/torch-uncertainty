@@ -1,4 +1,3 @@
-# fmt: off
 from typing import Type
 
 import torch.nn.functional as F
@@ -6,7 +5,6 @@ from torch import Tensor, nn
 
 from ...layers import MaskedConv2d, MaskedLinear
 
-# fmt: on
 __all__ = [
     "masked_wideresnet28x10",
 ]

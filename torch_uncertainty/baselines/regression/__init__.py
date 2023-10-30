@@ -1,2 +1,2 @@
-# flake8: noqa
+# ruff: noqa: F401
 from .mlp import MLP

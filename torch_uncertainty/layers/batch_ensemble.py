@@ -1,4 +1,3 @@
-# fmt: off
 import math
 from typing import Optional, Tuple, Union
 
@@ -8,7 +7,6 @@ from torch.nn.common_types import _size_2_t
 from torch.nn.modules.utils import _pair
 
 
-# fmt: on
 class BatchLinear(nn.Module):
     r"""Applies a linear transformation using BatchEnsemble method to the
     incoming data: :math:`y=(x\circ \hat{R})W^{T}\circ \hat{S} + \hat{b}`.

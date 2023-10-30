@@ -1,8 +1,6 @@
-# fmt: off
 from .base import ImageNetVariation
 
 
-# fmt:on
 # todo, build or download
 class ImageNetC(ImageNetVariation):
     """The corrupted ImageNet-C dataset.

@@ -19,6 +19,8 @@ Monte Carlo dropout, ensemble methods, etc.
 
 ## Common guidelines
 
+### Clean development install of TorchUncertainty
+
 If you are interested in contributing to torch_uncertainty, we first advise you
 to follow the following steps to reproduce a clean development environment
 ensuring that continuous integration does not break.
@@ -37,9 +39,34 @@ poetry install --with dev
 pre-commit install
 ```
 
-We are using `black` for code formatting, `flake8` for linting, and `isort` for the
-imports. The `pre-commit` hooks will ensure that your code is properly formatted
-and linted before committing.
+If you have issues with poetry, add `PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring`
+at the beginning of every`poetry` command.
+
+### Build the documentation locally
+
+To build the documentation, reinstall TorchUncertainty with the packages of the docs
+group:
+
+```sh
+poetry install --with dev,docs
+```
+
+Then navigate to `./docs` and build the documentation with:
+
+```sh
+make html
+```
+
+Optionally, specify `html-noplot` instead of `html` to avoid running the tutorials.
+
+### Guidelines
+
+We are using `ruff` for code formatting, linting, and imports (as a drop-in
+replacement for `black`, `isort`, and `flake8`). The `pre-commit` hooks will
+ensure that your code is properly formatted and linted before committing.
+
+To make your changes, create a branch on a personal fork, whose name is not
+dev nor main.
 
 Before submitting a final pull request, that we will review, please try your
 best not to reduce the code coverage and document your code.
