@@ -4,8 +4,10 @@ import pytest
 from torch_uncertainty.models.resnet import resnet18, resnet50
 from torch_uncertainty.models.vgg import vgg16
 from torch_uncertainty.models.wideresnet import wideresnet28x10
-from torch_uncertainty.optimization_procedures import *
-from torch_uncertainty.optimization_procedures import get_procedure
+from torch_uncertainty.optimization_procedures import (
+    get_procedure,
+    optim_regression,
+)
 
 
 class TestOptProcedures:
