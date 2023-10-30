@@ -1,4 +1,3 @@
-# fmt: off
 from typing import Any, Literal, Optional
 
 import torch
@@ -7,7 +6,6 @@ from torchmetrics import Metric
 from torchmetrics.utilities.data import dim_zero_cat
 
 
-# fmt: on
 class NegativeLogLikelihood(Metric):
     """The Negative Log Likelihood Metric.
 

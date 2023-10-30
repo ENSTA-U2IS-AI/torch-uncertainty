@@ -13,7 +13,7 @@ from torch_uncertainty.optimization_procedures import optim_cifar10_resnet18
 from .._dummies import DummyRegressionBaseline, DummyRegressionDataModule
 
 
-# fmt:on
+
 class TestRegressionSingle:
     """Testing the Regression routine with a single model."""
 

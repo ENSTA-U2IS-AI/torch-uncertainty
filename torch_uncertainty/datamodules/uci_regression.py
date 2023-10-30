@@ -1,4 +1,3 @@
-# fmt: off
 from argparse import ArgumentParser
 from functools import partial
 from pathlib import Path
@@ -11,7 +10,6 @@ from torch.utils.data import DataLoader, Dataset, random_split
 from ..datasets.regression import UCIRegression
 
 
-# fmt: on
 class UCIDataModule(LightningDataModule):
     """The UCI regression datasets.
 

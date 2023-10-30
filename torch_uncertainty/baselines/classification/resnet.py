@@ -1,4 +1,3 @@
-# fmt: off
 from argparse import ArgumentParser, BooleanOptionalAction
 from pathlib import Path
 from typing import Any, Literal, Optional, Type, Union
@@ -51,7 +50,6 @@ from ..utils.parser_addons import (
 )
 
 
-# fmt: on
 class ResNet:
     r"""ResNet backbone baseline for classification providing support for
     various versions and architectures.

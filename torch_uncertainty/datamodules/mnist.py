@@ -1,4 +1,3 @@
-# fmt: off
 from argparse import ArgumentParser
 from pathlib import Path
 from typing import Any, List, Literal, Optional, Union
@@ -13,7 +12,6 @@ from ..datasets.classification import MNISTC, NotMNIST
 from ..transforms import Cutout
 
 
-# fmt: on
 class MNISTDataModule(LightningDataModule):
     """DataModule for MNIST.
 

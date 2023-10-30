@@ -1,4 +1,3 @@
-# fmt: off
 from pathlib import Path
 from typing import Any, Callable, Literal, Optional, Tuple
 
@@ -9,7 +8,6 @@ from torchvision.datasets.utils import (
 )
 
 
-# fmt: on
 class NotMNIST(ImageFolder):
     """The notMNIST dataset.
 

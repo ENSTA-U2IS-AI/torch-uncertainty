@@ -1,4 +1,3 @@
-# fmt: off
 from argparse import ArgumentParser, Namespace
 from functools import partial
 from typing import Any, List, Optional, Tuple, Type, Union
@@ -34,7 +33,6 @@ from ..metrics import (
 from ..plotting_utils import CalibrationPlot, plot_hist
 
 
-# fmt:on
 class ClassificationSingle(pl.LightningModule):
     """
     Args:

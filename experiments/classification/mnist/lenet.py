@@ -1,4 +1,3 @@
-# fmt: off
 from pathlib import Path
 
 from torch import nn, optim
@@ -9,7 +8,6 @@ from torch_uncertainty.models.lenet import lenet
 from torch_uncertainty.routines.classification import ClassificationSingle
 
 
-# fmt: on
 def optim_lenet(model: nn.Module) -> dict:
     """Optimization procedure for LeNet.
 

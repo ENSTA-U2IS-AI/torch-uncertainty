@@ -9,7 +9,7 @@ from torch_uncertainty.datamodules import ImageNetDataModule
 from .._dummies.dataset import DummyClassificationDataset
 
 
-# fmt:on
+
 class TestImageNetDataModule:
     """Testing the ImageNetDataModule datamodule class."""
 

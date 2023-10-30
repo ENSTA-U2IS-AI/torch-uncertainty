@@ -1,5 +1,5 @@
 """ Modified from https://github.com/nikitadurasov/masksembles/ """
-# fmt: off
+
 from typing import Any, Union
 
 import torch
@@ -9,7 +9,6 @@ from torch.nn.common_types import _size_2_t
 import numpy as np
 
 
-# fmt: on
 def _generate_masks(m: int, n: int, s: float) -> np.ndarray:
     """Generates set of binary masks with properties defined by n, m, s params.
     Results of this function are stochastic, that is, calls with the same sets

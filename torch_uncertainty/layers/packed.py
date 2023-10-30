@@ -1,4 +1,3 @@
-# fmt: off
 from typing import Any, Union
 
 from einops import rearrange
@@ -6,7 +5,6 @@ from torch import Tensor, nn
 from torch.nn.common_types import _size_1_t, _size_2_t, _size_3_t
 
 
-# fmt: on
 def check_packed_parameters_consistency(
     alpha: float, num_estimators: int, gamma: int
 ) -> None:

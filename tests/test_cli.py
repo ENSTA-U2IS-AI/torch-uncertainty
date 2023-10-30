@@ -1,4 +1,3 @@
-# fmt: off
 import sys
 from pathlib import Path
 
@@ -18,7 +17,6 @@ from torch_uncertainty.optimization_procedures import (
 )
 
 
-# fmt: on
 class TestCLI:
     """Testing the CLI function."""
 

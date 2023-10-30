@@ -23,7 +23,6 @@ from torch_uncertainty.transforms import (
 )
 
 
-# fmt:on
 @pytest.fixture
 def img_input() -> torch.Tensor:
     imarray = numpy.random.rand(28, 28, 3) * 255

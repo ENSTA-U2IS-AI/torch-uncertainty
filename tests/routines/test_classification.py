@@ -20,7 +20,7 @@ from .._dummies import (
 )
 
 
-# fmt:on
+
 class TestClassificationSingle:
     """Testing the classification routine with a single model."""
 

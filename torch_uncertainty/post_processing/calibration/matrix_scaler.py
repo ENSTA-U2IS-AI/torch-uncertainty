@@ -1,4 +1,3 @@
-# fmt: off
 from typing import Literal, Optional
 
 import torch
@@ -7,7 +6,6 @@ from torch import nn
 from .scaler import Scaler
 
 
-# fmt: on
 class MatrixScaler(Scaler):
     """
     Matrix scaling post-processing for calibrated probabilities.

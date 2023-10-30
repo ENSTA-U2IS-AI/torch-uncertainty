@@ -4,7 +4,7 @@ import pytest
 from torch_uncertainty.datasets.classification import ImageNetO
 
 
-# fmt:on
+
 class TestImageNetO:
     """Testing the ImageNetO dataset class."""
 

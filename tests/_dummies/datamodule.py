@@ -1,4 +1,3 @@
-# fmt: off
 from argparse import ArgumentParser
 from pathlib import Path
 from typing import Any, List, Optional, Union
@@ -10,7 +9,6 @@ from torch.utils.data import DataLoader, Dataset
 from .dataset import DummyClassificationDataset, DummyRegressionDataset
 
 
-# fmt: on
 class DummyClassificationDataModule(LightningDataModule):
     num_channels = 1
     image_size: int = 4

@@ -1,4 +1,3 @@
-# fmt: off
 from typing import Callable, Dict, List, Type, Union
 
 import torch.nn.functional as F
@@ -8,7 +7,6 @@ from ..layers.bayesian import BayesLinear
 from ..layers.packed import PackedLinear
 from ..models.utils import StochasticModel
 
-# fmt: on
 __all__ = ["mlp", "packed_mlp", "bayesian_mlp"]
 
 

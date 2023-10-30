@@ -10,7 +10,7 @@ from torch_uncertainty.layers.packed import (
 )
 
 
-# fmt:on
+
 @pytest.fixture
 def feat_input() -> torch.Tensor:
     feat = torch.rand((6, 1))

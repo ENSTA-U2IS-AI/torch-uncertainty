@@ -1,4 +1,3 @@
-# fmt: off
 from argparse import ArgumentParser
 from typing import Any, Type
 
@@ -18,7 +17,6 @@ from torch_uncertainty.transforms import RepeatTarget
 from .model import dummy_model
 
 
-# fmt: on
 class DummyClassificationBaseline:
     def __new__(
         cls,

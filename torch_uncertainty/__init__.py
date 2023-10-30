@@ -1,4 +1,3 @@
-# fmt: off
 # flake8: noqa
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
@@ -17,7 +16,6 @@ import numpy as np
 from .utils import get_version
 
 
-# fmt: on
 def init_args(
     network: Optional[Type[pl.LightningModule]] = None,
     datamodule: Optional[Type[pl.LightningDataModule]] = None,

@@ -1,4 +1,3 @@
-# fmt: off
 from typing import Any, Literal, Optional
 
 import torch
@@ -8,7 +7,6 @@ from torchmetrics import Metric
 from torchmetrics.utilities.data import dim_zero_cat
 
 
-# fmt: on
 class Disagreement(Metric):
     """The Disagreement Metric to estimate the confidence of an ensemble of
     estimators.

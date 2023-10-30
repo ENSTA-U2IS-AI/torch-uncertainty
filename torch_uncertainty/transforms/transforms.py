@@ -1,4 +1,3 @@
-# fmt: off
 from typing import List, Optional, Tuple, Union
 
 import torch
@@ -10,7 +9,6 @@ from torch import Tensor, nn
 import numpy as np
 
 
-# fmt: on
 class AutoContrast(nn.Module):
     pixmix_max_level = None
     level_type = None

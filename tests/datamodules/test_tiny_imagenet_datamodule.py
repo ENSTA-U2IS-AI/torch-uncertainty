@@ -9,7 +9,7 @@ from torch_uncertainty.datasets.classification import TinyImageNet
 from .._dummies.dataset import DummyClassificationDataset
 
 
-# fmt:on
+
 class TestTinyImageNetDataModule:
     """Testing the TinyImageNetDataModule datamodule class."""
 

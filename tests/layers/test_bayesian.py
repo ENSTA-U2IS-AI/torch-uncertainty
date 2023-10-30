@@ -11,7 +11,7 @@ from torch_uncertainty.layers.bayesian import (
 from torch_uncertainty.layers.bayesian.sampler import TrainableDistribution
 
 
-# fmt:on
+
 @pytest.fixture
 def feat_input_odd() -> torch.Tensor:
     feat = torch.rand((5, 10))

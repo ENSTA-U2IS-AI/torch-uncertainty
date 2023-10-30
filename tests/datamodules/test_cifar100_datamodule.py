@@ -11,7 +11,7 @@ from torch_uncertainty.transforms import Cutout
 from .._dummies.dataset import DummyClassificationDataset
 
 
-# fmt:on
+
 class TestCIFAR100DataModule:
     """Testing the CIFAR100DataModule datamodule class."""
 

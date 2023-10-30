@@ -1,4 +1,3 @@
-# fmt: off
 from typing import List, Type, Union
 
 import torch
@@ -6,7 +5,6 @@ from einops import rearrange
 
 from .std import BasicBlock, Bottleneck, _ResNet
 
-# fmt: on
 __all__ = [
     "mimo_resnet18",
     "mimo_resnet34",

@@ -4,7 +4,7 @@ import pytest
 from torch_uncertainty.datasets.classification import CIFAR10H
 
 
-# fmt:on
+
 class TestCIFAR10_H:
     """Testing the CIFAR10H dataset class."""
 

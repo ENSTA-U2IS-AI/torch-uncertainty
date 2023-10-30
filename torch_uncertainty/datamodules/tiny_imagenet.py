@@ -12,7 +12,6 @@ from torchvision.datasets import DTD, SVHN
 from ..datasets.classification import ImageNetO, TinyImageNet
 
 
-# fmt: on
 class TinyImageNetDataModule(LightningDataModule):
     num_classes = 200
     num_channels = 3

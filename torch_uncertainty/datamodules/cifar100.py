@@ -1,4 +1,3 @@
-# fmt: off
 from argparse import ArgumentParser
 from pathlib import Path
 from typing import Any, List, Literal, Optional, Union
@@ -16,7 +15,6 @@ from ..datasets.classification import CIFAR100C
 from ..transforms import Cutout
 
 
-# fmt: on
 class CIFAR100DataModule(LightningDataModule):
     """DataModule for CIFAR100.
 

@@ -12,7 +12,6 @@ from torchvision.datasets.utils import (
 import numpy as np
 
 
-# fmt:on
 class MNISTC(VisionDataset):
     """The corrupted MNIST-C Dataset.
 

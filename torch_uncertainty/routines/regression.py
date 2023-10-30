@@ -1,4 +1,3 @@
-# fmt: off
 from argparse import ArgumentParser, Namespace
 from typing import Any, List, Literal, Optional, Tuple, Union
 
@@ -14,7 +13,6 @@ from torchmetrics import MeanSquaredError, MetricCollection
 from ..metrics.nll import GaussianNegativeLogLikelihood
 
 
-# fmt:on
 class RegressionSingle(pl.LightningModule):
     def __init__(
         self,

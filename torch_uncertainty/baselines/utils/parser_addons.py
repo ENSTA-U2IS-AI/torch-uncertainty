@@ -1,8 +1,6 @@
-# fmt: off
 from argparse import ArgumentParser
 
 
-# fmt: on
 def add_resnet_specific_args(parser: ArgumentParser) -> ArgumentParser:
     # style_choices = ["cifar", "imagenet", "robust"]
     archs = [18, 34, 50, 101, 152]

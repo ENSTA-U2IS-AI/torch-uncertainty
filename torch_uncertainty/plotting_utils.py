@@ -1,4 +1,3 @@
-# fmt: off
 from typing import List, Tuple
 
 import matplotlib.pyplot as plt
@@ -7,7 +6,6 @@ from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 
 
-# fmt: on
 class CalibrationPlot:
     """A class for plotting calibration figures for classification models.
 

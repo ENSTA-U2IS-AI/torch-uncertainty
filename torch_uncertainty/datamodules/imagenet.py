@@ -1,4 +1,3 @@
-# fmt: off
 from argparse import ArgumentParser
 from pathlib import Path
 from typing import Any, List, Optional, Union
@@ -14,7 +13,6 @@ from torchvision.datasets import DTD, SVHN, ImageNet, INaturalist
 from ..datasets.classification import ImageNetA, ImageNetO, ImageNetR
 
 
-# fmt: on
 class ImageNetDataModule(LightningDataModule):
     num_classes = 1000
     num_channels = 3

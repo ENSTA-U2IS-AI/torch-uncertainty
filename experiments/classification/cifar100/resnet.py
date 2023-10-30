@@ -1,4 +1,3 @@
-# fmt: off
 from pathlib import Path
 
 from torch import nn
@@ -8,7 +7,6 @@ from torch_uncertainty.baselines import ResNet
 from torch_uncertainty.datamodules import CIFAR100DataModule
 from torch_uncertainty.optimization_procedures import get_procedure
 
-# fmt: on
 if __name__ == "__main__":
     args = init_args(ResNet, CIFAR100DataModule)
     if args.root == "./data/":

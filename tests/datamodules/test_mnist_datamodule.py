@@ -11,7 +11,7 @@ from torch_uncertainty.transforms import Cutout
 from .._dummies.dataset import DummyClassificationDataset
 
 
-# fmt:on
+
 class TestMNISTDataModule:
     """Testing the MNISTDataModule datamodule class."""
 
