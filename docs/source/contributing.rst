@@ -63,9 +63,12 @@ Optionally, specify :bash:`html-noplot` instead of :bash:`html` to avoid running
 Guidelines
 ^^^^^^^^^^
 
-We are using ruff for code formatting, linting, and
-imports (as a drop-in replacement for black, isort, and flake8). The pre-commit hooks will ensure that your code is properly formatted
-and linted before committing.
+We are using ruff for code formatting, linting, and imports (as a drop-in
+replacement for black, isort, and flake8). The pre-commit hooks will ensure
+that your code is properly formatted and linted before committing.
+
+To make your changes, create a branch on a personal fork, whose name is not
+dev nor main.
 
 Before submitting a final pull request, that we will review, please try your
 best not to reduce the code coverage and do document your code.
