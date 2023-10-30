@@ -1,4 +1,4 @@
-# flake8: noqa
+# ruff: noqa: F401
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
 from typing import Dict, Optional, Type, Union

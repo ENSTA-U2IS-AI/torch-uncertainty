@@ -1,4 +1,4 @@
-# flake8: noqa
+# ruff: noqa: F401
 import pytest
 
 from torch_uncertainty.models.resnet import resnet18, resnet50

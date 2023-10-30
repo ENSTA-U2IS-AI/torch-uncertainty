@@ -1,4 +1,4 @@
-# flake8: noqa
+# ruff: noqa: F401
 from .cifar10 import CIFAR10DataModule
 from .cifar100 import CIFAR100DataModule
 from .imagenet import ImageNetDataModule

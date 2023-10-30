@@ -1,4 +1,4 @@
-# flake8: noqa
+# ruff: noqa: F401
 from .batched import *
 from .masked import *
 from .mimo import *

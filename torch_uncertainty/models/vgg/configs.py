@@ -1,4 +1,4 @@
-# flake8: noqa
+# ruff: noqa: F401
 from typing import Dict, List, Union
 
 cfgs: Dict[str, List[Union[str, int]]] = {
