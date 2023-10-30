@@ -75,7 +75,9 @@ class MNISTDataModule(LightningDataModule):
         elif ood_ds == "not":
             self.ood_dataset = NotMNIST
         else:
-            raise ValueError(f"`ood_ds` should be `fashion` or `not`. Got {ood_ds}.")
+            raise ValueError(
+                f"`ood_ds` should be `fashion` or `not`. Got {ood_ds}."
+            )
 
         if cutout:
             main_transform = Cutout(cutout)
@@ -174,7 +176,9 @@ class MNISTDataModule(LightningDataModule):
             dataloader.append(self._data_loader(self.ood))
         return dataloader
 
-    def _data_loader(self, dataset: Dataset, shuffle: bool = False) -> DataLoader:
+    def _data_loader(
+        self, dataset: Dataset, shuffle: bool = False
+    ) -> DataLoader:
         """Create a dataloader for a given dataset.
 
         Args:

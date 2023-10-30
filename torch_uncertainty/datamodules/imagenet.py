@@ -155,7 +155,9 @@ class ImageNetDataModule(LightningDataModule):
     def setup(self, stage: Optional[str] = None) -> None:
         if stage == "fit" or stage is None:
             if self.test_alt is not None:
-                raise ValueError("The test_alt argument is not supported for training.")
+                raise ValueError(
+                    "The test_alt argument is not supported for training."
+                )
             self.train = self.dataset(
                 self.root,
                 split="train",
@@ -215,7 +217,9 @@ class ImageNetDataModule(LightningDataModule):
             dataloader.append(self._data_loader(self.ood))
         return dataloader
 
-    def _data_loader(self, dataset: Dataset, shuffle: bool = False) -> DataLoader:
+    def _data_loader(
+        self, dataset: Dataset, shuffle: bool = False
+    ) -> DataLoader:
         """Create a dataloader for a given dataset.
 
         Args:

@@ -223,7 +223,9 @@ class CIFAR10DataModule(LightningDataModule):
             dataloader.append(self._data_loader(self.ood))
         return dataloader
 
-    def _data_loader(self, dataset: Dataset, shuffle: bool = False) -> DataLoader:
+    def _data_loader(
+        self, dataset: Dataset, shuffle: bool = False
+    ) -> DataLoader:
         """Create a dataloader for a given dataset.
 
         Args:
@@ -258,5 +260,7 @@ class CIFAR10DataModule(LightningDataModule):
         p.add_argument("--cutout", type=int, default=0)
         p.add_argument("--auto_augment", type=str)
         p.add_argument("--test_alt", choices=["c", "h"], default=None)
-        p.add_argument("--severity", dest="corruption_severity", type=int, default=None)
+        p.add_argument(
+            "--severity", dest="corruption_severity", type=int, default=None
+        )
         return parent_parser

@@ -86,7 +86,9 @@ class CIFAR100DataModule(LightningDataModule):
 
         self.corruption_severity = corruption_severity
 
-        if (cutout is not None) + randaugment + int(auto_augment is not None) > 1:
+        if (cutout is not None) + randaugment + int(
+            auto_augment is not None
+        ) > 1:
             raise ValueError(
                 "Only one data augmentation can be chosen at a time. Raise a "
                 "GitHub issue if needed."
@@ -222,7 +224,9 @@ class CIFAR100DataModule(LightningDataModule):
             dataloader.append(self._data_loader(self.ood))
         return dataloader
 
-    def _data_loader(self, dataset: Dataset, shuffle: bool = False) -> DataLoader:
+    def _data_loader(
+        self, dataset: Dataset, shuffle: bool = False
+    ) -> DataLoader:
         """Create a dataloader for a given dataset.
 
         Args:
@@ -258,5 +262,7 @@ class CIFAR100DataModule(LightningDataModule):
         p.add_argument("--randaugment", dest="randaugment", action="store_true")
         p.add_argument("--auto_augment", type=str)
         p.add_argument("--test_alt", choices=["c"], default=None)
-        p.add_argument("--severity", dest="corruption_severity", type=int, default=1)
+        p.add_argument(
+            "--severity", dest="corruption_severity", type=int, default=1
+        )
         return parent_parser

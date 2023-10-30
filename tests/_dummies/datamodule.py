@@ -90,7 +90,9 @@ class DummyClassificationDataModule(LightningDataModule):
             dataloader.append(self._data_loader(self.ood))
         return dataloader
 
-    def _data_loader(self, dataset: Dataset, shuffle: bool = False) -> DataLoader:
+    def _data_loader(
+        self, dataset: Dataset, shuffle: bool = False
+    ) -> DataLoader:
         return DataLoader(
             dataset,
             batch_size=self.batch_size,
@@ -187,7 +189,9 @@ class DummyRegressionDataModule(LightningDataModule):
             dataloader.append(self._data_loader(self.ood))
         return dataloader
 
-    def _data_loader(self, dataset: Dataset, shuffle: bool = False) -> DataLoader:
+    def _data_loader(
+        self, dataset: Dataset, shuffle: bool = False
+    ) -> DataLoader:
         return DataLoader(
             dataset,
             batch_size=self.batch_size,

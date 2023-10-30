@@ -51,7 +51,9 @@ class TinyImageNetDataModule(LightningDataModule):
         elif ood_ds == "textures":
             self.ood_dataset = DTD
         else:
-            raise ValueError(f"OOD dataset {ood_ds} not supported for TinyImageNet.")
+            raise ValueError(
+                f"OOD dataset {ood_ds} not supported for TinyImageNet."
+            )
 
         if rand_augment_opt is not None:
             main_transform = rand_augment_transform(rand_augment_opt, {})
@@ -195,7 +197,9 @@ class TinyImageNetDataModule(LightningDataModule):
             dataloader.append(self._data_loader(self.ood))
         return dataloader
 
-    def _data_loader(self, dataset: Dataset, shuffle: bool = False) -> DataLoader:
+    def _data_loader(
+        self, dataset: Dataset, shuffle: bool = False
+    ) -> DataLoader:
         """Create a dataloader for a given dataset.
 
         Args:
