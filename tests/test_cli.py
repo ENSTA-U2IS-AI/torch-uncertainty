@@ -16,6 +16,8 @@ from torch_uncertainty.optimization_procedures import (
     optim_regression,
 )
 
+from ._dummies.dataset import DummyClassificationDataset
+
 
 class TestCLI:
     """Testing the CLI function."""
@@ -162,6 +164,47 @@ class TestCLI:
             )
             with pytest.raises(ValueError):
                 cli_main(model, dm, root, "std", args)
+
+    def test_cli_cv_ts(self):
+        root = Path(__file__).parent.absolute().parents[0]
+        with ArgvContext("file.py", "--use_cv"):
+            args = init_args(ResNet, CIFAR10DataModule)
+
+            # datamodule
+            args.root = str(root / "data")
+            dm = CIFAR10DataModule(**vars(args))
+
+            # Simulate that summary is True & the only argument
+            args.summary = True
+
+            dm.dataset = (
+                lambda root,
+                train,
+                download,
+                transform: DummyClassificationDataset(
+                    root,
+                    train=train,
+                    download=download,
+                    transform=transform,
+                    num_images=20,
+                )
+            )
+
+            list_dm = dm.make_cross_val_splits(2, 1)
+            list_model = []
+            for i in range(len(list_dm)):
+                list_model.append(
+                    ResNet(
+                        num_classes=list_dm[i].dm.num_classes,
+                        in_channels=list_dm[i].dm.num_channels,
+                        style="cifar",
+                        loss=nn.CrossEntropyLoss,
+                        optimization_procedure=optim_cifar10_resnet18,
+                        **vars(args),
+                    )
+                )
+
+            cli_main(list_model, list_dm, root, "std", args)
 
     def test_init_args_void(self):
         with ArgvContext("file.py"):
