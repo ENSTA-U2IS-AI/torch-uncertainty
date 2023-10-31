@@ -2,7 +2,7 @@
 from argparse import ArgumentParser, Namespace
 from collections import defaultdict
 from pathlib import Path
-from typing import Dict, Optional, Type, Union
+from typing import Any, Dict, Optional, Type, Union
 
 import pytorch_lightning as pl
 import torch
@@ -19,7 +19,7 @@ from .utils import get_version
 
 
 def init_args(
-    network: Optional[Type[pl.LightningModule]] = None,
+    network: Any = None,
     datamodule: Optional[Type[pl.LightningDataModule]] = None,
 ) -> Namespace:
     parser = ArgumentParser("torch-uncertainty")

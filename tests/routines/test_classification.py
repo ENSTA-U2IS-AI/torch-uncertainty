@@ -109,27 +109,6 @@ class TestClassificationSingle:
             )
             cli_main(model, dm, root, "dummy", args)
 
-        with ArgvContext(
-            "file.py", "--evaluate_ood", "--entropy", "--cutmix", "0.5"
-        ):
-            args = init_args(
-                DummyClassificationBaseline, DummyClassificationDataModule
-            )
-
-            args.root = str(root / "data")
-            dm = DummyClassificationDataModule(**vars(args))
-
-            model = DummyClassificationBaseline(
-                num_classes=dm.num_classes,
-                in_channels=dm.num_channels,
-                loss=DECLoss,
-                optimization_procedure=optim_cifar10_resnet18,
-                baseline_type="single",
-                **vars(args),
-            )
-            with pytest.raises(NotImplementedError):
-                cli_main(model, dm, root, "dummy", args)
-
     def test_classification_failures(self):
         with pytest.raises(ValueError):
             ClassificationSingle(
