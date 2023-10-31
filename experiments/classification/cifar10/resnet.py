@@ -6,7 +6,7 @@ from torch_uncertainty import cli_main, init_args
 from torch_uncertainty.baselines import ResNet
 from torch_uncertainty.datamodules import CIFAR10DataModule
 from torch_uncertainty.optimization_procedures import get_procedure
-from torch_uncertainty.utils import csv_writter
+from torch_uncertainty.utils import csv_writer
 
 if __name__ == "__main__":
     args = init_args(ResNet, CIFAR10DataModule)
@@ -67,7 +67,7 @@ if __name__ == "__main__":
         results = cli_main(model, dm, args.exp_dir, args.exp_name, args)
 
     for dict_result in results:
-        csv_writter(
+        csv_writer(
             Path(args.exp_dir) / Path(args.exp_name) / "results.csv",
             dict_result,
         )

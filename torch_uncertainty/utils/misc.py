@@ -1,7 +1,7 @@
 import csv
 
 
-def csv_writter(path, dic):
+def csv_writer(path, dic):
     # Check if the file already exists
     if path.is_file():
         append_mode = True

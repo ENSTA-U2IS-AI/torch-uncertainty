@@ -172,10 +172,17 @@ def cli_main(
                     args.opt_temp_scaling or args.val_temp_scaling
                 ),
             )
-            trainer.fit(network[i], datamodule[i])
-            test_values.append(
-                trainer.test(datamodule=datamodule[i], ckpt_path="last")[0]
-            )
+            if args.summary:
+                summary(
+                    network[i],
+                    input_size=list(datamodule[i].dm.input_shape).insert(0, 1),
+                )
+                test_values.append({})
+            else:
+                trainer.fit(network[i], datamodule[i])
+                test_values.append(
+                    trainer.test(datamodule=datamodule[i], ckpt_path="last")[0]
+                )
 
         all_test_values = defaultdict(list)
         for test_value in test_values:
