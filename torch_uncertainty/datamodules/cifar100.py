@@ -71,6 +71,7 @@ class CIFAR100DataModule(AbstractDataModule):
             persistent_workers=persistent_workers,
         )
 
+        self.evaluate_ood = evaluate_ood
         self.val_split = val_split
         self.num_dataloaders = num_dataloaders
 

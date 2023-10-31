@@ -190,7 +190,7 @@ def cli_main(
     else:
         # logger
         tb_logger = TensorBoardLogger(
-            str(root),
+            str(root / "logs"),
             name=net_name,
             default_hp_metric=False,
             log_graph=args.log_graph,
