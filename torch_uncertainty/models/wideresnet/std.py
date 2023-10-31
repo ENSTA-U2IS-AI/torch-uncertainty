@@ -1,4 +1,3 @@
-# fmt: off
 from typing import Type
 
 import torch.nn.functional as F
@@ -6,7 +5,6 @@ from torch import Tensor, nn
 
 from ..utils import toggle_dropout
 
-# fmt: on
 __all__ = [
     "wideresnet28x10",
 ]

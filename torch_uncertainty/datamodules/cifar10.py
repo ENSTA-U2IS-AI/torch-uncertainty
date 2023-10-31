@@ -1,4 +1,3 @@
-# fmt: off
 from argparse import ArgumentParser
 from pathlib import Path
 from typing import Any, List, Literal, Optional, Union
@@ -18,7 +17,6 @@ from ..transforms import Cutout
 from .abstract import AbstractDataModule
 
 
-# fmt: on
 class CIFAR10DataModule(AbstractDataModule):
     """DataModule for CIFAR10.
 
@@ -50,7 +48,7 @@ class CIFAR10DataModule(AbstractDataModule):
     def __init__(
         self,
         root: Union[str, Path],
-        ood_detection: bool,
+        evaluate_ood: bool,
         batch_size: int,
         val_split: float = 0.0,
         num_workers: int = 1,
@@ -73,7 +71,7 @@ class CIFAR10DataModule(AbstractDataModule):
 
         self.val_split = val_split
         self.num_dataloaders = num_dataloaders
-        self.ood_detection = ood_detection
+        self.evaluate_ood = evaluate_ood
 
         if test_alt == "c":
             self.dataset = CIFAR10C
@@ -138,7 +136,7 @@ class CIFAR10DataModule(AbstractDataModule):
                 download=True,
             )
 
-        if self.ood_detection:
+        if self.evaluate_ood:
             self.ood_dataset(self.root, split="test", download=True)
 
     def setup(self, stage: Optional[str] = None) -> None:
@@ -181,7 +179,7 @@ class CIFAR10DataModule(AbstractDataModule):
                     transform=self.transform_test,
                     severity=self.corruption_severity,
                 )
-            if self.ood_detection:
+            if self.evaluate_ood:
                 self.ood = self.ood_dataset(
                     self.root,
                     split="test",
@@ -213,7 +211,7 @@ class CIFAR10DataModule(AbstractDataModule):
             and out-of-distribution data.
         """
         dataloader = [self._data_loader(self.test)]
-        if self.ood_detection:
+        if self.evaluate_ood:
             dataloader.append(self._data_loader(self.ood))
         return dataloader
 
@@ -235,10 +233,6 @@ class CIFAR10DataModule(AbstractDataModule):
         p.add_argument("--cutout", type=int, default=0)
         p.add_argument("--auto_augment", type=str)
         p.add_argument("--test_alt", choices=["c", "h"], default=None)
-        p.add_argument(
-            "--severity", dest="corruption_severity", type=int, default=None
-        )
-        p.add_argument(
-            "--evaluate_ood", dest="ood_detection", action="store_true"
-        )
+        p.add_argument("--severity", dest="corruption_severity", type=int, default=None)
+        p.add_argument("--evaluate_ood", action="store_true")
         return parent_parser

@@ -1,4 +1,3 @@
-# fmt: off
 from typing import Optional, Tuple
 
 import torch
@@ -9,7 +8,6 @@ from torch.nn import init
 from .sampler import PriorDistribution, TrainableDistribution
 
 
-# fmt: on
 class BayesLinear(nn.Module):
     """Bayesian Linear Layer with Mixture of Normals prior and Normal posterior
 

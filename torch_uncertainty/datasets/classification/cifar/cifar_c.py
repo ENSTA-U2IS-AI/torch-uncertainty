@@ -12,7 +12,6 @@ from torchvision.datasets.utils import (
 import numpy as np
 
 
-# fmt:on
 class CIFAR10C(VisionDataset):
     """The corrupted CIFAR-10-C Dataset.
 

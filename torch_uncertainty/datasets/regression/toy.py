@@ -1,9 +1,7 @@
-# fmt: off
 import torch
 from torch.utils.data import TensorDataset
 
 
-# fmt: on
 class Cubic(TensorDataset):
     """A dataset containing samples drawn on a cubic function with
     homoscedastic noise.

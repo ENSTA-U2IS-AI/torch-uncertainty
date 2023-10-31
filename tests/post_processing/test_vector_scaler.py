@@ -1,11 +1,9 @@
-# fmt: off
 import pytest
 import torch
 
 from torch_uncertainty.post_processing import VectorScaler
 
 
-# fmt: on
 def identity_model(x):
     return x
 

@@ -57,9 +57,9 @@ model.load_state_dict(weights)
 #
 # To get the dataloader from the datamodule, just call prepare_data, setup, and
 # extract the first element of the test dataloader list. There are more than one
-# element if `:attr:ood_detection` is True.
+# element if `:attr:evaluate_ood` is True.
 
-dm = CIFAR100DataModule(root="./data", ood_detection=False, batch_size=32)
+dm = CIFAR100DataModule(root="./data", evaluate_ood=False, batch_size=32)
 dm.prepare_data()
 dm.setup("test")
 

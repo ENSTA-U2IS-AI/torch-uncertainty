@@ -14,7 +14,6 @@ from ..datasets.classification import ImageNetO, TinyImageNet
 from .abstract import AbstractDataModule
 
 
-# fmt: on
 class TinyImageNetDataModule(AbstractDataModule):
     num_classes = 200
     num_channels = 3
@@ -23,7 +22,7 @@ class TinyImageNetDataModule(AbstractDataModule):
     def __init__(
         self,
         root: Union[str, Path],
-        ood_detection: bool,
+        evaluate_ood: bool,
         batch_size: int,
         ood_ds: str = "svhn",
         rand_augment_opt: Optional[str] = None,
@@ -41,7 +40,7 @@ class TinyImageNetDataModule(AbstractDataModule):
         )
         # TODO: COMPUTE STATS
 
-        self.ood_detection = ood_detection
+        self.evaluate_ood = evaluate_ood
         self.ood_ds = ood_ds
 
         self.dataset = TinyImageNet
@@ -88,7 +87,7 @@ class TinyImageNetDataModule(AbstractDataModule):
             )
 
     def prepare_data(self) -> None:  # coverage: ignore
-        if self.ood_detection:
+        if self.evaluate_ood:
             if self.ood_ds != "textures":
                 self.ood_dataset(
                     self.root,
@@ -139,7 +138,7 @@ class TinyImageNetDataModule(AbstractDataModule):
                 transform=self.transform_test,
             )
 
-        if self.ood_detection:
+        if self.evaluate_ood:
             if self.ood_ds == "textures":
                 self.ood = ConcatDataset(
                     [
@@ -178,7 +177,7 @@ class TinyImageNetDataModule(AbstractDataModule):
             and out-of-distribution data.
         """
         dataloader = [self._data_loader(self.test)]
-        if self.ood_detection:
+        if self.evaluate_ood:
             dataloader.append(self._data_loader(self.ood))
         return dataloader
 
@@ -200,7 +199,5 @@ class TinyImageNetDataModule(AbstractDataModule):
         p.add_argument(
             "--rand_augment", dest="rand_augment_opt", type=str, default=None
         )
-        p.add_argument(
-            "--evaluate_ood", dest="ood_detection", action="store_true"
-        )
+        p.add_argument("--evaluate_ood", action="store_true")
         return parent_parser

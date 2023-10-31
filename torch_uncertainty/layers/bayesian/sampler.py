@@ -1,4 +1,3 @@
-# fmt: off
 from typing import Optional
 
 import torch
@@ -7,7 +6,6 @@ from torch import Tensor, distributions, nn
 import numpy as np
 
 
-# fmt: on
 class TrainableDistribution(nn.Module):
     lsqrt2pi = torch.tensor(np.log(np.sqrt(2 * np.pi)))
 

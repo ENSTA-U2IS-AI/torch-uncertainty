@@ -1,4 +1,3 @@
-# fmt: off
 from pathlib import Path
 from typing import Callable, Optional, Tuple, Union
 
@@ -12,7 +11,6 @@ from torchvision.datasets.utils import (
     download_url,
 )
 
-# fmt:on
 boston_column_names = [
     "CRIM",
     "ZN",

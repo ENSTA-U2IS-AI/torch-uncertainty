@@ -1,8 +1,6 @@
-# fmt: off
 from .base import ImageNetVariation
 
 
-# fmt:on
 class ImageNetR(ImageNetVariation):
     url = "https://people.eecs.berkeley.edu/~hendrycks/imagenet-r.tar"
     filename = "imagenet-r.tar"

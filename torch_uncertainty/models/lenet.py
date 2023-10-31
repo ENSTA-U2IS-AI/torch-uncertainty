@@ -1,4 +1,3 @@
-# fmt: off
 from typing import Callable, Dict, Optional, Type, Union
 
 import torch
@@ -9,7 +8,6 @@ from ..layers.bayesian import BayesConv2d, BayesLinear
 from ..layers.packed import PackedConv2d, PackedLinear
 from .utils import StochasticModel, toggle_dropout
 
-# fmt: on
 __all__ = ["lenet", "packed_lenet", "bayesian_lenet"]
 
 

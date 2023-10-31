@@ -1,4 +1,3 @@
-# fmt: off
 from typing import Any, Dict, List, Type, Union
 
 import torch.nn.functional as F
@@ -8,7 +7,6 @@ from torch import Tensor, nn
 from ...layers import PackedConv2d, PackedLinear
 from ...utils import load_hf
 
-# fmt: on
 __all__ = [
     "packed_resnet18",
     "packed_resnet34",

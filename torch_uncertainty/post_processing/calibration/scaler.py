@@ -1,4 +1,3 @@
-# fmt: off
 from typing import Literal, Optional
 
 import torch
@@ -7,7 +6,6 @@ from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 
 
-# fmt: on
 class Scaler(nn.Module):
     """
     Virtual class for scaling post-processing for calibrated probabilities.

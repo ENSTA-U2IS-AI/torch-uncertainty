@@ -1,9 +1,8 @@
-# fmt: off
-# flake8: noqa
+# ruff: noqa: F401
 from argparse import ArgumentParser, Namespace
 from collections import defaultdict
 from pathlib import Path
-from typing import Dict, Optional, Type, Union
+from typing import Any, Dict, Optional, Type, Union
 
 import pytorch_lightning as pl
 import torch
@@ -19,9 +18,8 @@ from .datamodules.abstract import AbstractDataModule
 from .utils import get_version
 
 
-# fmt: on
 def init_args(
-    network: Optional[Type[pl.LightningModule]] = None,
+    network: Any = None,
     datamodule: Optional[Type[pl.LightningDataModule]] = None,
 ) -> Namespace:
     parser = ArgumentParser("torch-uncertainty")
@@ -192,7 +190,7 @@ def cli_main(
     else:
         # logger
         tb_logger = TensorBoardLogger(
-            str(root),
+            str(root / "logs"),
             name=net_name,
             default_hp_metric=False,
             log_graph=args.log_graph,

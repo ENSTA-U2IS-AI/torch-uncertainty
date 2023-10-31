@@ -7,7 +7,7 @@ import torch
 from torch_uncertainty.metrics import MutualInformation
 
 
-# fmt:on
+
 @pytest.fixture
 def disagreement_probas() -> torch.Tensor:
     """Return a vector with mean entropy ~ln(2) and entropy of mean =0."""
@@ -61,8 +61,3 @@ class TestMutualInformation:
     def test_bad_argument(self):
         with pytest.raises(Exception):
             _ = MutualInformation("geometric_mean")
-
-    # def test_bad_input(self, disagreement_probas: torch.Tensor):
-    #     metric = MutualInformation("mean")
-    #     with pytest.raises(ValueError):
-    #         metric.update(disagreement_probas.squeeze(1))

@@ -1,4 +1,3 @@
-# fmt: off
 from argparse import ArgumentParser
 from pathlib import Path
 from typing import Any, List, Optional, Union
@@ -11,7 +10,6 @@ from torch_uncertainty.datamodules.abstract import AbstractDataModule
 from .dataset import DummyClassificationDataset, DummyRegressionDataset
 
 
-# fmt: on
 class DummyClassificationDataModule(AbstractDataModule):
     num_channels = 1
     image_size: int = 4
@@ -20,7 +18,7 @@ class DummyClassificationDataModule(AbstractDataModule):
     def __init__(
         self,
         root: Union[str, Path],
-        ood_detection: bool,
+        evaluate_ood: bool,
         batch_size: int,
         num_classes: int = 2,
         num_workers: int = 1,
@@ -36,7 +34,7 @@ class DummyClassificationDataModule(AbstractDataModule):
             persistent_workers=persistent_workers,
         )
 
-        self.ood_detection = ood_detection
+        self.evaluate_ood = evaluate_ood
         self.num_classes = num_classes
 
         self.dataset = DummyClassificationDataset
@@ -82,7 +80,7 @@ class DummyClassificationDataModule(AbstractDataModule):
 
     def test_dataloader(self) -> Union[DataLoader, List[DataLoader]]:
         dataloader = [self._data_loader(self.test)]
-        if self.ood_detection:
+        if self.evaluate_ood:
             dataloader.append(self._data_loader(self.ood))
         return dataloader
 
@@ -93,9 +91,7 @@ class DummyClassificationDataModule(AbstractDataModule):
         **kwargs: Any,
     ) -> ArgumentParser:
         p = super().add_argparse_args(parent_parser)
-        p.add_argument(
-            "--evaluate_ood", dest="ood_detection", action="store_true"
-        )
+        p.add_argument("--evaluate_ood", action="store_true")
         return parent_parser
 
 
@@ -106,7 +102,7 @@ class DummyRegressionDataModule(AbstractDataModule):
     def __init__(
         self,
         root: Union[str, Path],
-        ood_detection: bool,
+        evaluate_ood: bool,
         batch_size: int,
         out_features: int = 2,
         num_workers: int = 1,
@@ -122,7 +118,7 @@ class DummyRegressionDataModule(AbstractDataModule):
             persistent_workers=persistent_workers,
         )
 
-        self.ood_detection = ood_detection
+        self.evaluate_ood = evaluate_ood
         self.out_features = out_features
 
         self.dataset = DummyRegressionDataset
@@ -152,7 +148,7 @@ class DummyRegressionDataModule(AbstractDataModule):
                 out_features=self.out_features,
                 transform=self.transform_test,
             )
-        if self.ood_detection:
+        if self.evaluate_ood:
             self.ood = self.ood_dataset(
                 self.root,
                 out_features=self.out_features,
@@ -161,7 +157,7 @@ class DummyRegressionDataModule(AbstractDataModule):
 
     def test_dataloader(self) -> Union[DataLoader, List[DataLoader]]:
         dataloader = [self._data_loader(self.test)]
-        if self.ood_detection:
+        if self.evaluate_ood:
             dataloader.append(self._data_loader(self.ood))
         return dataloader
 
@@ -172,7 +168,5 @@ class DummyRegressionDataModule(AbstractDataModule):
         **kwargs: Any,
     ) -> ArgumentParser:
         p = super().add_argparse_args(parent_parser)
-        p.add_argument(
-            "--evaluate_ood", dest="ood_detection", action="store_true"
-        )
+        p.add_argument("--evaluate_ood", action="store_true")
         return parent_parser

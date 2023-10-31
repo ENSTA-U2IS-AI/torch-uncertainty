@@ -1,4 +1,3 @@
-# fmt: off
 import copy
 from typing import List, Optional, Union
 
@@ -6,7 +5,6 @@ import torch
 from torch import nn
 
 
-# fmt: on
 class _DeepEnsembles(nn.Module):
     def __init__(
         self,

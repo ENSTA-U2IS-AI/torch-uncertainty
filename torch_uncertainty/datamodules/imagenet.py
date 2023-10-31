@@ -1,4 +1,3 @@
-# fmt: off
 from argparse import ArgumentParser
 from pathlib import Path
 from typing import Any, List, Optional, Union
@@ -14,7 +13,6 @@ from torchvision.datasets import DTD, SVHN, ImageNet, INaturalist
 from ..datasets.classification import ImageNetA, ImageNetO, ImageNetR
 
 
-# fmt: on
 class ImageNetDataModule(LightningDataModule):
     num_classes = 1000
     num_channels = 3
@@ -25,7 +23,7 @@ class ImageNetDataModule(LightningDataModule):
     def __init__(
         self,
         root: Union[str, Path],
-        ood_detection: bool,
+        evaluate_ood: bool,
         batch_size: int,
         ood_ds: str = "svhn",
         test_alt: Optional[str] = None,
@@ -43,7 +41,7 @@ class ImageNetDataModule(LightningDataModule):
             root = Path(root)
 
         self.root: Path = root
-        self.ood_detection = ood_detection
+        self.evaluate_ood = evaluate_ood
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.pin_memory = pin_memory
@@ -131,7 +129,7 @@ class ImageNetDataModule(LightningDataModule):
                 split="val",
                 download=True,
             )
-        if self.ood_detection:
+        if self.evaluate_ood:
             if self.ood_ds == "inaturalist":
                 self.ood = self.ood_dataset(
                     self.root,
@@ -177,7 +175,7 @@ class ImageNetDataModule(LightningDataModule):
                 transform=self.transform_test,
             )
 
-        if self.ood_detection:
+        if self.evaluate_ood:
             if self.ood_ds == "inaturalist":
                 self.ood = self.ood_dataset(
                     self.root,
@@ -215,7 +213,7 @@ class ImageNetDataModule(LightningDataModule):
             Textures test split (out-of-distribution data).
         """
         dataloader = [self._data_loader(self.test)]
-        if self.ood_detection:
+        if self.evaluate_ood:
             dataloader.append(self._data_loader(self.ood))
         return dataloader
 
@@ -251,9 +249,7 @@ class ImageNetDataModule(LightningDataModule):
         p.add_argument("--root", type=str, default="./data/")
         p.add_argument("--batch_size", type=int, default=256)
         p.add_argument("--num_workers", type=int, default=4)
-        p.add_argument(
-            "--evaluate_ood", dest="ood_detection", action="store_true"
-        )
+        p.add_argument("--evaluate_ood", action="store_true")
         p.add_argument("--ood_ds", choices=cls.ood_datasets, default="svhn")
         p.add_argument("--test_alt", choices=cls.test_datasets, default=None)
         p.add_argument("--procedure", choices=["ViT", "A3"], default=None)

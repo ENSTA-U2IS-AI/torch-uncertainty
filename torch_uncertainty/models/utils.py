@@ -1,4 +1,3 @@
-# fmt: off
 from typing import Dict, List
 
 from torch import nn
@@ -6,7 +5,6 @@ from torch import nn
 from ..layers.bayesian import bayesian_modules
 
 
-# fmt: on
 def toggle_dropout(
     model: nn.Module, last_layer_dropout: bool = False, enable: bool = True
 ) -> None:
@@ -44,7 +42,6 @@ def toggle_dropout(
                 m.eval()
 
 
-# fmt: on
 def StochasticModel(model: nn.Module) -> nn.Module:
     """Decorator for stochastic models. When applied to a model, it adds the
     sample, freeze and unfreeze methods to the model. Use freeze to obtain

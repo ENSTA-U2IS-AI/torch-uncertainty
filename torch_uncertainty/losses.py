@@ -8,7 +8,6 @@ from torch.nn import functional as F
 from .layers.bayesian import bayesian_modules
 
 
-# fmt: on
 class KLDiv(nn.Module):
     """KL divergence loss for Bayesian Neural Networks. Gathers the KL from the
     modules computed in the forward passes.

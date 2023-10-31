@@ -1,4 +1,3 @@
-# fmt: off
 from pathlib import Path
 
 from torch import nn, optim
@@ -8,7 +7,6 @@ from torch_uncertainty.baselines.regression.mlp import MLP
 from torch_uncertainty.datamodules import UCIDataModule
 
 
-# fmt: on
 def optim_regression(
     model: nn.Module,
     learning_rate: float = 5e-3,

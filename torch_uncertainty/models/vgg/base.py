@@ -1,4 +1,3 @@
-# fmt: off
 from typing import Any, Dict, List, Type, Union
 
 import torch
@@ -9,7 +8,6 @@ from ...layers.packed import PackedConv2d, PackedLinear
 from ..utils import toggle_dropout
 
 
-# fmt: on
 class VGG(nn.Module):
     def __init__(
         self,

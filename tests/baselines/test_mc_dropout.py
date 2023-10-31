@@ -10,7 +10,7 @@ from torch_uncertainty.optimization_procedures import (
 )
 
 
-# fmt:on
+
 class TestStandardBaseline:
     """Testing the ResNet baseline class."""
 

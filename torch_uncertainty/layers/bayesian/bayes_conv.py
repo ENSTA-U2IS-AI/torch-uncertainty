@@ -1,4 +1,3 @@
-# fmt: off
 from typing import List, Optional, Tuple, Union
 
 import torch
@@ -20,7 +19,6 @@ from .sampler import PriorDistribution, TrainableDistribution
 __all__ = ["BayesConv1d", "BayesConv2d", "BayesConv3d"]
 
 
-# fmt: on
 class _BayesConvNd(Module):
     __constants__ = [
         "stride",

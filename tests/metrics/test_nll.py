@@ -8,7 +8,7 @@ from torch_uncertainty.metrics import (
 )
 
 
-# fmt:on
+
 @pytest.fixture
 def probs_zero() -> torch.Tensor:
     probs = torch.as_tensor([[1, 0.0], [0.0, 1.0]])

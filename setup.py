@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# flake8: noqa
+# ruff: noqa: F401
 from setuptools import find_packages, setup
 
 setup(

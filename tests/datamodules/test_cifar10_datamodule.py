@@ -10,7 +10,7 @@ from torch_uncertainty.transforms import Cutout
 from .._dummies.dataset import DummyClassificationDataset
 
 
-# fmt:on
+
 class TestCIFAR10DataModule:
     """Testing the CIFAR10DataModule datamodule class."""
 
@@ -38,7 +38,7 @@ class TestCIFAR10DataModule:
         dm.val_dataloader()
         dm.test_dataloader()
 
-        dm.ood_detection = True
+        dm.evaluate_ood = True
         dm.prepare_data()
         dm.setup("test")
         dm.test_dataloader()

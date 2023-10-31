@@ -1,4 +1,3 @@
-# fmt: off
 from argparse import ArgumentParser
 from typing import Any, Type
 
@@ -18,8 +17,7 @@ from torch_uncertainty.transforms import RepeatTarget
 from .model import dummy_model
 
 
-# fmt: on
-class DummyClassificationBaseline(LightningModule):
+class DummyClassificationBaseline:
     def __new__(
         cls,
         num_classes: int,
@@ -64,7 +62,7 @@ class DummyClassificationBaseline(LightningModule):
         return parser
 
 
-class DummyRegressionBaseline(LightningModule):
+class DummyRegressionBaseline:
     def __new__(
         cls,
         in_features: int,

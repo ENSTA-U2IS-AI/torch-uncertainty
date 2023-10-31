@@ -1,4 +1,3 @@
-# fmt: off
 import torch
 from torch import nn
 from torchinfo import summary
@@ -11,7 +10,6 @@ from torch_uncertainty.optimization_procedures import (
 )
 
 
-# fmt: on
 class TestMIMOBaseline:
     """Testing the MIMOResNet baseline class."""
 

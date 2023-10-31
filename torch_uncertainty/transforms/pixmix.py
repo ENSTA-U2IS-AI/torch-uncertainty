@@ -1,6 +1,5 @@
 """ Code adapted from PixMix' paper. """
 
-# fmt: off
 from PIL import Image
 from torch import nn
 
@@ -8,7 +7,6 @@ import numpy as np
 from torch_uncertainty.transforms import Shear, Translate, augmentations
 
 
-# fmt: on
 def get_ab(beta):
     if np.random.random() < 0.5:
         a = np.float32(np.random.beta(beta, 1))

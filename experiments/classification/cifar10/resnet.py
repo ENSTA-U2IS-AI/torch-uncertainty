@@ -1,4 +1,3 @@
-# fmt: off
 from pathlib import Path
 
 from torch import nn
@@ -9,7 +8,6 @@ from torch_uncertainty.datamodules import CIFAR10DataModule
 from torch_uncertainty.optimization_procedures import get_procedure
 from torch_uncertainty.utils import csv_writter
 
-# fmt: on
 if __name__ == "__main__":
     args = init_args(ResNet, CIFAR10DataModule)
     if args.root == "./data/":

@@ -22,15 +22,16 @@ In this part, we train a LeNet with dropout layers, based on the model and routi
 First, we have to load the following utilities from TorchUncertainty:
 
 - the cli handler: cli_main and argument parser: init_args
-- the model: LeNet, which lies in torch_uncertainty.models
-- the classification training routine in the torch_uncertainty.training.classification module
 - the datamodule that handles dataloaders: MNISTDataModule, which lies in the torch_uncertainty.datamodule
+- the model: LeNet, which lies in torch_uncertainty.models
+- a resnet baseline to get the command line arguments: ResNet, which lies in torch_uncertainty.baselines
+- the classification training routine in the torch_uncertainty.training.classification module
 - the optimizer wrapper in the torch_uncertainty.optimization_procedures module.
 """
-
 from torch_uncertainty import cli_main, init_args
 from torch_uncertainty.datamodules import MNISTDataModule
 from torch_uncertainty.models.lenet import lenet
+from torch_uncertainty.baselines.classification import ResNet
 from torch_uncertainty.routines.classification import ClassificationEnsemble
 from torch_uncertainty.optimization_procedures import optim_cifar10_resnet18
 
@@ -75,7 +76,7 @@ with ArgvContext(
     "--num_estimators",
     "16",
 ):
-    args = init_args(datamodule=MNISTDataModule)
+    args = init_args(network=ResNet, datamodule=MNISTDataModule)
 
 net_name = "mc-dropout-lenet-mnist"
 
