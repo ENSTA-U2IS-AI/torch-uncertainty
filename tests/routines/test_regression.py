@@ -36,7 +36,7 @@ class TestRegressionSingle:
                 **vars(args),
             )
 
-            cli_main(model, dm, root, "dummy", args)
+            cli_main(model, dm, root, "logs/dummy", args)
 
     def test_cli_main_dummy_dist_der(self):
         root = Path(__file__).parent.absolute().parents[0]
@@ -62,7 +62,7 @@ class TestRegressionSingle:
                 **vars(args),
             )
 
-            cli_main(model, dm, root, "dummy_der", args)
+            cli_main(model, dm, root, "logs/dummy_der", args)
 
     def test_cli_main_dummy(self):
         root = Path(__file__).parent.absolute().parents[0]
@@ -82,7 +82,7 @@ class TestRegressionSingle:
                 **vars(args),
             )
 
-            cli_main(model, dm, root, "dummy", args)
+            cli_main(model, dm, root, "logs/dummy", args)
 
     def test_regression_failures(self):
         with pytest.raises(ValueError):
@@ -134,4 +134,4 @@ class TestRegressionEnsemble:
                 **vars(args),
             )
 
-            cli_main(model, dm, root, "dummy", args)
+            cli_main(model, dm, root, "logs/dummy", args)

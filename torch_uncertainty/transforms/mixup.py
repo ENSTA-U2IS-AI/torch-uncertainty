@@ -1,3 +1,4 @@
+from typing import Tuple
 import scipy
 import torch
 import torch.nn.functional as F
@@ -131,14 +132,14 @@ class AbstractMixup:
 
     def __call__(
         self, x: torch.Tensor, y: torch.Tensor
-    ) -> tuple[torch.Tensor, torch.Tensor]:
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         return x, y
 
 
 class Mixup(AbstractMixup):
     def __call__(
         self, x: torch.Tensor, y: torch.Tensor
-    ) -> tuple[torch.Tensor, torch.Tensor]:
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         lam, index = self._get_params(x.size()[0], x.device)
 
         mixed_x = self._linear_mixing(lam, x, index)
@@ -151,7 +152,7 @@ class Mixup(AbstractMixup):
 class MixupIO(AbstractMixup):
     def __call__(
         self, x: torch.Tensor, y: torch.Tensor
-    ) -> tuple[torch.Tensor, torch.Tensor]:
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         lam, index = self._get_params(x.size()[0], x.device)
 
         mixed_x = self._linear_mixing(lam, x, index)
@@ -164,7 +165,7 @@ class MixupIO(AbstractMixup):
 class RegMixup(AbstractMixup):
     def __call__(
         self, x: torch.Tensor, y: torch.Tensor
-    ) -> tuple[torch.Tensor, torch.Tensor]:
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         lam, index = self._get_params(x.size()[0], x.device)
 
         part_x = self._linear_mixing(lam, x, index)
@@ -208,7 +209,7 @@ class WarpingMixup(AbstractMixup):
         y: torch.Tensor,
         feats: torch.Tensor,
         warp_param=1.0,
-    ) -> tuple[torch.Tensor, torch.Tensor]:
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         lam, index = self._get_params(x.size()[0], x.device)
 
         if self.apply_kernel:

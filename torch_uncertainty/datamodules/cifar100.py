@@ -86,7 +86,9 @@ class CIFAR100DataModule(AbstractDataModule):
 
         self.corruption_severity = corruption_severity
 
-        if (cutout is not None) + randaugment + int(auto_augment is not None) > 1:
+        if (cutout is not None) + randaugment + int(
+            auto_augment is not None
+        ) > 1:
             raise ValueError(
                 "Only one data augmentation can be chosen at a time. Raise a "
                 "GitHub issue if needed."
@@ -232,6 +234,8 @@ class CIFAR100DataModule(AbstractDataModule):
         p.add_argument("--randaugment", dest="randaugment", action="store_true")
         p.add_argument("--auto_augment", type=str)
         p.add_argument("--test_alt", choices=["c"], default=None)
-        p.add_argument("--severity", dest="corruption_severity", type=int, default=1)
+        p.add_argument(
+            "--severity", dest="corruption_severity", type=int, default=1
+        )
         p.add_argument("--evaluate_ood", action="store_true")
         return parent_parser

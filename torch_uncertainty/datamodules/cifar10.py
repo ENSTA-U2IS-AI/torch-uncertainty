@@ -233,6 +233,8 @@ class CIFAR10DataModule(AbstractDataModule):
         p.add_argument("--cutout", type=int, default=0)
         p.add_argument("--auto_augment", type=str)
         p.add_argument("--test_alt", choices=["c", "h"], default=None)
-        p.add_argument("--severity", dest="corruption_severity", type=int, default=None)
+        p.add_argument(
+            "--severity", dest="corruption_severity", type=int, default=None
+        )
         p.add_argument("--evaluate_ood", action="store_true")
         return parent_parser

@@ -42,7 +42,7 @@ class TestClassificationSingle:
                 baseline_type="single",
                 **vars(args),
             )
-            cli_main(model, dm, root, "dummy", args)
+            cli_main(model, dm, root, "logs/dummy", args)
 
         with ArgvContext("file.py", "--logits"):
             args = init_args(
@@ -60,7 +60,7 @@ class TestClassificationSingle:
                 baseline_type="single",
                 **vars(args),
             )
-            cli_main(model, dm, root, "dummy", args)
+            cli_main(model, dm, root, "logs/dummy", args)
 
     def test_cli_main_dummy_ood(self):
         root = Path(__file__).parent.absolute().parents[0]
@@ -85,7 +85,7 @@ class TestClassificationSingle:
                 baseline_type="single",
                 **vars(args),
             )
-            cli_main(model, dm, root, "dummy", args)
+            cli_main(model, dm, root, "logs/dummy", args)
 
         with ArgvContext(
             "file.py",
@@ -107,7 +107,7 @@ class TestClassificationSingle:
                 baseline_type="single",
                 **vars(args),
             )
-            cli_main(model, dm, root, "dummy", args)
+            cli_main(model, dm, root, "logs/dummy", args)
 
         with ArgvContext(
             "file.py",
@@ -134,7 +134,7 @@ class TestClassificationSingle:
                 **vars(args),
             )
             with pytest.raises(NotImplementedError):
-                cli_main(model, dm, root, "dummy", args)
+                cli_main(model, dm, root, "logs/dummy", args)
 
     def test_classification_failures(self):
         with pytest.raises(ValueError):
@@ -174,7 +174,7 @@ class TestClassificationEnsemble:
                 **vars(args),
             )
 
-            cli_main(model, dm, root, "dummy", args)
+            cli_main(model, dm, root, "logs/dummy", args)
 
         with ArgvContext("file.py", "--mutual_information"):
             args = init_args(
@@ -194,7 +194,7 @@ class TestClassificationEnsemble:
                 **vars(args),
             )
 
-            cli_main(model, dm, root, "dummy", args)
+            cli_main(model, dm, root, "logs/dummy", args)
 
     def test_cli_main_dummy_ood(self):
         root = Path(__file__).parent.absolute().parents[0]
@@ -216,7 +216,7 @@ class TestClassificationEnsemble:
                 **vars(args),
             )
 
-            cli_main(model, dm, root, "dummy", args)
+            cli_main(model, dm, root, "logs/dummy", args)
 
         with ArgvContext("file.py", "--evaluate_ood", "--entropy"):
             args = init_args(
@@ -236,7 +236,7 @@ class TestClassificationEnsemble:
                 **vars(args),
             )
 
-            cli_main(model, dm, root, "dummy", args)
+            cli_main(model, dm, root, "logs/dummy", args)
 
         with ArgvContext("file.py", "--evaluate_ood", "--variation_ratio"):
             args = init_args(
@@ -256,7 +256,7 @@ class TestClassificationEnsemble:
                 **vars(args),
             )
 
-            cli_main(model, dm, root, "dummy", args)
+            cli_main(model, dm, root, "logs/dummy", args)
 
     def test_classification_failures(self):
         with pytest.raises(ValueError):

@@ -1,5 +1,6 @@
 # ruff: noqa: F401
 from .cutout import Cutout
+from .mixup import Mixup, MixupIO, RegMixup, WarpingMixup
 from .transforms import (
     AutoContrast,
     Brightness,
@@ -29,5 +30,3 @@ augmentations = [
     Color,
     Sharpness,
 ]
-
-from .mixup import Mixup, MixupIO, RegMixup, WarpingMixup

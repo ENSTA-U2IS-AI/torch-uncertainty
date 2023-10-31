@@ -89,7 +89,9 @@ class MLP:
             elif extension.lower() in ("yml", "yaml"):
                 hparams = load_hparams_from_yaml(hparams_file)
             else:
-                raise ValueError(".csv, .yml or .yaml is required for `hparams_file`")
+                raise ValueError(
+                    ".csv, .yml or .yaml is required for `hparams_file`"
+                )
 
         hparams.update(kwargs)
         checkpoint = torch.load(checkpoint_path)

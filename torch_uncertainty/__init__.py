@@ -2,7 +2,7 @@
 from argparse import ArgumentParser, Namespace
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, Dict, Optional, Type, Union
+from typing import Any, Dict, List, Optional, Type, Union
 
 import pytorch_lightning as pl
 import torch
@@ -90,12 +90,12 @@ def init_args(
 
 
 def cli_main(
-    network: pl.LightningModule | list[pl.LightningModule],
-    datamodule: AbstractDataModule | list[AbstractDataModule],
+    network: pl.LightningModule | List[pl.LightningModule],
+    datamodule: AbstractDataModule | List[AbstractDataModule],
     root: Union[Path, str],
     net_name: str,
     args: Namespace,
-) -> list[Dict]:
+) -> List[Dict]:
     if isinstance(root, str):
         root = Path(root)
 
@@ -190,7 +190,7 @@ def cli_main(
     else:
         # logger
         tb_logger = TensorBoardLogger(
-            str(root / "logs"),
+            str(root),
             name=net_name,
             default_hp_metric=False,
             log_graph=args.log_graph,
