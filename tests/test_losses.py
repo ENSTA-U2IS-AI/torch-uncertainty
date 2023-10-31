@@ -5,7 +5,7 @@ import torch
 from torch import nn
 
 from torch_uncertainty.layers.bayesian import BayesLinear
-from torch_uncertainty.losses import DECLoss, ELBOLoss, NIGLoss
+from torch_uncertainty.losses import DECLoss, ELBOLoss, NIGLoss, BetaNLL
 
 
 class TestELBOLoss:
@@ -44,6 +44,8 @@ class TestELBOLoss:
 
 
 class TestNIGLoss:
+    """Testing the NIGLoss class."""
+
     def test_main(self):
         loss = NIGLoss(reg_weight=1e-2)
 
@@ -83,6 +85,8 @@ class TestNIGLoss:
 
 
 class TestDECLoss:
+    """Testing the DECLoss class."""
+
     def test_main(self):
         loss = DECLoss(
             loss_type="mse", reg_weight=1e-2, annealing_step=1, reduction="sum"
@@ -115,3 +119,46 @@ class TestDECLoss:
 
         with pytest.raises(ValueError):
             DECLoss(loss_type="regression")
+
+
+# fmt: on
+class TestBetaNLL:
+    """Testing the BetaNLL class."""
+
+    def test_main(self):
+        loss = BetaNLL(beta=0.5)
+
+        inputs = torch.tensor([[1.0, 1.0]], dtype=torch.float32)
+        targets = torch.tensor([[1.0]], dtype=torch.float32)
+
+        assert loss(*inputs.split(1, dim=-1), targets) == 0
+
+        loss = BetaNLL(
+            beta=0.5,
+            reduction="sum",
+        )
+
+        assert (
+            loss(
+                *inputs.repeat(2, 1).split(1, dim=-1),
+                targets.repeat(2, 1),
+            )
+            == 0
+        )
+
+        loss = BetaNLL(
+            beta=0.5,
+            reduction="none",
+        )
+
+        assert loss(
+            *inputs.repeat(2, 1).split(1, dim=-1),
+            targets.repeat(2, 1),
+        ) == pytest.approx([0.0, 0.0])
+
+    def test_failures(self):
+        with pytest.raises(ValueError):
+            BetaNLL(beta=-1)
+
+        with pytest.raises(ValueError):
+            BetaNLL(beta=1.0, reduction="median")

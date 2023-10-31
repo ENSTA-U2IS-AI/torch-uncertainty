@@ -175,6 +175,53 @@ class NIGLoss(nn.Module):
             return loss
 
 
+class BetaNLL(nn.Module):
+    """The Beta Negative Log-likelihood loss.
+
+    Args:
+        beta (float): TParameter from range [0, 1] controlling relative
+        weighting between data points, where `0` corresponds to
+        high weight on low error points and `1` to an equal weighting.
+        reduction (str, optional): specifies the reduction to apply to the
+        output:``'none'`` | ``'mean'`` | ``'sum'``.
+
+    Reference:
+        Seitzer, M., Tavakoli, A., Antic, D., & Martius, G. (2022). On the
+        pitfalls of heteroscedastic uncertainty estimation with probabilistic
+        neural networks. https://arxiv.org/abs/2203.09168.
+    """
+
+    def __init__(
+        self, beta: float = 0.5, reduction: Optional[str] = "mean"
+    ) -> None:
+        super().__init__()
+
+        if beta < 0 or beta > 1:
+            raise ValueError(
+                "The beta parameter should be in range [0, 1], but got "
+                f"{beta}."
+            )
+        self.beta = beta
+        self.nll_loss = nn.GaussianNLLLoss(reduction="none")
+        if reduction != "none" and reduction != "mean" and reduction != "sum":
+            raise ValueError(f"{reduction} is not a valid value for reduction.")
+        self.reduction = reduction
+
+    def forward(
+        self, mean: Tensor, targets: Tensor, variance: Tensor
+    ) -> Tensor:
+        loss = self.nll_loss(mean, targets, variance) * (
+            variance.detach() ** self.beta
+        )
+
+        if self.reduction == "mean":
+            return loss.mean()
+        elif self.reduction == "sum":
+            return loss.sum()
+        else:
+            return loss
+
+
 class DECLoss(nn.Module):
     """The deep evidential classification loss.
 
