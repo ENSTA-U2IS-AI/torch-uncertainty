@@ -191,7 +191,9 @@ Metrics
     :nosignatures:
     :template: class.rst
 
+    AUSE
     BrierScore
+    CE
     Disagreement
     Entropy
     MutualInformation

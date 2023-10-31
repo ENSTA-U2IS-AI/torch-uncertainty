@@ -11,17 +11,16 @@ from pytorch_lightning.utilities.memory import get_model_size_mb
 from pytorch_lightning.utilities.types import EPOCH_OUTPUT, STEP_OUTPUT
 from timm.data import Mixup
 from torch import Tensor, nn
-from torchmetrics import Accuracy, CalibrationError, MetricCollection
+from torchmetrics import Accuracy, MetricCollection
 from torchmetrics.classification import (
-    BinaryAccuracy,
     BinaryAUROC,
     BinaryAveragePrecision,
-    BinaryCalibrationError,
 )
 
 from torch_uncertainty.losses import DECLoss, ELBOLoss
 
 from ..metrics import (
+    CE,
     FPR95,
     BrierScore,
     Disagreement,
@@ -30,7 +29,7 @@ from ..metrics import (
     NegativeLogLikelihood,
     VariationRatio,
 )
-from ..plotting_utils import CalibrationPlot, plot_hist
+from ..plotting_utils import plot_hist
 
 
 class ClassificationSingle(pl.LightningModule):
@@ -64,6 +63,7 @@ class ClassificationSingle(pl.LightningModule):
         evaluate_ood: bool = False,
         use_entropy: bool = False,
         use_logits: bool = False,
+        log_plots: bool = False,
         **kwargs,
     ) -> None:
         super().__init__()
@@ -84,6 +84,7 @@ class ClassificationSingle(pl.LightningModule):
         self.evaluate_ood = evaluate_ood
         self.use_logits = use_logits
         self.use_entropy = use_entropy
+        self.log_plots = log_plots
 
         self.binary_cls = num_classes == 1
 
@@ -97,8 +98,8 @@ class ClassificationSingle(pl.LightningModule):
         if self.binary_cls:
             cls_metrics = MetricCollection(
                 {
-                    "acc": BinaryAccuracy(),
-                    "ece": BinaryCalibrationError(),
+                    "acc": Accuracy(task="binary"),
+                    "ece": CE(task="binary"),
                     "brier": BrierScore(num_classes=1),
                 },
                 compute_groups=False,
@@ -110,9 +111,7 @@ class ClassificationSingle(pl.LightningModule):
                     "acc": Accuracy(
                         task="multiclass", num_classes=self.num_classes
                     ),
-                    "ece": CalibrationError(
-                        task="multiclass", num_classes=self.num_classes
-                    ),
+                    "ece": CE(task="multiclass", num_classes=self.num_classes),
                     "brier": BrierScore(num_classes=self.num_classes),
                 },
                 compute_groups=False,
@@ -147,7 +146,8 @@ class ClassificationSingle(pl.LightningModule):
         else:
             self.mixup = lambda x, y: (x, y)
 
-        self.cal_plot = CalibrationPlot()
+        # FIXME: to remove
+        # self.cal_plot = CalibrationPlot()
 
         # Handle ELBO special cases
         self.is_elbo = (
@@ -248,7 +248,7 @@ class ClassificationSingle(pl.LightningModule):
         else:
             probs = F.softmax(logits, dim=-1)
 
-        self.cal_plot.update(probs, targets)
+        # self.cal_plot.update(probs, targets)
         confs = probs.max(dim=-1)[0]
 
         if self.use_logits:
@@ -288,7 +288,6 @@ class ClassificationSingle(pl.LightningModule):
         self.log_dict(
             self.test_cls_metrics.compute(),
         )
-        self.test_cls_metrics.reset()
 
         if self.evaluate_ood:
             self.log_dict(
@@ -296,9 +295,9 @@ class ClassificationSingle(pl.LightningModule):
             )
             self.test_ood_metrics.reset()
 
-        if isinstance(self.logger, TensorBoardLogger):
+        if isinstance(self.logger, TensorBoardLogger) and self.log_plots:
             self.logger.experiment.add_figure(
-                "Calibration Plot", self.cal_plot.compute()[0]
+                "Calibration Plot", self.test_cls_metrics["ece"].plot()[0]
             )
 
             if self.evaluate_ood:
@@ -322,6 +321,8 @@ class ClassificationSingle(pl.LightningModule):
                 self.logger.experiment.add_figure(
                     "Likelihood Histogram", probs_fig
                 )
+
+        self.test_cls_metrics.reset()
 
     @staticmethod
     def add_model_specific_args(
@@ -387,6 +388,7 @@ class ClassificationEnsemble(ClassificationSingle):
         use_logits: bool = False,
         use_mi: bool = False,
         use_variation_ratio: bool = False,
+        log_plots: bool = False,
         **kwargs,
     ) -> None:
         super().__init__(
@@ -407,6 +409,7 @@ class ClassificationEnsemble(ClassificationSingle):
 
         self.use_mi = use_mi
         self.use_variation_ratio = use_variation_ratio
+        self.log_plots = log_plots
 
         if (
             self.use_logits
@@ -512,7 +515,7 @@ class ClassificationEnsemble(ClassificationSingle):
             probs_per_est = F.softmax(logits, dim=-1)
 
         probs = probs_per_est.mean(dim=1)
-        self.cal_plot.update(probs, targets)
+        # self.cal_plot.update(probs, targets)
         confs = probs.max(-1)[0]
 
         if self.use_logits:
@@ -568,27 +571,25 @@ class ClassificationEnsemble(ClassificationSingle):
         self.log_dict(
             self.test_cls_metrics.compute(),
         )
-        self.test_cls_metrics.reset()
 
         self.log_dict(
             self.test_id_ens_metrics.compute(),
         )
-        self.test_id_ens_metrics.reset()
 
         if self.evaluate_ood:
             self.log_dict(
                 self.test_ood_metrics.compute(),
             )
-            self.test_ood_metrics.reset()
-
             self.log_dict(
                 self.test_ood_ens_metrics.compute(),
             )
+
+            self.test_ood_metrics.reset()
             self.test_ood_ens_metrics.reset()
 
-        if isinstance(self.logger, TensorBoardLogger):
+        if isinstance(self.logger, TensorBoardLogger) and self.log_plots:
             self.logger.experiment.add_figure(
-                "Calibration Plot", self.cal_plot.compute()[0]
+                "Calibration Plot", self.test_cls_metrics["ece"].plot()[0]
             )
 
             if self.evaluate_ood:
@@ -618,6 +619,9 @@ class ClassificationEnsemble(ClassificationSingle):
                 self.logger.experiment.add_figure(
                     "Likelihood Histogram", probs_fig
                 )
+
+        self.test_cls_metrics.reset()
+        self.test_id_ens_metrics.reset()
 
     @staticmethod
     def add_model_specific_args(
