@@ -38,13 +38,11 @@ scikit-learn = "^1.3.2"
 optional = true
 
 [tool.poetry.group.dev.dependencies]
-isort = "^5.12.0"
-black = "^23.1.0"
-flake8 = "^6.0.0"
 pytest-cov = "^4.0.0"
 pre-commit = "^3.0.4"
 pre-commit-hooks = "^4.4.0"
 cli-test-helpers = "^3.2.0"
+ruff = "^0.1.2"
 
 [tool.poetry.group.docs]
 optional = true
@@ -62,26 +60,34 @@ sphinx-codeautolink = "^0.15.0"
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
-[tool.black]
+[tool.ruff]
 line-length = 80
-target_version = ['py38', 'py39', 'py310', 'py311']
-include = '\.pyi?$'
-exclude = '''
-/(
-    __pycache__
-  | \.git
-  | \.mypy_cache
-  | \.ipynb_checkpoints
-  | build
-  | dist
-  | auto_tutorials_source/*
-)/
-'''
-
-[tool.isort]
-line_length = 80
-profile = "black"
-known_first_party = ["numpy"]
+target-version = "py310"
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "__pypackages__",
+    "__pycache__",
+    "auto_tutorials_source/*",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "venv",
+]
 
 [tool.mypy]
 python_version = 3.8

@@ -1,4 +1,3 @@
-# fmt: off
 from pathlib import Path
 
 from torch import nn, optim
@@ -10,7 +9,6 @@ from torch_uncertainty.optimization_procedures import get_procedure
 from torch_uncertainty.utils import csv_writter
 
 
-# fmt: on
 def optim_tiny(model: nn.Module) -> dict:
     optimizer = optim.SGD(
         model.parameters(), lr=0.2, weight_decay=1e-4, momentum=0.9

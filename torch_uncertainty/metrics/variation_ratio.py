@@ -1,4 +1,3 @@
-# fmt: off
 from typing import Literal
 
 import torch
@@ -8,7 +7,6 @@ from torchmetrics.utilities import rank_zero_warn
 from torchmetrics.utilities.data import dim_zero_cat
 
 
-# fmt: on
 class VariationRatio(Metric):
     """From https://proceedings.mlr.press/v70/gal17a/gal17a.pdf"""
 

@@ -1,4 +1,3 @@
-# fmt: off
 from pathlib import Path
 from typing import Any, Callable, Optional, Tuple
 
@@ -10,7 +9,6 @@ from torchvision.datasets.utils import (
 )
 
 
-# fmt: on
 class Fractals(ImageFolder):
     """Dataset used for PixMix augmentations.
 

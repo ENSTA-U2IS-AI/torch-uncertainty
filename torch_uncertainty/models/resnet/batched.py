@@ -4,7 +4,6 @@ Reference:
 [1] Kaiming He, Xiangyu Zhang, Shaoqing Ren, Jian Sun
     Deep Residual Learning for Image Recognition. arXiv:1512.03385
 """
-# fmt: off
 from typing import List, Type, Union
 
 import torch.nn.functional as F
@@ -12,7 +11,6 @@ from torch import Tensor, nn
 
 from ...layers import BatchConv2d, BatchLinear
 
-# fmt: on
 __all__ = [
     "batched_resnet18",
     "batched_resnet34",

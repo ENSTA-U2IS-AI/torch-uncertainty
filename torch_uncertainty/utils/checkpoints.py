@@ -1,9 +1,7 @@
-# fmt: off
 from pathlib import Path
 from typing import Tuple, Union
 
 
-# fmt: on
 def get_version(
     root: Union[str, Path], version: int, checkpoint: Union[int, None] = None
 ) -> Tuple[Path, Path]:

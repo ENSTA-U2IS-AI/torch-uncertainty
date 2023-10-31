@@ -1,4 +1,4 @@
-# flake8: noqa
+# ruff: noqa: F401
 from .baseline import DummyClassificationBaseline, DummyRegressionBaseline
 from .datamodule import DummyClassificationDataModule, DummyRegressionDataModule
 from .dataset import DummyClassificationDataset, DummyRegressionDataset

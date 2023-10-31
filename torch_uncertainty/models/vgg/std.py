@@ -1,4 +1,3 @@
-# fmt: off
 from typing import Type
 
 from torch import nn
@@ -6,7 +5,6 @@ from torch import nn
 from .base import VGG, _vgg
 from .configs import cfgs
 
-# fmt:on
 __all__ = ["vgg11", "vgg13", "vgg16", "vgg19"]
 
 

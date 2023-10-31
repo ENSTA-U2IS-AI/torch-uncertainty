@@ -1,4 +1,3 @@
-# fmt: off
 from argparse import ArgumentParser
 from functools import partial
 from pathlib import Path
@@ -11,7 +10,6 @@ from ..datasets.regression import UCIRegression
 from .abstract import AbstractDataModule
 
 
-# fmt: on
 class UCIDataModule(AbstractDataModule):
     """The UCI regression datasets.
 

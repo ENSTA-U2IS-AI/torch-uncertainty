@@ -1,4 +1,3 @@
-# fmt: off
 from pathlib import Path
 
 import pytest
@@ -8,7 +7,6 @@ import torch_uncertainty.utils as utils
 from torch_uncertainty.plotting_utils import CalibrationPlot
 
 
-# fmt:on
 class TestUtils:
     """Testing utils methods."""
 

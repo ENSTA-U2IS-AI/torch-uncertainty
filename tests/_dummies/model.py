@@ -1,9 +1,6 @@
-# fmt: off
-
 import torch
 from torch import Tensor, nn
 
-# fmt: on
 __all__ = [
     "dummy_model",
 ]

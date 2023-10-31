@@ -1,4 +1,3 @@
-# fmt: off
 from pathlib import Path
 from typing import Dict, Tuple
 
@@ -7,7 +6,6 @@ import yaml
 from huggingface_hub import hf_hub_download
 
 
-# fmt: on
 def load_hf(weight_id: str) -> Tuple[torch.Tensor, Dict]:
     """Load a model from the HuggingFace hub.
 

@@ -1,11 +1,9 @@
-# fmt: off
 import torch
 from torch import nn
 
 import numpy as np
 
 
-# fmt: on
 class Cutout(nn.Module):
     """Cutout augmentation class.
 

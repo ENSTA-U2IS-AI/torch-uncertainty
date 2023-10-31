@@ -1,4 +1,3 @@
-# fmt: off
 from argparse import ArgumentParser
 from pathlib import Path
 from typing import Any, Literal, Optional, Type, Union
@@ -32,8 +31,7 @@ from ..utils.parser_addons import (
 )
 
 
-# fmt: on
-class VGG(LightningModule):
+class VGG:
     r"""VGG backbone baseline for classification providing support for
     various versions and architectures.
 
@@ -200,9 +198,7 @@ class VGG(LightningModule):
             elif extension.lower() in ("yml", "yaml"):
                 hparams = load_hparams_from_yaml(hparams_file)
             else:
-                raise ValueError(
-                    ".csv, .yml or .yaml is required for `hparams_file`"
-                )
+                raise ValueError(".csv, .yml or .yaml is required for `hparams_file`")
 
         hparams.update(kwargs)
         checkpoint = torch.load(checkpoint_path)

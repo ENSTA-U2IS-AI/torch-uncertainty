@@ -1,4 +1,3 @@
-# fmt: off
 from argparse import ArgumentParser
 from pathlib import Path
 from typing import List, Literal, Optional, Union
@@ -13,7 +12,6 @@ from .classification import VGG, ResNet, WideResNet
 from .regression import MLP
 
 
-# fmt: on
 class DeepEnsembles:
     backbones = {
         "mlp": MLP,

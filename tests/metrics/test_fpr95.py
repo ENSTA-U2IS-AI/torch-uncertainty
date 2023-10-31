@@ -5,7 +5,7 @@ import torch
 from torch_uncertainty.metrics import FPR95
 
 
-# fmt:on
+
 @pytest.fixture
 def confs_zero() -> torch.Tensor:
     confs = torch.as_tensor([1] * 99 + [0.99])

@@ -9,7 +9,6 @@ from torchvision.datasets.utils import check_integrity, download_url
 import numpy as np
 
 
-# fmt:on
 class CIFAR10H(CIFAR10):
     """`CIFAR-10H <https://github.com/jcpeterson/cifar-10h>`_ Dataset.
 

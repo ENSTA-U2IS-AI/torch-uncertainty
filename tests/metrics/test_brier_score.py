@@ -5,7 +5,7 @@ import torch
 from torch_uncertainty.metrics import BrierScore
 
 
-# fmt:on
+
 @pytest.fixture
 def vec2D_max() -> torch.Tensor:
     vec = torch.as_tensor([0.5, 0.5])

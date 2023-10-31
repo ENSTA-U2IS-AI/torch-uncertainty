@@ -5,7 +5,7 @@ import torch
 from torch_uncertainty.transforms import Cutout
 
 
-# fmt:on
+
 class TestCutout:
     """Testing the Cutout transform."""
 

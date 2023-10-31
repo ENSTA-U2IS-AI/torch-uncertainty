@@ -1,4 +1,3 @@
-# fmt: off
 import pytest
 import torch
 from torch import softmax
@@ -6,7 +5,6 @@ from torch import softmax
 from torch_uncertainty.post_processing import TemperatureScaler
 
 
-# fmt: on
 def identity_model(x):
     return x
 

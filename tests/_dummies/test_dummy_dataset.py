@@ -5,7 +5,7 @@ from .dataset import DummyClassificationDataset, DummyRegressionDataset
 from .transform import DummyTransform
 
 
-# fmt:on
+
 class TestDummyClassificationDataset:
     """Testing the Dummy dataset class."""
 

@@ -11,7 +11,7 @@ from torch_uncertainty.transforms import Cutout
 from .._dummies.dataset import DummyClassificationDataset
 
 
-# fmt:on
+
 class TestMNISTDataModule:
     """Testing the MNISTDataModule datamodule class."""
 
@@ -50,7 +50,7 @@ class TestMNISTDataModule:
         dm.val_dataloader()
         dm.test_dataloader()
 
-        dm.ood_detection = True
+        dm.evaluate_ood = True
         dm.val_split = 0.1
         dm.prepare_data()
         dm.setup("test")

@@ -1,4 +1,3 @@
-# fmt: off
 from argparse import ArgumentParser
 from pathlib import Path
 from typing import Any, List, Literal, Optional, Type, Union
@@ -16,8 +15,7 @@ from ...routines.regression import RegressionEnsemble, RegressionSingle
 from ..utils.parser_addons import add_packed_specific_args
 
 
-# fmt: on
-class MLP(LightningModule):
+class MLP:
     r"""MLP baseline for regression providing support for various versions."""
 
     single = ["vanilla"]
@@ -91,9 +89,7 @@ class MLP(LightningModule):
             elif extension.lower() in ("yml", "yaml"):
                 hparams = load_hparams_from_yaml(hparams_file)
             else:
-                raise ValueError(
-                    ".csv, .yml or .yaml is required for `hparams_file`"
-                )
+                raise ValueError(".csv, .yml or .yaml is required for `hparams_file`")
 
         hparams.update(kwargs)
         checkpoint = torch.load(checkpoint_path)

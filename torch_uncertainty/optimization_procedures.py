@@ -1,4 +1,3 @@
-# fmt: off
 from functools import partial
 from typing import Callable, Dict, Optional, Union
 
@@ -7,7 +6,6 @@ from torch import nn, optim
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import LRScheduler
 
-# fmt:on
 __all__ = [
     "optim_cifar10_resnet18",
     "optim_cifar10_resnet50",

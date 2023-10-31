@@ -5,7 +5,7 @@ import torch
 from torch_uncertainty.layers.batch_ensemble import BatchConv2d, BatchLinear
 
 
-# fmt:on
+
 @pytest.fixture
 def feat_input() -> torch.Tensor:
     feat = torch.rand((4, 6))

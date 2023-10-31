@@ -1,4 +1,3 @@
-# fmt: off
 from pathlib import Path
 
 from torch import nn
@@ -8,7 +7,6 @@ from torch_uncertainty.baselines import VGG
 from torch_uncertainty.datamodules import CIFAR10DataModule
 from torch_uncertainty.optimization_procedures import get_procedure
 
-# fmt: on
 if __name__ == "__main__":
     args = init_args(VGG, CIFAR10DataModule)
     if args.root == "./data/":

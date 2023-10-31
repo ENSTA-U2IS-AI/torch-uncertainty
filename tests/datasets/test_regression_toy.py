@@ -2,7 +2,7 @@
 from torch_uncertainty.datasets.regression.toy import Cubic
 
 
-# fmt:on
+
 class TestCubic:
     """Testing the Cubic dataset class."""
 

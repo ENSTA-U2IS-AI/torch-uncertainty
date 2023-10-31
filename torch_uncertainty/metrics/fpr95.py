@@ -1,4 +1,3 @@
-# fmt: off
 from typing import List
 
 import torch
@@ -11,7 +10,6 @@ import numpy as np
 from numpy.typing import ArrayLike
 
 
-# fmt:on
 def stable_cumsum(arr: ArrayLike, rtol: float = 1e-05, atol: float = 1e-08):
     """
     From https://github.com/hendrycks/anomaly-seg

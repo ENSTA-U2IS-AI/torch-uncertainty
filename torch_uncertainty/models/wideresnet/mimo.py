@@ -1,10 +1,8 @@
-# fmt: off
 import torch
 from einops import rearrange
 
 from .std import _Wide
 
-# fmt: on
 __all__ = [
     "mimo_wideresnet28x10",
 ]

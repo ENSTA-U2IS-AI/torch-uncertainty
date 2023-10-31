@@ -1,4 +1,3 @@
-# fmt: off
 import math
 
 import pytest
@@ -9,7 +8,6 @@ from torch_uncertainty.layers.bayesian import BayesLinear
 from torch_uncertainty.losses import DECLoss, ELBOLoss, NIGLoss
 
 
-# fmt: on
 class TestELBOLoss:
     """Testing the ELBOLoss class."""
 
@@ -45,7 +43,6 @@ class TestELBOLoss:
         loss(model(torch.randn(1, 1)), torch.randn(1, 1))
 
 
-# fmt: on
 class TestNIGLoss:
     def test_main(self):
         loss = NIGLoss(reg_weight=1e-2)
@@ -87,11 +84,13 @@ class TestNIGLoss:
 
 class TestDECLoss:
     def test_main(self):
-        loss = DECLoss(loss_type="mse", reg_weight=1e-2, annealing_step=1)
+        loss = DECLoss(
+            loss_type="mse", reg_weight=1e-2, annealing_step=1, reduction="sum"
+        )
         loss(torch.tensor([[0.0, 0.0]]), torch.tensor([0]), current_epoch=1)
         loss = DECLoss(loss_type="mse", reg_weight=1e-2, annealing_step=1)
         loss(torch.tensor([[0.0, 0.0]]), torch.tensor([0]), current_epoch=0)
-        loss = DECLoss(loss_type="log", reg_weight=1e-2)
+        loss = DECLoss(loss_type="log", reg_weight=1e-2, reduction="none")
         loss(torch.tensor([[0.0, 0.0]]), torch.tensor([0]))
         loss = DECLoss(loss_type="digamma")
         loss(torch.tensor([[0.0, 0.0]]), torch.tensor([0]))
