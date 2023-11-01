@@ -79,10 +79,7 @@ class MNISTDataModule(LightningDataModule):
                 f"`ood_ds` should be `fashion` or `not`. Got {ood_ds}."
             )
 
-        if cutout:
-            main_transform = Cutout(cutout)
-        else:
-            main_transform = nn.Identity()
+        main_transform = Cutout(cutout) if cutout else nn.Identity()
 
         self.transform_train = T.Compose(
             [

@@ -68,7 +68,7 @@ class VGG(nn.Module):
 
     def _init_weights(self) -> None:
         for m in self.modules():
-            if isinstance(m, nn.Conv2d) or isinstance(m, PackedConv2d):
+            if isinstance(m, nn.Conv2d | PackedConv2d):
                 nn.init.kaiming_normal_(
                     m.weight, mode="fan_out", nonlinearity="relu"
                 )
@@ -78,7 +78,7 @@ class VGG(nn.Module):
                 nn.init.constant_(m.weight, 1)
                 if m.bias is not None:
                     nn.init.constant_(m.bias, 0)
-            elif isinstance(m, nn.Linear) or isinstance(m, PackedLinear):
+            elif isinstance(m, nn.Linear | PackedLinear):
                 nn.init.normal_(m.weight, 0, 0.01)
                 if m.bias is not None:  # coverage: ignore
                     nn.init.constant_(m.bias, 0)
@@ -131,11 +131,10 @@ class VGG(nn.Module):
         return self.cls_head(x)
 
     def handle_dropout(self, x: Tensor) -> Tensor:
-        if self.num_estimators is not None:
-            if not self.training:
-                if self.last_layer_dropout is not None:
-                    toggle_dropout(self, self.last_layer_dropout)
-                x = x.repeat(self.num_estimators, 1, 1, 1)
+        if self.num_estimators is not None and not self.training:
+            if self.last_layer_dropout is not None:
+                toggle_dropout(self, self.last_layer_dropout)
+            x = x.repeat(self.num_estimators, 1, 1, 1)
         return x
 
 

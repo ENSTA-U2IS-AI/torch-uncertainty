@@ -49,7 +49,7 @@ class MLP:
                 "gamma": gamma,
             }
 
-        if version not in cls.versions.keys():
+        if version not in cls.versions:
             raise ValueError(f"Unknown version: {version}")
 
         model = cls.versions[version](**params)

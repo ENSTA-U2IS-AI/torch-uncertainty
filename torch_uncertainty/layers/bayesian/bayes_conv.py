@@ -177,10 +177,7 @@ class _BayesConvNd(Module):
     def sample(self) -> tuple[Tensor, Tensor | None]:
         """Sample the bayesian layer's posterior."""
         weight = self.weight_sampler.sample()
-        if self.bias_mu is not None:
-            bias = self.bias_sampler.sample()
-        else:
-            bias = None
+        bias = self.bias_sampler.sample() if self.bias_mu is not None else None
         return weight, bias
 
     def extra_repr(self):  # coverage: ignore

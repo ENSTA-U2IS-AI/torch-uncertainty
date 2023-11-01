@@ -96,10 +96,7 @@ def _mlp(
     activation: Callable = F.relu,
     dropout: float = 0.0,
 ) -> _MLP | _StochasticMLP:
-    if not stochastic:
-        model = _MLP
-    else:
-        model = _StochasticMLP
+    model = _MLP if not stochastic else _StochasticMLP
     return model(
         in_features=in_features,
         num_outputs=num_outputs,

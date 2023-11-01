@@ -73,17 +73,14 @@ class PixMix(nn.Module):
 
         self.aug_instances = []
         for aug in allowed_augmentations:
-            if aug == Shear or aug == Translate:
+            if aug in (Shear, Translate):
                 self.aug_instances.append(aug(axis=0))
                 self.aug_instances.append(aug(axis=1))
             else:
                 self.aug_instances.append(aug())
 
     def __call__(self, img: Image.Image) -> np.ndarray:
-        if np.random.random() < 0.5:
-            mixed = self.augment_input(img)
-        else:
-            mixed = img
+        mixed = self.augment_input(img) if np.random.random() < 0.5 else img
 
         for _ in range(np.random.randint(self.mixing_iterations + 1)):
             if np.random.random() < 0.5:

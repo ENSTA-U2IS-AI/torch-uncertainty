@@ -59,18 +59,10 @@ class RegressionSingle(pl.LightningModule):
 
         self.dist_estimation = dist_estimation
 
-        if dist_estimation == 4:
+        if dist_estimation == 4 or dist_estimation == 2:
             reg_metrics = MetricCollection(
                 {
-                    "mse": MeanSquaredError(squared=False),
-                    "gnll": GaussianNegativeLogLikelihood(),
-                },
-                compute_groups=False,
-            )
-        elif dist_estimation == 2:
-            reg_metrics = MetricCollection(
-                {
-                    "mse": MeanSquaredError(squared=False),
+                    "mse": MeanSquaredError(squared=True),
                     "gnll": GaussianNegativeLogLikelihood(),
                 },
                 compute_groups=False,
@@ -78,7 +70,7 @@ class RegressionSingle(pl.LightningModule):
         else:
             reg_metrics = MetricCollection(
                 {
-                    "mse": MeanSquaredError(squared=False),
+                    "mse": MeanSquaredError(squared=True),
                 },
                 compute_groups=False,
             )

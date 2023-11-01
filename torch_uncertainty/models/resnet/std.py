@@ -320,11 +320,10 @@ class _ResNet(nn.Module):
         return self.linear(out)
 
     def handle_dropout(self, x: Tensor) -> Tensor:
-        if self.num_estimators is not None:
-            if not self.training:
-                if self.last_layer_dropout is not None:
-                    toggle_dropout(self, self.last_layer_dropout)
-                x = x.repeat(self.num_estimators, 1, 1, 1)
+        if self.num_estimators is not None and not self.training:
+            if self.last_layer_dropout is not None:
+                toggle_dropout(self, self.last_layer_dropout)
+            x = x.repeat(self.num_estimators, 1, 1, 1)
         return x
 
 

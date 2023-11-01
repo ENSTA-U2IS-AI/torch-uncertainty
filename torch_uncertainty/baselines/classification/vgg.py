@@ -129,7 +129,7 @@ class VGG:
             "groups": groups,
         }
 
-        if version not in cls.versions.keys():
+        if version not in cls.versions:
             raise ValueError(f"Unknown version: {version}")
 
         format_batch_fn = nn.Identity()

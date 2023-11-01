@@ -67,11 +67,10 @@ class _LeNet(nn.Module):
         return self.fc3(out)
 
     def handle_dropout(self, x: Tensor) -> Tensor:
-        if self.num_estimators is not None:
-            if not self.training:
-                if self.last_layer_dropout is not None:
-                    toggle_dropout(self, self.last_layer_dropout)
-                x = x.repeat(self.num_estimators, 1, 1, 1)
+        if self.num_estimators is not None and not self.training:
+            if self.last_layer_dropout is not None:
+                toggle_dropout(self, self.last_layer_dropout)
+            x = x.repeat(self.num_estimators, 1, 1, 1)
         return x
 
 
@@ -94,10 +93,7 @@ def _lenet(
     num_estimators: int | None = None,
     last_layer_dropout: bool = False,
 ) -> _LeNet | _StochasticLeNet:
-    if not stochastic:
-        model = _LeNet
-    else:
-        model = _StochasticLeNet
+    model = _LeNet if not stochastic else _StochasticLeNet
     return model(
         in_channels=in_channels,
         num_classes=num_classes,

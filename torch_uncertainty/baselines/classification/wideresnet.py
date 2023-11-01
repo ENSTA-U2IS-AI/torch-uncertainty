@@ -140,7 +140,7 @@ class WideResNet:
 
         format_batch_fn = nn.Identity()
 
-        if version not in cls.versions.keys():
+        if version not in cls.versions:
             raise ValueError(f"Unknown version: {version}")
 
         # version specific params
