@@ -97,7 +97,7 @@ class PixMix(nn.Module):
 
     def _augment(self, image: Image.Image) -> np.ndarray:
         op = np.random.choice(self.aug_instances)
-        if op.level_type == int:
+        if op.level_type is int:
             aug_level = self._sample_int(op.pixmix_max_level)
         else:
             aug_level = self._sample_float(op.pixmix_max_level)
