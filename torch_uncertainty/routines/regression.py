@@ -309,8 +309,9 @@ class RegressionEnsemble(RegressionSingle):
     def add_model_specific_args(
         parent_parser: ArgumentParser,
     ) -> ArgumentParser:
-        """Defines the routine's attributes via command-line options:
+        """Defines the routine's attributes via command-line options.
 
+        Adds:
         - ``--num_estimators``: sets :attr:`num_estimators`.
         """
         parent_parser = RegressionSingle.add_model_specific_args(parent_parser)

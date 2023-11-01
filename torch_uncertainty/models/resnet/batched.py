@@ -275,6 +275,8 @@ def batched_resnet18(
         num_estimators (int): Number of estimators in the ensemble.
         groups (int): Number of groups within each estimator.
         num_classes (int): Number of classes to predict.
+        style (bool, optional): Whether to use the ImageNet
+            structure. Defaults to ``True``.
 
     Returns:
         _BatchedResNet: A BatchEnsemble-style ResNet-18.
@@ -305,6 +307,8 @@ def batched_resnet34(
         num_estimators (int): Number of estimators in the ensemble.
         groups (int): Number of groups within each estimator.
         num_classes (int): Number of classes to predict.
+        style (bool, optional): Whether to use the ImageNet
+            structure. Defaults to ``True``.
 
     Returns:
         _BatchedResNet: A BatchEnsemble-style ResNet-34.
@@ -336,6 +340,10 @@ def batched_resnet50(
         num_estimators (int): Number of estimators in the ensemble.
         groups (int): Number of groups within each estimator.
         num_classes (int): Number of classes to predict.
+        width_multiplier (int, optional): Expansion factor affecting the width
+            of the estimators. Defaults to ``1``.
+        style (bool, optional): Whether to use the ImageNet
+            structure. Defaults to ``True``.
 
     Returns:
         _BatchedResNet: A BatchEnsemble-style ResNet-50.
@@ -367,6 +375,8 @@ def batched_resnet101(
         num_estimators (int): Number of estimators in the ensemble.
         groups (int): Number of groups within each estimator.
         num_classes (int): Number of classes to predict.
+        style (bool, optional): Whether to use the ImageNet
+            structure. Defaults to ``True``.
 
     Returns:
         _BatchedResNet: A BatchEnsemble-style ResNet-101.

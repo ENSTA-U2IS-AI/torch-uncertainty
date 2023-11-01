@@ -1,4 +1,4 @@
-""" Code adapted from PixMix' paper. """
+"""Code adapted from PixMix' paper."""
 
 import numpy as np
 from PIL import Image

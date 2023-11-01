@@ -7,8 +7,7 @@ from tqdm import tqdm
 
 
 class Scaler(nn.Module):
-    """
-    Virtual class for scaling post-processing for calibrated probabilities.
+    """Virtual class for scaling post-processing for calibrated probabilities.
 
     Args:
         lr (float, optional): Learning rate for the optimizer. Defaults to 0.1.
@@ -49,8 +48,7 @@ class Scaler(nn.Module):
         save_logits: bool = False,
         progress: bool = True,
     ) -> "Scaler":
-        """
-        Fit the temperature parameters to the calibration data.
+        """Fit the temperature parameters to the calibration data.
 
         Args:
             model (nn.Module): Model to calibrate.
@@ -104,8 +102,7 @@ class Scaler(nn.Module):
             return self._scale(logits)
 
     def _scale(self, logits: torch.Tensor) -> torch.Tensor:
-        """
-        Scale the logits with the optimal temperature.
+        """Scale the logits with the optimal temperature.
 
         Args:
             logits (torch.Tensor): Logits to be scaled.

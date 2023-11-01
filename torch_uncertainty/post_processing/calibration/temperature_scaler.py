@@ -7,8 +7,7 @@ from .scaler import Scaler
 
 
 class TemperatureScaler(Scaler):
-    """
-    Temperature scaling post-processing for calibrated probabilities.
+    """Temperature scaling post-processing for calibrated probabilities.
 
     Args:
         init_value (float, optional): Initial value for the temperature.
@@ -39,8 +38,7 @@ class TemperatureScaler(Scaler):
         self.set_temperature(init_val)
 
     def set_temperature(self, val: float) -> None:
-        """
-        Set the temperature to a fixed value.
+        """Set the temperature to a fixed value.
 
         Args:
             val (float): Temperature value.
@@ -53,8 +51,7 @@ class TemperatureScaler(Scaler):
         )
 
     def _scale(self, logits: torch.Tensor) -> torch.Tensor:
-        """
-        Scale the logits with the optimal temperature.
+        """Scale the logits with the optimal temperature.
 
         Args:
             logits (torch.Tensor): Logits to be scaled.

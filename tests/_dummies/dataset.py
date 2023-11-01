@@ -70,9 +70,8 @@ class DummyClassificationDataset(data.Dataset):
         )[:num_images]
 
     def __getitem__(self, index: int) -> tuple[Any, Any]:
-        """
-        Args:
-            index (int): Index
+        """Args:
+            index (int): Index.
 
         Returns:
             tuple: (image, target) where target is index of the target class.
@@ -127,9 +126,8 @@ class DummyRegressionDataset(data.Dataset):
         )
 
     def __getitem__(self, index: int) -> tuple[Any, Any]:
-        """
-        Args:
-            index (int): Index
+        """Args:
+            index (int): Index.
 
         Returns:
             tuple: (image, target) where target is index of the target class.

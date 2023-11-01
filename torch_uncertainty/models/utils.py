@@ -18,7 +18,6 @@ def toggle_dropout(
             enabled, otherwise, if set to False, dropout layers will be
             disabled.
     """
-
     # filter all modules whose class name starts with `Dropout`
     filtered_modules = []
     for m in model.modules():

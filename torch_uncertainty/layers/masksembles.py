@@ -1,4 +1,4 @@
-""" Modified from https://github.com/nikitadurasov/masksembles/ """
+"""Modified from https://github.com/nikitadurasov/masksembles/."""
 
 from typing import Any
 
@@ -51,7 +51,6 @@ def generate_masks(m: int, n: int, s: float) -> np.ndarray:
     Returns:
         np.ndarray: matrix of binary vectors
     """
-
     masks = _generate_masks(m, n, s)
     # hardcoded formula for expected size, check reference
     expected_size = int(m * s * (1 - (1 - 1 / s) ** n))
@@ -78,7 +77,6 @@ def generation_wrapper(c: int, n: int, scale: float) -> np.ndarray:
     Returns:
         np.ndarray: matrix of binary vectors
     """
-
     if c < 10:
         raise ValueError(
             "Masksembles approach couldn't be used in such setups where "

@@ -208,6 +208,7 @@ def batched_wideresnet28x10(
     Args:
         in_channels (int): Number of input channels.
         num_estimators (int): Number of estimators in the ensemble.
+        groups (int): Number of groups in the convolutions.
         num_classes (int): Number of classes to predict.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.

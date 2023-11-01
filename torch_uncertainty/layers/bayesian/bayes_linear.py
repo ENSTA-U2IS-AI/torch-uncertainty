@@ -7,7 +7,7 @@ from .sampler import PriorDistribution, TrainableDistribution
 
 
 class BayesLinear(nn.Module):
-    """Bayesian Linear Layer with Mixture of Normals prior and Normal posterior
+    """Bayesian Linear Layer with Mixture of Normals prior and Normal posterior.
 
     Args:
         in_features (int): Number of input features

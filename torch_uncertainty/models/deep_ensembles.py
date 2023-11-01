@@ -15,7 +15,7 @@ class _DeepEnsembles(nn.Module):
         self.num_estimators = len(models)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Return the logits of the ensemble
+        """Return the logits of the ensemble.
 
         Args:
             x (Tensor): The input of the model.
@@ -33,8 +33,7 @@ def deep_ensembles(
     models: list[nn.Module] | nn.Module,
     num_estimators: int | None = None,
 ) -> nn.Module:
-    """
-    Builds a Deep Ensembles out of the original models.
+    """Builds a Deep Ensembles out of the original models.
 
     Args:
         model (nn.Module): The model to be ensembled.

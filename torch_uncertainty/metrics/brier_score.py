@@ -74,13 +74,14 @@ class BrierScore(Metric):
         self.add_state("total", default=torch.tensor(0), dist_reduce_fx="sum")
 
     def update(self, probs: torch.Tensor, target: torch.Tensor) -> None:
-        """
-        Update the current Brier score with a new tensor of probabilities.
+        """Update the current Brier score with a new tensor of probabilities.
 
         Args:
             probs (torch.Tensor): A probability tensor of shape
                 (batch, num_estimators, num_classes) or
                 (batch, num_classes)
+            target (torch.Tensor): A tensor of ground truth labels of shape
+                (batch, num_classes) or (batch)
         """
         if target.ndim == 1:
             target = F.one_hot(target, self.num_classes)
@@ -109,8 +110,7 @@ class BrierScore(Metric):
             self.total += batch_size
 
     def compute(self) -> torch.Tensor:
-        """
-        Compute the final Brier score based on inputs passed to ``update``.
+        """Compute the final Brier score based on inputs passed to ``update``.
 
         Returns:
             torch.Tensor: The final value(s) for the Brier score

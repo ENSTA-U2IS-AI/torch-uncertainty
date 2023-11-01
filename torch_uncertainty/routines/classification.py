@@ -33,7 +33,8 @@ from torch_uncertainty.plotting_utils import CalibrationPlot, plot_hist
 
 
 class ClassificationSingle(pl.LightningModule):
-    """
+    """Classification routine for single models.
+
     Args:
         evaluate_ood (bool, optional): Indicates whether to evaluate the OOD
             detection performance or not. Defaults to ``False``.
@@ -326,8 +327,9 @@ class ClassificationSingle(pl.LightningModule):
     def add_model_specific_args(
         parent_parser: ArgumentParser,
     ) -> ArgumentParser:
-        """Defines the routine's attributes via command-line options:
+        """Defines the routine's attributes via command-line options.
 
+        Adds:
         - ``--mixup``: sets :attr:`mixup_alpha` for Mixup
         - ``--cutmix``: sets :attr:`cutmix_alpha` for Cutmix
         - ``--entropy``: sets :attr:`use_entropy` to ``True``.
@@ -349,7 +351,8 @@ class ClassificationSingle(pl.LightningModule):
 
 
 class ClassificationEnsemble(ClassificationSingle):
-    """
+    """Classification routine for ensemble models.
+
     Args:
         evaluate_ood (bool, optional): Indicates whether to evaluate the OOD
             detection performance or not. Defaults to ``False``.
@@ -622,8 +625,9 @@ class ClassificationEnsemble(ClassificationSingle):
     def add_model_specific_args(
         parent_parser: ArgumentParser,
     ) -> ArgumentParser:
-        """Defines the routine's attributes via command-line options:
+        """Defines the routine's attributes via command-line options.
 
+        Adds:
         - ``--entropy``: sets :attr:`use_entropy` to ``True``.
         - ``--logits``: sets :attr:`use_logits` to ``True``.
         - ``--mutual_information``: sets :attr:`use_mi` to ``True``.

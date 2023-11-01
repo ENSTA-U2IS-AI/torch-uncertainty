@@ -114,16 +114,17 @@ class MNISTC(VisionDataset):
         subset: str,
         split: Literal["train", "test"],
     ) -> tuple[np.ndarray, np.ndarray]:
-        r"""
-        Build the corrupted dataset according to the chosen subset and
+        r"""Build the corrupted dataset according to the chosen subset and
             severity. If the subset is 'all', gather all corruption types
             in the dataset.
+
         Args:
             root (Path):The path to the dataset.
             subset (str): The name of the corruption subset to be used. Choose
                 `all` for the dataset to contain all subsets.
+
         Returns:
-            Tuple[np.ndarray, np.ndarray]: The samples and labels of the chosen
+            Tuple[np.ndarray, np.ndarray]: The samples and labels of the chosen.
         """
         if subset == "all":
             # take any subset to get the labels

@@ -62,7 +62,9 @@ build-backend = "poetry.core.masonry.api"
 [tool.ruff]
 line-length = 80
 target-version = "py310"
-extend-select = ["C4", "G", "I", "ICN", "PIE", "PERF", "RSE", "RET", "SIM", "UP", "TID", "TCH"] 
+extend-select = ["C4", "D", "G", "I", "ICN", "PIE", "PERF", "RSE", "RET", "SIM", "UP", "TID", "TCH"]
+ignore = ["D100", "D101", "D102", "D103", "D104", "D105", "D205", "D206", "D107", "D417"]
+
 exclude = [
     ".bzr",
     ".direnv",
@@ -88,3 +90,6 @@ exclude = [
     "dist",
     "venv",
 ]
+
+[tool.ruff.pydocstyle]
+convention = "google"

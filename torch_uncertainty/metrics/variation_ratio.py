@@ -8,7 +8,7 @@ from torchmetrics.utilities.data import dim_zero_cat
 
 
 class VariationRatio(Metric):
-    """From https://proceedings.mlr.press/v70/gal17a/gal17a.pdf"""
+    """From https://proceedings.mlr.press/v70/gal17a/gal17a.pdf."""
 
     full_state_update: bool = False
     is_differentiable: bool = True
@@ -46,6 +46,7 @@ class VariationRatio(Metric):
     def compute(self) -> Tensor:
         r"""Computes the variation ratio which amounts to the proportion of
         predicted class labels which are not the chosen class.
+
         Returns:
             Tensor: Mean disagreement between estimators.
         """

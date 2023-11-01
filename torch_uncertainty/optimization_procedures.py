@@ -23,7 +23,7 @@ __all__ = [
 def optim_cifar10_resnet18(
     model: nn.Module,
 ) -> dict[str, Optimizer | LRScheduler]:
-    """optimizer to train a ResNet18 on CIFAR-10"""
+    """Optimizer to train a ResNet18 on CIFAR-10."""
     optimizer = optim.SGD(
         model.parameters(),
         lr=0.05,
@@ -42,7 +42,7 @@ def optim_cifar10_resnet50(
     model: nn.Module,
 ) -> dict[str, Optimizer | LRScheduler]:
     r"""Hyperparameters from Deep Residual Learning for Image Recognition
-    https://arxiv.org/pdf/1512.03385.pdf
+    https://arxiv.org/pdf/1512.03385.pdf.
     """
     optimizer = optim.SGD(
         model.parameters(),
@@ -62,7 +62,7 @@ def optim_cifar10_resnet50(
 def optim_cifar10_wideresnet(
     model: nn.Module,
 ) -> dict[str, Optimizer | LRScheduler]:
-    """optimizer to train a WideResNet28x10 on CIFAR-10"""
+    """Optimizer to train a WideResNet28x10 on CIFAR-10."""
     optimizer = optim.SGD(
         model.parameters(),
         lr=0.1,
@@ -81,7 +81,7 @@ def optim_cifar10_wideresnet(
 def optim_cifar10_vgg16(
     model: nn.Module,
 ) -> dict[str, Optimizer | LRScheduler]:
-    """optimizer to train a VGG16 on CIFAR-10"""
+    """Optimizer to train a VGG16 on CIFAR-10."""
     optimizer = optim.Adam(
         model.parameters(),
         lr=0.005,
@@ -117,7 +117,7 @@ def optim_cifar100_resnet50(
     model: nn.Module,
 ) -> dict[str, Optimizer | LRScheduler]:
     r"""Hyperparameters from Deep Residual Learning for Image Recognition
-    https://arxiv.org/pdf/1512.03385.pdf
+    https://arxiv.org/pdf/1512.03385.pdf.
     """
     optimizer = optim.SGD(
         model.parameters(),
@@ -137,7 +137,7 @@ def optim_cifar100_resnet50(
 def optim_cifar100_vgg16(
     model: nn.Module,
 ) -> dict[str, Optimizer | LRScheduler]:
-    """optimizer to train a VGG16 on CIFAR-100"""
+    """Optimizer to train a VGG16 on CIFAR-100."""
     optimizer = optim.SGD(
         model.parameters(),
         lr=0.05,
@@ -160,7 +160,7 @@ def optim_imagenet_resnet50(
     end_lr: float = 0,
 ) -> dict:
     r"""Hyperparameters from Deep Residual Learning for Image Recognition
-    https://arxiv.org/pdf/1512.03385.pdf
+    https://arxiv.org/pdf/1512.03385.pdf.
     """
     optimizer = optim.SGD(
         model.parameters(),
@@ -182,8 +182,7 @@ def optim_imagenet_resnet50(
 def optim_imagenet_resnet50_A3(
     model: nn.Module, effective_batch_size: int | None = None
 ) -> dict:
-    """
-    Training procedure proposed in ResNet strikes back: An improved training
+    """Training procedure proposed in ResNet strikes back: An improved training
         procedure in timm.
 
     Args:

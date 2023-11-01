@@ -105,10 +105,10 @@ class TinyImageNetC(ImageFolder):
         self._make_c_dataset(self.subset, self.severity)
 
     def _make_c_dataset(self, subset: str, severity: int) -> None:
-        r"""
-        Build the corrupted dataset according to the chosen subset and
+        r"""Build the corrupted dataset according to the chosen subset and
             severity. If the subset is 'all', gather all corruption types
             in the dataset.
+
         Args:
             subset (str): The name of the corruption subset to be used. Choose
                 `all` for the dataset to contain all subsets.

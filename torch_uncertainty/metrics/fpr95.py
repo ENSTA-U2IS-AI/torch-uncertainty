@@ -8,17 +8,17 @@ from torchmetrics.utilities.data import dim_zero_cat
 
 
 def stable_cumsum(arr: ArrayLike, rtol: float = 1e-05, atol: float = 1e-08):
-    """
-    From https://github.com/hendrycks/anomaly-seg
+    """From https://github.com/hendrycks/anomaly-seg
     Uses high precision for cumsum and checks that the final value matches
     the sum.
+
     Args:
     arr : array-like
         To be cumulatively summed as flat
     rtol : float
         Relative tolerance, see ``np.allclose``
     atol : float
-        Absolute tolerance, see ``np.allclose``
+        Absolute tolerance, see ``np.allclose``.
     """
     out = np.cumsum(arr, dtype=np.float64)
     expected = np.sum(arr, dtype=np.float64)
@@ -62,6 +62,7 @@ class FPR95(Metric):
     def compute(self) -> Tensor:
         r"""From https://github.com/hendrycks/anomaly-seg
         Compute the actual False Positive Rate at 95% Recall.
+
         Returns:
             Tensor: The value of the FPR95.
         """

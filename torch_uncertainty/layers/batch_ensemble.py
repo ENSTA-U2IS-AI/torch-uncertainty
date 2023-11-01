@@ -237,7 +237,6 @@ class BatchConv2d(nn.Module):
         Make sure that :math:`M | N` when calling :func:`forward()`.
 
     Examples:
-
         >>> # With square kernels, four estimators and equal stride
         >>> m = Conv2dBE(3, 32, 3, 4, stride=1)
         >>> input = torch.randn(8, 3, 16, 16)

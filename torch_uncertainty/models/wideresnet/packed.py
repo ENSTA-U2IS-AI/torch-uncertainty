@@ -242,6 +242,7 @@ def packed_wideresnet28x10(
         num_estimators (int): Number of estimators in the ensemble.
         alpha (int): Expansion factor affecting the width of the estimators.
         gamma (int): Number of groups within each estimator.
+        groups (int): Number of subgroups in the convolutions.
         num_classes (int): Number of classes to predict.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
