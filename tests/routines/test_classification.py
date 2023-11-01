@@ -5,17 +5,16 @@ import pytest
 from cli_test_helpers import ArgvContext
 from torch import nn
 
+from tests._dummies import (
+    DummyClassificationBaseline,
+    DummyClassificationDataModule,
+)
 from torch_uncertainty import cli_main, init_args
 from torch_uncertainty.losses import DECLoss, ELBOLoss
 from torch_uncertainty.optimization_procedures import optim_cifar10_resnet18
 from torch_uncertainty.routines.classification import (
     ClassificationEnsemble,
     ClassificationSingle,
-)
-
-from .._dummies import (
-    DummyClassificationBaseline,
-    DummyClassificationDataModule,
 )
 
 

@@ -3,9 +3,9 @@ from collections.abc import Callable
 import torch.nn.functional as F
 from torch import Tensor, nn
 
-from ..layers.bayesian import BayesLinear
-from ..layers.packed import PackedLinear
-from ..models.utils import StochasticModel
+from torch_uncertainty.layers.bayesian import BayesLinear
+from torch_uncertainty.layers.packed import PackedLinear
+from torch_uncertainty.models.utils import StochasticModel
 
 __all__ = ["mlp", "packed_mlp", "bayesian_mlp"]
 

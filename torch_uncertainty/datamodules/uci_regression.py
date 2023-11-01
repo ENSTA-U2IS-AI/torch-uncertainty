@@ -7,7 +7,7 @@ from pytorch_lightning import LightningDataModule
 from torch import Generator
 from torch.utils.data import DataLoader, Dataset, random_split
 
-from ..datasets.regression import UCIRegression
+from torch_uncertainty.datasets.regression import UCIRegression
 
 
 class UCIDataModule(LightningDataModule):

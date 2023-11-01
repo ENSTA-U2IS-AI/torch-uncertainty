@@ -9,9 +9,9 @@ from torch import nn
 from torch.utils.data import DataLoader, Dataset, random_split
 from torchvision.datasets import CIFAR10, SVHN
 
-from ..datasets import AggregatedDataset
-from ..datasets.classification import CIFAR10C, CIFAR10H
-from ..transforms import Cutout
+from torch_uncertainty.datasets import AggregatedDataset
+from torch_uncertainty.datasets.classification import CIFAR10C, CIFAR10H
+from torch_uncertainty.transforms import Cutout
 
 
 class CIFAR10DataModule(LightningDataModule):

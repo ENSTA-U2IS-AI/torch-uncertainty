@@ -10,7 +10,13 @@ from pytorch_lightning.core.saving import (
 )
 from torch import nn
 
-from ...models.resnet import (
+from torch_uncertainty.baselines.utils.parser_addons import (
+    add_masked_specific_args,
+    add_mimo_specific_args,
+    add_packed_specific_args,
+    add_resnet_specific_args,
+)
+from torch_uncertainty.models.resnet import (
     batched_resnet18,
     batched_resnet34,
     batched_resnet50,
@@ -37,17 +43,11 @@ from ...models.resnet import (
     resnet101,
     resnet152,
 )
-from ...routines.classification import (
+from torch_uncertainty.routines.classification import (
     ClassificationEnsemble,
     ClassificationSingle,
 )
-from ...transforms import MIMOBatchFormat, RepeatTarget
-from ..utils.parser_addons import (
-    add_masked_specific_args,
-    add_mimo_specific_args,
-    add_packed_specific_args,
-    add_resnet_specific_args,
-)
+from torch_uncertainty.transforms import MIMOBatchFormat, RepeatTarget
 
 
 class ResNet:

@@ -20,8 +20,7 @@ from torchmetrics.classification import (
 )
 
 from torch_uncertainty.losses import DECLoss, ELBOLoss
-
-from ..metrics import (
+from torch_uncertainty.metrics import (
     FPR95,
     BrierScore,
     Disagreement,
@@ -30,7 +29,7 @@ from ..metrics import (
     NegativeLogLikelihood,
     VariationRatio,
 )
-from ..plotting_utils import CalibrationPlot, plot_hist
+from torch_uncertainty.plotting_utils import CalibrationPlot, plot_hist
 
 
 class ClassificationSingle(pl.LightningModule):

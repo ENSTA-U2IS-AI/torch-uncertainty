@@ -1,6 +1,6 @@
 from torch import nn
 
-from ..layers.bayesian import bayesian_modules
+from torch_uncertainty.layers.bayesian import bayesian_modules
 
 
 def toggle_dropout(

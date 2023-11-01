@@ -3,10 +3,9 @@ from argparse import ArgumentParser
 import pytest
 from torchvision.datasets import CIFAR10
 
+from tests._dummies.dataset import DummyClassificationDataset
 from torch_uncertainty.datamodules import CIFAR10DataModule
 from torch_uncertainty.transforms import Cutout
-
-from .._dummies.dataset import DummyClassificationDataset
 
 
 class TestCIFAR10DataModule:

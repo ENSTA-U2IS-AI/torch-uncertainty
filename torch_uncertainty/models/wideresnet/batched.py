@@ -1,7 +1,7 @@
 import torch.nn.functional as F
 from torch import Tensor, nn
 
-from ...layers import BatchConv2d, BatchLinear
+from torch_uncertainty.layers import BatchConv2d, BatchLinear
 
 __all__ = [
     "batched_wideresnet28x10",

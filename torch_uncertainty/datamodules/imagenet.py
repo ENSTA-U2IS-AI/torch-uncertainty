@@ -10,7 +10,11 @@ from torch import nn
 from torch.utils.data import DataLoader, Dataset
 from torchvision.datasets import DTD, SVHN, ImageNet, INaturalist
 
-from ..datasets.classification import ImageNetA, ImageNetO, ImageNetR
+from torch_uncertainty.datasets.classification import (
+    ImageNetA,
+    ImageNetO,
+    ImageNetR,
+)
 
 
 class ImageNetDataModule(LightningDataModule):

@@ -1,7 +1,7 @@
 import torch.nn.functional as F
 from torch import Tensor, nn
 
-from ...layers import MaskedConv2d, MaskedLinear
+from torch_uncertainty.layers import MaskedConv2d, MaskedLinear
 
 __all__ = [
     "masked_resnet18",

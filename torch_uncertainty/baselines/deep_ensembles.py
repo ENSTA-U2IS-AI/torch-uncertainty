@@ -4,10 +4,11 @@ from typing import Literal
 
 from pytorch_lightning import LightningModule
 
-from ..models import deep_ensembles
-from ..routines.classification import ClassificationEnsemble
-from ..routines.regression import RegressionEnsemble
-from ..utils import get_version
+from torch_uncertainty.models import deep_ensembles
+from torch_uncertainty.routines.classification import ClassificationEnsemble
+from torch_uncertainty.routines.regression import RegressionEnsemble
+from torch_uncertainty.utils import get_version
+
 from .classification import VGG, ResNet, WideResNet
 from .regression import MLP
 

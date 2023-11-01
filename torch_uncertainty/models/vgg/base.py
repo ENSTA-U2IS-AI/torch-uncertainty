@@ -4,8 +4,8 @@ import torch
 from einops import rearrange
 from torch import Tensor, nn
 
-from ...layers.packed import PackedConv2d, PackedLinear
-from ..utils import toggle_dropout
+from torch_uncertainty.layers.packed import PackedConv2d, PackedLinear
+from torch_uncertainty.models.utils import toggle_dropout
 
 
 class VGG(nn.Module):

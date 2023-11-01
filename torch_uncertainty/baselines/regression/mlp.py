@@ -10,9 +10,14 @@ from pytorch_lightning.core.saving import (
 )
 from torch import nn
 
-from ...models.mlp import mlp, packed_mlp
-from ...routines.regression import RegressionEnsemble, RegressionSingle
-from ..utils.parser_addons import add_packed_specific_args
+from torch_uncertainty.baselines.utils.parser_addons import (
+    add_packed_specific_args,
+)
+from torch_uncertainty.models.mlp import mlp, packed_mlp
+from torch_uncertainty.routines.regression import (
+    RegressionEnsemble,
+    RegressionSingle,
+)
 
 
 class MLP:

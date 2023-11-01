@@ -1,6 +1,7 @@
 from torch import nn
 
-from ...layers.packed import PackedConv2d, PackedLinear
+from torch_uncertainty.layers.packed import PackedConv2d, PackedLinear
+
 from .base import VGG, _vgg
 from .configs import cfgs
 

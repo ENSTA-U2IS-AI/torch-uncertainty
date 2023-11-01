@@ -10,7 +10,7 @@ from pytorch_lightning.utilities.types import EPOCH_OUTPUT, STEP_OUTPUT
 from torch import nn
 from torchmetrics import MeanSquaredError, MetricCollection
 
-from ..metrics.nll import GaussianNegativeLogLikelihood
+from torch_uncertainty.metrics.nll import GaussianNegativeLogLikelihood
 
 
 class RegressionSingle(pl.LightningModule):

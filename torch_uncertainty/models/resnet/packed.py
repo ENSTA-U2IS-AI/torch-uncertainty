@@ -4,8 +4,8 @@ import torch.nn.functional as F
 from einops import rearrange
 from torch import Tensor, nn
 
-from ...layers import PackedConv2d, PackedLinear
-from ...utils import load_hf
+from torch_uncertainty.layers import PackedConv2d, PackedLinear
+from torch_uncertainty.utils import load_hf
 
 __all__ = [
     "packed_resnet18",

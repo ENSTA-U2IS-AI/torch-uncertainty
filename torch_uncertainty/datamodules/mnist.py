@@ -8,8 +8,8 @@ from torch import nn
 from torch.utils.data import DataLoader, Dataset, random_split
 from torchvision.datasets import MNIST, FashionMNIST
 
-from ..datasets.classification import MNISTC, NotMNIST
-from ..transforms import Cutout
+from torch_uncertainty.datasets.classification import MNISTC, NotMNIST
+from torch_uncertainty.transforms import Cutout
 
 
 class MNISTDataModule(LightningDataModule):

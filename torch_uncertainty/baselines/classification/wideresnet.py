@@ -10,24 +10,24 @@ from pytorch_lightning.core.saving import (
 )
 from torch import nn
 
-from ...models.wideresnet import (
+from torch_uncertainty.baselines.utils.parser_addons import (
+    add_masked_specific_args,
+    add_mimo_specific_args,
+    add_packed_specific_args,
+    add_wideresnet_specific_args,
+)
+from torch_uncertainty.models.wideresnet import (
     batched_wideresnet28x10,
     masked_wideresnet28x10,
     mimo_wideresnet28x10,
     packed_wideresnet28x10,
     wideresnet28x10,
 )
-from ...routines.classification import (
+from torch_uncertainty.routines.classification import (
     ClassificationEnsemble,
     ClassificationSingle,
 )
-from ...transforms import MIMOBatchFormat, RepeatTarget
-from ..utils.parser_addons import (
-    add_masked_specific_args,
-    add_mimo_specific_args,
-    add_packed_specific_args,
-    add_wideresnet_specific_args,
-)
+from torch_uncertainty.transforms import MIMOBatchFormat, RepeatTarget
 
 
 class WideResNet:

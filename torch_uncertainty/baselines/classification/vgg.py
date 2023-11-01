@@ -10,7 +10,11 @@ from pytorch_lightning.core.saving import (
 )
 from torch import nn
 
-from ...models.vgg import (
+from torch_uncertainty.baselines.utils.parser_addons import (
+    add_packed_specific_args,
+    add_vgg_specific_args,
+)
+from torch_uncertainty.models.vgg import (
     packed_vgg11,
     packed_vgg13,
     packed_vgg16,
@@ -20,15 +24,11 @@ from ...models.vgg import (
     vgg16,
     vgg19,
 )
-from ...routines.classification import (
+from torch_uncertainty.routines.classification import (
     ClassificationEnsemble,
     ClassificationSingle,
 )
-from ...transforms import RepeatTarget
-from ..utils.parser_addons import (
-    add_packed_specific_args,
-    add_vgg_specific_args,
-)
+from torch_uncertainty.transforms import RepeatTarget
 
 
 class VGG:

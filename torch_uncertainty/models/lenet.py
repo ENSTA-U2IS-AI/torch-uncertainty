@@ -4,8 +4,9 @@ import torch
 import torch.nn.functional as F
 from torch import Tensor, nn
 
-from ..layers.bayesian import BayesConv2d, BayesLinear
-from ..layers.packed import PackedConv2d, PackedLinear
+from torch_uncertainty.layers.bayesian import BayesConv2d, BayesLinear
+from torch_uncertainty.layers.packed import PackedConv2d, PackedLinear
+
 from .utils import StochasticModel, toggle_dropout
 
 __all__ = ["lenet", "packed_lenet", "bayesian_lenet"]

@@ -1,7 +1,7 @@
 import torch.nn.functional as F
 from torch import Tensor, nn
 
-from ..utils import toggle_dropout
+from torch_uncertainty.models.utils import toggle_dropout
 
 __all__ = [
     "resnet18",

@@ -9,7 +9,7 @@ from torch import nn
 from torch.utils.data import ConcatDataset, DataLoader, Dataset
 from torchvision.datasets import DTD, SVHN
 
-from ..datasets.classification import ImageNetO, TinyImageNet
+from torch_uncertainty.datasets.classification import ImageNetO, TinyImageNet
 
 
 class TinyImageNetDataModule(LightningDataModule):

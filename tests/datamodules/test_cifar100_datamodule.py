@@ -4,10 +4,9 @@ from pathlib import Path
 import pytest
 from torchvision.datasets import CIFAR100
 
+from tests._dummies.dataset import DummyClassificationDataset
 from torch_uncertainty.datamodules import CIFAR100DataModule
 from torch_uncertainty.transforms import Cutout
-
-from .._dummies.dataset import DummyClassificationDataset
 
 
 class TestCIFAR100DataModule:
