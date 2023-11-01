@@ -121,7 +121,6 @@ class TestDECLoss:
             DECLoss(loss_type="regression")
 
 
-# fmt: on
 class TestBetaNLL:
     """Testing the BetaNLL class."""
 

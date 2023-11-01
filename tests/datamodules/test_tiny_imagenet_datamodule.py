@@ -1,4 +1,3 @@
-# fmt:off
 from argparse import ArgumentParser
 
 import pytest
@@ -7,7 +6,6 @@ from torch_uncertainty.datamodules import TinyImageNetDataModule
 from torch_uncertainty.datasets.classification import TinyImageNet
 
 from .._dummies.dataset import DummyClassificationDataset
-
 
 
 class TestTinyImageNetDataModule:

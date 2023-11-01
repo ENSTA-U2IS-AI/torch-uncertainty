@@ -1,6 +1,4 @@
-# fmt:off
 from torch_uncertainty.datasets.regression.toy import Cubic
-
 
 
 class TestCubic:

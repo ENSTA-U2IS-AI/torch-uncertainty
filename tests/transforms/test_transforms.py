@@ -1,4 +1,3 @@
-# fmt:off
 from typing import Tuple
 
 import pytest

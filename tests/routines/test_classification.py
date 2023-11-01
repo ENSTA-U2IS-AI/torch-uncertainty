@@ -1,4 +1,3 @@
-# fmt:off
 from functools import partial
 from pathlib import Path
 
@@ -18,7 +17,6 @@ from .._dummies import (
     DummyClassificationBaseline,
     DummyClassificationDataModule,
 )
-
 
 
 class TestClassificationSingle:

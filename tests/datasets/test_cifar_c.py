@@ -1,8 +1,6 @@
-# fmt:off
 import pytest
 
 from torch_uncertainty.datasets.classification import CIFAR10C, CIFAR100C
-
 
 
 class TestCIFAR10C:

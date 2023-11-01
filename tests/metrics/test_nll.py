@@ -1,4 +1,3 @@
-# fmt:off
 import pytest
 import torch
 
@@ -6,7 +5,6 @@ from torch_uncertainty.metrics import (
     GaussianNegativeLogLikelihood,
     NegativeLogLikelihood,
 )
-
 
 
 @pytest.fixture

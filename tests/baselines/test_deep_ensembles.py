@@ -1,8 +1,6 @@
-# fmt:off
 from argparse import ArgumentParser
 
 from torch_uncertainty.baselines import DeepEnsembles
-
 
 
 class TestDeepEnsembles:

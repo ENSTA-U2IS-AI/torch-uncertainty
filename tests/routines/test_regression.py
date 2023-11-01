@@ -1,4 +1,3 @@
-# fmt:off
 from functools import partial
 from pathlib import Path
 
@@ -11,7 +10,6 @@ from torch_uncertainty.losses import NIGLoss, BetaNLL
 from torch_uncertainty.optimization_procedures import optim_cifar10_resnet18
 
 from .._dummies import DummyRegressionBaseline, DummyRegressionDataModule
-
 
 
 class TestRegressionSingle:

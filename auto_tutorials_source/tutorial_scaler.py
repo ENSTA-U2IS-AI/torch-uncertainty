@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# flake: noqa
+
 """
 Improve Top-label Calibration with Temperature Scaling
 ======================================================

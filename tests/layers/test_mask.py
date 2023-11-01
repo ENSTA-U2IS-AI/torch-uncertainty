@@ -1,9 +1,7 @@
-# fmt:off
 import pytest
 import torch
 
 from torch_uncertainty.layers.masksembles import MaskedConv2d, MaskedLinear
-
 
 
 @pytest.fixture

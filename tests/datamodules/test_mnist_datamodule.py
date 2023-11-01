@@ -1,4 +1,3 @@
-# fmt:off
 from argparse import ArgumentParser
 
 import pytest
@@ -9,7 +8,6 @@ from torch_uncertainty.datamodules import MNISTDataModule
 from torch_uncertainty.transforms import Cutout
 
 from .._dummies.dataset import DummyClassificationDataset
-
 
 
 class TestMNISTDataModule:

@@ -1,11 +1,9 @@
-# fmt:off
 import math
 
 import pytest
 import torch
 
 from torch_uncertainty.metrics import MutualInformation
-
 
 
 @pytest.fixture
