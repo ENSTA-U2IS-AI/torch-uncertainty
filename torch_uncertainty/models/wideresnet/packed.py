@@ -94,12 +94,12 @@ class _PackedWide(nn.Module):
         num_blocks = int((depth - 4) / 6)
         k = widen_factor
 
-        nStages = [16, 16 * k, 32 * k, 64 * k]
+        num_stages = [16, 16 * k, 32 * k, 64 * k]
 
         if style == "imagenet":
             self.conv1 = PackedConv2d(
                 in_channels,
-                nStages[0],
+                num_stages[0],
                 kernel_size=7,
                 alpha=alpha,
                 num_estimators=self.num_estimators,
@@ -113,7 +113,7 @@ class _PackedWide(nn.Module):
         else:
             self.conv1 = PackedConv2d(
                 in_channels,
-                nStages[0],
+                num_stages[0],
                 kernel_size=3,
                 alpha=alpha,
                 num_estimators=self.num_estimators,
@@ -125,18 +125,16 @@ class _PackedWide(nn.Module):
                 first=True,
             )
 
-        self.bn1 = nn.BatchNorm2d(nStages[0] * alpha)
+        self.bn1 = nn.BatchNorm2d(num_stages[0] * alpha)
 
         if style == "imagenet":
-            self.optional_pool = nn.MaxPool2d(
-                kernel_size=3, stride=2, padding=1
-            )
+            self.optional_pool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         else:
             self.optional_pool = nn.Identity()
 
         self.layer1 = self._wide_layer(
             WideBasicBlock,
-            nStages[1],
+            num_stages[1],
             num_blocks,
             dropout_rate,
             stride=1,
@@ -147,7 +145,7 @@ class _PackedWide(nn.Module):
         )
         self.layer2 = self._wide_layer(
             WideBasicBlock,
-            nStages[2],
+            num_stages[2],
             num_blocks,
             dropout_rate,
             stride=2,
@@ -158,7 +156,7 @@ class _PackedWide(nn.Module):
         )
         self.layer3 = self._wide_layer(
             WideBasicBlock,
-            nStages[3],
+            num_stages[3],
             num_blocks,
             dropout_rate,
             stride=2,
@@ -172,7 +170,7 @@ class _PackedWide(nn.Module):
         self.flatten = nn.Flatten(1)
 
         self.linear = PackedLinear(
-            nStages[3],
+            num_stages[3],
             num_classes,
             alpha=alpha,
             num_estimators=num_estimators,
@@ -217,9 +215,7 @@ class _PackedWide(nn.Module):
         out = self.layer1(out)
         out = self.layer2(out)
         out = self.layer3(out)
-        out = rearrange(
-            out, "e (m c) h w -> (m e) c h w", m=self.num_estimators
-        )
+        out = rearrange(out, "e (m c) h w -> (m e) c h w", m=self.num_estimators)
         out = self.pool(out)
         out = self.flatten(out)
         out = self.linear(out)

@@ -36,7 +36,7 @@ def batch_input() -> tuple[torch.Tensor, torch.Tensor]:
 class TestAutoContrast:
     """Testing the AutoContrast transform."""
 
-    def test_PIL(self, img_input):
+    def test_pil(self, img_input):
         aug = AutoContrast()
         _ = aug(img_input)
 
@@ -44,7 +44,7 @@ class TestAutoContrast:
 class TestEqualize:
     """Testing the Equalize transform."""
 
-    def test_PIL(self, img_input):
+    def test_pil(self, img_input):
         aug = Equalize()
         _ = aug(img_input)
 
@@ -52,7 +52,7 @@ class TestEqualize:
 class TestPosterize:
     """Testing the Posterize transform."""
 
-    def test_PIL(self, img_input):
+    def test_pil(self, img_input):
         aug = Posterize()
         _ = aug(img_input, 2)
 
@@ -67,7 +67,7 @@ class TestPosterize:
 class TestSolarize:
     """Testing the Solarize transform."""
 
-    def test_PIL(self, img_input):
+    def test_pil(self, img_input):
         aug = Solarize()
         _ = aug(img_input, 2)
 
@@ -82,7 +82,7 @@ class TestSolarize:
 class TestRotation:
     """Testing the Rotation transform."""
 
-    def test_PIL(self, img_input):
+    def test_pil(self, img_input):
         aug = Rotation(random_direction=True)
         _ = aug(img_input, 10)
 
@@ -90,7 +90,7 @@ class TestRotation:
 class TestShear:
     """Testing the Shear transform."""
 
-    def test_PIL(self, img_input):
+    def test_pil(self, img_input):
         aug = Shear(axis=0, random_direction=True)
         _ = aug(img_input, 10)
 
@@ -102,7 +102,7 @@ class TestShear:
 class TestTranslate:
     """Testing the Translate transform."""
 
-    def test_PIL(self, img_input):
+    def test_pil(self, img_input):
         aug = Translate(axis=0, random_direction=True)
         _ = aug(img_input, 10)
 
@@ -114,7 +114,7 @@ class TestTranslate:
 class TestContrast:
     """Testing the Contrast transform."""
 
-    def test_PIL(self, img_input):
+    def test_pil(self, img_input):
         aug = Contrast()
         _ = aug(img_input, 2)
 
@@ -127,7 +127,7 @@ class TestContrast:
 class TestBrightness:
     """Testing the Brightness transform."""
 
-    def test_PIL(self, img_input):
+    def test_pil(self, img_input):
         aug = Brightness()
         _ = aug(img_input, 2)
 
@@ -140,7 +140,7 @@ class TestBrightness:
 class TestSharpness:
     """Testing the Sharpness transform."""
 
-    def test_PIL(self, img_input):
+    def test_pil(self, img_input):
         aug = Sharpness()
         _ = aug(img_input, 2)
 
@@ -153,7 +153,7 @@ class TestSharpness:
 class TestColor:
     """Testing the Color transform."""
 
-    def test_PIL(self, img_input):
+    def test_pil(self, img_input):
         aug = Color()
         aug(img_input, 2)
 

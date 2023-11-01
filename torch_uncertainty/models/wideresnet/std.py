@@ -90,12 +90,12 @@ class _Wide(nn.Module):
         num_blocks = int((depth - 4) / 6)
         k = widen_factor
 
-        nStages = [16, 16 * k, 32 * k, 64 * k]
+        num_stages = [16, 16 * k, 32 * k, 64 * k]
 
         if style == "imagenet":
             self.conv1 = nn.Conv2d(
                 in_channels,
-                nStages[0],
+                num_stages[0],
                 kernel_size=7,
                 stride=2,
                 padding=3,
@@ -105,7 +105,7 @@ class _Wide(nn.Module):
         else:
             self.conv1 = nn.Conv2d(
                 in_channels,
-                nStages[0],
+                num_stages[0],
                 kernel_size=3,
                 stride=1,
                 padding=1,
@@ -113,18 +113,16 @@ class _Wide(nn.Module):
                 bias=True,
             )
 
-        self.bn1 = nn.BatchNorm2d(nStages[0])
+        self.bn1 = nn.BatchNorm2d(num_stages[0])
 
         if style == "imagenet":
-            self.optional_pool = nn.MaxPool2d(
-                kernel_size=3, stride=2, padding=1
-            )
+            self.optional_pool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         else:
             self.optional_pool = nn.Identity()
 
         self.layer1 = self._wide_layer(
             WideBasicBlock,
-            nStages[1],
+            num_stages[1],
             num_blocks=num_blocks,
             dropout_rate=dropout_rate,
             stride=1,
@@ -132,7 +130,7 @@ class _Wide(nn.Module):
         )
         self.layer2 = self._wide_layer(
             WideBasicBlock,
-            nStages[2],
+            num_stages[2],
             num_blocks=num_blocks,
             dropout_rate=dropout_rate,
             stride=2,
@@ -140,7 +138,7 @@ class _Wide(nn.Module):
         )
         self.layer3 = self._wide_layer(
             WideBasicBlock,
-            nStages[3],
+            num_stages[3],
             num_blocks=num_blocks,
             dropout_rate=dropout_rate,
             stride=2,
@@ -151,7 +149,7 @@ class _Wide(nn.Module):
         self.flatten = nn.Flatten(1)
 
         self.linear = nn.Linear(
-            nStages[3],
+            num_stages[3],
             num_classes,
         )
 

@@ -84,12 +84,12 @@ class _BatchedWide(nn.Module):
         n = (depth - 4) // 6
         k = widen_factor
 
-        nStages = [16, 16 * k, 32 * k, 64 * k]
+        num_stages = [16, 16 * k, 32 * k, 64 * k]
 
         if style == "imagenet":
             self.conv1 = BatchConv2d(
                 in_channels,
-                nStages[0],
+                num_stages[0],
                 num_estimators=self.num_estimators,
                 groups=groups,
                 kernel_size=7,
@@ -100,7 +100,7 @@ class _BatchedWide(nn.Module):
         else:
             self.conv1 = BatchConv2d(
                 in_channels,
-                nStages[0],
+                num_stages[0],
                 num_estimators=self.num_estimators,
                 groups=groups,
                 kernel_size=3,
@@ -109,18 +109,16 @@ class _BatchedWide(nn.Module):
                 bias=True,
             )
 
-        self.bn1 = nn.BatchNorm2d(nStages[0])
+        self.bn1 = nn.BatchNorm2d(num_stages[0])
 
         if style == "imagenet":
-            self.optional_pool = nn.MaxPool2d(
-                kernel_size=3, stride=2, padding=1
-            )
+            self.optional_pool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         else:
             self.optional_pool = nn.Identity()
 
         self.layer1 = self._wide_layer(
             WideBasicBlock,
-            nStages[1],
+            num_stages[1],
             n,
             dropout_rate,
             stride=1,
@@ -129,7 +127,7 @@ class _BatchedWide(nn.Module):
         )
         self.layer2 = self._wide_layer(
             WideBasicBlock,
-            nStages[2],
+            num_stages[2],
             n,
             dropout_rate,
             stride=2,
@@ -138,7 +136,7 @@ class _BatchedWide(nn.Module):
         )
         self.layer3 = self._wide_layer(
             WideBasicBlock,
-            nStages[3],
+            num_stages[3],
             n,
             dropout_rate,
             stride=2,
@@ -150,7 +148,7 @@ class _BatchedWide(nn.Module):
         self.flatten = nn.Flatten(1)
 
         self.linear = BatchLinear(
-            nStages[3],
+            num_stages[3],
             num_classes,
             num_estimators,
         )

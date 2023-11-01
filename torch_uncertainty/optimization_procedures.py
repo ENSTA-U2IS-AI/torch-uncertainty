@@ -242,9 +242,7 @@ def optim_regression(
     }
 
 
-def batch_ensemble_wrapper(
-    model: nn.Module, optimization_procedure: Callable
-) -> dict:
+def batch_ensemble_wrapper(model: nn.Module, optimization_procedure: Callable) -> dict:
     procedure = optimization_procedure(model)
     param_optimizer = procedure["optimizer"]
     scheduler = procedure["lr_scheduler"]
@@ -262,8 +260,7 @@ def batch_ensemble_wrapper(
     )
     param_core_tmp = list(
         filter(
-            lambda kv: (name_list[0] not in kv[0])
-            and (name_list[1] not in kv[0]),
+            lambda kv: (name_list[0] not in kv[0]) and (name_list[1] not in kv[0]),
             model.named_parameters(),
         )
     )
@@ -336,8 +333,6 @@ def get_procedure(
         raise NotImplementedError(f"No recipe for architecture: {arch_name}.")
 
     if model_name == "batched":
-        procedure = partial(
-            batch_ensemble_wrapper, optimization_procedure=procedure
-        )
+        procedure = partial(batch_ensemble_wrapper, optimization_procedure=procedure)
 
     return procedure
