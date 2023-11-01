@@ -1,16 +1,17 @@
 from typing import Tuple
+
+import numpy as np
 import scipy
 import torch
 import torch.nn.functional as F
+from torch import Tensor
 
-import numpy as np
 
-
-def beta_warping(x, alpha_cdf=1.0, eps=1e-12):
+def beta_warping(x, alpha_cdf: float = 1.0, eps: float = 1e-12) -> float:
     return scipy.stats.beta.cdf(x, a=alpha_cdf + eps, b=alpha_cdf + eps)
 
 
-def sim_gauss_kernel(dist, tau_max=1.0, tau_std=0.5):
+def sim_gauss_kernel(dist, tau_max: float = 1.0, tau_std: float = 0.5) -> float:
     dist_rate = tau_max * np.exp(
         -(dist - 1) / (np.mean(dist) * 2 * tau_std * tau_std)
     )
@@ -48,16 +49,16 @@ def sim_gauss_kernel(dist, tau_max=1.0, tau_std=0.5):
 # ):
 #     if isinstance(c1, float):
 #         if c1 == c2:
-#             c1 = torch.tensor([c1], device=x.device)
+#             c1 = Tensor([c1], device=x.device)
 #             c2 = c1
 #         else:
-#             c1 = torch.tensor([c1], device=x.device)
+#             c1 = Tensor([c1], device=x.device)
 #     if isinstance(c2, float):
-#         c2 = torch.tensor([c2], device=x.device)
+#         c2 = Tensor([c2], device=x.device)
 #     bt = torch.distributions.Beta(c1, c2)
 
 #     if isinstance(x, float):
-#         x = torch.tensor(x)
+#         x = Tensor(x)
 
 #     X = tensor_linspace(torch.zeros_like(x) + eps, x, npts)
 #     return torch.trapezoid(bt.log_prob(X).exp(), X, dim=0)
@@ -80,7 +81,9 @@ def sim_gauss_kernel(dist, tau_max=1.0, tau_std=0.5):
 
 
 class AbstractMixup:
-    def __init__(self, alpha=1.0, mode="batch", num_classes=1000) -> None:
+    def __init__(
+        self, alpha: float = 1.0, mode: str = "batch", num_classes: int = 1000
+    ) -> None:
         self.alpha = alpha
         self.num_classes = num_classes
         self.mode = mode
@@ -89,65 +92,54 @@ class AbstractMixup:
         if self.mode == "batch":
             lam = np.random.beta(self.alpha, self.alpha)
         else:
-            lam = torch.tensor(
+            lam = Tensor(
                 np.random.beta(self.alpha, self.alpha, batch_size),
                 device=device,
             )
-
         index = torch.randperm(batch_size, device=device)
-
         return lam, index
 
     def _linear_mixing(
         self,
-        lam: torch.Tensor | float,
-        inp: torch.Tensor,
-        index: torch.Tensor,
-    ) -> torch.Tensor:
-        if isinstance(lam, torch.Tensor):
+        lam: Tensor | float,
+        inp: Tensor,
+        index: Tensor,
+    ) -> Tensor:
+        if isinstance(lam, Tensor):
             lam = lam.view(-1, *[1 for _ in range(inp.ndim - 1)]).float()
 
         return lam * inp + (1 - lam) * inp[index, :]
 
     def _mix_target(
         self,
-        lam: torch.Tensor | float,
-        target: torch.Tensor,
-        index: torch.Tensor,
-    ) -> torch.Tensor:
+        lam: Tensor | float,
+        target: Tensor,
+        index: Tensor,
+    ) -> Tensor:
         y1 = F.one_hot(target, self.num_classes)
         y2 = F.one_hot(target[index], self.num_classes)
-        if isinstance(lam, torch.Tensor):
+        if isinstance(lam, Tensor):
             lam = lam.view(-1, *[1 for _ in range(y1.ndim - 1)]).float()
 
-        if isinstance(lam, torch.Tensor) and lam.dtype == torch.bool:
+        if isinstance(lam, Tensor) and lam.dtype == torch.bool:
             return lam * y1 + (~lam) * y2
         else:
             return lam * y1 + (1 - lam) * y2
 
-    def __call__(
-        self, x: torch.Tensor, y: torch.Tensor
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    def __call__(self, x: Tensor, y: Tensor) -> Tuple[Tensor, Tensor]:
         return x, y
 
 
 class Mixup(AbstractMixup):
-    def __call__(
-        self, x: torch.Tensor, y: torch.Tensor
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    def __call__(self, x: Tensor, y: Tensor) -> Tuple[Tensor, Tensor]:
         lam, index = self._get_params(x.size()[0], x.device)
-
         mixed_x = self._linear_mixing(lam, x, index)
-
         mixed_y = self._mix_target(lam, y, index)
-
         return mixed_x, mixed_y
 
 
 class MixupIO(AbstractMixup):
-    def __call__(
-        self, x: torch.Tensor, y: torch.Tensor
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    def __call__(self, x: Tensor, y: Tensor) -> Tuple[Tensor, Tensor]:
         lam, index = self._get_params(x.size()[0], x.device)
 
         mixed_x = self._linear_mixing(lam, x, index)
@@ -158,30 +150,24 @@ class MixupIO(AbstractMixup):
 
 
 class RegMixup(AbstractMixup):
-    def __call__(
-        self, x: torch.Tensor, y: torch.Tensor
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    def __call__(self, x: Tensor, y: Tensor) -> Tuple[Tensor, Tensor]:
         lam, index = self._get_params(x.size()[0], x.device)
-
         part_x = self._linear_mixing(lam, x, index)
-
         part_y = self._mix_target(lam, y, index)
-
         mixed_x = torch.cat([x, part_x], dim=0)
         mixed_y = torch.cat([F.one_hot(y, self.num_classes), part_y], dim=0)
-
         return mixed_x, mixed_y
 
 
 class WarpingMixup(AbstractMixup):
     def __init__(
         self,
-        alpha=1.0,
-        mode="batch",
-        num_classes=1000,
-        apply_kernel=True,
-        tau_max=1.0,
-        tau_std=0.5,
+        alpha: float = 1.0,
+        mode: str = "batch",
+        num_classes: int = 1000,
+        apply_kernel: bool = True,
+        tau_max: float = 1.0,
+        tau_std: float = 0.5,
     ) -> None:
         super().__init__(alpha, mode, num_classes)
         self.apply_kernel = apply_kernel
@@ -195,16 +181,15 @@ class WarpingMixup(AbstractMixup):
             lam = np.random.beta(self.alpha, self.alpha, batch_size)
 
         index = torch.randperm(batch_size, device=device)
-
         return lam, index
 
     def __call__(
         self,
-        x: torch.Tensor,
-        y: torch.Tensor,
-        feats: torch.Tensor,
+        x: Tensor,
+        y: Tensor,
+        feats: Tensor,
         warp_param=1.0,
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> Tuple[Tensor, Tensor]:
         lam, index = self._get_params(x.size()[0], x.device)
 
         if self.apply_kernel:
@@ -217,10 +202,7 @@ class WarpingMixup(AbstractMixup):
             )
             warp_param = sim_gauss_kernel(l2_dist, self.tau_max, self.tau_std)
 
-        k_lam = torch.tensor(beta_warping(lam, warp_param), device=x.device)
-
+        k_lam = Tensor(beta_warping(lam, warp_param), device=x.device)
         mixed_x = self._linear_mixing(k_lam, x, index)
-
         mixed_y = self._mix_target(k_lam, y, index)
-
         return mixed_x, mixed_y

@@ -3,12 +3,11 @@ from pathlib import Path
 from typing import Any, List, Optional, Union
 
 import torchvision.transforms as T
+from numpy.typing import ArrayLike
 from timm.data.auto_augment import rand_augment_transform
 from torch import nn
 from torch.utils.data import ConcatDataset, DataLoader
 from torchvision.datasets import DTD, SVHN
-
-from numpy.typing import ArrayLike
 
 from ..datasets.classification import ImageNetO, TinyImageNet
 from .abstract import AbstractDataModule

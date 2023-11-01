@@ -2,15 +2,14 @@ from argparse import ArgumentParser
 from pathlib import Path
 from typing import Any, List, Literal, Optional, Union
 
+import numpy as np
 import torch
 import torchvision.transforms as T
+from numpy.typing import ArrayLike
 from timm.data.auto_augment import rand_augment_transform
 from torch import nn
 from torch.utils.data import DataLoader, random_split
 from torchvision.datasets import CIFAR100, SVHN
-
-import numpy as np
-from numpy.typing import ArrayLike
 
 from ..datasets import AggregatedDataset
 from ..datasets.classification import CIFAR100C

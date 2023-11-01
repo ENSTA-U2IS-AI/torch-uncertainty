@@ -2,12 +2,11 @@ from argparse import ArgumentParser
 from pathlib import Path
 from typing import Any, List, Optional, Union
 
+from numpy.typing import ArrayLike
 from pytorch_lightning import LightningDataModule
 from sklearn.model_selection import StratifiedKFold
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.sampler import SubsetRandomSampler
-
-from numpy.typing import ArrayLike
 
 
 class AbstractDataModule(LightningDataModule):

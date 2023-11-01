@@ -1,11 +1,10 @@
 from pathlib import Path
 from typing import Any, Callable, Tuple
 
+import numpy as np
 import torch
 import torch.utils.data as data
 from PIL import Image
-
-import numpy as np
 
 
 class DummyClassificationDataset(data.Dataset):

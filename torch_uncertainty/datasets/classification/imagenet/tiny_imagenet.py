@@ -3,11 +3,10 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Callable, Literal, Optional
 
+import numpy as np
 import torch
 from PIL import Image
 from torch.utils.data import Dataset
-
-import numpy as np
 
 
 class TinyImageNet(Dataset):

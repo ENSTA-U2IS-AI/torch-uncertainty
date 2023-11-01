@@ -16,6 +16,10 @@ class TestOptProcedures:
         model = resnet18(in_channels=3, num_classes=10)
         procedure(model)
 
+        procedure = get_procedure("resnet34", "cifar10", "masked")
+        model = resnet34(in_channels=3, num_classes=100)
+        procedure(model)
+
         procedure = get_procedure("resnet50", "cifar10", "packed")
         model = resnet50(in_channels=3, num_classes=10)
         procedure(model)

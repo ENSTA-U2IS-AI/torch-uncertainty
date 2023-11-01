@@ -15,6 +15,7 @@ from torch_uncertainty.optimization_procedures import (
     optim_cifar10_wideresnet,
     optim_regression,
 )
+from torch_uncertainty.utils.misc import csv_writer
 
 from ._dummies.dataset import DummyClassificationDataset
 
@@ -43,7 +44,12 @@ class TestCLI:
                 **vars(args),
             )
 
-            cli_main(model, dm, root, "std", args)
+            results = cli_main(model, dm, root, "std", args)
+            for dict_result in results:
+                csv_writer(
+                    Path("tests/logs/results.csv"),
+                    dict_result,
+                )
 
     def test_cli_main_other_arguments(self):
         root = Path(__file__).parent.absolute().parents[0]

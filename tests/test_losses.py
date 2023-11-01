@@ -5,7 +5,7 @@ import torch
 from torch import nn
 
 from torch_uncertainty.layers.bayesian import BayesLinear
-from torch_uncertainty.losses import DECLoss, ELBOLoss, NIGLoss, BetaNLL
+from torch_uncertainty.losses import BetaNLL, DECLoss, ELBOLoss, NIGLoss
 
 
 class TestELBOLoss:

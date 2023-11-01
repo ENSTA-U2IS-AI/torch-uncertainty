@@ -2,13 +2,12 @@ import os
 from pathlib import Path
 from typing import Any, Callable, Literal, Optional, Tuple
 
+import numpy as np
 from torchvision.datasets import VisionDataset
 from torchvision.datasets.utils import (
     check_integrity,
     download_and_extract_archive,
 )
-
-import numpy as np
 
 
 class MNISTC(VisionDataset):

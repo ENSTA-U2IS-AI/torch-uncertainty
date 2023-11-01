@@ -1,10 +1,10 @@
 from typing import Tuple
 
+import numpy
 import pytest
 import torch
 from PIL import Image
 
-import numpy
 from torch_uncertainty.transforms import (
     AutoContrast,
     Brightness,
