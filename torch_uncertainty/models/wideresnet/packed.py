@@ -90,7 +90,8 @@ class _PackedWide(nn.Module):
         self.num_estimators = num_estimators
         self.in_planes = 16
 
-        assert (depth - 4) % 6 == 0, "Wide-resnet depth should be 6n+4."
+        if (depth - 4) % 6 != 0:
+            raise ValueError("Wide-resnet depth should be 6n+4.")
         num_blocks = int((depth - 4) / 6)
         k = widen_factor
 
@@ -128,7 +129,9 @@ class _PackedWide(nn.Module):
         self.bn1 = nn.BatchNorm2d(num_stages[0] * alpha)
 
         if style == "imagenet":
-            self.optional_pool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+            self.optional_pool = nn.MaxPool2d(
+                kernel_size=3, stride=2, padding=1
+            )
         else:
             self.optional_pool = nn.Identity()
 
@@ -215,7 +218,9 @@ class _PackedWide(nn.Module):
         out = self.layer1(out)
         out = self.layer2(out)
         out = self.layer3(out)
-        out = rearrange(out, "e (m c) h w -> (m e) c h w", m=self.num_estimators)
+        out = rearrange(
+            out, "e (m c) h w -> (m e) c h w", m=self.num_estimators
+        )
         out = self.pool(out)
         out = self.flatten(out)
         out = self.linear(out)

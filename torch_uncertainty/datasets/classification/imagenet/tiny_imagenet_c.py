@@ -86,18 +86,20 @@ class TinyImageNetC(ImageFolder):
         super().__init__(
             root=root / self.base_folder / "brightness/1/", transform=transform
         )
-        assert (
-            subset in ["all"] + self.subsets
-        ), f"The subset '{subset}' does not exist in TinyImageNet-C."
+        if subset not in ["all"] + self.subsets:
+            raise ValueError(
+                f"The subset '{subset}' does not exist in TinyImageNet-C."
+            )
         self.subset = subset
         self.severity = severity
 
         self.transform = transform
         self.target_transform = target_transform
 
-        assert severity in list(
-            range(1, 6)
-        ), "Corruptions severity should be chosen between 1 and 5 included."
+        if severity not in list(range(1, 6)):
+            raise ValueError(
+                "Corruptions severity should be chosen between 1 and 5 included."
+            )
 
         # Update samples given the subset and severity
         self._make_c_dataset(self.subset, self.severity)

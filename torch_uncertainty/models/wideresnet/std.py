@@ -86,7 +86,8 @@ class _Wide(nn.Module):
         self.num_estimators = num_estimators
         self.last_layer_dropout = last_layer_dropout
 
-        assert (depth - 4) % 6 == 0, "Wide-resnet depth should be 6n+4."
+        if (depth - 4) % 6 != 0:
+            raise ValueError("Wide-resnet depth should be 6n+4.")
         num_blocks = int((depth - 4) / 6)
         k = widen_factor
 
@@ -116,7 +117,9 @@ class _Wide(nn.Module):
         self.bn1 = nn.BatchNorm2d(num_stages[0])
 
         if style == "imagenet":
-            self.optional_pool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+            self.optional_pool = nn.MaxPool2d(
+                kernel_size=3, stride=2, padding=1
+            )
         else:
             self.optional_pool = nn.Identity()
 
