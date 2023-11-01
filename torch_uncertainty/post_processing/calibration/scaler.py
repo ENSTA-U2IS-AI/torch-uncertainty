@@ -113,7 +113,7 @@ class Scaler(nn.Module):
         Returns:
             torch.Tensor: Scaled logits.
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def fit_predict(
         self,
@@ -122,9 +122,8 @@ class Scaler(nn.Module):
         progress: bool = True,
     ) -> torch.Tensor:
         self.fit(model, calibration_set, save_logits=True, progress=progress)
-        calib_logits = self(self.logits)
-        return calib_logits
+        return self(self.logits)
 
     @property
     def temperature(self) -> list:
-        raise NotImplementedError()
+        raise NotImplementedError

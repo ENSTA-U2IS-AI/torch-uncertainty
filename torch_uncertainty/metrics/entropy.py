@@ -88,7 +88,7 @@ class Entropy(Metric):
         values = dim_zero_cat(self.values)
         if self.reduction == "sum":
             return values.sum(dim=-1)
-        elif self.reduction == "mean":
+        if self.reduction == "mean":
             return values.sum(dim=-1) / self.total
-        else:  # reduction is None or "none"
-            return values
+        # reduction is None or "none"
+        return values

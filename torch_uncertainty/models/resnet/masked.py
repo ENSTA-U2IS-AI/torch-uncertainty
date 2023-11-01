@@ -71,8 +71,7 @@ class BasicBlock(nn.Module):
         out = F.relu(self.bn1(self.conv1(x)))
         out = self.bn2(self.conv2(out))
         out += self.shortcut(x)
-        out = F.relu(out)
-        return out
+        return F.relu(out)
 
 
 class Bottleneck(nn.Module):
@@ -143,8 +142,7 @@ class Bottleneck(nn.Module):
         out = F.relu(self.bn2(self.conv2(out)))
         out = self.bn3(self.conv3(out))
         out += self.shortcut(x)
-        out = F.relu(out)
-        return out
+        return F.relu(out)
 
 
 class _MaskedResNet(nn.Module):
@@ -281,8 +279,7 @@ class _MaskedResNet(nn.Module):
 
         out = self.pool(out)
         out = self.flatten(out)
-        out = self.linear(out)
-        return out
+        return self.linear(out)
 
 
 def masked_resnet18(

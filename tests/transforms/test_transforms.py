@@ -23,8 +23,7 @@ from torch_uncertainty.transforms import (
 @pytest.fixture
 def img_input() -> torch.Tensor:
     imarray = np.random.rand(28, 28, 3) * 255
-    im = Image.fromarray(imarray.astype("uint8")).convert("RGB")
-    return im
+    return Image.fromarray(imarray.astype("uint8")).convert("RGB")
 
 
 @pytest.fixture

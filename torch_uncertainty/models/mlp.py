@@ -78,8 +78,7 @@ class _MLP(nn.Module):
         for layer in self.layers[:-1]:
             x = F.dropout(layer(x), p=self.dropout, training=self.training)
             x = self.activation(x)
-        out = self.layers[-1](x)
-        return out
+        return self.layers[-1](x)
 
 
 @StochasticModel

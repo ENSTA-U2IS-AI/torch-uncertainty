@@ -140,7 +140,7 @@ class ClassificationSingle(pl.LightningModule):
                 "Cutmix alpha and Mixup alpha must be positive."
                 f"Got {mixup_alpha} and {cutmix_alpha}."
             )
-        elif mixup_alpha > 0 or cutmix_alpha > 0:
+        if mixup_alpha > 0 or cutmix_alpha > 0:
             self.mixup = Mixup(
                 mixup_alpha=mixup_alpha, cutmix_alpha=cutmix_alpha
             )

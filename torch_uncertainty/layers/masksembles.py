@@ -34,8 +34,7 @@ def _generate_masks(m: int, n: int, s: float) -> np.ndarray:
 
     masks = np.array(masks)
     # drop useless positions
-    masks = masks[:, ~np.all(masks == 0, axis=0)]
-    return masks
+    return masks[:, ~np.all(masks == 0, axis=0)]
 
 
 def generate_masks(m: int, n: int, s: float) -> np.ndarray:

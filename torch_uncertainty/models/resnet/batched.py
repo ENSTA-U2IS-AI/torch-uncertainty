@@ -72,8 +72,7 @@ class BasicBlock(nn.Module):
         out = F.relu(self.bn1(self.conv1(input)))
         out = self.bn2(self.conv2(out))
         out += self.shortcut(input)
-        out = F.relu(out)
-        return out
+        return F.relu(out)
 
 
 class Bottleneck(nn.Module):
@@ -138,8 +137,7 @@ class Bottleneck(nn.Module):
         out = F.relu(self.bn2(self.conv2(out)))
         out = self.bn3(self.conv3(out))
         out += self.shortcut(input)
-        out = F.relu(out)
-        return out
+        return F.relu(out)
 
 
 class _BatchedResNet(nn.Module):
@@ -259,8 +257,7 @@ class _BatchedResNet(nn.Module):
         out = self.layer4(out)
         out = self.pool(out)
         out = self.flatten(out)
-        out = self.linear(out)
-        return out
+        return self.linear(out)
 
 
 def batched_resnet18(

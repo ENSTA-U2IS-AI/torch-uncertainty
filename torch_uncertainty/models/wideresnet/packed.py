@@ -68,8 +68,7 @@ class WideBasicBlock(nn.Module):
         out = F.relu(self.bn1(self.dropout(self.conv1(x))))
         out = self.conv2(out)
         out += self.shortcut(x)
-        out = F.relu(self.bn2(out))
-        return out
+        return F.relu(self.bn2(out))
 
 
 class _PackedWide(nn.Module):
@@ -223,8 +222,7 @@ class _PackedWide(nn.Module):
         )
         out = self.pool(out)
         out = self.flatten(out)
-        out = self.linear(out)
-        return out
+        return self.linear(out)
 
 
 def packed_wideresnet28x10(

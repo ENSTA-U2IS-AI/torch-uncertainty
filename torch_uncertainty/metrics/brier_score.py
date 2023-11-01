@@ -118,7 +118,6 @@ class BrierScore(Metric):
         values = dim_zero_cat(self.values)
         if self.reduction == "sum":
             return values.sum(dim=-1) / self.num_estimators
-        elif self.reduction == "mean":
+        if self.reduction == "mean":
             return values.sum(dim=-1) / self.total / self.num_estimators
-        else:  # reduction is None
-            return values
+        return values

@@ -302,11 +302,10 @@ class UCIRegression(Dataset):
             target = self.data[index : index + 13, :]
             return data, target
 
-        else:
-            data = self.data[index]
-            if self.transform is not None:
-                data = self.transform(data)
-            target = self.targets[index]
-            if self.target_transform is not None:
-                target = self.target_transform(target)
+        data = self.data[index]
+        if self.transform is not None:
+            data = self.transform(data)
+        target = self.targets[index]
+        if self.target_transform is not None:
+            target = self.target_transform(target)
         return data, target

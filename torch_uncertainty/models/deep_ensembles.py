@@ -67,7 +67,7 @@ def deep_ensembles(
             raise ValueError(
                 "if models is a module, num_estimators must be specified."
             )
-        elif num_estimators < 2:
+        if num_estimators < 2:
             raise ValueError(
                 f"num_estimators must be at least 2. Got {num_estimators}."
             )

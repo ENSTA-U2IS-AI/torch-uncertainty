@@ -68,15 +68,15 @@ class DeepEnsembles:
                 use_mi=use_mi,
                 use_variation_ratio=use_variation_ratio,
             )
-        elif task == "regression":
-            return RegressionEnsemble(
-                model=de,
-                loss=None,
-                optimization_procedure=None,
-                dist_estimation=2,
-                num_estimators=de.num_estimators,
-                mode="mean",
-            )
+        #  task == "regression":
+        return RegressionEnsemble(
+            model=de,
+            loss=None,
+            optimization_procedure=None,
+            dist_estimation=2,
+            num_estimators=de.num_estimators,
+            mode="mean",
+        )
 
     @classmethod
     def add_model_specific_args(cls, parser: ArgumentParser) -> ArgumentParser:

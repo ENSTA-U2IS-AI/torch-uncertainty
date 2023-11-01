@@ -60,8 +60,7 @@ class WideBasicBlock(nn.Module):
         out = F.relu(self.bn1(self.dropout(self.conv1(x))))
         out = self.conv2(out)
         out += self.shortcut(x)
-        out = F.relu(self.bn2(out))
-        return out
+        return F.relu(self.bn2(out))
 
 
 class _BatchedWide(nn.Module):
@@ -193,8 +192,7 @@ class _BatchedWide(nn.Module):
         out = self.layer3(out)
         out = self.pool(out)
         out = self.flatten(out)
-        out = self.linear(out)
-        return out
+        return self.linear(out)
 
 
 def batched_wideresnet28x10(

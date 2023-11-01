@@ -171,18 +171,18 @@ class VGG:
                 use_logits=use_logits,
                 **kwargs,
             )
-        else:  # version in cls.ensemble
-            return ClassificationEnsemble(
-                model=model,
-                loss=loss,
-                optimization_procedure=optimization_procedure,
-                format_batch_fn=format_batch_fn,
-                use_entropy=use_entropy,
-                use_logits=use_logits,
-                use_mi=use_mi,
-                use_variation_ratio=use_variation_ratio,
-                **kwargs,
-            )
+        # version in cls.ensemble
+        return ClassificationEnsemble(
+            model=model,
+            loss=loss,
+            optimization_procedure=optimization_procedure,
+            format_batch_fn=format_batch_fn,
+            use_entropy=use_entropy,
+            use_logits=use_logits,
+            use_mi=use_mi,
+            use_variation_ratio=use_variation_ratio,
+            **kwargs,
+        )
 
     @classmethod
     def load_from_checkpoint(

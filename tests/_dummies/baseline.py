@@ -42,24 +42,23 @@ class DummyClassificationBaseline:
                 format_batch_fn=nn.Identity(),
                 **kwargs,
             )
-        elif baseline_type == "ensemble":
-            kwargs["num_estimators"] = 2
-            return ClassificationEnsemble(
-                num_classes=num_classes,
-                model=model,
-                loss=loss,
-                optimization_procedure=optimization_procedure,
-                format_batch_fn=RepeatTarget(2),
-                **kwargs,
-            )
+        # baseline_type == "ensemble":
+        kwargs["num_estimators"] = 2
+        return ClassificationEnsemble(
+            num_classes=num_classes,
+            model=model,
+            loss=loss,
+            optimization_procedure=optimization_procedure,
+            format_batch_fn=RepeatTarget(2),
+            **kwargs,
+        )
 
     @classmethod
     def add_model_specific_args(
         cls,
         parser: ArgumentParser,
     ) -> ArgumentParser:
-        parser = ClassificationEnsemble.add_model_specific_args(parser)
-        return parser
+        return ClassificationEnsemble.add_model_specific_args(parser)
 
 
 class DummyRegressionBaseline:
@@ -88,22 +87,21 @@ class DummyRegressionBaseline:
                 dist_estimation=dist_estimation,
                 **kwargs,
             )
-        elif baseline_type == "ensemble":
-            kwargs["num_estimators"] = 2
-            return RegressionEnsemble(
-                model=model,
-                loss=loss,
-                optimization_procedure=optimization_procedure,
-                dist_estimation=dist_estimation,
-                mode="mean",
-                out_features=out_features,
-                **kwargs,
-            )
+        # baseline_type == "ensemble":
+        kwargs["num_estimators"] = 2
+        return RegressionEnsemble(
+            model=model,
+            loss=loss,
+            optimization_procedure=optimization_procedure,
+            dist_estimation=dist_estimation,
+            mode="mean",
+            out_features=out_features,
+            **kwargs,
+        )
 
     @classmethod
     def add_model_specific_args(
         cls,
         parser: ArgumentParser,
     ) -> ArgumentParser:
-        parser = ClassificationEnsemble.add_model_specific_args(parser)
-        return parser
+        return ClassificationEnsemble.add_model_specific_args(parser)

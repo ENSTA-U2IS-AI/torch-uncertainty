@@ -11,32 +11,27 @@ from torch_uncertainty.layers.packed import (
 
 @pytest.fixture
 def feat_input() -> torch.Tensor:
-    feat = torch.rand((6, 1))
-    return feat
+    return torch.rand((6, 1))
 
 
 @pytest.fixture
 def feat_input_one_rearrange() -> torch.Tensor:
-    feat = torch.rand((1 * 3, 5))
-    return feat
+    return torch.rand((1 * 3, 5))
 
 
 @pytest.fixture
 def seq_input() -> torch.Tensor:
-    seq = torch.rand((5, 6, 3))
-    return seq
+    return torch.rand((5, 6, 3))
 
 
 @pytest.fixture
 def img_input() -> torch.Tensor:
-    img = torch.rand((5, 6, 3, 3))
-    return img
+    return torch.rand((5, 6, 3, 3))
 
 
 @pytest.fixture
 def voxels_input() -> torch.Tensor:
-    voxels = torch.rand((5, 6, 3, 3, 3))
-    return voxels
+    return torch.rand((5, 6, 3, 3, 3))
 
 
 class TestPackedLinear:

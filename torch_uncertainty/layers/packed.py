@@ -144,8 +144,7 @@ class PackedLinear(nn.Module):
     def forward(self, input: Tensor) -> Tensor:
         if self.rearrange:
             return self._rearrange_forward(input)
-        else:
-            return self.conv1x1(input)
+        return self.conv1x1(input)
 
     @property
     def weight(self) -> Tensor:

@@ -82,7 +82,7 @@ class TinyImageNet(Dataset):
         with open(self.words_path) as wf:
             for line in wf:
                 nid, labels = line.split("\t")
-                labels = list(map(lambda x: x.strip(), labels.split(",")))
+                labels = [x.strip() for x in labels.split(",")]
                 self.nid_to_words[nid].extend(labels)
 
         paths = []
@@ -111,7 +111,5 @@ class TinyImageNet(Dataset):
 
         else:  # self.split == "test":
             test_path = self.root / "test"
-            paths = list(
-                map(lambda x: os.path.join(test_path, x), os.listdir(test_path))
-            )
+            paths = [os.path.join(test_path, x) for x in os.listdir(test_path)]
         return paths

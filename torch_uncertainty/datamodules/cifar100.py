@@ -200,8 +200,7 @@ class CIFAR100DataModule(LightningDataModule):
                 AggregatedDataset(self.train, self.num_dataloaders),
                 shuffle=True,
             )
-        else:
-            return self._data_loader(self.train, shuffle=True)
+        return self._data_loader(self.train, shuffle=True)
 
     def val_dataloader(self) -> DataLoader:
         """Get the validation dataloader for CIFAR100.

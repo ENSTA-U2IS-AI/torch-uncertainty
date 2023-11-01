@@ -39,8 +39,7 @@ class _MIMOWide(_Wide):
 
         out = rearrange(x, "(m b) c h w -> b (m c) h w", m=self.num_estimators)
         out = super().forward(out)
-        out = rearrange(out, "b (m d) -> (m b) d", m=self.num_estimators)
-        return out
+        return rearrange(out, "b (m d) -> (m b) d", m=self.num_estimators)
 
 
 def mimo_wideresnet28x10(

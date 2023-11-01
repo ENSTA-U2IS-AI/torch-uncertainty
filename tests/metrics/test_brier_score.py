@@ -18,8 +18,7 @@ def vec2D_max_target() -> torch.Tensor:
 
 @pytest.fixture
 def vec2D_max_target1D() -> torch.Tensor:
-    vec = torch.as_tensor([1])
-    return vec
+    return torch.as_tensor([1])
 
 
 @pytest.fixture
@@ -36,22 +35,19 @@ def vec2D_min_target() -> torch.Tensor:
 
 @pytest.fixture
 def vec2D_5classes() -> torch.Tensor:
-    vec = torch.as_tensor(
+    return torch.as_tensor(
         [[0.2, 0.6, 0.1, 0.05, 0.05], [0.05, 0.25, 0.1, 0.3, 0.3]]
     )
-    return vec
 
 
 @pytest.fixture
 def vec2D_5classes_target() -> torch.Tensor:
-    vec = torch.as_tensor([[0, 0, 0, 1, 0], [0, 0, 0, 0, 1]])
-    return vec
+    return torch.as_tensor([[0, 0, 0, 1, 0], [0, 0, 0, 0, 1]])
 
 
 @pytest.fixture
 def vec2D_5classes_target1D() -> torch.Tensor:
-    vec = torch.as_tensor([3, 4])
-    return vec
+    return torch.as_tensor([3, 4])
 
 
 @pytest.fixture

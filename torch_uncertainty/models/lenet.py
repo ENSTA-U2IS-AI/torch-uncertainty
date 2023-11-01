@@ -64,8 +64,7 @@ class _LeNet(nn.Module):
             self.activation(self.norm(self.fc2(out))),
             p=self.dropout_rate,
         )
-        out = self.fc3(out)
-        return out
+        return self.fc3(out)
 
     def handle_dropout(self, x: Tensor) -> Tensor:
         if self.num_estimators is not None:

@@ -128,8 +128,7 @@ class VGG(nn.Module):
         x = self.avgpool(x)
         x = torch.flatten(x, 1)
 
-        x = self.cls_head(x)
-        return x
+        return self.cls_head(x)
 
     def handle_dropout(self, x: Tensor) -> Tensor:
         if self.num_estimators is not None:

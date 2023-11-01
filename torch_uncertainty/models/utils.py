@@ -68,7 +68,7 @@ def StochasticModel(model: nn.Module) -> nn.Module:
                     }
         return sampled_models
 
-    setattr(model, "sample", sample)
+    model.sample = sample
 
     def freeze(self) -> None:
         for module_name in self._modules:
@@ -76,7 +76,7 @@ def StochasticModel(model: nn.Module) -> nn.Module:
             if isinstance(module, bayesian_modules):
                 module.freeze()
 
-    setattr(model, "freeze", freeze)
+    model.freeze = freeze
 
     def unfreeze(self) -> None:
         for module_name in self._modules:
@@ -84,6 +84,6 @@ def StochasticModel(model: nn.Module) -> nn.Module:
             if isinstance(module, bayesian_modules):
                 module.unfreeze()
 
-    setattr(model, "unfreeze", unfreeze)
+    model.unfreeze = unfreeze
 
     return model

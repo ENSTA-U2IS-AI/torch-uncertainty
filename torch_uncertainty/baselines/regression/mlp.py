@@ -65,15 +65,16 @@ class MLP:
                 dist_estimation=dist_estimation,
                 **kwargs,
             )
-        elif version in cls.versions.keys():
-            return RegressionEnsemble(
-                model=model,
-                loss=loss,
-                optimization_procedure=optimization_procedure,
-                dist_estimation=dist_estimation,
-                mode="mean",
-                **kwargs,
-            )
+        # version in cls.versions.keys():
+        return RegressionEnsemble(
+            model=model,
+            loss=loss,
+            optimization_procedure=optimization_procedure,
+            dist_estimation=dist_estimation,
+            mode="mean",
+            **kwargs,
+        )
+        return None
 
     @classmethod
     def load_from_checkpoint(
