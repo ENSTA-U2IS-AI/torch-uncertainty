@@ -55,11 +55,14 @@ class TestTinyImageNetDataModule:
         args = parser.parse_args("")
 
         dm = TinyImageNetDataModule(**vars(args))
-        dm.dataset = lambda root, split, transform: DummyClassificationDataset(root, split=split, transform=transform, num_images=20)
-        dm.make_cross_val_splits(2,1)
-
+        dm.dataset = lambda root, split, transform: DummyClassificationDataset(
+            root, split=split, transform=transform, num_images=20
+        )
+        dm.make_cross_val_splits(2, 1)
 
         args.val_split = 0.1
         dm = TinyImageNetDataModule(**vars(args))
-        dm.dataset = lambda root, split, transform: DummyClassificationDataset(root, split=split, transform=transform, num_images=20)
-        dm.make_cross_val_splits(2,1)
+        dm.dataset = lambda root, split, transform: DummyClassificationDataset(
+            root, split=split, transform=transform, num_images=20
+        )
+        dm.make_cross_val_splits(2, 1)

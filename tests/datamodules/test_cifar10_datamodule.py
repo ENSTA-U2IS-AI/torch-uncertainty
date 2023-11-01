@@ -79,11 +79,26 @@ class TestCIFAR10DataModule:
         args = parser.parse_args("")
 
         dm = CIFAR10DataModule(**vars(args))
-        dm.dataset = lambda root, train, download, transform: DummyClassificationDataset(root, train=train, download=download, transform=transform, num_images=20)
-        dm.make_cross_val_splits(2,1)
-
+        dm.dataset = (
+            lambda root, train, download, transform: DummyClassificationDataset(
+                root,
+                train=train,
+                download=download,
+                transform=transform,
+                num_images=20,
+            )
+        )
+        dm.make_cross_val_splits(2, 1)
 
         args.val_split = 0.1
         dm = CIFAR10DataModule(**vars(args))
-        dm.dataset = lambda root, train, download, transform: DummyClassificationDataset(root, train=train, download=download, transform=transform, num_images=20)
-        dm.make_cross_val_splits(2,1)
+        dm.dataset = (
+            lambda root, train, download, transform: DummyClassificationDataset(
+                root,
+                train=train,
+                download=download,
+                transform=transform,
+                num_images=20,
+            )
+        )
+        dm.make_cross_val_splits(2, 1)

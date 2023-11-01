@@ -69,7 +69,7 @@ class DummyClassificationDataset(data.Dataset):
             num_images // (num_classes) + 1
         )[:num_images]
 
-        self.samples = self.data # for compatibility with TinyImagenet
+        self.samples = self.data  # for compatibility with TinyImagenet
         self.label_data = self.targets
 
     def __getitem__(self, index: int) -> Tuple[Any, Any]:
