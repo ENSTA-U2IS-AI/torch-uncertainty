@@ -1,4 +1,3 @@
-# fmt:off
 import os
 from collections import defaultdict
 from pathlib import Path

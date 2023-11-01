@@ -1,4 +1,3 @@
-# fmt:off
 import os
 from pathlib import Path
 from typing import Any, Callable, Literal, Optional, Tuple

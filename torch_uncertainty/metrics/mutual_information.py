@@ -1,4 +1,3 @@
-# fmt:off
 from typing import Any, Literal, Optional
 
 import torch

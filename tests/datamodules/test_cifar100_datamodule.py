@@ -1,4 +1,3 @@
-# fmt:off
 from argparse import ArgumentParser
 from pathlib import Path
 
@@ -9,7 +8,6 @@ from torch_uncertainty.datamodules import CIFAR100DataModule
 from torch_uncertainty.transforms import Cutout
 
 from .._dummies.dataset import DummyClassificationDataset
-
 
 
 class TestCIFAR100DataModule:

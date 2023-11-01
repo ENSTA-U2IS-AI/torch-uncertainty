@@ -1,4 +1,3 @@
-# fmt:off
 import pytest
 import torch
 
@@ -8,7 +7,6 @@ from torch_uncertainty.layers.packed import (
     PackedConv3d,
     PackedLinear,
 )
-
 
 
 @pytest.fixture

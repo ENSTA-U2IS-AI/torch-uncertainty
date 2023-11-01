@@ -1,9 +1,7 @@
-# fmt:off
 from torchvision.transforms import ToTensor
 
 from .dataset import DummyClassificationDataset, DummyRegressionDataset
 from .transform import DummyTransform
-
 
 
 class TestDummyClassificationDataset:

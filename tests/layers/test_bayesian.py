@@ -1,4 +1,3 @@
-# fmt:off
 import pytest
 import torch
 
@@ -9,7 +8,6 @@ from torch_uncertainty.layers.bayesian import (
     BayesLinear,
 )
 from torch_uncertainty.layers.bayesian.sampler import TrainableDistribution
-
 
 
 @pytest.fixture

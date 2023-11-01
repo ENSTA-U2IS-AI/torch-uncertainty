@@ -1,4 +1,3 @@
-# fmt:off
 import pytest
 import torch
 from torch import nn
@@ -10,7 +9,6 @@ from torch_uncertainty.optimization_procedures import (
     optim_cifar100_resnet18,
     optim_cifar100_resnet50,
 )
-
 
 
 class TestMaskedBaseline:

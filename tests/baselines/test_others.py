@@ -1,4 +1,3 @@
-# fmt:off
 import pytest
 from torch import nn
 
@@ -8,7 +7,6 @@ from torch_uncertainty.optimization_procedures import (
     optim_cifar10_resnet18,
     optim_cifar10_wideresnet,
 )
-
 
 
 class TestStandardBaseline:

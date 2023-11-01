@@ -77,7 +77,9 @@ Try to include an emoji at the start of each commit message following the sugges
 from `this page <https://gist.github.com/parmentf/035de27d6ed1dce0b36a>`_.
 
 If you implement a method, please add a reference to the corresponding paper in the 
-`references page <https://torch-uncertainty.github.io/references.html>`_.
+`references page <https://torch-uncertainty.github.io/references.html>`_. Also,
+remember to add TorchUncertainty to the list of libraries implementing this reference
+on `PapersWithCode <https://paperswithcode.com>`_.
 
 Datasets & Datamodules
 ^^^^^^^^^^^^^^^^^^^^^^
