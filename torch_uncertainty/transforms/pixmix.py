@@ -1,9 +1,9 @@
 """ Code adapted from PixMix' paper. """
 
+import numpy as np
 from PIL import Image
 from torch import nn
 
-import numpy as np
 from torch_uncertainty.transforms import Shear, Translate, augmentations
 
 

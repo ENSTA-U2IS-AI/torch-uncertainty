@@ -1,5 +1,3 @@
-from typing import Dict, List
-
 from torch import nn
 
 from ..layers.bayesian import bayesian_modules
@@ -49,7 +47,7 @@ def StochasticModel(model: nn.Module) -> nn.Module:
     provide samples of the estimated posterior distribution.
     """
 
-    def sample(self, num_samples: int = 1) -> List[Dict]:
+    def sample(self, num_samples: int = 1) -> list[dict]:
         sampled_models = [{}] * num_samples
         for module_name in self._modules:
             module = self._modules[module_name]

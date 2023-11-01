@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Type, Union
+from typing import Any
 
 import torch
 from einops import rearrange
@@ -11,12 +11,12 @@ from ..utils import toggle_dropout
 class VGG(nn.Module):
     def __init__(
         self,
-        vgg_cfg: List[Union[str, int]],
+        vgg_cfg: list[str | int],
         in_channels: int,
         num_classes: int,
-        linear_layer: Type[nn.Module],
-        conv2d_layer: Type[nn.Module],
-        norm: Type[nn.Module],
+        linear_layer: type[nn.Module],
+        conv2d_layer: type[nn.Module],
+        norm: type[nn.Module],
         groups: int,
         dropout_rate: float,
         style: str,
@@ -83,8 +83,8 @@ class VGG(nn.Module):
                 if m.bias is not None:  # coverage: ignore
                     nn.init.constant_(m.bias, 0)
 
-    def _make_layers(self, cfg: List) -> nn.Sequential:
-        layers: List[nn.Module] = []
+    def _make_layers(self, cfg: list) -> nn.Sequential:
+        layers: list[nn.Module] = []
         in_channels = self.in_channels
         for i, v in enumerate(cfg):
             if v == "M":
@@ -141,12 +141,12 @@ class VGG(nn.Module):
 
 
 def _vgg(
-    vgg_cfg: Dict[str, List[Union[str, int]]],
+    vgg_cfg: dict[str, list[str | int]],
     in_channels: int,
     num_classes: int,
-    linear_layer: Type[nn.Module] = nn.Linear,
-    conv2d_layer: Type[nn.Module] = nn.Conv2d,
-    norm: Type[nn.Module] = nn.Identity,
+    linear_layer: type[nn.Module] = nn.Linear,
+    conv2d_layer: type[nn.Module] = nn.Conv2d,
+    norm: type[nn.Module] = nn.Identity,
     groups: int = 1,
     dropout_rate: float = 0.5,
     style: str = "imagenet",

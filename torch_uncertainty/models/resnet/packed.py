@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Type, Union
+from typing import Any
 
 import torch.nn.functional as F
 from einops import rearrange
@@ -53,7 +53,7 @@ class BasicBlock(nn.Module):
         gamma: int = 1,
         groups: int = 1,
     ):
-        super(BasicBlock, self).__init__()
+        super().__init__()
 
         # No subgroups for the first layer
         self.conv1 = PackedConv2d(
@@ -120,7 +120,7 @@ class Bottleneck(nn.Module):
         gamma: int = 1,
         groups: int = 1,
     ):
-        super(Bottleneck, self).__init__()
+        super().__init__()
 
         # No subgroups for the first layer
         self.conv1 = PackedConv2d(
@@ -188,8 +188,8 @@ class Bottleneck(nn.Module):
 class _PackedResNet(nn.Module):
     def __init__(
         self,
-        block: Type[Union[BasicBlock, Bottleneck]],
-        num_blocks: List[int],
+        block: type[BasicBlock | Bottleneck],
+        num_blocks: list[int],
         in_channels: int,
         num_classes: int,
         num_estimators: int,
@@ -300,7 +300,7 @@ class _PackedResNet(nn.Module):
 
     def _make_layer(
         self,
-        block: Type[Union[BasicBlock, Bottleneck]],
+        block: type[BasicBlock | Bottleneck],
         planes: int,
         num_blocks: int,
         stride: int,
@@ -343,7 +343,7 @@ class _PackedResNet(nn.Module):
         out = self.linear(out)
         return out
 
-    def check_config(self, config: Dict[str, Any]) -> bool:
+    def check_config(self, config: dict[str, Any]) -> bool:
         """Check if the pretrained configuration matches the current model."""
         return (
             (config["alpha"] == self.alpha)

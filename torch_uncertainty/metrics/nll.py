@@ -1,4 +1,4 @@
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 import torch
 import torch.nn.functional as F
@@ -38,7 +38,7 @@ class NegativeLogLikelihood(Metric):
     """
 
     is_differentiable: bool = False
-    higher_is_better: Optional[bool] = False
+    higher_is_better: bool | None = False
     full_state_update: bool = False
 
     def __init__(

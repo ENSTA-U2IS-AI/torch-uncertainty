@@ -1,5 +1,5 @@
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, Optional, Tuple, Union
 
 import pandas as pd
 import torch
@@ -129,9 +129,9 @@ class UCIRegression(Dataset):
 
     def __init__(
         self,
-        root: Union[Path, str],
-        transform: Optional[Callable] = None,
-        target_transform: Optional[Callable] = None,
+        root: Path | str,
+        transform: Callable | None = None,
+        target_transform: Callable | None = None,
         dataset_name: str = "energy",
         download: bool = False,
         seed: int = 42,
@@ -295,7 +295,7 @@ class UCIRegression(Dataset):
             indexes = torch.randperm(array.shape[0], generator=gen)
             array = array[indexes]
 
-    def __getitem__(self, index: int) -> Tuple[torch.Tensor, torch.Tensor]:
+    def __getitem__(self, index: int) -> tuple[torch.Tensor, torch.Tensor]:
         """Get sample and target for a given index."""
         if self.dataset_name == "energy-prediction":
             data = self.data[index : index + 13, :]

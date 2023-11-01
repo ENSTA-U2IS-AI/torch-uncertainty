@@ -1,14 +1,14 @@
 import os
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable, Literal, Optional, Tuple
+from typing import Any, Literal
 
+import numpy as np
 from torchvision.datasets import VisionDataset
 from torchvision.datasets.utils import (
     check_integrity,
     download_and_extract_archive,
 )
-
-import numpy as np
 
 
 class MNISTC(VisionDataset):
@@ -66,8 +66,8 @@ class MNISTC(VisionDataset):
     def __init__(
         self,
         root: str,
-        transform: Optional[Callable] = None,
-        target_transform: Optional[Callable] = None,
+        transform: Callable | None = None,
+        target_transform: Callable | None = None,
         split: Literal["train", "test"] = "test",
         subset: str = "all",
         download: bool = False,
@@ -113,7 +113,7 @@ class MNISTC(VisionDataset):
         root: Path,
         subset: str,
         split: Literal["train", "test"],
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray, np.ndarray]:
         r"""
         Build the corrupted dataset according to the chosen subset and
             severity. If the subset is 'all', gather all corruption types

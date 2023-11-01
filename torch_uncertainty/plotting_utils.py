@@ -1,5 +1,3 @@
-from typing import List, Tuple
-
 import matplotlib.pyplot as plt
 import torch
 from matplotlib.axes import Axes
@@ -29,7 +27,7 @@ class CalibrationPlot:
         mode: str = "top_label",
         adaptive: bool = False,
         num_bins: int = 10,
-        figsize: Tuple = (5, 5),
+        figsize: tuple = (5, 5),
     ) -> None:
         if mode != "top_label":
             raise NotImplementedError(f"Mode {mode} is not yet implemented.")
@@ -75,7 +73,7 @@ class CalibrationPlot:
         else:
             self.acc.append((preds.argmax(-1) == targets).cpu())
 
-    def compute(self) -> Tuple[Figure, Axes]:
+    def compute(self) -> tuple[Figure, Axes]:
         """Compute and plot the calibration figure.
 
         Returns:
@@ -139,7 +137,7 @@ class CalibrationPlot:
 
     def __call__(
         self, preds: torch.Tensor, targets: torch.Tensor
-    ) -> Tuple[Figure, Axes]:
+    ) -> tuple[Figure, Axes]:
         """Update, compute, and plot the calibration plot.
 
         Args:
@@ -154,11 +152,11 @@ class CalibrationPlot:
 
 
 def plot_hist(
-    conf: List[torch.Tensor],
+    conf: list[torch.Tensor],
     bins: int = 20,
     title: str = "Histogram with 'auto' bins",
     dpi: int = 60,
-) -> Tuple[Figure, Axes]:
+) -> tuple[Figure, Axes]:
     """Plot a confidence histogram.
 
     Args:

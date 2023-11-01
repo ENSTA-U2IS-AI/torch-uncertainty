@@ -1,5 +1,3 @@
-from typing import Type
-
 from torch import nn
 
 from ...layers.packed import PackedConv2d, PackedLinear
@@ -20,7 +18,7 @@ def packed_vgg11(
     alpha: int,
     num_estimators: int,
     gamma: int,
-    norm: Type[nn.Module] = nn.Identity,
+    norm: type[nn.Module] = nn.Identity,
     groups: int = 1,
     dropout_rate: float = 0.5,
     style: str = "imagenet",
@@ -47,7 +45,7 @@ def packed_vgg13(
     alpha: int,
     num_estimators: int,
     gamma: int,
-    norm: Type[nn.Module] = nn.Identity,
+    norm: type[nn.Module] = nn.Identity,
     groups: int = 1,
     dropout_rate: float = 0.5,
     style: str = "imagenet",
@@ -74,7 +72,7 @@ def packed_vgg16(
     alpha: int,
     num_estimators: int,
     gamma: int,
-    norm: Type[nn.Module] = nn.Identity,
+    norm: type[nn.Module] = nn.Identity,
     groups: int = 1,
     dropout_rate: float = 0.5,
     style: str = "imagenet",
@@ -101,7 +99,7 @@ def packed_vgg19(
     alpha: int,
     num_estimators: int,
     gamma: int,
-    norm: Type[nn.Module] = nn.Identity,
+    norm: type[nn.Module] = nn.Identity,
     groups: int = 1,
     dropout_rate: float = 0.5,
     style: str = "imagenet",

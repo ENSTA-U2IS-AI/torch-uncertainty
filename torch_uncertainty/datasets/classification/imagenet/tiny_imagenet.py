@@ -1,13 +1,13 @@
 import os
 from collections import defaultdict
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, Literal, Optional
+from typing import Literal
 
+import numpy as np
 import torch
 from PIL import Image
 from torch.utils.data import Dataset
-
-import numpy as np
 
 
 class TinyImageNet(Dataset):
@@ -19,8 +19,8 @@ class TinyImageNet(Dataset):
         self,
         root: str,
         split: Literal["train", "val", "test"] = "train",
-        transform: Optional[Callable] = None,
-        target_transform: Optional[Callable] = None,
+        transform: Callable | None = None,
+        target_transform: Callable | None = None,
     ):
         self.root = Path(root) / "tiny-imagenet-200"
 
@@ -73,13 +73,13 @@ class TinyImageNet(Dataset):
 
     def _make_paths(self):
         self.ids = []
-        with open(self.wnids_path, "r") as idf:
+        with open(self.wnids_path) as idf:
             for nid in idf:
                 nid = nid.strip()
                 self.ids.append(nid)
         self.nid_to_words = defaultdict(list)
 
-        with open(self.words_path, "r") as wf:
+        with open(self.words_path) as wf:
             for line in wf:
                 nid, labels = line.split("\t")
                 labels = list(map(lambda x: x.strip(), labels.split(",")))
@@ -94,7 +94,7 @@ class TinyImageNet(Dataset):
                 anno_path = os.path.join(train_path, nid, nid + "_boxes.txt")
                 imgs_path = os.path.join(train_path, nid, "images")
                 label_id = self.ids.index(nid)
-                with open(anno_path, "r") as annof:
+                with open(anno_path) as annof:
                     for line in annof:
                         fname, x0, y0, x1, y1 = line.split()
                         fname = os.path.join(imgs_path, fname)

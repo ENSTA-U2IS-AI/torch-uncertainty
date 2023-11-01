@@ -1,5 +1,3 @@
-from typing import List, Type, Union
-
 import torch.nn.functional as F
 from torch import Tensor, nn
 
@@ -25,7 +23,7 @@ class BasicBlock(nn.Module):
         dropout_rate: float = 0,
         groups: int = 1,
     ) -> None:
-        super(BasicBlock, self).__init__()
+        super().__init__()
 
         self.conv1 = nn.Conv2d(
             in_planes,
@@ -84,7 +82,7 @@ class Bottleneck(nn.Module):
         dropout_rate: float = 0,
         groups: int = 1,
     ) -> None:
-        super(Bottleneck, self).__init__()
+        super().__init__()
 
         self.conv1 = nn.Conv2d(
             in_planes,
@@ -199,8 +197,8 @@ class _ResNet(nn.Module):
 
     def __init__(
         self,
-        block: Type[Union[BasicBlock, Bottleneck]],
-        num_blocks: List[int],
+        block: type[BasicBlock | Bottleneck],
+        num_blocks: list[int],
         in_channels: int,
         num_classes: int,
         dropout_rate: float,
@@ -289,7 +287,7 @@ class _ResNet(nn.Module):
 
     def _make_layer(
         self,
-        block: Union[Type[BasicBlock], Type[Bottleneck]],
+        block: type[BasicBlock] | type[Bottleneck],
         planes: int,
         num_blocks: int,
         stride: int,

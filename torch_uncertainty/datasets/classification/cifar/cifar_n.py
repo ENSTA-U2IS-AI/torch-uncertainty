@@ -1,5 +1,6 @@
 import os
-from typing import Any, Callable, Literal, Optional
+from collections.abc import Callable
+from typing import Any, Literal
 
 import torch
 from torchvision.datasets import CIFAR10, CIFAR100
@@ -43,8 +44,8 @@ class CIFAR10N(CIFAR10):
             "random_label2",
             "random_label3",
         ] = "aggre_label",
-        transform: Optional[Callable[..., Any]] = None,
-        target_transform: Optional[Callable[..., Any]] = None,
+        transform: Callable[..., Any] | None = None,
+        target_transform: Callable[..., Any] | None = None,
         download: bool = False,
     ) -> None:
         super().__init__(
@@ -98,8 +99,8 @@ class CIFAR100N(CIFAR100):
             "fine_label",
             "coarse_label",
         ] = "fine_label",
-        transform: Optional[Callable[..., Any]] = None,
-        target_transform: Optional[Callable[..., Any]] = None,
+        transform: Callable[..., Any] | None = None,
+        target_transform: Callable[..., Any] | None = None,
         download: bool = False,
     ) -> None:
         super().__init__(

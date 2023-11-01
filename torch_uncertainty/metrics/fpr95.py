@@ -1,13 +1,10 @@
-from typing import List
-
+import numpy as np
 import torch
+from numpy.typing import ArrayLike
 from torch import Tensor
 from torchmetrics import Metric
 from torchmetrics.utilities import rank_zero_warn
 from torchmetrics.utilities.data import dim_zero_cat
-
-import numpy as np
-from numpy.typing import ArrayLike
 
 
 def stable_cumsum(arr: ArrayLike, rtol: float = 1e-05, atol: float = 1e-08):
@@ -42,8 +39,8 @@ class FPR95(Metric):
     higher_is_better: bool = False
     full_state_update: bool = False
 
-    conf: List[Tensor]
-    targets: List[Tensor]
+    conf: list[Tensor]
+    targets: list[Tensor]
 
     def __init__(self, pos_label: int, **kwargs) -> None:
         super().__init__(**kwargs)

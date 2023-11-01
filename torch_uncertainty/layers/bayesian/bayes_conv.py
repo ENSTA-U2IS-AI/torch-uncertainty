@@ -1,10 +1,7 @@
-from typing import List, Optional, Tuple, Union
-
 import torch
 from torch import Tensor
-from torch.nn import Module
+from torch.nn import Module, init
 from torch.nn import functional as F
-from torch.nn import init
 from torch.nn.common_types import _size_1_t, _size_2_t, _size_3_t
 from torch.nn.modules.utils import (
     _pair,
@@ -31,31 +28,31 @@ class _BayesConvNd(Module):
         "out_channels",
         "kernel_size",
     ]
-    __annotations__ = {"bias": Optional[torch.Tensor]}
+    __annotations__ = {"bias": torch.Tensor | None}
 
     def _conv_forward(
-        self, input: Tensor, weight: Tensor, bias: Optional[Tensor]
+        self, input: Tensor, weight: Tensor, bias: Tensor | None
     ) -> Tensor:  # coverage: ignore
         ...
 
     in_channels: int
-    _reversed_padding_repeated_twice: List[int]
+    _reversed_padding_repeated_twice: list[int]
     out_channels: int
-    kernel_size: Tuple[int, ...]
-    stride: Tuple[int, ...]
-    padding: Union[str, Tuple[int, ...]]
-    dilation: Tuple[int, ...]
+    kernel_size: tuple[int, ...]
+    stride: tuple[int, ...]
+    padding: str | tuple[int, ...]
+    dilation: tuple[int, ...]
     prior_mu: float
     prior_sigma: float
     mu_init: float
     sigma_init: float
     frozen: bool
     transposed: bool
-    output_padding: Tuple[int, ...]
+    output_padding: tuple[int, ...]
     groups: int
     padding_mode: str
     weight: Tensor
-    bias: Optional[Tensor]
+    bias: Tensor | None
     lprior: Tensor
     lvposterior: Tensor
 
@@ -63,10 +60,10 @@ class _BayesConvNd(Module):
         self,
         in_channels: int,
         out_channels: int,
-        kernel_size: Tuple[int, ...],
-        stride: Tuple[int, ...],
-        padding: Tuple[int, ...],
-        dilation: Tuple[int, ...],
+        kernel_size: tuple[int, ...],
+        stride: tuple[int, ...],
+        padding: tuple[int, ...],
+        dilation: tuple[int, ...],
         prior_sigma_1: float,
         prior_sigma_2: float,
         prior_pi: float,
@@ -74,7 +71,7 @@ class _BayesConvNd(Module):
         sigma_init: float,
         frozen: bool,
         transposed: bool,
-        output_padding: Tuple[int, ...],
+        output_padding: tuple[int, ...],
         groups: int,
         bias: bool,
         padding_mode: str,
@@ -177,7 +174,7 @@ class _BayesConvNd(Module):
         """Unfreeze the layer by setting the frozen attribute to False."""
         self.frozen = False
 
-    def sample(self) -> Tuple[Tensor, Optional[Tensor]]:
+    def sample(self) -> tuple[Tensor, Tensor | None]:
         """Sample the bayesian layer's posterior."""
         weight = self.weight_sampler.sample()
         if self.bias_mu is not None:
@@ -222,7 +219,7 @@ class BayesConv1d(_BayesConvNd):
         out_channels: int,
         kernel_size: _size_1_t,
         stride: _size_1_t = 1,
-        padding: Union[str, _size_1_t] = 0,
+        padding: str | _size_1_t = 0,
         dilation: _size_1_t = 1,
         prior_sigma_1: float = 0.1,
         prior_sigma_2: float = 0.002,
@@ -263,7 +260,7 @@ class BayesConv1d(_BayesConvNd):
         )
 
     def _conv_forward(
-        self, input: Tensor, weight: Tensor, bias: Optional[Tensor]
+        self, input: Tensor, weight: Tensor, bias: Tensor | None
     ) -> Tensor:
         if self.padding_mode != "zeros":
             return F.conv1d(
@@ -322,7 +319,7 @@ class BayesConv2d(_BayesConvNd):
         out_channels: int,
         kernel_size: _size_2_t,
         stride: _size_2_t = 1,
-        padding: Union[str, _size_2_t] = 0,
+        padding: str | _size_2_t = 0,
         dilation: _size_2_t = 1,
         prior_sigma_1: float = 0.1,
         prior_sigma_2: float = 0.002,
@@ -363,7 +360,7 @@ class BayesConv2d(_BayesConvNd):
         )
 
     def _conv_forward(
-        self, input: Tensor, weight: Tensor, bias: Optional[Tensor]
+        self, input: Tensor, weight: Tensor, bias: Tensor | None
     ) -> Tensor:
         if self.padding_mode != "zeros":
             return F.conv2d(
@@ -422,7 +419,7 @@ class BayesConv3d(_BayesConvNd):
         out_channels: int,
         kernel_size: _size_3_t,
         stride: _size_3_t = 1,
-        padding: Union[str, _size_3_t] = 0,
+        padding: str | _size_3_t = 0,
         dilation: _size_3_t = 1,
         prior_sigma_1: float = 0.1,
         prior_sigma_2: float = 0.002,
@@ -463,7 +460,7 @@ class BayesConv3d(_BayesConvNd):
         )
 
     def _conv_forward(
-        self, input: Tensor, weight: Tensor, bias: Optional[Tensor]
+        self, input: Tensor, weight: Tensor, bias: Tensor | None
     ) -> Tensor:
         if self.padding_mode != "zeros":
             return F.conv3d(

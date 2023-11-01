@@ -1,5 +1,4 @@
 import copy
-from typing import List, Optional, Union
 
 import torch
 from torch import nn
@@ -8,7 +7,7 @@ from torch import nn
 class _DeepEnsembles(nn.Module):
     def __init__(
         self,
-        models: List[nn.Module],
+        models: list[nn.Module],
     ) -> None:
         super().__init__()
 
@@ -33,8 +32,8 @@ class _DeepEnsembles(nn.Module):
 
 
 def deep_ensembles(
-    models: Union[List[nn.Module], nn.Module],
-    num_estimators: Optional[int] = None,
+    models: list[nn.Module] | nn.Module,
+    num_estimators: int | None = None,
 ) -> nn.Module:
     """
     Builds a Deep Ensembles out of the original models.

@@ -1,5 +1,3 @@
-from typing import List, Type, Union
-
 import torch.nn.functional as F
 from torch import Tensor, nn
 
@@ -26,7 +24,7 @@ class BasicBlock(nn.Module):
         scale: float = 2.0,
         groups: int = 1,
     ):
-        super(BasicBlock, self).__init__()
+        super().__init__()
 
         self.conv1 = MaskedConv2d(
             in_planes,
@@ -89,7 +87,7 @@ class Bottleneck(nn.Module):
         scale: float = 2.0,
         groups: int = 1,
     ):
-        super(Bottleneck, self).__init__()
+        super().__init__()
 
         self.conv1 = MaskedConv2d(
             in_planes,
@@ -152,8 +150,8 @@ class Bottleneck(nn.Module):
 class _MaskedResNet(nn.Module):
     def __init__(
         self,
-        block: Type[Union[BasicBlock, Bottleneck]],
-        num_blocks: List[int],
+        block: type[BasicBlock | Bottleneck],
+        num_blocks: list[int],
         in_channels: int,
         num_classes: int,
         num_estimators: int,
@@ -248,7 +246,7 @@ class _MaskedResNet(nn.Module):
 
     def _make_layer(
         self,
-        block: Type[Union[BasicBlock, Bottleneck]],
+        block: type[BasicBlock | Bottleneck],
         planes: int,
         num_blocks: int,
         stride: int,

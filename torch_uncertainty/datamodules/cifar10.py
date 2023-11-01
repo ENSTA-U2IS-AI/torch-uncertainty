@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import Any, List, Literal, Optional, Union
+from typing import Any, Literal
 
 import torchvision.transforms as T
 from pytorch_lightning import LightningDataModule
@@ -44,14 +44,14 @@ class CIFAR10DataModule(LightningDataModule):
 
     def __init__(
         self,
-        root: Union[str, Path],
+        root: str | Path,
         evaluate_ood: bool,
         batch_size: int,
         val_split: float = 0.0,
         num_workers: int = 1,
-        cutout: Optional[int] = None,
-        auto_augment: Optional[str] = None,
-        test_alt: Optional[Literal["c", "h"]] = None,
+        cutout: int | None = None,
+        auto_augment: str | None = None,
+        test_alt: Literal["c", "h"] | None = None,
         corruption_severity: int = 1,
         num_dataloaders: int = 1,
         pin_memory: bool = True,
@@ -138,7 +138,7 @@ class CIFAR10DataModule(LightningDataModule):
         if self.evaluate_ood:
             self.ood_dataset(self.root, split="test", download=True)
 
-    def setup(self, stage: Optional[str] = None) -> None:
+    def setup(self, stage: str | None = None) -> None:
         if stage == "fit" or stage is None:
             if self.test_alt == "c" or self.test_alt == "h":
                 raise ValueError("CIFAR-C and H can only be used in testing.")
@@ -210,7 +210,7 @@ class CIFAR10DataModule(LightningDataModule):
         """
         return self._data_loader(self.val)
 
-    def test_dataloader(self) -> List[DataLoader]:
+    def test_dataloader(self) -> list[DataLoader]:
         r"""Get the test dataloaders for CIFAR10.
 
         Return:

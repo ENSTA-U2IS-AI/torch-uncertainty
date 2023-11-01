@@ -6,7 +6,7 @@ from cli_test_helpers import ArgvContext
 from torch import nn
 
 from torch_uncertainty import cli_main, init_args
-from torch_uncertainty.losses import NIGLoss, BetaNLL
+from torch_uncertainty.losses import BetaNLL, NIGLoss
 from torch_uncertainty.optimization_procedures import optim_cifar10_resnet18
 
 from .._dummies import DummyRegressionBaseline, DummyRegressionDataModule

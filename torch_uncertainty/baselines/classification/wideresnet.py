@@ -1,6 +1,6 @@
 from argparse import ArgumentParser, BooleanOptionalAction
 from pathlib import Path
-from typing import Any, Literal, Optional, Type, Union
+from typing import Any, Literal
 
 import torch
 from pytorch_lightning import LightningModule
@@ -110,18 +110,18 @@ class WideResNet:
         cls,
         num_classes: int,
         in_channels: int,
-        loss: Type[nn.Module],
+        loss: type[nn.Module],
         optimization_procedure: Any,
         version: Literal[
             "vanilla", "mc-dropout", "packed", "batched", "masked", "mimo"
         ],
         style: str = "imagenet",
-        num_estimators: Optional[int] = None,
+        num_estimators: int | None = None,
         dropout_rate: float = 0.0,
-        groups: Optional[int] = None,
-        scale: Optional[float] = None,
-        alpha: Optional[int] = None,
-        gamma: Optional[int] = None,
+        groups: int | None = None,
+        scale: float | None = None,
+        alpha: int | None = None,
+        gamma: int | None = None,
         rho: float = 1.0,
         batch_repeat: int = 1,
         use_entropy: bool = False,
@@ -222,8 +222,8 @@ class WideResNet:
     @classmethod
     def load_from_checkpoint(
         cls,
-        checkpoint_path: Union[str, Path],
-        hparams_file: Union[str, Path],
+        checkpoint_path: str | Path,
+        hparams_file: str | Path,
         **kwargs,
     ) -> LightningModule:  # coverage: ignore
         if hparams_file is not None:

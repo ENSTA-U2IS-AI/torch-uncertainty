@@ -1,6 +1,6 @@
 import os
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, Optional
 
 from torchvision.datasets import ImageFolder
 from torchvision.datasets.utils import (
@@ -65,8 +65,8 @@ class TinyImageNetC(ImageFolder):
     def __init__(
         self,
         root: str,
-        transform: Optional[Callable] = None,
-        target_transform: Optional[Callable] = None,
+        transform: Callable | None = None,
+        target_transform: Callable | None = None,
         subset: str = "all",
         severity: int = 1,
         download: bool = False,

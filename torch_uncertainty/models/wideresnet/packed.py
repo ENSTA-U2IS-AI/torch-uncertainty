@@ -1,11 +1,8 @@
-from typing import Type
-
 import torch.nn.functional as F
 from einops import rearrange
 from torch import Tensor, nn
 
 from ...layers import PackedConv2d, PackedLinear
-
 
 __all__ = [
     "packed_wideresnet28x10",
@@ -184,7 +181,7 @@ class _PackedWide(nn.Module):
 
     def _wide_layer(
         self,
-        block: Type[WideBasicBlock],
+        block: type[WideBasicBlock],
         planes: int,
         num_blocks: int,
         dropout_rate: float,

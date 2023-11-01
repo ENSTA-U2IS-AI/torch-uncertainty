@@ -1,4 +1,4 @@
-from typing import Any, Union
+from typing import Any
 
 from einops import rearrange
 from torch import Tensor, nn
@@ -153,7 +153,7 @@ class PackedLinear(nn.Module):
         return self.conv1x1.weight
 
     @property
-    def bias(self) -> Union[Tensor, None]:
+    def bias(self) -> Tensor | None:
         r"""The bias of the underlying convolutional layer."""
         return self.conv1x1.bias
 
@@ -206,7 +206,7 @@ class PackedConv1d(nn.Module):
         num_estimators: int,
         gamma: int = 1,
         stride: _size_1_t = 1,
-        padding: Union[str, _size_1_t] = 0,
+        padding: str | _size_1_t = 0,
         dilation: _size_1_t = 1,
         groups: int = 1,
         minimum_channels_per_group: int = 64,
@@ -273,7 +273,7 @@ class PackedConv1d(nn.Module):
         return self.conv.weight
 
     @property
-    def bias(self) -> Union[Tensor, None]:
+    def bias(self) -> Tensor | None:
         r"""The bias of the underlying convolutional layer."""
         return self.conv.bias
 
@@ -326,7 +326,7 @@ class PackedConv2d(nn.Module):
         num_estimators: int,
         gamma: int = 1,
         stride: _size_2_t = 1,
-        padding: Union[str, _size_2_t] = 0,
+        padding: str | _size_2_t = 0,
         dilation: _size_2_t = 1,
         groups: int = 1,
         minimum_channels_per_group: int = 64,
@@ -334,8 +334,8 @@ class PackedConv2d(nn.Module):
         padding_mode: str = "zeros",
         first: bool = False,
         last: bool = False,
-        device: Union[Any, None] = None,
-        dtype: Union[Any, None] = None,
+        device: Any | None = None,
+        dtype: Any | None = None,
     ) -> None:
         factory_kwargs = {"device": device, "dtype": dtype}
         super().__init__()
@@ -393,7 +393,7 @@ class PackedConv2d(nn.Module):
         return self.conv.weight
 
     @property
-    def bias(self) -> Union[Tensor, None]:
+    def bias(self) -> Tensor | None:
         r"""The bias of the underlying convolutional layer."""
         return self.conv.bias
 
@@ -446,7 +446,7 @@ class PackedConv3d(nn.Module):
         num_estimators: int,
         gamma: int = 1,
         stride: _size_3_t = 1,
-        padding: Union[str, _size_3_t] = 0,
+        padding: str | _size_3_t = 0,
         dilation: _size_3_t = 1,
         groups: int = 1,
         minimum_channels_per_group: int = 64,
@@ -454,8 +454,8 @@ class PackedConv3d(nn.Module):
         padding_mode: str = "zeros",
         first: bool = False,
         last: bool = False,
-        device: Union[Any, None] = None,
-        dtype: Union[Any, None] = None,
+        device: Any | None = None,
+        dtype: Any | None = None,
     ) -> None:
         factory_kwargs = {"device": device, "dtype": dtype}
         super().__init__()
@@ -513,6 +513,6 @@ class PackedConv3d(nn.Module):
         return self.conv.weight
 
     @property
-    def bias(self) -> Union[Tensor, None]:
+    def bias(self) -> Tensor | None:
         r"""The bias of the underlying convolutional layer."""
         return self.conv.bias

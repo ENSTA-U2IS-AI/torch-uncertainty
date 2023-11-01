@@ -1,10 +1,8 @@
-from typing import Tuple
-
+import numpy
 import pytest
 import torch
 from PIL import Image
 
-import numpy
 from torch_uncertainty.transforms import (
     AutoContrast,
     Brightness,
@@ -30,7 +28,7 @@ def img_input() -> torch.Tensor:
 
 
 @pytest.fixture
-def batch_input() -> Tuple[torch.Tensor, torch.Tensor]:
+def batch_input() -> tuple[torch.Tensor, torch.Tensor]:
     imgs = torch.rand(2, 3, 28, 28)
     return imgs, torch.tensor([0, 1])
 

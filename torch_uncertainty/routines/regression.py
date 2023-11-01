@@ -1,5 +1,5 @@
 from argparse import ArgumentParser, Namespace
-from typing import Any, List, Literal, Optional, Tuple, Union
+from typing import Any, Literal
 
 import pytorch_lightning as pl
 import torch
@@ -110,7 +110,7 @@ class RegressionSingle(pl.LightningModule):
             )
 
     def training_step(
-        self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int
+        self, batch: tuple[torch.Tensor, torch.Tensor], batch_idx: int
     ) -> STEP_OUTPUT:
         inputs, targets = batch
         logits = self.forward(inputs)
@@ -132,7 +132,7 @@ class RegressionSingle(pl.LightningModule):
         return loss
 
     def validation_step(
-        self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int
+        self, batch: tuple[torch.Tensor, torch.Tensor], batch_idx: int
     ) -> None:
         inputs, targets = batch
         logits = self.forward(inputs)
@@ -157,14 +157,14 @@ class RegressionSingle(pl.LightningModule):
         self.val_metrics.mse.update(means, targets)
 
     def validation_epoch_end(
-        self, outputs: Union[EPOCH_OUTPUT, List[EPOCH_OUTPUT]]
+        self, outputs: EPOCH_OUTPUT | list[EPOCH_OUTPUT]
     ) -> None:
         self.log_dict(self.val_metrics.compute())
         self.val_metrics.reset()
 
     def test_step(
         self,
-        batch: Tuple[torch.Tensor, torch.Tensor],
+        batch: tuple[torch.Tensor, torch.Tensor],
         batch_idx: int,
     ) -> None:
         inputs, targets = batch
@@ -191,7 +191,7 @@ class RegressionSingle(pl.LightningModule):
         self.test_metrics.mse.update(means, targets)
 
     def test_epoch_end(
-        self, outputs: Union[EPOCH_OUTPUT, List[EPOCH_OUTPUT]]
+        self, outputs: EPOCH_OUTPUT | list[EPOCH_OUTPUT]
     ) -> None:
         self.log_dict(
             self.test_metrics.compute(),
@@ -214,7 +214,7 @@ class RegressionEnsemble(RegressionSingle):
         dist_estimation: int,
         num_estimators: int,
         mode: Literal["mean", "mixture"],
-        out_features: Optional[int] = 1,
+        out_features: int | None = 1,
         **kwargs,
     ) -> None:
         super().__init__(
@@ -236,7 +236,7 @@ class RegressionEnsemble(RegressionSingle):
         self.out_features = out_features
 
     def training_step(
-        self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int
+        self, batch: tuple[torch.Tensor, torch.Tensor], batch_idx: int
     ) -> STEP_OUTPUT:
         inputs, targets = batch
 
@@ -245,7 +245,7 @@ class RegressionEnsemble(RegressionSingle):
         return super().training_step((inputs, targets), batch_idx)
 
     def validation_step(  # type: ignore
-        self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int
+        self, batch: tuple[torch.Tensor, torch.Tensor], batch_idx: int
     ) -> None:
         inputs, targets = batch
         logits = self.forward(inputs)
@@ -276,9 +276,9 @@ class RegressionEnsemble(RegressionSingle):
 
     def test_step(
         self,
-        batch: Tuple[torch.Tensor, torch.Tensor],
+        batch: tuple[torch.Tensor, torch.Tensor],
         batch_idx: int,
-        dataloader_idx: Optional[int] = 0,
+        dataloader_idx: int | None = 0,
     ) -> None:
         if dataloader_idx != 0:
             raise NotImplementedError(

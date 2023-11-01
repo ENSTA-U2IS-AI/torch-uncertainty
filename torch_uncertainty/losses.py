@@ -1,5 +1,3 @@
-from typing import Optional
-
 import torch
 from torch import Tensor, nn
 from torch.nn import functional as F
@@ -114,7 +112,7 @@ class NIGLoss(nn.Module):
     """
 
     def __init__(
-        self, reg_weight: float, reduction: Optional[str] = "mean"
+        self, reg_weight: float, reduction: str | None = "mean"
     ) -> None:
         super().__init__()
 
@@ -191,7 +189,7 @@ class BetaNLL(nn.Module):
     """
 
     def __init__(
-        self, beta: float = 0.5, reduction: Optional[str] = "mean"
+        self, beta: float = 0.5, reduction: str | None = "mean"
     ) -> None:
         super().__init__()
 
@@ -241,10 +239,10 @@ class DECLoss(nn.Module):
 
     def __init__(
         self,
-        annealing_step: Optional[int] = None,
-        reg_weight: Optional[float] = None,
+        annealing_step: int | None = None,
+        reg_weight: float | None = None,
         loss_type: str = "log",
-        reduction: Optional[str] = "mean",
+        reduction: str | None = "mean",
     ) -> None:
         super().__init__()
 
@@ -343,7 +341,7 @@ class DECLoss(nn.Module):
         self,
         evidence: Tensor,
         targets: Tensor,
-        current_epoch: Optional[int] = None,
+        current_epoch: int | None = None,
     ) -> Tensor:
         if (
             self.annealing_step is not None

@@ -1,14 +1,14 @@
 import os
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable, Optional, Tuple
+from typing import Any
 
+import numpy as np
 from torchvision.datasets import VisionDataset
 from torchvision.datasets.utils import (
     check_integrity,
     download_and_extract_archive,
 )
-
-import numpy as np
 
 
 class CIFAR10C(VisionDataset):
@@ -85,8 +85,8 @@ class CIFAR10C(VisionDataset):
     def __init__(
         self,
         root: str,
-        transform: Optional[Callable] = None,
-        target_transform: Optional[Callable] = None,
+        transform: Callable | None = None,
+        target_transform: Callable | None = None,
         subset: str = "all",
         severity: int = 1,
         download: bool = False,
@@ -130,7 +130,7 @@ class CIFAR10C(VisionDataset):
 
     def make_dataset(
         self, root: Path, subset: str, severity: int
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray, np.ndarray]:
         r"""
         Build the corrupted dataset according to the chosen subset and
             severity. If the subset is 'all', gather all corruption types

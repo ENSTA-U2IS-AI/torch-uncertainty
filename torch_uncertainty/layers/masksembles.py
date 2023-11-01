@@ -1,12 +1,11 @@
 """ Modified from https://github.com/nikitadurasov/masksembles/ """
 
-from typing import Any, Union
+from typing import Any
 
+import numpy as np
 import torch
 from torch import Tensor, nn
 from torch.nn.common_types import _size_2_t
-
-import numpy as np
 
 
 def _generate_masks(m: int, n: int, s: float) -> np.ndarray:
@@ -195,8 +194,8 @@ class MaskedLinear(nn.Module):
         num_estimators: int,
         scale: float,
         bias: bool = True,
-        device: Union[Any, None] = None,
-        dtype: Union[Any, None] = None,
+        device: Any | None = None,
+        dtype: Any | None = None,
     ) -> None:
         factory_kwargs = {"device": device, "dtype": dtype}
         super().__init__()
@@ -255,12 +254,12 @@ class MaskedConv2d(nn.Module):
         num_estimators: int,
         scale: float,
         stride: _size_2_t = 1,
-        padding: Union[str, _size_2_t] = 0,
+        padding: str | _size_2_t = 0,
         dilation: _size_2_t = 1,
         groups: int = 1,
         bias: bool = True,
-        device: Union[Any, None] = None,
-        dtype: Union[Any, None] = None,
+        device: Any | None = None,
+        dtype: Any | None = None,
     ) -> None:
         factory_kwargs = {"device": device, "dtype": dtype}
         super().__init__()

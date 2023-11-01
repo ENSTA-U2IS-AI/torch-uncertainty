@@ -1,7 +1,7 @@
 from argparse import ArgumentParser
 from functools import partial
 from pathlib import Path
-from typing import Any, Optional, Tuple, Union
+from typing import Any
 
 from pytorch_lightning import LightningDataModule
 from torch import Generator
@@ -34,14 +34,14 @@ class UCIDataModule(LightningDataModule):
 
     def __init__(
         self,
-        root: Union[str, Path],
+        root: str | Path,
         batch_size: int,
         dataset_name: str,
         val_split: float = 0.0,
         num_workers: int = 1,
         pin_memory: bool = True,
         persistent_workers: bool = True,
-        input_shape: Optional[Tuple[int, ...]] = None,
+        input_shape: tuple[int, ...] | None = None,
         split_seed: int = 42,
         **kwargs,
     ) -> None:
@@ -67,7 +67,7 @@ class UCIDataModule(LightningDataModule):
         """Download the dataset."""
         self.dataset(root=self.root, download=True)
 
-    def setup(self, stage: Optional[str] = None) -> None:
+    def setup(self, stage: str | None = None) -> None:
         """Split the datasets into train, val, and test."""
         full = self.dataset(
             self.root,

@@ -1,5 +1,3 @@
-from typing import Type
-
 import torch.nn.functional as F
 from torch import Tensor, nn
 
@@ -159,7 +157,7 @@ class _BatchedWide(nn.Module):
 
     def _wide_layer(
         self,
-        block: Type[nn.Module],
+        block: type[nn.Module],
         planes: int,
         num_blocks: int,
         dropout_rate: float,

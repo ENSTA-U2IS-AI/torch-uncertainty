@@ -1,6 +1,6 @@
 from argparse import ArgumentParser, Namespace
 from functools import partial
-from typing import Any, List, Optional, Tuple, Type, Union
+from typing import Any
 
 import pytorch_lightning as pl
 import torch
@@ -56,7 +56,7 @@ class ClassificationSingle(pl.LightningModule):
         self,
         num_classes: int,
         model: nn.Module,
-        loss: Type[nn.Module],
+        loss: type[nn.Module],
         optimization_procedure: Any,
         format_batch_fn: nn.Module = nn.Identity(),
         mixup_alpha: float = 0,
@@ -194,7 +194,7 @@ class ClassificationSingle(pl.LightningModule):
             )
 
     def training_step(
-        self, batch: Tuple[Tensor, Tensor], batch_idx: int
+        self, batch: tuple[Tensor, Tensor], batch_idx: int
     ) -> STEP_OUTPUT:
         batch = self.mixup(*batch)
         inputs, targets = self.format_batch_fn(batch)
@@ -216,7 +216,7 @@ class ClassificationSingle(pl.LightningModule):
         return loss
 
     def validation_step(
-        self, batch: Tuple[Tensor, Tensor], batch_idx: int
+        self, batch: tuple[Tensor, Tensor], batch_idx: int
     ) -> None:
         inputs, targets = batch
         logits = self.forward(inputs)
@@ -229,16 +229,16 @@ class ClassificationSingle(pl.LightningModule):
         self.val_cls_metrics.update(probs, targets)
 
     def validation_epoch_end(
-        self, outputs: Union[EPOCH_OUTPUT, List[EPOCH_OUTPUT]]
+        self, outputs: EPOCH_OUTPUT | list[EPOCH_OUTPUT]
     ) -> None:
         self.log_dict(self.val_cls_metrics.compute())
         self.val_cls_metrics.reset()
 
     def test_step(
         self,
-        batch: Tuple[Tensor, Tensor],
+        batch: tuple[Tensor, Tensor],
         batch_idx: int,
-        dataloader_idx: Optional[int] = 0,
+        dataloader_idx: int | None = 0,
     ) -> Tensor:
         inputs, targets = batch
         logits = self.forward(inputs)
@@ -283,7 +283,7 @@ class ClassificationSingle(pl.LightningModule):
         return logits
 
     def test_epoch_end(
-        self, outputs: Union[EPOCH_OUTPUT, List[EPOCH_OUTPUT]]
+        self, outputs: EPOCH_OUTPUT | list[EPOCH_OUTPUT]
     ) -> None:
         self.log_dict(
             self.test_cls_metrics.compute(),
@@ -376,7 +376,7 @@ class ClassificationEnsemble(ClassificationSingle):
         self,
         num_classes: int,
         model: nn.Module,
-        loss: Type[nn.Module],
+        loss: type[nn.Module],
         optimization_procedure: Any,
         num_estimators: int,
         format_batch_fn: nn.Module = nn.Identity(),
@@ -459,7 +459,7 @@ class ClassificationEnsemble(ClassificationSingle):
             )
 
     def training_step(
-        self, batch: Tuple[Tensor, Tensor], batch_idx: int
+        self, batch: tuple[Tensor, Tensor], batch_idx: int
     ) -> STEP_OUTPUT:
         batch = self.mixup(*batch)
         # eventual input repeat is done in the model
@@ -483,7 +483,7 @@ class ClassificationEnsemble(ClassificationSingle):
         return loss
 
     def validation_step(  # type: ignore
-        self, batch: Tuple[Tensor, Tensor], batch_idx: int
+        self, batch: tuple[Tensor, Tensor], batch_idx: int
     ) -> None:
         inputs, targets = batch
         logits = self.forward(inputs)
@@ -498,9 +498,9 @@ class ClassificationEnsemble(ClassificationSingle):
 
     def test_step(
         self,
-        batch: Tuple[Tensor, Tensor],
+        batch: tuple[Tensor, Tensor],
         batch_idx: int,
-        dataloader_idx: Optional[int] = 0,
+        dataloader_idx: int | None = 0,
     ) -> Tensor:
         inputs, targets = batch
         logits = self.forward(inputs)
@@ -563,7 +563,7 @@ class ClassificationEnsemble(ClassificationSingle):
         return logits
 
     def test_epoch_end(
-        self, outputs: Union[EPOCH_OUTPUT, List[EPOCH_OUTPUT]]
+        self, outputs: EPOCH_OUTPUT | list[EPOCH_OUTPUT]
     ) -> None:
         self.log_dict(
             self.test_cls_metrics.compute(),

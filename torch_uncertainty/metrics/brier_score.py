@@ -1,4 +1,4 @@
-from typing import Literal, Optional
+from typing import Literal
 
 import torch
 import torch.nn.functional as F
@@ -43,7 +43,7 @@ class BrierScore(Metric):
     """
 
     is_differentiable: bool = False
-    higher_is_better: Optional[bool] = False
+    higher_is_better: bool | None = False
     full_state_update: bool = False
 
     def __init__(

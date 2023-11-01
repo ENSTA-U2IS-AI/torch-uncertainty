@@ -1,4 +1,4 @@
-from typing import Callable, Dict, List, Type, Union
+from collections.abc import Callable
 
 import torch.nn.functional as F
 from torch import Tensor, nn
@@ -27,10 +27,10 @@ class _MLP(nn.Module):
         self,
         in_features: int,
         num_outputs: int,
-        hidden_dims: List[int],
-        layer: Type[nn.Module],
+        hidden_dims: list[int],
+        layer: type[nn.Module],
         activation: Callable,
-        layer_args: Dict,
+        layer_args: dict,
         dropout: float,
     ) -> None:
         super().__init__()
@@ -91,12 +91,12 @@ def _mlp(
     stochastic: bool,
     in_features: int,
     num_outputs: int,
-    hidden_dims: List[int],
-    layer_args: Dict = {},
-    layer: Type[nn.Module] = nn.Linear,
+    hidden_dims: list[int],
+    layer_args: dict = {},
+    layer: type[nn.Module] = nn.Linear,
     activation: Callable = F.relu,
     dropout: float = 0.0,
-) -> Union[_MLP, _StochasticMLP]:
+) -> _MLP | _StochasticMLP:
     if not stochastic:
         model = _MLP
     else:
@@ -115,8 +115,8 @@ def _mlp(
 def mlp(
     in_features: int,
     num_outputs: int,
-    hidden_dims: List[int],
-    layer: Type[nn.Module] = nn.Linear,
+    hidden_dims: list[int],
+    layer: type[nn.Module] = nn.Linear,
     activation: Callable = F.relu,
     dropout: float = 0.0,
 ) -> _MLP:
@@ -148,7 +148,7 @@ def mlp(
 def packed_mlp(
     in_features: int,
     num_outputs: int,
-    hidden_dims: List[int],
+    hidden_dims: list[int],
     num_estimators: int = 4,
     alpha: float = 2,
     gamma: float = 1,
@@ -175,7 +175,7 @@ def packed_mlp(
 def bayesian_mlp(
     in_features: int,
     num_outputs: int,
-    hidden_dims: List[int] = [],
+    hidden_dims: list[int] = [],
     activation: Callable = F.relu,
     dropout: float = 0.0,
 ) -> _StochasticMLP:

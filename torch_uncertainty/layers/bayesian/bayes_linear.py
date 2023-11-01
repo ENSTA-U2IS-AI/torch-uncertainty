@@ -1,5 +1,3 @@
-from typing import Optional, Tuple
-
 import torch
 import torch.nn.functional as F
 from torch import Tensor, nn
@@ -143,7 +141,7 @@ class BayesLinear(nn.Module):
         """Unfreeze the layer by setting the frozen attribute to False."""
         self.frozen = False
 
-    def sample(self) -> Tuple[Tensor, Optional[Tensor]]:
+    def sample(self) -> tuple[Tensor, Tensor | None]:
         """Sample the bayesian layer's posterior."""
         weight = self.weight_sampler.sample()
         if self.bias_mu is not None:

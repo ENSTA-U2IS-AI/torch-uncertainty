@@ -1,5 +1,5 @@
 from argparse import ArgumentParser
-from typing import Any, Type
+from typing import Any
 
 from pytorch_lightning import LightningModule
 from torch import nn
@@ -22,7 +22,7 @@ class DummyClassificationBaseline:
         cls,
         num_classes: int,
         in_channels: int,
-        loss: Type[nn.Module],
+        loss: type[nn.Module],
         optimization_procedure: Any,
         baseline_type: str = "single",
         **kwargs,

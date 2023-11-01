@@ -1,5 +1,5 @@
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, Optional
 
 from torchvision.datasets import ImageFolder
 from torchvision.datasets.utils import (
@@ -42,9 +42,9 @@ class ImageNetVariation(ImageFolder):
     def __init__(
         self,
         root: str,
-        split: Optional[str] = None,
-        transform: Optional[Callable] = None,
-        target_transform: Optional[Callable] = None,
+        split: str | None = None,
+        transform: Callable | None = None,
+        target_transform: Callable | None = None,
         download: bool = False,
     ) -> None:
         if isinstance(root, str):

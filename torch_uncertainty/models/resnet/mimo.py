@@ -1,5 +1,3 @@
-from typing import List, Type, Union
-
 import torch
 from einops import rearrange
 
@@ -17,8 +15,8 @@ __all__ = [
 class _MIMOResNet(_ResNet):
     def __init__(
         self,
-        block: Type[Union[BasicBlock, Bottleneck]],
-        num_blocks: List[int],
+        block: type[BasicBlock | Bottleneck],
+        num_blocks: list[int],
         in_channels: int,
         num_classes: int,
         num_estimators: int,

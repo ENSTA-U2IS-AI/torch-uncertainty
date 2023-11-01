@@ -1,11 +1,11 @@
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable, Tuple
+from typing import Any
 
+import numpy as np
 import torch
 import torch.utils.data as data
 from PIL import Image
-
-import numpy as np
 
 
 class DummyClassificationDataset(data.Dataset):
@@ -69,7 +69,7 @@ class DummyClassificationDataset(data.Dataset):
             num_images // (num_classes) + 1
         )[:num_images]
 
-    def __getitem__(self, index: int) -> Tuple[Any, Any]:
+    def __getitem__(self, index: int) -> tuple[Any, Any]:
         """
         Args:
             index (int): Index
@@ -126,7 +126,7 @@ class DummyRegressionDataset(data.Dataset):
             size=output_shape,
         )
 
-    def __getitem__(self, index: int) -> Tuple[Any, Any]:
+    def __getitem__(self, index: int) -> tuple[Any, Any]:
         """
         Args:
             index (int): Index

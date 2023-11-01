@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import Any, List, Optional, Union
+from typing import Any
 
 import torchvision.transforms as T
 from pytorch_lightning import LightningDataModule
@@ -16,7 +16,7 @@ class DummyClassificationDataModule(LightningDataModule):
 
     def __init__(
         self,
-        root: Union[str, Path],
+        root: str | Path,
         evaluate_ood: bool,
         batch_size: int,
         num_classes: int = 2,
@@ -46,7 +46,7 @@ class DummyClassificationDataModule(LightningDataModule):
     def prepare_data(self) -> None:
         pass
 
-    def setup(self, stage: Optional[str] = None) -> None:
+    def setup(self, stage: str | None = None) -> None:
         if stage == "fit" or stage is None:
             self.train = self.dataset(
                 self.root,
@@ -84,7 +84,7 @@ class DummyClassificationDataModule(LightningDataModule):
     def val_dataloader(self) -> DataLoader:
         return self._data_loader(self.val)
 
-    def test_dataloader(self) -> Union[DataLoader, List[DataLoader]]:
+    def test_dataloader(self) -> DataLoader | list[DataLoader]:
         dataloader = [self._data_loader(self.test)]
         if self.evaluate_ood:
             dataloader.append(self._data_loader(self.ood))
@@ -122,7 +122,7 @@ class DummyRegressionDataModule(LightningDataModule):
 
     def __init__(
         self,
-        root: Union[str, Path],
+        root: str | Path,
         evaluate_ood: bool,
         batch_size: int,
         out_features: int = 2,
@@ -152,7 +152,7 @@ class DummyRegressionDataModule(LightningDataModule):
     def prepare_data(self) -> None:
         pass
 
-    def setup(self, stage: Optional[str] = None) -> None:
+    def setup(self, stage: str | None = None) -> None:
         if stage == "fit" or stage is None:
             self.train = self.dataset(
                 self.root,
@@ -183,7 +183,7 @@ class DummyRegressionDataModule(LightningDataModule):
     def val_dataloader(self) -> DataLoader:
         return self._data_loader(self.val)
 
-    def test_dataloader(self) -> Union[DataLoader, List[DataLoader]]:
+    def test_dataloader(self) -> DataLoader | list[DataLoader]:
         dataloader = [self._data_loader(self.test)]
         if self.evaluate_ood:
             dataloader.append(self._data_loader(self.ood))

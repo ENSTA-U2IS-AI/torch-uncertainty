@@ -1,4 +1,4 @@
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 import torch
 import torch.nn.functional as F
@@ -42,7 +42,7 @@ class Disagreement(Metric):
     """
 
     is_differentiable: bool = False
-    higher_is_better: Optional[bool] = None
+    higher_is_better: bool | None = None
     full_state_update: bool = False
 
     def __init__(

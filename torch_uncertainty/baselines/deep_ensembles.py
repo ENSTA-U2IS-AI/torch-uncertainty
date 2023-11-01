@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import List, Literal, Optional, Union
+from typing import Literal
 
 from pytorch_lightning import LightningModule
 
@@ -23,12 +23,12 @@ class DeepEnsembles:
     def __new__(
         cls,
         task: Literal["classification", "regression"],
-        log_path: Union[str, Path],
-        checkpoint_ids: List[int],
+        log_path: str | Path,
+        checkpoint_ids: list[int],
         backbone: Literal["mlp", "resnet", "vgg", "wideresnet"],
         # num_estimators: int,
-        in_channels: Optional[int] = None,
-        num_classes: Optional[int] = None,
+        in_channels: int | None = None,
+        num_classes: int | None = None,
         use_entropy: bool = False,
         use_logits: bool = False,
         use_mi: bool = False,

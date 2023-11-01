@@ -1,4 +1,4 @@
-from typing import Literal, Optional
+from typing import Literal
 
 import torch
 from torch import nn, optim
@@ -29,7 +29,7 @@ class Scaler(nn.Module):
         self,
         lr: float = 0.1,
         max_iter: int = 100,
-        device: Optional[Literal["cpu", "cuda"]] = None,
+        device: Literal["cpu", "cuda"] | None = None,
     ) -> None:
         super().__init__()
         self.device = device

@@ -4,7 +4,6 @@ Reference:
 [1] Kaiming He, Xiangyu Zhang, Shaoqing Ren, Jian Sun
     Deep Residual Learning for Image Recognition. arXiv:1512.03385
 """
-from typing import List, Type, Union
 
 import torch.nn.functional as F
 from torch import Tensor, nn
@@ -88,7 +87,7 @@ class Bottleneck(nn.Module):
         num_estimators: int = 4,
         groups: int = 1,
     ) -> None:
-        super(Bottleneck, self).__init__()
+        super().__init__()
         self.conv1 = BatchConv2d(
             in_planes,
             planes,
@@ -146,8 +145,8 @@ class Bottleneck(nn.Module):
 class _BatchedResNet(nn.Module):
     def __init__(
         self,
-        block: Type[Union[BasicBlock, Bottleneck]],
-        num_blocks: List[int],
+        block: type[BasicBlock | Bottleneck],
+        num_blocks: list[int],
         in_channels: int,
         num_estimators: int,
         groups: int = 1,
@@ -234,7 +233,7 @@ class _BatchedResNet(nn.Module):
 
     def _make_layer(
         self,
-        block: Type[Union[BasicBlock, Bottleneck]],
+        block: type[BasicBlock | Bottleneck],
         planes: int,
         num_blocks: int,
         stride: int,

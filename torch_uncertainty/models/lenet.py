@@ -1,4 +1,4 @@
-from typing import Callable, Dict, Optional, Type, Union
+from collections.abc import Callable
 
 import torch
 import torch.nn.functional as F
@@ -16,11 +16,11 @@ class _LeNet(nn.Module):
         self,
         in_channels: int,
         num_classes: int,
-        linear_layer: Type[nn.Module],
-        conv2d_layer: Type[nn.Module],
-        layer_args: Dict,
+        linear_layer: type[nn.Module],
+        conv2d_layer: type[nn.Module],
+        layer_args: dict,
         activation: Callable,
-        norm: Type[nn.Module],
+        norm: type[nn.Module],
         groups: int,
         dropout_rate: float,
         num_estimators: int,
@@ -85,16 +85,16 @@ def _lenet(
     stochastic: bool,
     in_channels: int,
     num_classes: int,
-    linear_layer: Type[nn.Module] = nn.Linear,
-    conv2d_layer: Type[nn.Module] = nn.Conv2d,
-    layer_args: Dict = {},
+    linear_layer: type[nn.Module] = nn.Linear,
+    conv2d_layer: type[nn.Module] = nn.Conv2d,
+    layer_args: dict = {},
     activation: Callable = nn.ReLU,
-    norm: Type[nn.Module] = nn.Identity,
+    norm: type[nn.Module] = nn.Identity,
     groups: int = 1,
     dropout_rate: float = 0.0,
-    num_estimators: Optional[int] = None,
+    num_estimators: int | None = None,
     last_layer_dropout: bool = False,
-) -> Union[_LeNet, _StochasticLeNet]:
+) -> _LeNet | _StochasticLeNet:
     if not stochastic:
         model = _LeNet
     else:
@@ -118,7 +118,7 @@ def lenet(
     in_channels: int,
     num_classes: int,
     activation: Callable = F.relu,
-    norm: Type[nn.Module] = nn.Identity,
+    norm: type[nn.Module] = nn.Identity,
     groups: int = 1,
     dropout_rate: float = 0.0,
     num_estimators: int = None,
@@ -147,7 +147,7 @@ def packed_lenet(
     alpha: float = 2,
     gamma: float = 1,
     activation: Callable = F.relu,
-    norm: Type[nn.Module] = nn.Identity,
+    norm: type[nn.Module] = nn.Identity,
     groups: int = 1,
     dropout_rate: float = 0.0,
 ) -> _LeNet:
@@ -172,14 +172,14 @@ def packed_lenet(
 def bayesian_lenet(
     in_channels: int,
     num_classes: int,
-    prior_mu: Optional[float] = None,
-    prior_sigma_1: Optional[float] = None,
-    prior_sigma_2: Optional[float] = None,
-    prior_pi: Optional[float] = None,
-    mu_init: Optional[float] = None,
-    sigma_init: Optional[float] = None,
+    prior_mu: float | None = None,
+    prior_sigma_1: float | None = None,
+    prior_sigma_2: float | None = None,
+    prior_pi: float | None = None,
+    mu_init: float | None = None,
+    sigma_init: float | None = None,
     activation: Callable = F.relu,
-    norm: Type[nn.Module] = nn.Identity,
+    norm: type[nn.Module] = nn.Identity,
     groups: int = 1,
     dropout_rate: float = 0.0,
 ) -> _LeNet:

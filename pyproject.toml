@@ -62,6 +62,7 @@ build-backend = "poetry.core.masonry.api"
 [tool.ruff]
 line-length = 80
 target-version = "py310"
+extend-select = ["I", "UP"]
 exclude = [
     ".bzr",
     ".direnv",
@@ -87,20 +88,3 @@ exclude = [
     "dist",
     "venv",
 ]
-
-[tool.mypy]
-python_version = 3.8
-platform = "posix"
-
-color_output = true
-pretty = true
-show_column_numbers = true
-strict = true
-
-# probably redundant, but useful when switching strict to false
-check_untyped_defs = true
-ignore_missing_imports = true
-warn_no_return = true
-warn_redundant_casts = true
-warn_unused_configs = true
-warn_unused_ignores = true

@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import Any, List, Literal, Optional, Union
+from typing import Any, Literal
 
 import torch
 from pytorch_lightning import LightningModule
@@ -29,10 +29,10 @@ class MLP:
         loss: nn.Module,
         optimization_procedure: Any,
         version: Literal["vanilla", "packed"],
-        hidden_dims: List[int],
+        hidden_dims: list[int],
         dist_estimation: int,
-        num_estimators: Optional[int] = 1,
-        alpha: Optional[float] = None,
+        num_estimators: int | None = 1,
+        alpha: float | None = None,
         gamma: int = 1,
         **kwargs,
     ) -> LightningModule:
@@ -78,8 +78,8 @@ class MLP:
     @classmethod
     def load_from_checkpoint(
         cls,
-        checkpoint_path: Union[str, Path],
-        hparams_file: Union[str, Path],
+        checkpoint_path: str | Path,
+        hparams_file: str | Path,
         **kwargs,
     ) -> LightningModule:  # coverage: ignore
         if hparams_file is not None:

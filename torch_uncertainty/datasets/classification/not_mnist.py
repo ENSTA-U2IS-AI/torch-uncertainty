@@ -1,5 +1,6 @@
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable, Literal, Optional, Tuple
+from typing import Any, Literal
 
 from torchvision.datasets import ImageFolder
 from torchvision.datasets.utils import (
@@ -40,8 +41,8 @@ class NotMNIST(ImageFolder):
         self,
         root: str,
         subset: Literal["small", "large"] = "small",
-        transform: Optional[Callable[..., Any]] = None,
-        target_transform: Optional[Callable[..., Any]] = None,
+        transform: Callable[..., Any] | None = None,
+        target_transform: Callable[..., Any] | None = None,
         download: bool = False,
     ):
         if isinstance(root, str):
@@ -91,7 +92,7 @@ class NotMNIST(ImageFolder):
         )
         print(f"Downloaded {self.filename} to {self.root}")
 
-    def __getitem__(self, index: int) -> Tuple[Any, Any]:
+    def __getitem__(self, index: int) -> tuple[Any, Any]:
         return super().__getitem__(index)[0]
 
 

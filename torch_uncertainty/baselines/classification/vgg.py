@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import Any, Literal, Optional, Type, Union
+from typing import Any, Literal
 
 import torch
 from pytorch_lightning import LightningModule
@@ -106,15 +106,15 @@ class VGG:
         cls,
         num_classes: int,
         in_channels: int,
-        loss: Type[nn.Module],
+        loss: type[nn.Module],
         optimization_procedure: Any,
         version: Literal["vanilla", "mc-dropout", "packed"],
         arch: int,
-        num_estimators: Optional[int] = None,
+        num_estimators: int | None = None,
         dropout_rate: float = 0.0,
         style: str = "imagenet",
         groups: int = 1,
-        alpha: Optional[float] = None,
+        alpha: float | None = None,
         gamma: int = 1,
         use_entropy: bool = False,
         use_logits: bool = False,
@@ -187,8 +187,8 @@ class VGG:
     @classmethod
     def load_from_checkpoint(
         cls,
-        checkpoint_path: Union[str, Path],
-        hparams_file: Union[str, Path],
+        checkpoint_path: str | Path,
+        hparams_file: str | Path,
         **kwargs,
     ) -> LightningModule:  # coverage: ignore
         if hparams_file is not None:

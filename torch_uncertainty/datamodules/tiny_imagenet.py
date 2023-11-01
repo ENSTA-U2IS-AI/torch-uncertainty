@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import Any, List, Optional, Union
+from typing import Any
 
 import torchvision.transforms as T
 from pytorch_lightning import LightningDataModule
@@ -19,11 +19,11 @@ class TinyImageNetDataModule(LightningDataModule):
 
     def __init__(
         self,
-        root: Union[str, Path],
+        root: str | Path,
         evaluate_ood: bool,
         batch_size: int,
         ood_ds: str = "svhn",
-        rand_augment_opt: Optional[str] = None,
+        rand_augment_opt: str | None = None,
         num_workers: int = 1,
         pin_memory: bool = True,
         persistent_workers: bool = True,
@@ -119,7 +119,7 @@ class TinyImageNetDataModule(LightningDataModule):
                     ]
                 )
 
-    def setup(self, stage: Optional[str] = None) -> None:
+    def setup(self, stage: str | None = None) -> None:
         if stage == "fit" or stage is None:
             self.train = self.dataset(
                 self.root,
@@ -185,7 +185,7 @@ class TinyImageNetDataModule(LightningDataModule):
         """
         return self._data_loader(self.val)
 
-    def test_dataloader(self) -> List[DataLoader]:
+    def test_dataloader(self) -> list[DataLoader]:
         r"""Get test dataloaders for TinyImageNet.
 
         Return:

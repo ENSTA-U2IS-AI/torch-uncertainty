@@ -1,8 +1,8 @@
 # ruff: noqa: F401
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
-from typing import Dict, Optional, Type, Union
 
+import numpy as np
 import pytorch_lightning as pl
 import torch
 from pytorch_lightning.callbacks import LearningRateMonitor
@@ -11,14 +11,12 @@ from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint
 from pytorch_lightning.loggers.tensorboard import TensorBoardLogger
 from torchinfo import summary
 
-import numpy as np
-
 from .utils import get_version
 
 
 def init_args(
-    network: Optional[Type[pl.LightningModule]] = None,
-    datamodule: Optional[Type[pl.LightningDataModule]] = None,
+    network: type[pl.LightningModule] | None = None,
+    datamodule: type[pl.LightningDataModule] | None = None,
 ) -> Namespace:
     parser = ArgumentParser("torch-uncertainty")
     parser.add_argument(
@@ -64,10 +62,10 @@ def init_args(
 def cli_main(
     network: pl.LightningModule,
     datamodule: pl.LightningDataModule,
-    root: Union[Path, str],
+    root: Path | str,
     net_name: str,
     args: Namespace,
-) -> Dict:
+) -> dict:
     if isinstance(root, str):
         root = Path(root)
 
