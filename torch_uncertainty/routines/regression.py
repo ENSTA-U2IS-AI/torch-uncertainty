@@ -59,7 +59,7 @@ class RegressionSingle(pl.LightningModule):
 
         self.dist_estimation = dist_estimation
 
-        if dist_estimation == 4 or dist_estimation == 2:
+        if dist_estimation in (4, 2):
             reg_metrics = MetricCollection(
                 {
                     "mse": MeanSquaredError(squared=True),
@@ -236,7 +236,7 @@ class RegressionEnsemble(RegressionSingle):
         targets = targets.repeat((self.num_estimators, 1))
         return super().training_step((inputs, targets), batch_idx)
 
-    def validation_step(  # type: ignore
+    def validation_step(
         self, batch: tuple[torch.Tensor, torch.Tensor], batch_idx: int
     ) -> None:
         inputs, targets = batch

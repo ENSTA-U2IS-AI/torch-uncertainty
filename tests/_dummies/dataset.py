@@ -4,8 +4,8 @@ from typing import Any
 
 import numpy as np
 import torch
-import torch.utils.data as data
 from PIL import Image
+from torch.utils import data
 
 
 class DummyClassificationDataset(data.Dataset):

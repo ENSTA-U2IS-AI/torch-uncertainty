@@ -55,7 +55,7 @@ class FPR95(Metric):
             " footprint."
         )
 
-    def update(self, conf: Tensor, target: Tensor) -> None:  # type: ignore
+    def update(self, conf: Tensor, target: Tensor) -> None:
         self.conf.append(conf)
         self.targets.append(target)
 

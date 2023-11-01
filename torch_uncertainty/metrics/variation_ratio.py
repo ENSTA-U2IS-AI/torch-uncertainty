@@ -39,7 +39,7 @@ class VariationRatio(Metric):
             " large datasets this may lead to large memory footprint."
         )
 
-    def update(self, probs: Tensor) -> None:  # type: ignore
+    def update(self, probs: Tensor) -> None:
         # store data as (example, estimator, class)
         self.probs.append(probs.transpose(0, 1))
 

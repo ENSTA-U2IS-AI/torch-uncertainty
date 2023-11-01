@@ -32,9 +32,9 @@ class TinyImageNet(Dataset):
         self.wnids_path = self.root / "wnids.txt"
         self.words_path = self.root / "words.txt"
 
-        self.make_dataset(self.root)
+        self.make_dataset()
 
-    def make_dataset(self, directory: str):
+    def make_dataset(self):
         self.samples = self._make_paths()
         self.samples_num = len(self.samples)
 
@@ -75,8 +75,8 @@ class TinyImageNet(Dataset):
         self.ids = []
         with open(self.wnids_path) as idf:
             for nid in idf:
-                nid = nid.strip()
-                self.ids.append(nid)
+                snid = nid.strip()
+                self.ids.append(snid)
         self.nid_to_words = defaultdict(list)
 
         with open(self.words_path) as wf:

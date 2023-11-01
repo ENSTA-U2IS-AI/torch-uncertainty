@@ -481,7 +481,7 @@ class ClassificationEnsemble(ClassificationSingle):
         self.log("train_loss", loss)
         return loss
 
-    def validation_step(  # type: ignore
+    def validation_step(
         self, batch: tuple[Tensor, Tensor], batch_idx: int
     ) -> None:
         inputs, targets = batch

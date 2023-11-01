@@ -122,7 +122,7 @@ class NIGLoss(nn.Module):
                 f"{reg_weight}."
             )
         self.reg_weight = reg_weight
-        if reduction != "none" and reduction != "mean" and reduction != "sum":
+        if reduction not in ("none", "mean", "sum"):
             raise ValueError(f"{reduction} is not a valid value for reduction.")
         self.reduction = reduction
 
@@ -197,7 +197,7 @@ class BetaNLL(nn.Module):
             )
         self.beta = beta
         self.nll_loss = nn.GaussianNLLLoss(reduction="none")
-        if reduction != "none" and reduction != "mean" and reduction != "sum":
+        if reduction not in ("none", "mean", "sum"):
             raise ValueError(f"{reduction} is not a valid value for reduction.")
         self.reduction = reduction
 
@@ -256,7 +256,7 @@ class DECLoss(nn.Module):
             )
         self.annealing_step = annealing_step
 
-        if reduction != "none" and reduction != "mean" and reduction != "sum":
+        if reduction not in ("none", "mean", "sum"):
             raise ValueError(f"{reduction} is not a valid value for reduction.")
         self.reduction = reduction
 

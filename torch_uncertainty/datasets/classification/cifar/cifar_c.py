@@ -84,7 +84,7 @@ class CIFAR10C(VisionDataset):
 
     def __init__(
         self,
-        root: str,
+        root: Path | str,
         transform: Callable | None = None,
         target_transform: Callable | None = None,
         subset: str = "all",

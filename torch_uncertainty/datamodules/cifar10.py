@@ -140,7 +140,7 @@ class CIFAR10DataModule(LightningDataModule):
 
     def setup(self, stage: str | None = None) -> None:
         if stage == "fit" or stage is None:
-            if self.test_alt == "c" or self.test_alt == "h":
+            if self.test_alt in ("c", "h"):
                 raise ValueError("CIFAR-C and H can only be used in testing.")
             full = self.dataset(
                 self.root,

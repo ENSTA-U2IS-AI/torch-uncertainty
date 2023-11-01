@@ -79,7 +79,6 @@ class ImageNetDataModule(LightningDataModule):
 
         if self.procedure is None:
             print("Custom Procedure")
-            train_size = train_size
             if rand_augment_opt is not None:
                 main_transform = rand_augment_transform(rand_augment_opt, {})
             else:

@@ -31,13 +31,12 @@ def toggle_dropout(
         for m in filtered_modules[:-1]:
             m.eval()
         filtered_modules[-1].train()
+    elif enable:  # set all filtered modules to training mode
+        for m in filtered_modules:
+            m.train()
     else:
-        if enable:  # set all filtered modules to training mode
-            for m in filtered_modules:
-                m.train()
-        else:
-            for m in filtered_modules:
-                m.eval()
+        for m in filtered_modules:
+            m.eval()
 
 
 def StochasticModel(model: nn.Module) -> nn.Module:
@@ -62,6 +61,7 @@ def StochasticModel(model: nn.Module) -> nn.Module:
                     state = module.state_dict()
                     if not len(state):  # no parameter
                         break
+                    # TODO: fix this
                     model |= {
                         module_name + "." + key: val
                         for key, val in module.state_dict().items()
