@@ -11,7 +11,7 @@ from numpy.typing import ArrayLike
 
 
 class AbstractDataModule(LightningDataModule):
-    training_task = ""
+    training_task: str
 
     def __init__(
         self,
@@ -34,9 +34,7 @@ class AbstractDataModule(LightningDataModule):
         self.persistent_workers = persistent_workers
 
     def setup(self, stage: Optional[str] = None) -> None:
-        self.train = Dataset()
-        self.val = Dataset()
-        self.test = Dataset()
+        raise NotImplementedError()
 
     def get_train_set(self) -> Dataset:
         return self.train
@@ -100,12 +98,14 @@ class AbstractDataModule(LightningDataModule):
     # It is generally "Dataset.samples" or "Dataset.data"
     # They are used for constructing cross validation splits
     def _get_train_data(self) -> ArrayLike:
-        pass
+        raise NotImplementedError()
 
     def _get_train_targets(self) -> ArrayLike:
-        pass
+        raise NotImplementedError()
 
-    def make_cross_val_splits(self, n_splits=10, train_over=4) -> list:
+    def make_cross_val_splits(
+        self, n_splits: int = 10, train_over: int = 4
+    ) -> List:
         self.setup("fit")
         skf = StratifiedKFold(n_splits)
         cv_dm = []
@@ -192,15 +192,6 @@ class CrossValDataModule(AbstractDataModule):
             persistent_workers=self.persistent_workers,
         )
 
-    def train_dataloader(self) -> DataLoader:
-        return self._data_loader(self.dm.get_train_set(), self.train_idx)
-
-    def val_dataloader(self) -> DataLoader:
-        return self._data_loader(self.dm.get_train_set(), self.val_idx)
-
-    def test_dataloader(self) -> DataLoader:
-        return self._data_loader(self.dm.get_train_set(), self.val_idx)
-
     def get_train_set(self) -> Dataset:
         return self.dm.train
 
@@ -209,3 +200,12 @@ class CrossValDataModule(AbstractDataModule):
 
     def get_val_set(self) -> Dataset:
         return self.dm.val
+
+    def train_dataloader(self) -> DataLoader:
+        return self._data_loader(self.dm.get_train_set(), self.train_idx)
+
+    def val_dataloader(self) -> DataLoader:
+        return self._data_loader(self.dm.get_train_set(), self.val_idx)
+
+    def test_dataloader(self) -> DataLoader:
+        return self._data_loader(self.dm.get_train_set(), self.val_idx)
