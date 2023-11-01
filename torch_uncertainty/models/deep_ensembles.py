@@ -69,7 +69,7 @@ def deep_ensembles(
             )
         elif num_estimators < 2:
             raise ValueError(
-                "num_estimators must be at least 2. Got" f"{num_estimators}."
+                f"num_estimators must be at least 2. Got {num_estimators}."
             )
 
         if isinstance(models, list):

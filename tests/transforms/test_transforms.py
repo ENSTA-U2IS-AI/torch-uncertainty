@@ -1,4 +1,4 @@
-import numpy
+import numpy as np
 import pytest
 import torch
 from PIL import Image
@@ -22,7 +22,7 @@ from torch_uncertainty.transforms import (
 
 @pytest.fixture
 def img_input() -> torch.Tensor:
-    imarray = numpy.random.rand(28, 28, 3) * 255
+    imarray = np.random.rand(28, 28, 3) * 255
     im = Image.fromarray(imarray.astype("uint8")).convert("RGB")
     return im
 

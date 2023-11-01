@@ -255,8 +255,7 @@ class WideResNet:
             type=str,
             choices=cls.versions.keys(),
             default="vanilla",
-            help="Variation of WideResNet. "
-            + f"Choose among: {cls.versions.keys()}",
+            help=f"Variation of WideResNet. Choose among: {cls.versions.keys()}",
         )
         parser.add_argument(
             "--pretrained",
