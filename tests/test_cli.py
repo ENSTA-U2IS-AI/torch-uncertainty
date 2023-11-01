@@ -47,7 +47,7 @@ class TestCLI:
             results = cli_main(model, dm, root, "std", args)
             for dict_result in results:
                 csv_writer(
-                    Path("tests/logs/results.csv"),
+                    Path("results.csv"),
                     dict_result,
                 )
 
