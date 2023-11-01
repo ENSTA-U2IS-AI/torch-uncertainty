@@ -86,7 +86,7 @@ class TinyImageNetC(ImageFolder):
         super().__init__(
             root=root / self.base_folder / "brightness/1/", transform=transform
         )
-        if subset not in ["all"] + self.subsets:
+        if subset not in ["all", *self.subsets]:
             raise ValueError(
                 f"The subset '{subset}' does not exist in TinyImageNet-C."
             )

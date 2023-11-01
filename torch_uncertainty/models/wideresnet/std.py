@@ -77,7 +77,7 @@ class _Wide(nn.Module):
         dropout_rate: float,
         groups: int = 1,
         style: str = "imagenet",
-        num_estimators: int = None,
+        num_estimators: int | None = None,
         last_layer_dropout: bool = False,
     ) -> None:
         super().__init__()
@@ -207,7 +207,7 @@ def wideresnet28x10(
     groups: int = 1,
     dropout_rate: float = 0.3,
     style: str = "imagenet",
-    num_estimators: int = None,
+    num_estimators: int | None = None,
     last_layer_dropout: bool = False,
 ) -> nn.Module:
     """Wide-ResNet-28x10 from `Wide Residual Networks

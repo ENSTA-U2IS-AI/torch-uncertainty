@@ -13,7 +13,7 @@ def vgg11(
     groups: int = 1,
     dropout_rate: float = 0.5,
     style: str = "imagenet",
-    num_estimators: int = None,
+    num_estimators: int | None = None,
     last_layer_dropout: bool = False,
 ) -> VGG:
     return _vgg(
@@ -36,7 +36,7 @@ def vgg13(
     groups: int = 1,
     dropout_rate: float = 0.5,
     style: str = "imagenet",
-    num_estimators: int = None,
+    num_estimators: int | None = None,
     last_layer_dropout: bool = False,
 ) -> VGG:
     return _vgg(
@@ -59,7 +59,7 @@ def vgg16(
     groups: int = 1,
     dropout_rate: float = 0.5,
     style: str = "imagenet",
-    num_estimators: int = None,
+    num_estimators: int | None = None,
     last_layer_dropout: bool = False,
 ) -> VGG:
     return _vgg(
@@ -82,7 +82,7 @@ def vgg19(
     groups: int = 1,
     dropout_rate: float = 0.5,
     style: str = "imagenet",
-    num_estimators: int = None,
+    num_estimators: int | None = None,
     last_layer_dropout: bool = False,
 ) -> VGG:  # coverage: ignore
     return _vgg(

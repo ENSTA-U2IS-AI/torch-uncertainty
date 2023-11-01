@@ -109,7 +109,7 @@ class CIFAR10C(VisionDataset):
             transform=transform,
             target_transform=target_transform,
         )
-        if subset not in ["all"] + self.cifarc_subsets:
+        if subset not in ["all", *self.cifarc_subsets]:
             raise ValueError(
                 f"The subset '{subset}' does not exist in CIFAR-C."
             )

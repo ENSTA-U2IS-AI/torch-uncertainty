@@ -120,7 +120,7 @@ def lenet(
     norm: type[nn.Module] = nn.Identity,
     groups: int = 1,
     dropout_rate: float = 0.0,
-    num_estimators: int = None,
+    num_estimators: int | None = None,
     last_layer_dropout: bool = False,
 ) -> _LeNet:
     return _lenet(

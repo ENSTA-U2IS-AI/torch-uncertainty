@@ -202,7 +202,7 @@ class _ResNet(nn.Module):
         dropout_rate: float,
         groups: int,
         style: str = "imagenet",
-        num_estimators: int = None,
+        num_estimators: int | None = None,
         last_layer_dropout: bool = False,
     ) -> None:
         super().__init__()
@@ -334,7 +334,7 @@ def resnet18(
     dropout_rate: float = 0,
     groups: int = 1,
     style: str = "imagenet",
-    num_estimators: int = None,
+    num_estimators: int | None = None,
     last_layer_dropout: bool = False,
 ) -> _ResNet:
     """ResNet-18 from `Deep Residual Learning for Image Recognition
@@ -374,7 +374,7 @@ def resnet34(
     dropout_rate: float = 0,
     groups: int = 1,
     style: str = "imagenet",
-    num_estimators: int = None,
+    num_estimators: int | None = None,
     last_layer_dropout: bool = False,
 ) -> _ResNet:
     """ResNet-34 from `Deep Residual Learning for Image Recognition
@@ -414,7 +414,7 @@ def resnet50(
     dropout_rate: float = 0,
     groups: int = 1,
     style: str = "imagenet",
-    num_estimators: int = None,
+    num_estimators: int | None = None,
     last_layer_dropout: bool = False,
 ) -> _ResNet:
     """ResNet-50 from `Deep Residual Learning for Image Recognition
@@ -454,7 +454,7 @@ def resnet101(
     dropout_rate: float = 0,
     groups: int = 1,
     style: str = "imagenet",
-    num_estimators: int = None,
+    num_estimators: int | None = None,
     last_layer_dropout: bool = False,
 ) -> _ResNet:
     """ResNet-101 from `Deep Residual Learning for Image Recognition
@@ -494,7 +494,7 @@ def resnet152(
     dropout_rate: float = 0,
     groups: int = 1,
     style: str = "imagenet",
-    num_estimators: int = None,
+    num_estimators: int | None = None,
     last_layer_dropout: bool = False,
 ) -> _ResNet:
     """ResNet-152 from `Deep Residual Learning for Image Recognition
