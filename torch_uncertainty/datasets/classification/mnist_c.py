@@ -126,14 +126,13 @@ class MNISTC(VisionDataset):
             Tuple[np.ndarray, np.ndarray]: The samples and labels of the chosen
         """
         if subset == "all":
-            sample_arrays = []
             # take any subset to get the labels
             labels: np.ndarray = np.load(root / f"identity/{split}_labels.npy")
 
-            for mnist_subset in self.mnistc_subsets:
-                sample_arrays.append(
-                    np.load(root / mnist_subset / f"{split}_images.npy")
-                )
+            sample_arrays = [
+                np.load(root / mnist_subset / f"{split}_images.npy")
+                for mnist_subset in self.mnistc_subsets
+            ]
             samples = np.concatenate(sample_arrays, axis=0)
             labels = np.tile(labels, len(self.mnistc_subsets))
 

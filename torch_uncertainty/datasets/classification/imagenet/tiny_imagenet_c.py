@@ -118,27 +118,29 @@ class TinyImageNetC(ImageFolder):
         if subset == "all":
             collection = []
             for subset in self.subsets:
-                imgs = []
-                for i in range(len(self.imgs)):
-                    imgs.append(
-                        (
-                            self.imgs[i][0]
-                            .replace("brightness", subset)
-                            .replace("/1/", "/" + str(severity) + "/"),
-                            self.imgs[i][1],
-                        )
+                imgs = [
+                    (
+                        img[0]
+                        .replace("brightness", subset)
+                        .replace("/1/", "/" + str(severity) + "/"),
+                        img[1],
                     )
+                    for img in self.imgs
+                ]
+
                 collection.extend(imgs)
             self.imgs = collection
             self.samples = self.imgs
         else:
-            for i in range(len(self.imgs)):
-                self.imgs[i] = (
-                    self.imgs[i][0]
+            self.imgs = [
+                (
+                    img[0]
                     .replace("brightness", subset)
                     .replace("/1/", "/" + str(severity) + "/"),
-                    self.imgs[i][1],
+                    img[1],
                 )
+                for img in self.imgs
+            ]
 
     def _check_integrity(self) -> bool:
         """Check the integrity of the dataset."""

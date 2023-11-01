@@ -25,9 +25,7 @@ class _DeepEnsembles(nn.Module):
                 where :math:`B` is the batch size, :math:`N` is the number of
                 estimators, and :math:`C` is the number of classes.
         """
-        predictions = []
-        for model in self.models:
-            predictions.append(model.forward(x))
+        predictions = [model.forward(x) for model in self.models]
         return torch.stack(predictions, dim=1)
 
 

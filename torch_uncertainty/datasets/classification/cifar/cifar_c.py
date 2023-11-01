@@ -145,16 +145,15 @@ class CIFAR10C(VisionDataset):
             Tuple[np.ndarray, np.ndarray]: The samples and labels of the chosen
         """
         if subset == "all":
-            sample_arrays = []
             labels: np.ndarray = np.load(root / "labels.npy")[
                 (severity - 1) * 10000 : severity * 10000
             ]
-            for cifar_subset in self.cifarc_subsets:
-                sample_arrays.append(
-                    np.load(root / (cifar_subset + ".npy"))[
-                        (severity - 1) * 10000 : severity * 10000
-                    ]
-                )
+            sample_arrays = [
+                np.load(root / (cifar_subset + ".npy"))[
+                    (severity - 1) * 10000 : severity * 10000
+                ]
+                for cifar_subset in self.cifarc_subsets
+            ]
             samples = np.concatenate(sample_arrays, axis=0)
             labels = np.tile(labels, len(self.cifarc_subsets))
 
