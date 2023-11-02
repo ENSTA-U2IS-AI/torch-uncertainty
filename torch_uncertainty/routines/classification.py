@@ -159,42 +159,9 @@ class ClassificationSingle(pl.LightningModule):
         self.mixmode = mixmode
         self.dist_sim = dist_sim
 
-        if self.mixtype == "timm":
-            self.mixup = timm_Mixup(
-                mixup_alpha=mixup_alpha,
-                cutmix_alpha=cutmix_alpha,
-                mode=self.mixmode,
-                num_classes=self.num_classes,
-            )
-        elif self.mixtype == "mixup":
-            self.mixup = Mixup(
-                alpha=mixup_alpha,
-                mode=self.mixmode,
-                num_classes=self.num_classes,
-            )
-        elif self.mixtype == "mixup_io":
-            self.mixup = MixupIO(
-                alpha=mixup_alpha,
-                mode=self.mixmode,
-                num_classes=self.num_classes,
-            )
-        elif self.mixtype == "regmixup":
-            self.mixup = RegMixup(
-                alpha=mixup_alpha,
-                mode=self.mixmode,
-                num_classes=self.num_classes,
-            )
-        elif self.mixtype == "kernel_warping":
-            self.mixup = WarpingMixup(
-                alpha=mixup_alpha,
-                mode=self.mixmode,
-                num_classes=self.num_classes,
-                apply_kernel=True,
-                tau_max=kernel_tau_max,
-                tau_std=kernel_tau_std,
-            )
-        else:
-            self.mixup = lambda x, y: (x, y)
+        self.mixup = self.init_mixup(
+            mixup_alpha, cutmix_alpha, kernel_tau_max, kernel_tau_std
+        )
 
         self.cal_plot = CalibrationPlot()
 
@@ -411,6 +378,49 @@ class ClassificationSingle(pl.LightningModule):
                 self.logger.experiment.add_figure(
                     "Likelihood Histogram", probs_fig
                 )
+
+    def init_mixup(
+        self,
+        mixup_alpha: float,
+        cutmix_alpha: float,
+        kernel_tau_max: float,
+        kernel_tau_std: float,
+    ) -> nn.Module:
+        if self.mixtype == "timm":
+            return timm_Mixup(
+                mixup_alpha=mixup_alpha,
+                cutmix_alpha=cutmix_alpha,
+                mode=self.mixmode,
+                num_classes=self.num_classes,
+            )
+        elif self.mixtype == "mixup":
+            return Mixup(
+                alpha=mixup_alpha,
+                mode=self.mixmode,
+                num_classes=self.num_classes,
+            )
+        elif self.mixtype == "mixup_io":
+            return MixupIO(
+                alpha=mixup_alpha,
+                mode=self.mixmode,
+                num_classes=self.num_classes,
+            )
+        elif self.mixtype == "regmixup":
+            return RegMixup(
+                alpha=mixup_alpha,
+                mode=self.mixmode,
+                num_classes=self.num_classes,
+            )
+        elif self.mixtype == "kernel_warping":
+            return WarpingMixup(
+                alpha=mixup_alpha,
+                mode=self.mixmode,
+                num_classes=self.num_classes,
+                apply_kernel=True,
+                tau_max=kernel_tau_max,
+                tau_std=kernel_tau_std,
+            )
+        return lambda x, y: (x, y)
 
     @staticmethod
     def add_model_specific_args(
