@@ -154,13 +154,16 @@ class TestCLI:
 
             cli_main(model, dm, root, "std", args)
 
+            args.test = True
+            cli_main(model, dm, root, "std", args)
+
     def test_cli_other_training_task(self):
         root = Path(__file__).parent.absolute().parents[0]
         with ArgvContext("file.py"):
             args = init_args(MLP, UCIDataModule)
 
             # datamodule
-            args.root = root / "/data"
+            args.root = root / "data"
             dm = UCIDataModule(
                 dataset_name="kin8nm", input_shape=(1, 5), **vars(args)
             )

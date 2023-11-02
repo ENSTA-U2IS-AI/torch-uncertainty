@@ -127,7 +127,7 @@ class AbstractMixup:
             return lam * y1 + (1 - lam) * y2
 
     def __call__(self, x: Tensor, y: Tensor) -> Tuple[Tensor, Tensor]:
-        return x, y
+        raise NotImplementedError
 
 
 class Mixup(AbstractMixup):
