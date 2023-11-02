@@ -92,7 +92,7 @@ class AbstractMixup:
         if self.mode == "batch":
             lam = np.random.beta(self.alpha, self.alpha)
         else:
-            lam = Tensor(
+            lam = torch.as_tensor(
                 np.random.beta(self.alpha, self.alpha, batch_size),
                 device=device,
             )
@@ -121,10 +121,7 @@ class AbstractMixup:
         if isinstance(lam, Tensor):
             lam = lam.view(-1, *[1 for _ in range(y1.ndim - 1)]).float()
 
-        if isinstance(lam, Tensor) and lam.dtype == torch.bool:
-            return lam * y1 + (~lam) * y2
-        else:
-            return lam * y1 + (1 - lam) * y2
+        return lam * y1 + (1 - lam) * y2
 
     def __call__(self, x: Tensor, y: Tensor) -> Tuple[Tensor, Tensor]:
         raise NotImplementedError
@@ -144,7 +141,10 @@ class MixupIO(AbstractMixup):
 
         mixed_x = self._linear_mixing(lam, x, index)
 
-        mixed_y = self._mix_target((lam > 0.5), y, index)
+        if self.mode == "batch":
+            mixed_y = self._mix_target(float(lam > 0.5), y, index)
+        else:
+            mixed_y = self._mix_target((lam > 0.5).float(), y, index)
 
         return mixed_x, mixed_y
 
@@ -202,7 +202,7 @@ class WarpingMixup(AbstractMixup):
             )
             warp_param = sim_gauss_kernel(l2_dist, self.tau_max, self.tau_std)
 
-        k_lam = Tensor(beta_warping(lam, warp_param), device=x.device)
+        k_lam = torch.as_tensor(beta_warping(lam, warp_param), device=x.device)
         mixed_x = self._linear_mixing(k_lam, x, index)
         mixed_y = self._mix_target(k_lam, y, index)
         return mixed_x, mixed_y

@@ -385,7 +385,7 @@ class ClassificationSingle(pl.LightningModule):
         cutmix_alpha: float,
         kernel_tau_max: float,
         kernel_tau_std: float,
-    ) -> nn.Module:
+    ) -> Callable:
         if self.mixtype == "timm":
             return timm_Mixup(
                 mixup_alpha=mixup_alpha,
