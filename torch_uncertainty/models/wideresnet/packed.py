@@ -71,7 +71,7 @@ class WideBasicBlock(nn.Module):
         return F.relu(self.bn2(out))
 
 
-class _PackedWide(nn.Module):
+class _PackedWideResNet(nn.Module):
     def __init__(
         self,
         depth: int,
@@ -233,7 +233,7 @@ def packed_wideresnet28x10(
     groups: int,
     num_classes: int,
     style: str = "imagenet",
-) -> _PackedWide:
+) -> _PackedWideResNet:
     """Packed-Ensembles of Wide-ResNet-28x10 from `Wide Residual Networks
     <https://arxiv.org/pdf/1605.07146.pdf>`_.
 
@@ -248,9 +248,9 @@ def packed_wideresnet28x10(
             structure. Defaults to ``True``.
 
     Returns:
-        _PackedWide: A Packed-Ensembles Wide-ResNet-28x10.
+        _PackedWideResNet: A Packed-Ensembles Wide-ResNet-28x10.
     """
-    return _PackedWide(
+    return _PackedWideResNet(
         in_channels=in_channels,
         depth=28,
         widen_factor=10,

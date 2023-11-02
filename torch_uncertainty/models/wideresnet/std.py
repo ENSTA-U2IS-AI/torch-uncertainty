@@ -58,7 +58,7 @@ class WideBasicBlock(nn.Module):
         return F.relu(self.bn2(out))
 
 
-class _Wide(nn.Module):
+class _WideResNet(nn.Module):
     """WideResNet from `Wide Residual Networks`.
 
     Note:
@@ -208,7 +208,7 @@ def wideresnet28x10(
     style: str = "imagenet",
     num_estimators: int | None = None,
     last_layer_dropout: bool = False,
-) -> nn.Module:
+) -> _WideResNet:
     """Wide-ResNet-28x10 from `Wide Residual Networks
     <https://arxiv.org/pdf/1605.07146.pdf>`_.
 
@@ -228,7 +228,7 @@ def wideresnet28x10(
     Returns:
         _Wide: A Wide-ResNet-28x10.
     """
-    return _Wide(
+    return _WideResNet(
         depth=28,
         widen_factor=10,
         in_channels=in_channels,

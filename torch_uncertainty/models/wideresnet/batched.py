@@ -63,7 +63,7 @@ class WideBasicBlock(nn.Module):
         return F.relu(self.bn2(out))
 
 
-class _BatchedWide(nn.Module):
+class _BatchWideResNet(nn.Module):
     def __init__(
         self,
         depth: int,
@@ -201,7 +201,7 @@ def batched_wideresnet28x10(
     groups: int,
     num_classes: int,
     style: str = "imagenet",
-) -> _BatchedWide:
+) -> _BatchWideResNet:
     """BatchEnsemble of Wide-ResNet-28x10 from `Wide Residual Networks
     <https://arxiv.org/pdf/1605.07146.pdf>`_.
 
@@ -214,9 +214,9 @@ def batched_wideresnet28x10(
             structure. Defaults to ``True``.
 
     Returns:
-        _BatchedWide: A BatchEnsemble-style Wide-ResNet-28x10.
+        _BatchWideResNet: A BatchEnsemble-style Wide-ResNet-28x10.
     """
-    return _BatchedWide(
+    return _BatchWideResNet(
         in_channels=in_channels,
         depth=28,
         widen_factor=10,

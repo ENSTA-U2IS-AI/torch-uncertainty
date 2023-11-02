@@ -66,7 +66,7 @@ class WideBasicBlock(nn.Module):
         return F.relu(self.bn2(out))
 
 
-class _MaskedWide(nn.Module):
+class _MaskedWideResNet(nn.Module):
     def __init__(
         self,
         depth: int,
@@ -207,7 +207,7 @@ def masked_wideresnet28x10(
     groups: int,
     num_classes: int,
     style: str = "imagenet",
-) -> _MaskedWide:
+) -> _MaskedWideResNet:
     """Masksembles of Wide-ResNet-28x10 from `Wide Residual Networks
     <https://arxiv.org/pdf/1605.07146.pdf>`_.
 
@@ -221,9 +221,9 @@ def masked_wideresnet28x10(
             structure. Defaults to ``True``.
 
     Returns:
-        _MaskedWide: A Masksembles-style Wide-ResNet-28x10.
+        _MaskedWideResNet: A Masksembles-style Wide-ResNet-28x10.
     """
-    return _MaskedWide(
+    return _MaskedWideResNet(
         in_channels=in_channels,
         depth=28,
         widen_factor=10,
