@@ -47,7 +47,13 @@ class TestCLI:
             results = cli_main(model, dm, root, "std", args)
             for dict_result in results:
                 csv_writer(
-                    Path("results.csv"),
+                    root / Path("tests/logs/results.csv"),
+                    dict_result,
+                )
+            # Test if file already exists
+            for dict_result in results:
+                csv_writer(
+                    root / Path("tests/logs/results.csv"),
                     dict_result,
                 )
 
@@ -173,7 +179,7 @@ class TestCLI:
 
     def test_cli_cv_ts(self):
         root = Path(__file__).parent.absolute().parents[0]
-        with ArgvContext("file.py", "--use_cv"):
+        with ArgvContext("file.py", "--use_cv", "--channels_last"):
             args = init_args(ResNet, CIFAR10DataModule)
 
             # datamodule

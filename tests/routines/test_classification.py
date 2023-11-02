@@ -134,6 +134,36 @@ class TestClassificationSingle:
             with pytest.raises(NotImplementedError):
                 cli_main(model, dm, root, "logs/dummy", args)
 
+    def test_cli_main_dummy_mixup_ts(self):
+        root = Path(__file__).parent.absolute().parents[0]
+        with ArgvContext(
+            "file.py",
+            "--mixtype",
+            "kernel_warping",
+            "--mixup_alpha",
+            "1.",
+            "--dist_sim",
+            "inp",
+            "--opt_temp_scaling",
+        ):
+            args = init_args(
+                DummyClassificationBaseline, DummyClassificationDataModule
+            )
+
+            args.root = str(root / "data")
+            dm = DummyClassificationDataModule(num_classes=10, **vars(args))
+
+            model = DummyClassificationBaseline(
+                num_classes=dm.num_classes,
+                in_channels=dm.num_channels,
+                loss=nn.CrossEntropyLoss,
+                optimization_procedure=optim_cifar10_resnet18,
+                baseline_type="single",
+                calibration_set=dm.get_test_set,
+                **vars(args),
+            )
+            cli_main(model, dm, root, "logs/dummy", args)
+
     def test_classification_failures(self):
         with pytest.raises(ValueError):
             ClassificationSingle(
