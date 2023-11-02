@@ -1,4 +1,5 @@
 import sys
+import os
 from pathlib import Path
 
 import pytest
@@ -45,15 +46,18 @@ class TestCLI:
             )
 
             results = cli_main(model, dm, root, "std", args)
+            results_path = root / "tests" / "logs"
+            if not os.path.exists(results_path):
+                os.makedirs(results_path)
             for dict_result in results:
                 csv_writer(
-                    root / Path("tests/logs/results.csv"),
+                    results_path / "results.csv",
                     dict_result,
                 )
             # Test if file already exists
             for dict_result in results:
                 csv_writer(
-                    root / Path("tests/logs/results.csv"),
+                    results_path / "results.csv",
                     dict_result,
                 )
 
