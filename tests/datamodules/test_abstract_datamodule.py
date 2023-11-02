@@ -35,13 +35,13 @@ class TestCrossValDataModule:
         cv_dm.setup("test")
 
         # test abstract methods
-        dm.get_train_set()
-        dm.get_val_set()
-        dm.get_test_set()
+        cv_dm.get_train_set()
+        cv_dm.get_val_set()
+        cv_dm.get_test_set()
 
-        dm.train_dataloader()
-        dm.val_dataloader()
-        dm.test_dataloader()
+        cv_dm.train_dataloader()
+        cv_dm.val_dataloader()
+        cv_dm.test_dataloader()
 
     def test_errors(self):
         dm = AbstractDataModule("root", 128, 4, True, True)
