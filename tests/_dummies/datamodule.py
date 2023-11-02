@@ -1,6 +1,8 @@
 from argparse import ArgumentParser
 from pathlib import Path
 from typing import Any, List, Optional, Union
+from numpy.typing import ArrayLike
+import numpy as np
 
 import torchvision.transforms as T
 from torch.utils.data import DataLoader
@@ -83,6 +85,12 @@ class DummyClassificationDataModule(AbstractDataModule):
         if self.evaluate_ood:
             dataloader.append(self._data_loader(self.ood))
         return dataloader
+
+    def _get_train_data(self) -> ArrayLike:
+        return self.train.data
+
+    def _get_train_targets(self) -> ArrayLike:
+        return np.array(self.train.targets)
 
     @classmethod
     def add_argparse_args(

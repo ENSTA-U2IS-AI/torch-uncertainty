@@ -32,6 +32,9 @@ class TestCIFAR10DataModule:
         dm.setup()
         dm.setup("test")
 
+        with pytest.raises(ValueError):
+            dm.setup("xxx")
+
         # test abstract methods
         dm.get_train_set()
         dm.get_val_set()
@@ -51,6 +54,11 @@ class TestCIFAR10DataModule:
         dm.dataset = DummyClassificationDataset
         with pytest.raises(ValueError):
             dm.setup()
+
+        args.test_alt = "h"
+        dm = CIFAR10DataModule(**vars(args))
+        dm.dataset = DummyClassificationDataset
+        dm.setup("test")
 
         args.test_alt = None
         args.num_dataloaders = 2

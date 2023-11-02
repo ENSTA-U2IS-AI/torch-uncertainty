@@ -16,6 +16,7 @@ from torch_uncertainty.routines.classification import (
 from .._dummies import (
     DummyClassificationBaseline,
     DummyClassificationDataModule,
+    DummyClassificationDataset,
 )
 
 
@@ -134,7 +135,7 @@ class TestClassificationSingle:
             with pytest.raises(NotImplementedError):
                 cli_main(model, dm, root, "logs/dummy", args)
 
-    def test_cli_main_dummy_mixup_ts(self):
+    def test_cli_main_dummy_mixup_ts_cv(self):
         root = Path(__file__).parent.absolute().parents[0]
         with ArgvContext(
             "file.py",
@@ -144,7 +145,8 @@ class TestClassificationSingle:
             "1.",
             "--dist_sim",
             "inp",
-            "--opt_temp_scaling",
+            "--val_temp_scaling",
+            "--use_cv",
         ):
             args = init_args(
                 DummyClassificationBaseline, DummyClassificationDataModule
@@ -152,17 +154,37 @@ class TestClassificationSingle:
 
             args.root = str(root / "data")
             dm = DummyClassificationDataModule(num_classes=10, **vars(args))
-
-            model = DummyClassificationBaseline(
-                num_classes=dm.num_classes,
-                in_channels=dm.num_channels,
-                loss=nn.CrossEntropyLoss,
-                optimization_procedure=optim_cifar10_resnet18,
-                baseline_type="single",
-                calibration_set=dm.get_test_set,
-                **vars(args),
+            dm.dataset = (
+                lambda root,
+                num_channels,
+                num_classes,
+                image_size,
+                transform: DummyClassificationDataset(
+                    root,
+                    num_channels=num_channels,
+                    num_classes=num_classes,
+                    image_size=image_size,
+                    transform=transform,
+                    num_images=20,
+                )
             )
-            cli_main(model, dm, root, "logs/dummy", args)
+
+            list_dm = dm.make_cross_val_splits(2, 1)
+            list_model = []
+            for i in range(len(list_dm)):
+                list_model.append(
+                    DummyClassificationBaseline(
+                        num_classes=list_dm[i].dm.num_classes,
+                        in_channels=list_dm[i].dm.num_channels,
+                        loss=nn.CrossEntropyLoss,
+                        optimization_procedure=optim_cifar10_resnet18,
+                        baseline_type="single",
+                        calibration_set=dm.get_val_set,
+                        **vars(args),
+                    )
+                )
+
+            cli_main(list_model, list_dm, root, "logs/dummy", args)
 
     def test_classification_failures(self):
         with pytest.raises(ValueError):
