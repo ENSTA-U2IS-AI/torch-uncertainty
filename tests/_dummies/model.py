@@ -22,6 +22,9 @@ class _Dummy(nn.Module):
 
         self.num_estimators = num_estimators
 
+    def feats_forward(self, x: Tensor) -> Tensor:
+        return self.forward(x)
+
     def forward(self, x: Tensor) -> Tensor:
         return self.linear(
             torch.ones(

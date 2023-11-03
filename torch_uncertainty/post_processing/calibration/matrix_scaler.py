@@ -34,7 +34,7 @@ class MatrixScaler(Scaler):
         init_b: float = 0,
         lr: float = 0.1,
         max_iter: int = 200,
-        device: Literal["cpu", "cuda"] | None = None,
+        device: Optional[Literal["cpu", "cuda"] | torch.device] = None,
     ) -> None:
         super().__init__(lr=lr, max_iter=max_iter, device=device)
 

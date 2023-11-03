@@ -62,16 +62,18 @@ class DummyClassificationDataset(data.Dataset):
         else:
             self.data = self.data.transpose((0, 2, 3, 1))  # convert to HWC
 
-        self.targets = torch.randint(
-            low=0, high=num_classes, size=(num_images,)
-        )
+        self.targets = torch.randint(low=0, high=num_classes, size=(num_images,))
         self.targets = torch.arange(start=0, end=num_classes).repeat(
             num_images // (num_classes) + 1
         )[:num_images]
 
+        self.samples = self.data  # for compatibility with TinyImagenet
+        self.label_data = self.targets
+
     def __getitem__(self, index: int) -> tuple[Any, Any]:
-        """Args:
-            index (int): Index.
+        """
+        Args:
+            index (int): Index
 
         Returns:
             tuple: (image, target) where target is index of the target class.
