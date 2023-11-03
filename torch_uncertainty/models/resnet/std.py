@@ -324,6 +324,18 @@ class _ResNet(nn.Module):
         out = self.linear(out)
         return out
 
+    def feats_forward(self, x: Tensor) -> Tensor:
+        x = self.handle_dropout(x)
+        out = F.relu(self.bn1(self.conv1(x)))
+        out = self.optional_pool(out)
+        out = self.layer1(out)
+        out = self.layer2(out)
+        out = self.layer3(out)
+        out = self.layer4(out)
+        out = self.pool(out)
+        out = self.flatten(out)
+        return out
+
     def handle_dropout(self, x: Tensor) -> Tensor:
         if self.num_estimators is not None:
             if not self.training:

@@ -114,6 +114,39 @@ For Monte-Carlo Dropout, consider citing:
 * Authors: *Yarin Gal and Zoubin Ghahramani*
 * Paper: `ICML 2016 <https://arxiv.org/pdf/1506.02142.pdf>`__.
 
+Data Augmentation Methods
+-------------------------
+
+Mixup
+^^^^^
+
+For Mixup, consider citing:
+
+**mixup: Beyond Empirical Risk Minimization**
+
+* Authors: *Hongyi Zhang, Moustapha Cisse, Yann N. Dauphin, and David Lopez-Paz*
+* Paper: `ICLR 2018 <https://arxiv.org/pdf/1710.09412.pdf>`__.
+
+MixupIO
+^^^^^^^
+
+For MixupIO, consider citing:
+
+**On the Pitfall of Mixup for Uncertainty Calibration**
+
+* Authors: *Deng-Bao Wang, Lanqing Li, Peilin Zhao, Pheng-Ann Heng, and Min-Ling Zhang*
+* Paper: `CVPR 2023 <https://openaccess.thecvf.com/content/CVPR2023/papers/Wang_On_the_Pitfall_of_Mixup_for_Uncertainty_Calibration_CVPR_2023_paper.pdf>`
+
+Warping Mixup
+^^^^^^^^^^^^^
+
+For Warping Mixup, consider citing:
+
+**Tailoring Mixup to Data using Kernel Warping functions**
+
+* Authors: *Quentin Bouniot, Pavlo Mozharovskyi, and Florence d'Alché-Buc*
+* Paper: `ArXiv 2023 <https://arxiv.org/abs/2311.01434>`__.
+
 Post-Processing Methods
 -----------------------
 

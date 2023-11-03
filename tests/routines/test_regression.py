@@ -6,7 +6,7 @@ from cli_test_helpers import ArgvContext
 from torch import nn
 
 from torch_uncertainty import cli_main, init_args
-from torch_uncertainty.losses import NIGLoss, BetaNLL
+from torch_uncertainty.losses import BetaNLL, NIGLoss
 from torch_uncertainty.optimization_procedures import optim_cifar10_resnet18
 
 from .._dummies import DummyRegressionBaseline, DummyRegressionDataModule
@@ -34,7 +34,7 @@ class TestRegressionSingle:
                 **vars(args),
             )
 
-            cli_main(model, dm, root, "dummy", args)
+            cli_main(model, dm, root, "logs/dummy", args)
 
     def test_cli_main_dummy_dist_der(self):
         root = Path(__file__).parent.absolute().parents[0]
@@ -60,7 +60,7 @@ class TestRegressionSingle:
                 **vars(args),
             )
 
-            cli_main(model, dm, root, "dummy_der", args)
+            cli_main(model, dm, root, "logs/dummy_der", args)
 
     def test_cli_main_dummy_dist_betanll(self):
         root = Path(__file__).parent.absolute().parents[0]
@@ -86,7 +86,7 @@ class TestRegressionSingle:
                 **vars(args),
             )
 
-            cli_main(model, dm, root, "dummy_betanll", args)
+            cli_main(model, dm, root, "logs/dummy_betanll", args)
 
     def test_cli_main_dummy(self):
         root = Path(__file__).parent.absolute().parents[0]
@@ -106,7 +106,7 @@ class TestRegressionSingle:
                 **vars(args),
             )
 
-            cli_main(model, dm, root, "dummy", args)
+            cli_main(model, dm, root, "logs/dummy", args)
 
     def test_regression_failures(self):
         with pytest.raises(ValueError):
@@ -158,4 +158,4 @@ class TestRegressionEnsemble:
                 **vars(args),
             )
 
-            cli_main(model, dm, root, "dummy", args)
+            cli_main(model, dm, root, "logs/dummy", args)

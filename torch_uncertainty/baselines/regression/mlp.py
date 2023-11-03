@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import Any, List, Literal, Optional, Union
+from typing import Any, List, Literal, Optional, Type, Union
 
 import torch
 from pytorch_lightning import LightningModule
@@ -26,7 +26,7 @@ class MLP:
         cls,
         num_outputs: int,
         in_features: int,
-        loss: nn.Module,
+        loss: Type[nn.Module],
         optimization_procedure: Any,
         version: Literal["vanilla", "packed"],
         hidden_dims: List[int],

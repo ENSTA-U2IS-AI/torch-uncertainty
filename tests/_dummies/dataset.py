@@ -1,11 +1,10 @@
 from pathlib import Path
 from typing import Any, Callable, Tuple
 
+import numpy as np
 import torch
 import torch.utils.data as data
 from PIL import Image
-
-import numpy as np
 
 
 class DummyClassificationDataset(data.Dataset):
@@ -68,6 +67,9 @@ class DummyClassificationDataset(data.Dataset):
         self.targets = torch.arange(start=0, end=num_classes).repeat(
             num_images // (num_classes) + 1
         )[:num_images]
+
+        self.samples = self.data  # for compatibility with TinyImagenet
+        self.label_data = self.targets
 
     def __getitem__(self, index: int) -> Tuple[Any, Any]:
         """

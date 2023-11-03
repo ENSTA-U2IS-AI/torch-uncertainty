@@ -1,12 +1,11 @@
 from typing import List, Optional, Tuple, Union
 
+import numpy as np
 import torch
 import torchvision.transforms.functional as F
 from einops import rearrange
 from PIL import Image, ImageEnhance
 from torch import Tensor, nn
-
-import numpy as np
 
 
 class AutoContrast(nn.Module):

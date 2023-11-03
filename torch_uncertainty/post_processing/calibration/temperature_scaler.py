@@ -29,7 +29,7 @@ class TemperatureScaler(Scaler):
         init_val: float = 1,
         lr: float = 0.1,
         max_iter: int = 100,
-        device: Optional[Literal["cpu", "cuda"]] = None,
+        device: Optional[Literal["cpu", "cuda"] | torch.device] = None,
     ) -> None:
         super().__init__(lr=lr, max_iter=max_iter, device=device)
 

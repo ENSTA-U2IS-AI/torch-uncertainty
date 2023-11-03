@@ -2,19 +2,21 @@ from argparse import ArgumentParser
 from pathlib import Path
 from typing import Any, List, Literal, Optional, Union
 
+import numpy as np
 import torchvision.transforms as T
-from pytorch_lightning import LightningDataModule
+from numpy.typing import ArrayLike
 from timm.data.auto_augment import rand_augment_transform
 from torch import nn
-from torch.utils.data import DataLoader, Dataset, random_split
+from torch.utils.data import DataLoader, random_split
 from torchvision.datasets import CIFAR10, SVHN
 
 from ..datasets import AggregatedDataset
 from ..datasets.classification import CIFAR10C, CIFAR10H
 from ..transforms import Cutout
+from .abstract import AbstractDataModule
 
 
-class CIFAR10DataModule(LightningDataModule):
+class CIFAR10DataModule(AbstractDataModule):
     """DataModule for CIFAR10.
 
     Args:
@@ -58,19 +60,17 @@ class CIFAR10DataModule(LightningDataModule):
         persistent_workers: bool = True,
         **kwargs,
     ) -> None:
-        super().__init__()
+        super().__init__(
+            root=root,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            persistent_workers=persistent_workers,
+        )
 
-        if isinstance(root, str):
-            root = Path(root)
-        self.root: Path = root
-        self.evaluate_ood = evaluate_ood
-        self.batch_size = batch_size
         self.val_split = val_split
-        self.num_workers = num_workers
         self.num_dataloaders = num_dataloaders
-
-        self.pin_memory = pin_memory
-        self.persistent_workers = persistent_workers
+        self.evaluate_ood = evaluate_ood
 
         if test_alt == "c":
             self.dataset = CIFAR10C
@@ -202,48 +202,29 @@ class CIFAR10DataModule(LightningDataModule):
         else:
             return self._data_loader(self.train, shuffle=True)
 
-    def val_dataloader(self) -> DataLoader:
-        r"""Gets the validation dataloader for CIFAR10.
-
-        Returns:
-            DataLoader: CIFAR10 validation dataloader.
-        """
-        return self._data_loader(self.val)
-
     def test_dataloader(self) -> List[DataLoader]:
-        r"""Get the test dataloaders for CIFAR10.
+        r"""Get test dataloaders.
 
         Return:
-            List[DataLoader]: Dataloaders of the CIFAR10 test set (in
-                distribution data) and SVHN test split (out-of-distribution
-                data).
+            List[DataLoader]: test set for in distribution data
+            and out-of-distribution data.
         """
         dataloader = [self._data_loader(self.test)]
         if self.evaluate_ood:
             dataloader.append(self._data_loader(self.ood))
         return dataloader
 
-    def _data_loader(
-        self, dataset: Dataset, shuffle: bool = False
-    ) -> DataLoader:
-        """Create a dataloader for a given dataset.
+    def _get_train_data(self) -> ArrayLike:
+        if self.val_split:
+            return self.train.dataset.data[self.train.indices]
+        else:
+            return self.train.data
 
-        Args:
-            dataset (Dataset): Dataset to create a dataloader for.
-            shuffle (bool, optional): Whether to shuffle the dataset. Defaults
-                to False.
-
-        Return:
-            DataLoader: Dataloader for the given dataset.
-        """
-        return DataLoader(
-            dataset,
-            batch_size=self.batch_size,
-            shuffle=shuffle,
-            num_workers=self.num_workers,
-            pin_memory=self.pin_memory,
-            persistent_workers=self.persistent_workers,
-        )
+    def _get_train_targets(self) -> ArrayLike:
+        if self.val_split:
+            return np.array(self.train.dataset.targets)[self.train.indices]
+        else:
+            return np.array(self.train.targets)
 
     @classmethod
     def add_argparse_args(
@@ -251,16 +232,14 @@ class CIFAR10DataModule(LightningDataModule):
         parent_parser: ArgumentParser,
         **kwargs: Any,
     ) -> ArgumentParser:
-        p = parent_parser.add_argument_group("datamodule")
-        p.add_argument("--root", type=str, default="./data/")
-        p.add_argument("--batch_size", type=int, default=128)
-        p.add_argument("--val_split", type=float, default=0.0)
-        p.add_argument("--num_workers", type=int, default=4)
-        p.add_argument("--evaluate_ood", action="store_true")
+        p = super().add_argparse_args(parent_parser)
+
+        # Arguments for CIFAR10
         p.add_argument("--cutout", type=int, default=0)
         p.add_argument("--auto_augment", type=str)
         p.add_argument("--test_alt", choices=["c", "h"], default=None)
         p.add_argument(
             "--severity", dest="corruption_severity", type=int, default=None
         )
+        p.add_argument("--evaluate_ood", action="store_true")
         return parent_parser

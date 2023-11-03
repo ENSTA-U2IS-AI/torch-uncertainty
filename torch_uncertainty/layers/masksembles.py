@@ -2,11 +2,10 @@
 
 from typing import Any, Union
 
+import numpy as np
 import torch
 from torch import Tensor, nn
 from torch.nn.common_types import _size_2_t
-
-import numpy as np
 
 
 def _generate_masks(m: int, n: int, s: float) -> np.ndarray:

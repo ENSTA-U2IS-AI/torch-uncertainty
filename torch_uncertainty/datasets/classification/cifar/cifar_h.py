@@ -1,11 +1,10 @@
 import os
 from typing import Any, Callable, Optional
 
+import numpy as np
 import torch
 from torchvision.datasets import CIFAR10
 from torchvision.datasets.utils import check_integrity, download_url
-
-import numpy as np
 
 
 class CIFAR10H(CIFAR10):

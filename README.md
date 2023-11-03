@@ -51,20 +51,26 @@ A quickstart is available at [torch-uncertainty.github.io/quickstart](https://to
 To date, the following deep learning baselines have been implemented:
 
 - Deep Ensembles
-- MC-Dropout
+- MC-Dropout - [Tutorial](https://torch-uncertainty.github.io/auto_tutorials/tutorial_mc_dropout.html)
 - BatchEnsemble
 - Masksembles
 - MIMO
-- Packed-Ensembles (see [blog post](https://medium.com/@adrien.lafage/make-your-neural-networks-more-reliable-with-packed-ensembles-7ad0b737a873))
-- Bayesian Neural Networks :construction: Work in progress :construction:
+- Packed-Ensembles (see [blog post](https://medium.com/@adrien.lafage/make-your-neural-networks-more-reliable-with-packed-ensembles-7ad0b737a873)) - [Tutorial](https://torch-uncertainty.github.io/auto_tutorials/tutorial_pe_cifar10.html)
+- Bayesian Neural Networks :construction: Work in progress :construction: - [Tutorial](https://torch-uncertainty.github.io/auto_tutorials/tutorial_bayesian.html)
 - Regression with Beta Gaussian NLL Loss
-- Deep Evidential Classification & Regression
+- Deep Evidential Classification & Regression - [Tutorial](https://torch-uncertainty.github.io/auto_tutorials/tutorial_evidential_classification.html)
+
+### Augmentation methods
+
+The following data augmentation methods have been implemented:
+
+- Mixup, MixupIO, RegMixup, WarpingMixup
 
 ### Post-processing methods
 
 To date, the following post-processing methods have been implemented:
 
-- Temperature, Vector, & Matrix scaling
+- Temperature, Vector, & Matrix scaling - [Tutorial](https://torch-uncertainty.github.io/auto_tutorials/tutorial_scaler.html)
 
 ## Tutorials
 

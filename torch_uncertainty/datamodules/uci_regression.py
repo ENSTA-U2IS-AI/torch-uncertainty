@@ -3,14 +3,14 @@ from functools import partial
 from pathlib import Path
 from typing import Any, Optional, Tuple, Union
 
-from pytorch_lightning import LightningDataModule
 from torch import Generator
-from torch.utils.data import DataLoader, Dataset, random_split
+from torch.utils.data import random_split
 
 from ..datasets.regression import UCIRegression
+from .abstract import AbstractDataModule
 
 
-class UCIDataModule(LightningDataModule):
+class UCIDataModule(AbstractDataModule):
     """The UCI regression datasets.
 
     Args:
@@ -45,17 +45,15 @@ class UCIDataModule(LightningDataModule):
         split_seed: int = 42,
         **kwargs,
     ) -> None:
-        super().__init__()
+        super().__init__(
+            root=root,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            persistent_workers=persistent_workers,
+        )
 
-        if isinstance(root, str):
-            root = Path(root)
-        self.root: Path = root
-        self.batch_size = batch_size
         self.val_split = val_split
-        self.num_workers = num_workers
-
-        self.pin_memory = pin_memory
-        self.persistent_workers = persistent_workers
 
         self.dataset = partial(
             UCIRegression, dataset_name=dataset_name, seed=split_seed
@@ -85,51 +83,14 @@ class UCIDataModule(LightningDataModule):
         if self.val_split == 0:
             self.val = self.test
 
-    def train_dataloader(self) -> DataLoader:
-        """Get the training dataloader for UCI Regression.
+    # Change by default test_dataloader -> List[DataLoader]
+    # def test_dataloader(self) -> DataLoader:
+    #     """Get the test dataloader for UCI Regression.
 
-        Return:
-            DataLoader: UCI Regression training dataloader.
-        """
-        return self._data_loader(self.train, shuffle=True)
-
-    def val_dataloader(self) -> DataLoader:
-        """Get the validation dataloader for UCI Regression.
-
-        Return:
-            DataLoader: UCI Regression validation dataloader.
-        """
-        return self._data_loader(self.val)
-
-    def test_dataloader(self) -> DataLoader:
-        """Get the test dataloader for UCI Regression.
-
-        Return:
-            DataLoader: UCI Regression test dataloader.
-        """
-        return self._data_loader(self.test)
-
-    def _data_loader(
-        self, dataset: Dataset, shuffle: bool = False
-    ) -> DataLoader:
-        """Create a dataloader for a given dataset.
-
-        Args:
-            dataset (Dataset): Dataset to create a dataloader for.
-            shuffle (bool, optional): Whether to shuffle the dataset. Defaults
-                to False.
-
-        Return:
-            DataLoader: Dataloader for the given dataset.
-        """
-        return DataLoader(
-            dataset,
-            batch_size=self.batch_size,
-            shuffle=shuffle,
-            num_workers=self.num_workers,
-            pin_memory=self.pin_memory,
-            persistent_workers=self.persistent_workers,
-        )
+    #     Return:
+    #         DataLoader: UCI Regression test dataloader.
+    #     """
+    #     return self._data_loader(self.test)
 
     @classmethod
     def add_argparse_args(
@@ -137,9 +98,6 @@ class UCIDataModule(LightningDataModule):
         parent_parser: ArgumentParser,
         **kwargs: Any,
     ) -> ArgumentParser:
-        p = parent_parser.add_argument_group("datamodule")
-        p.add_argument("--root", type=str, default="./data/")
-        p.add_argument("--batch_size", type=int, default=128)
-        p.add_argument("--val_split", type=float, default=0)
-        p.add_argument("--num_workers", type=int, default=4)
+        super().add_argparse_args(parent_parser)
+
         return parent_parser

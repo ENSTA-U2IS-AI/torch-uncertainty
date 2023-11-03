@@ -11,7 +11,7 @@ from .._dummies.dataset import DummyClassificationDataset
 class TestTinyImageNetDataModule:
     """Testing the TinyImageNetDataModule datamodule class."""
 
-    def test_imagenet(self):
+    def test_tiny_imagenet(self):
         parser = ArgumentParser()
         parser = TinyImageNetDataModule.add_argparse_args(parser)
 
@@ -46,3 +46,23 @@ class TestTinyImageNetDataModule:
         dm.prepare_data()
         dm.setup("test")
         dm.test_dataloader()
+
+    def test_tiny_imagenet_cv(self):
+        parser = ArgumentParser()
+        parser = TinyImageNetDataModule.add_argparse_args(parser)
+
+        # Simulate that cutout is set to 8
+        args = parser.parse_args("")
+
+        dm = TinyImageNetDataModule(**vars(args))
+        dm.dataset = lambda root, split, transform: DummyClassificationDataset(
+            root, split=split, transform=transform, num_images=20
+        )
+        dm.make_cross_val_splits(2, 1)
+
+        args.val_split = 0.1
+        dm = TinyImageNetDataModule(**vars(args))
+        dm.dataset = lambda root, split, transform: DummyClassificationDataset(
+            root, split=split, transform=transform, num_images=20
+        )
+        dm.make_cross_val_splits(2, 1)

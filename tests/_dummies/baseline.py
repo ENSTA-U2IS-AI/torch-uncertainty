@@ -67,7 +67,7 @@ class DummyRegressionBaseline:
         cls,
         in_features: int,
         out_features: int,
-        loss: nn.Module,
+        loss: Type[nn.Module],
         optimization_procedure: Any,
         baseline_type: str = "single",
         dist_estimation: int = 1,

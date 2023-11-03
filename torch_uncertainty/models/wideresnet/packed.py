@@ -6,7 +6,6 @@ from torch import Tensor, nn
 
 from ...layers import PackedConv2d, PackedLinear
 
-
 __all__ = [
     "packed_wideresnet28x10",
 ]

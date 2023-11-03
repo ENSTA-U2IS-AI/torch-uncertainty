@@ -17,6 +17,10 @@ __all__ = [
     "optim_imagenet_resnet50",
     "optim_imagenet_resnet50_A3",
     "optim_regression",
+    "optim_cifar10_resnet34",
+    "optim_cifar100_resnet34",
+    "optim_tinyimagenet_resnet34",
+    "optim_tinyimagenet_resnet50",
 ]
 
 
@@ -227,6 +231,92 @@ def optim_imagenet_resnet50_A3(
     }
 
 
+def optim_cifar10_resnet34(
+    model: nn.Module,
+) -> Dict[str, Union[Optimizer, LRScheduler]]:
+    optimizer = optim.SGD(
+        model.parameters(),
+        lr=0.1,
+        momentum=0.9,
+        weight_decay=1e-4,
+        nesterov=True,
+    )
+    scheduler = optim.lr_scheduler.MultiStepLR(
+        optimizer,
+        milestones=[100, 150],
+        gamma=0.1,
+    )
+    return {"optimizer": optimizer, "lr_scheduler": scheduler}
+
+
+def optim_cifar100_resnet34(
+    model: nn.Module,
+) -> Dict[str, Union[Optimizer, LRScheduler]]:
+    optimizer = optim.SGD(
+        model.parameters(),
+        lr=0.1,
+        momentum=0.9,
+        weight_decay=1e-4,
+        nesterov=True,
+    )
+    scheduler = optim.lr_scheduler.MultiStepLR(
+        optimizer,
+        milestones=[100, 150],
+        gamma=0.1,
+    )
+    return {"optimizer": optimizer, "lr_scheduler": scheduler}
+
+
+def optim_tinyimagenet_resnet34(
+    model: nn.Module,
+) -> Dict[str, Union[Optimizer, LRScheduler]]:
+    """Optimization procedure from 'The Devil is in the Margin: Margin-based
+    Label Smoothing for Network Calibration',
+    (CVPR 2022, https://arxiv.org/abs/2111.15430):
+    "We train for 100 epochs with a learning rate of 0.1 for the first
+    40 epochs, of 0.01 for the next 20 epochs and of 0.001 for the last
+    40 epochs."
+    """
+    optimizer = optim.SGD(
+        model.parameters(),
+        lr=0.1,
+        momentum=0.9,
+        weight_decay=1e-4,
+        nesterov=True,
+    )
+    scheduler = optim.lr_scheduler.MultiStepLR(
+        optimizer,
+        milestones=[40, 60],
+        gamma=0.1,
+    )
+    return {"optimizer": optimizer, "lr_scheduler": scheduler}
+
+
+def optim_tinyimagenet_resnet50(
+    model: nn.Module,
+) -> Dict[str, Union[Optimizer, LRScheduler]]:
+    """Optimization procedure from 'The Devil is in the Margin: Margin-based
+    Label Smoothing for Network Calibration',
+    (CVPR 2022, https://arxiv.org/abs/2111.15430):
+    "We train for 100 epochs with a learning rate of 0.1 for the first
+    40 epochs, of 0.01 for the next 20 epochs and of 0.001 for the last
+    40 epochs."
+    """
+    optimizer = optim.SGD(
+        model.parameters(),
+        lr=0.1,
+        momentum=0.9,
+        weight_decay=1e-4,
+        nesterov=True,
+    )
+    scheduler = optim.lr_scheduler.MultiStepLR(
+        optimizer,
+        milestones=[40, 60],
+        gamma=0.1,
+    )
+    return {"optimizer": optimizer, "lr_scheduler": scheduler}
+
+
 def optim_regression(
     model: nn.Module,
     learning_rate: float = 1e-2,
@@ -307,12 +397,21 @@ def get_procedure(
         elif ds_name == "cifar100":
             procedure = optim_cifar100_resnet18
         else:
-            raise NotImplementedError(f"No recipe for dataset:{ds_name}.")
+            raise NotImplementedError(f"Dataset {ds_name} not implemented.")
+    elif arch_name == "resnet34":
+        if ds_name == "cifar10":
+            procedure = optim_cifar10_resnet34
+        elif ds_name == "cifar100":
+            procedure = optim_cifar100_resnet34
+        elif ds_name == "tiny-imagenet":
+            procedure = optim_tinyimagenet_resnet34
     elif arch_name == "resnet50":
         if ds_name == "cifar10":
             procedure = optim_cifar10_resnet50
         elif ds_name == "cifar100":
             procedure = optim_cifar100_resnet50
+        elif ds_name == "tiny-imagenet":
+            procedure = optim_tinyimagenet_resnet50
         elif ds_name == "imagenet":
             if imagenet_recipe is not None and imagenet_recipe == "A3":
                 procedure = optim_imagenet_resnet50_A3
