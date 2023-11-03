@@ -34,8 +34,7 @@ class DummyModelMix(torch.nn.Module):
 
     def forward(self, x):
         y = self.relu(self.layer(x))
-        y = self.layer2(y)
-        return y
+        return self.layer2(y)
 
 
 class TestStochasticModel:

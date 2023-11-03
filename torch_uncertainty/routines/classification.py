@@ -1,6 +1,7 @@
 from argparse import ArgumentParser, Namespace
+from collections.abc import Callable
 from functools import partial
-from typing import Any, Callable, List, Optional, Tuple, Type, Union
+from typing import Any
 
 import pytorch_lightning as pl
 import torch
@@ -20,8 +21,7 @@ from torchmetrics.classification import (
 )
 
 from torch_uncertainty.losses import DECLoss, ELBOLoss
-
-from ..metrics import (
+from torch_uncertainty.metrics import (
     FPR95,
     BrierScore,
     Disagreement,
@@ -30,13 +30,14 @@ from ..metrics import (
     NegativeLogLikelihood,
     VariationRatio,
 )
-from ..plotting_utils import CalibrationPlot, plot_hist
-from ..post_processing import TemperatureScaler
-from ..transforms import Mixup, MixupIO, RegMixup, WarpingMixup
+from torch_uncertainty.plotting_utils import CalibrationPlot, plot_hist
+from torch_uncertainty.post_processing import TemperatureScaler
+from torch_uncertainty.transforms import Mixup, MixupIO, RegMixup, WarpingMixup
 
 
 class ClassificationSingle(pl.LightningModule):
-    """
+    """Classification routine for single models.
+
     Args:
         evaluate_ood (bool, optional): Indicates whether to evaluate the OOD
             detection performance or not. Defaults to ``False``.
@@ -58,7 +59,7 @@ class ClassificationSingle(pl.LightningModule):
         self,
         num_classes: int,
         model: nn.Module,
-        loss: Type[nn.Module],
+        loss: type[nn.Module],
         optimization_procedure: Any,
         format_batch_fn: nn.Module = nn.Identity(),
         mixtype: str = "erm",
@@ -71,7 +72,7 @@ class ClassificationSingle(pl.LightningModule):
         evaluate_ood: bool = False,
         use_entropy: bool = False,
         use_logits: bool = False,
-        calibration_set: Optional[Callable] = None,
+        calibration_set: Callable | None = None,
         **kwargs,
     ) -> None:
         super().__init__()
@@ -213,7 +214,7 @@ class ClassificationSingle(pl.LightningModule):
             )
 
     def training_step(
-        self, batch: Tuple[Tensor, Tensor], batch_idx: int
+        self, batch: tuple[Tensor, Tensor], batch_idx: int
     ) -> STEP_OUTPUT:
         if self.mixtype == "kernel_warping":
             if self.dist_sim == "emb":
@@ -245,7 +246,7 @@ class ClassificationSingle(pl.LightningModule):
         return loss
 
     def validation_step(
-        self, batch: Tuple[Tensor, Tensor], batch_idx: int
+        self, batch: tuple[Tensor, Tensor], batch_idx: int
     ) -> None:
         inputs, targets = batch
         logits = self.forward(inputs)
@@ -258,7 +259,7 @@ class ClassificationSingle(pl.LightningModule):
         self.val_cls_metrics.update(probs, targets)
 
     def validation_epoch_end(
-        self, outputs: Union[EPOCH_OUTPUT, List[EPOCH_OUTPUT]]
+        self, outputs: EPOCH_OUTPUT | list[EPOCH_OUTPUT]
     ) -> None:
         self.log_dict(self.val_cls_metrics.compute())
         self.val_cls_metrics.reset()
@@ -275,9 +276,9 @@ class ClassificationSingle(pl.LightningModule):
 
     def test_step(
         self,
-        batch: Tuple[Tensor, Tensor],
+        batch: tuple[Tensor, Tensor],
         batch_idx: int,
-        dataloader_idx: Optional[int] = 0,
+        dataloader_idx: int | None = 0,
     ) -> Tensor:
         inputs, targets = batch
         logits = self.forward(inputs)
@@ -331,7 +332,7 @@ class ClassificationSingle(pl.LightningModule):
         return logits
 
     def test_epoch_end(
-        self, outputs: Union[EPOCH_OUTPUT, List[EPOCH_OUTPUT]]
+        self, outputs: EPOCH_OUTPUT | list[EPOCH_OUTPUT]
     ) -> None:
         self.log_dict(
             self.test_cls_metrics.compute(),
@@ -393,25 +394,25 @@ class ClassificationSingle(pl.LightningModule):
                 mode=self.mixmode,
                 num_classes=self.num_classes,
             )
-        elif self.mixtype == "mixup":
+        if self.mixtype == "mixup":
             return Mixup(
                 alpha=mixup_alpha,
                 mode=self.mixmode,
                 num_classes=self.num_classes,
             )
-        elif self.mixtype == "mixup_io":
+        if self.mixtype == "mixup_io":
             return MixupIO(
                 alpha=mixup_alpha,
                 mode=self.mixmode,
                 num_classes=self.num_classes,
             )
-        elif self.mixtype == "regmixup":
+        if self.mixtype == "regmixup":
             return RegMixup(
                 alpha=mixup_alpha,
                 mode=self.mixmode,
                 num_classes=self.num_classes,
             )
-        elif self.mixtype == "kernel_warping":
+        if self.mixtype == "kernel_warping":
             return WarpingMixup(
                 alpha=mixup_alpha,
                 mode=self.mixmode,
@@ -426,8 +427,9 @@ class ClassificationSingle(pl.LightningModule):
     def add_model_specific_args(
         parent_parser: ArgumentParser,
     ) -> ArgumentParser:
-        """Defines the routine's attributes via command-line options:
+        """Defines the routine's attributes via command-line options.
 
+        Adds:
         - ``--mixup``: sets :attr:`mixup_alpha` for Mixup
         - ``--cutmix``: sets :attr:`cutmix_alpha` for Cutmix
         - ``--entropy``: sets :attr:`use_entropy` to ``True``.
@@ -465,7 +467,8 @@ class ClassificationSingle(pl.LightningModule):
 
 
 class ClassificationEnsemble(ClassificationSingle):
-    """
+    """Classification routine for ensemble models.
+
     Args:
         evaluate_ood (bool, optional): Indicates whether to evaluate the OOD
             detection performance or not. Defaults to ``False``.
@@ -491,7 +494,7 @@ class ClassificationEnsemble(ClassificationSingle):
         self,
         num_classes: int,
         model: nn.Module,
-        loss: Type[nn.Module],
+        loss: type[nn.Module],
         optimization_procedure: Any,
         num_estimators: int,
         format_batch_fn: nn.Module = nn.Identity(),
@@ -574,7 +577,7 @@ class ClassificationEnsemble(ClassificationSingle):
             )
 
     def training_step(
-        self, batch: Tuple[Tensor, Tensor], batch_idx: int
+        self, batch: tuple[Tensor, Tensor], batch_idx: int
     ) -> STEP_OUTPUT:
         batch = self.mixup(*batch)
         # eventual input repeat is done in the model
@@ -597,8 +600,8 @@ class ClassificationEnsemble(ClassificationSingle):
         self.log("train_loss", loss)
         return loss
 
-    def validation_step(  # type: ignore
-        self, batch: Tuple[Tensor, Tensor], batch_idx: int
+    def validation_step(
+        self, batch: tuple[Tensor, Tensor], batch_idx: int
     ) -> None:
         inputs, targets = batch
         logits = self.forward(inputs)
@@ -613,9 +616,9 @@ class ClassificationEnsemble(ClassificationSingle):
 
     def test_step(
         self,
-        batch: Tuple[Tensor, Tensor],
+        batch: tuple[Tensor, Tensor],
         batch_idx: int,
-        dataloader_idx: Optional[int] = 0,
+        dataloader_idx: int | None = 0,
     ) -> Tensor:
         inputs, targets = batch
         logits = self.forward(inputs)
@@ -678,7 +681,7 @@ class ClassificationEnsemble(ClassificationSingle):
         return logits
 
     def test_epoch_end(
-        self, outputs: Union[EPOCH_OUTPUT, List[EPOCH_OUTPUT]]
+        self, outputs: EPOCH_OUTPUT | list[EPOCH_OUTPUT]
     ) -> None:
         self.log_dict(
             self.test_cls_metrics.compute(),
@@ -738,8 +741,9 @@ class ClassificationEnsemble(ClassificationSingle):
     def add_model_specific_args(
         parent_parser: ArgumentParser,
     ) -> ArgumentParser:
-        """Defines the routine's attributes via command-line options:
+        """Defines the routine's attributes via command-line options.
 
+        Adds:
         - ``--entropy``: sets :attr:`use_entropy` to ``True``.
         - ``--logits``: sets :attr:`use_logits` to ``True``.
         - ``--mutual_information``: sets :attr:`use_mi` to ``True``.

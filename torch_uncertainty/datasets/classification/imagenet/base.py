@@ -1,5 +1,5 @@
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, Optional
 
 from torchvision.datasets import ImageFolder
 from torchvision.datasets.utils import (
@@ -42,9 +42,9 @@ class ImageNetVariation(ImageFolder):
     def __init__(
         self,
         root: str,
-        split: Optional[str] = None,
-        transform: Optional[Callable] = None,
-        target_transform: Optional[Callable] = None,
+        split: str | None = None,
+        transform: Callable | None = None,
+        target_transform: Callable | None = None,
         download: bool = False,
     ) -> None:
         if isinstance(root, str):
@@ -76,7 +76,7 @@ class ImageNetVariation(ImageFolder):
                 self.root / Path(self.filename),
                 self.tgz_md5,
             )
-        elif isinstance(self.filename, list):  # ImageNet-C
+        if isinstance(self.filename, list):  # ImageNet-C
             integrity: bool = True
             for filename, md5 in zip(self.filename, self.tgz_md5):
                 integrity *= check_integrity(
@@ -84,8 +84,7 @@ class ImageNetVariation(ImageFolder):
                     md5,
                 )
             return integrity
-        else:
-            raise ValueError("filename must be str or list")
+        raise ValueError("filename must be str or list")
 
     def download(self) -> None:
         """Download and extract dataset."""

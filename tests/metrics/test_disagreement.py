@@ -6,20 +6,17 @@ from torch_uncertainty.metrics import Disagreement
 
 @pytest.fixture
 def disagreement_probas() -> torch.Tensor:
-    vec = torch.as_tensor([[[0.0, 1.0], [1.0, 0.0]]])
-    return vec
+    return torch.as_tensor([[[0.0, 1.0], [1.0, 0.0]]])
 
 
 @pytest.fixture
 def agreement_probas() -> torch.Tensor:
-    vec = torch.as_tensor([[[1.0, 0.0], [1.0, 0.0]]])
-    return vec
+    return torch.as_tensor([[[1.0, 0.0], [1.0, 0.0]]])
 
 
 @pytest.fixture
 def disagreement_probas_3() -> torch.Tensor:
-    vec = torch.as_tensor([[[0.0, 1.0], [0.0, 1.0], [1.0, 0.0]]])
-    return vec
+    return torch.as_tensor([[[0.0, 1.0], [0.0, 1.0], [1.0, 0.0]]])
 
 
 class TestDisagreement:

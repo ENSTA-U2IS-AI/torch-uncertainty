@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import Any, List, Optional, Union
+from typing import Any
 
 from numpy.typing import ArrayLike
 from pytorch_lightning import LightningDataModule
@@ -14,7 +14,7 @@ class AbstractDataModule(LightningDataModule):
 
     def __init__(
         self,
-        root: Union[str, Path],
+        root: str | Path,
         batch_size: int,
         num_workers: int = 1,
         pin_memory: bool = True,
@@ -32,8 +32,8 @@ class AbstractDataModule(LightningDataModule):
         self.pin_memory = pin_memory
         self.persistent_workers = persistent_workers
 
-    def setup(self, stage: Optional[str] = None) -> None:
-        raise NotImplementedError()
+    def setup(self, stage: str | None = None) -> None:
+        raise NotImplementedError
 
     def get_train_set(self) -> Dataset:
         return self.train
@@ -60,15 +60,14 @@ class AbstractDataModule(LightningDataModule):
         """
         return self._data_loader(self.val)
 
-    def test_dataloader(self) -> List[DataLoader]:
+    def test_dataloader(self) -> list[DataLoader]:
         r"""Get test dataloaders.
 
         Return:
             List[DataLoader]: test set for in distribution data
             and out-of-distribution data.
         """
-        dataloader = [self._data_loader(self.test)]
-        return dataloader
+        return [self._data_loader(self.test)]
 
     def _data_loader(
         self, dataset: Dataset, shuffle: bool = False
@@ -97,14 +96,14 @@ class AbstractDataModule(LightningDataModule):
     # It is generally "Dataset.samples" or "Dataset.data"
     # They are used for constructing cross validation splits
     def _get_train_data(self) -> ArrayLike:
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def _get_train_targets(self) -> ArrayLike:
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def make_cross_val_splits(
         self, n_splits: int = 10, train_over: int = 4
-    ) -> List:
+    ) -> list:
         self.setup("fit")
         skf = StratifiedKFold(n_splits)
         cv_dm = []

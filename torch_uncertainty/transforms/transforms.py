@@ -1,5 +1,3 @@
-from typing import List, Optional, Tuple, Union
-
 import numpy as np
 import torch
 import torchvision.transforms.functional as F
@@ -13,9 +11,7 @@ class AutoContrast(nn.Module):
     level_type = None
     corruption_overlap = False
 
-    def forward(
-        self, img: Union[Tensor, Image.Image]
-    ) -> Union[Tensor, Image.Image]:
+    def forward(self, img: Tensor | Image.Image) -> Tensor | Image.Image:
         return F.autocontrast(img)
 
 
@@ -24,9 +20,7 @@ class Equalize(nn.Module):
     level_type = None
     corruption_overlap = False
 
-    def forward(
-        self, img: Union[Tensor, Image.Image]
-    ) -> Union[Tensor, Image.Image]:
+    def forward(self, img: Tensor | Image.Image) -> Tensor | Image.Image:
         return F.equalize(img)
 
 
@@ -37,8 +31,8 @@ class Posterize(nn.Module):
     corruption_overlap = False
 
     def forward(
-        self, img: Union[Tensor, Image.Image], level: int
-    ) -> Union[Tensor, Image.Image]:
+        self, img: Tensor | Image.Image, level: int
+    ) -> Tensor | Image.Image:
         if level >= self.max_level:
             raise ValueError(f"Level must be less than {self.max_level}.")
         if level < 0:
@@ -53,8 +47,8 @@ class Solarize(nn.Module):
     corruption_overlap = False
 
     def forward(
-        self, img: Union[Tensor, Image.Image], level: float
-    ) -> Union[Tensor, Image.Image]:
+        self, img: Tensor | Image.Image, level: float
+    ) -> Tensor | Image.Image:
         if level >= self.max_level:
             raise ValueError(f"Level must be less than {self.max_level}.")
         if level < 0:
@@ -72,8 +66,8 @@ class Rotation(nn.Module):
         random_direction: bool = True,
         interpolation: F.InterpolationMode = F.InterpolationMode.NEAREST,
         expand: bool = False,
-        center: Optional[List[int]] = None,
-        fill: Optional[List[int]] = None,
+        center: list[int] | None = None,
+        fill: list[int] | None = None,
     ) -> None:
         super().__init__()
         self.random_direction = random_direction
@@ -83,8 +77,8 @@ class Rotation(nn.Module):
         self.fill = fill
 
     def forward(
-        self, img: Union[Tensor, Image.Image], level: float
-    ) -> Union[Tensor, Image.Image]:
+        self, img: Tensor | Image.Image, level: float
+    ) -> Tensor | Image.Image:
         if (
             self.random_direction and np.random.uniform() > 0.5
         ):  # coverage: ignore
@@ -109,8 +103,8 @@ class Shear(nn.Module):
         axis: int,
         random_direction: bool = True,
         interpolation: F.InterpolationMode = F.InterpolationMode.NEAREST,
-        center: Optional[List[int]] = None,
-        fill: Optional[List[int]] = None,
+        center: list[int] | None = None,
+        fill: list[int] | None = None,
     ):
         super().__init__()
         if axis not in (0, 1):
@@ -122,8 +116,8 @@ class Shear(nn.Module):
         self.fill = fill
 
     def forward(
-        self, img: Union[Tensor, Image.Image], level: int
-    ) -> Union[Tensor, Image.Image]:
+        self, img: Tensor | Image.Image, level: int
+    ) -> Tensor | Image.Image:
         if (
             self.random_direction and np.random.uniform() > 0.5
         ):  # coverage: ignore
@@ -152,8 +146,8 @@ class Translate(nn.Module):
         axis: int,
         random_direction: bool = True,
         interpolation: F.InterpolationMode = F.InterpolationMode.NEAREST,
-        center: Optional[List[int]] = None,
-        fill: Optional[List[int]] = None,
+        center: list[int] | None = None,
+        fill: list[int] | None = None,
     ):
         super().__init__()
         if axis not in (0, 1):
@@ -165,8 +159,8 @@ class Translate(nn.Module):
         self.fill = fill
 
     def forward(
-        self, img: Union[Tensor, Image.Image], level: int
-    ) -> Union[Tensor, Image.Image]:
+        self, img: Tensor | Image.Image, level: int
+    ) -> Tensor | Image.Image:
         if (
             self.random_direction and np.random.uniform() > 0.5
         ):  # coverage: ignore
@@ -194,8 +188,8 @@ class Contrast(nn.Module):
         super().__init__()
 
     def forward(
-        self, img: Union[Tensor, Image.Image], level: float
-    ) -> Union[Tensor, Image.Image]:
+        self, img: Tensor | Image.Image, level: float
+    ) -> Tensor | Image.Image:
         if level < 0:
             raise ValueError("Level must be greater than 0.")
         return F.adjust_contrast(img, level)
@@ -210,8 +204,8 @@ class Brightness(nn.Module):
         super().__init__()
 
     def forward(
-        self, img: Union[Tensor, Image.Image], level: float
-    ) -> Union[Tensor, Image.Image]:
+        self, img: Tensor | Image.Image, level: float
+    ) -> Tensor | Image.Image:
         if level < 0:
             raise ValueError("Level must be greater than 0.")
         return F.adjust_brightness(img, level)
@@ -226,8 +220,8 @@ class Sharpness(nn.Module):
         super().__init__()
 
     def forward(
-        self, img: Union[Tensor, Image.Image], level: float
-    ) -> Union[Tensor, Image.Image]:
+        self, img: Tensor | Image.Image, level: float
+    ) -> Tensor | Image.Image:
         if level < 0:
             raise ValueError("Level must be greater than 0.")
         return F.adjust_sharpness(img, level)
@@ -242,8 +236,8 @@ class Color(nn.Module):
         super().__init__()
 
     def forward(
-        self, img: Union[Tensor, Image.Image], level: float
-    ) -> Union[Tensor, Image.Image]:
+        self, img: Tensor | Image.Image, level: float
+    ) -> Tensor | Image.Image:
         if level < 0:
             raise ValueError("Level must be greater than 0.")
         if isinstance(img, Tensor):
@@ -272,7 +266,7 @@ class RepeatTarget(nn.Module):
 
         self.num_repeats = num_repeats
 
-    def forward(self, batch: Tuple[Tensor, Tensor]) -> Tuple[Tensor, Tensor]:
+    def forward(self, batch: tuple[Tensor, Tensor]) -> tuple[Tensor, Tensor]:
         inputs, targets = batch
         return inputs, targets.repeat(self.num_repeats)
 
@@ -310,7 +304,7 @@ class MIMOBatchFormat(nn.Module):
         idx = torch.randperm(inputs.nelement(), device=inputs.device)
         return inputs.view(-1)[idx].view(inputs.size())
 
-    def forward(self, batch: Tuple[Tensor, Tensor]) -> Tuple[Tensor, Tensor]:
+    def forward(self, batch: tuple[Tensor, Tensor]) -> tuple[Tensor, Tensor]:
         inputs, targets = batch
         indexes = torch.arange(
             0, inputs.shape[0], device=inputs.device, dtype=torch.int64

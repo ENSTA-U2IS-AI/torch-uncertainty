@@ -1,11 +1,11 @@
-from typing import Any, Dict, List, Type, Union
+from typing import Any
 
 import torch.nn.functional as F
 from einops import rearrange
 from torch import Tensor, nn
 
-from ...layers import PackedConv2d, PackedLinear
-from ...utils import load_hf
+from torch_uncertainty.layers import PackedConv2d, PackedLinear
+from torch_uncertainty.utils import load_hf
 
 __all__ = [
     "packed_resnet18",
@@ -53,7 +53,7 @@ class BasicBlock(nn.Module):
         gamma: int = 1,
         groups: int = 1,
     ):
-        super(BasicBlock, self).__init__()
+        super().__init__()
 
         # No subgroups for the first layer
         self.conv1 = PackedConv2d(
@@ -103,8 +103,7 @@ class BasicBlock(nn.Module):
         out = F.relu(self.bn1(self.conv1(x)))
         out = self.bn2(self.conv2(out))
         out += self.shortcut(x)
-        out = F.relu(out)
-        return out
+        return F.relu(out)
 
 
 class Bottleneck(nn.Module):
@@ -120,7 +119,7 @@ class Bottleneck(nn.Module):
         gamma: int = 1,
         groups: int = 1,
     ):
-        super(Bottleneck, self).__init__()
+        super().__init__()
 
         # No subgroups for the first layer
         self.conv1 = PackedConv2d(
@@ -181,15 +180,14 @@ class Bottleneck(nn.Module):
         out = F.relu(self.bn2(self.conv2(out)))
         out = self.bn3(self.conv3(out))
         out += self.shortcut(x)
-        out = F.relu(out)
-        return out
+        return F.relu(out)
 
 
 class _PackedResNet(nn.Module):
     def __init__(
         self,
-        block: Type[Union[BasicBlock, Bottleneck]],
-        num_blocks: List[int],
+        block: type[BasicBlock | Bottleneck],
+        num_blocks: list[int],
         in_channels: int,
         num_classes: int,
         num_estimators: int,
@@ -300,7 +298,7 @@ class _PackedResNet(nn.Module):
 
     def _make_layer(
         self,
-        block: Type[Union[BasicBlock, Bottleneck]],
+        block: type[BasicBlock | Bottleneck],
         planes: int,
         num_blocks: int,
         stride: int,
@@ -340,10 +338,9 @@ class _PackedResNet(nn.Module):
 
         out = self.pool(out)
         out = self.flatten(out)
-        out = self.linear(out)
-        return out
+        return self.linear(out)
 
-    def check_config(self, config: Dict[str, Any]) -> bool:
+    def check_config(self, config: dict[str, Any]) -> bool:
         """Check if the pretrained configuration matches the current model."""
         return (
             (config["alpha"] == self.alpha)
@@ -372,6 +369,8 @@ def packed_resnet18(
         alpha (int): Expansion factor affecting the width of the estimators.
         gamma (int): Number of groups within each estimator.
         num_classes (int): Number of classes to predict.
+        style (bool, optional): Whether to use the ImageNet
+            structure. Defaults to ``True``.
 
     Returns:
         _PackedResNet: A Packed-Ensembles ResNet-18.
@@ -419,6 +418,8 @@ def packed_resnet34(
         alpha (int): Expansion factor affecting the width of the estimators.
         gamma (int): Number of groups within each estimator.
         num_classes (int): Number of classes to predict.
+        style (bool, optional): Whether to use the ImageNet
+            structure. Defaults to ``True``.
 
     Returns:
         _PackedResNet: A Packed-Ensembles ResNet-34.
@@ -466,6 +467,8 @@ def packed_resnet50(
         alpha (int): Expansion factor affecting the width of the estimators.
         gamma (int): Number of groups within each estimator.
         num_classes (int): Number of classes to predict.
+        style (bool, optional): Whether to use the ImageNet
+            structure. Defaults to ``True``.
 
     Returns:
         _PackedResNet: A Packed-Ensembles ResNet-50.
@@ -513,6 +516,8 @@ def packed_resnet101(
         alpha (int): Expansion factor affecting the width of the estimators.
         gamma (int): Number of groups within each estimator.
         num_classes (int): Number of classes to predict.
+        style (bool, optional): Whether to use the ImageNet
+            structure. Defaults to ``True``.
 
     Returns:
         _PackedResNet: A Packed-Ensembles ResNet-101.

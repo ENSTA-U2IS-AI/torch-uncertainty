@@ -1,4 +1,4 @@
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 import torch
 from torchmetrics import Metric
@@ -46,7 +46,7 @@ class MutualInformation(Metric):
     """
 
     is_differentiable: bool = False
-    higher_is_better: Optional[bool] = None
+    higher_is_better: bool | None = None
     full_state_update: bool = False
 
     def __init__(
@@ -104,7 +104,7 @@ class MutualInformation(Metric):
         values = torch.clamp(dim_zero_cat(self.values), min=0)
         if self.reduction == "sum":
             return values.sum(dim=-1)
-        elif self.reduction == "mean":
+        if self.reduction == "mean":
             return values.sum(dim=-1) / self.total
-        else:  # reduction is None or "none"
-            return values
+        # reduction is None or "none"
+        return values

@@ -1,4 +1,4 @@
-from typing import Literal, Optional
+from typing import Literal
 
 import torch
 from torch import nn, optim
@@ -7,8 +7,7 @@ from tqdm import tqdm
 
 
 class Scaler(nn.Module):
-    """
-    Virtual class for scaling post-processing for calibrated probabilities.
+    """Virtual class for scaling post-processing for calibrated probabilities.
 
     Args:
         lr (float, optional): Learning rate for the optimizer. Defaults to 0.1.
@@ -29,7 +28,7 @@ class Scaler(nn.Module):
         self,
         lr: float = 0.1,
         max_iter: int = 100,
-        device: Optional[Literal["cpu", "cuda"] | torch.device] = None,
+        device: Literal["cpu", "cuda"] | torch.device | None = None,
     ) -> None:
         super().__init__()
         self.device = device
@@ -49,8 +48,7 @@ class Scaler(nn.Module):
         save_logits: bool = False,
         progress: bool = True,
     ) -> "Scaler":
-        """
-        Fit the temperature parameters to the calibration data.
+        """Fit the temperature parameters to the calibration data.
 
         Args:
             model (nn.Module): Model to calibrate.
@@ -104,8 +102,7 @@ class Scaler(nn.Module):
             return self._scale(logits)
 
     def _scale(self, logits: torch.Tensor) -> torch.Tensor:
-        """
-        Scale the logits with the optimal temperature.
+        """Scale the logits with the optimal temperature.
 
         Args:
             logits (torch.Tensor): Logits to be scaled.
@@ -113,7 +110,7 @@ class Scaler(nn.Module):
         Returns:
             torch.Tensor: Scaled logits.
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def fit_predict(
         self,
@@ -122,9 +119,8 @@ class Scaler(nn.Module):
         progress: bool = True,
     ) -> torch.Tensor:
         self.fit(model, calibration_set, save_logits=True, progress=progress)
-        calib_logits = self(self.logits)
-        return calib_logits
+        return self(self.logits)
 
     @property
     def temperature(self) -> list:
-        raise NotImplementedError()
+        raise NotImplementedError

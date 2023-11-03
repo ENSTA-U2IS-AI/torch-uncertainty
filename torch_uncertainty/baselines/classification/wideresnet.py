@@ -1,6 +1,6 @@
 from argparse import ArgumentParser, BooleanOptionalAction
 from pathlib import Path
-from typing import Any, Literal, Optional, Type, Union
+from typing import Any, Literal
 
 import torch
 from pytorch_lightning import LightningModule
@@ -10,24 +10,24 @@ from pytorch_lightning.core.saving import (
 )
 from torch import nn
 
-from ...models.wideresnet import (
+from torch_uncertainty.baselines.utils.parser_addons import (
+    add_masked_specific_args,
+    add_mimo_specific_args,
+    add_packed_specific_args,
+    add_wideresnet_specific_args,
+)
+from torch_uncertainty.models.wideresnet import (
     batched_wideresnet28x10,
     masked_wideresnet28x10,
     mimo_wideresnet28x10,
     packed_wideresnet28x10,
     wideresnet28x10,
 )
-from ...routines.classification import (
+from torch_uncertainty.routines.classification import (
     ClassificationEnsemble,
     ClassificationSingle,
 )
-from ...transforms import MIMOBatchFormat, RepeatTarget
-from ..utils.parser_addons import (
-    add_masked_specific_args,
-    add_mimo_specific_args,
-    add_packed_specific_args,
-    add_wideresnet_specific_args,
-)
+from torch_uncertainty.transforms import MIMOBatchFormat, RepeatTarget
 
 
 class WideResNet:
@@ -110,18 +110,18 @@ class WideResNet:
         cls,
         num_classes: int,
         in_channels: int,
-        loss: Type[nn.Module],
+        loss: type[nn.Module],
         optimization_procedure: Any,
         version: Literal[
             "vanilla", "mc-dropout", "packed", "batched", "masked", "mimo"
         ],
         style: str = "imagenet",
-        num_estimators: Optional[int] = None,
+        num_estimators: int | None = None,
         dropout_rate: float = 0.0,
-        groups: Optional[int] = None,
-        scale: Optional[float] = None,
-        alpha: Optional[int] = None,
-        gamma: Optional[int] = None,
+        groups: int | None = None,
+        scale: float | None = None,
+        alpha: int | None = None,
+        gamma: int | None = None,
         rho: float = 1.0,
         batch_repeat: int = 1,
         use_entropy: bool = False,
@@ -140,7 +140,7 @@ class WideResNet:
 
         format_batch_fn = nn.Identity()
 
-        if version not in cls.versions.keys():
+        if version not in cls.versions:
             raise ValueError(f"Unknown version: {version}")
 
         # version specific params
@@ -206,24 +206,24 @@ class WideResNet:
                 use_logits=use_logits,
                 **kwargs,
             )
-        else:  # version in cls.ensemble
-            return ClassificationEnsemble(
-                model=model,
-                loss=loss,
-                optimization_procedure=optimization_procedure,
-                format_batch_fn=format_batch_fn,
-                use_entropy=use_entropy,
-                use_logits=use_logits,
-                use_mi=use_mi,
-                use_variation_ratio=use_variation_ratio,
-                **kwargs,
-            )
+        # version in cls.ensemble
+        return ClassificationEnsemble(
+            model=model,
+            loss=loss,
+            optimization_procedure=optimization_procedure,
+            format_batch_fn=format_batch_fn,
+            use_entropy=use_entropy,
+            use_logits=use_logits,
+            use_mi=use_mi,
+            use_variation_ratio=use_variation_ratio,
+            **kwargs,
+        )
 
     @classmethod
     def load_from_checkpoint(
         cls,
-        checkpoint_path: Union[str, Path],
-        hparams_file: Union[str, Path],
+        checkpoint_path: str | Path,
+        hparams_file: str | Path,
         **kwargs,
     ) -> LightningModule:  # coverage: ignore
         if hparams_file is not None:
@@ -255,8 +255,7 @@ class WideResNet:
             type=str,
             choices=cls.versions.keys(),
             default="vanilla",
-            help="Variation of WideResNet. "
-            + f"Choose among: {cls.versions.keys()}",
+            help=f"Variation of WideResNet. Choose among: {cls.versions.keys()}",
         )
         parser.add_argument(
             "--pretrained",

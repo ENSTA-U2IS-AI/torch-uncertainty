@@ -1,5 +1,5 @@
-import sys
 import os
+import sys
 from pathlib import Path
 
 import pytest
@@ -210,18 +210,17 @@ class TestCLI:
             )
 
             list_dm = dm.make_cross_val_splits(2, 1)
-            list_model = []
-            for i in range(len(list_dm)):
-                list_model.append(
-                    ResNet(
-                        num_classes=list_dm[i].dm.num_classes,
-                        in_channels=list_dm[i].dm.num_channels,
-                        style="cifar",
-                        loss=nn.CrossEntropyLoss,
-                        optimization_procedure=optim_cifar10_resnet18,
-                        **vars(args),
-                    )
+            list_model = [
+                ResNet(
+                    num_classes=list_dm[i].dm.num_classes,
+                    in_channels=list_dm[i].dm.num_channels,
+                    style="cifar",
+                    loss=nn.CrossEntropyLoss,
+                    optimization_procedure=optim_cifar10_resnet18,
+                    **vars(args),
                 )
+                for i in range(len(list_dm))
+            ]
 
             cli_main(list_model, list_dm, root, "std", args)
 

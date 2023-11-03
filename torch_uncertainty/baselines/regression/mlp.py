@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import Any, List, Literal, Optional, Type, Union
+from typing import Any, Literal
 
 import torch
 from pytorch_lightning import LightningModule
@@ -10,9 +10,14 @@ from pytorch_lightning.core.saving import (
 )
 from torch import nn
 
-from ...models.mlp import mlp, packed_mlp
-from ...routines.regression import RegressionEnsemble, RegressionSingle
-from ..utils.parser_addons import add_packed_specific_args
+from torch_uncertainty.baselines.utils.parser_addons import (
+    add_packed_specific_args,
+)
+from torch_uncertainty.models.mlp import mlp, packed_mlp
+from torch_uncertainty.routines.regression import (
+    RegressionEnsemble,
+    RegressionSingle,
+)
 
 
 class MLP:
@@ -26,13 +31,13 @@ class MLP:
         cls,
         num_outputs: int,
         in_features: int,
-        loss: Type[nn.Module],
+        loss: type[nn.Module],
         optimization_procedure: Any,
         version: Literal["vanilla", "packed"],
-        hidden_dims: List[int],
+        hidden_dims: list[int],
         dist_estimation: int,
-        num_estimators: Optional[int] = 1,
-        alpha: Optional[float] = None,
+        num_estimators: int | None = 1,
+        alpha: float | None = None,
         gamma: int = 1,
         **kwargs,
     ) -> LightningModule:
@@ -49,7 +54,7 @@ class MLP:
                 "gamma": gamma,
             }
 
-        if version not in cls.versions.keys():
+        if version not in cls.versions:
             raise ValueError(f"Unknown version: {version}")
 
         model = cls.versions[version](**params)
@@ -65,21 +70,22 @@ class MLP:
                 dist_estimation=dist_estimation,
                 **kwargs,
             )
-        elif version in cls.versions.keys():
-            return RegressionEnsemble(
-                model=model,
-                loss=loss,
-                optimization_procedure=optimization_procedure,
-                dist_estimation=dist_estimation,
-                mode="mean",
-                **kwargs,
-            )
+        # version in cls.versions.keys():
+        return RegressionEnsemble(
+            model=model,
+            loss=loss,
+            optimization_procedure=optimization_procedure,
+            dist_estimation=dist_estimation,
+            mode="mean",
+            **kwargs,
+        )
+        return None
 
     @classmethod
     def load_from_checkpoint(
         cls,
-        checkpoint_path: Union[str, Path],
-        hparams_file: Union[str, Path],
+        checkpoint_path: str | Path,
+        hparams_file: str | Path,
         **kwargs,
     ) -> LightningModule:  # coverage: ignore
         if hparams_file is not None:

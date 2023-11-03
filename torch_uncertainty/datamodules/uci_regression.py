@@ -1,12 +1,13 @@
 from argparse import ArgumentParser
 from functools import partial
 from pathlib import Path
-from typing import Any, Optional, Tuple, Union
+from typing import Any
 
 from torch import Generator
 from torch.utils.data import random_split
 
-from ..datasets.regression import UCIRegression
+from torch_uncertainty.datasets.regression import UCIRegression
+
 from .abstract import AbstractDataModule
 
 
@@ -34,14 +35,14 @@ class UCIDataModule(AbstractDataModule):
 
     def __init__(
         self,
-        root: Union[str, Path],
+        root: str | Path,
         batch_size: int,
         dataset_name: str,
         val_split: float = 0.0,
         num_workers: int = 1,
         pin_memory: bool = True,
         persistent_workers: bool = True,
-        input_shape: Optional[Tuple[int, ...]] = None,
+        input_shape: tuple[int, ...] | None = None,
         split_seed: int = 42,
         **kwargs,
     ) -> None:
@@ -65,7 +66,7 @@ class UCIDataModule(AbstractDataModule):
         """Download the dataset."""
         self.dataset(root=self.root, download=True)
 
-    def setup(self, stage: Optional[str] = None) -> None:
+    def setup(self, stage: str | None = None) -> None:
         """Split the datasets into train, val, and test."""
         full = self.dataset(
             self.root,

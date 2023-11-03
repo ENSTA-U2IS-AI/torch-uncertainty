@@ -1,5 +1,5 @@
+from collections.abc import Callable
 from functools import partial
-from typing import Callable, Dict, Optional, Union
 
 from timm.optim import Lamb
 from torch import nn, optim
@@ -26,8 +26,8 @@ __all__ = [
 
 def optim_cifar10_resnet18(
     model: nn.Module,
-) -> Dict[str, Union[Optimizer, LRScheduler]]:
-    """optimizer to train a ResNet18 on CIFAR-10"""
+) -> dict[str, Optimizer | LRScheduler]:
+    """Optimizer to train a ResNet18 on CIFAR-10."""
     optimizer = optim.SGD(
         model.parameters(),
         lr=0.05,
@@ -44,9 +44,9 @@ def optim_cifar10_resnet18(
 
 def optim_cifar10_resnet50(
     model: nn.Module,
-) -> Dict[str, Union[Optimizer, LRScheduler]]:
+) -> dict[str, Optimizer | LRScheduler]:
     r"""Hyperparameters from Deep Residual Learning for Image Recognition
-    https://arxiv.org/pdf/1512.03385.pdf
+    https://arxiv.org/pdf/1512.03385.pdf.
     """
     optimizer = optim.SGD(
         model.parameters(),
@@ -65,8 +65,8 @@ def optim_cifar10_resnet50(
 
 def optim_cifar10_wideresnet(
     model: nn.Module,
-) -> Dict[str, Union[Optimizer, LRScheduler]]:
-    """optimizer to train a WideResNet28x10 on CIFAR-10"""
+) -> dict[str, Optimizer | LRScheduler]:
+    """Optimizer to train a WideResNet28x10 on CIFAR-10."""
     optimizer = optim.SGD(
         model.parameters(),
         lr=0.1,
@@ -84,8 +84,8 @@ def optim_cifar10_wideresnet(
 
 def optim_cifar10_vgg16(
     model: nn.Module,
-) -> Dict[str, Union[Optimizer, LRScheduler]]:
-    """optimizer to train a VGG16 on CIFAR-10"""
+) -> dict[str, Optimizer | LRScheduler]:
+    """Optimizer to train a VGG16 on CIFAR-10."""
     optimizer = optim.Adam(
         model.parameters(),
         lr=0.005,
@@ -101,7 +101,7 @@ def optim_cifar10_vgg16(
 
 def optim_cifar100_resnet18(
     model: nn.Module,
-) -> Dict[str, Union[Optimizer, LRScheduler]]:
+) -> dict[str, Optimizer | LRScheduler]:
     optimizer = optim.SGD(
         model.parameters(),
         lr=0.1,
@@ -119,9 +119,9 @@ def optim_cifar100_resnet18(
 
 def optim_cifar100_resnet50(
     model: nn.Module,
-) -> Dict[str, Union[Optimizer, LRScheduler]]:
+) -> dict[str, Optimizer | LRScheduler]:
     r"""Hyperparameters from Deep Residual Learning for Image Recognition
-    https://arxiv.org/pdf/1512.03385.pdf
+    https://arxiv.org/pdf/1512.03385.pdf.
     """
     optimizer = optim.SGD(
         model.parameters(),
@@ -140,8 +140,8 @@ def optim_cifar100_resnet50(
 
 def optim_cifar100_vgg16(
     model: nn.Module,
-) -> Dict[str, Union[Optimizer, LRScheduler]]:
-    """optimizer to train a VGG16 on CIFAR-100"""
+) -> dict[str, Optimizer | LRScheduler]:
+    """Optimizer to train a VGG16 on CIFAR-100."""
     optimizer = optim.SGD(
         model.parameters(),
         lr=0.05,
@@ -162,9 +162,9 @@ def optim_imagenet_resnet50(
     num_epochs: int = 90,
     start_lr: float = 0.256,
     end_lr: float = 0,
-) -> Dict:
+) -> dict:
     r"""Hyperparameters from Deep Residual Learning for Image Recognition
-    https://arxiv.org/pdf/1512.03385.pdf
+    https://arxiv.org/pdf/1512.03385.pdf.
     """
     optimizer = optim.SGD(
         model.parameters(),
@@ -184,10 +184,9 @@ def optim_imagenet_resnet50(
 
 
 def optim_imagenet_resnet50_A3(
-    model: nn.Module, effective_batch_size: Optional[int] = None
-) -> Dict:
-    """
-    Training procedure proposed in ResNet strikes back: An improved training
+    model: nn.Module, effective_batch_size: int | None = None
+) -> dict:
+    """Training procedure proposed in ResNet strikes back: An improved training
         procedure in timm.
 
     Args:
@@ -233,7 +232,7 @@ def optim_imagenet_resnet50_A3(
 
 def optim_cifar10_resnet34(
     model: nn.Module,
-) -> Dict[str, Union[Optimizer, LRScheduler]]:
+) -> dict[str, Optimizer | LRScheduler]:
     optimizer = optim.SGD(
         model.parameters(),
         lr=0.1,
@@ -251,7 +250,7 @@ def optim_cifar10_resnet34(
 
 def optim_cifar100_resnet34(
     model: nn.Module,
-) -> Dict[str, Union[Optimizer, LRScheduler]]:
+) -> dict[str, Optimizer | LRScheduler]:
     optimizer = optim.SGD(
         model.parameters(),
         lr=0.1,
@@ -269,13 +268,13 @@ def optim_cifar100_resnet34(
 
 def optim_tinyimagenet_resnet34(
     model: nn.Module,
-) -> Dict[str, Union[Optimizer, LRScheduler]]:
+) -> dict[str, Optimizer | LRScheduler]:
     """Optimization procedure from 'The Devil is in the Margin: Margin-based
     Label Smoothing for Network Calibration',
     (CVPR 2022, https://arxiv.org/abs/2111.15430):
-    "We train for 100 epochs with a learning rate of 0.1 for the first
+    'We train for 100 epochs with a learning rate of 0.1 for the first
     40 epochs, of 0.01 for the next 20 epochs and of 0.001 for the last
-    40 epochs."
+    40 epochs.'.
     """
     optimizer = optim.SGD(
         model.parameters(),
@@ -294,13 +293,13 @@ def optim_tinyimagenet_resnet34(
 
 def optim_tinyimagenet_resnet50(
     model: nn.Module,
-) -> Dict[str, Union[Optimizer, LRScheduler]]:
+) -> dict[str, Optimizer | LRScheduler]:
     """Optimization procedure from 'The Devil is in the Margin: Margin-based
     Label Smoothing for Network Calibration',
     (CVPR 2022, https://arxiv.org/abs/2111.15430):
-    "We train for 100 epochs with a learning rate of 0.1 for the first
+    'We train for 100 epochs with a learning rate of 0.1 for the first
     40 epochs, of 0.01 for the next 20 epochs and of 0.001 for the last
-    40 epochs."
+    40 epochs.'.
     """
     optimizer = optim.SGD(
         model.parameters(),
@@ -320,7 +319,7 @@ def optim_tinyimagenet_resnet50(
 def optim_regression(
     model: nn.Module,
     learning_rate: float = 1e-2,
-) -> Dict:
+) -> dict:
     optimizer = optim.SGD(
         model.parameters(),
         lr=learning_rate,
@@ -334,7 +333,7 @@ def optim_regression(
 
 def batch_ensemble_wrapper(
     model: nn.Module, optimization_procedure: Callable
-) -> Dict:
+) -> dict:
     procedure = optimization_procedure(model)
     param_optimizer = procedure["optimizer"]
     scheduler = procedure["lr_scheduler"]
@@ -377,7 +376,7 @@ def get_procedure(
     arch_name: str,
     ds_name: str,
     model_name: str = "",
-    imagenet_recipe: Optional[str] = None,
+    imagenet_recipe: str | None = None,
 ) -> Callable:
     """Get the optimization procedure for a given architecture and dataset.
 
@@ -420,7 +419,7 @@ def get_procedure(
         else:
             raise NotImplementedError(f"No recipe for dataset: {ds_name}.")
     elif arch_name == "wideresnet28x10":
-        if ds_name == "cifar10" or ds_name == "cifar100":
+        if ds_name in ("cifar10", "cifar100"):
             procedure = optim_cifar10_wideresnet
         else:
             raise NotImplementedError(f"No recipe for dataset: {ds_name}.")

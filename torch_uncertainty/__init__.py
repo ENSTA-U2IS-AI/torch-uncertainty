@@ -2,7 +2,7 @@
 from argparse import ArgumentParser, Namespace
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Type, Union
+from typing import Any, Optional
 
 import numpy as np
 import pytorch_lightning as pl
@@ -19,7 +19,7 @@ from .utils import get_version
 
 def init_args(
     network: Any = None,
-    datamodule: Optional[Type[pl.LightningDataModule]] = None,
+    datamodule: type[pl.LightningDataModule] | None = None,
 ) -> Namespace:
     parser = ArgumentParser("torch-uncertainty")
     parser.add_argument(
@@ -89,12 +89,12 @@ def init_args(
 
 
 def cli_main(
-    network: pl.LightningModule | List[pl.LightningModule],
-    datamodule: AbstractDataModule | List[AbstractDataModule],
-    root: Union[Path, str],
+    network: pl.LightningModule | list[pl.LightningModule],
+    datamodule: AbstractDataModule | list[AbstractDataModule],
+    root: Path | str,
     net_name: str,
     args: Namespace,
-) -> List[Dict]:
+) -> list[dict]:
     if isinstance(root, str):
         root = Path(root)
 
@@ -193,64 +193,62 @@ def cli_main(
             avg_test_values[key] = np.mean(all_test_values[key])
 
         return [avg_test_values]
-    else:
-        # logger
-        tb_logger = TensorBoardLogger(
-            str(root),
-            name=net_name,
-            default_hp_metric=False,
-            log_graph=args.log_graph,
-            version=args.test,
-        )
 
-        # callbacks
-        save_checkpoints = ModelCheckpoint(
-            monitor=monitor,
-            mode=mode,
-            save_last=True,
-            save_weights_only=not args.enable_resume,
-        )
+    # logger
+    tb_logger = TensorBoardLogger(
+        str(root),
+        name=net_name,
+        default_hp_metric=False,
+        log_graph=args.log_graph,
+        version=args.test,
+    )
 
-        # Select the best model, monitor the lr and stop if NaN
-        callbacks = [
-            save_checkpoints,
-            LearningRateMonitor(logging_interval="step"),
-            EarlyStopping(monitor=monitor, patience=np.inf, check_finite=True),
-        ]
+    # callbacks
+    save_checkpoints = ModelCheckpoint(
+        monitor=monitor,
+        mode=mode,
+        save_last=True,
+        save_weights_only=not args.enable_resume,
+    )
 
-        # trainer
-        trainer = pl.Trainer.from_argparse_args(
-            args,
-            callbacks=callbacks,
-            logger=tb_logger,
-            deterministic=(args.seed is not None),
-            inference_mode=not (args.opt_temp_scaling or args.val_temp_scaling),
+    # Select the best model, monitor the lr and stop if NaN
+    callbacks = [
+        save_checkpoints,
+        LearningRateMonitor(logging_interval="step"),
+        EarlyStopping(monitor=monitor, patience=np.inf, check_finite=True),
+    ]
+
+    # trainer
+    trainer = pl.Trainer.from_argparse_args(
+        args,
+        callbacks=callbacks,
+        logger=tb_logger,
+        deterministic=(args.seed is not None),
+        inference_mode=not (args.opt_temp_scaling or args.val_temp_scaling),
+    )
+    if args.summary:
+        summary(
+            network,
+            input_size=list(datamodule.input_shape).insert(0, 1),
         )
-        if args.summary:
-            summary(
-                network,
-                input_size=list(datamodule.input_shape).insert(0, 1),
+        test_values = [{}]
+    elif args.test is not None:
+        if args.test >= 0:
+            ckpt_file, _ = get_version(
+                root=(root / net_name),
+                version=args.test,
+                checkpoint=args.ckpt,
             )
-            test_values = [{}]
-        elif args.test is not None:
-            if args.test >= 0:
-                ckpt_file, _ = get_version(
-                    root=(root / net_name),
-                    version=args.test,
-                    checkpoint=args.ckpt,
-                )
-                test_values = trainer.test(
-                    network, datamodule=datamodule, ckpt_path=str(ckpt_file)
-                )
-            else:
-                test_values = trainer.test(network, datamodule=datamodule)
+            test_values = trainer.test(
+                network, datamodule=datamodule, ckpt_path=str(ckpt_file)
+            )
         else:
-            # training and testing
-            trainer.fit(network, datamodule)
-            if args.fast_dev_run is False:
-                test_values = trainer.test(
-                    datamodule=datamodule, ckpt_path="best"
-                )
-            else:
-                test_values = [{}]
-        return test_values
+            test_values = trainer.test(network, datamodule=datamodule)
+    else:
+        # training and testing
+        trainer.fit(network, datamodule)
+        if args.fast_dev_run is False:
+            test_values = trainer.test(datamodule=datamodule, ckpt_path="best")
+        else:
+            test_values = [{}]
+    return test_values

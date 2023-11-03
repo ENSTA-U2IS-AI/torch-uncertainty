@@ -5,18 +5,17 @@ import pytest
 from cli_test_helpers import ArgvContext
 from torch import nn
 
+from tests._dummies import (
+    DummyClassificationBaseline,
+    DummyClassificationDataModule,
+    DummyClassificationDataset,
+)
 from torch_uncertainty import cli_main, init_args
 from torch_uncertainty.losses import DECLoss, ELBOLoss
 from torch_uncertainty.optimization_procedures import optim_cifar10_resnet18
 from torch_uncertainty.routines.classification import (
     ClassificationEnsemble,
     ClassificationSingle,
-)
-
-from .._dummies import (
-    DummyClassificationBaseline,
-    DummyClassificationDataModule,
-    DummyClassificationDataset,
 )
 
 
@@ -170,19 +169,18 @@ class TestClassificationSingle:
             )
 
             list_dm = dm.make_cross_val_splits(2, 1)
-            list_model = []
-            for i in range(len(list_dm)):
-                list_model.append(
-                    DummyClassificationBaseline(
-                        num_classes=list_dm[i].dm.num_classes,
-                        in_channels=list_dm[i].dm.num_channels,
-                        loss=nn.CrossEntropyLoss,
-                        optimization_procedure=optim_cifar10_resnet18,
-                        baseline_type="single",
-                        calibration_set=dm.get_val_set,
-                        **vars(args),
-                    )
+            list_model = [
+                DummyClassificationBaseline(
+                    num_classes=list_dm[i].dm.num_classes,
+                    in_channels=list_dm[i].dm.num_channels,
+                    loss=nn.CrossEntropyLoss,
+                    optimization_procedure=optim_cifar10_resnet18,
+                    baseline_type="single",
+                    calibration_set=dm.get_val_set,
+                    **vars(args),
                 )
+                for i in range(len(list_dm))
+            ]
 
             cli_main(list_model, list_dm, root, "logs/dummy", args)
 

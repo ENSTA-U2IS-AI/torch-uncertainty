@@ -1,8 +1,6 @@
-from typing import Dict, List
-
 from torch import nn
 
-from ..layers.bayesian import bayesian_modules
+from torch_uncertainty.layers.bayesian import bayesian_modules
 
 
 def toggle_dropout(
@@ -20,7 +18,6 @@ def toggle_dropout(
             enabled, otherwise, if set to False, dropout layers will be
             disabled.
     """
-
     # filter all modules whose class name starts with `Dropout`
     filtered_modules = []
     for m in model.modules():
@@ -33,13 +30,12 @@ def toggle_dropout(
         for m in filtered_modules[:-1]:
             m.eval()
         filtered_modules[-1].train()
+    elif enable:  # set all filtered modules to training mode
+        for m in filtered_modules:
+            m.train()
     else:
-        if enable:  # set all filtered modules to training mode
-            for m in filtered_modules:
-                m.train()
-        else:
-            for m in filtered_modules:
-                m.eval()
+        for m in filtered_modules:
+            m.eval()
 
 
 def StochasticModel(model: nn.Module) -> nn.Module:
@@ -49,7 +45,7 @@ def StochasticModel(model: nn.Module) -> nn.Module:
     provide samples of the estimated posterior distribution.
     """
 
-    def sample(self, num_samples: int = 1) -> List[Dict]:
+    def sample(self, num_samples: int = 1) -> list[dict]:
         sampled_models = [{}] * num_samples
         for module_name in self._modules:
             module = self._modules[module_name]
@@ -64,13 +60,14 @@ def StochasticModel(model: nn.Module) -> nn.Module:
                     state = module.state_dict()
                     if not len(state):  # no parameter
                         break
+                    # TODO: fix this
                     model |= {
                         module_name + "." + key: val
                         for key, val in module.state_dict().items()
                     }
         return sampled_models
 
-    setattr(model, "sample", sample)
+    model.sample = sample
 
     def freeze(self) -> None:
         for module_name in self._modules:
@@ -78,7 +75,7 @@ def StochasticModel(model: nn.Module) -> nn.Module:
             if isinstance(module, bayesian_modules):
                 module.freeze()
 
-    setattr(model, "freeze", freeze)
+    model.freeze = freeze
 
     def unfreeze(self) -> None:
         for module_name in self._modules:
@@ -86,6 +83,6 @@ def StochasticModel(model: nn.Module) -> nn.Module:
             if isinstance(module, bayesian_modules):
                 module.unfreeze()
 
-    setattr(model, "unfreeze", unfreeze)
+    model.unfreeze = unfreeze
 
     return model

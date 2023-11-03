@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import Any, List, Literal, Optional, Union
+from typing import Any, Literal
 
 import numpy as np
 import torchvision.transforms as T
@@ -10,9 +10,10 @@ from torch import nn
 from torch.utils.data import DataLoader, random_split
 from torchvision.datasets import CIFAR10, SVHN
 
-from ..datasets import AggregatedDataset
-from ..datasets.classification import CIFAR10C, CIFAR10H
-from ..transforms import Cutout
+from torch_uncertainty.datasets import AggregatedDataset
+from torch_uncertainty.datasets.classification import CIFAR10C, CIFAR10H
+from torch_uncertainty.transforms import Cutout
+
 from .abstract import AbstractDataModule
 
 
@@ -46,14 +47,14 @@ class CIFAR10DataModule(AbstractDataModule):
 
     def __init__(
         self,
-        root: Union[str, Path],
+        root: str | Path,
         evaluate_ood: bool,
         batch_size: int,
         val_split: float = 0.0,
         num_workers: int = 1,
-        cutout: Optional[int] = None,
-        auto_augment: Optional[str] = None,
-        test_alt: Optional[Literal["c", "h"]] = None,
+        cutout: int | None = None,
+        auto_augment: str | None = None,
+        test_alt: Literal["c", "h"] | None = None,
         corruption_severity: int = 1,
         num_dataloaders: int = 1,
         pin_memory: bool = True,
@@ -138,9 +139,9 @@ class CIFAR10DataModule(AbstractDataModule):
         if self.evaluate_ood:
             self.ood_dataset(self.root, split="test", download=True)
 
-    def setup(self, stage: Optional[str] = None) -> None:
+    def setup(self, stage: str | None = None) -> None:
         if stage == "fit" or stage is None:
-            if self.test_alt == "c" or self.test_alt == "h":
+            if self.test_alt in ("c", "h"):
                 raise ValueError("CIFAR-C and H can only be used in testing.")
             full = self.dataset(
                 self.root,
@@ -199,10 +200,9 @@ class CIFAR10DataModule(AbstractDataModule):
                 AggregatedDataset(self.train, self.num_dataloaders),
                 shuffle=True,
             )
-        else:
-            return self._data_loader(self.train, shuffle=True)
+        return self._data_loader(self.train, shuffle=True)
 
-    def test_dataloader(self) -> List[DataLoader]:
+    def test_dataloader(self) -> list[DataLoader]:
         r"""Get test dataloaders.
 
         Return:
@@ -217,14 +217,12 @@ class CIFAR10DataModule(AbstractDataModule):
     def _get_train_data(self) -> ArrayLike:
         if self.val_split:
             return self.train.dataset.data[self.train.indices]
-        else:
-            return self.train.data
+        return self.train.data
 
     def _get_train_targets(self) -> ArrayLike:
         if self.val_split:
             return np.array(self.train.dataset.targets)[self.train.indices]
-        else:
-            return np.array(self.train.targets)
+        return np.array(self.train.targets)
 
     @classmethod
     def add_argparse_args(

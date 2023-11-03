@@ -1,4 +1,4 @@
-from typing import Literal, Optional
+from typing import Literal
 
 import torch
 from torch import nn
@@ -7,8 +7,7 @@ from .scaler import Scaler
 
 
 class TemperatureScaler(Scaler):
-    """
-    Temperature scaling post-processing for calibrated probabilities.
+    """Temperature scaling post-processing for calibrated probabilities.
 
     Args:
         init_value (float, optional): Initial value for the temperature.
@@ -21,7 +20,7 @@ class TemperatureScaler(Scaler):
 
     Reference:
         Guo, C., Pleiss, G., Sun, Y., & Weinberger, K. Q. On calibration
-        of modern neural networks. In ICML 2017.
+        o/gpfsdswork/projects/rech/ldr/uwv17to/torch-uncertainty/logs/vanilla-vit-in1k/version_9/checkpoints/epoch=296-step=92961.ckptf modern neural networks. In ICML 2017.
     """
 
     def __init__(
@@ -29,7 +28,7 @@ class TemperatureScaler(Scaler):
         init_val: float = 1,
         lr: float = 0.1,
         max_iter: int = 100,
-        device: Optional[Literal["cpu", "cuda"] | torch.device] = None,
+        device: Literal["cpu", "cuda"] | torch.device | None = None,
     ) -> None:
         super().__init__(lr=lr, max_iter=max_iter, device=device)
 
@@ -39,8 +38,7 @@ class TemperatureScaler(Scaler):
         self.set_temperature(init_val)
 
     def set_temperature(self, val: float) -> None:
-        """
-        Set the temperature to a fixed value.
+        """Set the temperature to a fixed value.
 
         Args:
             val (float): Temperature value.
@@ -53,8 +51,7 @@ class TemperatureScaler(Scaler):
         )
 
     def _scale(self, logits: torch.Tensor) -> torch.Tensor:
-        """
-        Scale the logits with the optimal temperature.
+        """Scale the logits with the optimal temperature.
 
         Args:
             logits (torch.Tensor): Logits to be scaled.

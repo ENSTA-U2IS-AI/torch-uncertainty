@@ -3,16 +3,15 @@ from argparse import ArgumentParser
 import pytest
 from torchvision.datasets import CIFAR10
 
+from tests._dummies.dataset import DummyClassificationDataset
 from torch_uncertainty.datamodules import CIFAR10DataModule
 from torch_uncertainty.transforms import Cutout
-
-from .._dummies.dataset import DummyClassificationDataset
 
 
 class TestCIFAR10DataModule:
     """Testing the CIFAR10DataModule datamodule class."""
 
-    def test_CIFAR10_main(self):
+    def test_cifar10_main(self):
         parser = ArgumentParser()
         parser = CIFAR10DataModule.add_argparse_args(parser)
 

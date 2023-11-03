@@ -6,26 +6,22 @@ from torch_uncertainty.layers.masksembles import MaskedConv2d, MaskedLinear
 
 @pytest.fixture
 def feat_input_odd() -> torch.Tensor:
-    feat = torch.rand((5, 10))
-    return feat
+    return torch.rand((5, 10))
 
 
 @pytest.fixture
 def feat_input_even() -> torch.Tensor:
-    feat = torch.rand((8, 10))
-    return feat
+    return torch.rand((8, 10))
 
 
 @pytest.fixture
 def img_input_odd() -> torch.Tensor:
-    img = torch.rand((5, 10, 3, 3))
-    return img
+    return torch.rand((5, 10, 3, 3))
 
 
 @pytest.fixture
 def img_input_even() -> torch.Tensor:
-    img = torch.rand((8, 10, 3, 3))
-    return img
+    return torch.rand((8, 10, 3, 3))
 
 
 class TestMaskedLinear:

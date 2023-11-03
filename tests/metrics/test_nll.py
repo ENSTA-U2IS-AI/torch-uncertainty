@@ -9,14 +9,12 @@ from torch_uncertainty.metrics import (
 
 @pytest.fixture
 def probs_zero() -> torch.Tensor:
-    probs = torch.as_tensor([[1, 0.0], [0.0, 1.0]])
-    return probs
+    return torch.as_tensor([[1, 0.0], [0.0, 1.0]])
 
 
 @pytest.fixture
 def targets_zero() -> torch.Tensor:
-    probs = torch.as_tensor([0, 1])
-    return probs
+    return torch.as_tensor([0, 1])
 
 
 class TestNegativeLogLikelihood:

@@ -1,11 +1,11 @@
-from typing import Callable, Dict, List, Type, Union
+from collections.abc import Callable
 
 import torch.nn.functional as F
 from torch import Tensor, nn
 
-from ..layers.bayesian import BayesLinear
-from ..layers.packed import PackedLinear
-from ..models.utils import StochasticModel
+from torch_uncertainty.layers.bayesian import BayesLinear
+from torch_uncertainty.layers.packed import PackedLinear
+from torch_uncertainty.models.utils import StochasticModel
 
 __all__ = ["mlp", "packed_mlp", "bayesian_mlp"]
 
@@ -27,10 +27,10 @@ class _MLP(nn.Module):
         self,
         in_features: int,
         num_outputs: int,
-        hidden_dims: List[int],
-        layer: Type[nn.Module],
+        hidden_dims: list[int],
+        layer: type[nn.Module],
         activation: Callable,
-        layer_args: Dict,
+        layer_args: dict,
         dropout: float,
     ) -> None:
         super().__init__()
@@ -78,8 +78,7 @@ class _MLP(nn.Module):
         for layer in self.layers[:-1]:
             x = F.dropout(layer(x), p=self.dropout, training=self.training)
             x = self.activation(x)
-        out = self.layers[-1](x)
-        return out
+        return self.layers[-1](x)
 
 
 @StochasticModel
@@ -91,16 +90,13 @@ def _mlp(
     stochastic: bool,
     in_features: int,
     num_outputs: int,
-    hidden_dims: List[int],
-    layer_args: Dict = {},
-    layer: Type[nn.Module] = nn.Linear,
+    hidden_dims: list[int],
+    layer_args: dict = {},
+    layer: type[nn.Module] = nn.Linear,
     activation: Callable = F.relu,
     dropout: float = 0.0,
-) -> Union[_MLP, _StochasticMLP]:
-    if not stochastic:
-        model = _MLP
-    else:
-        model = _StochasticMLP
+) -> _MLP | _StochasticMLP:
+    model = _MLP if not stochastic else _StochasticMLP
     return model(
         in_features=in_features,
         num_outputs=num_outputs,
@@ -115,8 +111,8 @@ def _mlp(
 def mlp(
     in_features: int,
     num_outputs: int,
-    hidden_dims: List[int],
-    layer: Type[nn.Module] = nn.Linear,
+    hidden_dims: list[int],
+    layer: type[nn.Module] = nn.Linear,
     activation: Callable = F.relu,
     dropout: float = 0.0,
 ) -> _MLP:
@@ -148,7 +144,7 @@ def mlp(
 def packed_mlp(
     in_features: int,
     num_outputs: int,
-    hidden_dims: List[int],
+    hidden_dims: list[int],
     num_estimators: int = 4,
     alpha: float = 2,
     gamma: float = 1,
@@ -175,7 +171,7 @@ def packed_mlp(
 def bayesian_mlp(
     in_features: int,
     num_outputs: int,
-    hidden_dims: List[int] = [],
+    hidden_dims: list[int] = [],
     activation: Callable = F.relu,
     dropout: float = 0.0,
 ) -> _StochasticMLP:
