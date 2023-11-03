@@ -1,4 +1,5 @@
 from argparse import ArgumentParser, Namespace
+from collections.abc import Callable
 from functools import partial
 from typing import Any
 
@@ -29,9 +30,9 @@ from torch_uncertainty.metrics import (
     NegativeLogLikelihood,
     VariationRatio,
 )
-from ..plotting_utils import CalibrationPlot, plot_hist
-from ..post_processing import TemperatureScaler
-from ..transforms import Mixup, MixupIO, RegMixup, WarpingMixup
+from torch_uncertainty.plotting_utils import CalibrationPlot, plot_hist
+from torch_uncertainty.post_processing import TemperatureScaler
+from torch_uncertainty.transforms import Mixup, MixupIO, RegMixup, WarpingMixup
 
 
 class ClassificationSingle(pl.LightningModule):
@@ -71,7 +72,7 @@ class ClassificationSingle(pl.LightningModule):
         evaluate_ood: bool = False,
         use_entropy: bool = False,
         use_logits: bool = False,
-        calibration_set: Optional[Callable] = None,
+        calibration_set: Callable | None = None,
         **kwargs,
     ) -> None:
         super().__init__()
@@ -393,25 +394,25 @@ class ClassificationSingle(pl.LightningModule):
                 mode=self.mixmode,
                 num_classes=self.num_classes,
             )
-        elif self.mixtype == "mixup":
+        if self.mixtype == "mixup":
             return Mixup(
                 alpha=mixup_alpha,
                 mode=self.mixmode,
                 num_classes=self.num_classes,
             )
-        elif self.mixtype == "mixup_io":
+        if self.mixtype == "mixup_io":
             return MixupIO(
                 alpha=mixup_alpha,
                 mode=self.mixmode,
                 num_classes=self.num_classes,
             )
-        elif self.mixtype == "regmixup":
+        if self.mixtype == "regmixup":
             return RegMixup(
                 alpha=mixup_alpha,
                 mode=self.mixmode,
                 num_classes=self.num_classes,
             )
-        elif self.mixtype == "kernel_warping":
+        if self.mixtype == "kernel_warping":
             return WarpingMixup(
                 alpha=mixup_alpha,
                 mode=self.mixmode,

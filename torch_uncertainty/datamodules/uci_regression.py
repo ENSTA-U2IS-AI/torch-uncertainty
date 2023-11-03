@@ -7,6 +7,7 @@ from torch import Generator
 from torch.utils.data import random_split
 
 from torch_uncertainty.datasets.regression import UCIRegression
+
 from .abstract import AbstractDataModule
 
 

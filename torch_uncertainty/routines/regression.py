@@ -17,7 +17,7 @@ class RegressionSingle(pl.LightningModule):
     def __init__(
         self,
         model: nn.Module,
-        loss: Type[nn.Module],
+        loss: type[nn.Module],
         optimization_procedure: Any,
         dist_estimation: int,
         **kwargs,
@@ -148,7 +148,9 @@ class RegressionSingle(pl.LightningModule):
 
         self.val_metrics.mse.update(means, targets)
 
-    def validation_epoch_end(self, outputs: EPOCH_OUTPUT | list[EPOCH_OUTPUT]) -> None:
+    def validation_epoch_end(
+        self, outputs: EPOCH_OUTPUT | list[EPOCH_OUTPUT]
+    ) -> None:
         self.log_dict(self.val_metrics.compute())
         self.val_metrics.reset()
 
@@ -180,7 +182,9 @@ class RegressionSingle(pl.LightningModule):
 
         self.test_metrics.mse.update(means, targets)
 
-    def test_epoch_end(self, outputs: EPOCH_OUTPUT | list[EPOCH_OUTPUT]) -> None:
+    def test_epoch_end(
+        self, outputs: EPOCH_OUTPUT | list[EPOCH_OUTPUT]
+    ) -> None:
         self.log_dict(
             self.test_metrics.compute(),
         )
@@ -197,7 +201,7 @@ class RegressionEnsemble(RegressionSingle):
     def __init__(
         self,
         model: nn.Module,
-        loss: Type[nn.Module],
+        loss: type[nn.Module],
         optimization_procedure: Any,
         dist_estimation: int,
         num_estimators: int,
@@ -215,7 +219,8 @@ class RegressionEnsemble(RegressionSingle):
 
         if mode == "mixture":
             raise NotImplementedError(
-                "Mixture of gaussians not implemented yet. Raise an issue if " "needed."
+                "Mixture of gaussians not implemented yet. Raise an issue if "
+                "needed."
             )
 
         self.mode = mode
@@ -238,7 +243,9 @@ class RegressionEnsemble(RegressionSingle):
         logits = self.forward(inputs)
 
         if self.out_features == 1:
-            logits = rearrange(logits, "(m b) dist -> b m dist", m=self.num_estimators)
+            logits = rearrange(
+                logits, "(m b) dist -> b m dist", m=self.num_estimators
+            )
         else:
             logits = rearrange(
                 logits,
@@ -275,7 +282,9 @@ class RegressionEnsemble(RegressionSingle):
         logits = self.forward(inputs)
 
         if self.out_features == 1:
-            logits = rearrange(logits, "(m b) dist -> b m dist", m=self.num_estimators)
+            logits = rearrange(
+                logits, "(m b) dist -> b m dist", m=self.num_estimators
+            )
         else:
             logits = rearrange(
                 logits,

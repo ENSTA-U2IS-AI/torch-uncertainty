@@ -31,7 +31,7 @@ class MLP:
         cls,
         num_outputs: int,
         in_features: int,
-        loss: Type[nn.Module],
+        loss: type[nn.Module],
         optimization_procedure: Any,
         version: Literal["vanilla", "packed"],
         hidden_dims: list[int],
@@ -95,7 +95,9 @@ class MLP:
             elif extension.lower() in ("yml", "yaml"):
                 hparams = load_hparams_from_yaml(hparams_file)
             else:
-                raise ValueError(".csv, .yml or .yaml is required for `hparams_file`")
+                raise ValueError(
+                    ".csv, .yml or .yaml is required for `hparams_file`"
+                )
 
         hparams.update(kwargs)
         checkpoint = torch.load(checkpoint_path)

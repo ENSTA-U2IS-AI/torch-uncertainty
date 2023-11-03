@@ -1,5 +1,3 @@
-from typing import Tuple
-
 import numpy as np
 import scipy
 import torch
@@ -123,17 +121,17 @@ class AbstractMixup:
 
         return lam * y1 + (1 - lam) * y2
 
-    def __call__(self, x: Tensor, y: Tensor) -> Tuple[Tensor, Tensor]:
+    def __call__(self, x: Tensor, y: Tensor) -> tuple[Tensor, Tensor]:
         raise NotImplementedError
 
 
 class Mixup(AbstractMixup):
     """Original Mixup method from Zhang et al.,
     "mixup: Beyond Empirical Risk Minimization" (ICLR 2021)
-    http://arxiv.org/abs/1710.09412
+    http://arxiv.org/abs/1710.09412.
     """
 
-    def __call__(self, x: Tensor, y: Tensor) -> Tuple[Tensor, Tensor]:
+    def __call__(self, x: Tensor, y: Tensor) -> tuple[Tensor, Tensor]:
         lam, index = self._get_params(x.size()[0], x.device)
         mixed_x = self._linear_mixing(lam, x, index)
         mixed_y = self._mix_target(lam, y, index)
@@ -143,10 +141,10 @@ class Mixup(AbstractMixup):
 class MixupIO(AbstractMixup):
     """Mixup on inputs only with targets unchanged, from Wang et al.,
     "On the Pitfall of Mixup for Uncertainty Calibration" (CVPR 2023)
-    https://openaccess.thecvf.com/content/CVPR2023/papers/Wang_On_the_Pitfall_of_Mixup_for_Uncertainty_Calibration_CVPR_2023_paper.pdf
+    https://openaccess.thecvf.com/content/CVPR2023/papers/Wang_On_the_Pitfall_of_Mixup_for_Uncertainty_Calibration_CVPR_2023_paper.pdf.
     """
 
-    def __call__(self, x: Tensor, y: Tensor) -> Tuple[Tensor, Tensor]:
+    def __call__(self, x: Tensor, y: Tensor) -> tuple[Tensor, Tensor]:
         lam, index = self._get_params(x.size()[0], x.device)
 
         mixed_x = self._linear_mixing(lam, x, index)
@@ -162,10 +160,10 @@ class MixupIO(AbstractMixup):
 class RegMixup(AbstractMixup):
     """RegMixup method from Pinto et al.,
     "RegMixup: Mixup as a Regularizer Can Surprisingly Improve Accuracy and Out Distribution Robustness" (NeurIPS 2022)
-    https://arxiv.org/abs/2206.14502
+    https://arxiv.org/abs/2206.14502.
     """
 
-    def __call__(self, x: Tensor, y: Tensor) -> Tuple[Tensor, Tensor]:
+    def __call__(self, x: Tensor, y: Tensor) -> tuple[Tensor, Tensor]:
         lam, index = self._get_params(x.size()[0], x.device)
         part_x = self._linear_mixing(lam, x, index)
         part_y = self._mix_target(lam, y, index)
@@ -177,7 +175,7 @@ class RegMixup(AbstractMixup):
 class WarpingMixup(AbstractMixup):
     """Kernel Warping Mixup method from Bouniot et al.,
     "Tailoring Mixup to Data using Kernel Warping functions" (2023)
-    https://arxiv.org/abs/2311.01434
+    https://arxiv.org/abs/2311.01434.
     """
 
     def __init__(
@@ -209,7 +207,7 @@ class WarpingMixup(AbstractMixup):
         y: Tensor,
         feats: Tensor,
         warp_param=1.0,
-    ) -> Tuple[Tensor, Tensor]:
+    ) -> tuple[Tensor, Tensor]:
         lam, index = self._get_params(x.size()[0], x.device)
 
         if self.apply_kernel:

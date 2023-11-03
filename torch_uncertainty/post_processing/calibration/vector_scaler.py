@@ -34,7 +34,7 @@ class VectorScaler(Scaler):
         init_b: float = 0,
         lr: float = 0.1,
         max_iter: int = 200,
-        device: Optional[Literal["cpu", "cuda"] | torch.device] = None,
+        device: Literal["cpu", "cuda"] | torch.device | None = None,
     ) -> None:
         super().__init__(lr=lr, max_iter=max_iter, device=device)
 

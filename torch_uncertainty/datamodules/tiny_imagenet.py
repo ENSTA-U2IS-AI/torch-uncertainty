@@ -10,6 +10,7 @@ from torch.utils.data import ConcatDataset, DataLoader
 from torchvision.datasets import DTD, SVHN
 
 from torch_uncertainty.datasets.classification import ImageNetO, TinyImageNet
+
 from .abstract import AbstractDataModule
 
 
@@ -51,7 +52,9 @@ class TinyImageNetDataModule(AbstractDataModule):
         elif ood_ds == "textures":
             self.ood_dataset = DTD
         else:
-            raise ValueError(f"OOD dataset {ood_ds} not supported for TinyImageNet.")
+            raise ValueError(
+                f"OOD dataset {ood_ds} not supported for TinyImageNet."
+            )
 
         if rand_augment_opt is not None:
             main_transform = rand_augment_transform(rand_augment_opt, {})

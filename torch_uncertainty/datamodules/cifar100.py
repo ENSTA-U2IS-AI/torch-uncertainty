@@ -14,6 +14,7 @@ from torchvision.datasets import CIFAR100, SVHN
 from torch_uncertainty.datasets import AggregatedDataset
 from torch_uncertainty.datasets.classification import CIFAR100C
 from torch_uncertainty.transforms import Cutout
+
 from .abstract import AbstractDataModule
 
 
@@ -216,14 +217,12 @@ class CIFAR100DataModule(AbstractDataModule):
     def _get_train_data(self) -> ArrayLike:
         if self.val_split:
             return self.train.dataset.data[self.train.indices]
-        else:
-            return self.train.data
+        return self.train.data
 
     def _get_train_targets(self) -> ArrayLike:
         if self.val_split:
             return np.array(self.train.dataset.targets)[self.train.indices]
-        else:
-            return np.array(self.train.targets)
+        return np.array(self.train.targets)
 
     @classmethod
     def add_argparse_args(

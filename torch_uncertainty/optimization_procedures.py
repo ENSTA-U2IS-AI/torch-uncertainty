@@ -232,7 +232,7 @@ def optim_imagenet_resnet50_A3(
 
 def optim_cifar10_resnet34(
     model: nn.Module,
-) -> Dict[str, Union[Optimizer, LRScheduler]]:
+) -> dict[str, Optimizer | LRScheduler]:
     optimizer = optim.SGD(
         model.parameters(),
         lr=0.1,
@@ -250,7 +250,7 @@ def optim_cifar10_resnet34(
 
 def optim_cifar100_resnet34(
     model: nn.Module,
-) -> Dict[str, Union[Optimizer, LRScheduler]]:
+) -> dict[str, Optimizer | LRScheduler]:
     optimizer = optim.SGD(
         model.parameters(),
         lr=0.1,
@@ -268,13 +268,13 @@ def optim_cifar100_resnet34(
 
 def optim_tinyimagenet_resnet34(
     model: nn.Module,
-) -> Dict[str, Union[Optimizer, LRScheduler]]:
+) -> dict[str, Optimizer | LRScheduler]:
     """Optimization procedure from 'The Devil is in the Margin: Margin-based
     Label Smoothing for Network Calibration',
     (CVPR 2022, https://arxiv.org/abs/2111.15430):
-    "We train for 100 epochs with a learning rate of 0.1 for the first
+    'We train for 100 epochs with a learning rate of 0.1 for the first
     40 epochs, of 0.01 for the next 20 epochs and of 0.001 for the last
-    40 epochs."
+    40 epochs.'.
     """
     optimizer = optim.SGD(
         model.parameters(),
@@ -293,13 +293,13 @@ def optim_tinyimagenet_resnet34(
 
 def optim_tinyimagenet_resnet50(
     model: nn.Module,
-) -> Dict[str, Union[Optimizer, LRScheduler]]:
+) -> dict[str, Optimizer | LRScheduler]:
     """Optimization procedure from 'The Devil is in the Margin: Margin-based
     Label Smoothing for Network Calibration',
     (CVPR 2022, https://arxiv.org/abs/2111.15430):
-    "We train for 100 epochs with a learning rate of 0.1 for the first
+    'We train for 100 epochs with a learning rate of 0.1 for the first
     40 epochs, of 0.01 for the next 20 epochs and of 0.001 for the last
-    40 epochs."
+    40 epochs.'.
     """
     optimizer = optim.SGD(
         model.parameters(),

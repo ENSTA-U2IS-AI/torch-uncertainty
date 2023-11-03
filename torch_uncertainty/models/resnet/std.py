@@ -328,8 +328,7 @@ class _ResNet(nn.Module):
         out = self.layer3(out)
         out = self.layer4(out)
         out = self.pool(out)
-        out = self.flatten(out)
-        return out
+        return self.flatten(out)
 
     def handle_dropout(self, x: Tensor) -> Tensor:
         if self.num_estimators is not None and not self.training:
