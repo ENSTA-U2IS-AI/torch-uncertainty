@@ -1,5 +1,3 @@
-from typing import Tuple
-
 import pytest
 import torch
 
@@ -8,13 +6,13 @@ from torch_uncertainty.transforms.mixup import AbstractMixup
 
 
 @pytest.fixture
-def batch_input() -> Tuple[torch.Tensor, torch.Tensor]:
+def batch_input() -> tuple[torch.Tensor, torch.Tensor]:
     imgs = torch.rand(2, 3, 28, 28)
     return imgs, torch.tensor([0, 1])
 
 
 class TestAbstractMixup:
-    """Testing AbstractMixup augmentation"""
+    """Testing AbstractMixup augmentation."""
 
     def test_abstract_mixup(self, batch_input):
         with pytest.raises(NotImplementedError):
@@ -22,7 +20,7 @@ class TestAbstractMixup:
 
 
 class TestMixup:
-    """Testing Mixup augmentation"""
+    """Testing Mixup augmentation."""
 
     def test_batch_mixup(self, batch_input):
         mixup = Mixup(alpha=1.0, mode="batch", num_classes=2)
@@ -34,7 +32,7 @@ class TestMixup:
 
 
 class TestMixupIO:
-    """Testing MixupIO augmentation"""
+    """Testing MixupIO augmentation."""
 
     def test_batch_mixupio(self, batch_input):
         mixup = MixupIO(alpha=1.0, mode="batch", num_classes=2)
@@ -46,7 +44,7 @@ class TestMixupIO:
 
 
 class TestRegMixup:
-    """Testing RegMixup augmentation"""
+    """Testing RegMixup augmentation."""
 
     def test_batch_regmixup(self, batch_input):
         mixup = RegMixup(alpha=1.0, mode="batch", num_classes=2)
@@ -58,7 +56,7 @@ class TestRegMixup:
 
 
 class TestWarpingMixup:
-    """Testing WarpingMixup augmentation"""
+    """Testing WarpingMixup augmentation."""
 
     def test_batch_kernel_warpingmixup(self, batch_input):
         mixup = WarpingMixup(

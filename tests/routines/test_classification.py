@@ -8,6 +8,7 @@ from torch import nn
 from tests._dummies import (
     DummyClassificationBaseline,
     DummyClassificationDataModule,
+    DummyClassificationDataset,
 )
 from torch_uncertainty import cli_main, init_args
 from torch_uncertainty.losses import DECLoss, ELBOLoss
@@ -17,12 +18,6 @@ from torch_uncertainty.routines.classification import (
     ClassificationSingle,
 )
 
-from .._dummies import (
-    DummyClassificationBaseline,
-    DummyClassificationDataModule,
-    DummyClassificationDataset,
-)
-
 
 class TestClassificationSingle:
     """Testing the classification routine with a single model."""
@@ -30,7 +25,9 @@ class TestClassificationSingle:
     def test_cli_main_dummy_binary(self):
         root = Path(__file__).parent.absolute().parents[0]
         with ArgvContext("file.py"):
-            args = init_args(DummyClassificationBaseline, DummyClassificationDataModule)
+            args = init_args(
+                DummyClassificationBaseline, DummyClassificationDataModule
+            )
 
             args.root = str(root / "data")
             dm = DummyClassificationDataModule(num_classes=1, **vars(args))
@@ -46,7 +43,9 @@ class TestClassificationSingle:
             cli_main(model, dm, root, "logs/dummy", args)
 
         with ArgvContext("file.py", "--logits"):
-            args = init_args(DummyClassificationBaseline, DummyClassificationDataModule)
+            args = init_args(
+                DummyClassificationBaseline, DummyClassificationDataModule
+            )
 
             args.root = str(root / "data")
             dm = DummyClassificationDataModule(num_classes=1, **vars(args))
@@ -64,7 +63,9 @@ class TestClassificationSingle:
     def test_cli_main_dummy_ood(self):
         root = Path(__file__).parent.absolute().parents[0]
         with ArgvContext("file.py", "--fast_dev_run"):
-            args = init_args(DummyClassificationBaseline, DummyClassificationDataModule)
+            args = init_args(
+                DummyClassificationBaseline, DummyClassificationDataModule
+            )
 
             args.root = str(root / "data")
             dm = DummyClassificationDataModule(**vars(args))
@@ -89,7 +90,9 @@ class TestClassificationSingle:
             "--evaluate_ood",
             "--entropy",
         ):
-            args = init_args(DummyClassificationBaseline, DummyClassificationDataModule)
+            args = init_args(
+                DummyClassificationBaseline, DummyClassificationDataModule
+            )
 
             args.root = str(root / "data")
             dm = DummyClassificationDataModule(**vars(args))
@@ -113,7 +116,9 @@ class TestClassificationSingle:
             "--mixtype",
             "timm",
         ):
-            args = init_args(DummyClassificationBaseline, DummyClassificationDataModule)
+            args = init_args(
+                DummyClassificationBaseline, DummyClassificationDataModule
+            )
 
             args.root = str(root / "data")
             dm = DummyClassificationDataModule(**vars(args))
@@ -142,33 +147,40 @@ class TestClassificationSingle:
             "--val_temp_scaling",
             "--use_cv",
         ):
-            args = init_args(DummyClassificationBaseline, DummyClassificationDataModule)
+            args = init_args(
+                DummyClassificationBaseline, DummyClassificationDataModule
+            )
 
             args.root = str(root / "data")
             dm = DummyClassificationDataModule(num_classes=10, **vars(args))
-            dm.dataset = lambda root, num_channels, num_classes, image_size, transform: DummyClassificationDataset(
-                root,
-                num_channels=num_channels,
-                num_classes=num_classes,
-                image_size=image_size,
-                transform=transform,
-                num_images=20,
+            dm.dataset = (
+                lambda root,
+                num_channels,
+                num_classes,
+                image_size,
+                transform: DummyClassificationDataset(
+                    root,
+                    num_channels=num_channels,
+                    num_classes=num_classes,
+                    image_size=image_size,
+                    transform=transform,
+                    num_images=20,
+                )
             )
 
             list_dm = dm.make_cross_val_splits(2, 1)
-            list_model = []
-            for i in range(len(list_dm)):
-                list_model.append(
-                    DummyClassificationBaseline(
-                        num_classes=list_dm[i].dm.num_classes,
-                        in_channels=list_dm[i].dm.num_channels,
-                        loss=nn.CrossEntropyLoss,
-                        optimization_procedure=optim_cifar10_resnet18,
-                        baseline_type="single",
-                        calibration_set=dm.get_val_set,
-                        **vars(args),
-                    )
+            list_model = [
+                DummyClassificationBaseline(
+                    num_classes=list_dm[i].dm.num_classes,
+                    in_channels=list_dm[i].dm.num_channels,
+                    loss=nn.CrossEntropyLoss,
+                    optimization_procedure=optim_cifar10_resnet18,
+                    baseline_type="single",
+                    calibration_set=dm.get_val_set,
+                    **vars(args),
                 )
+                for i in range(len(list_dm))
+            ]
 
             cli_main(list_model, list_dm, root, "logs/dummy", args)
 
@@ -183,17 +195,25 @@ class TestClassificationSingle:
             "--val_temp_scaling",
             "--use_cv",
         ):
-            args = init_args(DummyClassificationBaseline, DummyClassificationDataModule)
+            args = init_args(
+                DummyClassificationBaseline, DummyClassificationDataModule
+            )
 
             args.root = str(root / "data")
             dm = DummyClassificationDataModule(num_classes=10, **vars(args))
-            dm.dataset = lambda root, num_channels, num_classes, image_size, transform: DummyClassificationDataset(
-                root,
-                num_channels=num_channels,
-                num_classes=num_classes,
-                image_size=image_size,
-                transform=transform,
-                num_images=20,
+            dm.dataset = (
+                lambda root,
+                num_channels,
+                num_classes,
+                image_size,
+                transform: DummyClassificationDataset(
+                    root,
+                    num_channels=num_channels,
+                    num_classes=num_classes,
+                    image_size=image_size,
+                    transform=transform,
+                    num_images=20,
+                )
             )
 
             list_dm = dm.make_cross_val_splits(2, 1)
@@ -229,7 +249,9 @@ class TestClassificationEnsemble:
     def test_cli_main_dummy_binary(self):
         root = Path(__file__).parent.absolute().parents[0]
         with ArgvContext("file.py"):
-            args = init_args(DummyClassificationBaseline, DummyClassificationDataModule)
+            args = init_args(
+                DummyClassificationBaseline, DummyClassificationDataModule
+            )
 
             # datamodule
             args.root = str(root / "data")
@@ -252,7 +274,9 @@ class TestClassificationEnsemble:
             cli_main(model, dm, root, "logs/dummy", args)
 
         with ArgvContext("file.py", "--mutual_information"):
-            args = init_args(DummyClassificationBaseline, DummyClassificationDataModule)
+            args = init_args(
+                DummyClassificationBaseline, DummyClassificationDataModule
+            )
 
             # datamodule
             args.root = str(root / "data")
@@ -272,7 +296,9 @@ class TestClassificationEnsemble:
     def test_cli_main_dummy_ood(self):
         root = Path(__file__).parent.absolute().parents[0]
         with ArgvContext("file.py", "--logits"):
-            args = init_args(DummyClassificationBaseline, DummyClassificationDataModule)
+            args = init_args(
+                DummyClassificationBaseline, DummyClassificationDataModule
+            )
 
             # datamodule
             args.root = str(root / "data")
@@ -290,7 +316,9 @@ class TestClassificationEnsemble:
             cli_main(model, dm, root, "logs/dummy", args)
 
         with ArgvContext("file.py", "--evaluate_ood", "--entropy"):
-            args = init_args(DummyClassificationBaseline, DummyClassificationDataModule)
+            args = init_args(
+                DummyClassificationBaseline, DummyClassificationDataModule
+            )
 
             # datamodule
             args.root = str(root / "data")
@@ -308,7 +336,9 @@ class TestClassificationEnsemble:
             cli_main(model, dm, root, "logs/dummy", args)
 
         with ArgvContext("file.py", "--evaluate_ood", "--variation_ratio"):
-            args = init_args(DummyClassificationBaseline, DummyClassificationDataModule)
+            args = init_args(
+                DummyClassificationBaseline, DummyClassificationDataModule
+            )
 
             # datamodule
             args.root = str(root / "data")

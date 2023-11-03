@@ -1,9 +1,10 @@
 from argparse import ArgumentParser
 from pathlib import Path
 from typing import Any
-import numpy as np
 
+import numpy as np
 import torchvision.transforms as T
+from numpy.typing import ArrayLike
 from torch.utils.data import DataLoader
 
 from torch_uncertainty.datamodules.abstract import AbstractDataModule
@@ -79,7 +80,7 @@ class DummyClassificationDataModule(AbstractDataModule):
                 transform=self.transform_test,
             )
 
-    def test_dataloader(self) -> Union[DataLoader, list[DataLoader]]:
+    def test_dataloader(self) -> DataLoader | list[DataLoader]:
         dataloader = [self._data_loader(self.test)]
         if self.evaluate_ood:
             dataloader.append(self._data_loader(self.ood))
@@ -162,7 +163,7 @@ class DummyRegressionDataModule(AbstractDataModule):
                 transform=self.transform_test,
             )
 
-    def test_dataloader(self) -> Union[DataLoader, list[DataLoader]]:
+    def test_dataloader(self) -> DataLoader | list[DataLoader]:
         dataloader = [self._data_loader(self.test)]
         if self.evaluate_ood:
             dataloader.append(self._data_loader(self.ood))
