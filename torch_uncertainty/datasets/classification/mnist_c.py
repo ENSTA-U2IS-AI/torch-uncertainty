@@ -1,14 +1,14 @@
 import os
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable, Literal, Optional, Tuple
+from typing import Any, Literal
 
+import numpy as np
 from torchvision.datasets import VisionDataset
 from torchvision.datasets.utils import (
     check_integrity,
     download_and_extract_archive,
 )
-
-import numpy as np
 
 
 class MNISTC(VisionDataset):
@@ -66,8 +66,8 @@ class MNISTC(VisionDataset):
     def __init__(
         self,
         root: str,
-        transform: Optional[Callable] = None,
-        target_transform: Optional[Callable] = None,
+        transform: Callable | None = None,
+        target_transform: Callable | None = None,
         split: Literal["train", "test"] = "test",
         subset: str = "all",
         download: bool = False,
@@ -91,7 +91,7 @@ class MNISTC(VisionDataset):
             transform=transform,
             target_transform=target_transform,
         )
-        if subset not in ["all"] + self.mnistc_subsets:
+        if subset not in ["all", *self.mnistc_subsets]:
             raise ValueError(
                 f"The subset '{subset}' does not exist in MNIST-C."
             )
@@ -113,27 +113,27 @@ class MNISTC(VisionDataset):
         root: Path,
         subset: str,
         split: Literal["train", "test"],
-    ) -> Tuple[np.ndarray, np.ndarray]:
-        r"""
-        Build the corrupted dataset according to the chosen subset and
+    ) -> tuple[np.ndarray, np.ndarray]:
+        r"""Build the corrupted dataset according to the chosen subset and
             severity. If the subset is 'all', gather all corruption types
             in the dataset.
+
         Args:
             root (Path):The path to the dataset.
             subset (str): The name of the corruption subset to be used. Choose
                 `all` for the dataset to contain all subsets.
+
         Returns:
-            Tuple[np.ndarray, np.ndarray]: The samples and labels of the chosen
+            Tuple[np.ndarray, np.ndarray]: The samples and labels of the chosen.
         """
         if subset == "all":
-            sample_arrays = []
             # take any subset to get the labels
             labels: np.ndarray = np.load(root / f"identity/{split}_labels.npy")
 
-            for mnist_subset in self.mnistc_subsets:
-                sample_arrays.append(
-                    np.load(root / mnist_subset / f"{split}_images.npy")
-                )
+            sample_arrays = [
+                np.load(root / mnist_subset / f"{split}_images.npy")
+                for mnist_subset in self.mnistc_subsets
+            ]
             samples = np.concatenate(sample_arrays, axis=0)
             labels = np.tile(labels, len(self.mnistc_subsets))
 

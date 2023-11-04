@@ -1,9 +1,7 @@
-from typing import Type
-
 import torch.nn.functional as F
 from torch import Tensor, nn
 
-from ..utils import toggle_dropout
+from torch_uncertainty.models.utils import toggle_dropout
 
 __all__ = [
     "wideresnet28x10",
@@ -57,11 +55,10 @@ class WideBasicBlock(nn.Module):
         out = F.relu(self.bn1(self.dropout(self.conv1(x))))
         out = self.conv2(out)
         out += self.shortcut(x)
-        out = F.relu(self.bn2(out))
-        return out
+        return F.relu(self.bn2(out))
 
 
-class _Wide(nn.Module):
+class _WideResNet(nn.Module):
     """WideResNet from `Wide Residual Networks`.
 
     Note:
@@ -80,7 +77,7 @@ class _Wide(nn.Module):
         dropout_rate: float,
         groups: int = 1,
         style: str = "imagenet",
-        num_estimators: int = None,
+        num_estimators: int | None = None,
         last_layer_dropout: bool = False,
     ) -> None:
         super().__init__()
@@ -88,16 +85,17 @@ class _Wide(nn.Module):
         self.num_estimators = num_estimators
         self.last_layer_dropout = last_layer_dropout
 
-        assert (depth - 4) % 6 == 0, "Wide-resnet depth should be 6n+4."
+        if (depth - 4) % 6 != 0:
+            raise ValueError("Wide-resnet depth should be 6n+4.")
         num_blocks = int((depth - 4) / 6)
         k = widen_factor
 
-        nStages = [16, 16 * k, 32 * k, 64 * k]
+        num_stages = [16, 16 * k, 32 * k, 64 * k]
 
         if style == "imagenet":
             self.conv1 = nn.Conv2d(
                 in_channels,
-                nStages[0],
+                num_stages[0],
                 kernel_size=7,
                 stride=2,
                 padding=3,
@@ -107,7 +105,7 @@ class _Wide(nn.Module):
         else:
             self.conv1 = nn.Conv2d(
                 in_channels,
-                nStages[0],
+                num_stages[0],
                 kernel_size=3,
                 stride=1,
                 padding=1,
@@ -115,7 +113,7 @@ class _Wide(nn.Module):
                 bias=True,
             )
 
-        self.bn1 = nn.BatchNorm2d(nStages[0])
+        self.bn1 = nn.BatchNorm2d(num_stages[0])
 
         if style == "imagenet":
             self.optional_pool = nn.MaxPool2d(
@@ -126,7 +124,7 @@ class _Wide(nn.Module):
 
         self.layer1 = self._wide_layer(
             WideBasicBlock,
-            nStages[1],
+            num_stages[1],
             num_blocks=num_blocks,
             dropout_rate=dropout_rate,
             stride=1,
@@ -134,7 +132,7 @@ class _Wide(nn.Module):
         )
         self.layer2 = self._wide_layer(
             WideBasicBlock,
-            nStages[2],
+            num_stages[2],
             num_blocks=num_blocks,
             dropout_rate=dropout_rate,
             stride=2,
@@ -142,7 +140,7 @@ class _Wide(nn.Module):
         )
         self.layer3 = self._wide_layer(
             WideBasicBlock,
-            nStages[3],
+            num_stages[3],
             num_blocks=num_blocks,
             dropout_rate=dropout_rate,
             stride=2,
@@ -153,13 +151,13 @@ class _Wide(nn.Module):
         self.flatten = nn.Flatten(1)
 
         self.linear = nn.Linear(
-            nStages[3],
+            num_stages[3],
             num_classes,
         )
 
     def _wide_layer(
         self,
-        block: Type[WideBasicBlock],
+        block: type[WideBasicBlock],
         planes: int,
         num_blocks: int,
         dropout_rate: float,
@@ -192,15 +190,13 @@ class _Wide(nn.Module):
         out = self.layer3(out)
         out = self.pool(out)
         out = self.flatten(out)
-        out = self.linear(out)
-        return out
+        return self.linear(out)
 
     def handle_dropout(self, x: Tensor) -> Tensor:
-        if self.num_estimators is not None:
-            if not self.training:
-                if self.last_layer_dropout is not None:
-                    toggle_dropout(self, self.last_layer_dropout)
-                x = x.repeat(self.num_estimators, 1, 1, 1)
+        if self.num_estimators is not None and not self.training:
+            if self.last_layer_dropout is not None:
+                toggle_dropout(self, self.last_layer_dropout)
+            x = x.repeat(self.num_estimators, 1, 1, 1)
         return x
 
 
@@ -210,9 +206,9 @@ def wideresnet28x10(
     groups: int = 1,
     dropout_rate: float = 0.3,
     style: str = "imagenet",
-    num_estimators: int = None,
+    num_estimators: int | None = None,
     last_layer_dropout: bool = False,
-) -> nn.Module:
+) -> _WideResNet:
     """Wide-ResNet-28x10 from `Wide Residual Networks
     <https://arxiv.org/pdf/1605.07146.pdf>`_.
 
@@ -221,6 +217,7 @@ def wideresnet28x10(
         num_classes (int): Number of classes to predict.
         groups (int, optional): Number of groups in convolutions. Defaults to
             ``1``.
+        dropout_rate (float, optional): Dropout rate. Defaults to ``0.3``.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
         num_estimators (int, optional): Number of samples to draw from the
@@ -231,7 +228,7 @@ def wideresnet28x10(
     Returns:
         _Wide: A Wide-ResNet-28x10.
     """
-    return _Wide(
+    return _WideResNet(
         depth=28,
         widen_factor=10,
         in_channels=in_channels,

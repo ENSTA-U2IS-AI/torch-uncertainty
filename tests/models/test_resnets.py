@@ -38,6 +38,7 @@ class TestStdResnet:
         model = resnet50(1, 10, 1)
         with torch.no_grad():
             model(torch.randn(2, 1, 32, 32))
+            model.feats_forward(torch.randn(2, 1, 32, 32))
 
     def test_mc_dropout(self):
         resnet34(1, 10, 1, num_estimators=5)

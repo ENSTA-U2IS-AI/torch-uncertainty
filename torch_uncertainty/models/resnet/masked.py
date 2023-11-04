@@ -1,9 +1,7 @@
-from typing import List, Type, Union
-
 import torch.nn.functional as F
 from torch import Tensor, nn
 
-from ...layers import MaskedConv2d, MaskedLinear
+from torch_uncertainty.layers import MaskedConv2d, MaskedLinear
 
 __all__ = [
     "masked_resnet18",
@@ -26,7 +24,7 @@ class BasicBlock(nn.Module):
         scale: float = 2.0,
         groups: int = 1,
     ):
-        super(BasicBlock, self).__init__()
+        super().__init__()
 
         self.conv1 = MaskedConv2d(
             in_planes,
@@ -73,8 +71,7 @@ class BasicBlock(nn.Module):
         out = F.relu(self.bn1(self.conv1(x)))
         out = self.bn2(self.conv2(out))
         out += self.shortcut(x)
-        out = F.relu(out)
-        return out
+        return F.relu(out)
 
 
 class Bottleneck(nn.Module):
@@ -89,7 +86,7 @@ class Bottleneck(nn.Module):
         scale: float = 2.0,
         groups: int = 1,
     ):
-        super(Bottleneck, self).__init__()
+        super().__init__()
 
         self.conv1 = MaskedConv2d(
             in_planes,
@@ -145,15 +142,14 @@ class Bottleneck(nn.Module):
         out = F.relu(self.bn2(self.conv2(out)))
         out = self.bn3(self.conv3(out))
         out += self.shortcut(x)
-        out = F.relu(out)
-        return out
+        return F.relu(out)
 
 
 class _MaskedResNet(nn.Module):
     def __init__(
         self,
-        block: Type[Union[BasicBlock, Bottleneck]],
-        num_blocks: List[int],
+        block: type[BasicBlock | Bottleneck],
+        num_blocks: list[int],
         in_channels: int,
         num_classes: int,
         num_estimators: int,
@@ -248,7 +244,7 @@ class _MaskedResNet(nn.Module):
 
     def _make_layer(
         self,
-        block: Type[Union[BasicBlock, Bottleneck]],
+        block: type[BasicBlock | Bottleneck],
         planes: int,
         num_blocks: int,
         stride: int,
@@ -283,8 +279,7 @@ class _MaskedResNet(nn.Module):
 
         out = self.pool(out)
         out = self.flatten(out)
-        out = self.linear(out)
-        return out
+        return self.linear(out)
 
 
 def masked_resnet18(
@@ -429,7 +424,6 @@ def masked_resnet152(
     Args:
         in_channels (int): Number of input channels.
         num_estimators (int): Number of estimators in the ensemble.
-        scale (float): Expansion factor affecting the width of the estimators.
         groups (int): Number of groups within each estimator.
         num_classes (int): Number of classes to predict.
 

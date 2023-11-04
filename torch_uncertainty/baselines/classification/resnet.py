@@ -1,6 +1,6 @@
 from argparse import ArgumentParser, BooleanOptionalAction
 from pathlib import Path
-from typing import Any, Literal, Optional, Type, Union
+from typing import Any, Literal
 
 import torch
 from pytorch_lightning import LightningModule
@@ -10,7 +10,13 @@ from pytorch_lightning.core.saving import (
 )
 from torch import nn
 
-from ...models.resnet import (
+from torch_uncertainty.baselines.utils.parser_addons import (
+    add_masked_specific_args,
+    add_mimo_specific_args,
+    add_packed_specific_args,
+    add_resnet_specific_args,
+)
+from torch_uncertainty.models.resnet import (
     batched_resnet18,
     batched_resnet34,
     batched_resnet50,
@@ -37,17 +43,11 @@ from ...models.resnet import (
     resnet101,
     resnet152,
 )
-from ...routines.classification import (
+from torch_uncertainty.routines.classification import (
     ClassificationEnsemble,
     ClassificationSingle,
 )
-from ...transforms import MIMOBatchFormat, RepeatTarget
-from ..utils.parser_addons import (
-    add_masked_specific_args,
-    add_mimo_specific_args,
-    add_packed_specific_args,
-    add_resnet_specific_args,
-)
+from torch_uncertainty.transforms import MIMOBatchFormat, RepeatTarget
 
 
 class ResNet:
@@ -162,7 +162,7 @@ class ResNet:
         cls,
         num_classes: int,
         in_channels: int,
-        loss: Type[nn.Module],
+        loss: type[nn.Module],
         optimization_procedure: Any,
         version: Literal[
             "vanilla",
@@ -174,11 +174,11 @@ class ResNet:
         ],
         arch: int,
         style: str = "imagenet",
-        num_estimators: Optional[int] = None,
+        num_estimators: int | None = None,
         dropout_rate: float = 0.0,
         groups: int = 1,
-        scale: Optional[float] = None,
-        alpha: Optional[float] = None,
+        scale: float | None = None,
+        alpha: float | None = None,
         gamma: int = 1,
         rho: float = 1.0,
         batch_repeat: int = 1,
@@ -198,7 +198,7 @@ class ResNet:
 
         format_batch_fn = nn.Identity()
 
-        if version not in cls.versions.keys():
+        if version not in cls.versions:
             raise ValueError(f"Unknown version: {version}")
 
         if version == "vanilla":
@@ -265,24 +265,24 @@ class ResNet:
                 use_logits=use_logits,
                 **kwargs,
             )
-        else:  # version in cls.ensemble
-            return ClassificationEnsemble(
-                model=model,
-                loss=loss,
-                optimization_procedure=optimization_procedure,
-                format_batch_fn=format_batch_fn,
-                use_entropy=use_entropy,
-                use_logits=use_logits,
-                use_mi=use_mi,
-                use_variation_ratio=use_variation_ratio,
-                **kwargs,
-            )
+        # version in cls.ensemble
+        return ClassificationEnsemble(
+            model=model,
+            loss=loss,
+            optimization_procedure=optimization_procedure,
+            format_batch_fn=format_batch_fn,
+            use_entropy=use_entropy,
+            use_logits=use_logits,
+            use_mi=use_mi,
+            use_variation_ratio=use_variation_ratio,
+            **kwargs,
+        )
 
     @classmethod
     def load_from_checkpoint(
         cls,
-        checkpoint_path: Union[str, Path],
-        hparams_file: Union[str, Path],
+        checkpoint_path: str | Path,
+        hparams_file: str | Path,
         **kwargs,
     ) -> LightningModule:  # coverage: ignore
         if hparams_file is not None:

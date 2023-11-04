@@ -33,12 +33,8 @@ class TestTemperatureScaler:
         assert scaler.temperature[0] > 10  # best is +inf
         assert (
             torch.sum(
-                (
-                    softmax(
-                        scaler(torch.as_tensor([[0.6, 0.4]])).detach(), dim=1
-                    )
-                    - torch.as_tensor([[0.5, 0.5]])
-                )
+                softmax(scaler(torch.as_tensor([[0.6, 0.4]])).detach(), dim=1)
+                - torch.as_tensor([[0.5, 0.5]])
             )
             ** 2
             < 0.001

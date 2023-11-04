@@ -1,5 +1,4 @@
 import math
-from typing import Optional, Tuple, Union
 
 import torch
 from torch import nn
@@ -72,7 +71,7 @@ class BatchLinear(nn.Module):
     weight: torch.Tensor
     R: torch.Tensor
     S: torch.Tensor
-    bias: Optional[torch.Tensor]
+    bias: torch.Tensor | None
 
     def __init__(
         self,
@@ -132,7 +131,7 @@ class BatchLinear(nn.Module):
         R = torch.cat([R, R[:extra]], dim=0)  # .unsqueeze(-1).unsqueeze(-1)
         S = torch.repeat_interleave(self.S, examples_per_estimator, dim=0)
         S = torch.cat([S, S[:extra]], dim=0)  # .unsqueeze(-1).unsqueeze(-1)
-        bias: Optional[torch.Tensor]
+        bias: torch.Tensor | None
         if self.bias is not None:
             bias = torch.repeat_interleave(
                 self.bias,
@@ -148,9 +147,9 @@ class BatchLinear(nn.Module):
     def extra_repr(self) -> str:
         return (
             f"in_features={ self.in_features},"
-            + f" out_features={self.out_features},"
-            + f" num_estimators={self.num_estimators},"
-            + f" bias={self.bias is not None}"
+            f" out_features={self.out_features},"
+            f" num_estimators={self.num_estimators},"
+            f" bias={self.bias is not None}"
         )
 
 
@@ -238,7 +237,6 @@ class BatchConv2d(nn.Module):
         Make sure that :math:`M | N` when calling :func:`forward()`.
 
     Examples:
-
         >>> # With square kernels, four estimators and equal stride
         >>> m = Conv2dBE(3, 32, 3, 4, stride=1)
         >>> input = torch.randn(8, 3, 16, 16)
@@ -259,16 +257,16 @@ class BatchConv2d(nn.Module):
     ]
     in_channels: int
     out_channels: int
-    kernel_size: Tuple[int, ...]
+    kernel_size: tuple[int, ...]
     n_estimator: int
-    stride: Tuple[int, ...]
-    padding: Union[str, Tuple[int, ...]]
-    dilation: Tuple[int, ...]
+    stride: tuple[int, ...]
+    padding: str | tuple[int, ...]
+    dilation: tuple[int, ...]
     groups: int
     weight: torch.Tensor
     R: torch.Tensor
     S: torch.Tensor
-    bias: Optional[torch.Tensor]
+    bias: torch.Tensor | None
 
     def __init__(
         self,
@@ -277,7 +275,7 @@ class BatchConv2d(nn.Module):
         kernel_size: _size_2_t,
         num_estimators: int,
         stride: _size_2_t = 1,
-        padding: Union[str, _size_2_t] = 0,
+        padding: str | _size_2_t = 0,
         dilation: _size_2_t = 1,
         groups: int = 1,
         bias: bool = True,
@@ -368,7 +366,7 @@ class BatchConv2d(nn.Module):
         )
         S = torch.cat([S, S[:extra]], dim=0)  #
 
-        bias: Optional[torch.Tensor]
+        bias: torch.Tensor | None
         if self.bias is not None:
             bias = (
                 torch.repeat_interleave(

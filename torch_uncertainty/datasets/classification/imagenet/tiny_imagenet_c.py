@@ -1,6 +1,6 @@
 import os
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, Optional
 
 from torchvision.datasets import ImageFolder
 from torchvision.datasets.utils import (
@@ -65,8 +65,8 @@ class TinyImageNetC(ImageFolder):
     def __init__(
         self,
         root: str,
-        transform: Optional[Callable] = None,
-        target_transform: Optional[Callable] = None,
+        transform: Callable | None = None,
+        target_transform: Callable | None = None,
         subset: str = "all",
         severity: int = 1,
         download: bool = False,
@@ -86,27 +86,29 @@ class TinyImageNetC(ImageFolder):
         super().__init__(
             root=root / self.base_folder / "brightness/1/", transform=transform
         )
-        assert (
-            subset in ["all"] + self.subsets
-        ), f"The subset '{subset}' does not exist in TinyImageNet-C."
+        if subset not in ["all", *self.subsets]:
+            raise ValueError(
+                f"The subset '{subset}' does not exist in TinyImageNet-C."
+            )
         self.subset = subset
         self.severity = severity
 
         self.transform = transform
         self.target_transform = target_transform
 
-        assert severity in list(
-            range(1, 6)
-        ), "Corruptions severity should be chosen between 1 and 5 included."
+        if severity not in list(range(1, 6)):
+            raise ValueError(
+                "Corruptions severity should be chosen between 1 and 5 included."
+            )
 
         # Update samples given the subset and severity
         self._make_c_dataset(self.subset, self.severity)
 
     def _make_c_dataset(self, subset: str, severity: int) -> None:
-        r"""
-        Build the corrupted dataset according to the chosen subset and
+        r"""Build the corrupted dataset according to the chosen subset and
             severity. If the subset is 'all', gather all corruption types
             in the dataset.
+
         Args:
             subset (str): The name of the corruption subset to be used. Choose
                 `all` for the dataset to contain all subsets.
@@ -116,27 +118,29 @@ class TinyImageNetC(ImageFolder):
         if subset == "all":
             collection = []
             for subset in self.subsets:
-                imgs = []
-                for i in range(len(self.imgs)):
-                    imgs.append(
-                        (
-                            self.imgs[i][0]
-                            .replace("brightness", subset)
-                            .replace("/1/", "/" + str(severity) + "/"),
-                            self.imgs[i][1],
-                        )
+                imgs = [
+                    (
+                        img[0]
+                        .replace("brightness", subset)
+                        .replace("/1/", "/" + str(severity) + "/"),
+                        img[1],
                     )
+                    for img in self.imgs
+                ]
+
                 collection.extend(imgs)
             self.imgs = collection
             self.samples = self.imgs
         else:
-            for i in range(len(self.imgs)):
-                self.imgs[i] = (
-                    self.imgs[i][0]
+            self.imgs = [
+                (
+                    img[0]
                     .replace("brightness", subset)
                     .replace("/1/", "/" + str(severity) + "/"),
-                    self.imgs[i][1],
+                    img[1],
                 )
+                for img in self.imgs
+            ]
 
     def _check_integrity(self) -> bool:
         """Check the integrity of the dataset."""

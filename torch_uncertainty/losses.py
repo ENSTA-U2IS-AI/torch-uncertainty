@@ -1,5 +1,3 @@
-from typing import Optional
-
 import torch
 from torch import Tensor, nn
 from torch.nn import functional as F
@@ -114,7 +112,7 @@ class NIGLoss(nn.Module):
     """
 
     def __init__(
-        self, reg_weight: float, reduction: Optional[str] = "mean"
+        self, reg_weight: float, reduction: str | None = "mean"
     ) -> None:
         super().__init__()
 
@@ -124,7 +122,7 @@ class NIGLoss(nn.Module):
                 f"{reg_weight}."
             )
         self.reg_weight = reg_weight
-        if reduction != "none" and reduction != "mean" and reduction != "sum":
+        if reduction not in ("none", "mean", "sum"):
             raise ValueError(f"{reduction} is not a valid value for reduction.")
         self.reduction = reduction
 
@@ -137,22 +135,20 @@ class NIGLoss(nn.Module):
         targets: Tensor,
     ) -> Tensor:
         Gamma = 2 * beta * (1 + v)
-        nll = (
+        return (
             0.5 * torch.log(torch.pi / v)
             - alpha * Gamma.log()
             + (alpha + 0.5) * torch.log(Gamma + v * (targets - gamma) ** 2)
             + torch.lgamma(alpha)
             - torch.lgamma(alpha + 0.5)
         )
-        return nll
 
     def _nig_reg(
         self, gamma: Tensor, v: Tensor, alpha: Tensor, targets: Tensor
     ) -> Tensor:
-        reg = torch.norm(targets - gamma, 1, dim=1, keepdim=True) * (
+        return torch.norm(targets - gamma, 1, dim=1, keepdim=True) * (
             2 * v + alpha
         )
-        return reg
 
     def forward(
         self,
@@ -168,10 +164,9 @@ class NIGLoss(nn.Module):
 
         if self.reduction == "mean":
             return loss.mean()
-        elif self.reduction == "sum":
+        if self.reduction == "sum":
             return loss.sum()
-        else:
-            return loss
+        return loss
 
 
 class BetaNLL(nn.Module):
@@ -191,7 +186,7 @@ class BetaNLL(nn.Module):
     """
 
     def __init__(
-        self, beta: float = 0.5, reduction: Optional[str] = "mean"
+        self, beta: float = 0.5, reduction: str | None = "mean"
     ) -> None:
         super().__init__()
 
@@ -202,7 +197,7 @@ class BetaNLL(nn.Module):
             )
         self.beta = beta
         self.nll_loss = nn.GaussianNLLLoss(reduction="none")
-        if reduction != "none" and reduction != "mean" and reduction != "sum":
+        if reduction not in ("none", "mean", "sum"):
             raise ValueError(f"{reduction} is not a valid value for reduction.")
         self.reduction = reduction
 
@@ -215,10 +210,9 @@ class BetaNLL(nn.Module):
 
         if self.reduction == "mean":
             return loss.mean()
-        elif self.reduction == "sum":
+        if self.reduction == "sum":
             return loss.sum()
-        else:
-            return loss
+        return loss
 
 
 class DECLoss(nn.Module):
@@ -241,10 +235,10 @@ class DECLoss(nn.Module):
 
     def __init__(
         self,
-        annealing_step: Optional[int] = None,
-        reg_weight: Optional[float] = None,
+        annealing_step: int | None = None,
+        reg_weight: float | None = None,
         loss_type: str = "log",
-        reduction: Optional[str] = "mean",
+        reduction: str | None = "mean",
     ) -> None:
         super().__init__()
 
@@ -262,7 +256,7 @@ class DECLoss(nn.Module):
             )
         self.annealing_step = annealing_step
 
-        if reduction != "none" and reduction != "mean" and reduction != "sum":
+        if reduction not in ("none", "mean", "sum"):
             raise ValueError(f"{reduction} is not a valid value for reduction.")
         self.reduction = reduction
 
@@ -284,30 +278,27 @@ class DECLoss(nn.Module):
             dim=1,
             keepdim=True,
         )
-        loss = loglikelihood_err + loglikelihood_var
-        return loss
+        return loglikelihood_err + loglikelihood_var
 
     def _log_loss(self, evidence: Tensor, targets: Tensor) -> Tensor:
         evidence = torch.relu(evidence)
         alpha = evidence + 1.0
         strength = alpha.sum(dim=-1, keepdim=True)
-        loss = torch.sum(
+        return torch.sum(
             targets * (torch.log(strength) - torch.log(alpha)),
             dim=1,
             keepdim=True,
         )
-        return loss
 
     def _digamma_loss(self, evidence: Tensor, targets: Tensor) -> Tensor:
         evidence = torch.relu(evidence)
         alpha = evidence + 1.0
         strength = alpha.sum(dim=-1, keepdim=True)
-        loss = torch.sum(
+        return torch.sum(
             targets * (torch.digamma(strength) - torch.digamma(alpha)),
             dim=1,
             keepdim=True,
         )
-        return loss
 
     def _kldiv_reg(
         self,
@@ -336,14 +327,13 @@ class DECLoss(nn.Module):
             dim=1,
             keepdim=True,
         )
-        loss = first_term + second_term
-        return loss
+        return first_term + second_term
 
     def forward(
         self,
         evidence: Tensor,
         targets: Tensor,
-        current_epoch: Optional[int] = None,
+        current_epoch: int | None = None,
     ) -> Tensor:
         if (
             self.annealing_step is not None
@@ -360,8 +350,8 @@ class DECLoss(nn.Module):
             raise NotImplementedError(
                 "DECLoss does not yet support mixup/cutmix."
             )
-        else:  # TODO: handle binary
-            targets = F.one_hot(targets, num_classes=evidence.size()[-1])
+        # else:  # TODO: handle binary
+        targets = F.one_hot(targets, num_classes=evidence.size()[-1])
 
         if self.loss_type == "mse":
             loss_dirichlet = self._mse_loss(evidence, targets)
@@ -383,9 +373,7 @@ class DECLoss(nn.Module):
             )
 
         loss_reg = self._kldiv_reg(evidence, targets)
-
         loss = loss_dirichlet + annealing_coef * loss_reg
-
         if self.reduction == "mean":
             loss = loss.mean()
         elif self.reduction == "sum":

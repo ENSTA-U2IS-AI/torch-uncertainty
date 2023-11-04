@@ -1,9 +1,7 @@
-from typing import Type
-
 import torch.nn.functional as F
 from torch import Tensor, nn
 
-from ...layers import MaskedConv2d, MaskedLinear
+from torch_uncertainty.layers import MaskedConv2d, MaskedLinear
 
 __all__ = [
     "masked_wideresnet28x10",
@@ -65,11 +63,10 @@ class WideBasicBlock(nn.Module):
         out = F.relu(self.bn1(self.dropout(self.conv1(x))))
         out = self.conv2(out)
         out += self.shortcut(x)
-        out = F.relu(self.bn2(out))
-        return out
+        return F.relu(self.bn2(out))
 
 
-class _MaskedWide(nn.Module):
+class _MaskedWideResNet(nn.Module):
     def __init__(
         self,
         depth: int,
@@ -86,16 +83,17 @@ class _MaskedWide(nn.Module):
         self.num_estimators = num_estimators
         self.in_planes = 16
 
-        assert (depth - 4) % 6 == 0, "Wide-resnet depth should be 6n+4."
+        if (depth - 4) % 6 != 0:
+            raise ValueError("Wide-resnet depth should be 6n+4.")
         n = (depth - 4) // 6
         k = widen_factor
 
-        nStages = [16, 16 * k, 32 * k, 64 * k]
+        num_stages = [16, 16 * k, 32 * k, 64 * k]
 
         if style == "imagenet":
             self.conv1 = nn.Conv2d(
                 in_channels,
-                nStages[0],
+                num_stages[0],
                 kernel_size=7,
                 stride=2,
                 padding=3,
@@ -105,7 +103,7 @@ class _MaskedWide(nn.Module):
         else:
             self.conv1 = nn.Conv2d(
                 in_channels,
-                nStages[0],
+                num_stages[0],
                 kernel_size=3,
                 stride=1,
                 padding=1,
@@ -113,7 +111,7 @@ class _MaskedWide(nn.Module):
                 groups=1,
             )
 
-        self.bn1 = nn.BatchNorm2d(nStages[0])
+        self.bn1 = nn.BatchNorm2d(num_stages[0])
 
         if style == "imagenet":
             self.optional_pool = nn.MaxPool2d(
@@ -124,7 +122,7 @@ class _MaskedWide(nn.Module):
 
         self.layer1 = self._wide_layer(
             WideBasicBlock,
-            nStages[1],
+            num_stages[1],
             n,
             dropout_rate,
             stride=1,
@@ -134,7 +132,7 @@ class _MaskedWide(nn.Module):
         )
         self.layer2 = self._wide_layer(
             WideBasicBlock,
-            nStages[2],
+            num_stages[2],
             n,
             dropout_rate,
             stride=2,
@@ -144,7 +142,7 @@ class _MaskedWide(nn.Module):
         )
         self.layer3 = self._wide_layer(
             WideBasicBlock,
-            nStages[3],
+            num_stages[3],
             n,
             dropout_rate,
             stride=2,
@@ -157,12 +155,12 @@ class _MaskedWide(nn.Module):
         self.flatten = nn.Flatten(1)
 
         self.linear = MaskedLinear(
-            nStages[3], num_classes, num_estimators, scale=scale
+            num_stages[3], num_classes, num_estimators, scale=scale
         )
 
     def _wide_layer(
         self,
-        block: Type[nn.Module],
+        block: type[nn.Module],
         planes: int,
         num_blocks: int,
         dropout_rate: float,
@@ -199,8 +197,7 @@ class _MaskedWide(nn.Module):
         out = self.layer3(out)
         out = self.pool(out)
         out = self.flatten(out)
-        out = self.linear(out)
-        return out
+        return self.linear(out)
 
 
 def masked_wideresnet28x10(
@@ -210,7 +207,7 @@ def masked_wideresnet28x10(
     groups: int,
     num_classes: int,
     style: str = "imagenet",
-) -> _MaskedWide:
+) -> _MaskedWideResNet:
     """Masksembles of Wide-ResNet-28x10 from `Wide Residual Networks
     <https://arxiv.org/pdf/1605.07146.pdf>`_.
 
@@ -224,9 +221,9 @@ def masked_wideresnet28x10(
             structure. Defaults to ``True``.
 
     Returns:
-        _MaskedWide: A Masksembles-style Wide-ResNet-28x10.
+        _MaskedWideResNet: A Masksembles-style Wide-ResNet-28x10.
     """
-    return _MaskedWide(
+    return _MaskedWideResNet(
         in_channels=in_channels,
         depth=28,
         widen_factor=10,

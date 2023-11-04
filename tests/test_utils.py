@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 import torch
 
-import torch_uncertainty.utils as utils
+from torch_uncertainty import utils
 from torch_uncertainty.plotting_utils import CalibrationPlot
 
 

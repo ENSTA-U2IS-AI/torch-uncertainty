@@ -1,9 +1,9 @@
-""" Code adapted from PixMix' paper. """
+"""Code adapted from PixMix' paper."""
 
+import numpy as np
 from PIL import Image
 from torch import nn
 
-import numpy as np
 from torch_uncertainty.transforms import Shear, Translate, augmentations
 
 
@@ -73,17 +73,14 @@ class PixMix(nn.Module):
 
         self.aug_instances = []
         for aug in allowed_augmentations:
-            if aug == Shear or aug == Translate:
+            if aug in (Shear, Translate):
                 self.aug_instances.append(aug(axis=0))
                 self.aug_instances.append(aug(axis=1))
             else:
                 self.aug_instances.append(aug())
 
     def __call__(self, img: Image.Image) -> np.ndarray:
-        if np.random.random() < 0.5:
-            mixed = self.augment_input(img)
-        else:
-            mixed = img
+        mixed = self.augment_input(img) if np.random.random() < 0.5 else img
 
         for _ in range(np.random.randint(self.mixing_iterations + 1)):
             if np.random.random() < 0.5:
@@ -100,7 +97,7 @@ class PixMix(nn.Module):
 
     def _augment(self, image: Image.Image) -> np.ndarray:
         op = np.random.choice(self.aug_instances)
-        if op.level_type == int:
+        if op.level_type is int:
             aug_level = self._sample_int(op.pixmix_max_level)
         else:
             aug_level = self._sample_float(op.pixmix_max_level)

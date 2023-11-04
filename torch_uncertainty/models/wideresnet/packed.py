@@ -1,11 +1,8 @@
-from typing import Type
-
 import torch.nn.functional as F
 from einops import rearrange
 from torch import Tensor, nn
 
-from ...layers import PackedConv2d, PackedLinear
-
+from torch_uncertainty.layers import PackedConv2d, PackedLinear
 
 __all__ = [
     "packed_wideresnet28x10",
@@ -71,11 +68,10 @@ class WideBasicBlock(nn.Module):
         out = F.relu(self.bn1(self.dropout(self.conv1(x))))
         out = self.conv2(out)
         out += self.shortcut(x)
-        out = F.relu(self.bn2(out))
-        return out
+        return F.relu(self.bn2(out))
 
 
-class _PackedWide(nn.Module):
+class _PackedWideResNet(nn.Module):
     def __init__(
         self,
         depth: int,
@@ -93,16 +89,17 @@ class _PackedWide(nn.Module):
         self.num_estimators = num_estimators
         self.in_planes = 16
 
-        assert (depth - 4) % 6 == 0, "Wide-resnet depth should be 6n+4."
+        if (depth - 4) % 6 != 0:
+            raise ValueError("Wide-resnet depth should be 6n+4.")
         num_blocks = int((depth - 4) / 6)
         k = widen_factor
 
-        nStages = [16, 16 * k, 32 * k, 64 * k]
+        num_stages = [16, 16 * k, 32 * k, 64 * k]
 
         if style == "imagenet":
             self.conv1 = PackedConv2d(
                 in_channels,
-                nStages[0],
+                num_stages[0],
                 kernel_size=7,
                 alpha=alpha,
                 num_estimators=self.num_estimators,
@@ -116,7 +113,7 @@ class _PackedWide(nn.Module):
         else:
             self.conv1 = PackedConv2d(
                 in_channels,
-                nStages[0],
+                num_stages[0],
                 kernel_size=3,
                 alpha=alpha,
                 num_estimators=self.num_estimators,
@@ -128,7 +125,7 @@ class _PackedWide(nn.Module):
                 first=True,
             )
 
-        self.bn1 = nn.BatchNorm2d(nStages[0] * alpha)
+        self.bn1 = nn.BatchNorm2d(num_stages[0] * alpha)
 
         if style == "imagenet":
             self.optional_pool = nn.MaxPool2d(
@@ -139,7 +136,7 @@ class _PackedWide(nn.Module):
 
         self.layer1 = self._wide_layer(
             WideBasicBlock,
-            nStages[1],
+            num_stages[1],
             num_blocks,
             dropout_rate,
             stride=1,
@@ -150,7 +147,7 @@ class _PackedWide(nn.Module):
         )
         self.layer2 = self._wide_layer(
             WideBasicBlock,
-            nStages[2],
+            num_stages[2],
             num_blocks,
             dropout_rate,
             stride=2,
@@ -161,7 +158,7 @@ class _PackedWide(nn.Module):
         )
         self.layer3 = self._wide_layer(
             WideBasicBlock,
-            nStages[3],
+            num_stages[3],
             num_blocks,
             dropout_rate,
             stride=2,
@@ -175,7 +172,7 @@ class _PackedWide(nn.Module):
         self.flatten = nn.Flatten(1)
 
         self.linear = PackedLinear(
-            nStages[3],
+            num_stages[3],
             num_classes,
             alpha=alpha,
             num_estimators=num_estimators,
@@ -184,7 +181,7 @@ class _PackedWide(nn.Module):
 
     def _wide_layer(
         self,
-        block: Type[WideBasicBlock],
+        block: type[WideBasicBlock],
         planes: int,
         num_blocks: int,
         dropout_rate: float,
@@ -225,8 +222,7 @@ class _PackedWide(nn.Module):
         )
         out = self.pool(out)
         out = self.flatten(out)
-        out = self.linear(out)
-        return out
+        return self.linear(out)
 
 
 def packed_wideresnet28x10(
@@ -237,7 +233,7 @@ def packed_wideresnet28x10(
     groups: int,
     num_classes: int,
     style: str = "imagenet",
-) -> _PackedWide:
+) -> _PackedWideResNet:
     """Packed-Ensembles of Wide-ResNet-28x10 from `Wide Residual Networks
     <https://arxiv.org/pdf/1605.07146.pdf>`_.
 
@@ -246,14 +242,15 @@ def packed_wideresnet28x10(
         num_estimators (int): Number of estimators in the ensemble.
         alpha (int): Expansion factor affecting the width of the estimators.
         gamma (int): Number of groups within each estimator.
+        groups (int): Number of subgroups in the convolutions.
         num_classes (int): Number of classes to predict.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
 
     Returns:
-        _PackedWide: A Packed-Ensembles Wide-ResNet-28x10.
+        _PackedWideResNet: A Packed-Ensembles Wide-ResNet-28x10.
     """
-    return _PackedWide(
+    return _PackedWideResNet(
         in_channels=in_channels,
         depth=28,
         widen_factor=10,

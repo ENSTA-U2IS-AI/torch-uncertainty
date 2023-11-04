@@ -1,4 +1,4 @@
-from typing import Literal, Optional
+from typing import Literal
 
 import torch
 from torch import nn
@@ -7,8 +7,7 @@ from .scaler import Scaler
 
 
 class MatrixScaler(Scaler):
-    """
-    Matrix scaling post-processing for calibrated probabilities.
+    """Matrix scaling post-processing for calibrated probabilities.
 
     Args:
         num_classes (int): Number of classes.
@@ -35,7 +34,7 @@ class MatrixScaler(Scaler):
         init_b: float = 0,
         lr: float = 0.1,
         max_iter: int = 200,
-        device: Optional[Literal["cpu", "cuda"]] = None,
+        device: Literal["cpu", "cuda"] | torch.device | None = None,
     ) -> None:
         super().__init__(lr=lr, max_iter=max_iter, device=device)
 
@@ -48,8 +47,7 @@ class MatrixScaler(Scaler):
         self.set_temperature(init_w, init_b)
 
     def set_temperature(self, val_w: float, val_b: float) -> None:
-        """
-        Set the temperature to a fixed value.
+        """Set the temperature to a fixed value.
 
         Args:
             val_w (float): Weight temperature value.
@@ -67,8 +65,7 @@ class MatrixScaler(Scaler):
         )
 
     def _scale(self, logits: torch.Tensor) -> torch.Tensor:
-        """
-        Scale the logits with the optimal temperature.
+        """Scale the logits with the optimal temperature.
 
         Args:
             logits (torch.Tensor): Logits to be scaled.
