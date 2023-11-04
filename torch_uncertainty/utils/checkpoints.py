@@ -1,13 +1,11 @@
 from pathlib import Path
-from typing import Tuple, Union
 
 
 def get_version(
-    root: Union[str, Path], version: int, checkpoint: Union[int, None] = None
-) -> Tuple[Path, Path]:
-    """
-    Find a compute the path to the checkpoint corresponding to the input
-        parameters
+    root: str | Path, version: int, checkpoint: int | None = None
+) -> tuple[Path, Path]:
+    """Find a compute the path to the checkpoint corresponding to the input
+    parameters.
 
     Args:
         root (Union[str, Path]): The root of the dataset containing the

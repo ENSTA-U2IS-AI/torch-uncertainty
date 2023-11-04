@@ -1,7 +1,6 @@
+import numpy as np
 import torch
 from torch import nn
-
-import numpy as np
 
 
 class Cutout(nn.Module):
@@ -17,12 +16,10 @@ class Cutout(nn.Module):
 
         if length <= 0:
             raise ValueError("Cutout length must be positive.")
-        else:
-            self.length = length
+        self.length = length
 
         if value < 0 or value > 255:
             raise ValueError("Cutout value must be between 0 and 255.")
-
         self.value = value
 
     def __call__(self, img: torch.Tensor) -> torch.Tensor:

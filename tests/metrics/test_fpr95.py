@@ -1,45 +1,37 @@
-# fmt:off
 import pytest
 import torch
 
 from torch_uncertainty.metrics import FPR95
 
 
-
 @pytest.fixture
 def confs_zero() -> torch.Tensor:
-    confs = torch.as_tensor([1] * 99 + [0.99])
-    return confs
+    return torch.as_tensor([1] * 99 + [0.99])
 
 
 @pytest.fixture
 def target_zero() -> torch.Tensor:
-    targets = torch.as_tensor([1] * 99 + [0])
-    return targets
+    return torch.as_tensor([1] * 99 + [0])
 
 
 @pytest.fixture
 def confs_half() -> torch.Tensor:
-    confs = torch.as_tensor([0.9] * 100 + [0.95] * 50 + [0.85] * 50)
-    return confs
+    return torch.as_tensor([0.9] * 100 + [0.95] * 50 + [0.85] * 50)
 
 
 @pytest.fixture
 def target_half() -> torch.Tensor:
-    targets = torch.as_tensor([1] * 100 + [0] * 100)
-    return targets
+    return torch.as_tensor([1] * 100 + [0] * 100)
 
 
 @pytest.fixture
 def confs_one() -> torch.Tensor:
-    confs = torch.as_tensor([0.99] * 99 + [1])
-    return confs
+    return torch.as_tensor([0.99] * 99 + [1])
 
 
 @pytest.fixture
 def target_one() -> torch.Tensor:
-    targets = torch.as_tensor([1] * 99 + [0])
-    return targets
+    return torch.as_tensor([1] * 99 + [0])
 
 
 class TestFPR95:

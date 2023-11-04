@@ -1,5 +1,4 @@
 import copy
-from typing import List, Optional, Union
 
 import torch
 from torch import nn
@@ -8,7 +7,7 @@ from torch import nn
 class _DeepEnsembles(nn.Module):
     def __init__(
         self,
-        models: List[nn.Module],
+        models: list[nn.Module],
     ) -> None:
         super().__init__()
 
@@ -16,7 +15,7 @@ class _DeepEnsembles(nn.Module):
         self.num_estimators = len(models)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Return the logits of the ensemble
+        """Return the logits of the ensemble.
 
         Args:
             x (Tensor): The input of the model.
@@ -26,18 +25,15 @@ class _DeepEnsembles(nn.Module):
                 where :math:`B` is the batch size, :math:`N` is the number of
                 estimators, and :math:`C` is the number of classes.
         """
-        predictions = []
-        for model in self.models:
-            predictions.append(model.forward(x))
+        predictions = [model.forward(x) for model in self.models]
         return torch.stack(predictions, dim=1)
 
 
 def deep_ensembles(
-    models: Union[List[nn.Module], nn.Module],
-    num_estimators: Optional[int] = None,
+    models: list[nn.Module] | nn.Module,
+    num_estimators: int | None = None,
 ) -> nn.Module:
-    """
-    Builds a Deep Ensembles out of the original models.
+    """Builds a Deep Ensembles out of the original models.
 
     Args:
         model (nn.Module): The model to be ensembled.
@@ -68,9 +64,9 @@ def deep_ensembles(
             raise ValueError(
                 "if models is a module, num_estimators must be specified."
             )
-        elif num_estimators < 2:
+        if num_estimators < 2:
             raise ValueError(
-                "num_estimators must be at least 2. Got" f"{num_estimators}."
+                f"num_estimators must be at least 2. Got {num_estimators}."
             )
 
         if isinstance(models, list):

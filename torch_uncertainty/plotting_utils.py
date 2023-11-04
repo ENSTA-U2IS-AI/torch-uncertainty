@@ -1,5 +1,3 @@
-from typing import List, Tuple
-
 import matplotlib.pyplot as plt
 import torch
 from matplotlib.axes import Axes
@@ -7,11 +5,11 @@ from matplotlib.figure import Figure
 
 
 def plot_hist(
-    conf: List[torch.Tensor],
+    conf: list[torch.Tensor],
     bins: int = 20,
     title: str = "Histogram with 'auto' bins",
     dpi: int = 60,
-) -> Tuple[Figure, Axes]:
+) -> tuple[Figure, Axes]:
     """Plot a confidence histogram.
 
     Args:

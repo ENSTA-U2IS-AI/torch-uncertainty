@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import Any, List, Literal, Optional, Union
+from typing import Any, Literal
 
 import torchvision.transforms as T
 from pytorch_lightning import LightningDataModule
@@ -8,8 +8,8 @@ from torch import nn
 from torch.utils.data import DataLoader, Dataset, random_split
 from torchvision.datasets import MNIST, FashionMNIST
 
-from ..datasets.classification import MNISTC, NotMNIST
-from ..transforms import Cutout
+from torch_uncertainty.datasets.classification import MNISTC, NotMNIST
+from torch_uncertainty.transforms import Cutout
 
 
 class MNISTDataModule(LightningDataModule):
@@ -40,14 +40,14 @@ class MNISTDataModule(LightningDataModule):
 
     def __init__(
         self,
-        root: Union[str, Path],
+        root: str | Path,
         evaluate_ood: bool,
         batch_size: int,
         ood_ds: Literal["fashion", "not"] = "fashion",
         val_split: float = 0.0,
         num_workers: int = 1,
-        cutout: Optional[int] = None,
-        test_alt: Optional[Literal["c"]] = None,
+        cutout: int | None = None,
+        test_alt: Literal["c"] | None = None,
         pin_memory: bool = True,
         persistent_workers: bool = True,
         **kwargs,
@@ -79,10 +79,7 @@ class MNISTDataModule(LightningDataModule):
                 f"`ood_ds` should be `fashion` or `not`. Got {ood_ds}."
             )
 
-        if cutout:
-            main_transform = Cutout(cutout)
-        else:
-            main_transform = nn.Identity()
+        main_transform = Cutout(cutout) if cutout else nn.Identity()
 
         self.transform_train = T.Compose(
             [
@@ -108,7 +105,7 @@ class MNISTDataModule(LightningDataModule):
         if self.evaluate_ood:
             self.ood_dataset(self.root, download=True)
 
-    def setup(self, stage: Optional[str] = None) -> None:
+    def setup(self, stage: str | None = None) -> None:
         if stage == "fit" or stage is None:
             full = self.dataset(
                 self.root,
@@ -163,7 +160,7 @@ class MNISTDataModule(LightningDataModule):
         """
         return self._data_loader(self.val)
 
-    def test_dataloader(self) -> List[DataLoader]:
+    def test_dataloader(self) -> list[DataLoader]:
         r"""Get the test dataloaders for MNIST.
 
         Return:

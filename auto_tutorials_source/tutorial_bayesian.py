@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# flake: noqa
+
 """
 Train a Bayesian Neural Network in Three Minutes
 ================================================

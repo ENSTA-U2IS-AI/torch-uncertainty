@@ -1,4 +1,3 @@
-# fmt:off
 import pytest
 import torch
 
@@ -11,41 +10,34 @@ from torch_uncertainty.layers.bayesian import (
 from torch_uncertainty.layers.bayesian.sampler import TrainableDistribution
 
 
-
 @pytest.fixture
 def feat_input_odd() -> torch.Tensor:
-    feat = torch.rand((5, 10))
-    return feat
+    return torch.rand((5, 10))
 
 
 @pytest.fixture
 def feat_input_even() -> torch.Tensor:
-    feat = torch.rand((8, 10))
-    return feat
+    return torch.rand((8, 10))
 
 
 @pytest.fixture
 def img_input_odd() -> torch.Tensor:
-    img = torch.rand((5, 10, 3, 3))
-    return img
+    return torch.rand((5, 10, 3, 3))
 
 
 @pytest.fixture
 def img_input_even() -> torch.Tensor:
-    img = torch.rand((8, 10, 3, 3))
-    return img
+    return torch.rand((8, 10, 3, 3))
 
 
 @pytest.fixture
 def cube_input_odd() -> torch.Tensor:
-    img = torch.rand((1, 10, 3, 3, 3))
-    return img
+    return torch.rand((1, 10, 3, 3, 3))
 
 
 @pytest.fixture
 def cube_input_even() -> torch.Tensor:
-    img = torch.rand((2, 10, 3, 3, 3))
-    return img
+    return torch.rand((2, 10, 3, 3, 3))
 
 
 class TestBayesLinear:

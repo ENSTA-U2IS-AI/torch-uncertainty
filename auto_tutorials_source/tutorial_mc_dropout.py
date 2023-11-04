@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# flake: noqa
+
 """
 Training a LeNet with Monte-Carlo Dropout
 ==========================================

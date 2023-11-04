@@ -1,11 +1,8 @@
-# fmt:off
-from typing import Tuple
-
+import numpy as np
 import pytest
 import torch
 from PIL import Image
 
-import numpy
 from torch_uncertainty.transforms import (
     AutoContrast,
     Brightness,
@@ -25,13 +22,12 @@ from torch_uncertainty.transforms import (
 
 @pytest.fixture
 def img_input() -> torch.Tensor:
-    imarray = numpy.random.rand(28, 28, 3) * 255
-    im = Image.fromarray(imarray.astype("uint8")).convert("RGB")
-    return im
+    imarray = np.random.rand(28, 28, 3) * 255
+    return Image.fromarray(imarray.astype("uint8")).convert("RGB")
 
 
 @pytest.fixture
-def batch_input() -> Tuple[torch.Tensor, torch.Tensor]:
+def batch_input() -> tuple[torch.Tensor, torch.Tensor]:
     imgs = torch.rand(2, 3, 28, 28)
     return imgs, torch.tensor([0, 1])
 
@@ -39,7 +35,7 @@ def batch_input() -> Tuple[torch.Tensor, torch.Tensor]:
 class TestAutoContrast:
     """Testing the AutoContrast transform."""
 
-    def test_PIL(self, img_input):
+    def test_pil(self, img_input):
         aug = AutoContrast()
         _ = aug(img_input)
 
@@ -47,7 +43,7 @@ class TestAutoContrast:
 class TestEqualize:
     """Testing the Equalize transform."""
 
-    def test_PIL(self, img_input):
+    def test_pil(self, img_input):
         aug = Equalize()
         _ = aug(img_input)
 
@@ -55,7 +51,7 @@ class TestEqualize:
 class TestPosterize:
     """Testing the Posterize transform."""
 
-    def test_PIL(self, img_input):
+    def test_pil(self, img_input):
         aug = Posterize()
         _ = aug(img_input, 2)
 
@@ -70,7 +66,7 @@ class TestPosterize:
 class TestSolarize:
     """Testing the Solarize transform."""
 
-    def test_PIL(self, img_input):
+    def test_pil(self, img_input):
         aug = Solarize()
         _ = aug(img_input, 2)
 
@@ -85,7 +81,7 @@ class TestSolarize:
 class TestRotation:
     """Testing the Rotation transform."""
 
-    def test_PIL(self, img_input):
+    def test_pil(self, img_input):
         aug = Rotation(random_direction=True)
         _ = aug(img_input, 10)
 
@@ -93,7 +89,7 @@ class TestRotation:
 class TestShear:
     """Testing the Shear transform."""
 
-    def test_PIL(self, img_input):
+    def test_pil(self, img_input):
         aug = Shear(axis=0, random_direction=True)
         _ = aug(img_input, 10)
 
@@ -105,7 +101,7 @@ class TestShear:
 class TestTranslate:
     """Testing the Translate transform."""
 
-    def test_PIL(self, img_input):
+    def test_pil(self, img_input):
         aug = Translate(axis=0, random_direction=True)
         _ = aug(img_input, 10)
 
@@ -117,7 +113,7 @@ class TestTranslate:
 class TestContrast:
     """Testing the Contrast transform."""
 
-    def test_PIL(self, img_input):
+    def test_pil(self, img_input):
         aug = Contrast()
         _ = aug(img_input, 2)
 
@@ -130,7 +126,7 @@ class TestContrast:
 class TestBrightness:
     """Testing the Brightness transform."""
 
-    def test_PIL(self, img_input):
+    def test_pil(self, img_input):
         aug = Brightness()
         _ = aug(img_input, 2)
 
@@ -143,7 +139,7 @@ class TestBrightness:
 class TestSharpness:
     """Testing the Sharpness transform."""
 
-    def test_PIL(self, img_input):
+    def test_pil(self, img_input):
         aug = Sharpness()
         _ = aug(img_input, 2)
 
@@ -156,7 +152,7 @@ class TestSharpness:
 class TestColor:
     """Testing the Color transform."""
 
-    def test_PIL(self, img_input):
+    def test_pil(self, img_input):
         aug = Color()
         aug(img_input, 2)
 

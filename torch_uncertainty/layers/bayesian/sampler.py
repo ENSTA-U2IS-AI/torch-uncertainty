@@ -1,9 +1,6 @@
-from typing import Optional
-
+import numpy as np
 import torch
 from torch import Tensor, distributions, nn
-
-import numpy as np
 
 
 class TrainableDistribution(nn.Module):
@@ -28,7 +25,7 @@ class TrainableDistribution(nn.Module):
         self.weight = self.mu + self.sigma * w_sample
         return self.weight
 
-    def log_posterior(self, weight: Optional[Tensor] = None) -> Tensor:
+    def log_posterior(self, weight: Tensor | None = None) -> Tensor:
         if self.weight is None or self.sigma is None:
             raise ValueError(
                 "Sample the weights before asking for the log posterior."

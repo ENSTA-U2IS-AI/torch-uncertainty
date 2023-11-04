@@ -22,13 +22,15 @@ class _Dummy(nn.Module):
 
         self.num_estimators = num_estimators
 
+    def feats_forward(self, x: Tensor) -> Tensor:
+        return self.forward(x)
+
     def forward(self, x: Tensor) -> Tensor:
-        out = self.linear(
+        return self.linear(
             torch.ones(
                 (x.shape[0] * self.num_estimators, 1), dtype=torch.float32
             )
         )
-        return out
 
 
 def dummy_model(

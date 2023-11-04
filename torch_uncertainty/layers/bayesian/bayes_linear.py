@@ -1,5 +1,3 @@
-from typing import Optional, Tuple
-
 import torch
 import torch.nn.functional as F
 from torch import Tensor, nn
@@ -9,7 +7,7 @@ from .sampler import PriorDistribution, TrainableDistribution
 
 
 class BayesLinear(nn.Module):
-    """Bayesian Linear Layer with Mixture of Normals prior and Normal posterior
+    """Bayesian Linear Layer with Mixture of Normals prior and Normal posterior.
 
     Args:
         in_features (int): Number of input features
@@ -114,8 +112,7 @@ class BayesLinear(nn.Module):
     def forward(self, input: Tensor) -> Tensor:
         if self.frozen:
             return self._frozen_forward(input)
-        else:
-            return self._forward(input)
+        return self._forward(input)
 
     def _frozen_forward(self, input):
         return F.linear(input, self.weight_mu, self.bias_mu)
@@ -143,13 +140,10 @@ class BayesLinear(nn.Module):
         """Unfreeze the layer by setting the frozen attribute to False."""
         self.frozen = False
 
-    def sample(self) -> Tuple[Tensor, Optional[Tensor]]:
+    def sample(self) -> tuple[Tensor, Tensor | None]:
         """Sample the bayesian layer's posterior."""
         weight = self.weight_sampler.sample()
-        if self.bias_mu is not None:
-            bias = self.bias_sampler.sample()
-        else:
-            bias = None
+        bias = self.bias_sampler.sample() if self.bias_mu is not None else None
         return weight, bias
 
     def extra_repr(self) -> str:

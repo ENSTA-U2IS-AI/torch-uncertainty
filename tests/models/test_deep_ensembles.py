@@ -1,9 +1,8 @@
 import pytest
 import torch
 
+from tests._dummies import dummy_model
 from torch_uncertainty.models import deep_ensembles
-
-from .._dummies import dummy_model
 
 
 class TestDeepEnsemblesModel:

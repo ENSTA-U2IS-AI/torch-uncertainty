@@ -1,12 +1,11 @@
-# fmt:off
 import os
-from typing import Any, Callable, Optional
+from collections.abc import Callable
+from typing import Any
 
+import numpy as np
 import torch
 from torchvision.datasets import CIFAR10
 from torchvision.datasets.utils import check_integrity, download_url
-
-import numpy as np
 
 
 class CIFAR10H(CIFAR10):
@@ -36,9 +35,9 @@ class CIFAR10H(CIFAR10):
     def __init__(
         self,
         root: str,
-        train: Optional[bool] = None,
-        transform: Optional[Callable[..., Any]] = None,
-        target_transform: Optional[Callable[..., Any]] = None,
+        train: bool | None = None,
+        transform: Callable[..., Any] | None = None,
+        target_transform: Callable[..., Any] | None = None,
         download: bool = False,
     ) -> None:
         if train:

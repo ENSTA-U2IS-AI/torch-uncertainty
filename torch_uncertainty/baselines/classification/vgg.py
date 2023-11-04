@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import Any, Literal, Optional, Type, Union
+from typing import Any, Literal
 
 import torch
 from pytorch_lightning import LightningModule
@@ -10,7 +10,11 @@ from pytorch_lightning.core.saving import (
 )
 from torch import nn
 
-from ...models.vgg import (
+from torch_uncertainty.baselines.utils.parser_addons import (
+    add_packed_specific_args,
+    add_vgg_specific_args,
+)
+from torch_uncertainty.models.vgg import (
     packed_vgg11,
     packed_vgg13,
     packed_vgg16,
@@ -20,15 +24,11 @@ from ...models.vgg import (
     vgg16,
     vgg19,
 )
-from ...routines.classification import (
+from torch_uncertainty.routines.classification import (
     ClassificationEnsemble,
     ClassificationSingle,
 )
-from ...transforms import RepeatTarget
-from ..utils.parser_addons import (
-    add_packed_specific_args,
-    add_vgg_specific_args,
-)
+from torch_uncertainty.transforms import RepeatTarget
 
 
 class VGG:
@@ -106,15 +106,15 @@ class VGG:
         cls,
         num_classes: int,
         in_channels: int,
-        loss: Type[nn.Module],
+        loss: type[nn.Module],
         optimization_procedure: Any,
         version: Literal["vanilla", "mc-dropout", "packed"],
         arch: int,
-        num_estimators: Optional[int] = None,
+        num_estimators: int | None = None,
         dropout_rate: float = 0.0,
         style: str = "imagenet",
         groups: int = 1,
-        alpha: Optional[float] = None,
+        alpha: float | None = None,
         gamma: int = 1,
         use_entropy: bool = False,
         use_logits: bool = False,
@@ -129,7 +129,7 @@ class VGG:
             "groups": groups,
         }
 
-        if version not in cls.versions.keys():
+        if version not in cls.versions:
             raise ValueError(f"Unknown version: {version}")
 
         format_batch_fn = nn.Identity()
@@ -171,24 +171,24 @@ class VGG:
                 use_logits=use_logits,
                 **kwargs,
             )
-        else:  # version in cls.ensemble
-            return ClassificationEnsemble(
-                model=model,
-                loss=loss,
-                optimization_procedure=optimization_procedure,
-                format_batch_fn=format_batch_fn,
-                use_entropy=use_entropy,
-                use_logits=use_logits,
-                use_mi=use_mi,
-                use_variation_ratio=use_variation_ratio,
-                **kwargs,
-            )
+        # version in cls.ensemble
+        return ClassificationEnsemble(
+            model=model,
+            loss=loss,
+            optimization_procedure=optimization_procedure,
+            format_batch_fn=format_batch_fn,
+            use_entropy=use_entropy,
+            use_logits=use_logits,
+            use_mi=use_mi,
+            use_variation_ratio=use_variation_ratio,
+            **kwargs,
+        )
 
     @classmethod
     def load_from_checkpoint(
         cls,
-        checkpoint_path: Union[str, Path],
-        hparams_file: Union[str, Path],
+        checkpoint_path: str | Path,
+        hparams_file: str | Path,
         **kwargs,
     ) -> LightningModule:  # coverage: ignore
         if hparams_file is not None:

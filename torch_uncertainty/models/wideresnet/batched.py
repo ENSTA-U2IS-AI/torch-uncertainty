@@ -1,9 +1,7 @@
-from typing import Type
-
 import torch.nn.functional as F
 from torch import Tensor, nn
 
-from ...layers import BatchConv2d, BatchLinear
+from torch_uncertainty.layers import BatchConv2d, BatchLinear
 
 __all__ = [
     "batched_wideresnet28x10",
@@ -62,11 +60,10 @@ class WideBasicBlock(nn.Module):
         out = F.relu(self.bn1(self.dropout(self.conv1(x))))
         out = self.conv2(out)
         out += self.shortcut(x)
-        out = F.relu(self.bn2(out))
-        return out
+        return F.relu(self.bn2(out))
 
 
-class _BatchedWide(nn.Module):
+class _BatchWideResNet(nn.Module):
     def __init__(
         self,
         depth: int,
@@ -82,16 +79,17 @@ class _BatchedWide(nn.Module):
         self.num_estimators = num_estimators
         self.in_planes = 16
 
-        assert (depth - 4) % 6 == 0, "Wide-resnet depth should be 6n+4."
+        if (depth - 4) % 6 != 0:
+            raise ValueError("Wide-resnet depth should be 6n+4.")
         n = (depth - 4) // 6
         k = widen_factor
 
-        nStages = [16, 16 * k, 32 * k, 64 * k]
+        num_stages = [16, 16 * k, 32 * k, 64 * k]
 
         if style == "imagenet":
             self.conv1 = BatchConv2d(
                 in_channels,
-                nStages[0],
+                num_stages[0],
                 num_estimators=self.num_estimators,
                 groups=groups,
                 kernel_size=7,
@@ -102,7 +100,7 @@ class _BatchedWide(nn.Module):
         else:
             self.conv1 = BatchConv2d(
                 in_channels,
-                nStages[0],
+                num_stages[0],
                 num_estimators=self.num_estimators,
                 groups=groups,
                 kernel_size=3,
@@ -111,7 +109,7 @@ class _BatchedWide(nn.Module):
                 bias=True,
             )
 
-        self.bn1 = nn.BatchNorm2d(nStages[0])
+        self.bn1 = nn.BatchNorm2d(num_stages[0])
 
         if style == "imagenet":
             self.optional_pool = nn.MaxPool2d(
@@ -122,7 +120,7 @@ class _BatchedWide(nn.Module):
 
         self.layer1 = self._wide_layer(
             WideBasicBlock,
-            nStages[1],
+            num_stages[1],
             n,
             dropout_rate,
             stride=1,
@@ -131,7 +129,7 @@ class _BatchedWide(nn.Module):
         )
         self.layer2 = self._wide_layer(
             WideBasicBlock,
-            nStages[2],
+            num_stages[2],
             n,
             dropout_rate,
             stride=2,
@@ -140,7 +138,7 @@ class _BatchedWide(nn.Module):
         )
         self.layer3 = self._wide_layer(
             WideBasicBlock,
-            nStages[3],
+            num_stages[3],
             n,
             dropout_rate,
             stride=2,
@@ -152,14 +150,14 @@ class _BatchedWide(nn.Module):
         self.flatten = nn.Flatten(1)
 
         self.linear = BatchLinear(
-            nStages[3],
+            num_stages[3],
             num_classes,
             num_estimators,
         )
 
     def _wide_layer(
         self,
-        block: Type[nn.Module],
+        block: type[nn.Module],
         planes: int,
         num_blocks: int,
         dropout_rate: float,
@@ -194,8 +192,7 @@ class _BatchedWide(nn.Module):
         out = self.layer3(out)
         out = self.pool(out)
         out = self.flatten(out)
-        out = self.linear(out)
-        return out
+        return self.linear(out)
 
 
 def batched_wideresnet28x10(
@@ -204,21 +201,22 @@ def batched_wideresnet28x10(
     groups: int,
     num_classes: int,
     style: str = "imagenet",
-) -> _BatchedWide:
+) -> _BatchWideResNet:
     """BatchEnsemble of Wide-ResNet-28x10 from `Wide Residual Networks
     <https://arxiv.org/pdf/1605.07146.pdf>`_.
 
     Args:
         in_channels (int): Number of input channels.
         num_estimators (int): Number of estimators in the ensemble.
+        groups (int): Number of groups in the convolutions.
         num_classes (int): Number of classes to predict.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
 
     Returns:
-        _BatchedWide: A BatchEnsemble-style Wide-ResNet-28x10.
+        _BatchWideResNet: A BatchEnsemble-style Wide-ResNet-28x10.
     """
-    return _BatchedWide(
+    return _BatchWideResNet(
         in_channels=in_channels,
         depth=28,
         widen_factor=10,

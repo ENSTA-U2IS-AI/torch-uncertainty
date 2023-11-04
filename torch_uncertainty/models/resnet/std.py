@@ -1,9 +1,7 @@
-from typing import List, Type, Union
-
 import torch.nn.functional as F
 from torch import Tensor, nn
 
-from ..utils import toggle_dropout
+from torch_uncertainty.models.utils import toggle_dropout
 
 __all__ = [
     "resnet18",
@@ -25,7 +23,7 @@ class BasicBlock(nn.Module):
         dropout_rate: float = 0,
         groups: int = 1,
     ) -> None:
-        super(BasicBlock, self).__init__()
+        super().__init__()
 
         self.conv1 = nn.Conv2d(
             in_planes,
@@ -69,8 +67,7 @@ class BasicBlock(nn.Module):
         out = F.relu(self.dropout(self.bn1(self.conv1(x))))
         out = self.bn2(self.conv2(out))
         out += self.shortcut(x)
-        out = F.relu(out)
-        return out
+        return F.relu(out)
 
 
 class Bottleneck(nn.Module):
@@ -84,7 +81,7 @@ class Bottleneck(nn.Module):
         dropout_rate: float = 0,
         groups: int = 1,
     ) -> None:
-        super(Bottleneck, self).__init__()
+        super().__init__()
 
         self.conv1 = nn.Conv2d(
             in_planes,
@@ -133,8 +130,7 @@ class Bottleneck(nn.Module):
         out = F.relu(self.dropout(self.bn2(self.conv2(out))))
         out = self.bn3(self.conv3(out))
         out += self.shortcut(x)
-        out = F.relu(out)
-        return out
+        return F.relu(out)
 
 
 # class RobustBottleneck(nn.Module):
@@ -199,14 +195,14 @@ class _ResNet(nn.Module):
 
     def __init__(
         self,
-        block: Type[Union[BasicBlock, Bottleneck]],
-        num_blocks: List[int],
+        block: type[BasicBlock | Bottleneck],
+        num_blocks: list[int],
         in_channels: int,
         num_classes: int,
         dropout_rate: float,
         groups: int,
         style: str = "imagenet",
-        num_estimators: int = None,
+        num_estimators: int | None = None,
         last_layer_dropout: bool = False,
     ) -> None:
         super().__init__()
@@ -289,7 +285,7 @@ class _ResNet(nn.Module):
 
     def _make_layer(
         self,
-        block: Union[Type[BasicBlock], Type[Bottleneck]],
+        block: type[BasicBlock] | type[Bottleneck],
         planes: int,
         num_blocks: int,
         stride: int,
@@ -321,15 +317,24 @@ class _ResNet(nn.Module):
         out = self.layer4(out)
         out = self.pool(out)
         out = self.flatten(out)
-        out = self.linear(out)
-        return out
+        return self.linear(out)
+
+    def feats_forward(self, x: Tensor) -> Tensor:
+        x = self.handle_dropout(x)
+        out = F.relu(self.bn1(self.conv1(x)))
+        out = self.optional_pool(out)
+        out = self.layer1(out)
+        out = self.layer2(out)
+        out = self.layer3(out)
+        out = self.layer4(out)
+        out = self.pool(out)
+        return self.flatten(out)
 
     def handle_dropout(self, x: Tensor) -> Tensor:
-        if self.num_estimators is not None:
-            if not self.training:
-                if self.last_layer_dropout is not None:
-                    toggle_dropout(self, self.last_layer_dropout)
-                x = x.repeat(self.num_estimators, 1, 1, 1)
+        if self.num_estimators is not None and not self.training:
+            if self.last_layer_dropout is not None:
+                toggle_dropout(self, self.last_layer_dropout)
+            x = x.repeat(self.num_estimators, 1, 1, 1)
         return x
 
 
@@ -339,7 +344,7 @@ def resnet18(
     dropout_rate: float = 0,
     groups: int = 1,
     style: str = "imagenet",
-    num_estimators: int = None,
+    num_estimators: int | None = None,
     last_layer_dropout: bool = False,
 ) -> _ResNet:
     """ResNet-18 from `Deep Residual Learning for Image Recognition
@@ -379,7 +384,7 @@ def resnet34(
     dropout_rate: float = 0,
     groups: int = 1,
     style: str = "imagenet",
-    num_estimators: int = None,
+    num_estimators: int | None = None,
     last_layer_dropout: bool = False,
 ) -> _ResNet:
     """ResNet-34 from `Deep Residual Learning for Image Recognition
@@ -419,7 +424,7 @@ def resnet50(
     dropout_rate: float = 0,
     groups: int = 1,
     style: str = "imagenet",
-    num_estimators: int = None,
+    num_estimators: int | None = None,
     last_layer_dropout: bool = False,
 ) -> _ResNet:
     """ResNet-50 from `Deep Residual Learning for Image Recognition
@@ -459,7 +464,7 @@ def resnet101(
     dropout_rate: float = 0,
     groups: int = 1,
     style: str = "imagenet",
-    num_estimators: int = None,
+    num_estimators: int | None = None,
     last_layer_dropout: bool = False,
 ) -> _ResNet:
     """ResNet-101 from `Deep Residual Learning for Image Recognition
@@ -499,7 +504,7 @@ def resnet152(
     dropout_rate: float = 0,
     groups: int = 1,
     style: str = "imagenet",
-    num_estimators: int = None,
+    num_estimators: int | None = None,
     last_layer_dropout: bool = False,
 ) -> _ResNet:
     """ResNet-152 from `Deep Residual Learning for Image Recognition

@@ -1,5 +1,3 @@
-from typing import Type
-
 from torch import nn
 
 from .base import VGG, _vgg
@@ -11,11 +9,11 @@ __all__ = ["vgg11", "vgg13", "vgg16", "vgg19"]
 def vgg11(
     in_channels: int,
     num_classes: int,
-    norm: Type[nn.Module] = nn.Identity,
+    norm: type[nn.Module] = nn.Identity,
     groups: int = 1,
     dropout_rate: float = 0.5,
     style: str = "imagenet",
-    num_estimators: int = None,
+    num_estimators: int | None = None,
     last_layer_dropout: bool = False,
 ) -> VGG:
     return _vgg(
@@ -34,11 +32,11 @@ def vgg11(
 def vgg13(
     in_channels: int,
     num_classes: int,
-    norm: Type[nn.Module] = nn.Identity,
+    norm: type[nn.Module] = nn.Identity,
     groups: int = 1,
     dropout_rate: float = 0.5,
     style: str = "imagenet",
-    num_estimators: int = None,
+    num_estimators: int | None = None,
     last_layer_dropout: bool = False,
 ) -> VGG:
     return _vgg(
@@ -57,11 +55,11 @@ def vgg13(
 def vgg16(
     in_channels: int,
     num_classes: int,
-    norm: Type[nn.Module] = nn.Identity,
+    norm: type[nn.Module] = nn.Identity,
     groups: int = 1,
     dropout_rate: float = 0.5,
     style: str = "imagenet",
-    num_estimators: int = None,
+    num_estimators: int | None = None,
     last_layer_dropout: bool = False,
 ) -> VGG:
     return _vgg(
@@ -80,11 +78,11 @@ def vgg16(
 def vgg19(
     in_channels: int,
     num_classes: int,
-    norm: Type[nn.Module] = nn.Identity,
+    norm: type[nn.Module] = nn.Identity,
     groups: int = 1,
     dropout_rate: float = 0.5,
     style: str = "imagenet",
-    num_estimators: int = None,
+    num_estimators: int | None = None,
     last_layer_dropout: bool = False,
 ) -> VGG:  # coverage: ignore
     return _vgg(

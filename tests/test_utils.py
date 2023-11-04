@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-import torch_uncertainty.utils as utils
+from torch_uncertainty import utils
 
 
 class TestUtils:

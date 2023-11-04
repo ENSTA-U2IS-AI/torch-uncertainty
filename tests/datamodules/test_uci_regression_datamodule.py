@@ -1,11 +1,8 @@
-# fmt:off
 from argparse import ArgumentParser
 from functools import partial
 
+from tests._dummies.dataset import DummyRegressionDataset
 from torch_uncertainty.datamodules import UCIDataModule
-
-from .._dummies.dataset import DummyRegressionDataset
-
 
 
 class TestUCIDataModule:

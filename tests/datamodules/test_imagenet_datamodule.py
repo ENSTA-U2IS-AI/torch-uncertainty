@@ -1,13 +1,10 @@
-# fmt:off
 from argparse import ArgumentParser
 
 import pytest
 from torchvision.datasets import ImageNet
 
+from tests._dummies.dataset import DummyClassificationDataset
 from torch_uncertainty.datamodules import ImageNetDataModule
-
-from .._dummies.dataset import DummyClassificationDataset
-
 
 
 class TestImageNetDataModule:
