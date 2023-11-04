@@ -9,7 +9,7 @@ Uncertainty Models
 The following uncertainty models are implemented.
 
 Deep Evidential Classification
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 For Deep Evidential Classification, consider citing:
 
@@ -20,7 +20,7 @@ For Deep Evidential Classification, consider citing:
 
 
 Beta NLL in Deep Regression
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 For Beta NLL in Deep Regression, consider citing:
 

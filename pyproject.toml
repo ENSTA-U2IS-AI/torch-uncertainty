@@ -1,64 +1,74 @@
-[tool.poetry]
+[build-system]
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
 name = "torch_uncertainty"
 version = "0.1.5"
-description = "TorchUncertainty: A maintained and collaborative PyTorch Library for benchmarking and leveraging predictive uncertainty quantification techniques."
 authors = [
-  "ENSTA U2IS <olivier.laurent@ensta-paris.fr>",
-  "Adrien Lafage <adrienlafage@outlook.com>",
-  "Olivier Laurent <olivier.ar.laurent@gmail.com>",
+    {name = "ENSTA U2IS", email = "olivier.laurent@ensta-paris.fr"},
+    {name = "Adrien Lafage", email = "adrienlafage@outlook.com"},
+    {name = "Olivier Laurent", email = "olivier.laurent@ensta-paris.fr"},
 ]
-license = "Apache-2.0"
-keywords = [
-  "deep-learning",
-  "pytorch",
-  "uncertainty",
-  "ensembles",
-  "uncertainty-quantification",
-  "predictive-uncertainty",
-  "reliable-ai",
-  "deep-learning-uncertainty",
-]
+description="Uncertainty quantification library in PyTorch"
 readme = "README.md"
-packages = [{ include = "torch_uncertainty" }]
+requires-python = ">=3.10"
+keywords=[
+    "bayesian-network",
+    "ensembles",
+    "neural-networks",
+    "predictive-uncertainty",
+    "pytorch",
+    "reliable-ai", 
+    "trustworthy-machine-learning",
+    "uncertainty",
+    "uncertainty-quantification",
+]
+classifiers = [
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3 :: Only",
+]
+dependencies=[
+    "timm",
+    "pytorch-lightning<2",
+    "tensorboard",
+    "einops",
+    "torchinfo", 
+    "scipy", 
+    "huggingface-hub",
+    "scikit-learn",
+    "matplotlib",
+]
 
-[tool.poetry.dependencies]
-python = ">=3.9,<3.12"
-torch = "=2.0.0"
-timm = ">=0.6.12"
-pytorch-lightning = "^1.9.0"
-tensorboard = ">=2.11.2"
-einops = ">=0.6.0"
-torchinfo = ">=1.7.1"
-scipy = "^1.10.0"
-huggingface-hub = "^0.14.1"
-pandas = "^2.0.3"
-scikit-learn = "^1.3.2"
+[project.optional-dependencies]
+dev=[
+    "ruff",
+    "pytest-cov",
+    "pre-commit",
+    "pre-commit-hooks",
+    "cli-test-helpers",
+]
+docs=[
+    "sphinx<6", 
+    "pytorch_sphinx_theme@git+https://github.com/torch-uncertainty/pytorch_sphinx_theme",
+    "sphinx-copybutton", 
+    "sphinx-gallery",
+    "sphinx-design",
+    "sphinx-codeautolink",
+]
+full=[
+    "pandas",
+]
 
-[tool.poetry.group.dev]
-optional = true
+[project.urls]
+homepage="https://torch-uncertainty.github.io/"
+documentation="https://torch-uncertainty.github.io/quickstart.html"
+repository="https://github.com/ENSTA-U2IS/torch-uncertainty.git"
 
-[tool.poetry.group.dev.dependencies]
-pytest-cov = "^4.0.0"
-pre-commit = "^3.0.4"
-pre-commit-hooks = "^4.4.0"
-cli-test-helpers = "^3.2.0"
-ruff = "^0.1.2"
-
-[tool.poetry.group.docs]
-optional = true
-
-[tool.poetry.group.docs.dependencies]
-sphinx = "^5.1.3"
-pytorch-sphinx-theme = { git = "https://github.com/torch-uncertainty/pytorch_sphinx_theme" }
-sphinx-copybutton = "^0.5.1"
-sphinx-gallery = "^0.14.0"
-matplotlib = "^3.7.1"
-sphinx-design = "^0.3.0"
-sphinx-codeautolink = "^0.15.0"
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+[tool.flit.module]
+name = "torch_uncertainty"
 
 [tool.ruff]
 line-length = 80
@@ -94,3 +104,18 @@ exclude = [
 
 [tool.ruff.pydocstyle]
 convention = "google"
+
+[tool.coverage.run]
+branch = true
+include = ["*/torch-uncertainty/*"]
+omit = [
+    "*/tests/*", 
+    "*/datasets/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "coverage: ignore",
+    "raise NotImplementedError",
+]
+ignore_errors = true

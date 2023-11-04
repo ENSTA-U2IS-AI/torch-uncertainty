@@ -1,7 +1,10 @@
 from collections.abc import Callable
+from importlib import util
 from pathlib import Path
 
-import pandas as pd
+if util.find_spec("pandas"):
+    import pandas as pd
+
 import torch
 import torch.nn.functional as F
 from torch.utils.data import Dataset
@@ -223,6 +226,10 @@ class UCIRegression(Dataset):
 
     def _make_dataset(self) -> None:
         """Create dataset from extracted files."""
+        if not util.find_spec("pandas"):
+            raise ImportError(
+                "Please install pandas manually to use the UCI datasets."
+            )
         path = self.root / self.root_appendix / self.dataset_name
         if self.dataset_name == "boston":
             array = pd.read_table(
@@ -234,13 +241,6 @@ class UCIRegression(Dataset):
         elif self.dataset_name == "concrete":
             array = pd.read_excel(path / "Concrete_Data.xls").to_numpy()
         elif self.dataset_name == "energy-efficiency":
-            try:
-                import openpyxl  # noqa: F401
-            except ImportError:
-                raise ImportError(
-                    "Energy dataset: Please install openpyxl manually to read "
-                    "the excel file."
-                )
             array = pd.read_excel(path / "ENB2012_data.xlsx").to_numpy()
         elif self.dataset_name == "energy-prediction":
             array = pd.read_csv(path / "energydata_complete.csv")[
