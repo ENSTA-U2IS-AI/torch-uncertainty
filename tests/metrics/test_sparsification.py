@@ -1,20 +1,18 @@
+import matplotlib.pyplot as plt
 import pytest
 import torch
-import matplotlib.pyplot as plt
 
 from torch_uncertainty.metrics import AUSE
 
 
 @pytest.fixture
 def uncertainty_scores() -> torch.Tensor:
-    scores = torch.as_tensor([0.2, 0.1, 0.5, 0.3, 0.4])
-    return scores
+    return torch.as_tensor([0.2, 0.1, 0.5, 0.3, 0.4])
 
 
 @pytest.fixture
 def error_values() -> torch.Tensor:
-    errors = torch.as_tensor([0.1, 0.2, 0.3, 0.4, 0.5])
-    return errors
+    return torch.as_tensor([0.1, 0.2, 0.3, 0.4, 0.5])
 
 
 class TestAUSE:

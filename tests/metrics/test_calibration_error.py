@@ -1,25 +1,23 @@
+import matplotlib.pyplot as plt
 import pytest
 import torch
-import matplotlib.pyplot as plt
 
 from torch_uncertainty.metrics import CE
 
 
 @pytest.fixture
 def preds_binary() -> torch.Tensor:
-    preds = torch.as_tensor([0.25, 0.25, 0.55, 0.75, 0.75])
-    return preds
+    return torch.as_tensor([0.25, 0.25, 0.55, 0.75, 0.75])
 
 
 @pytest.fixture
 def targets_binary() -> torch.Tensor:
-    targets = torch.as_tensor([0, 0, 1, 1, 1])
-    return targets
+    return torch.as_tensor([0, 0, 1, 1, 1])
 
 
 @pytest.fixture
 def preds_multiclass() -> torch.Tensor:
-    preds = torch.as_tensor(
+    return torch.as_tensor(
         [
             [0.25, 0.20, 0.55],
             [0.55, 0.05, 0.40],
@@ -27,13 +25,11 @@ def preds_multiclass() -> torch.Tensor:
             [0.90, 0.05, 0.05],
         ]
     )
-    return preds
 
 
 @pytest.fixture
 def targets_multiclass() -> torch.Tensor:
-    targets = torch.as_tensor([0, 1, 2, 0])
-    return targets
+    return torch.as_tensor([0, 1, 2, 0])
 
 
 class TestCE:
