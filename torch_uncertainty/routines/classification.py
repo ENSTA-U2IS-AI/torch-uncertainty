@@ -29,6 +29,7 @@ from ..metrics import (
     NegativeLogLikelihood,
     VariationRatio,
 )
+
 from ..plotting_utils import plot_hist
 
 

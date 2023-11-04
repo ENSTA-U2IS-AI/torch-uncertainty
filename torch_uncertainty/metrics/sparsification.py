@@ -52,7 +52,7 @@ class AUSE(Metric):
         self.add_state("errors", default=[], dist_reduce_fx="cat")
 
     def update(self, scores: Tensor, errors: Tensor) -> None:
-        self.confidences.append(scores)
+        self.scores.append(scores)
         self.errors.append(errors)
 
     def compute(self) -> Tensor:
@@ -85,23 +85,23 @@ class AUSE(Metric):
         ausec = auc(x, y)
 
         rejection_rates = (
-            np.arange(self.computed_error_rates.size(0))
-            / self.computed_error_rates.size(0)
+            np.arange(computed_error_rates.size(0))
+            / computed_error_rates.size(0)
         ) * 100
 
         ax.plot(
             rejection_rates,
-            self.computed_error_rates * 100,
+            computed_error_rates * 100,
             label="Model",
         )
         ax.plot(
             rejection_rates,
-            self.computed_optimal_error_rates * 100,
+            computed_optimal_error_rates * 100,
             label="Optimal",
         )
 
-        ax.set_xlabel("Rejection Rate")
-        ax.set_ylabel("Error Rate")
+        ax.set_xlabel("Rejection Rate (%)")
+        ax.set_ylabel("Error Rate (%)")
         ax.set_xlim(self.plot_lower_bound, self.plot_upper_bound)
         ax.set_ylim(self.plot_lower_bound, self.plot_upper_bound)
         ax.legend(loc="upper right")

@@ -16,17 +16,19 @@ class BinaryCE(BinaryCalibrationError):
     def plot(self, ax: Optional[_AX_TYPE] = None) -> _PLOT_OUT_TYPE:
         fig, ax = plt.subplots() if ax is None else (None, ax)
 
-        conf = dim_zero_cat(self.conf)
-        acc = dim_zero_cat(self.acc)
+        conf = dim_zero_cat(self.confidences)
+        acc = dim_zero_cat(self.accuracies)
+
+        bin_width = 1 / self.n_bins
 
         bin_ids = torch.round(
-            torch.clamp(conf * self.num_bins, 1e-5, self.num_bins - 1 - 1e-5)
+            torch.clamp(conf * self.n_bins, 1e-5, self.n_bins - 1 - 1e-5)
         )
         val, inverse, counts = bin_ids.unique(
             return_inverse=True, return_counts=True
         )
         val_oh = torch.nn.functional.one_hot(
-            val.long(), num_classes=self.num_bins
+            val.long(), num_classes=self.n_bins
         )
 
         # add 1e-6 to avoid division NaNs
@@ -43,9 +45,9 @@ class BinaryCE(BinaryCalibrationError):
 
         plt.rc("axes", axisbelow=True)
         ax.hist(
-            x=[self.bin_width * i * 100 for i in range(self.num_bins)],
+            x=[bin_width * i * 100 for i in range(self.n_bins)],
             weights=values * 100,
-            bins=[self.bin_width * i * 100 for i in range(self.num_bins + 1)],
+            bins=[bin_width * i * 100 for i in range(self.n_bins + 1)],
             alpha=0.7,
             linewidth=1,
             edgecolor="#0d559f",
@@ -74,17 +76,19 @@ class MulticlassCE(MulticlassCalibrationError):
     def plot(self, ax: Optional[_AX_TYPE] = None) -> _PLOT_OUT_TYPE:
         fig, ax = plt.subplots() if ax is None else (None, ax)
 
-        conf = dim_zero_cat(self.conf)
-        acc = dim_zero_cat(self.acc)
+        conf = dim_zero_cat(self.confidences)
+        acc = dim_zero_cat(self.accuracies)
+
+        bin_width = 1 / self.n_bins
 
         bin_ids = torch.round(
-            torch.clamp(conf * self.num_bins, 1e-5, self.num_bins - 1 - 1e-5)
+            torch.clamp(conf * self.n_bins, 1e-5, self.n_bins - 1 - 1e-5)
         )
         val, inverse, counts = bin_ids.unique(
             return_inverse=True, return_counts=True
         )
         val_oh = torch.nn.functional.one_hot(
-            val.long(), num_classes=self.num_bins
+            val.long(), num_classes=self.n_bins
         )
 
         # add 1e-6 to avoid division NaNs
@@ -101,9 +105,9 @@ class MulticlassCE(MulticlassCalibrationError):
 
         plt.rc("axes", axisbelow=True)
         ax.hist(
-            x=[self.bin_width * i * 100 for i in range(self.num_bins)],
+            x=[bin_width * i * 100 for i in range(self.n_bins)],
             weights=values * 100,
-            bins=[self.bin_width * i * 100 for i in range(self.num_bins + 1)],
+            bins=[bin_width * i * 100 for i in range(self.n_bins + 1)],
             alpha=0.7,
             linewidth=1,
             edgecolor="#0d559f",
@@ -157,11 +161,11 @@ class CE:
             }
         )
         if task == ClassificationTaskNoMultilabel.BINARY:
-            return BinaryCalibrationError(**kwargs)
+            return BinaryCE(**kwargs)
         if task == ClassificationTaskNoMultilabel.MULTICLASS:
             if not isinstance(num_classes, int):
                 raise ValueError(
                     f"`num_classes` is expected to be `int` but `{type(num_classes)} was passed.`"
                 )
-            return MulticlassCalibrationError(num_classes, **kwargs)
+            return MulticlassCE(num_classes, **kwargs)
         raise ValueError(f"Not handled value: {task}")
