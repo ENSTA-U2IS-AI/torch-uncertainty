@@ -13,7 +13,8 @@ folder or if you want to contribute to the project.
 From PyPI
 ---------
 
-Install the package via pip: 
+Check that you have PyTorch (cpu or gpu) installed on your system. Then, install
+the package via pip: 
 
 .. parsed-literal::
 
@@ -28,64 +29,9 @@ To update the package, run:
 From source
 -----------
 
-To install the project from source, you may use `Poetry <https://python-poetry.org/>`_
-or install the package using pip directly.
+To install the project from source, you can use pip directly.
 
-With poetry
-^^^^^^^^^^^
-
-**Installing Poetry**
-
-Installation guidelines for poetry are available `here <https://python-poetry.org/docs/>`_.
-They boil down to executing the following command:
-
-.. parsed-literal::
-    
-    curl -sSL https://install.python-poetry.org | python3 -
-
-**Installing the package**
-
-Clone the repository with:
-
-.. parsed-literal::
-
-    git clone https://github.com/ENSTA-U2IS/torch-uncertainty.git
-    cd torch-uncertainty
-
-Create a new conda environment and activate it:
-
-.. parsed-literal::
-
-    conda create -n uncertainty python=3.10
-    conda activate uncertainty
-
-Install the package using poetry:
-
-.. parsed-literal::
-
-    poetry install
-    # or, for development
-    poetry install --with dev
-
-
-Depending on your system, you may encounter poetry errors. If so, kill the 
-process and add :bash:`PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring`
-at the beginning of every :bash:`poetry` command, eg:
-
-.. parsed-literal::
-
-    PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring poetry install
-
-To update the package, run:
-
-.. parsed-literal::
-
-    git pull && poetry update
-
-With pip
-^^^^^^^^
-
-Clone the repository with:
+Again, with PyTorch already installed, clone the repository with:
 
 .. parsed-literal::
 
@@ -105,5 +51,4 @@ Install the package using pip in editable mode:
 
     pip install -e .
 
-For now, you will have to install the optional dependencies manually.
-Check the pyproject.toml file for the list of dependencies.
+If PyTorch is not installed, the latest version will be installed automatically.
