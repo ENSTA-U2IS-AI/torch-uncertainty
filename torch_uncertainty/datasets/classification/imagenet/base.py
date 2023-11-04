@@ -36,8 +36,8 @@ class ImageNetVariation(ImageFolder):
         "imagenet-classes/master/wnid_to_idx.txt"
     )
     wnid_to_idx_md5 = (
-        "7fac43d97231a87a264a118fa76a13ad"
-    )  # avoid replacement attack
+        "7fac43d97231a87a264a118fa76a13ad"  # avoid replacement attack
+    )
 
     def __init__(
         self,
