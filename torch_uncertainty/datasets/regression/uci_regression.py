@@ -1,7 +1,10 @@
 from collections.abc import Callable
+from importlib import util
 from pathlib import Path
 
-import pandas as pd
+if util.find_spec("spam"):
+    import pandas as pd
+
 import torch
 import torch.nn.functional as F
 from torch.utils.data import Dataset
