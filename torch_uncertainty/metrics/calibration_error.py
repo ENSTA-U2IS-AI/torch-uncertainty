@@ -1,4 +1,4 @@
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 import matplotlib.pyplot as plt
 import torch
@@ -8,12 +8,12 @@ from torchmetrics.classification.calibration_error import (
 )
 from torchmetrics.metric import Metric
 from torchmetrics.utilities.data import dim_zero_cat
-from torchmetrics.utilities.plot import _AX_TYPE, _PLOT_OUT_TYPE
 from torchmetrics.utilities.enums import ClassificationTaskNoMultilabel
+from torchmetrics.utilities.plot import _AX_TYPE, _PLOT_OUT_TYPE
 
 
 class BinaryCE(BinaryCalibrationError):
-    def plot(self, ax: Optional[_AX_TYPE] = None) -> _PLOT_OUT_TYPE:
+    def plot(self, ax: _AX_TYPE | None = None) -> _PLOT_OUT_TYPE:
         fig, ax = plt.subplots() if ax is None else (None, ax)
 
         conf = dim_zero_cat(self.confidences)
@@ -73,7 +73,7 @@ class BinaryCE(BinaryCalibrationError):
 
 
 class MulticlassCE(MulticlassCalibrationError):
-    def plot(self, ax: Optional[_AX_TYPE] = None) -> _PLOT_OUT_TYPE:
+    def plot(self, ax: _AX_TYPE | None = None) -> _PLOT_OUT_TYPE:
         fig, ax = plt.subplots() if ax is None else (None, ax)
 
         conf = dim_zero_cat(self.confidences)
@@ -145,8 +145,8 @@ class CE:
         task: Literal["binary", "multiclass"],
         n_bins: int = 15,
         norm: Literal["l1", "l2", "max"] = "l1",
-        num_classes: Optional[int] = None,
-        ignore_index: Optional[int] = None,
+        num_classes: int | None = None,
+        ignore_index: int | None = None,
         validate_args: bool = True,
         **kwargs: Any,
     ) -> Metric:

@@ -1,14 +1,11 @@
-from typing import List, Optional
-
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+from sklearn.metrics import auc
 from torch import Tensor
 from torchmetrics.metric import Metric
 from torchmetrics.utilities.data import dim_zero_cat
 from torchmetrics.utilities.plot import _AX_TYPE, _PLOT_OUT_TYPE
-
-from sklearn.metrics import auc
 
 
 class AUSE(Metric):
@@ -43,8 +40,8 @@ class AUSE(Metric):
     plot_upper_bound: float = 100.0
     plot_legend_name: str = "Sparsification Curves"
 
-    scores: List[Tensor]
-    errors: List[Tensor]
+    scores: list[Tensor]
+    errors: list[Tensor]
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -68,7 +65,7 @@ class AUSE(Metric):
 
         return torch.tensor([auc(x, y)])
 
-    def plot(self, ax: Optional[_AX_TYPE] = None) -> _PLOT_OUT_TYPE:
+    def plot(self, ax: _AX_TYPE | None = None) -> _PLOT_OUT_TYPE:
         fig, ax = plt.subplots() if ax is None else (None, ax)
 
         # Computation of AUSEC
