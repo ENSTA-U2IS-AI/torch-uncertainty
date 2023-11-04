@@ -52,7 +52,7 @@ dev=[
 ]
 docs=[
     "sphinx", 
-    "pytorch_sphinx_theme @ git+ssh://git@github.com/torch-uncertainty/pytorch_sphinx_theme",
+    "pytorch_sphinx_theme@git+https://github.com/torch-uncertainty/pytorch_sphinx_theme.git",
     "sphinx-copybutton", 
     "sphinx-gallery",
     "sphinx-design",
