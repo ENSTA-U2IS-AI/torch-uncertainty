@@ -211,7 +211,7 @@ Losses
 
     KLDiv
     ELBOLoss
-    BetaNLLLoss
+    BetaNLL
     NIGLoss
     DECLoss
 

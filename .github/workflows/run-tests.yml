@@ -43,7 +43,6 @@ jobs:
         files: |
           auto_tutorials_source/**
           data/**
-          docs/**
           experiments/**
           README.md
           CONTRIBUTING.md

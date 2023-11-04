@@ -32,7 +32,7 @@ classifiers = [
 ]
 dependencies=[
     "timm",
-    "pytorch-lightning<2.0",
+    "pytorch-lightning<2",
     "tensorboard",
     "einops",
     "torchinfo", 
@@ -51,8 +51,8 @@ dev=[
     "cli-test-helpers",
 ]
 docs=[
-    "sphinx", 
-    "pytorch_sphinx_theme@git+https://github.com/torch-uncertainty/pytorch_sphinx_theme.git",
+    "sphinx<6", 
+    "pytorch_sphinx_theme@git+https://github.com/torch-uncertainty/pytorch_sphinx_theme",
     "sphinx-copybutton", 
     "sphinx-gallery",
     "sphinx-design",
