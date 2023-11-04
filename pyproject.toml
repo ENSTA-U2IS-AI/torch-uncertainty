@@ -107,7 +107,7 @@ convention = "google"
 
 [tool.coverage.run]
 branch = true
-include = "*/torch-uncertainty/*"
+include = ["*/torch-uncertainty/*"]
 omit = [
     "*/tests/*", 
     "*/datasets/*",
