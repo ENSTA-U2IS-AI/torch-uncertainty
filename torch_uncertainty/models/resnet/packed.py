@@ -52,7 +52,7 @@ class BasicBlock(nn.Module):
         num_estimators: int = 4,
         gamma: int = 1,
         groups: int = 1,
-    ):
+    ) -> None:
         super().__init__()
 
         # No subgroups for the first layer
@@ -118,7 +118,7 @@ class Bottleneck(nn.Module):
         num_estimators: int = 4,
         gamma: int = 1,
         groups: int = 1,
-    ):
+    ) -> None:
         super().__init__()
 
         # No subgroups for the first layer
@@ -369,8 +369,11 @@ def packed_resnet18(
         alpha (int): Expansion factor affecting the width of the estimators.
         gamma (int): Number of groups within each estimator.
         num_classes (int): Number of classes to predict.
+        groups (int): Number of groups within each estimator.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
+        pretrained (bool, optional): Whether to load pretrained weights.
+            Defaults to ``False``.
 
     Returns:
         _PackedResNet: A Packed-Ensembles ResNet-18.
@@ -418,8 +421,11 @@ def packed_resnet34(
         alpha (int): Expansion factor affecting the width of the estimators.
         gamma (int): Number of groups within each estimator.
         num_classes (int): Number of classes to predict.
+        groups (int): Number of groups within each estimator.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
+        pretrained (bool, optional): Whether to load pretrained weights.
+            Defaults to ``False``.
 
     Returns:
         _PackedResNet: A Packed-Ensembles ResNet-34.
@@ -467,8 +473,11 @@ def packed_resnet50(
         alpha (int): Expansion factor affecting the width of the estimators.
         gamma (int): Number of groups within each estimator.
         num_classes (int): Number of classes to predict.
+        groups (int): Number of groups within each estimator.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
+        pretrained (bool, optional): Whether to load pretrained weights.
+            Defaults to ``False``.
 
     Returns:
         _PackedResNet: A Packed-Ensembles ResNet-50.
@@ -516,8 +525,11 @@ def packed_resnet101(
         alpha (int): Expansion factor affecting the width of the estimators.
         gamma (int): Number of groups within each estimator.
         num_classes (int): Number of classes to predict.
+        groups (int): Number of groups within each estimator.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
+        pretrained (bool, optional): Whether to load pretrained weights.
+            Defaults to ``False``.
 
     Returns:
         _PackedResNet: A Packed-Ensembles ResNet-101.
@@ -565,8 +577,11 @@ def packed_resnet152(
         alpha (int): Expansion factor affecting the width of the estimators.
         gamma (int): Number of groups within each estimator.
         num_classes (int): Number of classes to predict.
+        groups (int): Number of groups within each estimator.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
+        pretrained (bool, optional): Whether to load pretrained weights.
+            Defaults to ``False``.
 
     Returns:
         _PackedResNet: A Packed-Ensembles ResNet-152.

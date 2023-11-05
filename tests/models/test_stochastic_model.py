@@ -1,11 +1,12 @@
 import torch
 
-from torch_uncertainty.layers import BayesConv2d, BayesLinear
-from torch_uncertainty.models.utils import StochasticModel
+from torch_uncertainty.layers import BayesConv2d, BayesLinear, stochastic_model
 
 
-@StochasticModel
+@stochastic_model
 class DummyModelLinear(torch.nn.Module):
+    """Dummy model for testing purposes."""
+
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.layer = BayesLinear(1, 10, 1)
@@ -14,8 +15,10 @@ class DummyModelLinear(torch.nn.Module):
         return self.layer(x)
 
 
-@StochasticModel
+@stochastic_model
 class DummyModelConv(torch.nn.Module):
+    """Dummy conv model for testing purposes."""
+
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.layer = BayesConv2d(1, 10, 1)
@@ -24,8 +27,10 @@ class DummyModelConv(torch.nn.Module):
         return self.layer(x)
 
 
-@StochasticModel
+@stochastic_model
 class DummyModelMix(torch.nn.Module):
+    """Dummy mix model for testing purposes."""
+
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.layer = BayesConv2d(1, 10, 1, bias=False)

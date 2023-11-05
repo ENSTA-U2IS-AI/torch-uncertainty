@@ -38,7 +38,7 @@ def toggle_dropout(
             m.eval()
 
 
-def StochasticModel(model: nn.Module) -> nn.Module:
+def stochastic_model(model: nn.Module) -> nn.Module:
     """Decorator for stochastic models. When applied to a model, it adds the
     sample, freeze and unfreeze methods to the model. Use freeze to obtain
     deterministic outputs. Use unfreeze to obtain stochastic outputs. Samples

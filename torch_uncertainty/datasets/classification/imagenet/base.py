@@ -1,3 +1,4 @@
+import ast
 from collections.abc import Callable
 from pathlib import Path
 
@@ -126,7 +127,7 @@ class ImageNetVariation(ImageFolder):
                 self.wnid_to_idx_md5,
             )
         with open(self.root / "imagenet_wnid_to_idx.txt") as file:
-            self.wnid_to_idx = eval(file.read())
+            self.wnid_to_idx = ast.literal_eval(file.read())
 
         for i in range(len(self.samples)):
             wnid = Path(self.samples[i][0]).parts[-2]

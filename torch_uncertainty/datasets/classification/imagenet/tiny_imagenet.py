@@ -21,7 +21,7 @@ class TinyImageNet(Dataset):
         split: Literal["train", "val", "test"] = "train",
         transform: Callable | None = None,
         target_transform: Callable | None = None,
-    ):
+    ) -> None:
         self.root = Path(root) / "tiny-imagenet-200"
 
         self.split = split
@@ -34,20 +34,19 @@ class TinyImageNet(Dataset):
 
         self.make_dataset()
 
-    def make_dataset(self):
-        self.samples = self._make_paths()
-        self.samples_num = len(self.samples)
+    def make_dataset(self) -> None:
+        self.samples_paths = self._make_paths()
+        self.samples_num = len(self.samples_paths)
 
         labels = []
         for idx in range(self.samples_num):
-            s = self.samples[idx]
+            s = self.samples_paths[idx]
             img = Image.open(s[0])
             img = self._add_channels(np.uint8(img))
             img = Image.fromarray(img)
             self.samples[idx] = img
             labels.append(s[self.label_idx])
 
-        self.samples = self.samples
         self.label_data = torch.as_tensor(labels).long()
 
     def _add_channels(self, img):
@@ -57,10 +56,16 @@ class TinyImageNet(Dataset):
             img = np.concatenate([img, img[:, :, -1:]], axis=-1)
         return img
 
-    def __len__(self):
+    def __len__(self) -> int:
+        """The number of samples in the dataset."""
         return self.samples_num
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: int) -> tuple[torch.Tensor, torch.Tensor]:
+        """Get the samples and targets of the dataset.
+
+        Args:
+            index (int): The index of the sample to get.
+        """
         sample = self.samples[index]
         target = self.label_data[index]
 

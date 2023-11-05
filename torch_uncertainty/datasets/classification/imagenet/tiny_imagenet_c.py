@@ -70,7 +70,7 @@ class TinyImageNetC(ImageFolder):
         subset: str = "all",
         severity: int = 1,
         download: bool = False,
-    ):
+    ) -> None:
         if isinstance(root, str):
             root = Path(root)
 

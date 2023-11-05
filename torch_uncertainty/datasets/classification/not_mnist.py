@@ -44,7 +44,7 @@ class NotMNIST(ImageFolder):
         transform: Callable[..., Any] | None = None,
         target_transform: Callable[..., Any] | None = None,
         download: bool = False,
-    ):
+    ) -> None:
         if isinstance(root, str):
             self.root = Path(root)
 
@@ -93,6 +93,11 @@ class NotMNIST(ImageFolder):
         print(f"Downloaded {self.filename} to {self.root}")
 
     def __getitem__(self, index: int) -> tuple[Any, Any]:
+        """Get the samples and targets of the dataset.
+
+        Args:
+            index (int): The index of the sample to get.
+        """
         return super().__getitem__(index)[0]
 
 

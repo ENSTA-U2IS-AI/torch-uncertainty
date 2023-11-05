@@ -26,7 +26,7 @@ class TestStandardBaseline:
         )
         summary(net)
 
-        net.criterion
+        _ = net.criterion
         net.configure_optimizers()
         net(torch.rand(1, 3, 32, 32))
 
@@ -47,7 +47,7 @@ class TestStandardWideBaseline:
         )
         summary(net)
 
-        net.criterion
+        _ = net.criterion
         net.configure_optimizers()
         net(torch.rand(1, 3, 32, 32))
 
@@ -69,7 +69,7 @@ class TestStandardVGGBaseline:
         )
         summary(net)
 
-        net.criterion
+        _ = net.criterion
         net.configure_optimizers()
         net(torch.rand(1, 3, 32, 32))
 

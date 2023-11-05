@@ -148,10 +148,10 @@ class _BatchedResNet(nn.Module):
         in_channels: int,
         num_estimators: int,
         groups: int = 1,
-        num_classes=10,
+        num_classes: int = 10,
         width_multiplier: int = 1,
         style: str = "imagenet",
-    ):
+    ) -> None:
         super().__init__()
         self.in_planes = 64 * width_multiplier
         self.num_estimators = num_estimators
@@ -237,7 +237,7 @@ class _BatchedResNet(nn.Module):
         stride: int,
         num_estimators: int,
         groups: int,
-    ):
+    ) -> nn.Module:
         strides = [stride] + [1] * (num_blocks - 1)
         layers = []
         for stride in strides:

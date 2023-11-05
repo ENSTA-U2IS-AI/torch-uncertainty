@@ -105,7 +105,7 @@ class Shear(nn.Module):
         interpolation: F.InterpolationMode = F.InterpolationMode.NEAREST,
         center: list[int] | None = None,
         fill: list[int] | None = None,
-    ):
+    ) -> None:
         super().__init__()
         if axis not in (0, 1):
             raise ValueError("Axis must be 0 or 1.")
@@ -148,7 +148,7 @@ class Translate(nn.Module):
         interpolation: F.InterpolationMode = F.InterpolationMode.NEAREST,
         center: list[int] | None = None,
         fill: list[int] | None = None,
-    ):
+    ) -> None:
         super().__init__()
         if axis not in (0, 1):
             raise ValueError("Axis must be 0 or 1.")
@@ -184,7 +184,7 @@ class Contrast(nn.Module):
     level_type = float
     corruption_overlap = True
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
     def forward(
@@ -200,7 +200,7 @@ class Brightness(nn.Module):
     level_type = float
     corruption_overlap = True
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
     def forward(
@@ -216,7 +216,7 @@ class Sharpness(nn.Module):
     level_type = float
     corruption_overlap = True
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
     def forward(
@@ -232,7 +232,8 @@ class Color(nn.Module):
     level_type = float
     corruption_overlap = True
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Color augmentation class."""
         super().__init__()
 
     def forward(
@@ -246,13 +247,12 @@ class Color(nn.Module):
 
 
 class RepeatTarget(nn.Module):
-    """Repeat the targets for ensemble training.
-
-    Args:
-        num_repeats: Number of times to repeat the targets.
-    """
-
     def __init__(self, num_repeats: int) -> None:
+        """Repeat the targets for ensemble training.
+
+        Args:
+            num_repeats: Number of times to repeat the targets.
+        """
         super().__init__()
 
         if not isinstance(num_repeats, int):
@@ -272,21 +272,20 @@ class RepeatTarget(nn.Module):
 
 
 class MIMOBatchFormat(nn.Module):
-    """Format the batch for MIMO training.
-
-    Args:
-        num_estimators: Number of estimators.
-        rho: Ratio of the correlation between the images for MIMO.
-        batch_repeat: Number of times to repeat the batch.
-
-    Reference:
-        Havasi, M., et al. Training independent subnetworks for robust
-        prediction. In ICLR, 2021.
-    """
-
     def __init__(
         self, num_estimators: int, rho: float = 0.0, batch_repeat: int = 1
     ) -> None:
+        """Format the batch for MIMO training.
+
+        Args:
+            num_estimators: Number of estimators.
+            rho: Ratio of the correlation between the images for MIMO.
+            batch_repeat: Number of times to repeat the batch.
+
+        Reference:
+            Havasi, M., et al. Training independent subnetworks for robust
+            prediction. In ICLR, 2021.
+        """
         super().__init__()
 
         if num_estimators <= 0:

@@ -5,10 +5,28 @@ from typing import Any
 import numpy as np
 import torch
 from PIL import Image
-from torch.utils import data
+from torch.utils.data import Dataset
 
 
-class DummyClassificationDataset(data.Dataset):
+class DummyClassificationDataset(Dataset):
+    """Dummy dataset for testing purposes.
+
+    Args:
+        root (string): Root directory containing the dataset (unused).
+        train (bool, optional): If True, creates dataset from training set,
+            otherwise creates from test set (unused).
+        transform (callable, optional): A function/transform that takes in
+            a PIL image and returns a transformed version. E.g,
+            ``transforms.RandomCrop``
+        target_transform (callable, optional): A function/transform that
+            takes in the target and transforms it.
+        num_channels (int, optional): Number of channels in the images.
+        image_size (int, optional): Size of the images.
+        num_classes (int, optional): Number of classes in the dataset.
+        num_images (int, optional): Number of images in the dataset.
+        kwargs (Any): Other arguments.
+    """
+
     def __init__(
         self,
         root: Path,
@@ -21,22 +39,6 @@ class DummyClassificationDataset(data.Dataset):
         num_images: int = 2,
         **kwargs: Any,
     ) -> None:
-        """Dummy dataset for testing purposes.
-
-        Args:
-            root (string): Root directory containing the dataset (unused).
-            train (bool, optional): If True, creates dataset from training set,
-                otherwise creates from test set (unused).
-            transform (callable, optional): A function/transform that takes in
-                a PIL image and returns a transformed version. E.g,
-                ``transforms.RandomCrop``
-            target_transform (callable, optional): A function/transform that
-                takes in the target and transforms it.
-            num_channels (int, optional): Number of channels in the images.
-            image_size (int, optional): Size of the images.
-            num_classes (int, optional): Number of classes in the dataset.
-            num_images (int, optional): Number of images in the dataset.
-        """
         self.root = root
         self.train = train  # training set or test set
         self.transform = transform
@@ -97,7 +99,7 @@ class DummyClassificationDataset(data.Dataset):
         return len(self.data)
 
 
-class DummyRegressionDataset(data.Dataset):
+class DummyRegressionDataset(Dataset):
     def __init__(
         self,
         root: str,

@@ -4,14 +4,13 @@ from torch import nn
 
 
 class Cutout(nn.Module):
-    """Cutout augmentation class.
+    def __init__(self, length: int, value: int = 0) -> None:
+        """Cutout augmentation class.
 
-    Args:
-        length (int): Length of the cutout square.
-        value (int): Pixel value to be filled in the cutout square.
-    """
-
-    def __init__(self, length: int, value: int = 0):
+        Args:
+            length (int): Length of the cutout square.
+            value (int): Pixel value to be filled in the cutout square.
+        """
         super().__init__()
 
         if length <= 0:

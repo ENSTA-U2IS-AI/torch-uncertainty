@@ -5,23 +5,6 @@ from matplotlib.figure import Figure
 
 
 class CalibrationPlot:
-    """A class for plotting calibration figures for classification models.
-
-    Args:
-        mode (str, optional): The mode of the calibration plot. One of
-            "top_label" (default).
-        adaptive (bool, optional): Whether to use adaptive binning. Defaults to
-            ``False``.
-        num_bins (int, optional): The number of bins. Defaults to ``10``.
-        figsize (Tuple, optional): The figure size. Defaults to ``(5, 5)``.
-
-    Raises:
-        NotImplementedError: If ``mode`` is not "top_label".
-        NotImplementedError: If ``adaptive`` is ``True``.
-        TypeError: If ``num_bins`` is not an ``int``.
-        ValueError: If ``num_bins`` is not strictly positive.
-    """
-
     def __init__(
         self,
         mode: str = "top_label",
@@ -29,6 +12,22 @@ class CalibrationPlot:
         num_bins: int = 10,
         figsize: tuple = (5, 5),
     ) -> None:
+        """A class for plotting calibration figures for classification models.
+
+        Args:
+            mode (str, optional): The mode of the calibration plot. One of
+                "top_label" (default).
+            adaptive (bool, optional): Whether to use adaptive binning. Defaults to
+                ``False``.
+            num_bins (int, optional): The number of bins. Defaults to ``10``.
+            figsize (Tuple, optional): The figure size. Defaults to ``(5, 5)``.
+
+        Raises:
+            NotImplementedError: If ``mode`` is not "top_label".
+            NotImplementedError: If ``adaptive`` is ``True``.
+            TypeError: If ``num_bins`` is not an ``int``.
+            ValueError: If ``num_bins`` is not strictly positive.
+        """
         if mode != "top_label":
             raise NotImplementedError(f"Mode {mode} is not yet implemented.")
 

@@ -166,6 +166,7 @@ class UCIRegression(Dataset):
         self._make_dataset()
 
     def __len__(self) -> int:
+        """Get the length of the dataset."""
         return self.data.shape[0]
 
     def _check_integrity(self) -> bool:

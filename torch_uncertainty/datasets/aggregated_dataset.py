@@ -18,7 +18,12 @@ class AggregatedDataset(Dataset):
         self.dataset_size = len(dataset)
         self.offset = self.dataset_size // self.n_dataloaders
 
-    def __getitem__(self, idx: int):
+    def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
+        """Get the samples and targets of the dataset.
+
+        Args:
+            idx: The index of the sample.
+        """
         inputs, targets = zip(
             *[
                 self.dataset[(idx + i * self.offset) % self.dataset_size]
@@ -29,5 +34,6 @@ class AggregatedDataset(Dataset):
         targets = torch.as_tensor(targets)
         return inputs, targets
 
-    def __len__(self):
+    def __len__(self) -> int:
+        """The number of samples in the dataset."""
         return self.dataset_size

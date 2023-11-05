@@ -90,7 +90,7 @@ class CIFAR10C(VisionDataset):
         subset: str = "all",
         severity: int = 1,
         download: bool = False,
-    ):
+    ) -> None:
         if isinstance(root, str):
             root = Path(root)
 
@@ -172,6 +172,11 @@ class CIFAR10C(VisionDataset):
         return self.labels.shape[0]
 
     def __getitem__(self, index: int) -> Any:
+        """Get the samples and targets of the dataset.
+
+        Args:
+            index (int): The index of the sample to get.
+        """
         sample, target = (
             self.samples[index],
             self.labels[index],

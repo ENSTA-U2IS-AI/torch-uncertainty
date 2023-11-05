@@ -173,11 +173,6 @@ class RegMixup(AbstractMixup):
 
 
 class WarpingMixup(AbstractMixup):
-    """Kernel Warping Mixup method from Bouniot et al.,
-    "Tailoring Mixup to Data using Kernel Warping functions" (2023)
-    https://arxiv.org/abs/2311.01434.
-    """
-
     def __init__(
         self,
         alpha: float = 1.0,
@@ -187,6 +182,10 @@ class WarpingMixup(AbstractMixup):
         tau_max: float = 1.0,
         tau_std: float = 0.5,
     ) -> None:
+        """Kernel Warping Mixup method from Bouniot et al.,
+        "Tailoring Mixup to Data using Kernel Warping functions" (2023)
+        https://arxiv.org/abs/2311.01434.
+        """
         super().__init__(alpha, mode, num_classes)
         self.apply_kernel = apply_kernel
         self.tau_max = tau_max
@@ -206,7 +205,7 @@ class WarpingMixup(AbstractMixup):
         x: Tensor,
         y: Tensor,
         feats: Tensor,
-        warp_param=1.0,
+        warp_param: float = 1.0,
     ) -> tuple[Tensor, Tensor]:
         lam, index = self._get_params(x.size()[0], x.device)
 
