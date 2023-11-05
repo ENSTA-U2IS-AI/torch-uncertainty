@@ -10,7 +10,25 @@ from torch.utils.data.sampler import SubsetRandomSampler
 
 
 class AbstractDataModule(LightningDataModule):
+    """Abstract DataModule class.
+    This class implements the basic functionality of a DataModule. It includes
+    setters and getters for the datasets, dataloaders, as well as the crossval
+    logic. It also provide the basic argparse arguments for the datamodules.
+
+    Args:
+        root (str): Root directory of the datasets.
+        batch_size (int): Number of samples per batch.
+        num_workers (int): Number of workers to use for data loading. Defaults
+            to ``1``.
+        pin_memory (bool): Whether to pin memory. Defaults to ``True``.
+        persistent_workers (bool): Whether to use persistent workers. Defaults
+            to ``True``.
+    """
+
     training_task: str
+    train: Dataset
+    val: Dataset
+    test: Dataset
 
     def __init__(
         self,
@@ -36,13 +54,16 @@ class AbstractDataModule(LightningDataModule):
         raise NotImplementedError
 
     def get_train_set(self) -> Dataset:
+        """Get the training set."""
         return self.train
 
-    def get_test_set(self) -> Dataset:
-        return self.test
-
     def get_val_set(self) -> Dataset:
+        """Get the validation set."""
         return self.val
+
+    def get_test_set(self) -> Dataset:
+        """Get the test set."""
+        return self.test
 
     def train_dataloader(self) -> DataLoader:
         r"""Get the training dataloader.
@@ -124,7 +145,6 @@ class AbstractDataModule(LightningDataModule):
                 pin_memory=self.pin_memory,
                 persistent_workers=self.persistent_workers,
             )
-
             cv_dm.append(fold_dm)
 
         return cv_dm
@@ -191,19 +211,25 @@ class CrossValDataModule(AbstractDataModule):
         )
 
     def get_train_set(self) -> Dataset:
+        """Get the training set for the current fold."""
         return self.dm.train
 
-    def get_test_set(self) -> Dataset:
+    def get_val_set(self) -> Dataset:
+        """Get the validation set for the current fold."""
         return self.dm.val
 
-    def get_val_set(self) -> Dataset:
+    def get_test_set(self) -> Dataset:
+        """Get the test set for the current fold."""
         return self.dm.val
 
     def train_dataloader(self) -> DataLoader:
+        """Get the training dataloader for the current fold."""
         return self._data_loader(self.dm.get_train_set(), self.train_idx)
 
     def val_dataloader(self) -> DataLoader:
+        """Get the validation dataloader for the current fold."""
         return self._data_loader(self.dm.get_train_set(), self.val_idx)
 
     def test_dataloader(self) -> DataLoader:
+        """Get the test dataloader for the current fold."""
         return self._data_loader(self.dm.get_train_set(), self.val_idx)
