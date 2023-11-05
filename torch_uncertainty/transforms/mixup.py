@@ -159,7 +159,7 @@ class MixupIO(AbstractMixup):
 
 class RegMixup(AbstractMixup):
     """RegMixup method from Pinto et al.,
-    "RegMixup: Mixup as a Regularizer Can Surprisingly Improve Accuracy and Out Distribution Robustness" (NeurIPS 2022)
+    'RegMixup: Mixup as a Regularizer Can Surprisingly Improve Accuracy and Out Distribution Robustness' (NeurIPS 2022)
     https://arxiv.org/abs/2206.14502.
     """
 

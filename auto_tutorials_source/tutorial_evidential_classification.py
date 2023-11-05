@@ -84,7 +84,7 @@ with ArgvContext(
 ):
     args = init_args(datamodule=MNISTDataModule)
 
-net_name = "dec-lenet-mnist"
+net_name = "logs/dec-lenet-mnist"
 
 # datamodule
 args.root = str(root / "data")
