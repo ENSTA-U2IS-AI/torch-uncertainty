@@ -3,16 +3,16 @@ from pathlib import Path
 from typing import Any, Literal
 
 import torchvision.transforms as T
-from pytorch_lightning import LightningDataModule
 from torch import nn
-from torch.utils.data import DataLoader, Dataset, random_split
+from torch.utils.data import DataLoader, random_split
 from torchvision.datasets import MNIST, FashionMNIST
 
+from torch_uncertainty.datamodules.abstract import AbstractDataModule
 from torch_uncertainty.datasets.classification import MNISTC, NotMNIST
 from torch_uncertainty.transforms import Cutout
 
 
-class MNISTDataModule(LightningDataModule):
+class MNISTDataModule(AbstractDataModule):
     """DataModule for MNIST.
 
     Args:
@@ -52,7 +52,13 @@ class MNISTDataModule(LightningDataModule):
         persistent_workers: bool = True,
         **kwargs,
     ) -> None:
-        super().__init__()
+        super().__init__(
+            root=root,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            persistent_workers=persistent_workers,
+        )
 
         if isinstance(root, str):
             root = Path(root)
@@ -144,22 +150,6 @@ class MNISTDataModule(LightningDataModule):
                 transform=self.transform_test,
             )
 
-    def train_dataloader(self) -> DataLoader:
-        r"""Get the training dataloader for MNIST.
-
-        Return:
-            DataLoader: MNIST training dataloader.
-        """
-        return self._data_loader(self.train, shuffle=True)
-
-    def val_dataloader(self) -> DataLoader:
-        r"""Get the validation dataloader for MNIST.
-
-        Return:
-            DataLoader: MNIST validation dataloader.
-        """
-        return self._data_loader(self.val)
-
     def test_dataloader(self) -> list[DataLoader]:
         r"""Get the test dataloaders for MNIST.
 
@@ -173,39 +163,15 @@ class MNISTDataModule(LightningDataModule):
             dataloader.append(self._data_loader(self.ood))
         return dataloader
 
-    def _data_loader(
-        self, dataset: Dataset, shuffle: bool = False
-    ) -> DataLoader:
-        """Create a dataloader for a given dataset.
-
-        Args:
-            dataset (Dataset): Dataset to create a dataloader for.
-            shuffle (bool, optional): Whether to shuffle the dataset. Defaults
-                to False.
-
-        Return:
-            DataLoader: Dataloader for the given dataset.
-        """
-        return DataLoader(
-            dataset,
-            batch_size=self.batch_size,
-            shuffle=shuffle,
-            num_workers=self.num_workers,
-            pin_memory=self.pin_memory,
-            persistent_workers=self.persistent_workers,
-        )
-
     @classmethod
     def add_argparse_args(
         cls,
         parent_parser: ArgumentParser,
         **kwargs: Any,
     ) -> ArgumentParser:
-        p = parent_parser.add_argument_group("datamodule")
-        p.add_argument("--root", type=str, default="./data/")
-        p.add_argument("--batch_size", type=int, default=128)
-        p.add_argument("--val_split", type=int, default=0)
-        p.add_argument("--num_workers", type=int, default=4)
+        p = super().add_argparse_args(parent_parser)
+
+        # Arguments for MNIST
         p.add_argument("--evaluate_ood", action="store_true")
         p.add_argument("--ood_ds", choices=cls.ood_datasets, default="fashion")
         p.add_argument("--test_alt", choices=["c"], default=None)
