@@ -75,7 +75,9 @@ class DummyClassificationDataset(Dataset):
         self.label_data = self.targets
 
     def __getitem__(self, index: int) -> tuple[Any, Any]:
-        """Args:
+        """Get item from dataset.
+
+        Args:
             index (int): Index.
 
         Returns:
@@ -131,7 +133,9 @@ class DummyRegressionDataset(Dataset):
         )
 
     def __getitem__(self, index: int) -> tuple[Any, Any]:
-        """Args:
+        """Get item from dataset.
+
+        Args:
             index (int): Index.
 
         Returns:

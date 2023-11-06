@@ -39,10 +39,15 @@ def toggle_dropout(
 
 
 def stochastic_model(model: nn.Module) -> nn.Module:
-    """Decorator for stochastic models. When applied to a model, it adds the
-    sample, freeze and unfreeze methods to the model. Use freeze to obtain
-    deterministic outputs. Use unfreeze to obtain stochastic outputs. Samples
-    provide samples of the estimated posterior distribution.
+    """Decorator for stochastic models.
+
+    When applied to a model, it adds the `sample`, `freeze` and `unfreeze`
+    methods. Use `freeze` to obtain deterministic outputs. Use unfreeze to
+    obtain stochastic outputs. `sample` get samples of the estimated posterior
+    distribution.
+
+    Args:
+        model (nn.Module): PyTorch model.
     """
 
     def sample(self, num_samples: int = 1) -> list[dict]:

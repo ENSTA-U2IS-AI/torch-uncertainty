@@ -126,9 +126,11 @@ class AbstractMixup:
 
 
 class Mixup(AbstractMixup):
-    """Original Mixup method from Zhang et al.,
-    "mixup: Beyond Empirical Risk Minimization" (ICLR 2021)
-    http://arxiv.org/abs/1710.09412.
+    """Original Mixup method from Zhang et al.
+
+    Reference:
+        "mixup: Beyond Empirical Risk Minimization" (ICLR 2021)
+        http://arxiv.org/abs/1710.09412.
     """
 
     def __call__(self, x: Tensor, y: Tensor) -> tuple[Tensor, Tensor]:
@@ -139,9 +141,11 @@ class Mixup(AbstractMixup):
 
 
 class MixupIO(AbstractMixup):
-    """Mixup on inputs only with targets unchanged, from Wang et al.,
-    "On the Pitfall of Mixup for Uncertainty Calibration" (CVPR 2023)
-    https://openaccess.thecvf.com/content/CVPR2023/papers/Wang_On_the_Pitfall_of_Mixup_for_Uncertainty_Calibration_CVPR_2023_paper.pdf.
+    """Mixup on inputs only with targets unchanged, from Wang et al.
+
+    Reference:
+        "On the Pitfall of Mixup for Uncertainty Calibration" (CVPR 2023)
+        https://openaccess.thecvf.com/content/CVPR2023/papers/Wang_On_the_Pitfall_of_Mixup_for_Uncertainty_Calibration_CVPR_2023_paper.pdf.
     """
 
     def __call__(self, x: Tensor, y: Tensor) -> tuple[Tensor, Tensor]:
@@ -158,9 +162,11 @@ class MixupIO(AbstractMixup):
 
 
 class RegMixup(AbstractMixup):
-    """RegMixup method from Pinto et al.,
-    'RegMixup: Mixup as a Regularizer Can Surprisingly Improve Accuracy and Out Distribution Robustness' (NeurIPS 2022)
-    https://arxiv.org/abs/2206.14502.
+    """RegMixup method from Pinto et al.
+
+    Reference:
+        'RegMixup: Mixup as a Regularizer Can Surprisingly Improve Accuracy and Out Distribution Robustness' (NeurIPS 2022)
+        https://arxiv.org/abs/2206.14502.
     """
 
     def __call__(self, x: Tensor, y: Tensor) -> tuple[Tensor, Tensor]:
@@ -182,9 +188,11 @@ class WarpingMixup(AbstractMixup):
         tau_max: float = 1.0,
         tau_std: float = 0.5,
     ) -> None:
-        """Kernel Warping Mixup method from Bouniot et al.,
-        "Tailoring Mixup to Data using Kernel Warping functions" (2023)
-        https://arxiv.org/abs/2311.01434.
+        """Kernel Warping Mixup method from Bouniot et al.
+
+        Reference:
+            "Tailoring Mixup to Data using Kernel Warping functions" (2023)
+            https://arxiv.org/abs/2311.01434.
         """
         super().__init__(alpha, mode, num_classes)
         self.apply_kernel = apply_kernel

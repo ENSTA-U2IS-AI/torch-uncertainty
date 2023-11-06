@@ -3,7 +3,9 @@ from torch.utils.data import Dataset
 
 
 class AggregatedDataset(Dataset):
-    """Virtually interlace multiple copies of a dataset to train ensembles with
+    """A class to help aggregating datasets.
+
+    Virtually interlace multiple copies of a dataset to train ensembles with
     different batch orders.
 
     Args:

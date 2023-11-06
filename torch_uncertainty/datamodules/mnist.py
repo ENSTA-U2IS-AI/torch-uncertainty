@@ -13,25 +13,6 @@ from torch_uncertainty.transforms import Cutout
 
 
 class MNISTDataModule(AbstractDataModule):
-    """DataModule for MNIST.
-
-    Args:
-        root (str): Root directory of the datasets.
-        batch_size (int): Number of samples per batch.
-        ood_ds (str): Which out-of-distribution dataset to use. Defaults to
-            ``"fashion"``; `fashion` stands for FashionMNIST and `not` for
-            notMNIST.
-        val_split (float): Share of samples to use for validation. Defaults
-            to ``0.0``.
-        num_workers (int): Number of workers to use for data loading. Defaults
-            to ``1``.
-        cutout (int): Size of cutout to apply to images. Defaults to ``None``.
-        test_alt (str): Which test set to use. Defaults to ``None``.
-        pin_memory (bool): Whether to pin memory. Defaults to ``True``.
-        persistent_workers (bool): Whether to use persistent workers. Defaults
-            to ``True``.
-    """
-
     num_classes = 10
     num_channels = 1
     input_shape = (1, 28, 28)
@@ -52,6 +33,26 @@ class MNISTDataModule(AbstractDataModule):
         persistent_workers: bool = True,
         **kwargs,
     ) -> None:
+        """DataModule for MNIST.
+
+        Args:
+            root (str): Root directory of the datasets.
+            evaluate_ood (bool): Whether to evaluate on out-of-distribution data.
+            batch_size (int): Number of samples per batch.
+            ood_ds (str): Which out-of-distribution dataset to use. Defaults to
+                ``"fashion"``; `fashion` stands for FashionMNIST and `not` for
+                notMNIST.
+            val_split (float): Share of samples to use for validation. Defaults
+                to ``0.0``.
+            num_workers (int): Number of workers to use for data loading. Defaults
+                to ``1``.
+            cutout (int): Size of cutout to apply to images. Defaults to ``None``.
+            test_alt (str): Which test set to use. Defaults to ``None``.
+            pin_memory (bool): Whether to pin memory. Defaults to ``True``.
+            persistent_workers (bool): Whether to use persistent workers. Defaults
+                to ``True``.
+            kwargs: Additional arguments.
+        """
         super().__init__(
             root=root,
             batch_size=batch_size,

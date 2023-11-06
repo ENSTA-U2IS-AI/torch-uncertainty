@@ -7,31 +7,6 @@ from .sampler import PriorDistribution, TrainableDistribution
 
 
 class BayesLinear(nn.Module):
-    """Bayesian Linear Layer with Mixture of Normals prior and Normal posterior.
-
-    Args:
-        in_features (int): Number of input features
-        out_features (int): Number of output features
-        prior_sigma_1 (float, optional): Standard deviation of the first prior
-            distribution. Defaults to 0.1.
-        prior_sigma_2 (float, optional): Standard deviation of the second prior
-            distribution. Defaults to 0.1.
-        prior_pi (float, optional): Mixture control variable. Defaults to 0.1.
-        mu_init (float, optional): Initial mean of the posterior distribution.
-            Defaults to 0.0.
-        sigma_init (float, optional): Initial standard deviation of the
-            posterior distribution. Defaults to -7.0.
-        frozen (bool, optional): Whether to freeze the posterior distribution.
-            Defaults to False.
-        bias (bool, optional): Whether to use a bias term. Defaults to True.
-        device (optional): Device to use. Defaults to None.
-        dtype (optional): Data type to use. Defaults to None.
-
-    Paper Reference:
-        Blundell, Charles, et al. "Weight uncertainty in neural networks"
-        ICML 2015.
-    """
-
     __constants__ = ["in_features", "out_features"]
     in_features: int
     out_features: int
@@ -53,6 +28,30 @@ class BayesLinear(nn.Module):
         device=None,
         dtype=None,
     ) -> None:
+        """Bayesian Linear Layer with Mixture of Normals prior and Normal posterior.
+
+        Args:
+            in_features (int): Number of input features
+            out_features (int): Number of output features
+            prior_sigma_1 (float, optional): Standard deviation of the first prior
+                distribution. Defaults to 0.1.
+            prior_sigma_2 (float, optional): Standard deviation of the second prior
+                distribution. Defaults to 0.1.
+            prior_pi (float, optional): Mixture control variable. Defaults to 0.1.
+            mu_init (float, optional): Initial mean of the posterior distribution.
+                Defaults to 0.0.
+            sigma_init (float, optional): Initial standard deviation of the
+                posterior distribution. Defaults to -7.0.
+            frozen (bool, optional): Whether to freeze the posterior distribution.
+                Defaults to False.
+            bias (bool, optional): Whether to use a bias term. Defaults to True.
+            device (optional): Device to use. Defaults to None.
+            dtype (optional): Data type to use. Defaults to None.
+
+        Paper Reference:
+            Blundell, Charles, et al. "Weight uncertainty in neural networks"
+            ICML 2015.
+        """
         factory_kwargs = {"device": device, "dtype": dtype}
         super().__init__()
 

@@ -8,8 +8,6 @@ from torchmetrics.utilities.data import dim_zero_cat
 
 
 class VariationRatio(Metric):
-    """From https://proceedings.mlr.press/v70/gal17a/gal17a.pdf."""
-
     full_state_update: bool = False
     is_differentiable: bool = True
     higher_is_better: bool = False
@@ -20,6 +18,7 @@ class VariationRatio(Metric):
         reduction: Literal["mean", "sum", "none", None] = "mean",
         **kwargs,
     ) -> None:
+        """From https://proceedings.mlr.press/v70/gal17a/gal17a.pdf."""
         super().__init__(**kwargs)
 
         allowed_reduction = ("sum", "mean", "none", None)

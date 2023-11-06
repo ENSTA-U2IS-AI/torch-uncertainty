@@ -131,7 +131,9 @@ class CIFAR10C(VisionDataset):
     def make_dataset(
         self, root: Path, subset: str, severity: int
     ) -> tuple[np.ndarray, np.ndarray]:
-        r"""Build the corrupted dataset according to the chosen subset and
+        r"""Make the CIFAR-C dataset.
+
+        Build the corrupted dataset according to the chosen subset and
             severity. If the subset is 'all', gather all corruption types
             in the dataset.
 
