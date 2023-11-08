@@ -6,19 +6,19 @@ import torch
 from torch_uncertainty.metrics import Entropy
 
 
-@pytest.fixture
+@pytest.fixture()
 def vec2d_max() -> torch.Tensor:
     vec = torch.as_tensor([0.5, 0.5])
     return vec.unsqueeze(0)
 
 
-@pytest.fixture
+@pytest.fixture()
 def vec2d_min() -> torch.Tensor:
     vec = torch.as_tensor([0.0, 1.0])
     return vec.unsqueeze(0)
 
 
-@pytest.fixture
+@pytest.fixture()
 def vec3d() -> torch.Tensor:
     """Return a torch tensor with a mean entropy of 0 and an entropy of
     the mean of ln(2) to test the `ensemble` parameter of `Entropy`.

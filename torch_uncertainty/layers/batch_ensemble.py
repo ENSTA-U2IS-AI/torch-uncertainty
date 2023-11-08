@@ -120,10 +120,10 @@ class BatchLinear(nn.Module):
             bound = 1 / math.sqrt(fan_in) if fan_in > 0 else 0
             nn.init.uniform_(self.bias, -bound, bound)
 
-    def forward(self, input: torch.Tensor) -> torch.Tensor:
-        batch_size = input.size(0)
+    def forward(self, inputs: torch.Tensor) -> torch.Tensor:
+        batch_size = inputs.size(0)
         examples_per_estimator = torch.tensor(
-            batch_size // self.num_estimators, device=input.device
+            batch_size // self.num_estimators, device=inputs.device
         )
         extra = batch_size % self.num_estimators
 
@@ -150,7 +150,7 @@ class BatchLinear(nn.Module):
         else:
             bias = None
 
-        return self.linear(input * r_group) * s_group + (
+        return self.linear(inputs * r_group) * s_group + (
             bias if bias is not None else 0
         )
 
@@ -342,8 +342,8 @@ class BatchConv2d(nn.Module):
             bound = 1 / math.sqrt(fan_in) if fan_in > 0 else 0
             nn.init.uniform_(self.bias, -bound, bound)
 
-    def forward(self, input: torch.Tensor) -> torch.Tensor:
-        batch_size = input.size(0)
+    def forward(self, inputs: torch.Tensor) -> torch.Tensor:
+        batch_size = inputs.size(0)
         examples_per_estimator = batch_size // self.num_estimators
         extra = batch_size % self.num_estimators
 
@@ -398,7 +398,7 @@ class BatchConv2d(nn.Module):
         else:
             bias = None
 
-        return self.conv(input * r_group) * s_group + (
+        return self.conv(inputs * r_group) * s_group + (
             bias if bias is not None else 0
         )
 

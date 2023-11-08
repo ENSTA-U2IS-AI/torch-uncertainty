@@ -31,7 +31,7 @@ class _BayesConvNd(Module):
     __annotations__ = {"bias": torch.Tensor | None}
 
     def _conv_forward(
-        self, input: Tensor, weight: Tensor, bias: Tensor | None
+        self, inputs: Tensor, weight: Tensor, bias: Tensor | None
     ) -> Tensor:  # coverage: ignore
         ...
 
@@ -257,12 +257,12 @@ class BayesConv1d(_BayesConvNd):
         )
 
     def _conv_forward(
-        self, input: Tensor, weight: Tensor, bias: Tensor | None
+        self, inputs: Tensor, weight: Tensor, bias: Tensor | None
     ) -> Tensor:
         if self.padding_mode != "zeros":
             return F.conv1d(
                 F.pad(
-                    input,
+                    inputs,
                     self._reversed_padding_repeated_twice,
                     mode=self.padding_mode,
                 ),
@@ -274,7 +274,7 @@ class BayesConv1d(_BayesConvNd):
                 self.groups,
             )
         return F.conv1d(
-            input,
+            inputs,
             weight,
             bias,
             self.stride,
@@ -283,7 +283,7 @@ class BayesConv1d(_BayesConvNd):
             self.groups,
         )
 
-    def forward(self, input: Tensor) -> Tensor:
+    def forward(self, inputs: Tensor) -> Tensor:
         if self.frozen:
             weight = self.weight_mu
             bias = self.bias_mu
@@ -302,7 +302,7 @@ class BayesConv1d(_BayesConvNd):
             )
             self.lprior = self.weight_prior_dist.log_prior(weight) + bias_lprior
 
-        return self._conv_forward(input, weight, bias)
+        return self._conv_forward(inputs, weight, bias)
 
 
 class BayesConv2d(_BayesConvNd):
@@ -357,12 +357,12 @@ class BayesConv2d(_BayesConvNd):
         )
 
     def _conv_forward(
-        self, input: Tensor, weight: Tensor, bias: Tensor | None
+        self, inputs: Tensor, weight: Tensor, bias: Tensor | None
     ) -> Tensor:
         if self.padding_mode != "zeros":
             return F.conv2d(
                 F.pad(
-                    input,
+                    inputs,
                     self._reversed_padding_repeated_twice,
                     mode=self.padding_mode,
                 ),
@@ -374,7 +374,7 @@ class BayesConv2d(_BayesConvNd):
                 self.groups,
             )
         return F.conv2d(
-            input,
+            inputs,
             weight,
             bias,
             self.stride,
@@ -383,7 +383,7 @@ class BayesConv2d(_BayesConvNd):
             self.groups,
         )
 
-    def forward(self, input: Tensor) -> Tensor:
+    def forward(self, inputs: Tensor) -> Tensor:
         if self.frozen:
             weight = self.weight_mu
             bias = self.bias_mu
@@ -402,7 +402,7 @@ class BayesConv2d(_BayesConvNd):
             )
             self.lprior = self.weight_prior_dist.log_prior(weight) + bias_lprior
 
-        return self._conv_forward(input, weight, bias)
+        return self._conv_forward(inputs, weight, bias)
 
 
 class BayesConv3d(_BayesConvNd):
@@ -456,12 +456,12 @@ class BayesConv3d(_BayesConvNd):
         )
 
     def _conv_forward(
-        self, input: Tensor, weight: Tensor, bias: Tensor | None
+        self, inputs: Tensor, weight: Tensor, bias: Tensor | None
     ) -> Tensor:
         if self.padding_mode != "zeros":
             return F.conv3d(
                 F.pad(
-                    input,
+                    inputs,
                     self._reversed_padding_repeated_twice,
                     mode=self.padding_mode,
                 ),
@@ -473,7 +473,7 @@ class BayesConv3d(_BayesConvNd):
                 self.groups,
             )
         return F.conv3d(
-            input,
+            inputs,
             weight,
             bias,
             self.stride,
@@ -482,7 +482,7 @@ class BayesConv3d(_BayesConvNd):
             self.groups,
         )
 
-    def forward(self, input: Tensor) -> Tensor:
+    def forward(self, inputs: Tensor) -> Tensor:
         if self.frozen:
             weight = self.weight_mu
             bias = self.bias_mu
@@ -501,4 +501,4 @@ class BayesConv3d(_BayesConvNd):
             )
             self.lprior = self.weight_prior_dist.log_prior(weight) + bias_lprior
 
-        return self._conv_forward(input, weight, bias)
+        return self._conv_forward(inputs, weight, bias)

@@ -66,13 +66,13 @@ class Scaler(nn.Module):
             calibration_set, batch_size=32, shuffle=False, drop_last=False
         )
         with torch.no_grad():
-            for input, label in tqdm(calibration_dl, disable=not progress):
-                input = input.to(self.device)
-                logits = model(input)
+            for inputs, labels in tqdm(calibration_dl, disable=not progress):
+                inputs = inputs.to(self.device)
+                logits = model(inputs)
                 logits_list.append(logits)
-                labels_list.append(label)
-        logits = torch.cat(logits_list).detach().to(self.device)
-        labels = torch.cat(labels_list).detach().to(self.device)
+                labels_list.append(labels)
+        all_logits = torch.cat(logits_list).detach().to(self.device)
+        all_labels = torch.cat(labels_list).detach().to(self.device)
 
         optimizer = optim.LBFGS(
             self.temperature, lr=self.lr, max_iter=self.max_iter
@@ -80,7 +80,7 @@ class Scaler(nn.Module):
 
         def calib_eval() -> float:
             optimizer.zero_grad()
-            loss = self.criterion(self._scale(logits), labels)
+            loss = self.criterion(self._scale(all_logits), all_labels)
             loss.backward()
             return loss
 

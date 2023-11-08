@@ -210,8 +210,8 @@ class MaskedLinear(nn.Module):
             **factory_kwargs,
         )
 
-    def forward(self, input: Tensor) -> Tensor:
-        return self.linear(self.mask(input))
+    def forward(self, inputs: Tensor) -> Tensor:
+        return self.linear(self.mask(inputs))
 
 
 class MaskedConv2d(nn.Module):
@@ -280,5 +280,5 @@ class MaskedConv2d(nn.Module):
             **factory_kwargs,
         )
 
-    def forward(self, input: Tensor) -> Tensor:
-        return self.conv(self.mask(input))
+    def forward(self, inputs: Tensor) -> Tensor:
+        return self.conv(self.mask(inputs))

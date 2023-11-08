@@ -6,20 +6,20 @@ build-backend = "flit_core.buildapi"
 name = "torch_uncertainty"
 version = "0.1.5"
 authors = [
-    {name = "ENSTA U2IS", email = "olivier.laurent@ensta-paris.fr"},
-    {name = "Adrien Lafage", email = "adrienlafage@outlook.com"},
-    {name = "Olivier Laurent", email = "olivier.laurent@ensta-paris.fr"},
+    { name = "ENSTA U2IS", email = "olivier.laurent@ensta-paris.fr" },
+    { name = "Adrien Lafage", email = "adrienlafage@outlook.com" },
+    { name = "Olivier Laurent", email = "olivier.laurent@ensta-paris.fr" },
 ]
-description="Uncertainty quantification library in PyTorch"
+description = "Uncertainty quantification library in PyTorch"
 readme = "README.md"
 requires-python = ">=3.10"
-keywords=[
+keywords = [
     "bayesian-network",
     "ensembles",
     "neural-networks",
     "predictive-uncertainty",
     "pytorch",
-    "reliable-ai", 
+    "reliable-ai",
     "trustworthy-machine-learning",
     "uncertainty",
     "uncertainty-quantification",
@@ -30,42 +30,40 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3 :: Only",
 ]
-dependencies=[
+dependencies = [
     "timm",
     "pytorch-lightning<2",
     "tensorboard",
     "einops",
-    "torchinfo", 
-    "scipy", 
+    "torchinfo",
+    "scipy",
     "huggingface-hub",
     "scikit-learn",
     "matplotlib",
 ]
 
 [project.optional-dependencies]
-dev=[
+dev = [
     "ruff",
     "pytest-cov",
     "pre-commit",
     "pre-commit-hooks",
     "cli-test-helpers",
 ]
-docs=[
-    "sphinx<6", 
+docs = [
+    "sphinx<6",
     "pytorch_sphinx_theme@git+https://github.com/torch-uncertainty/pytorch_sphinx_theme",
-    "sphinx-copybutton", 
+    "sphinx-copybutton",
     "sphinx-gallery",
     "sphinx-design",
     "sphinx-codeautolink",
 ]
-full=[
-    "pandas",
-]
+full = ["pandas"]
 
 [project.urls]
-homepage="https://torch-uncertainty.github.io/"
-documentation="https://torch-uncertainty.github.io/quickstart.html"
-repository="https://github.com/ENSTA-U2IS/torch-uncertainty.git"
+homepage = "https://torch-uncertainty.github.io/"
+documentation = "https://torch-uncertainty.github.io/quickstart.html"
+repository = "https://github.com/ENSTA-U2IS/torch-uncertainty.git"
 
 [tool.flit.module]
 name = "torch_uncertainty"
@@ -73,8 +71,47 @@ name = "torch_uncertainty"
 [tool.ruff]
 line-length = 80
 target-version = "py310"
-extend-select = ["C4", "D", "G", "I", "ICN", "N", "PIE", "PERF", "RSE", "RET", "S", "SIM", "UP", "TID", "TCH", "YTT"]
-ignore = ["D100", "D101", "D102", "D103", "D104", "D107", "D205", "N812", "S101"]
+extend-select = [
+    "A",
+    "B",
+    "C4",
+    "D",
+    "G",
+    "I",
+    "ISC",
+    "ICN",
+    "N",
+    "PERF",
+    "PIE",
+    "PTH",
+    "PYI",
+    "RET",
+    "RUF",
+    "RSE",
+    "S",
+    "SIM",
+    "UP",
+    "TCH",
+    "TID",
+    "TRY",
+    "YTT",
+]
+ignore = [
+    "B017",
+    "D100",
+    "D101",
+    "D102",
+    "D103",
+    "D104",
+    "D107",
+    "D205",
+    "D206",
+    "ISC001",
+    "N812",
+    "RUF012",
+    "S101",
+    "TRY003",
+]
 
 exclude = [
     ".bzr",
@@ -108,14 +145,8 @@ convention = "google"
 [tool.coverage.run]
 branch = true
 include = ["*/torch-uncertainty/*"]
-omit = [
-    "*/tests/*", 
-    "*/datasets/*",
-]
+omit = ["*/tests/*", "*/datasets/*"]
 
 [tool.coverage.report]
-exclude_lines = [
-    "coverage: ignore",
-    "raise NotImplementedError",
-]
+exclude_lines = ["coverage: ignore", "raise NotImplementedError"]
 ignore_errors = true

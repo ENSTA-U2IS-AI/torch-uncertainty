@@ -39,14 +39,16 @@ class TinyImageNet(Dataset):
         self.samples_num = len(self.samples_paths)
 
         labels = []
+        samples = []
         for idx in range(self.samples_num):
             s = self.samples_paths[idx]
             img = Image.open(s[0])
             img = self._add_channels(np.uint8(img))
             img = Image.fromarray(img)
-            self.samples[idx] = img
+            samples.append(img)
             labels.append(s[self.label_idx])
 
+        self.samples = samples
         self.label_data = torch.as_tensor(labels).long()
 
     def _add_channels(self, img):
@@ -78,13 +80,13 @@ class TinyImageNet(Dataset):
 
     def _make_paths(self):
         self.ids = []
-        with open(self.wnids_path) as idf:
+        with self.wnids_path.open() as idf:
             for nid in idf:
                 snid = nid.strip()
                 self.ids.append(snid)
         self.nid_to_words = defaultdict(list)
 
-        with open(self.words_path) as wf:
+        with self.words_path.open() as wf:
             for line in wf:
                 nid, labels = line.split("\t")
                 labels = [x.strip() for x in labels.split(",")]
@@ -96,25 +98,25 @@ class TinyImageNet(Dataset):
             train_path = self.root / "train"
             train_nids = os.listdir(train_path)
             for nid in train_nids:
-                anno_path = os.path.join(train_path, nid, nid + "_boxes.txt")
-                imgs_path = os.path.join(train_path, nid, "images")
+                anno_path = train_path / nid / (nid + "_boxes.txt")
+                imgs_path = train_path / nid / "images"
                 label_id = self.ids.index(nid)
-                with open(anno_path) as annof:
+                with anno_path.open() as annof:
                     for line in annof:
                         fname, x0, y0, x1, y1 = line.split()
-                        fname = os.path.join(imgs_path, fname)
+                        fname = imgs_path / fname
                         paths.append((fname, label_id))
 
         elif self.split == "val":
             val_path = self.root / "val"
-            with open(os.path.join(val_path, "val_annotations.txt")) as valf:
+            with (val_path / "val_annotations.txt").open() as valf:
                 for line in valf:
                     fname, nid, x0, y0, x1, y1 = line.split()
-                    fname = os.path.join(val_path, "images", fname)
+                    fname = val_path / "images" / fname
                     label_id = self.ids.index(nid)
                     paths.append((fname, label_id))
 
         else:  # self.split == "test":
             test_path = self.root / "test"
-            paths = [os.path.join(test_path, x) for x in os.listdir(test_path)]
+            paths = [test_path / x for x in os.listdir(test_path)]
         return paths

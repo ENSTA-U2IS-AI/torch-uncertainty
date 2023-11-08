@@ -26,11 +26,11 @@ class ImageNetVariation(ImageFolder):
             downloaded, it is not downloaded again. Defaults to False.
     """
 
-    url = None
-    filename = None
-    tgz_md5 = None
-    dataset_name = None
-    root_appendix = ""
+    url: str
+    filename: str
+    tgz_md5: str
+    dataset_name: str
+    root_appendix: str
 
     wnid_to_idx_url = (
         "https://raw.githubusercontent.com/torch-uncertainty/"
@@ -48,13 +48,10 @@ class ImageNetVariation(ImageFolder):
         target_transform: Callable | None = None,
         download: bool = False,
     ) -> None:
-        if isinstance(root, str):
-            root = Path(root)
-
-        self.root = root
-
         if download:
             self.download()
+
+        self.root = Path(root)
 
         if not self._check_integrity():
             raise RuntimeError(
@@ -79,9 +76,9 @@ class ImageNetVariation(ImageFolder):
             )
         if isinstance(self.filename, list):  # ImageNet-C
             integrity: bool = True
-            for filename, md5 in zip(self.filename, self.tgz_md5):
+            for filename, md5 in zip(self.filename, self.tgz_md5, strict=True):
                 integrity *= check_integrity(
-                    self.root / self.root_appendix / Path(filename),
+                    self.root / self.root_appendix / filename,
                     md5,
                 )
             return integrity
@@ -102,7 +99,7 @@ class ImageNetVariation(ImageFolder):
             )
         elif isinstance(self.filename, list):  # ImageNet-C
             for url, filename, md5 in zip(
-                self.url, self.filename, self.tgz_md5
+                self.url, self.filename, self.tgz_md5, strict=True
             ):
                 # Check that this particular file is not already downloaded
                 if not check_integrity(
@@ -126,7 +123,7 @@ class ImageNetVariation(ImageFolder):
                 "imagenet_wnid_to_idx.txt",
                 self.wnid_to_idx_md5,
             )
-        with open(self.root / "imagenet_wnid_to_idx.txt") as file:
+        with (self.root / "imagenet_wnid_to_idx.txt").open() as file:
             self.wnid_to_idx = ast.literal_eval(file.read())
 
         for i in range(len(self.samples)):

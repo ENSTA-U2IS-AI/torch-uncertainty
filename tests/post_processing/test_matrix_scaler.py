@@ -28,7 +28,7 @@ class TestMatrixScaler:
             MatrixScaler(num_classes=-1)
 
     def test_float_numclasses(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             MatrixScaler(num_classes=1.8)
 
     def test_negative_lr(self):

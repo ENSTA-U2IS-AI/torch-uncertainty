@@ -55,7 +55,7 @@ class ELBOLoss(nn.Module):
         self._kl_div = KLDiv(model)
 
         if isinstance(criterion, type):
-            raise ValueError(
+            raise TypeError(
                 "The criterion should be an instance of a class."
                 f"Got {criterion}."
             )

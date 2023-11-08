@@ -30,7 +30,8 @@ class AggregatedDataset(Dataset):
             *[
                 self.dataset[(idx + i * self.offset) % self.dataset_size]
                 for i in range(self.n_dataloaders)
-            ]
+            ],
+            strict=True,
         )
         inputs = torch.cat(inputs, dim=0)
         targets = torch.as_tensor(targets)

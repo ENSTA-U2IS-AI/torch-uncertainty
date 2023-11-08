@@ -42,7 +42,7 @@ class ClassificationSingle(pl.LightningModule):
         model: nn.Module,
         loss: type[nn.Module],
         optimization_procedure: Any,
-        format_batch_fn: nn.Module = nn.Identity(),
+        format_batch_fn: nn.Module | None = None,
         mixtype: str = "erm",
         mixmode: str = "elem",
         dist_sim: str = "emb",
@@ -94,6 +94,9 @@ class ClassificationSingle(pl.LightningModule):
             be raised.
         """
         super().__init__()
+
+        if format_batch_fn is None:
+            format_batch_fn = nn.Identity()
 
         self.save_hyperparameters(
             ignore=[
@@ -203,8 +206,8 @@ class ClassificationSingle(pl.LightningModule):
             self.loss = partial(self.loss, model=self.model)
         return self.loss()
 
-    def forward(self, input: Tensor) -> Tensor:
-        return self.model.forward(input)
+    def forward(self, inputs: Tensor) -> Tensor:
+        return self.model.forward(inputs)
 
     def on_train_start(self) -> None:
         # hyperparameters for performances
@@ -501,7 +504,7 @@ class ClassificationEnsemble(ClassificationSingle):
         loss: type[nn.Module],
         optimization_procedure: Any,
         num_estimators: int,
-        format_batch_fn: nn.Module = nn.Identity(),
+        format_batch_fn: nn.Module | None = None,
         mixtype: str = "erm",
         mixmode: str = "elem",
         dist_sim: str = "emb",

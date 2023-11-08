@@ -99,8 +99,3 @@ class NotMNIST(ImageFolder):
             index (int): The index of the sample to get.
         """
         return super().__getitem__(index)[0]
-
-
-if __name__ == "__main__":
-    set = NotMNIST(root="./data", subset="large", download=True)
-    print(set)

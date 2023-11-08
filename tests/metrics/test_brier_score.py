@@ -4,53 +4,53 @@ import torch
 from torch_uncertainty.metrics import BrierScore
 
 
-@pytest.fixture
+@pytest.fixture()
 def vec2d_max() -> torch.Tensor:
     vec = torch.as_tensor([0.5, 0.5])
     return vec.unsqueeze(0)
 
 
-@pytest.fixture
+@pytest.fixture()
 def vec2d_max_target() -> torch.Tensor:
     vec = torch.as_tensor([0, 1])
     return vec.unsqueeze(0)
 
 
-@pytest.fixture
+@pytest.fixture()
 def vec2d_max_target1d() -> torch.Tensor:
     return torch.as_tensor([1])
 
 
-@pytest.fixture
+@pytest.fixture()
 def vec2d_min() -> torch.Tensor:
     vec = torch.as_tensor([0.0, 1.0])
     return vec.unsqueeze(0)
 
 
-@pytest.fixture
+@pytest.fixture()
 def vec2d_min_target() -> torch.Tensor:
     vec = torch.as_tensor([0, 1])
     return vec.unsqueeze(0)
 
 
-@pytest.fixture
+@pytest.fixture()
 def vec2d_5classes() -> torch.Tensor:
     return torch.as_tensor(
         [[0.2, 0.6, 0.1, 0.05, 0.05], [0.05, 0.25, 0.1, 0.3, 0.3]]
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 def vec2d_5classes_target() -> torch.Tensor:
     return torch.as_tensor([[0, 0, 0, 1, 0], [0, 0, 0, 0, 1]])
 
 
-@pytest.fixture
+@pytest.fixture()
 def vec2d_5classes_target1d() -> torch.Tensor:
     return torch.as_tensor([3, 4])
 
 
-@pytest.fixture
+@pytest.fixture()
 def vec3d() -> torch.Tensor:
     """Return a torch tensor with a mean BrierScore of 0 and a BrierScore of
     the mean of 0.5 to test the `ensemble` parameter of `BrierScore`.
@@ -59,13 +59,13 @@ def vec3d() -> torch.Tensor:
     return vec.unsqueeze(0)
 
 
-@pytest.fixture
+@pytest.fixture()
 def vec3d_target() -> torch.Tensor:
     vec = torch.as_tensor([0, 1])
     return vec.unsqueeze(0)
 
 
-@pytest.fixture
+@pytest.fixture()
 def vec3d_target1d() -> torch.Tensor:
     vec = torch.as_tensor([1])
     return vec.unsqueeze(0)

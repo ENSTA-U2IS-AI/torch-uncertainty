@@ -108,15 +108,15 @@ class BayesLinear(nn.Module):
             init.normal_(self.bias_mu, mean=self.mu_init, std=0.1)
             init.normal_(self.bias_sigma, mean=self.sigma_init, std=0.1)
 
-    def forward(self, input: Tensor) -> Tensor:
+    def forward(self, inputs: Tensor) -> Tensor:
         if self.frozen:
-            return self._frozen_forward(input)
-        return self._forward(input)
+            return self._frozen_forward(inputs)
+        return self._forward(inputs)
 
-    def _frozen_forward(self, input):
-        return F.linear(input, self.weight_mu, self.bias_mu)
+    def _frozen_forward(self, inputs):
+        return F.linear(inputs, self.weight_mu, self.bias_mu)
 
-    def _forward(self, input: Tensor) -> Tensor:
+    def _forward(self, inputs: Tensor) -> Tensor:
         weight = self.weight_sampler.sample()
 
         if self.bias_mu is not None:
@@ -129,7 +129,7 @@ class BayesLinear(nn.Module):
         self.lvposterior = self.weight_sampler.log_posterior() + bias_lposterior
         self.lprior = self.weight_prior_dist.log_prior(weight) + bias_lprior
 
-        return F.linear(input, weight, bias)
+        return F.linear(inputs, weight, bias)
 
     def freeze(self) -> None:
         """Freeze the layer by setting the frozen attribute to True."""

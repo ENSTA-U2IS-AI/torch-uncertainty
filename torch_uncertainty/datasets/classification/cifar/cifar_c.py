@@ -1,4 +1,3 @@
-import os
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
@@ -193,7 +192,7 @@ class CIFAR10C(VisionDataset):
     def _check_integrity(self) -> bool:
         """Check the integrity of the dataset."""
         for filename, md5 in self.ctest_list:
-            fpath = os.path.join(self.root, self.base_folder, filename)
+            fpath = self.root / self.base_folder / filename
             if not check_integrity(fpath, md5):
                 return False
         return True

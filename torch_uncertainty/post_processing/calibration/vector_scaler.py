@@ -38,7 +38,7 @@ class VectorScaler(Scaler):
         super().__init__(lr=lr, max_iter=max_iter, device=device)
 
         if not isinstance(num_classes, int):
-            raise ValueError("num_classes must be an integer.")
+            raise TypeError("num_classes must be an integer.")
         if num_classes <= 0:
             raise ValueError("The number of classes must be positive.")
         self.num_classes = num_classes

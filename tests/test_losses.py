@@ -23,7 +23,7 @@ class TestELBOLoss:
         model = BayesLinear(1, 1)
         criterion = nn.BCEWithLogitsLoss()
 
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             ELBOLoss(model, nn.BCEWithLogitsLoss, kl_weight=1, num_samples=1)
 
         with pytest.raises(ValueError):
@@ -106,8 +106,8 @@ class TestDECLoss:
         with pytest.raises(ValueError):
             DECLoss(annealing_step=0)
 
+        loss = DECLoss(annealing_step=10)
         with pytest.raises(ValueError):
-            loss = DECLoss(annealing_step=10)
             loss(
                 torch.tensor([[0.0, 0.0]]),
                 torch.tensor([0]),

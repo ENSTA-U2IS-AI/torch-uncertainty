@@ -20,13 +20,13 @@ from torch_uncertainty.transforms import (
 )
 
 
-@pytest.fixture
+@pytest.fixture()
 def img_input() -> torch.Tensor:
     imarray = np.random.rand(28, 28, 3) * 255
     return Image.fromarray(imarray.astype("uint8")).convert("RGB")
 
 
-@pytest.fixture
+@pytest.fixture()
 def batch_input() -> tuple[torch.Tensor, torch.Tensor]:
     imgs = torch.rand(2, 3, 28, 28)
     return imgs, torch.tensor([0, 1])
@@ -175,7 +175,7 @@ class TestRepeatTarget:
         assert target.shape == (6,)
 
     def test_failures(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             _ = RepeatTarget(1.2)
 
         with pytest.raises(ValueError):

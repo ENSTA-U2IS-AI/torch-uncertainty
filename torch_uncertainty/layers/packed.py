@@ -19,7 +19,7 @@ def check_packed_parameters_consistency(
             "You must specify the value of the arg. `num_estimators`"
         )
     if not isinstance(num_estimators, int):
-        raise ValueError(
+        raise TypeError(
             "Attribute `num_estimators` should be an int, not "
             f"{type(num_estimators)}"
         )
@@ -30,7 +30,7 @@ def check_packed_parameters_consistency(
         )
 
     if not isinstance(gamma, int):
-        raise ValueError(
+        raise TypeError(
             f"Attribute `gamma` should be an int, not {type(gamma)}"
         )
     if gamma <= 0:
@@ -148,10 +148,10 @@ class PackedLinear(nn.Module):
         x = rearrange(x, "e (m c) h -> (m e) c h", m=self.num_estimators)
         return x.squeeze(-1)
 
-    def forward(self, input: Tensor) -> Tensor:
+    def forward(self, inputs: Tensor) -> Tensor:
         if self.rearrange:
-            return self._rearrange_forward(input)
-        return self.conv1x1(input)
+            return self._rearrange_forward(inputs)
+        return self.conv1x1(inputs)
 
     @property
     def weight(self) -> Tensor:
@@ -279,8 +279,8 @@ class PackedConv1d(nn.Module):
             **factory_kwargs,
         )
 
-    def forward(self, input: Tensor) -> Tensor:
-        return self.conv(input)
+    def forward(self, inputs: Tensor) -> Tensor:
+        return self.conv(inputs)
 
     @property
     def weight(self) -> Tensor:
@@ -408,8 +408,8 @@ class PackedConv2d(nn.Module):
             **factory_kwargs,
         )
 
-    def forward(self, input: Tensor) -> Tensor:
-        return self.conv(input)
+    def forward(self, inputs: Tensor) -> Tensor:
+        return self.conv(inputs)
 
     @property
     def weight(self) -> Tensor:
@@ -537,8 +537,8 @@ class PackedConv3d(nn.Module):
             **factory_kwargs,
         )
 
-    def forward(self, input: Tensor) -> Tensor:
-        return self.conv(input)
+    def forward(self, inputs: Tensor) -> Tensor:
+        return self.conv(inputs)
 
     @property
     def weight(self) -> Tensor:
