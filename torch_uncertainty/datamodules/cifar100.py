@@ -19,28 +19,6 @@ from .abstract import AbstractDataModule
 
 
 class CIFAR100DataModule(AbstractDataModule):
-    """DataModule for CIFAR100.
-
-    Args:
-        root (str): Root directory of the datasets.
-        batch_size (int): Number of samples per batch.
-        val_split (float): Share of samples to use for validation. Defaults
-            to ``0.0``.
-        num_workers (int): Number of workers to use for data loading. Defaults
-            to ``1``.
-        cutout (int): Size of cutout to apply to images. Defaults to ``None``.
-        randaugment (bool): Whether to apply RandAugment. Defaults to
-            ``False``.
-        auto_augment (str): Which auto-augment to apply. Defaults to ``None``.
-        test_alt (str): Which test set to use. Defaults to ``None``.
-        corruption_severity (int): Severity of corruption to apply to
-            CIFAR100-C. Defaults to ``1``.
-        num_dataloaders (int): Number of dataloaders to use. Defaults to ``1``.
-        pin_memory (bool): Whether to pin memory. Defaults to ``True``.
-        persistent_workers (bool): Whether to use persistent workers. Defaults
-            to ``True``.
-    """
-
     num_classes = 100
     num_channels = 3
     input_shape = (3, 32, 32)
@@ -63,6 +41,29 @@ class CIFAR100DataModule(AbstractDataModule):
         persistent_workers: bool = True,
         **kwargs,
     ) -> None:
+        """DataModule for CIFAR100.
+
+        Args:
+            root (str): Root directory of the datasets.
+            evaluate_ood (bool): Whether to evaluate on out-of-distribution data.
+            batch_size (int): Number of samples per batch.
+            val_split (float): Share of samples to use for validation. Defaults
+                to ``0.0``.
+            num_workers (int): Number of workers to use for data loading. Defaults
+                to ``1``.
+            cutout (int): Size of cutout to apply to images. Defaults to ``None``.
+            randaugment (bool): Whether to apply RandAugment. Defaults to
+                ``False``.
+            auto_augment (str): Which auto-augment to apply. Defaults to ``None``.
+            test_alt (str): Which test set to use. Defaults to ``None``.
+            corruption_severity (int): Severity of corruption to apply to
+                CIFAR100-C. Defaults to ``1``.
+            num_dataloaders (int): Number of dataloaders to use. Defaults to ``1``.
+            pin_memory (bool): Whether to pin memory. Defaults to ``True``.
+            persistent_workers (bool): Whether to use persistent workers. Defaults
+                to ``True``.
+            kwargs: Additional arguments.
+        """
         super().__init__(
             root=root,
             batch_size=batch_size,

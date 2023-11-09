@@ -7,20 +7,6 @@ from tqdm import tqdm
 
 
 class Scaler(nn.Module):
-    """Virtual class for scaling post-processing for calibrated probabilities.
-
-    Args:
-        lr (float, optional): Learning rate for the optimizer. Defaults to 0.1.
-        max_iter (int, optional): Maximum number of iterations for the
-            optimizer. Defaults to 100.
-        device (Optional[Literal["cpu", "cuda"]], optional): Device to use
-            for optimization. Defaults to None.
-
-    Reference:
-        Guo, C., Pleiss, G., Sun, Y., & Weinberger, K. Q. On calibration
-        of modern neural networks. In ICML 2017.
-    """
-
     criterion = nn.CrossEntropyLoss()
     trained = False
 
@@ -30,6 +16,19 @@ class Scaler(nn.Module):
         max_iter: int = 100,
         device: Literal["cpu", "cuda"] | torch.device | None = None,
     ) -> None:
+        """Virtual class for scaling post-processing for calibrated probabilities.
+
+        Args:
+            lr (float, optional): Learning rate for the optimizer. Defaults to 0.1.
+            max_iter (int, optional): Maximum number of iterations for the
+                optimizer. Defaults to 100.
+            device (Optional[Literal["cpu", "cuda"]], optional): Device to use
+                for optimization. Defaults to None.
+
+        Reference:
+            Guo, C., Pleiss, G., Sun, Y., & Weinberger, K. Q. On calibration
+            of modern neural networks. In ICML 2017.
+        """
         super().__init__()
         self.device = device
 
@@ -67,13 +66,13 @@ class Scaler(nn.Module):
             calibration_set, batch_size=32, shuffle=False, drop_last=False
         )
         with torch.no_grad():
-            for input, label in tqdm(calibration_dl, disable=not progress):
-                input = input.to(self.device)
-                logits = model(input)
+            for inputs, labels in tqdm(calibration_dl, disable=not progress):
+                inputs = inputs.to(self.device)
+                logits = model(inputs)
                 logits_list.append(logits)
-                labels_list.append(label)
-        logits = torch.cat(logits_list).detach().to(self.device)
-        labels = torch.cat(labels_list).detach().to(self.device)
+                labels_list.append(labels)
+        all_logits = torch.cat(logits_list).detach().to(self.device)
+        all_labels = torch.cat(labels_list).detach().to(self.device)
 
         optimizer = optim.LBFGS(
             self.temperature, lr=self.lr, max_iter=self.max_iter
@@ -81,7 +80,7 @@ class Scaler(nn.Module):
 
         def calib_eval() -> float:
             optimizer.zero_grad()
-            loss = self.criterion(self._scale(logits), labels)
+            loss = self.criterion(self._scale(all_logits), all_labels)
             loss.backward()
             return loss
 

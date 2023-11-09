@@ -6,8 +6,9 @@ from torch import Tensor, nn
 
 from torch_uncertainty.layers.bayesian import BayesConv2d, BayesLinear
 from torch_uncertainty.layers.packed import PackedConv2d, PackedLinear
+from torch_uncertainty.models.utils import stochastic_model
 
-from .utils import StochasticModel, toggle_dropout
+from .utils import toggle_dropout
 
 __all__ = ["lenet", "packed_lenet", "bayesian_lenet"]
 
@@ -75,7 +76,7 @@ class _LeNet(nn.Module):
         return x
 
 
-@StochasticModel
+@stochastic_model
 class _StochasticLeNet(_LeNet):
     pass
 
@@ -86,7 +87,7 @@ def _lenet(
     num_classes: int,
     linear_layer: type[nn.Module] = nn.Linear,
     conv2d_layer: type[nn.Module] = nn.Conv2d,
-    layer_args: dict = {},
+    layer_args: dict | None = None,
     activation: Callable = nn.ReLU,
     norm: type[nn.Module] = nn.Identity,
     groups: int = 1,
@@ -94,6 +95,8 @@ def _lenet(
     num_estimators: int | None = None,
     last_layer_dropout: bool = False,
 ) -> _LeNet | _StochasticLeNet:
+    if layer_args is None:
+        layer_args = {}
     model = _LeNet if not stochastic else _StochasticLeNet
     return model(
         in_channels=in_channels,

@@ -4,54 +4,54 @@ import torch
 from torch_uncertainty.metrics import BrierScore
 
 
-@pytest.fixture
-def vec2D_max() -> torch.Tensor:
+@pytest.fixture()
+def vec2d_max() -> torch.Tensor:
     vec = torch.as_tensor([0.5, 0.5])
     return vec.unsqueeze(0)
 
 
-@pytest.fixture
-def vec2D_max_target() -> torch.Tensor:
+@pytest.fixture()
+def vec2d_max_target() -> torch.Tensor:
     vec = torch.as_tensor([0, 1])
     return vec.unsqueeze(0)
 
 
-@pytest.fixture
-def vec2D_max_target1D() -> torch.Tensor:
+@pytest.fixture()
+def vec2d_max_target1d() -> torch.Tensor:
     return torch.as_tensor([1])
 
 
-@pytest.fixture
-def vec2D_min() -> torch.Tensor:
+@pytest.fixture()
+def vec2d_min() -> torch.Tensor:
     vec = torch.as_tensor([0.0, 1.0])
     return vec.unsqueeze(0)
 
 
-@pytest.fixture
-def vec2D_min_target() -> torch.Tensor:
+@pytest.fixture()
+def vec2d_min_target() -> torch.Tensor:
     vec = torch.as_tensor([0, 1])
     return vec.unsqueeze(0)
 
 
-@pytest.fixture
-def vec2D_5classes() -> torch.Tensor:
+@pytest.fixture()
+def vec2d_5classes() -> torch.Tensor:
     return torch.as_tensor(
         [[0.2, 0.6, 0.1, 0.05, 0.05], [0.05, 0.25, 0.1, 0.3, 0.3]]
     )
 
 
-@pytest.fixture
-def vec2D_5classes_target() -> torch.Tensor:
+@pytest.fixture()
+def vec2d_5classes_target() -> torch.Tensor:
     return torch.as_tensor([[0, 0, 0, 1, 0], [0, 0, 0, 0, 1]])
 
 
-@pytest.fixture
-def vec2D_5classes_target1D() -> torch.Tensor:
+@pytest.fixture()
+def vec2d_5classes_target1d() -> torch.Tensor:
     return torch.as_tensor([3, 4])
 
 
-@pytest.fixture
-def vec3D() -> torch.Tensor:
+@pytest.fixture()
+def vec3d() -> torch.Tensor:
     """Return a torch tensor with a mean BrierScore of 0 and a BrierScore of
     the mean of 0.5 to test the `ensemble` parameter of `BrierScore`.
     """
@@ -59,14 +59,14 @@ def vec3D() -> torch.Tensor:
     return vec.unsqueeze(0)
 
 
-@pytest.fixture
-def vec3D_target() -> torch.Tensor:
+@pytest.fixture()
+def vec3d_target() -> torch.Tensor:
     vec = torch.as_tensor([0, 1])
     return vec.unsqueeze(0)
 
 
-@pytest.fixture
-def vec3D_target1D() -> torch.Tensor:
+@pytest.fixture()
+def vec3d_target1d() -> torch.Tensor:
     vec = torch.as_tensor([1])
     return vec.unsqueeze(0)
 
@@ -75,38 +75,38 @@ class TestBrierScore:
     """Testing the BrierScore metric class."""
 
     def test_compute(
-        self, vec2D_min: torch.Tensor, vec2D_min_target: torch.Tensor
+        self, vec2d_min: torch.Tensor, vec2d_min_target: torch.Tensor
     ):
         metric = BrierScore(num_classes=2)
-        metric.update(vec2D_min, vec2D_min_target)
+        metric.update(vec2d_min, vec2d_min_target)
         res = metric.compute()
         assert res == 0
 
     def test_compute_max(
-        self, vec2D_max: torch.Tensor, vec2D_max_target: torch.Tensor
+        self, vec2d_max: torch.Tensor, vec2d_max_target: torch.Tensor
     ):
         metric = BrierScore(num_classes=2, reduction="sum")
-        metric.update(vec2D_max, vec2D_max_target)
+        metric.update(vec2d_max, vec2d_max_target)
         res = metric.compute()
         assert res == 0.5
 
-    def test_compute_max_target1D(
-        self, vec2D_max: torch.Tensor, vec2D_max_target1D: torch.Tensor
+    def test_compute_max_target1d(
+        self, vec2d_max: torch.Tensor, vec2d_max_target1d: torch.Tensor
     ):
         metric = BrierScore(num_classes=2, reduction="sum")
-        metric.update(vec2D_max, vec2D_max_target1D)
+        metric.update(vec2d_max, vec2d_max_target1d)
         res = metric.compute()
         assert res == 0.5
 
     def test_compute_5classes(
         self,
-        vec2D_5classes: torch.Tensor,
-        vec2D_5classes_target: torch.Tensor,
-        vec2D_5classes_target1D: torch.Tensor,
+        vec2d_5classes: torch.Tensor,
+        vec2d_5classes_target: torch.Tensor,
+        vec2d_5classes_target1d: torch.Tensor,
     ):
         metric = BrierScore(num_classes=5, reduction="sum")
-        metric.update(vec2D_5classes, vec2D_5classes_target)
-        metric.update(vec2D_5classes, vec2D_5classes_target1D)
+        metric.update(vec2d_5classes, vec2d_5classes_target)
+        metric.update(vec2d_5classes, vec2d_5classes_target1d)
         res = metric.compute()
         assert (
             res / 2
@@ -122,76 +122,76 @@ class TestBrierScore:
 
     def test_multiple_compute_sum(
         self,
-        vec2D_min: torch.Tensor,
-        vec2D_max: torch.Tensor,
-        vec2D_min_target: torch.Tensor,
-        vec2D_max_target: torch.Tensor,
+        vec2d_min: torch.Tensor,
+        vec2d_max: torch.Tensor,
+        vec2d_min_target: torch.Tensor,
+        vec2d_max_target: torch.Tensor,
     ):
         metric = BrierScore(num_classes=2, reduction="sum")
-        metric.update(vec2D_min, vec2D_min_target)
-        metric.update(vec2D_max, vec2D_max_target)
+        metric.update(vec2d_min, vec2d_min_target)
+        metric.update(vec2d_max, vec2d_max_target)
         res = metric.compute()
         assert res == 0.5
 
     def test_multiple_compute_mean(
         self,
-        vec2D_min: torch.Tensor,
-        vec2D_max: torch.Tensor,
-        vec2D_min_target: torch.Tensor,
-        vec2D_max_target: torch.Tensor,
+        vec2d_min: torch.Tensor,
+        vec2d_max: torch.Tensor,
+        vec2d_min_target: torch.Tensor,
+        vec2d_max_target: torch.Tensor,
     ):
         metric = BrierScore(num_classes=2, reduction="mean")
-        metric.update(vec2D_min, vec2D_min_target)
-        metric.update(vec2D_max, vec2D_max_target)
+        metric.update(vec2d_min, vec2d_min_target)
+        metric.update(vec2d_max, vec2d_max_target)
         res = metric.compute()
         assert res == 0.5 / 2
 
     def test_multiple_compute_none(
         self,
-        vec2D_min: torch.Tensor,
-        vec2D_max: torch.Tensor,
-        vec2D_min_target: torch.Tensor,
-        vec2D_max_target: torch.Tensor,
+        vec2d_min: torch.Tensor,
+        vec2d_max: torch.Tensor,
+        vec2d_min_target: torch.Tensor,
+        vec2d_max_target: torch.Tensor,
     ):
         metric = BrierScore(num_classes=2, reduction=None)
-        metric.update(vec2D_min, vec2D_min_target)
-        metric.update(vec2D_max, vec2D_max_target)
+        metric.update(vec2d_min, vec2d_min_target)
+        metric.update(vec2d_max, vec2d_max_target)
         res = metric.compute()
         assert all(res == torch.as_tensor([0, 0.5]))
 
-    def test_compute_3D_mean(
-        self, vec3D: torch.Tensor, vec3D_target: torch.Tensor
+    def test_compute_3d_mean(
+        self, vec3d: torch.Tensor, vec3d_target: torch.Tensor
     ):
         """Test that the metric returns the mean of the BrierScore over
         the estimators.
         """
         metric = BrierScore(num_classes=2, reduction="mean")
-        metric.update(vec3D, vec3D_target)
+        metric.update(vec3d, vec3d_target)
         res = metric.compute()
         assert res == 1
 
-    def test_compute_3D_sum(
-        self, vec3D: torch.Tensor, vec3D_target: torch.Tensor
+    def test_compute_3d_sum(
+        self, vec3d: torch.Tensor, vec3d_target: torch.Tensor
     ):
         metric = BrierScore(num_classes=2, reduction="sum")
-        metric.update(vec3D, vec3D_target)
+        metric.update(vec3d, vec3d_target)
         res = metric.compute()
         assert res == 1
 
-    def test_compute_3D_sum_target1D(
-        self, vec3D: torch.Tensor, vec3D_target1D: torch.Tensor
+    def test_compute_3d_sum_target1d(
+        self, vec3d: torch.Tensor, vec3d_target1d: torch.Tensor
     ):
         metric = BrierScore(num_classes=2, reduction="sum")
-        metric.update(vec3D, vec3D_target1D)
+        metric.update(vec3d, vec3d_target1d)
         res = metric.compute()
         assert res == 1
 
-    def test_compute_3D_to_2D(
-        self, vec3D: torch.Tensor, vec3D_target: torch.Tensor
+    def test_compute_3d_to_2d(
+        self, vec3d: torch.Tensor, vec3d_target: torch.Tensor
     ):
         metric = BrierScore(num_classes=2, reduction="mean")
-        vec3D = vec3D.mean(1)
-        metric.update(vec3D, vec3D_target)
+        vec3d = vec3d.mean(1)
+        metric.update(vec3d, vec3d_target)
         res = metric.compute()
         assert res == 0.5
 

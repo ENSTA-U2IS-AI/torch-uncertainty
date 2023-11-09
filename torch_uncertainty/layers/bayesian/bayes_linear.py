@@ -7,31 +7,6 @@ from .sampler import PriorDistribution, TrainableDistribution
 
 
 class BayesLinear(nn.Module):
-    """Bayesian Linear Layer with Mixture of Normals prior and Normal posterior.
-
-    Args:
-        in_features (int): Number of input features
-        out_features (int): Number of output features
-        prior_sigma_1 (float, optional): Standard deviation of the first prior
-            distribution. Defaults to 0.1.
-        prior_sigma_2 (float, optional): Standard deviation of the second prior
-            distribution. Defaults to 0.1.
-        prior_pi (float, optional): Mixture control variable. Defaults to 0.1.
-        mu_init (float, optional): Initial mean of the posterior distribution.
-            Defaults to 0.0.
-        sigma_init (float, optional): Initial standard deviation of the
-            posterior distribution. Defaults to -7.0.
-        frozen (bool, optional): Whether to freeze the posterior distribution.
-            Defaults to False.
-        bias (bool, optional): Whether to use a bias term. Defaults to True.
-        device (optional): Device to use. Defaults to None.
-        dtype (optional): Data type to use. Defaults to None.
-
-    Paper Reference:
-        Blundell, Charles, et al. "Weight uncertainty in neural networks"
-        ICML 2015.
-    """
-
     __constants__ = ["in_features", "out_features"]
     in_features: int
     out_features: int
@@ -53,6 +28,30 @@ class BayesLinear(nn.Module):
         device=None,
         dtype=None,
     ) -> None:
+        """Bayesian Linear Layer with Mixture of Normals prior and Normal posterior.
+
+        Args:
+            in_features (int): Number of input features
+            out_features (int): Number of output features
+            prior_sigma_1 (float, optional): Standard deviation of the first prior
+                distribution. Defaults to 0.1.
+            prior_sigma_2 (float, optional): Standard deviation of the second prior
+                distribution. Defaults to 0.1.
+            prior_pi (float, optional): Mixture control variable. Defaults to 0.1.
+            mu_init (float, optional): Initial mean of the posterior distribution.
+                Defaults to 0.0.
+            sigma_init (float, optional): Initial standard deviation of the
+                posterior distribution. Defaults to -7.0.
+            frozen (bool, optional): Whether to freeze the posterior distribution.
+                Defaults to False.
+            bias (bool, optional): Whether to use a bias term. Defaults to True.
+            device (optional): Device to use. Defaults to None.
+            dtype (optional): Data type to use. Defaults to None.
+
+        Paper Reference:
+            Blundell, Charles, et al. "Weight uncertainty in neural networks"
+            ICML 2015.
+        """
         factory_kwargs = {"device": device, "dtype": dtype}
         super().__init__()
 
@@ -109,15 +108,15 @@ class BayesLinear(nn.Module):
             init.normal_(self.bias_mu, mean=self.mu_init, std=0.1)
             init.normal_(self.bias_sigma, mean=self.sigma_init, std=0.1)
 
-    def forward(self, input: Tensor) -> Tensor:
+    def forward(self, inputs: Tensor) -> Tensor:
         if self.frozen:
-            return self._frozen_forward(input)
-        return self._forward(input)
+            return self._frozen_forward(inputs)
+        return self._forward(inputs)
 
-    def _frozen_forward(self, input):
-        return F.linear(input, self.weight_mu, self.bias_mu)
+    def _frozen_forward(self, inputs):
+        return F.linear(inputs, self.weight_mu, self.bias_mu)
 
-    def _forward(self, input: Tensor) -> Tensor:
+    def _forward(self, inputs: Tensor) -> Tensor:
         weight = self.weight_sampler.sample()
 
         if self.bias_mu is not None:
@@ -130,7 +129,7 @@ class BayesLinear(nn.Module):
         self.lvposterior = self.weight_sampler.log_posterior() + bias_lposterior
         self.lprior = self.weight_prior_dist.log_prior(weight) + bias_lprior
 
-        return F.linear(input, weight, bias)
+        return F.linear(inputs, weight, bias)
 
     def freeze(self) -> None:
         """Freeze the layer by setting the frozen attribute to True."""

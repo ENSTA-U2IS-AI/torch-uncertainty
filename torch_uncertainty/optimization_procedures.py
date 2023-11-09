@@ -15,7 +15,7 @@ __all__ = [
     "optim_cifar100_resnet50",
     "optim_cifar100_vgg16",
     "optim_imagenet_resnet50",
-    "optim_imagenet_resnet50_A3",
+    "optim_imagenet_resnet50_a3",
     "optim_regression",
     "optim_cifar10_resnet34",
     "optim_cifar100_resnet34",
@@ -183,7 +183,7 @@ def optim_imagenet_resnet50(
     }
 
 
-def optim_imagenet_resnet50_A3(
+def optim_imagenet_resnet50_a3(
     model: nn.Module, effective_batch_size: int | None = None
 ) -> dict:
     """Training procedure proposed in ResNet strikes back: An improved training
@@ -413,7 +413,7 @@ def get_procedure(
             procedure = optim_tinyimagenet_resnet50
         elif ds_name == "imagenet":
             if imagenet_recipe is not None and imagenet_recipe == "A3":
-                procedure = optim_imagenet_resnet50_A3
+                procedure = optim_imagenet_resnet50_a3
             else:
                 procedure = optim_imagenet_resnet50
         else:

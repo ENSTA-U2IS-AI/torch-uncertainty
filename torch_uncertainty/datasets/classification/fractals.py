@@ -31,7 +31,7 @@ class Fractals(ImageFolder):
         transform: Callable[..., Any] | None = None,
         target_transform: Callable[..., Any] | None = None,
         download: bool = False,
-    ):
+    ) -> None:
         if isinstance(root, str):
             self.root = Path(root)
 
@@ -69,4 +69,9 @@ class Fractals(ImageFolder):
         extract_archive(self.root / self.filename, self.root)
 
     def __getitem__(self, index: int) -> tuple[Any, Any]:
+        """Get the samples and targets of the dataset.
+
+        Args:
+            index (int): The index of the sample to get.
+        """
         return super().__getitem__(index)[0]

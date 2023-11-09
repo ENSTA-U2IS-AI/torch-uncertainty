@@ -4,22 +4,22 @@ import torch
 from torch_uncertainty.layers.masksembles import MaskedConv2d, MaskedLinear
 
 
-@pytest.fixture
+@pytest.fixture()
 def feat_input_odd() -> torch.Tensor:
     return torch.rand((5, 10))
 
 
-@pytest.fixture
+@pytest.fixture()
 def feat_input_even() -> torch.Tensor:
     return torch.rand((8, 10))
 
 
-@pytest.fixture
+@pytest.fixture()
 def img_input_odd() -> torch.Tensor:
     return torch.rand((5, 10, 3, 3))
 
 
-@pytest.fixture
+@pytest.fixture()
 def img_input_even() -> torch.Tensor:
     return torch.rand((8, 10, 3, 3))
 

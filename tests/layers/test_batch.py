@@ -4,12 +4,12 @@ import torch
 from torch_uncertainty.layers.batch_ensemble import BatchConv2d, BatchLinear
 
 
-@pytest.fixture
+@pytest.fixture()
 def feat_input() -> torch.Tensor:
     return torch.rand((4, 6))
 
 
-@pytest.fixture
+@pytest.fixture()
 def img_input() -> torch.Tensor:
     return torch.rand((5, 6, 3, 3))
 

@@ -3,7 +3,7 @@ import pytest
 from torch_uncertainty.datasets.classification import CIFAR10H
 
 
-class TestCIFAR10_H:
+class TestCIFAR10H:
     """Testing the CIFAR10H dataset class."""
 
     def test_nodataset_nodownload(self):

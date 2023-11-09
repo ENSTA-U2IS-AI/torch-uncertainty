@@ -85,8 +85,8 @@ class RegressionSingle(pl.LightningModule):
     def criterion(self) -> nn.Module:
         return self.loss()
 
-    def forward(self, input: torch.Tensor) -> torch.Tensor:
-        return self.model.forward(input)
+    def forward(self, inputs: torch.Tensor) -> torch.Tensor:
+        return self.model.forward(inputs)
 
     def on_train_start(self) -> None:
         # hyperparameters for performances
@@ -115,8 +115,8 @@ class RegressionSingle(pl.LightningModule):
             loss = self.criterion(means, v, alpha, beta, targets)
         elif self.dist_estimation == 2:
             means = logits[..., 0]
-            vars = F.softplus(logits[..., 1])
-            loss = self.criterion(means, targets, vars)
+            variances = F.softplus(logits[..., 1])
+            loss = self.criterion(means, targets, variances)
         else:
             loss = self.criterion(logits, targets)
 
@@ -132,14 +132,14 @@ class RegressionSingle(pl.LightningModule):
             means = logits[..., 0]
             alpha = 1 + F.softplus(logits[..., 2])
             beta = F.softplus(logits[..., 3])
-            vars = beta / (alpha - 1)
-            self.val_metrics.gnll.update(means, targets, vars)
+            variances = beta / (alpha - 1)
+            self.val_metrics.gnll.update(means, targets, variances)
 
             targets = targets.view(means.size())
         elif self.dist_estimation == 2:
             means = logits[..., 0]
-            vars = F.softplus(logits[..., 1])
-            self.val_metrics.gnll.update(means, targets, vars)
+            variances = F.softplus(logits[..., 1])
+            self.val_metrics.gnll.update(means, targets, variances)
 
             if means.ndim == 1:
                 means = means.unsqueeze(-1)
@@ -166,14 +166,14 @@ class RegressionSingle(pl.LightningModule):
             means = logits[..., 0]
             alpha = 1 + F.softplus(logits[..., 2])
             beta = F.softplus(logits[..., 3])
-            vars = beta / (alpha - 1)
-            self.test_metrics.gnll.update(means, targets, vars)
+            variances = beta / (alpha - 1)
+            self.test_metrics.gnll.update(means, targets, variances)
 
             targets = targets.view(means.size())
         elif self.dist_estimation == 2:
             means = logits[..., 0]
-            vars = F.softplus(logits[..., 1])
-            self.test_metrics.gnll.update(means, targets, vars)
+            variances = F.softplus(logits[..., 1])
+            self.test_metrics.gnll.update(means, targets, variances)
 
             if means.ndim == 1:
                 means = means.unsqueeze(-1)
@@ -259,8 +259,8 @@ class RegressionEnsemble(RegressionSingle):
 
         if self.dist_estimation == 2:
             means = logits[..., 0]
-            vars = F.softplus(logits[..., 1])
-            self.val_metrics.gnll.update(means, targets, vars)
+            variances = F.softplus(logits[..., 1])
+            self.val_metrics.gnll.update(means, targets, variances)
         else:
             means = logits
 
@@ -298,8 +298,8 @@ class RegressionEnsemble(RegressionSingle):
 
         if self.dist_estimation == 2:
             means = logits[..., 0]
-            vars = F.softplus(logits[..., 1])
-            self.test_metrics.gnll.update(means, targets, vars)
+            variances = F.softplus(logits[..., 1])
+            self.test_metrics.gnll.update(means, targets, variances)
         else:
             means = logits
 
