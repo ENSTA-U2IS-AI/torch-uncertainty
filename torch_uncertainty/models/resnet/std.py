@@ -209,6 +209,7 @@ class _ResNet(nn.Module):
         self.in_planes = 64
         block_planes = self.in_planes
         self.num_estimators = num_estimators
+        self.dropout_rate = dropout_rate
         self.last_layer_dropout = last_layer_dropout
 
         if style == "imagenet":
@@ -330,7 +331,12 @@ class _ResNet(nn.Module):
         return self.flatten(out)
 
     def handle_dropout(self, x: Tensor) -> Tensor:
-        if self.num_estimators is not None and not self.training:
+        if (
+            self.dropout_rate is not None
+            and self.dropout_rate > 0
+            and self.num_estimators is not None
+            and not self.training
+        ):
             if self.last_layer_dropout is not None:
                 toggle_dropout(self, self.last_layer_dropout)
             x = x.repeat(self.num_estimators, 1, 1, 1)
