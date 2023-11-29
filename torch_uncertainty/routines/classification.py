@@ -44,6 +44,8 @@ class ClassificationSingle(pl.LightningModule):
             values as the OOD criterion or not. Defaults to ``False``.
         use_logits (bool, optional): Indicates whether to use the logits as the
             OOD criterion or not. Defaults to ``False``.
+        log_plots (bool, optional): Indicates whether to log plots from
+            metrics. Defaults to ``False``.
 
     Note:
         The default OOD criterion is the softmax confidence score.
@@ -481,6 +483,8 @@ class ClassificationEnsemble(ClassificationSingle):
             information as the OOD criterion or not. Defaults to ``False``.
         use_variation_ratio (bool, optional): Indicates whether to use the
             variation ratio as the OOD criterion or not. Defaults to ``False``.
+        log_plots (bool, optional): Indicates whether to log plots from
+            metrics. Defaults to ``False``.
 
     Note:
         The default OOD criterion is the averaged softmax confidence score.
