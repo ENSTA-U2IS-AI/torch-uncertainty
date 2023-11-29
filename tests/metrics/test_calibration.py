@@ -58,3 +58,11 @@ class TestCE:
         assert ax.get_xlabel() == "Top-class Confidence (%)"
         assert ax.get_ylabel() == "Success Rate (%)"
         plt.close(fig)
+
+    def test_bad_task_argument(self) -> None:
+        with pytest.raises(ValueError):
+            _ = CE(task="geometric_mean")
+
+    def test_bad_num_classes_argument(self) -> None:
+        with pytest.raises(ValueError):
+            _ = CE(task="multiclass", num_classes=1.5)
