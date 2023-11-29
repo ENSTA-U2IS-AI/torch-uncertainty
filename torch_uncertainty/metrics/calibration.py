@@ -12,7 +12,7 @@ from torchmetrics.utilities.enums import ClassificationTaskNoMultilabel
 from torchmetrics.utilities.plot import _AX_TYPE, _PLOT_OUT_TYPE
 
 
-class BinaryCE(BinaryCalibrationError):
+class BinaryCE(BinaryCalibrationError):  # noqa: N818
     def plot(self, ax: _AX_TYPE | None = None) -> _PLOT_OUT_TYPE:
         fig, ax = plt.subplots() if ax is None else (None, ax)
 
@@ -72,7 +72,7 @@ class BinaryCE(BinaryCalibrationError):
         return fig, ax
 
 
-class MulticlassCE(MulticlassCalibrationError):
+class MulticlassCE(MulticlassCalibrationError):  # noqa: N818
     def plot(self, ax: _AX_TYPE | None = None) -> _PLOT_OUT_TYPE:
         fig, ax = plt.subplots() if ax is None else (None, ax)
 
