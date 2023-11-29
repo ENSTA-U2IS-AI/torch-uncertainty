@@ -21,14 +21,14 @@ class TestVectorScaler:
         assert scaler.temp_b.item() == 0.0
         assert torch.all(scaler(logits) == logits)
 
-        scaler.temperature
+        _ = scaler.temperature
 
     def test_negative_numclasses(self):
         with pytest.raises(ValueError):
             VectorScaler(num_classes=-1)
 
     def test_float_numclasses(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             VectorScaler(num_classes=1.8)
 
     def test_negative_lr(self):

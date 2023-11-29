@@ -23,7 +23,7 @@ class BasicBlock(nn.Module):
         num_estimators: int = 4,
         scale: float = 2.0,
         groups: int = 1,
-    ):
+    ) -> None:
         super().__init__()
 
         self.conv1 = MaskedConv2d(
@@ -85,7 +85,7 @@ class Bottleneck(nn.Module):
         num_estimators: int = 4,
         scale: float = 2.0,
         groups: int = 1,
-    ):
+    ) -> None:
         super().__init__()
 
         self.conv1 = MaskedConv2d(
@@ -296,8 +296,10 @@ def masked_resnet18(
     Args:
         in_channels (int): Number of input channels.
         num_estimators (int): Number of estimators in the ensemble.
+        scale (float): The scale of the mask.
         groups (int): Number of groups within each estimator.
         num_classes (int): Number of classes to predict.
+        style (str, optional): The style of the model. Defaults to "imagenet".
 
     Returns:
         _MaskedResNet: A Masksembles-style ResNet-18.
@@ -328,8 +330,10 @@ def masked_resnet34(
     Args:
         in_channels (int): Number of input channels.
         num_estimators (int): Number of estimators in the ensemble.
+        scale (float): The scale of the mask.
         groups (int): Number of groups within each estimator.
         num_classes (int): Number of classes to predict.
+        style (str, optional): The style of the model. Defaults to "imagenet".
 
     Returns:
         _MaskedResNet: A Masksembles-style ResNet-34.
@@ -360,8 +364,10 @@ def masked_resnet50(
     Args:
         in_channels (int): Number of input channels.
         num_estimators (int): Number of estimators in the ensemble.
+        scale (float): The scale of the mask.
         groups (int): Number of groups within each estimator.
         num_classes (int): Number of classes to predict.
+        style (str, optional): The style of the model. Defaults to "imagenet".
 
     Returns:
         _MaskedResNet: A Masksembles-style ResNet-50.
@@ -392,8 +398,10 @@ def masked_resnet101(
     Args:
         in_channels (int): Number of input channels.
         num_estimators (int): Number of estimators in the ensemble.
+        scale (float): The scale of the mask.
         groups (int): Number of groups within each estimator.
         num_classes (int): Number of classes to predict.
+        style (str, optional): The style of the model. Defaults to "imagenet".
 
     Returns:
         _MaskedResNet: A Masksembles-style ResNet-101.
@@ -424,8 +432,10 @@ def masked_resnet152(
     Args:
         in_channels (int): Number of input channels.
         num_estimators (int): Number of estimators in the ensemble.
+        scale (float): The scale of the mask.
         groups (int): Number of groups within each estimator.
         num_classes (int): Number of classes to predict.
+        style (str, optional): The style of the model. Defaults to "imagenet".
 
     Returns:
         _MaskedResNet: A Masksembles-style ResNet-152.

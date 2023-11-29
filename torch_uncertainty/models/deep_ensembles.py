@@ -36,8 +36,8 @@ def deep_ensembles(
     """Builds a Deep Ensembles out of the original models.
 
     Args:
-        model (nn.Module): The model to be ensembled.
-        num_estimators (int): The number of estimators in the ensemble.
+        models (list[nn.Module] | nn.Module): The model to be ensembled.
+        num_estimators (int | None): The number of estimators in the ensemble.
 
     Returns:
         nn.Module: The ensembled model.

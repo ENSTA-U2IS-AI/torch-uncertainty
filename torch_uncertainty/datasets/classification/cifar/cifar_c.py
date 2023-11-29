@@ -1,4 +1,3 @@
-import os
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
@@ -90,7 +89,7 @@ class CIFAR10C(VisionDataset):
         subset: str = "all",
         severity: int = 1,
         download: bool = False,
-    ):
+    ) -> None:
         if isinstance(root, str):
             root = Path(root)
 
@@ -131,7 +130,9 @@ class CIFAR10C(VisionDataset):
     def make_dataset(
         self, root: Path, subset: str, severity: int
     ) -> tuple[np.ndarray, np.ndarray]:
-        r"""Build the corrupted dataset according to the chosen subset and
+        r"""Make the CIFAR-C dataset.
+
+        Build the corrupted dataset according to the chosen subset and
             severity. If the subset is 'all', gather all corruption types
             in the dataset.
 
@@ -172,6 +173,11 @@ class CIFAR10C(VisionDataset):
         return self.labels.shape[0]
 
     def __getitem__(self, index: int) -> Any:
+        """Get the samples and targets of the dataset.
+
+        Args:
+            index (int): The index of the sample to get.
+        """
         sample, target = (
             self.samples[index],
             self.labels[index],
@@ -186,7 +192,7 @@ class CIFAR10C(VisionDataset):
     def _check_integrity(self) -> bool:
         """Check the integrity of the dataset."""
         for filename, md5 in self.ctest_list:
-            fpath = os.path.join(self.root, self.base_folder, filename)
+            fpath = self.root / self.base_folder / filename
             if not check_integrity(fpath, md5):
                 return False
         return True

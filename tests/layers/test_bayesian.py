@@ -10,32 +10,32 @@ from torch_uncertainty.layers.bayesian import (
 from torch_uncertainty.layers.bayesian.sampler import TrainableDistribution
 
 
-@pytest.fixture
+@pytest.fixture()
 def feat_input_odd() -> torch.Tensor:
     return torch.rand((5, 10))
 
 
-@pytest.fixture
+@pytest.fixture()
 def feat_input_even() -> torch.Tensor:
     return torch.rand((8, 10))
 
 
-@pytest.fixture
+@pytest.fixture()
 def img_input_odd() -> torch.Tensor:
     return torch.rand((5, 10, 3, 3))
 
 
-@pytest.fixture
+@pytest.fixture()
 def img_input_even() -> torch.Tensor:
     return torch.rand((8, 10, 3, 3))
 
 
-@pytest.fixture
+@pytest.fixture()
 def cube_input_odd() -> torch.Tensor:
     return torch.rand((1, 10, 3, 3, 3))
 
 
-@pytest.fixture
+@pytest.fixture()
 def cube_input_even() -> torch.Tensor:
     return torch.rand((2, 10, 3, 3, 3))
 

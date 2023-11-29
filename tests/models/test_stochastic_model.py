@@ -1,11 +1,13 @@
-import torch
+from torch import nn
 
 from torch_uncertainty.layers import BayesConv2d, BayesLinear
-from torch_uncertainty.models.utils import StochasticModel
+from torch_uncertainty.models.utils import stochastic_model
 
 
-@StochasticModel
-class DummyModelLinear(torch.nn.Module):
+@stochastic_model
+class DummyModelLinear(nn.Module):
+    """Dummy model for testing purposes."""
+
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.layer = BayesLinear(1, 10, 1)
@@ -14,8 +16,10 @@ class DummyModelLinear(torch.nn.Module):
         return self.layer(x)
 
 
-@StochasticModel
-class DummyModelConv(torch.nn.Module):
+@stochastic_model
+class DummyModelConv(nn.Module):
+    """Dummy conv model for testing purposes."""
+
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.layer = BayesConv2d(1, 10, 1)
@@ -24,13 +28,15 @@ class DummyModelConv(torch.nn.Module):
         return self.layer(x)
 
 
-@StochasticModel
-class DummyModelMix(torch.nn.Module):
+@stochastic_model
+class DummyModelMix(nn.Module):
+    """Dummy mix model for testing purposes."""
+
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.layer = BayesConv2d(1, 10, 1, bias=False)
-        self.relu = torch.nn.ReLU()
-        self.layer2 = torch.nn.Conv2d(10, 1, 1)
+        self.relu = nn.ReLU()
+        self.layer2 = nn.Conv2d(10, 1, 1)
 
     def forward(self, x):
         y = self.relu(self.layer(x))

@@ -31,21 +31,20 @@ if __name__ == "__main__":
 
     if args.use_cv:
         list_dm = dm.make_cross_val_splits(args.n_splits, args.train_over)
-        list_model = []
-        for i in range(len(list_dm)):
-            list_model.append(
-                ResNet(
-                    num_classes=list_dm[i].dm.num_classes,
-                    in_channels=list_dm[i].dm.num_channels,
-                    loss=nn.CrossEntropyLoss,
-                    optimization_procedure=get_procedure(
-                        f"resnet{args.arch}", "cifar10", args.version
-                    ),
-                    style="cifar",
-                    calibration_set=calibration_set,
-                    **vars(args),
-                )
+        list_model = [
+            ResNet(
+                num_classes=list_dm[i].dm.num_classes,
+                in_channels=list_dm[i].dm.num_channels,
+                loss=nn.CrossEntropyLoss,
+                optimization_procedure=get_procedure(
+                    f"resnet{args.arch}", "cifar10", args.version
+                ),
+                style="cifar",
+                calibration_set=calibration_set,
+                **vars(args),
             )
+            for i in range(len(list_dm))
+        ]
 
         results = cli_main(
             list_model, list_dm, args.exp_dir, args.exp_name, args

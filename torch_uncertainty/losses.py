@@ -6,14 +6,13 @@ from .layers.bayesian import bayesian_modules
 
 
 class KLDiv(nn.Module):
-    """KL divergence loss for Bayesian Neural Networks. Gathers the KL from the
-    modules computed in the forward passes.
-
-    Args:
-        model (nn.Module): Bayesian Neural Network
-    """
-
     def __init__(self, model: nn.Module) -> None:
+        """KL divergence loss for Bayesian Neural Networks. Gathers the KL from the
+        modules computed in the forward passes.
+
+        Args:
+            model (nn.Module): Bayesian Neural Network
+        """
         super().__init__()
         self.model = model
 
@@ -33,16 +32,6 @@ class KLDiv(nn.Module):
 
 
 class ELBOLoss(nn.Module):
-    """ELBO loss for Bayesian Neural Networks. Use this loss function with the
-    objective that you seek to minimize as :attr:`criterion`.
-
-    Args:
-        model (nn.Module): The Bayesian Neural Network to compute the loss for
-        criterion (nn.Module): The loss function to use during training
-        kl_weight (float): The weight of the KL divergence term
-        num_samples (int): The number of samples to use for the ELBO loss
-    """
-
     def __init__(
         self,
         model: nn.Module,
@@ -50,12 +39,23 @@ class ELBOLoss(nn.Module):
         kl_weight: float,
         num_samples: int,
     ) -> None:
+        """The Evidence Lower Bound (ELBO) loss for Bayesian Neural Networks.
+
+        ELBO loss for Bayesian Neural Networks. Use this loss function with the
+        objective that you seek to minimize as :attr:`criterion`.
+
+        Args:
+            model (nn.Module): The Bayesian Neural Network to compute the loss for
+            criterion (nn.Module): The loss function to use during training
+            kl_weight (float): The weight of the KL divergence term
+            num_samples (int): The number of samples to use for the ELBO loss
+        """
         super().__init__()
         self.model = model
         self._kl_div = KLDiv(model)
 
         if isinstance(criterion, type):
-            raise ValueError(
+            raise TypeError(
                 "The criterion should be an instance of a class."
                 f"Got {criterion}."
             )
@@ -99,21 +99,20 @@ class ELBOLoss(nn.Module):
 
 
 class NIGLoss(nn.Module):
-    """The Normal Inverse-Gamma loss.
-
-    Args:
-        reg_weight (float): The weight of the regularization term.
-        reduction (str, optional): specifies the reduction to apply to the
-        output:``'none'`` | ``'mean'`` | ``'sum'``.
-
-    Reference:
-        Amini, A., Schwarting, W., Soleimany, A., & Rus, D. (2019). Deep
-        evidential regression. https://arxiv.org/abs/1910.02600.
-    """
-
     def __init__(
         self, reg_weight: float, reduction: str | None = "mean"
     ) -> None:
+        """The Normal Inverse-Gamma loss.
+
+        Args:
+            reg_weight (float): The weight of the regularization term.
+            reduction (str, optional): specifies the reduction to apply to the
+            output:``'none'`` | ``'mean'`` | ``'sum'``.
+
+        Reference:
+            Amini, A., Schwarting, W., Soleimany, A., & Rus, D. (2019). Deep
+            evidential regression. https://arxiv.org/abs/1910.02600.
+        """
         super().__init__()
 
         if reg_weight < 0:
@@ -134,11 +133,11 @@ class NIGLoss(nn.Module):
         beta: Tensor,
         targets: Tensor,
     ) -> Tensor:
-        Gamma = 2 * beta * (1 + v)
+        gam = 2 * beta * (1 + v)
         return (
             0.5 * torch.log(torch.pi / v)
-            - alpha * Gamma.log()
-            + (alpha + 0.5) * torch.log(Gamma + v * (targets - gamma) ** 2)
+            - alpha * gam.log()
+            + (alpha + 0.5) * torch.log(gam + v * (targets - gamma) ** 2)
             + torch.lgamma(alpha)
             - torch.lgamma(alpha + 0.5)
         )
@@ -170,24 +169,23 @@ class NIGLoss(nn.Module):
 
 
 class BetaNLL(nn.Module):
-    """The Beta Negative Log-likelihood loss.
-
-    Args:
-        beta (float): TParameter from range [0, 1] controlling relative
-        weighting between data points, where `0` corresponds to
-        high weight on low error points and `1` to an equal weighting.
-        reduction (str, optional): specifies the reduction to apply to the
-        output:``'none'`` | ``'mean'`` | ``'sum'``.
-
-    Reference:
-        Seitzer, M., Tavakoli, A., Antic, D., & Martius, G. (2022). On the
-        pitfalls of heteroscedastic uncertainty estimation with probabilistic
-        neural networks. https://arxiv.org/abs/2203.09168.
-    """
-
     def __init__(
         self, beta: float = 0.5, reduction: str | None = "mean"
     ) -> None:
+        """The Beta Negative Log-likelihood loss.
+
+        Args:
+            beta (float): TParameter from range [0, 1] controlling relative
+            weighting between data points, where `0` corresponds to
+            high weight on low error points and `1` to an equal weighting.
+            reduction (str, optional): specifies the reduction to apply to the
+            output:``'none'`` | ``'mean'`` | ``'sum'``.
+
+        Reference:
+            Seitzer, M., Tavakoli, A., Antic, D., & Martius, G. (2022). On the
+            pitfalls of heteroscedastic uncertainty estimation with probabilistic
+            neural networks. https://arxiv.org/abs/2203.09168.
+        """
         super().__init__()
 
         if beta < 0 or beta > 1:
@@ -216,23 +214,6 @@ class BetaNLL(nn.Module):
 
 
 class DECLoss(nn.Module):
-    """The deep evidential classification loss.
-
-    Args:
-        annealing_step (int): Annealing step for the weight of the
-        regularization term.
-        reg_weight (float): Fixed weight of the regularization term.
-        loss_type (str, optional): Specifies the loss type to apply to the
-        Dirichlet parameters: ``'mse'`` | ``'log'`` | ``'digamma'``.
-        reduction (str, optional): Specifies the reduction to apply to the
-        output:``'none'`` | ``'mean'`` | ``'sum'``.
-
-    Reference:
-        Sensoy, M., Kaplan, L., & Kandemir, M. (2018). Evidential deep
-        learning to quantify classification uncertainty. NeurIPS 2018.
-        https://arxiv.org/abs/1806.01768.
-    """
-
     def __init__(
         self,
         annealing_step: int | None = None,
@@ -240,6 +221,22 @@ class DECLoss(nn.Module):
         loss_type: str = "log",
         reduction: str | None = "mean",
     ) -> None:
+        """The deep evidential classification loss.
+
+        Args:
+            annealing_step (int): Annealing step for the weight of the
+            regularization term.
+            reg_weight (float): Fixed weight of the regularization term.
+            loss_type (str, optional): Specifies the loss type to apply to the
+            Dirichlet parameters: ``'mse'`` | ``'log'`` | ``'digamma'``.
+            reduction (str, optional): Specifies the reduction to apply to the
+            output:``'none'`` | ``'mean'`` | ``'sum'``.
+
+        Reference:
+            Sensoy, M., Kaplan, L., & Kandemir, M. (2018). Evidential deep
+            learning to quantify classification uncertainty. NeurIPS 2018.
+            https://arxiv.org/abs/1806.01768.
+        """
         super().__init__()
 
         if reg_weight is not None and (reg_weight < 0):

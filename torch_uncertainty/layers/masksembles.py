@@ -115,10 +115,10 @@ def generation_wrapper(c: int, n: int, scale: float) -> np.ndarray:
     return masks
 
 
-class Mask1D(nn.Module):
+class Mask1d(nn.Module):
     def __init__(
         self, channels: int, num_masks: int, scale: float, **factory_kwargs
-    ):
+    ) -> None:
         super().__init__()
         self.num_masks = num_masks
 
@@ -137,10 +137,10 @@ class Mask1D(nn.Module):
         return torch.as_tensor(x, dtype=inputs.dtype).squeeze(0)
 
 
-class Mask2D(nn.Module):
+class Mask2d(nn.Module):
     def __init__(
         self, channels: int, num_masks: int, scale: float, **factory_kwargs
-    ):
+    ) -> None:
         super().__init__()
         self.num_masks = num_masks
 
@@ -200,7 +200,7 @@ class MaskedLinear(nn.Module):
         if scale < 1:
             raise ValueError(f"Attribute `scale` should be >= 1, not {scale}.")
 
-        self.mask = Mask1D(
+        self.mask = Mask1d(
             in_features, num_masks=num_estimators, scale=scale, **factory_kwargs
         )
         self.linear = nn.Linear(
@@ -210,8 +210,8 @@ class MaskedLinear(nn.Module):
             **factory_kwargs,
         )
 
-    def forward(self, input: Tensor) -> Tensor:
-        return self.linear(self.mask(input))
+    def forward(self, inputs: Tensor) -> Tensor:
+        return self.linear(self.mask(inputs))
 
 
 class MaskedConv2d(nn.Module):
@@ -264,7 +264,7 @@ class MaskedConv2d(nn.Module):
         if scale < 1:
             raise ValueError(f"Attribute `scale` should be >= 1, not {scale}.")
 
-        self.mask = Mask2D(
+        self.mask = Mask2d(
             in_channels, num_masks=num_estimators, scale=scale, **factory_kwargs
         )
         self.conv = nn.Conv2d(
@@ -280,5 +280,5 @@ class MaskedConv2d(nn.Module):
             **factory_kwargs,
         )
 
-    def forward(self, input: Tensor) -> Tensor:
-        return self.conv(self.mask(input))
+    def forward(self, inputs: Tensor) -> Tensor:
+        return self.conv(self.mask(inputs))

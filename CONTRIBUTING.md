@@ -25,12 +25,12 @@ If you are interested in contributing to torch_uncertainty, we first advise you
 to follow the following steps to reproduce a clean development environment
 ensuring that continuous integration does not break.
 
-1. Install poetry on your workstation.
-2. Clone the repository.
-3. Install torch-uncertainty in editable mode poetry with dev packages:
+1. Check that you have PyTorch already installed on your system
+2. Clone the repository
+3. Install torch-uncertainty in editable mode with the dev packages:
 
 ```sh
-poetry install --with dev
+python3 -m pip install -e .[dev]
 ```
 
 4. Install pre-commit hooks with:
@@ -39,16 +39,13 @@ poetry install --with dev
 pre-commit install
 ```
 
-If you have issues with poetry, add `PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring`
-at the beginning of every`poetry` command.
-
 ### Build the documentation locally
 
 To build the documentation, reinstall TorchUncertainty with the packages of the docs
 group:
 
 ```sh
-poetry install --with dev,docs
+python3 -m pip install -e .[dev,docs]
 ```
 
 Then navigate to `./docs` and build the documentation with:

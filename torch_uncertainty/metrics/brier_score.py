@@ -7,41 +7,6 @@ from torchmetrics.utilities.data import dim_zero_cat
 
 
 class BrierScore(Metric):
-    r"""The Brier Score Metric.
-
-    Args:
-        reduction (str, optional): Determines how to reduce over the
-            :math:`B`/batch dimension:
-
-            - ``'mean'`` [default]: Averages score across samples
-            - ``'sum'``: Sum score across samples
-            - ``'none'`` or ``None``: Returns score per sample
-
-        kwargs: Additional keyword arguments, see `Advanced metric settings
-            <https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metric-kwargs>`_.
-
-    Inputs:
-        - :attr:`probs`: :math:`(B, C)` or :math:`(B, N, C)`
-        - :attr:`target`: :math:`(B)` or :math:`(B, C)`
-
-        where :math:`B` is the batch size, :math:`C` is the number of classes
-        and :math:`N` is the number of estimators.
-
-    Note:
-        If :attr:`probs` is a 3D tensor, then the metric computes the mean of
-        the Brier score over the estimators ie. :math:`t = \frac{1}{N}
-        \sum_{i=0}^{N-1} BrierScore(probs[:,i,:], target)`.
-
-    Warning:
-        Make sure that the probabilities in :attr:`probs` are normalized to sum
-        to one.
-
-    Raises:
-        ValueError:
-            If :attr:`reduction` is not one of ``'mean'``, ``'sum'``,
-            ``'none'`` or ``None``.
-    """
-
     is_differentiable: bool = False
     higher_is_better: bool | None = False
     full_state_update: bool = False
@@ -52,6 +17,41 @@ class BrierScore(Metric):
         reduction: Literal["mean", "sum", "none", None] = "mean",
         **kwargs,
     ) -> None:
+        r"""The Brier Score Metric.
+
+        Args:
+            num_classes (int): Number of classes
+            reduction (str, optional): Determines how to reduce over the
+                :math:`B`/batch dimension:
+
+                - ``'mean'`` [default]: Averages score across samples
+                - ``'sum'``: Sum score across samples
+                - ``'none'`` or ``None``: Returns score per sample
+
+            kwargs: Additional keyword arguments, see `Advanced metric settings
+                <https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metric-kwargs>`_.
+
+        Inputs:
+            - :attr:`probs`: :math:`(B, C)` or :math:`(B, N, C)`
+            - :attr:`target`: :math:`(B)` or :math:`(B, C)`
+
+            where :math:`B` is the batch size, :math:`C` is the number of classes
+            and :math:`N` is the number of estimators.
+
+        Note:
+            If :attr:`probs` is a 3d tensor, then the metric computes the mean of
+            the Brier score over the estimators ie. :math:`t = \frac{1}{N}
+            \sum_{i=0}^{N-1} BrierScore(probs[:,i,:], target)`.
+
+        Warning:
+            Make sure that the probabilities in :attr:`probs` are normalized to sum
+            to one.
+
+        Raises:
+            ValueError:
+                If :attr:`reduction` is not one of ``'mean'``, ``'sum'``,
+                ``'none'`` or ``None``.
+        """
         super().__init__(**kwargs)
 
         allowed_reduction = ("sum", "mean", "none", None)

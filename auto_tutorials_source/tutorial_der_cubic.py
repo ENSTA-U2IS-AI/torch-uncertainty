@@ -89,8 +89,9 @@ with ArgvContext(
     "False",
 ):
     args = init_args()
+    args.use_cv = False
 
-net_name = "der-mlp-cubic"
+net_name = "logs/der-mlp-cubic"
 
 # dataset
 train_ds = Cubic(num_samples=1000)

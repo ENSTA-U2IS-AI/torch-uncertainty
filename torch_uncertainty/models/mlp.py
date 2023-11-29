@@ -5,24 +5,12 @@ from torch import Tensor, nn
 
 from torch_uncertainty.layers.bayesian import BayesLinear
 from torch_uncertainty.layers.packed import PackedLinear
-from torch_uncertainty.models.utils import StochasticModel
+from torch_uncertainty.models.utils import stochastic_model
 
 __all__ = ["mlp", "packed_mlp", "bayesian_mlp"]
 
 
 class _MLP(nn.Module):
-    """Multi-layer perceptron class.
-
-    Args:
-        in_features (int): Number of input features.
-        num_outputs (int): Number of output features.
-        hidden_dims (List[int]): Number of features for each hidden layer.
-        layer (nn.Module): Layer class.
-        activation (Callable): Activation function.
-        layer_args (Dict): Arguments for the layer class.
-        dropout (float): Dropout probability.
-    """
-
     def __init__(
         self,
         in_features: int,
@@ -33,6 +21,17 @@ class _MLP(nn.Module):
         layer_args: dict,
         dropout: float,
     ) -> None:
+        """Multi-layer perceptron class.
+
+        Args:
+            in_features (int): Number of input features.
+            num_outputs (int): Number of output features.
+            hidden_dims (List[int]): Number of features for each hidden layer.
+            layer (nn.Module): Layer class.
+            activation (Callable): Activation function.
+            layer_args (Dict): Arguments for the layer class.
+            dropout (float): Dropout probability.
+        """
         super().__init__()
         self.activation = activation
         self.dropout = dropout
@@ -81,7 +80,7 @@ class _MLP(nn.Module):
         return self.layers[-1](x)
 
 
-@StochasticModel
+@stochastic_model
 class _StochasticMLP(_MLP):
     pass
 
@@ -91,11 +90,13 @@ def _mlp(
     in_features: int,
     num_outputs: int,
     hidden_dims: list[int],
-    layer_args: dict = {},
+    layer_args: dict | None = None,
     layer: type[nn.Module] = nn.Linear,
     activation: Callable = F.relu,
     dropout: float = 0.0,
 ) -> _MLP | _StochasticMLP:
+    if layer_args is None:
+        layer_args = {}
     model = _MLP if not stochastic else _StochasticMLP
     return model(
         in_features=in_features,
@@ -171,10 +172,12 @@ def packed_mlp(
 def bayesian_mlp(
     in_features: int,
     num_outputs: int,
-    hidden_dims: list[int] = [],
+    hidden_dims: list[int] | None = None,
     activation: Callable = F.relu,
     dropout: float = 0.0,
 ) -> _StochasticMLP:
+    if hidden_dims is None:
+        hidden_dims = []
     return _mlp(
         True,
         in_features=in_features,

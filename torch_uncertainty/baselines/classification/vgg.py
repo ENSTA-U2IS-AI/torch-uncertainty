@@ -32,62 +32,6 @@ from torch_uncertainty.transforms import RepeatTarget
 
 
 class VGG:
-    r"""VGG backbone baseline for classification providing support for
-    various versions and architectures.
-
-    Args:
-        num_classes (int): Number of classes to predict.
-        in_channels (int): Number of input channels.
-        loss (nn.Module): Training loss.
-        optimization_procedure (Any): Optimization procedure, corresponds to
-            what expect the `LightningModule.configure_optimizers()
-            <https://pytorch-lightning.readthedocs.io/en/stable/common/lightning_module.html#configure-optimizers>`_
-            method.
-        version (str):
-            Determines which VGG version to use:
-
-            - ``"vanilla"``: original VGG
-            - ``"mc-dropout"``: Monte Carlo Dropout VGG
-            - ``"packed"``: Packed-Ensembles VGG
-
-        arch (int):
-            Determines which VGG architecture to use:
-
-            - ``11``: VGG-11
-            - ``13``: VGG-13
-            - ``16``: VGG-16
-            - ``19``: VGG-19
-
-        style (str, optional): Which VGG style to use. Defaults to
-        ``imagenet``.
-        num_estimators (int, optional): Number of estimators in the ensemble.
-            Only used if :attr:`version` is either ``"packed"``, ``"batched"``
-            or ``"masked"`` Defaults to ``None``.
-        groups (int, optional): Number of groups in convolutions. Defaults to
-            ``1``.
-        alpha (float, optional): Expansion factor affecting the width of the
-            estimators. Only used if :attr:`version` is ``"packed"``. Defaults
-            to ``None``.
-        gamma (int, optional): Number of groups within each estimator. Only
-            used if :attr:`version` is ``"packed"`` and scales with
-            :attr:`groups`. Defaults to ``1s``.
-        use_entropy (bool, optional): Indicates whether to use the entropy
-            values as the OOD criterion or not. Defaults to ``False``.
-        use_logits (bool, optional): Indicates whether to use the logits as the
-            OOD criterion or not. Defaults to ``False``.
-        use_mi (bool, optional): Indicates whether to use the mutual
-            information as the OOD criterion or not. Defaults to ``False``.
-        use_variation_ratio (bool, optional): Indicates whether to use the
-            variation ratio as the OOD criterion or not. Defaults to ``False``.
-
-    Raises:
-        ValueError: If :attr:`version` is not either ``"vanilla"``,
-            ``"packed"``, ``"batched"`` or ``"masked"``.
-
-    Returns:
-        LightningModule: VGG baseline ready for training and evaluation.
-    """
-
     single = ["vanilla"]
     ensemble = ["mc-dropout", "packed"]
     versions = {
@@ -122,6 +66,62 @@ class VGG:
         use_variation_ratio: bool = False,
         **kwargs,
     ) -> LightningModule:
+        r"""VGG backbone baseline for classification providing support for
+        various versions and architectures.
+
+        Args:
+            num_classes (int): Number of classes to predict.
+            in_channels (int): Number of input channels.
+            loss (nn.Module): Training loss.
+            optimization_procedure (Any): Optimization procedure, corresponds to
+                what expect the `LightningModule.configure_optimizers()
+                <https://pytorch-lightning.readthedocs.io/en/stable/common/lightning_module.html#configure-optimizers>`_
+                method.
+            version (str):
+                Determines which VGG version to use:
+
+                - ``"vanilla"``: original VGG
+                - ``"mc-dropout"``: Monte Carlo Dropout VGG
+                - ``"packed"``: Packed-Ensembles VGG
+
+            arch (int):
+                Determines which VGG architecture to use:
+
+                - ``11``: VGG-11
+                - ``13``: VGG-13
+                - ``16``: VGG-16
+                - ``19``: VGG-19
+
+            style (str, optional): Which VGG style to use. Defaults to
+            ``imagenet``.
+            num_estimators (int, optional): Number of estimators in the ensemble.
+                Only used if :attr:`version` is either ``"packed"``, ``"batched"``
+                or ``"masked"`` Defaults to ``None``.
+            dropout_rate (float, optional): Dropout rate. Defaults to ``0.0``.
+            groups (int, optional): Number of groups in convolutions. Defaults to
+                ``1``.
+            alpha (float, optional): Expansion factor affecting the width of the
+                estimators. Only used if :attr:`version` is ``"packed"``. Defaults
+                to ``None``.
+            gamma (int, optional): Number of groups within each estimator. Only
+                used if :attr:`version` is ``"packed"`` and scales with
+                :attr:`groups`. Defaults to ``1s``.
+            use_entropy (bool, optional): Indicates whether to use the entropy
+                values as the OOD criterion or not. Defaults to ``False``.
+            use_logits (bool, optional): Indicates whether to use the logits as the
+                OOD criterion or not. Defaults to ``False``.
+            use_mi (bool, optional): Indicates whether to use the mutual
+                information as the OOD criterion or not. Defaults to ``False``.
+            use_variation_ratio (bool, optional): Indicates whether to use the
+                variation ratio as the OOD criterion or not. Defaults to ``False``.
+            **kwargs: Additional arguments to be passed to the
+        Raises:
+            ValueError: If :attr:`version` is not either ``"vanilla"``,
+                ``"packed"``, ``"batched"`` or ``"masked"``.
+
+        Returns:
+            LightningModule: VGG baseline ready for training and evaluation.
+        """
         params = {
             "in_channels": in_channels,
             "num_classes": num_classes,
