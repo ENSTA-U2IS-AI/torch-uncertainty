@@ -213,7 +213,7 @@ Losses
 
     KLDiv
     ELBOLoss
-    BetaNLLLoss
+    BetaNLL
     NIGLoss
     DECLoss
 
@@ -225,7 +225,7 @@ Post-Processing Methods
 .. autosummary::
     :toctree: generated/
     :nosignatures:
-    :template: class.rst
+    :template: class_inherited.rst
 
     TemperatureScaler
     VectorScaler

@@ -5,7 +5,7 @@ from sklearn.metrics import auc
 from torch import Tensor
 from torchmetrics.metric import Metric
 from torchmetrics.utilities.data import dim_zero_cat
-from torchmetrics.utilities.plot import _AX_TYPE, _PLOT_OUT_TYPE
+from torchmetrics.utilities.plot import _AX_TYPE
 
 
 class AUSE(Metric):
@@ -17,20 +17,20 @@ class AUSE(Metric):
         kwargs: Additional keyword arguments, see `Advanced metric settings
             <https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metric-kwargs>`_.
 
+    Reference:
+        From the paper
+        `Uncertainty estimates and multi-hypotheses for optical flow <https://arxiv.org/abs/1802.07095>`_.
+        In ECCV, 2018.
+
     Inputs:
         - :attr:`scores`: Uncertainty scores of shape :math:`(B,)`. A higher
-            score means a higher uncertainty.
+          score means a higher uncertainty.
         - :attr:`errors`: Errors of shape :math:`(B,)`.
 
         where :math:`B` is the batch size.
 
     Note:
         A higher AUSE means a lower quality of the uncertainty estimates.
-
-    References:
-        Eddy Ilg, Özgün Çiçek, Silvio Galesso, Aaron Klein, Osama Makansi,
-        Frank Hutter, and Thomas Brox. Uncertainty estimates and
-        multi-hypotheses for optical flow. In ECCV, 2018.
     """
 
     is_differentiable: bool = False
@@ -49,10 +49,22 @@ class AUSE(Metric):
         self.add_state("errors", default=[], dist_reduce_fx="cat")
 
     def update(self, scores: Tensor, errors: Tensor) -> None:
+        """Store the scores and their associated errors for later computation.
+
+        Args:
+            scores (Tensor): uncertainty scores of shape :math:`(B,)`
+            errors (Tensor): errors of shape :math:`(B,)`
+        """
         self.scores.append(scores)
         self.errors.append(errors)
 
     def compute(self) -> Tensor:
+        """Compute the Area Under the Sparsification Error curve (AUSE) based
+        on inputs passed to ``update``.
+
+        Returns:
+            Tensor: The AUSE.
+        """
         scores = dim_zero_cat(self.scores)
         errors = dim_zero_cat(self.errors)
         computed_error_rates = _rejection_rate_compute(scores, errors)
@@ -65,7 +77,19 @@ class AUSE(Metric):
 
         return torch.tensor([auc(x, y)])
 
-    def plot(self, ax: _AX_TYPE | None = None) -> _PLOT_OUT_TYPE:
+    def plot(
+        self, ax: _AX_TYPE | None = None
+    ) -> tuple[[plt.Figure | None], plt.Axes]:
+        """Plot the sparsification curve corresponding to the inputs passed to
+        ``update``, and the oracle sparsification curve.
+
+        Args:
+            ax (Axes | None, optional): An matplotlib axis object. If provided
+                will add plot to that axis. Defaults to None.
+
+        Returns:
+            tuple[[Figure | None], Axes]: Figure object and Axes object
+        """
         fig, ax = plt.subplots() if ax is None else (None, ax)
 
         # Computation of AUSEC

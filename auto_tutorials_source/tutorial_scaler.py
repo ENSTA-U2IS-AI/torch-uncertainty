@@ -27,13 +27,14 @@ In this tutorial, we will need:
 """
 
 import torch
-from torchmetrics import CalibrationError
 
 from torch_uncertainty.datamodules import CIFAR100DataModule
+from torch_uncertainty.metrics import CE
 from torch_uncertainty.models.resnet import resnet18
 from torch_uncertainty.post_processing import TemperatureScaler
 from torch_uncertainty.utils import load_hf
-from torch_uncertainty.plotting_utils import CalibrationPlot
+
+# from torch_uncertainty.plotting_utils import CalibrationPlot
 
 # %%
 # 2. Loading a model from TorchUncertainty's HF
@@ -67,7 +68,7 @@ dm.setup("test")
 dataloader = dm.test_dataloader()[0]
 
 # create the calibration plot utility
-cal_plot = CalibrationPlot()
+# cal_plot = CalibrationPlot()
 
 # %%
 # 4. Iterating on the Dataloader and Computing the ECE
@@ -91,14 +92,14 @@ cal_dataset, test_dataset, other = random_split(
 test_dataloader = DataLoader(test_dataset, batch_size=32)
 
 # Initialize the ECE
-ece = CalibrationError(task="multiclass", num_classes=100)
+ece = CE(task="multiclass", num_classes=100)
 
 # Iterate on the calibration dataloader
 for sample, target in test_dataloader:
     logits = model(sample)
     probs = logits.softmax(-1)
     ece.update(probs, target)
-    cal_plot.update(probs, target)
+    # cal_plot.update(probs, target)
 
 # Compute & print the calibration error
 cal = ece.compute()
@@ -107,7 +108,7 @@ print(f"ECE before scaling - {cal*100:.3}%.")
 # %%
 # We also compute and plot the top-label calibration figure. We see that the
 # model is not well calibrated.
-fig, ax = cal_plot.compute()
+fig, ax = ece.plot()
 fig.show()
 
 # %%
@@ -144,7 +145,7 @@ for sample, target in test_dataloader:
     logits = cal_model(sample)
     probs = logits.softmax(-1)
     ece.update(probs, target)
-    cal_plot.update(probs, target)
+    # cal_plot.update(probs, target)
 
 cal = ece.compute()
 print(f"ECE after scaling - {cal*100:.3}%.")
@@ -152,7 +153,7 @@ print(f"ECE after scaling - {cal*100:.3}%.")
 # %%
 # We finally compute and plot the scaled top-label calibration figure. We see
 # that the model is now better calibrated.
-fig, ax = cal_plot.compute()
+fig, ax = ece.plot()
 fig.show()
 
 # %%

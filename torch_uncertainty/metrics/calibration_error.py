@@ -133,17 +133,18 @@ class MulticlassCE(MulticlassCalibrationError):
 
 
 class CE:
-    r"""`Top-label Calibration Error`_.
+    r"""`Top-label Calibration Error <https://arxiv.org/pdf/1909.10155.pdf>`_.
 
-    See :class:`~torchmetrics.classification.calibration_error.CalibrationError` for
-    details. Our version of the metric is a wrapper around the original metric that
-    provides a plotting functionality.
+    See
+    `CalibrationError <https://torchmetrics.readthedocs.io/en/stable/classification/calibration_error.html>`_
+    for details. Our version of the metric is a wrapper around the original
+    metric providing a plotting functionality.
     """
 
     def __new__(  # type: ignore[misc]
         cls,
         task: Literal["binary", "multiclass"],
-        n_bins: int = 15,
+        n_bins: int = 10,
         norm: Literal["l1", "l2", "max"] = "l1",
         num_classes: int | None = None,
         ignore_index: int | None = None,
