@@ -7,22 +7,6 @@ from .scaler import Scaler
 
 
 class TemperatureScaler(Scaler):
-    """Temperature scaling post-processing for calibrated probabilities.
-
-    Args:
-        init_value (float, optional): Initial value for the temperature.
-            Defaults to 1.
-        lr (float, optional): Learning rate for the optimizer. Defaults to 0.1.
-        max_iter (int, optional): Maximum number of iterations for the
-            optimizer. Defaults to 100.
-        device (Optional[Literal["cpu", "cuda"]], optional): Device to use
-            for optimization. Defaults to None.
-
-    Reference:
-        Guo, C., Pleiss, G., Sun, Y., & Weinberger, K. Q. On calibration
-        o/gpfsdswork/projects/rech/ldr/uwv17to/torch-uncertainty/logs/vanilla-vit-in1k/version_9/checkpoints/epoch=296-step=92961.ckptf modern neural networks. In ICML 2017.
-    """
-
     def __init__(
         self,
         init_val: float = 1,
@@ -30,6 +14,21 @@ class TemperatureScaler(Scaler):
         max_iter: int = 100,
         device: Literal["cpu", "cuda"] | torch.device | None = None,
     ) -> None:
+        """Temperature scaling post-processing for calibrated probabilities.
+
+        Args:
+            init_val (float, optional): Initial value for the temperature.
+                Defaults to 1.
+            lr (float, optional): Learning rate for the optimizer. Defaults to 0.1.
+            max_iter (int, optional): Maximum number of iterations for the
+                optimizer. Defaults to 100.
+            device (Optional[Literal["cpu", "cuda"]], optional): Device to use
+                for optimization. Defaults to None.
+
+        Reference:
+            Guo, C., Pleiss, G., Sun, Y., & Weinberger, K. Q. On calibration
+            of modern neural networks. In ICML 2017.
+        """
         super().__init__(lr=lr, max_iter=max_iter, device=device)
 
         if init_val <= 0:

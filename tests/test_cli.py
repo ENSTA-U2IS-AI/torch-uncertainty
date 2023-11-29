@@ -1,4 +1,3 @@
-import os
 import sys
 from pathlib import Path
 
@@ -47,8 +46,8 @@ class TestCLI:
 
             results = cli_main(model, dm, root, "std", args)
             results_path = root / "tests" / "logs"
-            if not os.path.exists(results_path):
-                os.makedirs(results_path)
+            if not results_path.exists():
+                results_path.mkdir(parents=True)
             for dict_result in results:
                 csv_writer(
                     results_path / "results.csv",

@@ -21,8 +21,6 @@ from torch_uncertainty.routines.regression import (
 
 
 class MLP:
-    r"""MLP baseline for regression providing support for various versions."""
-
     single = ["vanilla"]
     ensemble = ["packed"]
     versions = {"vanilla": mlp, "packed": packed_mlp}
@@ -41,6 +39,7 @@ class MLP:
         gamma: int = 1,
         **kwargs,
     ) -> LightningModule:
+        r"""MLP baseline for regression providing support for various versions."""
         params = {
             "in_features": in_features,
             "num_outputs": num_outputs,

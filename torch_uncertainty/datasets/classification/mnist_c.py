@@ -1,4 +1,3 @@
-import os
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any, Literal
@@ -71,7 +70,7 @@ class MNISTC(VisionDataset):
         split: Literal["train", "test"] = "test",
         subset: str = "all",
         download: bool = False,
-    ):
+    ) -> None:
         if isinstance(root, str):
             root = Path(root)
 
@@ -122,6 +121,7 @@ class MNISTC(VisionDataset):
             root (Path):The path to the dataset.
             subset (str): The name of the corruption subset to be used. Choose
                 `all` for the dataset to contain all subsets.
+            split (str): The split to be used, either `train` or `test`.
 
         Returns:
             Tuple[np.ndarray, np.ndarray]: The samples and labels of the chosen.
@@ -147,6 +147,11 @@ class MNISTC(VisionDataset):
         return self.labels.shape[0]
 
     def __getitem__(self, index: int) -> Any:
+        """Get the samples and targets of the dataset.
+
+        Args:
+            index (int): The index of the sample to get.
+        """
         sample, target = (
             self.samples[index],
             self.labels[index],
@@ -160,7 +165,7 @@ class MNISTC(VisionDataset):
 
     def _check_integrity(self) -> bool:
         """Check the integrity of the dataset."""
-        fpath = os.path.join(self.root, self.filename)
+        fpath = self.root / self.filename
         if not check_integrity(fpath, self.zip_md5):
             return False
         return True

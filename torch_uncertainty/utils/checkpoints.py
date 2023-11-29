@@ -4,8 +4,7 @@ from pathlib import Path
 def get_version(
     root: str | Path, version: int, checkpoint: int | None = None
 ) -> tuple[Path, Path]:
-    """Find a compute the path to the checkpoint corresponding to the input
-    parameters.
+    """Find the path to the checkpoint corresponding to the version.
 
     Args:
         root (Union[str, Path]): The root of the dataset containing the
@@ -15,7 +14,7 @@ def get_version(
             to None.
 
     Raises:
-        Exception: if the checkpoint cannot be found.
+        FileNotFoundError: if the checkpoint cannot be found.
 
     Returns:
         Tuple[Path, Path]: The path to the checkpoints and to its parameters.
@@ -31,7 +30,7 @@ def get_version(
         else:
             ckpts = list(ckpt_folder.glob(f"epoch={checkpoint}-*.ckpt"))
     else:
-        raise Exception(
+        raise FileNotFoundError(
             f"The directory {root}/version_{version} does not exist."
         )
 

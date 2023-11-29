@@ -8,7 +8,7 @@ from torch_uncertainty.datamodules import UCIDataModule
 class TestUCIDataModule:
     """Testing the UCIDataModule datamodule class."""
 
-    def test_UCIRegression(self):
+    def test_uci_regression(self):
         parser = ArgumentParser()
         parser = UCIDataModule.add_argparse_args(parser)
 

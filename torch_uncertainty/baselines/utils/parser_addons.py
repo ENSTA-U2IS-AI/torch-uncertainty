@@ -2,6 +2,16 @@ from argparse import ArgumentParser
 
 
 def add_resnet_specific_args(parser: ArgumentParser) -> ArgumentParser:
+    """Add ResNet specific arguments to parser.
+
+    Args:
+        parser (ArgumentParser): Argument parser.
+
+    Adds the following arguments:
+        --arch (int): Architecture of ResNet. Choose among: [18, 34, 50, 101, 152]
+        --dropout_rate (float): Dropout rate.
+        --groups (int): Number of groups.
+    """
     # style_choices = ["cifar", "imagenet", "robust"]
     archs = [18, 34, 50, 101, 152]
     parser.add_argument(

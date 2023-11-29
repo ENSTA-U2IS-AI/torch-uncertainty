@@ -7,7 +7,7 @@ from torch import nn
 from torch_uncertainty.transforms import Shear, Translate, augmentations
 
 
-def get_ab(beta):
+def get_ab(beta: float) -> tuple[float, float]:
     if np.random.random() < 0.5:
         a = np.float32(np.random.beta(beta, 1))
         b = np.float32(np.random.beta(1, beta))
@@ -36,19 +36,6 @@ mixings = [add, multiply]
 
 
 class PixMix(nn.Module):
-    """PixMix augmentation class.
-
-    Args:
-        mixing_set (MixingSet): Dataset to be mixed with.
-        mixing_iterations (int): Number of mixing iterations.
-        mixing_severity (float): Severity of mixing.
-        all_ops (bool): Whether to use augmentations included in ImageNet-C.
-            Defaults to True.
-
-    Note:
-        Default arguments are set to follow original guidelines.
-    """
-
     def __init__(
         self,
         mixing_set,
@@ -56,7 +43,20 @@ class PixMix(nn.Module):
         augmentation_severity: float = 3,
         mixing_severity: float = 3,
         all_ops: bool = True,
-    ):
+    ) -> None:
+        """PixMix augmentation class.
+
+        Args:
+            mixing_set (MixingSet): Dataset to be mixed with.
+            mixing_iterations (int): Number of mixing iterations.
+            augmentation_severity (float): Severity of augmentation.
+            mixing_severity (float): Severity of mixing.
+            all_ops (bool): Whether to use augmentations included in ImageNet-C.
+                Defaults to True.
+
+        Note:
+            Default arguments are set to follow original guidelines.
+        """
         super().__init__()
         self.mixing_set = mixing_set
         self.num_mixing_images = len(mixing_set)

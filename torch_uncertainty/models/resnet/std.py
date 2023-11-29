@@ -184,15 +184,6 @@ class Bottleneck(nn.Module):
 
 
 class _ResNet(nn.Module):
-    """ResNet from `Deep Residual Learning for Image Recognition`.
-
-    Note:
-        if `dropout_rate` and `num_estimators` are set, the model will sample
-        from the dropout distribution during inference. If `last_layer_dropout`
-        is set, only the last layer will be sampled from the dropout
-        distribution during inference.
-    """
-
     def __init__(
         self,
         block: type[BasicBlock | Bottleneck],
@@ -205,11 +196,20 @@ class _ResNet(nn.Module):
         num_estimators: int | None = None,
         last_layer_dropout: bool = False,
     ) -> None:
+        """ResNet from `Deep Residual Learning for Image Recognition`.
+
+        Note:
+            if `dropout_rate` and `num_estimators` are set, the model will sample
+            from the dropout distribution during inference. If `last_layer_dropout`
+            is set, only the last layer will be sampled from the dropout
+            distribution during inference.
+        """
         super().__init__()
 
         self.in_planes = 64
         block_planes = self.in_planes
         self.num_estimators = num_estimators
+        self.dropout_rate = dropout_rate
         self.last_layer_dropout = last_layer_dropout
 
         if style == "imagenet":
@@ -331,7 +331,12 @@ class _ResNet(nn.Module):
         return self.flatten(out)
 
     def handle_dropout(self, x: Tensor) -> Tensor:
-        if self.num_estimators is not None and not self.training:
+        if (
+            self.dropout_rate is not None
+            and self.dropout_rate > 0
+            and self.num_estimators is not None
+            and not self.training
+        ):
             if self.last_layer_dropout is not None:
                 toggle_dropout(self, self.last_layer_dropout)
             x = x.repeat(self.num_estimators, 1, 1, 1)

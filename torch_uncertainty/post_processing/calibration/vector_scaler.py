@@ -7,26 +7,6 @@ from .scaler import Scaler
 
 
 class VectorScaler(Scaler):
-    """Vector scaling post-processing for calibrated probabilities.
-
-    Args:
-        num_classes (int): Number of classes.
-        init_w (float, optional): Initial value for the weights.
-            Defaults to 1.
-        init_b (float, optional): Initial value for the bias.
-            Defaults to 0.
-        lr (float, optional): Learning rate for the optimizer. Defaults to 0.1.
-        max_iter (int, optional): Maximum number of iterations for the
-            optimizer. Defaults to 100.
-        device (Optional[Literal["cpu", "cuda"]], optional): Device to use
-            for optimization. Defaults to None.
-
-    Reference:
-        Guo, C., Pleiss, G., Sun, Y., & Weinberger, K. Q. On calibration
-        of modern neural networks. In ICML 2017.
-
-    """
-
     def __init__(
         self,
         num_classes: int,
@@ -36,10 +16,29 @@ class VectorScaler(Scaler):
         max_iter: int = 200,
         device: Literal["cpu", "cuda"] | torch.device | None = None,
     ) -> None:
+        """Vector scaling post-processing for calibrated probabilities.
+
+        Args:
+            num_classes (int): Number of classes.
+            init_w (float, optional): Initial value for the weights.
+                Defaults to 1.
+            init_b (float, optional): Initial value for the bias.
+                Defaults to 0.
+            lr (float, optional): Learning rate for the optimizer. Defaults to 0.1.
+            max_iter (int, optional): Maximum number of iterations for the
+                optimizer. Defaults to 100.
+            device (Optional[Literal["cpu", "cuda"]], optional): Device to use
+                for optimization. Defaults to None.
+
+        Reference:
+            Guo, C., Pleiss, G., Sun, Y., & Weinberger, K. Q. On calibration
+            of modern neural networks. In ICML 2017.
+
+        """
         super().__init__(lr=lr, max_iter=max_iter, device=device)
 
         if not isinstance(num_classes, int):
-            raise ValueError("num_classes must be an integer.")
+            raise TypeError("num_classes must be an integer.")
         if num_classes <= 0:
             raise ValueError("The number of classes must be positive.")
         self.num_classes = num_classes

@@ -1,4 +1,3 @@
-import os
 from collections.abc import Callable
 from pathlib import Path
 
@@ -70,7 +69,7 @@ class TinyImageNetC(ImageFolder):
         subset: str = "all",
         severity: int = 1,
         download: bool = False,
-    ):
+    ) -> None:
         if isinstance(root, str):
             root = Path(root)
 
@@ -144,11 +143,13 @@ class TinyImageNetC(ImageFolder):
 
     def _check_integrity(self) -> bool:
         """Check the integrity of the dataset."""
-        for filename, md5 in list(zip(self.filename, self.tgz_md5)):
+        for filename, md5 in list(
+            zip(self.filename, self.tgz_md5, strict=True)
+        ):
             if "extra" in filename:
-                fpath = os.path.join(self.root, "Tiny-ImageNet-C", filename)
+                fpath = self.root / "Tiny-ImageNet-C" / filename
             else:
-                fpath = os.path.join(self.root, filename)
+                fpath = self.root / filename
             if not check_integrity(fpath, md5):
                 return False
         return True
@@ -158,7 +159,9 @@ class TinyImageNetC(ImageFolder):
         if self._check_integrity():
             print("Files already downloaded and verified.")
             return
-        for filename, md5 in list(zip(self.filename, self.tgz_md5)):
+        for filename, md5 in list(
+            zip(self.filename, self.tgz_md5, strict=True)
+        ):
             if "extra" in filename:
                 download_and_extract_archive(
                     self.url + filename,

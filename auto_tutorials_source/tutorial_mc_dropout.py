@@ -78,7 +78,7 @@ with ArgvContext(
 ):
     args = init_args(network=ResNet, datamodule=MNISTDataModule)
 
-net_name = "mc-dropout-lenet-mnist"
+net_name = "logs/mc-dropout-lenet-mnist"
 
 # datamodule
 args.root = str(root / "data")

@@ -127,6 +127,16 @@ For Mixup, consider citing:
 * Authors: *Hongyi Zhang, Moustapha Cisse, Yann N. Dauphin, and David Lopez-Paz*
 * Paper: `ICLR 2018 <https://arxiv.org/pdf/1710.09412.pdf>`__.
 
+RegMixup
+^^^^^^^^
+
+For RegMixup, consider citing:
+
+**RegMixup: Mixup as a Regularizer Can Surprisingly Improve Accuracy and Out Distribution Robustness**
+
+* Authors: *Francesco Pinto, Harry Yang, Ser-Nam Lim, Philip H.S. Torr, Puneet K. Dokania*
+* Paper: `NeurIPS 2022 <https://arxiv.org/abs/2206.14502>`__.
+
 MixupIO
 ^^^^^^^
 

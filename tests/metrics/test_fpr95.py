@@ -4,32 +4,32 @@ import torch
 from torch_uncertainty.metrics import FPR95
 
 
-@pytest.fixture
+@pytest.fixture()
 def confs_zero() -> torch.Tensor:
     return torch.as_tensor([1] * 99 + [0.99])
 
 
-@pytest.fixture
+@pytest.fixture()
 def target_zero() -> torch.Tensor:
     return torch.as_tensor([1] * 99 + [0])
 
 
-@pytest.fixture
+@pytest.fixture()
 def confs_half() -> torch.Tensor:
     return torch.as_tensor([0.9] * 100 + [0.95] * 50 + [0.85] * 50)
 
 
-@pytest.fixture
+@pytest.fixture()
 def target_half() -> torch.Tensor:
     return torch.as_tensor([1] * 100 + [0] * 100)
 
 
-@pytest.fixture
+@pytest.fixture()
 def confs_one() -> torch.Tensor:
     return torch.as_tensor([0.99] * 99 + [1])
 
 
-@pytest.fixture
+@pytest.fixture()
 def target_one() -> torch.Tensor:
     return torch.as_tensor([1] * 99 + [0])
 

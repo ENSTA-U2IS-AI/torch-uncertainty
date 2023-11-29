@@ -5,7 +5,7 @@ from torch_uncertainty.transforms import Mixup, MixupIO, RegMixup, WarpingMixup
 from torch_uncertainty.transforms.mixup import AbstractMixup
 
 
-@pytest.fixture
+@pytest.fixture()
 def batch_input() -> tuple[torch.Tensor, torch.Tensor]:
     imgs = torch.rand(2, 3, 28, 28)
     return imgs, torch.tensor([0, 1])

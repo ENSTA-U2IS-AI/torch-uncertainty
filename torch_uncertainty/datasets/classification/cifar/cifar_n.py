@@ -1,5 +1,5 @@
-import os
 from collections.abc import Callable
+from pathlib import Path
 from typing import Any, Literal
 
 import torch
@@ -55,6 +55,7 @@ class CIFAR10N(CIFAR10):
             target_transform=target_transform,
             download=download,
         )
+        self.root = Path(self.root)
 
         if download:
             self.download_n()
@@ -65,13 +66,11 @@ class CIFAR10N(CIFAR10):
                 "download it."
             )
 
-        self.targets = list(
-            torch.load(os.path.join(self.root, self.filename))[file_arg]
-        )
+        self.targets = list(torch.load(self.root / self.filename)[file_arg])
 
     def _check_specific_integrity(self) -> bool:
         filename, md5 = self.n_test_list
-        fpath = os.path.join(self.root, filename)
+        fpath = self.root / filename
         if not check_integrity(fpath, md5):
             return False
         return True
@@ -110,6 +109,7 @@ class CIFAR100N(CIFAR100):
             target_transform=target_transform,
             download=download,
         )
+        self.root = Path(self.root)
 
         if download:
             self.download_n()
@@ -120,13 +120,11 @@ class CIFAR100N(CIFAR100):
                 "download it."
             )
 
-        self.targets = list(
-            torch.load(os.path.join(self.root, self.filename))[file_arg]
-        )
+        self.targets = list(torch.load(self.root / self.filename)[file_arg])
 
     def _check_specific_integrity(self) -> bool:
         filename, md5 = self.n_test_list
-        fpath = os.path.join(self.root, filename)
+        fpath = self.root / filename
         if not check_integrity(fpath, md5):
             return False
         return True

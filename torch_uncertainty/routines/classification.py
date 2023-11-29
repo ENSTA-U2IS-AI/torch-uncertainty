@@ -35,34 +35,13 @@ from torch_uncertainty.transforms import Mixup, MixupIO, RegMixup, WarpingMixup
 
 
 class ClassificationSingle(pl.LightningModule):
-    """Classification routine for single models.
-
-    Args:
-        evaluate_ood (bool, optional): Indicates whether to evaluate the OOD
-            detection performance or not. Defaults to ``False``.
-        use_entropy (bool, optional): Indicates whether to use the entropy
-            values as the OOD criterion or not. Defaults to ``False``.
-        use_logits (bool, optional): Indicates whether to use the logits as the
-            OOD criterion or not. Defaults to ``False``.
-        log_plots (bool, optional): Indicates whether to log plots from
-            metrics. Defaults to ``False``.
-
-    Note:
-        The default OOD criterion is the softmax confidence score.
-
-    Warning:
-        Make sure at most only one of :attr:`use_entropy` and :attr:`use_logits`
-        attributes is set to ``True``. Otherwise a :class:`ValueError()` will
-        be raised.
-    """
-
     def __init__(
         self,
         num_classes: int,
         model: nn.Module,
         loss: type[nn.Module],
         optimization_procedure: Any,
-        format_batch_fn: nn.Module = nn.Identity(),
+        format_batch_fn: nn.Module | None = None,
         mixtype: str = "erm",
         mixmode: str = "elem",
         dist_sim: str = "emb",
@@ -77,7 +56,49 @@ class ClassificationSingle(pl.LightningModule):
         calibration_set: Callable | None = None,
         **kwargs,
     ) -> None:
+        """Classification routine for single models.
+
+        Args:
+            num_classes (int): Number of classes.
+            model (nn.Module): Model to train.
+            loss (type[nn.Module]): Loss function.
+            optimization_procedure (Any): Optimization procedure.
+            format_batch_fn (nn.Module, optional): Function to format the batch.
+                Defaults to :class:`torch.nn.Identity()`.
+            mixtype (str, optional): Mixup type. Defaults to ``"erm"``.
+            mixmode (str, optional): Mixup mode. Defaults to ``"elem"``.
+            dist_sim (str, optional): Distance similarity. Defaults to ``"emb"``.
+            kernel_tau_max (float, optional): Maximum value for the kernel tau.
+                Defaults to 1.0.
+            kernel_tau_std (float, optional): Standard deviation for the kernel tau.
+                Defaults to 0.5.
+            mixup_alpha (float, optional): Alpha parameter for Mixup. Defaults to 0.
+            cutmix_alpha (float, optional): Alpha parameter for Cutmix.
+                Defaults to 0.
+            evaluate_ood (bool, optional): Indicates whether to evaluate the OOD
+                detection performance or not. Defaults to ``False``.
+            use_entropy (bool, optional): Indicates whether to use the entropy
+                values as the OOD criterion or not. Defaults to ``False``.
+            use_logits (bool, optional): Indicates whether to use the logits as the
+                OOD criterion or not. Defaults to ``False``.
+            log_plots (bool, optional): Indicates whether to log plots from
+                metrics. Defaults to ``False``.
+            calibration_set (Callable, optional): Function to get the calibration
+                set. Defaults to ``None``.
+            kwargs (Any): Additional arguments.
+
+        Note:
+            The default OOD criterion is the softmax confidence score.
+
+        Warning:
+            Make sure at most only one of :attr:`use_entropy` and :attr:`use_logits`
+            attributes is set to ``True``. Otherwise a :class:`ValueError()` will
+            be raised.
+        """
         super().__init__()
+
+        if format_batch_fn is None:
+            format_batch_fn = nn.Identity()
 
         self.save_hyperparameters(
             ignore=[
@@ -187,8 +208,8 @@ class ClassificationSingle(pl.LightningModule):
             self.loss = partial(self.loss, model=self.model)
         return self.loss()
 
-    def forward(self, input: Tensor) -> Tensor:
-        return self.model.forward(input)
+    def forward(self, inputs: Tensor) -> Tensor:
+        return self.model.forward(inputs)
 
     def on_train_start(self) -> None:
         # hyperparameters for performances
@@ -432,23 +453,33 @@ class ClassificationSingle(pl.LightningModule):
     ) -> ArgumentParser:
         """Defines the routine's attributes via command-line options.
 
+        Args:
+            parent_parser (ArgumentParser): Parent parser to be completed.
+
         Adds:
-        - ``--mixup``: sets :attr:`mixup_alpha` for Mixup
-        - ``--cutmix``: sets :attr:`cutmix_alpha` for Cutmix
         - ``--entropy``: sets :attr:`use_entropy` to ``True``.
         - ``--logits``: sets :attr:`use_logits` to ``True``.
+        - ``--mixup_alpha``: sets :attr:`mixup_alpha` for Mixup
+        - ``--cutmix_alpha``: sets :attr:`cutmix_alpha` for Cutmix
+        - ``--mixtype``: sets :attr:`mixtype` for Mixup
+        - ``--mixmode``: sets :attr:`mixmode` for Mixup
+        - ``--dist_sim``: sets :attr:`dist_sim` for Mixup
+        - ``--kernel_tau_max``: sets :attr:`kernel_tau_max` for Mixup
+        - ``--kernel_tau_std``: sets :attr:`kernel_tau_std` for Mixup
         """
-        parent_parser.add_argument(
-            "--mixup_alpha", dest="mixup_alpha", type=float, default=0
-        )
-        parent_parser.add_argument(
-            "--cutmix_alpha", dest="cutmix_alpha", type=float, default=0
-        )
         parent_parser.add_argument(
             "--entropy", dest="use_entropy", action="store_true"
         )
         parent_parser.add_argument(
             "--logits", dest="use_logits", action="store_true"
+        )
+
+        # Mixup args
+        parent_parser.add_argument(
+            "--mixup_alpha", dest="mixup_alpha", type=float, default=0
+        )
+        parent_parser.add_argument(
+            "--cutmix_alpha", dest="cutmix_alpha", type=float, default=0
         )
         parent_parser.add_argument(
             "--mixtype", dest="mixtype", type=str, default="erm"
@@ -465,36 +496,10 @@ class ClassificationSingle(pl.LightningModule):
         parent_parser.add_argument(
             "--kernel_tau_std", dest="kernel_tau_std", type=float, default=0.5
         )
-
         return parent_parser
 
 
 class ClassificationEnsemble(ClassificationSingle):
-    """Classification routine for ensemble models.
-
-    Args:
-        evaluate_ood (bool, optional): Indicates whether to evaluate the OOD
-            detection performance or not. Defaults to ``False``.
-        use_entropy (bool, optional): Indicates whether to use the entropy
-            values as the OOD criterion or not. Defaults to ``False``.
-        use_logits (bool, optional): Indicates whether to use the logits as the
-            OOD criterion or not. Defaults to ``False``.
-        use_mi (bool, optional): Indicates whether to use the mutual
-            information as the OOD criterion or not. Defaults to ``False``.
-        use_variation_ratio (bool, optional): Indicates whether to use the
-            variation ratio as the OOD criterion or not. Defaults to ``False``.
-        log_plots (bool, optional): Indicates whether to log plots from
-            metrics. Defaults to ``False``.
-
-    Note:
-        The default OOD criterion is the averaged softmax confidence score.
-
-    Warning:
-        Make sure at most only one of :attr:`use_entropy`, :attr:`use_logits`
-        , :attr:`use_mi`, and :attr:`use_variation_ratio` attributes is set to
-        ``True``. Otherwise a :class:`ValueError()` will be raised.
-    """
-
     def __init__(
         self,
         num_classes: int,
@@ -502,7 +507,12 @@ class ClassificationEnsemble(ClassificationSingle):
         loss: type[nn.Module],
         optimization_procedure: Any,
         num_estimators: int,
-        format_batch_fn: nn.Module = nn.Identity(),
+        format_batch_fn: nn.Module | None = None,
+        mixtype: str = "erm",
+        mixmode: str = "elem",
+        dist_sim: str = "emb",
+        kernel_tau_max: float = 1.0,
+        kernel_tau_std: float = 0.5,
         mixup_alpha: float = 0,
         cutmix_alpha: float = 0,
         evaluate_ood: bool = False,
@@ -513,12 +523,61 @@ class ClassificationEnsemble(ClassificationSingle):
         log_plots: bool = False,
         **kwargs,
     ) -> None:
+        """Classification routine for ensemble models.
+
+        Args:
+            num_classes (int): Number of classes.
+            model (nn.Module): Model to train.
+            loss (type[nn.Module]): Loss function.
+            optimization_procedure (Any): Optimization procedure.
+            num_estimators (int): Number of estimators in the ensemble.
+            format_batch_fn (nn.Module, optional): Function to format the batch.
+                Defaults to :class:`torch.nn.Identity()`.
+            mixtype (str, optional): Mixup type. Defaults to ``"erm"``.
+            mixmode (str, optional): Mixup mode. Defaults to ``"elem"``.
+            dist_sim (str, optional): Distance similarity. Defaults to ``"emb"``.
+            kernel_tau_max (float, optional): Maximum value for the kernel tau.
+                Defaults to 1.0.
+            kernel_tau_std (float, optional): Standard deviation for the kernel tau.
+                Defaults to 0.5.
+            mixup_alpha (float, optional): Alpha parameter for Mixup. Defaults to 0.
+            cutmix_alpha (float, optional): Alpha parameter for Cutmix.
+                Defaults to 0.
+            evaluate_ood (bool, optional): Indicates whether to evaluate the OOD
+                detection performance or not. Defaults to ``False``.
+            use_entropy (bool, optional): Indicates whether to use the entropy
+                values as the OOD criterion or not. Defaults to ``False``.
+            use_logits (bool, optional): Indicates whether to use the logits as the
+                OOD criterion or not. Defaults to ``False``.
+            use_mi (bool, optional): Indicates whether to use the mutual
+                information as the OOD criterion or not. Defaults to ``False``.
+            use_variation_ratio (bool, optional): Indicates whether to use the
+                variation ratio as the OOD criterion or not. Defaults to ``False``.
+            log_plots (bool, optional): Indicates whether to log plots from
+                metrics. Defaults to ``False``.
+            calibration_set (Callable, optional): Function to get the calibration
+                set. Defaults to ``None``.
+            kwargs (Any): Additional arguments.
+
+        Note:
+            The default OOD criterion is the averaged softmax confidence score.
+
+        Warning:
+            Make sure at most only one of :attr:`use_entropy`, :attr:`use_logits`
+            , :attr:`use_mi`, and :attr:`use_variation_ratio` attributes is set to
+            ``True``. Otherwise a :class:`ValueError()` will be raised.
+        """
         super().__init__(
             num_classes=num_classes,
             model=model,
             loss=loss,
             optimization_procedure=optimization_procedure,
             format_batch_fn=format_batch_fn,
+            mixtype=mixtype,
+            mixmode=mixmode,
+            dist_sim=dist_sim,
+            kernel_tau_max=kernel_tau_max,
+            kernel_tau_std=kernel_tau_std,
             mixup_alpha=mixup_alpha,
             cutmix_alpha=cutmix_alpha,
             evaluate_ood=evaluate_ood,
