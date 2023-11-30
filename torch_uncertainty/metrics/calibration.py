@@ -169,4 +169,4 @@ class CE:
                     f"`num_classes` is expected to be `int` but `{type(num_classes)} was passed.`"
                 )
             return MulticlassCE(num_classes, **kwargs)
-        raise ValueError(f"Not handled value: {task}")
+        raise ValueError(f"Not handled value: {task}")  # coverage: ignore

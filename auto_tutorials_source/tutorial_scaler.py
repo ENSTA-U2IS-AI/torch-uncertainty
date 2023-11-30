@@ -34,8 +34,6 @@ from torch_uncertainty.models.resnet import resnet18
 from torch_uncertainty.post_processing import TemperatureScaler
 from torch_uncertainty.utils import load_hf
 
-# from torch_uncertainty.plotting_utils import CalibrationPlot
-
 # %%
 # 2. Loading a model from TorchUncertainty's HF
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -67,8 +65,6 @@ dm.setup("test")
 # Get the full test dataloader (unused in this tutorial)
 dataloader = dm.test_dataloader()[0]
 
-# create the calibration plot utility
-# cal_plot = CalibrationPlot()
 
 # %%
 # 4. Iterating on the Dataloader and Computing the ECE
@@ -99,7 +95,6 @@ for sample, target in test_dataloader:
     logits = model(sample)
     probs = logits.softmax(-1)
     ece.update(probs, target)
-    # cal_plot.update(probs, target)
 
 # Compute & print the calibration error
 cal = ece.compute()
@@ -145,7 +140,6 @@ for sample, target in test_dataloader:
     logits = cal_model(sample)
     probs = logits.softmax(-1)
     ece.update(probs, target)
-    # cal_plot.update(probs, target)
 
 cal = ece.compute()
 print(f"ECE after scaling - {cal*100:.3}%.")

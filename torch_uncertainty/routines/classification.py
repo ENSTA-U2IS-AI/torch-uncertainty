@@ -186,9 +186,6 @@ class ClassificationSingle(pl.LightningModule):
             mixup_alpha, cutmix_alpha, kernel_tau_max, kernel_tau_std
         )
 
-        # FIXME: to remove
-        # self.cal_plot = CalibrationPlot()
-
         # Handle ELBO special cases
         self.is_elbo = (
             isinstance(self.loss, partial) and self.loss.func == ELBOLoss
