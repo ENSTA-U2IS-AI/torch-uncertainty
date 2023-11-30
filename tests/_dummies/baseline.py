@@ -40,6 +40,7 @@ class DummyClassificationBaseline:
                 loss=loss,
                 optimization_procedure=optimization_procedure,
                 format_batch_fn=nn.Identity(),
+                log_plots=True,
                 **kwargs,
             )
         # baseline_type == "ensemble":
@@ -50,6 +51,7 @@ class DummyClassificationBaseline:
             loss=loss,
             optimization_procedure=optimization_procedure,
             format_batch_fn=RepeatTarget(2),
+            log_plots=True,
             **kwargs,
         )
 

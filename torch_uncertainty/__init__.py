@@ -128,7 +128,7 @@ def cli_main(
         else:
             network = network.to(memory_format=torch.channels_last)
 
-    if args.use_cv:
+    if hasattr(args, "use_cv") and args.use_cv:
         test_values = []
         for i in range(len(datamodule)):
             print(
