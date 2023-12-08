@@ -1,7 +1,8 @@
+import json
 import shutil
 from collections.abc import Callable
 from pathlib import Path
-from typing import NamedTuple
+from typing import Literal, NamedTuple
 
 from PIL import Image
 from torchvision import tv_tensors
@@ -42,11 +43,17 @@ class CamVid(VisionDataset):
         "label": "LabeledApproved_full.zip",
     }
     base_folder = "camvid"
-    num_samples = 701
+    num_samples = {
+        "train": 367,
+        "val": 101,
+        "test": 233,
+        "all": 701,
+    }
 
     def __init__(
         self,
         root: str,
+        split: Literal["train", "val", "test"] | None = None,
         transforms: Callable | None = None,
         download: bool = False,
     ) -> None:
@@ -55,6 +62,8 @@ class CamVid(VisionDataset):
         Args:
             root (str): Root directory of dataset where ``camvid/`` exists or
                 will be saved to if download is set to ``True``.
+            split (str, optional): The dataset split, supports ``train``,
+                ``val`` and ``test``. Default: ``None``.
             transforms (callable, optional): A function/transform that takes
                 input sample and its target as entry and returns a transformed
                 version.
@@ -62,6 +71,12 @@ class CamVid(VisionDataset):
                 internet and puts it in root directory. If dataset is already
                 downloaded, it is not downloaded again.
         """
+        if split not in ["train", "val", "test", None]:
+            raise ValueError(
+                f"Unknown split '{split}'. "
+                "Supported splits are ['train', 'val', 'test', None]"
+            )
+
         super().__init__(root, transforms, None, None)
 
         if download:
@@ -73,10 +88,38 @@ class CamVid(VisionDataset):
                 "You can use download=True to download it"
             )
 
-        self.images = sorted((Path(self.root) / "camvid" / "raw").glob("*.png"))
-        self.targets = sorted(
-            (Path(self.root) / "camvid" / "label").glob("*.png")
-        )
+        # get filenames for split
+        if split is None:
+            self.images = sorted(
+                (Path(self.root) / "camvid" / "raw").glob("*.png")
+            )
+            self.targets = sorted(
+                (Path(self.root) / "camvid" / "label").glob("*.png")
+            )
+        else:
+            with (Path(__file__).parent / "camvid_splits.json").open() as f:
+                filenames = json.load(f)[split]
+
+            self.images = sorted(
+                [
+                    path
+                    for path in (Path(self.root) / "camvid" / "raw").glob(
+                        "*.png"
+                    )
+                    if path.stem in filenames
+                ]
+            )
+            self.targets = sorted(
+                [
+                    path
+                    for path in (Path(self.root) / "camvid" / "label").glob(
+                        "*.png"
+                    )
+                    if path.stem in filenames
+                ]
+            )
+
+        self.split = split if split is not None else "all"
 
     def __getitem__(self, index: int) -> tuple:
         """Get image and target at index.
@@ -97,18 +140,18 @@ class CamVid(VisionDataset):
 
     def __len__(self) -> int:
         """Return the number of samples."""
-        return self.num_samples
+        return self.num_samples[self.split]
 
     def _check_integrity(self) -> bool:
         """Check if the dataset exists."""
         if (
             len(list((Path(self.root) / "camvid" / "raw").glob("*.png")))
-            != self.num_samples
+            != self.num_samples["all"]
         ):
             return False
         if (
             len(list((Path(self.root) / "camvid" / "label").glob("*.png")))
-            != self.num_samples
+            != self.num_samples["all"]
         ):
             return False
         return True
@@ -140,5 +183,5 @@ class CamVid(VisionDataset):
 
 
 if __name__ == "__main__":
-    dataset = CamVid("data", download=True)
+    dataset = CamVid("data", split=None, download=True)
     print(dataset)
