@@ -191,7 +191,9 @@ Metrics
     :nosignatures:
     :template: class.rst
 
+    AUSE
     BrierScore
+    CE
     Disagreement
     Entropy
     MutualInformation
@@ -223,7 +225,7 @@ Post-Processing Methods
 .. autosummary::
     :toctree: generated/
     :nosignatures:
-    :template: class.rst
+    :template: class_inherited.rst
 
     TemperatureScaler
     VectorScaler
