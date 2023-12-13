@@ -33,8 +33,8 @@ from torch_uncertainty.transforms import RepeatTarget
 
 
 class VGG:
-    single = ["vanilla"]
-    ensemble = ["mc-dropout", "packed"]
+    single = ["vanilla", "mc-dropout"]
+    ensemble = ["packed"]
     versions = {
         "vanilla": [vgg11, vgg13, vgg16, vgg19],
         "mc-dropout": [vgg11, vgg13, vgg16, vgg19],

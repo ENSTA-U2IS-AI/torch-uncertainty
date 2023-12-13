@@ -78,6 +78,7 @@ class _WideResNet(nn.Module):
     ) -> None:
         super().__init__()
         self.in_planes = 16
+        self.dropout_rate = dropout_rate
 
         if (depth - 4) % 6 != 0:
             raise ValueError("Wide-resnet depth should be 6n+4.")

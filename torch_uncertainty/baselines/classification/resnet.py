@@ -52,8 +52,8 @@ from torch_uncertainty.transforms import MIMOBatchFormat, RepeatTarget
 
 
 class ResNet:
-    single = ["vanilla"]
-    ensemble = ["packed", "batched", "masked", "mimo", "mc-dropout"]
+    single = ["vanilla", "mc-dropout"]
+    ensemble = ["packed", "batched", "masked", "mimo"]
     versions = {
         "vanilla": [resnet18, resnet34, resnet50, resnet101, resnet152],
         "packed": [

@@ -27,6 +27,7 @@ class VGG(nn.Module):
         self.conv2d_layer = conv2d_layer
         self.norm = norm
         self.groups = groups
+        self.dropout_rate = dropout_rate
 
         if self.conv2d_layer == PackedConv2d:
             self.num_estimators = model_kwargs.get("num_estimators")

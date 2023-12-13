@@ -12,11 +12,9 @@ class _MCDropout(nn.Module):
             raise ValueError("dropout_rate must be set to use MC Dropout")
         if model.dropout_rate <= 0:
             raise ValueError("dropout_rate must be positive to use MC Dropout")
-        if model.num_estimators is None:
-            raise ValueError("num_estimators must be set to use MC Dropout")
-        if model.num_estimators <= 0:
+        if num_passes <= 0:
             raise ValueError(
-                "num_estimators must be positive to use MC Dropout"
+                "num_passes must be strictly positive to use MC Dropout"
             )
 
         self.model = model
@@ -25,7 +23,7 @@ class _MCDropout(nn.Module):
         self.filtered_modules = filter(
             lambda m: isinstance(m, nn.Dropout), model.modules()
         )
-        if model.last_layer_dropout:
+        if last_layer:
             self.filtered_modules = list(self.filtered_modules)[-1:]
 
     def train(self: nn.Module, mode: bool = True) -> nn.Module:
@@ -43,7 +41,7 @@ class _MCDropout(nn.Module):
         x: Tensor,
     ) -> tuple[Tensor, Tensor]:
         if not self.training:
-            x = x.repeat(self.model.num_estimators, 1, 1, 1)
+            x = x.repeat(self.num_passes, 1, 1, 1)
         return self.model(x)
 
 
