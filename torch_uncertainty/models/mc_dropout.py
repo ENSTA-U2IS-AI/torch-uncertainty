@@ -5,6 +5,21 @@ class _MCDropout(nn.Module):
     def __init__(
         self, model: nn.Module, num_estimators: int, last_layer: bool
     ) -> None:
+        """MC Dropout wrapper for a model.
+
+        Args:
+            model (nn.Module): model to wrap
+            num_estimators (int): number of estimators to use
+            last_layer (bool): whether to apply dropout to the last layer.
+
+        Warning:
+            The underlying models must have a `dropout_rate` attribute.
+
+        Warning:
+            For the `last-layer` option to work properly, the model must
+            declare the last dropout at the end of the initialization
+            (i.e. after all the other dropout layers).
+        """
         super().__init__()
         self.last_layer = last_layer
 
@@ -28,7 +43,14 @@ class _MCDropout(nn.Module):
         if last_layer:
             self.filtered_modules = list(self.filtered_modules)[-1:]
 
-    def train(self: nn.Module, mode: bool = True) -> nn.Module:
+    def train(self, mode: bool = True) -> nn.Module:
+        """Override the default train method to set the training mode of
+        each submodule to be the same as the module itself.
+
+        Args:
+            mode (bool, optional): whether to set the module to training
+                mode. Defaults to True.
+        """
         if not isinstance(mode, bool):  # coverage: ignore
             raise TypeError("training mode is expected to be boolean")
         self.training = mode
@@ -50,6 +72,14 @@ class _MCDropout(nn.Module):
 def mc_dropout(
     model: nn.Module, num_estimators: int, last_layer: bool = False
 ) -> _MCDropout:
+    """MC Dropout wrapper for a model.
+
+    Args:
+        model (nn.Module): model to wrap
+        num_estimators (int): number of estimators to use
+        last_layer (bool, optional): whether to apply dropout to the last
+            layer. Defaults to False.
+    """
     return _MCDropout(
         model=model, num_estimators=num_estimators, last_layer=last_layer
     )
