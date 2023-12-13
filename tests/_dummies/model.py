@@ -12,8 +12,10 @@ class _Dummy(nn.Module):
         in_channels: int,
         num_classes: int,
         num_estimators: int,
+        dropout_rate: float,
     ) -> None:
         super().__init__()
+        self.dropout_rate = dropout_rate
 
         self.linear = nn.Linear(
             1,
@@ -37,6 +39,7 @@ def dummy_model(
     in_channels: int,
     num_classes: int,
     num_estimators: int,
+    dropout_rate: float = 0.0,
 ) -> _Dummy:
     """Dummy model for testing purposes.
 
@@ -44,6 +47,7 @@ def dummy_model(
         in_channels (int): Number of input channels.
         num_classes (int): Number of output classes.
         num_estimators (int): Number of estimators in the ensemble.
+        dropout_rate (float, optional): Dropout rate. Defaults to 0.0.
 
     Returns:
         _Dummy: Dummy model.
@@ -52,4 +56,5 @@ def dummy_model(
         in_channels=in_channels,
         num_classes=num_classes,
         num_estimators=num_estimators,
+        dropout_rate=dropout_rate,
     )

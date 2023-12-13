@@ -149,7 +149,7 @@ class VGG:
 
         model = cls.versions[version][cls.archs.index(arch)](**params)
         if version == "mc-dropout":
-            model = mc_dropout(model=model, num_passes=num_estimators)
+            model = mc_dropout(model=model, num_estimators=num_estimators)
 
         kwargs.update(params | {"version": version, "arch": arch})
         # routine specific parameters

@@ -183,7 +183,7 @@ class WideResNet:
 
         model = cls.versions[version][0](**params)
         if version == "mc-dropout":
-            model = mc_dropout(model=model, num_passes=num_estimators)
+            model = mc_dropout(model=model, num_estimators=num_estimators)
         kwargs.update(params | {"version": version})
         # routine specific parameters
         if version in cls.single:
