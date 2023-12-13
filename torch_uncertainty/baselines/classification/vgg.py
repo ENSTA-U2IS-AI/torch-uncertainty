@@ -11,6 +11,7 @@ from pytorch_lightning.core.saving import (
 from torch import nn
 
 from torch_uncertainty.baselines.utils.parser_addons import (
+    add_mc_dropout_specific_args,
     add_packed_specific_args,
     add_vgg_specific_args,
 )
@@ -205,6 +206,7 @@ class VGG:
         parser = ClassificationEnsemble.add_model_specific_args(parser)
         parser = add_vgg_specific_args(parser)
         parser = add_packed_specific_args(parser)
+        parser = add_mc_dropout_specific_args(parser)
         parser.add_argument(
             "--version",
             type=str,

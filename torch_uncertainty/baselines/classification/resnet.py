@@ -12,6 +12,7 @@ from torch import nn
 
 from torch_uncertainty.baselines.utils.parser_addons import (
     add_masked_specific_args,
+    add_mc_dropout_specific_args,
     add_mimo_specific_args,
     add_packed_specific_args,
     add_resnet_specific_args,
@@ -303,6 +304,7 @@ class ResNet:
         parser = add_packed_specific_args(parser)
         parser = add_masked_specific_args(parser)
         parser = add_mimo_specific_args(parser)
+        parser = add_mc_dropout_specific_args(parser)
         parser.add_argument(
             "--version",
             type=str,

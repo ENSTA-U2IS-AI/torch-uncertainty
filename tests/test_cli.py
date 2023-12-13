@@ -33,6 +33,7 @@ class TestCLI:
             "0.2",
             "--num_estimators",
             "4",
+            "--last_layer_dropout",
         ):
             args = init_args(ResNet, CIFAR10DataModule)
 
