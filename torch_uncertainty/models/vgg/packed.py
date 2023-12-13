@@ -50,7 +50,7 @@ def packed_vgg13(
     groups: int = 1,
     dropout_rate: float = 0.5,
     style: str = "imagenet",
-) -> VGG:
+) -> VGG:  # coverage: ignore
     return _vgg(
         cfgs["B"],
         in_channels=in_channels,
@@ -77,7 +77,7 @@ def packed_vgg16(
     groups: int = 1,
     dropout_rate: float = 0.5,
     style: str = "imagenet",
-) -> VGG:
+) -> VGG:  # coverage: ignore
     return _vgg(
         cfgs["D"],
         in_channels=in_channels,

@@ -14,6 +14,7 @@ from torch_uncertainty.baselines.utils.parser_addons import (
     add_packed_specific_args,
     add_vgg_specific_args,
 )
+from torch_uncertainty.models.mc_dropout import mc_dropout
 from torch_uncertainty.models.vgg import (
     packed_vgg11,
     packed_vgg13,
@@ -123,6 +124,7 @@ class VGG:
             LightningModule: VGG baseline ready for training and evaluation.
         """
         params = {
+            "dropout_rate": dropout_rate,
             "in_channels": in_channels,
             "num_classes": num_classes,
             "style": style,
@@ -134,20 +136,7 @@ class VGG:
 
         format_batch_fn = nn.Identity()
 
-        if version == "vanilla":
-            params.update(
-                {
-                    "dropout_rate": dropout_rate,
-                }
-            )
-        elif version == "mc-dropout":
-            params.update(
-                {
-                    "dropout_rate": dropout_rate,
-                    "num_estimators": num_estimators,
-                }
-            )
-        elif version == "packed":
+        if version == "packed":
             params.update(
                 {
                     "num_estimators": num_estimators,
@@ -159,7 +148,10 @@ class VGG:
             format_batch_fn = RepeatTarget(num_repeats=num_estimators)
 
         model = cls.versions[version][cls.archs.index(arch)](**params)
-        kwargs.update(params)
+        if version == "mc-dropout":
+            model = mc_dropout(model=model, num_passes=num_estimators)
+
+        kwargs.update(params | {"version": version, "arch": arch})
         # routine specific parameters
         if version in cls.single:
             return ClassificationSingle(

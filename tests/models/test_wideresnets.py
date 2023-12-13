@@ -49,38 +49,88 @@ class TestPackedResnet:
     """Testing the WideResNet packed class."""
 
     def test_main(self):
-        packed_wideresnet28x10(1, 2, 2, 1, 1, 10, style="imagenet")
+        packed_wideresnet28x10(
+            in_channels=1,
+            num_estimators=2,
+            alpha=2,
+            groups=1,
+            gamma=1,
+            num_classes=10,
+            style="imagenet",
+        )
 
         with pytest.raises(ValueError):
-            _PackedWideResNet(27, 20, 3, 10)
+            _PackedWideResNet(
+                depth=27,
+                widen_factor=20,
+                in_channels=3,
+                num_classes=10,
+                dropout_rate=0.0,
+            )
 
 
 class TestMaskedWide:
     """Testing the WideResNet masked class."""
 
     def test_main(self):
-        masked_wideresnet28x10(1, 2, 2, 1, 10, style="imagenet")
+        masked_wideresnet28x10(
+            in_channels=1,
+            num_classes=10,
+            num_estimators=2,
+            scale=2.0,
+            groups=1,
+            style="imagenet",
+        )
 
         with pytest.raises(ValueError):
-            _MaskedWideResNet(27, 20, 3, 10, 4)
+            _MaskedWideResNet(
+                depth=27,
+                widen_factor=20,
+                in_channels=3,
+                num_classes=10,
+                num_estimators=4,
+                dropout_rate=0.0,
+            )
 
 
 class TestBatchedWide:
     """Testing the WideResNet batched class."""
 
     def test_main(self):
-        batched_wideresnet28x10(1, 2, 1, 10, style="imagenet")
+        batched_wideresnet28x10(
+            in_channels=1,
+            num_classes=10,
+            num_estimators=2,
+            groups=1,
+            style="imagenet",
+        )
 
         with pytest.raises(ValueError):
-            _BatchWideResNet(27, 20, 3, 10, 4)
+            _BatchWideResNet(
+                depth=27,
+                widen_factor=20,
+                in_channels=3,
+                num_classes=10,
+                num_estimators=4,
+                dropout_rate=0.0,
+            )
 
 
 class TestMIMOWide:
     """Testing the WideResNet mimo class."""
 
     def test_main(self):
-        model = mimo_wideresnet28x10(1, 10, 2, style="cifar")
+        model = mimo_wideresnet28x10(
+            in_channels=1, num_classes=10, num_estimators=2, style="cifar"
+        )
         model(torch.rand((2, 1, 28, 28)))
 
         with pytest.raises(ValueError):
-            _MIMOWideResNet(27, 20, 3, 10, 4, 0.0)
+            _MIMOWideResNet(
+                depth=27,
+                widen_factor=20,
+                in_channels=3,
+                num_classes=10,
+                num_estimators=4,
+                dropout_rate=0.0,
+            )

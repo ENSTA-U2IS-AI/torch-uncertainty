@@ -1,8 +1,6 @@
 import torch.nn.functional as F
 from torch import Tensor, nn
 
-from torch_uncertainty.models.utils import toggle_dropout
-
 __all__ = [
     "wideresnet28x10",
 ]
@@ -77,13 +75,9 @@ class _WideResNet(nn.Module):
         dropout_rate: float,
         groups: int = 1,
         style: str = "imagenet",
-        num_estimators: int | None = None,
-        last_layer_dropout: bool = False,
     ) -> None:
         super().__init__()
         self.in_planes = 16
-        self.num_estimators = num_estimators
-        self.last_layer_dropout = last_layer_dropout
 
         if (depth - 4) % 6 != 0:
             raise ValueError("Wide-resnet depth should be 6n+4.")
@@ -147,6 +141,7 @@ class _WideResNet(nn.Module):
             groups=groups,
         )
 
+        self.dropout = nn.Dropout(p=dropout_rate)
         self.pool = nn.AdaptiveAvgPool2d(output_size=1)
         self.flatten = nn.Flatten(1)
 
@@ -181,23 +176,17 @@ class _WideResNet(nn.Module):
 
         return nn.Sequential(*layers)
 
-    def forward(self, x: Tensor) -> Tensor:
-        x = self.handle_dropout(x)
+    def feats_forward(self, x: Tensor) -> Tensor:
         out = F.relu(self.bn1(self.conv1(x)))
         out = self.optional_pool(out)
         out = self.layer1(out)
         out = self.layer2(out)
         out = self.layer3(out)
         out = self.pool(out)
-        out = self.flatten(out)
-        return self.linear(out)
+        return self.dropout(self.flatten(out))
 
-    def handle_dropout(self, x: Tensor) -> Tensor:
-        if self.num_estimators is not None and not self.training:
-            if self.last_layer_dropout is not None:
-                toggle_dropout(self, self.last_layer_dropout)
-            x = x.repeat(self.num_estimators, 1, 1, 1)
-        return x
+    def forward(self, x: Tensor) -> Tensor:
+        return self.linear(self.feats_forward(x))
 
 
 def wideresnet28x10(
@@ -206,8 +195,6 @@ def wideresnet28x10(
     groups: int = 1,
     dropout_rate: float = 0.3,
     style: str = "imagenet",
-    num_estimators: int | None = None,
-    last_layer_dropout: bool = False,
 ) -> _WideResNet:
     """Wide-ResNet-28x10 from `Wide Residual Networks
     <https://arxiv.org/pdf/1605.07146.pdf>`_.
@@ -220,10 +207,6 @@ def wideresnet28x10(
         dropout_rate (float, optional): Dropout rate. Defaults to ``0.3``.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
-        num_estimators (int, optional): Number of samples to draw from the
-            dropout distribution. Defaults to ``None``.
-        last_layer_dropout (bool, optional): Whether to apply dropout to the
-            last layer during inference. Defaults to ``False``.
 
     Returns:
         _Wide: A Wide-ResNet-28x10.
@@ -236,6 +219,4 @@ def wideresnet28x10(
         num_classes=num_classes,
         groups=groups,
         style=style,
-        num_estimators=num_estimators,
-        last_layer_dropout=last_layer_dropout,
     )

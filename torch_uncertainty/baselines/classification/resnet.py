@@ -16,6 +16,7 @@ from torch_uncertainty.baselines.utils.parser_addons import (
     add_packed_specific_args,
     add_resnet_specific_args,
 )
+from torch_uncertainty.models.mc_dropout import mc_dropout
 from torch_uncertainty.models.resnet import (
     batched_resnet18,
     batched_resnet34,
@@ -191,10 +192,11 @@ class ResNet:
             LightningModule: ResNet baseline ready for training and evaluation.
         """
         params = {
+            "dropout_rate": dropout_rate,
+            "groups": groups,
             "in_channels": in_channels,
             "num_classes": num_classes,
             "style": style,
-            "groups": groups,
         }
 
         format_batch_fn = nn.Identity()
@@ -202,25 +204,12 @@ class ResNet:
         if version not in cls.versions:
             raise ValueError(f"Unknown version: {version}")
 
-        if version == "vanilla":
+        if version == "packed":
             params.update(
                 {
-                    "dropout_rate": dropout_rate,
-                }
-            )
-        elif version == "mc-dropout":
-            params.update(
-                {
-                    "dropout_rate": dropout_rate,
-                    "num_estimators": num_estimators,
-                }
-            )
-        elif version == "packed":
-            params.update(
-                {
-                    "num_estimators": num_estimators,
                     "alpha": alpha,
                     "gamma": gamma,
+                    "num_estimators": num_estimators,
                     "pretrained": pretrained,
                 }
             )
@@ -253,8 +242,12 @@ class ResNet:
             )
 
         model = cls.versions[version][cls.archs.index(arch)](**params)
-        kwargs.update(params)
-        kwargs.update({"version": version, "arch": arch})
+        if version == "mc-dropout":
+            model = mc_dropout(model=model, num_passes=num_estimators)
+
+        # for lightning params
+        kwargs.update(params | {"version": version, "arch": arch})
+
         # routine specific parameters
         if version in cls.single:
             return ClassificationSingle(

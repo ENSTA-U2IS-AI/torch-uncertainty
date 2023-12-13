@@ -40,18 +40,19 @@ weight_ids = {
 }
 
 
-class BasicBlock(nn.Module):
+class _BasicBlock(nn.Module):
     expansion = 1
 
     def __init__(
         self,
         in_planes: int,
         planes: int,
-        stride: int = 1,
-        alpha: float = 2,
-        num_estimators: int = 4,
-        gamma: int = 1,
-        groups: int = 1,
+        stride: int,
+        alpha: float,
+        num_estimators: int,
+        gamma: int,
+        dropout_rate: float,
+        groups: int,
     ) -> None:
         super().__init__()
 
@@ -68,6 +69,7 @@ class BasicBlock(nn.Module):
             bias=False,
         )
         self.bn1 = nn.BatchNorm2d(planes * alpha)
+        self.dropout = nn.Dropout2d(p=dropout_rate)
         self.conv2 = PackedConv2d(
             planes,
             planes,
@@ -100,24 +102,25 @@ class BasicBlock(nn.Module):
             )
 
     def forward(self, x: Tensor) -> Tensor:
-        out = F.relu(self.bn1(self.conv1(x)))
+        out = F.relu(self.dropout(self.bn1(self.conv1(x))))
         out = self.bn2(self.conv2(out))
         out += self.shortcut(x)
         return F.relu(out)
 
 
-class Bottleneck(nn.Module):
+class _Bottleneck(nn.Module):
     expansion = 4
 
     def __init__(
         self,
         in_planes: int,
         planes: int,
-        stride: int = 1,
-        alpha: float = 2,
-        num_estimators: int = 4,
-        gamma: int = 1,
-        groups: int = 1,
+        stride: int,
+        alpha: float,
+        num_estimators: int,
+        gamma: int,
+        dropout_rate: float,
+        groups: int,
     ) -> None:
         super().__init__()
 
@@ -146,6 +149,7 @@ class Bottleneck(nn.Module):
             bias=False,
         )
         self.bn2 = nn.BatchNorm2d(planes * alpha)
+        self.dropout = nn.Dropout2d(p=dropout_rate)
         self.conv3 = PackedConv2d(
             planes,
             self.expansion * planes,
@@ -177,7 +181,7 @@ class Bottleneck(nn.Module):
 
     def forward(self, x: Tensor) -> Tensor:
         out = F.relu(self.bn1(self.conv1(x)))
-        out = F.relu(self.bn2(self.conv2(out)))
+        out = F.relu(self.dropout(self.bn2(self.conv2(out))))
         out = self.bn3(self.conv3(out))
         out += self.shortcut(x)
         return F.relu(out)
@@ -186,11 +190,12 @@ class Bottleneck(nn.Module):
 class _PackedResNet(nn.Module):
     def __init__(
         self,
-        block: type[BasicBlock | Bottleneck],
+        block: type[_BasicBlock | _Bottleneck],
         num_blocks: list[int],
         in_channels: int,
         num_classes: int,
         num_estimators: int,
+        dropout_rate: float,
         alpha: int = 2,
         gamma: int = 1,
         groups: int = 1,
@@ -251,6 +256,7 @@ class _PackedResNet(nn.Module):
             stride=1,
             alpha=alpha,
             num_estimators=num_estimators,
+            dropout_rate=dropout_rate,
             gamma=gamma,
             groups=groups,
         )
@@ -261,6 +267,7 @@ class _PackedResNet(nn.Module):
             stride=2,
             alpha=alpha,
             num_estimators=num_estimators,
+            dropout_rate=dropout_rate,
             gamma=gamma,
             groups=groups,
         )
@@ -271,6 +278,7 @@ class _PackedResNet(nn.Module):
             stride=2,
             alpha=alpha,
             num_estimators=num_estimators,
+            dropout_rate=dropout_rate,
             gamma=gamma,
             groups=groups,
         )
@@ -281,10 +289,12 @@ class _PackedResNet(nn.Module):
             stride=2,
             alpha=alpha,
             num_estimators=num_estimators,
+            dropout_rate=dropout_rate,
             gamma=gamma,
             groups=groups,
         )
 
+        self.dropout = nn.Dropout2d(p=dropout_rate)
         self.pool = nn.AdaptiveAvgPool2d(output_size=1)
         self.flatten = nn.Flatten(1)
 
@@ -298,12 +308,13 @@ class _PackedResNet(nn.Module):
 
     def _make_layer(
         self,
-        block: type[BasicBlock | Bottleneck],
+        block: type[_BasicBlock | _Bottleneck],
         planes: int,
         num_blocks: int,
         stride: int,
         alpha: float,
         num_estimators: int,
+        dropout_rate: float,
         gamma: int,
         groups: int,
     ) -> nn.Module:
@@ -312,11 +323,12 @@ class _PackedResNet(nn.Module):
         for stride in strides:
             layers.append(
                 block(
-                    self.in_planes,
-                    planes,
-                    stride,
+                    in_planes=self.in_planes,
+                    planes=planes,
+                    stride=stride,
                     alpha=alpha,
                     num_estimators=num_estimators,
+                    dropout_rate=dropout_rate,
                     gamma=gamma,
                     groups=groups,
                 )
@@ -337,7 +349,7 @@ class _PackedResNet(nn.Module):
         )
 
         out = self.pool(out)
-        out = self.flatten(out)
+        out = self.dropout(self.flatten(out))
         return self.linear(out)
 
     def check_config(self, config: dict[str, Any]) -> bool:
@@ -357,6 +369,7 @@ def packed_resnet18(
     gamma: int,
     num_classes: int,
     groups: int,
+    dropout_rate: float = 0,
     style: str = "imagenet",
     pretrained: bool = False,
 ) -> _PackedResNet:
@@ -365,10 +378,11 @@ def packed_resnet18(
 
     Args:
         in_channels (int): Number of input channels.
+        num_classes (int): Number of classes to predict.
+        dropout_rate (float): Dropout rate. Defaults to 0.
         num_estimators (int): Number of estimators in the ensemble.
         alpha (int): Expansion factor affecting the width of the estimators.
         gamma (int): Number of groups within each estimator.
-        num_classes (int): Number of classes to predict.
         groups (int): Number of groups within each estimator.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
@@ -379,12 +393,13 @@ def packed_resnet18(
         _PackedResNet: A Packed-Ensembles ResNet-18.
     """
     net = _PackedResNet(
-        block=BasicBlock,
+        block=_BasicBlock,
         num_blocks=[2, 2, 2, 2],
         in_channels=in_channels,
         num_estimators=num_estimators,
         alpha=alpha,
         gamma=gamma,
+        dropout_rate=dropout_rate,
         groups=groups,
         num_classes=num_classes,
         style=style,
@@ -409,6 +424,7 @@ def packed_resnet34(
     gamma: int,
     num_classes: int,
     groups: int,
+    dropout_rate: float = 0,
     style: str = "imagenet",
     pretrained: bool = False,
 ) -> _PackedResNet:
@@ -417,10 +433,11 @@ def packed_resnet34(
 
     Args:
         in_channels (int): Number of input channels.
+        num_classes (int): Number of classes to predict.
+        dropout_rate (float): Dropout rate. Defaults to 0.
         num_estimators (int): Number of estimators in the ensemble.
         alpha (int): Expansion factor affecting the width of the estimators.
         gamma (int): Number of groups within each estimator.
-        num_classes (int): Number of classes to predict.
         groups (int): Number of groups within each estimator.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
@@ -431,13 +448,14 @@ def packed_resnet34(
         _PackedResNet: A Packed-Ensembles ResNet-34.
     """
     net = _PackedResNet(
-        block=BasicBlock,
+        block=_BasicBlock,
         num_blocks=[3, 4, 6, 3],
         in_channels=in_channels,
         num_estimators=num_estimators,
         alpha=alpha,
         gamma=gamma,
         groups=groups,
+        dropout_rate=dropout_rate,
         num_classes=num_classes,
         style=style,
     )
@@ -461,6 +479,7 @@ def packed_resnet50(
     gamma: int,
     num_classes: int,
     groups: int,
+    dropout_rate: float = 0,
     style: str = "imagenet",
     pretrained: bool = False,
 ) -> _PackedResNet:
@@ -469,10 +488,11 @@ def packed_resnet50(
 
     Args:
         in_channels (int): Number of input channels.
+        num_classes (int): Number of classes to predict.
+        dropout_rate (float): Dropout rate. Defaults to 0.
         num_estimators (int): Number of estimators in the ensemble.
         alpha (int): Expansion factor affecting the width of the estimators.
         gamma (int): Number of groups within each estimator.
-        num_classes (int): Number of classes to predict.
         groups (int): Number of groups within each estimator.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
@@ -483,13 +503,14 @@ def packed_resnet50(
         _PackedResNet: A Packed-Ensembles ResNet-50.
     """
     net = _PackedResNet(
-        block=Bottleneck,
+        block=_Bottleneck,
         num_blocks=[3, 4, 6, 3],
         in_channels=in_channels,
         num_estimators=num_estimators,
         alpha=alpha,
         gamma=gamma,
         groups=groups,
+        dropout_rate=dropout_rate,
         num_classes=num_classes,
         style=style,
     )
@@ -513,6 +534,7 @@ def packed_resnet101(
     gamma: int,
     num_classes: int,
     groups: int,
+    dropout_rate: float = 0,
     style: str = "imagenet",
     pretrained: bool = False,
 ) -> _PackedResNet:
@@ -521,10 +543,11 @@ def packed_resnet101(
 
     Args:
         in_channels (int): Number of input channels.
+        num_classes (int): Number of classes to predict.
+        dropout_rate (float): Dropout rate. Defaults to 0.
         num_estimators (int): Number of estimators in the ensemble.
         alpha (int): Expansion factor affecting the width of the estimators.
         gamma (int): Number of groups within each estimator.
-        num_classes (int): Number of classes to predict.
         groups (int): Number of groups within each estimator.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
@@ -535,13 +558,14 @@ def packed_resnet101(
         _PackedResNet: A Packed-Ensembles ResNet-101.
     """
     net = _PackedResNet(
-        block=Bottleneck,
+        block=_Bottleneck,
         num_blocks=[3, 4, 23, 3],
         in_channels=in_channels,
         num_estimators=num_estimators,
         alpha=alpha,
         gamma=gamma,
         groups=groups,
+        dropout_rate=dropout_rate,
         num_classes=num_classes,
         style=style,
     )
@@ -565,6 +589,7 @@ def packed_resnet152(
     gamma: int,
     num_classes: int,
     groups: int,
+    dropout_rate: float = 0,
     style: str = "imagenet",
     pretrained: bool = False,
 ) -> _PackedResNet:
@@ -573,10 +598,11 @@ def packed_resnet152(
 
     Args:
         in_channels (int): Number of input channels.
+        num_classes (int): Number of classes to predict.
+        dropout_rate (float): Dropout rate. Defaults to 0.
         num_estimators (int): Number of estimators in the ensemble.
         alpha (int): Expansion factor affecting the width of the estimators.
         gamma (int): Number of groups within each estimator.
-        num_classes (int): Number of classes to predict.
         groups (int): Number of groups within each estimator.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
@@ -587,13 +613,14 @@ def packed_resnet152(
         _PackedResNet: A Packed-Ensembles ResNet-152.
     """
     net = _PackedResNet(
-        block=Bottleneck,
+        block=_Bottleneck,
         num_blocks=[3, 8, 36, 3],
         in_channels=in_channels,
         num_estimators=num_estimators,
         alpha=alpha,
         gamma=gamma,
         groups=groups,
+        dropout_rate=dropout_rate,
         num_classes=num_classes,
         style=style,
     )

@@ -28,7 +28,6 @@ class _MIMOWideResNet(_WideResNet):
             dropout_rate=dropout_rate,
             groups=groups,
             style=style,
-            num_estimators=num_estimators,
         )
 
         self.num_estimators = num_estimators
@@ -47,6 +46,7 @@ def mimo_wideresnet28x10(
     num_classes: int,
     num_estimators: int,
     groups: int = 1,
+    dropout_rate: float = 0.3,
     style: str = "imagenet",
 ) -> _MIMOWideResNet:
     return _MIMOWideResNet(
@@ -55,7 +55,7 @@ def mimo_wideresnet28x10(
         in_channels=in_channels,
         num_classes=num_classes,
         num_estimators=num_estimators,
-        dropout_rate=0.3,
+        dropout_rate=dropout_rate,
         groups=groups,
         style=style,
     )

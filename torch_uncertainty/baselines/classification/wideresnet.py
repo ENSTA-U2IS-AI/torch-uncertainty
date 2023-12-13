@@ -16,6 +16,7 @@ from torch_uncertainty.baselines.utils.parser_addons import (
     add_packed_specific_args,
     add_wideresnet_specific_args,
 )
+from torch_uncertainty.models.mc_dropout import mc_dropout
 from torch_uncertainty.models.wideresnet import (
     batched_wideresnet28x10,
     masked_wideresnet28x10,
@@ -132,10 +133,11 @@ class WideResNet:
                 evaluation.
         """
         params = {
+            "dropout_rate": dropout_rate,
+            "groups": groups,
             "in_channels": in_channels,
             "num_classes": num_classes,
             "style": style,
-            "groups": groups,
         }
 
         format_batch_fn = nn.Identity()
@@ -143,26 +145,12 @@ class WideResNet:
         if version not in cls.versions:
             raise ValueError(f"Unknown version: {version}")
 
-        # version specific params
-        if version == "vanilla":
+        if version == "packed":
             params.update(
                 {
-                    "dropout_rate": dropout_rate,
-                }
-            )
-        elif version == "mc-dropout":
-            params.update(
-                {
-                    "dropout_rate": dropout_rate,
-                    "num_estimators": num_estimators,
-                }
-            )
-        elif version == "packed":
-            params.update(
-                {
-                    "num_estimators": num_estimators,
                     "alpha": alpha,
                     "gamma": gamma,
+                    "num_estimators": num_estimators,
                 }
             )
             format_batch_fn = RepeatTarget(num_repeats=num_estimators)
@@ -194,7 +182,9 @@ class WideResNet:
             )
 
         model = cls.versions[version][0](**params)
-        kwargs.update(params)
+        if version == "mc-dropout":
+            model = mc_dropout(model=model, num_passes=num_estimators)
+        kwargs.update(params | {"version": version})
         # routine specific parameters
         if version in cls.single:
             return ClassificationSingle(

@@ -8,16 +8,16 @@ __all__ = [
 ]
 
 
-class WideBasicBlock(nn.Module):
+class _WideBasicBlock(nn.Module):
     def __init__(
         self,
         in_planes: int,
         planes: int,
         dropout_rate: float,
-        stride: int = 1,
-        num_estimators: int = 4,
-        scale: float = 2.0,
-        groups: int = 1,
+        stride: int,
+        num_estimators: int,
+        scale: float,
+        groups: int,
     ) -> None:
         super().__init__()
         self.conv1 = MaskedConv2d(
@@ -74,9 +74,9 @@ class _MaskedWideResNet(nn.Module):
         in_channels: int,
         num_classes: int,
         num_estimators: int,
+        dropout_rate: float,
         scale: float = 2.0,
         groups: int = 1,
-        dropout_rate: float = 0.0,
         style: str = "imagenet",
     ) -> None:
         super().__init__()
@@ -121,7 +121,7 @@ class _MaskedWideResNet(nn.Module):
             self.optional_pool = nn.Identity()
 
         self.layer1 = self._wide_layer(
-            WideBasicBlock,
+            _WideBasicBlock,
             num_stages[1],
             n,
             dropout_rate,
@@ -131,7 +131,7 @@ class _MaskedWideResNet(nn.Module):
             groups=groups,
         )
         self.layer2 = self._wide_layer(
-            WideBasicBlock,
+            _WideBasicBlock,
             num_stages[2],
             n,
             dropout_rate,
@@ -141,7 +141,7 @@ class _MaskedWideResNet(nn.Module):
             groups=groups,
         )
         self.layer3 = self._wide_layer(
-            WideBasicBlock,
+            _WideBasicBlock,
             num_stages[3],
             n,
             dropout_rate,
@@ -151,6 +151,7 @@ class _MaskedWideResNet(nn.Module):
             groups=groups,
         )
 
+        self.dropout = nn.Dropout(p=dropout_rate)
         self.pool = nn.AdaptiveAvgPool2d(output_size=1)
         self.flatten = nn.Flatten(1)
 
@@ -175,11 +176,11 @@ class _MaskedWideResNet(nn.Module):
         for stride in strides:
             layers.append(
                 block(
-                    self.in_planes,
-                    planes,
-                    dropout_rate,
-                    stride,
-                    num_estimators,
+                    in_planes=self.in_planes,
+                    planes=planes,
+                    stride=stride,
+                    num_estimators=num_estimators,
+                    dropout_rate=dropout_rate,
                     scale=scale,
                     groups=groups,
                 )
@@ -196,16 +197,17 @@ class _MaskedWideResNet(nn.Module):
         out = self.layer2(out)
         out = self.layer3(out)
         out = self.pool(out)
-        out = self.flatten(out)
+        out = self.dropout(self.flatten(out))
         return self.linear(out)
 
 
 def masked_wideresnet28x10(
     in_channels: int,
+    num_classes: int,
     num_estimators: int,
     scale: float,
     groups: int,
-    num_classes: int,
+    dropout_rate: float = 0.3,
     style: str = "imagenet",
 ) -> _MaskedWideResNet:
     """Masksembles of Wide-ResNet-28x10 from `Wide Residual Networks
@@ -213,10 +215,11 @@ def masked_wideresnet28x10(
 
     Args:
         in_channels (int): Number of input channels.
+        num_classes (int): Number of classes to predict.
         num_estimators (int): Number of estimators in the ensemble.
         scale (float): Expansion factor affecting the width of the estimators.
         groups (int): Number of groups within each estimator.
-        num_classes (int): Number of classes to predict.
+        dropout_rate (float, optional): Dropout rate. Defaults to ``0.3``.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
 
@@ -225,10 +228,10 @@ def masked_wideresnet28x10(
     """
     return _MaskedWideResNet(
         in_channels=in_channels,
+        num_classes=num_classes,
         depth=28,
         widen_factor=10,
-        dropout_rate=0.3,
-        num_classes=num_classes,
+        dropout_rate=dropout_rate,
         num_estimators=num_estimators,
         scale=scale,
         groups=groups,
