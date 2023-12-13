@@ -21,6 +21,7 @@ class _Dummy(nn.Module):
             1,
             num_classes,
         )
+        self.dropout = nn.Dropout(p=dropout_rate)
 
         self.num_estimators = num_estimators
 
@@ -28,9 +29,11 @@ class _Dummy(nn.Module):
         return self.forward(x)
 
     def forward(self, x: Tensor) -> Tensor:
-        return self.linear(
-            torch.ones(
-                (x.shape[0] * self.num_estimators, 1), dtype=torch.float32
+        return self.dropout(
+            self.linear(
+                torch.ones(
+                    (x.shape[0] * self.num_estimators, 1), dtype=torch.float32
+                )
             )
         )
 

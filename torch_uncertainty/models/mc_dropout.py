@@ -8,15 +8,15 @@ class _MCDropout(nn.Module):
         super().__init__()
         self.last_layer = last_layer
 
-        if model.dropout_rate is None:
-            raise ValueError("dropout_rate must be set to use MC Dropout")
-        if model.dropout_rate <= 0:
-            raise ValueError("dropout_rate must be positive to use MC Dropout")
+        if not hasattr(model, "dropout_rate"):
+            raise ValueError(
+                "`dropout_rate` must be set in the model to use MC Dropout"
+            )
         if num_estimators is None:
-            raise ValueError("num_estimators must be set to use MC Dropout")
+            raise ValueError("`num_estimators` must be set to use MC Dropout")
         if num_estimators <= 0:
             raise ValueError(
-                "num_estimators must be strictly positive to use MC Dropout"
+                "`num_estimators` must be strictly positive to use MC Dropout"
             )
 
         self.model = model
