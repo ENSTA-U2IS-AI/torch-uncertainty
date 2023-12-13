@@ -7,7 +7,10 @@ from typing import Literal, NamedTuple
 from PIL import Image
 from torchvision import tv_tensors
 from torchvision.datasets import VisionDataset
-from torchvision.datasets.utils import download_and_extract_archive
+from torchvision.datasets.utils import (
+    download_and_extract_archive,
+    download_url,
+)
 
 
 class CamVidClass(NamedTuple):
@@ -37,7 +40,11 @@ class CamVid(VisionDataset):
     urls = {
         "raw": "http://web4.cs.ucl.ac.uk/staff/g.brostow/MotionSegRecData/files/701_StillsRaw_full.zip",
         "label": "http://web4.cs.ucl.ac.uk/staff/g.brostow/MotionSegRecData/data/LabeledApproved_full.zip",
+        "splits": "https://raw.githubusercontent.com/torch-uncertainty/dataset-metadata/main/segmentation/camvid/splits.json",
     }
+
+    splits_md5 = "db45289aaa83c60201391b11e78c6382"
+
     filenames = {
         "raw": "701_StillsRaw_full.zip",
         "label": "LabeledApproved_full.zip",
@@ -97,7 +104,7 @@ class CamVid(VisionDataset):
                 (Path(self.root) / "camvid" / "label").glob("*.png")
             )
         else:
-            with (Path(__file__).parent / "camvid_splits.json").open() as f:
+            with (Path(self.root) / "camvid" / "splits.json").open() as f:
                 filenames = json.load(f)[split]
 
             self.images = sorted(
@@ -154,6 +161,10 @@ class CamVid(VisionDataset):
             != self.num_samples["all"]
         ):
             return False
+
+        if not (Path(self.root) / "camvid" / "splits.json").exists():
+            return False
+
         return True
 
     def download(self) -> None:
@@ -179,6 +190,12 @@ class CamVid(VisionDataset):
             self.root,
             extract_root=Path(self.root) / "camvid" / "label",
             filename=self.filenames["label"],
+        )
+        download_url(
+            self.urls["splits"],
+            Path(self.root) / "camvid",
+            filename="splits.json",
+            md5=self.splits_md5,
         )
 
 
