@@ -231,7 +231,7 @@ class _BatchedResNet(nn.Module):
             dropout_rate=dropout_rate,
             groups=groups,
         )
-        self.dropout = nn.Dropout2d(p=dropout_rate)
+        self.dropout = nn.Dropout(p=dropout_rate)
         self.pool = nn.AdaptiveAvgPool2d(output_size=1)
         self.flatten = nn.Flatten(1)
 

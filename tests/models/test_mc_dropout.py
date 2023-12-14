@@ -50,3 +50,7 @@ class TestMCDropout:
         model = dummy_model(10, 5, 1, 0.1)
         with pytest.raises(ValueError):
             dropout_model = mc_dropout(model, None)
+
+        model = dummy_model(10, 5, 1, dropout_rate=0)
+        with pytest.raises(ValueError):
+            dropout_model = mc_dropout(model, None)

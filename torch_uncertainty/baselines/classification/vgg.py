@@ -34,8 +34,8 @@ from torch_uncertainty.transforms import RepeatTarget
 
 
 class VGG:
-    single = ["vanilla", "mc-dropout"]
-    ensemble = ["packed"]
+    single = ["vanilla"]
+    ensemble = ["packed", "mc-dropout"]
     versions = {
         "vanilla": [vgg11, vgg13, vgg16, vgg19],
         "mc-dropout": [vgg11, vgg13, vgg16, vgg19],
@@ -58,6 +58,7 @@ class VGG:
         arch: int,
         num_estimators: int | None = None,
         dropout_rate: float = 0.0,
+        last_layer_dropout: bool = False,
         style: str = "imagenet",
         groups: int = 1,
         alpha: float | None = None,
@@ -100,6 +101,7 @@ class VGG:
                 Only used if :attr:`version` is either ``"packed"``, ``"batched"``
                 or ``"masked"`` Defaults to ``None``.
             dropout_rate (float, optional): Dropout rate. Defaults to ``0.0``.
+            last_layer_dropout (bool): whether to apply dropout to the last layer only.
             groups (int, optional): Number of groups in convolutions. Defaults to
                 ``1``.
             alpha (float, optional): Expansion factor affecting the width of the
@@ -137,22 +139,38 @@ class VGG:
 
         format_batch_fn = nn.Identity()
 
-        if version == "packed":
+        if version in cls.ensemble:
             params.update(
                 {
                     "num_estimators": num_estimators,
+                }
+            )
+
+            if version != "mc-dropout":
+                format_batch_fn = RepeatTarget(num_repeats=num_estimators)
+
+        if version == "packed":
+            params.update(
+                {
                     "alpha": alpha,
                     "style": style,
                     "gamma": gamma,
                 }
             )
-            format_batch_fn = RepeatTarget(num_repeats=num_estimators)
 
+        # for lightning params
+        kwargs.update(params | {"version": version, "arch": arch})
+
+        if version == "mc-dropout":  # std VGGs don't have `num_estimators`
+            del params["num_estimators"]
         model = cls.versions[version][cls.archs.index(arch)](**params)
         if version == "mc-dropout":
-            model = mc_dropout(model=model, num_estimators=num_estimators)
+            model = mc_dropout(
+                model=model,
+                num_estimators=num_estimators,
+                last_layer=last_layer_dropout,
+            )
 
-        kwargs.update(params | {"version": version, "arch": arch})
         # routine specific parameters
         if version in cls.single:
             return ClassificationSingle(

@@ -12,6 +12,7 @@ from torch import nn
 
 from torch_uncertainty.baselines.utils.parser_addons import (
     add_masked_specific_args,
+    add_mc_dropout_specific_args,
     add_mimo_specific_args,
     add_packed_specific_args,
     add_wideresnet_specific_args,
@@ -32,8 +33,8 @@ from torch_uncertainty.transforms import MIMOBatchFormat, RepeatTarget
 
 
 class WideResNet:
-    single = ["vanilla", "mc-dropout"]
-    ensemble = ["packed", "batched", "masked", "mimo"]
+    single = ["vanilla"]
+    ensemble = ["packed", "batched", "masked", "mc-dropout", "mimo"]
     versions = {
         "vanilla": [wideresnet28x10],
         "mc-dropout": [wideresnet28x10],
@@ -55,6 +56,7 @@ class WideResNet:
         style: str = "imagenet",
         num_estimators: int | None = None,
         dropout_rate: float = 0.0,
+        last_layer_dropout: bool = False,
         groups: int | None = None,
         scale: float | None = None,
         alpha: int | None = None,
@@ -95,6 +97,7 @@ class WideResNet:
                 Only used if :attr:`version` is either ``"packed"``, ``"batched"``
                 or ``"masked"`` Defaults to ``None``.
             dropout_rate (float, optional): Dropout rate. Defaults to ``0.0``.
+            last_layer_dropout (bool): whether to apply dropout to the last layer only.
             groups (int, optional): Number of groups in convolutions. Defaults to
                 ``1``.
             scale (float, optional): Expansion factor affecting the width of the
@@ -145,46 +148,48 @@ class WideResNet:
         if version not in cls.versions:
             raise ValueError(f"Unknown version: {version}")
 
+        if version in cls.ensemble:
+            params.update(
+                {
+                    "num_estimators": num_estimators,
+                }
+            )
+            if version != "mc-dropout":
+                format_batch_fn = RepeatTarget(num_repeats=num_estimators)
+
         if version == "packed":
             params.update(
                 {
                     "alpha": alpha,
                     "gamma": gamma,
-                    "num_estimators": num_estimators,
                 }
             )
-            format_batch_fn = RepeatTarget(num_repeats=num_estimators)
-        elif version == "batched":
-            params.update(
-                {
-                    "num_estimators": num_estimators,
-                }
-            )
-            format_batch_fn = RepeatTarget(num_repeats=num_estimators)
         elif version == "masked":
             params.update(
                 {
-                    "num_estimators": num_estimators,
                     "scale": scale,
                 }
             )
-            format_batch_fn = RepeatTarget(num_repeats=num_estimators)
         elif version == "mimo":
-            params.update(
-                {
-                    "num_estimators": num_estimators,
-                }
-            )
             format_batch_fn = MIMOBatchFormat(
                 num_estimators=num_estimators,
                 rho=rho,
                 batch_repeat=batch_repeat,
             )
 
+        # for lightning params
+        kwargs.update(params | {"version": version})
+
+        if version == "mc-dropout":  # std wideRn don't have `num_estimators`
+            del params["num_estimators"]
         model = cls.versions[version][0](**params)
         if version == "mc-dropout":
-            model = mc_dropout(model=model, num_estimators=num_estimators)
-        kwargs.update(params | {"version": version})
+            model = mc_dropout(
+                model=model,
+                num_estimators=num_estimators,
+                last_layer=last_layer_dropout,
+            )
+
         # routine specific parameters
         if version in cls.single:
             return ClassificationSingle(
@@ -240,6 +245,7 @@ class WideResNet:
         parser = add_packed_specific_args(parser)
         parser = add_masked_specific_args(parser)
         parser = add_mimo_specific_args(parser)
+        parser = add_mc_dropout_specific_args(parser)
         parser.add_argument(
             "--version",
             type=str,

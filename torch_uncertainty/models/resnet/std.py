@@ -269,7 +269,7 @@ class _ResNet(nn.Module):
             groups=groups,
         )
 
-        self.dropout = nn.Dropout2d(p=dropout_rate)
+        self.dropout = nn.Dropout(p=dropout_rate)
         self.pool = nn.AdaptiveAvgPool2d(output_size=1)
         self.flatten = nn.Flatten(1)
 
@@ -319,7 +319,7 @@ class _ResNet(nn.Module):
 def resnet18(
     in_channels: int,
     num_classes: int,
-    dropout_rate: float = 0,
+    dropout_rate: float = 0.0,
     groups: int = 1,
     style: str = "imagenet",
 ) -> _ResNet:

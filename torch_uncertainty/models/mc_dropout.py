@@ -10,7 +10,7 @@ class _MCDropout(nn.Module):
         Args:
             model (nn.Module): model to wrap
             num_estimators (int): number of estimators to use
-            last_layer (bool): whether to apply dropout to the last layer.
+            last_layer (bool): whether to apply dropout to the last layer only.
 
         Warning:
             The underlying models must have a `dropout_rate` attribute.
@@ -25,23 +25,30 @@ class _MCDropout(nn.Module):
 
         if not hasattr(model, "dropout_rate"):
             raise ValueError(
-                "`dropout_rate` must be set in the model to use MC Dropout"
+                "`dropout_rate` must be set in the model to use MC Dropout."
+            )
+        if model.dropout_rate <= 0.0:
+            raise ValueError(
+                "`dropout_rate` must be strictly positive to use MC Dropout."
             )
         if num_estimators is None:
-            raise ValueError("`num_estimators` must be set to use MC Dropout")
+            raise ValueError("`num_estimators` must be set to use MC Dropout.")
         if num_estimators <= 0:
             raise ValueError(
-                "`num_estimators` must be strictly positive to use MC Dropout"
+                "`num_estimators` must be strictly positive to use MC Dropout."
             )
 
         self.model = model
         self.num_estimators = num_estimators
 
-        self.filtered_modules = filter(
-            lambda m: isinstance(m, nn.Dropout), model.modules()
+        self.filtered_modules = list(
+            filter(
+                lambda m: isinstance(m, nn.Dropout | nn.Dropout2d),
+                model.modules(),
+            )
         )
         if last_layer:
-            self.filtered_modules = list(self.filtered_modules)[-1:]
+            self.filtered_modules = self.filtered_modules[-1:]
 
     def train(self, mode: bool = True) -> nn.Module:
         """Override the default train method to set the training mode of
@@ -57,6 +64,7 @@ class _MCDropout(nn.Module):
         for module in self.children():
             module.train(mode)
         for module in self.filtered_modules:
+            print(module)
             module.train()
         return self
 

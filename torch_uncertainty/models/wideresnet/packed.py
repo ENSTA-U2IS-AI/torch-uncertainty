@@ -33,7 +33,7 @@ class _WideBasicBlock(nn.Module):
             padding=1,
             bias=False,
         )
-        self.dropout = nn.Dropout(p=dropout_rate)
+        self.dropout = nn.Dropout2d(p=dropout_rate)
         self.bn1 = nn.BatchNorm2d(alpha * planes)
         self.conv2 = PackedConv2d(
             planes,

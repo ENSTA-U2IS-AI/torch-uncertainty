@@ -24,7 +24,7 @@ class WideBasicBlock(nn.Module):
             groups=groups,
             bias=False,
         )
-        self.dropout = nn.Dropout(p=dropout_rate)
+        self.dropout = nn.Dropout2d(p=dropout_rate)
         self.bn1 = nn.BatchNorm2d(planes)
         self.conv2 = nn.Conv2d(
             planes,
