@@ -64,7 +64,6 @@ class _MCDropout(nn.Module):
         for module in self.children():
             module.train(mode)
         for module in self.filtered_modules:
-            print(module)
             module.train()
         return self
 
