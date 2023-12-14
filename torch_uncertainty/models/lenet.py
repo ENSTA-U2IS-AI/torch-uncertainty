@@ -2,13 +2,11 @@ from collections.abc import Callable
 
 import torch
 import torch.nn.functional as F
-from torch import Tensor, nn
+from torch import nn
 
 from torch_uncertainty.layers.bayesian import BayesConv2d, BayesLinear
 from torch_uncertainty.layers.packed import PackedConv2d, PackedLinear
 from torch_uncertainty.models.utils import stochastic_model
-
-from .utils import toggle_dropout
 
 __all__ = ["lenet", "packed_lenet", "bayesian_lenet"]
 
@@ -45,7 +43,6 @@ class _LeNet(nn.Module):
         self.fc3 = linear_layer(84, num_classes, **layer_args)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = self.handle_dropout(x)
         out = F.dropout(
             self.activation(self.norm(self.conv1(x))),
             p=self.dropout_rate,
@@ -67,13 +64,6 @@ class _LeNet(nn.Module):
             p=self.dropout_rate,
         )
         return self.fc3(out)
-
-    def handle_dropout(self, x: Tensor) -> Tensor:
-        if self.num_estimators is not None and not self.training:
-            if self.last_layer_dropout is not None:
-                toggle_dropout(self, self.last_layer_dropout)
-            x = x.repeat(self.num_estimators, 1, 1, 1)
-        return x
 
 
 @stochastic_model
