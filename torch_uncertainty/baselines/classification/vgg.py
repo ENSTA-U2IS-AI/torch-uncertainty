@@ -11,9 +11,11 @@ from pytorch_lightning.core.saving import (
 from torch import nn
 
 from torch_uncertainty.baselines.utils.parser_addons import (
+    add_mc_dropout_specific_args,
     add_packed_specific_args,
     add_vgg_specific_args,
 )
+from torch_uncertainty.models.mc_dropout import mc_dropout
 from torch_uncertainty.models.vgg import (
     packed_vgg11,
     packed_vgg13,
@@ -33,7 +35,7 @@ from torch_uncertainty.transforms import RepeatTarget
 
 class VGG:
     single = ["vanilla"]
-    ensemble = ["mc-dropout", "packed"]
+    ensemble = ["packed", "mc-dropout"]
     versions = {
         "vanilla": [vgg11, vgg13, vgg16, vgg19],
         "mc-dropout": [vgg11, vgg13, vgg16, vgg19],
@@ -56,6 +58,7 @@ class VGG:
         arch: int,
         num_estimators: int | None = None,
         dropout_rate: float = 0.0,
+        last_layer_dropout: bool = False,
         style: str = "imagenet",
         groups: int = 1,
         alpha: float | None = None,
@@ -98,6 +101,7 @@ class VGG:
                 Only used if :attr:`version` is either ``"packed"``, ``"batched"``
                 or ``"masked"`` Defaults to ``None``.
             dropout_rate (float, optional): Dropout rate. Defaults to ``0.0``.
+            last_layer_dropout (bool): whether to apply dropout to the last layer only.
             groups (int, optional): Number of groups in convolutions. Defaults to
                 ``1``.
             alpha (float, optional): Expansion factor affecting the width of the
@@ -123,6 +127,7 @@ class VGG:
             LightningModule: VGG baseline ready for training and evaluation.
         """
         params = {
+            "dropout_rate": dropout_rate,
             "in_channels": in_channels,
             "num_classes": num_classes,
             "style": style,
@@ -134,32 +139,38 @@ class VGG:
 
         format_batch_fn = nn.Identity()
 
-        if version == "vanilla":
-            params.update(
-                {
-                    "dropout_rate": dropout_rate,
-                }
-            )
-        elif version == "mc-dropout":
-            params.update(
-                {
-                    "dropout_rate": dropout_rate,
-                    "num_estimators": num_estimators,
-                }
-            )
-        elif version == "packed":
+        if version in cls.ensemble:
             params.update(
                 {
                     "num_estimators": num_estimators,
+                }
+            )
+
+            if version != "mc-dropout":
+                format_batch_fn = RepeatTarget(num_repeats=num_estimators)
+
+        if version == "packed":
+            params.update(
+                {
                     "alpha": alpha,
                     "style": style,
                     "gamma": gamma,
                 }
             )
-            format_batch_fn = RepeatTarget(num_repeats=num_estimators)
 
+        # for lightning params
+        kwargs.update(params | {"version": version, "arch": arch})
+
+        if version == "mc-dropout":  # std VGGs don't have `num_estimators`
+            del params["num_estimators"]
         model = cls.versions[version][cls.archs.index(arch)](**params)
-        kwargs.update(params)
+        if version == "mc-dropout":
+            model = mc_dropout(
+                model=model,
+                num_estimators=num_estimators,
+                last_layer=last_layer_dropout,
+            )
+
         # routine specific parameters
         if version in cls.single:
             return ClassificationSingle(
@@ -213,6 +224,7 @@ class VGG:
         parser = ClassificationEnsemble.add_model_specific_args(parser)
         parser = add_vgg_specific_args(parser)
         parser = add_packed_specific_args(parser)
+        parser = add_mc_dropout_specific_args(parser)
         parser.add_argument(
             "--version",
             type=str,

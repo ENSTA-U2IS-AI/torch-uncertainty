@@ -12,10 +12,12 @@ from torch import nn
 
 from torch_uncertainty.baselines.utils.parser_addons import (
     add_masked_specific_args,
+    add_mc_dropout_specific_args,
     add_mimo_specific_args,
     add_packed_specific_args,
     add_resnet_specific_args,
 )
+from torch_uncertainty.models.mc_dropout import mc_dropout
 from torch_uncertainty.models.resnet import (
     batched_resnet18,
     batched_resnet34,
@@ -52,7 +54,7 @@ from torch_uncertainty.transforms import MIMOBatchFormat, RepeatTarget
 
 class ResNet:
     single = ["vanilla"]
-    ensemble = ["packed", "batched", "masked", "mimo", "mc-dropout"]
+    ensemble = ["packed", "batched", "masked", "mc-dropout", "mimo"]
     versions = {
         "vanilla": [resnet18, resnet34, resnet50, resnet101, resnet152],
         "packed": [
@@ -105,6 +107,7 @@ class ResNet:
         style: str = "imagenet",
         num_estimators: int | None = None,
         dropout_rate: float = 0.0,
+        last_layer_dropout: bool = False,
         groups: int = 1,
         scale: float | None = None,
         alpha: float | None = None,
@@ -154,6 +157,7 @@ class ResNet:
                 Only used if :attr:`version` is either ``"packed"``, ``"batched"``,
                 ``"masked"`` or ``"mc-dropout"`` Defaults to ``None``.
             dropout_rate (float, optional): Dropout rate. Defaults to ``0.0``.
+            last_layer_dropout (bool): whether to apply dropout to the last layer only.
             groups (int, optional): Number of groups in convolutions. Defaults to
                 ``1``.
             scale (float, optional): Expansion factor affecting the width of the
@@ -191,10 +195,11 @@ class ResNet:
             LightningModule: ResNet baseline ready for training and evaluation.
         """
         params = {
+            "dropout_rate": dropout_rate,
+            "groups": groups,
             "in_channels": in_channels,
             "num_classes": num_classes,
             "style": style,
-            "groups": groups,
         }
 
         format_batch_fn = nn.Identity()
@@ -202,59 +207,49 @@ class ResNet:
         if version not in cls.versions:
             raise ValueError(f"Unknown version: {version}")
 
-        if version == "vanilla":
-            params.update(
-                {
-                    "dropout_rate": dropout_rate,
-                }
-            )
-        elif version == "mc-dropout":
-            params.update(
-                {
-                    "dropout_rate": dropout_rate,
-                    "num_estimators": num_estimators,
-                }
-            )
-        elif version == "packed":
+        if version in cls.ensemble:
             params.update(
                 {
                     "num_estimators": num_estimators,
+                }
+            )
+            if version != "mc-dropout":
+                format_batch_fn = RepeatTarget(num_repeats=num_estimators)
+
+        if version == "packed":
+            params.update(
+                {
                     "alpha": alpha,
                     "gamma": gamma,
                     "pretrained": pretrained,
                 }
             )
-            format_batch_fn = RepeatTarget(num_repeats=num_estimators)
-        elif version == "batched":
-            params.update(
-                {
-                    "num_estimators": num_estimators,
-                }
-            )
-            format_batch_fn = RepeatTarget(num_repeats=num_estimators)
         elif version == "masked":
             params.update(
                 {
-                    "num_estimators": num_estimators,
                     "scale": scale,
                 }
             )
-            format_batch_fn = RepeatTarget(num_repeats=num_estimators)
         elif version == "mimo":
-            params.update(
-                {
-                    "num_estimators": num_estimators,
-                }
-            )
             format_batch_fn = MIMOBatchFormat(
                 num_estimators=num_estimators,
                 rho=rho,
                 batch_repeat=batch_repeat,
             )
 
+        # for lightning params
+        kwargs.update(params | {"version": version, "arch": arch})
+
+        if version == "mc-dropout":  # std ResNets don't have `num_estimators`
+            del params["num_estimators"]
         model = cls.versions[version][cls.archs.index(arch)](**params)
-        kwargs.update(params)
-        kwargs.update({"version": version, "arch": arch})
+        if version == "mc-dropout":
+            model = mc_dropout(
+                model=model,
+                num_estimators=num_estimators,
+                last_layer=last_layer_dropout,
+            )
+
         # routine specific parameters
         if version in cls.single:
             return ClassificationSingle(
@@ -310,6 +305,7 @@ class ResNet:
         parser = add_packed_specific_args(parser)
         parser = add_masked_specific_args(parser)
         parser = add_mimo_specific_args(parser)
+        parser = add_mc_dropout_specific_args(parser)
         parser.add_argument(
             "--version",
             type=str,

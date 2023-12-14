@@ -25,7 +25,16 @@ class TestCLI:
 
     def test_cli_main_resnet(self):
         root = Path(__file__).parent.absolute().parents[0]
-        with ArgvContext("file.py"):
+        with ArgvContext(
+            "file.py",
+            "--version",
+            "mc-dropout",
+            "--dropout_rate",
+            "0.2",
+            "--num_estimators",
+            "4",
+            "--last_layer_dropout",
+        ):
             args = init_args(ResNet, CIFAR10DataModule)
 
             # datamodule

@@ -128,3 +128,12 @@ def add_mimo_specific_args(parser: ArgumentParser) -> ArgumentParser:
         help="Batch repeat for MIMO",
     )
     return parser
+
+
+def add_mc_dropout_specific_args(parser: ArgumentParser) -> ArgumentParser:
+    parser.add_argument(
+        "--last_layer_dropout",
+        action="store_true",
+        help="Whether to apply dropout to the last layer only",
+    )
+    return parser

@@ -1,7 +1,7 @@
 import torch
 from einops import rearrange
 
-from .std import BasicBlock, Bottleneck, _ResNet
+from .std import _BasicBlock, _Bottleneck, _ResNet
 
 __all__ = [
     "mimo_resnet18",
@@ -15,12 +15,12 @@ __all__ = [
 class _MIMOResNet(_ResNet):
     def __init__(
         self,
-        block: type[BasicBlock | Bottleneck],
+        block: type[_BasicBlock | _Bottleneck],
         num_blocks: list[int],
         in_channels: int,
         num_classes: int,
         num_estimators: int,
-        dropout_rate: float = 0.0,
+        dropout_rate: float,
         groups: int = 1,
         style: str = "imagenet",
     ) -> None:
@@ -54,7 +54,7 @@ def mimo_resnet18(
     style: str = "imagenet",
 ) -> _MIMOResNet:
     return _MIMOResNet(
-        block=BasicBlock,
+        block=_BasicBlock,
         num_blocks=[2, 2, 2, 2],
         in_channels=in_channels,
         num_classes=num_classes,
@@ -74,7 +74,7 @@ def mimo_resnet34(
     style: str = "imagenet",
 ) -> _MIMOResNet:
     return _MIMOResNet(
-        block=BasicBlock,
+        block=_BasicBlock,
         num_blocks=[3, 4, 6, 3],
         in_channels=in_channels,
         num_classes=num_classes,
@@ -94,7 +94,7 @@ def mimo_resnet50(
     style: str = "imagenet",
 ) -> _MIMOResNet:
     return _MIMOResNet(
-        block=Bottleneck,
+        block=_Bottleneck,
         num_blocks=[3, 4, 6, 3],
         in_channels=in_channels,
         num_classes=num_classes,
@@ -114,7 +114,7 @@ def mimo_resnet101(
     style: str = "imagenet",
 ) -> _MIMOResNet:
     return _MIMOResNet(
-        block=Bottleneck,
+        block=_Bottleneck,
         num_blocks=[3, 4, 23, 3],
         in_channels=in_channels,
         num_classes=num_classes,
@@ -134,7 +134,7 @@ def mimo_resnet152(
     style: str = "imagenet",
 ) -> _MIMOResNet:
     return _MIMOResNet(
-        block=Bottleneck,
+        block=_Bottleneck,
         num_blocks=[3, 8, 36, 3],
         in_channels=in_channels,
         num_classes=num_classes,

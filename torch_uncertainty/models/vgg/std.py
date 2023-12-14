@@ -14,7 +14,6 @@ def vgg11(
     dropout_rate: float = 0.5,
     style: str = "imagenet",
     num_estimators: int | None = None,
-    last_layer_dropout: bool = False,
 ) -> VGG:
     return _vgg(
         cfgs["A"],
@@ -25,7 +24,6 @@ def vgg11(
         dropout_rate=dropout_rate,
         style=style,
         num_estimators=num_estimators,
-        last_layer_dropout=last_layer_dropout,
     )
 
 
@@ -37,8 +35,7 @@ def vgg13(
     dropout_rate: float = 0.5,
     style: str = "imagenet",
     num_estimators: int | None = None,
-    last_layer_dropout: bool = False,
-) -> VGG:
+) -> VGG:  # coverage: ignore
     return _vgg(
         cfgs["B"],
         in_channels=in_channels,
@@ -48,7 +45,6 @@ def vgg13(
         dropout_rate=dropout_rate,
         style=style,
         num_estimators=num_estimators,
-        last_layer_dropout=last_layer_dropout,
     )
 
 
@@ -60,8 +56,7 @@ def vgg16(
     dropout_rate: float = 0.5,
     style: str = "imagenet",
     num_estimators: int | None = None,
-    last_layer_dropout: bool = False,
-) -> VGG:
+) -> VGG:  # coverage: ignore
     return _vgg(
         cfgs["D"],
         in_channels=in_channels,
@@ -71,7 +66,6 @@ def vgg16(
         dropout_rate=dropout_rate,
         style=style,
         num_estimators=num_estimators,
-        last_layer_dropout=last_layer_dropout,
     )
 
 
@@ -83,7 +77,6 @@ def vgg19(
     dropout_rate: float = 0.5,
     style: str = "imagenet",
     num_estimators: int | None = None,
-    last_layer_dropout: bool = False,
 ) -> VGG:  # coverage: ignore
     return _vgg(
         cfgs["E"],
@@ -94,5 +87,4 @@ def vgg19(
         dropout_rate=dropout_rate,
         style=style,
         num_estimators=num_estimators,
-        last_layer_dropout=last_layer_dropout,
     )

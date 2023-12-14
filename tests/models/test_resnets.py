@@ -41,11 +41,11 @@ class TestStdResnet:
             model.feats_forward(torch.randn(2, 1, 32, 32))
 
     def test_mc_dropout(self):
-        resnet34(1, 10, 1, num_estimators=5)
-        resnet101(1, 10, 1, num_estimators=5)
-        resnet152(1, 10, 1, num_estimators=5)
+        resnet34(1, 10, 1)
+        resnet101(1, 10, 1)
+        resnet152(1, 10, 1)
 
-        model = resnet50(1, 10, 1, num_estimators=5)
+        model = resnet50(1, 10, 1)
         with torch.no_grad():
             model(torch.randn(2, 1, 32, 32))
 
@@ -72,17 +72,17 @@ class TestMaskedResnet:
     """Testing the ResNet masked class."""
 
     def test_main(self):
-        masked_resnet34(1, 2, 2, 1, 10)
-        masked_resnet101(1, 2, 2, 1, 10)
+        masked_resnet34(1, 2, 2, 1, num_classes=10)
+        masked_resnet101(1, 2, 2, 1, num_classes=10)
 
 
 class TestBatchedResnet:
     """Testing the ResNet batched class."""
 
     def test_main(self):
-        batched_resnet34(1, 2, 1, 10)
-        batched_resnet101(1, 2, 1, 10)
-        batched_resnet152(1, 2, 1, 10)
+        batched_resnet34(1, 10, 2, 1)
+        batched_resnet101(1, 10, 2, 1)
+        batched_resnet152(1, 10, 2, 1)
 
 
 class TestMIMOResnet:

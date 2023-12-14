@@ -19,6 +19,7 @@ class TestStandardBaseline:
             loss=nn.CrossEntropyLoss,
             optimization_procedure=optim_cifar10_resnet18,
             version="mc-dropout",
+            dropout_rate=0.1,
             num_estimators=4,
             arch=18,
             style="cifar",
@@ -41,6 +42,7 @@ class TestStandardWideBaseline:
             loss=nn.CrossEntropyLoss,
             optimization_procedure=optim_cifar10_wideresnet,
             version="mc-dropout",
+            dropout_rate=0.1,
             num_estimators=4,
             style="cifar",
             groups=1,
@@ -62,6 +64,7 @@ class TestStandardVGGBaseline:
             loss=nn.CrossEntropyLoss,
             optimization_procedure=optim_cifar10_resnet18,
             version="mc-dropout",
+            dropout_rate=0.1,
             num_estimators=4,
             arch=11,
             groups=1,
@@ -71,18 +74,4 @@ class TestStandardVGGBaseline:
 
         _ = net.criterion
         net.configure_optimizers()
-        net(torch.rand(1, 3, 32, 32))
-
-        net = VGG(
-            num_classes=10,
-            in_channels=3,
-            loss=nn.CrossEntropyLoss,
-            optimization_procedure=optim_cifar10_resnet18,
-            version="mc-dropout",
-            num_estimators=4,
-            arch=11,
-            groups=1,
-            last_layer_dropout=True,
-        )
-        net.eval()
         net(torch.rand(1, 3, 32, 32))

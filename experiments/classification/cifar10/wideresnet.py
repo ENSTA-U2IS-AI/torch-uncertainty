@@ -8,11 +8,14 @@ from torch_uncertainty.datamodules import CIFAR10DataModule
 from torch_uncertainty.optimization_procedures import get_procedure
 
 if __name__ == "__main__":
-    root = Path(__file__).parent.absolute().parents[2]
-
     args = init_args(WideResNet, CIFAR10DataModule)
+    if args.root == "./data/":
+        root = Path(__file__).parent.absolute().parents[2]
+    else:
+        root = Path(args.root)
 
-    net_name = f"{args.version}-wideresnet28x10-cifar10"
+    if args.exp_name == "":
+        args.exp_name = f"{args.version}-wideresnet28x10-cifar10"
 
     # datamodule
     args.root = str(root / "data")
@@ -30,4 +33,4 @@ if __name__ == "__main__":
         **vars(args),
     )
 
-    cli_main(model, dm, root, net_name, args)
+    cli_main(model, dm, root, args.exp_dir, args.exp_name, args)

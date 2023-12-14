@@ -1,8 +1,6 @@
 import torch.nn.functional as F
 from torch import Tensor, nn
 
-from torch_uncertainty.models.utils import toggle_dropout
-
 __all__ = [
     "resnet18",
     "resnet34",
@@ -12,16 +10,16 @@ __all__ = [
 ]
 
 
-class BasicBlock(nn.Module):
+class _BasicBlock(nn.Module):
     expansion = 1
 
     def __init__(
         self,
         in_planes: int,
         planes: int,
-        stride: int = 1,
-        dropout_rate: float = 0,
-        groups: int = 1,
+        stride: int,
+        dropout_rate: float,
+        groups: int,
     ) -> None:
         super().__init__()
 
@@ -70,16 +68,16 @@ class BasicBlock(nn.Module):
         return F.relu(out)
 
 
-class Bottleneck(nn.Module):
+class _Bottleneck(nn.Module):
     expansion = 4
 
     def __init__(
         self,
         in_planes: int,
         planes: int,
-        stride: int = 1,
-        dropout_rate: float = 0,
-        groups: int = 1,
+        stride: int,
+        dropout_rate: float,
+        groups: int,
     ) -> None:
         super().__init__()
 
@@ -133,8 +131,8 @@ class Bottleneck(nn.Module):
         return F.relu(out)
 
 
-# class RobustBottleneck(nn.Module):
-#     """Robust Bottleneck from "Can CNNs be more robust than transformers?"
+# class Robust_Bottleneck(nn.Module):
+#     """Robust _Bottleneck from "Can CNNs be more robust than transformers?"
 #     This corresponds to ResNet-Up-Inverted-DW in the paper.
 #     """
 
@@ -186,15 +184,13 @@ class Bottleneck(nn.Module):
 class _ResNet(nn.Module):
     def __init__(
         self,
-        block: type[BasicBlock | Bottleneck],
+        block: type[_BasicBlock | _Bottleneck],
         num_blocks: list[int],
         in_channels: int,
         num_classes: int,
         dropout_rate: float,
         groups: int,
         style: str = "imagenet",
-        num_estimators: int | None = None,
-        last_layer_dropout: bool = False,
     ) -> None:
         """ResNet from `Deep Residual Learning for Image Recognition`.
 
@@ -208,9 +204,7 @@ class _ResNet(nn.Module):
 
         self.in_planes = 64
         block_planes = self.in_planes
-        self.num_estimators = num_estimators
         self.dropout_rate = dropout_rate
-        self.last_layer_dropout = last_layer_dropout
 
         if style == "imagenet":
             self.conv1 = nn.Conv2d(
@@ -275,6 +269,7 @@ class _ResNet(nn.Module):
             groups=groups,
         )
 
+        self.dropout = nn.Dropout(p=dropout_rate)
         self.pool = nn.AdaptiveAvgPool2d(output_size=1)
         self.flatten = nn.Flatten(1)
 
@@ -285,7 +280,7 @@ class _ResNet(nn.Module):
 
     def _make_layer(
         self,
-        block: type[BasicBlock] | type[Bottleneck],
+        block: type[_BasicBlock] | type[_Bottleneck],
         planes: int,
         num_blocks: int,
         stride: int,
@@ -307,20 +302,7 @@ class _ResNet(nn.Module):
             self.in_planes = planes * block.expansion
         return nn.Sequential(*layers)
 
-    def forward(self, x: Tensor) -> Tensor:
-        x = self.handle_dropout(x)
-        out = F.relu(self.bn1(self.conv1(x)))
-        out = self.optional_pool(out)
-        out = self.layer1(out)
-        out = self.layer2(out)
-        out = self.layer3(out)
-        out = self.layer4(out)
-        out = self.pool(out)
-        out = self.flatten(out)
-        return self.linear(out)
-
     def feats_forward(self, x: Tensor) -> Tensor:
-        x = self.handle_dropout(x)
         out = F.relu(self.bn1(self.conv1(x)))
         out = self.optional_pool(out)
         out = self.layer1(out)
@@ -328,29 +310,18 @@ class _ResNet(nn.Module):
         out = self.layer3(out)
         out = self.layer4(out)
         out = self.pool(out)
-        return self.flatten(out)
+        return self.dropout(self.flatten(out))
 
-    def handle_dropout(self, x: Tensor) -> Tensor:
-        if (
-            self.dropout_rate is not None
-            and self.dropout_rate > 0
-            and self.num_estimators is not None
-            and not self.training
-        ):
-            if self.last_layer_dropout is not None:
-                toggle_dropout(self, self.last_layer_dropout)
-            x = x.repeat(self.num_estimators, 1, 1, 1)
-        return x
+    def forward(self, x: Tensor) -> Tensor:
+        return self.linear(self.feats_forward(x))
 
 
 def resnet18(
     in_channels: int,
     num_classes: int,
-    dropout_rate: float = 0,
+    dropout_rate: float = 0.0,
     groups: int = 1,
     style: str = "imagenet",
-    num_estimators: int | None = None,
-    last_layer_dropout: bool = False,
 ) -> _ResNet:
     """ResNet-18 from `Deep Residual Learning for Image Recognition
     <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -362,24 +333,18 @@ def resnet18(
         groups (int): Number of groups in convolutions. Defaults to 1.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
-        num_estimators (int, optional): Number of samples to draw from the
-            dropout distribution. Defaults to ``None``.
-        last_layer_dropout (bool, optional): Whether to apply dropout to the
-            last layer during inference. Defaults to ``False``.
 
     Returns:
         _ResNet: A ResNet-18.
     """
     return _ResNet(
-        block=BasicBlock,
+        block=_BasicBlock,
         num_blocks=[2, 2, 2, 2],
         in_channels=in_channels,
         num_classes=num_classes,
         dropout_rate=dropout_rate,
         groups=groups,
         style=style,
-        num_estimators=num_estimators,
-        last_layer_dropout=last_layer_dropout,
     )
 
 
@@ -389,8 +354,6 @@ def resnet34(
     dropout_rate: float = 0,
     groups: int = 1,
     style: str = "imagenet",
-    num_estimators: int | None = None,
-    last_layer_dropout: bool = False,
 ) -> _ResNet:
     """ResNet-34 from `Deep Residual Learning for Image Recognition
     <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -402,24 +365,18 @@ def resnet34(
         groups (int): Number of groups in convolutions. Defaults to 1.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
-        num_estimators (int, optional): Number of samples to draw from the
-            dropout distribution. Defaults to ``None``.
-        last_layer_dropout (bool, optional): Whether to apply dropout to the
-            last layer during inference. Defaults to ``False``.
 
     Returns:
         _ResNet: A ResNet-34.
     """
     return _ResNet(
-        block=BasicBlock,
+        block=_BasicBlock,
         num_blocks=[3, 4, 6, 3],
         in_channels=in_channels,
         num_classes=num_classes,
         dropout_rate=dropout_rate,
         groups=groups,
         style=style,
-        num_estimators=num_estimators,
-        last_layer_dropout=last_layer_dropout,
     )
 
 
@@ -429,8 +386,6 @@ def resnet50(
     dropout_rate: float = 0,
     groups: int = 1,
     style: str = "imagenet",
-    num_estimators: int | None = None,
-    last_layer_dropout: bool = False,
 ) -> _ResNet:
     """ResNet-50 from `Deep Residual Learning for Image Recognition
     <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -442,24 +397,18 @@ def resnet50(
         groups (int): Number of groups in convolutions. Defaults to 1.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
-        num_estimators (int, optional): Number of samples to draw from the
-            dropout distribution. Defaults to ``None``.
-        last_layer_dropout (bool, optional): Whether to apply dropout to the
-            last layer during inference. Defaults to ``False``.
 
     Returns:
         _ResNet: A ResNet-50.
     """
     return _ResNet(
-        block=Bottleneck,
+        block=_Bottleneck,
         num_blocks=[3, 4, 6, 3],
         in_channels=in_channels,
         num_classes=num_classes,
         dropout_rate=dropout_rate,
         groups=groups,
         style=style,
-        num_estimators=num_estimators,
-        last_layer_dropout=last_layer_dropout,
     )
 
 
@@ -469,8 +418,6 @@ def resnet101(
     dropout_rate: float = 0,
     groups: int = 1,
     style: str = "imagenet",
-    num_estimators: int | None = None,
-    last_layer_dropout: bool = False,
 ) -> _ResNet:
     """ResNet-101 from `Deep Residual Learning for Image Recognition
     <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -482,24 +429,18 @@ def resnet101(
         groups (int): Number of groups in convolutions. Defaults to 1.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
-        num_estimators (int, optional): Number of samples to draw from the
-            dropout distribution. Defaults to ``None``.
-        last_layer_dropout (bool, optional): Whether to apply dropout to the
-            last layer during inference. Defaults to ``False``.
 
     Returns:
         _ResNet: A ResNet-101.
     """
     return _ResNet(
-        block=Bottleneck,
+        block=_Bottleneck,
         num_blocks=[3, 4, 23, 3],
         in_channels=in_channels,
         num_classes=num_classes,
         dropout_rate=dropout_rate,
         groups=groups,
         style=style,
-        num_estimators=num_estimators,
-        last_layer_dropout=last_layer_dropout,
     )
 
 
@@ -509,8 +450,6 @@ def resnet152(
     dropout_rate: float = 0,
     groups: int = 1,
     style: str = "imagenet",
-    num_estimators: int | None = None,
-    last_layer_dropout: bool = False,
 ) -> _ResNet:
     """ResNet-152 from `Deep Residual Learning for Image Recognition
     <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -523,22 +462,16 @@ def resnet152(
             ``1``.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
-        num_estimators (int, optional): Number of samples to draw from the
-            dropout distribution. Defaults to ``None``.
-        last_layer_dropout (bool, optional): Whether to apply dropout to the
-            last layer during inference. Defaults to ``False``.
 
     Returns:
         _ResNet: A ResNet-152.
     """
     return _ResNet(
-        block=Bottleneck,
+        block=_Bottleneck,
         num_blocks=[3, 8, 36, 3],
         in_channels=in_channels,
         num_classes=num_classes,
         dropout_rate=dropout_rate,
         groups=groups,
         style=style,
-        num_estimators=num_estimators,
-        last_layer_dropout=last_layer_dropout,
     )
