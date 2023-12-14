@@ -59,4 +59,4 @@ if __name__ == "__main__":
         **vars(args),
     )
 
-    cli_main(baseline, dm, root, net_name, args)
+    cli_main(baseline, dm, root, "logs/", net_name, args)
