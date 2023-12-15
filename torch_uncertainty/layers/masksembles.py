@@ -1,12 +1,11 @@
-""" Modified from https://github.com/nikitadurasov/masksembles/ """
+"""Modified from https://github.com/nikitadurasov/masksembles/."""
 
-from typing import Any, Union
+from typing import Any
 
+import numpy as np
 import torch
 from torch import Tensor, nn
 from torch.nn.common_types import _size_2_t
-
-import numpy as np
 
 
 def _generate_masks(m: int, n: int, s: float) -> np.ndarray:
@@ -35,8 +34,7 @@ def _generate_masks(m: int, n: int, s: float) -> np.ndarray:
 
     masks = np.array(masks)
     # drop useless positions
-    masks = masks[:, ~np.all(masks == 0, axis=0)]
-    return masks
+    return masks[:, ~np.all(masks == 0, axis=0)]
 
 
 def generate_masks(m: int, n: int, s: float) -> np.ndarray:
@@ -53,7 +51,6 @@ def generate_masks(m: int, n: int, s: float) -> np.ndarray:
     Returns:
         np.ndarray: matrix of binary vectors
     """
-
     masks = _generate_masks(m, n, s)
     # hardcoded formula for expected size, check reference
     expected_size = int(m * s * (1 - (1 - 1 / s) ** n))
@@ -80,7 +77,6 @@ def generation_wrapper(c: int, n: int, scale: float) -> np.ndarray:
     Returns:
         np.ndarray: matrix of binary vectors
     """
-
     if c < 10:
         raise ValueError(
             "Masksembles approach couldn't be used in such setups where "
@@ -119,10 +115,10 @@ def generation_wrapper(c: int, n: int, scale: float) -> np.ndarray:
     return masks
 
 
-class Mask1D(nn.Module):
+class Mask1d(nn.Module):
     def __init__(
         self, channels: int, num_masks: int, scale: float, **factory_kwargs
-    ):
+    ) -> None:
         super().__init__()
         self.num_masks = num_masks
 
@@ -141,10 +137,10 @@ class Mask1D(nn.Module):
         return torch.as_tensor(x, dtype=inputs.dtype).squeeze(0)
 
 
-class Mask2D(nn.Module):
+class Mask2d(nn.Module):
     def __init__(
         self, channels: int, num_masks: int, scale: float, **factory_kwargs
-    ):
+    ) -> None:
         super().__init__()
         self.num_masks = num_masks
 
@@ -195,8 +191,8 @@ class MaskedLinear(nn.Module):
         num_estimators: int,
         scale: float,
         bias: bool = True,
-        device: Union[Any, None] = None,
-        dtype: Union[Any, None] = None,
+        device: Any | None = None,
+        dtype: Any | None = None,
     ) -> None:
         factory_kwargs = {"device": device, "dtype": dtype}
         super().__init__()
@@ -204,7 +200,7 @@ class MaskedLinear(nn.Module):
         if scale < 1:
             raise ValueError(f"Attribute `scale` should be >= 1, not {scale}.")
 
-        self.mask = Mask1D(
+        self.mask = Mask1d(
             in_features, num_masks=num_estimators, scale=scale, **factory_kwargs
         )
         self.linear = nn.Linear(
@@ -214,8 +210,8 @@ class MaskedLinear(nn.Module):
             **factory_kwargs,
         )
 
-    def forward(self, input: Tensor) -> Tensor:
-        return self.linear(self.mask(input))
+    def forward(self, inputs: Tensor) -> Tensor:
+        return self.linear(self.mask(inputs))
 
 
 class MaskedConv2d(nn.Module):
@@ -255,12 +251,12 @@ class MaskedConv2d(nn.Module):
         num_estimators: int,
         scale: float,
         stride: _size_2_t = 1,
-        padding: Union[str, _size_2_t] = 0,
+        padding: str | _size_2_t = 0,
         dilation: _size_2_t = 1,
         groups: int = 1,
         bias: bool = True,
-        device: Union[Any, None] = None,
-        dtype: Union[Any, None] = None,
+        device: Any | None = None,
+        dtype: Any | None = None,
     ) -> None:
         factory_kwargs = {"device": device, "dtype": dtype}
         super().__init__()
@@ -268,7 +264,7 @@ class MaskedConv2d(nn.Module):
         if scale < 1:
             raise ValueError(f"Attribute `scale` should be >= 1, not {scale}.")
 
-        self.mask = Mask2D(
+        self.mask = Mask2d(
             in_channels, num_masks=num_estimators, scale=scale, **factory_kwargs
         )
         self.conv = nn.Conv2d(
@@ -284,5 +280,5 @@ class MaskedConv2d(nn.Module):
             **factory_kwargs,
         )
 
-    def forward(self, input: Tensor) -> Tensor:
-        return self.conv(self.mask(input))
+    def forward(self, inputs: Tensor) -> Tensor:
+        return self.conv(self.mask(inputs))

@@ -1,6 +1,7 @@
 from argparse import ArgumentParser, Namespace
+from collections.abc import Callable
 from functools import partial
-from typing import Any, List, Optional, Tuple, Type, Union
+from typing import Any
 
 import pytorch_lightning as pl
 import torch
@@ -9,19 +10,17 @@ from einops import rearrange
 from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.utilities.memory import get_model_size_mb
 from pytorch_lightning.utilities.types import EPOCH_OUTPUT, STEP_OUTPUT
-from timm.data import Mixup
+from timm.data import Mixup as timm_Mixup
 from torch import Tensor, nn
-from torchmetrics import Accuracy, CalibrationError, MetricCollection
+from torchmetrics import Accuracy, MetricCollection
 from torchmetrics.classification import (
-    BinaryAccuracy,
     BinaryAUROC,
     BinaryAveragePrecision,
-    BinaryCalibrationError,
 )
 
 from torch_uncertainty.losses import DECLoss, ELBOLoss
-
-from ..metrics import (
+from torch_uncertainty.metrics import (
+    CE,
     FPR95,
     BrierScore,
     Disagreement,
@@ -30,43 +29,76 @@ from ..metrics import (
     NegativeLogLikelihood,
     VariationRatio,
 )
-from ..plotting_utils import CalibrationPlot, plot_hist
+from torch_uncertainty.plotting_utils import plot_hist
+from torch_uncertainty.post_processing import TemperatureScaler
+from torch_uncertainty.transforms import Mixup, MixupIO, RegMixup, WarpingMixup
 
 
 class ClassificationSingle(pl.LightningModule):
-    """
-    Args:
-        evaluate_ood (bool, optional): Indicates whether to evaluate the OOD
-            detection performance or not. Defaults to ``False``.
-        use_entropy (bool, optional): Indicates whether to use the entropy
-            values as the OOD criterion or not. Defaults to ``False``.
-        use_logits (bool, optional): Indicates whether to use the logits as the
-            OOD criterion or not. Defaults to ``False``.
-
-    Note:
-        The default OOD criterion is the softmax confidence score.
-
-    Warning:
-        Make sure at most only one of :attr:`use_entropy` and :attr:`use_logits`
-        attributes is set to ``True``. Otherwise a :class:`ValueError()` will
-        be raised.
-    """
-
     def __init__(
         self,
         num_classes: int,
         model: nn.Module,
-        loss: Type[nn.Module],
+        loss: type[nn.Module],
         optimization_procedure: Any,
-        format_batch_fn: nn.Module = nn.Identity(),
+        format_batch_fn: nn.Module | None = None,
+        mixtype: str = "erm",
+        mixmode: str = "elem",
+        dist_sim: str = "emb",
+        kernel_tau_max: float = 1.0,
+        kernel_tau_std: float = 0.5,
         mixup_alpha: float = 0,
         cutmix_alpha: float = 0,
         evaluate_ood: bool = False,
         use_entropy: bool = False,
         use_logits: bool = False,
+        log_plots: bool = False,
+        calibration_set: Callable | None = None,
         **kwargs,
     ) -> None:
+        """Classification routine for single models.
+
+        Args:
+            num_classes (int): Number of classes.
+            model (nn.Module): Model to train.
+            loss (type[nn.Module]): Loss function.
+            optimization_procedure (Any): Optimization procedure.
+            format_batch_fn (nn.Module, optional): Function to format the batch.
+                Defaults to :class:`torch.nn.Identity()`.
+            mixtype (str, optional): Mixup type. Defaults to ``"erm"``.
+            mixmode (str, optional): Mixup mode. Defaults to ``"elem"``.
+            dist_sim (str, optional): Distance similarity. Defaults to ``"emb"``.
+            kernel_tau_max (float, optional): Maximum value for the kernel tau.
+                Defaults to 1.0.
+            kernel_tau_std (float, optional): Standard deviation for the kernel tau.
+                Defaults to 0.5.
+            mixup_alpha (float, optional): Alpha parameter for Mixup. Defaults to 0.
+            cutmix_alpha (float, optional): Alpha parameter for Cutmix.
+                Defaults to 0.
+            evaluate_ood (bool, optional): Indicates whether to evaluate the OOD
+                detection performance or not. Defaults to ``False``.
+            use_entropy (bool, optional): Indicates whether to use the entropy
+                values as the OOD criterion or not. Defaults to ``False``.
+            use_logits (bool, optional): Indicates whether to use the logits as the
+                OOD criterion or not. Defaults to ``False``.
+            log_plots (bool, optional): Indicates whether to log plots from
+                metrics. Defaults to ``False``.
+            calibration_set (Callable, optional): Function to get the calibration
+                set. Defaults to ``None``.
+            kwargs (Any): Additional arguments.
+
+        Note:
+            The default OOD criterion is the softmax confidence score.
+
+        Warning:
+            Make sure at most only one of :attr:`use_entropy` and :attr:`use_logits`
+            attributes is set to ``True``. Otherwise a :class:`ValueError()` will
+            be raised.
+        """
         super().__init__()
+
+        if format_batch_fn is None:
+            format_batch_fn = nn.Identity()
 
         self.save_hyperparameters(
             ignore=[
@@ -74,6 +106,7 @@ class ClassificationSingle(pl.LightningModule):
                 "loss",
                 "optimization_procedure",
                 "format_batch_fn",
+                "calibration_set",
             ]
         )
 
@@ -84,6 +117,9 @@ class ClassificationSingle(pl.LightningModule):
         self.evaluate_ood = evaluate_ood
         self.use_logits = use_logits
         self.use_entropy = use_entropy
+        self.log_plots = log_plots
+
+        self.calibration_set = calibration_set
 
         self.binary_cls = num_classes == 1
 
@@ -97,8 +133,8 @@ class ClassificationSingle(pl.LightningModule):
         if self.binary_cls:
             cls_metrics = MetricCollection(
                 {
-                    "acc": BinaryAccuracy(),
-                    "ece": BinaryCalibrationError(),
+                    "acc": Accuracy(task="binary"),
+                    "ece": CE(task="binary"),
                     "brier": BrierScore(num_classes=1),
                 },
                 compute_groups=False,
@@ -110,9 +146,7 @@ class ClassificationSingle(pl.LightningModule):
                     "acc": Accuracy(
                         task="multiclass", num_classes=self.num_classes
                     ),
-                    "ece": CalibrationError(
-                        task="multiclass", num_classes=self.num_classes
-                    ),
+                    "ece": CE(task="multiclass", num_classes=self.num_classes),
                     "brier": BrierScore(num_classes=self.num_classes),
                 },
                 compute_groups=False,
@@ -120,6 +154,9 @@ class ClassificationSingle(pl.LightningModule):
 
         self.val_cls_metrics = cls_metrics.clone(prefix="hp/val_")
         self.test_cls_metrics = cls_metrics.clone(prefix="hp/test_")
+
+        if self.calibration_set is not None:
+            self.ts_cls_metrics = cls_metrics.clone(prefix="hp/ts_")
 
         self.test_entropy_id = Entropy()
 
@@ -140,14 +177,14 @@ class ClassificationSingle(pl.LightningModule):
                 "Cutmix alpha and Mixup alpha must be positive."
                 f"Got {mixup_alpha} and {cutmix_alpha}."
             )
-        elif mixup_alpha > 0 or cutmix_alpha > 0:
-            self.mixup = Mixup(
-                mixup_alpha=mixup_alpha, cutmix_alpha=cutmix_alpha
-            )
-        else:
-            self.mixup = lambda x, y: (x, y)
 
-        self.cal_plot = CalibrationPlot()
+        self.mixtype = mixtype
+        self.mixmode = mixmode
+        self.dist_sim = dist_sim
+
+        self.mixup = self.init_mixup(
+            mixup_alpha, cutmix_alpha, kernel_tau_max, kernel_tau_std
+        )
 
         # Handle ELBO special cases
         self.is_elbo = (
@@ -168,8 +205,8 @@ class ClassificationSingle(pl.LightningModule):
             self.loss = partial(self.loss, model=self.model)
         return self.loss()
 
-    def forward(self, input: Tensor) -> Tensor:
-        return self.model.forward(input)
+    def forward(self, inputs: Tensor) -> Tensor:
+        return self.model.forward(inputs)
 
     def on_train_start(self) -> None:
         # hyperparameters for performances
@@ -190,13 +227,26 @@ class ClassificationSingle(pl.LightningModule):
                     "hp/test_aupr": 0,
                     "hp/test_auroc": 0,
                     "hp/test_fpr95": 0,
+                    "hp/ts_test_nll": 0,
+                    "hp/ts_test_ece": 0,
+                    "hp/ts_test_brier": 0,
                 },
             )
 
     def training_step(
-        self, batch: Tuple[Tensor, Tensor], batch_idx: int
+        self, batch: tuple[Tensor, Tensor], batch_idx: int
     ) -> STEP_OUTPUT:
-        batch = self.mixup(*batch)
+        if self.mixtype == "kernel_warping":
+            if self.dist_sim == "emb":
+                with torch.no_grad():
+                    feats = self.model.feats_forward(batch[0]).detach()
+
+                batch = self.mixup(*batch, feats)
+            elif self.dist_sim == "inp":
+                batch = self.mixup(*batch, batch[0])
+        else:
+            batch = self.mixup(*batch)
+
         inputs, targets = self.format_batch_fn(batch)
 
         if self.is_elbo:
@@ -216,7 +266,7 @@ class ClassificationSingle(pl.LightningModule):
         return loss
 
     def validation_step(
-        self, batch: Tuple[Tensor, Tensor], batch_idx: int
+        self, batch: tuple[Tensor, Tensor], batch_idx: int
     ) -> None:
         inputs, targets = batch
         logits = self.forward(inputs)
@@ -229,16 +279,26 @@ class ClassificationSingle(pl.LightningModule):
         self.val_cls_metrics.update(probs, targets)
 
     def validation_epoch_end(
-        self, outputs: Union[EPOCH_OUTPUT, List[EPOCH_OUTPUT]]
+        self, outputs: EPOCH_OUTPUT | list[EPOCH_OUTPUT]
     ) -> None:
         self.log_dict(self.val_cls_metrics.compute())
         self.val_cls_metrics.reset()
 
+    def on_test_start(self) -> None:
+        if self.calibration_set is not None:
+            self.scaler = TemperatureScaler(device=self.device).fit(
+                model=self.model, calibration_set=self.calibration_set()
+            )
+            self.cal_model = torch.nn.Sequential(self.model, self.scaler)
+        else:
+            self.scaler = None
+            self.cal_model = None
+
     def test_step(
         self,
-        batch: Tuple[Tensor, Tensor],
+        batch: tuple[Tensor, Tensor],
         batch_idx: int,
-        dataloader_idx: Optional[int] = 0,
+        dataloader_idx: int | None = 0,
     ) -> Tensor:
         inputs, targets = batch
         logits = self.forward(inputs)
@@ -248,7 +308,7 @@ class ClassificationSingle(pl.LightningModule):
         else:
             probs = F.softmax(logits, dim=-1)
 
-        self.cal_plot.update(probs, targets)
+        # self.cal_plot.update(probs, targets)
         confs = probs.max(dim=-1)[0]
 
         if self.use_logits:
@@ -257,6 +317,15 @@ class ClassificationSingle(pl.LightningModule):
             ood_scores = torch.special.entr(probs).sum(dim=-1)
         else:
             ood_scores = -confs
+
+        if (
+            self.calibration_set is not None
+            and self.scaler is not None
+            and self.cal_model is not None
+        ):
+            cal_logits = self.cal_model(inputs)
+            cal_probs = F.softmax(cal_logits, dim=-1)
+            self.ts_cls_metrics.update(cal_probs, targets)
 
         if dataloader_idx == 0:
             self.test_cls_metrics.update(probs, targets)
@@ -283,12 +352,19 @@ class ClassificationSingle(pl.LightningModule):
         return logits
 
     def test_epoch_end(
-        self, outputs: Union[EPOCH_OUTPUT, List[EPOCH_OUTPUT]]
+        self, outputs: EPOCH_OUTPUT | list[EPOCH_OUTPUT]
     ) -> None:
         self.log_dict(
             self.test_cls_metrics.compute(),
         )
-        self.test_cls_metrics.reset()
+
+        if (
+            self.calibration_set is not None
+            and self.scaler is not None
+            and self.cal_model is not None
+        ):
+            self.log_dict(self.ts_cls_metrics.compute())
+            self.ts_cls_metrics.reset()
 
         if self.evaluate_ood:
             self.log_dict(
@@ -296,9 +372,9 @@ class ClassificationSingle(pl.LightningModule):
             )
             self.test_ood_metrics.reset()
 
-        if isinstance(self.logger, TensorBoardLogger):
+        if isinstance(self.logger, TensorBoardLogger) and self.log_plots:
             self.logger.experiment.add_figure(
-                "Calibration Plot", self.cal_plot.compute()[0]
+                "Calibration Plot", self.test_cls_metrics["ece"].plot()[0]
             )
 
             if self.evaluate_ood:
@@ -323,63 +399,117 @@ class ClassificationSingle(pl.LightningModule):
                     "Likelihood Histogram", probs_fig
                 )
 
+        self.test_cls_metrics.reset()
+
+    def init_mixup(
+        self,
+        mixup_alpha: float,
+        cutmix_alpha: float,
+        kernel_tau_max: float,
+        kernel_tau_std: float,
+    ) -> Callable:
+        if self.mixtype == "timm":
+            return timm_Mixup(
+                mixup_alpha=mixup_alpha,
+                cutmix_alpha=cutmix_alpha,
+                mode=self.mixmode,
+                num_classes=self.num_classes,
+            )
+        if self.mixtype == "mixup":
+            return Mixup(
+                alpha=mixup_alpha,
+                mode=self.mixmode,
+                num_classes=self.num_classes,
+            )
+        if self.mixtype == "mixup_io":
+            return MixupIO(
+                alpha=mixup_alpha,
+                mode=self.mixmode,
+                num_classes=self.num_classes,
+            )
+        if self.mixtype == "regmixup":
+            return RegMixup(
+                alpha=mixup_alpha,
+                mode=self.mixmode,
+                num_classes=self.num_classes,
+            )
+        if self.mixtype == "kernel_warping":
+            return WarpingMixup(
+                alpha=mixup_alpha,
+                mode=self.mixmode,
+                num_classes=self.num_classes,
+                apply_kernel=True,
+                tau_max=kernel_tau_max,
+                tau_std=kernel_tau_std,
+            )
+        return lambda x, y: (x, y)
+
     @staticmethod
     def add_model_specific_args(
         parent_parser: ArgumentParser,
     ) -> ArgumentParser:
-        """Defines the routine's attributes via command-line options:
+        """Defines the routine's attributes via command-line options.
 
-        - ``--mixup``: sets :attr:`mixup_alpha` for Mixup
-        - ``--cutmix``: sets :attr:`cutmix_alpha` for Cutmix
+        Args:
+            parent_parser (ArgumentParser): Parent parser to be completed.
+
+        Adds:
         - ``--entropy``: sets :attr:`use_entropy` to ``True``.
         - ``--logits``: sets :attr:`use_logits` to ``True``.
+        - ``--mixup_alpha``: sets :attr:`mixup_alpha` for Mixup
+        - ``--cutmix_alpha``: sets :attr:`cutmix_alpha` for Cutmix
+        - ``--mixtype``: sets :attr:`mixtype` for Mixup
+        - ``--mixmode``: sets :attr:`mixmode` for Mixup
+        - ``--dist_sim``: sets :attr:`dist_sim` for Mixup
+        - ``--kernel_tau_max``: sets :attr:`kernel_tau_max` for Mixup
+        - ``--kernel_tau_std``: sets :attr:`kernel_tau_std` for Mixup
         """
-        parent_parser.add_argument(
-            "--mixup", dest="mixup_alpha", type=float, default=0
-        )
-        parent_parser.add_argument(
-            "--cutmix", dest="cutmix_alpha", type=float, default=0
-        )
         parent_parser.add_argument(
             "--entropy", dest="use_entropy", action="store_true"
         )
         parent_parser.add_argument(
             "--logits", dest="use_logits", action="store_true"
         )
+
+        # Mixup args
+        parent_parser.add_argument(
+            "--mixup_alpha", dest="mixup_alpha", type=float, default=0
+        )
+        parent_parser.add_argument(
+            "--cutmix_alpha", dest="cutmix_alpha", type=float, default=0
+        )
+        parent_parser.add_argument(
+            "--mixtype", dest="mixtype", type=str, default="erm"
+        )
+        parent_parser.add_argument(
+            "--mixmode", dest="mixmode", type=str, default="elem"
+        )
+        parent_parser.add_argument(
+            "--dist_sim", dest="dist_sim", type=str, default="emb"
+        )
+        parent_parser.add_argument(
+            "--kernel_tau_max", dest="kernel_tau_max", type=float, default=1.0
+        )
+        parent_parser.add_argument(
+            "--kernel_tau_std", dest="kernel_tau_std", type=float, default=0.5
+        )
         return parent_parser
 
 
 class ClassificationEnsemble(ClassificationSingle):
-    """
-    Args:
-        evaluate_ood (bool, optional): Indicates whether to evaluate the OOD
-            detection performance or not. Defaults to ``False``.
-        use_entropy (bool, optional): Indicates whether to use the entropy
-            values as the OOD criterion or not. Defaults to ``False``.
-        use_logits (bool, optional): Indicates whether to use the logits as the
-            OOD criterion or not. Defaults to ``False``.
-        use_mi (bool, optional): Indicates whether to use the mutual
-            information as the OOD criterion or not. Defaults to ``False``.
-        use_variation_ratio (bool, optional): Indicates whether to use the
-            variation ratio as the OOD criterion or not. Defaults to ``False``.
-
-    Note:
-        The default OOD criterion is the averaged softmax confidence score.
-
-    Warning:
-        Make sure at most only one of :attr:`use_entropy`, :attr:`use_logits`
-        , :attr:`use_mi`, and :attr:`use_variation_ratio` attributes is set to
-        ``True``. Otherwise a :class:`ValueError()` will be raised.
-    """
-
     def __init__(
         self,
         num_classes: int,
         model: nn.Module,
-        loss: Type[nn.Module],
+        loss: type[nn.Module],
         optimization_procedure: Any,
         num_estimators: int,
-        format_batch_fn: nn.Module = nn.Identity(),
+        format_batch_fn: nn.Module | None = None,
+        mixtype: str = "erm",
+        mixmode: str = "elem",
+        dist_sim: str = "emb",
+        kernel_tau_max: float = 1.0,
+        kernel_tau_std: float = 0.5,
         mixup_alpha: float = 0,
         cutmix_alpha: float = 0,
         evaluate_ood: bool = False,
@@ -387,14 +517,64 @@ class ClassificationEnsemble(ClassificationSingle):
         use_logits: bool = False,
         use_mi: bool = False,
         use_variation_ratio: bool = False,
+        log_plots: bool = False,
         **kwargs,
     ) -> None:
+        """Classification routine for ensemble models.
+
+        Args:
+            num_classes (int): Number of classes.
+            model (nn.Module): Model to train.
+            loss (type[nn.Module]): Loss function.
+            optimization_procedure (Any): Optimization procedure.
+            num_estimators (int): Number of estimators in the ensemble.
+            format_batch_fn (nn.Module, optional): Function to format the batch.
+                Defaults to :class:`torch.nn.Identity()`.
+            mixtype (str, optional): Mixup type. Defaults to ``"erm"``.
+            mixmode (str, optional): Mixup mode. Defaults to ``"elem"``.
+            dist_sim (str, optional): Distance similarity. Defaults to ``"emb"``.
+            kernel_tau_max (float, optional): Maximum value for the kernel tau.
+                Defaults to 1.0.
+            kernel_tau_std (float, optional): Standard deviation for the kernel tau.
+                Defaults to 0.5.
+            mixup_alpha (float, optional): Alpha parameter for Mixup. Defaults to 0.
+            cutmix_alpha (float, optional): Alpha parameter for Cutmix.
+                Defaults to 0.
+            evaluate_ood (bool, optional): Indicates whether to evaluate the OOD
+                detection performance or not. Defaults to ``False``.
+            use_entropy (bool, optional): Indicates whether to use the entropy
+                values as the OOD criterion or not. Defaults to ``False``.
+            use_logits (bool, optional): Indicates whether to use the logits as the
+                OOD criterion or not. Defaults to ``False``.
+            use_mi (bool, optional): Indicates whether to use the mutual
+                information as the OOD criterion or not. Defaults to ``False``.
+            use_variation_ratio (bool, optional): Indicates whether to use the
+                variation ratio as the OOD criterion or not. Defaults to ``False``.
+            log_plots (bool, optional): Indicates whether to log plots from
+                metrics. Defaults to ``False``.
+            calibration_set (Callable, optional): Function to get the calibration
+                set. Defaults to ``None``.
+            kwargs (Any): Additional arguments.
+
+        Note:
+            The default OOD criterion is the averaged softmax confidence score.
+
+        Warning:
+            Make sure at most only one of :attr:`use_entropy`, :attr:`use_logits`
+            , :attr:`use_mi`, and :attr:`use_variation_ratio` attributes is set to
+            ``True``. Otherwise a :class:`ValueError()` will be raised.
+        """
         super().__init__(
             num_classes=num_classes,
             model=model,
             loss=loss,
             optimization_procedure=optimization_procedure,
             format_batch_fn=format_batch_fn,
+            mixtype=mixtype,
+            mixmode=mixmode,
+            dist_sim=dist_sim,
+            kernel_tau_max=kernel_tau_max,
+            kernel_tau_std=kernel_tau_std,
             mixup_alpha=mixup_alpha,
             cutmix_alpha=cutmix_alpha,
             evaluate_ood=evaluate_ood,
@@ -407,6 +587,7 @@ class ClassificationEnsemble(ClassificationSingle):
 
         self.use_mi = use_mi
         self.use_variation_ratio = use_variation_ratio
+        self.log_plots = log_plots
 
         if (
             self.use_logits
@@ -459,7 +640,7 @@ class ClassificationEnsemble(ClassificationSingle):
             )
 
     def training_step(
-        self, batch: Tuple[Tensor, Tensor], batch_idx: int
+        self, batch: tuple[Tensor, Tensor], batch_idx: int
     ) -> STEP_OUTPUT:
         batch = self.mixup(*batch)
         # eventual input repeat is done in the model
@@ -482,8 +663,8 @@ class ClassificationEnsemble(ClassificationSingle):
         self.log("train_loss", loss)
         return loss
 
-    def validation_step(  # type: ignore
-        self, batch: Tuple[Tensor, Tensor], batch_idx: int
+    def validation_step(
+        self, batch: tuple[Tensor, Tensor], batch_idx: int
     ) -> None:
         inputs, targets = batch
         logits = self.forward(inputs)
@@ -498,9 +679,9 @@ class ClassificationEnsemble(ClassificationSingle):
 
     def test_step(
         self,
-        batch: Tuple[Tensor, Tensor],
+        batch: tuple[Tensor, Tensor],
         batch_idx: int,
-        dataloader_idx: Optional[int] = 0,
+        dataloader_idx: int | None = 0,
     ) -> Tensor:
         inputs, targets = batch
         logits = self.forward(inputs)
@@ -512,7 +693,7 @@ class ClassificationEnsemble(ClassificationSingle):
             probs_per_est = F.softmax(logits, dim=-1)
 
         probs = probs_per_est.mean(dim=1)
-        self.cal_plot.update(probs, targets)
+        # self.cal_plot.update(probs, targets)
         confs = probs.max(-1)[0]
 
         if self.use_logits:
@@ -563,32 +744,30 @@ class ClassificationEnsemble(ClassificationSingle):
         return logits
 
     def test_epoch_end(
-        self, outputs: Union[EPOCH_OUTPUT, List[EPOCH_OUTPUT]]
+        self, outputs: EPOCH_OUTPUT | list[EPOCH_OUTPUT]
     ) -> None:
         self.log_dict(
             self.test_cls_metrics.compute(),
         )
-        self.test_cls_metrics.reset()
 
         self.log_dict(
             self.test_id_ens_metrics.compute(),
         )
-        self.test_id_ens_metrics.reset()
 
         if self.evaluate_ood:
             self.log_dict(
                 self.test_ood_metrics.compute(),
             )
-            self.test_ood_metrics.reset()
-
             self.log_dict(
                 self.test_ood_ens_metrics.compute(),
             )
+
+            self.test_ood_metrics.reset()
             self.test_ood_ens_metrics.reset()
 
-        if isinstance(self.logger, TensorBoardLogger):
+        if isinstance(self.logger, TensorBoardLogger) and self.log_plots:
             self.logger.experiment.add_figure(
-                "Calibration Plot", self.cal_plot.compute()[0]
+                "Calibration Plot", self.test_cls_metrics["ece"].plot()[0]
             )
 
             if self.evaluate_ood:
@@ -619,12 +798,16 @@ class ClassificationEnsemble(ClassificationSingle):
                     "Likelihood Histogram", probs_fig
                 )
 
+        self.test_cls_metrics.reset()
+        self.test_id_ens_metrics.reset()
+
     @staticmethod
     def add_model_specific_args(
         parent_parser: ArgumentParser,
     ) -> ArgumentParser:
-        """Defines the routine's attributes via command-line options:
+        """Defines the routine's attributes via command-line options.
 
+        Adds:
         - ``--entropy``: sets :attr:`use_entropy` to ``True``.
         - ``--logits``: sets :attr:`use_logits` to ``True``.
         - ``--mutual_information``: sets :attr:`use_mi` to ``True``.

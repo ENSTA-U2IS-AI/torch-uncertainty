@@ -1,12 +1,11 @@
-# fmt:off
-import os
-from typing import Any, Callable, Optional
+from collections.abc import Callable
+from pathlib import Path
+from typing import Any
 
+import numpy as np
 import torch
 from torchvision.datasets import CIFAR10
 from torchvision.datasets.utils import check_integrity, download_url
-
-import numpy as np
 
 
 class CIFAR10H(CIFAR10):
@@ -36,9 +35,9 @@ class CIFAR10H(CIFAR10):
     def __init__(
         self,
         root: str,
-        train: Optional[bool] = None,
-        transform: Optional[Callable[..., Any]] = None,
-        target_transform: Optional[Callable[..., Any]] = None,
+        train: bool | None = None,
+        transform: Callable[..., Any] | None = None,
+        target_transform: Callable[..., Any] | None = None,
         download: bool = False,
     ) -> None:
         if train:
@@ -54,6 +53,7 @@ class CIFAR10H(CIFAR10):
             target_transform=target_transform,
             download=download,
         )
+        self.root = Path(self.root)
 
         if download:
             self.download_h()
@@ -65,14 +65,12 @@ class CIFAR10H(CIFAR10):
             )
 
         self.targets = list(
-            torch.as_tensor(
-                np.load(os.path.join(self.root, self.h_test_list[0]))
-            )
+            torch.as_tensor(np.load(self.root / self.h_test_list[0]))
         )
 
     def _check_specific_integrity(self) -> bool:
         filename, md5 = self.h_test_list
-        fpath = os.path.join(self.root, filename)
+        fpath = self.root / filename
         if not check_integrity(fpath, md5):
             return False
         return True

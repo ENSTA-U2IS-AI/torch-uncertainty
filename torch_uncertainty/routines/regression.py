@@ -1,5 +1,5 @@
 from argparse import ArgumentParser, Namespace
-from typing import Any, List, Literal, Optional, Tuple, Union
+from typing import Any, Literal
 
 import pytorch_lightning as pl
 import torch
@@ -10,14 +10,14 @@ from pytorch_lightning.utilities.types import EPOCH_OUTPUT, STEP_OUTPUT
 from torch import nn
 from torchmetrics import MeanSquaredError, MetricCollection
 
-from ..metrics.nll import GaussianNegativeLogLikelihood
+from torch_uncertainty.metrics.nll import GaussianNegativeLogLikelihood
 
 
 class RegressionSingle(pl.LightningModule):
     def __init__(
         self,
         model: nn.Module,
-        loss: nn.Module,
+        loss: type[nn.Module],
         optimization_procedure: Any,
         dist_estimation: int,
         **kwargs,
@@ -59,18 +59,10 @@ class RegressionSingle(pl.LightningModule):
 
         self.dist_estimation = dist_estimation
 
-        if dist_estimation == 4:
+        if dist_estimation in (4, 2):
             reg_metrics = MetricCollection(
                 {
-                    "mse": MeanSquaredError(squared=False),
-                    "gnll": GaussianNegativeLogLikelihood(),
-                },
-                compute_groups=False,
-            )
-        elif dist_estimation == 2:
-            reg_metrics = MetricCollection(
-                {
-                    "mse": MeanSquaredError(squared=False),
+                    "mse": MeanSquaredError(squared=True),
                     "gnll": GaussianNegativeLogLikelihood(),
                 },
                 compute_groups=False,
@@ -78,7 +70,7 @@ class RegressionSingle(pl.LightningModule):
         else:
             reg_metrics = MetricCollection(
                 {
-                    "mse": MeanSquaredError(squared=False),
+                    "mse": MeanSquaredError(squared=True),
                 },
                 compute_groups=False,
             )
@@ -93,8 +85,8 @@ class RegressionSingle(pl.LightningModule):
     def criterion(self) -> nn.Module:
         return self.loss()
 
-    def forward(self, input: torch.Tensor) -> torch.Tensor:
-        return self.model.forward(input)
+    def forward(self, inputs: torch.Tensor) -> torch.Tensor:
+        return self.model.forward(inputs)
 
     def on_train_start(self) -> None:
         # hyperparameters for performances
@@ -110,7 +102,7 @@ class RegressionSingle(pl.LightningModule):
             )
 
     def training_step(
-        self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int
+        self, batch: tuple[torch.Tensor, torch.Tensor], batch_idx: int
     ) -> STEP_OUTPUT:
         inputs, targets = batch
         logits = self.forward(inputs)
@@ -123,8 +115,8 @@ class RegressionSingle(pl.LightningModule):
             loss = self.criterion(means, v, alpha, beta, targets)
         elif self.dist_estimation == 2:
             means = logits[..., 0]
-            vars = F.softplus(logits[..., 1])
-            loss = self.criterion(means, targets, vars)
+            variances = F.softplus(logits[..., 1])
+            loss = self.criterion(means, targets, variances)
         else:
             loss = self.criterion(logits, targets)
 
@@ -132,7 +124,7 @@ class RegressionSingle(pl.LightningModule):
         return loss
 
     def validation_step(
-        self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int
+        self, batch: tuple[torch.Tensor, torch.Tensor], batch_idx: int
     ) -> None:
         inputs, targets = batch
         logits = self.forward(inputs)
@@ -140,14 +132,14 @@ class RegressionSingle(pl.LightningModule):
             means = logits[..., 0]
             alpha = 1 + F.softplus(logits[..., 2])
             beta = F.softplus(logits[..., 3])
-            vars = beta / (alpha - 1)
-            self.val_metrics.gnll.update(means, targets, vars)
+            variances = beta / (alpha - 1)
+            self.val_metrics.gnll.update(means, targets, variances)
 
             targets = targets.view(means.size())
         elif self.dist_estimation == 2:
             means = logits[..., 0]
-            vars = F.softplus(logits[..., 1])
-            self.val_metrics.gnll.update(means, targets, vars)
+            variances = F.softplus(logits[..., 1])
+            self.val_metrics.gnll.update(means, targets, variances)
 
             if means.ndim == 1:
                 means = means.unsqueeze(-1)
@@ -157,14 +149,14 @@ class RegressionSingle(pl.LightningModule):
         self.val_metrics.mse.update(means, targets)
 
     def validation_epoch_end(
-        self, outputs: Union[EPOCH_OUTPUT, List[EPOCH_OUTPUT]]
+        self, outputs: EPOCH_OUTPUT | list[EPOCH_OUTPUT]
     ) -> None:
         self.log_dict(self.val_metrics.compute())
         self.val_metrics.reset()
 
     def test_step(
         self,
-        batch: Tuple[torch.Tensor, torch.Tensor],
+        batch: tuple[torch.Tensor, torch.Tensor],
         batch_idx: int,
     ) -> None:
         inputs, targets = batch
@@ -174,14 +166,14 @@ class RegressionSingle(pl.LightningModule):
             means = logits[..., 0]
             alpha = 1 + F.softplus(logits[..., 2])
             beta = F.softplus(logits[..., 3])
-            vars = beta / (alpha - 1)
-            self.test_metrics.gnll.update(means, targets, vars)
+            variances = beta / (alpha - 1)
+            self.test_metrics.gnll.update(means, targets, variances)
 
             targets = targets.view(means.size())
         elif self.dist_estimation == 2:
             means = logits[..., 0]
-            vars = F.softplus(logits[..., 1])
-            self.test_metrics.gnll.update(means, targets, vars)
+            variances = F.softplus(logits[..., 1])
+            self.test_metrics.gnll.update(means, targets, variances)
 
             if means.ndim == 1:
                 means = means.unsqueeze(-1)
@@ -191,7 +183,7 @@ class RegressionSingle(pl.LightningModule):
         self.test_metrics.mse.update(means, targets)
 
     def test_epoch_end(
-        self, outputs: Union[EPOCH_OUTPUT, List[EPOCH_OUTPUT]]
+        self, outputs: EPOCH_OUTPUT | list[EPOCH_OUTPUT]
     ) -> None:
         self.log_dict(
             self.test_metrics.compute(),
@@ -209,12 +201,12 @@ class RegressionEnsemble(RegressionSingle):
     def __init__(
         self,
         model: nn.Module,
-        loss: nn.Module,
+        loss: type[nn.Module],
         optimization_procedure: Any,
         dist_estimation: int,
         num_estimators: int,
         mode: Literal["mean", "mixture"],
-        out_features: Optional[int] = 1,
+        out_features: int | None = 1,
         **kwargs,
     ) -> None:
         super().__init__(
@@ -236,7 +228,7 @@ class RegressionEnsemble(RegressionSingle):
         self.out_features = out_features
 
     def training_step(
-        self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int
+        self, batch: tuple[torch.Tensor, torch.Tensor], batch_idx: int
     ) -> STEP_OUTPUT:
         inputs, targets = batch
 
@@ -244,8 +236,8 @@ class RegressionEnsemble(RegressionSingle):
         targets = targets.repeat((self.num_estimators, 1))
         return super().training_step((inputs, targets), batch_idx)
 
-    def validation_step(  # type: ignore
-        self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int
+    def validation_step(
+        self, batch: tuple[torch.Tensor, torch.Tensor], batch_idx: int
     ) -> None:
         inputs, targets = batch
         logits = self.forward(inputs)
@@ -267,8 +259,8 @@ class RegressionEnsemble(RegressionSingle):
 
         if self.dist_estimation == 2:
             means = logits[..., 0]
-            vars = F.softplus(logits[..., 1])
-            self.val_metrics.gnll.update(means, targets, vars)
+            variances = F.softplus(logits[..., 1])
+            self.val_metrics.gnll.update(means, targets, variances)
         else:
             means = logits
 
@@ -276,9 +268,9 @@ class RegressionEnsemble(RegressionSingle):
 
     def test_step(
         self,
-        batch: Tuple[torch.Tensor, torch.Tensor],
+        batch: tuple[torch.Tensor, torch.Tensor],
         batch_idx: int,
-        dataloader_idx: Optional[int] = 0,
+        dataloader_idx: int | None = 0,
     ) -> None:
         if dataloader_idx != 0:
             raise NotImplementedError(
@@ -306,8 +298,8 @@ class RegressionEnsemble(RegressionSingle):
 
         if self.dist_estimation == 2:
             means = logits[..., 0]
-            vars = F.softplus(logits[..., 1])
-            self.test_metrics.gnll.update(means, targets, vars)
+            variances = F.softplus(logits[..., 1])
+            self.test_metrics.gnll.update(means, targets, variances)
         else:
             means = logits
 
@@ -317,8 +309,9 @@ class RegressionEnsemble(RegressionSingle):
     def add_model_specific_args(
         parent_parser: ArgumentParser,
     ) -> ArgumentParser:
-        """Defines the routine's attributes via command-line options:
+        """Defines the routine's attributes via command-line options.
 
+        Adds:
         - ``--num_estimators``: sets :attr:`num_estimators`.
         """
         parent_parser = RegressionSingle.add_model_specific_args(parent_parser)

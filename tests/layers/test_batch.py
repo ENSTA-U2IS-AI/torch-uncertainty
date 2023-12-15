@@ -1,21 +1,17 @@
-# fmt:off
 import pytest
 import torch
 
 from torch_uncertainty.layers.batch_ensemble import BatchConv2d, BatchLinear
 
 
-
-@pytest.fixture
+@pytest.fixture()
 def feat_input() -> torch.Tensor:
-    feat = torch.rand((4, 6))
-    return feat
+    return torch.rand((4, 6))
 
 
-@pytest.fixture
+@pytest.fixture()
 def img_input() -> torch.Tensor:
-    img = torch.rand((5, 6, 3, 3))
-    return img
+    return torch.rand((5, 6, 3, 3))
 
 
 class TestBatchLinear:

@@ -32,14 +32,11 @@ If you are interested in contributing to torch_uncertainty, we first advise you
 to follow the following steps to reproduce a clean development environment
 ensuring continuous integration does not break.
 
-1. Install poetry on your workstation.
-2. Clone the repository.
-3. Install torch-uncertainty in editable mode poetry with dev packages:
-   :bash:`poetry install --with dev`
+1. Check that you have PyTorch already installed on your system
+2. Clone the repository
+3. Install torch-uncertainty in editable mode with the dev packages:
+   :bash:`python3 -m pip install -e .[dev]`
 4. Install pre-commit hooks with :bash:`pre-commit install`
-
-If you have issues with poetry, add :bash:`PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring`
-at the beginning of every :bash:`poetry` command.
 
 Build the documentation locally
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -49,7 +46,7 @@ group:
 
 .. parsed-literal::
 
-    poetry install --with dev,docs
+    python3 -m pip install -e .[dev,docs]
 
 Then navigate to :bash:`./docs` and build the documentation with:
 
@@ -63,21 +60,43 @@ Optionally, specify :bash:`html-noplot` instead of :bash:`html` to avoid running
 Guidelines
 ^^^^^^^^^^
 
-We are using ruff for code formatting, linting, and imports (as a drop-in
+**Commits**
+
+We use ruff for code formatting, linting, and imports (as a drop-in
 replacement for black, isort, and flake8). The pre-commit hooks will ensure
 that your code is properly formatted and linted before committing.
 
-To make your changes, create a branch on a personal fork, whose name is not
-dev nor main.
+Please ensure that the tests are passing on your machine before pushing on a
+PR. This will avoid multiplying the number featureless commits. To do this,
+run, at the root of the folder:
 
-Before submitting a final pull request, that we will review, please try your
-best not to reduce the code coverage and do document your code.
+.. parsed-literal::
+    
+    python3 -m pytest tests
 
 Try to include an emoji at the start of each commit message following the suggestions
 from `this page <https://gist.github.com/parmentf/035de27d6ed1dce0b36a>`_.
 
-If you implement a method, please add a reference to the corresponding paper in the 
+**Pull requests**
+
+To make your changes, create a branch on a personal fork and create a PR when your contribution
+is mostly finished or if you need help.
+
+Check that your PR complies with the following conditions:
+* The name of your branch is not `main` nor `dev` (see issue #58)
+* Your PR does not reduce the code coverage
+* Your code is documented: the function signatures are typed, and the main functions have clear
+docstrings
+* Your code is mostly original, and the parts coming from licensed sources are explicitly
+stated as such
+* If you implement a method, please add a reference to the corresponding paper in the
 `references page <https://torch-uncertainty.github.io/references.html>`_.
+* Also, remember to add TorchUncertainty to the list of libraries implementing this reference
+on `PapersWithCode <https://paperswithcode.com>`_.
+
+If you need help to implement a method, increase the coverage, or solve ruff-raised errors,
+create the PR with the `need-help` flag and explain your problems in the comments. A maintainer
+will do their best to help you.
 
 Datasets & Datamodules
 ^^^^^^^^^^^^^^^^^^^^^^

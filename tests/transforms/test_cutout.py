@@ -1,28 +1,26 @@
-# fmt:off
 import pytest
 import torch
 
 from torch_uncertainty.transforms import Cutout
 
 
-
 class TestCutout:
     """Testing the Cutout transform."""
 
     def test_cutout_allchannels(self):
-        input = torch.rand(32, 32) + 10  # no zeros
+        inputs = torch.rand(32, 32) + 10  # no zeros
         transform = Cutout(16)
-        output = transform(input)
+        output = transform(inputs)
 
         assert (output == 0).sum() > 0
 
-        input = torch.rand(1, 32, 32) + 10  # no zeros
-        output = transform(input)
+        inputs = torch.rand(1, 32, 32) + 10  # no zeros
+        output = transform(inputs)
 
         assert (output == 0).sum() > 0
 
-        input = torch.rand(3, 32, 32) + 10  # no zeros
-        output = transform(input)
+        inputs = torch.rand(3, 32, 32) + 10  # no zeros
+        output = transform(inputs)
 
         assert (output == 0).sum() > 0
 

@@ -1,15 +1,12 @@
-# fmt:off
 from argparse import ArgumentParser
 
 import pytest
 from torch import nn
 from torchvision.datasets import MNIST
 
+from tests._dummies.dataset import DummyClassificationDataset
 from torch_uncertainty.datamodules import MNISTDataModule
 from torch_uncertainty.transforms import Cutout
-
-from .._dummies.dataset import DummyClassificationDataset
-
 
 
 class TestMNISTDataModule:

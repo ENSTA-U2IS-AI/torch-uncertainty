@@ -9,7 +9,7 @@ Uncertainty Models
 The following uncertainty models are implemented.
 
 Deep Evidential Classification
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 For Deep Evidential Classification, consider citing:
 
@@ -17,6 +17,17 @@ For Deep Evidential Classification, consider citing:
 
 * Authors: *Murat Sensoy, Lance Kaplan, Melih Kandemir*
 * Paper: `NeurIPS 2018 <https://arxiv.org/pdf/1806.01768>`__.
+
+
+Beta NLL in Deep Regression
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For Beta NLL in Deep Regression, consider citing:
+
+**On the Pitfalls of Heteroscedastic Uncertainty Estimation with Probabilistic Neural Networks**
+
+* Authors: *Maximilian Seitzer, Arash Tavakoli, Dimitrije Antic, Georg Martius*
+* Paper: `ICLR 2022 <https://arxiv.org/abs/2203.09168>`__.
 
 
 Deep Evidential Regression
@@ -102,6 +113,49 @@ For Monte-Carlo Dropout, consider citing:
 
 * Authors: *Yarin Gal and Zoubin Ghahramani*
 * Paper: `ICML 2016 <https://arxiv.org/pdf/1506.02142.pdf>`__.
+
+Data Augmentation Methods
+-------------------------
+
+Mixup
+^^^^^
+
+For Mixup, consider citing:
+
+**mixup: Beyond Empirical Risk Minimization**
+
+* Authors: *Hongyi Zhang, Moustapha Cisse, Yann N. Dauphin, and David Lopez-Paz*
+* Paper: `ICLR 2018 <https://arxiv.org/pdf/1710.09412.pdf>`__.
+
+RegMixup
+^^^^^^^^
+
+For RegMixup, consider citing:
+
+**RegMixup: Mixup as a Regularizer Can Surprisingly Improve Accuracy and Out Distribution Robustness**
+
+* Authors: *Francesco Pinto, Harry Yang, Ser-Nam Lim, Philip H.S. Torr, Puneet K. Dokania*
+* Paper: `NeurIPS 2022 <https://arxiv.org/abs/2206.14502>`__.
+
+MixupIO
+^^^^^^^
+
+For MixupIO, consider citing:
+
+**On the Pitfall of Mixup for Uncertainty Calibration**
+
+* Authors: *Deng-Bao Wang, Lanqing Li, Peilin Zhao, Pheng-Ann Heng, and Min-Ling Zhang*
+* Paper: `CVPR 2023 <https://openaccess.thecvf.com/content/CVPR2023/papers/Wang_On_the_Pitfall_of_Mixup_for_Uncertainty_Calibration_CVPR_2023_paper.pdf>`
+
+Warping Mixup
+^^^^^^^^^^^^^
+
+For Warping Mixup, consider citing:
+
+**Tailoring Mixup to Data using Kernel Warping functions**
+
+* Authors: *Quentin Bouniot, Pavlo Mozharovskyi, and Florence d'Alché-Buc*
+* Paper: `ArXiv 2023 <https://arxiv.org/abs/2311.01434>`__.
 
 Post-Processing Methods
 -----------------------

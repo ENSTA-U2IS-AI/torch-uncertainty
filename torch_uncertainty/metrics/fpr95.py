@@ -1,27 +1,30 @@
-from typing import List
-
+import numpy as np
 import torch
+from numpy.typing import ArrayLike
 from torch import Tensor
 from torchmetrics import Metric
 from torchmetrics.utilities import rank_zero_warn
 from torchmetrics.utilities.data import dim_zero_cat
 
-import numpy as np
-from numpy.typing import ArrayLike
-
 
 def stable_cumsum(arr: ArrayLike, rtol: float = 1e-05, atol: float = 1e-08):
-    """
-    From https://github.com/hendrycks/anomaly-seg
-    Uses high precision for cumsum and checks that the final value matches
+    """Uses high precision for cumsum and checks that the final value matches
     the sum.
+
     Args:
-    arr : array-like
-        To be cumulatively summed as flat
-    rtol : float
-        Relative tolerance, see ``np.allclose``
-    atol : float
-        Absolute tolerance, see ``np.allclose``
+        arr (ArrayLike): The array to be cumulatively summed as flat.
+        rtol (float, optional): Relative tolerance, see ``np.allclose``.
+            Defaults to 1e-05.
+        atol (float, optional): Absolute tolerance, see ``np.allclose``.
+            Defaults to 1e-08.
+
+    Returns:
+        ArrayLike: The cumulatively summed array.
+
+    Reference:
+        From https://github.com/hendrycks/anomaly-seg.
+
+    TODO: Check if necessary.
     """
     out = np.cumsum(arr, dtype=np.float64)
     expected = np.sum(arr, dtype=np.float64)
@@ -36,16 +39,15 @@ def stable_cumsum(arr: ArrayLike, rtol: float = 1e-05, atol: float = 1e-08):
 
 
 class FPR95(Metric):
-    """Class which computes the False Positive Rate at 95% Recall."""
-
     is_differentiable: bool = False
     higher_is_better: bool = False
     full_state_update: bool = False
 
-    conf: List[Tensor]
-    targets: List[Tensor]
+    conf: list[Tensor]
+    targets: list[Tensor]
 
     def __init__(self, pos_label: int, **kwargs) -> None:
+        """The False Positive Rate at 95% Recall metric."""
         super().__init__(**kwargs)
 
         self.pos_label = pos_label
@@ -58,15 +60,18 @@ class FPR95(Metric):
             " footprint."
         )
 
-    def update(self, conf: Tensor, target: Tensor) -> None:  # type: ignore
+    def update(self, conf: Tensor, target: Tensor) -> None:
         self.conf.append(conf)
         self.targets.append(target)
 
     def compute(self) -> Tensor:
-        r"""From https://github.com/hendrycks/anomaly-seg
-        Compute the actual False Positive Rate at 95% Recall.
+        r"""Compute the actual False Positive Rate at 95% Recall.
+
         Returns:
             Tensor: The value of the FPR95.
+
+        Reference:
+            Inpired by https://github.com/hendrycks/anomaly-seg.
         """
         conf = dim_zero_cat(self.conf).cpu().numpy()
         targets = dim_zero_cat(self.targets).cpu().numpy()

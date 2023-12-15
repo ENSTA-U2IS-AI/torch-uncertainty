@@ -25,7 +25,7 @@ class TestTemperatureScaler:
         inputs = torch.as_tensor([0.6, 0.4]).repeat(10, 1)
         labels = torch.as_tensor([0.5, 0.5]).repeat(10, 1)
 
-        calibration_set = list(zip(inputs, labels))
+        calibration_set = list(zip(inputs, labels, strict=True))
 
         scaler = TemperatureScaler(init_val=2, lr=1, max_iter=10)
         assert scaler.temperature[0] == 2.0
@@ -33,12 +33,8 @@ class TestTemperatureScaler:
         assert scaler.temperature[0] > 10  # best is +inf
         assert (
             torch.sum(
-                (
-                    softmax(
-                        scaler(torch.as_tensor([[0.6, 0.4]])).detach(), dim=1
-                    )
-                    - torch.as_tensor([[0.5, 0.5]])
-                )
+                softmax(scaler(torch.as_tensor([[0.6, 0.4]])).detach(), dim=1)
+                - torch.as_tensor([[0.5, 0.5]])
             )
             ** 2
             < 0.001

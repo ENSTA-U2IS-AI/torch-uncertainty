@@ -1,4 +1,3 @@
-# fmt:off
 import math
 
 import pytest
@@ -7,18 +6,15 @@ import torch
 from torch_uncertainty.metrics import MutualInformation
 
 
-
-@pytest.fixture
+@pytest.fixture()
 def disagreement_probas() -> torch.Tensor:
     """Return a vector with mean entropy ~ln(2) and entropy of mean =0."""
-    vec = torch.as_tensor([[[1e-8, 1 - 1e-8], [1 - 1e-8, 1e-8]]])
-    return vec
+    return torch.as_tensor([[[1e-8, 1 - 1e-8], [1 - 1e-8, 1e-8]]])
 
 
-@pytest.fixture
+@pytest.fixture()
 def agreement_probas() -> torch.Tensor:
-    vec = torch.as_tensor([[[0.9, 0.1], [0.9, 0.1]]])
-    return vec
+    return torch.as_tensor([[[0.9, 0.1], [0.9, 0.1]]])
 
 
 class TestMutualInformation:

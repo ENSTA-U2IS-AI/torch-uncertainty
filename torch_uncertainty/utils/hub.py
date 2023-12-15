@@ -1,12 +1,11 @@
 from pathlib import Path
-from typing import Dict, Tuple
 
 import torch
 import yaml
 from huggingface_hub import hf_hub_download
 
 
-def load_hf(weight_id: str) -> Tuple[torch.Tensor, Dict]:
+def load_hf(weight_id: str) -> tuple[torch.Tensor, dict]:
     """Load a model from the HuggingFace hub.
 
     Args:

@@ -1,28 +1,24 @@
+import numpy as np
 import torch
 from torch import nn
 
-import numpy as np
-
 
 class Cutout(nn.Module):
-    """Cutout augmentation class.
+    def __init__(self, length: int, value: int = 0) -> None:
+        """Cutout augmentation class.
 
-    Args:
-        length (int): Length of the cutout square.
-        value (int): Pixel value to be filled in the cutout square.
-    """
-
-    def __init__(self, length: int, value: int = 0):
+        Args:
+            length (int): Length of the cutout square.
+            value (int): Pixel value to be filled in the cutout square.
+        """
         super().__init__()
 
         if length <= 0:
             raise ValueError("Cutout length must be positive.")
-        else:
-            self.length = length
+        self.length = length
 
         if value < 0 or value > 255:
             raise ValueError("Cutout value must be between 0 and 255.")
-
         self.value = value
 
     def __call__(self, img: torch.Tensor) -> torch.Tensor:

@@ -1,13 +1,13 @@
-""" Code adapted from PixMix' paper. """
+"""Code adapted from PixMix' paper."""
 
+import numpy as np
 from PIL import Image
 from torch import nn
 
-import numpy as np
 from torch_uncertainty.transforms import Shear, Translate, augmentations
 
 
-def get_ab(beta):
+def get_ab(beta: float) -> tuple[float, float]:
     if np.random.random() < 0.5:
         a = np.float32(np.random.beta(beta, 1))
         b = np.float32(np.random.beta(1, beta))
@@ -36,19 +36,6 @@ mixings = [add, multiply]
 
 
 class PixMix(nn.Module):
-    """PixMix augmentation class.
-
-    Args:
-        mixing_set (MixingSet): Dataset to be mixed with.
-        mixing_iterations (int): Number of mixing iterations.
-        mixing_severity (float): Severity of mixing.
-        all_ops (bool): Whether to use augmentations included in ImageNet-C.
-            Defaults to True.
-
-    Note:
-        Default arguments are set to follow original guidelines.
-    """
-
     def __init__(
         self,
         mixing_set,
@@ -56,7 +43,20 @@ class PixMix(nn.Module):
         augmentation_severity: float = 3,
         mixing_severity: float = 3,
         all_ops: bool = True,
-    ):
+    ) -> None:
+        """PixMix augmentation class.
+
+        Args:
+            mixing_set (MixingSet): Dataset to be mixed with.
+            mixing_iterations (int): Number of mixing iterations.
+            augmentation_severity (float): Severity of augmentation.
+            mixing_severity (float): Severity of mixing.
+            all_ops (bool): Whether to use augmentations included in ImageNet-C.
+                Defaults to True.
+
+        Note:
+            Default arguments are set to follow original guidelines.
+        """
         super().__init__()
         self.mixing_set = mixing_set
         self.num_mixing_images = len(mixing_set)
@@ -73,17 +73,14 @@ class PixMix(nn.Module):
 
         self.aug_instances = []
         for aug in allowed_augmentations:
-            if aug == Shear or aug == Translate:
+            if aug in (Shear, Translate):
                 self.aug_instances.append(aug(axis=0))
                 self.aug_instances.append(aug(axis=1))
             else:
                 self.aug_instances.append(aug())
 
     def __call__(self, img: Image.Image) -> np.ndarray:
-        if np.random.random() < 0.5:
-            mixed = self.augment_input(img)
-        else:
-            mixed = img
+        mixed = self.augment_input(img) if np.random.random() < 0.5 else img
 
         for _ in range(np.random.randint(self.mixing_iterations + 1)):
             if np.random.random() < 0.5:
@@ -100,7 +97,7 @@ class PixMix(nn.Module):
 
     def _augment(self, image: Image.Image) -> np.ndarray:
         op = np.random.choice(self.aug_instances)
-        if op.level_type == int:
+        if op.level_type is int:
             aug_level = self._sample_int(op.pixmix_max_level)
         else:
             aug_level = self._sample_float(op.pixmix_max_level)

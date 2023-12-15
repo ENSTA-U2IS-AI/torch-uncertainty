@@ -1,19 +1,23 @@
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import Any, List, Optional, Union
+from typing import Any
 
 import torchvision.transforms as T
-from pytorch_lightning import LightningDataModule
 from timm.data.auto_augment import rand_augment_transform
 from timm.data.mixup import Mixup
 from torch import nn
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader
 from torchvision.datasets import DTD, SVHN, ImageNet, INaturalist
 
-from ..datasets.classification import ImageNetA, ImageNetO, ImageNetR
+from torch_uncertainty.datamodules.abstract import AbstractDataModule
+from torch_uncertainty.datasets.classification import (
+    ImageNetA,
+    ImageNetO,
+    ImageNetR,
+)
 
 
-class ImageNetDataModule(LightningDataModule):
+class ImageNetDataModule(AbstractDataModule):
     num_classes = 1000
     num_channels = 3
     test_datasets = ["r", "o", "a"]
@@ -22,30 +26,28 @@ class ImageNetDataModule(LightningDataModule):
 
     def __init__(
         self,
-        root: Union[str, Path],
+        root: str | Path,
         evaluate_ood: bool,
         batch_size: int,
         ood_ds: str = "svhn",
-        test_alt: Optional[str] = None,
+        test_alt: str | None = None,
         procedure: str = "A3",
         train_size: int = 224,
-        rand_augment_opt: Optional[str] = None,
+        rand_augment_opt: str | None = None,
         num_workers: int = 1,
         pin_memory: bool = True,
         persistent_workers: bool = True,
         **kwargs,
     ) -> None:
-        super().__init__()
+        super().__init__(
+            root=root,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            persistent_workers=persistent_workers,
+        )
 
-        if isinstance(root, str):
-            root = Path(root)
-
-        self.root: Path = root
         self.evaluate_ood = evaluate_ood
-        self.batch_size = batch_size
-        self.num_workers = num_workers
-        self.pin_memory = pin_memory
-        self.persistent_workers = persistent_workers
         self.ood_ds = ood_ds
         self.test_alt = test_alt
 
@@ -75,7 +77,6 @@ class ImageNetDataModule(LightningDataModule):
 
         if self.procedure is None:
             print("Custom Procedure")
-            train_size = train_size
             if rand_augment_opt is not None:
                 main_transform = rand_augment_transform(rand_augment_opt, {})
             else:
@@ -152,7 +153,7 @@ class ImageNetDataModule(LightningDataModule):
                     transform=self.transform_test,
                 )
 
-    def setup(self, stage: Optional[str] = None) -> None:
+    def setup(self, stage: str | None = None) -> None:
         if stage == "fit" or stage is None:
             if self.test_alt is not None:
                 raise ValueError(
@@ -189,23 +190,7 @@ class ImageNetDataModule(LightningDataModule):
                     download=True,
                 )
 
-    def train_dataloader(self) -> DataLoader:
-        """Get the training dataloader for ImageNet.
-
-        Return:
-            DataLoader: ImageNet training dataloader.
-        """
-        return self._data_loader(self.train, shuffle=True)
-
-    def val_dataloader(self) -> DataLoader:
-        """Get the validation dataloader for ImageNet.
-
-        Return:
-            DataLoader: ImageNet validation dataloader.
-        """
-        return self._data_loader(self.val)
-
-    def test_dataloader(self) -> List[DataLoader]:
+    def test_dataloader(self) -> list[DataLoader]:
         """Get the test dataloaders for ImageNet.
 
         Return:
@@ -217,38 +202,15 @@ class ImageNetDataModule(LightningDataModule):
             dataloader.append(self._data_loader(self.ood))
         return dataloader
 
-    def _data_loader(
-        self, dataset: Dataset, shuffle: bool = False
-    ) -> DataLoader:
-        """Create a dataloader for a given dataset.
-
-        Args:
-            dataset (Dataset): Dataset to create a dataloader for.
-            shuffle (bool, optional): Whether to shuffle the dataset. Defaults
-                to False.
-
-        Return:
-            DataLoader: Dataloader for the given dataset.
-        """
-        return DataLoader(
-            dataset,
-            batch_size=self.batch_size,
-            shuffle=shuffle,
-            num_workers=self.num_workers,
-            pin_memory=self.pin_memory,
-            persistent_workers=self.persistent_workers,
-        )
-
     @classmethod
     def add_argparse_args(
         cls,
         parent_parser: ArgumentParser,
         **kwargs: Any,
     ) -> ArgumentParser:
-        p = parent_parser.add_argument_group("datamodule")
-        p.add_argument("--root", type=str, default="./data/")
-        p.add_argument("--batch_size", type=int, default=256)
-        p.add_argument("--num_workers", type=int, default=4)
+        p = super().add_argparse_args(parent_parser)
+
+        # Arguments for ImageNet
         p.add_argument("--evaluate_ood", action="store_true")
         p.add_argument("--ood_ds", choices=cls.ood_datasets, default="svhn")
         p.add_argument("--test_alt", choices=cls.test_datasets, default=None)

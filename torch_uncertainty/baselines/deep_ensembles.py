@@ -1,13 +1,14 @@
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import List, Literal, Optional, Union
+from typing import Literal
 
 from pytorch_lightning import LightningModule
 
-from ..models import deep_ensembles
-from ..routines.classification import ClassificationEnsemble
-from ..routines.regression import RegressionEnsemble
-from ..utils import get_version
+from torch_uncertainty.models import deep_ensembles
+from torch_uncertainty.routines.classification import ClassificationEnsemble
+from torch_uncertainty.routines.regression import RegressionEnsemble
+from torch_uncertainty.utils import get_version
+
 from .classification import VGG, ResNet, WideResNet
 from .regression import MLP
 
@@ -23,12 +24,12 @@ class DeepEnsembles:
     def __new__(
         cls,
         task: Literal["classification", "regression"],
-        log_path: Union[str, Path],
-        checkpoint_ids: List[int],
+        log_path: str | Path,
+        checkpoint_ids: list[int],
         backbone: Literal["mlp", "resnet", "vgg", "wideresnet"],
         # num_estimators: int,
-        in_channels: Optional[int] = None,
-        num_classes: Optional[int] = None,
+        in_channels: int | None = None,
+        num_classes: int | None = None,
         use_entropy: bool = False,
         use_logits: bool = False,
         use_mi: bool = False,
@@ -68,15 +69,15 @@ class DeepEnsembles:
                 use_mi=use_mi,
                 use_variation_ratio=use_variation_ratio,
             )
-        elif task == "regression":
-            return RegressionEnsemble(
-                model=de,
-                loss=None,
-                optimization_procedure=None,
-                dist_estimation=2,
-                num_estimators=de.num_estimators,
-                mode="mean",
-            )
+        #  task == "regression":
+        return RegressionEnsemble(
+            model=de,
+            loss=None,
+            optimization_procedure=None,
+            dist_estimation=2,
+            num_estimators=de.num_estimators,
+            mode="mean",
+        )
 
     @classmethod
     def add_model_specific_args(cls, parser: ArgumentParser) -> ArgumentParser:

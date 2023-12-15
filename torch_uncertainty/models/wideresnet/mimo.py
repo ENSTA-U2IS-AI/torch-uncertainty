@@ -1,14 +1,14 @@
 import torch
 from einops import rearrange
 
-from .std import _Wide
+from .std import _WideResNet
 
 __all__ = [
     "mimo_wideresnet28x10",
 ]
 
 
-class _MIMOWide(_Wide):
+class _MIMOWideResNet(_WideResNet):
     def __init__(
         self,
         depth: int,
@@ -28,7 +28,6 @@ class _MIMOWide(_Wide):
             dropout_rate=dropout_rate,
             groups=groups,
             style=style,
-            num_estimators=num_estimators,
         )
 
         self.num_estimators = num_estimators
@@ -39,8 +38,7 @@ class _MIMOWide(_Wide):
 
         out = rearrange(x, "(m b) c h w -> b (m c) h w", m=self.num_estimators)
         out = super().forward(out)
-        out = rearrange(out, "b (m d) -> (m b) d", m=self.num_estimators)
-        return out
+        return rearrange(out, "b (m d) -> (m b) d", m=self.num_estimators)
 
 
 def mimo_wideresnet28x10(
@@ -48,15 +46,16 @@ def mimo_wideresnet28x10(
     num_classes: int,
     num_estimators: int,
     groups: int = 1,
+    dropout_rate: float = 0.3,
     style: str = "imagenet",
-) -> _MIMOWide:
-    return _MIMOWide(
+) -> _MIMOWideResNet:
+    return _MIMOWideResNet(
         depth=28,
         widen_factor=10,
         in_channels=in_channels,
         num_classes=num_classes,
         num_estimators=num_estimators,
-        dropout_rate=0.3,
+        dropout_rate=dropout_rate,
         groups=groups,
         style=style,
     )

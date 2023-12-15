@@ -28,15 +28,14 @@ See the [Reference page](https://torch-uncertainty.github.io/references.html) or
 
 ## Installation
 
-The package can be installed from PyPI:
+Install the desired PyTorch version in your environment.
+Then, install the package from PyPI:
 
 ```sh
 pip install torch-uncertainty
 ```
 
-Then, install the desired PyTorch version in your environment.
-
-If you aim to contribute (thank you!), have a look at the [contribution page](https://torch-uncertainty.github.io/contributing.html).
+If you aim to contribute, have a look at the [contribution page](https://torch-uncertainty.github.io/contributing.html).
 
 ## Getting Started and Documentation
 
@@ -51,19 +50,26 @@ A quickstart is available at [torch-uncertainty.github.io/quickstart](https://to
 To date, the following deep learning baselines have been implemented:
 
 - Deep Ensembles
-- MC-Dropout
+- MC-Dropout - [Tutorial](https://torch-uncertainty.github.io/auto_tutorials/tutorial_mc_dropout.html)
 - BatchEnsemble
 - Masksembles
 - MIMO
-- Packed-Ensembles (see [blog post](https://medium.com/@adrien.lafage/make-your-neural-networks-more-reliable-with-packed-ensembles-7ad0b737a873))
-- Bayesian Neural Networks :construction: Work in progress :construction:
-- Deep Evidential Classification & Regression
+- Packed-Ensembles (see [blog post](https://medium.com/@adrien.lafage/make-your-neural-networks-more-reliable-with-packed-ensembles-7ad0b737a873)) - [Tutorial](https://torch-uncertainty.github.io/auto_tutorials/tutorial_pe_cifar10.html)
+- Bayesian Neural Networks :construction: Work in progress :construction: - [Tutorial](https://torch-uncertainty.github.io/auto_tutorials/tutorial_bayesian.html)
+- Regression with Beta Gaussian NLL Loss
+- Deep Evidential Classification & Regression - [Tutorial](https://torch-uncertainty.github.io/auto_tutorials/tutorial_evidential_classification.html)
+
+### Augmentation methods
+
+The following data augmentation methods have been implemented:
+
+- Mixup, MixupIO, RegMixup, WarpingMixup
 
 ### Post-processing methods
 
 To date, the following post-processing methods have been implemented:
 
-- Temperature, Vector, & Matrix scaling
+- Temperature, Vector, & Matrix scaling - [Tutorial](https://torch-uncertainty.github.io/auto_tutorials/tutorial_scaler.html)
 
 ## Tutorials
 

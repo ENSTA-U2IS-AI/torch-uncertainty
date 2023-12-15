@@ -1,43 +1,24 @@
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import Any, List, Literal, Optional, Union
+from typing import Any, Literal
 
+import numpy as np
 import torch
 import torchvision.transforms as T
-from pytorch_lightning import LightningDataModule
+from numpy.typing import ArrayLike
 from timm.data.auto_augment import rand_augment_transform
 from torch import nn
-from torch.utils.data import DataLoader, Dataset, random_split
+from torch.utils.data import DataLoader, random_split
 from torchvision.datasets import CIFAR100, SVHN
 
-from ..datasets import AggregatedDataset
-from ..datasets.classification import CIFAR100C
-from ..transforms import Cutout
+from torch_uncertainty.datasets import AggregatedDataset
+from torch_uncertainty.datasets.classification import CIFAR100C
+from torch_uncertainty.transforms import Cutout
+
+from .abstract import AbstractDataModule
 
 
-class CIFAR100DataModule(LightningDataModule):
-    """DataModule for CIFAR100.
-
-    Args:
-        root (str): Root directory of the datasets.
-        batch_size (int): Number of samples per batch.
-        val_split (float): Share of samples to use for validation. Defaults
-            to ``0.0``.
-        num_workers (int): Number of workers to use for data loading. Defaults
-            to ``1``.
-        cutout (int): Size of cutout to apply to images. Defaults to ``None``.
-        randaugment (bool): Whether to apply RandAugment. Defaults to
-            ``False``.
-        auto_augment (str): Which auto-augment to apply. Defaults to ``None``.
-        test_alt (str): Which test set to use. Defaults to ``None``.
-        corruption_severity (int): Severity of corruption to apply to
-            CIFAR100-C. Defaults to ``1``.
-        num_dataloaders (int): Number of dataloaders to use. Defaults to ``1``.
-        pin_memory (bool): Whether to pin memory. Defaults to ``True``.
-        persistent_workers (bool): Whether to use persistent workers. Defaults
-            to ``True``.
-    """
-
+class CIFAR100DataModule(AbstractDataModule):
     num_classes = 100
     num_channels = 3
     input_shape = (3, 32, 32)
@@ -45,35 +26,55 @@ class CIFAR100DataModule(LightningDataModule):
 
     def __init__(
         self,
-        root: Union[str, Path],
+        root: str | Path,
         evaluate_ood: bool,
         batch_size: int,
         val_split: float = 0.0,
         num_workers: int = 1,
-        cutout: Optional[int] = None,
+        cutout: int | None = None,
         randaugment: bool = False,
-        auto_augment: Optional[str] = None,
-        test_alt: Optional[Literal["c"]] = None,
+        auto_augment: str | None = None,
+        test_alt: Literal["c"] | None = None,
         corruption_severity: int = 1,
         num_dataloaders: int = 1,
         pin_memory: bool = True,
         persistent_workers: bool = True,
         **kwargs,
     ) -> None:
-        super().__init__()
+        """DataModule for CIFAR100.
 
-        if isinstance(root, str):
-            root = Path(root)
+        Args:
+            root (str): Root directory of the datasets.
+            evaluate_ood (bool): Whether to evaluate on out-of-distribution data.
+            batch_size (int): Number of samples per batch.
+            val_split (float): Share of samples to use for validation. Defaults
+                to ``0.0``.
+            num_workers (int): Number of workers to use for data loading. Defaults
+                to ``1``.
+            cutout (int): Size of cutout to apply to images. Defaults to ``None``.
+            randaugment (bool): Whether to apply RandAugment. Defaults to
+                ``False``.
+            auto_augment (str): Which auto-augment to apply. Defaults to ``None``.
+            test_alt (str): Which test set to use. Defaults to ``None``.
+            corruption_severity (int): Severity of corruption to apply to
+                CIFAR100-C. Defaults to ``1``.
+            num_dataloaders (int): Number of dataloaders to use. Defaults to ``1``.
+            pin_memory (bool): Whether to pin memory. Defaults to ``True``.
+            persistent_workers (bool): Whether to use persistent workers. Defaults
+                to ``True``.
+            kwargs: Additional arguments.
+        """
+        super().__init__(
+            root=root,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            persistent_workers=persistent_workers,
+        )
 
-        self.root: Path = root
         self.evaluate_ood = evaluate_ood
-        self.batch_size = batch_size
         self.val_split = val_split
-        self.num_workers = num_workers
         self.num_dataloaders = num_dataloaders
-
-        self.pin_memory = pin_memory
-        self.persistent_workers = persistent_workers
 
         if test_alt == "c":
             self.dataset = CIFAR100C
@@ -139,7 +140,7 @@ class CIFAR100DataModule(LightningDataModule):
                 transform=self.transform_test,
             )
 
-    def setup(self, stage: Optional[str] = None) -> None:
+    def setup(self, stage: str | None = None) -> None:
         if stage == "fit" or stage is None:
             if self.test_alt == "c":
                 raise ValueError("CIFAR-C can only be used in testing.")
@@ -200,51 +201,29 @@ class CIFAR100DataModule(LightningDataModule):
                 AggregatedDataset(self.train, self.num_dataloaders),
                 shuffle=True,
             )
-        else:
-            return self._data_loader(self.train, shuffle=True)
+        return self._data_loader(self.train, shuffle=True)
 
-    def val_dataloader(self) -> DataLoader:
-        """Get the validation dataloader for CIFAR100.
-
-        Return:
-            DataLoader: CIFAR100 validation dataloader.
-        """
-        return self._data_loader(self.val)
-
-    def test_dataloader(self) -> List[DataLoader]:
-        """Get the test dataloaders for CIFAR100.
+    def test_dataloader(self) -> list[DataLoader]:
+        r"""Get test dataloaders.
 
         Return:
-            List[DataLoader]: Dataloaders of the CIFAR100 test set (in
-                distribution data) and SVHN test split (out-of-distribution
-                data).
+            List[DataLoader]: test set for in distribution data
+            and out-of-distribution data.
         """
         dataloader = [self._data_loader(self.test)]
         if self.evaluate_ood:
             dataloader.append(self._data_loader(self.ood))
         return dataloader
 
-    def _data_loader(
-        self, dataset: Dataset, shuffle: bool = False
-    ) -> DataLoader:
-        """Create a dataloader for a given dataset.
+    def _get_train_data(self) -> ArrayLike:
+        if self.val_split:
+            return self.train.dataset.data[self.train.indices]
+        return self.train.data
 
-        Args:
-            dataset (Dataset): Dataset to create a dataloader for.
-            shuffle (bool, optional): Whether to shuffle the dataset. Defaults
-                to False.
-
-        Return:
-            DataLoader: Dataloader for the given dataset.
-        """
-        return DataLoader(
-            dataset,
-            batch_size=self.batch_size,
-            shuffle=shuffle,
-            num_workers=self.num_workers,
-            pin_memory=self.pin_memory,
-            persistent_workers=self.persistent_workers,
-        )
+    def _get_train_targets(self) -> ArrayLike:
+        if self.val_split:
+            return np.array(self.train.dataset.targets)[self.train.indices]
+        return np.array(self.train.targets)
 
     @classmethod
     def add_argparse_args(
@@ -252,12 +231,9 @@ class CIFAR100DataModule(LightningDataModule):
         parent_parser: ArgumentParser,
         **kwargs: Any,
     ) -> ArgumentParser:
-        p = parent_parser.add_argument_group("datamodule")
-        p.add_argument("--root", type=str, default="./data/")
-        p.add_argument("--batch_size", type=int, default=128)
-        p.add_argument("--val_split", type=float, default=0.0)
-        p.add_argument("--num_workers", type=int, default=4)
-        p.add_argument("--evaluate_ood", action="store_true")
+        p = super().add_argparse_args(parent_parser)
+
+        # Arguments for CIFAR100
         p.add_argument("--cutout", type=int, default=0)
         p.add_argument("--randaugment", dest="randaugment", action="store_true")
         p.add_argument("--auto_augment", type=str)
@@ -265,4 +241,5 @@ class CIFAR100DataModule(LightningDataModule):
         p.add_argument(
             "--severity", dest="corruption_severity", type=int, default=1
         )
+        p.add_argument("--evaluate_ood", action="store_true")
         return parent_parser

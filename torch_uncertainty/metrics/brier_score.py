@@ -1,4 +1,4 @@
-from typing import Literal, Optional
+from typing import Literal
 
 import torch
 import torch.nn.functional as F
@@ -7,43 +7,8 @@ from torchmetrics.utilities.data import dim_zero_cat
 
 
 class BrierScore(Metric):
-    r"""The Brier Score Metric.
-
-    Args:
-        reduction (str, optional): Determines how to reduce over the
-            :math:`B`/batch dimension:
-
-            - ``'mean'`` [default]: Averages score across samples
-            - ``'sum'``: Sum score across samples
-            - ``'none'`` or ``None``: Returns score per sample
-
-        kwargs: Additional keyword arguments, see `Advanced metric settings
-            <https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metric-kwargs>`_.
-
-    Inputs:
-        - :attr:`probs`: :math:`(B, C)` or :math:`(B, N, C)`
-        - :attr:`target`: :math:`(B)` or :math:`(B, C)`
-
-        where :math:`B` is the batch size, :math:`C` is the number of classes
-        and :math:`N` is the number of estimators.
-
-    Note:
-        If :attr:`probs` is a 3D tensor, then the metric computes the mean of
-        the Brier score over the estimators ie. :math:`t = \frac{1}{N}
-        \sum_{i=0}^{N-1} BrierScore(probs[:,i,:], target)`.
-
-    Warning:
-        Make sure that the probabilities in :attr:`probs` are normalized to sum
-        to one.
-
-    Raises:
-        ValueError:
-            If :attr:`reduction` is not one of ``'mean'``, ``'sum'``,
-            ``'none'`` or ``None``.
-    """
-
     is_differentiable: bool = False
-    higher_is_better: Optional[bool] = False
+    higher_is_better: bool | None = False
     full_state_update: bool = False
 
     def __init__(
@@ -52,6 +17,41 @@ class BrierScore(Metric):
         reduction: Literal["mean", "sum", "none", None] = "mean",
         **kwargs,
     ) -> None:
+        r"""The Brier Score Metric.
+
+        Args:
+            num_classes (int): Number of classes
+            reduction (str, optional): Determines how to reduce over the
+                :math:`B`/batch dimension:
+
+                - ``'mean'`` [default]: Averages score across samples
+                - ``'sum'``: Sum score across samples
+                - ``'none'`` or ``None``: Returns score per sample
+
+            kwargs: Additional keyword arguments, see `Advanced metric settings
+                <https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metric-kwargs>`_.
+
+        Inputs:
+            - :attr:`probs`: :math:`(B, C)` or :math:`(B, N, C)`
+            - :attr:`target`: :math:`(B)` or :math:`(B, C)`
+
+            where :math:`B` is the batch size, :math:`C` is the number of classes
+            and :math:`N` is the number of estimators.
+
+        Note:
+            If :attr:`probs` is a 3d tensor, then the metric computes the mean of
+            the Brier score over the estimators ie. :math:`t = \frac{1}{N}
+            \sum_{i=0}^{N-1} BrierScore(probs[:,i,:], target)`.
+
+        Warning:
+            Make sure that the probabilities in :attr:`probs` are normalized to sum
+            to one.
+
+        Raises:
+            ValueError:
+                If :attr:`reduction` is not one of ``'mean'``, ``'sum'``,
+                ``'none'`` or ``None``.
+        """
         super().__init__(**kwargs)
 
         allowed_reduction = ("sum", "mean", "none", None)
@@ -74,13 +74,14 @@ class BrierScore(Metric):
         self.add_state("total", default=torch.tensor(0), dist_reduce_fx="sum")
 
     def update(self, probs: torch.Tensor, target: torch.Tensor) -> None:
-        """
-        Update the current Brier score with a new tensor of probabilities.
+        """Update the current Brier score with a new tensor of probabilities.
 
         Args:
             probs (torch.Tensor): A probability tensor of shape
                 (batch, num_estimators, num_classes) or
                 (batch, num_classes)
+            target (torch.Tensor): A tensor of ground truth labels of shape
+                (batch, num_classes) or (batch)
         """
         if target.ndim == 1:
             target = F.one_hot(target, self.num_classes)
@@ -109,8 +110,7 @@ class BrierScore(Metric):
             self.total += batch_size
 
     def compute(self) -> torch.Tensor:
-        """
-        Compute the final Brier score based on inputs passed to ``update``.
+        """Compute the final Brier score based on inputs passed to ``update``.
 
         Returns:
             torch.Tensor: The final value(s) for the Brier score
@@ -118,7 +118,6 @@ class BrierScore(Metric):
         values = dim_zero_cat(self.values)
         if self.reduction == "sum":
             return values.sum(dim=-1) / self.num_estimators
-        elif self.reduction == "mean":
+        if self.reduction == "mean":
             return values.sum(dim=-1) / self.total / self.num_estimators
-        else:  # reduction is None
-            return values
+        return values

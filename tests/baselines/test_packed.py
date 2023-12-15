@@ -1,4 +1,3 @@
-# fmt:off
 import pytest
 import torch
 from torch import nn
@@ -11,7 +10,6 @@ from torch_uncertainty.optimization_procedures import (
     optim_cifar10_resnet50,
     optim_cifar10_wideresnet,
 )
-
 
 
 class TestPackedBaseline:
@@ -59,7 +57,7 @@ class TestPackedBaseline:
         _ = net.configure_optimizers()
         _ = net(torch.rand(1, 3, 40, 40))
 
-    def test_packed_alpha_lt_0(self):
+    def test_packed_exception(self):
         with pytest.raises(Exception):
             _ = ResNet(
                 num_classes=10,
@@ -75,7 +73,6 @@ class TestPackedBaseline:
                 groups=1,
             )
 
-    def test_packed_gamma_lt_1(self):
         with pytest.raises(Exception):
             _ = ResNet(
                 num_classes=10,

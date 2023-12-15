@@ -1,17 +1,14 @@
-# fmt:off
 from argparse import ArgumentParser
 from functools import partial
 
+from tests._dummies.dataset import DummyRegressionDataset
 from torch_uncertainty.datamodules import UCIDataModule
-
-from .._dummies.dataset import DummyRegressionDataset
-
 
 
 class TestUCIDataModule:
     """Testing the UCIDataModule datamodule class."""
 
-    def test_UCIRegression(self):
+    def test_uci_regression(self):
         parser = ArgumentParser()
         parser = UCIDataModule.add_argparse_args(parser)
 

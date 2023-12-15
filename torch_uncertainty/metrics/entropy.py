@@ -1,4 +1,4 @@
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 import torch
 from torchmetrics import Metric
@@ -6,37 +6,8 @@ from torchmetrics.utilities.data import dim_zero_cat
 
 
 class Entropy(Metric):
-    """The Shannon Entropy Metric to estimate the confidence of a single model
-    or the mean confidence accross estimators.
-
-    Args:
-        reduction (str, optional): Determines how to reduce over the
-            :math:`B`/batch dimension:
-
-            - ``'mean'`` [default]: Averages score across samples
-            - ``'sum'``: Sum score across samples
-            - ``'none'`` or ``None``: Returns score per sample
-
-        kwargs: Additional keyword arguments, see `Advanced metric settings
-            <https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metric-kwargs>`_.
-
-    Inputs:
-        - ``probs``: :math:`(B, C)` or :math:`(B, N, C)`
-
-        where :math:`B` is the batch size, :math:`C` is the number of classes
-        and :math:`N` is the number of estimators.
-
-    Note:
-        A higher entropy means a lower confidence.
-
-    Raises:
-        ValueError:
-            If :attr:`reduction` is not one of ``'mean'``, ``'sum'``,
-            ``'none'`` or ``None``.
-    """
-
     is_differentiable: bool = False
-    higher_is_better: Optional[bool] = None
+    higher_is_better: bool | None = None
     full_state_update: bool = False
 
     def __init__(
@@ -44,6 +15,34 @@ class Entropy(Metric):
         reduction: Literal["mean", "sum", "none", None] = "mean",
         **kwargs: Any,
     ) -> None:
+        """The Shannon Entropy Metric to estimate the confidence of a single model
+        or the mean confidence accross estimators.
+
+        Args:
+            reduction (str, optional): Determines how to reduce over the
+                :math:`B`/batch dimension:
+
+                - ``'mean'`` [default]: Averages score across samples
+                - ``'sum'``: Sum score across samples
+                - ``'none'`` or ``None``: Returns score per sample
+
+            kwargs: Additional keyword arguments, see `Advanced metric settings
+                <https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metric-kwargs>`_.
+
+        Inputs:
+            - ``probs``: :math:`(B, C)` or :math:`(B, N, C)`
+
+            where :math:`B` is the batch size, :math:`C` is the number of classes
+            and :math:`N` is the number of estimators.
+
+        Note:
+            A higher entropy means a lower confidence.
+
+        Raises:
+            ValueError:
+                If :attr:`reduction` is not one of ``'mean'``, ``'sum'``,
+                ``'none'`` or ``None``.
+        """
         super().__init__(**kwargs)
 
         allowed_reduction = ("sum", "mean", "none", None)
@@ -88,7 +87,7 @@ class Entropy(Metric):
         values = dim_zero_cat(self.values)
         if self.reduction == "sum":
             return values.sum(dim=-1)
-        elif self.reduction == "mean":
+        if self.reduction == "mean":
             return values.sum(dim=-1) / self.total
-        else:  # reduction is None or "none"
-            return values
+        # reduction is None or "none"
+        return values

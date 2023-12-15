@@ -1,15 +1,13 @@
-# fmt:off
-import os
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable, Optional, Tuple
+from typing import Any
 
+import numpy as np
 from torchvision.datasets import VisionDataset
 from torchvision.datasets.utils import (
     check_integrity,
     download_and_extract_archive,
 )
-
-import numpy as np
 
 
 class CIFAR10C(VisionDataset):
@@ -85,13 +83,13 @@ class CIFAR10C(VisionDataset):
 
     def __init__(
         self,
-        root: str,
-        transform: Optional[Callable] = None,
-        target_transform: Optional[Callable] = None,
+        root: Path | str,
+        transform: Callable | None = None,
+        target_transform: Callable | None = None,
         subset: str = "all",
         severity: int = 1,
         download: bool = False,
-    ):
+    ) -> None:
         if isinstance(root, str):
             root = Path(root)
 
@@ -110,7 +108,7 @@ class CIFAR10C(VisionDataset):
             transform=transform,
             target_transform=target_transform,
         )
-        if subset not in ["all"] + self.cifarc_subsets:
+        if subset not in ["all", *self.cifarc_subsets]:
             raise ValueError(
                 f"The subset '{subset}' does not exist in CIFAR-C."
             )
@@ -131,31 +129,33 @@ class CIFAR10C(VisionDataset):
 
     def make_dataset(
         self, root: Path, subset: str, severity: int
-    ) -> Tuple[np.ndarray, np.ndarray]:
-        r"""
+    ) -> tuple[np.ndarray, np.ndarray]:
+        r"""Make the CIFAR-C dataset.
+
         Build the corrupted dataset according to the chosen subset and
             severity. If the subset is 'all', gather all corruption types
             in the dataset.
+
         Args:
             root (Path):The path to the dataset.
             subset (str): The name of the corruption subset to be used. Choose
                 `all` for the dataset to contain all subsets.
             severity (int): The severity of the corruption applied to the
                 images.
+
         Returns:
-            Tuple[np.ndarray, np.ndarray]: The samples and labels of the chosen
+            Tuple[np.ndarray, np.ndarray]: The samples and labels of the chosen.
         """
         if subset == "all":
-            sample_arrays = []
             labels: np.ndarray = np.load(root / "labels.npy")[
                 (severity - 1) * 10000 : severity * 10000
             ]
-            for cifar_subset in self.cifarc_subsets:
-                sample_arrays.append(
-                    np.load(root / (cifar_subset + ".npy"))[
-                        (severity - 1) * 10000 : severity * 10000
-                    ]
-                )
+            sample_arrays = [
+                np.load(root / (cifar_subset + ".npy"))[
+                    (severity - 1) * 10000 : severity * 10000
+                ]
+                for cifar_subset in self.cifarc_subsets
+            ]
             samples = np.concatenate(sample_arrays, axis=0)
             labels = np.tile(labels, len(self.cifarc_subsets))
 
@@ -173,6 +173,11 @@ class CIFAR10C(VisionDataset):
         return self.labels.shape[0]
 
     def __getitem__(self, index: int) -> Any:
+        """Get the samples and targets of the dataset.
+
+        Args:
+            index (int): The index of the sample to get.
+        """
         sample, target = (
             self.samples[index],
             self.labels[index],
@@ -187,7 +192,7 @@ class CIFAR10C(VisionDataset):
     def _check_integrity(self) -> bool:
         """Check the integrity of the dataset."""
         for filename, md5 in self.ctest_list:
-            fpath = os.path.join(self.root, self.base_folder, filename)
+            fpath = self.root / self.base_folder / filename
             if not check_integrity(fpath, md5):
                 return False
         return True

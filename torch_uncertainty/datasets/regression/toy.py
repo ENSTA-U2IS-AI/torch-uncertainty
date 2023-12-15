@@ -3,13 +3,12 @@ from torch.utils.data import TensorDataset
 
 
 class Cubic(TensorDataset):
-    """A dataset containing samples drawn on a cubic function with
-    homoscedastic noise.
+    """A dataset of samples drawn from the cube fct. with homoscedastic noise.
 
     Args:
-        lower_bound (int, optional): Lower bound of the samples. Defaults to
+        lower_bound (float, optional): Lower bound of the samples. Defaults to
             ``-4.0``.
-        upper_bound (int, optional): Upper bound of the samples. Defaults to
+        upper_bound (float, optional): Upper bound of the samples. Defaults to
             ``4.0``.
         num_samples (int, optional): Number of samples. Defaults to ``5000``.
         noise_mean (float, optional): Mean of the noise. Defaults to ``0.0``.
@@ -19,8 +18,8 @@ class Cubic(TensorDataset):
 
     def __init__(
         self,
-        lower_bound: int = -4.0,
-        upper_bound: int = 4.0,
+        lower_bound: float = -4.0,
+        upper_bound: float = 4.0,
         num_samples: int = 5000,
         noise_mean: float = 0.0,
         noise_std: float = 3.0,

@@ -1,4 +1,3 @@
-# fmt:off
 import pytest
 import torch
 
@@ -8,17 +7,14 @@ from torch_uncertainty.metrics import (
 )
 
 
-
-@pytest.fixture
+@pytest.fixture()
 def probs_zero() -> torch.Tensor:
-    probs = torch.as_tensor([[1, 0.0], [0.0, 1.0]])
-    return probs
+    return torch.as_tensor([[1, 0.0], [0.0, 1.0]])
 
 
-@pytest.fixture
+@pytest.fixture()
 def targets_zero() -> torch.Tensor:
-    probs = torch.as_tensor([0, 1])
-    return probs
+    return torch.as_tensor([0, 1])
 
 
 class TestNegativeLogLikelihood:
@@ -48,18 +44,18 @@ class TestGaussianNegativeLogLikelihood:
     def test_compute_zero(self) -> None:
         metric = GaussianNegativeLogLikelihood()
         means = torch.as_tensor([1, 10]).float()
-        vars = torch.as_tensor([1, 2]).float()
+        variances = torch.as_tensor([1, 2]).float()
         targets = torch.as_tensor([1, 10]).float()
-        metric.update(means, targets, vars)
+        metric.update(means, targets, variances)
         res_mean = metric.compute()
-        assert res_mean == torch.log(vars).mean() / 2
+        assert res_mean == torch.log(variances).mean() / 2
 
         metric = GaussianNegativeLogLikelihood(reduction="sum")
-        metric.update(means, targets, vars)
+        metric.update(means, targets, variances)
         res_sum = metric.compute()
-        assert res_sum == torch.log(vars).sum() / 2
+        assert res_sum == torch.log(variances).sum() / 2
 
         metric = GaussianNegativeLogLikelihood(reduction="none")
-        metric.update(means, targets, vars)
+        metric.update(means, targets, variances)
         res_sum = metric.compute()
-        assert torch.all(res_sum == torch.log(vars) / 2)
+        assert torch.all(res_sum == torch.log(variances) / 2)

@@ -1,5 +1,3 @@
-from typing import Type
-
 from torch import nn
 
 from .base import VGG, _vgg
@@ -11,12 +9,11 @@ __all__ = ["vgg11", "vgg13", "vgg16", "vgg19"]
 def vgg11(
     in_channels: int,
     num_classes: int,
-    norm: Type[nn.Module] = nn.Identity,
+    norm: type[nn.Module] = nn.Identity,
     groups: int = 1,
     dropout_rate: float = 0.5,
     style: str = "imagenet",
-    num_estimators: int = None,
-    last_layer_dropout: bool = False,
+    num_estimators: int | None = None,
 ) -> VGG:
     return _vgg(
         cfgs["A"],
@@ -27,20 +24,18 @@ def vgg11(
         dropout_rate=dropout_rate,
         style=style,
         num_estimators=num_estimators,
-        last_layer_dropout=last_layer_dropout,
     )
 
 
 def vgg13(
     in_channels: int,
     num_classes: int,
-    norm: Type[nn.Module] = nn.Identity,
+    norm: type[nn.Module] = nn.Identity,
     groups: int = 1,
     dropout_rate: float = 0.5,
     style: str = "imagenet",
-    num_estimators: int = None,
-    last_layer_dropout: bool = False,
-) -> VGG:
+    num_estimators: int | None = None,
+) -> VGG:  # coverage: ignore
     return _vgg(
         cfgs["B"],
         in_channels=in_channels,
@@ -50,20 +45,18 @@ def vgg13(
         dropout_rate=dropout_rate,
         style=style,
         num_estimators=num_estimators,
-        last_layer_dropout=last_layer_dropout,
     )
 
 
 def vgg16(
     in_channels: int,
     num_classes: int,
-    norm: Type[nn.Module] = nn.Identity,
+    norm: type[nn.Module] = nn.Identity,
     groups: int = 1,
     dropout_rate: float = 0.5,
     style: str = "imagenet",
-    num_estimators: int = None,
-    last_layer_dropout: bool = False,
-) -> VGG:
+    num_estimators: int | None = None,
+) -> VGG:  # coverage: ignore
     return _vgg(
         cfgs["D"],
         in_channels=in_channels,
@@ -73,19 +66,17 @@ def vgg16(
         dropout_rate=dropout_rate,
         style=style,
         num_estimators=num_estimators,
-        last_layer_dropout=last_layer_dropout,
     )
 
 
 def vgg19(
     in_channels: int,
     num_classes: int,
-    norm: Type[nn.Module] = nn.Identity,
+    norm: type[nn.Module] = nn.Identity,
     groups: int = 1,
     dropout_rate: float = 0.5,
     style: str = "imagenet",
-    num_estimators: int = None,
-    last_layer_dropout: bool = False,
+    num_estimators: int | None = None,
 ) -> VGG:  # coverage: ignore
     return _vgg(
         cfgs["E"],
@@ -96,5 +87,4 @@ def vgg19(
         dropout_rate=dropout_rate,
         style=style,
         num_estimators=num_estimators,
-        last_layer_dropout=last_layer_dropout,
     )

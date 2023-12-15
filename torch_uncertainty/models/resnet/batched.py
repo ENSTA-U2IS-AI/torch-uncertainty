@@ -4,12 +4,11 @@ Reference:
 [1] Kaiming He, Xiangyu Zhang, Shaoqing Ren, Jian Sun
     Deep Residual Learning for Image Recognition. arXiv:1512.03385
 """
-from typing import List, Type, Union
 
 import torch.nn.functional as F
 from torch import Tensor, nn
 
-from ...layers import BatchConv2d, BatchLinear
+from torch_uncertainty.layers import BatchConv2d, BatchLinear
 
 __all__ = [
     "batched_resnet18",
@@ -20,16 +19,17 @@ __all__ = [
 ]
 
 
-class BasicBlock(nn.Module):
+class _BasicBlock(nn.Module):
     expansion = 1
 
     def __init__(
         self,
         in_planes: int,
         planes: int,
-        stride: int = 1,
-        num_estimators: int = 4,
-        groups: int = 1,
+        stride: int,
+        num_estimators: int,
+        dropout_rate: float,
+        groups: int,
     ) -> None:
         super().__init__()
         self.conv1 = BatchConv2d(
@@ -43,6 +43,8 @@ class BasicBlock(nn.Module):
             bias=False,
         )
         self.bn1 = nn.BatchNorm2d(planes)
+
+        self.dropout = nn.Dropout2d(p=dropout_rate)
         self.conv2 = BatchConv2d(
             planes,
             planes,
@@ -69,26 +71,26 @@ class BasicBlock(nn.Module):
                 nn.BatchNorm2d(self.expansion * planes),
             )
 
-    def forward(self, input: Tensor) -> Tensor:
-        out = F.relu(self.bn1(self.conv1(input)))
+    def forward(self, inputs: Tensor) -> Tensor:
+        out = F.relu(self.dropout(self.bn1(self.conv1(inputs))))
         out = self.bn2(self.conv2(out))
-        out += self.shortcut(input)
-        out = F.relu(out)
-        return out
+        out += self.shortcut(inputs)
+        return F.relu(out)
 
 
-class Bottleneck(nn.Module):
+class _Bottleneck(nn.Module):
     expansion = 4
 
     def __init__(
         self,
         in_planes: int,
         planes: int,
-        stride: int = 1,
-        num_estimators: int = 4,
-        groups: int = 1,
+        stride: int,
+        num_estimators: int,
+        dropout_rate: float,
+        groups: int,
     ) -> None:
-        super(Bottleneck, self).__init__()
+        super().__init__()
         self.conv1 = BatchConv2d(
             in_planes,
             planes,
@@ -109,6 +111,7 @@ class Bottleneck(nn.Module):
             bias=False,
         )
         self.bn2 = nn.BatchNorm2d(planes)
+        self.dropout = nn.Dropout2d(p=dropout_rate)
         self.conv3 = BatchConv2d(
             planes,
             self.expansion * planes,
@@ -134,30 +137,31 @@ class Bottleneck(nn.Module):
                 nn.BatchNorm2d(self.expansion * planes),
             )
 
-    def forward(self, input: Tensor) -> Tensor:
-        out = F.relu(self.bn1(self.conv1(input)))
-        out = F.relu(self.bn2(self.conv2(out)))
+    def forward(self, inputs: Tensor) -> Tensor:
+        out = F.relu(self.bn1(self.conv1(inputs)))
+        out = F.relu(self.dropout(self.bn2(self.conv2(out))))
         out = self.bn3(self.conv3(out))
-        out += self.shortcut(input)
-        out = F.relu(out)
-        return out
+        out += self.shortcut(inputs)
+        return F.relu(out)
 
 
 class _BatchedResNet(nn.Module):
     def __init__(
         self,
-        block: Type[Union[BasicBlock, Bottleneck]],
-        num_blocks: List[int],
+        block: type[_BasicBlock | _Bottleneck],
+        num_blocks: list[int],
         in_channels: int,
+        num_classes: int,
         num_estimators: int,
+        dropout_rate: float,
         groups: int = 1,
-        num_classes=10,
         width_multiplier: int = 1,
         style: str = "imagenet",
-    ):
+    ) -> None:
         super().__init__()
         self.in_planes = 64 * width_multiplier
         self.num_estimators = num_estimators
+        self.dropout_rate = dropout_rate
 
         self.width_multiplier = width_multiplier
         if style == "imagenet":
@@ -197,6 +201,7 @@ class _BatchedResNet(nn.Module):
             num_blocks[0],
             stride=1,
             num_estimators=num_estimators,
+            dropout_rate=dropout_rate,
             groups=groups,
         )
         self.layer2 = self._make_layer(
@@ -205,6 +210,7 @@ class _BatchedResNet(nn.Module):
             num_blocks[1],
             stride=2,
             num_estimators=num_estimators,
+            dropout_rate=dropout_rate,
             groups=groups,
         )
         self.layer3 = self._make_layer(
@@ -213,6 +219,7 @@ class _BatchedResNet(nn.Module):
             num_blocks[2],
             stride=2,
             num_estimators=num_estimators,
+            dropout_rate=dropout_rate,
             groups=groups,
         )
         self.layer4 = self._make_layer(
@@ -221,8 +228,10 @@ class _BatchedResNet(nn.Module):
             num_blocks[3],
             stride=2,
             num_estimators=num_estimators,
+            dropout_rate=dropout_rate,
             groups=groups,
         )
+        self.dropout = nn.Dropout(p=dropout_rate)
         self.pool = nn.AdaptiveAvgPool2d(output_size=1)
         self.flatten = nn.Flatten(1)
 
@@ -234,18 +243,26 @@ class _BatchedResNet(nn.Module):
 
     def _make_layer(
         self,
-        block: Type[Union[BasicBlock, Bottleneck]],
+        block: type[_BasicBlock | _Bottleneck],
         planes: int,
         num_blocks: int,
         stride: int,
         num_estimators: int,
-        groups: int,
-    ):
+        dropout_rate: float,
+        groups: int = 1,
+    ) -> nn.Module:
         strides = [stride] + [1] * (num_blocks - 1)
         layers = []
         for stride in strides:
             layers.append(
-                block(self.in_planes, planes, stride, num_estimators, groups)
+                block(
+                    in_planes=self.in_planes,
+                    planes=planes,
+                    stride=stride,
+                    dropout_rate=dropout_rate,
+                    num_estimators=num_estimators,
+                    groups=groups,
+                )
             )
             self.in_planes = planes * block.expansion
         return nn.Sequential(*layers)
@@ -259,16 +276,16 @@ class _BatchedResNet(nn.Module):
         out = self.layer3(out)
         out = self.layer4(out)
         out = self.pool(out)
-        out = self.flatten(out)
-        out = self.linear(out)
-        return out
+        out = self.dropout(self.flatten(out))
+        return self.linear(out)
 
 
 def batched_resnet18(
     in_channels: int,
-    num_estimators: int,
-    groups: int,
     num_classes: int,
+    num_estimators: int,
+    dropout_rate: float = 0,
+    groups: int = 1,
     style: str = "imagenet",
 ) -> _BatchedResNet:
     """BatchEnsemble of ResNet-18 from `Deep Residual Learning for Image
@@ -277,18 +294,22 @@ def batched_resnet18(
     Args:
         in_channels (int): Number of input channels.
         num_estimators (int): Number of estimators in the ensemble.
+        dropout_rate (float): Dropout rate. Defaults to 0.
         groups (int): Number of groups within each estimator.
         num_classes (int): Number of classes to predict.
+        style (bool, optional): Whether to use the ImageNet
+            structure. Defaults to ``True``.
 
     Returns:
         _BatchedResNet: A BatchEnsemble-style ResNet-18.
     """
     return _BatchedResNet(
-        BasicBlock,
+        _BasicBlock,
         [2, 2, 2, 2],
         in_channels=in_channels,
-        num_estimators=num_estimators,
         num_classes=num_classes,
+        num_estimators=num_estimators,
+        dropout_rate=dropout_rate,
         groups=groups,
         style=style,
     )
@@ -296,9 +317,10 @@ def batched_resnet18(
 
 def batched_resnet34(
     in_channels: int,
-    num_estimators: int,
-    groups: int,
     num_classes: int,
+    num_estimators: int,
+    dropout_rate: float = 0,
+    groups: int = 1,
     style: str = "imagenet",
 ) -> _BatchedResNet:
     """BatchEnsemble of ResNet-34 from `Deep Residual Learning for Image
@@ -307,18 +329,22 @@ def batched_resnet34(
     Args:
         in_channels (int): Number of input channels.
         num_estimators (int): Number of estimators in the ensemble.
+        dropout_rate (float): Dropout rate. Defaults to 0.
         groups (int): Number of groups within each estimator.
         num_classes (int): Number of classes to predict.
+        style (bool, optional): Whether to use the ImageNet
+            structure. Defaults to ``True``.
 
     Returns:
         _BatchedResNet: A BatchEnsemble-style ResNet-34.
     """
     return _BatchedResNet(
-        BasicBlock,
+        _BasicBlock,
         [3, 4, 6, 3],
         in_channels=in_channels,
-        num_estimators=num_estimators,
         num_classes=num_classes,
+        num_estimators=num_estimators,
+        dropout_rate=dropout_rate,
         groups=groups,
         style=style,
     )
@@ -326,9 +352,10 @@ def batched_resnet34(
 
 def batched_resnet50(
     in_channels: int,
-    num_estimators: int,
-    groups: int,
     num_classes: int,
+    num_estimators: int,
+    dropout_rate: float = 0,
+    groups: int = 1,
     width_multiplier: int = 1,
     style: str = "imagenet",
 ) -> _BatchedResNet:
@@ -338,19 +365,25 @@ def batched_resnet50(
     Args:
         in_channels (int): Number of input channels.
         num_estimators (int): Number of estimators in the ensemble.
+        dropout_rate (float): Dropout rate. Defaults to 0.
         groups (int): Number of groups within each estimator.
         num_classes (int): Number of classes to predict.
+        width_multiplier (int, optional): Expansion factor affecting the width
+            of the estimators. Defaults to ``1``.
+        style (bool, optional): Whether to use the ImageNet
+            structure. Defaults to ``True``.
 
     Returns:
         _BatchedResNet: A BatchEnsemble-style ResNet-50.
     """
     return _BatchedResNet(
-        Bottleneck,
+        _Bottleneck,
         [3, 4, 6, 3],
         in_channels=in_channels,
-        num_estimators=num_estimators,
         num_classes=num_classes,
+        num_estimators=num_estimators,
         width_multiplier=width_multiplier,
+        dropout_rate=dropout_rate,
         groups=groups,
         style=style,
     )
@@ -358,9 +391,10 @@ def batched_resnet50(
 
 def batched_resnet101(
     in_channels: int,
-    num_estimators: int,
-    groups: int,
     num_classes: int,
+    num_estimators: int,
+    dropout_rate: float = 0,
+    groups: int = 1,
     style: str = "imagenet",
 ) -> _BatchedResNet:
     """BatchEnsemble of ResNet-101 from `Deep Residual Learning for Image
@@ -369,18 +403,22 @@ def batched_resnet101(
     Args:
         in_channels (int): Number of input channels.
         num_estimators (int): Number of estimators in the ensemble.
+        dropout_rate (float): Dropout rate. Defaults to 0.
         groups (int): Number of groups within each estimator.
         num_classes (int): Number of classes to predict.
+        style (bool, optional): Whether to use the ImageNet
+            structure. Defaults to ``True``.
 
     Returns:
         _BatchedResNet: A BatchEnsemble-style ResNet-101.
     """
     return _BatchedResNet(
-        Bottleneck,
+        _Bottleneck,
         [3, 4, 23, 3],
         in_channels=in_channels,
-        num_estimators=num_estimators,
         num_classes=num_classes,
+        num_estimators=num_estimators,
+        dropout_rate=dropout_rate,
         groups=groups,
         style=style,
     )
@@ -388,9 +426,10 @@ def batched_resnet101(
 
 def batched_resnet152(
     in_channels: int,
-    num_estimators: int,
-    groups: int,
     num_classes: int,
+    num_estimators: int,
+    dropout_rate: float = 0,
+    groups: int = 1,
     style: str = "imagenet",
 ) -> _BatchedResNet:
     """BatchEnsemble of ResNet-152 from `Deep Residual Learning for Image
@@ -399,6 +438,7 @@ def batched_resnet152(
     Args:
         in_channels (int): Number of input channels.
         num_estimators (int): Number of estimators in the ensemble.
+        dropout_rate (float): Dropout rate. Defaults to 0.
         groups (int): Number of groups within each estimator.
         num_classes (int): Number of classes to predict.
         style (bool, optional): Whether to use the ImageNet
@@ -408,11 +448,12 @@ def batched_resnet152(
         _BatchedResNet: A BatchEnsemble-style ResNet-152.
     """
     return _BatchedResNet(
-        Bottleneck,
+        _Bottleneck,
         [3, 8, 36, 3],
         in_channels=in_channels,
-        num_estimators=num_estimators,
         num_classes=num_classes,
+        num_estimators=num_estimators,
+        dropout_rate=dropout_rate,
         groups=groups,
         style=style,
     )

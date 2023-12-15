@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# flake: noqa
+
 """
 Train a Bayesian Neural Network in Three Minutes
 ================================================
@@ -90,7 +90,7 @@ with ArgvContext(
 ):
     args = init_args(datamodule=MNISTDataModule)
 
-net_name = "bayesian-lenet-mnist"
+net_name = "logs/bayesian-lenet-mnist"
 
 # datamodule
 args.root = str(root / "data")

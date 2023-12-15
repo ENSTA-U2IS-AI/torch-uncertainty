@@ -1,4 +1,3 @@
-# fmt:off
 import pytest
 import torch
 
@@ -10,35 +9,29 @@ from torch_uncertainty.layers.packed import (
 )
 
 
-
-@pytest.fixture
+@pytest.fixture()
 def feat_input() -> torch.Tensor:
-    feat = torch.rand((6, 1))
-    return feat
+    return torch.rand((6, 1))
 
 
-@pytest.fixture
+@pytest.fixture()
 def feat_input_one_rearrange() -> torch.Tensor:
-    feat = torch.rand((1 * 3, 5))
-    return feat
+    return torch.rand((1 * 3, 5))
 
 
-@pytest.fixture
+@pytest.fixture()
 def seq_input() -> torch.Tensor:
-    seq = torch.rand((5, 6, 3))
-    return seq
+    return torch.rand((5, 6, 3))
 
 
-@pytest.fixture
+@pytest.fixture()
 def img_input() -> torch.Tensor:
-    img = torch.rand((5, 6, 3, 3))
-    return img
+    return torch.rand((5, 6, 3, 3))
 
 
-@pytest.fixture
+@pytest.fixture()
 def voxels_input() -> torch.Tensor:
-    voxels = torch.rand((5, 6, 3, 3, 3))
-    return voxels
+    return torch.rand((5, 6, 3, 3, 3))
 
 
 class TestPackedLinear:
@@ -82,13 +75,13 @@ class TestPackedLinear:
         with pytest.raises(ValueError):
             _ = PackedLinear(5, 2, alpha=1, num_estimators=None, rearrange=True)
 
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             _ = PackedLinear(5, 2, alpha=1, num_estimators=1.5, rearrange=True)
 
         with pytest.raises(ValueError):
             _ = PackedLinear(5, 2, alpha=1, num_estimators=-1, rearrange=True)
 
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             _ = PackedLinear(
                 5, 2, alpha=1, num_estimators=1, gamma=0.5, rearrange=True
             )
@@ -139,14 +132,14 @@ class TestPackedConv1d:
         with pytest.raises(ValueError):
             _ = PackedConv1d(5, 2, kernel_size=1, alpha=-1, num_estimators=1)
 
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             _ = PackedConv1d(
                 5, 2, kernel_size=1, alpha=1, num_estimators=1, gamma=0.5
             )
 
         with pytest.raises(ValueError):
             _ = PackedConv1d(
-                5, 2, kernel_size=1, alpha=1, num_estimators=1, gamma=-0.5
+                5, 2, kernel_size=1, alpha=1, num_estimators=1, gamma=-1
             )
 
 
@@ -188,14 +181,14 @@ class TestPackedConv2d:
         with pytest.raises(ValueError):
             _ = PackedConv2d(5, 2, kernel_size=1, alpha=-1, num_estimators=1)
 
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             _ = PackedConv2d(
                 5, 2, kernel_size=1, alpha=1, num_estimators=1, gamma=0.5
             )
 
         with pytest.raises(ValueError):
             _ = PackedConv2d(
-                5, 2, kernel_size=1, alpha=1, num_estimators=1, gamma=-0.5
+                5, 2, kernel_size=1, alpha=1, num_estimators=1, gamma=-1
             )
 
 
@@ -239,12 +232,12 @@ class TestPackedConv3d:
         with pytest.raises(ValueError):
             _ = PackedConv3d(5, 2, kernel_size=1, alpha=-1, num_estimators=1)
 
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             _ = PackedConv3d(
                 5, 2, kernel_size=1, alpha=1, num_estimators=1, gamma=0.5
             )
 
         with pytest.raises(ValueError):
             _ = PackedConv3d(
-                5, 2, kernel_size=1, alpha=1, num_estimators=1, gamma=-0.5
+                5, 2, kernel_size=1, alpha=1, num_estimators=1, gamma=-1
             )

@@ -1,5 +1,6 @@
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable, Literal, Optional, Tuple
+from typing import Any, Literal
 
 from torchvision.datasets import ImageFolder
 from torchvision.datasets.utils import (
@@ -40,10 +41,10 @@ class NotMNIST(ImageFolder):
         self,
         root: str,
         subset: Literal["small", "large"] = "small",
-        transform: Optional[Callable[..., Any]] = None,
-        target_transform: Optional[Callable[..., Any]] = None,
+        transform: Callable[..., Any] | None = None,
+        target_transform: Callable[..., Any] | None = None,
         download: bool = False,
-    ):
+    ) -> None:
         if isinstance(root, str):
             self.root = Path(root)
 
@@ -91,10 +92,10 @@ class NotMNIST(ImageFolder):
         )
         print(f"Downloaded {self.filename} to {self.root}")
 
-    def __getitem__(self, index: int) -> Tuple[Any, Any]:
+    def __getitem__(self, index: int) -> tuple[Any, Any]:
+        """Get the samples and targets of the dataset.
+
+        Args:
+            index (int): The index of the sample to get.
+        """
         return super().__getitem__(index)[0]
-
-
-if __name__ == "__main__":
-    set = NotMNIST(root="./data", subset="large", download=True)
-    print(set)

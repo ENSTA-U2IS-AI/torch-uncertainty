@@ -1,9 +1,7 @@
-from typing import List, Type, Union
-
 import torch.nn.functional as F
 from torch import Tensor, nn
 
-from ...layers import MaskedConv2d, MaskedLinear
+from torch_uncertainty.layers import MaskedConv2d, MaskedLinear
 
 __all__ = [
     "masked_resnet18",
@@ -14,19 +12,20 @@ __all__ = [
 ]
 
 
-class BasicBlock(nn.Module):
+class _BasicBlock(nn.Module):
     expansion = 1
 
     def __init__(
         self,
         in_planes: int,
         planes: int,
-        stride: int = 1,
-        num_estimators: int = 4,
-        scale: float = 2.0,
-        groups: int = 1,
-    ):
-        super(BasicBlock, self).__init__()
+        stride: int,
+        num_estimators: int,
+        scale: float,
+        dropout_rate: float,
+        groups: int,
+    ) -> None:
+        super().__init__()
 
         self.conv1 = MaskedConv2d(
             in_planes,
@@ -51,6 +50,7 @@ class BasicBlock(nn.Module):
             groups=groups,
             bias=False,
         )
+        self.dropout = nn.Dropout2d(p=dropout_rate)
         self.bn2 = nn.BatchNorm2d(planes)
 
         self.shortcut = nn.Sequential()
@@ -70,11 +70,10 @@ class BasicBlock(nn.Module):
             )
 
     def forward(self, x: Tensor) -> Tensor:
-        out = F.relu(self.bn1(self.conv1(x)))
+        out = F.relu(self.dropout(self.bn1(self.conv1(x))))
         out = self.bn2(self.conv2(out))
         out += self.shortcut(x)
-        out = F.relu(out)
-        return out
+        return F.relu(out)
 
 
 class Bottleneck(nn.Module):
@@ -84,12 +83,13 @@ class Bottleneck(nn.Module):
         self,
         in_planes: int,
         planes: int,
-        stride: int = 1,
-        num_estimators: int = 4,
-        scale: float = 2.0,
-        groups: int = 1,
-    ):
-        super(Bottleneck, self).__init__()
+        stride: int,
+        num_estimators: int,
+        scale: float,
+        dropout_rate: float,
+        groups: int,
+    ) -> None:
+        super().__init__()
 
         self.conv1 = MaskedConv2d(
             in_planes,
@@ -112,6 +112,7 @@ class Bottleneck(nn.Module):
             groups=groups,
             bias=False,
         )
+        self.dropout = nn.Dropout2d(p=dropout_rate)
         self.bn2 = nn.BatchNorm2d(planes)
         self.conv3 = MaskedConv2d(
             planes,
@@ -142,21 +143,21 @@ class Bottleneck(nn.Module):
 
     def forward(self, x: Tensor) -> Tensor:
         out = F.relu(self.bn1(self.conv1(x)))
-        out = F.relu(self.bn2(self.conv2(out)))
+        out = F.relu(self.dropout(self.bn2(self.conv2(out))))
         out = self.bn3(self.conv3(out))
         out += self.shortcut(x)
-        out = F.relu(out)
-        return out
+        return F.relu(out)
 
 
 class _MaskedResNet(nn.Module):
     def __init__(
         self,
-        block: Type[Union[BasicBlock, Bottleneck]],
-        num_blocks: List[int],
+        block: type[_BasicBlock | Bottleneck],
+        num_blocks: list[int],
         in_channels: int,
         num_classes: int,
         num_estimators: int,
+        dropout_rate: float,
         scale: float = 2.0,
         groups: int = 1,
         style: str = "imagenet",
@@ -205,6 +206,7 @@ class _MaskedResNet(nn.Module):
             num_blocks[0],
             stride=1,
             num_estimators=num_estimators,
+            dropout_rate=dropout_rate,
             scale=scale,
             groups=groups,
         )
@@ -214,6 +216,7 @@ class _MaskedResNet(nn.Module):
             num_blocks[1],
             stride=2,
             num_estimators=num_estimators,
+            dropout_rate=dropout_rate,
             scale=scale,
             groups=groups,
         )
@@ -223,6 +226,7 @@ class _MaskedResNet(nn.Module):
             num_blocks[2],
             stride=2,
             num_estimators=num_estimators,
+            dropout_rate=dropout_rate,
             scale=scale,
             groups=groups,
         )
@@ -232,10 +236,12 @@ class _MaskedResNet(nn.Module):
             num_blocks[3],
             stride=2,
             num_estimators=num_estimators,
+            dropout_rate=dropout_rate,
             scale=scale,
             groups=groups,
         )
 
+        self.dropout = nn.Dropout(p=dropout_rate)
         self.pool = nn.AdaptiveAvgPool2d(output_size=1)
         self.flatten = nn.Flatten(1)
 
@@ -248,11 +254,12 @@ class _MaskedResNet(nn.Module):
 
     def _make_layer(
         self,
-        block: Type[Union[BasicBlock, Bottleneck]],
+        block: type[_BasicBlock | Bottleneck],
         planes: int,
         num_blocks: int,
         stride: int,
         num_estimators: int,
+        dropout_rate: float,
         scale: float,
         groups: int,
     ) -> nn.Module:
@@ -261,10 +268,11 @@ class _MaskedResNet(nn.Module):
         for stride in strides:
             layers.append(
                 block(
-                    self.in_planes,
-                    planes,
-                    stride,
-                    num_estimators,
+                    in_planes=self.in_planes,
+                    planes=planes,
+                    stride=stride,
+                    num_estimators=num_estimators,
+                    dropout_rate=dropout_rate,
                     scale=scale,
                     groups=groups,
                 )
@@ -282,9 +290,8 @@ class _MaskedResNet(nn.Module):
         out = self.layer4(out)
 
         out = self.pool(out)
-        out = self.flatten(out)
-        out = self.linear(out)
-        return out
+        out = self.dropout(self.flatten(out))
+        return self.linear(out)
 
 
 def masked_resnet18(
@@ -293,6 +300,7 @@ def masked_resnet18(
     scale: float,
     groups: int,
     num_classes: int,
+    dropout_rate: float = 0,
     style: str = "imagenet",
 ) -> _MaskedResNet:
     """Masksembles of ResNet-18 from `Deep Residual Learning for Image
@@ -300,21 +308,25 @@ def masked_resnet18(
 
     Args:
         in_channels (int): Number of input channels.
+        dropout_rate (float): Dropout rate. Defaults to 0.
         num_estimators (int): Number of estimators in the ensemble.
+        scale (float): The scale of the mask.
         groups (int): Number of groups within each estimator.
         num_classes (int): Number of classes to predict.
+        style (str, optional): The style of the model. Defaults to "imagenet".
 
     Returns:
         _MaskedResNet: A Masksembles-style ResNet-18.
     """
     return _MaskedResNet(
-        block=BasicBlock,
+        num_classes=num_classes,
+        block=_BasicBlock,
         num_blocks=[2, 2, 2, 2],
         in_channels=in_channels,
         num_estimators=num_estimators,
         scale=scale,
         groups=groups,
-        num_classes=num_classes,
+        dropout_rate=dropout_rate,
         style=style,
     )
 
@@ -325,6 +337,7 @@ def masked_resnet34(
     scale: float,
     groups: int,
     num_classes: int,
+    dropout_rate: float = 0,
     style: str = "imagenet",
 ) -> _MaskedResNet:
     """Masksembles of ResNet-34 from `Deep Residual Learning for Image
@@ -332,21 +345,25 @@ def masked_resnet34(
 
     Args:
         in_channels (int): Number of input channels.
+        dropout_rate (float): Dropout rate. Defaults to 0.
         num_estimators (int): Number of estimators in the ensemble.
+        scale (float): The scale of the mask.
         groups (int): Number of groups within each estimator.
         num_classes (int): Number of classes to predict.
+        style (str, optional): The style of the model. Defaults to "imagenet".
 
     Returns:
         _MaskedResNet: A Masksembles-style ResNet-34.
     """
     return _MaskedResNet(
-        block=BasicBlock,
+        num_classes=num_classes,
+        block=_BasicBlock,
         num_blocks=[3, 4, 6, 3],
         in_channels=in_channels,
         num_estimators=num_estimators,
         scale=scale,
         groups=groups,
-        num_classes=num_classes,
+        dropout_rate=dropout_rate,
         style=style,
     )
 
@@ -357,6 +374,7 @@ def masked_resnet50(
     scale: float,
     groups: int,
     num_classes: int,
+    dropout_rate: float = 0,
     style: str = "imagenet",
 ) -> _MaskedResNet:
     """Masksembles of ResNet-50 from `Deep Residual Learning for Image
@@ -364,21 +382,25 @@ def masked_resnet50(
 
     Args:
         in_channels (int): Number of input channels.
+        dropout_rate (float): Dropout rate. Defaults to 0.
         num_estimators (int): Number of estimators in the ensemble.
+        scale (float): The scale of the mask.
         groups (int): Number of groups within each estimator.
         num_classes (int): Number of classes to predict.
+        style (str, optional): The style of the model. Defaults to "imagenet".
 
     Returns:
         _MaskedResNet: A Masksembles-style ResNet-50.
     """
     return _MaskedResNet(
+        num_classes=num_classes,
         block=Bottleneck,
         num_blocks=[3, 4, 6, 3],
         in_channels=in_channels,
         num_estimators=num_estimators,
         scale=scale,
         groups=groups,
-        num_classes=num_classes,
+        dropout_rate=dropout_rate,
         style=style,
     )
 
@@ -389,6 +411,7 @@ def masked_resnet101(
     scale: float,
     groups: int,
     num_classes: int,
+    dropout_rate: float = 0,
     style: str = "imagenet",
 ) -> _MaskedResNet:
     """Masksembles of ResNet-101 from `Deep Residual Learning for Image
@@ -396,21 +419,25 @@ def masked_resnet101(
 
     Args:
         in_channels (int): Number of input channels.
+        dropout_rate (float): Dropout rate. Defaults to 0.
         num_estimators (int): Number of estimators in the ensemble.
+        scale (float): The scale of the mask.
         groups (int): Number of groups within each estimator.
         num_classes (int): Number of classes to predict.
+        style (str, optional): The style of the model. Defaults to "imagenet".
 
     Returns:
         _MaskedResNet: A Masksembles-style ResNet-101.
     """
     return _MaskedResNet(
+        num_classes=num_classes,
         block=Bottleneck,
         num_blocks=[3, 4, 23, 3],
         in_channels=in_channels,
         num_estimators=num_estimators,
         scale=scale,
         groups=groups,
-        num_classes=num_classes,
+        dropout_rate=dropout_rate,
         style=style,
     )
 
@@ -421,6 +448,7 @@ def masked_resnet152(
     scale: float,
     groups: int,
     num_classes: int,
+    dropout_rate: float = 0,
     style: str = "imagenet",
 ) -> _MaskedResNet:  # coverage: ignore
     """Masksembles of ResNet-152 from `Deep Residual Learning for Image
@@ -428,21 +456,24 @@ def masked_resnet152(
 
     Args:
         in_channels (int): Number of input channels.
+        dropout_rate (float): Dropout rate. Defaults to 0.
         num_estimators (int): Number of estimators in the ensemble.
-        scale (float): Expansion factor affecting the width of the estimators.
+        scale (float): The scale of the mask.
         groups (int): Number of groups within each estimator.
         num_classes (int): Number of classes to predict.
+        style (str, optional): The style of the model. Defaults to "imagenet".
 
     Returns:
         _MaskedResNet: A Masksembles-style ResNet-152.
     """
     return _MaskedResNet(
+        num_classes=num_classes,
         block=Bottleneck,
         num_blocks=[3, 8, 36, 3],
         in_channels=in_channels,
         num_estimators=num_estimators,
         scale=scale,
         groups=groups,
-        num_classes=num_classes,
+        dropout_rate=dropout_rate,
         style=style,
     )

@@ -12,20 +12,19 @@ Torch Uncertainty
 Welcome to the documentation of TorchUncertainty.
 
 This website contains the documentation for 
-`installing <https://torch-uncertainty.github.io/installation.html>`_ TorchUncertainty, 
-how to `contribute <https://torch-uncertainty.github.io/>`_,
+`installing <https://torch-uncertainty.github.io/installation.html>`_
+and `contributing <https://torch-uncertainty.github.io/>`_ to TorchUncertainty, 
 details on the `API <https://torch-uncertainty.github.io/api.html>`_, and a 
 `comprehensive list of the references <https://torch-uncertainty.github.io/references.html>`_  of
 the models and metrics implemented.
 
-TorchUncertainty can be directly installed from PyPI:
+You can install TorchUncertainty directly from PyPI:
 
 .. parsed-literal::
    pip install torch-uncertainty
 
 To install TorchUncertainty with contribution in mind, check the
-`detailed installation page <https://torch-uncertainty.github.io/installation.html>`_, 
-which explains how to install the full package using poetry.
+`contribution page <https://torch-uncertainty.github.io/contributing.html>`_.
 
 Packed-Ensembles
 ^^^^^^^^^^^^^^^^
