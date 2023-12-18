@@ -4,7 +4,7 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 from datetime import datetime
 
-import pytorch_sphinx_theme
+import tu_sphinx_theme
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
@@ -65,8 +65,8 @@ exclude_patterns = []
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = "pytorch_sphinx_theme"
-html_theme_path = [pytorch_sphinx_theme.get_html_theme_path()]
+html_theme = "tu_sphinx_theme"
+html_theme_path = [tu_sphinx_theme.get_html_theme_path()]
 
 html_theme_options = {
     "logo_url": "https://torch-uncertainty.github.io/",
