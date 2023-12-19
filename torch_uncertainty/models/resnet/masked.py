@@ -5,6 +5,7 @@ from torch_uncertainty.layers import MaskedConv2d, MaskedLinear
 
 __all__ = [
     "masked_resnet18",
+    "masked_resnet20",
     "masked_resnet34",
     "masked_resnet50",
     "masked_resnet101",
@@ -24,6 +25,7 @@ class _BasicBlock(nn.Module):
         scale: float,
         dropout_rate: float,
         groups: int,
+        normalization_layer: nn.Module,
     ) -> None:
         super().__init__()
 
@@ -38,7 +40,7 @@ class _BasicBlock(nn.Module):
             padding=1,
             bias=False,
         )
-        self.bn1 = nn.BatchNorm2d(planes)
+        self.bn1 = normalization_layer(planes)
         self.conv2 = MaskedConv2d(
             planes,
             planes,
@@ -51,7 +53,7 @@ class _BasicBlock(nn.Module):
             bias=False,
         )
         self.dropout = nn.Dropout2d(p=dropout_rate)
-        self.bn2 = nn.BatchNorm2d(planes)
+        self.bn2 = normalization_layer(planes)
 
         self.shortcut = nn.Sequential()
         if stride != 1 or in_planes != self.expansion * planes:
@@ -66,7 +68,7 @@ class _BasicBlock(nn.Module):
                     groups=groups,
                     bias=False,
                 ),
-                nn.BatchNorm2d(self.expansion * planes),
+                normalization_layer(self.expansion * planes),
             )
 
     def forward(self, x: Tensor) -> Tensor:
@@ -88,6 +90,7 @@ class Bottleneck(nn.Module):
         scale: float,
         dropout_rate: float,
         groups: int,
+        normalization_layer: nn.Module,
     ) -> None:
         super().__init__()
 
@@ -100,7 +103,7 @@ class Bottleneck(nn.Module):
             groups=groups,
             bias=False,
         )
-        self.bn1 = nn.BatchNorm2d(planes)
+        self.bn1 = normalization_layer(planes)
         self.conv2 = MaskedConv2d(
             planes,
             planes,
@@ -113,7 +116,7 @@ class Bottleneck(nn.Module):
             bias=False,
         )
         self.dropout = nn.Dropout2d(p=dropout_rate)
-        self.bn2 = nn.BatchNorm2d(planes)
+        self.bn2 = normalization_layer(planes)
         self.conv3 = MaskedConv2d(
             planes,
             self.expansion * planes,
@@ -123,7 +126,7 @@ class Bottleneck(nn.Module):
             groups=groups,
             bias=False,
         )
-        self.bn3 = nn.BatchNorm2d(self.expansion * planes)
+        self.bn3 = normalization_layer(self.expansion * planes)
 
         self.shortcut = nn.Sequential()
         if stride != 1 or in_planes != self.expansion * planes:
@@ -138,7 +141,7 @@ class Bottleneck(nn.Module):
                     groups=groups,
                     bias=False,
                 ),
-                nn.BatchNorm2d(self.expansion * planes),
+                normalization_layer(self.expansion * planes),
             )
 
     def forward(self, x: Tensor) -> Tensor:
@@ -161,14 +164,15 @@ class _MaskedResNet(nn.Module):
         scale: float = 2.0,
         groups: int = 1,
         style: str = "imagenet",
+        in_planes: int = 64,
+        normalization_layer: nn.Module = nn.BatchNorm2d,
     ) -> None:
         super().__init__()
-
         self.in_channels = in_channels
-        self.num_estimators = num_estimators
-        self.in_planes = 64
-
+        self.in_planes = in_planes
         block_planes = self.in_planes
+
+        self.num_estimators = num_estimators
 
         if style == "imagenet":
             self.conv1 = nn.Conv2d(
@@ -191,7 +195,7 @@ class _MaskedResNet(nn.Module):
                 bias=False,
             )
 
-        self.bn1 = nn.BatchNorm2d(block_planes)
+        self.bn1 = normalization_layer(block_planes)
 
         if style == "imagenet":
             self.optional_pool = nn.MaxPool2d(
@@ -209,6 +213,7 @@ class _MaskedResNet(nn.Module):
             dropout_rate=dropout_rate,
             scale=scale,
             groups=groups,
+            normalization_layer=normalization_layer,
         )
         self.layer2 = self._make_layer(
             block,
@@ -219,6 +224,7 @@ class _MaskedResNet(nn.Module):
             dropout_rate=dropout_rate,
             scale=scale,
             groups=groups,
+            normalization_layer=normalization_layer,
         )
         self.layer3 = self._make_layer(
             block,
@@ -229,24 +235,31 @@ class _MaskedResNet(nn.Module):
             dropout_rate=dropout_rate,
             scale=scale,
             groups=groups,
+            normalization_layer=normalization_layer,
         )
-        self.layer4 = self._make_layer(
-            block,
-            block_planes * 8,
-            num_blocks[3],
-            stride=2,
-            num_estimators=num_estimators,
-            dropout_rate=dropout_rate,
-            scale=scale,
-            groups=groups,
-        )
+        if len(num_blocks) == 4:
+            self.layer4 = self._make_layer(
+                block,
+                block_planes * 8,
+                num_blocks[3],
+                stride=2,
+                num_estimators=num_estimators,
+                dropout_rate=dropout_rate,
+                scale=scale,
+                groups=groups,
+                normalization_layer=normalization_layer,
+            )
+            linear_multiplier = 8
+        else:
+            self.layer4 = nn.Identity()
+            linear_multiplier = 4
 
         self.dropout = nn.Dropout(p=dropout_rate)
         self.pool = nn.AdaptiveAvgPool2d(output_size=1)
         self.flatten = nn.Flatten(1)
 
         self.linear = MaskedLinear(
-            block_planes * 8 * block.expansion,
+            block_planes * linear_multiplier * block.expansion,
             num_classes,
             num_estimators,
             scale=scale,
@@ -262,6 +275,7 @@ class _MaskedResNet(nn.Module):
         dropout_rate: float,
         scale: float,
         groups: int,
+        normalization_layer: nn.Module,
     ) -> nn.Module:
         strides = [stride] + [1] * (num_blocks - 1)
         layers = []
@@ -275,6 +289,7 @@ class _MaskedResNet(nn.Module):
                     dropout_rate=dropout_rate,
                     scale=scale,
                     groups=groups,
+                    normalization_layer=normalization_layer,
                 )
             )
             self.in_planes = planes * block.expansion
@@ -302,6 +317,7 @@ def masked_resnet18(
     num_classes: int,
     dropout_rate: float = 0,
     style: str = "imagenet",
+    normalization_layer: nn.Module = nn.BatchNorm2d,
 ) -> _MaskedResNet:
     """Masksembles of ResNet-18 from `Deep Residual Learning for Image
     Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -314,6 +330,7 @@ def masked_resnet18(
         groups (int): Number of groups within each estimator.
         num_classes (int): Number of classes to predict.
         style (str, optional): The style of the model. Defaults to "imagenet".
+        normalization_layer (nn.Module, optional): Normalization layer.
 
     Returns:
         _MaskedResNet: A Masksembles-style ResNet-18.
@@ -328,6 +345,49 @@ def masked_resnet18(
         groups=groups,
         dropout_rate=dropout_rate,
         style=style,
+        in_planes=64,
+        normalization_layer=normalization_layer,
+    )
+
+
+def masked_resnet20(
+    in_channels: int,
+    num_estimators: int,
+    scale: float,
+    groups: int,
+    num_classes: int,
+    dropout_rate: float = 0,
+    style: str = "imagenet",
+    normalization_layer: nn.Module = nn.BatchNorm2d,
+) -> _MaskedResNet:
+    """Masksembles of ResNet-20 from `Deep Residual Learning for Image
+    Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
+
+    Args:
+        in_channels (int): Number of input channels.
+        dropout_rate (float): Dropout rate. Defaults to 0.
+        num_estimators (int): Number of estimators in the ensemble.
+        scale (float): The scale of the mask.
+        groups (int): Number of groups within each estimator.
+        num_classes (int): Number of classes to predict.
+        style (str, optional): The style of the model. Defaults to "imagenet".
+        normalization_layer (nn.Module, optional): Normalization layer.
+
+    Returns:
+        _MaskedResNet: A Masksembles-style ResNet-20.
+    """
+    return _MaskedResNet(
+        num_classes=num_classes,
+        block=_BasicBlock,
+        num_blocks=[3, 3, 3],
+        in_channels=in_channels,
+        num_estimators=num_estimators,
+        scale=scale,
+        groups=groups,
+        dropout_rate=dropout_rate,
+        style=style,
+        in_planes=16,
+        normalization_layer=normalization_layer,
     )
 
 
@@ -339,6 +399,7 @@ def masked_resnet34(
     num_classes: int,
     dropout_rate: float = 0,
     style: str = "imagenet",
+    normalization_layer: nn.Module = nn.BatchNorm2d,
 ) -> _MaskedResNet:
     """Masksembles of ResNet-34 from `Deep Residual Learning for Image
     Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -351,6 +412,7 @@ def masked_resnet34(
         groups (int): Number of groups within each estimator.
         num_classes (int): Number of classes to predict.
         style (str, optional): The style of the model. Defaults to "imagenet".
+        normalization_layer (nn.Module, optional): Normalization layer.
 
     Returns:
         _MaskedResNet: A Masksembles-style ResNet-34.
@@ -365,6 +427,8 @@ def masked_resnet34(
         groups=groups,
         dropout_rate=dropout_rate,
         style=style,
+        in_planes=64,
+        normalization_layer=normalization_layer,
     )
 
 
@@ -376,6 +440,7 @@ def masked_resnet50(
     num_classes: int,
     dropout_rate: float = 0,
     style: str = "imagenet",
+    normalization_layer: nn.Module = nn.BatchNorm2d,
 ) -> _MaskedResNet:
     """Masksembles of ResNet-50 from `Deep Residual Learning for Image
     Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -388,6 +453,7 @@ def masked_resnet50(
         groups (int): Number of groups within each estimator.
         num_classes (int): Number of classes to predict.
         style (str, optional): The style of the model. Defaults to "imagenet".
+        normalization_layer (nn.Module, optional): Normalization layer.
 
     Returns:
         _MaskedResNet: A Masksembles-style ResNet-50.
@@ -402,6 +468,8 @@ def masked_resnet50(
         groups=groups,
         dropout_rate=dropout_rate,
         style=style,
+        in_planes=64,
+        normalization_layer=normalization_layer,
     )
 
 
@@ -413,6 +481,7 @@ def masked_resnet101(
     num_classes: int,
     dropout_rate: float = 0,
     style: str = "imagenet",
+    normalization_layer: nn.Module = nn.BatchNorm2d,
 ) -> _MaskedResNet:
     """Masksembles of ResNet-101 from `Deep Residual Learning for Image
     Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -425,6 +494,7 @@ def masked_resnet101(
         groups (int): Number of groups within each estimator.
         num_classes (int): Number of classes to predict.
         style (str, optional): The style of the model. Defaults to "imagenet".
+        normalization_layer (nn.Module, optional): Normalization layer.
 
     Returns:
         _MaskedResNet: A Masksembles-style ResNet-101.
@@ -439,6 +509,8 @@ def masked_resnet101(
         groups=groups,
         dropout_rate=dropout_rate,
         style=style,
+        in_planes=64,
+        normalization_layer=normalization_layer,
     )
 
 
@@ -450,6 +522,7 @@ def masked_resnet152(
     num_classes: int,
     dropout_rate: float = 0,
     style: str = "imagenet",
+    normalization_layer: nn.Module = nn.BatchNorm2d,
 ) -> _MaskedResNet:  # coverage: ignore
     """Masksembles of ResNet-152 from `Deep Residual Learning for Image
     Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -462,6 +535,7 @@ def masked_resnet152(
         groups (int): Number of groups within each estimator.
         num_classes (int): Number of classes to predict.
         style (str, optional): The style of the model. Defaults to "imagenet".
+        normalization_layer (nn.Module, optional): Normalization layer.
 
     Returns:
         _MaskedResNet: A Masksembles-style ResNet-152.
@@ -476,4 +550,6 @@ def masked_resnet152(
         groups=groups,
         dropout_rate=dropout_rate,
         style=style,
+        in_planes=64,
+        normalization_layer=normalization_layer,
     )

@@ -13,7 +13,7 @@ def add_resnet_specific_args(parser: ArgumentParser) -> ArgumentParser:
         --groups (int): Number of groups.
     """
     # style_choices = ["cifar", "imagenet", "robust"]
-    archs = [18, 34, 50, 101, 152]
+    archs = [18, 20, 34, 50, 101, 152]
     parser.add_argument(
         "--arch",
         type=int,

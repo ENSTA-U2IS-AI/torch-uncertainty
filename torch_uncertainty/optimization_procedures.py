@@ -390,7 +390,7 @@ def get_procedure(
     Returns:
         callable: The optimization procedure.
     """
-    if arch_name == "resnet18":
+    if arch_name in ["resnet18", "resnet20"]:
         if ds_name == "cifar10":
             procedure = optim_cifar10_resnet18
         elif ds_name == "cifar100":

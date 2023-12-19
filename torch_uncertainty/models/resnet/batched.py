@@ -12,6 +12,7 @@ from torch_uncertainty.layers import BatchConv2d, BatchLinear
 
 __all__ = [
     "batched_resnet18",
+    "batched_resnet20",
     "batched_resnet34",
     "batched_resnet50",
     "batched_resnet101",
@@ -30,6 +31,7 @@ class _BasicBlock(nn.Module):
         num_estimators: int,
         dropout_rate: float,
         groups: int,
+        normalization_layer: nn.Module,
     ) -> None:
         super().__init__()
         self.conv1 = BatchConv2d(
@@ -42,7 +44,7 @@ class _BasicBlock(nn.Module):
             padding=1,
             bias=False,
         )
-        self.bn1 = nn.BatchNorm2d(planes)
+        self.bn1 = normalization_layer(planes)
 
         self.dropout = nn.Dropout2d(p=dropout_rate)
         self.conv2 = BatchConv2d(
@@ -55,7 +57,7 @@ class _BasicBlock(nn.Module):
             padding=1,
             bias=False,
         )
-        self.bn2 = nn.BatchNorm2d(planes)
+        self.bn2 = normalization_layer(planes)
 
         self.shortcut = nn.Sequential()
         if stride != 1 or in_planes != self.expansion * planes:
@@ -68,7 +70,7 @@ class _BasicBlock(nn.Module):
                     stride=stride,
                     bias=False,
                 ),
-                nn.BatchNorm2d(self.expansion * planes),
+                normalization_layer(self.expansion * planes),
             )
 
     def forward(self, inputs: Tensor) -> Tensor:
@@ -89,6 +91,7 @@ class _Bottleneck(nn.Module):
         num_estimators: int,
         dropout_rate: float,
         groups: int,
+        normalization_layer: nn.Module,
     ) -> None:
         super().__init__()
         self.conv1 = BatchConv2d(
@@ -99,7 +102,7 @@ class _Bottleneck(nn.Module):
             groups=groups,
             bias=False,
         )
-        self.bn1 = nn.BatchNorm2d(planes)
+        self.bn1 = normalization_layer(planes)
         self.conv2 = BatchConv2d(
             planes,
             planes,
@@ -110,7 +113,7 @@ class _Bottleneck(nn.Module):
             padding=1,
             bias=False,
         )
-        self.bn2 = nn.BatchNorm2d(planes)
+        self.bn2 = normalization_layer(planes)
         self.dropout = nn.Dropout2d(p=dropout_rate)
         self.conv3 = BatchConv2d(
             planes,
@@ -120,7 +123,7 @@ class _Bottleneck(nn.Module):
             kernel_size=1,
             bias=False,
         )
-        self.bn3 = nn.BatchNorm2d(self.expansion * planes)
+        self.bn3 = normalization_layer(self.expansion * planes)
 
         self.shortcut = nn.Sequential()
         if stride != 1 or in_planes != self.expansion * planes:
@@ -134,7 +137,7 @@ class _Bottleneck(nn.Module):
                     stride=stride,
                     bias=False,
                 ),
-                nn.BatchNorm2d(self.expansion * planes),
+                normalization_layer(self.expansion * planes),
             )
 
     def forward(self, inputs: Tensor) -> Tensor:
@@ -157,17 +160,21 @@ class _BatchedResNet(nn.Module):
         groups: int = 1,
         width_multiplier: int = 1,
         style: str = "imagenet",
+        in_planes: int = 64,
+        normalization_layer: nn.Module = nn.BatchNorm2d,
     ) -> None:
         super().__init__()
-        self.in_planes = 64 * width_multiplier
+        self.in_planes = in_planes * width_multiplier
+        block_planes = in_planes * width_multiplier
+
         self.num_estimators = num_estimators
         self.dropout_rate = dropout_rate
-
         self.width_multiplier = width_multiplier
+
         if style == "imagenet":
             self.conv1 = BatchConv2d(
                 3,
-                64 * self.width_multiplier,
+                block_planes,
                 kernel_size=7,
                 stride=2,
                 padding=3,
@@ -178,7 +185,7 @@ class _BatchedResNet(nn.Module):
         else:
             self.conv1 = BatchConv2d(
                 in_channels,
-                64 * self.width_multiplier,
+                block_planes,
                 kernel_size=3,
                 stride=1,
                 padding=1,
@@ -186,7 +193,7 @@ class _BatchedResNet(nn.Module):
                 groups=groups,
                 bias=False,
             )
-        self.bn1 = nn.BatchNorm2d(64 * self.width_multiplier)
+        self.bn1 = normalization_layer(block_planes)
 
         if style == "imagenet":
             self.optional_pool = nn.MaxPool2d(
@@ -197,46 +204,56 @@ class _BatchedResNet(nn.Module):
 
         self.layer1 = self._make_layer(
             block,
-            64 * width_multiplier,
+            block_planes,
             num_blocks[0],
             stride=1,
             num_estimators=num_estimators,
             dropout_rate=dropout_rate,
             groups=groups,
+            normalization_layer=normalization_layer,
         )
         self.layer2 = self._make_layer(
             block,
-            128 * width_multiplier,
+            block_planes * 2,
             num_blocks[1],
             stride=2,
             num_estimators=num_estimators,
             dropout_rate=dropout_rate,
             groups=groups,
+            normalization_layer=normalization_layer,
         )
         self.layer3 = self._make_layer(
             block,
-            256 * width_multiplier,
+            block_planes * 4,
             num_blocks[2],
             stride=2,
             num_estimators=num_estimators,
             dropout_rate=dropout_rate,
             groups=groups,
+            normalization_layer=normalization_layer,
         )
-        self.layer4 = self._make_layer(
-            block,
-            512 * width_multiplier,
-            num_blocks[3],
-            stride=2,
-            num_estimators=num_estimators,
-            dropout_rate=dropout_rate,
-            groups=groups,
-        )
+        if len(num_blocks) == 4:
+            self.layer4 = self._make_layer(
+                block,
+                block_planes * 8,
+                num_blocks[3],
+                stride=2,
+                num_estimators=num_estimators,
+                dropout_rate=dropout_rate,
+                groups=groups,
+                normalization_layer=normalization_layer,
+            )
+            linear_multiplier = 8
+        else:
+            self.layer4 = nn.Identity()
+            linear_multiplier = 4
+
         self.dropout = nn.Dropout(p=dropout_rate)
         self.pool = nn.AdaptiveAvgPool2d(output_size=1)
         self.flatten = nn.Flatten(1)
 
         self.linear = BatchLinear(
-            512 * width_multiplier * block.expansion,
+            block_planes * linear_multiplier * block.expansion,
             num_classes,
             num_estimators=num_estimators,
         )
@@ -249,7 +266,8 @@ class _BatchedResNet(nn.Module):
         stride: int,
         num_estimators: int,
         dropout_rate: float,
-        groups: int = 1,
+        groups: int,
+        normalization_layer: nn.Module,
     ) -> nn.Module:
         strides = [stride] + [1] * (num_blocks - 1)
         layers = []
@@ -262,6 +280,7 @@ class _BatchedResNet(nn.Module):
                     dropout_rate=dropout_rate,
                     num_estimators=num_estimators,
                     groups=groups,
+                    normalization_layer=normalization_layer,
                 )
             )
             self.in_planes = planes * block.expansion
@@ -287,6 +306,7 @@ def batched_resnet18(
     dropout_rate: float = 0,
     groups: int = 1,
     style: str = "imagenet",
+    normalization_layer: nn.Module = nn.BatchNorm2d,
 ) -> _BatchedResNet:
     """BatchEnsemble of ResNet-18 from `Deep Residual Learning for Image
     Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -299,6 +319,7 @@ def batched_resnet18(
         num_classes (int): Number of classes to predict.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
+        normalization_layer (nn.Module, optional): Normalization layer.
 
     Returns:
         _BatchedResNet: A BatchEnsemble-style ResNet-18.
@@ -312,6 +333,47 @@ def batched_resnet18(
         dropout_rate=dropout_rate,
         groups=groups,
         style=style,
+        in_planes=64,
+        normalization_layer=normalization_layer,
+    )
+
+
+def batched_resnet20(
+    in_channels: int,
+    num_classes: int,
+    num_estimators: int,
+    dropout_rate: float = 0,
+    groups: int = 1,
+    style: str = "imagenet",
+    normalization_layer: nn.Module = nn.BatchNorm2d,
+) -> _BatchedResNet:
+    """BatchEnsemble of ResNet-20 from `Deep Residual Learning for Image
+    Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
+
+    Args:
+        in_channels (int): Number of input channels.
+        num_estimators (int): Number of estimators in the ensemble.
+        dropout_rate (float): Dropout rate. Defaults to 0.
+        groups (int): Number of groups within each estimator.
+        num_classes (int): Number of classes to predict.
+        style (bool, optional): Whether to use the ImageNet
+            structure. Defaults to ``True``.
+        normalization_layer (nn.Module, optional): Normalization layer.
+
+    Returns:
+        _BatchedResNet: A BatchEnsemble-style ResNet-20.
+    """
+    return _BatchedResNet(
+        _BasicBlock,
+        [3, 3, 3],
+        in_channels=in_channels,
+        num_classes=num_classes,
+        num_estimators=num_estimators,
+        dropout_rate=dropout_rate,
+        groups=groups,
+        style=style,
+        in_planes=16,
+        normalization_layer=normalization_layer,
     )
 
 
@@ -322,6 +384,7 @@ def batched_resnet34(
     dropout_rate: float = 0,
     groups: int = 1,
     style: str = "imagenet",
+    normalization_layer: nn.Module = nn.BatchNorm2d,
 ) -> _BatchedResNet:
     """BatchEnsemble of ResNet-34 from `Deep Residual Learning for Image
     Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -334,6 +397,7 @@ def batched_resnet34(
         num_classes (int): Number of classes to predict.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
+        normalization_layer (nn.Module, optional): Normalization layer.
 
     Returns:
         _BatchedResNet: A BatchEnsemble-style ResNet-34.
@@ -347,6 +411,8 @@ def batched_resnet34(
         dropout_rate=dropout_rate,
         groups=groups,
         style=style,
+        in_planes=64,
+        normalization_layer=normalization_layer,
     )
 
 
@@ -358,6 +424,7 @@ def batched_resnet50(
     groups: int = 1,
     width_multiplier: int = 1,
     style: str = "imagenet",
+    normalization_layer: nn.Module = nn.BatchNorm2d,
 ) -> _BatchedResNet:
     """BatchEnsemble of ResNet-50 from `Deep Residual Learning for Image
     Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -372,6 +439,7 @@ def batched_resnet50(
             of the estimators. Defaults to ``1``.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
+        normalization_layer (nn.Module, optional): Normalization layer.
 
     Returns:
         _BatchedResNet: A BatchEnsemble-style ResNet-50.
@@ -386,6 +454,8 @@ def batched_resnet50(
         dropout_rate=dropout_rate,
         groups=groups,
         style=style,
+        in_planes=64,
+        normalization_layer=normalization_layer,
     )
 
 
@@ -396,6 +466,7 @@ def batched_resnet101(
     dropout_rate: float = 0,
     groups: int = 1,
     style: str = "imagenet",
+    normalization_layer: nn.Module = nn.BatchNorm2d,
 ) -> _BatchedResNet:
     """BatchEnsemble of ResNet-101 from `Deep Residual Learning for Image
     Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -408,6 +479,7 @@ def batched_resnet101(
         num_classes (int): Number of classes to predict.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
+        normalization_layer (nn.Module, optional): Normalization layer.
 
     Returns:
         _BatchedResNet: A BatchEnsemble-style ResNet-101.
@@ -421,6 +493,8 @@ def batched_resnet101(
         dropout_rate=dropout_rate,
         groups=groups,
         style=style,
+        in_planes=64,
+        normalization_layer=normalization_layer,
     )
 
 
@@ -431,6 +505,7 @@ def batched_resnet152(
     dropout_rate: float = 0,
     groups: int = 1,
     style: str = "imagenet",
+    normalization_layer: nn.Module = nn.BatchNorm2d,
 ) -> _BatchedResNet:
     """BatchEnsemble of ResNet-152 from `Deep Residual Learning for Image
     Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
@@ -443,6 +518,7 @@ def batched_resnet152(
         num_classes (int): Number of classes to predict.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
+        normalization_layer (nn.Module, optional): Normalization layer.
 
     Returns:
         _BatchedResNet: A BatchEnsemble-style ResNet-152.
@@ -456,4 +532,6 @@ def batched_resnet152(
         dropout_rate=dropout_rate,
         groups=groups,
         style=style,
+        in_planes=64,
+        normalization_layer=normalization_layer,
     )
