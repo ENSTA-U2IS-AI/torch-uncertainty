@@ -79,8 +79,9 @@ if __name__ == "__main__":
 
         results = cli_main(model, dm, args.exp_dir, args.exp_name, args)
 
-    for dict_result in results:
-        csv_writer(
-            Path(args.exp_dir) / Path(args.exp_name) / "results.csv",
-            dict_result,
-        )
+    if results is not None:
+        for dict_result in results:
+            csv_writer(
+                Path(args.exp_dir) / Path(args.exp_name) / "results.csv",
+                dict_result,
+            )

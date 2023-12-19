@@ -29,6 +29,7 @@ if __name__ == "__main__":
     else:
         calibration_set = None
 
+    results = None
     if args.use_cv:
         list_dm = dm.make_cross_val_splits(args.n_splits, args.train_over)
         list_model = [
@@ -65,8 +66,9 @@ if __name__ == "__main__":
 
         results = cli_main(model, dm, args.exp_dir, args.exp_name, args)
 
-    for dict_result in results:
-        csv_writer(
-            Path(args.exp_dir) / Path(args.exp_name) / "results.csv",
-            dict_result,
-        )
+    if results is not None:
+        for dict_result in results:
+            csv_writer(
+                Path(args.exp_dir) / Path(args.exp_name) / "results.csv",
+                dict_result,
+            )
