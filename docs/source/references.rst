@@ -311,3 +311,12 @@ VGG
 
 * Authors: *Karen Simonyan and Andrew Zisserman*
 * Paper: `ICLR 2015 <https://arxiv.org/pdf/1409.1556.pdf>`__.
+
+Layers
+------
+
+**Filter Response Normalization Layer: Eliminating Batch Dependence in the
+Training of Deep Neural Networks**
+
+* Authors: *Saurabh Singh and Shankar Krishnan*
+* Paper: `CVPR 2020 <https://arxiv.org/pdf/1911.09737.pdf>`__.
