@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Training a LeNet with Monte-Carlo Dropout
 ==========================================

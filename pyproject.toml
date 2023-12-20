@@ -58,7 +58,8 @@ docs = [
     "sphinx-design",
     "sphinx-codeautolink",
 ]
-full = ["pandas"]
+image = ["scikit-image", "opencv-python"]
+tabular = ["pandas"]
 
 [project.urls]
 homepage = "https://torch-uncertainty.github.io/"

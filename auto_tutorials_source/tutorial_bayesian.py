@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Train a Bayesian Neural Network in Three Minutes
 ================================================

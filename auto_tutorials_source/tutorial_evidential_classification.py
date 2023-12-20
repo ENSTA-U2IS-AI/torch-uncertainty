@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
 """
 Deep Evidential Classification on a Toy Example
 ===============================================
@@ -154,6 +151,7 @@ def rotated_mnist(angle: int) -> None:
     """
     rotated_images = F.rotate(images, angle)
     # print rotated images
+    plt.axis('off')
     imshow(torchvision.utils.make_grid(rotated_images[:4, ...]))
     print("Ground truth: ", " ".join(f"{labels[j]}" for j in range(4)))
 
