@@ -45,8 +45,11 @@ jobs:
           auto_tutorials_source/**
           data/**
           experiments/**
-          README.md
-          CONTRIBUTING.md
+          *.md
+          *.yaml
+          *.yml
+          LICENSE
+          .gitignore
 
     - name: Cache folder for Torch Uncertainty
       if: steps.changed-files-specific.outputs.only_changed != 'true'
