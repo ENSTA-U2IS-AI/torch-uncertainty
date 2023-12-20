@@ -12,8 +12,8 @@ from torch_uncertainty.transforms import (
     MIMOBatchFormat,
     Posterize,
     RepeatTarget,
-    Rotation,
-    Sharpness,
+    Rotate,
+    Sharpen,
     Shear,
     Solarize,
     Translate,
@@ -78,11 +78,11 @@ class TestSolarize:
             _ = aug(img_input, -1)
 
 
-class TestRotation:
-    """Testing the Rotation transform."""
+class TestRotate:
+    """Testing the Rotate transform."""
 
     def test_pil(self, img_input):
-        aug = Rotation(random_direction=True)
+        aug = Rotate(random_direction=True)
         _ = aug(img_input, 10)
 
 
@@ -136,15 +136,15 @@ class TestBrightness:
             _ = aug(img_input, -1)
 
 
-class TestSharpness:
-    """Testing the Sharpness transform."""
+class TestSharpen:
+    """Testing the Sharpen transform."""
 
     def test_pil(self, img_input):
-        aug = Sharpness()
+        aug = Sharpen()
         _ = aug(img_input, 2)
 
     def test_failures(self, img_input):
-        aug = Sharpness()
+        aug = Sharpen()
         with pytest.raises(ValueError):
             _ = aug(img_input, -1)
 
