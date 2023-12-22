@@ -197,6 +197,8 @@ class MaskedLinear(nn.Module):
         factory_kwargs = {"device": device, "dtype": dtype}
         super().__init__()
 
+        if scale is None:
+            raise ValueError("You must specify the value of the arg. `scale`")
         if scale < 1:
             raise ValueError(f"Attribute `scale` should be >= 1, not {scale}.")
 
@@ -261,6 +263,8 @@ class MaskedConv2d(nn.Module):
         factory_kwargs = {"device": device, "dtype": dtype}
         super().__init__()
 
+        if scale is None:
+            raise ValueError("You must specify the value of the arg. `scale`")
         if scale < 1:
             raise ValueError(f"Attribute `scale` should be >= 1, not {scale}.")
 
