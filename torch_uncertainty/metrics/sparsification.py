@@ -79,13 +79,13 @@ class AUSE(Metric):
 
     def plot(
         self, ax: _AX_TYPE | None = None
-    ) -> tuple[[plt.Figure | None], plt.Axes]:
+    ) -> tuple[plt.Figure | None, plt.Axes]:
         """Plot the sparsification curve corresponding to the inputs passed to
         ``update``, and the oracle sparsification curve.
 
         Args:
             ax (Axes | None, optional): An matplotlib axis object. If provided
-                will add plot to that axis. Defaults to None.
+                will add plot to this axis. Defaults to None.
 
         Returns:
             tuple[[Figure | None], Axes]: Figure object and Axes object
@@ -141,12 +141,12 @@ class AUSE(Metric):
 
 
 def _rejection_rate_compute(
+    scores: Tensor,
     errors: Tensor,
-    uncertainty_score: Tensor,
 ) -> Tensor:
     num_samples = errors.size(0)
 
-    order = uncertainty_score.argsort()
+    order = scores.argsort()
     errors = errors[order]
 
     error_rates = torch.zeros(num_samples + 1)
