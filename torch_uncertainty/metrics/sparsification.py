@@ -25,7 +25,7 @@ class AUSE(Metric):
     Inputs:
         - :attr:`scores`: Uncertainty scores of shape :math:`(B,)`. A higher
           score means a higher uncertainty.
-        - :attr:`errors`: Errors of shape :math:`(B,)`.
+        - :attr:`errors`: Binary errors of shape :math:`(B,)`,
 
         where :math:`B` is the batch size.
 
@@ -53,7 +53,7 @@ class AUSE(Metric):
 
         Args:
             scores (Tensor): uncertainty scores of shape :math:`(B,)`
-            errors (Tensor): errors of shape :math:`(B,)`
+            errors (Tensor): binary errors of shape :math:`(B,)`
         """
         self.scores.append(scores)
         self.errors.append(errors)
@@ -78,7 +78,10 @@ class AUSE(Metric):
         return torch.tensor([auc(x, y)])
 
     def plot(
-        self, ax: _AX_TYPE | None = None
+        self,
+        ax: _AX_TYPE | None = None,
+        plot_oracle: bool = True,
+        plot_value: bool = True,
     ) -> tuple[plt.Figure | None, plt.Axes]:
         """Plot the sparsification curve corresponding to the inputs passed to
         ``update``, and the oracle sparsification curve.
@@ -86,6 +89,10 @@ class AUSE(Metric):
         Args:
             ax (Axes | None, optional): An matplotlib axis object. If provided
                 will add plot to this axis. Defaults to None.
+            plot_oracle (bool, optional): Whether to plot the oracle
+                sparsification curve. Defaults to True.
+            plot_value (bool, optional): Whether to plot the AUSE value.
+                Defaults to True.
 
         Returns:
             tuple[[Figure | None], Axes]: Figure object and Axes object
@@ -115,11 +122,12 @@ class AUSE(Metric):
             computed_error_rates * 100,
             label="Model",
         )
-        ax.plot(
-            rejection_rates,
-            computed_optimal_error_rates * 100,
-            label="Optimal",
-        )
+        if plot_oracle:
+            ax.plot(
+                rejection_rates,
+                computed_optimal_error_rates * 100,
+                label="Oracle",
+            )
 
         ax.set_xlabel("Rejection Rate (%)")
         ax.set_ylabel("Error Rate (%)")
@@ -127,15 +135,16 @@ class AUSE(Metric):
         ax.set_ylim(self.plot_lower_bound, self.plot_upper_bound)
         ax.legend(loc="upper right")
 
-        ax.text(
-            0.02,
-            0.02,
-            f"AUSEC={ausec:.03}",
-            color="black",
-            ha="left",
-            va="bottom",
-            transform=ax.transAxes,
-        )
+        if plot_value:
+            ax.text(
+                0.02,
+                0.02,
+                f"AUSEC={ausec:.03}",
+                color="black",
+                ha="left",
+                va="bottom",
+                transform=ax.transAxes,
+            )
 
         return fig, ax
 
@@ -144,6 +153,12 @@ def _rejection_rate_compute(
     scores: Tensor,
     errors: Tensor,
 ) -> Tensor:
+    """Compute the cumulative error rates for a given set of scores and errors.
+
+    Args:
+        scores (Tensor): uncertainty scores of shape :math:`(B,)`
+        errors (Tensor): binary errors of shape :math:`(B,)`
+    """
     num_samples = errors.size(0)
 
     order = scores.argsort()
