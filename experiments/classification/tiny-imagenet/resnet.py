@@ -30,7 +30,7 @@ if __name__ == "__main__":
 
     # net_name = f"{args.version}-resnet{args.arch}-tiny-imagenet"
     if args.exp_name == "":
-        args.exp_name = f"{args.version}-resnet{args.arch}-cifar10"
+        args.exp_name = f"{args.version}-resnet{args.arch}-tinyimagenet"
 
     # datamodule
     args.root = str(root / "data")

@@ -30,7 +30,8 @@ if __name__ == "__main__":
     else:
         root = Path(args.root)
 
-    net_name = "std-lenet-mnist"
+    if args.exp_name == "":
+        args.exp_name = "std-lenet-mnist"
 
     # datamodule
     args.root = str(root / "data")
@@ -48,4 +49,4 @@ if __name__ == "__main__":
         **vars(args),
     )
 
-    cli_main(baseline, dm, root, "logs/", net_name, args)
+    cli_main(baseline, dm, args.exp_dir, args.exp_name, args)
