@@ -1,15 +1,16 @@
-# ruff: noqa: F401
 from argparse import ArgumentParser, Namespace
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 import pytorch_lightning as pl
 import torch
-from pytorch_lightning.callbacks import LearningRateMonitor
-from pytorch_lightning.callbacks.early_stopping import EarlyStopping
-from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint
+from pytorch_lightning.callbacks import (
+    EarlyStopping,
+    LearningRateMonitor,
+    ModelCheckpoint,
+)
 from pytorch_lightning.loggers.tensorboard import TensorBoardLogger
 from torchinfo import summary
 
@@ -113,8 +114,8 @@ def cli_main(
 
     if args.test is None and args.max_epochs is None:
         print(
-            "Setting max_epochs to 1 for testing purposes. Set max_epochs "
-            "manually to train the model."
+            "Setting max_epochs to 1 for testing purposes. Set max_epochs"
+            " manually to train the model."
         )
         args.max_epochs = 1
 

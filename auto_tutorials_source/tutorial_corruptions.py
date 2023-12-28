@@ -23,7 +23,7 @@ ds = CIFAR10("./data", train=False, download=True)
 def get_images(main_transform, severity):
     ds_transforms = Compose([ToTensor(), main_transform(severity), Resize(256)])
     ds = CIFAR10("./data", train=False, download=False, transform=ds_transforms)
-    return [ds[i][0] for i in range(6)]
+    return make_grid([ds[i][0] for i in range(6)]).permute(1, 2, 0)
 
 # %%
 # 1. Gaussian Noise
@@ -33,14 +33,14 @@ from torch_uncertainty.transforms.corruptions import GaussianNoise
 print("Original Images")
 with torch.no_grad():
     plt.axis('off')
-    plt.imshow(make_grid(get_images(GaussianNoise, 0)).permute(1, 2, 0))
+    plt.imshow(get_images(GaussianNoise, 0))
     plt.show()
 
 for severity in range(1, 6):
     print(f"Severity {severity}")
     with torch.no_grad():
         plt.axis('off')
-        plt.imshow(make_grid(get_images(GaussianNoise, severity)).permute(1, 2, 0))
+        plt.imshow(get_images(GaussianNoise, severity))
         plt.show()
 
 # %%
@@ -51,14 +51,14 @@ from torch_uncertainty.transforms.corruptions import ShotNoise
 print("Original Images")
 with torch.no_grad():
     plt.axis('off')
-    plt.imshow(make_grid(get_images(ShotNoise, 0)).permute(1, 2, 0))
+    plt.imshow(get_images(ShotNoise, 0))
     plt.show()
 
 for severity in range(1, 6):
     print(f"Severity {severity}")
     with torch.no_grad():
         plt.axis('off')
-        plt.imshow(make_grid(get_images(ShotNoise, severity)).permute(1, 2, 0))
+        plt.imshow(get_images(ShotNoise, severity))
         plt.show()
 
 # %%
@@ -69,14 +69,14 @@ from torch_uncertainty.transforms.corruptions import ImpulseNoise
 print("Original Images")
 with torch.no_grad():
     plt.axis('off')
-    plt.imshow(make_grid(get_images(ImpulseNoise, 0)).permute(1, 2, 0))
+    plt.imshow(get_images(ImpulseNoise, 0))
     plt.show()
 
 for severity in range(1, 6):
     print(f"Severity {severity}")
     with torch.no_grad():
         plt.axis('off')
-        plt.imshow(make_grid(get_images(ImpulseNoise, severity)).permute(1, 2, 0))
+        plt.imshow(get_images(ImpulseNoise, severity))
         plt.show()
 
 # %%
@@ -87,14 +87,14 @@ from torch_uncertainty.transforms.corruptions import GaussianBlur
 print("Original Images")
 with torch.no_grad():
     plt.axis('off')
-    plt.imshow(make_grid(get_images(GaussianBlur, 0)).permute(1, 2, 0))
+    plt.imshow(get_images(GaussianBlur, 0))
     plt.show()
 
 for severity in range(1, 6):
     print(f"Severity {severity}")
     with torch.no_grad():
         plt.axis('off')
-        plt.imshow(make_grid(get_images(GaussianBlur, severity)).permute(1, 2, 0))
+        plt.imshow(get_images(GaussianBlur, severity))
         plt.show()
 
 
@@ -106,14 +106,14 @@ from torch_uncertainty.transforms.corruptions import GlassBlur
 print("Original Images")
 with torch.no_grad():
     plt.axis('off')
-    plt.imshow(make_grid(get_images(GlassBlur, 0)).permute(1, 2, 0))
+    plt.imshow(get_images(GlassBlur, 0))
     plt.show()
 
 for severity in range(1, 6):
     print(f"Severity {severity}")
     with torch.no_grad():
         plt.axis('off')
-        plt.imshow(make_grid(get_images(GlassBlur, severity)).permute(1, 2, 0))
+        plt.imshow(get_images(GlassBlur, severity))
         plt.show()
 
 
@@ -126,15 +126,83 @@ from torch_uncertainty.transforms.corruptions import DefocusBlur
 print("Original Images")
 with torch.no_grad():
     plt.axis('off')
-    plt.imshow(make_grid(get_images(DefocusBlur, 0)).permute(1, 2, 0))
+    plt.imshow(get_images(DefocusBlur, 0))
     plt.show()
 
 for severity in range(1, 6):
     print(f"Severity {severity}")
     with torch.no_grad():
         plt.axis('off')
-        plt.imshow(make_grid(get_images(DefocusBlur, severity)).permute(1, 2, 0))
+        plt.imshow(get_images(DefocusBlur, severity))
         plt.show()
+
+#%%
+# 7. JPEG Compression
+# ~~~~~~~~~~~~~~
+from torch_uncertainty.transforms.corruptions import JPEGCompression
+
+print("Original Images")
+with torch.no_grad():
+    plt.axis('off')
+    plt.imshow(get_images(JPEGCompression, 0))
+    plt.show()
+
+for severity in range(1, 6):
+    print(f"Severity {severity}")
+    with torch.no_grad():
+        plt.axis('off')
+        plt.imshow(get_images(JPEGCompression, severity))
+        plt.show()
+
+#%%
+# 8. Pixelate
+# ~~~~~~~~~~~
+from torch_uncertainty.transforms.corruptions import Pixelate
+
+print("Original Images")
+with torch.no_grad():
+    plt.axis('off')
+    plt.imshow(get_images(Pixelate, 0))
+    plt.show()
+
+for severity in range(1, 6):
+    print(f"Severity {severity}")
+    with torch.no_grad():
+        plt.axis('off')
+        plt.imshow(get_images(Pixelate, severity))
+        plt.show()
+
+#%% 
+# 9. Frost
+# ~~~~~~~~
+from torch_uncertainty.transforms.corruptions import Frost
+import torch
+from torchvision.datasets import CIFAR10, MNIST
+from torchvision.transforms import Compose, ToTensor, Resize
+
+from torchvision.utils import make_grid
+import matplotlib.pyplot as plt
+plt.axis('off')
+ds = CIFAR10("./data", train=False, download=True)
+
+def get_images(main_transform, severity):
+    ds_transforms = Compose([ToTensor(), main_transform(severity), Resize(256)])
+    ds = CIFAR10("./data", train=False, download=False, transform=ds_transforms)
+    return make_grid([ds[i][0] for i in range(6)]).permute(1, 2, 0)
+
+print("Original Images")
+with torch.no_grad():
+    plt.axis('off')
+    plt.imshow(get_images(Frost, 0))
+    plt.show()
+
+for severity in range(1, 6):
+    print(f"Severity {severity}")
+    with torch.no_grad():
+        plt.axis('off')
+        plt.imshow(get_images(Frost, severity))
+        plt.show()
+
 
 # %%
 # Reference
