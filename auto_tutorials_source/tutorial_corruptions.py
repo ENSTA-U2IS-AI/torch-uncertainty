@@ -9,7 +9,7 @@ by Dan Hendrycks and Thomas Dietterich.
 
 For this tutorial, we will only load the corruption transforms available in 
 torch_uncertainty.transforms.corruptions. We also need to load utilities from
-torchvision and matplotlib
+torchvision and matplotlib.
 """
 import torch
 from torchvision.datasets import CIFAR10, MNIST
@@ -194,19 +194,6 @@ for severity in range(1, 6):
 # 10. Frost
 # ~~~~~~~~
 from torch_uncertainty.transforms.corruptions import Frost
-import torch
-from torchvision.datasets import CIFAR10, MNIST
-from torchvision.transforms import Compose, ToTensor, Resize
-
-from torchvision.utils import make_grid
-import matplotlib.pyplot as plt
-plt.axis('off')
-ds = CIFAR10("./data", train=False, download=True)
-
-def get_images(main_transform, severity):
-    ds_transforms = Compose([ToTensor(), main_transform(severity), Resize(256)])
-    ds = CIFAR10("./data", train=False, download=False, transform=ds_transforms)
-    return make_grid([ds[i][0] for i in range(6)]).permute(1, 2, 0)
 
 print("Original Images")
 with torch.no_grad():
