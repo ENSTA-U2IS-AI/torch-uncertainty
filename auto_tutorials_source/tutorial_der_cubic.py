@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
 """
 Deep Evidential Regression on a Toy Example
 ===========================================
@@ -182,7 +179,7 @@ plt.legend(loc="upper left")
 plt.grid()
 
 # %%
-# References
-# ----------
+# Reference
+# ---------
 #
-# - **Deep Evidential Regression:** Alexander Amini, Wilko Schwarting, Ava Soleimany, & Daniela Rus (2022). Deep Evidential Regression. `NeurIPS 2020 <https://arxiv.org/pdf/1910.02600>`_.
+# - **Deep Evidential Regression:** Alexander Amini, Wilko Schwarting, Ava Soleimany, & Daniela Rus. `NeurIPS 2020 <https://arxiv.org/pdf/1910.02600>`_.

@@ -1,4 +1,4 @@
-import ast
+import json
 from collections.abc import Callable
 from pathlib import Path
 
@@ -32,12 +32,9 @@ class ImageNetVariation(ImageFolder):
     dataset_name: str
     root_appendix: str
 
-    wnid_to_idx_url = (
-        "https://raw.githubusercontent.com/torch-uncertainty/"
-        "imagenet-classes/master/wnid_to_idx.txt"
-    )
+    wnid_to_idx_url = "https://raw.githubusercontent.com/torch-uncertainty/dataset-metadata/main/classification/imagenet/classes.json"
     wnid_to_idx_md5 = (
-        "7fac43d97231a87a264a118fa76a13ad"  # avoid replacement attack
+        "1bcf467b49f735dbeb745249eae6b133"  # avoid replacement attack
     )
 
     def __init__(
@@ -115,16 +112,17 @@ class ImageNetVariation(ImageFolder):
 
     def _repair_dataset(self) -> None:
         """Download the wnid_to_idx.txt file and to get the correct targets."""
-        path = self.root / "imagenet_wnid_to_idx.txt"
+        path = self.root / "classes.json"
         if not check_integrity(path, self.wnid_to_idx_md5):
             download_url(
                 self.wnid_to_idx_url,
                 self.root,
-                "imagenet_wnid_to_idx.txt",
+                "classes.json",
                 self.wnid_to_idx_md5,
             )
-        with (self.root / "imagenet_wnid_to_idx.txt").open() as file:
-            self.wnid_to_idx = ast.literal_eval(file.read())
+
+        with (self.root / "classes.json").open() as file:
+            self.wnid_to_idx = json.load(file)
 
         for i in range(len(self.samples)):
             wnid = Path(self.samples[i][0]).parts[-2]

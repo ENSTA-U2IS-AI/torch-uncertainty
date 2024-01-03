@@ -48,6 +48,8 @@ sphinx_gallery_conf = {
     },
 }
 
+# Use both the docstrings of the init and the class
+autoclass_content = "both"
 
 autosummary_generate = True
 napoleon_use_ivar = True

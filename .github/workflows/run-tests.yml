@@ -22,13 +22,14 @@ jobs:
     env:
       PYTHON_VERSION: ${{ matrix.python-version }}
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
         cache: "pip"
+        cache-dependency-path: "pyproject.toml"
 
     # Update full Python version
     - name: Full Python version
@@ -44,8 +45,11 @@ jobs:
           auto_tutorials_source/**
           data/**
           experiments/**
-          README.md
-          CONTRIBUTING.md
+          *.md
+          *.yaml
+          *.yml
+          LICENSE
+          .gitignore
 
     - name: Cache folder for Torch Uncertainty
       if: steps.changed-files-specific.outputs.only_changed != 'true'
@@ -60,12 +64,12 @@ jobs:
       if: steps.changed-files-specific.outputs.only_changed != 'true'
       run: |
         python3 -m pip install torch torchvision --extra-index-url https://download.pytorch.org/whl/cpu
-        python3 -m pip install .[dev,docs]
+        python3 -m pip install .[image,dev,docs]
 
     - name: Check style & format
       if: steps.changed-files-specific.outputs.only_changed != 'true'
       run: |
-        python3 -m ruff check torch_uncertainty tests --no-fix --exit-non-zero-on-fix
+        python3 -m ruff check torch_uncertainty tests --no-fix
         python3 -m ruff format torch_uncertainty tests --check
 
     - name: Test with pytest and compute coverage

@@ -20,26 +20,31 @@ from torch_uncertainty.baselines.utils.parser_addons import (
 from torch_uncertainty.models.mc_dropout import mc_dropout
 from torch_uncertainty.models.resnet import (
     batched_resnet18,
+    batched_resnet20,
     batched_resnet34,
     batched_resnet50,
     batched_resnet101,
     batched_resnet152,
     masked_resnet18,
+    masked_resnet20,
     masked_resnet34,
     masked_resnet50,
     masked_resnet101,
     masked_resnet152,
     mimo_resnet18,
+    mimo_resnet20,
     mimo_resnet34,
     mimo_resnet50,
     mimo_resnet101,
     mimo_resnet152,
     packed_resnet18,
+    packed_resnet20,
     packed_resnet34,
     packed_resnet50,
     packed_resnet101,
     packed_resnet152,
     resnet18,
+    resnet20,
     resnet34,
     resnet50,
     resnet101,
@@ -56,9 +61,17 @@ class ResNet:
     single = ["vanilla"]
     ensemble = ["packed", "batched", "masked", "mc-dropout", "mimo"]
     versions = {
-        "vanilla": [resnet18, resnet34, resnet50, resnet101, resnet152],
+        "vanilla": [
+            resnet18,
+            resnet20,
+            resnet34,
+            resnet50,
+            resnet101,
+            resnet152,
+        ],
         "packed": [
             packed_resnet18,
+            packed_resnet20,
             packed_resnet34,
             packed_resnet50,
             packed_resnet101,
@@ -66,6 +79,7 @@ class ResNet:
         ],
         "batched": [
             batched_resnet18,
+            batched_resnet20,
             batched_resnet34,
             batched_resnet50,
             batched_resnet101,
@@ -73,6 +87,7 @@ class ResNet:
         ],
         "masked": [
             masked_resnet18,
+            masked_resnet20,
             masked_resnet34,
             masked_resnet50,
             masked_resnet101,
@@ -80,14 +95,22 @@ class ResNet:
         ],
         "mimo": [
             mimo_resnet18,
+            mimo_resnet20,
             mimo_resnet34,
             mimo_resnet50,
             mimo_resnet101,
             mimo_resnet152,
         ],
-        "mc-dropout": [resnet18, resnet34, resnet50, resnet101, resnet152],
+        "mc-dropout": [
+            resnet18,
+            resnet20,
+            resnet34,
+            resnet50,
+            resnet101,
+            resnet152,
+        ],
     }
-    archs = [18, 34, 50, 101, 152]
+    archs = [18, 20, 34, 50, 101, 152]
 
     def __new__(
         cls,

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Improve Top-label Calibration with Temperature Scaling
 ======================================================

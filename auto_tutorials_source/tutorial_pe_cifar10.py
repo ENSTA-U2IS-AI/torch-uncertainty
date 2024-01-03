@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 From a Vanilla Classifier to a Packed-Ensemble
 ==============================================

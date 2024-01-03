@@ -191,7 +191,7 @@ class ClassificationSingle(pl.LightningModule):
             isinstance(self.loss, partial) and self.loss.func == ELBOLoss
         )
 
-        # DEC
+        # Deep Evidential Classification
         self.is_dec = self.loss == DECLoss or (
             isinstance(self.loss, partial) and self.loss.func == DECLoss
         )

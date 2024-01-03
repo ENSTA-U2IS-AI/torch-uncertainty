@@ -33,4 +33,4 @@ if __name__ == "__main__":
         **vars(args),
     )
 
-    cli_main(model, dm, root, args.exp_dir, args.exp_name, args)
+    cli_main(model, dm, args.exp_dir, args.exp_name, args)

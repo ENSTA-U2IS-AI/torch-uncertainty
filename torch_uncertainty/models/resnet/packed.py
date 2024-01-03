@@ -9,6 +9,7 @@ from torch_uncertainty.utils import load_hf
 
 __all__ = [
     "packed_resnet18",
+    "packed_resnet20",
     "packed_resnet34",
     "packed_resnet50",
     "packed_resnet101",
@@ -53,6 +54,7 @@ class _BasicBlock(nn.Module):
         gamma: int,
         dropout_rate: float,
         groups: int,
+        normalization_layer: nn.Module,
     ) -> None:
         super().__init__()
 
@@ -68,7 +70,7 @@ class _BasicBlock(nn.Module):
             padding=1,
             bias=False,
         )
-        self.bn1 = nn.BatchNorm2d(planes * alpha)
+        self.bn1 = normalization_layer(planes * alpha)
         self.dropout = nn.Dropout2d(p=dropout_rate)
         self.conv2 = PackedConv2d(
             planes,
@@ -82,7 +84,7 @@ class _BasicBlock(nn.Module):
             padding=1,
             bias=False,
         )
-        self.bn2 = nn.BatchNorm2d(planes * alpha)
+        self.bn2 = normalization_layer(planes * alpha)
 
         self.shortcut = nn.Sequential()
         if stride != 1 or in_planes != self.expansion * planes:
@@ -98,7 +100,7 @@ class _BasicBlock(nn.Module):
                     stride=stride,
                     bias=False,
                 ),
-                nn.BatchNorm2d(self.expansion * planes * alpha),
+                normalization_layer(self.expansion * planes * alpha),
             )
 
     def forward(self, x: Tensor) -> Tensor:
@@ -121,6 +123,7 @@ class _Bottleneck(nn.Module):
         gamma: int,
         dropout_rate: float,
         groups: int,
+        normalization_layer: nn.Module,
     ) -> None:
         super().__init__()
 
@@ -135,7 +138,7 @@ class _Bottleneck(nn.Module):
             groups=groups,
             bias=False,
         )
-        self.bn1 = nn.BatchNorm2d(planes * alpha)
+        self.bn1 = normalization_layer(planes * alpha)
         self.conv2 = PackedConv2d(
             planes,
             planes,
@@ -148,7 +151,7 @@ class _Bottleneck(nn.Module):
             groups=groups,
             bias=False,
         )
-        self.bn2 = nn.BatchNorm2d(planes * alpha)
+        self.bn2 = normalization_layer(planes * alpha)
         self.dropout = nn.Dropout2d(p=dropout_rate)
         self.conv3 = PackedConv2d(
             planes,
@@ -160,7 +163,7 @@ class _Bottleneck(nn.Module):
             groups=groups,
             bias=False,
         )
-        self.bn3 = nn.BatchNorm2d(self.expansion * planes * alpha)
+        self.bn3 = normalization_layer(self.expansion * planes * alpha)
 
         self.shortcut = nn.Sequential()
         if stride != 1 or in_planes != self.expansion * planes:
@@ -176,7 +179,7 @@ class _Bottleneck(nn.Module):
                     stride=stride,
                     bias=False,
                 ),
-                nn.BatchNorm2d(self.expansion * planes * alpha),
+                normalization_layer(self.expansion * planes * alpha),
             )
 
     def forward(self, x: Tensor) -> Tensor:
@@ -200,6 +203,8 @@ class _PackedResNet(nn.Module):
         gamma: int = 1,
         groups: int = 1,
         style: str = "imagenet",
+        in_planes: int = 64,
+        normalization_layer: nn.Module = nn.BatchNorm2d,
     ) -> None:
         super().__init__()
 
@@ -208,8 +213,9 @@ class _PackedResNet(nn.Module):
         self.gamma = gamma
         self.groups = groups
         self.num_estimators = num_estimators
-        self.in_planes = 64
-        block_planes = self.in_planes
+
+        self.in_planes = in_planes
+        block_planes = in_planes
 
         if style == "imagenet":
             self.conv1 = PackedConv2d(
@@ -240,7 +246,7 @@ class _PackedResNet(nn.Module):
                 first=True,
             )
 
-        self.bn1 = nn.BatchNorm2d(block_planes * alpha)
+        self.bn1 = normalization_layer(block_planes * alpha)
 
         if style == "imagenet":
             self.optional_pool = nn.MaxPool2d(
@@ -259,6 +265,7 @@ class _PackedResNet(nn.Module):
             dropout_rate=dropout_rate,
             gamma=gamma,
             groups=groups,
+            normalization_layer=normalization_layer,
         )
         self.layer2 = self._make_layer(
             block,
@@ -270,6 +277,7 @@ class _PackedResNet(nn.Module):
             dropout_rate=dropout_rate,
             gamma=gamma,
             groups=groups,
+            normalization_layer=normalization_layer,
         )
         self.layer3 = self._make_layer(
             block,
@@ -281,25 +289,32 @@ class _PackedResNet(nn.Module):
             dropout_rate=dropout_rate,
             gamma=gamma,
             groups=groups,
+            normalization_layer=normalization_layer,
         )
-        self.layer4 = self._make_layer(
-            block,
-            block_planes * 8,
-            num_blocks[3],
-            stride=2,
-            alpha=alpha,
-            num_estimators=num_estimators,
-            dropout_rate=dropout_rate,
-            gamma=gamma,
-            groups=groups,
-        )
+        if len(num_blocks) == 4:
+            self.layer4 = self._make_layer(
+                block,
+                block_planes * 8,
+                num_blocks[3],
+                stride=2,
+                alpha=alpha,
+                num_estimators=num_estimators,
+                dropout_rate=dropout_rate,
+                gamma=gamma,
+                groups=groups,
+                normalization_layer=normalization_layer,
+            )
+            linear_multiplier = 8
+        else:
+            self.layer4 = nn.Identity()
+            linear_multiplier = 4
 
         self.dropout = nn.Dropout(p=dropout_rate)
         self.pool = nn.AdaptiveAvgPool2d(output_size=1)
         self.flatten = nn.Flatten(1)
 
         self.linear = PackedLinear(
-            block_planes * 8 * block.expansion,
+            block_planes * linear_multiplier * block.expansion,
             num_classes,
             alpha=alpha,
             num_estimators=num_estimators,
@@ -317,6 +332,7 @@ class _PackedResNet(nn.Module):
         dropout_rate: float,
         gamma: int,
         groups: int,
+        normalization_layer: nn.Module,
     ) -> nn.Module:
         strides = [stride] + [1] * (num_blocks - 1)
         layers = []
@@ -331,6 +347,7 @@ class _PackedResNet(nn.Module):
                     dropout_rate=dropout_rate,
                     gamma=gamma,
                     groups=groups,
+                    normalization_layer=normalization_layer,
                 )
             )
             self.in_planes = planes * block.expansion
@@ -371,6 +388,7 @@ def packed_resnet18(
     groups: int,
     dropout_rate: float = 0,
     style: str = "imagenet",
+    normalization_layer: nn.Module = nn.BatchNorm2d,
     pretrained: bool = False,
 ) -> _PackedResNet:
     """Packed-Ensembles of ResNet-18 from `Deep Residual Learning for Image
@@ -386,6 +404,7 @@ def packed_resnet18(
         groups (int): Number of groups within each estimator.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
+        normalization_layer (nn.Module, optional): Normalization layer.
         pretrained (bool, optional): Whether to load pretrained weights.
             Defaults to ``False``.
 
@@ -403,6 +422,67 @@ def packed_resnet18(
         groups=groups,
         num_classes=num_classes,
         style=style,
+        in_planes=64,
+        normalization_layer=normalization_layer,
+    )
+    if pretrained:  # coverage: ignore
+        weights = weight_ids[str(num_classes)]["18"]
+        if weights is None:
+            raise ValueError("No pretrained weights for this configuration")
+        state_dict, config = load_hf(weights)
+        if not net.check_config(config):
+            raise ValueError(
+                "Pretrained weights do not match current configuration."
+            )
+        net.load_state_dict(state_dict)
+    return net
+
+
+def packed_resnet20(
+    in_channels: int,
+    num_estimators: int,
+    alpha: int,
+    gamma: int,
+    num_classes: int,
+    groups: int,
+    dropout_rate: float = 0,
+    style: str = "imagenet",
+    normalization_layer: nn.Module = nn.BatchNorm2d,
+    pretrained: bool = False,
+) -> _PackedResNet:
+    """Packed-Ensembles of ResNet-20 from `Deep Residual Learning for Image
+    Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
+
+    Args:
+        in_channels (int): Number of input channels.
+        num_classes (int): Number of classes to predict.
+        dropout_rate (float): Dropout rate. Defaults to 0.
+        num_estimators (int): Number of estimators in the ensemble.
+        alpha (int): Expansion factor affecting the width of the estimators.
+        gamma (int): Number of groups within each estimator.
+        groups (int): Number of groups within each estimator.
+        style (bool, optional): Whether to use the ImageNet
+            structure. Defaults to ``True``.
+        normalization_layer (nn.Module, optional): Normalization layer.
+        pretrained (bool, optional): Whether to load pretrained weights.
+            Defaults to ``False``.
+
+    Returns:
+        _PackedResNet: A Packed-Ensembles ResNet-20.
+    """
+    net = _PackedResNet(
+        block=_BasicBlock,
+        num_blocks=[3, 3, 3],
+        in_channels=in_channels,
+        num_estimators=num_estimators,
+        alpha=alpha,
+        gamma=gamma,
+        dropout_rate=dropout_rate,
+        groups=groups,
+        num_classes=num_classes,
+        style=style,
+        in_planes=16,
+        normalization_layer=normalization_layer,
     )
     if pretrained:  # coverage: ignore
         weights = weight_ids[str(num_classes)]["18"]
@@ -426,6 +506,7 @@ def packed_resnet34(
     groups: int,
     dropout_rate: float = 0,
     style: str = "imagenet",
+    normalization_layer: nn.Module = nn.BatchNorm2d,
     pretrained: bool = False,
 ) -> _PackedResNet:
     """Packed-Ensembles of ResNet-34 from `Deep Residual Learning for Image
@@ -441,6 +522,7 @@ def packed_resnet34(
         groups (int): Number of groups within each estimator.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
+        normalization_layer (nn.Module, optional): Normalization layer.
         pretrained (bool, optional): Whether to load pretrained weights.
             Defaults to ``False``.
 
@@ -458,6 +540,8 @@ def packed_resnet34(
         dropout_rate=dropout_rate,
         num_classes=num_classes,
         style=style,
+        in_planes=64,
+        normalization_layer=normalization_layer,
     )
     if pretrained:  # coverage: ignore
         weights = weight_ids[str(num_classes)]["34"]
@@ -481,6 +565,7 @@ def packed_resnet50(
     groups: int,
     dropout_rate: float = 0,
     style: str = "imagenet",
+    normalization_layer: nn.Module = nn.BatchNorm2d,
     pretrained: bool = False,
 ) -> _PackedResNet:
     """Packed-Ensembles of ResNet-50 from `Deep Residual Learning for Image
@@ -496,6 +581,7 @@ def packed_resnet50(
         groups (int): Number of groups within each estimator.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
+        normalization_layer (nn.Module, optional): Normalization layer.
         pretrained (bool, optional): Whether to load pretrained weights.
             Defaults to ``False``.
 
@@ -513,6 +599,8 @@ def packed_resnet50(
         dropout_rate=dropout_rate,
         num_classes=num_classes,
         style=style,
+        in_planes=64,
+        normalization_layer=normalization_layer,
     )
     if pretrained:  # coverage: ignore
         weights = weight_ids[str(num_classes)]["50"]
@@ -536,6 +624,7 @@ def packed_resnet101(
     groups: int,
     dropout_rate: float = 0,
     style: str = "imagenet",
+    normalization_layer: nn.Module = nn.BatchNorm2d,
     pretrained: bool = False,
 ) -> _PackedResNet:
     """Packed-Ensembles of ResNet-101 from `Deep Residual Learning for Image
@@ -551,6 +640,7 @@ def packed_resnet101(
         groups (int): Number of groups within each estimator.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
+        normalization_layer (nn.Module, optional): Normalization layer.
         pretrained (bool, optional): Whether to load pretrained weights.
             Defaults to ``False``.
 
@@ -568,6 +658,8 @@ def packed_resnet101(
         dropout_rate=dropout_rate,
         num_classes=num_classes,
         style=style,
+        in_planes=64,
+        normalization_layer=normalization_layer,
     )
     if pretrained:  # coverage: ignore
         weights = weight_ids[str(num_classes)]["101"]
@@ -591,6 +683,7 @@ def packed_resnet152(
     groups: int,
     dropout_rate: float = 0,
     style: str = "imagenet",
+    normalization_layer: nn.Module = nn.BatchNorm2d,
     pretrained: bool = False,
 ) -> _PackedResNet:
     """Packed-Ensembles of ResNet-152 from `Deep Residual Learning for Image
@@ -606,6 +699,7 @@ def packed_resnet152(
         groups (int): Number of groups within each estimator.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
+        normalization_layer (nn.Module, optional): Normalization layer.
         pretrained (bool, optional): Whether to load pretrained weights.
             Defaults to ``False``.
 
@@ -623,6 +717,8 @@ def packed_resnet152(
         dropout_rate=dropout_rate,
         num_classes=num_classes,
         style=style,
+        in_planes=64,
+        normalization_layer=normalization_layer,
     )
     if pretrained:  # coverage: ignore
         weights = weight_ids[str(num_classes)]["152"]
