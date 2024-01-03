@@ -230,3 +230,20 @@ Post-Processing Methods
     TemperatureScaler
     VectorScaler
     MatrixScaler
+
+Datamodules
+-----------
+
+.. currentmodule:: torch_uncertainty.datamodules
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: class.rst
+
+    CIFAR10DataModule
+    CIFAR100DataModule
+    MNISTDataModule
+    TinyImageNetDataModule
+    ImageNetDataModule
+    UCIDataModule
