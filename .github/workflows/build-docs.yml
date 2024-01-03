@@ -44,6 +44,7 @@ jobs:
         python3 -m pip install .[dev,docs]
 
     - name: Sphinx build
+      if: github.event.pull_request.draft == false
       run: |
         cd docs && make clean && make html
 
