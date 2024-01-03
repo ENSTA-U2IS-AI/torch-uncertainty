@@ -76,7 +76,7 @@ class TestMaskedConv2d:
 
     def test_conv_error(self):
         with pytest.raises(ValueError):
-            _ = MaskedLinear(8, 2, num_estimators=1, scale=None)
+            MaskedConv2d(10, 2, num_estimators=2, kernel_size=1, scale=None)
 
         with pytest.raises(ValueError):
-            _ = MaskedLinear(10, 2, num_estimators=1, scale=0)
+            MaskedConv2d(10, 2, num_estimators=2, kernel_size=1, scale=0)

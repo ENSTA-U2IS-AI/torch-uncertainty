@@ -76,6 +76,7 @@ class TestCorruptions:
         transform(inputs)
         transform = GaussianBlur(0)
         transform(inputs)
+        print(transform)
 
     def test_glass_blur(self):
         with pytest.raises(ValueError):
