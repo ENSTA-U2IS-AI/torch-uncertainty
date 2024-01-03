@@ -9,30 +9,6 @@ from torchmetrics.utilities.plot import _AX_TYPE
 
 
 class AUSE(Metric):
-    """The Area Under the Sparsification Error curve (AUSE) metric to estimate
-    the quality of the uncertainty estimates, i.e., how much they coincide with
-    the true errors.
-
-    Args:
-        kwargs: Additional keyword arguments, see `Advanced metric settings
-            <https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metric-kwargs>`_.
-
-    Reference:
-        From the paper
-        `Uncertainty estimates and multi-hypotheses for optical flow <https://arxiv.org/abs/1802.07095>`_.
-        In ECCV, 2018.
-
-    Inputs:
-        - :attr:`scores`: Uncertainty scores of shape :math:`(B,)`. A higher
-          score means a higher uncertainty.
-        - :attr:`errors`: Binary errors of shape :math:`(B,)`,
-
-        where :math:`B` is the batch size.
-
-    Note:
-        A higher AUSE means a lower quality of the uncertainty estimates.
-    """
-
     is_differentiable: bool = False
     higher_is_better: bool = False
     full_state_update: bool = False
@@ -44,6 +20,29 @@ class AUSE(Metric):
     errors: list[Tensor]
 
     def __init__(self, **kwargs):
+        """The Area Under the Sparsification Error curve (AUSE) metric to estimate
+        the quality of the uncertainty estimates, i.e., how much they coincide with
+        the true errors.
+
+        Args:
+            kwargs: Additional keyword arguments, see `Advanced metric settings
+                <https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metric-kwargs>`_.
+
+        Reference:
+            From the paper
+            `Uncertainty estimates and multi-hypotheses for optical flow <https://arxiv.org/abs/1802.07095>`_.
+            In ECCV, 2018.
+
+        Inputs:
+            - :attr:`scores`: Uncertainty scores of shape :math:`(B,)`. A higher
+            score means a higher uncertainty.
+            - :attr:`errors`: Binary errors of shape :math:`(B,)`,
+
+        where :math:`B` is the batch size.
+
+        Note:
+            A higher AUSE means a lower quality of the uncertainty estimates.
+        """
         super().__init__(**kwargs)
         self.add_state("scores", default=[], dist_reduce_fx="cat")
         self.add_state("errors", default=[], dist_reduce_fx="cat")
