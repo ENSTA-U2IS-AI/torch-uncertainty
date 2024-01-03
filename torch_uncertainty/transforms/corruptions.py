@@ -5,12 +5,13 @@ from io import BytesIO
 
 if util.find_spec("cv2"):
     import cv2
-
 import numpy as np
 import torch
 from PIL import Image
-from skimage.filters import gaussian
-from skimage.util import random_noise
+
+if util.find_spec("skimage"):
+    from skimage.filters import gaussian
+    from skimage.util import random_noise
 from torch import Tensor, nn
 from torchvision.transforms import (
     InterpolationMode,
