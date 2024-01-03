@@ -99,6 +99,7 @@ class TestCorruptions:
         transform(inputs)
         transform = DefocusBlur(0)
         transform(inputs)
+        print(transform)
 
     def test_jpeg_compression(self):
         with pytest.raises(ValueError):

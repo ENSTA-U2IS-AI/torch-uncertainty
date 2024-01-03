@@ -24,6 +24,7 @@ class TestHub:
 
     def test_hub_exists(self):
         _ = utils.hub.load_hf("test")
+        _ = utils.hub.load_hf("test", version=1)
 
     def test_hub_notexists(self):
         with pytest.raises(Exception):

@@ -109,7 +109,7 @@ class SpeckleNoise(nn.Module):
         if not isinstance(severity, int):
             raise TypeError("Severity must be an integer.")
         self.severity = severity
-        self.scale = torch.Tensor([0.06, 0.1, 0.12, 0.16, 0.2])[severity - 1]
+        self.scale = [0.06, 0.1, 0.12, 0.16, 0.2][severity - 1]
 
     def forward(self, img: Tensor) -> Tensor:
         if self.severity == 0:
@@ -190,7 +190,7 @@ def disk(radius: int, alias_blur: float = 0.1, dtype=np.float32):
     if radius <= 8:
         size = np.arange(-8, 8 + 1)
         ksize = (3, 3)
-    else:
+    else:  # coverage: ignore
         size = np.arange(-radius, radius + 1)
         ksize = (5, 5)
     xs, ys = np.meshgrid(size, size)
