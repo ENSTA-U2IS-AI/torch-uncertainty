@@ -109,13 +109,13 @@ class SpeckleNoise(nn.Module):
         if not isinstance(severity, int):
             raise TypeError("Severity must be an integer.")
         self.severity = severity
-        self.scale = [0.06, 0.1, 0.12, 0.16, 0.2][severity - 1]
+        self.scale = torch.Tensor([0.06, 0.1, 0.12, 0.16, 0.2])[severity - 1]
 
     def forward(self, img: Tensor) -> Tensor:
         if self.severity == 0:
             return img
         return torch.clip(
-            img + img * torch.normal(img.shape, scale=self.scale),
+            img + img * torch.normal(img, self.scale),
             0,
             1,
         )

@@ -80,7 +80,25 @@ for severity in range(1, 6):
         plt.show()
 
 # %%
-# 4. Gaussian Blur
+# 4. Speckle Noise
+# ~~~~~~~~~~~~~~~~
+from torch_uncertainty.transforms.corruptions import SpeckleNoise
+
+print("Original Images")
+with torch.no_grad():
+    plt.axis('off')
+    plt.imshow(get_images(SpeckleNoise, 0))
+    plt.show()
+
+for severity in range(1, 6):
+    print(f"Severity {severity}")
+    with torch.no_grad():
+        plt.axis('off')
+        plt.imshow(get_images(SpeckleNoise, severity))
+        plt.show()
+
+# %%
+# 5. Gaussian Blur
 # ~~~~~~~~~~~~~~~~
 from torch_uncertainty.transforms.corruptions import GaussianBlur
 
@@ -99,7 +117,7 @@ for severity in range(1, 6):
 
 
 # %%
-# 5. Glass Blur
+# 6. Glass Blur
 # ~~~~~~~~~~~~~
 from torch_uncertainty.transforms.corruptions import GlassBlur
 
@@ -118,7 +136,7 @@ for severity in range(1, 6):
 
 
 # %%
-# 6. Defocus Blur
+# 7. Defocus Blur
 # ~~~~~~~~~~~~~~~
 
 from torch_uncertainty.transforms.corruptions import DefocusBlur
@@ -137,7 +155,7 @@ for severity in range(1, 6):
         plt.show()
 
 #%%
-# 7. JPEG Compression
+# 8. JPEG Compression
 # ~~~~~~~~~~~~~~
 from torch_uncertainty.transforms.corruptions import JPEGCompression
 
@@ -155,7 +173,7 @@ for severity in range(1, 6):
         plt.show()
 
 #%%
-# 8. Pixelate
+# 9. Pixelate
 # ~~~~~~~~~~~
 from torch_uncertainty.transforms.corruptions import Pixelate
 
@@ -173,7 +191,7 @@ for severity in range(1, 6):
         plt.show()
 
 #%% 
-# 9. Frost
+# 10. Frost
 # ~~~~~~~~
 from torch_uncertainty.transforms.corruptions import Frost
 import torch
