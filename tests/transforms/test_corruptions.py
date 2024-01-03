@@ -28,6 +28,7 @@ class TestCorruptions:
         transform(inputs)
         transform = GaussianNoise(0)
         transform(inputs)
+        print(transform)
 
     def test_shot_noise(self):
         with pytest.raises(ValueError):
@@ -39,6 +40,7 @@ class TestCorruptions:
         transform(inputs)
         transform = ShotNoise(0)
         transform(inputs)
+        print(transform)
 
     def test_impulse_noise(self):
         with pytest.raises(ValueError):
@@ -50,6 +52,7 @@ class TestCorruptions:
         transform(inputs)
         transform = ImpulseNoise(0)
         transform(inputs)
+        print(transform)
 
     def test_speckle_noise(self):
         with pytest.raises(ValueError):
@@ -61,6 +64,7 @@ class TestCorruptions:
         transform(inputs)
         transform = SpeckleNoise(0)
         transform(inputs)
+        print(transform)
 
     def test_gaussian_blur(self):
         with pytest.raises(ValueError):
@@ -83,6 +87,7 @@ class TestCorruptions:
         transform(inputs)
         transform = GlassBlur(0)
         transform(inputs)
+        print(transform)
 
     def test_defocus_blur(self):
         with pytest.raises(ValueError):
@@ -105,6 +110,7 @@ class TestCorruptions:
         transform(inputs)
         transform = JPEGCompression(0)
         transform(inputs)
+        print(transform)
 
     def test_pixelate(self):
         with pytest.raises(ValueError):
@@ -116,6 +122,7 @@ class TestCorruptions:
         transform(inputs)
         transform = Pixelate(0)
         transform(inputs)
+        print(transform)
 
     def test_frost(self):
         with pytest.raises(ValueError):
@@ -127,3 +134,4 @@ class TestCorruptions:
         transform(inputs)
         transform = Frost(0)
         transform(inputs)
+        print(transform)
