@@ -1,8 +1,11 @@
 """Adapted from https://github.com/hendrycks/robustness."""
 
+from importlib import util
 from io import BytesIO
 
-import cv2
+if util.find_spec("cv2"):
+    import cv2
+
 import numpy as np
 import torch
 from PIL import Image
@@ -19,12 +22,27 @@ from torchvision.transforms import (
 
 from torch_uncertainty.datasets import FrostImages
 
+__all__ = [
+    "GaussianNoise",
+    "ShotNoise",
+    "ImpulseNoise",
+    "SpeckleNoise",
+    "GaussianBlur",
+    "GlassBlur",
+    "DefocusBlur",
+    "JPEGCompression",
+    "Pixelate",
+    "Frost",
+]
+
 
 class GaussianNoise(nn.Module):
     def __init__(self, severity: int) -> None:
         super().__init__()
         if not (0 <= severity <= 5):
             raise ValueError("Severity must be between 0 and 5.")
+        if not isinstance(severity, int):
+            raise TypeError("Severity must be an integer.")
         self.severity = severity
         self.scale = [0, 0.04, 0.06, 0.08, 0.09, 0.10][severity]
 
@@ -43,6 +61,8 @@ class ShotNoise(nn.Module):
         super().__init__()
         if not (0 <= severity <= 5):
             raise ValueError("Severity must be between 0 and 5.")
+        if not isinstance(severity, int):
+            raise TypeError("Severity must be an integer.")
         self.severity = severity
         self.scale = [500, 250, 100, 75, 50][severity - 1]
 
@@ -61,6 +81,8 @@ class ImpulseNoise(nn.Module):
         super().__init__()
         if not (0 <= severity <= 5):
             raise ValueError("Severity must be between 0 and 5.")
+        if not isinstance(severity, int):
+            raise TypeError("Severity must be an integer.")
         self.severity = severity
         self.scale = [0, 0.01, 0.02, 0.03, 0.05, 0.07][severity]
 
@@ -83,6 +105,8 @@ class SpeckleNoise(nn.Module):
         super().__init__()
         if not (0 <= severity <= 5):
             raise ValueError("Severity must be between 0 and 5.")
+        if not isinstance(severity, int):
+            raise TypeError("Severity must be an integer.")
         self.severity = severity
         self.scale = [0.06, 0.1, 0.12, 0.16, 0.2][severity - 1]
 
@@ -105,6 +129,8 @@ class GaussianBlur(nn.Module):
         super().__init__()
         if not (0 <= severity <= 5):
             raise ValueError("Severity must be between 0 and 5.")
+        if not isinstance(severity, int):
+            raise TypeError("Severity must be an integer.")
         self.severity = severity
         self.sigma = [0.4, 0.6, 0.7, 0.8, 1.0][severity - 1]
 
@@ -127,6 +153,8 @@ class GlassBlur(nn.Module):  # TODO: batch
         super().__init__()
         if not (0 <= severity <= 5):
             raise ValueError("Severity must be between 0 and 5.")
+        if not isinstance(severity, int):
+            raise TypeError("Severity must be an integer.")
         self.severity = severity
         self.sigma = [0.05, 0.25, 0.4, 0.25, 0.4][severity - 1]
         self.max_delta = 1
@@ -176,6 +204,8 @@ class DefocusBlur(nn.Module):
         super().__init__()
         if not (0 <= severity <= 5):
             raise ValueError("Severity must be between 0 and 5.")
+        if not isinstance(severity, int):
+            raise TypeError("Severity must be an integer.")
         self.severity = severity
         self.radius = [0.3, 0.4, 0.5, 1, 1.5][severity - 1]
         self.alias_blur = [0.4, 0.5, 0.6, 0.2, 0.1][severity - 1]
@@ -206,6 +236,8 @@ class JPEGCompression(nn.Module):  # TODO: batch
         super().__init__()
         if not (0 <= severity <= 5):
             raise ValueError("Severity must be between 0 and 5.")
+        if not isinstance(severity, int):
+            raise TypeError("Severity must be an integer.")
         self.severity = severity
         self.quality = [80, 65, 58, 50, 40][severity - 1]
 
@@ -226,6 +258,8 @@ class Pixelate(nn.Module):  # TODO: batch
         super().__init__()
         if not (0 <= severity <= 5):
             raise ValueError("Severity must be between 0 and 5.")
+        if not isinstance(severity, int):
+            raise TypeError("Severity must be an integer.")
         self.severity = severity
         self.quality = [0.95, 0.9, 0.85, 0.75, 0.65][severity - 1]
 
@@ -250,6 +284,8 @@ class Frost(nn.Module):
         super().__init__()
         if not (0 <= severity <= 5):
             raise ValueError("Severity must be between 0 and 5.")
+        if not isinstance(severity, int):
+            raise TypeError("Severity must be an integer.")
         self.severity = severity
         self.mix = [(1, 0.2), (1, 0.3), (0.9, 0.4), (0.85, 0.4), (0.75, 0.45)][
             severity - 1
