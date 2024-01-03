@@ -3,13 +3,13 @@
 from importlib import util
 from io import BytesIO
 
-if util.find_spec("cv2"):
+if util.find_spec("cv2"):  # coverage: ignore
     import cv2
 import numpy as np
 import torch
 from PIL import Image
 
-if util.find_spec("skimage"):
+if util.find_spec("skimage"):  # coverage: ignore
     from skimage.filters import gaussian
     from skimage.util import random_noise
 from torch import Tensor, nn
