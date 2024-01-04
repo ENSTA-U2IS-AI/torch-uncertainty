@@ -248,7 +248,7 @@ def cli_main(
     else:
         # training and testing
         trainer.fit(network, datamodule)
-        if args.fast_dev_run is False:
+        if not args.fast_dev_run:
             test_values = trainer.test(datamodule=datamodule, ckpt_path="best")
         else:
             test_values = [{}]

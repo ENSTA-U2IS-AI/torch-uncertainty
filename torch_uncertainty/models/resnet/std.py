@@ -197,14 +197,7 @@ class _ResNet(nn.Module):
         in_planes: int = 64,
         normalization_layer: nn.Module = nn.BatchNorm2d,
     ) -> None:
-        """ResNet from `Deep Residual Learning for Image Recognition`.
-
-        Note:
-            if `dropout_rate` and `num_estimators` are set, the model will sample
-            from the dropout distribution during inference. If `last_layer_dropout`
-            is set, only the last layer will be sampled from the dropout
-            distribution during inference.
-        """
+        """ResNet from `Deep Residual Learning for Image Recognition`."""
         super().__init__()
 
         self.in_planes = in_planes

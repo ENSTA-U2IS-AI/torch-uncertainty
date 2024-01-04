@@ -385,7 +385,7 @@ def packed_resnet18(
     alpha: int,
     gamma: int,
     num_classes: int,
-    groups: int,
+    groups: int = 1,
     dropout_rate: float = 0,
     style: str = "imagenet",
     normalization_layer: nn.Module = nn.BatchNorm2d,
@@ -444,7 +444,7 @@ def packed_resnet20(
     alpha: int,
     gamma: int,
     num_classes: int,
-    groups: int,
+    groups: int = 1,
     dropout_rate: float = 0,
     style: str = "imagenet",
     normalization_layer: nn.Module = nn.BatchNorm2d,
@@ -456,11 +456,11 @@ def packed_resnet20(
     Args:
         in_channels (int): Number of input channels.
         num_classes (int): Number of classes to predict.
-        dropout_rate (float): Dropout rate. Defaults to 0.
         num_estimators (int): Number of estimators in the ensemble.
         alpha (int): Expansion factor affecting the width of the estimators.
         gamma (int): Number of groups within each estimator.
-        groups (int): Number of groups within each estimator.
+        groups (int): Number of groups within each estimator. Defaults to 1.
+        dropout_rate (float): Dropout rate. Defaults to 0.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
         normalization_layer (nn.Module, optional): Normalization layer.
@@ -515,11 +515,11 @@ def packed_resnet34(
     Args:
         in_channels (int): Number of input channels.
         num_classes (int): Number of classes to predict.
-        dropout_rate (float): Dropout rate. Defaults to 0.
         num_estimators (int): Number of estimators in the ensemble.
         alpha (int): Expansion factor affecting the width of the estimators.
         gamma (int): Number of groups within each estimator.
-        groups (int): Number of groups within each estimator.
+        groups (int): Number of groups within each estimator. Defaults to 1.
+        dropout_rate (float): Dropout rate. Defaults to 0.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
         normalization_layer (nn.Module, optional): Normalization layer.
@@ -562,7 +562,7 @@ def packed_resnet50(
     alpha: int,
     gamma: int,
     num_classes: int,
-    groups: int,
+    groups: int = 1,
     dropout_rate: float = 0,
     style: str = "imagenet",
     normalization_layer: nn.Module = nn.BatchNorm2d,
@@ -574,11 +574,11 @@ def packed_resnet50(
     Args:
         in_channels (int): Number of input channels.
         num_classes (int): Number of classes to predict.
-        dropout_rate (float): Dropout rate. Defaults to 0.
         num_estimators (int): Number of estimators in the ensemble.
         alpha (int): Expansion factor affecting the width of the estimators.
-        gamma (int): Number of groups within each estimator.
-        groups (int): Number of groups within each estimator.
+        gamma (int): Number of groups within each estimator. 
+        groups (int): Number of groups within each estimator. Defaults to 1.
+        dropout_rate (float): Dropout rate. Defaults to 0.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
         normalization_layer (nn.Module, optional): Normalization layer.
@@ -621,7 +621,7 @@ def packed_resnet101(
     alpha: int,
     gamma: int,
     num_classes: int,
-    groups: int,
+    groups: int = 1,
     dropout_rate: float = 0,
     style: str = "imagenet",
     normalization_layer: nn.Module = nn.BatchNorm2d,
@@ -633,11 +633,11 @@ def packed_resnet101(
     Args:
         in_channels (int): Number of input channels.
         num_classes (int): Number of classes to predict.
-        dropout_rate (float): Dropout rate. Defaults to 0.
         num_estimators (int): Number of estimators in the ensemble.
         alpha (int): Expansion factor affecting the width of the estimators.
         gamma (int): Number of groups within each estimator.
-        groups (int): Number of groups within each estimator.
+        groups (int): Number of groups within each estimator. Defaults to 1.
+        dropout_rate (float): Dropout rate. Defaults to 0.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
         normalization_layer (nn.Module, optional): Normalization layer.
@@ -680,7 +680,7 @@ def packed_resnet152(
     alpha: int,
     gamma: int,
     num_classes: int,
-    groups: int,
+    groups: int = 1,
     dropout_rate: float = 0,
     style: str = "imagenet",
     normalization_layer: nn.Module = nn.BatchNorm2d,
@@ -692,11 +692,11 @@ def packed_resnet152(
     Args:
         in_channels (int): Number of input channels.
         num_classes (int): Number of classes to predict.
-        dropout_rate (float): Dropout rate. Defaults to 0.
-        num_estimators (int): Number of estimators in the ensemble.
+        num_estimators (int): Number of estimators in the ensemble. 
         alpha (int): Expansion factor affecting the width of the estimators.
         gamma (int): Number of groups within each estimator.
-        groups (int): Number of groups within each estimator.
+        groups (int): Number of groups within each estimator. Defaults to 1.
+        dropout_rate (float): Dropout rate. Defaults to 0.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
         normalization_layer (nn.Module, optional): Normalization layer.

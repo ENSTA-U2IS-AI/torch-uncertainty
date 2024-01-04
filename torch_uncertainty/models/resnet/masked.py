@@ -313,8 +313,8 @@ def masked_resnet18(
     in_channels: int,
     num_estimators: int,
     scale: float,
-    groups: int,
     num_classes: int,
+    groups: int = 1,
     dropout_rate: float = 0,
     style: str = "imagenet",
     normalization_layer: nn.Module = nn.BatchNorm2d,
@@ -327,8 +327,8 @@ def masked_resnet18(
         dropout_rate (float): Dropout rate. Defaults to 0.
         num_estimators (int): Number of estimators in the ensemble.
         scale (float): The scale of the mask.
-        groups (int): Number of groups within each estimator.
         num_classes (int): Number of classes to predict.
+        groups (int): Number of groups within each estimator. Defaults to 1.
         style (str, optional): The style of the model. Defaults to "imagenet".
         normalization_layer (nn.Module, optional): Normalization layer.
 
@@ -354,8 +354,8 @@ def masked_resnet20(
     in_channels: int,
     num_estimators: int,
     scale: float,
-    groups: int,
     num_classes: int,
+    groups: int = 1,
     dropout_rate: float = 0,
     style: str = "imagenet",
     normalization_layer: nn.Module = nn.BatchNorm2d,
@@ -368,8 +368,8 @@ def masked_resnet20(
         dropout_rate (float): Dropout rate. Defaults to 0.
         num_estimators (int): Number of estimators in the ensemble.
         scale (float): The scale of the mask.
-        groups (int): Number of groups within each estimator.
         num_classes (int): Number of classes to predict.
+        groups (int): Number of groups within each estimator. Defaults to 1.
         style (str, optional): The style of the model. Defaults to "imagenet".
         normalization_layer (nn.Module, optional): Normalization layer.
 
@@ -395,8 +395,8 @@ def masked_resnet34(
     in_channels: int,
     num_estimators: int,
     scale: float,
-    groups: int,
     num_classes: int,
+    groups: int = 1,
     dropout_rate: float = 0,
     style: str = "imagenet",
     normalization_layer: nn.Module = nn.BatchNorm2d,
@@ -409,8 +409,8 @@ def masked_resnet34(
         dropout_rate (float): Dropout rate. Defaults to 0.
         num_estimators (int): Number of estimators in the ensemble.
         scale (float): The scale of the mask.
-        groups (int): Number of groups within each estimator.
         num_classes (int): Number of classes to predict.
+        groups (int): Number of groups within each estimator. Defaults to 1.
         style (str, optional): The style of the model. Defaults to "imagenet".
         normalization_layer (nn.Module, optional): Normalization layer.
 
@@ -436,7 +436,6 @@ def masked_resnet50(
     in_channels: int,
     num_estimators: int,
     scale: float,
-    groups: int,
     num_classes: int,
     dropout_rate: float = 0,
     style: str = "imagenet",
@@ -450,8 +449,8 @@ def masked_resnet50(
         dropout_rate (float): Dropout rate. Defaults to 0.
         num_estimators (int): Number of estimators in the ensemble.
         scale (float): The scale of the mask.
-        groups (int): Number of groups within each estimator.
         num_classes (int): Number of classes to predict.
+        groups (int): Number of groups within each estimator. Defaults to 1.
         style (str, optional): The style of the model. Defaults to "imagenet".
         normalization_layer (nn.Module, optional): Normalization layer.
 
@@ -477,8 +476,8 @@ def masked_resnet101(
     in_channels: int,
     num_estimators: int,
     scale: float,
-    groups: int,
     num_classes: int,
+    groups: int = 1,
     dropout_rate: float = 0,
     style: str = "imagenet",
     normalization_layer: nn.Module = nn.BatchNorm2d,
@@ -491,8 +490,8 @@ def masked_resnet101(
         dropout_rate (float): Dropout rate. Defaults to 0.
         num_estimators (int): Number of estimators in the ensemble.
         scale (float): The scale of the mask.
-        groups (int): Number of groups within each estimator.
         num_classes (int): Number of classes to predict.
+        groups (int): Number of groups within each estimator. Defaults to 1.
         style (str, optional): The style of the model. Defaults to "imagenet".
         normalization_layer (nn.Module, optional): Normalization layer.
 
@@ -518,8 +517,8 @@ def masked_resnet152(
     in_channels: int,
     num_estimators: int,
     scale: float,
-    groups: int,
     num_classes: int,
+    groups: int = 1,
     dropout_rate: float = 0,
     style: str = "imagenet",
     normalization_layer: nn.Module = nn.BatchNorm2d,
@@ -532,8 +531,8 @@ def masked_resnet152(
         dropout_rate (float): Dropout rate. Defaults to 0.
         num_estimators (int): Number of estimators in the ensemble.
         scale (float): The scale of the mask.
-        groups (int): Number of groups within each estimator.
         num_classes (int): Number of classes to predict.
+        groups (int): Number of groups within each estimator. Defaults to 1.
         style (str, optional): The style of the model. Defaults to "imagenet".
         normalization_layer (nn.Module, optional): Normalization layer.
 
