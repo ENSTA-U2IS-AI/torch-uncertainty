@@ -68,7 +68,8 @@ including opencv and scikit-image
 * full: includes all the aforementioned dependencies
 
 For example, to install the package with the dependencies for the development
-and the documentation, run:
+and the documentation, run the following command. It is a mandatory step if you
+want to contribute to the project.
 
 .. parsed-literal::
 
