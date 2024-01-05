@@ -576,7 +576,7 @@ def packed_resnet50(
         num_classes (int): Number of classes to predict.
         num_estimators (int): Number of estimators in the ensemble.
         alpha (int): Expansion factor affecting the width of the estimators.
-        gamma (int): Number of groups within each estimator. 
+        gamma (int): Number of groups within each estimator.
         groups (int): Number of groups within each estimator. Defaults to 1.
         dropout_rate (float): Dropout rate. Defaults to 0.
         style (bool, optional): Whether to use the ImageNet
@@ -692,7 +692,7 @@ def packed_resnet152(
     Args:
         in_channels (int): Number of input channels.
         num_classes (int): Number of classes to predict.
-        num_estimators (int): Number of estimators in the ensemble. 
+        num_estimators (int): Number of estimators in the ensemble.
         alpha (int): Expansion factor affecting the width of the estimators.
         gamma (int): Number of groups within each estimator.
         groups (int): Number of groups within each estimator. Defaults to 1.
