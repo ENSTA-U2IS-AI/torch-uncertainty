@@ -404,6 +404,8 @@ def get_procedure(
             procedure = optim_cifar100_resnet34
         elif ds_name == "tiny-imagenet":
             procedure = optim_tinyimagenet_resnet34
+        else:
+            raise NotImplementedError(f"No recipe for dataset: {ds_name}.")
     elif arch_name == "resnet50":
         if ds_name == "cifar10":
             procedure = optim_cifar10_resnet50
