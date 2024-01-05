@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from numpy.typing import ArrayLike
 from pytorch_lightning import LightningDataModule
@@ -51,7 +51,7 @@ class AbstractDataModule(LightningDataModule):
         self.pin_memory = pin_memory
         self.persistent_workers = persistent_workers
 
-    def setup(self, stage: str | None = None) -> None:
+    def setup(self, stage: Literal["fit", "test"] | None = None) -> None:
         raise NotImplementedError
 
     def get_train_set(self) -> Dataset:

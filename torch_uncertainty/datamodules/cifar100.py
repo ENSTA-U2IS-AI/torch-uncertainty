@@ -140,7 +140,7 @@ class CIFAR100DataModule(AbstractDataModule):
                 transform=self.transform_test,
             )
 
-    def setup(self, stage: str | None = None) -> None:
+    def setup(self, stage: Literal["fit", "test"] | None = None) -> None:
         if stage == "fit" or stage is None:
             if self.test_alt == "c":
                 raise ValueError("CIFAR-C can only be used in testing.")

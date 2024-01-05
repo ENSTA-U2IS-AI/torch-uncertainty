@@ -140,7 +140,7 @@ class CIFAR10DataModule(AbstractDataModule):
         if self.evaluate_ood:
             self.ood_dataset(self.root, split="test", download=True)
 
-    def setup(self, stage: str | None = None) -> None:
+    def setup(self, stage: Literal["fit", "test"] | None = None) -> None:
         if stage == "fit" or stage is None:
             if self.test_alt in ("c", "h"):
                 raise ValueError("CIFAR-C and H can only be used in testing.")

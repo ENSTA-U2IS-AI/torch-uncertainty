@@ -112,7 +112,7 @@ class MNISTDataModule(AbstractDataModule):
         if self.evaluate_ood:
             self.ood_dataset(self.root, download=True)
 
-    def setup(self, stage: str | None = None) -> None:
+    def setup(self, stage: Literal["fit", "test"] | None = None) -> None:
         if stage == "fit" or stage is None:
             full = self.dataset(
                 self.root,
@@ -143,6 +143,8 @@ class MNISTDataModule(AbstractDataModule):
                 download=False,
                 transform=self.transform_test,
             )
+        else:
+            raise ValueError(f"Stage {stage} is not supported.")
 
         if self.evaluate_ood:
             self.ood = self.ood_dataset(

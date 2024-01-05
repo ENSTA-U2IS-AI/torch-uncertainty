@@ -1,4 +1,5 @@
 from argparse import ArgumentParser
+from pathlib import Path
 
 import pytest
 from torch import nn
@@ -25,7 +26,7 @@ class TestMNISTDataModule:
         assert dm.dataset == MNIST
         assert isinstance(dm.transform_train.transforms[0], Cutout)
 
-        args.root = str(args.root)
+        args.root = Path(args.root)
         args.ood_ds = "not"
         args.cutout = 0
         args.val_split = 0
@@ -46,6 +47,9 @@ class TestMNISTDataModule:
         dm.train_dataloader()
         dm.val_dataloader()
         dm.test_dataloader()
+
+        with pytest.raises(ValueError):
+            dm.setup("other")
 
         dm.evaluate_ood = True
         dm.val_split = 0.1

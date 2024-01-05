@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import torchvision.transforms as T
 from numpy.typing import ArrayLike
@@ -119,7 +119,7 @@ class TinyImageNetDataModule(AbstractDataModule):
                     ]
                 )
 
-    def setup(self, stage: str | None = None) -> None:
+    def setup(self, stage: Literal["fit", "test"] | None = None) -> None:
         if stage == "fit" or stage is None:
             self.train = self.dataset(
                 self.root,
@@ -131,12 +131,14 @@ class TinyImageNetDataModule(AbstractDataModule):
                 split="val",
                 transform=self.transform_test,
             )
-        if stage == "test":
+        elif stage == "test":
             self.test = self.dataset(
                 self.root,
                 split="val",
                 transform=self.transform_test,
             )
+        else:
+            raise ValueError(f"Stage {stage} is not supported.")
 
         if self.evaluate_ood:
             if self.ood_ds == "textures":

@@ -61,10 +61,10 @@ class TestPackedResnet:
     """Testing the ResNet packed class."""
 
     def test_main(self):
-        packed_resnet20(1, 2, 2, 1, 10, 1)
-        packed_resnet34(1, 2, 2, 1, 10, 1)
-        packed_resnet101(1, 2, 2, 1, 10, 1)
-        model = packed_resnet152(1, 2, 2, 1, 10, 1)
+        packed_resnet20(1, 10, 2, 2, 1, 1)
+        packed_resnet34(1, 10, 2, 2, 1, 1)
+        packed_resnet101(1, 10, 2, 2, 1, 1)
+        model = packed_resnet152(1, 10, 2, 2, 1, 1)
 
         out = model.check_config(
             {"alpha": 2, "gamma": 1, "groups": 1, "num_estimators": 2}
@@ -80,9 +80,9 @@ class TestMaskedResnet:
     """Testing the ResNet masked class."""
 
     def test_main(self):
-        masked_resnet20(1, 2, 2, 1, num_classes=10)
-        masked_resnet34(1, 2, 2, 1, num_classes=10)
-        masked_resnet101(1, 2, 2, 1, num_classes=10)
+        masked_resnet20(1, 10, 2, 2, 1)
+        masked_resnet34(1, 10, 2, 2, 1)
+        masked_resnet101(1, 10, 2, 2, 1)
 
 
 class TestBatchedResnet:

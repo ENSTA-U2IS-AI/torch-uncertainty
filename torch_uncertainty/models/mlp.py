@@ -132,7 +132,7 @@ def mlp(
         _MLP: A Multi-Layer-Perceptron model.
     """
     return _mlp(
-        False,
+        stochastic=False,
         in_features=in_features,
         num_outputs=num_outputs,
         hidden_dims=hidden_dims,
@@ -158,7 +158,7 @@ def packed_mlp(
         "gamma": gamma,
     }
     return _mlp(
-        False,
+        stochastic=False,
         in_features=in_features,
         num_outputs=num_outputs,
         hidden_dims=hidden_dims,
@@ -172,14 +172,12 @@ def packed_mlp(
 def bayesian_mlp(
     in_features: int,
     num_outputs: int,
-    hidden_dims: list[int] | None = None,
+    hidden_dims: list[int],
     activation: Callable = F.relu,
     dropout: float = 0.0,
 ) -> _StochasticMLP:
-    if hidden_dims is None:
-        hidden_dims = []
     return _mlp(
-        True,
+        stochastic=True,
         in_features=in_features,
         num_outputs=num_outputs,
         hidden_dims=hidden_dims,

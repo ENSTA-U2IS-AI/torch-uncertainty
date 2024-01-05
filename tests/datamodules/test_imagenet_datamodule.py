@@ -34,6 +34,9 @@ class TestImageNetDataModule:
         dm.setup("test")
         dm.test_dataloader()
 
+        with pytest.raises(ValueError):
+            dm.setup("other")
+
         for test_alt in ["r", "o", "a"]:
             args.test_alt = test_alt
             dm = ImageNetDataModule(**vars(args))

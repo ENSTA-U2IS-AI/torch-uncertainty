@@ -381,10 +381,10 @@ class _PackedResNet(nn.Module):
 
 def packed_resnet18(
     in_channels: int,
+    num_classes: int,
     num_estimators: int,
     alpha: int,
     gamma: int,
-    num_classes: int,
     groups: int = 1,
     dropout_rate: float = 0,
     style: str = "imagenet",
@@ -440,10 +440,10 @@ def packed_resnet18(
 
 def packed_resnet20(
     in_channels: int,
+    num_classes: int,
     num_estimators: int,
     alpha: int,
     gamma: int,
-    num_classes: int,
     groups: int = 1,
     dropout_rate: float = 0,
     style: str = "imagenet",
@@ -499,10 +499,10 @@ def packed_resnet20(
 
 def packed_resnet34(
     in_channels: int,
+    num_classes: int,
     num_estimators: int,
     alpha: int,
     gamma: int,
-    num_classes: int,
     groups: int,
     dropout_rate: float = 0,
     style: str = "imagenet",
@@ -558,10 +558,10 @@ def packed_resnet34(
 
 def packed_resnet50(
     in_channels: int,
+    num_classes: int,
     num_estimators: int,
     alpha: int,
     gamma: int,
-    num_classes: int,
     groups: int = 1,
     dropout_rate: float = 0,
     style: str = "imagenet",
@@ -617,10 +617,10 @@ def packed_resnet50(
 
 def packed_resnet101(
     in_channels: int,
+    num_classes: int,
     num_estimators: int,
     alpha: int,
     gamma: int,
-    num_classes: int,
     groups: int = 1,
     dropout_rate: float = 0,
     style: str = "imagenet",
@@ -676,10 +676,10 @@ def packed_resnet101(
 
 def packed_resnet152(
     in_channels: int,
+    num_classes: int,
     num_estimators: int,
     alpha: int,
     gamma: int,
-    num_classes: int,
     groups: int = 1,
     dropout_rate: float = 0,
     style: str = "imagenet",

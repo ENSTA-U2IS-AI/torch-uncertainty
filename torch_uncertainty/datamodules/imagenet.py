@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import torchvision.transforms as T
 from timm.data.auto_augment import rand_augment_transform
@@ -153,7 +153,7 @@ class ImageNetDataModule(AbstractDataModule):
                     transform=self.transform_test,
                 )
 
-    def setup(self, stage: str | None = None) -> None:
+    def setup(self, stage: Literal["fit", "test"] | None = None) -> None:
         if stage == "fit" or stage is None:
             if self.test_alt is not None:
                 raise ValueError(
@@ -169,12 +169,14 @@ class ImageNetDataModule(AbstractDataModule):
                 split="val",
                 transform=self.transform_test,
             )
-        if stage == "test":
+        elif stage == "test":
             self.test = self.dataset(
                 self.root,
                 split="val",
                 transform=self.transform_test,
             )
+        else:
+            raise ValueError(f"Stage {stage} is not supported.")
 
         if self.evaluate_ood:
             if self.ood_ds == "inaturalist":

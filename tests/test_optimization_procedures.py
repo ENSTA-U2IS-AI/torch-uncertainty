@@ -82,6 +82,8 @@ class TestOptProcedures:
         with pytest.raises(NotImplementedError):
             _ = get_procedure("resnet18", "unknown")
         with pytest.raises(NotImplementedError):
+            _ = get_procedure("resnet34", "unknown")
+        with pytest.raises(NotImplementedError):
             _ = get_procedure("resnet50", "unknown")
         with pytest.raises(NotImplementedError):
             _ = get_procedure("wideresnet28x10", "unknown")

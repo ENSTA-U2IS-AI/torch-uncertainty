@@ -41,6 +41,9 @@ class TestTinyImageNetDataModule:
         dm.val_dataloader()
         dm.test_dataloader()
 
+        with pytest.raises(ValueError):
+            dm.setup("other")
+
         dm.evaluate_ood = True
         dm.prepare_data()
         dm.setup("test")
