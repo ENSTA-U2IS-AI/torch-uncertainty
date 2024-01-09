@@ -401,6 +401,9 @@ class ClassificationSingle(pl.LightningModule):
 
         self.test_cls_metrics.reset()
 
+    def identity(self, x: float, y: float):
+        return x, y
+
     def init_mixup(
         self,
         mixup_alpha: float,
@@ -442,7 +445,7 @@ class ClassificationSingle(pl.LightningModule):
                 tau_max=kernel_tau_max,
                 tau_std=kernel_tau_std,
             )
-        return lambda x, y: (x, y)
+        return self.identity
 
     @staticmethod
     def add_model_specific_args(
