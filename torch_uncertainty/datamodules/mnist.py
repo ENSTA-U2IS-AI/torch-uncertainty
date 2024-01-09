@@ -88,7 +88,7 @@ class MNISTDataModule(AbstractDataModule):
 
         main_transform = Cutout(cutout) if cutout else nn.Identity()
 
-        self.transform_train = T.Compose(
+        self.train_transform = T.Compose(
             [
                 main_transform,
                 T.ToTensor(),
@@ -96,7 +96,7 @@ class MNISTDataModule(AbstractDataModule):
                 T.Normalize((0.1307,), (0.3081,)),
             ]
         )
-        self.transform_test = T.Compose(
+        self.test_transform = T.Compose(
             [
                 T.ToTensor(),
                 T.CenterCrop(28),
@@ -118,7 +118,7 @@ class MNISTDataModule(AbstractDataModule):
                 self.root,
                 train=True,
                 download=False,
-                transform=self.transform_train,
+                transform=self.train_transform,
             )
             if self.val_split:
                 self.train, self.val = random_split(
@@ -134,14 +134,14 @@ class MNISTDataModule(AbstractDataModule):
                     self.root,
                     train=False,
                     download=False,
-                    transform=self.transform_test,
+                    transform=self.test_transform,
                 )
         elif stage == "test":
             self.test = self.dataset(
                 self.root,
                 train=False,
                 download=False,
-                transform=self.transform_test,
+                transform=self.test_transform,
             )
         else:
             raise ValueError(f"Stage {stage} is not supported.")
@@ -150,7 +150,7 @@ class MNISTDataModule(AbstractDataModule):
             self.ood = self.ood_dataset(
                 self.root,
                 download=False,
-                transform=self.transform_test,
+                transform=self.test_transform,
             )
 
     def test_dataloader(self) -> list[DataLoader]:

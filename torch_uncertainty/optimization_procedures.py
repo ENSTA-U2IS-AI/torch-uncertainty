@@ -30,9 +30,10 @@ def optim_cifar10_resnet18(
     """Optimizer to train a ResNet18 on CIFAR-10."""
     optimizer = optim.SGD(
         model.parameters(),
-        lr=0.05,
+        lr=0.1,
         momentum=0.9,
         weight_decay=5e-4,
+        nesterov=True,
     )
     scheduler = optim.lr_scheduler.MultiStepLR(
         optimizer,
@@ -375,7 +376,7 @@ def batch_ensemble_wrapper(
 def get_procedure(
     arch_name: str,
     ds_name: str,
-    model_name: str = "",
+    method: str = "",
     imagenet_recipe: str | None = None,
 ) -> Callable:
     """Get the optimization procedure for a given architecture and dataset.
@@ -383,7 +384,7 @@ def get_procedure(
     Args:
         arch_name (str): The name of the architecture.
         ds_name (str): The name of the dataset.
-        model_name (str, optional): The name of the model. Defaults to "".
+        method (str, optional): The name of the method. Defaults to "".
         imagenet_recipe (str, optional): The recipe to use for
             ImageNet. Defaults to None.
 
@@ -435,7 +436,7 @@ def get_procedure(
     else:
         raise NotImplementedError(f"No recipe for architecture: {arch_name}.")
 
-    if model_name == "batched":
+    if method == "batched":
         procedure = partial(
             batch_ensemble_wrapper, optimization_procedure=procedure
         )

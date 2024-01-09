@@ -104,7 +104,7 @@ class CIFAR100DataModule(AbstractDataModule):
         else:
             main_transform = nn.Identity()
 
-        self.transform_train = T.Compose(
+        self.train_transform = T.Compose(
             [
                 T.RandomCrop(32, padding=4),
                 T.RandomHorizontalFlip(),
@@ -117,7 +117,7 @@ class CIFAR100DataModule(AbstractDataModule):
                 ),
             ]
         )
-        self.transform_test = T.Compose(
+        self.test_transform = T.Compose(
             [
                 T.ToTensor(),
                 T.Normalize(
@@ -137,7 +137,7 @@ class CIFAR100DataModule(AbstractDataModule):
                 self.root,
                 split="test",
                 download=True,
-                transform=self.transform_test,
+                transform=self.test_transform,
             )
 
     def setup(self, stage: Literal["fit", "test"] | None = None) -> None:
@@ -148,7 +148,7 @@ class CIFAR100DataModule(AbstractDataModule):
                 self.root,
                 train=True,
                 download=False,
-                transform=self.transform_train,
+                transform=self.train_transform,
             )
             if self.val_split:
                 self.train, self.val = random_split(
@@ -164,7 +164,7 @@ class CIFAR100DataModule(AbstractDataModule):
                     self.root,
                     train=False,
                     download=False,
-                    transform=self.transform_test,
+                    transform=self.test_transform,
                 )
         elif stage == "test":
             if self.test_alt is None:
@@ -172,12 +172,12 @@ class CIFAR100DataModule(AbstractDataModule):
                     self.root,
                     train=False,
                     download=False,
-                    transform=self.transform_test,
+                    transform=self.test_transform,
                 )
             else:
                 self.test = self.dataset(
                     self.root,
-                    transform=self.transform_test,
+                    transform=self.test_transform,
                     severity=self.corruption_severity,
                 )
             if self.evaluate_ood:
@@ -185,7 +185,7 @@ class CIFAR100DataModule(AbstractDataModule):
                     self.root,
                     split="test",
                     download=False,
-                    transform=self.transform_test,
+                    transform=self.test_transform,
                 )
         else:
             raise ValueError(f"Stage {stage} is not supported.")

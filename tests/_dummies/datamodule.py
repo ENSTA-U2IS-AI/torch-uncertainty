@@ -42,8 +42,8 @@ class DummyClassificationDataModule(AbstractDataModule):
         self.dataset = DummyClassificationDataset
         self.ood_dataset = DummyClassificationDataset
 
-        self.transform_train = T.ToTensor()
-        self.transform_test = T.ToTensor()
+        self.train_transform = T.ToTensor()
+        self.test_transform = T.ToTensor()
 
     def prepare_data(self) -> None:
         pass
@@ -55,14 +55,14 @@ class DummyClassificationDataModule(AbstractDataModule):
                 num_channels=self.num_channels,
                 num_classes=self.num_classes,
                 image_size=self.image_size,
-                transform=self.transform_train,
+                transform=self.train_transform,
             )
             self.val = self.dataset(
                 self.root,
                 num_channels=self.num_channels,
                 num_classes=self.num_classes,
                 image_size=self.image_size,
-                transform=self.transform_test,
+                transform=self.test_transform,
             )
         elif stage == "test":
             self.test = self.dataset(
@@ -70,14 +70,14 @@ class DummyClassificationDataModule(AbstractDataModule):
                 num_channels=self.num_channels,
                 num_classes=self.num_classes,
                 image_size=self.image_size,
-                transform=self.transform_test,
+                transform=self.test_transform,
             )
             self.ood = self.ood_dataset(
                 self.root,
                 num_channels=self.num_channels,
                 num_classes=self.num_classes,
                 image_size=self.image_size,
-                transform=self.transform_test,
+                transform=self.test_transform,
             )
 
     def test_dataloader(self) -> DataLoader | list[DataLoader]:
@@ -132,8 +132,8 @@ class DummyRegressionDataModule(AbstractDataModule):
         self.dataset = DummyRegressionDataset
         self.ood_dataset = DummyRegressionDataset
 
-        self.transform_train = None
-        self.transform_test = None
+        self.train_transform = None
+        self.test_transform = None
 
     def prepare_data(self) -> None:
         pass
@@ -143,24 +143,24 @@ class DummyRegressionDataModule(AbstractDataModule):
             self.train = self.dataset(
                 self.root,
                 out_features=self.out_features,
-                transform=self.transform_train,
+                transform=self.train_transform,
             )
             self.val = self.dataset(
                 self.root,
                 out_features=self.out_features,
-                transform=self.transform_test,
+                transform=self.test_transform,
             )
         elif stage == "test":
             self.test = self.dataset(
                 self.root,
                 out_features=self.out_features,
-                transform=self.transform_test,
+                transform=self.test_transform,
             )
         if self.evaluate_ood:
             self.ood = self.ood_dataset(
                 self.root,
                 out_features=self.out_features,
-                transform=self.transform_test,
+                transform=self.test_transform,
             )
 
     def test_dataloader(self) -> DataLoader | list[DataLoader]:

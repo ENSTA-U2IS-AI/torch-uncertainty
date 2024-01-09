@@ -22,7 +22,7 @@ class TestCIFAR10DataModule:
         dm = CIFAR10DataModule(**vars(args))
 
         assert dm.dataset == CIFAR10
-        assert isinstance(dm.transform_train.transforms[2], Cutout)
+        assert isinstance(dm.train_transform.transforms[2], Cutout)
 
         dm.dataset = DummyClassificationDataset
         dm.ood_dataset = DummyClassificationDataset

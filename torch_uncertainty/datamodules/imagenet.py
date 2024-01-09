@@ -97,7 +97,7 @@ class ImageNetDataModule(AbstractDataModule):
         else:
             raise ValueError("The procedure is unknown")
 
-        self.transform_train = T.Compose(
+        self.train_transform = T.Compose(
             [
                 T.RandomResizedCrop(train_size),
                 T.RandomHorizontalFlip(),
@@ -107,7 +107,7 @@ class ImageNetDataModule(AbstractDataModule):
             ]
         )
 
-        self.transform_test = T.Compose(
+        self.test_transform = T.Compose(
             [
                 T.Resize(256),
                 T.CenterCrop(224),
@@ -136,21 +136,21 @@ class ImageNetDataModule(AbstractDataModule):
                     self.root,
                     version="2021_valid",
                     download=True,
-                    transform=self.transform_test,
+                    transform=self.test_transform,
                 )
             elif self.ood_ds != "textures":
                 self.ood = self.ood_dataset(
                     self.root,
                     split="test",
                     download=True,
-                    transform=self.transform_test,
+                    transform=self.test_transform,
                 )
             else:
                 self.ood = self.ood_dataset(
                     self.root,
                     split="train",
                     download=True,
-                    transform=self.transform_test,
+                    transform=self.test_transform,
                 )
 
     def setup(self, stage: Literal["fit", "test"] | None = None) -> None:
@@ -162,18 +162,18 @@ class ImageNetDataModule(AbstractDataModule):
             self.train = self.dataset(
                 self.root,
                 split="train",
-                transform=self.transform_train,
+                transform=self.train_transform,
             )
             self.val = self.dataset(
                 self.root,
                 split="val",
-                transform=self.transform_test,
+                transform=self.test_transform,
             )
         elif stage == "test":
             self.test = self.dataset(
                 self.root,
                 split="val",
-                transform=self.transform_test,
+                transform=self.test_transform,
             )
         else:
             raise ValueError(f"Stage {stage} is not supported.")
@@ -183,12 +183,12 @@ class ImageNetDataModule(AbstractDataModule):
                 self.ood = self.ood_dataset(
                     self.root,
                     version="2021_valid",
-                    transform=self.transform_test,
+                    transform=self.test_transform,
                 )
             else:
                 self.ood = self.ood_dataset(
                     self.root,
-                    transform=self.transform_test,
+                    transform=self.test_transform,
                     download=True,
                 )
 

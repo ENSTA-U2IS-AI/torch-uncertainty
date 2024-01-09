@@ -24,14 +24,14 @@ class TestMNISTDataModule:
         dm = MNISTDataModule(**vars(args))
 
         assert dm.dataset == MNIST
-        assert isinstance(dm.transform_train.transforms[0], Cutout)
+        assert isinstance(dm.train_transform.transforms[0], Cutout)
 
         args.root = Path(args.root)
         args.ood_ds = "not"
         args.cutout = 0
         args.val_split = 0
         dm = MNISTDataModule(**vars(args))
-        assert isinstance(dm.transform_train.transforms[0], nn.Identity)
+        assert isinstance(dm.train_transform.transforms[0], nn.Identity)
 
         args.ood_ds = "other"
         with pytest.raises(ValueError):

@@ -61,7 +61,7 @@ class TinyImageNetDataModule(AbstractDataModule):
         else:
             main_transform = nn.Identity()
 
-        self.transform_train = T.Compose(
+        self.train_transform = T.Compose(
             [
                 T.RandomCrop(64, padding=4),
                 T.RandomHorizontalFlip(),
@@ -71,7 +71,7 @@ class TinyImageNetDataModule(AbstractDataModule):
             ]
         )
 
-        self.transform_test = T.Compose(
+        self.test_transform = T.Compose(
             [
                 T.Resize(64),
                 T.ToTensor(),
@@ -93,7 +93,7 @@ class TinyImageNetDataModule(AbstractDataModule):
                     self.root,
                     split="test",
                     download=True,
-                    transform=self.transform_test,
+                    transform=self.test_transform,
                 )
             else:
                 ConcatDataset(
@@ -102,19 +102,19 @@ class TinyImageNetDataModule(AbstractDataModule):
                             self.root,
                             split="train",
                             download=True,
-                            transform=self.transform_test,
+                            transform=self.test_transform,
                         ),
                         self.ood_dataset(
                             self.root,
                             split="val",
                             download=True,
-                            transform=self.transform_test,
+                            transform=self.test_transform,
                         ),
                         self.ood_dataset(
                             self.root,
                             split="test",
                             download=True,
-                            transform=self.transform_test,
+                            transform=self.test_transform,
                         ),
                     ]
                 )
@@ -124,18 +124,18 @@ class TinyImageNetDataModule(AbstractDataModule):
             self.train = self.dataset(
                 self.root,
                 split="train",
-                transform=self.transform_train,
+                transform=self.train_transform,
             )
             self.val = self.dataset(
                 self.root,
                 split="val",
-                transform=self.transform_test,
+                transform=self.test_transform,
             )
         elif stage == "test":
             self.test = self.dataset(
                 self.root,
                 split="val",
-                transform=self.transform_test,
+                transform=self.test_transform,
             )
         else:
             raise ValueError(f"Stage {stage} is not supported.")
@@ -148,19 +148,19 @@ class TinyImageNetDataModule(AbstractDataModule):
                             self.root,
                             split="train",
                             download=True,
-                            transform=self.transform_test,
+                            transform=self.test_transform,
                         ),
                         self.ood_dataset(
                             self.root,
                             split="val",
                             download=True,
-                            transform=self.transform_test,
+                            transform=self.test_transform,
                         ),
                         self.ood_dataset(
                             self.root,
                             split="test",
                             download=True,
-                            transform=self.transform_test,
+                            transform=self.test_transform,
                         ),
                     ]
                 )
@@ -168,7 +168,7 @@ class TinyImageNetDataModule(AbstractDataModule):
                 self.ood = self.ood_dataset(
                     self.root,
                     split="test",
-                    transform=self.transform_test,
+                    transform=self.test_transform,
                 )
 
     def train_dataloader(self) -> DataLoader:
