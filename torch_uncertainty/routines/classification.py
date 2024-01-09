@@ -1,4 +1,4 @@
-from argparse import ArgumentParser, Namespace
+from argparse import ArgumentParser
 from collections.abc import Callable
 from functools import partial
 from typing import Any
@@ -212,26 +212,6 @@ class ClassificationSingle(pl.LightningModule):
         # hyperparameters for performances
         param = {}
         param["storage"] = f"{get_model_size_mb(self)} MB"
-        if self.logger is not None:  # coverage: ignore
-            self.logger.log_hyperparams(
-                Namespace(**param),
-                {
-                    "hp/val_nll": 0,
-                    "hp/val_acc": 0,
-                    "hp/test_acc": 0,
-                    "hp/test_nll": 0,
-                    "hp/test_ece": 0,
-                    "hp/test_brier": 0,
-                    "hp/test_entropy_id": 0,
-                    "hp/test_entropy_ood": 0,
-                    "hp/test_aupr": 0,
-                    "hp/test_auroc": 0,
-                    "hp/test_fpr95": 0,
-                    "hp/ts_test_nll": 0,
-                    "hp/ts_test_ece": 0,
-                    "hp/ts_test_brier": 0,
-                },
-            )
 
     def training_step(
         self, batch: tuple[Tensor, Tensor], batch_idx: int
@@ -618,29 +598,6 @@ class ClassificationEnsemble(ClassificationSingle):
     def on_train_start(self) -> None:
         param = {}
         param["storage"] = f"{get_model_size_mb(self)} MB"
-        if self.logger is not None:  # coverage: ignore
-            self.logger.log_hyperparams(
-                Namespace(**param),
-                {
-                    "hp/val_nll": 0,
-                    "hp/val_acc": 0,
-                    "hp/test_acc": 0,
-                    "hp/test_nll": 0,
-                    "hp/test_ece": 0,
-                    "hp/test_brier": 0,
-                    "hp/test_entropy_id": 0,
-                    "hp/test_entropy_ood": 0,
-                    "hp/test_aupr": 0,
-                    "hp/test_auroc": 0,
-                    "hp/test_fpr95": 0,
-                    "hp/test_id_ens_disagreement": 0,
-                    "hp/test_id_ens_mi": 0,
-                    "hp/test_id_ens_entropy": 0,
-                    "hp/test_ood_ens_disagreement": 0,
-                    "hp/test_ood_ens_mi": 0,
-                    "hp/test_ood_ens_entropy": 0,
-                },
-            )
 
     def training_step(
         self, batch: tuple[Tensor, Tensor], batch_idx: int
