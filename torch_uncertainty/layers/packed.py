@@ -65,8 +65,6 @@ class PackedLinear(nn.Module):
             gamma (int, optional): Defaults to ``1``.
             bias (bool, optional): It ``True``, adds a learnable bias to the
                 output. Defaults to ``True``.
-            groups (int, optional): Number of blocked connections from input
-                channels to output channels. Defaults to ``1``.
             rearrange (bool, optional): Rearrange the input and outputs for
                 compatibility with previous and later layers. Defaults to ``True``.
             first (bool, optional): Whether this is the first layer of the
@@ -87,9 +85,9 @@ class PackedLinear(nn.Module):
         Note:
             Each ensemble member will only see
             :math:`\frac{\text{in_features}}{\text{num_estimators}}` features,
-            so when using :attr:`groups` you should make sure that
+            so when using :attr:`gamma` you should make sure that
             :attr:`in_features` and :attr:`out_features` are both divisible by
-            :attr:`n_estimators` :math:`\times`:attr:`groups`. However, the
+            :attr:`n_estimators` :math:`\times`:attr:`gamma`. However, the
             number of input and output features will be changed to comply with
             this constraint.
 
