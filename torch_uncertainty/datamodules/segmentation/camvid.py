@@ -2,6 +2,8 @@ from argparse import ArgumentParser
 from pathlib import Path
 from typing import Any
 
+from torchvision.transforms import v2
+
 from torch_uncertainty.datamodules.abstract import AbstractDataModule
 from torch_uncertainty.datasets.segmentation import CamVid
 
@@ -14,7 +16,6 @@ class CamVidDataModule(AbstractDataModule):
         num_workers: int = 1,
         pin_memory: bool = True,
         persistent_workers: bool = True,
-        **kwargs,
     ) -> None:
         super().__init__(
             root=root,
@@ -26,8 +27,12 @@ class CamVidDataModule(AbstractDataModule):
 
         self.dataset = CamVid
 
-        self.transform_train = ...
-        self.transform_test = ...
+        self.transform_train = v2.Compose(
+            [v2.Resize((360, 480), interpolation=v2.InterpolationMode.NEAREST)]
+        )
+        self.transform_test = v2.Compose(
+            [v2.Resize((360, 480), interpolation=v2.InterpolationMode.NEAREST)]
+        )
 
     def prepare_data(self) -> None:  # coverage: ignore
         self.dataset(root=self.root, download=True)

@@ -1,21 +1,8 @@
-from argparse import ArgumentParser, BooleanOptionalAction
-from pathlib import Path
-from typing import Any, Literal
+from collections.abc import Callable
+from typing import Literal
 
-import torch
-from pytorch_lightning import LightningModule
-from pytorch_lightning.core.saving import (
-    load_hparams_from_tags_csv,
-    load_hparams_from_yaml,
-)
 from torch import nn
 
-from torch_uncertainty.baselines.utils.parser_addons import (
-    add_masked_specific_args,
-    add_mimo_specific_args,
-    add_packed_specific_args,
-    add_resnet_specific_args,
-)
 from torch_uncertainty.models.resnet import (
     batched_resnet18,
     batched_resnet34,
@@ -44,13 +31,14 @@ from torch_uncertainty.models.resnet import (
     resnet152,
 )
 from torch_uncertainty.routines.classification import (
-    ClassificationEnsemble,
-    ClassificationSingle,
+    # ClassificationEnsemble,
+    # ClassificationSingle,
+    ClassificationRoutine,
 )
 from torch_uncertainty.transforms import MIMOBatchFormat, RepeatTarget
 
 
-class ResNet:
+class ResNet(ClassificationRoutine):
     single = ["vanilla"]
     ensemble = ["packed", "batched", "masked", "mimo", "mc-dropout"]
     versions = {
@@ -87,12 +75,12 @@ class ResNet:
     }
     archs = [18, 34, 50, 101, 152]
 
-    def __new__(
-        cls,
+    def __init__(
+        self,
         num_classes: int,
         in_channels: int,
         loss: type[nn.Module],
-        optimization_procedure: Any,
+        # optimization_procedure: Any,
         version: Literal[
             "vanilla",
             "mc-dropout",
@@ -103,8 +91,15 @@ class ResNet:
         ],
         arch: int,
         style: str = "imagenet",
-        num_estimators: int | None = None,
+        num_estimators: int = 1,
         dropout_rate: float = 0.0,
+        mixtype: str = "erm",
+        mixmode: str = "elem",
+        dist_sim: str = "emb",
+        kernel_tau_max: float = 1.0,
+        kernel_tau_std: float = 0.5,
+        mixup_alpha: float = 0,
+        cutmix_alpha: float = 0,
         groups: int = 1,
         scale: float | None = None,
         alpha: float | None = None,
@@ -115,9 +110,11 @@ class ResNet:
         use_logits: bool = False,
         use_mi: bool = False,
         use_variation_ratio: bool = False,
+        log_plots: bool = False,
+        calibration_set: Callable | None = None,
+        evaluate_ood: bool = False,
         pretrained: bool = False,
-        **kwargs,
-    ) -> LightningModule:
+    ) -> None:
         r"""ResNet backbone baseline for classification providing support for
         various versions and architectures.
 
@@ -154,6 +151,13 @@ class ResNet:
                 Only used if :attr:`version` is either ``"packed"``, ``"batched"``,
                 ``"masked"`` or ``"mc-dropout"`` Defaults to ``None``.
             dropout_rate (float, optional): Dropout rate. Defaults to ``0.0``.
+            mixtype (str, optional): _description_
+            mixmode (str, optional): _description_
+            dist_sim (str, optional): _description_
+            kernel_tau_max (float, optional): _description_
+            kernel_tau_std (float, optional): _description_
+            mixup_alpha (float, optional): _description_
+            cutmix_alpha (float, optional): _description_
             groups (int, optional): Number of groups in convolutions. Defaults to
                 ``1``.
             scale (float, optional): Expansion factor affecting the width of the
@@ -178,10 +182,15 @@ class ResNet:
                 information as the OOD criterion or not. Defaults to ``False``.
             use_variation_ratio (bool, optional): Indicates whether to use the
                 variation ratio as the OOD criterion or not. Defaults to ``False``.
+            log_plots (bool, optional): Indicates whether to log the plots or not.
+                Defaults to ``False``.
+            calibration_set (Callable, optional): Calibration set. Defaults to
+                ``None``.
+            evaluate_ood (bool, optional): Indicates whether to evaluate the OOD
+                detection or not. Defaults to ``False``.
             pretrained (bool, optional): Indicates whether to use the pretrained
                 weights or not. Only used if :attr:`version` is ``"packed"``.
                 Defaults to ``False``.
-            **kwargs: Additional arguments.
 
         Raises:
             ValueError: If :attr:`version` is not either ``"vanilla"``,
@@ -199,7 +208,7 @@ class ResNet:
 
         format_batch_fn = nn.Identity()
 
-        if version not in cls.versions:
+        if version not in self.versions:
             raise ValueError(f"Unknown version: {version}")
 
         if version == "vanilla":
@@ -252,75 +261,89 @@ class ResNet:
                 batch_repeat=batch_repeat,
             )
 
-        model = cls.versions[version][cls.archs.index(arch)](**params)
-        kwargs.update(params)
-        kwargs.update({"version": version, "arch": arch})
+        model = self.versions[version][self.archs.index(arch)](**params)
+        # kwargs.update(params)
+        # kwargs.update({"version": version, "arch": arch})
         # routine specific parameters
-        if version in cls.single:
-            return ClassificationSingle(
-                model=model,
-                loss=loss,
-                optimization_procedure=optimization_procedure,
-                format_batch_fn=format_batch_fn,
-                use_entropy=use_entropy,
-                use_logits=use_logits,
-                **kwargs,
-            )
-        # version in cls.ensemble
-        return ClassificationEnsemble(
+        # if version in cls.single:
+        #     return ClassificationSingle(
+        #         model=model,
+        #         loss=loss,
+        #         # optimization_procedure=optimization_procedure,
+        #         format_batch_fn=format_batch_fn,
+        #         use_entropy=use_entropy,
+        #         use_logits=use_logits,
+        #         # **kwargs,
+        #     )
+        # # version in cls.ensemble
+        super().__init__(
+            num_classes=num_classes,
             model=model,
             loss=loss,
-            optimization_procedure=optimization_procedure,
+            num_estimators=num_estimators,
             format_batch_fn=format_batch_fn,
+            mixtype=mixtype,
+            mixmode=mixmode,
+            dist_sim=dist_sim,
+            kernel_tau_max=kernel_tau_max,
+            kernel_tau_std=kernel_tau_std,
+            mixup_alpha=mixup_alpha,
+            cutmix_alpha=cutmix_alpha,
+            evaluate_ood=evaluate_ood,
             use_entropy=use_entropy,
             use_logits=use_logits,
             use_mi=use_mi,
             use_variation_ratio=use_variation_ratio,
-            **kwargs,
+            log_plots=log_plots,
+            calibration_set=calibration_set,
         )
 
-    @classmethod
-    def load_from_checkpoint(
-        cls,
-        checkpoint_path: str | Path,
-        hparams_file: str | Path,
-        **kwargs,
-    ) -> LightningModule:  # coverage: ignore
-        if hparams_file is not None:
-            extension = str(hparams_file).split(".")[-1]
-            if extension.lower() == "csv":
-                hparams = load_hparams_from_tags_csv(hparams_file)
-            elif extension.lower() in ("yml", "yaml"):
-                hparams = load_hparams_from_yaml(hparams_file)
-            else:
-                raise ValueError(
-                    ".csv, .yml or .yaml is required for `hparams_file`"
-                )
-
-        hparams.update(kwargs)
-        checkpoint = torch.load(checkpoint_path)
-        obj = cls(**hparams)
-        obj.load_state_dict(checkpoint["state_dict"])
-        return obj
-
-    @classmethod
-    def add_model_specific_args(cls, parser: ArgumentParser) -> ArgumentParser:
-        parser = ClassificationEnsemble.add_model_specific_args(parser)
-        parser = add_resnet_specific_args(parser)
-        parser = add_packed_specific_args(parser)
-        parser = add_masked_specific_args(parser)
-        parser = add_mimo_specific_args(parser)
-        parser.add_argument(
-            "--version",
-            type=str,
-            choices=cls.versions.keys(),
-            default="vanilla",
-            help=f"Variation of ResNet. Choose among: {cls.versions.keys()}",
+        self.save_hyperparameters(
+            ignore=[
+                "log_plots",
+            ]
         )
-        parser.add_argument(
-            "--pretrained",
-            dest="pretrained",
-            action=BooleanOptionalAction,
-            default=False,
-        )
-        return parser
+
+    # @classmethod
+    # def load_from_checkpoint(
+    #     cls,
+    #     checkpoint_path: str | Path,
+    #     hparams_file: str | Path,
+    #     **kwargs,
+    # ) -> LightningModule:  # coverage: ignore
+    #     if hparams_file is not None:
+    #         extension = str(hparams_file).split(".")[-1]
+    #         if extension.lower() == "csv":
+    #             hparams = load_hparams_from_tags_csv(hparams_file)
+    #         elif extension.lower() in ("yml", "yaml"):
+    #             hparams = load_hparams_from_yaml(hparams_file)
+    #         else:
+    #             raise ValueError(".csv, .yml or .yaml is required for `hparams_file`")
+
+    #     hparams.update(kwargs)
+    #     checkpoint = torch.load(checkpoint_path)
+    #     obj = cls(**hparams)
+    #     obj.load_state_dict(checkpoint["state_dict"])
+    #     return obj
+
+    # @classmethod
+    # def add_model_specific_args(cls, parser: ArgumentParser) -> ArgumentParser:
+    #     parser = ClassificationEnsemble.add_model_specific_args(parser)
+    #     parser = add_resnet_specific_args(parser)
+    #     parser = add_packed_specific_args(parser)
+    #     parser = add_masked_specific_args(parser)
+    #     parser = add_mimo_specific_args(parser)
+    #     parser.add_argument(
+    #         "--version",
+    #         type=str,
+    #         choices=cls.versions.keys(),
+    #         default="vanilla",
+    #         help=f"Variation of ResNet. Choose among: {cls.versions.keys()}",
+    #     )
+    #     parser.add_argument(
+    #         "--pretrained",
+    #         dest="pretrained",
+    #         action=BooleanOptionalAction,
+    #         default=False,
+    #     )
+    #     return parser

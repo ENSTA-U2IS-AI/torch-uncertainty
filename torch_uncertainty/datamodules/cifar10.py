@@ -37,7 +37,6 @@ class CIFAR10DataModule(AbstractDataModule):
         num_dataloaders: int = 1,
         pin_memory: bool = True,
         persistent_workers: bool = True,
-        **kwargs,
     ) -> None:
         """DataModule for CIFAR10.
 
@@ -60,7 +59,6 @@ class CIFAR10DataModule(AbstractDataModule):
             pin_memory (bool): Whether to pin memory. Defaults to ``True``.
             persistent_workers (bool): Whether to use persistent workers. Defaults
                 to ``True``.
-            kwargs: Additional arguments.
         """
         super().__init__(
             root=root,
