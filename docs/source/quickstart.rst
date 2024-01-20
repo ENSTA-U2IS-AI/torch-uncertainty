@@ -83,7 +83,7 @@ Run this model with, for instance:
 
 .. code:: bash
 
-    python3 resnet.py --version vanilla --arch 18 --accelerator gpu --device 1 --benchmark True --max_epochs 75 --precision 16
+    python3 resnet.py --version std --arch 18 --accelerator gpu --device 1 --benchmark True --max_epochs 75 --precision 16
 
 You may replace the architecture (which should be a Lightning Module), the
 Datamodule (a Lightning Datamodule), the loss or the optimization procedure to your likings.
@@ -128,7 +128,7 @@ It is likely that your desired architecture is not supported by our library.
 In that case, you might be interested in directly using the actual layers.
 
 1. Check the API reference for specific layers of your choosing.
-2. Import the layers and use them as you would for any vanilla PyTorch layers.
+2. Import the layers and use them as you would for any standard PyTorch layer.
 
 If you think that your architecture should be added to the package, raise an
 issue on the GitHub repository!

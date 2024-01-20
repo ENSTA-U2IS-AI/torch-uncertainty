@@ -58,10 +58,10 @@ from torch_uncertainty.transforms import MIMOBatchFormat, RepeatTarget
 
 
 class ResNet:
-    single = ["vanilla"]
+    single = ["std"]
     ensemble = ["packed", "batched", "masked", "mc-dropout", "mimo"]
     versions = {
-        "vanilla": [
+        "std": [
             resnet18,
             resnet20,
             resnet34,
@@ -119,7 +119,7 @@ class ResNet:
         loss: type[nn.Module],
         optimization_procedure: Any,
         version: Literal[
-            "vanilla",
+            "std",
             "mc-dropout",
             "packed",
             "batched",
@@ -158,7 +158,7 @@ class ResNet:
             version (str):
                 Determines which ResNet version to use:
 
-                - ``"vanilla"``: original ResNet
+                - ``"std"``: original ResNet
                 - ``"packed"``: Packed-Ensembles ResNet
                 - ``"batched"``: BatchEnsemble ResNet
                 - ``"masked"``: Masksemble ResNet
@@ -211,7 +211,7 @@ class ResNet:
             **kwargs: Additional arguments.
 
         Raises:
-            ValueError: If :attr:`version` is not either ``"vanilla"``,
+            ValueError: If :attr:`version` is not either ``"std"``,
                 ``"packed"``, ``"batched"``, ``"masked"`` or ``"mc-dropout"``.
 
         Returns:
@@ -333,7 +333,7 @@ class ResNet:
             "--version",
             type=str,
             choices=cls.versions.keys(),
-            default="vanilla",
+            default="std",
             help=f"Variation of ResNet. Choose among: {cls.versions.keys()}",
         )
         parser.add_argument(

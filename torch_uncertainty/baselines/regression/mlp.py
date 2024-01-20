@@ -21,9 +21,9 @@ from torch_uncertainty.routines.regression import (
 
 
 class MLP:
-    single = ["vanilla"]
+    single = ["std"]
     ensemble = ["packed"]
-    versions = {"vanilla": mlp, "packed": packed_mlp}
+    versions = {"std": mlp, "packed": packed_mlp}
 
     def __new__(
         cls,
@@ -31,7 +31,7 @@ class MLP:
         in_features: int,
         loss: type[nn.Module],
         optimization_procedure: Any,
-        version: Literal["vanilla", "packed"],
+        version: Literal["std", "packed"],
         hidden_dims: list[int],
         dist_estimation: int,
         num_estimators: int | None = 1,
@@ -112,7 +112,7 @@ class MLP:
             "--version",
             type=str,
             choices=cls.versions.keys(),
-            default="vanilla",
+            default="std",
             help=f"Variation of MLP. Choose among: {cls.versions.keys()}",
         )
         return parser

@@ -33,10 +33,10 @@ from torch_uncertainty.transforms import MIMOBatchFormat, RepeatTarget
 
 
 class WideResNet:
-    single = ["vanilla"]
+    single = ["std"]
     ensemble = ["packed", "batched", "masked", "mc-dropout", "mimo"]
     versions = {
-        "vanilla": [wideresnet28x10],
+        "std": [wideresnet28x10],
         "mc-dropout": [wideresnet28x10],
         "packed": [packed_wideresnet28x10],
         "batched": [batched_wideresnet28x10],
@@ -51,7 +51,7 @@ class WideResNet:
         loss: type[nn.Module],
         optimization_procedure: Any,
         version: Literal[
-            "vanilla", "mc-dropout", "packed", "batched", "masked", "mimo"
+            "std", "mc-dropout", "packed", "batched", "masked", "mimo"
         ],
         style: str = "imagenet",
         num_estimators: int | None = None,
@@ -84,7 +84,7 @@ class WideResNet:
             version (str):
                 Determines which Wide-ResNet version to use:
 
-                - ``"vanilla"``: original Wide-ResNet
+                - ``"std"``: original Wide-ResNet
                 - ``"mc-dropout"``: Monte Carlo Dropout Wide-ResNet
                 - ``"packed"``: Packed-Ensembles Wide-ResNet
                 - ``"batched"``: BatchEnsemble Wide-ResNet
@@ -128,7 +128,7 @@ class WideResNet:
             **kwargs: Additional arguments.
 
         Raises:
-            ValueError: If :attr:`version` is not either ``"vanilla"``,
+            ValueError: If :attr:`version` is not either ``"std"``,
                 ``"packed"``, ``"batched"`` or ``"masked"``.
 
         Returns:
@@ -250,7 +250,7 @@ class WideResNet:
             "--version",
             type=str,
             choices=cls.versions.keys(),
-            default="vanilla",
+            default="std",
             help=f"Variation of WideResNet. Choose among: {cls.versions.keys()}",
         )
         parser.add_argument(

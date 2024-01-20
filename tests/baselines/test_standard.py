@@ -19,7 +19,7 @@ class TestStandardBaseline:
             in_channels=3,
             loss=nn.CrossEntropyLoss,
             optimization_procedure=optim_cifar10_resnet18,
-            version="vanilla",
+            version="std",
             arch=18,
             style="cifar",
             groups=1,
@@ -40,7 +40,7 @@ class TestStandardWideBaseline:
             in_channels=3,
             loss=nn.CrossEntropyLoss,
             optimization_procedure=optim_cifar10_wideresnet,
-            version="vanilla",
+            version="std",
             style="cifar",
             groups=1,
         )
@@ -60,7 +60,7 @@ class TestStandardVGGBaseline:
             in_channels=3,
             loss=nn.CrossEntropyLoss,
             optimization_procedure=optim_cifar10_resnet18,
-            version="vanilla",
+            version="std",
             arch=11,
             groups=1,
         )
@@ -80,7 +80,7 @@ class TestStandardMLPBaseline:
             num_outputs=10,
             loss=nn.MSELoss,
             optimization_procedure=optim_cifar10_resnet18,
-            version="vanilla",
+            version="std",
             hidden_dims=[1],
             dist_estimation=1,
         )
