@@ -2,6 +2,7 @@ from typing import Literal
 
 import torch
 import torch.nn.functional as F
+from torch import Tensor
 from torchmetrics import Metric
 from torchmetrics.utilities.data import dim_zero_cat
 
@@ -73,14 +74,14 @@ class BrierScore(Metric):
             self.add_state("values", default=[], dist_reduce_fx="cat")
         self.add_state("total", default=torch.tensor(0), dist_reduce_fx="sum")
 
-    def update(self, probs: torch.Tensor, target: torch.Tensor) -> None:
+    def update(self, probs: Tensor, target: Tensor) -> None:
         """Update the current Brier score with a new tensor of probabilities.
 
         Args:
-            probs (torch.Tensor): A probability tensor of shape
+            probs (Tensor): A probability tensor of shape
                 (batch, num_estimators, num_classes) or
                 (batch, num_classes)
-            target (torch.Tensor): A tensor of ground truth labels of shape
+            target (Tensor): A tensor of ground truth labels of shape
                 (batch, num_classes) or (batch)
         """
         if target.ndim == 1:
@@ -109,11 +110,11 @@ class BrierScore(Metric):
             self.values += brier_score.sum()
             self.total += batch_size
 
-    def compute(self) -> torch.Tensor:
+    def compute(self) -> Tensor:
         """Compute the final Brier score based on inputs passed to ``update``.
 
         Returns:
-            torch.Tensor: The final value(s) for the Brier score
+            Tensor: The final value(s) for the Brier score
         """
         values = dim_zero_cat(self.values)
         if self.reduction == "sum":
