@@ -51,7 +51,7 @@ class TestMNISTDataModule:
         with pytest.raises(ValueError):
             dm.setup("other")
 
-        dm.evaluate_ood = True
+        dm.eval_ood = True
         dm.val_split = 0.1
         dm.prepare_data()
         dm.setup("test")

@@ -29,7 +29,7 @@ class TestImageNetDataModule:
         dm.val_dataloader()
         dm.test_dataloader()
 
-        dm.evaluate_ood = True
+        dm.eval_ood = True
         dm.prepare_data()
         dm.setup("test")
         dm.test_dataloader()

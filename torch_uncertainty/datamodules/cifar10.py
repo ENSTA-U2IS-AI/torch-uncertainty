@@ -26,7 +26,7 @@ class CIFAR10DataModule(AbstractDataModule):
     def __init__(
         self,
         root: str | Path,
-        evaluate_ood: bool,
+        eval_ood: bool,
         batch_size: int,
         val_split: float = 0.0,
         num_workers: int = 1,
@@ -43,7 +43,7 @@ class CIFAR10DataModule(AbstractDataModule):
 
         Args:
             root (str): Root directory of the datasets.
-            evaluate_ood (bool): Whether to evaluate on out-of-distribution data.
+            eval_ood (bool): Whether to evaluate on out-of-distribution data.
             batch_size (int): Number of samples per batch.
             val_split (float): Share of samples to use for validation. Defaults
                 to ``0.0``.
@@ -72,7 +72,7 @@ class CIFAR10DataModule(AbstractDataModule):
 
         self.val_split = val_split
         self.num_dataloaders = num_dataloaders
-        self.evaluate_ood = evaluate_ood
+        self.eval_ood = eval_ood
 
         if test_alt == "c":
             self.dataset = CIFAR10C
@@ -137,7 +137,7 @@ class CIFAR10DataModule(AbstractDataModule):
                 download=True,
             )
 
-        if self.evaluate_ood:
+        if self.eval_ood:
             self.ood_dataset(self.root, split="test", download=True)
 
     def setup(self, stage: Literal["fit", "test"] | None = None) -> None:
@@ -180,7 +180,7 @@ class CIFAR10DataModule(AbstractDataModule):
                     transform=self.test_transform,
                     severity=self.corruption_severity,
                 )
-            if self.evaluate_ood:
+            if self.eval_ood:
                 self.ood = self.ood_dataset(
                     self.root,
                     split="test",
@@ -211,7 +211,7 @@ class CIFAR10DataModule(AbstractDataModule):
             and out-of-distribution data.
         """
         dataloader = [self._data_loader(self.test)]
-        if self.evaluate_ood:
+        if self.eval_ood:
             dataloader.append(self._data_loader(self.ood))
         return dataloader
 
@@ -240,5 +240,5 @@ class CIFAR10DataModule(AbstractDataModule):
         p.add_argument(
             "--severity", dest="corruption_severity", type=int, default=None
         )
-        p.add_argument("--evaluate_ood", action="store_true")
+        p.add_argument("--eval-ood", action="store_true")
         return parent_parser

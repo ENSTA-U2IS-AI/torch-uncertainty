@@ -87,7 +87,7 @@ class TestClassificationSingle:
 
         with ArgvContext(
             "file.py",
-            "--evaluate_ood",
+            "--eval-ood",
             "--entropy",
         ):
             args = init_args(
@@ -109,7 +109,7 @@ class TestClassificationSingle:
 
         with ArgvContext(
             "file.py",
-            "--evaluate_ood",
+            "--eval-ood",
             "--entropy",
             "--cutmix_alpha",
             "0.5",
@@ -315,7 +315,7 @@ class TestClassificationEnsemble:
 
             cli_main(model, dm, root, "logs/dummy", args)
 
-        with ArgvContext("file.py", "--evaluate_ood", "--entropy"):
+        with ArgvContext("file.py", "--eval-ood", "--entropy"):
             args = init_args(
                 DummyClassificationBaseline, DummyClassificationDataModule
             )
@@ -335,7 +335,7 @@ class TestClassificationEnsemble:
 
             cli_main(model, dm, root, "logs/dummy", args)
 
-        with ArgvContext("file.py", "--evaluate_ood", "--variation_ratio"):
+        with ArgvContext("file.py", "--eval-ood", "--variation_ratio"):
             args = init_args(
                 DummyClassificationBaseline, DummyClassificationDataModule
             )

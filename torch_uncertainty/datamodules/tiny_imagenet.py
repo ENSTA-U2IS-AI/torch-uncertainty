@@ -22,7 +22,7 @@ class TinyImageNetDataModule(AbstractDataModule):
     def __init__(
         self,
         root: str | Path,
-        evaluate_ood: bool,
+        eval_ood: bool,
         batch_size: int,
         ood_ds: str = "svhn",
         rand_augment_opt: str | None = None,
@@ -40,7 +40,7 @@ class TinyImageNetDataModule(AbstractDataModule):
         )
         # TODO: COMPUTE STATS
 
-        self.evaluate_ood = evaluate_ood
+        self.eval_ood = eval_ood
         self.ood_ds = ood_ds
 
         self.dataset = TinyImageNet
@@ -87,7 +87,7 @@ class TinyImageNetDataModule(AbstractDataModule):
             )
 
     def prepare_data(self) -> None:  # coverage: ignore
-        if self.evaluate_ood:
+        if self.eval_ood:
             if self.ood_ds != "textures":
                 self.ood_dataset(
                     self.root,
@@ -140,7 +140,7 @@ class TinyImageNetDataModule(AbstractDataModule):
         else:
             raise ValueError(f"Stage {stage} is not supported.")
 
-        if self.evaluate_ood:
+        if self.eval_ood:
             if self.ood_ds == "textures":
                 self.ood = ConcatDataset(
                     [
@@ -195,7 +195,7 @@ class TinyImageNetDataModule(AbstractDataModule):
             and out-of-distribution data.
         """
         dataloader = [self._data_loader(self.test)]
-        if self.evaluate_ood:
+        if self.eval_ood:
             dataloader.append(self._data_loader(self.ood))
         return dataloader
 
@@ -217,5 +217,5 @@ class TinyImageNetDataModule(AbstractDataModule):
         p.add_argument(
             "--rand_augment", dest="rand_augment_opt", type=str, default=None
         )
-        p.add_argument("--evaluate_ood", action="store_true")
+        p.add_argument("--eval-ood", action="store_true")
         return parent_parser

@@ -20,7 +20,7 @@ class DummyClassificationDataModule(AbstractDataModule):
     def __init__(
         self,
         root: str | Path,
-        evaluate_ood: bool,
+        eval_ood: bool,
         batch_size: int,
         num_classes: int = 2,
         num_workers: int = 1,
@@ -36,7 +36,7 @@ class DummyClassificationDataModule(AbstractDataModule):
             persistent_workers=persistent_workers,
         )
 
-        self.evaluate_ood = evaluate_ood
+        self.eval_ood = eval_ood
         self.num_classes = num_classes
 
         self.dataset = DummyClassificationDataset
@@ -82,7 +82,7 @@ class DummyClassificationDataModule(AbstractDataModule):
 
     def test_dataloader(self) -> DataLoader | list[DataLoader]:
         dataloader = [self._data_loader(self.test)]
-        if self.evaluate_ood:
+        if self.eval_ood:
             dataloader.append(self._data_loader(self.ood))
         return dataloader
 
@@ -99,7 +99,7 @@ class DummyClassificationDataModule(AbstractDataModule):
         **kwargs: Any,
     ) -> ArgumentParser:
         p = super().add_argparse_args(parent_parser)
-        p.add_argument("--evaluate_ood", action="store_true")
+        p.add_argument("--eval-ood", action="store_true")
         return parent_parser
 
 
@@ -110,7 +110,7 @@ class DummyRegressionDataModule(AbstractDataModule):
     def __init__(
         self,
         root: str | Path,
-        evaluate_ood: bool,
+        eval_ood: bool,
         batch_size: int,
         out_features: int = 2,
         num_workers: int = 1,
@@ -126,7 +126,7 @@ class DummyRegressionDataModule(AbstractDataModule):
             persistent_workers=persistent_workers,
         )
 
-        self.evaluate_ood = evaluate_ood
+        self.eval_ood = eval_ood
         self.out_features = out_features
 
         self.dataset = DummyRegressionDataset
@@ -156,7 +156,7 @@ class DummyRegressionDataModule(AbstractDataModule):
                 out_features=self.out_features,
                 transform=self.test_transform,
             )
-        if self.evaluate_ood:
+        if self.eval_ood:
             self.ood = self.ood_dataset(
                 self.root,
                 out_features=self.out_features,
@@ -165,7 +165,7 @@ class DummyRegressionDataModule(AbstractDataModule):
 
     def test_dataloader(self) -> DataLoader | list[DataLoader]:
         dataloader = [self._data_loader(self.test)]
-        if self.evaluate_ood:
+        if self.eval_ood:
             dataloader.append(self._data_loader(self.ood))
         return dataloader
 
@@ -176,5 +176,5 @@ class DummyRegressionDataModule(AbstractDataModule):
         **kwargs: Any,
     ) -> ArgumentParser:
         p = super().add_argparse_args(parent_parser)
-        p.add_argument("--evaluate_ood", action="store_true")
+        p.add_argument("--eval-ood", action="store_true")
         return parent_parser

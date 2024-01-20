@@ -49,7 +49,7 @@ class ClassificationSingle(pl.LightningModule):
         kernel_tau_std: float = 0.5,
         mixup_alpha: float = 0,
         cutmix_alpha: float = 0,
-        evaluate_ood: bool = False,
+        eval_ood: bool = False,
         use_entropy: bool = False,
         use_logits: bool = False,
         log_plots: bool = False,
@@ -75,7 +75,7 @@ class ClassificationSingle(pl.LightningModule):
             mixup_alpha (float, optional): Alpha parameter for Mixup. Defaults to 0.
             cutmix_alpha (float, optional): Alpha parameter for Cutmix.
                 Defaults to 0.
-            evaluate_ood (bool, optional): Indicates whether to evaluate the OOD
+            eval_ood (bool, optional): Indicates whether to evaluate the OOD
                 detection performance or not. Defaults to ``False``.
             use_entropy (bool, optional): Indicates whether to use the entropy
                 values as the OOD criterion or not. Defaults to ``False``.
@@ -114,7 +114,7 @@ class ClassificationSingle(pl.LightningModule):
             raise ValueError("You cannot choose more than one OOD criterion.")
 
         self.num_classes = num_classes
-        self.evaluate_ood = evaluate_ood
+        self.eval_ood = eval_ood
         self.use_logits = use_logits
         self.use_entropy = use_entropy
         self.log_plots = log_plots
@@ -160,7 +160,7 @@ class ClassificationSingle(pl.LightningModule):
 
         self.test_entropy_id = Entropy()
 
-        if self.evaluate_ood:
+        if self.eval_ood:
             ood_metrics = MetricCollection(
                 {
                     "fpr95": FPR95(pos_label=1),
@@ -316,11 +316,11 @@ class ClassificationSingle(pl.LightningModule):
                 on_epoch=True,
                 add_dataloader_idx=False,
             )
-            if self.evaluate_ood:
+            if self.eval_ood:
                 self.test_ood_metrics.update(
                     ood_scores, torch.zeros_like(targets)
                 )
-        elif self.evaluate_ood and dataloader_idx == 1:
+        elif self.eval_ood and dataloader_idx == 1:
             self.test_ood_metrics.update(ood_scores, torch.ones_like(targets))
             self.test_entropy_ood(probs)
             self.log(
@@ -346,7 +346,7 @@ class ClassificationSingle(pl.LightningModule):
             self.log_dict(self.ts_cls_metrics.compute())
             self.ts_cls_metrics.reset()
 
-        if self.evaluate_ood:
+        if self.eval_ood:
             self.log_dict(
                 self.test_ood_metrics.compute(),
             )
@@ -357,7 +357,7 @@ class ClassificationSingle(pl.LightningModule):
                 "Calibration Plot", self.test_cls_metrics["ece"].plot()[0]
             )
 
-            if self.evaluate_ood:
+            if self.eval_ood:
                 id_logits = torch.cat(outputs[0], 0).float().cpu()
                 ood_logits = torch.cat(outputs[1], 0).float().cpu()
 
@@ -495,7 +495,7 @@ class ClassificationEnsemble(ClassificationSingle):
         kernel_tau_std: float = 0.5,
         mixup_alpha: float = 0,
         cutmix_alpha: float = 0,
-        evaluate_ood: bool = False,
+        eval_ood: bool = False,
         use_entropy: bool = False,
         use_logits: bool = False,
         use_mi: bool = False,
@@ -523,7 +523,7 @@ class ClassificationEnsemble(ClassificationSingle):
             mixup_alpha (float, optional): Alpha parameter for Mixup. Defaults to 0.
             cutmix_alpha (float, optional): Alpha parameter for Cutmix.
                 Defaults to 0.
-            evaluate_ood (bool, optional): Indicates whether to evaluate the OOD
+            eval_ood (bool, optional): Indicates whether to evaluate the OOD
                 detection performance or not. Defaults to ``False``.
             use_entropy (bool, optional): Indicates whether to use the entropy
                 values as the OOD criterion or not. Defaults to ``False``.
@@ -560,7 +560,7 @@ class ClassificationEnsemble(ClassificationSingle):
             kernel_tau_std=kernel_tau_std,
             mixup_alpha=mixup_alpha,
             cutmix_alpha=cutmix_alpha,
-            evaluate_ood=evaluate_ood,
+            eval_ood=eval_ood,
             use_entropy=use_entropy,
             use_logits=use_logits,
             **kwargs,
@@ -590,7 +590,7 @@ class ClassificationEnsemble(ClassificationSingle):
         )
         self.test_id_ens_metrics = ens_metrics.clone(prefix="hp/test_id_ens_")
 
-        if self.evaluate_ood:
+        if self.eval_ood:
             self.test_ood_ens_metrics = ens_metrics.clone(
                 prefix="hp/test_ood_ens_"
             )
@@ -687,11 +687,11 @@ class ClassificationEnsemble(ClassificationSingle):
                 add_dataloader_idx=False,
             )
 
-            if self.evaluate_ood:
+            if self.eval_ood:
                 self.test_ood_metrics.update(
                     ood_scores, torch.zeros_like(targets)
                 )
-        elif self.evaluate_ood and dataloader_idx == 1:
+        elif self.eval_ood and dataloader_idx == 1:
             self.test_ood_metrics.update(ood_scores, torch.ones_like(targets))
             self.test_entropy_ood(probs)
             self.test_ood_ens_metrics.update(probs_per_est)
@@ -714,7 +714,7 @@ class ClassificationEnsemble(ClassificationSingle):
             self.test_id_ens_metrics.compute(),
         )
 
-        if self.evaluate_ood:
+        if self.eval_ood:
             self.log_dict(
                 self.test_ood_metrics.compute(),
             )
@@ -730,7 +730,7 @@ class ClassificationEnsemble(ClassificationSingle):
                 "Calibration Plot", self.test_cls_metrics["ece"].plot()[0]
             )
 
-            if self.evaluate_ood:
+            if self.eval_ood:
                 id_logits = torch.cat(outputs[0], 0).float().cpu()
                 ood_logits = torch.cat(outputs[1], 0).float().cpu()
 

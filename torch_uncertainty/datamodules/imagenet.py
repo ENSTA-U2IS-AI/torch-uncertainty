@@ -27,7 +27,7 @@ class ImageNetDataModule(AbstractDataModule):
     def __init__(
         self,
         root: str | Path,
-        evaluate_ood: bool,
+        eval_ood: bool,
         batch_size: int,
         ood_ds: str = "svhn",
         test_alt: str | None = None,
@@ -47,7 +47,7 @@ class ImageNetDataModule(AbstractDataModule):
             persistent_workers=persistent_workers,
         )
 
-        self.evaluate_ood = evaluate_ood
+        self.eval_ood = eval_ood
         self.ood_ds = ood_ds
         self.test_alt = test_alt
 
@@ -130,7 +130,7 @@ class ImageNetDataModule(AbstractDataModule):
                 split="val",
                 download=True,
             )
-        if self.evaluate_ood:
+        if self.eval_ood:
             if self.ood_ds == "inaturalist":
                 self.ood = self.ood_dataset(
                     self.root,
@@ -178,7 +178,7 @@ class ImageNetDataModule(AbstractDataModule):
         else:
             raise ValueError(f"Stage {stage} is not supported.")
 
-        if self.evaluate_ood:
+        if self.eval_ood:
             if self.ood_ds == "inaturalist":
                 self.ood = self.ood_dataset(
                     self.root,
@@ -200,7 +200,7 @@ class ImageNetDataModule(AbstractDataModule):
             Textures test split (out-of-distribution data).
         """
         dataloader = [self._data_loader(self.test)]
-        if self.evaluate_ood:
+        if self.eval_ood:
             dataloader.append(self._data_loader(self.ood))
         return dataloader
 
@@ -213,7 +213,7 @@ class ImageNetDataModule(AbstractDataModule):
         p = super().add_argparse_args(parent_parser)
 
         # Arguments for ImageNet
-        p.add_argument("--evaluate_ood", action="store_true")
+        p.add_argument("--eval-ood", action="store_true")
         p.add_argument("--ood_ds", choices=cls.ood_datasets, default="svhn")
         p.add_argument("--test_alt", choices=cls.test_datasets, default=None)
         p.add_argument("--procedure", choices=["ViT", "A3"], default=None)

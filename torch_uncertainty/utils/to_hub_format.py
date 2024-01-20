@@ -34,7 +34,7 @@ model = {key.replace("model.", ""): val.cpu() for key, val in model.items()}
 output_name = args.name
 if args.version != 0:
     output_name += "_" + str(args.version)
-output_name += ".ckpt" if not args.safe else ".st"
+output_name += ".ckpt" if not args.safe else ".safetensors"
 
 if args.safe:
     save_file(model, output_name)
