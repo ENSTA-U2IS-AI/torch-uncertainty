@@ -65,7 +65,7 @@ based on sphinx
 * image: includes all the dependencies for the image processing module
 including opencv and scikit-image
 * tabular: includes pandas
-* full: includes all the aforementioned dependencies
+* all: includes all the aforementioned dependencies
 
 For example, to install the package with the dependencies for the development
 and the documentation, run the following command. It is a mandatory step if you
@@ -79,4 +79,4 @@ To install the package with all the dependencies, run:
 
 .. parsed-literal::
 
-    pip install -e .[full]
+    pip install -e .[all]

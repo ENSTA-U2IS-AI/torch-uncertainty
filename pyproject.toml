@@ -60,6 +60,7 @@ docs = [
 ]
 image = ["scikit-image", "opencv-python"]
 tabular = ["pandas"]
+all = ["torch_uncertainty[dev,docs,image,tabular]"]
 
 [project.urls]
 homepage = "https://torch-uncertainty.github.io/"
