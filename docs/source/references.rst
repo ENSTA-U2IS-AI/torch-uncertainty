@@ -285,6 +285,23 @@ Textures
 * Authors: *Haoqi Wang, Zhizhong Li, Litong Feng, and Wayne Zhang**
 * Paper: `CVPR 2022 <https://arxiv.org/pdf/2203.10807.pdf>`__.
 
+OpenImage-O
+^^^^^^^^^^^
+
+Curation:
+
+**ViM: Out-of-distribution with virtual-logit matching**
+
+* Authors: *Haoqi Wang, Zhizhong Li, Litong Feng, and Wayne Zhang**
+* Paper: `CVPR 2022 <https://arxiv.org/pdf/2203.10807.pdf>`__.
+
+Original Dataset:
+
+**The open images dataset v4: Unified image classification, object detection, and visual relationship detection at scale.**
+
+* Authors: *Alina Kuznetsova, Hassan Rom, Neil Alldrin, Jasper Uijlings, Ivan Krasin, Jordi Pont-Tuset, Shahab Kamali, et al.*
+* Paper: `IJCV 2020 <https://arxiv.org/pdf/1811.00982.pdf>`__.
+
 Architectures
 -------------
 
