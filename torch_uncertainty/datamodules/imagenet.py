@@ -14,6 +14,7 @@ from torch_uncertainty.datasets.classification import (
     ImageNetA,
     ImageNetO,
     ImageNetR,
+    OpenImageO,
 )
 
 
@@ -21,7 +22,13 @@ class ImageNetDataModule(AbstractDataModule):
     num_classes = 1000
     num_channels = 3
     test_datasets = ["r", "o", "a"]
-    ood_datasets = ["inaturalist", "imagenet-o", "svhn", "textures"]
+    ood_datasets = [
+        "inaturalist",
+        "imagenet-o",
+        "svhn",
+        "textures",
+        "openimage-o",
+    ]
     training_task = "classification"
 
     def __init__(
@@ -70,6 +77,8 @@ class ImageNetDataModule(AbstractDataModule):
             self.ood_dataset = SVHN
         elif ood_ds == "textures":
             self.ood_dataset = DTD
+        elif ood_ds == "openimage-o":
+            self.ood_dataset = OpenImageO
         else:
             raise ValueError(f"The dataset {ood_ds} is not supported.")
 
