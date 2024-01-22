@@ -253,7 +253,7 @@ class ClassificationSingle(pl.LightningModule):
             logits, features = self.forward(inputs)
             # BCEWithLogitsLoss expects float targets
             if self.binary_cls and self.loss == nn.BCEWithLogitsLoss:
-                logits, features = logits.squeeze(-1)
+                logits = logits.squeeze(-1)
                 targets = targets.float()
 
             if not self.is_dec:
@@ -664,7 +664,7 @@ class ClassificationEnsemble(ClassificationSingle):
         if self.is_elbo:
             loss = self.criterion(inputs, targets)
         else:
-            logits = self.forward(inputs)
+            logits, features = self.forward(inputs)
             # BCEWithLogitsLoss expects float targets
             if self.binary_cls and self.loss == nn.BCEWithLogitsLoss:
                 logits = logits.squeeze(-1)
@@ -682,7 +682,7 @@ class ClassificationEnsemble(ClassificationSingle):
         self, batch: tuple[Tensor, Tensor], batch_idx: int
     ) -> None:
         inputs, targets = batch
-        logits = self.forward(inputs)
+        logits, features = self.forward(inputs)
         logits = rearrange(logits, "(m b) c -> b m c", m=self.num_estimators)
         if self.binary_cls:
             probs_per_est = torch.sigmoid(logits).squeeze(-1)
@@ -699,7 +699,7 @@ class ClassificationEnsemble(ClassificationSingle):
         dataloader_idx: int | None = 0,
     ) -> Tensor:
         inputs, targets = batch
-        logits = self.forward(inputs)
+        logits, features = self.forward(inputs)
         logits = rearrange(logits, "(n b) c -> b n c", n=self.num_estimators)
 
         if self.binary_cls:
