@@ -1,15 +1,20 @@
 import torch
-import torch.nn.functional as F
 from glest import GLEstimator as GLEstimatorBase
 from torch import Tensor
 from torchmetrics import Metric
+from torchmetrics.utilities import rank_zero_warn
 from torchmetrics.utilities.data import dim_zero_cat
 
 
 class GLEstimator(GLEstimatorBase):
     def fit(self, probs: Tensor, targets: Tensor, features: Tensor):
-        self.classifier = probs.numpy()
-        return super().fit(features.numpy(), targets.numpy())
+        probs = probs.detach().cpu().numpy()
+        features = features.detach().cpu().numpy()
+        targets = (targets * 1).detach().cpu().numpy()
+        if targets.ndim == 2:
+            targets = targets.argmax(axis=1)
+        self.classifier = probs
+        return super().fit(features, targets)
 
 
 class GroupingLoss(Metric):
@@ -60,6 +65,12 @@ class GroupingLoss(Metric):
         self.add_state("features", default=[], dist_reduce_fx="cat")
         self.add_state("total", default=torch.tensor(0), dist_reduce_fx="sum")
 
+        rank_zero_warn(
+            "Metric `GroupingLoss` will save all targets, predictions and features"
+            " in buffer. For large datasets this may lead to large memory"
+            " footprint."
+        )
+
     def update(self, probs: Tensor, target: Tensor, features: Tensor) -> None:
         """Accumulate the tensors for the estimation of the Grouping Loss.
 
@@ -72,18 +83,25 @@ class GroupingLoss(Metric):
             features (Tensor): A tensor of features of shape
                 (batch, num_estimators, num_features) or (batch, num_features)
         """
-        if target.ndim == 1:
-            target = F.one_hot(target, self.num_classes)
-
-        if self.num_classes == 1:
-            probs = probs.unsqueeze(-1)
-
-        if probs.ndim == 3:
-            self.probs.append(probs.mean(dim=1))
-        if features.ndim == 3:
-            self.features.append(features[:, 0, :])
-
+        if probs.ndim == 2:
+            max_probs = probs.max(-1)
+            self.probs.append(max_probs.values)
+            self.targets.append(target == max_probs.indices)
+        elif probs.ndim == 3:
+            max_probs = probs.mean(1).max(-1)
+            self.probs.append(max_probs.values)
+            self.targets.append(target == max_probs.indices)
         else:
+            raise ValueError
+
+        if features.ndim == 2:
+            self.features.append(features)
+        elif features.ndim == 3:
+            self.features.append(features[:, 0, :])
+        else:
+            raise ValueError
+
+        if probs.ndim not in [2, 3] or features.ndim not in [2, 3]:
             raise ValueError(
                 f"Expected `probs` to be of shape (batch, num_classes) or "
                 f"(batch, num_estimators, num_classes) but got {probs.shape}"
