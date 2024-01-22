@@ -27,7 +27,7 @@ class GroupingLoss(Metric):
         num_classes: int,
         **kwargs,
     ) -> None:
-        r"""Metric to estimate the Grouping Loss.
+        r"""Metric to estimate the Top-label Grouping Loss.
 
         Args:
             num_classes (int): Number of classes
@@ -54,6 +54,11 @@ class GroupingLoss(Metric):
             ValueError:
                 If :attr:`reduction` is not one of ``'mean'``, ``'sum'``,
                 ``'none'`` or ``None``.
+
+        Reference:
+            Perez-Lebel, Alexandre, Le Morvan, Marine and Varoquaux, Gaël.
+            Beyond calibration: estimating the grouping loss of modern neural
+            networks. In ICLR 2023.
         """
         super().__init__(**kwargs)
         self.estimator = GLEstimator(None)
