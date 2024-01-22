@@ -6,6 +6,7 @@ lightning_logs/
 docs/*/generated/
 docs/*/auto_tutorials/
 *.pth
+*.ckpt
 *.out
 
 # Byte-compiled / optimized / DLL files
