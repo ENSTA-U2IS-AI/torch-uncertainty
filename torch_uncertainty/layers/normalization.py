@@ -2,9 +2,9 @@ import torch
 from torch import Tensor, nn
 
 
-class FeatureResponseNorm(nn.Module):
+class FilterResponseNorm(nn.Module):
     def __init__(self, num_features, eps=1e-6, device=None, dtype=None) -> None:
-        """Feature Response Normalization layer.
+        """Filter Response Normalization layer.
 
         Args:
             num_features (int): Number of channels.
