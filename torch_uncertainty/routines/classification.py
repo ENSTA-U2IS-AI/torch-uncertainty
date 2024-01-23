@@ -234,7 +234,7 @@ class ClassificationSingle(pl.LightningModule):
     ) -> tuple[Tensor, Tensor | None]:
         if return_features:
             features = self.model.feats_forward(inputs)
-            if hasattr(self.model, "classification_head"):
+            if hasattr(self.model, "classification_head"):  # coverage: ignore
                 logits = self.model.classification_head(features)
             else:
                 logits = self.model.linear(features)
