@@ -117,6 +117,20 @@ class ClassificationSingle(pl.LightningModule):
         if (use_logits + use_entropy) > 1:
             raise ValueError("You cannot choose more than one OOD criterion.")
 
+        if eval_grouping_loss and not hasattr(model, "feats_forward"):
+            raise ValueError(
+                "Your model must have a `feats_forward` method to compute the "
+                "grouping loss."
+            )
+
+        if eval_grouping_loss and not (
+            hasattr(model, "classification_head") or hasattr(model, "linear")
+        ):
+            raise ValueError(
+                "Your model must have a `classification_head` or `linear` "
+                "attribute to compute the grouping loss."
+            )
+
         self.num_classes = num_classes
         self.eval_ood = eval_ood
         self.eval_grouping_loss = eval_grouping_loss
@@ -217,7 +231,9 @@ class ClassificationSingle(pl.LightningModule):
             self.loss = partial(self.loss, model=self.model)
         return self.loss()
 
-    def forward(self, inputs: Tensor, return_features: bool = False) -> Tensor:
+    def forward(
+        self, inputs: Tensor, return_features: bool = False
+    ) -> tuple[Tensor, Tensor | None]:
         if return_features:
             features = self.model.feats_forward(inputs)
             logits = self.model.linear(features)
