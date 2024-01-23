@@ -15,7 +15,17 @@ class TestGroupingLoss:
     def test_compute(self):
         metric = GroupingLoss()
         metric.update(
-            torch.ones((2, 10)) / 10, torch.arange(2), torch.rand((2, 10))
+            torch.ones((100, 4, 10)) / 10,
+            torch.arange(100),
+            torch.rand((100, 4, 10)),
+        )
+        metric.compute()
+        metric.reset()
+
+        metric.update(
+            torch.ones((100, 10)) / 10,
+            torch.nn.functional.one_hot(torch.arange(100)),
+            torch.rand((100, 10)),
         )
 
     def test_errors(self):
