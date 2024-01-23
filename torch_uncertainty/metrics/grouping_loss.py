@@ -24,13 +24,11 @@ class GroupingLoss(Metric):
 
     def __init__(
         self,
-        num_classes: int,
         **kwargs,
     ) -> None:
         r"""Metric to estimate the Top-label Grouping Loss.
 
         Args:
-            num_classes (int): Number of classes
             kwargs: Additional keyword arguments, see `Advanced metric settings
                 <https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metric-kwargs>`_.
 
@@ -63,8 +61,6 @@ class GroupingLoss(Metric):
         super().__init__(**kwargs)
         self.estimator = GLEstimator(None)
 
-        self.num_classes = num_classes
-
         self.add_state("probs", default=[], dist_reduce_fx="cat")
         self.add_state("targets", default=[], dist_reduce_fx="cat")
         self.add_state("features", default=[], dist_reduce_fx="cat")
@@ -88,6 +84,14 @@ class GroupingLoss(Metric):
             features (Tensor): A tensor of features of shape
                 (batch, num_estimators, num_features) or (batch, num_features)
         """
+        if target.ndim == 2:
+            target = target.argmax(axis=-1)
+        elif target.ndim != 1:
+            raise ValueError(
+                "Expected `target` to be of shape (batch) or (batch, num_classes) "
+                f"but got {target.shape}."
+            )
+
         if probs.ndim == 2:
             max_probs = probs.max(-1)
             self.probs.append(max_probs.values)
@@ -97,19 +101,20 @@ class GroupingLoss(Metric):
             self.probs.append(max_probs.values)
             self.targets.append(target == max_probs.indices)
         else:
-            raise ValueError
+            raise ValueError(
+                "Expected `probs` to be of shape (batch, num_classes) or "
+                f"(batch, num_estimators, num_classes) but got {probs.shape}."
+            )
 
         if features.ndim == 2:
             self.features.append(features)
         elif features.ndim == 3:
             self.features.append(features[:, 0, :])
         else:
-            raise ValueError
-
-        if probs.ndim not in [2, 3] or features.ndim not in [2, 3]:
             raise ValueError(
-                f"Expected `probs` to be of shape (batch, num_classes) or "
-                f"(batch, num_estimators, num_classes) but got {probs.shape}"
+                "Expected `features` to be of shape (batch, num_features) or "
+                "(batch, num_estimators, num_features) but got "
+                f"{features.shape}."
             )
 
     def compute(self) -> torch.Tensor:

@@ -192,9 +192,7 @@ class ClassificationSingle(pl.LightningModule):
             self.test_entropy_ood = Entropy()
 
         if self.eval_grouping_loss:
-            grouping_loss = MetricCollection(
-                {"grouping_loss": GroupingLoss(num_classes=self.num_classes)}
-            )
+            grouping_loss = MetricCollection({"grouping_loss": GroupingLoss()})
             self.val_grouping_loss = grouping_loss.clone(prefix="hp/val_")
             self.test_grouping_loss = grouping_loss.clone(prefix="hp/test_")
 
