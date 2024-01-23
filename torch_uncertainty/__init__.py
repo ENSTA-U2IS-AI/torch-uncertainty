@@ -104,10 +104,10 @@ def cli_main(
     else:
         training_task = datamodule.training_task
     if training_task == "classification":
-        monitor = "hp/val_acc"
+        monitor = "val_acc"
         mode = "max"
     elif training_task == "regression":
-        monitor = "hp/val_mse"
+        monitor = "val_mse"
         mode = "min"
     else:
         raise ValueError("Unknown problem type.")
