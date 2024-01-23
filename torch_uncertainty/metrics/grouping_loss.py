@@ -11,8 +11,6 @@ class GLEstimator(GLEstimatorBase):
         probs = probs.detach().cpu().numpy()
         features = features.detach().cpu().numpy()
         targets = (targets * 1).detach().cpu().numpy()
-        if targets.ndim == 2:
-            targets = targets.argmax(axis=1)
         self.classifier = probs
         return super().fit(features, targets)
 
@@ -76,9 +74,9 @@ class GroupingLoss(Metric):
         """Accumulate the tensors for the estimation of the Grouping Loss.
 
         Args:
-            probs (Tensor): A probability tensor of shape
-                (batch, num_estimators, num_classes) or
-                (batch, num_classes)
+            probs (Tensor): A probability tensor of shape (batch, num_classes),
+                (batch, num_estimators, num_classes), or (batch) if binary
+                classification
             target (Tensor): A tensor of ground truth labels of shape
                 (batch, num_classes) or (batch)
             features (Tensor): A tensor of features of shape
@@ -92,7 +90,10 @@ class GroupingLoss(Metric):
                 f"but got {target.shape}."
             )
 
-        if probs.ndim == 2:
+        if probs.ndim == 1:
+            self.probs.append(probs)
+            self.targets.append(target == (probs > 0.5).int())
+        elif probs.ndim == 2:
             max_probs = probs.max(-1)
             self.probs.append(max_probs.values)
             self.targets.append(target == max_probs.indices)
@@ -103,7 +104,8 @@ class GroupingLoss(Metric):
         else:
             raise ValueError(
                 "Expected `probs` to be of shape (batch, num_classes) or "
-                f"(batch, num_estimators, num_classes) but got {probs.shape}."
+                "(batch, num_estimators, num_classes) or (batch) "
+                f"but got {probs.shape}."
             )
 
         if features.ndim == 2:
