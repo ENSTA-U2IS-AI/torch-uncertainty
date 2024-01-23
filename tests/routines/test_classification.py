@@ -9,6 +9,7 @@ from tests._dummies import (
     DummyClassificationBaseline,
     DummyClassificationDataModule,
     DummyClassificationDataset,
+    dummy_model,
 )
 from torch_uncertainty import cli_main, init_args
 from torch_uncertainty.losses import DECLoss, ELBOLoss
@@ -252,26 +253,12 @@ class TestClassificationSingle:
                 10, nn.Module(), None, None, eval_grouping_loss=True
             )
 
-        model = DummyClassificationBaseline(
-            num_classes=10,
-            in_channels=3,
-            loss=nn.CrossEntropyLoss,
-            optimization_procedure=optim_cifar10_resnet18,
-            baseline_type="single",
-            with_feats=False,
-        )
+        model = dummy_model(1, 1, 1, 0, with_feats=False, with_linear=True)
 
         with pytest.raises(ValueError):
             ClassificationSingle(10, model, None, None, eval_grouping_loss=True)
 
-        model = DummyClassificationBaseline(
-            num_classes=10,
-            in_channels=3,
-            loss=nn.CrossEntropyLoss,
-            optimization_procedure=optim_cifar10_resnet18,
-            baseline_type="single",
-            with_linear=False,
-        )
+        model = dummy_model(1, 1, 1, 0, with_feats=True, with_linear=False)
 
         with pytest.raises(ValueError):
             ClassificationSingle(10, model, None, None, eval_grouping_loss=True)

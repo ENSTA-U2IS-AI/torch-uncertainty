@@ -32,9 +32,6 @@ class _Dummy(nn.Module):
 
         self.num_estimators = num_estimators
 
-    def feats_forward(self, x: Tensor) -> Tensor:
-        return self.forward(x)
-
     def forward(self, x: Tensor) -> Tensor:
         return self.dropout(
             self.linear(
@@ -73,6 +70,7 @@ def dummy_model(
         _Dummy: Dummy model.
     """
     if with_feats:
+        print("WITH FEATS")
         return _DummyWithFeats(
             in_channels=in_channels,
             num_classes=num_classes,
