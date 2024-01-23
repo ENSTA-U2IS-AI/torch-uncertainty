@@ -186,6 +186,17 @@ For the expected calibration error, consider citing:
 * Authors: *Mahdi Pakdaman Naeini, Gregory F. Cooper, and Milos Hauskrecht*
 * Paper: `AAAI 2015 <https://www.dbmi.pitt.edu/wp-content/uploads/2022/10/Obtaining-well-calibrated-probabilities-using-Bayesian-binning.pdf>`__.
 
+Grouping Loss
+^^^^^^^^^^^^^
+
+For the grouping loss, consider citing:
+
+**Beyond Calibration: Estimating the Grouping Loss of Modern Neural Networks**
+
+* Authors: *Alexandre Perez-Lebel, Marine Le Morvan, and Gaël Varoquaux*
+* Paper: `ICLR 2023 <https://arxiv.org/pdf/2210.16315.pdf>`__.
+
+
 Datasets
 --------
 
