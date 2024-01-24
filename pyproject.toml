@@ -40,6 +40,7 @@ dependencies = [
     "huggingface-hub",
     "scikit-learn",
     "matplotlib",
+    "glest==0.0.1a0",
 ]
 
 [project.optional-dependencies]

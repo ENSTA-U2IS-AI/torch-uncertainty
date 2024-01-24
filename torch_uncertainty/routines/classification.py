@@ -25,6 +25,7 @@ from torch_uncertainty.metrics import (
     BrierScore,
     Disagreement,
     Entropy,
+    GroupingLoss,
     MutualInformation,
     NegativeLogLikelihood,
     VariationRatio,
@@ -50,6 +51,7 @@ class ClassificationSingle(pl.LightningModule):
         mixup_alpha: float = 0,
         cutmix_alpha: float = 0,
         eval_ood: bool = False,
+        eval_grouping_loss: bool = False,
         use_entropy: bool = False,
         use_logits: bool = False,
         log_plots: bool = False,
@@ -77,6 +79,8 @@ class ClassificationSingle(pl.LightningModule):
                 Defaults to 0.
             eval_ood (bool, optional): Indicates whether to evaluate the OOD
                 detection performance or not. Defaults to ``False``.
+            eval_grouping_loss (bool, optional): Indicates whether to evaluate the
+                grouping loss or not. Defaults to ``False``.
             use_entropy (bool, optional): Indicates whether to use the entropy
                 values as the OOD criterion or not. Defaults to ``False``.
             use_logits (bool, optional): Indicates whether to use the logits as the
@@ -113,8 +117,23 @@ class ClassificationSingle(pl.LightningModule):
         if (use_logits + use_entropy) > 1:
             raise ValueError("You cannot choose more than one OOD criterion.")
 
+        if eval_grouping_loss and not hasattr(model, "feats_forward"):
+            raise ValueError(
+                "Your model must have a `feats_forward` method to compute the "
+                "grouping loss."
+            )
+
+        if eval_grouping_loss and not (
+            hasattr(model, "classification_head") or hasattr(model, "linear")
+        ):
+            raise ValueError(
+                "Your model must have a `classification_head` or `linear` "
+                "attribute to compute the grouping loss."
+            )
+
         self.num_classes = num_classes
         self.eval_ood = eval_ood
+        self.eval_grouping_loss = eval_grouping_loss
         self.use_logits = use_logits
         self.use_entropy = use_entropy
         self.log_plots = log_plots
@@ -172,6 +191,11 @@ class ClassificationSingle(pl.LightningModule):
             self.test_ood_metrics = ood_metrics.clone(prefix="test_")
             self.test_entropy_ood = Entropy()
 
+        if self.eval_grouping_loss:
+            grouping_loss = MetricCollection({"grouping_loss": GroupingLoss()})
+            self.val_grouping_loss = grouping_loss.clone(prefix="hp/val_")
+            self.test_grouping_loss = grouping_loss.clone(prefix="hp/test_")
+
         if mixup_alpha < 0 or cutmix_alpha < 0:
             raise ValueError(
                 "Cutmix alpha and Mixup alpha must be positive."
@@ -205,8 +229,19 @@ class ClassificationSingle(pl.LightningModule):
             self.loss = partial(self.loss, model=self.model)
         return self.loss()
 
-    def forward(self, inputs: Tensor) -> Tensor:
-        return self.model.forward(inputs)
+    def forward(
+        self, inputs: Tensor, return_features: bool = False
+    ) -> tuple[Tensor, Tensor | None]:
+        if return_features:
+            features = self.model.feats_forward(inputs)
+            if hasattr(self.model, "classification_head"):  # coverage: ignore
+                logits = self.model.classification_head(features)
+            else:
+                logits = self.model.linear(features)
+        else:
+            features = None
+            logits = self.model(inputs)
+        return logits, features
 
     def on_train_start(self) -> None:
         # hyperparameters for performances
@@ -232,7 +267,7 @@ class ClassificationSingle(pl.LightningModule):
         if self.is_elbo:
             loss = self.criterion(inputs, targets)
         else:
-            logits = self.forward(inputs)
+            logits, features = self.forward(inputs)
             # BCEWithLogitsLoss expects float targets
             if self.binary_cls and self.loss == nn.BCEWithLogitsLoss:
                 logits = logits.squeeze(-1)
@@ -249,7 +284,10 @@ class ClassificationSingle(pl.LightningModule):
         self, batch: tuple[Tensor, Tensor], batch_idx: int
     ) -> None:
         inputs, targets = batch
-        logits = self.forward(inputs)
+
+        logits, features = self.forward(
+            inputs, return_features=self.eval_grouping_loss
+        )
 
         if self.binary_cls:
             probs = torch.sigmoid(logits).squeeze(-1)
@@ -258,11 +296,18 @@ class ClassificationSingle(pl.LightningModule):
 
         self.val_cls_metrics.update(probs, targets)
 
+        if self.eval_grouping_loss:
+            self.val_grouping_loss.update(probs, targets, features)
+
     def validation_epoch_end(
         self, outputs: EPOCH_OUTPUT | list[EPOCH_OUTPUT]
     ) -> None:
         self.log_dict(self.val_cls_metrics.compute())
         self.val_cls_metrics.reset()
+
+        if self.eval_grouping_loss:
+            self.log_dict(self.val_grouping_loss.compute())
+            self.val_grouping_loss.reset()
 
     def on_test_start(self) -> None:
         if self.calibration_set is not None:
@@ -281,7 +326,9 @@ class ClassificationSingle(pl.LightningModule):
         dataloader_idx: int | None = 0,
     ) -> Tensor:
         inputs, targets = batch
-        logits = self.forward(inputs)
+        logits, features = self.forward(
+            inputs, return_features=self.eval_grouping_loss
+        )
 
         if self.binary_cls:
             probs = torch.sigmoid(logits).squeeze(-1)
@@ -309,6 +356,8 @@ class ClassificationSingle(pl.LightningModule):
 
         if dataloader_idx == 0:
             self.test_cls_metrics.update(probs, targets)
+            if self.eval_grouping_loss:
+                self.test_grouping_loss.update(probs, targets, features)
             self.test_entropy_id(probs)
             self.log(
                 "test_entropy_id",
@@ -337,6 +386,10 @@ class ClassificationSingle(pl.LightningModule):
         self.log_dict(
             self.test_cls_metrics.compute(),
         )
+        if self.eval_grouping_loss:
+            self.log_dict(
+                self.test_grouping_loss.compute(),
+            )
 
         if (
             self.calibration_set is not None
@@ -380,6 +433,8 @@ class ClassificationSingle(pl.LightningModule):
                 )
 
         self.test_cls_metrics.reset()
+        if self.eval_grouping_loss:
+            self.test_grouping_loss.reset()
 
     def identity(self, x: float, y: float):
         return x, y
@@ -439,6 +494,8 @@ class ClassificationSingle(pl.LightningModule):
         Adds:
         - ``--entropy``: sets :attr:`use_entropy` to ``True``.
         - ``--logits``: sets :attr:`use_logits` to ``True``.
+        - ``--eval-grouping-loss``: sets :attr:`eval_grouping-loss` to
+            ``True``.
         - ``--mixup_alpha``: sets :attr:`mixup_alpha` for Mixup
         - ``--cutmix_alpha``: sets :attr:`cutmix_alpha` for Cutmix
         - ``--mixtype``: sets :attr:`mixtype` for Mixup
@@ -452,6 +509,11 @@ class ClassificationSingle(pl.LightningModule):
         )
         parent_parser.add_argument(
             "--logits", dest="use_logits", action="store_true"
+        )
+        parent_parser.add_argument(
+            "--eval-grouping-loss",
+            action="store_true",
+            help="Whether to evaluate the grouping loss or not",
         )
 
         # Mixup args
@@ -496,6 +558,7 @@ class ClassificationEnsemble(ClassificationSingle):
         mixup_alpha: float = 0,
         cutmix_alpha: float = 0,
         eval_ood: bool = False,
+        eval_grouping_loss: bool = False,
         use_entropy: bool = False,
         use_logits: bool = False,
         use_mi: bool = False,
@@ -525,6 +588,8 @@ class ClassificationEnsemble(ClassificationSingle):
                 Defaults to 0.
             eval_ood (bool, optional): Indicates whether to evaluate the OOD
                 detection performance or not. Defaults to ``False``.
+            eval_grouping_loss (bool, optional): Indicates whether to evaluate the
+                grouping loss or not. Defaults to ``False``.
             use_entropy (bool, optional): Indicates whether to use the entropy
                 values as the OOD criterion or not. Defaults to ``False``.
             use_logits (bool, optional): Indicates whether to use the logits as the
@@ -561,6 +626,7 @@ class ClassificationEnsemble(ClassificationSingle):
             mixup_alpha=mixup_alpha,
             cutmix_alpha=cutmix_alpha,
             eval_ood=eval_ood,
+            eval_grouping_loss=eval_grouping_loss,
             use_entropy=use_entropy,
             use_logits=use_logits,
             **kwargs,
@@ -595,6 +661,12 @@ class ClassificationEnsemble(ClassificationSingle):
                 prefix="test_ood_ens_"
             )
 
+        if self.eval_grouping_loss:
+            raise NotImplementedError(
+                "Grouping loss not implemented for ensembles. Raise an issue"
+                " if you need it."
+            )
+
     def on_train_start(self) -> None:
         param = {}
         param["storage"] = f"{get_model_size_mb(self)} MB"
@@ -609,7 +681,7 @@ class ClassificationEnsemble(ClassificationSingle):
         if self.is_elbo:
             loss = self.criterion(inputs, targets)
         else:
-            logits = self.forward(inputs)
+            logits, features = self.forward(inputs)
             # BCEWithLogitsLoss expects float targets
             if self.binary_cls and self.loss == nn.BCEWithLogitsLoss:
                 logits = logits.squeeze(-1)
@@ -627,7 +699,7 @@ class ClassificationEnsemble(ClassificationSingle):
         self, batch: tuple[Tensor, Tensor], batch_idx: int
     ) -> None:
         inputs, targets = batch
-        logits = self.forward(inputs)
+        logits, features = self.forward(inputs)
         logits = rearrange(logits, "(m b) c -> b m c", m=self.num_estimators)
         if self.binary_cls:
             probs_per_est = torch.sigmoid(logits).squeeze(-1)
@@ -644,7 +716,7 @@ class ClassificationEnsemble(ClassificationSingle):
         dataloader_idx: int | None = 0,
     ) -> Tensor:
         inputs, targets = batch
-        logits = self.forward(inputs)
+        logits, features = self.forward(inputs)
         logits = rearrange(logits, "(n b) c -> b n c", n=self.num_estimators)
 
         if self.binary_cls:

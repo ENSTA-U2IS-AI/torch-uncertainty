@@ -26,6 +26,7 @@ class DummyClassificationDataModule(AbstractDataModule):
         num_workers: int = 1,
         pin_memory: bool = True,
         persistent_workers: bool = True,
+        num_images: int = 2,
         **kwargs,
     ) -> None:
         super().__init__(
@@ -38,6 +39,7 @@ class DummyClassificationDataModule(AbstractDataModule):
 
         self.eval_ood = eval_ood
         self.num_classes = num_classes
+        self.num_images = num_images
 
         self.dataset = DummyClassificationDataset
         self.ood_dataset = DummyClassificationDataset
@@ -56,6 +58,7 @@ class DummyClassificationDataModule(AbstractDataModule):
                 num_classes=self.num_classes,
                 image_size=self.image_size,
                 transform=self.train_transform,
+                num_images=self.num_images,
             )
             self.val = self.dataset(
                 self.root,
@@ -63,6 +66,7 @@ class DummyClassificationDataModule(AbstractDataModule):
                 num_classes=self.num_classes,
                 image_size=self.image_size,
                 transform=self.test_transform,
+                num_images=self.num_images,
             )
         elif stage == "test":
             self.test = self.dataset(
@@ -71,6 +75,7 @@ class DummyClassificationDataModule(AbstractDataModule):
                 num_classes=self.num_classes,
                 image_size=self.image_size,
                 transform=self.test_transform,
+                num_images=self.num_images,
             )
             self.ood = self.ood_dataset(
                 self.root,
@@ -78,6 +83,7 @@ class DummyClassificationDataModule(AbstractDataModule):
                 num_classes=self.num_classes,
                 image_size=self.image_size,
                 transform=self.test_transform,
+                num_images=self.num_images,
             )
 
     def test_dataloader(self) -> DataLoader | list[DataLoader]:
