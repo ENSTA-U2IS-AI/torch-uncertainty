@@ -35,8 +35,6 @@ class FilterResponseNorm2d(nn.Module):
 
 class MCBatchNorm2d(nn.BatchNorm2d):
     counter: int
-    mean: list
-    var: list
 
     def __init__(
         self,
@@ -58,7 +56,18 @@ class MCBatchNorm2d(nn.BatchNorm2d):
             device,
             dtype,
         )
-
+        self.register_buffer(
+            "means",
+            torch.zeros(
+                num_estimators, num_features, device=device, dtype=dtype
+            ),
+        )
+        self.register_buffer(
+            "vars",
+            torch.zeros(
+                num_estimators, num_features, device=device, dtype=dtype
+            ),
+        )
         if num_estimators < 1 or not isinstance(num_estimators, int):
             raise ValueError(
                 "num_estimators should be an integer greater or equal than 1. "
@@ -68,20 +77,26 @@ class MCBatchNorm2d(nn.BatchNorm2d):
         self.num_estimators = num_estimators
         self.reset_mc_statistics()
 
+    @torch.no_grad()
     def forward(self, x: Tensor) -> Tensor:
-        if self.accumulate:
-            self.mean.append(x.mean((0, -2, -1)))
-            self.var.append(x.var((0, -2, -1)))
-            self.accumulate = self.counter < self.num_estimators
         if not self.training:
-            if len(self.mean) != self.num_estimators:
-                raise ValueError("The statistics are not yet filled.")
-            self.running_mean = self.mean[self.counter]
-            self.running_var = self.var[self.counter]
-            self.counter += 1 if self.counter < self.num_estimators else 0
+            self.counter = self.counter % self.num_estimators
+            if self.accumulate:
+                mean = x.mean((0, -2, -1))
+                var = x.var((0, -2, -1), unbiased=True)
+                self.means[self.counter] = mean
+                self.vars[self.counter] = var
+            self.running_mean = self.means[self.counter]
+            self.running_var = self.vars[self.counter]
+            self.counter += 1
+            self.accumulate = (
+                self.accumulate and self.counter < self.num_estimators
+            )
+        else:
+            print("training")
         return super().forward(x)
 
     def reset_mc_statistics(self):
         self.counter = 0
-        self.mean = []
-        self.std = []
+        self.means = torch.zeros_like(self.means)
+        self.vars = torch.zeros_like(self.vars)
