@@ -13,12 +13,19 @@ class OpenImageO(ImageFolder):
     md5sum = "c0abd7cd4b6f218a7149adc718d70e6e"
 
     def __init__(
-        self, root, transform=None, target_transform=None, download=False
+        self,
+        root,
+        split: str | None = None,
+        transform=None,
+        target_transform=None,
+        download=False,
     ):
         """OpenImage-O dataset.
 
         Args:
             root (str): Root directory of the datasets.
+            split (str, optional): Unused, for API consistency. Defaults to
+                None.
             transform (callable, optional): A function/transform that takes in
                 a PIL image and returns a transformed version. E.g,
                 ``transforms.RandomCrop``. Defaults to None.
@@ -29,15 +36,17 @@ class OpenImageO(ImageFolder):
                 downloaded, it is not downloaded again. Defaults to False.
 
         References:
-            Original dataset: The open images dataset v4: Unified image classification,
-            object detection, and visual relationship detection at scale. Kuznetsova,
-            A., et al. The International Journal of Computer Vision.
+            Original dataset: The open images dataset v4: Unified image
+            classification, object detection, and visual relationship detection
+            at scale. Kuznetsova, A., et al. The International Journal of
+            Computer Vision.
 
-            Curation: ViM: Out-Of-Distribution with Virtual-logit Matching. Wang H., et al.
-            In CVPR 2022.
+            Curation: ViM: Out-Of-Distribution with Virtual-logit Matching.
+            Wang H., et al. In CVPR 2022.
         """
         if isinstance(root, str):
-            self.root = Path(root)
+            root = Path(root)
+        self.root = root
 
         self.transform = transform
         self.target_transform = target_transform
