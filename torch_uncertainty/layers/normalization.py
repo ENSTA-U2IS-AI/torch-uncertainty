@@ -80,7 +80,6 @@ class MCBatchNorm2d(nn.BatchNorm2d):
     @torch.no_grad()
     def forward(self, x: Tensor) -> Tensor:
         if not self.training:
-            self.counter = self.counter % self.num_estimators
             if self.accumulate:
                 mean = x.mean((0, -2, -1))
                 var = x.var((0, -2, -1), unbiased=True)
@@ -88,13 +87,14 @@ class MCBatchNorm2d(nn.BatchNorm2d):
                 self.vars[self.counter] = var
             self.running_mean = self.means[self.counter]
             self.running_var = self.vars[self.counter]
-            self.counter += 1
-            self.accumulate = (
-                self.accumulate and self.counter < self.num_estimators
-            )
-        else:
-            print("training")
         return super().forward(x)
+
+    def increase_counter(self):
+        self.counter += 1
+        self.counter = self.counter % self.num_estimators
+
+    def set_counter(self, counter: int):
+        self.counter = counter % self.num_estimators
 
     def reset_mc_statistics(self):
         self.counter = 0
