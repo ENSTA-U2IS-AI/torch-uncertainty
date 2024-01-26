@@ -1,6 +1,6 @@
 import pytest
 import torch
-from torch import softmax
+from torch import nn, softmax
 
 from torch_uncertainty.post_processing import TemperatureScaler
 
@@ -13,7 +13,7 @@ class TestTemperatureScaler:
     """Testing the TemperatureScaler class."""
 
     def test_main(self):
-        scaler = TemperatureScaler(init_val=2)
+        scaler = TemperatureScaler(model=nn.Module(), init_val=2)
         scaler.set_temperature(1)
 
         logits = torch.tensor([[1, 2, 3]], dtype=torch.float32)
@@ -27,9 +27,11 @@ class TestTemperatureScaler:
 
         calibration_set = list(zip(inputs, labels, strict=True))
 
-        scaler = TemperatureScaler(init_val=2, lr=1, max_iter=10)
+        scaler = TemperatureScaler(
+            model=identity_model, init_val=2, lr=1, max_iter=10
+        )
         assert scaler.temperature[0] == 2.0
-        scaler.fit(identity_model, calibration_set)
+        scaler.fit(calibration_set)
         assert scaler.temperature[0] > 10  # best is +inf
         assert (
             torch.sum(
@@ -39,21 +41,20 @@ class TestTemperatureScaler:
             ** 2
             < 0.001
         )
-        scaler.fit_predict(identity_model, calibration_set, progress=False)
+        scaler.fit_predict(calibration_set, progress=False)
 
-    def test_negative_initvalue(self):
+    def test_errors(self):
         with pytest.raises(ValueError):
-            TemperatureScaler(init_val=-1)
+            TemperatureScaler(model=nn.Module(), init_val=-1)
 
-    def test_negative_lr(self):
         with pytest.raises(ValueError):
-            TemperatureScaler(lr=-1)
+            TemperatureScaler(model=nn.Module(), lr=-1)
 
-    def test_negative_maxiter(self):
         with pytest.raises(ValueError):
-            TemperatureScaler(max_iter=-1)
+            TemperatureScaler(model=nn.Module(), max_iter=-1)
 
-    def test_negative_val(self):
-        scaler = TemperatureScaler()
+        scaler = TemperatureScaler(
+            model=nn.Module(),
+        )
         with pytest.raises(ValueError):
             scaler.set_temperature(val=-1)

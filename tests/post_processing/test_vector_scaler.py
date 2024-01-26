@@ -1,5 +1,6 @@
 import pytest
 import torch
+from torch import nn
 
 from torch_uncertainty.post_processing import VectorScaler
 
@@ -12,7 +13,7 @@ class TestVectorScaler:
     """Testing the VectorScaler class."""
 
     def test_main(self):
-        scaler = VectorScaler(num_classes=1, init_w=2)
+        scaler = VectorScaler(model=nn.Module(), num_classes=1, init_w=2)
         scaler.set_temperature(1, 0)
 
         logits = torch.tensor([[1, 2, 3]], dtype=torch.float32)
@@ -23,18 +24,15 @@ class TestVectorScaler:
 
         _ = scaler.temperature
 
-    def test_negative_numclasses(self):
+    def test_errors(self):
         with pytest.raises(ValueError):
-            VectorScaler(num_classes=-1)
+            VectorScaler(model=nn.Module(), num_classes=-1)
 
-    def test_float_numclasses(self):
         with pytest.raises(TypeError):
-            VectorScaler(num_classes=1.8)
+            VectorScaler(model=nn.Module(), num_classes=1.8)
 
-    def test_negative_lr(self):
         with pytest.raises(ValueError):
-            VectorScaler(num_classes=2, lr=-1)
+            VectorScaler(model=nn.Module(), num_classes=2, lr=-1)
 
-    def test_negative_maxiter(self):
         with pytest.raises(ValueError):
-            VectorScaler(num_classes=2, max_iter=-1)
+            VectorScaler(model=nn.Module(), num_classes=2, max_iter=-1)

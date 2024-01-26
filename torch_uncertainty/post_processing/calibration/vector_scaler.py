@@ -9,6 +9,7 @@ from .scaler import Scaler
 class VectorScaler(Scaler):
     def __init__(
         self,
+        model: nn.Module,
         num_classes: int,
         init_w: float = 1,
         init_b: float = 0,
@@ -19,6 +20,7 @@ class VectorScaler(Scaler):
         """Vector scaling post-processing for calibrated probabilities.
 
         Args:
+            model (nn.Module): Model to calibrate.
             num_classes (int): Number of classes.
             init_w (float, optional): Initial value for the weights.
                 Defaults to 1.
@@ -35,7 +37,7 @@ class VectorScaler(Scaler):
             of modern neural networks. In ICML 2017.
 
         """
-        super().__init__(lr=lr, max_iter=max_iter, device=device)
+        super().__init__(model=model, lr=lr, max_iter=max_iter, device=device)
 
         if not isinstance(num_classes, int):
             raise TypeError("num_classes must be an integer.")
