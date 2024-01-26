@@ -38,7 +38,7 @@ class ImageNetDataModule(AbstractDataModule):
         batch_size: int,
         ood_ds: str = "svhn",
         test_alt: str | None = None,
-        procedure: str = "A3",
+        procedure: str | None = None,
         train_size: int = 224,
         rand_augment_opt: str | None = None,
         num_workers: int = 1,
