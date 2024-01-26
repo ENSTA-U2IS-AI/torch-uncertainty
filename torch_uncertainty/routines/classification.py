@@ -311,10 +311,9 @@ class ClassificationSingle(pl.LightningModule):
 
     def on_test_start(self) -> None:
         if self.calibration_set is not None:
-            self.scaler = TemperatureScaler(device=self.device).fit(
-                model=self.model, calibration_set=self.calibration_set()
-            )
-            self.cal_model = torch.nn.Sequential(self.model, self.scaler)
+            self.cal_model = TemperatureScaler(
+                model=self.model, device=self.device
+            ).fit(calibration_set=self.calibration_set())
         else:
             self.scaler = None
             self.cal_model = None
