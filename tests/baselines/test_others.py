@@ -1,11 +1,10 @@
 import pytest
 from torch import nn
 
-from torch_uncertainty.baselines import VGG, ResNet, WideResNet
+from torch_uncertainty.baselines.classification import VGG, ResNet, WideResNet
 from torch_uncertainty.baselines.regression import MLP
 from torch_uncertainty.optimization_procedures import (
     optim_cifar10_resnet18,
-    optim_cifar10_wideresnet,
 )
 
 
@@ -18,7 +17,6 @@ class TestStandardBaseline:
                 num_classes=10,
                 in_channels=3,
                 loss=nn.CrossEntropyLoss,
-                optimization_procedure=optim_cifar10_resnet18,
                 version="prior",
                 arch=18,
                 style="cifar",
@@ -35,7 +33,6 @@ class TestStandardWideBaseline:
                 num_classes=10,
                 in_channels=3,
                 loss=nn.CrossEntropyLoss,
-                optimization_procedure=optim_cifar10_wideresnet,
                 version="prior",
                 style="cifar",
                 groups=1,
@@ -51,7 +48,6 @@ class TestStandardVGGBaseline:
                 num_classes=10,
                 in_channels=3,
                 loss=nn.CrossEntropyLoss,
-                optimization_procedure=optim_cifar10_resnet18,
                 version="prior",
                 arch=11,
                 groups=1,

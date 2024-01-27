@@ -36,7 +36,6 @@ class _MIMOWideResNet(_WideResNet):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         if not self.training:
             x = x.repeat(self.num_estimators, 1, 1, 1)
-
         out = rearrange(x, "(m b) c h w -> b (m c) h w", m=self.num_estimators)
         out = super().forward(out)
         return rearrange(out, "b (m d) -> (m b) d", m=self.num_estimators)

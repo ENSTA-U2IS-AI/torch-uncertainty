@@ -1,6 +1,5 @@
-from argparse import ArgumentParser
 from pathlib import Path
-from typing import Any, Literal
+from typing import Literal
 
 import numpy as np
 import torch
@@ -27,8 +26,8 @@ class CIFAR100DataModule(AbstractDataModule):
     def __init__(
         self,
         root: str | Path,
-        evaluate_ood: bool,
         batch_size: int,
+        evaluate_ood: bool = False,
         val_split: float = 0.0,
         num_workers: int = 1,
         cutout: int | None = None,
@@ -224,22 +223,3 @@ class CIFAR100DataModule(AbstractDataModule):
         if self.val_split:
             return np.array(self.train.dataset.targets)[self.train.indices]
         return np.array(self.train.targets)
-
-    @classmethod
-    def add_argparse_args(
-        cls,
-        parent_parser: ArgumentParser,
-        **kwargs: Any,
-    ) -> ArgumentParser:
-        p = super().add_argparse_args(parent_parser)
-
-        # Arguments for CIFAR100
-        p.add_argument("--cutout", type=int, default=0)
-        p.add_argument("--randaugment", dest="randaugment", action="store_true")
-        p.add_argument("--auto_augment", type=str)
-        p.add_argument("--test_alt", choices=["c"], default=None)
-        p.add_argument(
-            "--severity", dest="corruption_severity", type=int, default=1
-        )
-        p.add_argument("--evaluate_ood", action="store_true")
-        return parent_parser

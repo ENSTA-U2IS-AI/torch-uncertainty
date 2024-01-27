@@ -1,6 +1,4 @@
-from argparse import ArgumentParser
-
-from torch_uncertainty.baselines import DeepEnsembles
+from torch_uncertainty.baselines.classification import DeepEnsembles
 
 
 class TestDeepEnsembles:
@@ -8,16 +6,10 @@ class TestDeepEnsembles:
 
     def test_standard(self):
         DeepEnsembles(
-            task="classification",
             log_path=".",
             checkpoint_ids=[],
             backbone="resnet",
-            in_channels=3,
             num_classes=10,
-            version="vanilla",
-            arch=18,
-            style="cifar",
-            groups=1,
         )
-        parser = ArgumentParser()
-        DeepEnsembles.add_model_specific_args(parser)
+        # parser = ArgumentParser()
+        # DeepEnsembles.add_model_specific_args(parser)

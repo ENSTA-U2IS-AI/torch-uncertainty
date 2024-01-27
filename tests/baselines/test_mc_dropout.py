@@ -2,11 +2,12 @@ import torch
 from torch import nn
 from torchinfo import summary
 
-from torch_uncertainty.baselines import VGG, ResNet, WideResNet
-from torch_uncertainty.optimization_procedures import (
-    optim_cifar10_resnet18,
-    optim_cifar10_wideresnet,
-)
+from torch_uncertainty.baselines.classification import VGG, ResNet, WideResNet
+
+# from torch_uncertainty.optimization_procedures import (
+#     optim_cifar10_resnet18,
+#     optim_cifar10_wideresnet,
+# )
 
 
 class TestStandardBaseline:
@@ -17,7 +18,6 @@ class TestStandardBaseline:
             num_classes=10,
             in_channels=3,
             loss=nn.CrossEntropyLoss,
-            optimization_procedure=optim_cifar10_resnet18,
             version="mc-dropout",
             num_estimators=4,
             arch=18,
@@ -27,7 +27,6 @@ class TestStandardBaseline:
         summary(net)
 
         _ = net.criterion
-        net.configure_optimizers()
         net(torch.rand(1, 3, 32, 32))
 
 
@@ -39,7 +38,6 @@ class TestStandardWideBaseline:
             num_classes=10,
             in_channels=3,
             loss=nn.CrossEntropyLoss,
-            optimization_procedure=optim_cifar10_wideresnet,
             version="mc-dropout",
             num_estimators=4,
             style="cifar",
@@ -48,7 +46,6 @@ class TestStandardWideBaseline:
         summary(net)
 
         _ = net.criterion
-        net.configure_optimizers()
         net(torch.rand(1, 3, 32, 32))
 
 
@@ -60,7 +57,6 @@ class TestStandardVGGBaseline:
             num_classes=10,
             in_channels=3,
             loss=nn.CrossEntropyLoss,
-            optimization_procedure=optim_cifar10_resnet18,
             version="mc-dropout",
             num_estimators=4,
             arch=11,
@@ -70,14 +66,12 @@ class TestStandardVGGBaseline:
         summary(net)
 
         _ = net.criterion
-        net.configure_optimizers()
         net(torch.rand(1, 3, 32, 32))
 
         net = VGG(
             num_classes=10,
             in_channels=3,
             loss=nn.CrossEntropyLoss,
-            optimization_procedure=optim_cifar10_resnet18,
             version="mc-dropout",
             num_estimators=4,
             arch=11,

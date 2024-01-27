@@ -2,12 +2,13 @@ import torch
 from torch import nn
 from torchinfo import summary
 
-from torch_uncertainty.baselines import ResNet, WideResNet
-from torch_uncertainty.optimization_procedures import (
-    optim_cifar10_resnet18,
-    optim_cifar10_resnet50,
-    optim_cifar10_wideresnet,
-)
+from torch_uncertainty.baselines.classification import ResNet, WideResNet
+
+# from torch_uncertainty.optimization_procedures import (
+#     optim_cifar10_resnet18,
+#     optim_cifar10_resnet50,
+#     optim_cifar10_wideresnet,
+# )
 
 
 class TestMIMOBaseline:
@@ -18,7 +19,6 @@ class TestMIMOBaseline:
             num_classes=10,
             in_channels=3,
             loss=nn.CrossEntropyLoss,
-            optimization_procedure=optim_cifar10_resnet50,
             version="mimo",
             arch=50,
             style="cifar",
@@ -31,7 +31,6 @@ class TestMIMOBaseline:
         summary(net)
 
         _ = net.criterion
-        _ = net.configure_optimizers()
         _ = net(torch.rand(1, 3, 32, 32))
 
     def test_mimo_18(self):
@@ -39,7 +38,6 @@ class TestMIMOBaseline:
             num_classes=10,
             in_channels=3,
             loss=nn.CrossEntropyLoss,
-            optimization_procedure=optim_cifar10_resnet18,
             version="mimo",
             arch=18,
             style="imagenet",
@@ -52,7 +50,6 @@ class TestMIMOBaseline:
         summary(net)
 
         _ = net.criterion
-        _ = net.configure_optimizers()
         _ = net(torch.rand(1, 3, 40, 40))
 
 
@@ -64,7 +61,6 @@ class TestMIMOWideBaseline:
             num_classes=10,
             in_channels=3,
             loss=nn.CrossEntropyLoss,
-            optimization_procedure=optim_cifar10_wideresnet,
             version="mimo",
             style="cifar",
             num_estimators=4,
@@ -76,5 +72,4 @@ class TestMIMOWideBaseline:
         summary(net)
 
         _ = net.criterion
-        _ = net.configure_optimizers()
         _ = net(torch.rand(1, 3, 32, 32))

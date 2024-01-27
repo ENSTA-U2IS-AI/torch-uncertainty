@@ -76,8 +76,8 @@ class MulticlassCE(MulticlassCalibrationError):  # noqa: N818
     def plot(self, ax: _AX_TYPE | None = None) -> _PLOT_OUT_TYPE:
         fig, ax = plt.subplots() if ax is None else (None, ax)
 
-        conf = dim_zero_cat(self.confidences)
-        acc = dim_zero_cat(self.accuracies)
+        conf = dim_zero_cat(self.confidences).cpu()
+        acc = dim_zero_cat(self.accuracies).cpu()
 
         bin_width = 1 / self.n_bins
 
@@ -98,9 +98,9 @@ class MulticlassCE(MulticlassCalibrationError):  # noqa: N818
                 acc.unsqueeze(1) * torch.nn.functional.one_hot(inverse).float(),
                 0,
             )
-            / (val_oh.T @ counts + 1e-6).float()
+            / (val_oh.T.float() @ counts.float() + 1e-6)
         )
-        counts_all = (val_oh.T @ counts).float()
+        counts_all = val_oh.T.float() @ counts.float()
         total = torch.sum(counts)
 
         plt.rc("axes", axisbelow=True)

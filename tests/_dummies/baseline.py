@@ -1,12 +1,10 @@
-from argparse import ArgumentParser
 from typing import Any
 
 from pytorch_lightning import LightningModule
 from torch import nn
 
 from torch_uncertainty.routines.classification import (
-    ClassificationEnsemble,
-    ClassificationSingle,
+    ClassificationRoutine,
 )
 from torch_uncertainty.routines.regression import (
     RegressionEnsemble,
@@ -34,7 +32,7 @@ class DummyClassificationBaseline:
         )
 
         if baseline_type == "single":
-            return ClassificationSingle(
+            return ClassificationRoutine(
                 num_classes=num_classes,
                 model=model,
                 loss=loss,
@@ -45,7 +43,7 @@ class DummyClassificationBaseline:
             )
         # baseline_type == "ensemble":
         kwargs["num_estimators"] = 2
-        return ClassificationEnsemble(
+        return ClassificationRoutine(
             num_classes=num_classes,
             model=model,
             loss=loss,
@@ -55,12 +53,12 @@ class DummyClassificationBaseline:
             **kwargs,
         )
 
-    @classmethod
-    def add_model_specific_args(
-        cls,
-        parser: ArgumentParser,
-    ) -> ArgumentParser:
-        return ClassificationEnsemble.add_model_specific_args(parser)
+    # @classmethod
+    # def add_model_specific_args(
+    #     cls,
+    #     parser: ArgumentParser,
+    # ) -> ArgumentParser:
+    #     return ClassificationEnsemble.add_model_specific_args(parser)
 
 
 class DummyRegressionBaseline:
@@ -101,9 +99,9 @@ class DummyRegressionBaseline:
             **kwargs,
         )
 
-    @classmethod
-    def add_model_specific_args(
-        cls,
-        parser: ArgumentParser,
-    ) -> ArgumentParser:
-        return ClassificationEnsemble.add_model_specific_args(parser)
+    # @classmethod
+    # def add_model_specific_args(
+    #     cls,
+    #     parser: ArgumentParser,
+    # ) -> ArgumentParser:
+    #     return ClassificationEnsemble.add_model_specific_args(parser)

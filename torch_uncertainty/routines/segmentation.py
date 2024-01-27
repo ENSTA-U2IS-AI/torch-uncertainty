@@ -11,7 +11,9 @@ class SegmentationRoutine(LightningModule):
         self,
         num_classes: int,
         model: nn.Module,
-        loss: nn.Module | None,
+        loss: nn.Module,
+        num_estimators: int,
+        format_batch_fn: nn.Module | None = None,
     ) -> None:
         super().__init__()
 

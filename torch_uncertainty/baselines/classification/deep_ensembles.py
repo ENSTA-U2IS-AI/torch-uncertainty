@@ -1,0 +1,64 @@
+from pathlib import Path
+from typing import Literal
+
+from torch_uncertainty.models import deep_ensembles
+from torch_uncertainty.routines.classification import ClassificationRoutine
+from torch_uncertainty.utils import get_version
+
+from . import VGG, ResNet, WideResNet
+
+
+class DeepEnsembles(ClassificationRoutine):
+    backbones = {
+        "resnet": ResNet,
+        "vgg": VGG,
+        "wideresnet": WideResNet,
+    }
+
+    def __init__(
+        self,
+        num_classes: int,
+        log_path: str | Path,
+        checkpoint_ids: list[int],
+        backbone: Literal["resnet", "vgg", "wideresnet"],
+        evaluate_ood: bool = False,
+        use_entropy: bool = False,
+        use_logits: bool = False,
+        use_mi: bool = False,
+        use_variation_ratio: bool = False,
+        log_plots: bool = False,
+        calibration_set: Literal["val", "test"] | None = None,
+    ) -> None:
+        if isinstance(log_path, str):
+            log_path = Path(log_path)
+
+        backbone_cls = self.backbones[backbone]
+
+        models = []
+        for version in checkpoint_ids:  # coverage: ignore
+            ckpt_file, hparams_file = get_version(
+                root=log_path, version=version
+            )
+            trained_model = backbone_cls.load_from_checkpoint(
+                checkpoint_path=ckpt_file,
+                hparams_file=hparams_file,
+                loss=None,
+                optimization_procedure=None,
+            ).eval()
+            models.append(trained_model.model)
+
+        de = deep_ensembles(models=models)
+
+        super().__init__(
+            num_classes=num_classes,
+            model=de,
+            loss=None,
+            num_estimators=de.num_estimators,
+            evaluate_ood=evaluate_ood,
+            use_entropy=use_entropy,
+            use_logits=use_logits,
+            use_mi=use_mi,
+            use_variation_ratio=use_variation_ratio,
+            log_plots=log_plots,
+            calibration_set=calibration_set,
+        )
