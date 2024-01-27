@@ -63,16 +63,16 @@ class VectorScaler(Scaler):
             requires_grad=True,
         )
 
-    def _scale(self, logits: torch.Tensor) -> torch.Tensor:
-        """Scale the logits with the optimal temperature.
+    def _scale(self, inputs: torch.Tensor) -> torch.Tensor:
+        """Scale the predictions with the optimal temperature.
 
         Args:
-            logits (torch.Tensor): Logits to be scaled.
+            inputs (torch.Tensor): inputs to be scaled.
 
         Returns:
-            torch.Tensor: Scaled logits.
+            torch.Tensor: Scaled inputs.
         """
-        return self.temp_w * logits + self.temp_b
+        return self.temp_w * self.model(inputs) + self.temp_b
 
     @property
     def temperature(self) -> list:

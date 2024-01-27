@@ -6,6 +6,11 @@ __all__ = [
 ]
 
 
+class Identity(nn.Module):
+    def forward(self, x: Tensor) -> Tensor:
+        return x
+
+
 class _Dummy(nn.Module):
     def __init__(
         self,
@@ -70,7 +75,6 @@ def dummy_model(
         _Dummy: Dummy model.
     """
     if with_feats:
-        print("WITH FEATS")
         return _DummyWithFeats(
             in_channels=in_channels,
             num_classes=num_classes,
