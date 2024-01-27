@@ -47,6 +47,23 @@ class MCBatchNorm2d(nn.BatchNorm2d):
         device=None,
         dtype=None,
     ) -> None:
+        """Monte Carlo Stochastic Batch Normalization.
+
+        Args:
+            num_features (int): Number of features.
+            num_estimators (int): Number of estimators.
+            eps (float, optional): Epsilon. Defaults to 0.00001.
+            momentum (float, optional): Momentum. Defaults to 0.1.
+            affine (bool, optional): Affine. Defaults to True.
+            track_running_stats (bool, optional): Track running statistics.
+                Defaults to True.
+            device (optional): Device. Defaults to None.
+            dtype (optional): Data type. Defaults to None.
+
+        Note:
+            These layers should not be used out of the corresponding wrapper.
+            Check MCBatchNorm in torch_uncertainty/post_processing/.
+        """
         super().__init__(
             num_features,
             eps,
@@ -79,6 +96,11 @@ class MCBatchNorm2d(nn.BatchNorm2d):
 
     @torch.no_grad()
     def forward(self, x: Tensor) -> Tensor:
+        """Forward pass.
+
+        Args:
+            x (Tensor): Input tensor.
+        """
         if not self.training:
             if self.accumulate:
                 mean = x.mean((0, -2, -1))
@@ -89,14 +111,21 @@ class MCBatchNorm2d(nn.BatchNorm2d):
             self.running_var = self.vars[self.counter]
         return super().forward(x)
 
-    def increase_counter(self):
+    def increase_counter(self) -> None:
+        """Increase the counter."""
         self.counter += 1
         self.counter = self.counter % self.num_estimators
 
-    def set_counter(self, counter: int):
+    def set_counter(self, counter: int) -> None:
+        """Set the counter.
+
+        Args:
+            counter (int): new value for the counter.
+        """
         self.counter = counter % self.num_estimators
 
-    def reset_mc_statistics(self):
+    def reset_mc_statistics(self) -> None:
+        """Reset the batch statistics."""
         self.counter = 0
         self.means = torch.zeros_like(self.means)
         self.vars = torch.zeros_like(self.vars)

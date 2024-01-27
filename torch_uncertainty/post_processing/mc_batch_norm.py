@@ -21,6 +21,20 @@ class MCBatchNorm(nn.Module):
         mc_batch_size: int = 32,
         device: Literal["cpu", "cuda"] | torch.device | None = None,
     ) -> None:
+        """Monte Carlo Stochastic Batch Normalization.
+
+        Args:
+            model (nn.Module): model to be converted.
+            num_estimators (int): number of estimators.
+            convert (bool): whether to convert the model.
+            mc_batch_size (int, optional): Monte Carlo batch size. Defaults to 32.
+            device (Literal["cpu", "cuda"] | torch.device | None, optional): device.
+                Defaults to None.
+
+        Reference:
+            Teye M, Azizpour H, Smith K. Bayesian uncertainty estimation for
+            batch normalized deep networks. In ICML 2018.
+        """
         super().__init__()
 
         self.mc_batch_size = mc_batch_size
@@ -42,6 +56,15 @@ class MCBatchNorm(nn.Module):
             self._convert()
 
     def fit(self, dataset: Dataset):
+        """Fit the model on the dataset.
+
+        Args:
+            dataset (Dataset): dataset to be used for fitting.
+
+        Note:
+            This method is used to populate the MC BatchNorm layers.
+            Use the training dataset.
+        """
         self.dl = DataLoader(
             dataset, batch_size=self.mc_batch_size, shuffle=True
         )
@@ -54,6 +77,7 @@ class MCBatchNorm(nn.Module):
                 return
 
     def _est_forward(self, x: Tensor) -> Tensor:
+        """Forward pass of a single estimator."""
         logit = self.model(x)
         self.raise_counters()
         return logit
@@ -72,25 +96,34 @@ class MCBatchNorm(nn.Module):
         return preds
 
     def _has_mcbn(self) -> bool:
+        """Check if the model contains any MCBatchNorm2d layers."""
         for module in self.model.modules():
             if isinstance(module, MCBatchNorm2d):
                 return True
         return False
 
     def _convert(self) -> None:
+        """Convert all BatchNorm2d layers to MCBatchNorm2d layers."""
         self.replace_layers(self.model)
 
     def reset_counters(self) -> None:
+        """Reset all counters to 0."""
         self.counter = 0
         for layer in self.mc_batch_norm_layers:
             layer.set_counter(0)
 
     def raise_counters(self) -> None:
+        """Raise all counters by 1."""
         self.counter += 1
         for layer in self.mc_batch_norm_layers:
             layer.set_counter(self.counter)
 
     def replace_layers(self, model: nn.Module) -> None:
+        """Replace all BatchNorm2d layers with MCBatchNorm2d layers.
+
+        Args:
+            model (nn.Module): model to be converted.
+        """
         for name, module in model.named_children():
             if len(list(module.children())) > 0:
                 self.replace_layers(module)
