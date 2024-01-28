@@ -23,20 +23,28 @@ class _LeNet(nn.Module):
         norm: type[nn.Module],
         groups: int,
         dropout_rate: float,
-        num_estimators: int,
         last_layer_dropout: bool,
     ) -> None:
         super().__init__()
         self.activation = activation
-        self.norm = norm()  # TODO: Fix when not Identity
+
+        if norm == nn.Identity:
+            self.norm1 = norm()
+            self.norm2 = norm()
+        elif norm != nn.BatchNorm2d:
+            raise ValueError("norm must be nn.Identity or nn.BatchNorm2d")
+
         self.dropout_rate = dropout_rate
-        self.num_estimators = num_estimators
         self.last_layer_dropout = last_layer_dropout
 
         self.conv1 = conv2d_layer(
             in_channels, 6, (5, 5), groups=groups, **layer_args
         )
+        if norm == nn.BatchNorm2d:
+            self.norm1 = norm(6)
         self.conv2 = conv2d_layer(6, 16, (5, 5), groups=groups, **layer_args)
+        if norm == nn.BatchNorm2d:
+            self.norm2 = norm(16)
         self.pooling = nn.AdaptiveAvgPool2d((4, 4))
         self.fc1 = linear_layer(256, 120, **layer_args)
         self.fc2 = linear_layer(120, 84, **layer_args)
@@ -44,23 +52,23 @@ class _LeNet(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         out = F.dropout(
-            self.activation(self.norm(self.conv1(x))),
+            self.activation(self.norm1(self.conv1(x))),
             p=self.dropout_rate,
         )
         out = F.max_pool2d(out, 2)
         out = F.dropout(
-            self.activation(self.norm(self.conv2(out))),
+            self.activation(self.norm2(self.conv2(out))),
             p=self.dropout_rate,
         )
         out = F.max_pool2d(out, 2)
         out = self.pooling(out)
         out = torch.flatten(out, 1)
         out = F.dropout(
-            self.activation(self.norm(self.fc1(out))),
+            self.activation(self.fc1(out)),
             p=self.dropout_rate,
         )
         out = F.dropout(
-            self.activation(self.norm(self.fc2(out))),
+            self.activation(self.fc2(out)),
             p=self.dropout_rate,
         )
         return self.fc3(out)
@@ -82,7 +90,6 @@ def _lenet(
     norm: type[nn.Module] = nn.Identity,
     groups: int = 1,
     dropout_rate: float = 0.0,
-    num_estimators: int | None = None,
     last_layer_dropout: bool = False,
 ) -> _LeNet | _StochasticLeNet:
     if layer_args is None:
@@ -98,7 +105,6 @@ def _lenet(
         groups=groups,
         layer_args=layer_args,
         dropout_rate=dropout_rate,
-        num_estimators=num_estimators,
         last_layer_dropout=last_layer_dropout,
     )
 
@@ -110,7 +116,6 @@ def lenet(
     norm: type[nn.Module] = nn.Identity,
     groups: int = 1,
     dropout_rate: float = 0.0,
-    num_estimators: int | None = None,
     last_layer_dropout: bool = False,
 ) -> _LeNet:
     return _lenet(
@@ -124,7 +129,6 @@ def lenet(
         norm=norm,
         groups=groups,
         dropout_rate=dropout_rate,
-        num_estimators=num_estimators,
         last_layer_dropout=last_layer_dropout,
     )
 
