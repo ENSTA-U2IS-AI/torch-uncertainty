@@ -11,7 +11,7 @@ from torch_uncertainty.layers.normalization import MCBatchNorm2d
 class MCBatchNorm(nn.Module):
     counter: int = 0
     mc_batch_norm_layers: list[MCBatchNorm2d] = []
-    populated = False
+    trained = False
 
     def __init__(
         self,
@@ -78,12 +78,17 @@ class MCBatchNorm(nn.Module):
         self.counter = 0
         self.reset_counters()
         self.set_accumulate(True)
+        self.train()
         for x, _ in self.dl:
             self.model(x.to(self.device))
             self.raise_counters()
             if self.counter == self.num_estimators:
                 self.set_accumulate(False)
-                break
+                self.trained = True
+                return
+        raise ValueError(
+            "The dataset is too small to populate the MC BatchNorm statistics."
+        )
 
     def _est_forward(self, x: Tensor) -> Tensor:
         """Forward pass of a single estimator."""
@@ -97,6 +102,10 @@ class MCBatchNorm(nn.Module):
     ) -> tuple[Tensor, Tensor]:
         if self.training:
             return self.model(x)
+        if not self.trained:
+            raise RuntimeError(
+                "MCBatchNorm has not been trained. Call .fit() first."
+            )
         self.reset_counters()
         return torch.cat(
             [self._est_forward(x) for _ in range(self.num_estimators)], dim=0

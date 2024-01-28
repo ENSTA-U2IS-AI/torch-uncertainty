@@ -1,10 +1,12 @@
 from collections.abc import Callable
+from functools import partial
 
 import torch
 import torch.nn.functional as F
 from torch import nn
 
 from torch_uncertainty.layers.bayesian import BayesConv2d, BayesLinear
+from torch_uncertainty.layers.normalization import MCBatchNorm2d
 from torch_uncertainty.layers.packed import PackedConv2d, PackedLinear
 from torch_uncertainty.models.utils import stochastic_model
 
@@ -31,7 +33,11 @@ class _LeNet(nn.Module):
         if norm == nn.Identity:
             self.norm1 = norm()
             self.norm2 = norm()
-        elif norm != nn.BatchNorm2d:
+        elif (
+            norm != nn.BatchNorm2d
+            and isinstance(norm, partial)
+            and norm.func != MCBatchNorm2d
+        ):
             raise ValueError("norm must be nn.Identity or nn.BatchNorm2d")
 
         self.dropout_rate = dropout_rate
@@ -40,10 +46,10 @@ class _LeNet(nn.Module):
         self.conv1 = conv2d_layer(
             in_channels, 6, (5, 5), groups=groups, **layer_args
         )
-        if norm == nn.BatchNorm2d:
+        if norm == nn.BatchNorm2d or MCBatchNorm2d:
             self.norm1 = norm(6)
         self.conv2 = conv2d_layer(6, 16, (5, 5), groups=groups, **layer_args)
-        if norm == nn.BatchNorm2d:
+        if norm == nn.BatchNorm2d or MCBatchNorm2d:
             self.norm2 = norm(16)
         self.pooling = nn.AdaptiveAvgPool2d((4, 4))
         self.fc1 = linear_layer(256, 120, **layer_args)
