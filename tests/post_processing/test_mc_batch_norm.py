@@ -1,5 +1,6 @@
 import pytest
 import torch
+import torchvision.transforms as T
 
 from tests._dummies.dataset import DummyClassificationDataset
 from tests._dummies.model import Identity
@@ -17,7 +18,12 @@ class TestMCBatchNorm:
             model, num_estimators=2, convert=True, mc_batch_size=1
         )
         dataset = DummyClassificationDataset(
-            "./", image_size=16, num_classes=1, num_images=2
+            "./",
+            num_channels=1,
+            image_size=16,
+            num_classes=1,
+            num_images=2,
+            transform=T.ToTensor(),
         )
         stoch_model.fit(dataset=dataset)
         stoch_model.train()

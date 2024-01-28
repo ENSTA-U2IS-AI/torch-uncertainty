@@ -1,7 +1,7 @@
 import pytest
 from torch import nn
 
-from torch_uncertainty.models import lenet
+from torch_uncertainty.models.lenet import lenet
 
 
 class TestLeNet:

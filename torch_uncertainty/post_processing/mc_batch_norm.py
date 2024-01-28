@@ -47,12 +47,12 @@ class MCBatchNorm(nn.Module):
             )
         self.num_estimators = num_estimators
 
+        self.model = deepcopy(model)
         if not convert and not self._has_mcbn():
             raise ValueError(
                 "model does not contain any MCBatchNorm2d nor is not to be "
                 "converted."
             )
-        self.model = deepcopy(model)
         self.device = device
         self.model = self.model.eval()
         if convert:
