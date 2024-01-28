@@ -33,10 +33,8 @@ class _LeNet(nn.Module):
         if norm == nn.Identity:
             self.norm1 = norm()
             self.norm2 = norm()
-        elif (
-            norm != nn.BatchNorm2d
-            and isinstance(norm, partial)
-            and norm.func != MCBatchNorm2d
+        elif norm != nn.BatchNorm2d and not (
+            isinstance(norm, partial) and norm.func == MCBatchNorm2d
         ):
             raise ValueError("norm must be nn.Identity or nn.BatchNorm2d")
 
