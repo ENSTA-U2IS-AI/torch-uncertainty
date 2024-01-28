@@ -1,10 +1,11 @@
 import pytest
 import torch
 import torchvision.transforms as T
+from torch import nn
 
 from tests._dummies.dataset import DummyClassificationDataset
 from tests._dummies.model import Identity
-from torch_uncertainty.models.resnet import resnet20
+from torch_uncertainty.models.lenet import lenet
 from torch_uncertainty.post_processing import MCBatchNorm
 
 
@@ -13,7 +14,7 @@ class TestMCBatchNorm:
 
     def test_main(self):
         """Test initialization."""
-        model = resnet20(1, 1)
+        model = lenet(1, 1, norm=nn.BatchNorm2d)
         stoch_model = MCBatchNorm(
             model, num_estimators=2, convert=True, mc_batch_size=1
         )

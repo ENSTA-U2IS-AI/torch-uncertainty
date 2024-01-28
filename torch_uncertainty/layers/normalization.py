@@ -16,6 +16,12 @@ class FilterResponseNorm2d(nn.Module):
         """
         super().__init__()
         self.eps = eps
+        if num_channels < 1 or not isinstance(num_channels, int):
+            raise ValueError(
+                "num_channels should be an integer greater or equal than 1. "
+                f"got {num_channels}."
+            )
+
         self.tau = nn.Parameter(
             torch.zeros((1, num_channels, 1, 1), device=device, dtype=dtype)
         )
@@ -73,6 +79,13 @@ class MCBatchNorm2d(nn.BatchNorm2d):
             device,
             dtype,
         )
+
+        if num_estimators < 1 or not isinstance(num_estimators, int):
+            raise ValueError(
+                "num_estimators should be an integer greater or equal than 1. "
+                f"got {num_estimators}."
+            )
+
         self.register_buffer(
             "means",
             torch.zeros(
@@ -85,11 +98,7 @@ class MCBatchNorm2d(nn.BatchNorm2d):
                 num_estimators, num_features, device=device, dtype=dtype
             ),
         )
-        if num_estimators < 1 or not isinstance(num_estimators, int):
-            raise ValueError(
-                "num_estimators should be an integer greater or equal than 1. "
-                f"got {num_estimators}."
-            )
+
         self.accumulate = True
         self.num_estimators = num_estimators
         self.reset_mc_statistics()
@@ -110,11 +119,6 @@ class MCBatchNorm2d(nn.BatchNorm2d):
             self.running_mean = self.means[self.counter]
             self.running_var = self.vars[self.counter]
         return super().forward(x)
-
-    def increase_counter(self) -> None:
-        """Increase the counter."""
-        self.counter += 1
-        self.counter = self.counter % self.num_estimators
 
     def set_counter(self, counter: int) -> None:
         """Set the counter.
