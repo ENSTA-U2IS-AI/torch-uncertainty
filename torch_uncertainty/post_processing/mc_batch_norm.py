@@ -10,7 +10,7 @@ from torch_uncertainty.layers.normalization import MCBatchNorm2d
 
 class MCBatchNorm(nn.Module):
     counter: int = 0
-    mc_batch_norm_layers: list[MCBatchNorm2d]
+    mc_batch_norm_layers: list[MCBatchNorm2d] = []
     populated = False
 
     def __init__(
@@ -21,7 +21,7 @@ class MCBatchNorm(nn.Module):
         mc_batch_size: int = 32,
         device: Literal["cpu", "cuda"] | torch.device | None = None,
     ) -> None:
-        """Monte Carlo Stochastic Batch Normalization.
+        """Monte Carlo Batch Normalization wrapper.
 
         Args:
             model (nn.Module): model to be converted.
@@ -30,6 +30,9 @@ class MCBatchNorm(nn.Module):
             mc_batch_size (int, optional): Monte Carlo batch size. Defaults to 32.
             device (Literal["cpu", "cuda"] | torch.device | None, optional): device.
                 Defaults to None.
+
+        Note:
+            This wrapper will be stochastic in eval mode only.
 
         Reference:
             Teye M, Azizpour H, Smith K. Bayesian uncertainty estimation for
@@ -54,6 +57,10 @@ class MCBatchNorm(nn.Module):
         self.model = self.model.eval()
         if convert:
             self._convert()
+            if not self._has_mcbn():
+                raise ValueError(
+                    "model does not contain any MCBatchNorm2d after conversion."
+                )
 
     def fit(self, dataset: Dataset):
         """Fit the model on the dataset.
@@ -70,11 +77,13 @@ class MCBatchNorm(nn.Module):
         )
         self.counter = 0
         self.reset_counters()
+        self.set_accumulate(True)
         for x, _ in self.dl:
             self.model(x.to(self.device))
             self.raise_counters()
             if self.counter == self.num_estimators:
-                return
+                self.set_accumulate(False)
+                break
 
     def _est_forward(self, x: Tensor) -> Tensor:
         """Forward pass of a single estimator."""
@@ -89,11 +98,9 @@ class MCBatchNorm(nn.Module):
         if self.training:
             return self.model(x)
         self.reset_counters()
-        preds = torch.cat(
+        return torch.cat(
             [self._est_forward(x) for _ in range(self.num_estimators)], dim=0
         )
-        self.reset_counters()
-        return preds
 
     def _has_mcbn(self) -> bool:
         """Check if the model contains any MCBatchNorm2d layers."""
@@ -117,6 +124,15 @@ class MCBatchNorm(nn.Module):
         self.counter += 1
         for layer in self.mc_batch_norm_layers:
             layer.set_counter(self.counter)
+
+    def set_accumulate(self, accumulate: bool) -> None:
+        """Set the accumulate flag for all MCBatchNorm2d layers.
+
+        Args:
+            accumulate (bool): accumulate flag.
+        """
+        for layer in self.mc_batch_norm_layers:
+            layer.accumulate = accumulate
 
     def replace_layers(self, model: nn.Module) -> None:
         """Replace all BatchNorm2d layers with MCBatchNorm2d layers.
