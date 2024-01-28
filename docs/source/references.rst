@@ -170,6 +170,15 @@ For temperature, vector, & matrix scaling, consider citing:
 * Authors: *Chuan Guo, Geoff Pleiss, Yu Sun, and Kilian Q. Weinberger*
 * Paper: `ICML 2017 <https://arxiv.org/pdf/1706.04599.pdf>`__.
 
+Monte Carlo Batch Normalization
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For Monte Carlo Batch Normalization, consider citing:
+
+**Bayesian Uncertainty Estimation for Batch Normalized Deep Networks**
+
+* Authors: *Mathias Teye, Hossein Azizpour, and Kevin Smith*
+* Paper: `ICML 2018 <https://arxiv.org/pdf/1802.06455.pdf>`__.
 
 Metrics
 -------
