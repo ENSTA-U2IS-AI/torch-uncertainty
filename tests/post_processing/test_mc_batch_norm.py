@@ -6,7 +6,6 @@ import torchvision.transforms as T
 from torch import nn
 
 from tests._dummies.dataset import DummyClassificationDataset
-from tests._dummies.model import Identity
 from torch_uncertainty.layers.normalization import MCBatchNorm2d
 from torch_uncertainty.models.lenet import lenet
 from torch_uncertainty.post_processing import MCBatchNorm
@@ -45,7 +44,7 @@ class TestMCBatchNorm:
 
     def test_errors(self):
         """Test errors."""
-        model = Identity()
+        model = nn.Identity()
         with pytest.raises(ValueError):
             MCBatchNorm(model, num_estimators=0, convert=True)
         with pytest.raises(ValueError):

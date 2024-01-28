@@ -1,8 +1,7 @@
 import pytest
 import torch
-from torch import softmax
+from torch import nn, softmax
 
-from tests._dummies.model import Identity
 from torch_uncertainty.post_processing import (
     MatrixScaler,
     TemperatureScaler,
@@ -14,7 +13,7 @@ class TestTemperatureScaler:
     """Testing the TemperatureScaler class."""
 
     def test_main(self):
-        scaler = TemperatureScaler(model=Identity(), init_val=2)
+        scaler = TemperatureScaler(model=nn.Identity(), init_val=2)
         scaler.set_temperature(1)
 
         logits = torch.tensor([[1, 2, 3]], dtype=torch.float32)
@@ -29,7 +28,7 @@ class TestTemperatureScaler:
         calibration_set = list(zip(inputs, labels, strict=True))
 
         scaler = TemperatureScaler(
-            model=Identity(), init_val=2, lr=1, max_iter=10
+            model=nn.Identity(), init_val=2, lr=1, max_iter=10
         )
         assert scaler.temperature[0] == 2.0
         scaler.fit(calibration_set)
@@ -46,16 +45,16 @@ class TestTemperatureScaler:
 
     def test_errors(self):
         with pytest.raises(ValueError):
-            TemperatureScaler(model=Identity(), init_val=-1)
+            TemperatureScaler(model=nn.Identity(), init_val=-1)
 
         with pytest.raises(ValueError):
-            TemperatureScaler(model=Identity(), lr=-1)
+            TemperatureScaler(model=nn.Identity(), lr=-1)
 
         with pytest.raises(ValueError):
-            TemperatureScaler(model=Identity(), max_iter=-1)
+            TemperatureScaler(model=nn.Identity(), max_iter=-1)
 
         scaler = TemperatureScaler(
-            model=Identity(),
+            model=nn.Identity(),
         )
         with pytest.raises(ValueError):
             scaler.set_temperature(val=-1)
@@ -65,7 +64,7 @@ class TestVectorScaler:
     """Testing the VectorScaler class."""
 
     def test_main(self):
-        scaler = VectorScaler(model=Identity(), num_classes=1, init_w=2)
+        scaler = VectorScaler(model=nn.Identity(), num_classes=1, init_w=2)
         scaler.set_temperature(1, 0)
 
         logits = torch.tensor([[1, 2, 3]], dtype=torch.float32)
@@ -78,23 +77,23 @@ class TestVectorScaler:
 
     def test_errors(self):
         with pytest.raises(ValueError):
-            VectorScaler(model=Identity(), num_classes=-1)
+            VectorScaler(model=nn.Identity(), num_classes=-1)
 
         with pytest.raises(TypeError):
-            VectorScaler(model=Identity(), num_classes=1.8)
+            VectorScaler(model=nn.Identity(), num_classes=1.8)
 
         with pytest.raises(ValueError):
-            VectorScaler(model=Identity(), num_classes=2, lr=-1)
+            VectorScaler(model=nn.Identity(), num_classes=2, lr=-1)
 
         with pytest.raises(ValueError):
-            VectorScaler(model=Identity(), num_classes=2, max_iter=-1)
+            VectorScaler(model=nn.Identity(), num_classes=2, max_iter=-1)
 
 
 class TestMatrixScaler:
     """Testing the MatrixScaler class."""
 
     def test_main(self):
-        scaler = MatrixScaler(model=Identity(), num_classes=1, init_w=2)
+        scaler = MatrixScaler(model=nn.Identity(), num_classes=1, init_w=2)
         scaler.set_temperature(1, 0)
 
         logits = torch.tensor([[1, 2, 3]], dtype=torch.float32)
@@ -107,13 +106,13 @@ class TestMatrixScaler:
 
     def test_errors(self):
         with pytest.raises(ValueError):
-            MatrixScaler(model=Identity(), num_classes=-1)
+            MatrixScaler(model=nn.Identity(), num_classes=-1)
 
         with pytest.raises(TypeError):
-            MatrixScaler(model=Identity(), num_classes=1.8)
+            MatrixScaler(model=nn.Identity(), num_classes=1.8)
 
         with pytest.raises(ValueError):
-            MatrixScaler(model=Identity(), num_classes=2, lr=-1)
+            MatrixScaler(model=nn.Identity(), num_classes=2, lr=-1)
 
         with pytest.raises(ValueError):
-            MatrixScaler(model=Identity(), num_classes=2, max_iter=-1)
+            MatrixScaler(model=nn.Identity(), num_classes=2, max_iter=-1)

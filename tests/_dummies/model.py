@@ -6,11 +6,6 @@ __all__ = [
 ]
 
 
-class Identity(nn.Module):
-    def forward(self, x: Tensor) -> Tensor:
-        return x
-
-
 class _Dummy(nn.Module):
     def __init__(
         self,
