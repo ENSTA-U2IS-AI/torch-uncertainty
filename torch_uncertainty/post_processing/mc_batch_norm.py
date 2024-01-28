@@ -78,7 +78,7 @@ class MCBatchNorm(nn.Module):
         self.counter = 0
         self.reset_counters()
         self.set_accumulate(True)
-        self.train()
+        self.eval()
         for x, _ in self.dl:
             self.model(x.to(self.device))
             self.raise_counters()

@@ -24,7 +24,10 @@ class TestMCBatchNorm:
 
         model = lenet(1, 1, norm=nn.BatchNorm2d)
         stoch_model = MCBatchNorm(
-            model, num_estimators=2, convert=True, mc_batch_size=1
+            nn.Sequential(model),
+            num_estimators=2,
+            convert=True,
+            mc_batch_size=1,
         )
         dataset = DummyClassificationDataset(
             "./",

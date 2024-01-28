@@ -2,7 +2,7 @@ import pytest
 import torch
 from torch import nn
 
-from torch_uncertainty.models.lenet import lenet
+from torch_uncertainty.models.lenet import bayesian_lenet, lenet, packed_lenet
 
 
 class TestLeNet:
@@ -17,6 +17,10 @@ class TestLeNet:
         model = lenet(1, 1, norm=nn.Identity)
         model.eval()
         model(torch.randn(1, 1, 20, 20))
+
+        packed_lenet(1, 1)
+
+        bayesian_lenet(1, 1, 1, 1, 1, 0, 1)
 
     def test_errors(self):
         with pytest.raises(ValueError):

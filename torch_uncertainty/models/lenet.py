@@ -169,7 +169,6 @@ def packed_lenet(
 def bayesian_lenet(
     in_channels: int,
     num_classes: int,
-    prior_mu: float | None = None,
     prior_sigma_1: float | None = None,
     prior_sigma_2: float | None = None,
     prior_pi: float | None = None,
@@ -181,8 +180,6 @@ def bayesian_lenet(
     dropout_rate: float = 0.0,
 ) -> _LeNet:
     layers_args = {}
-    if prior_mu is not None:
-        layers_args["prior_mu"] = prior_mu
     if prior_sigma_1 is not None:
         layers_args["prior_sigma_1"] = prior_sigma_1
     if prior_sigma_2 is not None:
