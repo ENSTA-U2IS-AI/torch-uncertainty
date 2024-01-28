@@ -114,28 +114,24 @@ fig.show()
 # `fit` method for more details.
 
 # Fit the scaler on the calibration dataset
-scaler = TemperatureScaler()
-scaler = scaler.fit(model=model, calibration_set=cal_dataset)
+scaled_model = TemperatureScaler(model=model)
+scaled_model = scaled_model.fit(calibration_set=cal_dataset)
 
 # %%
 # 6. Iterating Again to Compute the Improved ECE
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
-# We create a wrapper of the original model and the scaler using torch.nn.Sequential.
-# This is possible because the scaler is derived from nn.Module.
+# We can directly use the scaler as a calibrated model.
 #
 # Note that you will need to first reset the ECE metric to avoid mixing the scores of
 # the previous and current iterations.
-
-# Create the calibrated model
-cal_model = torch.nn.Sequential(model, scaler)
 
 # Reset the ECE
 ece.reset()
 
 # Iterate on the test dataloader
 for sample, target in test_dataloader:
-    logits = cal_model(sample)
+    logits = scaled_model(sample)
     probs = logits.softmax(-1)
     ece.update(probs, target)
 

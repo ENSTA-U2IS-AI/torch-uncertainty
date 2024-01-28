@@ -1,7 +1,7 @@
 from typing import Literal
 
 import torch
-from torch import nn
+from torch import Tensor, device, nn
 
 from .scaler import Scaler
 
@@ -9,14 +9,16 @@ from .scaler import Scaler
 class TemperatureScaler(Scaler):
     def __init__(
         self,
+        model: nn.Module,
         init_val: float = 1,
         lr: float = 0.1,
         max_iter: int = 100,
-        device: Literal["cpu", "cuda"] | torch.device | None = None,
+        device: Literal["cpu", "cuda"] | device | None = None,
     ) -> None:
         """Temperature scaling post-processing for calibrated probabilities.
 
         Args:
+            model (nn.Module): Model to calibrate.
             init_val (float, optional): Initial value for the temperature.
                 Defaults to 1.
             lr (float, optional): Learning rate for the optimizer. Defaults to 0.1.
@@ -29,7 +31,7 @@ class TemperatureScaler(Scaler):
             Guo, C., Pleiss, G., Sun, Y., & Weinberger, K. Q. On calibration
             of modern neural networks. In ICML 2017.
         """
-        super().__init__(lr=lr, max_iter=max_iter, device=device)
+        super().__init__(model=model, lr=lr, max_iter=max_iter, device=device)
 
         if init_val <= 0:
             raise ValueError("Initial temperature value must be positive.")
@@ -49,21 +51,16 @@ class TemperatureScaler(Scaler):
             torch.ones(1, device=self.device) * val, requires_grad=True
         )
 
-    def _scale(self, logits: torch.Tensor) -> torch.Tensor:
-        """Scale the logits with the optimal temperature.
+    def _scale(self, inputs: Tensor) -> Tensor:
+        """Scale the prediction with the optimal temperature.
 
         Args:
-            logits (torch.Tensor): Logits to be scaled.
+            inputs (Tensor): inputs to be scaled.
 
         Returns:
-            torch.Tensor: Scaled logits.
+            Tensor: Scaled inputs.
         """
-        temperature = (
-            self.temperature[0]
-            .unsqueeze(1)
-            .expand(logits.size(0), logits.size(1))
-        )
-        return logits / temperature
+        return self.model(inputs) / self.temperature[0]
 
     @property
     def temperature(self) -> list:

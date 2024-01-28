@@ -311,12 +311,10 @@ class ClassificationSingle(pl.LightningModule):
 
     def on_test_start(self) -> None:
         if self.calibration_set is not None:
-            self.scaler = TemperatureScaler(device=self.device).fit(
-                model=self.model, calibration_set=self.calibration_set()
-            )
-            self.cal_model = torch.nn.Sequential(self.model, self.scaler)
+            self.cal_model = TemperatureScaler(
+                model=self.model, device=self.device
+            ).fit(calibration_set=self.calibration_set())
         else:
-            self.scaler = None
             self.cal_model = None
 
     def test_step(
@@ -345,11 +343,7 @@ class ClassificationSingle(pl.LightningModule):
         else:
             ood_scores = -confs
 
-        if (
-            self.calibration_set is not None
-            and self.scaler is not None
-            and self.cal_model is not None
-        ):
+        if self.calibration_set is not None and self.cal_model is not None:
             cal_logits = self.cal_model(inputs)
             cal_probs = F.softmax(cal_logits, dim=-1)
             self.ts_cls_metrics.update(cal_probs, targets)
@@ -391,11 +385,7 @@ class ClassificationSingle(pl.LightningModule):
                 self.test_grouping_loss.compute(),
             )
 
-        if (
-            self.calibration_set is not None
-            and self.scaler is not None
-            and self.cal_model is not None
-        ):
+        if self.calibration_set is not None and self.cal_model is not None:
             self.log_dict(self.ts_cls_metrics.compute())
             self.ts_cls_metrics.reset()
 

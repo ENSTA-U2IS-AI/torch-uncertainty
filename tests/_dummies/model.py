@@ -70,7 +70,6 @@ def dummy_model(
         _Dummy: Dummy model.
     """
     if with_feats:
-        print("WITH FEATS")
         return _DummyWithFeats(
             in_channels=in_channels,
             num_classes=num_classes,
