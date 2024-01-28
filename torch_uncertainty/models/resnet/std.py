@@ -1,5 +1,7 @@
-import torch.nn.functional as F
+from collections.abc import Callable
+
 from torch import Tensor, nn
+from torch.nn.functional import relu
 
 __all__ = [
     "resnet18",
@@ -21,9 +23,11 @@ class _BasicBlock(nn.Module):
         stride: int,
         dropout_rate: float,
         groups: int,
+        activation_fn: Callable,
         normalization_layer: nn.Module,
     ) -> None:
         super().__init__()
+        self.activation_fn = activation_fn
 
         self.conv1 = nn.Conv2d(
             in_planes,
@@ -64,10 +68,10 @@ class _BasicBlock(nn.Module):
             )
 
     def forward(self, x: Tensor) -> Tensor:
-        out = F.relu(self.dropout(self.bn1(self.conv1(x))))
+        out = self.activation_fn(self.dropout(self.bn1(self.conv1(x))))
         out = self.bn2(self.conv2(out))
         out += self.shortcut(x)
-        return F.relu(out)
+        return self.activation_fn(out)
 
 
 class _Bottleneck(nn.Module):
@@ -80,9 +84,11 @@ class _Bottleneck(nn.Module):
         stride: int,
         dropout_rate: float,
         groups: int,
+        activation_fn: Callable,
         normalization_layer: nn.Module,
     ) -> None:
         super().__init__()
+        self.activation_fn = activation_fn
 
         self.conv1 = nn.Conv2d(
             in_planes,
@@ -127,11 +133,11 @@ class _Bottleneck(nn.Module):
             )
 
     def forward(self, x: Tensor) -> Tensor:
-        out = F.relu(self.bn1(self.conv1(x)))
-        out = F.relu(self.dropout(self.bn2(self.conv2(out))))
+        out = self.activation_fn(self.bn1(self.conv1(x)))
+        out = self.activation_fn(self.dropout(self.bn2(self.conv2(out))))
         out = self.bn3(self.conv3(out))
         out += self.shortcut(x)
-        return F.relu(out)
+        return self.activation_fn(out)
 
 
 # class Robust_Bottleneck(nn.Module):
@@ -178,7 +184,7 @@ class _Bottleneck(nn.Module):
 
 #     def forward(self, x: Tensor) -> Tensor:
 #         out = self.bn1(self.conv1(x))
-#         out = F.relu(self.conv2(out))
+#         out = relu(self.conv2(out))
 #         out = self.conv3(out)
 #         out += self.shortcut(x)
 #         return out
@@ -195,6 +201,7 @@ class _ResNet(nn.Module):
         groups: int,
         style: str = "imagenet",
         in_planes: int = 64,
+        activation_fn: Callable = relu,
         normalization_layer: nn.Module = nn.BatchNorm2d,
     ) -> None:
         """ResNet from `Deep Residual Learning for Image Recognition`."""
@@ -203,6 +210,7 @@ class _ResNet(nn.Module):
         self.in_planes = in_planes
         block_planes = in_planes
         self.dropout_rate = dropout_rate
+        self.activation_fn = activation_fn
 
         if style == "imagenet":
             self.conv1 = nn.Conv2d(
@@ -241,6 +249,7 @@ class _ResNet(nn.Module):
             stride=1,
             dropout_rate=dropout_rate,
             groups=groups,
+            activation_fn=activation_fn,
             normalization_layer=normalization_layer,
         )
         self.layer2 = self._make_layer(
@@ -250,6 +259,7 @@ class _ResNet(nn.Module):
             stride=2,
             dropout_rate=dropout_rate,
             groups=groups,
+            activation_fn=activation_fn,
             normalization_layer=normalization_layer,
         )
         self.layer3 = self._make_layer(
@@ -259,6 +269,7 @@ class _ResNet(nn.Module):
             stride=2,
             dropout_rate=dropout_rate,
             groups=groups,
+            activation_fn=activation_fn,
             normalization_layer=normalization_layer,
         )
         if len(num_blocks) == 4:
@@ -269,6 +280,7 @@ class _ResNet(nn.Module):
                 stride=2,
                 dropout_rate=dropout_rate,
                 groups=groups,
+                activation_fn=activation_fn,
                 normalization_layer=normalization_layer,
             )
             linear_multiplier = 8
@@ -293,6 +305,7 @@ class _ResNet(nn.Module):
         stride: int,
         dropout_rate: float,
         groups: int,
+        activation_fn: Callable,
         normalization_layer: nn.Module,
     ) -> nn.Module:
         strides = [stride] + [1] * (num_blocks - 1)
@@ -305,6 +318,7 @@ class _ResNet(nn.Module):
                     stride=stride,
                     dropout_rate=dropout_rate,
                     groups=groups,
+                    activation_fn=activation_fn,
                     normalization_layer=normalization_layer,
                 )
             )
@@ -312,7 +326,7 @@ class _ResNet(nn.Module):
         return nn.Sequential(*layers)
 
     def feats_forward(self, x: Tensor) -> Tensor:
-        out = F.relu(self.bn1(self.conv1(x)))
+        out = self.activation_fn(self.bn1(self.conv1(x)))
         out = self.optional_pool(out)
         out = self.layer1(out)
         out = self.layer2(out)
@@ -331,6 +345,7 @@ def resnet18(
     dropout_rate: float = 0.0,
     groups: int = 1,
     style: str = "imagenet",
+    activation_fn: Callable = relu,
     normalization_layer: nn.Module = nn.BatchNorm2d,
 ) -> _ResNet:
     """ResNet-18 from `Deep Residual Learning for Image Recognition
@@ -343,6 +358,7 @@ def resnet18(
         groups (int): Number of groups in convolutions. Defaults to 1.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
+        activation_fn (Callable, optional): Activation function.
         normalization_layer (nn.Module, optional): Normalization layer.
 
     Returns:
@@ -357,6 +373,7 @@ def resnet18(
         groups=groups,
         style=style,
         in_planes=64,
+        activation_fn=activation_fn,
         normalization_layer=normalization_layer,
     )
 
@@ -367,6 +384,7 @@ def resnet20(
     dropout_rate: float = 0.0,
     groups: int = 1,
     style: str = "imagenet",
+    activation_fn: Callable = relu,
     normalization_layer: nn.Module = nn.BatchNorm2d,
 ) -> _ResNet:
     """ResNet-18 from `Deep Residual Learning for Image Recognition
@@ -379,6 +397,7 @@ def resnet20(
         groups (int): Number of groups in convolutions. Defaults to 1.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
+        activation_fn (Callable, optional): Activation function.
         normalization_layer (nn.Module, optional): Normalization layer.
 
     Returns:
@@ -393,6 +412,7 @@ def resnet20(
         groups=groups,
         style=style,
         in_planes=16,
+        activation_fn=activation_fn,
         normalization_layer=normalization_layer,
     )
 
@@ -403,6 +423,7 @@ def resnet34(
     dropout_rate: float = 0,
     groups: int = 1,
     style: str = "imagenet",
+    activation_fn: Callable = relu,
     normalization_layer: nn.Module = nn.BatchNorm2d,
 ) -> _ResNet:
     """ResNet-34 from `Deep Residual Learning for Image Recognition
@@ -415,6 +436,7 @@ def resnet34(
         groups (int): Number of groups in convolutions. Defaults to 1.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
+        activation_fn (Callable, optional): Activation function.
         normalization_layer (nn.Module, optional): Normalization layer.
 
     Returns:
@@ -429,6 +451,7 @@ def resnet34(
         groups=groups,
         style=style,
         in_planes=64,
+        activation_fn=activation_fn,
         normalization_layer=normalization_layer,
     )
 
@@ -439,6 +462,7 @@ def resnet50(
     dropout_rate: float = 0,
     groups: int = 1,
     style: str = "imagenet",
+    activation_fn: Callable = relu,
     normalization_layer: nn.Module = nn.BatchNorm2d,
 ) -> _ResNet:
     """ResNet-50 from `Deep Residual Learning for Image Recognition
@@ -451,6 +475,7 @@ def resnet50(
         groups (int): Number of groups in convolutions. Defaults to 1.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
+        activation_fn (Callable, optional): Activation function.
         normalization_layer (nn.Module, optional): Normalization layer.
 
     Returns:
@@ -465,6 +490,7 @@ def resnet50(
         groups=groups,
         style=style,
         in_planes=64,
+        activation_fn=activation_fn,
         normalization_layer=normalization_layer,
     )
 
@@ -475,6 +501,7 @@ def resnet101(
     dropout_rate: float = 0,
     groups: int = 1,
     style: str = "imagenet",
+    activation_fn: Callable = relu,
     normalization_layer: nn.Module = nn.BatchNorm2d,
 ) -> _ResNet:
     """ResNet-101 from `Deep Residual Learning for Image Recognition
@@ -487,6 +514,7 @@ def resnet101(
         groups (int): Number of groups in convolutions. Defaults to 1.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
+        activation_fn (Callable, optional): Activation function.
         normalization_layer (nn.Module, optional): Normalization layer.
 
     Returns:
@@ -501,6 +529,7 @@ def resnet101(
         groups=groups,
         style=style,
         in_planes=64,
+        activation_fn=activation_fn,
         normalization_layer=normalization_layer,
     )
 
@@ -511,6 +540,7 @@ def resnet152(
     dropout_rate: float = 0,
     groups: int = 1,
     style: str = "imagenet",
+    activation_fn: Callable = relu,
     normalization_layer: nn.Module = nn.BatchNorm2d,
 ) -> _ResNet:
     """ResNet-152 from `Deep Residual Learning for Image Recognition
@@ -524,6 +554,7 @@ def resnet152(
             ``1``.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
+        activation_fn (Callable, optional): Activation function.
         normalization_layer (nn.Module, optional): Normalization layer.
 
     Returns:
@@ -538,5 +569,6 @@ def resnet152(
         groups=groups,
         style=style,
         in_planes=64,
+        activation_fn=activation_fn,
         normalization_layer=normalization_layer,
     )
