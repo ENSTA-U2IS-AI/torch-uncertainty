@@ -1,18 +1,12 @@
 """
-Training a LeNet with Monte-Carlo Dropout
-=========================================
+Training a LeNet with Monte Carlo Batch Normalization
+=====================================================
 
-In this tutorial, we will train a LeNet classifier on the MNIST dataset using Monte-Carlo Dropout (MC Dropout), a computationally efficient Bayesian approximation method. To estimate the predictive mean and uncertainty (variance), we perform multiple forward passes through the network with dropout layers enabled in ``train`` mode.
+In this tutorial, we will train a LeNet classifier on the MNIST dataset using Monte-Carlo Batch Normalization (MCBN), a post-hoc Bayesian approximation method. 
 
-For more information on Monte-Carlo Dropout, we refer the reader to the following resources:
-
-- What Uncertainties Do We Need in Bayesian Deep Learning for Computer Vision? `NeurIPS 2017 <https://browse.arxiv.org/pdf/1703.04977.pdf>`_
-- Dropout as a Bayesian Approximation: Representing Model Uncertainty in Deep Learning `PMLR 2016 <https://browse.arxiv.org/pdf/1506.02142.pdf>`_
-
-Training a LeNet with MC Dropout using TorchUncertainty models and PyTorch Lightning
--------------------------------------------------------------------------------------
-
-In this part, we train a LeNet with dropout layers, based on the model and routines already implemented in TU.
+Training a LeNet with MCBN using TorchUncertainty models and PyTorch Lightning
+------------------------------------------------------------------------------
+In this part, we train a LeNet with batch normalization layers, based on the model and routines already implemented in TU.
 
 1. Loading the utilities
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -22,7 +16,7 @@ First, we have to load the following utilities from TorchUncertainty:
 - the cli handler: cli_main and argument parser: init_args
 - the datamodule that handles dataloaders: MNISTDataModule, which lies in the torch_uncertainty.datamodule
 - the model: LeNet, which lies in torch_uncertainty.models
-- the mc-dropout wrapper: mc_dropout, which lies in torch_uncertainty.models
+- the mc-batch-norm wrapper: mc_dropout, which lies in torch_uncertainty.models
 - a resnet baseline to get the command line arguments: ResNet, which lies in torch_uncertainty.baselines
 - the classification training routine in the torch_uncertainty.training.classification module
 - the optimizer wrapper in the torch_uncertainty.optimization_procedures module.
@@ -31,9 +25,9 @@ First, we have to load the following utilities from TorchUncertainty:
 from torch_uncertainty import cli_main, init_args
 from torch_uncertainty.datamodules import MNISTDataModule
 from torch_uncertainty.models.lenet import lenet
-from torch_uncertainty.models.mc_dropout import mc_dropout
+from torch_uncertainty.post_processing.mc_batch_norm import MCBatchNorm
 from torch_uncertainty.baselines.classification import ResNet
-from torch_uncertainty.routines.classification import ClassificationEnsemble
+from torch_uncertainty.routines.classification import ClassificationSingle
 from torch_uncertainty.optimization_procedures import optim_cifar10_resnet18
 
 # %%
@@ -70,16 +64,14 @@ with ArgvContext(
     "1",
     "--enable_progress_bar",
     "False",
-    "--dropout_rate",
-    "0.6",
     "--num_estimators",
-    "16",
+    "8",
     "--max_epochs",
     "2"
 ):
     args = init_args(network=ResNet, datamodule=MNISTDataModule)
 
-net_name = "logs/mc-dropout-lenet-mnist"
+net_name = "logs/lenet-mnist"
 
 # datamodule
 args.root = str(root / "data")
@@ -89,10 +81,8 @@ dm = MNISTDataModule(**vars(args))
 model = lenet(
     in_channels=dm.num_channels,
     num_classes=dm.num_classes,
-    dropout_rate=args.dropout_rate,
+    norm = nn.BatchNorm2d,
 )
-
-mc_model = mc_dropout(model, num_estimators=args.num_estimators, last_layer=0.0)
 
 # %%
 # 3. The Loss and the Training Routine
@@ -104,9 +94,9 @@ mc_model = mc_dropout(model, num_estimators=args.num_estimators, last_layer=0.0)
 # forward passes to perform through the network, as well as all the default
 # arguments.
 
-baseline = ClassificationEnsemble(
+baseline = ClassificationSingle(
     num_classes=dm.num_classes,
-    model=mc_model,
+    model=model,
     loss=nn.CrossEntropyLoss,
     optimization_procedure=optim_cifar10_resnet18,
     **vars(args),
@@ -118,11 +108,29 @@ baseline = ClassificationEnsemble(
 
 results = cli_main(baseline, dm, root, net_name, args)
 
+
 # %%
-# 6. Testing the Model
+# 6. Wrapping the Model in a MCBatchNorm
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# We can now wrap the model in a MCBatchNorm to add stochasticity to the
+# predictions. We specify that the BatchNorm layers are to be converted to
+# MCBatchNorm layers, and that we want to use 8 stochastic estimators.
+# The amount of stochasticity is controlled by the ``mc_batch_size`` argument.
+# The larger the ``mc_batch_size``, the more stochastic the predictions will be.
+# The authors suggest 32 as a good value for ``mc_batch_size`` but we use 4 here
+# to highlight the effect of stochasticity on the predictions.
+
+baseline.model = MCBatchNorm(baseline.model, num_estimators=8, convert=True, mc_batch_size=32)
+baseline.model.fit(dm.train)
+baseline.eval()
+
+# %%
+# 7. Testing the Model
 # ~~~~~~~~~~~~~~~~~~~~
 # Now that the model is trained, let's test it on MNIST. Don't forget to call
-# .eval() to enable dropout at inference.
+# .eval() to enable Monte Carlo batch normalization at inference.
+# In this tutorial, we plot the most uncertain images, i.e. the images for which
+# the variance of the predictions is the highest.
 
 import matplotlib.pyplot as plt
 import torch
@@ -145,17 +153,20 @@ imshow(torchvision.utils.make_grid(images[:4, ...]))
 print("Ground truth: ", " ".join(f"{labels[j]}" for j in range(4)))
 
 baseline.eval()
-logits = baseline.model(images).reshape(16, 128, 10)
+logits = baseline.model(images).reshape(8, 128, 10)
 
 probs = torch.nn.functional.softmax(logits, dim=-1)
 
 
-for j in range(4):
+for j in sorted(probs.var(0).sum(-1).topk(4).indices):
     values, predicted = torch.max(probs[:, j], 1)
     print(
         f"Predicted digits for the image {j}: ",
         " ".join([str(image_id.item()) for image_id in predicted]),
     )
 
-# %% We see that there is some disagreement between the samples of the dropout
-# approximation of the posterior distribution.
+# %%
+# The predictions are mostly erroneous, which is expected since we selected
+# the most uncertain images. We also see that there stochasticity in the
+# predictions, as the predictions for the same image differ depending on the
+# stochastic estimator used.
