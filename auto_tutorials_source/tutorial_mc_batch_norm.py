@@ -153,7 +153,7 @@ imshow(torchvision.utils.make_grid(images[:4, ...]))
 print("Ground truth: ", " ".join(f"{labels[j]}" for j in range(4)))
 
 baseline.eval()
-logits = baseline.model(images).reshape(8, 128, 10)
+logits = baseline(images).reshape(8, 128, 10)
 
 probs = torch.nn.functional.softmax(logits, dim=-1)
 

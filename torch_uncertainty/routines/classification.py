@@ -229,19 +229,27 @@ class ClassificationSingle(pl.LightningModule):
             self.loss = partial(self.loss, model=self.model)
         return self.loss()
 
-    def forward(
-        self, inputs: Tensor, return_features: bool = False
-    ) -> tuple[Tensor, Tensor | None]:
+    def forward(self, inputs: Tensor, return_features: bool = False) -> Tensor:
+        """Forward pass of the model.
+
+        Args:
+            inputs (Tensor): Input tensor.
+            return_features (bool, optional): Whether to store the features or
+                not. Defaults to ``False``.
+
+        Note:
+            The features are stored in the :attr:`features` attribute.
+        """
         if return_features:
-            features = self.model.feats_forward(inputs)
+            self.features = self.model.feats_forward(inputs)
             if hasattr(self.model, "classification_head"):  # coverage: ignore
-                logits = self.model.classification_head(features)
+                logits = self.model.classification_head(self.features)
             else:
-                logits = self.model.linear(features)
+                logits = self.model.linear(self.features)
         else:
-            features = None
+            self.features = None
             logits = self.model(inputs)
-        return logits, features
+        return logits
 
     def on_train_start(self) -> None:
         # hyperparameters for performances
@@ -267,7 +275,7 @@ class ClassificationSingle(pl.LightningModule):
         if self.is_elbo:
             loss = self.criterion(inputs, targets)
         else:
-            logits, features = self.forward(inputs)
+            logits = self.forward(inputs)
             # BCEWithLogitsLoss expects float targets
             if self.binary_cls and self.loss == nn.BCEWithLogitsLoss:
                 logits = logits.squeeze(-1)
@@ -285,9 +293,7 @@ class ClassificationSingle(pl.LightningModule):
     ) -> None:
         inputs, targets = batch
 
-        logits, features = self.forward(
-            inputs, return_features=self.eval_grouping_loss
-        )
+        logits = self.forward(inputs, return_features=self.eval_grouping_loss)
 
         if self.binary_cls:
             probs = torch.sigmoid(logits).squeeze(-1)
@@ -297,7 +303,7 @@ class ClassificationSingle(pl.LightningModule):
         self.val_cls_metrics.update(probs, targets)
 
         if self.eval_grouping_loss:
-            self.val_grouping_loss.update(probs, targets, features)
+            self.val_grouping_loss.update(probs, targets, self.features)
 
     def validation_epoch_end(
         self, outputs: EPOCH_OUTPUT | list[EPOCH_OUTPUT]
@@ -324,9 +330,7 @@ class ClassificationSingle(pl.LightningModule):
         dataloader_idx: int | None = 0,
     ) -> Tensor:
         inputs, targets = batch
-        logits, features = self.forward(
-            inputs, return_features=self.eval_grouping_loss
-        )
+        logits = self.forward(inputs, return_features=self.eval_grouping_loss)
 
         if self.binary_cls:
             probs = torch.sigmoid(logits).squeeze(-1)
@@ -351,7 +355,7 @@ class ClassificationSingle(pl.LightningModule):
         if dataloader_idx == 0:
             self.test_cls_metrics.update(probs, targets)
             if self.eval_grouping_loss:
-                self.test_grouping_loss.update(probs, targets, features)
+                self.test_grouping_loss.update(probs, targets, self.features)
             self.test_entropy_id(probs)
             self.log(
                 "test_entropy_id",
@@ -671,7 +675,7 @@ class ClassificationEnsemble(ClassificationSingle):
         if self.is_elbo:
             loss = self.criterion(inputs, targets)
         else:
-            logits, features = self.forward(inputs)
+            logits = self.forward(inputs)
             # BCEWithLogitsLoss expects float targets
             if self.binary_cls and self.loss == nn.BCEWithLogitsLoss:
                 logits = logits.squeeze(-1)
@@ -689,7 +693,7 @@ class ClassificationEnsemble(ClassificationSingle):
         self, batch: tuple[Tensor, Tensor], batch_idx: int
     ) -> None:
         inputs, targets = batch
-        logits, features = self.forward(inputs)
+        logits = self.forward(inputs)
         logits = rearrange(logits, "(m b) c -> b m c", m=self.num_estimators)
         if self.binary_cls:
             probs_per_est = torch.sigmoid(logits).squeeze(-1)
@@ -706,7 +710,13 @@ class ClassificationEnsemble(ClassificationSingle):
         dataloader_idx: int | None = 0,
     ) -> Tensor:
         inputs, targets = batch
-        logits, features = self.forward(inputs)
+        logits = self.forward(inputs)
+        if logits.size(0) % self.num_estimators != 0:
+            raise ValueError(
+                "The number of predicted samples is not divisible by the "
+                f"reported number of estimators {self.num_estimators} of the "
+                "routine. Please check the correspondence between these values."
+            )
         logits = rearrange(logits, "(n b) c -> b n c", n=self.num_estimators)
 
         if self.binary_cls:
