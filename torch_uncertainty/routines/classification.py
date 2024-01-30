@@ -171,8 +171,8 @@ class ClassificationSingle(pl.LightningModule):
                 compute_groups=False,
             )
 
-        self.val_cls_metrics = cls_metrics.clone(prefix="val_")
-        self.test_cls_metrics = cls_metrics.clone(prefix="test_")
+        self.val_cls_metrics = cls_metrics.clone(prefix="cls/val_")
+        self.test_cls_metrics = cls_metrics.clone(prefix="csl/test_")
 
         if self.calibration_set is not None:
             self.ts_cls_metrics = cls_metrics.clone(prefix="ts_")
@@ -188,13 +188,13 @@ class ClassificationSingle(pl.LightningModule):
                 },
                 compute_groups=[["auroc", "aupr"], ["fpr95"]],
             )
-            self.test_ood_metrics = ood_metrics.clone(prefix="test_")
+            self.test_ood_metrics = ood_metrics.clone(prefix="ood/test_")
             self.test_entropy_ood = Entropy()
 
         if self.eval_grouping_loss:
             grouping_loss = MetricCollection({"grouping_loss": GroupingLoss()})
-            self.val_grouping_loss = grouping_loss.clone(prefix="hp/val_")
-            self.test_grouping_loss = grouping_loss.clone(prefix="hp/test_")
+            self.val_grouping_loss = grouping_loss.clone(prefix="gpl/val_")
+            self.test_grouping_loss = grouping_loss.clone(prefix="gpl/test_")
 
         if mixup_alpha < 0 or cutmix_alpha < 0:
             raise ValueError(
@@ -358,7 +358,7 @@ class ClassificationSingle(pl.LightningModule):
                 self.test_grouping_loss.update(probs, targets, self.features)
             self.test_entropy_id(probs)
             self.log(
-                "test_entropy_id",
+                "cls/test_entropy",
                 self.test_entropy_id,
                 on_epoch=True,
                 add_dataloader_idx=False,
@@ -371,7 +371,7 @@ class ClassificationSingle(pl.LightningModule):
             self.test_ood_metrics.update(ood_scores, torch.ones_like(targets))
             self.test_entropy_ood(probs)
             self.log(
-                "test_entropy_ood",
+                "ood/test_entropy",
                 self.test_entropy_ood,
                 on_epoch=True,
                 add_dataloader_idx=False,
@@ -648,11 +648,11 @@ class ClassificationEnsemble(ClassificationSingle):
                 "entropy": Entropy(),
             }
         )
-        self.test_id_ens_metrics = ens_metrics.clone(prefix="test_id_ens_")
+        self.test_id_ens_metrics = ens_metrics.clone(prefix="ens_id/test_")
 
         if self.eval_ood:
             self.test_ood_ens_metrics = ens_metrics.clone(
-                prefix="test_ood_ens_"
+                prefix="ens_ood/test_"
             )
 
         if self.eval_grouping_loss:
@@ -753,7 +753,7 @@ class ClassificationEnsemble(ClassificationSingle):
 
             self.test_id_ens_metrics.update(probs_per_est)
             self.log(
-                "test_entropy_id",
+                "cls/test_entropy",
                 self.test_entropy_id,
                 on_epoch=True,
                 add_dataloader_idx=False,
@@ -768,7 +768,7 @@ class ClassificationEnsemble(ClassificationSingle):
             self.test_entropy_ood(probs)
             self.test_ood_ens_metrics.update(probs_per_est)
             self.log(
-                "test_entropy_ood",
+                "ood/test_entropy",
                 self.test_entropy_ood,
                 on_epoch=True,
                 add_dataloader_idx=False,
