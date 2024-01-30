@@ -180,7 +180,7 @@ def optim_imagenet_resnet50(
     return {
         "optimizer": optimizer,
         "lr_scheduler": scheduler,
-        "monitor": "hp/val_acc",
+        "monitor": "cls/val_acc",
     }
 
 
@@ -227,7 +227,7 @@ def optim_imagenet_resnet50_a3(
             "interval": "step",
             "frequency": 1,
         },
-        "monitor": "hp/val_acc",
+        "monitor": "cls/val_acc",
     }
 
 
@@ -328,7 +328,7 @@ def optim_regression(
     )
     return {
         "optimizer": optimizer,
-        "monitor": "hp/val_nll",
+        "monitor": "reg/val_nll",
     }
 
 

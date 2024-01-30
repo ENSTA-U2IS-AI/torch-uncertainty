@@ -75,8 +75,8 @@ class RegressionSingle(pl.LightningModule):
                 compute_groups=False,
             )
 
-        self.val_metrics = reg_metrics.clone(prefix="val_")
-        self.test_metrics = reg_metrics.clone(prefix="test_")
+        self.val_metrics = reg_metrics.clone(prefix="reg/val_")
+        self.test_metrics = reg_metrics.clone(prefix="reg/test_")
 
     def configure_optimizers(self) -> Any:
         return self.optimization_procedure(self)
