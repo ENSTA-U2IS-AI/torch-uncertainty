@@ -172,7 +172,7 @@ class ClassificationSingle(pl.LightningModule):
             )
 
         self.val_cls_metrics = cls_metrics.clone(prefix="cls/val_")
-        self.test_cls_metrics = cls_metrics.clone(prefix="csl/test_")
+        self.test_cls_metrics = cls_metrics.clone(prefix="cls/test_")
 
         if self.calibration_set is not None:
             self.ts_cls_metrics = cls_metrics.clone(prefix="ts_")
