@@ -3,10 +3,11 @@ from pathlib import Path
 from typing import Any, Literal
 
 import torchvision.transforms as T
+import yaml
 from timm.data.auto_augment import rand_augment_transform
 from timm.data.mixup import Mixup
 from torch import nn
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Subset, random_split
 from torchvision.datasets import DTD, SVHN, ImageNet, INaturalist
 
 from torch_uncertainty.datamodules.abstract import AbstractDataModule
@@ -30,13 +31,16 @@ class ImageNetDataModule(AbstractDataModule):
         "openimage-o",
     ]
     training_task = "classification"
+    train_indices = None
+    val_indices = None
 
     def __init__(
         self,
         root: str | Path,
         eval_ood: bool,
         batch_size: int,
-        ood_ds: str = "svhn",
+        val_split: float | Path = 0.0,
+        ood_ds: str = "openimage-o",
         test_alt: str | None = None,
         procedure: str | None = None,
         train_size: int = 224,
@@ -46,6 +50,29 @@ class ImageNetDataModule(AbstractDataModule):
         persistent_workers: bool = True,
         **kwargs,
     ) -> None:
+        """DataModule for ImageNet.
+
+        Args:
+            root (str): Root directory of the datasets.
+            eval_ood (bool): Whether to evaluate out-of-distribution
+                performance.
+            batch_size (int): Number of samples per batch.
+            val_split (float or Path): Share of samples to use for validation
+                or path to a yaml file containing a list of validation images
+                ids. Defaults to ``0.0``.
+            ood_ds (str): Which out-of-distribution dataset to use. Defaults to
+                ``"openimage-o"``.
+            test_alt (str): Which test set to use. Defaults to ``None``.
+            procedure (str): Which procedure to use. Defaults to ``None``.
+            train_size (int): Size of training images. Defaults to ``224``.
+            rand_augment_opt (str): Which RandAugment to use. Defaults to ``None``.
+            num_workers (int): Number of workers to use for data loading. Defaults
+                to ``1``.
+            pin_memory (bool): Whether to pin memory. Defaults to ``True``.
+            persistent_workers (bool): Whether to use persistent workers. Defaults
+                to ``True``.
+            kwargs: Additional arguments.
+        """
         super().__init__(
             root=root,
             batch_size=batch_size,
@@ -55,6 +82,11 @@ class ImageNetDataModule(AbstractDataModule):
         )
 
         self.eval_ood = eval_ood
+        if isinstance(val_split, str):
+            val_split = Path(val_split)
+        if isinstance(val_split, Path):
+            self.train_indices, self.val_indices = read_indices(val_split)
+        self.val_split = val_split
         self.ood_ds = ood_ds
         self.test_alt = test_alt
 
@@ -85,7 +117,6 @@ class ImageNetDataModule(AbstractDataModule):
         self.procedure = procedure
 
         if self.procedure is None:
-            print("Custom Procedure")
             if rand_augment_opt is not None:
                 main_transform = rand_augment_transform(rand_augment_opt, {})
             else:
@@ -98,9 +129,7 @@ class ImageNetDataModule(AbstractDataModule):
                     rand_augment_transform("rand-m9-n2-mstd0.5", {}),
                 ]
             )
-
         elif self.procedure == "A3":
-            print("Procedure A3")
             train_size = 160
             main_transform = rand_augment_transform("rand-m6-mstd0.5-inc1", {})
         else:
@@ -168,16 +197,30 @@ class ImageNetDataModule(AbstractDataModule):
                 raise ValueError(
                     "The test_alt argument is not supported for training."
                 )
-            self.train = self.dataset(
+            full = self.dataset(
                 self.root,
                 split="train",
                 transform=self.train_transform,
             )
-            self.val = self.dataset(
-                self.root,
-                split="val",
-                transform=self.test_transform,
-            )
+            if self.val_split and isinstance(self.val_split, float):
+                self.train, self.val = random_split(
+                    full,
+                    [
+                        1 - self.val_split,
+                        self.val_split,
+                    ],
+                )
+            elif isinstance(self.val_split, Path):
+                self.train = Subset(full, self.train_indices)
+                self.val = Subset(full, self.val_indices)
+                self.val.dataset.transform = self.test_transform
+            else:
+                self.train = full
+                self.val = self.dataset(
+                    self.root,
+                    split="val",
+                    transform=self.test_transform,
+                )
         elif stage == "test":
             self.test = self.dataset(
                 self.root,
@@ -231,3 +274,19 @@ class ImageNetDataModule(AbstractDataModule):
             "--rand_augment", dest="rand_augment_opt", type=str, default=None
         )
         return parent_parser
+
+
+def read_indices(path: Path) -> list[str]:  # coverage: ignore
+    """Read a file and return its lines as a list.
+
+    Args:
+        path (Path): Path to the file.
+
+    Returns:
+        list[str]: List of filenames.
+    """
+    if not path.is_file():
+        raise ValueError(f"{path} is not a file.")
+    with path.open("r") as f:
+        indices = yaml.safe_load(f)
+        return indices["train"], indices["val"]
