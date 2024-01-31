@@ -6,7 +6,7 @@ import torch.nn.functional as F
 from torch import nn
 
 from torch_uncertainty.layers.bayesian import BayesConv2d, BayesLinear
-from torch_uncertainty.layers.normalization import MCBatchNorm2d
+from torch_uncertainty.layers.mc_batch_norm import MCBatchNorm2d
 from torch_uncertainty.layers.packed import PackedConv2d, PackedLinear
 from torch_uncertainty.models.utils import stochastic_model
 

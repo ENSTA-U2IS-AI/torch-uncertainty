@@ -5,7 +5,7 @@ import torch
 from torch import Tensor, nn
 from torch.utils.data import DataLoader, Dataset
 
-from torch_uncertainty.layers.normalization import MCBatchNorm2d
+from torch_uncertainty.layers.mc_batch_norm import MCBatchNorm2d
 
 
 class MCBatchNorm(nn.Module):
