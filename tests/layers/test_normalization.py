@@ -1,9 +1,13 @@
 import pytest
 import torch
 
+from torch_uncertainty.layers.mc_batch_norm import (
+    MCBatchNorm1d,
+    MCBatchNorm2d,
+    MCBatchNorm3d,
+)
 from torch_uncertainty.layers.normalization import (
     FilterResponseNorm2d,
-    MCBatchNorm2d,
 )
 
 
@@ -23,11 +27,13 @@ class TestFRN2d:
             FilterResponseNorm2d(1.5)
 
 
-class TestMCBatchNorm2d:
-    """Testing the MCBatchNorm2d layer."""
+class TestMCBatchNorm:
+    """Testing the MCBatchNorm layers."""
 
     def test_main(self):
         """Test initialization."""
+        bn = MCBatchNorm1d(1, 1)
+        bn = MCBatchNorm3d(1, 1)
         bn = MCBatchNorm2d(1, 1)
         bn(torch.randn(1, 1, 20, 20))
 

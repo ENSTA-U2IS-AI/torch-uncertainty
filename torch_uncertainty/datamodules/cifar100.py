@@ -30,13 +30,13 @@ class CIFAR100DataModule(AbstractDataModule):
         eval_ood: bool,
         batch_size: int,
         val_split: float = 0.0,
-        num_workers: int = 1,
         cutout: int | None = None,
         randaugment: bool = False,
         auto_augment: str | None = None,
         test_alt: Literal["c"] | None = None,
         corruption_severity: int = 1,
         num_dataloaders: int = 1,
+        num_workers: int = 1,
         pin_memory: bool = True,
         persistent_workers: bool = True,
         **kwargs,
@@ -45,12 +45,11 @@ class CIFAR100DataModule(AbstractDataModule):
 
         Args:
             root (str): Root directory of the datasets.
-            eval_ood (bool): Whether to evaluate on out-of-distribution data.
+            eval_ood (bool): Whether to evaluate out-of-distribution
+                performance.
             batch_size (int): Number of samples per batch.
             val_split (float): Share of samples to use for validation. Defaults
                 to ``0.0``.
-            num_workers (int): Number of workers to use for data loading. Defaults
-                to ``1``.
             cutout (int): Size of cutout to apply to images. Defaults to ``None``.
             randaugment (bool): Whether to apply RandAugment. Defaults to
                 ``False``.
@@ -59,6 +58,8 @@ class CIFAR100DataModule(AbstractDataModule):
             corruption_severity (int): Severity of corruption to apply to
                 CIFAR100-C. Defaults to ``1``.
             num_dataloaders (int): Number of dataloaders to use. Defaults to ``1``.
+            num_workers (int): Number of workers to use for data loading. Defaults
+                to ``1``.
             pin_memory (bool): Whether to pin memory. Defaults to ``True``.
             persistent_workers (bool): Whether to use persistent workers. Defaults
                 to ``True``.
