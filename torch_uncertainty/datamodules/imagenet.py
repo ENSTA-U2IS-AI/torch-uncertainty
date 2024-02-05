@@ -1,3 +1,4 @@
+import copy
 from argparse import ArgumentParser
 from pathlib import Path
 from typing import Any, Literal
@@ -212,7 +213,8 @@ class ImageNetDataModule(AbstractDataModule):
                 )
             elif isinstance(self.val_split, Path):
                 self.train = Subset(full, self.train_indices)
-                self.val = Subset(full, self.val_indices)
+                # TODO: improve the performance
+                self.val = copy.deepcopy(Subset(full, self.val_indices))
                 self.val.dataset.transform = self.test_transform
             else:
                 self.train = full
