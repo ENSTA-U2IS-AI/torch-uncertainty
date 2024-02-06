@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Literal
 
 import torch.nn.functional as F
 from einops import rearrange
@@ -202,7 +202,7 @@ class _PackedResNet(nn.Module):
         alpha: int = 2,
         gamma: int = 1,
         groups: int = 1,
-        style: str = "imagenet",
+        style: Literal["imagenet", "cifar"] = "imagenet",
         in_planes: int = 64,
         normalization_layer: nn.Module = nn.BatchNorm2d,
     ) -> None:
@@ -231,7 +231,7 @@ class _PackedResNet(nn.Module):
                 bias=False,
                 first=True,
             )
-        else:
+        elif style == "cifar":
             self.conv1 = PackedConv2d(
                 self.in_channels,
                 block_planes,
@@ -245,6 +245,8 @@ class _PackedResNet(nn.Module):
                 bias=False,
                 first=True,
             )
+        else:
+            raise ValueError(f"Unknown style. Got {style}.")
 
         self.bn1 = normalization_layer(block_planes * alpha)
 
@@ -387,12 +389,11 @@ def packed_resnet18(
     gamma: int,
     groups: int = 1,
     dropout_rate: float = 0,
-    style: str = "imagenet",
+    style: Literal["imagenet", "cifar"] = "imagenet",
     normalization_layer: nn.Module = nn.BatchNorm2d,
     pretrained: bool = False,
 ) -> _PackedResNet:
-    """Packed-Ensembles of ResNet-18 from `Deep Residual Learning for Image
-    Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
+    """Packed-Ensembles of ResNet-18.
 
     Args:
         in_channels (int): Number of input channels.
@@ -446,12 +447,11 @@ def packed_resnet20(
     gamma: int,
     groups: int = 1,
     dropout_rate: float = 0,
-    style: str = "imagenet",
+    style: Literal["imagenet", "cifar"] = "imagenet",
     normalization_layer: nn.Module = nn.BatchNorm2d,
     pretrained: bool = False,
 ) -> _PackedResNet:
-    """Packed-Ensembles of ResNet-20 from `Deep Residual Learning for Image
-    Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
+    """Packed-Ensembles of ResNet-20.
 
     Args:
         in_channels (int): Number of input channels.
@@ -505,12 +505,11 @@ def packed_resnet34(
     gamma: int,
     groups: int,
     dropout_rate: float = 0,
-    style: str = "imagenet",
+    style: Literal["imagenet", "cifar"] = "imagenet",
     normalization_layer: nn.Module = nn.BatchNorm2d,
     pretrained: bool = False,
 ) -> _PackedResNet:
-    """Packed-Ensembles of ResNet-34 from `Deep Residual Learning for Image
-    Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
+    """Packed-Ensembles of ResNet-34.
 
     Args:
         in_channels (int): Number of input channels.
@@ -564,12 +563,11 @@ def packed_resnet50(
     gamma: int,
     groups: int = 1,
     dropout_rate: float = 0,
-    style: str = "imagenet",
+    style: Literal["imagenet", "cifar"] = "imagenet",
     normalization_layer: nn.Module = nn.BatchNorm2d,
     pretrained: bool = False,
 ) -> _PackedResNet:
-    """Packed-Ensembles of ResNet-50 from `Deep Residual Learning for Image
-    Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
+    """Packed-Ensembles of ResNet-50.
 
     Args:
         in_channels (int): Number of input channels.
@@ -623,12 +621,11 @@ def packed_resnet101(
     gamma: int,
     groups: int = 1,
     dropout_rate: float = 0,
-    style: str = "imagenet",
+    style: Literal["imagenet", "cifar"] = "imagenet",
     normalization_layer: nn.Module = nn.BatchNorm2d,
     pretrained: bool = False,
 ) -> _PackedResNet:
-    """Packed-Ensembles of ResNet-101 from `Deep Residual Learning for Image
-    Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
+    """Packed-Ensembles of ResNet-101.
 
     Args:
         in_channels (int): Number of input channels.
@@ -682,12 +679,11 @@ def packed_resnet152(
     gamma: int,
     groups: int = 1,
     dropout_rate: float = 0,
-    style: str = "imagenet",
+    style: Literal["imagenet", "cifar"] = "imagenet",
     normalization_layer: nn.Module = nn.BatchNorm2d,
     pretrained: bool = False,
 ) -> _PackedResNet:
-    """Packed-Ensembles of ResNet-152 from `Deep Residual Learning for Image
-    Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
+    """Packed-Ensembles of ResNet-152.
 
     Args:
         in_channels (int): Number of input channels.

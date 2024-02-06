@@ -1,3 +1,5 @@
+from typing import Literal
+
 import torch.nn.functional as F
 from einops import rearrange
 from torch import Tensor, nn
@@ -83,7 +85,7 @@ class _PackedWideResNet(nn.Module):
         alpha: int = 2,
         gamma: int = 1,
         groups: int = 1,
-        style: str = "imagenet",
+        style: Literal["imagenet", "cifar"] = "imagenet",
     ) -> None:
         super().__init__()
         self.num_estimators = num_estimators
@@ -110,7 +112,7 @@ class _PackedWideResNet(nn.Module):
                 bias=True,
                 first=True,
             )
-        else:
+        elif style == "cifar":
             self.conv1 = PackedConv2d(
                 in_channels,
                 num_stages[0],
@@ -124,6 +126,8 @@ class _PackedWideResNet(nn.Module):
                 bias=True,
                 first=True,
             )
+        else:
+            raise ValueError(f"Unknown WideResNet style: {style}. ")
 
         self.bn1 = nn.BatchNorm2d(num_stages[0] * alpha)
 
@@ -234,10 +238,9 @@ def packed_wideresnet28x10(
     gamma: int,
     groups: int,
     dropout_rate: float = 0.3,
-    style: str = "imagenet",
+    style: Literal["imagenet", "cifar"] = "imagenet",
 ) -> _PackedWideResNet:
-    """Packed-Ensembles of Wide-ResNet-28x10 from `Wide Residual Networks
-    <https://arxiv.org/pdf/1605.07146.pdf>`_.
+    """Packed-Ensembles of Wide-ResNet-28x10.
 
     Args:
         in_channels (int): Number of input channels.

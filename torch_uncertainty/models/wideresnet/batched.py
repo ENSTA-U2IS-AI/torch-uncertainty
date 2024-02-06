@@ -1,3 +1,5 @@
+from typing import Literal
+
 import torch.nn.functional as F
 from torch import Tensor, nn
 
@@ -73,7 +75,7 @@ class _BatchWideResNet(nn.Module):
         num_estimators: int,
         dropout_rate: float,
         groups: int = 1,
-        style: str = "imagenet",
+        style: Literal["imagenet", "cifar"] = "imagenet",
     ) -> None:
         super().__init__()
         self.num_estimators = num_estimators
@@ -97,7 +99,7 @@ class _BatchWideResNet(nn.Module):
                 padding=3,
                 bias=True,
             )
-        else:
+        elif style == "cifar":
             self.conv1 = BatchConv2d(
                 in_channels,
                 num_stages[0],
@@ -108,6 +110,8 @@ class _BatchWideResNet(nn.Module):
                 padding=1,
                 bias=True,
             )
+        else:
+            raise ValueError(f"Unknown WideResNet style: {style}. ")
 
         self.bn1 = nn.BatchNorm2d(num_stages[0])
 
@@ -202,10 +206,9 @@ def batched_wideresnet28x10(
     num_estimators: int,
     dropout_rate: float = 0.3,
     groups: int = 1,
-    style: str = "imagenet",
+    style: Literal["imagenet", "cifar"] = "imagenet",
 ) -> _BatchWideResNet:
-    """BatchEnsemble of Wide-ResNet-28x10 from `Wide Residual Networks
-    <https://arxiv.org/pdf/1605.07146.pdf>`_.
+    """BatchEnsemble of Wide-ResNet-28x10.
 
     Args:
         in_channels (int): Number of input channels.

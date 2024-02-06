@@ -1,3 +1,5 @@
+from typing import Literal
+
 import torch
 from einops import rearrange
 from torch import nn
@@ -24,7 +26,7 @@ class _MIMOResNet(_ResNet):
         num_estimators: int,
         dropout_rate: float,
         groups: int = 1,
-        style: str = "imagenet",
+        style: Literal["imagenet", "cifar"] = "imagenet",
         in_planes: int = 64,
         normalization_layer: nn.Module = nn.BatchNorm2d,
     ) -> None:
@@ -57,7 +59,7 @@ def mimo_resnet18(
     num_estimators: int,
     dropout_rate: float = 0.0,
     groups: int = 1,
-    style: str = "imagenet",
+    style: Literal["imagenet", "cifar"] = "imagenet",
     normalization_layer: nn.Module = nn.BatchNorm2d,
 ) -> _MIMOResNet:
     return _MIMOResNet(
@@ -80,7 +82,7 @@ def mimo_resnet20(
     num_estimators: int,
     dropout_rate: float = 0.0,
     groups: int = 1,
-    style: str = "imagenet",
+    style: Literal["imagenet", "cifar"] = "imagenet",
     normalization_layer: nn.Module = nn.BatchNorm2d,
 ) -> _MIMOResNet:
     return _MIMOResNet(
@@ -103,7 +105,7 @@ def mimo_resnet34(
     num_estimators: int,
     dropout_rate: float = 0.0,
     groups: int = 1,
-    style: str = "imagenet",
+    style: Literal["imagenet", "cifar"] = "imagenet",
     normalization_layer: nn.Module = nn.BatchNorm2d,
 ) -> _MIMOResNet:
     return _MIMOResNet(
@@ -126,7 +128,7 @@ def mimo_resnet50(
     num_estimators: int,
     dropout_rate: float = 0.0,
     groups: int = 1,
-    style: str = "imagenet",
+    style: Literal["imagenet", "cifar"] = "imagenet",
     normalization_layer: nn.Module = nn.BatchNorm2d,
 ) -> _MIMOResNet:
     return _MIMOResNet(
@@ -149,7 +151,7 @@ def mimo_resnet101(
     num_estimators: int,
     dropout_rate: float = 0.0,
     groups: int = 1,
-    style: str = "imagenet",
+    style: Literal["imagenet", "cifar"] = "imagenet",
     normalization_layer: nn.Module = nn.BatchNorm2d,
 ) -> _MIMOResNet:
     return _MIMOResNet(
@@ -172,7 +174,7 @@ def mimo_resnet152(
     num_estimators: int,
     dropout_rate: float = 0.0,
     groups: int = 1,
-    style: str = "imagenet",
+    style: Literal["imagenet", "cifar"] = "imagenet",
     normalization_layer: nn.Module = nn.BatchNorm2d,
 ) -> _MIMOResNet:
     return _MIMOResNet(

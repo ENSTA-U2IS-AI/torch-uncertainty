@@ -1,3 +1,5 @@
+from typing import Literal
+
 import torch.nn.functional as F
 from torch import Tensor, nn
 
@@ -77,7 +79,7 @@ class _MaskedWideResNet(nn.Module):
         dropout_rate: float,
         scale: float = 2.0,
         groups: int = 1,
-        style: str = "imagenet",
+        style: Literal["imagenet", "cifar"] = "imagenet",
     ) -> None:
         super().__init__()
         self.num_estimators = num_estimators
@@ -100,7 +102,7 @@ class _MaskedWideResNet(nn.Module):
                 bias=True,
                 groups=1,
             )
-        else:
+        elif style == "cifar":
             self.conv1 = nn.Conv2d(
                 in_channels,
                 num_stages[0],
@@ -110,6 +112,8 @@ class _MaskedWideResNet(nn.Module):
                 bias=True,
                 groups=1,
             )
+        else:
+            raise ValueError(f"Unknown WideResNet style: {style}. ")
 
         self.bn1 = nn.BatchNorm2d(num_stages[0])
 
@@ -208,10 +212,9 @@ def masked_wideresnet28x10(
     scale: float,
     groups: int,
     dropout_rate: float = 0.3,
-    style: str = "imagenet",
+    style: Literal["imagenet", "cifar"] = "imagenet",
 ) -> _MaskedWideResNet:
-    """Masksembles of Wide-ResNet-28x10 from `Wide Residual Networks
-    <https://arxiv.org/pdf/1605.07146.pdf>`_.
+    """Masksembles of Wide-ResNet-28x10.
 
     Args:
         in_channels (int): Number of input channels.

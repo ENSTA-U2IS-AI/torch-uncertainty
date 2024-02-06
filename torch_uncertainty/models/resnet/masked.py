@@ -1,3 +1,5 @@
+from typing import Literal
+
 import torch.nn.functional as F
 from torch import Tensor, nn
 
@@ -163,7 +165,7 @@ class _MaskedResNet(nn.Module):
         dropout_rate: float,
         scale: float = 2.0,
         groups: int = 1,
-        style: str = "imagenet",
+        style: Literal["imagenet", "cifar"] = "imagenet",
         in_planes: int = 64,
         normalization_layer: nn.Module = nn.BatchNorm2d,
     ) -> None:
@@ -184,7 +186,7 @@ class _MaskedResNet(nn.Module):
                 groups=groups,
                 bias=False,
             )
-        else:
+        elif style == "cifar":
             self.conv1 = nn.Conv2d(
                 self.in_channels,
                 block_planes,
@@ -194,6 +196,8 @@ class _MaskedResNet(nn.Module):
                 groups=groups,
                 bias=False,
             )
+        else:
+            raise ValueError(f"Unknown style. Got {style}.")
 
         self.bn1 = normalization_layer(block_planes)
 
@@ -316,11 +320,10 @@ def masked_resnet18(
     scale: float,
     groups: int = 1,
     dropout_rate: float = 0,
-    style: str = "imagenet",
+    style: Literal["imagenet", "cifar"] = "imagenet",
     normalization_layer: nn.Module = nn.BatchNorm2d,
 ) -> _MaskedResNet:
-    """Masksembles of ResNet-18 from `Deep Residual Learning for Image
-    Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
+    """Masksembles of ResNet-18.
 
     Args:
         in_channels (int): Number of input channels.
@@ -357,11 +360,10 @@ def masked_resnet20(
     scale: float,
     groups: int = 1,
     dropout_rate: float = 0,
-    style: str = "imagenet",
+    style: Literal["imagenet", "cifar"] = "imagenet",
     normalization_layer: nn.Module = nn.BatchNorm2d,
 ) -> _MaskedResNet:
-    """Masksembles of ResNet-20 from `Deep Residual Learning for Image
-    Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
+    """Masksembles of ResNet-20.
 
     Args:
         in_channels (int): Number of input channels.
@@ -398,11 +400,10 @@ def masked_resnet34(
     scale: float,
     groups: int = 1,
     dropout_rate: float = 0,
-    style: str = "imagenet",
+    style: Literal["imagenet", "cifar"] = "imagenet",
     normalization_layer: nn.Module = nn.BatchNorm2d,
 ) -> _MaskedResNet:
-    """Masksembles of ResNet-34 from `Deep Residual Learning for Image
-    Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
+    """Masksembles of ResNet-34.
 
     Args:
         in_channels (int): Number of input channels.
@@ -439,11 +440,10 @@ def masked_resnet50(
     scale: float,
     groups: int = 1,
     dropout_rate: float = 0,
-    style: str = "imagenet",
+    style: Literal["imagenet", "cifar"] = "imagenet",
     normalization_layer: nn.Module = nn.BatchNorm2d,
 ) -> _MaskedResNet:
-    """Masksembles of ResNet-50 from `Deep Residual Learning for Image
-    Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
+    """Masksembles of ResNet-50.
 
     Args:
         in_channels (int): Number of input channels.
@@ -480,11 +480,10 @@ def masked_resnet101(
     scale: float,
     groups: int = 1,
     dropout_rate: float = 0,
-    style: str = "imagenet",
+    style: Literal["imagenet", "cifar"] = "imagenet",
     normalization_layer: nn.Module = nn.BatchNorm2d,
 ) -> _MaskedResNet:
-    """Masksembles of ResNet-101 from `Deep Residual Learning for Image
-    Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
+    """Masksembles of ResNet-101.
 
     Args:
         in_channels (int): Number of input channels.
@@ -521,11 +520,10 @@ def masked_resnet152(
     scale: float,
     groups: int = 1,
     dropout_rate: float = 0,
-    style: str = "imagenet",
+    style: Literal["imagenet", "cifar"] = "imagenet",
     normalization_layer: nn.Module = nn.BatchNorm2d,
 ) -> _MaskedResNet:  # coverage: ignore
-    """Masksembles of ResNet-152 from `Deep Residual Learning for Image
-    Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
+    """Masksembles of ResNet-152.
 
     Args:
         in_channels (int): Number of input channels.

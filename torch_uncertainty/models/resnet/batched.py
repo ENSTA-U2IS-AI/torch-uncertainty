@@ -5,6 +5,8 @@ Reference:
     Deep Residual Learning for Image Recognition. arXiv:1512.03385
 """
 
+from typing import Literal
+
 import torch.nn.functional as F
 from torch import Tensor, nn
 
@@ -159,7 +161,7 @@ class _BatchedResNet(nn.Module):
         dropout_rate: float,
         groups: int = 1,
         width_multiplier: int = 1,
-        style: str = "imagenet",
+        style: Literal["imagenet", "cifar"] = "imagenet",
         in_planes: int = 64,
         normalization_layer: nn.Module = nn.BatchNorm2d,
     ) -> None:
@@ -182,7 +184,7 @@ class _BatchedResNet(nn.Module):
                 groups=groups,
                 bias=False,
             )
-        else:
+        elif style == "cifar":
             self.conv1 = BatchConv2d(
                 in_channels,
                 block_planes,
@@ -193,6 +195,9 @@ class _BatchedResNet(nn.Module):
                 groups=groups,
                 bias=False,
             )
+        else:
+            raise ValueError(f"Unknown style. Got {style}.")
+
         self.bn1 = normalization_layer(block_planes)
 
         if style == "imagenet":
@@ -305,11 +310,10 @@ def batched_resnet18(
     num_estimators: int,
     dropout_rate: float = 0,
     groups: int = 1,
-    style: str = "imagenet",
+    style: Literal["imagenet", "cifar"] = "imagenet",
     normalization_layer: nn.Module = nn.BatchNorm2d,
 ) -> _BatchedResNet:
-    """BatchEnsemble of ResNet-18 from `Deep Residual Learning for Image
-    Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
+    """BatchEnsemble of ResNet-18.
 
     Args:
         in_channels (int): Number of input channels.
@@ -344,11 +348,10 @@ def batched_resnet20(
     num_estimators: int,
     dropout_rate: float = 0,
     groups: int = 1,
-    style: str = "imagenet",
+    style: Literal["imagenet", "cifar"] = "imagenet",
     normalization_layer: nn.Module = nn.BatchNorm2d,
 ) -> _BatchedResNet:
-    """BatchEnsemble of ResNet-20 from `Deep Residual Learning for Image
-    Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
+    """BatchEnsemble of ResNet-20.
 
     Args:
         in_channels (int): Number of input channels.
@@ -383,11 +386,10 @@ def batched_resnet34(
     num_estimators: int,
     dropout_rate: float = 0,
     groups: int = 1,
-    style: str = "imagenet",
+    style: Literal["imagenet", "cifar"] = "imagenet",
     normalization_layer: nn.Module = nn.BatchNorm2d,
 ) -> _BatchedResNet:
-    """BatchEnsemble of ResNet-34 from `Deep Residual Learning for Image
-    Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
+    """BatchEnsemble of ResNet-34.
 
     Args:
         in_channels (int): Number of input channels.
@@ -423,11 +425,10 @@ def batched_resnet50(
     dropout_rate: float = 0,
     groups: int = 1,
     width_multiplier: int = 1,
-    style: str = "imagenet",
+    style: Literal["imagenet", "cifar"] = "imagenet",
     normalization_layer: nn.Module = nn.BatchNorm2d,
 ) -> _BatchedResNet:
-    """BatchEnsemble of ResNet-50 from `Deep Residual Learning for Image
-    Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
+    """BatchEnsemble of ResNet-50.
 
     Args:
         in_channels (int): Number of input channels.
@@ -465,11 +466,10 @@ def batched_resnet101(
     num_estimators: int,
     dropout_rate: float = 0,
     groups: int = 1,
-    style: str = "imagenet",
+    style: Literal["imagenet", "cifar"] = "imagenet",
     normalization_layer: nn.Module = nn.BatchNorm2d,
 ) -> _BatchedResNet:
-    """BatchEnsemble of ResNet-101 from `Deep Residual Learning for Image
-    Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
+    """BatchEnsemble of ResNet-101.
 
     Args:
         in_channels (int): Number of input channels.
@@ -504,11 +504,10 @@ def batched_resnet152(
     num_estimators: int,
     dropout_rate: float = 0,
     groups: int = 1,
-    style: str = "imagenet",
+    style: Literal["imagenet", "cifar"] = "imagenet",
     normalization_layer: nn.Module = nn.BatchNorm2d,
 ) -> _BatchedResNet:
-    """BatchEnsemble of ResNet-152 from `Deep Residual Learning for Image
-    Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
+    """BatchEnsemble of ResNet-152.
 
     Args:
         in_channels (int): Number of input channels.

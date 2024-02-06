@@ -1,3 +1,5 @@
+from typing import Literal
+
 import torch
 from einops import rearrange
 
@@ -18,7 +20,7 @@ class _MIMOWideResNet(_WideResNet):
         num_estimators: int,
         dropout_rate: float,
         groups: int = 1,
-        style: str = "imagenet",
+        style: Literal["imagenet", "cifar"] = "imagenet",
     ) -> None:
         super().__init__(
             depth,
@@ -47,7 +49,7 @@ def mimo_wideresnet28x10(
     num_estimators: int,
     groups: int = 1,
     dropout_rate: float = 0.3,
-    style: str = "imagenet",
+    style: Literal["imagenet", "cifar"] = "imagenet",
 ) -> _MIMOWideResNet:
     return _MIMOWideResNet(
         depth=28,

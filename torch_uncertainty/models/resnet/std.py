@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from typing import Literal
 
 from torch import Tensor, nn
 from torch.nn.functional import relu
@@ -199,7 +200,7 @@ class _ResNet(nn.Module):
         num_classes: int,
         dropout_rate: float,
         groups: int,
-        style: str = "imagenet",
+        style: Literal["imagenet", "cifar"] = "imagenet",
         in_planes: int = 64,
         activation_fn: Callable = relu,
         normalization_layer: nn.Module = nn.BatchNorm2d,
@@ -222,7 +223,7 @@ class _ResNet(nn.Module):
                 groups=1,  # No groups in the first layer
                 bias=False,
             )
-        else:
+        elif style == "cifar":
             self.conv1 = nn.Conv2d(
                 in_channels,
                 block_planes,
@@ -232,6 +233,8 @@ class _ResNet(nn.Module):
                 groups=1,  # No groups in the first layer
                 bias=False,
             )
+        else:
+            raise ValueError(f"Unknown style. Got {style}.")
 
         self.bn1 = normalization_layer(block_planes)
 
@@ -344,12 +347,11 @@ def resnet18(
     num_classes: int,
     dropout_rate: float = 0.0,
     groups: int = 1,
-    style: str = "imagenet",
+    style: Literal["imagenet", "cifar"] = "imagenet",
     activation_fn: Callable = relu,
     normalization_layer: nn.Module = nn.BatchNorm2d,
 ) -> _ResNet:
-    """ResNet-18 from `Deep Residual Learning for Image Recognition
-    <https://arxiv.org/pdf/1512.03385.pdf>`_.
+    """ResNet-18 model.
 
     Args:
         in_channels (int): Number of input channels.
@@ -383,12 +385,11 @@ def resnet20(
     num_classes: int,
     dropout_rate: float = 0.0,
     groups: int = 1,
-    style: str = "imagenet",
+    style: Literal["imagenet", "cifar"] = "imagenet",
     activation_fn: Callable = relu,
     normalization_layer: nn.Module = nn.BatchNorm2d,
 ) -> _ResNet:
-    """ResNet-18 from `Deep Residual Learning for Image Recognition
-    <https://arxiv.org/pdf/1512.03385.pdf>`_.
+    """ResNet-18 model.
 
     Args:
         in_channels (int): Number of input channels.
@@ -422,12 +423,11 @@ def resnet34(
     num_classes: int,
     dropout_rate: float = 0,
     groups: int = 1,
-    style: str = "imagenet",
+    style: Literal["imagenet", "cifar"] = "imagenet",
     activation_fn: Callable = relu,
     normalization_layer: nn.Module = nn.BatchNorm2d,
 ) -> _ResNet:
-    """ResNet-34 from `Deep Residual Learning for Image Recognition
-    <https://arxiv.org/pdf/1512.03385.pdf>`_.
+    """ResNet-34 model.
 
     Args:
         in_channels (int): Number of input channels.
@@ -461,12 +461,11 @@ def resnet50(
     num_classes: int,
     dropout_rate: float = 0,
     groups: int = 1,
-    style: str = "imagenet",
+    style: Literal["imagenet", "cifar"] = "imagenet",
     activation_fn: Callable = relu,
     normalization_layer: nn.Module = nn.BatchNorm2d,
 ) -> _ResNet:
-    """ResNet-50 from `Deep Residual Learning for Image Recognition
-    <https://arxiv.org/pdf/1512.03385.pdf>`_.
+    """ResNet-50 model.
 
     Args:
         in_channels (int): Number of input channels.
@@ -500,12 +499,11 @@ def resnet101(
     num_classes: int,
     dropout_rate: float = 0,
     groups: int = 1,
-    style: str = "imagenet",
+    style: Literal["imagenet", "cifar"] = "imagenet",
     activation_fn: Callable = relu,
     normalization_layer: nn.Module = nn.BatchNorm2d,
 ) -> _ResNet:
-    """ResNet-101 from `Deep Residual Learning for Image Recognition
-    <https://arxiv.org/pdf/1512.03385.pdf>`_.
+    """ResNet-101 model.
 
     Args:
         in_channels (int): Number of input channels.
@@ -539,12 +537,11 @@ def resnet152(
     num_classes: int,
     dropout_rate: float = 0,
     groups: int = 1,
-    style: str = "imagenet",
+    style: Literal["imagenet", "cifar"] = "imagenet",
     activation_fn: Callable = relu,
     normalization_layer: nn.Module = nn.BatchNorm2d,
 ) -> _ResNet:
-    """ResNet-152 from `Deep Residual Learning for Image Recognition
-    <https://arxiv.org/pdf/1512.03385.pdf>`_.
+    """ResNet-152 model.
 
     Args:
         in_channels (int): Number of input channels.

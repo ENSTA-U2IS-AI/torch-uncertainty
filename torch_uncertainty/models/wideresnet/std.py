@@ -1,3 +1,5 @@
+from typing import Literal
+
 import torch.nn.functional as F
 from torch import Tensor, nn
 
@@ -74,7 +76,7 @@ class _WideResNet(nn.Module):
         num_classes: int,
         dropout_rate: float,
         groups: int = 1,
-        style: str = "imagenet",
+        style: Literal["imagenet", "cifar"] = "imagenet",
     ) -> None:
         super().__init__()
         self.in_planes = 16
@@ -97,7 +99,7 @@ class _WideResNet(nn.Module):
                 groups=groups,
                 bias=True,
             )
-        else:
+        elif style == "cifar":
             self.conv1 = nn.Conv2d(
                 in_channels,
                 num_stages[0],
@@ -107,6 +109,8 @@ class _WideResNet(nn.Module):
                 groups=groups,
                 bias=True,
             )
+        else:
+            raise ValueError(f"Unknown WideResNet style: {style}. ")
 
         self.bn1 = nn.BatchNorm2d(num_stages[0])
 
@@ -195,7 +199,7 @@ def wideresnet28x10(
     num_classes: int,
     groups: int = 1,
     dropout_rate: float = 0.3,
-    style: str = "imagenet",
+    style: Literal["imagenet", "cifar"] = "imagenet",
 ) -> _WideResNet:
     """Wide-ResNet-28x10 from `Wide Residual Networks
     <https://arxiv.org/pdf/1605.07146.pdf>`_.
