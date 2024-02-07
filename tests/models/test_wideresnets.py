@@ -31,6 +31,7 @@ class TestPackedResnet:
             gamma=1,
             num_classes=10,
             style="imagenet",
+            conv_bias=False,
         )
 
         with pytest.raises(ValueError):
@@ -39,6 +40,7 @@ class TestPackedResnet:
                 widen_factor=20,
                 in_channels=3,
                 num_classes=10,
+                conv_bias=False,
                 dropout_rate=0.0,
             )
 
@@ -54,6 +56,7 @@ class TestMaskedWide:
             scale=2.0,
             groups=1,
             style="imagenet",
+            conv_bias=False,
         )
 
         with pytest.raises(ValueError):
@@ -63,6 +66,7 @@ class TestMaskedWide:
                 in_channels=3,
                 num_classes=10,
                 num_estimators=4,
+                conv_bias=False,
                 dropout_rate=0.0,
             )
 
@@ -77,6 +81,7 @@ class TestBatchedWide:
             num_estimators=2,
             groups=1,
             style="imagenet",
+            conv_bias=False,
         )
 
         with pytest.raises(ValueError):
@@ -86,6 +91,7 @@ class TestBatchedWide:
                 in_channels=3,
                 num_classes=10,
                 num_estimators=4,
+                conv_bias=False,
                 dropout_rate=0.0,
             )
 
@@ -107,4 +113,5 @@ class TestMIMOWide:
                 num_classes=10,
                 num_estimators=4,
                 dropout_rate=0.0,
+                conv_bias=False,
             )

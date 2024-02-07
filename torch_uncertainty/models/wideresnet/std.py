@@ -74,6 +74,7 @@ class _WideResNet(nn.Module):
         widen_factor: int,
         in_channels: int,
         num_classes: int,
+        conv_bias: bool,
         dropout_rate: float,
         groups: int = 1,
         style: Literal["imagenet", "cifar"] = "imagenet",
@@ -97,7 +98,7 @@ class _WideResNet(nn.Module):
                 stride=2,
                 padding=3,
                 groups=groups,
-                bias=True,
+                bias=conv_bias,
             )
         elif style == "cifar":
             self.conv1 = nn.Conv2d(
@@ -107,7 +108,7 @@ class _WideResNet(nn.Module):
                 stride=1,
                 padding=1,
                 groups=groups,
-                bias=True,
+                bias=conv_bias,
             )
         else:
             raise ValueError(f"Unknown WideResNet style: {style}. ")
@@ -198,6 +199,7 @@ def wideresnet28x10(
     in_channels: int,
     num_classes: int,
     groups: int = 1,
+    conv_bias: bool = True,
     dropout_rate: float = 0.3,
     style: Literal["imagenet", "cifar"] = "imagenet",
 ) -> _WideResNet:
@@ -209,6 +211,8 @@ def wideresnet28x10(
         num_classes (int): Number of classes to predict.
         groups (int, optional): Number of groups in convolutions. Defaults to
             ``1``.
+        conv_bias (bool): Whether to use bias in convolutions. Defaults to
+            ``True``.
         dropout_rate (float, optional): Dropout rate. Defaults to ``0.3``.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
@@ -220,6 +224,7 @@ def wideresnet28x10(
         depth=28,
         widen_factor=10,
         in_channels=in_channels,
+        conv_bias=conv_bias,
         dropout_rate=dropout_rate,
         num_classes=num_classes,
         groups=groups,

@@ -136,6 +136,7 @@ class WideResNet:
                 evaluation.
         """
         params = {
+            "conv_bias": False,
             "dropout_rate": dropout_rate,
             "groups": groups,
             "in_channels": in_channels,

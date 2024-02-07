@@ -26,6 +26,7 @@ class _BasicBlock(nn.Module):
         groups: int,
         activation_fn: Callable,
         normalization_layer: nn.Module,
+        conv_bias: bool,
     ) -> None:
         super().__init__()
         self.activation_fn = activation_fn
@@ -37,7 +38,7 @@ class _BasicBlock(nn.Module):
             stride=stride,
             padding=1,
             groups=groups,
-            bias=False,
+            bias=conv_bias,
         )
         self.bn1 = normalization_layer(planes)
 
@@ -50,7 +51,7 @@ class _BasicBlock(nn.Module):
             stride=1,
             padding=1,
             groups=groups,
-            bias=False,
+            bias=conv_bias,
         )
         self.bn2 = normalization_layer(planes)
 
@@ -63,7 +64,7 @@ class _BasicBlock(nn.Module):
                     kernel_size=1,
                     stride=stride,
                     groups=groups,
-                    bias=False,
+                    bias=conv_bias,
                 ),
                 normalization_layer(self.expansion * planes),
             )
@@ -87,6 +88,7 @@ class _Bottleneck(nn.Module):
         groups: int,
         activation_fn: Callable,
         normalization_layer: nn.Module,
+        conv_bias: bool,
     ) -> None:
         super().__init__()
         self.activation_fn = activation_fn
@@ -96,7 +98,7 @@ class _Bottleneck(nn.Module):
             planes,
             kernel_size=1,
             groups=groups,
-            bias=False,
+            bias=conv_bias,
         )
         self.bn1 = normalization_layer(planes)
         self.conv2 = nn.Conv2d(
@@ -106,7 +108,7 @@ class _Bottleneck(nn.Module):
             stride=stride,
             padding=1,
             groups=groups,
-            bias=False,
+            bias=conv_bias,
         )
         self.bn2 = normalization_layer(planes)
         self.dropout = nn.Dropout2d(p=dropout_rate)
@@ -115,7 +117,7 @@ class _Bottleneck(nn.Module):
             self.expansion * planes,
             kernel_size=1,
             groups=groups,
-            bias=False,
+            bias=conv_bias,
         )
         self.bn3 = normalization_layer(self.expansion * planes)
 
@@ -128,7 +130,7 @@ class _Bottleneck(nn.Module):
                     kernel_size=1,
                     stride=stride,
                     groups=groups,
-                    bias=False,
+                    bias=conv_bias,
                 ),
                 normalization_layer(self.expansion * planes),
             )
@@ -164,7 +166,7 @@ class _Bottleneck(nn.Module):
 #             padding=5,
 #             groups=in_planes,
 #             stride=stride,
-#             bias=False,
+#             bias=self.conv_bias,
 #         )
 #         self.bn1 = normalization_layer(planes)
 #         self.conv2 = nn.Conv2d(
@@ -198,6 +200,7 @@ class _ResNet(nn.Module):
         num_blocks: list[int],
         in_channels: int,
         num_classes: int,
+        conv_bias: bool,
         dropout_rate: float,
         groups: int,
         style: Literal["imagenet", "cifar"] = "imagenet",
@@ -221,7 +224,7 @@ class _ResNet(nn.Module):
                 stride=2,
                 padding=3,
                 groups=1,  # No groups in the first layer
-                bias=False,
+                bias=conv_bias,
             )
         elif style == "cifar":
             self.conv1 = nn.Conv2d(
@@ -231,7 +234,7 @@ class _ResNet(nn.Module):
                 stride=1,
                 padding=1,
                 groups=1,  # No groups in the first layer
-                bias=False,
+                bias=conv_bias,
             )
         else:
             raise ValueError(f"Unknown style. Got {style}.")
@@ -254,6 +257,7 @@ class _ResNet(nn.Module):
             groups=groups,
             activation_fn=activation_fn,
             normalization_layer=normalization_layer,
+            conv_bias=conv_bias,
         )
         self.layer2 = self._make_layer(
             block,
@@ -264,6 +268,7 @@ class _ResNet(nn.Module):
             groups=groups,
             activation_fn=activation_fn,
             normalization_layer=normalization_layer,
+            conv_bias=conv_bias,
         )
         self.layer3 = self._make_layer(
             block,
@@ -274,6 +279,7 @@ class _ResNet(nn.Module):
             groups=groups,
             activation_fn=activation_fn,
             normalization_layer=normalization_layer,
+            conv_bias=conv_bias,
         )
         if len(num_blocks) == 4:
             self.layer4 = self._make_layer(
@@ -285,6 +291,7 @@ class _ResNet(nn.Module):
                 groups=groups,
                 activation_fn=activation_fn,
                 normalization_layer=normalization_layer,
+                conv_bias=conv_bias,
             )
             linear_multiplier = 8
         else:
@@ -310,6 +317,7 @@ class _ResNet(nn.Module):
         groups: int,
         activation_fn: Callable,
         normalization_layer: nn.Module,
+        conv_bias: bool,
     ) -> nn.Module:
         strides = [stride] + [1] * (num_blocks - 1)
         layers = []
@@ -323,6 +331,7 @@ class _ResNet(nn.Module):
                     groups=groups,
                     activation_fn=activation_fn,
                     normalization_layer=normalization_layer,
+                    conv_bias=conv_bias,
                 )
             )
             self.in_planes = planes * block.expansion
@@ -345,6 +354,7 @@ class _ResNet(nn.Module):
 def resnet18(
     in_channels: int,
     num_classes: int,
+    conv_bias: bool = True,
     dropout_rate: float = 0.0,
     groups: int = 1,
     style: Literal["imagenet", "cifar"] = "imagenet",
@@ -356,6 +366,10 @@ def resnet18(
     Args:
         in_channels (int): Number of input channels.
         num_classes (int): Number of classes to predict.
+        conv_bias (bool): Whether to use bias in convolutions. Defaults to
+            ``True``.
+        conv_bias (bool): Whether to use bias in convolutions. Defaults to
+            ``True``.
         dropout_rate (float): Dropout rate. Defaults to 0.
         groups (int): Number of groups in convolutions. Defaults to 1.
         style (bool, optional): Whether to use the ImageNet
@@ -371,6 +385,7 @@ def resnet18(
         num_blocks=[2, 2, 2, 2],
         in_channels=in_channels,
         num_classes=num_classes,
+        conv_bias=conv_bias,
         dropout_rate=dropout_rate,
         groups=groups,
         style=style,
@@ -383,6 +398,7 @@ def resnet18(
 def resnet20(
     in_channels: int,
     num_classes: int,
+    conv_bias: bool = True,
     dropout_rate: float = 0.0,
     groups: int = 1,
     style: Literal["imagenet", "cifar"] = "imagenet",
@@ -394,6 +410,8 @@ def resnet20(
     Args:
         in_channels (int): Number of input channels.
         num_classes (int): Number of classes to predict.
+        conv_bias (bool): Whether to use bias in convolutions. Defaults to
+            ``True``.
         dropout_rate (float): Dropout rate. Defaults to 0.
         groups (int): Number of groups in convolutions. Defaults to 1.
         style (bool, optional): Whether to use the ImageNet
@@ -409,6 +427,7 @@ def resnet20(
         num_blocks=[3, 3, 3],
         in_channels=in_channels,
         num_classes=num_classes,
+        conv_bias=conv_bias,
         dropout_rate=dropout_rate,
         groups=groups,
         style=style,
@@ -421,6 +440,7 @@ def resnet20(
 def resnet34(
     in_channels: int,
     num_classes: int,
+    conv_bias: bool = True,
     dropout_rate: float = 0,
     groups: int = 1,
     style: Literal["imagenet", "cifar"] = "imagenet",
@@ -432,6 +452,8 @@ def resnet34(
     Args:
         in_channels (int): Number of input channels.
         num_classes (int): Number of classes to predict.
+        conv_bias (bool): Whether to use bias in convolutions. Defaults to
+            ``True``.
         dropout_rate (float): Dropout rate. Defaults to 0.
         groups (int): Number of groups in convolutions. Defaults to 1.
         style (bool, optional): Whether to use the ImageNet
@@ -447,6 +469,7 @@ def resnet34(
         num_blocks=[3, 4, 6, 3],
         in_channels=in_channels,
         num_classes=num_classes,
+        conv_bias=conv_bias,
         dropout_rate=dropout_rate,
         groups=groups,
         style=style,
@@ -459,6 +482,7 @@ def resnet34(
 def resnet50(
     in_channels: int,
     num_classes: int,
+    conv_bias: bool = True,
     dropout_rate: float = 0,
     groups: int = 1,
     style: Literal["imagenet", "cifar"] = "imagenet",
@@ -470,6 +494,8 @@ def resnet50(
     Args:
         in_channels (int): Number of input channels.
         num_classes (int): Number of classes to predict.
+        conv_bias (bool): Whether to use bias in convolutions. Defaults to
+            ``True``.
         dropout_rate (float): Dropout rate. Defaults to 0.
         groups (int): Number of groups in convolutions. Defaults to 1.
         style (bool, optional): Whether to use the ImageNet
@@ -485,6 +511,7 @@ def resnet50(
         num_blocks=[3, 4, 6, 3],
         in_channels=in_channels,
         num_classes=num_classes,
+        conv_bias=conv_bias,
         dropout_rate=dropout_rate,
         groups=groups,
         style=style,
@@ -497,6 +524,7 @@ def resnet50(
 def resnet101(
     in_channels: int,
     num_classes: int,
+    conv_bias: bool = True,
     dropout_rate: float = 0,
     groups: int = 1,
     style: Literal["imagenet", "cifar"] = "imagenet",
@@ -508,6 +536,8 @@ def resnet101(
     Args:
         in_channels (int): Number of input channels.
         num_classes (int): Number of classes to predict.
+        conv_bias (bool): Whether to use bias in convolutions. Defaults to
+            ``True``.
         dropout_rate (float): Dropout rate. Defaults to 0.
         groups (int): Number of groups in convolutions. Defaults to 1.
         style (bool, optional): Whether to use the ImageNet
@@ -523,6 +553,7 @@ def resnet101(
         num_blocks=[3, 4, 23, 3],
         in_channels=in_channels,
         num_classes=num_classes,
+        conv_bias=conv_bias,
         dropout_rate=dropout_rate,
         groups=groups,
         style=style,
@@ -535,6 +566,7 @@ def resnet101(
 def resnet152(
     in_channels: int,
     num_classes: int,
+    conv_bias: bool = True,
     dropout_rate: float = 0,
     groups: int = 1,
     style: Literal["imagenet", "cifar"] = "imagenet",
@@ -546,6 +578,8 @@ def resnet152(
     Args:
         in_channels (int): Number of input channels.
         num_classes (int): Number of classes to predict.
+        conv_bias (bool): Whether to use bias in convolutions. Defaults to
+            ``True``.
         dropout_rate (float): Dropout rate. Defaults to 0.
         groups (int, optional): Number of groups in convolutions. Defaults to
             ``1``.
@@ -562,6 +596,7 @@ def resnet152(
         num_blocks=[3, 8, 36, 3],
         in_channels=in_channels,
         num_classes=num_classes,
+        conv_bias=conv_bias,
         dropout_rate=dropout_rate,
         groups=groups,
         style=style,

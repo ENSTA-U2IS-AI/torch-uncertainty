@@ -25,6 +25,7 @@ class _BasicBlock(nn.Module):
         stride: int,
         num_estimators: int,
         scale: float,
+        conv_bias: bool,
         dropout_rate: float,
         groups: int,
         normalization_layer: nn.Module,
@@ -40,7 +41,7 @@ class _BasicBlock(nn.Module):
             groups=groups,
             stride=stride,
             padding=1,
-            bias=False,
+            bias=conv_bias,
         )
         self.bn1 = normalization_layer(planes)
         self.conv2 = MaskedConv2d(
@@ -52,7 +53,7 @@ class _BasicBlock(nn.Module):
             stride=1,
             padding=1,
             groups=groups,
-            bias=False,
+            bias=conv_bias,
         )
         self.dropout = nn.Dropout2d(p=dropout_rate)
         self.bn2 = normalization_layer(planes)
@@ -68,7 +69,7 @@ class _BasicBlock(nn.Module):
                     scale=scale,
                     stride=stride,
                     groups=groups,
-                    bias=False,
+                    bias=conv_bias,
                 ),
                 normalization_layer(self.expansion * planes),
             )
@@ -90,6 +91,7 @@ class Bottleneck(nn.Module):
         stride: int,
         num_estimators: int,
         scale: float,
+        conv_bias: bool,
         dropout_rate: float,
         groups: int,
         normalization_layer: nn.Module,
@@ -164,6 +166,7 @@ class _MaskedResNet(nn.Module):
         num_estimators: int,
         dropout_rate: float,
         scale: float = 2.0,
+        conv_bias: bool = True,
         groups: int = 1,
         style: Literal["imagenet", "cifar"] = "imagenet",
         in_planes: int = 64,
@@ -214,6 +217,7 @@ class _MaskedResNet(nn.Module):
             num_blocks[0],
             stride=1,
             num_estimators=num_estimators,
+            conv_bias=conv_bias,
             dropout_rate=dropout_rate,
             scale=scale,
             groups=groups,
@@ -225,6 +229,7 @@ class _MaskedResNet(nn.Module):
             num_blocks[1],
             stride=2,
             num_estimators=num_estimators,
+            conv_bias=conv_bias,
             dropout_rate=dropout_rate,
             scale=scale,
             groups=groups,
@@ -236,6 +241,7 @@ class _MaskedResNet(nn.Module):
             num_blocks[2],
             stride=2,
             num_estimators=num_estimators,
+            conv_bias=conv_bias,
             dropout_rate=dropout_rate,
             scale=scale,
             groups=groups,
@@ -248,6 +254,7 @@ class _MaskedResNet(nn.Module):
                 num_blocks[3],
                 stride=2,
                 num_estimators=num_estimators,
+                conv_bias=conv_bias,
                 dropout_rate=dropout_rate,
                 scale=scale,
                 groups=groups,
@@ -276,6 +283,7 @@ class _MaskedResNet(nn.Module):
         num_blocks: int,
         stride: int,
         num_estimators: int,
+        conv_bias: bool,
         dropout_rate: float,
         scale: float,
         groups: int,
@@ -290,6 +298,7 @@ class _MaskedResNet(nn.Module):
                     planes=planes,
                     stride=stride,
                     num_estimators=num_estimators,
+                    conv_bias=conv_bias,
                     dropout_rate=dropout_rate,
                     scale=scale,
                     groups=groups,
@@ -319,6 +328,7 @@ def masked_resnet18(
     num_estimators: int,
     scale: float,
     groups: int = 1,
+    conv_bias: bool = True,
     dropout_rate: float = 0,
     style: Literal["imagenet", "cifar"] = "imagenet",
     normalization_layer: nn.Module = nn.BatchNorm2d,
@@ -331,6 +341,8 @@ def masked_resnet18(
         num_estimators (int): Number of estimators in the ensemble.
         scale (float): The scale of the mask.
         groups (int): Number of groups within each estimator. Defaults to 1.
+        conv_bias (bool): Whether to use bias in convolutions. Defaults to
+            ``True``.
         dropout_rate (float): Dropout rate. Defaults to 0.
         style (str, optional): The style of the model. Defaults to "imagenet".
         normalization_layer (nn.Module, optional): Normalization layer.
@@ -346,6 +358,7 @@ def masked_resnet18(
         num_estimators=num_estimators,
         scale=scale,
         groups=groups,
+        conv_bias=conv_bias,
         dropout_rate=dropout_rate,
         style=style,
         in_planes=64,
@@ -359,6 +372,7 @@ def masked_resnet20(
     num_estimators: int,
     scale: float,
     groups: int = 1,
+    conv_bias: bool = True,
     dropout_rate: float = 0,
     style: Literal["imagenet", "cifar"] = "imagenet",
     normalization_layer: nn.Module = nn.BatchNorm2d,
@@ -371,6 +385,8 @@ def masked_resnet20(
         num_estimators (int): Number of estimators in the ensemble.
         scale (float): The scale of the mask.
         groups (int): Number of groups within each estimator. Defaults to 1.
+        conv_bias (bool): Whether to use bias in convolutions. Defaults to
+            ``True``.
         dropout_rate (float): Dropout rate. Defaults to 0.
         style (str, optional): The style of the model. Defaults to "imagenet".
         normalization_layer (nn.Module, optional): Normalization layer.
@@ -386,6 +402,7 @@ def masked_resnet20(
         num_estimators=num_estimators,
         scale=scale,
         groups=groups,
+        conv_bias=conv_bias,
         dropout_rate=dropout_rate,
         style=style,
         in_planes=16,
@@ -399,6 +416,7 @@ def masked_resnet34(
     num_estimators: int,
     scale: float,
     groups: int = 1,
+    conv_bias: bool = True,
     dropout_rate: float = 0,
     style: Literal["imagenet", "cifar"] = "imagenet",
     normalization_layer: nn.Module = nn.BatchNorm2d,
@@ -411,6 +429,8 @@ def masked_resnet34(
         num_estimators (int): Number of estimators in the ensemble.
         scale (float): The scale of the mask.
         groups (int): Number of groups within each estimator. Defaults to 1.
+        conv_bias (bool): Whether to use bias in convolutions. Defaults to
+            ``True``.
         dropout_rate (float): Dropout rate. Defaults to 0.
         style (str, optional): The style of the model. Defaults to "imagenet".
         normalization_layer (nn.Module, optional): Normalization layer.
@@ -426,6 +446,7 @@ def masked_resnet34(
         num_estimators=num_estimators,
         scale=scale,
         groups=groups,
+        conv_bias=conv_bias,
         dropout_rate=dropout_rate,
         style=style,
         in_planes=64,
@@ -439,6 +460,7 @@ def masked_resnet50(
     num_estimators: int,
     scale: float,
     groups: int = 1,
+    conv_bias: bool = True,
     dropout_rate: float = 0,
     style: Literal["imagenet", "cifar"] = "imagenet",
     normalization_layer: nn.Module = nn.BatchNorm2d,
@@ -451,6 +473,8 @@ def masked_resnet50(
         num_estimators (int): Number of estimators in the ensemble.
         scale (float): The scale of the mask.
         groups (int): Number of groups within each estimator. Defaults to 1.
+        conv_bias (bool): Whether to use bias in convolutions. Defaults to
+            ``True``.
         dropout_rate (float): Dropout rate. Defaults to 0.
         style (str, optional): The style of the model. Defaults to "imagenet".
         normalization_layer (nn.Module, optional): Normalization layer.
@@ -466,6 +490,7 @@ def masked_resnet50(
         num_estimators=num_estimators,
         scale=scale,
         groups=groups,
+        conv_bias=conv_bias,
         dropout_rate=dropout_rate,
         style=style,
         in_planes=64,
@@ -479,6 +504,7 @@ def masked_resnet101(
     num_estimators: int,
     scale: float,
     groups: int = 1,
+    conv_bias: bool = True,
     dropout_rate: float = 0,
     style: Literal["imagenet", "cifar"] = "imagenet",
     normalization_layer: nn.Module = nn.BatchNorm2d,
@@ -491,6 +517,8 @@ def masked_resnet101(
         num_estimators (int): Number of estimators in the ensemble.
         scale (float): The scale of the mask.
         groups (int): Number of groups within each estimator. Defaults to 1.
+        conv_bias (bool): Whether to use bias in convolutions. Defaults to
+            ``True``.
         dropout_rate (float): Dropout rate. Defaults to 0.
         style (str, optional): The style of the model. Defaults to "imagenet".
         normalization_layer (nn.Module, optional): Normalization layer.
@@ -506,6 +534,7 @@ def masked_resnet101(
         num_estimators=num_estimators,
         scale=scale,
         groups=groups,
+        conv_bias=conv_bias,
         dropout_rate=dropout_rate,
         style=style,
         in_planes=64,
@@ -519,6 +548,7 @@ def masked_resnet152(
     num_estimators: int,
     scale: float,
     groups: int = 1,
+    conv_bias: bool = True,
     dropout_rate: float = 0,
     style: Literal["imagenet", "cifar"] = "imagenet",
     normalization_layer: nn.Module = nn.BatchNorm2d,
@@ -531,6 +561,8 @@ def masked_resnet152(
         num_estimators (int): Number of estimators in the ensemble.
         scale (float): The scale of the mask.
         groups (int): Number of groups within each estimator. Defaults to 1.
+        conv_bias (bool): Whether to use bias in convolutions. Defaults to
+            ``True``.
         dropout_rate (float): Dropout rate. Defaults to 0.
         style (str, optional): The style of the model. Defaults to "imagenet".
         normalization_layer (nn.Module, optional): Normalization layer.
@@ -546,6 +578,7 @@ def masked_resnet152(
         num_estimators=num_estimators,
         scale=scale,
         groups=groups,
+        conv_bias=conv_bias,
         dropout_rate=dropout_rate,
         style=style,
         in_planes=64,
