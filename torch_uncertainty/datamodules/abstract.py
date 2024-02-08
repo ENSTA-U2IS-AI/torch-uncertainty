@@ -42,9 +42,7 @@ class AbstractDataModule(LightningDataModule):
         """
         super().__init__()
 
-        if isinstance(root, str):
-            root = Path(root)
-        self.root: Path = root
+        self.root = Path(root)
         self.batch_size = batch_size
         self.num_workers = num_workers
 

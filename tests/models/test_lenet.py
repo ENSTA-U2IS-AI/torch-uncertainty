@@ -19,7 +19,7 @@ class TestLeNet:
         model(torch.randn(1, 1, 20, 20))
 
         packed_lenet(1, 1)
-
+        bayesian_lenet(1, 1)
         bayesian_lenet(1, 1, 1, 1, 1, 0, 1)
 
     def test_errors(self):

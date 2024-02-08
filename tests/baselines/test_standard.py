@@ -1,9 +1,14 @@
+from argparse import ArgumentParser
+
 import torch
 from torch import nn
 from torchinfo import summary
 
 from torch_uncertainty.baselines import VGG, ResNet, WideResNet
 from torch_uncertainty.baselines.regression import MLP
+from torch_uncertainty.baselines.utils.parser_addons import (
+    add_mlp_specific_args,
+)
 from torch_uncertainty.optimization_procedures import (
     optim_cifar10_resnet18,
     optim_cifar10_wideresnet,
@@ -89,3 +94,6 @@ class TestStandardMLPBaseline:
         _ = net.criterion
         _ = net.configure_optimizers()
         _ = net(torch.rand(1, 3))
+
+        parser = ArgumentParser()
+        add_mlp_specific_args(parser)

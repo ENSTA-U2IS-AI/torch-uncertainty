@@ -19,8 +19,7 @@ def get_version(
     Returns:
         Tuple[Path, Path]: The path to the checkpoints and to its parameters.
     """
-    if isinstance(root, str):
-        root = Path(root)
+    root = Path(root)
 
     if (root / f"version_{version}").is_dir():
         version_folder = root / f"version_{version}"

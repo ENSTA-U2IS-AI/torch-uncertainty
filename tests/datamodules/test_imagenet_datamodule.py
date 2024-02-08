@@ -1,3 +1,4 @@
+import pathlib
 from argparse import ArgumentParser
 
 import pytest
@@ -26,7 +27,13 @@ class TestImageNetDataModule:
         dm.setup()
         dm.setup("test")
 
-        dm.val_split = "../assets/dummy_indices.yaml"
+        args.val_split = (
+            pathlib.Path(__file__).parent.resolve()
+            / "../assets/dummy_indices.yaml"
+        )
+        dm = ImageNetDataModule(**vars(args))
+        dm.dataset = DummyClassificationDataset
+        dm.ood_dataset = DummyClassificationDataset
         dm.setup("fit")
         dm.setup("test")
         dm.train_dataloader()
@@ -64,6 +71,7 @@ class TestImageNetDataModule:
             args.ood_ds = ood_ds
             dm = ImageNetDataModule(**vars(args))
             if ood_ds == "inaturalist":
+                dm.eval_ood = True
                 dm.dataset = DummyClassificationDataset
                 dm.ood_dataset = DummyClassificationDataset
                 dm.prepare_data()

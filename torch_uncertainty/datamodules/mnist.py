@@ -61,16 +61,9 @@ class MNISTDataModule(AbstractDataModule):
             persistent_workers=persistent_workers,
         )
 
-        if isinstance(root, str):
-            root = Path(root)
-
-        self.root: Path = root
         self.eval_ood = eval_ood
         self.batch_size = batch_size
         self.val_split = val_split
-        self.num_workers = num_workers
-        self.pin_memory = pin_memory
-        self.persistent_workers = persistent_workers
 
         if test_alt == "c":
             self.dataset = MNISTC

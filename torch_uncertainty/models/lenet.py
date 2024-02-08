@@ -44,10 +44,10 @@ class _LeNet(nn.Module):
         self.conv1 = conv2d_layer(
             in_channels, 6, (5, 5), groups=groups, **layer_args
         )
-        if norm == nn.BatchNorm2d or MCBatchNorm2d:
+        if isinstance(norm, (nn.BatchNorm2d | MCBatchNorm2d)):
             self.norm1 = norm(6)
         self.conv2 = conv2d_layer(6, 16, (5, 5), groups=groups, **layer_args)
-        if norm == nn.BatchNorm2d or MCBatchNorm2d:
+        if isinstance(norm, (nn.BatchNorm2d | MCBatchNorm2d)):
             self.norm2 = norm(16)
         self.pooling = nn.AdaptiveAvgPool2d((4, 4))
         self.fc1 = linear_layer(256, 120, **layer_args)
@@ -87,17 +87,15 @@ def _lenet(
     stochastic: bool,
     in_channels: int,
     num_classes: int,
+    layer_args: dict,
     linear_layer: type[nn.Module] = nn.Linear,
     conv2d_layer: type[nn.Module] = nn.Conv2d,
-    layer_args: dict | None = None,
     activation: Callable = nn.ReLU,
     norm: type[nn.Module] = nn.Identity,
     groups: int = 1,
     dropout_rate: float = 0.0,
     last_layer_dropout: bool = False,
 ) -> _LeNet | _StochasticLeNet:
-    if layer_args is None:
-        layer_args = {}
     model = _LeNet if not stochastic else _StochasticLeNet
     return model(
         in_channels=in_channels,
