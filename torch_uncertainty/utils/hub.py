@@ -4,7 +4,7 @@ import torch
 import yaml
 from huggingface_hub import hf_hub_download
 from huggingface_hub.utils._errors import EntryNotFoundError
-from safetensors import safe_open
+from safetensors.torch import load_file
 
 
 def load_hf(weight_id: str, version: int = 0) -> tuple[torch.Tensor, dict]:
@@ -30,17 +30,20 @@ def load_hf(weight_id: str, version: int = 0) -> tuple[torch.Tensor, dict]:
         filename = f"{weight_id}_{version}.ckpt"
     try:
         weight_path = hf_hub_download(repo_id=repo_id, filename=filename)
-    except EntryNotFoundError:
+    except EntryNotFoundError as not_pt:
         pickle = False
-        filename = f"{weight_id}.safetensors"
-        weight_path = hf_hub_download(repo_id=repo_id, filename=filename)
+        filename = f"{weight_id}_{version}.safetensors"
+        try:
+            weight_path = hf_hub_download(repo_id=repo_id, filename=filename)
+        except EntryNotFoundError:
+            raise ValueError(
+                f"Model {weight_id}_{version} not found on HuggingFace."
+            ) from not_pt
+
     if pickle:
         weight = torch.load(weight_path, map_location=torch.device("cpu"))
     else:
-        weight = {}
-        with safe_open("model.safetensors", framework="pt", device="cpu") as f:
-            for key in f:
-                weight[key] = f.get_tensor(key)
+        weight = load_file(weight_path, device="cpu")
 
     if "state_dict" in weight:  # coverage: ignore
         weight = weight["state_dict"]
