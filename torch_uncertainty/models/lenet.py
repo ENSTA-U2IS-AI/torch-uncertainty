@@ -30,12 +30,15 @@ class _LeNet(nn.Module):
         super().__init__()
         self.activation = activation
 
+        batchnorm = False
         if norm == nn.Identity:
             self.norm1 = norm()
             self.norm2 = norm()
-        elif norm != nn.BatchNorm2d and not (
+        elif norm == nn.BatchNorm2d or (
             isinstance(norm, partial) and norm.func == MCBatchNorm2d
         ):
+            batchnorm = True
+        else:
             raise ValueError("norm must be nn.Identity or nn.BatchNorm2d")
 
         self.dropout_rate = dropout_rate
@@ -44,10 +47,10 @@ class _LeNet(nn.Module):
         self.conv1 = conv2d_layer(
             in_channels, 6, (5, 5), groups=groups, **layer_args
         )
-        if isinstance(norm, (nn.BatchNorm2d | MCBatchNorm2d)):
+        if batchnorm:
             self.norm1 = norm(6)
         self.conv2 = conv2d_layer(6, 16, (5, 5), groups=groups, **layer_args)
-        if isinstance(norm, (nn.BatchNorm2d | MCBatchNorm2d)):
+        if batchnorm:
             self.norm2 = norm(16)
         self.pooling = nn.AdaptiveAvgPool2d((4, 4))
         self.fc1 = linear_layer(256, 120, **layer_args)
