@@ -45,6 +45,7 @@ jobs:
           auto_tutorials_source/**
           data/**
           experiments/**
+          docs/**
           *.md
           *.yaml
           *.yml
