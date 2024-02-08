@@ -64,17 +64,14 @@ class MNISTC(VisionDataset):
 
     def __init__(
         self,
-        root: str,
+        root: str | Path,
         transform: Callable | None = None,
         target_transform: Callable | None = None,
         split: Literal["train", "test"] = "test",
         subset: str = "all",
         download: bool = False,
     ) -> None:
-        if isinstance(root, str):
-            root = Path(root)
-
-        self.root = root
+        self.root = Path(root)
 
         # Download the new targets
         if download:
@@ -86,7 +83,7 @@ class MNISTC(VisionDataset):
             )
 
         super().__init__(
-            root=root / self.base_folder,
+            root=self.root / self.base_folder,
             transform=transform,
             target_transform=target_transform,
         )

@@ -15,6 +15,7 @@ class TestImageNetDataModule:
         parser = ImageNetDataModule.add_argparse_args(parser)
 
         args = parser.parse_args("")
+        args.val_split = 0.1
         dm = ImageNetDataModule(**vars(args))
 
         assert dm.dataset == ImageNet
@@ -25,6 +26,8 @@ class TestImageNetDataModule:
         dm.setup()
         dm.setup("test")
 
+        dm.val_split = None
+        dm.setup("test")
         dm.train_dataloader()
         dm.val_dataloader()
         dm.test_dataloader()
@@ -50,7 +53,7 @@ class TestImageNetDataModule:
 
         args.test_alt = None
 
-        for ood_ds in ["inaturalist", "imagenet-o", "textures"]:
+        for ood_ds in ["inaturalist", "imagenet-o", "textures", "openimage-o"]:
             args.ood_ds = ood_ds
             dm = ImageNetDataModule(**vars(args))
 

@@ -63,17 +63,14 @@ class TinyImageNetC(ImageFolder):
 
     def __init__(
         self,
-        root: str,
+        root: str | Path,
         transform: Callable | None = None,
         target_transform: Callable | None = None,
         subset: str = "all",
         severity: int = 1,
         download: bool = False,
     ) -> None:
-        if isinstance(root, str):
-            root = Path(root)
-
-        self.root = root
+        self.root = Path(root)
 
         if download:
             self.download()
@@ -83,7 +80,8 @@ class TinyImageNetC(ImageFolder):
                 "Dataset not found. You can use download=True to download it."
             )
         super().__init__(
-            root=root / self.base_folder / "brightness/1/", transform=transform
+            root=self.root / self.base_folder / "brightness/1/",
+            transform=transform,
         )
         if subset not in ["all", *self.subsets]:
             raise ValueError(

@@ -31,13 +31,12 @@ class FrostImages(VisionDataset):  # TODO: Use ImageFolder
 
     def __init__(
         self,
-        root: str,
+        root: str | Path,
         transform: Callable[..., Any] | None,
         target_transform: Callable[..., Any] | None = None,
         download: bool = False,
     ) -> None:
-        if isinstance(root, str):
-            self.root = Path(root)
+        self.root = Path(root)
 
         if download:
             self.download()

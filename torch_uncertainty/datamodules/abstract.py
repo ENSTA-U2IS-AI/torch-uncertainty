@@ -159,7 +159,7 @@ class AbstractDataModule(LightningDataModule):
         p = parent_parser.add_argument_group("datamodule")
         p.add_argument("--root", type=str, default="./data/")
         p.add_argument("--batch_size", type=int, default=128)
-        p.add_argument("--val_split", type=float, default=0.0)
+        p.add_argument("--val_split", type=float, default=None)
         p.add_argument("--num_workers", type=int, default=4)
         p.add_argument("--use_cv", action="store_true")
         p.add_argument("--n_splits", type=int, default=10)

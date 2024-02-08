@@ -40,7 +40,7 @@ class ImageNetDataModule(AbstractDataModule):
         root: str | Path,
         eval_ood: bool,
         batch_size: int,
-        val_split: float | Path = 0.0,
+        val_split: float | Path | None = None,
         ood_ds: str = "openimage-o",
         test_alt: str | None = None,
         procedure: str | None = None,
@@ -75,7 +75,7 @@ class ImageNetDataModule(AbstractDataModule):
             kwargs: Additional arguments.
         """
         super().__init__(
-            root=root,
+            root=Path(root),
             batch_size=batch_size,
             num_workers=num_workers,
             pin_memory=pin_memory,
@@ -83,9 +83,8 @@ class ImageNetDataModule(AbstractDataModule):
         )
 
         self.eval_ood = eval_ood
-        if isinstance(val_split, str):
+        if not isinstance(val_split, float):
             val_split = Path(val_split)
-        if isinstance(val_split, Path):
             self.train_indices, self.val_indices = read_indices(val_split)
         self.val_split = val_split
         self.ood_ds = ood_ds

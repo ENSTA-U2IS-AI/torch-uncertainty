@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from pathlib import Path
 
 from torchvision.datasets import ImageFolder
@@ -14,12 +15,12 @@ class OpenImageO(ImageFolder):
 
     def __init__(
         self,
-        root,
+        root: str | Path,
         split: str | None = None,
-        transform=None,
-        target_transform=None,
-        download=False,
-    ):
+        transform: Callable | None = None,
+        target_transform: Callable | None = None,
+        download: bool = False,
+    ) -> None:
         """OpenImage-O dataset.
 
         Args:
@@ -44,9 +45,7 @@ class OpenImageO(ImageFolder):
             Curation: ViM: Out-Of-Distribution with Virtual-logit Matching.
             Wang H., et al. In CVPR 2022.
         """
-        if isinstance(root, str):
-            root = Path(root)
-        self.root = root
+        self.root = Path(root)
 
         self.transform = transform
         self.target_transform = target_transform

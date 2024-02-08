@@ -43,3 +43,11 @@ class TestMCBatchNorm:
             MCBatchNorm2d(1, 0)
         with pytest.raises(ValueError):
             MCBatchNorm2d(1, 1.5)
+
+        layer1d = MCBatchNorm1d(1, 1)
+        layer2d = MCBatchNorm2d(1, 1)
+        layer3d = MCBatchNorm3d(1, 1)
+        with pytest.raises(ValueError):
+            layer1d(torch.randn(1, 1, 1, 20))
+            layer2d(torch.randn(1, 1, 1, 1, 20))
+            layer3d(torch.randn(1, 1, 1, 1, 1, 20))
