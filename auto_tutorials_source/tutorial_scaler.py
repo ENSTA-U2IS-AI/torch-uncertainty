@@ -40,7 +40,7 @@ from torch_uncertainty.utils import load_hf
 # This can be done in a one liner:
 
 # Build the model
-model = resnet18(in_channels=3, num_classes=100, groups=1, style="cifar")
+model = resnet18(in_channels=3, num_classes=100, style="cifar", conv_bias=False)
 
 # Download the weights (the config is not used here)
 weights, config = load_hf("resnet18_c100")
