@@ -26,8 +26,15 @@ class TestImageNetDataModule:
         dm.setup()
         dm.setup("test")
 
-        dm.val_split = None
+        dm.val_split = "../assets/dummy_indices.yaml"
+        dm.setup("fit")
         dm.setup("test")
+        dm.train_dataloader()
+        dm.val_dataloader()
+        dm.test_dataloader()
+
+        dm.val_split = None
+        dm.setup("fit")
         dm.train_dataloader()
         dm.val_dataloader()
         dm.test_dataloader()
@@ -56,6 +63,12 @@ class TestImageNetDataModule:
         for ood_ds in ["inaturalist", "imagenet-o", "textures", "openimage-o"]:
             args.ood_ds = ood_ds
             dm = ImageNetDataModule(**vars(args))
+            if ood_ds == "inaturalist":
+                dm.dataset = DummyClassificationDataset
+                dm.ood_dataset = DummyClassificationDataset
+                dm.prepare_data()
+                dm.setup("test")
+                dm.test_dataloader()
 
         args.ood_ds = "other"
         with pytest.raises(ValueError):

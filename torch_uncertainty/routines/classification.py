@@ -711,11 +711,12 @@ class ClassificationEnsemble(ClassificationSingle):
     ) -> Tensor:
         inputs, targets = batch
         logits = self.forward(inputs)
-        if logits.size(0) % self.num_estimators != 0:
+        if logits.size(0) % self.num_estimators != 0:  # coverage: ignore
             raise ValueError(
-                "The number of predicted samples is not divisible by the "
-                f"reported number of estimators {self.num_estimators} of the "
-                "routine. Please check the correspondence between these values."
+                f"The number of predicted samples {logits.size(0)} is not "
+                "divisible by the reported number of estimators "
+                f"{self.num_estimators} of the routine. Please check the "
+                "correspondence between these values."
             )
         logits = rearrange(logits, "(n b) c -> b n c", n=self.num_estimators)
 

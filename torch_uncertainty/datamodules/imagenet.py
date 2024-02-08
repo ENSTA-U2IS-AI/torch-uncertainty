@@ -83,7 +83,7 @@ class ImageNetDataModule(AbstractDataModule):
         )
 
         self.eval_ood = eval_ood
-        if not isinstance(val_split, float):
+        if val_split and not isinstance(val_split, float):
             val_split = Path(val_split)
             self.train_indices, self.val_indices = read_indices(val_split)
         self.val_split = val_split
