@@ -33,9 +33,11 @@ class TestMCBatchNorm:
     def test_main(self):
         """Test initialization."""
         bn = MCBatchNorm1d(1, 1)
-        bn = MCBatchNorm3d(1, 1)
+        bn(torch.randn(1, 1, 2))
         bn = MCBatchNorm2d(1, 1)
-        bn(torch.randn(1, 1, 20, 20))
+        bn(torch.randn(1, 1, 1, 2))
+        bn = MCBatchNorm3d(1, 1)
+        bn(torch.randn(1, 1, 1, 1, 2))
 
     def test_errors(self):
         """Test errors."""
@@ -49,5 +51,7 @@ class TestMCBatchNorm:
         layer3d = MCBatchNorm3d(1, 1)
         with pytest.raises(ValueError):
             layer1d(torch.randn(1, 1, 1, 20))
+        with pytest.raises(ValueError):
             layer2d(torch.randn(1, 1, 1, 1, 20))
+        with pytest.raises(ValueError):
             layer3d(torch.randn(1, 1, 1, 1, 1, 20))
