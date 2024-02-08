@@ -22,14 +22,14 @@ routine, which takes as arguments:
 * a Lightning Module corresponding to the model, its own arguments, and
   forward/validation/test logic. For instance, you might use already available
   modules, such as the Packed-Ensembles-style ResNet available at
-  `torch_uncertainty/baselines/packed/resnet.py <https://github.com/ENSTA-U2IS/torch-uncertainty/blob/main/torch_uncertainty/baselines/classification/resnet.py>`_
+  `torch_uncertainty/baselines/packed/resnet.py <https://github.com/ENSTA-U2IS-AI/torch-uncertainty/blob/main/torch_uncertainty/baselines/classification/resnet.py>`_
 * a Lightning DataModule corresponding to the training, validation, and test
   sets with again its arguments and logic. CIFAR-10/100, ImageNet, and
   ImageNet-200 are available, for instance.
 * a PyTorch loss such as the torch.nn.CrossEntropyLoss
 * a dictionary containing the optimization procedure, namely a scheduler and
   an optimizer. Many procedures are available at 
-  `torch_uncertainty/optimization_procedures.py <https://github.com/ENSTA-U2IS/torch-uncertainty/blob/main/torch_uncertainty/optimization_procedures.py>`_
+  `torch_uncertainty/optimization_procedures.py <https://github.com/ENSTA-U2IS-AI/torch-uncertainty/blob/main/torch_uncertainty/optimization_procedures.py>`_
 
 * the path to the data and logs folder, in the example below, the root of the library
 * and finally, the name of your model (used for logs)
@@ -41,7 +41,7 @@ for multi-gpu training and cuDNN benchmark, etc.
 Example
 ^^^^^^^
 
-The following code - `available in the experiments folder <https://github.com/ENSTA-U2IS/torch-uncertainty/blob/main/experiments/classification/cifar10/resnet.py>`_ - 
+The following code - `available in the experiments folder <https://github.com/ENSTA-U2IS-AI/torch-uncertainty/blob/main/experiments/classification/cifar10/resnet.py>`_ - 
 trains any ResNet architecture on CIFAR10:
 
 .. code:: python

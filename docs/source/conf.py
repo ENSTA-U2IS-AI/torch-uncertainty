@@ -75,7 +75,7 @@ html_theme_options = {
     "menu": [
         {
             "name": "GitHub",
-            "url": "https://github.com/ENSTA-U2IS/torch-uncertainty",
+            "url": "https://github.com/ENSTA-U2IS-AI/torch-uncertainty",
         }
     ],
     "pytorch_project": "tutorials",
