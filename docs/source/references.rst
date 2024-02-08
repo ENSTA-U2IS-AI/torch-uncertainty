@@ -302,7 +302,7 @@ Textures
 
 **ViM: Out-of-distribution with virtual-logit matching**
 
-* Authors: *Haoqi Wang, Zhizhong Li, Litong Feng, and Wayne Zhang**
+* Authors: *Haoqi Wang, Zhizhong Li, Litong Feng, and Wayne Zhang*
 * Paper: `CVPR 2022 <https://arxiv.org/pdf/2203.10807.pdf>`__.
 
 OpenImage-O
@@ -312,7 +312,7 @@ Curation:
 
 **ViM: Out-of-distribution with virtual-logit matching**
 
-* Authors: *Haoqi Wang, Zhizhong Li, Litong Feng, and Wayne Zhang**
+* Authors: *Haoqi Wang, Zhizhong Li, Litong Feng, and Wayne Zhang*
 * Paper: `CVPR 2022 <https://arxiv.org/pdf/2203.10807.pdf>`__.
 
 Original Dataset:
@@ -321,6 +321,14 @@ Original Dataset:
 
 * Authors: *Alina Kuznetsova, Hassan Rom, Neil Alldrin, Jasper Uijlings, Ivan Krasin, Jordi Pont-Tuset, Shahab Kamali, et al.*
 * Paper: `IJCV 2020 <https://arxiv.org/pdf/1811.00982.pdf>`__.
+
+MUAD
+^^^^
+
+**MUAD: Multiple Uncertainties for Autonomous Driving Dataset**
+
+* Authors: Gianni Franchi, Xuanlong Yu, Andrei Bursuc, et al.*
+* Paper: `BMVC 2022 <https://arxiv.org/pdf/2203.01437.pdf>`
 
 Architectures
 -------------
