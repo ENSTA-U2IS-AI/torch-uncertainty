@@ -24,8 +24,6 @@ In this tutorial, we will need:
     the plots will be automatically available in the tensorboard logs.
 """
 
-import torch
-
 from torch_uncertainty.datamodules import CIFAR100DataModule
 from torch_uncertainty.metrics import CE
 from torch_uncertainty.models.resnet import resnet18
