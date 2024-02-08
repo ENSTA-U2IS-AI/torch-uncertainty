@@ -65,16 +65,16 @@ class MatrixScaler(Scaler):
             requires_grad=True,
         )
 
-    def _scale(self, inputs: Tensor) -> Tensor:
+    def _scale(self, logits: Tensor) -> Tensor:
         """Scale the predictions with the optimal temperature.
 
         Args:
-            inputs (Tensor): inputs to be scaled.
+            logits (Tensor): logits to be scaled.
 
         Returns:
-            Tensor: Scaled inputs.
+            Tensor: Scaled logits.
         """
-        return self.temp_w @ self.model(inputs) + self.temp_b
+        return self.temp_w @ logits + self.temp_b
 
     @property
     def temperature(self) -> list:

@@ -51,16 +51,16 @@ class TemperatureScaler(Scaler):
             torch.ones(1, device=self.device) * val, requires_grad=True
         )
 
-    def _scale(self, inputs: Tensor) -> Tensor:
+    def _scale(self, logits: Tensor) -> Tensor:
         """Scale the prediction with the optimal temperature.
 
         Args:
-            inputs (Tensor): inputs to be scaled.
+            logits (Tensor): logits to be scaled.
 
         Returns:
-            Tensor: Scaled inputs.
+            Tensor: Scaled logits.
         """
-        return self.model(inputs) / self.temperature[0]
+        return logits / self.temperature[0]
 
     @property
     def temperature(self) -> list:

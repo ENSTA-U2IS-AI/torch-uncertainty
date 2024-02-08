@@ -93,13 +93,13 @@ class Scaler(nn.Module):
         return self
 
     @torch.no_grad()
-    def forward(self, logits: Tensor) -> Tensor:
+    def forward(self, inputs: Tensor) -> Tensor:
         if not self.trained:
             print(
                 "TemperatureScaler has not been trained yet. Returning a "
-                "manually tempered input."
+                "manually tempered inputs."
             )
-        return self._scale(logits)
+        return self._scale(self.model(inputs))
 
     def _scale(self, logits: Tensor) -> Tensor:
         """Scale the logits with the optimal temperature.
