@@ -1,26 +1,33 @@
 import pytest
 import torch
 
+from torch_uncertainty.layers.filter_response_norm import (
+    FilterResponseNorm1d,
+    FilterResponseNorm2d,
+    FilterResponseNorm3d,
+    FilterResponseNormNd,
+)
 from torch_uncertainty.layers.mc_batch_norm import (
     MCBatchNorm1d,
     MCBatchNorm2d,
     MCBatchNorm3d,
 )
-from torch_uncertainty.layers.normalization import (
-    FilterResponseNorm2d,
-)
 
 
-class TestFRN2d:
+class TestFilterResponseNorm:
     """Testing the FRN2d layer."""
 
     def test_main(self):
         """Test initialization."""
         frn = FilterResponseNorm2d(1)
         frn(torch.randn(1, 1, 20, 20))
+        FilterResponseNorm1d(1)
+        FilterResponseNorm3d(1)
 
     def test_errors(self):
         """Test errors."""
+        with pytest.raises(ValueError):
+            FilterResponseNormNd(-1, 1)
         with pytest.raises(ValueError):
             FilterResponseNorm2d(0)
         with pytest.raises(ValueError):
