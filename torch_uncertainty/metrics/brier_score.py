@@ -15,6 +15,7 @@ class BrierScore(Metric):
     def __init__(
         self,
         num_classes: int,
+        top_class: bool = False,
         reduction: Literal["mean", "sum", "none", None] = "mean",
         **kwargs,
     ) -> None:
@@ -22,6 +23,8 @@ class BrierScore(Metric):
 
         Args:
             num_classes (int): Number of classes
+            top_class (bool, optional): If true, compute the Brier score for the
+                top class only. Defaults to False.
             reduction (str, optional): Determines how to reduce over the
                 :math:`B`/batch dimension:
 
@@ -63,6 +66,7 @@ class BrierScore(Metric):
             )
 
         self.num_classes = num_classes
+        self.top_class = top_class
         self.reduction = reduction
         self.num_estimators = 1
 
@@ -102,7 +106,14 @@ class BrierScore(Metric):
                 f"(batch, num_estimators, num_classes) but got {probs.shape}"
             )
 
-        brier_score = F.mse_loss(probs, target, reduction="none").sum(dim=-1)
+        if self.top_class:
+            probs, indices = probs.max(dim=-1)
+            target = target.gather(-1, indices.unsqueeze(-1)).squeeze(-1)
+            brier_score = F.mse_loss(probs, target, reduction="none")
+        else:
+            brier_score = F.mse_loss(probs, target, reduction="none").sum(
+                dim=-1
+            )
 
         if self.reduction is None or self.reduction == "none":
             self.values.append(brier_score)
