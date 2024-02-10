@@ -171,8 +171,8 @@ class ClassificationSingle(pl.LightningModule):
                 compute_groups=False,
             )
 
-        self.val_cls_metrics = cls_metrics.clone(prefix="cls/val_")
-        self.test_cls_metrics = cls_metrics.clone(prefix="cls/test_")
+        self.val_cls_metrics = cls_metrics.clone(prefix="cls_val/")
+        self.test_cls_metrics = cls_metrics.clone(prefix="cls_test/")
 
         if self.calibration_set is not None:
             self.ts_cls_metrics = cls_metrics.clone(prefix="ts_")
@@ -188,7 +188,7 @@ class ClassificationSingle(pl.LightningModule):
                 },
                 compute_groups=[["auroc", "aupr"], ["fpr95"]],
             )
-            self.test_ood_metrics = ood_metrics.clone(prefix="ood/test_")
+            self.test_ood_metrics = ood_metrics.clone(prefix="ood/")
             self.test_entropy_ood = Entropy()
 
         if self.eval_grouping_loss:
@@ -358,7 +358,7 @@ class ClassificationSingle(pl.LightningModule):
                 self.test_grouping_loss.update(probs, targets, self.features)
             self.test_entropy_id(probs)
             self.log(
-                "cls/test_entropy",
+                "cls_test/entropy",
                 self.test_entropy_id,
                 on_epoch=True,
                 add_dataloader_idx=False,
@@ -371,7 +371,7 @@ class ClassificationSingle(pl.LightningModule):
             self.test_ood_metrics.update(ood_scores, torch.ones_like(targets))
             self.test_entropy_ood(probs)
             self.log(
-                "ood/test_entropy",
+                "ood/entropy",
                 self.test_entropy_ood,
                 on_epoch=True,
                 add_dataloader_idx=False,
@@ -754,7 +754,7 @@ class ClassificationEnsemble(ClassificationSingle):
 
             self.test_id_ens_metrics.update(probs_per_est)
             self.log(
-                "cls/test_entropy",
+                "cls_test/entropy",
                 self.test_entropy_id,
                 on_epoch=True,
                 add_dataloader_idx=False,
@@ -769,7 +769,7 @@ class ClassificationEnsemble(ClassificationSingle):
             self.test_entropy_ood(probs)
             self.test_ood_ens_metrics.update(probs_per_est)
             self.log(
-                "ood/test_entropy",
+                "ood/entropy",
                 self.test_entropy_ood,
                 on_epoch=True,
                 add_dataloader_idx=False,
