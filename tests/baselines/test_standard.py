@@ -1,5 +1,6 @@
 from argparse import ArgumentParser
 
+import pytest
 import torch
 from torch import nn
 from torchinfo import summary
@@ -35,6 +36,19 @@ class TestStandardBaseline:
         _ = net.configure_optimizers()
         _ = net(torch.rand(1, 3, 32, 32))
 
+    def test_errors(self):
+        with pytest.raises(ValueError):
+            ResNet(
+                num_classes=10,
+                in_channels=3,
+                loss=nn.CrossEntropyLoss,
+                optimization_procedure=optim_cifar10_resnet18,
+                version="test",
+                arch=18,
+                style="cifar",
+                groups=1,
+            )
+
 
 class TestStandardWideBaseline:
     """Testing the WideResNet baseline class."""
@@ -55,6 +69,18 @@ class TestStandardWideBaseline:
         _ = net.configure_optimizers()
         _ = net(torch.rand(1, 3, 32, 32))
 
+    def test_errors(self):
+        with pytest.raises(ValueError):
+            WideResNet(
+                num_classes=10,
+                in_channels=3,
+                loss=nn.CrossEntropyLoss,
+                optimization_procedure=optim_cifar10_wideresnet,
+                version="test",
+                style="cifar",
+                groups=1,
+            )
+
 
 class TestStandardVGGBaseline:
     """Testing the VGG baseline class."""
@@ -74,6 +100,18 @@ class TestStandardVGGBaseline:
         _ = net.criterion
         _ = net.configure_optimizers()
         _ = net(torch.rand(1, 3, 32, 32))
+
+    def test_errors(self):
+        with pytest.raises(ValueError):
+            VGG(
+                num_classes=10,
+                in_channels=3,
+                loss=nn.CrossEntropyLoss,
+                optimization_procedure=optim_cifar10_resnet18,
+                version="test",
+                arch=11,
+                groups=1,
+            )
 
 
 class TestStandardMLPBaseline:
@@ -97,3 +135,15 @@ class TestStandardMLPBaseline:
 
         parser = ArgumentParser()
         add_mlp_specific_args(parser)
+
+    def test_errors(self):
+        with pytest.raises(ValueError):
+            MLP(
+                in_features=3,
+                num_outputs=10,
+                loss=nn.MSELoss,
+                optimization_procedure=optim_cifar10_resnet18,
+                version="test",
+                hidden_dims=[1],
+                dist_estimation=1,
+            )
