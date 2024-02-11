@@ -12,7 +12,7 @@ import tu_sphinx_theme
 project = "TorchUncertainty"
 copyright = f"{datetime.utcnow().year!s}, Adrien Lafage and Olivier Laurent"  # noqa: A001
 author = "Adrien Lafage and Olivier Laurent"
-release = "0.1.5"
+release = "0.1.6"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
