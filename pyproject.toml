@@ -75,7 +75,7 @@ name = "torch_uncertainty"
 [tool.ruff]
 line-length = 80
 target-version = "py310"
-extend-select = [
+lint.extend-select = [
     "A",
     "B",
     "C4",
@@ -100,7 +100,7 @@ extend-select = [
     "TRY",
     "YTT",
 ]
-ignore = [
+lint.ignore = [
     "B017",
     "D100",
     "D101",
@@ -143,7 +143,7 @@ exclude = [
     "venv",
 ]
 
-[tool.ruff.pydocstyle]
+[tool.ruff.lint.pydocstyle]
 convention = "google"
 
 [tool.coverage.run]
