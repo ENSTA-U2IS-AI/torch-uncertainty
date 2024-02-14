@@ -148,37 +148,33 @@ class VGG(ClassificationRoutine):
         format_batch_fn = nn.Identity()
 
         if version == "std":
-            params.update(
-                {
+            params |= {
                     "dropout_rate": dropout_rate,
                 }
-            )
+            
         elif version == "mc-dropout":
-            params.update(
-                {
+            params |= {
                     "dropout_rate": dropout_rate,
                     "num_estimators": num_estimators,
                 }
-            )
+            
 
         if version in self.ensemble:
-            params.update(
-                {
+            params |= {
                     "num_estimators": num_estimators,
                 }
-            )
+            
 
             if version != "mc-dropout":
                 format_batch_fn = RepeatTarget(num_repeats=num_estimators)
 
         if version == "packed":
-            params.update(
-                {
+            params |= {
                     "alpha": alpha,
                     "style": style,
                     "gamma": gamma,
                 }
-            )
+            
 
         if version == "mc-dropout":  # std VGGs don't have `num_estimators`
             del params["num_estimators"]

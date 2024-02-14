@@ -246,28 +246,25 @@ class ResNet(ClassificationRoutine):
             raise ValueError(f"Unknown version: {version}")
 
         if version in self.ensemble:
-            params.update(
-                {
+            params |= {
                     "num_estimators": num_estimators,
                 }
-            )
+            
             if version != "mc-dropout":
                 format_batch_fn = RepeatTarget(num_repeats=num_estimators)
 
         if version == "packed":
-            params.update(
-                {
+            params |= {
                     "alpha": alpha,
                     "gamma": gamma,
                     "pretrained": pretrained,
                 }
-            )
+            
         elif version == "masked":
-            params.update(
-                {
+            params |= {
                     "scale": scale,
                 }
-            )
+            
         elif version == "mimo":
             format_batch_fn = MIMOBatchFormat(
                 num_estimators=num_estimators,
