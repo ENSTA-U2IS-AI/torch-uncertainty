@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Improve Top-label Calibration with Temperature Scaling
 ======================================================
@@ -26,8 +24,6 @@ In this tutorial, we will need:
     the plots will be automatically available in the tensorboard logs.
 """
 
-import torch
-
 from torch_uncertainty.datamodules import CIFAR100DataModule
 from torch_uncertainty.metrics import CE
 from torch_uncertainty.models.resnet import resnet18
@@ -42,7 +38,7 @@ from torch_uncertainty.utils import load_hf
 # This can be done in a one liner:
 
 # Build the model
-model = resnet18(in_channels=3, num_classes=100, groups=1, style="cifar")
+model = resnet18(in_channels=3, num_classes=100, style="cifar", conv_bias=False)
 
 # Download the weights (the config is not used here)
 weights, config = load_hf("resnet18_c100")
@@ -56,9 +52,9 @@ model.load_state_dict(weights)
 #
 # To get the dataloader from the datamodule, just call prepare_data, setup, and
 # extract the first element of the test dataloader list. There are more than one
-# element if `:attr:evaluate_ood` is True.
+# element if `:attr:eval_ood` is True.
 
-dm = CIFAR100DataModule(root="./data", evaluate_ood=False, batch_size=32)
+dm = CIFAR100DataModule(root="./data", eval_ood=False, batch_size=32)
 dm.prepare_data()
 dm.setup("test")
 
@@ -116,28 +112,24 @@ fig.show()
 # `fit` method for more details.
 
 # Fit the scaler on the calibration dataset
-scaler = TemperatureScaler()
-scaler = scaler.fit(model=model, calibration_set=cal_dataset)
+scaled_model = TemperatureScaler(model=model)
+scaled_model = scaled_model.fit(calibration_set=cal_dataset)
 
 # %%
 # 6. Iterating Again to Compute the Improved ECE
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
-# We create a wrapper of the original model and the scaler using torch.nn.Sequential.
-# This is possible because the scaler is derived from nn.Module.
+# We can directly use the scaler as a calibrated model.
 #
 # Note that you will need to first reset the ECE metric to avoid mixing the scores of
 # the previous and current iterations.
-
-# Create the calibrated model
-cal_model = torch.nn.Sequential(model, scaler)
 
 # Reset the ECE
 ece.reset()
 
 # Iterate on the test dataloader
 for sample, target in test_dataloader:
-    logits = cal_model(sample)
+    logits = scaled_model(sample)
     probs = logits.softmax(-1)
     ece.update(probs, target)
 

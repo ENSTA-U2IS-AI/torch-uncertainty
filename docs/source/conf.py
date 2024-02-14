@@ -4,7 +4,7 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 from datetime import datetime
 
-import pytorch_sphinx_theme
+import tu_sphinx_theme
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
@@ -12,7 +12,7 @@ import pytorch_sphinx_theme
 project = "TorchUncertainty"
 copyright = f"{datetime.utcnow().year!s}, Adrien Lafage and Olivier Laurent"  # noqa: A001
 author = "Adrien Lafage and Olivier Laurent"
-release = "0.1.5"
+release = "0.1.6"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -48,6 +48,8 @@ sphinx_gallery_conf = {
     },
 }
 
+# Use both the docstrings of the init and the class
+autoclass_content = "both"
 
 autosummary_generate = True
 napoleon_use_ivar = True
@@ -65,15 +67,15 @@ exclude_patterns = []
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = "pytorch_sphinx_theme"
-html_theme_path = [pytorch_sphinx_theme.get_html_theme_path()]
+html_theme = "tu_sphinx_theme"
+html_theme_path = [tu_sphinx_theme.get_html_theme_path()]
 
 html_theme_options = {
     "logo_url": "https://torch-uncertainty.github.io/",
     "menu": [
         {
             "name": "GitHub",
-            "url": "https://github.com/ENSTA-U2IS/torch-uncertainty",
+            "url": "https://github.com/ENSTA-U2IS-AI/torch-uncertainty",
         }
     ],
     "pytorch_project": "tutorials",

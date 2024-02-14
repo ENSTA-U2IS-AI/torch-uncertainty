@@ -34,7 +34,7 @@ class CIFAR10H(CIFAR10):
 
     def __init__(
         self,
-        root: str,
+        root: str | Path,
         train: bool | None = None,
         transform: Callable[..., Any] | None = None,
         target_transform: Callable[..., Any] | None = None,
@@ -47,13 +47,12 @@ class CIFAR10H(CIFAR10):
             "for now."
         )
         super().__init__(
-            root,
+            Path(root),
             train=False,
             transform=transform,
             target_transform=target_transform,
             download=download,
         )
-        self.root = Path(self.root)
 
         if download:
             self.download_h()

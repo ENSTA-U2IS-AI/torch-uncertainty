@@ -27,15 +27,15 @@ class CIFAR100DataModule(AbstractDataModule):
         self,
         root: str | Path,
         batch_size: int,
-        evaluate_ood: bool = False,
+        eval_ood: bool = False,
         val_split: float = 0.0,
-        num_workers: int = 1,
         cutout: int | None = None,
         randaugment: bool = False,
         auto_augment: str | None = None,
         test_alt: Literal["c"] | None = None,
         corruption_severity: int = 1,
         num_dataloaders: int = 1,
+        num_workers: int = 1,
         pin_memory: bool = True,
         persistent_workers: bool = True,
         **kwargs,
@@ -44,12 +44,11 @@ class CIFAR100DataModule(AbstractDataModule):
 
         Args:
             root (str): Root directory of the datasets.
-            evaluate_ood (bool): Whether to evaluate on out-of-distribution data.
+            eval_ood (bool): Whether to evaluate out-of-distribution
+                performance.
             batch_size (int): Number of samples per batch.
             val_split (float): Share of samples to use for validation. Defaults
                 to ``0.0``.
-            num_workers (int): Number of workers to use for data loading. Defaults
-                to ``1``.
             cutout (int): Size of cutout to apply to images. Defaults to ``None``.
             randaugment (bool): Whether to apply RandAugment. Defaults to
                 ``False``.
@@ -58,6 +57,8 @@ class CIFAR100DataModule(AbstractDataModule):
             corruption_severity (int): Severity of corruption to apply to
                 CIFAR100-C. Defaults to ``1``.
             num_dataloaders (int): Number of dataloaders to use. Defaults to ``1``.
+            num_workers (int): Number of workers to use for data loading. Defaults
+                to ``1``.
             pin_memory (bool): Whether to pin memory. Defaults to ``True``.
             persistent_workers (bool): Whether to use persistent workers. Defaults
                 to ``True``.
@@ -71,7 +72,7 @@ class CIFAR100DataModule(AbstractDataModule):
             persistent_workers=persistent_workers,
         )
 
-        self.evaluate_ood = evaluate_ood
+        self.eval_ood = eval_ood
         self.val_split = val_split
         self.num_dataloaders = num_dataloaders
 
@@ -103,7 +104,7 @@ class CIFAR100DataModule(AbstractDataModule):
         else:
             main_transform = nn.Identity()
 
-        self.transform_train = T.Compose(
+        self.train_transform = T.Compose(
             [
                 T.RandomCrop(32, padding=4),
                 T.RandomHorizontalFlip(),
@@ -116,7 +117,7 @@ class CIFAR100DataModule(AbstractDataModule):
                 ),
             ]
         )
-        self.transform_test = T.Compose(
+        self.test_transform = T.Compose(
             [
                 T.ToTensor(),
                 T.Normalize(
@@ -131,15 +132,15 @@ class CIFAR100DataModule(AbstractDataModule):
             self.dataset(self.root, train=True, download=True)
             self.dataset(self.root, train=False, download=True)
 
-        if self.evaluate_ood:
+        if self.eval_ood:
             self.ood_dataset(
                 self.root,
                 split="test",
                 download=True,
-                transform=self.transform_test,
+                transform=self.test_transform,
             )
 
-    def setup(self, stage: str | None = None) -> None:
+    def setup(self, stage: Literal["fit", "test"] | None = None) -> None:
         if stage == "fit" or stage is None:
             if self.test_alt == "c":
                 raise ValueError("CIFAR-C can only be used in testing.")
@@ -147,7 +148,7 @@ class CIFAR100DataModule(AbstractDataModule):
                 self.root,
                 train=True,
                 download=False,
-                transform=self.transform_train,
+                transform=self.train_transform,
             )
             if self.val_split:
                 self.train, self.val = random_split(
@@ -163,7 +164,7 @@ class CIFAR100DataModule(AbstractDataModule):
                     self.root,
                     train=False,
                     download=False,
-                    transform=self.transform_test,
+                    transform=self.test_transform,
                 )
         elif stage == "test":
             if self.test_alt is None:
@@ -171,20 +172,20 @@ class CIFAR100DataModule(AbstractDataModule):
                     self.root,
                     train=False,
                     download=False,
-                    transform=self.transform_test,
+                    transform=self.test_transform,
                 )
             else:
                 self.test = self.dataset(
                     self.root,
-                    transform=self.transform_test,
+                    transform=self.test_transform,
                     severity=self.corruption_severity,
                 )
-            if self.evaluate_ood:
+            if self.eval_ood:
                 self.ood = self.ood_dataset(
                     self.root,
                     split="test",
                     download=False,
-                    transform=self.transform_test,
+                    transform=self.test_transform,
                 )
         else:
             raise ValueError(f"Stage {stage} is not supported.")
@@ -210,7 +211,7 @@ class CIFAR100DataModule(AbstractDataModule):
             and out-of-distribution data.
         """
         dataloader = [self._data_loader(self.test)]
-        if self.evaluate_ood:
+        if self.eval_ood:
             dataloader.append(self._data_loader(self.ood))
         return dataloader
 

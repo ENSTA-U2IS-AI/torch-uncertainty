@@ -27,13 +27,12 @@ class Fractals(ImageFolder):
 
     def __init__(
         self,
-        root: str,
+        root: str | Path,
         transform: Callable[..., Any] | None = None,
         target_transform: Callable[..., Any] | None = None,
         download: bool = False,
     ) -> None:
-        if isinstance(root, str):
-            self.root = Path(root)
+        self.root = Path(root)
 
         if download:
             self.download()
@@ -45,7 +44,7 @@ class Fractals(ImageFolder):
             )
 
         super().__init__(
-            root, transform=transform, target_transform=target_transform
+            self.root, transform=transform, target_transform=target_transform
         )
 
     def _check_integrity(self) -> bool:

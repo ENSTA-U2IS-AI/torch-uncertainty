@@ -1,3 +1,4 @@
+import pathlib
 from argparse import ArgumentParser
 
 import pytest
@@ -15,6 +16,7 @@ class TestImageNetDataModule:
         parser = ImageNetDataModule.add_argparse_args(parser)
 
         args = parser.parse_args("")
+        args.val_split = 0.1
         dm = ImageNetDataModule(**vars(args))
 
         assert dm.dataset == ImageNet
@@ -25,14 +27,32 @@ class TestImageNetDataModule:
         dm.setup()
         dm.setup("test")
 
+        args.val_split = (
+            pathlib.Path(__file__).parent.resolve()
+            / "../assets/dummy_indices.yaml"
+        )
+        dm = ImageNetDataModule(**vars(args))
+        dm.dataset = DummyClassificationDataset
+        dm.ood_dataset = DummyClassificationDataset
+        dm.setup("fit")
+        dm.setup("test")
         dm.train_dataloader()
         dm.val_dataloader()
         dm.test_dataloader()
 
-        dm.evaluate_ood = True
+        dm.val_split = None
+        dm.setup("fit")
+        dm.train_dataloader()
+        dm.val_dataloader()
+        dm.test_dataloader()
+
+        dm.eval_ood = True
         dm.prepare_data()
         dm.setup("test")
         dm.test_dataloader()
+
+        with pytest.raises(ValueError):
+            dm.setup("other")
 
         for test_alt in ["r", "o", "a"]:
             args.test_alt = test_alt
@@ -47,9 +67,16 @@ class TestImageNetDataModule:
 
         args.test_alt = None
 
-        for ood_ds in ["inaturalist", "imagenet-o", "textures"]:
+        for ood_ds in ["inaturalist", "imagenet-o", "textures", "openimage-o"]:
             args.ood_ds = ood_ds
             dm = ImageNetDataModule(**vars(args))
+            if ood_ds == "inaturalist":
+                dm.eval_ood = True
+                dm.dataset = DummyClassificationDataset
+                dm.ood_dataset = DummyClassificationDataset
+                dm.prepare_data()
+                dm.setup("test")
+                dm.test_dataloader()
 
         args.ood_ds = "other"
         with pytest.raises(ValueError):

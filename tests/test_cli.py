@@ -60,13 +60,13 @@
 #                     dict_result,
 #                 )
 
-#     def test_cli_main_other_arguments(self):
-#         root = Path(__file__).parent.absolute().parents[0]
-#         with ArgvContext(
-#             "file.py", "--seed", "42", "--max_epochs", "1", "--channels_last"
-#         ):
-#             print(sys.orig_argv, sys.argv)
-#             args = init_args(ResNet, CIFAR10DataModule)
+# def test_cli_main_other_arguments(self):
+#     root = Path(__file__).parent.absolute().parents[0]
+#     with ArgvContext(
+#         "file.py", "--seed", "42", "--max_epochs", "1", "--channels_last"
+#     ):
+#         print(sys.orig_argv, sys.argv)
+#         args = init_args(ResNet, CIFAR10DataModule)
 
 #             # datamodule
 #             args.root = root / "data"

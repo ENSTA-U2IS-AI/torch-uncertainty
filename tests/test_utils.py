@@ -9,22 +9,27 @@ class TestUtils:
     """Testing utils methods."""
 
     def test_getversion_log_success(self):
-        _ = utils.get_version("tests/testlog", version=42)
-        _ = utils.get_version(Path("tests/testlog"), version=42)
+        utils.get_version("tests/testlog", version=42)
+        utils.get_version(Path("tests/testlog"), version=42)
 
-        _ = utils.get_version("tests/testlog", version=42, checkpoint=45)
+        utils.get_version("tests/testlog", version=42, checkpoint=45)
 
     def test_getversion_log_failure(self):
         with pytest.raises(Exception):
-            _ = utils.get_version("tests/testlog", version=52)
+            utils.get_version("tests/testlog", version=52)
 
 
 class TestHub:
     """Testing hub methods."""
 
     def test_hub_exists(self):
-        _ = utils.hub.load_hf("test")
+        utils.hub.load_hf("test")
+        utils.hub.load_hf("test", version=1)
+        utils.hub.load_hf("test", version=2)
 
     def test_hub_notexists(self):
         with pytest.raises(Exception):
-            _ = utils.hub.load_hf("tests")
+            utils.hub.load_hf("tests")
+
+        with pytest.raises(ValueError):
+            utils.hub.load_hf("test", version=42)

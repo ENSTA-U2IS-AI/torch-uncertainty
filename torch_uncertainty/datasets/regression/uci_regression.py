@@ -141,9 +141,7 @@ class UCIRegression(Dataset):
         shuffle: bool = True,
     ) -> None:
         super().__init__()
-        if isinstance(root, str):
-            root = Path(root)
-        self.root = root
+        self.root = Path(root)
         self.transform = transform
         self.target_transform = target_transform
         self.seed = seed

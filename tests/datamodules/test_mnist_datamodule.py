@@ -1,4 +1,5 @@
 from argparse import ArgumentParser
+from pathlib import Path
 
 import pytest
 from torch import nn
@@ -23,14 +24,14 @@ class TestMNISTDataModule:
         dm = MNISTDataModule(**vars(args))
 
         assert dm.dataset == MNIST
-        assert isinstance(dm.transform_train.transforms[0], Cutout)
+        assert isinstance(dm.train_transform.transforms[0], Cutout)
 
-        args.root = str(args.root)
+        args.root = Path(args.root)
         args.ood_ds = "not"
         args.cutout = 0
         args.val_split = 0
         dm = MNISTDataModule(**vars(args))
-        assert isinstance(dm.transform_train.transforms[0], nn.Identity)
+        assert isinstance(dm.train_transform.transforms[0], nn.Identity)
 
         args.ood_ds = "other"
         with pytest.raises(ValueError):
@@ -47,7 +48,10 @@ class TestMNISTDataModule:
         dm.val_dataloader()
         dm.test_dataloader()
 
-        dm.evaluate_ood = True
+        with pytest.raises(ValueError):
+            dm.setup("other")
+
+        dm.eval_ood = True
         dm.val_split = 0.1
         dm.prepare_data()
         dm.setup("test")

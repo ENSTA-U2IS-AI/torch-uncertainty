@@ -14,7 +14,7 @@ class TestDeepEnsemblesModel:
 
         de = deep_ensembles([model_1, model_2])
         # Check B N C
-        assert de(torch.randn(3, 4, 4)).shape == (3, 2, 10)
+        assert de(torch.randn(3, 4, 4)).shape == (6, 10)
 
     def test_list_and_num_estimators(self):
         model_1 = dummy_model(1, 10, 1)

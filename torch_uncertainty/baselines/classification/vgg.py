@@ -1,8 +1,8 @@
 from typing import Literal
 
 from torch import nn
-from torch.nn.modules import Module
 
+from torch_uncertainty.models.mc_dropout import mc_dropout
 from torch_uncertainty.models.vgg import (
     packed_vgg11,
     packed_vgg13,
@@ -18,10 +18,10 @@ from torch_uncertainty.transforms import RepeatTarget
 
 
 class VGG(ClassificationRoutine):
-    single = ["vanilla"]
+    single = ["std"]
     ensemble = ["mc-dropout", "packed"]
     versions = {
-        "vanilla": [vgg11, vgg13, vgg16, vgg19],
+        "std": [vgg11, vgg13, vgg16, vgg19],
         "mc-dropout": [vgg11, vgg13, vgg16, vgg19],
         "packed": [
             packed_vgg11,
@@ -36,8 +36,8 @@ class VGG(ClassificationRoutine):
         self,
         num_classes: int,
         in_channels: int,
-        loss: type[Module],
-        version: Literal["vanilla", "mc-dropout", "packed"],
+        loss: type[nn.Module],
+        version: Literal["std", "mc-dropout", "packed"],
         arch: int,
         style: str = "imagenet",
         num_estimators: int = 1,
@@ -60,7 +60,7 @@ class VGG(ClassificationRoutine):
         log_plots: bool = False,
         save_in_csv: bool = False,
         calibration_set: Literal["val", "test"] | None = None,
-        evaluate_ood: bool = False,
+        eval_ood: bool = False,
     ) -> None:
         r"""VGG backbone baseline for classification providing support for
         various versions and architectures.
@@ -72,7 +72,7 @@ class VGG(ClassificationRoutine):
             version (str):
                 Determines which VGG version to use:
 
-                - ``"vanilla"``: original VGG
+                - ``"std"``: original VGG
                 - ``"mc-dropout"``: Monte Carlo Dropout VGG
                 - ``"packed"``: Packed-Ensembles VGG
 
@@ -90,8 +90,6 @@ class VGG(ClassificationRoutine):
                 Only used if :attr:`version` is either ``"packed"``, ``"batched"``
                 or ``"masked"`` Defaults to ``None``.
             dropout_rate (float, optional): Dropout rate. Defaults to ``0.0``.
-            last_layer_dropout (bool, optional): Indicates whether to apply dropout
-                to the last layer or not. Defaults to ``False``.
             mixtype (str, optional): Mixup type. Defaults to ``"erm"``.
             mixmode (str, optional): Mixup mode. Defaults to ``"elem"``.
             dist_sim (str, optional): Distance similarity. Defaults to ``"emb"``.
@@ -103,6 +101,7 @@ class VGG(ClassificationRoutine):
                 to ``0``.
             cutmix_alpha (float, optional): Alpha parameter for CutMix.
                 Defaults to ``0``.
+            last_layer_dropout (bool): whether to apply dropout to the last layer only.
             groups (int, optional): Number of groups in convolutions. Defaults to
                 ``1``.
             alpha (float, optional): Expansion factor affecting the width of the
@@ -125,17 +124,18 @@ class VGG(ClassificationRoutine):
                 a csv file or not. Defaults to ``False``.
             calibration_set (Callable, optional): Calibration set. Defaults to
                 ``None``.
-            evaluate_ood (bool, optional): Indicates whether to evaluate the
+            eval_ood (bool, optional): Indicates whether to evaluate the
                 OOD detection or not. Defaults to ``False``.
 
         Raises:
-            ValueError: If :attr:`version` is not either ``"vanilla"``,
+            ValueError: If :attr:`version` is not either ``"std"``,
                 ``"packed"``, ``"batched"`` or ``"masked"``.
 
         Returns:
             LightningModule: VGG baseline ready for training and evaluation.
         """
         params = {
+            "dropout_rate": dropout_rate,
             "in_channels": in_channels,
             "num_classes": num_classes,
             "style": style,
@@ -147,7 +147,7 @@ class VGG(ClassificationRoutine):
 
         format_batch_fn = nn.Identity()
 
-        if version == "vanilla":
+        if version == "std":
             params.update(
                 {
                     "dropout_rate": dropout_rate,
@@ -158,21 +158,37 @@ class VGG(ClassificationRoutine):
                 {
                     "dropout_rate": dropout_rate,
                     "num_estimators": num_estimators,
-                    "last_layer_dropout": last_layer_dropout,
                 }
             )
-        elif version == "packed":
+
+        if version in self.ensemble:
             params.update(
                 {
                     "num_estimators": num_estimators,
+                }
+            )
+
+            if version != "mc-dropout":
+                format_batch_fn = RepeatTarget(num_repeats=num_estimators)
+
+        if version == "packed":
+            params.update(
+                {
                     "alpha": alpha,
                     "style": style,
                     "gamma": gamma,
                 }
             )
-            format_batch_fn = RepeatTarget(num_repeats=num_estimators)
 
+        if version == "mc-dropout":  # std VGGs don't have `num_estimators`
+            del params["num_estimators"]
         model = self.versions[version][self.archs.index(arch)](**params)
+        if version == "mc-dropout":
+            model = mc_dropout(
+                model=model,
+                num_estimators=num_estimators,
+                last_layer=last_layer_dropout,
+            )
         super().__init__(
             num_classes=num_classes,
             model=model,
@@ -186,7 +202,7 @@ class VGG(ClassificationRoutine):
             kernel_tau_std=kernel_tau_std,
             mixup_alpha=mixup_alpha,
             cutmix_alpha=cutmix_alpha,
-            evaluate_ood=evaluate_ood,
+            eval_ood=eval_ood,
             use_entropy=use_entropy,
             use_logits=use_logits,
             use_mi=use_mi,
@@ -195,3 +211,4 @@ class VGG(ClassificationRoutine):
             save_in_csv=save_in_csv,
             calibration_set=calibration_set,
         )
+        self.save_hyperparameters()

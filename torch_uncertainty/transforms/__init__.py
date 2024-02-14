@@ -1,32 +1,31 @@
 # ruff: noqa: F401
+from .batch import MIMOBatchFormat, RepeatTarget
 from .cutout import Cutout
-from .mixup import Mixup, MixupIO, RegMixup, WarpingMixup
-from .transforms import (
+from .image import (
     AutoContrast,
     Brightness,
     Color,
     Contrast,
     Equalize,
-    MIMOBatchFormat,
     Posterize,
-    RepeatTarget,
-    Rotation,
-    Sharpness,
+    Rotate,
+    Sharpen,
     Shear,
     Solarize,
     Translate,
 )
+from .mixup import Mixup, MixupIO, RegMixup, WarpingMixup
 
 augmentations = [
     AutoContrast,
     Equalize,
     Posterize,
-    Rotation,
+    Rotate,
     Solarize,
     Shear,
     Translate,
     Contrast,
     Brightness,
     Color,
-    Sharpness,
+    Sharpen,
 ]

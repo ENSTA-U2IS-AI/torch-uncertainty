@@ -4,7 +4,7 @@ build-backend = "flit_core.buildapi"
 
 [project]
 name = "torch_uncertainty"
-version = "0.1.5"
+version = "0.1.6"
 authors = [
     { name = "ENSTA U2IS", email = "olivier.laurent@ensta-paris.fr" },
     { name = "Adrien Lafage", email = "adrienlafage@outlook.com" },
@@ -41,6 +41,7 @@ dependencies = [
     "huggingface-hub",
     "scikit-learn",
     "matplotlib",
+    "glest==0.0.1a0",
 ]
 
 [project.optional-dependencies]
@@ -53,18 +54,20 @@ dev = [
 ]
 docs = [
     "sphinx<6",
-    "pytorch_sphinx_theme@git+https://github.com/torch-uncertainty/pytorch_sphinx_theme",
+    "tu_sphinx_theme",
     "sphinx-copybutton",
     "sphinx-gallery",
     "sphinx-design",
     "sphinx-codeautolink",
 ]
-full = ["pandas"]
+image = ["scikit-image", "opencv-python"]
+tabular = ["pandas"]
+all = ["torch_uncertainty[dev,docs,image,tabular]"]
 
 [project.urls]
 homepage = "https://torch-uncertainty.github.io/"
 documentation = "https://torch-uncertainty.github.io/quickstart.html"
-repository = "https://github.com/ENSTA-U2IS/torch-uncertainty.git"
+repository = "https://github.com/ENSTA-U2IS-AI/torch-uncertainty.git"
 
 [tool.flit.module]
 name = "torch_uncertainty"

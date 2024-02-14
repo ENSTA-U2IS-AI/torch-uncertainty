@@ -14,7 +14,8 @@ if __name__ == "__main__":
     else:
         root = Path(args.root)
 
-    net_name = f"{args.version}-resnet{args.arch}-cifar100"
+    if args.exp_name == "":
+        args.exp_name = f"{args.version}-resnet{args.arch}-cifar100"
 
     # datamodule
     args.root = str(root / "data")
@@ -32,4 +33,4 @@ if __name__ == "__main__":
         **vars(args),
     )
 
-    cli_main(model, dm, root, net_name, args)
+    cli_main(model, dm, args.exp_dir, args.exp_name, args)

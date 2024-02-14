@@ -106,7 +106,7 @@ We intend to include datamodules for the most popular datasets only.
 For now, we intend to follow scikit-learn style API for post-processing
 methods (except that we use a validation dataset for now). You can get
 inspiration from the already implemented
-[temperature-scaling](https://github.com/ENSTA-U2IS/torch-uncertainty/blob/dev/torch_uncertainty/post_processing/calibration/temperature_scaler.py).
+[temperature-scaling](https://github.com/ENSTA-U2IS-AI/torch-uncertainty/blob/dev/torch_uncertainty/post_processing/calibration/temperature_scaler.py).
 
 ## License
 

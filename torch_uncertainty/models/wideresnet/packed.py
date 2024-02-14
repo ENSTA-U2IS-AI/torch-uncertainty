@@ -1,3 +1,5 @@
+from typing import Literal
+
 import torch.nn.functional as F
 from einops import rearrange
 from torch import Tensor, nn
@@ -9,17 +11,18 @@ __all__ = [
 ]
 
 
-class WideBasicBlock(nn.Module):
+class _WideBasicBlock(nn.Module):
     def __init__(
         self,
         in_planes: int,
         planes: int,
+        conv_bias: bool,
         dropout_rate: float,
-        stride: int = 1,
-        alpha: int = 2,
-        num_estimators: int = 4,
-        gamma: int = 1,
-        groups: int = 1,
+        stride: int,
+        alpha: int,
+        num_estimators: int,
+        gamma: int,
+        groups: int,
     ) -> None:
         super().__init__()
         self.conv1 = PackedConv2d(
@@ -31,9 +34,9 @@ class WideBasicBlock(nn.Module):
             gamma=gamma,
             groups=groups,
             padding=1,
-            bias=False,
+            bias=conv_bias,
         )
-        self.dropout = nn.Dropout(p=dropout_rate)
+        self.dropout = nn.Dropout2d(p=dropout_rate)
         self.bn1 = nn.BatchNorm2d(alpha * planes)
         self.conv2 = PackedConv2d(
             planes,
@@ -45,7 +48,7 @@ class WideBasicBlock(nn.Module):
             groups=groups,
             stride=stride,
             padding=1,
-            bias=False,
+            bias=conv_bias,
         )
         self.shortcut = nn.Sequential()
         if stride != 1 or in_planes != planes:
@@ -59,7 +62,7 @@ class WideBasicBlock(nn.Module):
                     gamma=gamma,
                     groups=groups,
                     stride=stride,
-                    bias=True,
+                    bias=conv_bias,
                 ),
             )
         self.bn2 = nn.BatchNorm2d(alpha * planes)
@@ -78,12 +81,13 @@ class _PackedWideResNet(nn.Module):
         widen_factor: int,
         in_channels: int,
         num_classes: int,
+        conv_bias: bool,
+        dropout_rate: float,
         num_estimators: int = 4,
         alpha: int = 2,
         gamma: int = 1,
         groups: int = 1,
-        dropout_rate: float = 0,
-        style: str = "imagenet",
+        style: Literal["imagenet", "cifar"] = "imagenet",
     ) -> None:
         super().__init__()
         self.num_estimators = num_estimators
@@ -107,10 +111,10 @@ class _PackedWideResNet(nn.Module):
                 padding=3,
                 gamma=1,  # No groups for the first layer
                 groups=groups,
-                bias=True,
+                bias=conv_bias,
                 first=True,
             )
-        else:
+        elif style == "cifar":
             self.conv1 = PackedConv2d(
                 in_channels,
                 num_stages[0],
@@ -121,9 +125,11 @@ class _PackedWideResNet(nn.Module):
                 padding=1,
                 gamma=gamma,
                 groups=groups,
-                bias=True,
+                bias=conv_bias,
                 first=True,
             )
+        else:
+            raise ValueError(f"Unknown WideResNet style: {style}. ")
 
         self.bn1 = nn.BatchNorm2d(num_stages[0] * alpha)
 
@@ -135,10 +141,11 @@ class _PackedWideResNet(nn.Module):
             self.optional_pool = nn.Identity()
 
         self.layer1 = self._wide_layer(
-            WideBasicBlock,
+            _WideBasicBlock,
             num_stages[1],
             num_blocks,
-            dropout_rate,
+            conv_bias=conv_bias,
+            dropout_rate=dropout_rate,
             stride=1,
             alpha=alpha,
             num_estimators=self.num_estimators,
@@ -146,10 +153,11 @@ class _PackedWideResNet(nn.Module):
             groups=groups,
         )
         self.layer2 = self._wide_layer(
-            WideBasicBlock,
+            _WideBasicBlock,
             num_stages[2],
             num_blocks,
-            dropout_rate,
+            conv_bias=conv_bias,
+            dropout_rate=dropout_rate,
             stride=2,
             alpha=alpha,
             num_estimators=self.num_estimators,
@@ -157,10 +165,11 @@ class _PackedWideResNet(nn.Module):
             groups=groups,
         )
         self.layer3 = self._wide_layer(
-            WideBasicBlock,
+            _WideBasicBlock,
             num_stages[3],
             num_blocks,
-            dropout_rate,
+            conv_bias=conv_bias,
+            dropout_rate=dropout_rate,
             stride=2,
             alpha=alpha,
             num_estimators=self.num_estimators,
@@ -168,6 +177,7 @@ class _PackedWideResNet(nn.Module):
             groups=groups,
         )
 
+        self.dropout = nn.Dropout(p=dropout_rate)
         self.pool = nn.AdaptiveAvgPool2d(output_size=1)
         self.flatten = nn.Flatten(1)
 
@@ -181,9 +191,10 @@ class _PackedWideResNet(nn.Module):
 
     def _wide_layer(
         self,
-        block: type[WideBasicBlock],
+        block: type[_WideBasicBlock],
         planes: int,
         num_blocks: int,
+        conv_bias: bool,
         dropout_rate: float,
         stride: int,
         alpha: int,
@@ -199,6 +210,7 @@ class _PackedWideResNet(nn.Module):
                 block(
                     in_planes=self.in_planes,
                     planes=planes,
+                    conv_bias=conv_bias,
                     dropout_rate=dropout_rate,
                     stride=stride,
                     alpha=alpha,
@@ -221,29 +233,33 @@ class _PackedWideResNet(nn.Module):
             out, "e (m c) h w -> (m e) c h w", m=self.num_estimators
         )
         out = self.pool(out)
-        out = self.flatten(out)
+        out = self.dropout(self.flatten(out))
         return self.linear(out)
 
 
 def packed_wideresnet28x10(
     in_channels: int,
+    num_classes: int,
     num_estimators: int,
     alpha: int,
     gamma: int,
-    groups: int,
-    num_classes: int,
-    style: str = "imagenet",
+    groups: int = 1,
+    conv_bias: bool = True,
+    dropout_rate: float = 0.3,
+    style: Literal["imagenet", "cifar"] = "imagenet",
 ) -> _PackedWideResNet:
-    """Packed-Ensembles of Wide-ResNet-28x10 from `Wide Residual Networks
-    <https://arxiv.org/pdf/1605.07146.pdf>`_.
+    """Packed-Ensembles of Wide-ResNet-28x10.
 
     Args:
         in_channels (int): Number of input channels.
+        num_classes (int): Number of classes to predict.
         num_estimators (int): Number of estimators in the ensemble.
         alpha (int): Expansion factor affecting the width of the estimators.
         gamma (int): Number of groups within each estimator.
         groups (int): Number of subgroups in the convolutions.
-        num_classes (int): Number of classes to predict.
+        conv_bias (bool): Whether to use bias in convolutions. Defaults to
+            ``True``.
+        dropout_rate (float, optional): Dropout rate. Defaults to ``0.3``.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
 
@@ -252,10 +268,11 @@ def packed_wideresnet28x10(
     """
     return _PackedWideResNet(
         in_channels=in_channels,
+        num_classes=num_classes,
         depth=28,
         widen_factor=10,
-        num_classes=num_classes,
-        dropout_rate=0.3,
+        conv_bias=conv_bias,
+        dropout_rate=dropout_rate,
         num_estimators=num_estimators,
         alpha=alpha,
         gamma=gamma,

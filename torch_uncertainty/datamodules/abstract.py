@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from lightning.pytorch.core import LightningDataModule
 from numpy.typing import ArrayLike
@@ -42,16 +42,14 @@ class AbstractDataModule(LightningDataModule):
         """
         super().__init__()
 
-        if isinstance(root, str):
-            root = Path(root)
-        self.root: Path = root
+        self.root = Path(root)
         self.batch_size = batch_size
         self.num_workers = num_workers
 
         self.pin_memory = pin_memory
         self.persistent_workers = persistent_workers
 
-    def setup(self, stage: str | None = None) -> None:
+    def setup(self, stage: Literal["fit", "test"] | None = None) -> None:
         raise NotImplementedError
 
     def get_train_set(self) -> Dataset:
@@ -159,7 +157,7 @@ class AbstractDataModule(LightningDataModule):
         p = parent_parser.add_argument_group("datamodule")
         p.add_argument("--root", type=str, default="./data/")
         p.add_argument("--batch_size", type=int, default=128)
-        p.add_argument("--val_split", type=float, default=0.0)
+        p.add_argument("--val_split", type=float, default=None)
         p.add_argument("--num_workers", type=int, default=4)
         p.add_argument("--use_cv", action="store_true")
         p.add_argument("--n_splits", type=int, default=10)

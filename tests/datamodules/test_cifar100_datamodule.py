@@ -23,7 +23,7 @@ class TestCIFAR100DataModule:
         dm = CIFAR100DataModule(**vars(args))
 
         assert dm.dataset == CIFAR100
-        assert isinstance(dm.transform_train.transforms[2], Cutout)
+        assert isinstance(dm.train_transform.transforms[2], Cutout)
 
         dm.dataset = DummyClassificationDataset
         dm.ood_dataset = DummyClassificationDataset
@@ -36,7 +36,7 @@ class TestCIFAR100DataModule:
         dm.val_dataloader()
         dm.test_dataloader()
 
-        dm.evaluate_ood = True
+        dm.eval_ood = True
         dm.prepare_data()
         dm.setup("test")
         dm.test_dataloader()

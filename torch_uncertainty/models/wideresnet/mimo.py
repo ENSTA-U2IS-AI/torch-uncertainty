@@ -1,3 +1,5 @@
+from typing import Literal
+
 import torch
 from einops import rearrange
 
@@ -16,19 +18,20 @@ class _MIMOWideResNet(_WideResNet):
         in_channels: int,
         num_classes: int,
         num_estimators: int,
+        conv_bias: bool,
         dropout_rate: float,
         groups: int = 1,
-        style: str = "imagenet",
+        style: Literal["imagenet", "cifar"] = "imagenet",
     ) -> None:
         super().__init__(
             depth,
             widen_factor=widen_factor,
             in_channels=in_channels * num_estimators,
             num_classes=num_classes * num_estimators,
+            conv_bias=conv_bias,
             dropout_rate=dropout_rate,
             groups=groups,
             style=style,
-            num_estimators=num_estimators,
         )
 
         self.num_estimators = num_estimators
@@ -46,7 +49,9 @@ def mimo_wideresnet28x10(
     num_classes: int,
     num_estimators: int,
     groups: int = 1,
-    style: str = "imagenet",
+    conv_bias: bool = True,
+    dropout_rate: float = 0.3,
+    style: Literal["imagenet", "cifar"] = "imagenet",
 ) -> _MIMOWideResNet:
     return _MIMOWideResNet(
         depth=28,
@@ -54,7 +59,8 @@ def mimo_wideresnet28x10(
         in_channels=in_channels,
         num_classes=num_classes,
         num_estimators=num_estimators,
-        dropout_rate=0.3,
+        conv_bias=conv_bias,
+        dropout_rate=dropout_rate,
         groups=groups,
         style=style,
     )

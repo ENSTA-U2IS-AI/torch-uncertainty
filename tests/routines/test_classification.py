@@ -9,12 +9,14 @@
 #     DummyClassificationBaseline,
 #     DummyClassificationDataModule,
 #     DummyClassificationDataset,
+#     dummy_model,
 # )
 # from torch_uncertainty import cli_main, init_args
 # from torch_uncertainty.losses import DECLoss, ELBOLoss
 # from torch_uncertainty.optimization_procedures import optim_cifar10_resnet18
 # from torch_uncertainty.routines.classification import (
-#     ClassificationRoutine,
+#     ClassificationEnsemble,
+#     ClassificationSingle,
 # )
 
 
@@ -26,8 +28,11 @@
 #         with ArgvContext("file.py"):
 #             args = init_args(DummyClassificationBaseline, DummyClassificationDataModule)
 
-#             args.root = str(root / "data")
-#             dm = DummyClassificationDataModule(num_classes=1, **vars(args))
+# args.root = str(root / "data")
+# args.eval_grouping_loss = True
+# dm = DummyClassificationDataModule(
+#     num_classes=1, num_images=100, **vars(args)
+# )
 
 #             model = DummyClassificationBaseline(
 #                 num_classes=dm.num_classes,
@@ -78,12 +83,14 @@
 #             )
 #             cli_main(model, dm, root, "logs/dummy", args)
 
-#         with ArgvContext(
-#             "file.py",
-#             "--evaluate_ood",
-#             "--entropy",
-#         ):
-#             args = init_args(DummyClassificationBaseline, DummyClassificationDataModule)
+# with ArgvContext(
+#     "file.py",
+#     "--eval-ood",
+#     "--entropy",
+# ):
+#     args = init_args(
+#         DummyClassificationBaseline, DummyClassificationDataModule
+#     )
 
 #             args.root = str(root / "data")
 #             dm = DummyClassificationDataModule(**vars(args))
@@ -98,16 +105,18 @@
 #             )
 #             cli_main(model, dm, root, "logs/dummy", args)
 
-#         with ArgvContext(
-#             "file.py",
-#             "--evaluate_ood",
-#             "--entropy",
-#             "--cutmix_alpha",
-#             "0.5",
-#             "--mixtype",
-#             "timm",
-#         ):
-#             args = init_args(DummyClassificationBaseline, DummyClassificationDataModule)
+# with ArgvContext(
+#     "file.py",
+#     "--eval-ood",
+#     "--entropy",
+#     "--cutmix_alpha",
+#     "0.5",
+#     "--mixtype",
+#     "timm",
+# ):
+#     args = init_args(
+#         DummyClassificationBaseline, DummyClassificationDataModule
+#     )
 
 #             args.root = str(root / "data")
 #             dm = DummyClassificationDataModule(**vars(args))
@@ -138,16 +147,23 @@
 #         ):
 #             args = init_args(DummyClassificationBaseline, DummyClassificationDataModule)
 
-#             args.root = str(root / "data")
-#             dm = DummyClassificationDataModule(num_classes=10, **vars(args))
-#             dm.dataset = lambda root, num_channels, num_classes, image_size, transform: DummyClassificationDataset(
-#                 root,
-#                 num_channels=num_channels,
-#                 num_classes=num_classes,
-#                 image_size=image_size,
-#                 transform=transform,
-#                 num_images=20,
-#             )
+# args.root = str(root / "data")
+# dm = DummyClassificationDataModule(num_classes=10, **vars(args))
+# dm.dataset = (
+#     lambda root,
+#     num_channels,
+#     num_classes,
+#     image_size,
+#     transform,
+#     num_images: DummyClassificationDataset(
+#         root,
+#         num_channels=num_channels,
+#         num_classes=num_classes,
+#         image_size=image_size,
+#         transform=transform,
+#         num_images=20,
+#     )
+# )
 
 #             list_dm = dm.make_cross_val_splits(2, 1)
 #             list_model = [
@@ -178,16 +194,23 @@
 #         ):
 #             args = init_args(DummyClassificationBaseline, DummyClassificationDataModule)
 
-#             args.root = str(root / "data")
-#             dm = DummyClassificationDataModule(num_classes=10, **vars(args))
-#             dm.dataset = lambda root, num_channels, num_classes, image_size, transform: DummyClassificationDataset(
-#                 root,
-#                 num_channels=num_channels,
-#                 num_classes=num_classes,
-#                 image_size=image_size,
-#                 transform=transform,
-#                 num_images=20,
-#             )
+# args.root = str(root / "data")
+# dm = DummyClassificationDataModule(num_classes=10, **vars(args))
+# dm.dataset = (
+#     lambda root,
+#     num_channels,
+#     num_classes,
+#     image_size,
+#     transform,
+#     num_images: DummyClassificationDataset(
+#         root,
+#         num_channels=num_channels,
+#         num_classes=num_classes,
+#         image_size=image_size,
+#         transform=transform,
+#         num_images=20,
+#     )
+# )
 
 #             list_dm = dm.make_cross_val_splits(2, 1)
 #             list_model = []
@@ -214,6 +237,21 @@
 
 #         with pytest.raises(ValueError):
 #             ClassificationRoutine(10, nn.Module(), None, None, cutmix_alpha=-1)
+
+# with pytest.raises(ValueError):
+#     ClassificationSingle(
+#         10, nn.Module(), None, None, eval_grouping_loss=True
+#     )
+
+# model = dummy_model(1, 1, 1, 0, with_feats=False, with_linear=True)
+
+# with pytest.raises(ValueError):
+#     ClassificationSingle(10, model, None, None, eval_grouping_loss=True)
+
+# model = dummy_model(1, 1, 1, 0, with_feats=True, with_linear=False)
+
+# with pytest.raises(ValueError):
+#     ClassificationSingle(10, model, None, None, eval_grouping_loss=True)
 
 
 # class TestClassificationEnsemble:
@@ -282,8 +320,10 @@
 
 #             cli_main(model, dm, root, "logs/dummy", args)
 
-#         with ArgvContext("file.py", "--evaluate_ood", "--entropy"):
-#             args = init_args(DummyClassificationBaseline, DummyClassificationDataModule)
+# with ArgvContext("file.py", "--eval-ood", "--entropy"):
+#     args = init_args(
+#         DummyClassificationBaseline, DummyClassificationDataModule
+#     )
 
 #             # datamodule
 #             args.root = str(root / "data")
@@ -300,8 +340,10 @@
 
 #             cli_main(model, dm, root, "logs/dummy", args)
 
-#         with ArgvContext("file.py", "--evaluate_ood", "--variation_ratio"):
-#             args = init_args(DummyClassificationBaseline, DummyClassificationDataModule)
+# with ArgvContext("file.py", "--eval-ood", "--variation_ratio"):
+#     args = init_args(
+#         DummyClassificationBaseline, DummyClassificationDataModule
+#     )
 
 #             # datamodule
 #             args.root = str(root / "data")

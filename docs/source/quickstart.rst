@@ -22,14 +22,14 @@ routine, which takes as arguments:
 * a Lightning Module corresponding to the model, its own arguments, and
   forward/validation/test logic. For instance, you might use already available
   modules, such as the Packed-Ensembles-style ResNet available at
-  `torch_uncertainty/baselines/packed/resnet.py <https://github.com/ENSTA-U2IS/torch-uncertainty/blob/main/torch_uncertainty/baselines/classification/resnet.py>`_
+  `torch_uncertainty/baselines/packed/resnet.py <https://github.com/ENSTA-U2IS-AI/torch-uncertainty/blob/main/torch_uncertainty/baselines/classification/resnet.py>`_
 * a Lightning DataModule corresponding to the training, validation, and test
   sets with again its arguments and logic. CIFAR-10/100, ImageNet, and
   ImageNet-200 are available, for instance.
 * a PyTorch loss such as the torch.nn.CrossEntropyLoss
 * a dictionary containing the optimization procedure, namely a scheduler and
   an optimizer. Many procedures are available at 
-  `torch_uncertainty/optimization_procedures.py <https://github.com/ENSTA-U2IS/torch-uncertainty/blob/main/torch_uncertainty/optimization_procedures.py>`_
+  `torch_uncertainty/optimization_procedures.py <https://github.com/ENSTA-U2IS-AI/torch-uncertainty/blob/main/torch_uncertainty/optimization_procedures.py>`_
 
 * the path to the data and logs folder, in the example below, the root of the library
 * and finally, the name of your model (used for logs)
@@ -41,7 +41,7 @@ for multi-gpu training and cuDNN benchmark, etc.
 Example
 ^^^^^^^
 
-The following code - `available in the experiments folder <https://github.com/ENSTA-U2IS/torch-uncertainty/blob/main/experiments/classification/cifar10/resnet.py>`_ - 
+The following code - `available in the experiments folder <https://github.com/ENSTA-U2IS-AI/torch-uncertainty/blob/main/experiments/classification/cifar10/resnet.py>`_ - 
 trains any ResNet architecture on CIFAR10:
 
 .. code:: python
@@ -83,7 +83,7 @@ Run this model with, for instance:
 
 .. code:: bash
 
-    python3 resnet.py --version vanilla --arch 18 --accelerator gpu --device 1 --benchmark True --max_epochs 75 --precision 16
+    python3 resnet.py --version std --arch 18 --accelerator gpu --device 1 --benchmark True --max_epochs 75 --precision 16
 
 You may replace the architecture (which should be a Lightning Module), the
 Datamodule (a Lightning Datamodule), the loss or the optimization procedure to your likings.
@@ -128,7 +128,7 @@ It is likely that your desired architecture is not supported by our library.
 In that case, you might be interested in directly using the actual layers.
 
 1. Check the API reference for specific layers of your choosing.
-2. Import the layers and use them as you would for any vanilla PyTorch layers.
+2. Import the layers and use them as you would for any standard PyTorch layer.
 
 If you think that your architecture should be added to the package, raise an
 issue on the GitHub repository!

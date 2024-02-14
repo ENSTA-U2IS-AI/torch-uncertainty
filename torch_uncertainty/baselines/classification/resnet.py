@@ -2,28 +2,34 @@ from typing import Literal
 
 from torch import nn
 
+from torch_uncertainty.models.mc_dropout import mc_dropout
 from torch_uncertainty.models.resnet import (
     batched_resnet18,
+    batched_resnet20,
     batched_resnet34,
     batched_resnet50,
     batched_resnet101,
     batched_resnet152,
     masked_resnet18,
+    masked_resnet20,
     masked_resnet34,
     masked_resnet50,
     masked_resnet101,
     masked_resnet152,
     mimo_resnet18,
+    mimo_resnet20,
     mimo_resnet34,
     mimo_resnet50,
     mimo_resnet101,
     mimo_resnet152,
     packed_resnet18,
+    packed_resnet20,
     packed_resnet34,
     packed_resnet50,
     packed_resnet101,
     packed_resnet152,
     resnet18,
+    resnet20,
     resnet34,
     resnet50,
     resnet101,
@@ -34,12 +40,20 @@ from torch_uncertainty.transforms import MIMOBatchFormat, RepeatTarget
 
 
 class ResNet(ClassificationRoutine):
-    single = ["vanilla"]
-    ensemble = ["packed", "batched", "masked", "mimo", "mc-dropout"]
+    single = ["std"]
+    ensemble = ["packed", "batched", "masked", "mc-dropout", "mimo"]
     versions = {
-        "vanilla": [resnet18, resnet34, resnet50, resnet101, resnet152],
+        "std": [
+            resnet18,
+            resnet20,
+            resnet34,
+            resnet50,
+            resnet101,
+            resnet152,
+        ],
         "packed": [
             packed_resnet18,
+            packed_resnet20,
             packed_resnet34,
             packed_resnet50,
             packed_resnet101,
@@ -47,6 +61,7 @@ class ResNet(ClassificationRoutine):
         ],
         "batched": [
             batched_resnet18,
+            batched_resnet20,
             batched_resnet34,
             batched_resnet50,
             batched_resnet101,
@@ -54,6 +69,7 @@ class ResNet(ClassificationRoutine):
         ],
         "masked": [
             masked_resnet18,
+            masked_resnet20,
             masked_resnet34,
             masked_resnet50,
             masked_resnet101,
@@ -61,14 +77,22 @@ class ResNet(ClassificationRoutine):
         ],
         "mimo": [
             mimo_resnet18,
+            mimo_resnet20,
             mimo_resnet34,
             mimo_resnet50,
             mimo_resnet101,
             mimo_resnet152,
         ],
-        "mc-dropout": [resnet18, resnet34, resnet50, resnet101, resnet152],
+        "mc-dropout": [
+            resnet18,
+            resnet20,
+            resnet34,
+            resnet50,
+            resnet101,
+            resnet152,
+        ],
     }
-    archs = [18, 34, 50, 101, 152]
+    archs = [18, 20, 34, 50, 101, 152]
 
     def __init__(
         self,
@@ -76,7 +100,7 @@ class ResNet(ClassificationRoutine):
         in_channels: int,
         loss: type[nn.Module],
         version: Literal[
-            "vanilla",
+            "std",
             "mc-dropout",
             "packed",
             "batched",
@@ -94,6 +118,7 @@ class ResNet(ClassificationRoutine):
         kernel_tau_std: float = 0.5,
         mixup_alpha: float = 0,
         cutmix_alpha: float = 0,
+        last_layer_dropout: bool = False,
         groups: int = 1,
         scale: float | None = None,
         alpha: int | None = None,
@@ -107,7 +132,7 @@ class ResNet(ClassificationRoutine):
         log_plots: bool = False,
         save_in_csv: bool = False,
         calibration_set: Literal["val", "test"] | None = None,
-        evaluate_ood: bool = False,
+        eval_ood: bool = False,
         pretrained: bool = False,
     ) -> None:
         r"""ResNet backbone baseline for classification providing support for
@@ -124,7 +149,7 @@ class ResNet(ClassificationRoutine):
             version (str):
                 Determines which ResNet version to use:
 
-                - ``"vanilla"``: original ResNet
+                - ``"std"``: original ResNet
                 - ``"packed"``: Packed-Ensembles ResNet
                 - ``"batched"``: BatchEnsemble ResNet
                 - ``"masked"``: Masksemble ResNet
@@ -162,9 +187,15 @@ class ResNet(ClassificationRoutine):
             scale (float, optional): Expansion factor affecting the width of
                 the estimators. Only used if :attr:`version` is ``"masked"``.
                 Defaults to ``None``.
-            alpha (int, optional): Expansion factor affecting the width of the
-                estimators. Only used if :attr:`version` is ``"packed"``.
-                Defaults to ``None``.
+            last_layer_dropout (bool): whether to apply dropout to the last layer only.
+            groups (int, optional): Number of groups in convolutions. Defaults to
+                ``1``.
+            scale (float, optional): Expansion factor affecting the width of the
+                estimators. Only used if :attr:`version` is ``"masked"``. Defaults
+                to ``None``.
+            alpha (float, optional): Expansion factor affecting the width of the
+                estimators. Only used if :attr:`version` is ``"packed"``. Defaults
+                to ``None``.
             gamma (int, optional): Number of groups within each estimator. Only
                 used if :attr:`version` is ``"packed"`` and scales with
                 :attr:`groups`. Defaults to ``1``.
@@ -187,24 +218,26 @@ class ResNet(ClassificationRoutine):
                 a csv file or not. Defaults to ``False``.
             calibration_set (Callable, optional): Calibration set. Defaults to
                 ``None``.
-            evaluate_ood (bool, optional): Indicates whether to evaluate the
+            eval_ood (bool, optional): Indicates whether to evaluate the
                 OOD detection or not. Defaults to ``False``.
             pretrained (bool, optional): Indicates whether to use the pretrained
                 weights or not. Only used if :attr:`version` is ``"packed"``.
                 Defaults to ``False``.
 
         Raises:
-            ValueError: If :attr:`version` is not either ``"vanilla"``,
+            ValueError: If :attr:`version` is not either ``"std"``,
                 ``"packed"``, ``"batched"``, ``"masked"`` or ``"mc-dropout"``.
 
         Returns:
             LightningModule: ResNet baseline ready for training and evaluation.
         """
         params = {
+            "conv_bias": False,
+            "dropout_rate": dropout_rate,
+            "groups": groups,
             "in_channels": in_channels,
             "num_classes": num_classes,
             "style": style,
-            "groups": groups,
         }
 
         format_batch_fn = nn.Identity()
@@ -212,54 +245,45 @@ class ResNet(ClassificationRoutine):
         if version not in self.versions:
             raise ValueError(f"Unknown version: {version}")
 
-        if version == "vanilla":
-            params.update(
-                {
-                    "dropout_rate": dropout_rate,
-                }
-            )
-        elif version == "mc-dropout":
-            params.update(
-                {
-                    "dropout_rate": dropout_rate,
-                    "num_estimators": num_estimators,
-                }
-            )
-        elif version == "packed":
+        if version in self.ensemble:
             params.update(
                 {
                     "num_estimators": num_estimators,
+                }
+            )
+            if version != "mc-dropout":
+                format_batch_fn = RepeatTarget(num_repeats=num_estimators)
+
+        if version == "packed":
+            params.update(
+                {
                     "alpha": alpha,
                     "gamma": gamma,
                     "pretrained": pretrained,
                 }
             )
-            format_batch_fn = RepeatTarget(num_repeats=num_estimators)
-        elif version == "batched":
-            params.update(
-                {
-                    "num_estimators": num_estimators,
-                }
-            )
-            format_batch_fn = RepeatTarget(num_repeats=num_estimators)
         elif version == "masked":
             params.update(
                 {
-                    "num_estimators": num_estimators,
                     "scale": scale,
                 }
             )
-            format_batch_fn = RepeatTarget(num_repeats=num_estimators)
         elif version == "mimo":
-            params.update(
-                {
-                    "num_estimators": num_estimators,
-                }
-            )
             format_batch_fn = MIMOBatchFormat(
                 num_estimators=num_estimators,
                 rho=rho,
                 batch_repeat=batch_repeat,
+            )
+
+        if version == "mc-dropout":  # std ResNets don't have `num_estimators`
+            del params["num_estimators"]
+
+        model = self.versions[version][self.archs.index(arch)](**params)
+        if version == "mc-dropout":
+            model = mc_dropout(
+                model=model,
+                num_estimators=num_estimators,
+                last_layer=last_layer_dropout,
             )
 
         model = self.versions[version][self.archs.index(arch)](**params)
@@ -276,7 +300,7 @@ class ResNet(ClassificationRoutine):
             kernel_tau_std=kernel_tau_std,
             mixup_alpha=mixup_alpha,
             cutmix_alpha=cutmix_alpha,
-            evaluate_ood=evaluate_ood,
+            eval_ood=eval_ood,
             use_entropy=use_entropy,
             use_logits=use_logits,
             use_mi=use_mi,
@@ -285,3 +309,4 @@ class ResNet(ClassificationRoutine):
             save_in_csv=save_in_csv,
             calibration_set=calibration_set,
         )
+        self.save_hyperparameters()

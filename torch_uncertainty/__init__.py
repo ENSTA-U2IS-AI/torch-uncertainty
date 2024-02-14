@@ -7,9 +7,11 @@
 # import numpy as np
 # import pytorch_lightning as pl
 # import torch
-# from pytorch_lightning.callbacks import LearningRateMonitor
-# from pytorch_lightning.callbacks.early_stopping import EarlyStopping
-# from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint
+# from pytorch_lightning.callbacks import (
+#     EarlyStopping,
+#     LearningRateMonitor,
+#     ModelCheckpoint,
+# )
 # from pytorch_lightning.loggers.tensorboard import TensorBoardLogger
 # from torchinfo import summary
 
@@ -103,18 +105,18 @@
 #     else:
 #         training_task = datamodule.training_task
 #     if training_task == "classification":
-#         monitor = "hp/val_acc"
+#         monitor = "cls_val/acc"
 #         mode = "max"
 #     elif training_task == "regression":
-#         monitor = "hp/val_mse"
+#         monitor = "reg_val/mse"
 #         mode = "min"
 #     else:
 #         raise ValueError("Unknown problem type.")
 
 #     if args.test is None and args.max_epochs is None:
 #         print(
-#             "Setting max_epochs to 1 for testing purposes. Set max_epochs "
-#             "manually to train the model."
+#             "Setting max_epochs to 1 for testing purposes. Set max_epochs"
+#             " manually to train the model."
 #         )
 #         args.max_epochs = 1
 
@@ -214,7 +216,7 @@
 #         EarlyStopping(monitor=monitor, patience=np.inf, check_finite=True),
 #     ]
 
-#     # trainer
+#     trainer
 #     trainer = pl.Trainer.from_argparse_args(
 #         args,
 #         callbacks=callbacks,
@@ -243,7 +245,7 @@
 #     else:
 #         # training and testing
 #         trainer.fit(network, datamodule)
-#         if args.fast_dev_run is False:
+#         if not args.fast_dev_run:
 #             test_values = trainer.test(datamodule=datamodule, ckpt_path="best")
 #         else:
 #             test_values = [{}]

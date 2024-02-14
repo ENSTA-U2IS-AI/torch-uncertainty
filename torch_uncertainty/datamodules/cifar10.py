@@ -26,7 +26,7 @@ class CIFAR10DataModule(AbstractDataModule):
         self,
         root: str | Path,
         batch_size: int,
-        evaluate_ood: bool = False,
+        eval_ood: bool = False,
         val_split: float = 0.0,
         num_workers: int = 1,
         cutout: int | None = None,
@@ -41,7 +41,7 @@ class CIFAR10DataModule(AbstractDataModule):
 
         Args:
             root (str): Root directory of the datasets.
-            evaluate_ood (bool): Whether to evaluate on out-of-distribution data.
+            eval_ood (bool): Whether to evaluate on out-of-distribution data.
             batch_size (int): Number of samples per batch.
             val_split (float): Share of samples to use for validation. Defaults
                 to ``0.0``.
@@ -69,7 +69,7 @@ class CIFAR10DataModule(AbstractDataModule):
 
         self.val_split = val_split
         self.num_dataloaders = num_dataloaders
-        self.evaluate_ood = evaluate_ood
+        self.eval_ood = eval_ood
 
         if test_alt == "c":
             self.dataset = CIFAR10C
@@ -95,7 +95,7 @@ class CIFAR10DataModule(AbstractDataModule):
         else:
             main_transform = nn.Identity()
 
-        self.transform_train = T.Compose(
+        self.train_transform = T.Compose(
             [
                 T.RandomCrop(32, padding=4),
                 T.RandomHorizontalFlip(),
@@ -108,7 +108,7 @@ class CIFAR10DataModule(AbstractDataModule):
             ]
         )
 
-        self.transform_test = T.Compose(
+        self.test_transform = T.Compose(
             [
                 T.ToTensor(),
                 T.Normalize(
@@ -134,10 +134,10 @@ class CIFAR10DataModule(AbstractDataModule):
                 download=True,
             )
 
-        if self.evaluate_ood:
+        if self.eval_ood:
             self.ood_dataset(self.root, split="test", download=True)
 
-    def setup(self, stage: str | None = None) -> None:
+    def setup(self, stage: Literal["fit", "test"] | None = None) -> None:
         if stage == "fit" or stage is None:
             if self.test_alt in ("c", "h"):
                 raise ValueError("CIFAR-C and H can only be used in testing.")
@@ -145,7 +145,7 @@ class CIFAR10DataModule(AbstractDataModule):
                 self.root,
                 train=True,
                 download=False,
-                transform=self.transform_train,
+                transform=self.train_transform,
             )
             if self.val_split:
                 self.train, self.val = random_split(
@@ -161,7 +161,7 @@ class CIFAR10DataModule(AbstractDataModule):
                     self.root,
                     train=False,
                     download=False,
-                    transform=self.transform_test,
+                    transform=self.test_transform,
                 )
         elif stage == "test":
             if self.test_alt is None:
@@ -169,20 +169,20 @@ class CIFAR10DataModule(AbstractDataModule):
                     self.root,
                     train=False,
                     download=False,
-                    transform=self.transform_test,
+                    transform=self.test_transform,
                 )
             else:
                 self.test = self.dataset(
                     self.root,
-                    transform=self.transform_test,
+                    transform=self.test_transform,
                     severity=self.corruption_severity,
                 )
-            if self.evaluate_ood:
+            if self.eval_ood:
                 self.ood = self.ood_dataset(
                     self.root,
                     split="test",
                     download=False,
-                    transform=self.transform_test,
+                    transform=self.test_transform,
                 )
         else:
             raise ValueError(f"Stage {stage} is not supported.")
@@ -208,7 +208,7 @@ class CIFAR10DataModule(AbstractDataModule):
             and out-of-distribution data.
         """
         dataloader = [self._data_loader(self.test)]
-        if self.evaluate_ood:
+        if self.eval_ood:
             dataloader.append(self._data_loader(self.ood))
         return dataloader
 

@@ -30,9 +30,10 @@ def optim_cifar10_resnet18(
     """Optimizer to train a ResNet18 on CIFAR-10."""
     optimizer = optim.SGD(
         model.parameters(),
-        lr=0.05,
+        lr=0.1,
         momentum=0.9,
         weight_decay=5e-4,
+        nesterov=True,
     )
     scheduler = optim.lr_scheduler.MultiStepLR(
         optimizer,
@@ -179,7 +180,7 @@ def optim_imagenet_resnet50(
     return {
         "optimizer": optimizer,
         "lr_scheduler": scheduler,
-        "monitor": "hp/val_acc",
+        "monitor": "cls/val_acc",
     }
 
 
@@ -226,7 +227,7 @@ def optim_imagenet_resnet50_a3(
             "interval": "step",
             "frequency": 1,
         },
-        "monitor": "hp/val_acc",
+        "monitor": "cls/val_acc",
     }
 
 
@@ -327,7 +328,7 @@ def optim_regression(
     )
     return {
         "optimizer": optimizer,
-        "monitor": "hp/val_nll",
+        "monitor": "reg/val_nll",
     }
 
 
@@ -375,7 +376,7 @@ def batch_ensemble_wrapper(
 def get_procedure(
     arch_name: str,
     ds_name: str,
-    model_name: str = "",
+    method: str = "",
     imagenet_recipe: str | None = None,
 ) -> Callable:
     """Get the optimization procedure for a given architecture and dataset.
@@ -383,14 +384,14 @@ def get_procedure(
     Args:
         arch_name (str): The name of the architecture.
         ds_name (str): The name of the dataset.
-        model_name (str, optional): The name of the model. Defaults to "".
+        method (str, optional): The name of the method. Defaults to "".
         imagenet_recipe (str, optional): The recipe to use for
             ImageNet. Defaults to None.
 
     Returns:
         callable: The optimization procedure.
     """
-    if arch_name == "resnet18":
+    if arch_name in ["resnet18", "resnet20"]:
         if ds_name == "cifar10":
             procedure = optim_cifar10_resnet18
         elif ds_name == "cifar100":
@@ -404,6 +405,8 @@ def get_procedure(
             procedure = optim_cifar100_resnet34
         elif ds_name == "tiny-imagenet":
             procedure = optim_tinyimagenet_resnet34
+        else:
+            raise NotImplementedError(f"No recipe for dataset: {ds_name}.")
     elif arch_name == "resnet50":
         if ds_name == "cifar10":
             procedure = optim_cifar10_resnet50
@@ -433,7 +436,7 @@ def get_procedure(
     else:
         raise NotImplementedError(f"No recipe for architecture: {arch_name}.")
 
-    if model_name == "batched":
+    if method == "batched":
         procedure = partial(
             batch_ensemble_wrapper, optimization_procedure=procedure
         )

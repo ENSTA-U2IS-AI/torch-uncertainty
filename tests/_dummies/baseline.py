@@ -23,12 +23,16 @@ class DummyClassificationBaseline:
         loss: type[nn.Module],
         optimization_procedure: Any,
         baseline_type: str = "single",
+        with_feats: bool = True,
+        with_linear: bool = True,
         **kwargs,
     ) -> LightningModule:
         model = dummy_model(
             in_channels=in_channels,
             num_classes=num_classes,
             num_estimators=1 + int(baseline_type == "ensemble"),
+            with_feats=with_feats,
+            with_linear=with_linear,
         )
 
         if baseline_type == "single":

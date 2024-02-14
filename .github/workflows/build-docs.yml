@@ -17,13 +17,14 @@ jobs:
   documentation:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ env.PYTHON_VERSION }}
         cache: "pip"
+        cache-dependency-path: "pyproject.toml"
 
     - name: Full Python version
       run: |
@@ -40,9 +41,10 @@ jobs:
     - name: Install dependencies
       run: |
         python3 -m pip install torch torchvision --extra-index-url https://download.pytorch.org/whl/cpu
-        python3 -m pip install .[dev,docs]
+        python3 -m pip install .[image,dev,docs]
 
     - name: Sphinx build
+      if: github.event.pull_request.draft == false
       run: |
         cd docs && make clean && make html
 

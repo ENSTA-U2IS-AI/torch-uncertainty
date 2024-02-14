@@ -21,7 +21,7 @@ class DeepEnsembles(ClassificationRoutine):
         log_path: str | Path,
         checkpoint_ids: list[int],
         backbone: Literal["resnet", "vgg", "wideresnet"],
-        evaluate_ood: bool = False,
+        eval_ood: bool = False,
         use_entropy: bool = False,
         use_logits: bool = False,
         use_mi: bool = False,
@@ -29,8 +29,7 @@ class DeepEnsembles(ClassificationRoutine):
         log_plots: bool = False,
         calibration_set: Literal["val", "test"] | None = None,
     ) -> None:
-        if isinstance(log_path, str):
-            log_path = Path(log_path)
+        log_path = Path(log_path)
 
         backbone_cls = self.backbones[backbone]
 
@@ -54,7 +53,7 @@ class DeepEnsembles(ClassificationRoutine):
             model=de,
             loss=None,
             num_estimators=de.num_estimators,
-            evaluate_ood=evaluate_ood,
+            eval_ood=eval_ood,
             use_entropy=use_entropy,
             use_logits=use_logits,
             use_mi=use_mi,
@@ -62,3 +61,4 @@ class DeepEnsembles(ClassificationRoutine):
             log_plots=log_plots,
             calibration_set=calibration_set,
         )
+        self.save_hyperparameters()

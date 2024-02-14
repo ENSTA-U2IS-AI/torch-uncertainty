@@ -6,7 +6,7 @@ Installation
 
 
 You can install the package from PyPI or from source. Choose the latter if you
-want to access the files included the `experiments <https://github.com/ENSTA-U2IS/torch-uncertainty/tree/main/experiments>`_
+want to access the files included the `experiments <https://github.com/ENSTA-U2IS-AI/torch-uncertainty/tree/main/experiments>`_
 folder or if you want to contribute to the project.
 
 
@@ -35,7 +35,7 @@ Again, with PyTorch already installed, clone the repository with:
 
 .. parsed-literal::
 
-    git clone https://github.com/ENSTA-U2IS/torch-uncertainty.git
+    git clone https://github.com/ENSTA-U2IS-AI/torch-uncertainty.git
     cd torch-uncertainty
 
 Create a new conda environment and activate it:
@@ -52,3 +52,31 @@ Install the package using pip in editable mode:
     pip install -e .
 
 If PyTorch is not installed, the latest version will be installed automatically.
+
+Options
+-------
+
+You can install the package with the following options:
+
+* dev: includes all the dependencies for the development of the package
+including ruff and the pre-commits hooks.
+* docs: includes all the dependencies for the documentation of the package
+based on sphinx
+* image: includes all the dependencies for the image processing module
+including opencv and scikit-image
+* tabular: includes pandas
+* all: includes all the aforementioned dependencies
+
+For example, to install the package with the dependencies for the development
+and the documentation, run the following command. It is a mandatory step if you
+want to contribute to the project.
+
+.. parsed-literal::
+
+    pip install -e .[dev,docs]
+
+To install the package with all the dependencies, run:
+
+.. parsed-literal::
+
+    pip install -e .[all]

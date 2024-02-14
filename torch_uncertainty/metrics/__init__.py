@@ -4,6 +4,7 @@ from .calibration import CE
 from .disagreement import Disagreement
 from .entropy import Entropy
 from .fpr95 import FPR95
+from .grouping_loss import GroupingLoss
 from .iou import IntersectionOverUnion
 from .mutual_information import MutualInformation
 from .nll import GaussianNegativeLogLikelihood, NegativeLogLikelihood

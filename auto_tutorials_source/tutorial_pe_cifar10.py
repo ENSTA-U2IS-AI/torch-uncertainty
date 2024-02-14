@@ -1,13 +1,11 @@
-# -*- coding: utf-8 -*-
-
 """
-From a Vanilla Classifier to a Packed-Ensemble
-==============================================
+From a Standard Classifier to a Packed-Ensemble
+===============================================
 
 This tutorial is heavily inspired by PyTorch's `Training a Classifier <https://pytorch.org/tutorials/beginner/blitz/cifar10_tutorial.html#test-the-network-on-the-test-data>`_
 tutorial.
 
-Let's dive step by step into the process to modify a vanilla classifier into a
+Let's dive step by step into the process to modify a standard classifier into a
 packed-ensemble classifier.
 
 Dataset
@@ -32,7 +30,7 @@ Here is the outline of the process:
 
 1. Load and normalizing the CIFAR10 training and test datasets using
    ``torchvision``
-2. Define a Packed-Ensemble from a vanilla classifier
+2. Define a Packed-Ensemble from a standard classifier
 3. Define a loss function
 4. Train the Packed-Ensemble on the training data
 5. Test the Packed-Ensemble on the test data and evaluate its performance
@@ -120,9 +118,9 @@ print(" ".join(f"{classes[labels[j]]:5s}" for j in range(batch_size)))
 
 
 # %%
-# 2. Define a Packed-Ensemble from a vanilla classifier
+# 2. Define a Packed-Ensemble from a standard classifier
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-# First we define a vanilla classifier for CIFAR10 for reference. We will use a
+# First we define a standard classifier for CIFAR10 for reference. We will use a
 # convolutional neural network.
 
 import torch.nn.functional as F
@@ -152,7 +150,7 @@ class Net(nn.Module):
 net = Net()
 
 # %%
-# Let's modify the vanilla classifier into a Packed-Ensemble classifier of
+# Let's modify the standard classifier into a Packed-Ensemble classifier of
 # parameters :math:`M=4,\ \alpha=2\text{ and }\gamma=1`.
 
 from einops import rearrange

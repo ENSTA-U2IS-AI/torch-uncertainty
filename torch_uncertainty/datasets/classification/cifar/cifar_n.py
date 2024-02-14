@@ -35,7 +35,7 @@ class CIFAR10N(CIFAR10):
 
     def __init__(
         self,
-        root: str,
+        root: str | Path,
         train: bool = True,
         file_arg: Literal[
             "aggre_label",
@@ -49,13 +49,12 @@ class CIFAR10N(CIFAR10):
         download: bool = False,
     ) -> None:
         super().__init__(
-            root,
+            Path(root),
             train=train,
             transform=transform,
             target_transform=target_transform,
             download=download,
         )
-        self.root = Path(self.root)
 
         if download:
             self.download_n()

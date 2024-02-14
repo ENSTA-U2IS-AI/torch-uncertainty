@@ -51,7 +51,7 @@ class TestPackedBaseline:
         _ = net.criterion
         _ = net(torch.rand(1, 3, 40, 40))
 
-    def test_packed_alpha_lt_0(self):
+    def test_packed_exception(self):
         with pytest.raises(Exception):
             _ = ResNet(
                 num_classes=10,
@@ -66,7 +66,6 @@ class TestPackedBaseline:
                 groups=1,
             )
 
-    def test_packed_gamma_lt_1(self):
         with pytest.raises(Exception):
             _ = ResNet(
                 num_classes=10,

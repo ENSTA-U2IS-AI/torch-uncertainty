@@ -24,6 +24,7 @@ from torch_uncertainty.metrics import (
     BrierScore,
     Disagreement,
     Entropy,
+    GroupingLoss,
     MutualInformation,
     NegativeLogLikelihood,
     VariationRatio,
@@ -49,7 +50,8 @@ class ClassificationRoutine(LightningModule):
         kernel_tau_std: float = 0.5,
         mixup_alpha: float = 0,
         cutmix_alpha: float = 0,
-        evaluate_ood: bool = False,
+        eval_ood: bool = False,
+        eval_grouping_loss: bool = False,
         use_entropy: bool = False,
         use_logits: bool = False,
         use_mi: bool = False,
@@ -61,26 +63,40 @@ class ClassificationRoutine(LightningModule):
         """Classification routine.
 
         Args:
-            num_classes (int): _description_
-            model (nn.Module): _description_
-            loss (type[nn.Module]): _description_
+            num_classes (int): Number of classes.
+            model (nn.Module): Model to train.
+            loss (type[nn.Module]): Loss function.
             num_estimators (int): _description_
-            format_batch_fn (nn.Module | None, optional): _description_. Defaults to None.
-            mixtype (str, optional): _description_. Defaults to "erm".
-            mixmode (str, optional): _description_. Defaults to "elem".
-            dist_sim (str, optional): _description_. Defaults to "emb".
-            kernel_tau_max (float, optional): _description_. Defaults to 1.0.
-            kernel_tau_std (float, optional): _description_. Defaults to 0.5.
-            mixup_alpha (float, optional): _description_. Defaults to 0.
-            cutmix_alpha (float, optional): _description_. Defaults to 0.
-            evaluate_ood (bool, optional): _description_. Defaults to False.
-            use_entropy (bool, optional): _description_. Defaults to False.
-            use_logits (bool, optional): _description_. Defaults to False.
-            use_mi (bool, optional): _description_. Defaults to False.
-            use_variation_ratio (bool, optional): _description_. Defaults to False.
-            log_plots (bool, optional): _description_. Defaults to False.
-            save_in_csv (bool, optional): _description_. Defaults to False.
-            calibration_set (str | None, optional): _description_. Defaults to None.
+            optimization_procedure (Any): Optimization procedure.
+            format_batch_fn (nn.Module, optional): Function to format the batch.
+                Defaults to :class:`torch.nn.Identity()`.
+            mixtype (str, optional): Mixup type. Defaults to ``"erm"``.
+            mixmode (str, optional): Mixup mode. Defaults to ``"elem"``.
+            dist_sim (str, optional): Distance similarity. Defaults to ``"emb"``.
+            kernel_tau_max (float, optional): Maximum value for the kernel tau.
+                Defaults to 1.0.
+            kernel_tau_std (float, optional): Standard deviation for the kernel tau.
+                Defaults to 0.5.
+            mixup_alpha (float, optional): Alpha parameter for Mixup. Defaults to 0.
+            cutmix_alpha (float, optional): Alpha parameter for Cutmix.
+                Defaults to 0.
+            eval_ood (bool, optional): Indicates whether to evaluate the OOD
+                detection performance or not. Defaults to ``False``.
+            eval_grouping_loss (bool, optional): Indicates whether to evaluate the
+                grouping loss or not. Defaults to ``False``.
+            use_entropy (bool, optional): Indicates whether to use the entropy
+                values as the OOD criterion or not. Defaults to ``False``.
+            use_logits (bool, optional): Indicates whether to use the logits as the
+                OOD criterion or not. Defaults to ``False``.
+            use_mi (bool, optional): Indicates whether to use the mutual
+                information as the OOD criterion or not. Defaults to ``False``.
+            use_variation_ratio (bool, optional): Indicates whether to use the
+                variation ratio as the OOD criterion or not. Defaults to ``False``.
+            log_plots (bool, optional): Indicates whether to log plots from
+                metrics. Defaults to ``False``.
+            save_in_csv(bool, optional): __TODO__
+            calibration_set (Callable, optional): Function to get the calibration
+                set. Defaults to ``None``.
 
         Raises:
             ValueError: _description_
@@ -108,9 +124,29 @@ class ClassificationRoutine(LightningModule):
                 " model."
             )
 
+        if num_estimators == 1 and eval_grouping_loss:
+            raise NotImplementedError(
+                "Groupng loss for ensembles is not yet implemented. Raise an issue if needed."
+            )
+
+        if eval_grouping_loss and not hasattr(model, "feats_forward"):
+            raise ValueError(
+                "Your model must have a `feats_forward` method to compute the "
+                "grouping loss."
+            )
+
+        if eval_grouping_loss and not (
+            hasattr(model, "classification_head") or hasattr(model, "linear")
+        ):
+            raise ValueError(
+                "Your model must have a `classification_head` or `linear` "
+                "attribute to compute the grouping loss."
+            )
+
         self.num_classes = num_classes
         self.num_estimators = num_estimators
-        self.evaluate_ood = evaluate_ood
+        self.eval_ood = eval_ood
+        self.eval_grouping_loss = eval_grouping_loss
         self.use_logits = use_logits
         self.use_entropy = use_entropy
         self.use_mi = use_mi
@@ -148,15 +184,15 @@ class ClassificationRoutine(LightningModule):
                 compute_groups=False,
             )
 
-        self.val_cls_metrics = cls_metrics.clone(prefix="val_")
-        self.test_cls_metrics = cls_metrics.clone(prefix="test_")
+        self.val_cls_metrics = cls_metrics.clone(prefix="cls_val/")
+        self.test_cls_metrics = cls_metrics.clone(prefix="cls_test/")
 
         if self.calibration_set is not None:
             self.ts_cls_metrics = cls_metrics.clone(prefix="ts_")
 
         self.test_entropy_id = Entropy()
 
-        if self.evaluate_ood:
+        if self.eval_ood:
             ood_metrics = MetricCollection(
                 {
                     "fpr95": FPR95(pos_label=1),
@@ -165,7 +201,7 @@ class ClassificationRoutine(LightningModule):
                 },
                 compute_groups=[["auroc", "aupr"], ["fpr95"]],
             )
-            self.test_ood_metrics = ood_metrics.clone(prefix="test_")
+            self.test_ood_metrics = ood_metrics.clone(prefix="ood/")
             self.test_entropy_ood = Entropy()
 
         self.mixtype = mixtype
@@ -182,12 +218,21 @@ class ClassificationRoutine(LightningModule):
                 mixup_alpha, cutmix_alpha, kernel_tau_max, kernel_tau_std
             )
 
+            if self.eval_grouping_loss:
+                grouping_loss = MetricCollection(
+                    {"grouping_loss": GroupingLoss()}
+                )
+                self.val_grouping_loss = grouping_loss.clone(prefix="gpl/val_")
+                self.test_grouping_loss = grouping_loss.clone(
+                    prefix="gpl/test_"
+                )
+
         # Handle ELBO special cases
         self.is_elbo = (
             isinstance(self.loss, partial) and self.loss.func == ELBOLoss
         )
 
-        # DEC
+        # Deep Evidential Classification
         self.is_dec = self.loss == DECLoss or (
             isinstance(self.loss, partial) and self.loss.func == DECLoss
         )
@@ -201,12 +246,11 @@ class ClassificationRoutine(LightningModule):
                     "entropy": Entropy(),
                 }
             )
-            self.test_id_ens_metrics = ens_metrics.clone(prefix="test_id_ens_")
 
-            if self.evaluate_ood:
-                self.test_ood_ens_metrics = ens_metrics.clone(
-                    prefix="test_ood_ens_"
-                )
+            self.test_id_ens_metrics = ens_metrics.clone(prefix="ood/ens_")
+
+            if self.eval_ood:
+                self.test_ood_ens_metrics = ens_metrics.clone(prefix="ood/ens_")
 
         self.id_logit_storage = None
         self.ood_logit_storage = None
@@ -252,7 +296,7 @@ class ClassificationRoutine(LightningModule):
                 tau_max=kernel_tau_max,
                 tau_std=kernel_tau_std,
             )
-        return lambda x, y: (x, y)
+        return nn.Identity()
 
     def on_train_start(self) -> None:
         init_metrics = {k: 0 for k in self.val_cls_metrics}
@@ -283,7 +327,7 @@ class ClassificationRoutine(LightningModule):
             self.cal_model = None
 
         if (
-            self.evaluate_ood
+            self.eval_ood
             and self.log_plots
             and isinstance(self.logger, TensorBoardLogger)
         ):
@@ -296,8 +340,27 @@ class ClassificationRoutine(LightningModule):
             self.loss = partial(self.loss, model=self.model)
         return self.loss()
 
-    def forward(self, inputs: Tensor) -> Tensor:
-        return self.model.forward(inputs)
+    def forward(self, inputs: Tensor, return_features: bool = False) -> Tensor:
+        """Forward pass of the model.
+
+        Args:
+            inputs (Tensor): Input tensor.
+            return_features (bool, optional): Whether to store the features or
+                not. Defaults to ``False``.
+
+        Note:
+            The features are stored in the :attr:`features` attribute.
+        """
+        if return_features:
+            self.features = self.model.feats_forward(inputs)
+            if hasattr(self.model, "classification_head"):  # coverage: ignore
+                logits = self.model.classification_head(self.features)
+            else:
+                logits = self.model.linear(self.features)
+        else:
+            self.features = None
+            logits = self.model(inputs)
+        return logits
 
     def training_step(
         self, batch: tuple[Tensor, Tensor], batch_idx: int
@@ -349,6 +412,9 @@ class ClassificationRoutine(LightningModule):
         probs = probs_per_est.mean(dim=1)
         self.val_cls_metrics.update(probs, targets)
 
+        if self.eval_grouping_loss:
+            self.val_grouping_loss.update(probs, targets, self.features)
+
     def test_step(
         self,
         batch: tuple[Tensor, Tensor],
@@ -356,8 +422,17 @@ class ClassificationRoutine(LightningModule):
         dataloader_idx: int = 0,
     ) -> None:
         inputs, targets = batch
-        logits = self.forward(inputs)  # (m*b, c)
-        logits = rearrange(logits, "(m b) c -> b m c", m=self.num_estimators)
+        logits = self.forward(
+            inputs, return_features=self.eval_grouping_loss
+        )  # (m*b, c)
+        if logits.size(0) % self.num_estimators != 0:  # coverage: ignore
+            raise ValueError(
+                f"The number of predicted samples {logits.size(0)} is not "
+                "divisible by the reported number of estimators "
+                f"{self.num_estimators} of the routine. Please check the "
+                "correspondence between these values."
+            )
+        logits = rearrange(logits, "(n b) c -> b n c", n=self.num_estimators)
 
         if self.binary_cls:
             probs_per_est = torch.sigmoid(logits).squeeze(-1)
@@ -396,16 +471,19 @@ class ClassificationRoutine(LightningModule):
 
         if dataloader_idx == 0:
             # squeeze if binary classification only for binary metrics
-            self.test_cls_metrics(
+            self.test_cls_metrics.update(
                 probs.squeeze(-1) if self.binary_cls else probs,
                 targets,
             )
+            if self.eval_grouping_loss:
+                self.test_grouping_loss.update(probs, targets, self.features)
+
             self.log_dict(
                 self.test_cls_metrics, on_epoch=True, add_dataloader_idx=False
             )
             self.test_entropy_id(probs)
             self.log(
-                "test_entropy_id",
+                "cls_test/entropy",
                 self.test_entropy_id,
                 on_epoch=True,
                 add_dataloader_idx=False,
@@ -414,7 +492,7 @@ class ClassificationRoutine(LightningModule):
             if self.num_estimators > 1:
                 self.test_id_ens_metrics.update(probs_per_est)
 
-            if self.evaluate_ood:
+            if self.eval_ood:
                 self.test_ood_metrics.update(
                     ood_scores, torch.zeros_like(targets)
                 )
@@ -422,11 +500,11 @@ class ClassificationRoutine(LightningModule):
             if self.id_logit_storage is not None:
                 self.id_logit_storage.append(logits.detach().cpu())
 
-        elif self.evaluate_ood and dataloader_idx == 1:
+        elif self.eval_ood and dataloader_idx == 1:
             self.test_ood_metrics.update(ood_scores, torch.ones_like(targets))
             self.test_entropy_ood(probs)
             self.log(
-                "test_entropy_ood",
+                "ood/entropy",
                 self.test_entropy_ood,
                 on_epoch=True,
                 add_dataloader_idx=False,
@@ -441,12 +519,16 @@ class ClassificationRoutine(LightningModule):
         self.log_dict(self.val_cls_metrics.compute())
         self.val_cls_metrics.reset()
 
+        if self.eval_grouping_loss:
+            self.log_dict(self.val_grouping_loss.compute())
+            self.val_grouping_loss.reset()
+
     def on_test_epoch_end(self) -> None:
         # already logged
         result_dict = self.test_cls_metrics.compute()
 
         # already logged
-        result_dict.update({"test_entropy_id": self.test_entropy_id.compute()})
+        result_dict.update({"cls_test/entropy": self.test_entropy_id.compute()})
 
         if (
             self.num_estimators == 1
@@ -459,22 +541,25 @@ class ClassificationRoutine(LightningModule):
             result_dict.update(tmp_metrics)
             self.ts_cls_metrics.reset()
 
+        if self.eval_grouping_loss:
+            self.log_dict(
+                self.test_grouping_loss.compute(),
+            )
+
         if self.num_estimators > 1:
             tmp_metrics = self.test_id_ens_metrics.compute()
             self.log_dict(tmp_metrics)
             result_dict.update(tmp_metrics)
             self.test_id_ens_metrics.reset()
 
-        if self.evaluate_ood:
+        if self.eval_ood:
             tmp_metrics = self.test_ood_metrics.compute()
             self.log_dict(tmp_metrics)
             result_dict.update(tmp_metrics)
             self.test_ood_metrics.reset()
 
             # already logged
-            result_dict.update(
-                {"test_entropy_ood": self.test_entropy_ood.compute()}
-            )
+            result_dict.update({"ood/entropy": self.test_entropy_ood.compute()})
 
             if self.num_estimators > 1:
                 tmp_metrics = self.test_ood_ens_metrics.compute()
@@ -488,7 +573,7 @@ class ClassificationRoutine(LightningModule):
             )
 
             # plot histograms of logits and likelihoods
-            if self.evaluate_ood:
+            if self.eval_ood:
                 id_logits = torch.cat(self.id_logit_storage, dim=0)
                 ood_logits = torch.cat(self.ood_logit_storage, dim=0)
 

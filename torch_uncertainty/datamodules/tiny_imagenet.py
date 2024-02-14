@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import torchvision.transforms as T
 from numpy.typing import ArrayLike
@@ -22,8 +22,8 @@ class TinyImageNetDataModule(AbstractDataModule):
     def __init__(
         self,
         root: str | Path,
-        evaluate_ood: bool,
         batch_size: int,
+        eval_ood: bool = False,
         ood_ds: str = "svhn",
         rand_augment_opt: str | None = None,
         num_workers: int = 1,
@@ -40,7 +40,7 @@ class TinyImageNetDataModule(AbstractDataModule):
         )
         # TODO: COMPUTE STATS
 
-        self.evaluate_ood = evaluate_ood
+        self.eval_ood = eval_ood
         self.ood_ds = ood_ds
 
         self.dataset = TinyImageNet
@@ -61,7 +61,7 @@ class TinyImageNetDataModule(AbstractDataModule):
         else:
             main_transform = nn.Identity()
 
-        self.transform_train = T.Compose(
+        self.train_transform = T.Compose(
             [
                 T.RandomCrop(64, padding=4),
                 T.RandomHorizontalFlip(),
@@ -71,7 +71,7 @@ class TinyImageNetDataModule(AbstractDataModule):
             ]
         )
 
-        self.transform_test = T.Compose(
+        self.test_transform = T.Compose(
             [
                 T.Resize(64),
                 T.ToTensor(),
@@ -87,13 +87,13 @@ class TinyImageNetDataModule(AbstractDataModule):
             )
 
     def prepare_data(self) -> None:  # coverage: ignore
-        if self.evaluate_ood:
+        if self.eval_ood:
             if self.ood_ds != "textures":
                 self.ood_dataset(
                     self.root,
                     split="test",
                     download=True,
-                    transform=self.transform_test,
+                    transform=self.test_transform,
                 )
             else:
                 ConcatDataset(
@@ -102,43 +102,45 @@ class TinyImageNetDataModule(AbstractDataModule):
                             self.root,
                             split="train",
                             download=True,
-                            transform=self.transform_test,
+                            transform=self.test_transform,
                         ),
                         self.ood_dataset(
                             self.root,
                             split="val",
                             download=True,
-                            transform=self.transform_test,
+                            transform=self.test_transform,
                         ),
                         self.ood_dataset(
                             self.root,
                             split="test",
                             download=True,
-                            transform=self.transform_test,
+                            transform=self.test_transform,
                         ),
                     ]
                 )
 
-    def setup(self, stage: str | None = None) -> None:
+    def setup(self, stage: Literal["fit", "test"] | None = None) -> None:
         if stage == "fit" or stage is None:
             self.train = self.dataset(
                 self.root,
                 split="train",
-                transform=self.transform_train,
+                transform=self.train_transform,
             )
             self.val = self.dataset(
                 self.root,
                 split="val",
-                transform=self.transform_test,
+                transform=self.test_transform,
             )
-        if stage == "test":
+        elif stage == "test":
             self.test = self.dataset(
                 self.root,
                 split="val",
-                transform=self.transform_test,
+                transform=self.test_transform,
             )
+        else:
+            raise ValueError(f"Stage {stage} is not supported.")
 
-        if self.evaluate_ood:
+        if self.eval_ood:
             if self.ood_ds == "textures":
                 self.ood = ConcatDataset(
                     [
@@ -146,19 +148,19 @@ class TinyImageNetDataModule(AbstractDataModule):
                             self.root,
                             split="train",
                             download=True,
-                            transform=self.transform_test,
+                            transform=self.test_transform,
                         ),
                         self.ood_dataset(
                             self.root,
                             split="val",
                             download=True,
-                            transform=self.transform_test,
+                            transform=self.test_transform,
                         ),
                         self.ood_dataset(
                             self.root,
                             split="test",
                             download=True,
-                            transform=self.transform_test,
+                            transform=self.test_transform,
                         ),
                     ]
                 )
@@ -166,7 +168,7 @@ class TinyImageNetDataModule(AbstractDataModule):
                 self.ood = self.ood_dataset(
                     self.root,
                     split="test",
-                    transform=self.transform_test,
+                    transform=self.test_transform,
                 )
 
     def train_dataloader(self) -> DataLoader:
@@ -193,7 +195,7 @@ class TinyImageNetDataModule(AbstractDataModule):
             and out-of-distribution data.
         """
         dataloader = [self._data_loader(self.test)]
-        if self.evaluate_ood:
+        if self.eval_ood:
             dataloader.append(self._data_loader(self.ood))
         return dataloader
 
@@ -215,5 +217,5 @@ class TinyImageNetDataModule(AbstractDataModule):
         p.add_argument(
             "--rand_augment", dest="rand_augment_opt", type=str, default=None
         )
-        p.add_argument("--evaluate_ood", action="store_true")
+        p.add_argument("--eval-ood", action="store_true")
         return parent_parser

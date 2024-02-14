@@ -38,8 +38,3 @@ repos:
     language: python
     types_or: [python, pyi]
     exclude: ^auto_tutorials_source/
-  # - id: pytest-check
-  #   name: pytest-check
-  #   entry: pytest
-  #   language: system
-  #   pass_filenames: false

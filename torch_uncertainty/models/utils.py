@@ -3,41 +3,6 @@ from torch import nn
 from torch_uncertainty.layers.bayesian import bayesian_modules
 
 
-def toggle_dropout(
-    model: nn.Module, last_layer_dropout: bool = False, enable: bool = True
-) -> None:
-    """Function to enable or disable dropout layers at inference.
-
-    Args:
-        model (nn.Module, required): PyTorch model.
-        last_layer_dropout (bool, optional): If set to True, only the
-            last dropout layer will be in `eval` mode, otherwise, if set to
-            False, all dropout layers in the model will be set
-            to `eval` mode.
-        enable (bool, optional): If set to True, dropout layers will be
-            enabled, otherwise, if set to False, dropout layers will be
-            disabled.
-    """
-    # filter all modules whose class name starts with `Dropout`
-    filtered_modules = []
-    for m in model.modules():
-        if m.__class__.__name__.startswith("Dropout"):
-            filtered_modules += [m]
-
-    if (
-        last_layer_dropout and enable
-    ):  # set only the last filtered module to training mode
-        for m in filtered_modules[:-1]:
-            m.eval()
-        filtered_modules[-1].train()
-    elif enable:  # set all filtered modules to training mode
-        for m in filtered_modules:
-            m.train()
-    else:
-        for m in filtered_modules:
-            m.eval()
-
-
 def stochastic_model(model: nn.Module) -> nn.Module:
     """Decorator for stochastic models.
 

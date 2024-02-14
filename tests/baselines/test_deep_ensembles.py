@@ -1,4 +1,4 @@
-from torch_uncertainty.baselines.classification import DeepEnsembles
+from torch_uncertainty.baselines.classification.deep_ensembles import DeepEnsembles
 
 
 class TestDeepEnsembles:
@@ -11,5 +11,3 @@ class TestDeepEnsembles:
             backbone="resnet",
             num_classes=10,
         )
-        # parser = ArgumentParser()
-        # DeepEnsembles.add_model_specific_args(parser)

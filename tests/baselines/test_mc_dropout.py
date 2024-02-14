@@ -19,6 +19,7 @@ class TestStandardBaseline:
             in_channels=3,
             loss=nn.CrossEntropyLoss,
             version="mc-dropout",
+            dropout_rate=0.1,
             num_estimators=4,
             arch=18,
             style="cifar",
@@ -39,6 +40,7 @@ class TestStandardWideBaseline:
             in_channels=3,
             loss=nn.CrossEntropyLoss,
             version="mc-dropout",
+            dropout_rate=0.1,
             num_estimators=4,
             style="cifar",
             groups=1,
@@ -58,6 +60,7 @@ class TestStandardVGGBaseline:
             in_channels=3,
             loss=nn.CrossEntropyLoss,
             version="mc-dropout",
+            dropout_rate=0.1,
             num_estimators=4,
             arch=11,
             groups=1,
@@ -76,6 +79,7 @@ class TestStandardVGGBaseline:
             num_estimators=4,
             arch=11,
             groups=1,
+            dropout_rate=0.3,
             last_layer_dropout=True,
         )
         net.eval()

@@ -1,10 +1,8 @@
-# -*- coding: utf-8 -*-
-
 """
 Training a LeNet with Monte-Carlo Dropout
-==========================================
+=========================================
 
-In this tutorial, we'll train a LeNet classifier on the MNIST dataset using Monte-Carlo Dropout (MC Dropout), a computationally efficient Bayesian approximation method. To estimate the predictive mean and uncertainty (variance), we perform multiple forward passes through the network with dropout layers enabled in ``train`` mode.
+In this tutorial, we will train a LeNet classifier on the MNIST dataset using Monte-Carlo Dropout (MC Dropout), a computationally efficient Bayesian approximation method. To estimate the predictive mean and uncertainty (variance), we perform multiple forward passes through the network with dropout layers enabled in ``train`` mode.
 
 For more information on Monte-Carlo Dropout, we refer the reader to the following resources:
 
@@ -24,13 +22,16 @@ First, we have to load the following utilities from TorchUncertainty:
 - the cli handler: cli_main and argument parser: init_args
 - the datamodule that handles dataloaders: MNISTDataModule, which lies in the torch_uncertainty.datamodule
 - the model: LeNet, which lies in torch_uncertainty.models
+- the mc-dropout wrapper: mc_dropout, which lies in torch_uncertainty.models
 - a resnet baseline to get the command line arguments: ResNet, which lies in torch_uncertainty.baselines
 - the classification training routine in the torch_uncertainty.training.classification module
 - the optimizer wrapper in the torch_uncertainty.optimization_procedures module.
 """
+# %%
 from torch_uncertainty import cli_main, init_args
 from torch_uncertainty.datamodules import MNISTDataModule
 from torch_uncertainty.models.lenet import lenet
+from torch_uncertainty.models.mc_dropout import mc_dropout
 from torch_uncertainty.baselines.classification import ResNet
 from torch_uncertainty.routines.classification import ClassificationEnsemble
 from torch_uncertainty.optimization_procedures import optim_cifar10_resnet18
@@ -54,8 +55,8 @@ from cli_test_helpers import ArgvContext
 # In the following, we will need to define the root of the datasets and the
 # logs, and to fake-parse the arguments needed for using the PyTorch Lightning
 # Trainer. We also create the datamodule that handles the MNIST dataset,
-# dataloaders and transforms. Finally, we create the model using the
-# blueprint from torch_uncertainty.models.
+# dataloaders and transforms. We create the model using the
+# blueprint from torch_uncertainty.models and we wrap it into mc-dropout.
 #
 # It is important to specify the arguments ``version`` as ``mc-dropout``,
 # ``num_estimators`` and the ``dropout_rate`` to use Monte Carlo dropout.
@@ -69,12 +70,12 @@ with ArgvContext(
     "1",
     "--enable_progress_bar",
     "False",
-    "--version",
-    "mc-dropout",
     "--dropout_rate",
-    "0.5",
+    "0.6",
     "--num_estimators",
     "16",
+    "--max_epochs",
+    "2"
 ):
     args = init_args(network=ResNet, datamodule=MNISTDataModule)
 
@@ -89,8 +90,9 @@ model = lenet(
     in_channels=dm.num_channels,
     num_classes=dm.num_classes,
     dropout_rate=args.dropout_rate,
-    num_estimators=args.num_estimators,
 )
+
+mc_model = mc_dropout(model, num_estimators=args.num_estimators, last_layer=0.0)
 
 # %%
 # 3. The Loss and the Training Routine
@@ -104,7 +106,7 @@ model = lenet(
 
 baseline = ClassificationEnsemble(
     num_classes=dm.num_classes,
-    model=model,
+    model=mc_model,
     loss=nn.CrossEntropyLoss,
     optimization_procedure=optim_cifar10_resnet18,
     **vars(args),

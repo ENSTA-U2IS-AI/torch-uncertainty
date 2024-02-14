@@ -22,13 +22,14 @@ jobs:
     env:
       PYTHON_VERSION: ${{ matrix.python-version }}
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
         cache: "pip"
+        cache-dependency-path: "pyproject.toml"
 
     # Update full Python version
     - name: Full Python version
@@ -38,18 +39,22 @@ jobs:
 
     - name: Get changed files
       id: changed-files-specific
-      uses: tj-actions/changed-files@v34
+      uses: tj-actions/changed-files@v42
       with:
         files: |
           auto_tutorials_source/**
           data/**
           experiments/**
-          README.md
-          CONTRIBUTING.md
+          docs/**
+          *.md
+          *.yaml
+          *.yml
+          LICENSE
+          .gitignore
 
     - name: Cache folder for Torch Uncertainty
       if: steps.changed-files-specific.outputs.only_changed != 'true'
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       id: cache-folder
       with:
         path: |
@@ -60,12 +65,12 @@ jobs:
       if: steps.changed-files-specific.outputs.only_changed != 'true'
       run: |
         python3 -m pip install torch torchvision --extra-index-url https://download.pytorch.org/whl/cpu
-        python3 -m pip install .[dev,docs]
+        python3 -m pip install .[image,dev,docs]
 
     - name: Check style & format
       if: steps.changed-files-specific.outputs.only_changed != 'true'
       run: |
-        python3 -m ruff check torch_uncertainty tests --no-fix --exit-non-zero-on-fix
+        python3 -m ruff check torch_uncertainty tests --no-fix
         python3 -m ruff format torch_uncertainty tests --check
 
     - name: Test with pytest and compute coverage
@@ -75,7 +80,7 @@ jobs:
 
     - name: Upload coverage to Codecov
       if: steps.changed-files-specific.outputs.only_changed != 'true' && (github.event_name != 'pull_request' || github.base_ref == 'dev')
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       continue-on-error: true
       with:
         token: ${{ secrets.CODECOV_TOKEN }}

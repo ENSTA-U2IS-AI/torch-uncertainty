@@ -1,12 +1,10 @@
-from argparse import ArgumentParser, Namespace
+from argparse import ArgumentParser
 from typing import Any, Literal
 
 import pytorch_lightning as pl
 import torch
 import torch.nn.functional as F
 from einops import rearrange
-from pytorch_lightning.utilities.memory import get_model_size_mb
-from pytorch_lightning.utilities.types import EPOCH_OUTPUT, STEP_OUTPUT
 from torch import nn
 from torchmetrics import MeanSquaredError, MetricCollection
 
@@ -23,14 +21,6 @@ class RegressionSingle(pl.LightningModule):
         **kwargs,
     ) -> None:
         super().__init__()
-
-        self.save_hyperparameters(
-            ignore=[
-                "model",
-                "loss",
-                "optimization_procedure",
-            ]
-        )
 
         self.model = model
         self.loss = loss
@@ -75,8 +65,8 @@ class RegressionSingle(pl.LightningModule):
                 compute_groups=False,
             )
 
-        self.val_metrics = reg_metrics.clone(prefix="hp/val_")
-        self.test_metrics = reg_metrics.clone(prefix="hp/test_")
+        self.val_metrics = reg_metrics.clone(prefix="reg_val/")
+        self.test_metrics = reg_metrics.clone(prefix="reg_test/")
 
     def configure_optimizers(self) -> Any:
         return self.optimization_procedure(self)
@@ -92,18 +82,10 @@ class RegressionSingle(pl.LightningModule):
         # hyperparameters for performances
         param = {}
         param["storage"] = f"{get_model_size_mb(self)} MB"
-        if self.logger is not None:  # coverage: ignore
-            self.logger.log_hyperparams(
-                Namespace(**param),
-                {
-                    "hp/val_mse": 0,
-                    "hp/val_gnll": 0,
-                },
-            )
 
     def training_step(
         self, batch: tuple[torch.Tensor, torch.Tensor], batch_idx: int
-    ) -> STEP_OUTPUT:
+    ):
         inputs, targets = batch
         logits = self.forward(inputs)
 
@@ -149,7 +131,7 @@ class RegressionSingle(pl.LightningModule):
         self.val_metrics.mse.update(means, targets)
 
     def validation_epoch_end(
-        self, outputs: EPOCH_OUTPUT | list[EPOCH_OUTPUT]
+        self, outputs
     ) -> None:
         self.log_dict(self.val_metrics.compute())
         self.val_metrics.reset()
@@ -183,7 +165,7 @@ class RegressionSingle(pl.LightningModule):
         self.test_metrics.mse.update(means, targets)
 
     def test_epoch_end(
-        self, outputs: EPOCH_OUTPUT | list[EPOCH_OUTPUT]
+        self, outputs
     ) -> None:
         self.log_dict(
             self.test_metrics.compute(),
@@ -229,7 +211,7 @@ class RegressionEnsemble(RegressionSingle):
 
     def training_step(
         self, batch: tuple[torch.Tensor, torch.Tensor], batch_idx: int
-    ) -> STEP_OUTPUT:
+    ):
         inputs, targets = batch
 
         # eventual input repeat is done in the model

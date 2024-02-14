@@ -13,7 +13,7 @@ def add_resnet_specific_args(parser: ArgumentParser) -> ArgumentParser:
         --groups (int): Number of groups.
     """
     # style_choices = ["cifar", "imagenet", "robust"]
-    archs = [18, 34, 50, 101, 152]
+    archs = [18, 20, 34, 50, 101, 152]
     parser.add_argument(
         "--arch",
         type=int,
@@ -126,5 +126,14 @@ def add_mimo_specific_args(parser: ArgumentParser) -> ArgumentParser:
         type=int,
         default=1,
         help="Batch repeat for MIMO",
+    )
+    return parser
+
+
+def add_mc_dropout_specific_args(parser: ArgumentParser) -> ArgumentParser:
+    parser.add_argument(
+        "--last_layer_dropout",
+        action="store_true",
+        help="Whether to apply dropout to the last layer only",
     )
     return parser
