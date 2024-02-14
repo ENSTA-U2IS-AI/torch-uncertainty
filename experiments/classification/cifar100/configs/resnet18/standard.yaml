@@ -5,12 +5,12 @@ trainer:
   accelerator: gpu
   devices: 1
   precision: 16-mixed
-  max_epochs: 200
+  max_epochs: 75
   logger:
     class_path: lightning.pytorch.loggers.TensorBoardLogger
     init_args:
-      save_dir: logs/wideresnet28x10
-      name: packed
+      save_dir: logs/resnet18
+      name: standard
       default_hp_metric: false
   callbacks:
   - class_path: lightning.pytorch.callbacks.ModelCheckpoint
@@ -27,25 +27,22 @@ trainer:
       patience: 1000
       check_finite: true
 model:
-  num_classes: 10
+  num_classes: 100
   in_channels: 3
   loss: torch.nn.CrossEntropyLoss
-  version: packed
+  version: standard
+  arch: 18
   style: cifar
-  num_estimators: 4
-  alpha: 2
-  gamma: 2
 data:
   root: ./data
   batch_size: 128
 optimizer:
-  lr: 0.1
+  lr: 0.05
   momentum: 0.9
   weight_decay: 5e-4
   nesterov: true
 lr_scheduler:
   milestones:
-  - 60
-  - 120
-  - 160
-  gamma: 0.2
+  - 25
+  - 50
+  gamma: 0.1
