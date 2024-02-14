@@ -39,14 +39,13 @@ class NotMNIST(ImageFolder):
 
     def __init__(
         self,
-        root: str,
+        root: str | Path,
         subset: Literal["small", "large"] = "small",
         transform: Callable[..., Any] | None = None,
         target_transform: Callable[..., Any] | None = None,
         download: bool = False,
     ) -> None:
-        if isinstance(root, str):
-            self.root = Path(root)
+        self.root = Path(root)
 
         if subset not in self.subsets:
             raise ValueError(
@@ -67,7 +66,7 @@ class NotMNIST(ImageFolder):
             )
 
         super().__init__(
-            root + f"/notMNIST_{subset}",
+            self.root + f"/notMNIST_{subset}",
             transform=transform,
             target_transform=target_transform,
         )

@@ -10,3 +10,4 @@ from .imagenet import (
 )
 from .mnist_c import MNISTC
 from .not_mnist import NotMNIST
+from .openimage_o import OpenImageO

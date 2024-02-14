@@ -22,7 +22,7 @@ class MNISTDataModule(AbstractDataModule):
     def __init__(
         self,
         root: str | Path,
-        evaluate_ood: bool,
+        eval_ood: bool,
         batch_size: int,
         ood_ds: Literal["fashion", "not"] = "fashion",
         val_split: float = 0.0,
@@ -37,7 +37,7 @@ class MNISTDataModule(AbstractDataModule):
 
         Args:
             root (str): Root directory of the datasets.
-            evaluate_ood (bool): Whether to evaluate on out-of-distribution data.
+            eval_ood (bool): Whether to evaluate on out-of-distribution data.
             batch_size (int): Number of samples per batch.
             ood_ds (str): Which out-of-distribution dataset to use. Defaults to
                 ``"fashion"``; `fashion` stands for FashionMNIST and `not` for
@@ -61,16 +61,9 @@ class MNISTDataModule(AbstractDataModule):
             persistent_workers=persistent_workers,
         )
 
-        if isinstance(root, str):
-            root = Path(root)
-
-        self.root: Path = root
-        self.evaluate_ood = evaluate_ood
+        self.eval_ood = eval_ood
         self.batch_size = batch_size
         self.val_split = val_split
-        self.num_workers = num_workers
-        self.pin_memory = pin_memory
-        self.persistent_workers = persistent_workers
 
         if test_alt == "c":
             self.dataset = MNISTC
@@ -88,7 +81,7 @@ class MNISTDataModule(AbstractDataModule):
 
         main_transform = Cutout(cutout) if cutout else nn.Identity()
 
-        self.transform_train = T.Compose(
+        self.train_transform = T.Compose(
             [
                 main_transform,
                 T.ToTensor(),
@@ -96,7 +89,7 @@ class MNISTDataModule(AbstractDataModule):
                 T.Normalize((0.1307,), (0.3081,)),
             ]
         )
-        self.transform_test = T.Compose(
+        self.test_transform = T.Compose(
             [
                 T.ToTensor(),
                 T.CenterCrop(28),
@@ -109,16 +102,16 @@ class MNISTDataModule(AbstractDataModule):
         self.dataset(self.root, train=True, download=True)
         self.dataset(self.root, train=False, download=True)
 
-        if self.evaluate_ood:
+        if self.eval_ood:
             self.ood_dataset(self.root, download=True)
 
-    def setup(self, stage: str | None = None) -> None:
+    def setup(self, stage: Literal["fit", "test"] | None = None) -> None:
         if stage == "fit" or stage is None:
             full = self.dataset(
                 self.root,
                 train=True,
                 download=False,
-                transform=self.transform_train,
+                transform=self.train_transform,
             )
             if self.val_split:
                 self.train, self.val = random_split(
@@ -134,21 +127,23 @@ class MNISTDataModule(AbstractDataModule):
                     self.root,
                     train=False,
                     download=False,
-                    transform=self.transform_test,
+                    transform=self.test_transform,
                 )
         elif stage == "test":
             self.test = self.dataset(
                 self.root,
                 train=False,
                 download=False,
-                transform=self.transform_test,
+                transform=self.test_transform,
             )
+        else:
+            raise ValueError(f"Stage {stage} is not supported.")
 
-        if self.evaluate_ood:
+        if self.eval_ood:
             self.ood = self.ood_dataset(
                 self.root,
                 download=False,
-                transform=self.transform_test,
+                transform=self.test_transform,
             )
 
     def test_dataloader(self) -> list[DataLoader]:
@@ -160,7 +155,7 @@ class MNISTDataModule(AbstractDataModule):
                 (out-of-distribution data).
         """
         dataloader = [self._data_loader(self.test)]
-        if self.evaluate_ood:
+        if self.eval_ood:
             dataloader.append(self._data_loader(self.ood))
         return dataloader
 
@@ -173,7 +168,7 @@ class MNISTDataModule(AbstractDataModule):
         p = super().add_argparse_args(parent_parser)
 
         # Arguments for MNIST
-        p.add_argument("--evaluate_ood", action="store_true")
+        p.add_argument("--eval-ood", action="store_true")
         p.add_argument("--ood_ds", choices=cls.ood_datasets, default="fashion")
         p.add_argument("--test_alt", choices=["c"], default=None)
         return parent_parser

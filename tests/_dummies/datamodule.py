@@ -20,12 +20,13 @@ class DummyClassificationDataModule(AbstractDataModule):
     def __init__(
         self,
         root: str | Path,
-        evaluate_ood: bool,
+        eval_ood: bool,
         batch_size: int,
         num_classes: int = 2,
         num_workers: int = 1,
         pin_memory: bool = True,
         persistent_workers: bool = True,
+        num_images: int = 2,
         **kwargs,
     ) -> None:
         super().__init__(
@@ -36,14 +37,15 @@ class DummyClassificationDataModule(AbstractDataModule):
             persistent_workers=persistent_workers,
         )
 
-        self.evaluate_ood = evaluate_ood
+        self.eval_ood = eval_ood
         self.num_classes = num_classes
+        self.num_images = num_images
 
         self.dataset = DummyClassificationDataset
         self.ood_dataset = DummyClassificationDataset
 
-        self.transform_train = T.ToTensor()
-        self.transform_test = T.ToTensor()
+        self.train_transform = T.ToTensor()
+        self.test_transform = T.ToTensor()
 
     def prepare_data(self) -> None:
         pass
@@ -55,14 +57,16 @@ class DummyClassificationDataModule(AbstractDataModule):
                 num_channels=self.num_channels,
                 num_classes=self.num_classes,
                 image_size=self.image_size,
-                transform=self.transform_train,
+                transform=self.train_transform,
+                num_images=self.num_images,
             )
             self.val = self.dataset(
                 self.root,
                 num_channels=self.num_channels,
                 num_classes=self.num_classes,
                 image_size=self.image_size,
-                transform=self.transform_test,
+                transform=self.test_transform,
+                num_images=self.num_images,
             )
         elif stage == "test":
             self.test = self.dataset(
@@ -70,19 +74,21 @@ class DummyClassificationDataModule(AbstractDataModule):
                 num_channels=self.num_channels,
                 num_classes=self.num_classes,
                 image_size=self.image_size,
-                transform=self.transform_test,
+                transform=self.test_transform,
+                num_images=self.num_images,
             )
             self.ood = self.ood_dataset(
                 self.root,
                 num_channels=self.num_channels,
                 num_classes=self.num_classes,
                 image_size=self.image_size,
-                transform=self.transform_test,
+                transform=self.test_transform,
+                num_images=self.num_images,
             )
 
     def test_dataloader(self) -> DataLoader | list[DataLoader]:
         dataloader = [self._data_loader(self.test)]
-        if self.evaluate_ood:
+        if self.eval_ood:
             dataloader.append(self._data_loader(self.ood))
         return dataloader
 
@@ -99,7 +105,7 @@ class DummyClassificationDataModule(AbstractDataModule):
         **kwargs: Any,
     ) -> ArgumentParser:
         p = super().add_argparse_args(parent_parser)
-        p.add_argument("--evaluate_ood", action="store_true")
+        p.add_argument("--eval-ood", action="store_true")
         return parent_parser
 
 
@@ -110,7 +116,7 @@ class DummyRegressionDataModule(AbstractDataModule):
     def __init__(
         self,
         root: str | Path,
-        evaluate_ood: bool,
+        eval_ood: bool,
         batch_size: int,
         out_features: int = 2,
         num_workers: int = 1,
@@ -126,14 +132,14 @@ class DummyRegressionDataModule(AbstractDataModule):
             persistent_workers=persistent_workers,
         )
 
-        self.evaluate_ood = evaluate_ood
+        self.eval_ood = eval_ood
         self.out_features = out_features
 
         self.dataset = DummyRegressionDataset
         self.ood_dataset = DummyRegressionDataset
 
-        self.transform_train = None
-        self.transform_test = None
+        self.train_transform = None
+        self.test_transform = None
 
     def prepare_data(self) -> None:
         pass
@@ -143,29 +149,29 @@ class DummyRegressionDataModule(AbstractDataModule):
             self.train = self.dataset(
                 self.root,
                 out_features=self.out_features,
-                transform=self.transform_train,
+                transform=self.train_transform,
             )
             self.val = self.dataset(
                 self.root,
                 out_features=self.out_features,
-                transform=self.transform_test,
+                transform=self.test_transform,
             )
         elif stage == "test":
             self.test = self.dataset(
                 self.root,
                 out_features=self.out_features,
-                transform=self.transform_test,
+                transform=self.test_transform,
             )
-        if self.evaluate_ood:
+        if self.eval_ood:
             self.ood = self.ood_dataset(
                 self.root,
                 out_features=self.out_features,
-                transform=self.transform_test,
+                transform=self.test_transform,
             )
 
     def test_dataloader(self) -> DataLoader | list[DataLoader]:
         dataloader = [self._data_loader(self.test)]
-        if self.evaluate_ood:
+        if self.eval_ood:
             dataloader.append(self._data_loader(self.ood))
         return dataloader
 
@@ -176,5 +182,5 @@ class DummyRegressionDataModule(AbstractDataModule):
         **kwargs: Any,
     ) -> ArgumentParser:
         p = super().add_argparse_args(parent_parser)
-        p.add_argument("--evaluate_ood", action="store_true")
+        p.add_argument("--eval-ood", action="store_true")
         return parent_parser

@@ -1,3 +1,5 @@
+from typing import Literal
+
 import torch
 from einops import rearrange
 from torch import nn
@@ -22,9 +24,10 @@ class _MIMOResNet(_ResNet):
         in_channels: int,
         num_classes: int,
         num_estimators: int,
+        conv_bias: bool,
         dropout_rate: float,
         groups: int = 1,
-        style: str = "imagenet",
+        style: Literal["imagenet", "cifar"] = "imagenet",
         in_planes: int = 64,
         normalization_layer: nn.Module = nn.BatchNorm2d,
     ) -> None:
@@ -33,6 +36,7 @@ class _MIMOResNet(_ResNet):
             num_blocks=num_blocks,
             in_channels=in_channels * num_estimators,
             num_classes=num_classes * num_estimators,
+            conv_bias=conv_bias,
             dropout_rate=dropout_rate,
             groups=groups,
             style=style,
@@ -55,9 +59,10 @@ def mimo_resnet18(
     in_channels: int,
     num_classes: int,
     num_estimators: int,
+    conv_bias: bool = True,
     dropout_rate: float = 0.0,
     groups: int = 1,
-    style: str = "imagenet",
+    style: Literal["imagenet", "cifar"] = "imagenet",
     normalization_layer: nn.Module = nn.BatchNorm2d,
 ) -> _MIMOResNet:
     return _MIMOResNet(
@@ -66,6 +71,7 @@ def mimo_resnet18(
         in_channels=in_channels,
         num_classes=num_classes,
         num_estimators=num_estimators,
+        conv_bias=conv_bias,
         dropout_rate=dropout_rate,
         groups=groups,
         style=style,
@@ -78,9 +84,10 @@ def mimo_resnet20(
     in_channels: int,
     num_classes: int,
     num_estimators: int,
+    conv_bias: bool = True,
     dropout_rate: float = 0.0,
     groups: int = 1,
-    style: str = "imagenet",
+    style: Literal["imagenet", "cifar"] = "imagenet",
     normalization_layer: nn.Module = nn.BatchNorm2d,
 ) -> _MIMOResNet:
     return _MIMOResNet(
@@ -89,6 +96,7 @@ def mimo_resnet20(
         in_channels=in_channels,
         num_classes=num_classes,
         num_estimators=num_estimators,
+        conv_bias=conv_bias,
         dropout_rate=dropout_rate,
         groups=groups,
         style=style,
@@ -101,9 +109,10 @@ def mimo_resnet34(
     in_channels: int,
     num_classes: int,
     num_estimators: int,
+    conv_bias: bool = True,
     dropout_rate: float = 0.0,
     groups: int = 1,
-    style: str = "imagenet",
+    style: Literal["imagenet", "cifar"] = "imagenet",
     normalization_layer: nn.Module = nn.BatchNorm2d,
 ) -> _MIMOResNet:
     return _MIMOResNet(
@@ -112,6 +121,7 @@ def mimo_resnet34(
         in_channels=in_channels,
         num_classes=num_classes,
         num_estimators=num_estimators,
+        conv_bias=conv_bias,
         dropout_rate=dropout_rate,
         groups=groups,
         style=style,
@@ -124,9 +134,10 @@ def mimo_resnet50(
     in_channels: int,
     num_classes: int,
     num_estimators: int,
+    conv_bias: bool = True,
     dropout_rate: float = 0.0,
     groups: int = 1,
-    style: str = "imagenet",
+    style: Literal["imagenet", "cifar"] = "imagenet",
     normalization_layer: nn.Module = nn.BatchNorm2d,
 ) -> _MIMOResNet:
     return _MIMOResNet(
@@ -135,6 +146,7 @@ def mimo_resnet50(
         in_channels=in_channels,
         num_classes=num_classes,
         num_estimators=num_estimators,
+        conv_bias=conv_bias,
         dropout_rate=dropout_rate,
         groups=groups,
         style=style,
@@ -147,9 +159,10 @@ def mimo_resnet101(
     in_channels: int,
     num_classes: int,
     num_estimators: int,
+    conv_bias: bool = True,
     dropout_rate: float = 0.0,
     groups: int = 1,
-    style: str = "imagenet",
+    style: Literal["imagenet", "cifar"] = "imagenet",
     normalization_layer: nn.Module = nn.BatchNorm2d,
 ) -> _MIMOResNet:
     return _MIMOResNet(
@@ -158,6 +171,7 @@ def mimo_resnet101(
         in_channels=in_channels,
         num_classes=num_classes,
         num_estimators=num_estimators,
+        conv_bias=conv_bias,
         dropout_rate=dropout_rate,
         groups=groups,
         style=style,
@@ -170,9 +184,10 @@ def mimo_resnet152(
     in_channels: int,
     num_classes: int,
     num_estimators: int,
+    conv_bias: bool = True,
     dropout_rate: float = 0.0,
     groups: int = 1,
-    style: str = "imagenet",
+    style: Literal["imagenet", "cifar"] = "imagenet",
     normalization_layer: nn.Module = nn.BatchNorm2d,
 ) -> _MIMOResNet:
     return _MIMOResNet(
@@ -181,6 +196,7 @@ def mimo_resnet152(
         in_channels=in_channels,
         num_classes=num_classes,
         num_estimators=num_estimators,
+        conv_bias=conv_bias,
         dropout_rate=dropout_rate,
         groups=groups,
         style=style,

@@ -104,10 +104,10 @@ def cli_main(
     else:
         training_task = datamodule.training_task
     if training_task == "classification":
-        monitor = "hp/val_acc"
+        monitor = "cls_val/acc"
         mode = "max"
     elif training_task == "regression":
-        monitor = "hp/val_mse"
+        monitor = "reg_val/mse"
         mode = "min"
     else:
         raise ValueError("Unknown problem type.")
@@ -248,7 +248,7 @@ def cli_main(
     else:
         # training and testing
         trainer.fit(network, datamodule)
-        if args.fast_dev_run is False:
+        if not args.fast_dev_run:
             test_values = trainer.test(datamodule=datamodule, ckpt_path="best")
         else:
             test_values = [{}]

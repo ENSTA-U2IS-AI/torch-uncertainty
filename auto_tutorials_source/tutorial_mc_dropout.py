@@ -1,8 +1,8 @@
 """
 Training a LeNet with Monte-Carlo Dropout
-==========================================
+=========================================
 
-In this tutorial, we'll train a LeNet classifier on the MNIST dataset using Monte-Carlo Dropout (MC Dropout), a computationally efficient Bayesian approximation method. To estimate the predictive mean and uncertainty (variance), we perform multiple forward passes through the network with dropout layers enabled in ``train`` mode.
+In this tutorial, we will train a LeNet classifier on the MNIST dataset using Monte-Carlo Dropout (MC Dropout), a computationally efficient Bayesian approximation method. To estimate the predictive mean and uncertainty (variance), we perform multiple forward passes through the network with dropout layers enabled in ``train`` mode.
 
 For more information on Monte-Carlo Dropout, we refer the reader to the following resources:
 
@@ -90,7 +90,6 @@ model = lenet(
     in_channels=dm.num_channels,
     num_classes=dm.num_classes,
     dropout_rate=args.dropout_rate,
-    num_estimators=args.num_estimators,
 )
 
 mc_model = mc_dropout(model, num_estimators=args.num_estimators, last_layer=0.0)

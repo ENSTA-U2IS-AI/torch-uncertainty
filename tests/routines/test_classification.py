@@ -9,6 +9,7 @@ from tests._dummies import (
     DummyClassificationBaseline,
     DummyClassificationDataModule,
     DummyClassificationDataset,
+    dummy_model,
 )
 from torch_uncertainty import cli_main, init_args
 from torch_uncertainty.losses import DECLoss, ELBOLoss
@@ -30,7 +31,10 @@ class TestClassificationSingle:
             )
 
             args.root = str(root / "data")
-            dm = DummyClassificationDataModule(num_classes=1, **vars(args))
+            args.eval_grouping_loss = True
+            dm = DummyClassificationDataModule(
+                num_classes=1, num_images=100, **vars(args)
+            )
 
             model = DummyClassificationBaseline(
                 num_classes=dm.num_classes,
@@ -87,7 +91,7 @@ class TestClassificationSingle:
 
         with ArgvContext(
             "file.py",
-            "--evaluate_ood",
+            "--eval-ood",
             "--entropy",
         ):
             args = init_args(
@@ -109,7 +113,7 @@ class TestClassificationSingle:
 
         with ArgvContext(
             "file.py",
-            "--evaluate_ood",
+            "--eval-ood",
             "--entropy",
             "--cutmix_alpha",
             "0.5",
@@ -158,7 +162,8 @@ class TestClassificationSingle:
                 num_channels,
                 num_classes,
                 image_size,
-                transform: DummyClassificationDataset(
+                transform,
+                num_images: DummyClassificationDataset(
                     root,
                     num_channels=num_channels,
                     num_classes=num_classes,
@@ -206,7 +211,8 @@ class TestClassificationSingle:
                 num_channels,
                 num_classes,
                 image_size,
-                transform: DummyClassificationDataset(
+                transform,
+                num_images: DummyClassificationDataset(
                     root,
                     num_channels=num_channels,
                     num_classes=num_classes,
@@ -241,6 +247,21 @@ class TestClassificationSingle:
 
         with pytest.raises(ValueError):
             ClassificationSingle(10, nn.Module(), None, None, cutmix_alpha=-1)
+
+        with pytest.raises(ValueError):
+            ClassificationSingle(
+                10, nn.Module(), None, None, eval_grouping_loss=True
+            )
+
+        model = dummy_model(1, 1, 1, 0, with_feats=False, with_linear=True)
+
+        with pytest.raises(ValueError):
+            ClassificationSingle(10, model, None, None, eval_grouping_loss=True)
+
+        model = dummy_model(1, 1, 1, 0, with_feats=True, with_linear=False)
+
+        with pytest.raises(ValueError):
+            ClassificationSingle(10, model, None, None, eval_grouping_loss=True)
 
 
 class TestClassificationEnsemble:
@@ -315,7 +336,7 @@ class TestClassificationEnsemble:
 
             cli_main(model, dm, root, "logs/dummy", args)
 
-        with ArgvContext("file.py", "--evaluate_ood", "--entropy"):
+        with ArgvContext("file.py", "--eval-ood", "--entropy"):
             args = init_args(
                 DummyClassificationBaseline, DummyClassificationDataModule
             )
@@ -335,7 +356,7 @@ class TestClassificationEnsemble:
 
             cli_main(model, dm, root, "logs/dummy", args)
 
-        with ArgvContext("file.py", "--evaluate_ood", "--variation_ratio"):
+        with ArgvContext("file.py", "--eval-ood", "--variation_ratio"):
             args = init_args(
                 DummyClassificationBaseline, DummyClassificationDataModule
             )

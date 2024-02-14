@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Literal
 
 import torch.nn.functional as F
 from einops import rearrange
@@ -52,6 +52,7 @@ class _BasicBlock(nn.Module):
         alpha: float,
         num_estimators: int,
         gamma: int,
+        conv_bias: bool,
         dropout_rate: float,
         groups: int,
         normalization_layer: nn.Module,
@@ -68,7 +69,7 @@ class _BasicBlock(nn.Module):
             groups=groups,
             stride=stride,
             padding=1,
-            bias=False,
+            bias=conv_bias,
         )
         self.bn1 = normalization_layer(planes * alpha)
         self.dropout = nn.Dropout2d(p=dropout_rate)
@@ -82,7 +83,7 @@ class _BasicBlock(nn.Module):
             groups=groups,
             stride=1,
             padding=1,
-            bias=False,
+            bias=conv_bias,
         )
         self.bn2 = normalization_layer(planes * alpha)
 
@@ -98,7 +99,7 @@ class _BasicBlock(nn.Module):
                     gamma=gamma,
                     groups=groups,
                     stride=stride,
-                    bias=False,
+                    bias=conv_bias,
                 ),
                 normalization_layer(self.expansion * planes * alpha),
             )
@@ -121,6 +122,7 @@ class _Bottleneck(nn.Module):
         alpha: float,
         num_estimators: int,
         gamma: int,
+        conv_bias: bool,
         dropout_rate: float,
         groups: int,
         normalization_layer: nn.Module,
@@ -136,7 +138,7 @@ class _Bottleneck(nn.Module):
             num_estimators=num_estimators,
             gamma=1,  # No groups from gamma in the first layer
             groups=groups,
-            bias=False,
+            bias=conv_bias,
         )
         self.bn1 = normalization_layer(planes * alpha)
         self.conv2 = PackedConv2d(
@@ -149,7 +151,7 @@ class _Bottleneck(nn.Module):
             stride=stride,
             padding=1,
             groups=groups,
-            bias=False,
+            bias=conv_bias,
         )
         self.bn2 = normalization_layer(planes * alpha)
         self.dropout = nn.Dropout2d(p=dropout_rate)
@@ -161,7 +163,7 @@ class _Bottleneck(nn.Module):
             num_estimators=num_estimators,
             gamma=gamma,
             groups=groups,
-            bias=False,
+            bias=conv_bias,
         )
         self.bn3 = normalization_layer(self.expansion * planes * alpha)
 
@@ -177,7 +179,7 @@ class _Bottleneck(nn.Module):
                     gamma=gamma,
                     groups=groups,
                     stride=stride,
-                    bias=False,
+                    bias=conv_bias,
                 ),
                 normalization_layer(self.expansion * planes * alpha),
             )
@@ -197,12 +199,13 @@ class _PackedResNet(nn.Module):
         num_blocks: list[int],
         in_channels: int,
         num_classes: int,
+        conv_bias: bool,
         num_estimators: int,
         dropout_rate: float,
         alpha: int = 2,
         gamma: int = 1,
         groups: int = 1,
-        style: str = "imagenet",
+        style: Literal["imagenet", "cifar"] = "imagenet",
         in_planes: int = 64,
         normalization_layer: nn.Module = nn.BatchNorm2d,
     ) -> None:
@@ -228,10 +231,10 @@ class _PackedResNet(nn.Module):
                 num_estimators=num_estimators,
                 gamma=1,  # No groups for the first layer
                 groups=groups,
-                bias=False,
+                bias=conv_bias,
                 first=True,
             )
-        else:
+        elif style == "cifar":
             self.conv1 = PackedConv2d(
                 self.in_channels,
                 block_planes,
@@ -242,9 +245,11 @@ class _PackedResNet(nn.Module):
                 num_estimators=num_estimators,
                 gamma=1,  # No groups for the first layer
                 groups=groups,
-                bias=False,
+                bias=conv_bias,
                 first=True,
             )
+        else:
+            raise ValueError(f"Unknown style. Got {style}.")
 
         self.bn1 = normalization_layer(block_planes * alpha)
 
@@ -262,6 +267,7 @@ class _PackedResNet(nn.Module):
             stride=1,
             alpha=alpha,
             num_estimators=num_estimators,
+            conv_bias=conv_bias,
             dropout_rate=dropout_rate,
             gamma=gamma,
             groups=groups,
@@ -274,6 +280,7 @@ class _PackedResNet(nn.Module):
             stride=2,
             alpha=alpha,
             num_estimators=num_estimators,
+            conv_bias=conv_bias,
             dropout_rate=dropout_rate,
             gamma=gamma,
             groups=groups,
@@ -286,6 +293,7 @@ class _PackedResNet(nn.Module):
             stride=2,
             alpha=alpha,
             num_estimators=num_estimators,
+            conv_bias=conv_bias,
             dropout_rate=dropout_rate,
             gamma=gamma,
             groups=groups,
@@ -299,6 +307,7 @@ class _PackedResNet(nn.Module):
                 stride=2,
                 alpha=alpha,
                 num_estimators=num_estimators,
+                conv_bias=conv_bias,
                 dropout_rate=dropout_rate,
                 gamma=gamma,
                 groups=groups,
@@ -329,6 +338,7 @@ class _PackedResNet(nn.Module):
         stride: int,
         alpha: float,
         num_estimators: int,
+        conv_bias: bool,
         dropout_rate: float,
         gamma: int,
         groups: int,
@@ -344,6 +354,7 @@ class _PackedResNet(nn.Module):
                     stride=stride,
                     alpha=alpha,
                     num_estimators=num_estimators,
+                    conv_bias=conv_bias,
                     dropout_rate=dropout_rate,
                     gamma=gamma,
                     groups=groups,
@@ -381,22 +392,24 @@ class _PackedResNet(nn.Module):
 
 def packed_resnet18(
     in_channels: int,
+    num_classes: int,
     num_estimators: int,
     alpha: int,
     gamma: int,
-    num_classes: int,
-    groups: int,
+    conv_bias: bool = True,
+    groups: int = 1,
     dropout_rate: float = 0,
-    style: str = "imagenet",
+    style: Literal["imagenet", "cifar"] = "imagenet",
     normalization_layer: nn.Module = nn.BatchNorm2d,
     pretrained: bool = False,
 ) -> _PackedResNet:
-    """Packed-Ensembles of ResNet-18 from `Deep Residual Learning for Image
-    Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
+    """Packed-Ensembles of ResNet-18.
 
     Args:
         in_channels (int): Number of input channels.
         num_classes (int): Number of classes to predict.
+        conv_bias (bool): Whether to use bias in convolutions. Defaults to
+            ``True``.
         dropout_rate (float): Dropout rate. Defaults to 0.
         num_estimators (int): Number of estimators in the ensemble.
         alpha (int): Expansion factor affecting the width of the estimators.
@@ -418,6 +431,7 @@ def packed_resnet18(
         num_estimators=num_estimators,
         alpha=alpha,
         gamma=gamma,
+        conv_bias=conv_bias,
         dropout_rate=dropout_rate,
         groups=groups,
         num_classes=num_classes,
@@ -440,27 +454,29 @@ def packed_resnet18(
 
 def packed_resnet20(
     in_channels: int,
+    num_classes: int,
     num_estimators: int,
     alpha: int,
     gamma: int,
-    num_classes: int,
-    groups: int,
+    groups: int = 1,
+    conv_bias: bool = True,
     dropout_rate: float = 0,
-    style: str = "imagenet",
+    style: Literal["imagenet", "cifar"] = "imagenet",
     normalization_layer: nn.Module = nn.BatchNorm2d,
     pretrained: bool = False,
 ) -> _PackedResNet:
-    """Packed-Ensembles of ResNet-20 from `Deep Residual Learning for Image
-    Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
+    """Packed-Ensembles of ResNet-20.
 
     Args:
         in_channels (int): Number of input channels.
         num_classes (int): Number of classes to predict.
-        dropout_rate (float): Dropout rate. Defaults to 0.
         num_estimators (int): Number of estimators in the ensemble.
         alpha (int): Expansion factor affecting the width of the estimators.
         gamma (int): Number of groups within each estimator.
-        groups (int): Number of groups within each estimator.
+        groups (int): Number of groups within each estimator. Defaults to 1.
+        conv_bias (bool): Whether to use bias in convolutions. Defaults to
+            ``True``.
+        dropout_rate (float): Dropout rate. Defaults to 0.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
         normalization_layer (nn.Module, optional): Normalization layer.
@@ -477,6 +493,7 @@ def packed_resnet20(
         num_estimators=num_estimators,
         alpha=alpha,
         gamma=gamma,
+        conv_bias=conv_bias,
         dropout_rate=dropout_rate,
         groups=groups,
         num_classes=num_classes,
@@ -499,27 +516,29 @@ def packed_resnet20(
 
 def packed_resnet34(
     in_channels: int,
+    num_classes: int,
     num_estimators: int,
     alpha: int,
     gamma: int,
-    num_classes: int,
-    groups: int,
+    groups: int = 1,
+    conv_bias: bool = True,
     dropout_rate: float = 0,
-    style: str = "imagenet",
+    style: Literal["imagenet", "cifar"] = "imagenet",
     normalization_layer: nn.Module = nn.BatchNorm2d,
     pretrained: bool = False,
 ) -> _PackedResNet:
-    """Packed-Ensembles of ResNet-34 from `Deep Residual Learning for Image
-    Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
+    """Packed-Ensembles of ResNet-34.
 
     Args:
         in_channels (int): Number of input channels.
         num_classes (int): Number of classes to predict.
-        dropout_rate (float): Dropout rate. Defaults to 0.
         num_estimators (int): Number of estimators in the ensemble.
         alpha (int): Expansion factor affecting the width of the estimators.
         gamma (int): Number of groups within each estimator.
-        groups (int): Number of groups within each estimator.
+        groups (int): Number of groups within each estimator. Defaults to 1.
+        conv_bias (bool): Whether to use bias in convolutions. Defaults to
+            ``True``.
+        dropout_rate (float): Dropout rate. Defaults to 0.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
         normalization_layer (nn.Module, optional): Normalization layer.
@@ -537,6 +556,7 @@ def packed_resnet34(
         alpha=alpha,
         gamma=gamma,
         groups=groups,
+        conv_bias=conv_bias,
         dropout_rate=dropout_rate,
         num_classes=num_classes,
         style=style,
@@ -558,27 +578,29 @@ def packed_resnet34(
 
 def packed_resnet50(
     in_channels: int,
+    num_classes: int,
     num_estimators: int,
     alpha: int,
     gamma: int,
-    num_classes: int,
-    groups: int,
+    groups: int = 1,
+    conv_bias: bool = True,
     dropout_rate: float = 0,
-    style: str = "imagenet",
+    style: Literal["imagenet", "cifar"] = "imagenet",
     normalization_layer: nn.Module = nn.BatchNorm2d,
     pretrained: bool = False,
 ) -> _PackedResNet:
-    """Packed-Ensembles of ResNet-50 from `Deep Residual Learning for Image
-    Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
+    """Packed-Ensembles of ResNet-50.
 
     Args:
         in_channels (int): Number of input channels.
         num_classes (int): Number of classes to predict.
-        dropout_rate (float): Dropout rate. Defaults to 0.
         num_estimators (int): Number of estimators in the ensemble.
         alpha (int): Expansion factor affecting the width of the estimators.
         gamma (int): Number of groups within each estimator.
-        groups (int): Number of groups within each estimator.
+        groups (int): Number of groups within each estimator. Defaults to 1.
+        conv_bias (bool): Whether to use bias in convolutions. Defaults to
+            ``True``.
+        dropout_rate (float): Dropout rate. Defaults to 0.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
         normalization_layer (nn.Module, optional): Normalization layer.
@@ -596,6 +618,7 @@ def packed_resnet50(
         alpha=alpha,
         gamma=gamma,
         groups=groups,
+        conv_bias=conv_bias,
         dropout_rate=dropout_rate,
         num_classes=num_classes,
         style=style,
@@ -617,27 +640,29 @@ def packed_resnet50(
 
 def packed_resnet101(
     in_channels: int,
+    num_classes: int,
     num_estimators: int,
     alpha: int,
     gamma: int,
-    num_classes: int,
-    groups: int,
+    groups: int = 1,
+    conv_bias: bool = True,
     dropout_rate: float = 0,
-    style: str = "imagenet",
+    style: Literal["imagenet", "cifar"] = "imagenet",
     normalization_layer: nn.Module = nn.BatchNorm2d,
     pretrained: bool = False,
 ) -> _PackedResNet:
-    """Packed-Ensembles of ResNet-101 from `Deep Residual Learning for Image
-    Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
+    """Packed-Ensembles of ResNet-101.
 
     Args:
         in_channels (int): Number of input channels.
         num_classes (int): Number of classes to predict.
-        dropout_rate (float): Dropout rate. Defaults to 0.
         num_estimators (int): Number of estimators in the ensemble.
         alpha (int): Expansion factor affecting the width of the estimators.
         gamma (int): Number of groups within each estimator.
-        groups (int): Number of groups within each estimator.
+        groups (int): Number of groups within each estimator. Defaults to 1.
+        conv_bias (bool): Whether to use bias in convolutions. Defaults to
+            ``True``.
+        dropout_rate (float): Dropout rate. Defaults to 0.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
         normalization_layer (nn.Module, optional): Normalization layer.
@@ -655,6 +680,7 @@ def packed_resnet101(
         alpha=alpha,
         gamma=gamma,
         groups=groups,
+        conv_bias=conv_bias,
         dropout_rate=dropout_rate,
         num_classes=num_classes,
         style=style,
@@ -676,27 +702,29 @@ def packed_resnet101(
 
 def packed_resnet152(
     in_channels: int,
+    num_classes: int,
     num_estimators: int,
     alpha: int,
     gamma: int,
-    num_classes: int,
-    groups: int,
+    groups: int = 1,
+    conv_bias: bool = True,
     dropout_rate: float = 0,
-    style: str = "imagenet",
+    style: Literal["imagenet", "cifar"] = "imagenet",
     normalization_layer: nn.Module = nn.BatchNorm2d,
     pretrained: bool = False,
 ) -> _PackedResNet:
-    """Packed-Ensembles of ResNet-152 from `Deep Residual Learning for Image
-    Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
+    """Packed-Ensembles of ResNet-152.
 
     Args:
         in_channels (int): Number of input channels.
         num_classes (int): Number of classes to predict.
-        dropout_rate (float): Dropout rate. Defaults to 0.
         num_estimators (int): Number of estimators in the ensemble.
         alpha (int): Expansion factor affecting the width of the estimators.
         gamma (int): Number of groups within each estimator.
-        groups (int): Number of groups within each estimator.
+        groups (int): Number of groups within each estimator. Defaults to 1.
+        conv_bias (bool): Whether to use bias in convolutions. Defaults to
+            ``True``.
+        dropout_rate (float): Dropout rate. Defaults to 0.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
         normalization_layer (nn.Module, optional): Normalization layer.
@@ -714,6 +742,7 @@ def packed_resnet152(
         alpha=alpha,
         gamma=gamma,
         groups=groups,
+        conv_bias=conv_bias,
         dropout_rate=dropout_rate,
         num_classes=num_classes,
         style=style,

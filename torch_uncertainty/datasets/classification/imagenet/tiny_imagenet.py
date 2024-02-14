@@ -17,7 +17,7 @@ class TinyImageNet(Dataset):
 
     def __init__(
         self,
-        root: str,
+        root: str | Path,
         split: Literal["train", "val", "test"] = "train",
         transform: Callable | None = None,
         target_transform: Callable | None = None,

@@ -1,7 +1,7 @@
 from typing import Literal
 
 import torch
-from torch import nn
+from torch import Tensor, device, nn
 
 from .scaler import Scaler
 
@@ -9,16 +9,18 @@ from .scaler import Scaler
 class MatrixScaler(Scaler):
     def __init__(
         self,
+        model: nn.Module,
         num_classes: int,
         init_w: float = 1,
         init_b: float = 0,
         lr: float = 0.1,
         max_iter: int = 200,
-        device: Literal["cpu", "cuda"] | torch.device | None = None,
+        device: Literal["cpu", "cuda"] | device | None = None,
     ) -> None:
         """Matrix scaling post-processing for calibrated probabilities.
 
         Args:
+            model (nn.Module): Model to calibrate.
             num_classes (int): Number of classes.
             init_w (float, optional): Initial value for the weights.
                 Defaults to 1.
@@ -35,7 +37,7 @@ class MatrixScaler(Scaler):
             of modern neural networks. In ICML 2017.
 
         """
-        super().__init__(lr=lr, max_iter=max_iter, device=device)
+        super().__init__(model=model, lr=lr, max_iter=max_iter, device=device)
 
         if not isinstance(num_classes, int):
             raise TypeError("num_classes must be an integer.")
@@ -63,14 +65,14 @@ class MatrixScaler(Scaler):
             requires_grad=True,
         )
 
-    def _scale(self, logits: torch.Tensor) -> torch.Tensor:
-        """Scale the logits with the optimal temperature.
+    def _scale(self, logits: Tensor) -> Tensor:
+        """Scale the predictions with the optimal temperature.
 
         Args:
-            logits (torch.Tensor): Logits to be scaled.
+            logits (Tensor): logits to be scaled.
 
         Returns:
-            torch.Tensor: Scaled logits.
+            Tensor: Scaled logits.
         """
         return self.temp_w @ logits + self.temp_b
 

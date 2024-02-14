@@ -34,10 +34,10 @@ from torch_uncertainty.transforms import RepeatTarget
 
 
 class VGG:
-    single = ["vanilla"]
+    single = ["std"]
     ensemble = ["packed", "mc-dropout"]
     versions = {
-        "vanilla": [vgg11, vgg13, vgg16, vgg19],
+        "std": [vgg11, vgg13, vgg16, vgg19],
         "mc-dropout": [vgg11, vgg13, vgg16, vgg19],
         "packed": [
             packed_vgg11,
@@ -54,7 +54,7 @@ class VGG:
         in_channels: int,
         loss: type[nn.Module],
         optimization_procedure: Any,
-        version: Literal["vanilla", "mc-dropout", "packed"],
+        version: Literal["std", "mc-dropout", "packed"],
         arch: int,
         num_estimators: int | None = None,
         dropout_rate: float = 0.0,
@@ -83,7 +83,7 @@ class VGG:
             version (str):
                 Determines which VGG version to use:
 
-                - ``"vanilla"``: original VGG
+                - ``"std"``: original VGG
                 - ``"mc-dropout"``: Monte Carlo Dropout VGG
                 - ``"packed"``: Packed-Ensembles VGG
 
@@ -120,7 +120,7 @@ class VGG:
                 variation ratio as the OOD criterion or not. Defaults to ``False``.
             **kwargs: Additional arguments to be passed to the
         Raises:
-            ValueError: If :attr:`version` is not either ``"vanilla"``,
+            ValueError: If :attr:`version` is not either ``"std"``,
                 ``"packed"``, ``"batched"`` or ``"masked"``.
 
         Returns:
@@ -229,7 +229,7 @@ class VGG:
             "--version",
             type=str,
             choices=cls.versions.keys(),
-            default="vanilla",
+            default="std",
             help=f"Variation of VGG. Choose among: {cls.versions.keys()}",
         )
         return parser

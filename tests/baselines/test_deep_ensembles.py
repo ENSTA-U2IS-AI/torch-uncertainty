@@ -14,7 +14,7 @@ class TestDeepEnsembles:
             backbone="resnet",
             in_channels=3,
             num_classes=10,
-            version="vanilla",
+            version="std",
             arch=18,
             style="cifar",
             groups=1,

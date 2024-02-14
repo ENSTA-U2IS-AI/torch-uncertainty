@@ -1,7 +1,7 @@
 from typing import Literal
 
 import torch
-from torch import nn, optim
+from torch import Tensor, device, nn, optim
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 
@@ -12,13 +12,15 @@ class Scaler(nn.Module):
 
     def __init__(
         self,
+        model: nn.Module,
         lr: float = 0.1,
         max_iter: int = 100,
-        device: Literal["cpu", "cuda"] | torch.device | None = None,
+        device: Literal["cpu", "cuda"] | device | None = None,
     ) -> None:
         """Virtual class for scaling post-processing for calibrated probabilities.
 
         Args:
+            model (nn.Module): Model to calibrate.
             lr (float, optional): Learning rate for the optimizer. Defaults to 0.1.
             max_iter (int, optional): Maximum number of iterations for the
                 optimizer. Defaults to 100.
@@ -30,6 +32,7 @@ class Scaler(nn.Module):
             of modern neural networks. In ICML 2017.
         """
         super().__init__()
+        self.model = model
         self.device = device
 
         if lr <= 0:
@@ -42,7 +45,6 @@ class Scaler(nn.Module):
 
     def fit(
         self,
-        model: nn.Module,
         calibration_set: Dataset,
         save_logits: bool = False,
         progress: bool = True,
@@ -50,7 +52,6 @@ class Scaler(nn.Module):
         """Fit the temperature parameters to the calibration data.
 
         Args:
-            model (nn.Module): Model to calibrate.
             calibration_set (Dataset): Calibration dataset.
             save_logits (bool, optional): Whether to save the logits and
                 labels. Defaults to False.
@@ -68,7 +69,7 @@ class Scaler(nn.Module):
         with torch.no_grad():
             for inputs, labels in tqdm(calibration_dl, disable=not progress):
                 inputs = inputs.to(self.device)
-                logits = model(inputs)
+                logits = self.model(inputs)
                 logits_list.append(logits)
                 labels_list.append(labels)
         all_logits = torch.cat(logits_list).detach().to(self.device)
@@ -91,33 +92,32 @@ class Scaler(nn.Module):
             self.labels = labels
         return self
 
-    def forward(self, logits: torch.Tensor) -> torch.Tensor:
-        with torch.no_grad():
-            if not self.trained:
-                print(
-                    "TemperatureScaler has not been trained yet. Returning a "
-                    "manually tempered input."
-                )
-            return self._scale(logits)
+    @torch.no_grad()
+    def forward(self, inputs: Tensor) -> Tensor:
+        if not self.trained:
+            print(
+                "TemperatureScaler has not been trained yet. Returning a "
+                "manually tempered inputs."
+            )
+        return self._scale(self.model(inputs))
 
-    def _scale(self, logits: torch.Tensor) -> torch.Tensor:
+    def _scale(self, logits: Tensor) -> Tensor:
         """Scale the logits with the optimal temperature.
 
         Args:
-            logits (torch.Tensor): Logits to be scaled.
+            logits (Tensor): Logits to be scaled.
 
         Returns:
-            torch.Tensor: Scaled logits.
+            Tensor: Scaled logits.
         """
         raise NotImplementedError
 
     def fit_predict(
         self,
-        model: nn.Module,
         calibration_set: Dataset,
         progress: bool = True,
-    ) -> torch.Tensor:
-        self.fit(model, calibration_set, save_logits=True, progress=progress)
+    ) -> Tensor:
+        self.fit(calibration_set, save_logits=True, progress=progress)
         return self(self.logits)
 
     @property

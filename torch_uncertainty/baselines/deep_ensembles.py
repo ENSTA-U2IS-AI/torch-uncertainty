@@ -36,8 +36,7 @@ class DeepEnsembles:
         use_variation_ratio: bool = False,
         **kwargs,
     ) -> LightningModule:
-        if isinstance(log_path, str):
-            log_path = Path(log_path)
+        log_path = Path(log_path)
 
         backbone_cls = cls.backbones[backbone]
 

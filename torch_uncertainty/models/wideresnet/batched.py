@@ -1,3 +1,5 @@
+from typing import Literal
+
 import torch.nn.functional as F
 from torch import Tensor, nn
 
@@ -13,6 +15,7 @@ class _WideBasicBlock(nn.Module):
         self,
         in_planes: int,
         planes: int,
+        conv_bias: bool,
         dropout_rate: float,
         stride: int,
         num_estimators: int,
@@ -26,7 +29,7 @@ class _WideBasicBlock(nn.Module):
             num_estimators=num_estimators,
             groups=groups,
             padding=1,
-            bias=False,
+            bias=conv_bias,
         )
         self.dropout = nn.Dropout2d(p=dropout_rate)
         self.bn1 = nn.BatchNorm2d(planes)
@@ -38,7 +41,7 @@ class _WideBasicBlock(nn.Module):
             groups=groups,
             stride=stride,
             padding=1,
-            bias=False,
+            bias=conv_bias,
         )
         self.shortcut = nn.Sequential()
         if stride != 1 or in_planes != planes:
@@ -50,7 +53,7 @@ class _WideBasicBlock(nn.Module):
                     num_estimators=num_estimators,
                     groups=groups,
                     stride=stride,
-                    bias=True,
+                    bias=conv_bias,
                 ),
             )
 
@@ -71,9 +74,10 @@ class _BatchWideResNet(nn.Module):
         in_channels: int,
         num_classes: int,
         num_estimators: int,
+        conv_bias: bool,
         dropout_rate: float,
         groups: int = 1,
-        style: str = "imagenet",
+        style: Literal["imagenet", "cifar"] = "imagenet",
     ) -> None:
         super().__init__()
         self.num_estimators = num_estimators
@@ -81,7 +85,7 @@ class _BatchWideResNet(nn.Module):
 
         if (depth - 4) % 6 != 0:
             raise ValueError("Wide-resnet depth should be 6n+4.")
-        n = (depth - 4) // 6
+        num_blocks = (depth - 4) // 6
         k = widen_factor
 
         num_stages = [16, 16 * k, 32 * k, 64 * k]
@@ -97,7 +101,7 @@ class _BatchWideResNet(nn.Module):
                 padding=3,
                 bias=True,
             )
-        else:
+        elif style == "cifar":
             self.conv1 = BatchConv2d(
                 in_channels,
                 num_stages[0],
@@ -108,6 +112,8 @@ class _BatchWideResNet(nn.Module):
                 padding=1,
                 bias=True,
             )
+        else:
+            raise ValueError(f"Unknown WideResNet style: {style}. ")
 
         self.bn1 = nn.BatchNorm2d(num_stages[0])
 
@@ -121,8 +127,9 @@ class _BatchWideResNet(nn.Module):
         self.layer1 = self._wide_layer(
             _WideBasicBlock,
             num_stages[1],
-            n,
-            dropout_rate,
+            num_blocks=num_blocks,
+            conv_bias=conv_bias,
+            dropout_rate=dropout_rate,
             stride=1,
             num_estimators=self.num_estimators,
             groups=groups,
@@ -130,8 +137,9 @@ class _BatchWideResNet(nn.Module):
         self.layer2 = self._wide_layer(
             _WideBasicBlock,
             num_stages[2],
-            n,
-            dropout_rate,
+            num_blocks=num_blocks,
+            conv_bias=conv_bias,
+            dropout_rate=dropout_rate,
             stride=2,
             num_estimators=self.num_estimators,
             groups=groups,
@@ -139,8 +147,9 @@ class _BatchWideResNet(nn.Module):
         self.layer3 = self._wide_layer(
             _WideBasicBlock,
             num_stages[3],
-            n,
-            dropout_rate,
+            num_blocks=num_blocks,
+            conv_bias=conv_bias,
+            dropout_rate=dropout_rate,
             stride=2,
             num_estimators=self.num_estimators,
             groups=groups,
@@ -161,6 +170,7 @@ class _BatchWideResNet(nn.Module):
         block: type[nn.Module],
         planes: int,
         num_blocks: int,
+        conv_bias: bool,
         dropout_rate: float,
         stride: int,
         num_estimators: int,
@@ -174,6 +184,7 @@ class _BatchWideResNet(nn.Module):
                 block(
                     in_planes=self.in_planes,
                     planes=planes,
+                    conv_bias=conv_bias,
                     dropout_rate=dropout_rate,
                     stride=stride,
                     num_estimators=num_estimators,
@@ -200,17 +211,19 @@ def batched_wideresnet28x10(
     in_channels: int,
     num_classes: int,
     num_estimators: int,
+    conv_bias: bool = True,
     dropout_rate: float = 0.3,
     groups: int = 1,
-    style: str = "imagenet",
+    style: Literal["imagenet", "cifar"] = "imagenet",
 ) -> _BatchWideResNet:
-    """BatchEnsemble of Wide-ResNet-28x10 from `Wide Residual Networks
-    <https://arxiv.org/pdf/1605.07146.pdf>`_.
+    """BatchEnsemble of Wide-ResNet-28x10.
 
     Args:
         in_channels (int): Number of input channels.
         num_estimators (int): Number of estimators in the ensemble.
         groups (int): Number of groups in the convolutions.
+        conv_bias (bool): Whether to use bias in convolutions. Defaults to
+            ``True``.
         dropout_rate (float, optional): Dropout rate. Defaults to ``0.3``.
         num_classes (int): Number of classes to predict.
         style (bool, optional): Whether to use the ImageNet
@@ -223,6 +236,7 @@ def batched_wideresnet28x10(
         in_channels=in_channels,
         depth=28,
         widen_factor=10,
+        conv_bias=conv_bias,
         dropout_rate=dropout_rate,
         num_classes=num_classes,
         num_estimators=num_estimators,

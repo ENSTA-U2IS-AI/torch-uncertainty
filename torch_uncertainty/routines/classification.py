@@ -1,4 +1,4 @@
-from argparse import ArgumentParser, Namespace
+from argparse import ArgumentParser
 from collections.abc import Callable
 from functools import partial
 from typing import Any
@@ -25,6 +25,7 @@ from torch_uncertainty.metrics import (
     BrierScore,
     Disagreement,
     Entropy,
+    GroupingLoss,
     MutualInformation,
     NegativeLogLikelihood,
     VariationRatio,
@@ -49,7 +50,8 @@ class ClassificationSingle(pl.LightningModule):
         kernel_tau_std: float = 0.5,
         mixup_alpha: float = 0,
         cutmix_alpha: float = 0,
-        evaluate_ood: bool = False,
+        eval_ood: bool = False,
+        eval_grouping_loss: bool = False,
         use_entropy: bool = False,
         use_logits: bool = False,
         log_plots: bool = False,
@@ -75,8 +77,10 @@ class ClassificationSingle(pl.LightningModule):
             mixup_alpha (float, optional): Alpha parameter for Mixup. Defaults to 0.
             cutmix_alpha (float, optional): Alpha parameter for Cutmix.
                 Defaults to 0.
-            evaluate_ood (bool, optional): Indicates whether to evaluate the OOD
+            eval_ood (bool, optional): Indicates whether to evaluate the OOD
                 detection performance or not. Defaults to ``False``.
+            eval_grouping_loss (bool, optional): Indicates whether to evaluate the
+                grouping loss or not. Defaults to ``False``.
             use_entropy (bool, optional): Indicates whether to use the entropy
                 values as the OOD criterion or not. Defaults to ``False``.
             use_logits (bool, optional): Indicates whether to use the logits as the
@@ -113,8 +117,23 @@ class ClassificationSingle(pl.LightningModule):
         if (use_logits + use_entropy) > 1:
             raise ValueError("You cannot choose more than one OOD criterion.")
 
+        if eval_grouping_loss and not hasattr(model, "feats_forward"):
+            raise ValueError(
+                "Your model must have a `feats_forward` method to compute the "
+                "grouping loss."
+            )
+
+        if eval_grouping_loss and not (
+            hasattr(model, "classification_head") or hasattr(model, "linear")
+        ):
+            raise ValueError(
+                "Your model must have a `classification_head` or `linear` "
+                "attribute to compute the grouping loss."
+            )
+
         self.num_classes = num_classes
-        self.evaluate_ood = evaluate_ood
+        self.eval_ood = eval_ood
+        self.eval_grouping_loss = eval_grouping_loss
         self.use_logits = use_logits
         self.use_entropy = use_entropy
         self.log_plots = log_plots
@@ -152,15 +171,15 @@ class ClassificationSingle(pl.LightningModule):
                 compute_groups=False,
             )
 
-        self.val_cls_metrics = cls_metrics.clone(prefix="hp/val_")
-        self.test_cls_metrics = cls_metrics.clone(prefix="hp/test_")
+        self.val_cls_metrics = cls_metrics.clone(prefix="cls_val/")
+        self.test_cls_metrics = cls_metrics.clone(prefix="cls_test/")
 
         if self.calibration_set is not None:
-            self.ts_cls_metrics = cls_metrics.clone(prefix="hp/ts_")
+            self.ts_cls_metrics = cls_metrics.clone(prefix="ts_")
 
         self.test_entropy_id = Entropy()
 
-        if self.evaluate_ood:
+        if self.eval_ood:
             ood_metrics = MetricCollection(
                 {
                     "fpr95": FPR95(pos_label=1),
@@ -169,8 +188,13 @@ class ClassificationSingle(pl.LightningModule):
                 },
                 compute_groups=[["auroc", "aupr"], ["fpr95"]],
             )
-            self.test_ood_metrics = ood_metrics.clone(prefix="hp/test_")
+            self.test_ood_metrics = ood_metrics.clone(prefix="ood/")
             self.test_entropy_ood = Entropy()
+
+        if self.eval_grouping_loss:
+            grouping_loss = MetricCollection({"grouping_loss": GroupingLoss()})
+            self.val_grouping_loss = grouping_loss.clone(prefix="gpl/val_")
+            self.test_grouping_loss = grouping_loss.clone(prefix="gpl/test_")
 
         if mixup_alpha < 0 or cutmix_alpha < 0:
             raise ValueError(
@@ -205,33 +229,32 @@ class ClassificationSingle(pl.LightningModule):
             self.loss = partial(self.loss, model=self.model)
         return self.loss()
 
-    def forward(self, inputs: Tensor) -> Tensor:
-        return self.model.forward(inputs)
+    def forward(self, inputs: Tensor, return_features: bool = False) -> Tensor:
+        """Forward pass of the model.
+
+        Args:
+            inputs (Tensor): Input tensor.
+            return_features (bool, optional): Whether to store the features or
+                not. Defaults to ``False``.
+
+        Note:
+            The features are stored in the :attr:`features` attribute.
+        """
+        if return_features:
+            self.features = self.model.feats_forward(inputs)
+            if hasattr(self.model, "classification_head"):  # coverage: ignore
+                logits = self.model.classification_head(self.features)
+            else:
+                logits = self.model.linear(self.features)
+        else:
+            self.features = None
+            logits = self.model(inputs)
+        return logits
 
     def on_train_start(self) -> None:
         # hyperparameters for performances
         param = {}
         param["storage"] = f"{get_model_size_mb(self)} MB"
-        if self.logger is not None:  # coverage: ignore
-            self.logger.log_hyperparams(
-                Namespace(**param),
-                {
-                    "hp/val_nll": 0,
-                    "hp/val_acc": 0,
-                    "hp/test_acc": 0,
-                    "hp/test_nll": 0,
-                    "hp/test_ece": 0,
-                    "hp/test_brier": 0,
-                    "hp/test_entropy_id": 0,
-                    "hp/test_entropy_ood": 0,
-                    "hp/test_aupr": 0,
-                    "hp/test_auroc": 0,
-                    "hp/test_fpr95": 0,
-                    "hp/ts_test_nll": 0,
-                    "hp/ts_test_ece": 0,
-                    "hp/ts_test_brier": 0,
-                },
-            )
 
     def training_step(
         self, batch: tuple[Tensor, Tensor], batch_idx: int
@@ -269,7 +292,8 @@ class ClassificationSingle(pl.LightningModule):
         self, batch: tuple[Tensor, Tensor], batch_idx: int
     ) -> None:
         inputs, targets = batch
-        logits = self.forward(inputs)
+
+        logits = self.forward(inputs, return_features=self.eval_grouping_loss)
 
         if self.binary_cls:
             probs = torch.sigmoid(logits).squeeze(-1)
@@ -278,20 +302,25 @@ class ClassificationSingle(pl.LightningModule):
 
         self.val_cls_metrics.update(probs, targets)
 
+        if self.eval_grouping_loss:
+            self.val_grouping_loss.update(probs, targets, self.features)
+
     def validation_epoch_end(
         self, outputs: EPOCH_OUTPUT | list[EPOCH_OUTPUT]
     ) -> None:
         self.log_dict(self.val_cls_metrics.compute())
         self.val_cls_metrics.reset()
 
+        if self.eval_grouping_loss:
+            self.log_dict(self.val_grouping_loss.compute())
+            self.val_grouping_loss.reset()
+
     def on_test_start(self) -> None:
         if self.calibration_set is not None:
-            self.scaler = TemperatureScaler(device=self.device).fit(
-                model=self.model, calibration_set=self.calibration_set()
-            )
-            self.cal_model = torch.nn.Sequential(self.model, self.scaler)
+            self.cal_model = TemperatureScaler(
+                model=self.model, device=self.device
+            ).fit(calibration_set=self.calibration_set())
         else:
-            self.scaler = None
             self.cal_model = None
 
     def test_step(
@@ -301,7 +330,7 @@ class ClassificationSingle(pl.LightningModule):
         dataloader_idx: int | None = 0,
     ) -> Tensor:
         inputs, targets = batch
-        logits = self.forward(inputs)
+        logits = self.forward(inputs, return_features=self.eval_grouping_loss)
 
         if self.binary_cls:
             probs = torch.sigmoid(logits).squeeze(-1)
@@ -318,33 +347,31 @@ class ClassificationSingle(pl.LightningModule):
         else:
             ood_scores = -confs
 
-        if (
-            self.calibration_set is not None
-            and self.scaler is not None
-            and self.cal_model is not None
-        ):
+        if self.calibration_set is not None and self.cal_model is not None:
             cal_logits = self.cal_model(inputs)
             cal_probs = F.softmax(cal_logits, dim=-1)
             self.ts_cls_metrics.update(cal_probs, targets)
 
         if dataloader_idx == 0:
             self.test_cls_metrics.update(probs, targets)
+            if self.eval_grouping_loss:
+                self.test_grouping_loss.update(probs, targets, self.features)
             self.test_entropy_id(probs)
             self.log(
-                "hp/test_entropy_id",
+                "cls_test/entropy",
                 self.test_entropy_id,
                 on_epoch=True,
                 add_dataloader_idx=False,
             )
-            if self.evaluate_ood:
+            if self.eval_ood:
                 self.test_ood_metrics.update(
                     ood_scores, torch.zeros_like(targets)
                 )
-        elif self.evaluate_ood and dataloader_idx == 1:
+        elif self.eval_ood and dataloader_idx == 1:
             self.test_ood_metrics.update(ood_scores, torch.ones_like(targets))
             self.test_entropy_ood(probs)
             self.log(
-                "hp/test_entropy_ood",
+                "ood/entropy",
                 self.test_entropy_ood,
                 on_epoch=True,
                 add_dataloader_idx=False,
@@ -357,16 +384,16 @@ class ClassificationSingle(pl.LightningModule):
         self.log_dict(
             self.test_cls_metrics.compute(),
         )
+        if self.eval_grouping_loss:
+            self.log_dict(
+                self.test_grouping_loss.compute(),
+            )
 
-        if (
-            self.calibration_set is not None
-            and self.scaler is not None
-            and self.cal_model is not None
-        ):
+        if self.calibration_set is not None and self.cal_model is not None:
             self.log_dict(self.ts_cls_metrics.compute())
             self.ts_cls_metrics.reset()
 
-        if self.evaluate_ood:
+        if self.eval_ood:
             self.log_dict(
                 self.test_ood_metrics.compute(),
             )
@@ -377,7 +404,7 @@ class ClassificationSingle(pl.LightningModule):
                 "Calibration Plot", self.test_cls_metrics["ece"].plot()[0]
             )
 
-            if self.evaluate_ood:
+            if self.eval_ood:
                 id_logits = torch.cat(outputs[0], 0).float().cpu()
                 ood_logits = torch.cat(outputs[1], 0).float().cpu()
 
@@ -400,6 +427,11 @@ class ClassificationSingle(pl.LightningModule):
                 )
 
         self.test_cls_metrics.reset()
+        if self.eval_grouping_loss:
+            self.test_grouping_loss.reset()
+
+    def identity(self, x: float, y: float):
+        return x, y
 
     def init_mixup(
         self,
@@ -442,7 +474,7 @@ class ClassificationSingle(pl.LightningModule):
                 tau_max=kernel_tau_max,
                 tau_std=kernel_tau_std,
             )
-        return lambda x, y: (x, y)
+        return self.identity
 
     @staticmethod
     def add_model_specific_args(
@@ -456,6 +488,8 @@ class ClassificationSingle(pl.LightningModule):
         Adds:
         - ``--entropy``: sets :attr:`use_entropy` to ``True``.
         - ``--logits``: sets :attr:`use_logits` to ``True``.
+        - ``--eval-grouping-loss``: sets :attr:`eval_grouping-loss` to
+            ``True``.
         - ``--mixup_alpha``: sets :attr:`mixup_alpha` for Mixup
         - ``--cutmix_alpha``: sets :attr:`cutmix_alpha` for Cutmix
         - ``--mixtype``: sets :attr:`mixtype` for Mixup
@@ -469,6 +503,11 @@ class ClassificationSingle(pl.LightningModule):
         )
         parent_parser.add_argument(
             "--logits", dest="use_logits", action="store_true"
+        )
+        parent_parser.add_argument(
+            "--eval-grouping-loss",
+            action="store_true",
+            help="Whether to evaluate the grouping loss or not",
         )
 
         # Mixup args
@@ -512,7 +551,8 @@ class ClassificationEnsemble(ClassificationSingle):
         kernel_tau_std: float = 0.5,
         mixup_alpha: float = 0,
         cutmix_alpha: float = 0,
-        evaluate_ood: bool = False,
+        eval_ood: bool = False,
+        eval_grouping_loss: bool = False,
         use_entropy: bool = False,
         use_logits: bool = False,
         use_mi: bool = False,
@@ -540,8 +580,10 @@ class ClassificationEnsemble(ClassificationSingle):
             mixup_alpha (float, optional): Alpha parameter for Mixup. Defaults to 0.
             cutmix_alpha (float, optional): Alpha parameter for Cutmix.
                 Defaults to 0.
-            evaluate_ood (bool, optional): Indicates whether to evaluate the OOD
+            eval_ood (bool, optional): Indicates whether to evaluate the OOD
                 detection performance or not. Defaults to ``False``.
+            eval_grouping_loss (bool, optional): Indicates whether to evaluate the
+                grouping loss or not. Defaults to ``False``.
             use_entropy (bool, optional): Indicates whether to use the entropy
                 values as the OOD criterion or not. Defaults to ``False``.
             use_logits (bool, optional): Indicates whether to use the logits as the
@@ -577,7 +619,8 @@ class ClassificationEnsemble(ClassificationSingle):
             kernel_tau_std=kernel_tau_std,
             mixup_alpha=mixup_alpha,
             cutmix_alpha=cutmix_alpha,
-            evaluate_ood=evaluate_ood,
+            eval_ood=eval_ood,
+            eval_grouping_loss=eval_grouping_loss,
             use_entropy=use_entropy,
             use_logits=use_logits,
             **kwargs,
@@ -605,39 +648,22 @@ class ClassificationEnsemble(ClassificationSingle):
                 "entropy": Entropy(),
             }
         )
-        self.test_id_ens_metrics = ens_metrics.clone(prefix="hp/test_id_ens_")
+        self.test_id_ens_metrics = ens_metrics.clone(prefix="ens_id/test_")
 
-        if self.evaluate_ood:
+        if self.eval_ood:
             self.test_ood_ens_metrics = ens_metrics.clone(
-                prefix="hp/test_ood_ens_"
+                prefix="ens_ood/test_"
+            )
+
+        if self.eval_grouping_loss:
+            raise NotImplementedError(
+                "Grouping loss not implemented for ensembles. Raise an issue"
+                " if you need it."
             )
 
     def on_train_start(self) -> None:
         param = {}
         param["storage"] = f"{get_model_size_mb(self)} MB"
-        if self.logger is not None:  # coverage: ignore
-            self.logger.log_hyperparams(
-                Namespace(**param),
-                {
-                    "hp/val_nll": 0,
-                    "hp/val_acc": 0,
-                    "hp/test_acc": 0,
-                    "hp/test_nll": 0,
-                    "hp/test_ece": 0,
-                    "hp/test_brier": 0,
-                    "hp/test_entropy_id": 0,
-                    "hp/test_entropy_ood": 0,
-                    "hp/test_aupr": 0,
-                    "hp/test_auroc": 0,
-                    "hp/test_fpr95": 0,
-                    "hp/test_id_ens_disagreement": 0,
-                    "hp/test_id_ens_mi": 0,
-                    "hp/test_id_ens_entropy": 0,
-                    "hp/test_ood_ens_disagreement": 0,
-                    "hp/test_ood_ens_mi": 0,
-                    "hp/test_ood_ens_entropy": 0,
-                },
-            )
 
     def training_step(
         self, batch: tuple[Tensor, Tensor], batch_idx: int
@@ -685,6 +711,13 @@ class ClassificationEnsemble(ClassificationSingle):
     ) -> Tensor:
         inputs, targets = batch
         logits = self.forward(inputs)
+        if logits.size(0) % self.num_estimators != 0:  # coverage: ignore
+            raise ValueError(
+                f"The number of predicted samples {logits.size(0)} is not "
+                "divisible by the reported number of estimators "
+                f"{self.num_estimators} of the routine. Please check the "
+                "correspondence between these values."
+            )
         logits = rearrange(logits, "(n b) c -> b n c", n=self.num_estimators)
 
         if self.binary_cls:
@@ -721,22 +754,22 @@ class ClassificationEnsemble(ClassificationSingle):
 
             self.test_id_ens_metrics.update(probs_per_est)
             self.log(
-                "hp/test_entropy_id",
+                "cls_test/entropy",
                 self.test_entropy_id,
                 on_epoch=True,
                 add_dataloader_idx=False,
             )
 
-            if self.evaluate_ood:
+            if self.eval_ood:
                 self.test_ood_metrics.update(
                     ood_scores, torch.zeros_like(targets)
                 )
-        elif self.evaluate_ood and dataloader_idx == 1:
+        elif self.eval_ood and dataloader_idx == 1:
             self.test_ood_metrics.update(ood_scores, torch.ones_like(targets))
             self.test_entropy_ood(probs)
             self.test_ood_ens_metrics.update(probs_per_est)
             self.log(
-                "hp/test_entropy_ood",
+                "ood/entropy",
                 self.test_entropy_ood,
                 on_epoch=True,
                 add_dataloader_idx=False,
@@ -754,7 +787,7 @@ class ClassificationEnsemble(ClassificationSingle):
             self.test_id_ens_metrics.compute(),
         )
 
-        if self.evaluate_ood:
+        if self.eval_ood:
             self.log_dict(
                 self.test_ood_metrics.compute(),
             )
@@ -770,7 +803,7 @@ class ClassificationEnsemble(ClassificationSingle):
                 "Calibration Plot", self.test_cls_metrics["ece"].plot()[0]
             )
 
-            if self.evaluate_ood:
+            if self.eval_ood:
                 id_logits = torch.cat(outputs[0], 0).float().cpu()
                 ood_logits = torch.cat(outputs[1], 0).float().cpu()
 

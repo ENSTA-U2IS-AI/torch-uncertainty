@@ -17,7 +17,7 @@ from torchvision.transforms import Compose, ToTensor, Resize
 
 from torchvision.utils import make_grid
 import matplotlib.pyplot as plt
-plt.axis('off')
+
 ds = CIFAR10("./data", train=False, download=True)
 
 def get_images(main_transform, severity):

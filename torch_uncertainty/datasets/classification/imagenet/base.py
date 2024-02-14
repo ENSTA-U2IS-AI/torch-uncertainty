@@ -39,7 +39,7 @@ class ImageNetVariation(ImageFolder):
 
     def __init__(
         self,
-        root: str,
+        root: str | Path,
         split: str | None = None,
         transform: Callable | None = None,
         target_transform: Callable | None = None,

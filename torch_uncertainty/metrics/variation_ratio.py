@@ -18,7 +18,6 @@ class VariationRatio(Metric):
         reduction: Literal["mean", "sum", "none", None] = "mean",
         **kwargs,
     ) -> None:
-        """From https://proceedings.mlr.press/v70/gal17a/gal17a.pdf."""
         super().__init__(**kwargs)
 
         allowed_reduction = ("sum", "mean", "none", None)

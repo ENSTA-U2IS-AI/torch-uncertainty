@@ -9,31 +9,31 @@ class _DeepEnsembles(nn.Module):
         self,
         models: list[nn.Module],
     ) -> None:
+        """Create a deep ensembles from a list of models."""
         super().__init__()
 
         self.models = nn.ModuleList(models)
         self.num_estimators = len(models)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Return the logits of the ensemble.
+        r"""Return the logits of the ensemble.
 
         Args:
             x (Tensor): The input of the model.
 
         Returns:
-            Tensor: The output of the model with shape :math:`(B, N, C)`,
+            Tensor: The output of the model with shape :math:`(N \times B, C)`,
                 where :math:`B` is the batch size, :math:`N` is the number of
                 estimators, and :math:`C` is the number of classes.
         """
-        predictions = [model.forward(x) for model in self.models]
-        return torch.stack(predictions, dim=1)
+        return torch.cat([model.forward(x) for model in self.models], dim=0)
 
 
 def deep_ensembles(
     models: list[nn.Module] | nn.Module,
     num_estimators: int | None = None,
 ) -> nn.Module:
-    """Builds a Deep Ensembles out of the original models.
+    """Build a Deep Ensembles out of the original models.
 
     Args:
         models (list[nn.Module] | nn.Module): The model to be ensembled.

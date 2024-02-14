@@ -5,6 +5,8 @@ Reference:
     Deep Residual Learning for Image Recognition. arXiv:1512.03385
 """
 
+from typing import Literal
+
 import torch.nn.functional as F
 from torch import Tensor, nn
 
@@ -29,6 +31,7 @@ class _BasicBlock(nn.Module):
         planes: int,
         stride: int,
         num_estimators: int,
+        conv_bias: bool,
         dropout_rate: float,
         groups: int,
         normalization_layer: nn.Module,
@@ -42,7 +45,7 @@ class _BasicBlock(nn.Module):
             groups=groups,
             stride=stride,
             padding=1,
-            bias=False,
+            bias=conv_bias,
         )
         self.bn1 = normalization_layer(planes)
 
@@ -55,7 +58,7 @@ class _BasicBlock(nn.Module):
             groups=groups,
             stride=1,
             padding=1,
-            bias=False,
+            bias=conv_bias,
         )
         self.bn2 = normalization_layer(planes)
 
@@ -68,7 +71,7 @@ class _BasicBlock(nn.Module):
                     groups=groups,
                     kernel_size=1,
                     stride=stride,
-                    bias=False,
+                    bias=conv_bias,
                 ),
                 normalization_layer(self.expansion * planes),
             )
@@ -89,6 +92,7 @@ class _Bottleneck(nn.Module):
         planes: int,
         stride: int,
         num_estimators: int,
+        conv_bias: bool,
         dropout_rate: float,
         groups: int,
         normalization_layer: nn.Module,
@@ -100,7 +104,7 @@ class _Bottleneck(nn.Module):
             kernel_size=1,
             num_estimators=num_estimators,
             groups=groups,
-            bias=False,
+            bias=conv_bias,
         )
         self.bn1 = normalization_layer(planes)
         self.conv2 = BatchConv2d(
@@ -111,7 +115,7 @@ class _Bottleneck(nn.Module):
             groups=groups,
             stride=stride,
             padding=1,
-            bias=False,
+            bias=conv_bias,
         )
         self.bn2 = normalization_layer(planes)
         self.dropout = nn.Dropout2d(p=dropout_rate)
@@ -121,7 +125,7 @@ class _Bottleneck(nn.Module):
             num_estimators=num_estimators,
             groups=groups,
             kernel_size=1,
-            bias=False,
+            bias=conv_bias,
         )
         self.bn3 = normalization_layer(self.expansion * planes)
 
@@ -135,7 +139,7 @@ class _Bottleneck(nn.Module):
                     num_estimators=num_estimators,
                     groups=groups,
                     stride=stride,
-                    bias=False,
+                    bias=conv_bias,
                 ),
                 normalization_layer(self.expansion * planes),
             )
@@ -156,10 +160,11 @@ class _BatchedResNet(nn.Module):
         in_channels: int,
         num_classes: int,
         num_estimators: int,
+        conv_bias: bool,
         dropout_rate: float,
         groups: int = 1,
         width_multiplier: int = 1,
-        style: str = "imagenet",
+        style: Literal["imagenet", "cifar"] = "imagenet",
         in_planes: int = 64,
         normalization_layer: nn.Module = nn.BatchNorm2d,
     ) -> None:
@@ -182,7 +187,7 @@ class _BatchedResNet(nn.Module):
                 groups=groups,
                 bias=False,
             )
-        else:
+        elif style == "cifar":
             self.conv1 = BatchConv2d(
                 in_channels,
                 block_planes,
@@ -193,6 +198,9 @@ class _BatchedResNet(nn.Module):
                 groups=groups,
                 bias=False,
             )
+        else:
+            raise ValueError(f"Unknown style. Got {style}.")
+
         self.bn1 = normalization_layer(block_planes)
 
         if style == "imagenet":
@@ -208,6 +216,7 @@ class _BatchedResNet(nn.Module):
             num_blocks[0],
             stride=1,
             num_estimators=num_estimators,
+            conv_bias=conv_bias,
             dropout_rate=dropout_rate,
             groups=groups,
             normalization_layer=normalization_layer,
@@ -218,6 +227,7 @@ class _BatchedResNet(nn.Module):
             num_blocks[1],
             stride=2,
             num_estimators=num_estimators,
+            conv_bias=conv_bias,
             dropout_rate=dropout_rate,
             groups=groups,
             normalization_layer=normalization_layer,
@@ -228,6 +238,7 @@ class _BatchedResNet(nn.Module):
             num_blocks[2],
             stride=2,
             num_estimators=num_estimators,
+            conv_bias=conv_bias,
             dropout_rate=dropout_rate,
             groups=groups,
             normalization_layer=normalization_layer,
@@ -239,6 +250,7 @@ class _BatchedResNet(nn.Module):
                 num_blocks[3],
                 stride=2,
                 num_estimators=num_estimators,
+                conv_bias=conv_bias,
                 dropout_rate=dropout_rate,
                 groups=groups,
                 normalization_layer=normalization_layer,
@@ -265,6 +277,7 @@ class _BatchedResNet(nn.Module):
         num_blocks: int,
         stride: int,
         num_estimators: int,
+        conv_bias: bool,
         dropout_rate: float,
         groups: int,
         normalization_layer: nn.Module,
@@ -277,6 +290,7 @@ class _BatchedResNet(nn.Module):
                     in_planes=self.in_planes,
                     planes=planes,
                     stride=stride,
+                    conv_bias=conv_bias,
                     dropout_rate=dropout_rate,
                     num_estimators=num_estimators,
                     groups=groups,
@@ -303,17 +317,19 @@ def batched_resnet18(
     in_channels: int,
     num_classes: int,
     num_estimators: int,
+    conv_bias: bool = True,
     dropout_rate: float = 0,
     groups: int = 1,
-    style: str = "imagenet",
+    style: Literal["imagenet", "cifar"] = "imagenet",
     normalization_layer: nn.Module = nn.BatchNorm2d,
 ) -> _BatchedResNet:
-    """BatchEnsemble of ResNet-18 from `Deep Residual Learning for Image
-    Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
+    """BatchEnsemble of ResNet-18.
 
     Args:
         in_channels (int): Number of input channels.
         num_estimators (int): Number of estimators in the ensemble.
+        conv_bias (bool): Whether to use bias in convolutions. Defaults to
+            ``True``.
         dropout_rate (float): Dropout rate. Defaults to 0.
         groups (int): Number of groups within each estimator.
         num_classes (int): Number of classes to predict.
@@ -330,6 +346,7 @@ def batched_resnet18(
         in_channels=in_channels,
         num_classes=num_classes,
         num_estimators=num_estimators,
+        conv_bias=conv_bias,
         dropout_rate=dropout_rate,
         groups=groups,
         style=style,
@@ -342,17 +359,19 @@ def batched_resnet20(
     in_channels: int,
     num_classes: int,
     num_estimators: int,
+    conv_bias: bool = True,
     dropout_rate: float = 0,
     groups: int = 1,
-    style: str = "imagenet",
+    style: Literal["imagenet", "cifar"] = "imagenet",
     normalization_layer: nn.Module = nn.BatchNorm2d,
 ) -> _BatchedResNet:
-    """BatchEnsemble of ResNet-20 from `Deep Residual Learning for Image
-    Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
+    """BatchEnsemble of ResNet-20.
 
     Args:
         in_channels (int): Number of input channels.
         num_estimators (int): Number of estimators in the ensemble.
+        conv_bias (bool): Whether to use bias in convolutions. Defaults to
+            ``True``.
         dropout_rate (float): Dropout rate. Defaults to 0.
         groups (int): Number of groups within each estimator.
         num_classes (int): Number of classes to predict.
@@ -369,6 +388,7 @@ def batched_resnet20(
         in_channels=in_channels,
         num_classes=num_classes,
         num_estimators=num_estimators,
+        conv_bias=conv_bias,
         dropout_rate=dropout_rate,
         groups=groups,
         style=style,
@@ -381,17 +401,19 @@ def batched_resnet34(
     in_channels: int,
     num_classes: int,
     num_estimators: int,
+    conv_bias: bool = True,
     dropout_rate: float = 0,
     groups: int = 1,
-    style: str = "imagenet",
+    style: Literal["imagenet", "cifar"] = "imagenet",
     normalization_layer: nn.Module = nn.BatchNorm2d,
 ) -> _BatchedResNet:
-    """BatchEnsemble of ResNet-34 from `Deep Residual Learning for Image
-    Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
+    """BatchEnsemble of ResNet-34.
 
     Args:
         in_channels (int): Number of input channels.
         num_estimators (int): Number of estimators in the ensemble.
+        conv_bias (bool): Whether to use bias in convolutions. Defaults to
+            ``True``.
         dropout_rate (float): Dropout rate. Defaults to 0.
         groups (int): Number of groups within each estimator.
         num_classes (int): Number of classes to predict.
@@ -408,6 +430,7 @@ def batched_resnet34(
         in_channels=in_channels,
         num_classes=num_classes,
         num_estimators=num_estimators,
+        conv_bias=conv_bias,
         dropout_rate=dropout_rate,
         groups=groups,
         style=style,
@@ -420,18 +443,20 @@ def batched_resnet50(
     in_channels: int,
     num_classes: int,
     num_estimators: int,
+    conv_bias: bool = True,
     dropout_rate: float = 0,
     groups: int = 1,
     width_multiplier: int = 1,
-    style: str = "imagenet",
+    style: Literal["imagenet", "cifar"] = "imagenet",
     normalization_layer: nn.Module = nn.BatchNorm2d,
 ) -> _BatchedResNet:
-    """BatchEnsemble of ResNet-50 from `Deep Residual Learning for Image
-    Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
+    """BatchEnsemble of ResNet-50.
 
     Args:
         in_channels (int): Number of input channels.
         num_estimators (int): Number of estimators in the ensemble.
+        conv_bias (bool): Whether to use bias in convolutions. Defaults to
+            ``True``.
         dropout_rate (float): Dropout rate. Defaults to 0.
         groups (int): Number of groups within each estimator.
         num_classes (int): Number of classes to predict.
@@ -451,6 +476,7 @@ def batched_resnet50(
         num_classes=num_classes,
         num_estimators=num_estimators,
         width_multiplier=width_multiplier,
+        conv_bias=conv_bias,
         dropout_rate=dropout_rate,
         groups=groups,
         style=style,
@@ -463,17 +489,19 @@ def batched_resnet101(
     in_channels: int,
     num_classes: int,
     num_estimators: int,
+    conv_bias: bool = True,
     dropout_rate: float = 0,
     groups: int = 1,
-    style: str = "imagenet",
+    style: Literal["imagenet", "cifar"] = "imagenet",
     normalization_layer: nn.Module = nn.BatchNorm2d,
 ) -> _BatchedResNet:
-    """BatchEnsemble of ResNet-101 from `Deep Residual Learning for Image
-    Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
+    """BatchEnsemble of ResNet-101.
 
     Args:
         in_channels (int): Number of input channels.
         num_estimators (int): Number of estimators in the ensemble.
+        conv_bias (bool): Whether to use bias in convolutions. Defaults to
+            ``True``.
         dropout_rate (float): Dropout rate. Defaults to 0.
         groups (int): Number of groups within each estimator.
         num_classes (int): Number of classes to predict.
@@ -490,6 +518,7 @@ def batched_resnet101(
         in_channels=in_channels,
         num_classes=num_classes,
         num_estimators=num_estimators,
+        conv_bias=conv_bias,
         dropout_rate=dropout_rate,
         groups=groups,
         style=style,
@@ -502,17 +531,19 @@ def batched_resnet152(
     in_channels: int,
     num_classes: int,
     num_estimators: int,
+    conv_bias: bool = True,
     dropout_rate: float = 0,
     groups: int = 1,
-    style: str = "imagenet",
+    style: Literal["imagenet", "cifar"] = "imagenet",
     normalization_layer: nn.Module = nn.BatchNorm2d,
 ) -> _BatchedResNet:
-    """BatchEnsemble of ResNet-152 from `Deep Residual Learning for Image
-    Recognition <https://arxiv.org/pdf/1512.03385.pdf>`_.
+    """BatchEnsemble of ResNet-152.
 
     Args:
         in_channels (int): Number of input channels.
         num_estimators (int): Number of estimators in the ensemble.
+        conv_bias (bool): Whether to use bias in convolutions. Defaults to
+            ``True``.
         dropout_rate (float): Dropout rate. Defaults to 0.
         groups (int): Number of groups within each estimator.
         num_classes (int): Number of classes to predict.
@@ -529,6 +560,7 @@ def batched_resnet152(
         in_channels=in_channels,
         num_classes=num_classes,
         num_estimators=num_estimators,
+        conv_bias=conv_bias,
         dropout_rate=dropout_rate,
         groups=groups,
         style=style,

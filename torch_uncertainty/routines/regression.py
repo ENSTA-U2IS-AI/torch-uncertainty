@@ -1,4 +1,4 @@
-from argparse import ArgumentParser, Namespace
+from argparse import ArgumentParser
 from typing import Any, Literal
 
 import pytorch_lightning as pl
@@ -75,8 +75,8 @@ class RegressionSingle(pl.LightningModule):
                 compute_groups=False,
             )
 
-        self.val_metrics = reg_metrics.clone(prefix="hp/val_")
-        self.test_metrics = reg_metrics.clone(prefix="hp/test_")
+        self.val_metrics = reg_metrics.clone(prefix="reg_val/")
+        self.test_metrics = reg_metrics.clone(prefix="reg_test/")
 
     def configure_optimizers(self) -> Any:
         return self.optimization_procedure(self)
@@ -92,14 +92,6 @@ class RegressionSingle(pl.LightningModule):
         # hyperparameters for performances
         param = {}
         param["storage"] = f"{get_model_size_mb(self)} MB"
-        if self.logger is not None:  # coverage: ignore
-            self.logger.log_hyperparams(
-                Namespace(**param),
-                {
-                    "hp/val_mse": 0,
-                    "hp/val_gnll": 0,
-                },
-            )
 
     def training_step(
         self, batch: tuple[torch.Tensor, torch.Tensor], batch_idx: int

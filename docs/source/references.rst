@@ -170,6 +170,15 @@ For temperature, vector, & matrix scaling, consider citing:
 * Authors: *Chuan Guo, Geoff Pleiss, Yu Sun, and Kilian Q. Weinberger*
 * Paper: `ICML 2017 <https://arxiv.org/pdf/1706.04599.pdf>`__.
 
+Monte-Carlo Batch Normalization
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For Monte-Carlo Batch Normalization, consider citing:
+
+**Bayesian Uncertainty Estimation for Batch Normalized Deep Networks**
+
+* Authors: *Mathias Teye, Hossein Azizpour, and Kevin Smith*
+* Paper: `ICML 2018 <https://arxiv.org/pdf/1802.06455.pdf>`__.
 
 Metrics
 -------
@@ -185,6 +194,17 @@ For the expected calibration error, consider citing:
 
 * Authors: *Mahdi Pakdaman Naeini, Gregory F. Cooper, and Milos Hauskrecht*
 * Paper: `AAAI 2015 <https://www.dbmi.pitt.edu/wp-content/uploads/2022/10/Obtaining-well-calibrated-probabilities-using-Bayesian-binning.pdf>`__.
+
+Grouping Loss
+^^^^^^^^^^^^^
+
+For the grouping loss, consider citing:
+
+**Beyond Calibration: Estimating the Grouping Loss of Modern Neural Networks**
+
+* Authors: *Alexandre Perez-Lebel, Marine Le Morvan, and Gaël Varoquaux*
+* Paper: `ICLR 2023 <https://arxiv.org/pdf/2210.16315.pdf>`__.
+
 
 Datasets
 --------
@@ -282,8 +302,33 @@ Textures
 
 **ViM: Out-of-distribution with virtual-logit matching**
 
-* Authors: *Haoqi Wang, Zhizhong Li, Litong Feng, and Wayne Zhang**
+* Authors: *Haoqi Wang, Zhizhong Li, Litong Feng, and Wayne Zhang*
 * Paper: `CVPR 2022 <https://arxiv.org/pdf/2203.10807.pdf>`__.
+
+OpenImage-O
+^^^^^^^^^^^
+
+Curation:
+
+**ViM: Out-of-distribution with virtual-logit matching**
+
+* Authors: *Haoqi Wang, Zhizhong Li, Litong Feng, and Wayne Zhang*
+* Paper: `CVPR 2022 <https://arxiv.org/pdf/2203.10807.pdf>`__.
+
+Original Dataset:
+
+**The open images dataset v4: Unified image classification, object detection, and visual relationship detection at scale.**
+
+* Authors: *Alina Kuznetsova, Hassan Rom, Neil Alldrin, Jasper Uijlings, Ivan Krasin, Jordi Pont-Tuset, Shahab Kamali, et al.*
+* Paper: `IJCV 2020 <https://arxiv.org/pdf/1811.00982.pdf>`__.
+
+MUAD
+^^^^
+
+**MUAD: Multiple Uncertainties for Autonomous Driving Dataset**
+
+* Authors: Gianni Franchi, Xuanlong Yu, Andrei Bursuc, et al.*
+* Paper: `BMVC 2022 <https://arxiv.org/pdf/2203.01437.pdf>`
 
 Architectures
 -------------

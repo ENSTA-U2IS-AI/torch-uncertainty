@@ -35,3 +35,12 @@ class TestAUSE:
         assert ax.get_xlabel() == "Rejection Rate (%)"
         assert ax.get_ylabel() == "Error Rate (%)"
         plt.close(fig)
+
+        metric = AUSE()
+        metric.update(uncertainty_scores, error_values)
+        fig, ax = metric.plot(plot_oracle=False, plot_value=False)
+        assert isinstance(fig, plt.Figure)
+        assert isinstance(ax, plt.Axes)
+        assert ax.get_xlabel() == "Rejection Rate (%)"
+        assert ax.get_ylabel() == "Error Rate (%)"
+        plt.close(fig)

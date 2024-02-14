@@ -48,7 +48,7 @@ Regression
 .. ResNet50, ResNet101 and, ResNet152 (from `Deep Residual Learning for Image Recognition
 .. <https://arxiv.org/pdf/1512.03385.pdf>`_, CVPR 2016). 
 
-.. Vanilla
+.. Standard
 .. ~~~~~~~
 
 .. .. autosummary::
@@ -109,7 +109,7 @@ Regression
 .. (from `Wide Residual Networks <https://arxiv.org/pdf/1605.07146.pdf>`_, British
 .. Machine Vision Conference 2016).
 
-.. Vanilla
+.. Standard
 .. ~~~~~~~
 
 .. .. autosummary::
