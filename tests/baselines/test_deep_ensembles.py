@@ -1,4 +1,6 @@
-from torch_uncertainty.baselines.classification.deep_ensembles import DeepEnsembles
+from torch_uncertainty.baselines.classification.deep_ensembles import (
+    DeepEnsembles,
+)
 
 
 class TestDeepEnsembles:

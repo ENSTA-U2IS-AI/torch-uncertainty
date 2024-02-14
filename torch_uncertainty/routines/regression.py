@@ -1,31 +1,30 @@
-from argparse import ArgumentParser
-from typing import Any, Literal
+from typing import Literal
 
-import pytorch_lightning as pl
-import torch
 import torch.nn.functional as F
 from einops import rearrange
-from torch import nn
+from lightning.pytorch.utilities.types import STEP_OUTPUT
+from pytorch_lightning import LightningModule
+from torch import Tensor, nn
 from torchmetrics import MeanSquaredError, MetricCollection
 
 from torch_uncertainty.metrics.nll import GaussianNegativeLogLikelihood
 
 
-class RegressionSingle(pl.LightningModule):
+class RegressionRoutine(LightningModule):
     def __init__(
         self,
+        dist_estimation: int,
         model: nn.Module,
         loss: type[nn.Module],
-        optimization_procedure: Any,
-        dist_estimation: int,
-        **kwargs,
+        num_estimators: int,
+        mode: Literal["mean", "mixture"],
+        out_features: int | None = 1,
     ) -> None:
+        print("Regression is Work in progress. Raise an issue if interested.")
         super().__init__()
 
         self.model = model
         self.loss = loss
-        self.optimization_procedure = optimization_procedure
-
         # metrics
         if isinstance(dist_estimation, int):
             if dist_estimation <= 0:
@@ -68,25 +67,36 @@ class RegressionSingle(pl.LightningModule):
         self.val_metrics = reg_metrics.clone(prefix="reg_val/")
         self.test_metrics = reg_metrics.clone(prefix="reg_test/")
 
-    def configure_optimizers(self) -> Any:
-        return self.optimization_procedure(self)
+        if mode == "mixture":
+            raise NotImplementedError(
+                "Mixture of gaussians not implemented yet. Raise an issue if "
+                "needed."
+            )
+
+        self.mode = mode
+        self.num_estimators = num_estimators
+        self.out_features = out_features
+
+    def on_train_start(self) -> None:
+        # hyperparameters for performances
+        init_metrics = {k: 0 for k in self.val_metrics}
+        init_metrics.update({k: 0 for k in self.test_metrics})
+
+    def forward(self, inputs: Tensor) -> Tensor:
+        return self.model.forward(inputs)
 
     @property
     def criterion(self) -> nn.Module:
         return self.loss()
 
-    def forward(self, inputs: torch.Tensor) -> torch.Tensor:
-        return self.model.forward(inputs)
-
-    def on_train_start(self) -> None:
-        # hyperparameters for performances
-        param = {}
-        param["storage"] = f"{get_model_size_mb(self)} MB"
-
     def training_step(
-        self, batch: tuple[torch.Tensor, torch.Tensor], batch_idx: int
-    ):
+        self, batch: tuple[Tensor, Tensor], batch_idx: int
+    )-> STEP_OUTPUT:
         inputs, targets = batch
+
+        # eventual input repeat is done in the model
+        targets = targets.repeat((self.num_estimators, 1))
+
         logits = self.forward(inputs)
 
         if self.dist_estimation == 4:
@@ -106,120 +116,7 @@ class RegressionSingle(pl.LightningModule):
         return loss
 
     def validation_step(
-        self, batch: tuple[torch.Tensor, torch.Tensor], batch_idx: int
-    ) -> None:
-        inputs, targets = batch
-        logits = self.forward(inputs)
-        if self.dist_estimation == 4:
-            means = logits[..., 0]
-            alpha = 1 + F.softplus(logits[..., 2])
-            beta = F.softplus(logits[..., 3])
-            variances = beta / (alpha - 1)
-            self.val_metrics.gnll.update(means, targets, variances)
-
-            targets = targets.view(means.size())
-        elif self.dist_estimation == 2:
-            means = logits[..., 0]
-            variances = F.softplus(logits[..., 1])
-            self.val_metrics.gnll.update(means, targets, variances)
-
-            if means.ndim == 1:
-                means = means.unsqueeze(-1)
-        else:
-            means = logits.squeeze(-1)
-
-        self.val_metrics.mse.update(means, targets)
-
-    def validation_epoch_end(
-        self, outputs
-    ) -> None:
-        self.log_dict(self.val_metrics.compute())
-        self.val_metrics.reset()
-
-    def test_step(
-        self,
-        batch: tuple[torch.Tensor, torch.Tensor],
-        batch_idx: int,
-    ) -> None:
-        inputs, targets = batch
-        logits = self.forward(inputs)
-
-        if self.dist_estimation == 4:
-            means = logits[..., 0]
-            alpha = 1 + F.softplus(logits[..., 2])
-            beta = F.softplus(logits[..., 3])
-            variances = beta / (alpha - 1)
-            self.test_metrics.gnll.update(means, targets, variances)
-
-            targets = targets.view(means.size())
-        elif self.dist_estimation == 2:
-            means = logits[..., 0]
-            variances = F.softplus(logits[..., 1])
-            self.test_metrics.gnll.update(means, targets, variances)
-
-            if means.ndim == 1:
-                means = means.unsqueeze(-1)
-        else:
-            means = logits.squeeze(-1)
-
-        self.test_metrics.mse.update(means, targets)
-
-    def test_epoch_end(
-        self, outputs
-    ) -> None:
-        self.log_dict(
-            self.test_metrics.compute(),
-        )
-        self.test_metrics.reset()
-
-    @staticmethod
-    def add_model_specific_args(
-        parent_parser: ArgumentParser,
-    ) -> ArgumentParser:
-        return parent_parser
-
-
-class RegressionEnsemble(RegressionSingle):
-    def __init__(
-        self,
-        model: nn.Module,
-        loss: type[nn.Module],
-        optimization_procedure: Any,
-        dist_estimation: int,
-        num_estimators: int,
-        mode: Literal["mean", "mixture"],
-        out_features: int | None = 1,
-        **kwargs,
-    ) -> None:
-        super().__init__(
-            model=model,
-            loss=loss,
-            optimization_procedure=optimization_procedure,
-            dist_estimation=dist_estimation,
-            **kwargs,
-        )
-
-        if mode == "mixture":
-            raise NotImplementedError(
-                "Mixture of gaussians not implemented yet. Raise an issue if "
-                "needed."
-            )
-
-        self.mode = mode
-        self.num_estimators = num_estimators
-        self.out_features = out_features
-
-    def training_step(
-        self, batch: tuple[torch.Tensor, torch.Tensor], batch_idx: int
-    ):
-        inputs, targets = batch
-
-        # eventual input repeat is done in the model
-        targets = targets.repeat((self.num_estimators, 1))
-        return super().training_step((inputs, targets), batch_idx)
-
-    def validation_step(
-        self, batch: tuple[torch.Tensor, torch.Tensor], batch_idx: int
+        self, batch: tuple[Tensor, Tensor], batch_idx: int
     ) -> None:
         inputs, targets = batch
         logits = self.forward(inputs)
@@ -250,9 +147,9 @@ class RegressionEnsemble(RegressionSingle):
 
     def test_step(
         self,
-        batch: tuple[torch.Tensor, torch.Tensor],
+        batch: tuple[Tensor, Tensor],
         batch_idx: int,
-        dataloader_idx: int | None = 0,
+        dataloader_idx: int = 0,
     ) -> None:
         if dataloader_idx != 0:
             raise NotImplementedError(
@@ -287,20 +184,12 @@ class RegressionEnsemble(RegressionSingle):
 
         self.test_metrics.mse.update(means, targets)
 
-    @staticmethod
-    def add_model_specific_args(
-        parent_parser: ArgumentParser,
-    ) -> ArgumentParser:
-        """Defines the routine's attributes via command-line options.
-
-        Adds:
-        - ``--num_estimators``: sets :attr:`num_estimators`.
-        """
-        parent_parser = RegressionSingle.add_model_specific_args(parent_parser)
-        parent_parser.add_argument(
-            "--num_estimators",
-            type=int,
-            default=None,
-            help="Number of estimators for ensemble",
+    def validation_epoch_end(self, outputs) -> None:
+        self.log_dict(self.val_metrics.compute())
+        self.val_metrics.reset()
+        
+    def test_epoch_end(self, outputs) -> None:
+        self.log_dict(
+            self.test_metrics.compute(),
         )
-        return parent_parser
+        self.test_metrics.reset()
