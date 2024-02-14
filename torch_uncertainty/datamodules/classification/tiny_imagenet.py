@@ -9,9 +9,8 @@ from torch import nn
 from torch.utils.data import ConcatDataset, DataLoader
 from torchvision.datasets import DTD, SVHN
 
+from torch_uncertainty.datamodules.abstract import AbstractDataModule
 from torch_uncertainty.datasets.classification import ImageNetO, TinyImageNet
-
-from .abstract import AbstractDataModule
 
 
 class TinyImageNetDataModule(AbstractDataModule):

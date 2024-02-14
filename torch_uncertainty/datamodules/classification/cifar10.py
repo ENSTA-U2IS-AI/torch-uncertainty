@@ -9,11 +9,10 @@ from torch import nn
 from torch.utils.data import DataLoader, random_split
 from torchvision.datasets import CIFAR10, SVHN
 
+from torch_uncertainty.datamodules.abstract import AbstractDataModule
 from torch_uncertainty.datasets import AggregatedDataset
 from torch_uncertainty.datasets.classification import CIFAR10C, CIFAR10H
 from torch_uncertainty.transforms import Cutout
-
-from .abstract import AbstractDataModule
 
 
 class CIFAR10DataModule(AbstractDataModule):
