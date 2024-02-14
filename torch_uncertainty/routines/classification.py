@@ -340,18 +340,18 @@ class ClassificationRoutine(LightningModule):
             self.loss = partial(self.loss, model=self.model)
         return self.loss()
 
-    def forward(self, inputs: Tensor, return_features: bool = False) -> Tensor:
+    def forward(self, inputs: Tensor, save_feats: bool = False) -> Tensor:
         """Forward pass of the model.
 
         Args:
             inputs (Tensor): Input tensor.
-            return_features (bool, optional): Whether to store the features or
+            save_feats (bool, optional): Whether to store the features or
                 not. Defaults to ``False``.
 
         Note:
             The features are stored in the :attr:`features` attribute.
         """
-        if return_features:
+        if save_feats:
             self.features = self.model.feats_forward(inputs)
             if hasattr(self.model, "classification_head"):  # coverage: ignore
                 logits = self.model.classification_head(self.features)
@@ -423,7 +423,7 @@ class ClassificationRoutine(LightningModule):
     ) -> None:
         inputs, targets = batch
         logits = self.forward(
-            inputs, return_features=self.eval_grouping_loss
+            inputs, save_feats=self.eval_grouping_loss
         )  # (m*b, c)
         if logits.size(0) % self.num_estimators != 0:  # coverage: ignore
             raise ValueError(
