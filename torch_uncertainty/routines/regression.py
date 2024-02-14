@@ -91,7 +91,7 @@ class RegressionRoutine(LightningModule):
 
     def training_step(
         self, batch: tuple[Tensor, Tensor], batch_idx: int
-    )-> STEP_OUTPUT:
+    ) -> STEP_OUTPUT:
         inputs, targets = batch
 
         # eventual input repeat is done in the model
@@ -187,7 +187,7 @@ class RegressionRoutine(LightningModule):
     def validation_epoch_end(self, outputs) -> None:
         self.log_dict(self.val_metrics.compute())
         self.val_metrics.reset()
-        
+
     def test_epoch_end(self, outputs) -> None:
         self.log_dict(
             self.test_metrics.compute(),

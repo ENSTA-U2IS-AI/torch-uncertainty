@@ -1,4 +1,3 @@
-
 from pytorch_lightning import LightningModule
 from torch import nn
 
@@ -33,7 +32,7 @@ class DummyClassificationBaseline:
                 loss=loss,
                 format_batch_fn=nn.Identity(),
                 log_plots=True,
-                num_estimators = 1
+                num_estimators=1,
             )
         # baseline_type == "ensemble":
         return ClassificationRoutine(
@@ -42,7 +41,7 @@ class DummyClassificationBaseline:
             loss=loss,
             format_batch_fn=RepeatTarget(2),
             log_plots=True,
-            num_estimators = 2
+            num_estimators=2,
         )
 
     # @classmethod
@@ -75,7 +74,7 @@ class DummyRegressionBaseline:
                 model=model,
                 loss=loss,
                 dist_estimation=dist_estimation,
-                num_estimators=1
+                num_estimators=1,
             )
         # baseline_type == "ensemble":
         kwargs["num_estimators"] = 2
@@ -85,7 +84,7 @@ class DummyRegressionBaseline:
             dist_estimation=dist_estimation,
             mode="mean",
             out_features=out_features,
-            num_estimators=2
+            num_estimators=2,
         )
 
     # @classmethod

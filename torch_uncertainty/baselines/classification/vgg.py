@@ -149,32 +149,29 @@ class VGG(ClassificationRoutine):
 
         if version == "std":
             params |= {
-                    "dropout_rate": dropout_rate,
-                }
-            
+                "dropout_rate": dropout_rate,
+            }
+
         elif version == "mc-dropout":
             params |= {
-                    "dropout_rate": dropout_rate,
-                    "num_estimators": num_estimators,
-                }
-            
+                "dropout_rate": dropout_rate,
+                "num_estimators": num_estimators,
+            }
 
         if version in self.ensemble:
             params |= {
-                    "num_estimators": num_estimators,
-                }
-            
+                "num_estimators": num_estimators,
+            }
 
             if version != "mc-dropout":
                 format_batch_fn = RepeatTarget(num_repeats=num_estimators)
 
         if version == "packed":
             params |= {
-                    "alpha": alpha,
-                    "style": style,
-                    "gamma": gamma,
-                }
-            
+                "alpha": alpha,
+                "style": style,
+                "gamma": gamma,
+            }
 
         if version == "mc-dropout":  # std VGGs don't have `num_estimators`
             del params["num_estimators"]

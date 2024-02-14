@@ -159,23 +159,23 @@ class WideResNet(ClassificationRoutine):
 
         if version in self.ensemble:
             params |= {
-                    "num_estimators": num_estimators,
-                }
-            
+                "num_estimators": num_estimators,
+            }
+
             if version != "mc-dropout":
                 format_batch_fn = RepeatTarget(num_repeats=num_estimators)
 
         if version == "packed":
             params |= {
-                    "alpha": alpha,
-                    "gamma": gamma,
-                }
-            
+                "alpha": alpha,
+                "gamma": gamma,
+            }
+
         elif version == "masked":
             params |= {
-                    "scale": scale,
-                }
-            
+                "scale": scale,
+            }
+
         elif version == "mimo":
             format_batch_fn = MIMOBatchFormat(
                 num_estimators=num_estimators,
