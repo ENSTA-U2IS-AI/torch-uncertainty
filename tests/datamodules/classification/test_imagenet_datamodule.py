@@ -21,7 +21,9 @@ class TestImageNetDataModule:
         dm.setup()
         dm.setup("test")
 
-        path = Path(__file__).parent.resolve() / "../assets/dummy_indices.yaml"
+        path = (
+            Path(__file__).parent.resolve() / "../../assets/dummy_indices.yaml"
+        )
         dm = ImageNetDataModule(root="./data/", batch_size=128, val_split=path)
         dm.dataset = DummyClassificationDataset
         dm.ood_dataset = DummyClassificationDataset

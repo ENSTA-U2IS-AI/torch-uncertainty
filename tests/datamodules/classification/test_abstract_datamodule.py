@@ -13,7 +13,7 @@ class TestAbstractDataModule:
     """Testing the AbstractDataModule class."""
 
     def test_errors(self):
-        dm = AbstractDataModule("root", 128, 4, True, True)
+        dm = AbstractDataModule("root", 128, 0.0, 4, True, True)
         with pytest.raises(NotImplementedError):
             dm.setup()
             dm._get_train_data()
@@ -24,12 +24,14 @@ class TestCrossValDataModule:
     """Testing the CrossValDataModule class."""
 
     def test_cv_main(self):
-        dm = AbstractDataModule("root", 128, 4, True, True)
+        dm = AbstractDataModule("root", 128, 0.0, 4, True, True)
         ds = DummyClassificationDataset(Path("root"))
         dm.train = ds
         dm.val = ds
         dm.test = ds
-        cv_dm = CrossValDataModule("root", [0], [1], dm, 128, 4, True, True)
+        cv_dm = CrossValDataModule(
+            "root", [0], [1], dm, 128, 0.0, 4, True, True
+        )
 
         cv_dm.setup()
         cv_dm.setup("test")
@@ -44,12 +46,14 @@ class TestCrossValDataModule:
         cv_dm.test_dataloader()
 
     def test_errors(self):
-        dm = AbstractDataModule("root", 128, 4, True, True)
+        dm = AbstractDataModule("root", 128, 0.0, 4, True, True)
         ds = DummyClassificationDataset(Path("root"))
         dm.train = ds
         dm.val = ds
         dm.test = ds
-        cv_dm = CrossValDataModule("root", [0], [1], dm, 128, 4, True, True)
+        cv_dm = CrossValDataModule(
+            "root", [0], [1], dm, 128, 0.0, 4, True, True
+        )
         with pytest.raises(NotImplementedError):
             cv_dm.setup()
             cv_dm._get_train_data()

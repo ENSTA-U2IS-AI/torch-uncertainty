@@ -90,7 +90,7 @@ class TestCIFAR10DataModule:
             auto_augment="rand-m9-n2-mstd0.5",
         )
 
-    def test_cifar100_cv(self):
+    def test_cifar10_cv(self):
         dm = CIFAR10DataModule(root="./data/", batch_size=128)
         dm.dataset = (
             lambda root, train, download, transform: DummyClassificationDataset(
