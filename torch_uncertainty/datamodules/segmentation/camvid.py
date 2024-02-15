@@ -1,6 +1,4 @@
-from argparse import ArgumentParser
 from pathlib import Path
-from typing import Any
 
 from torchvision.transforms import v2
 
@@ -13,6 +11,7 @@ class CamVidDataModule(AbstractDataModule):
         self,
         root: str | Path,
         batch_size: int,
+        val_split: float = 0.0,
         num_workers: int = 1,
         pin_memory: bool = True,
         persistent_workers: bool = True,
@@ -20,11 +19,11 @@ class CamVidDataModule(AbstractDataModule):
         super().__init__(
             root=root,
             batch_size=batch_size,
+            val_split=val_split,
             num_workers=num_workers,
             pin_memory=pin_memory,
             persistent_workers=persistent_workers,
         )
-
         self.dataset = CamVid
 
         self.transform_train = v2.Compose(
@@ -60,15 +59,3 @@ class CamVidDataModule(AbstractDataModule):
             )
         else:
             raise ValueError(f"Stage {stage} is not supported.")
-
-    @classmethod
-    def add_argparse_args(
-        cls,
-        parent_parser: ArgumentParser,
-        **kwargs: Any,
-    ) -> ArgumentParser:
-        p = parent_parser.add_argument_group("datamodule")
-        p.add_argument("--root", type=str, default="./data/")
-        p.add_argument("--batch_size", type=int, default=128)
-        p.add_argument("--num_workers", type=int, default=4)
-        return parent_parser
