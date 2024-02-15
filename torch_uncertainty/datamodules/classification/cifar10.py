@@ -61,6 +61,7 @@ class CIFAR10DataModule(AbstractDataModule):
         super().__init__(
             root=root,
             batch_size=batch_size,
+            val_split=val_split,
             num_workers=num_workers,
             pin_memory=pin_memory,
             persistent_workers=persistent_workers,

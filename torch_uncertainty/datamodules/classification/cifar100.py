@@ -37,7 +37,6 @@ class CIFAR100DataModule(AbstractDataModule):
         num_workers: int = 1,
         pin_memory: bool = True,
         persistent_workers: bool = True,
-        **kwargs,
     ) -> None:
         """DataModule for CIFAR100.
 
@@ -61,18 +60,17 @@ class CIFAR100DataModule(AbstractDataModule):
             pin_memory (bool): Whether to pin memory. Defaults to ``True``.
             persistent_workers (bool): Whether to use persistent workers. Defaults
                 to ``True``.
-            kwargs: Additional arguments.
         """
         super().__init__(
             root=root,
             batch_size=batch_size,
+            val_split=val_split,
             num_workers=num_workers,
             pin_memory=pin_memory,
             persistent_workers=persistent_workers,
         )
 
         self.eval_ood = eval_ood
-        self.val_split = val_split
         self.num_dataloaders = num_dataloaders
 
         if test_alt == "c":

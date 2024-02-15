@@ -23,7 +23,7 @@ class TinyImageNetDataModule(AbstractDataModule):
         root: str | Path,
         batch_size: int,
         eval_ood: bool = False,
-        val_split: float | None = None,
+        val_split: float = 0.0,
         ood_ds: str = "svhn",
         rand_augment_opt: str | None = None,
         num_workers: int = 1,
@@ -33,6 +33,7 @@ class TinyImageNetDataModule(AbstractDataModule):
         super().__init__(
             root=root,
             batch_size=batch_size,
+            val_split=val_split,
             num_workers=num_workers,
             pin_memory=pin_memory,
             persistent_workers=persistent_workers,
@@ -40,7 +41,6 @@ class TinyImageNetDataModule(AbstractDataModule):
         # TODO: COMPUTE STATS
 
         self.eval_ood = eval_ood
-        self.val_split = val_split
         self.ood_ds = ood_ds
 
         self.dataset = TinyImageNet

@@ -18,10 +18,10 @@ class AbstractDataModule(LightningDataModule):
         self,
         root: str | Path,
         batch_size: int,
-        num_workers: int = 1,
-        pin_memory: bool = True,
-        persistent_workers: bool = True,
-        **kwargs,
+        val_split: float,
+        num_workers: int,
+        pin_memory: bool,
+        persistent_workers: bool,
     ) -> None:
         """Abstract DataModule class.
 
@@ -32,17 +32,16 @@ class AbstractDataModule(LightningDataModule):
         Args:
             root (str): Root directory of the datasets.
             batch_size (int): Number of samples per batch.
-            num_workers (int): Number of workers to use for data loading. Defaults
-                to ``1``.
-            pin_memory (bool): Whether to pin memory. Defaults to ``True``.
-            persistent_workers (bool): Whether to use persistent workers. Defaults
-                to ``True``.
-            kwargs (Any): Other arguments.
+            val_split (float): Share of samples to use for validation.
+            num_workers (int): Number of workers to use for data loading.
+            pin_memory (bool): Whether to pin memory.
+            persistent_workers (bool): Whether to use persistent workers.
         """
         super().__init__()
 
         self.root = Path(root)
         self.batch_size = batch_size
+        self.val_split = val_split
         self.num_workers = num_workers
 
         self.pin_memory = pin_memory
@@ -139,6 +138,7 @@ class AbstractDataModule(LightningDataModule):
                 val_idx=val_idx,
                 datamodule=self,
                 batch_size=self.batch_size,
+                val_split=self.val_split,
                 num_workers=self.num_workers,
                 pin_memory=self.pin_memory,
                 persistent_workers=self.persistent_workers,
@@ -156,18 +156,18 @@ class CrossValDataModule(AbstractDataModule):
         val_idx: ArrayLike,
         datamodule: AbstractDataModule,
         batch_size: int,
-        num_workers: int = 1,
-        pin_memory: bool = True,
-        persistent_workers: bool = True,
-        **kwargs,
+        val_split: float,
+        num_workers: int,
+        pin_memory: bool,
+        persistent_workers: bool,
     ) -> None:
         super().__init__(
-            root,
-            batch_size,
-            num_workers,
-            pin_memory,
-            persistent_workers,
-            **kwargs,
+            root=root,
+            batch_size=batch_size,
+            val_split=val_split,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            persistent_workers=persistent_workers,
         )
 
         self.train_idx = train_idx

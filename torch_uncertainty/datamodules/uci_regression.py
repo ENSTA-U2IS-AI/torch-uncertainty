@@ -23,7 +23,6 @@ class UCIDataModule(AbstractDataModule):
         persistent_workers: bool = True,
         input_shape: tuple[int, ...] | None = None,
         split_seed: int = 42,
-        **kwargs,
     ) -> None:
         """The UCI regression datasets.
 
@@ -46,17 +45,15 @@ class UCIDataModule(AbstractDataModule):
                 ``None``.
             split_seed (int, optional): The seed to use for splitting the dataset.
                 Defaults to ``42``.
-            **kwargs: Additional arguments.
         """
         super().__init__(
             root=root,
             batch_size=batch_size,
+            val_split=val_split,
             num_workers=num_workers,
             pin_memory=pin_memory,
             persistent_workers=persistent_workers,
         )
-
-        self.val_split = val_split
 
         self.dataset = partial(
             UCIRegression, dataset_name=dataset_name, seed=split_seed
