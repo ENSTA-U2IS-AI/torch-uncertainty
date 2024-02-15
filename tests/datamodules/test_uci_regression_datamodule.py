@@ -1,4 +1,3 @@
-from argparse import ArgumentParser
 from functools import partial
 
 from tests._dummies.dataset import DummyRegressionDataset
@@ -9,12 +8,9 @@ class TestUCIDataModule:
     """Testing the UCIDataModule datamodule class."""
 
     def test_uci_regression(self):
-        parser = ArgumentParser()
-        parser = UCIDataModule.add_argparse_args(parser)
-
-        args = parser.parse_args("")
-
-        dm = UCIDataModule(dataset_name="kin8nm", **vars(args))
+        dm = UCIDataModule(
+            dataset_name="kin8nm", root="./data/", batch_size=128
+        )
 
         dm.dataset = partial(DummyRegressionDataset, num_samples=64)
         dm.prepare_data()

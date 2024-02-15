@@ -1,6 +1,3 @@
-from argparse import ArgumentParser
-from pathlib import Path
-
 import pytest
 from torch import nn
 from torchvision.datasets import MNIST
@@ -14,28 +11,20 @@ class TestMNISTDataModule:
     """Testing the MNISTDataModule datamodule class."""
 
     def test_mnist_cutout(self):
-        parser = ArgumentParser()
-        parser = MNISTDataModule.add_argparse_args(parser)
-
-        # Simulate that cutout is set to 16
-        args = parser.parse_args("")
-        args.cutout = 16
-        args.val_split = 0.1
-        dm = MNISTDataModule(**vars(args))
+        dm = MNISTDataModule(
+            root="./data/", batch_size=128, cutout=16, val_split=0.1
+        )
 
         assert dm.dataset == MNIST
         assert isinstance(dm.train_transform.transforms[0], Cutout)
 
-        args.root = Path(args.root)
-        args.ood_ds = "not"
-        args.cutout = 0
-        args.val_split = 0
-        dm = MNISTDataModule(**vars(args))
+        dm = MNISTDataModule(
+            root="./data/", batch_size=128, ood_ds="not", cutout=0, val_split=0
+        )
         assert isinstance(dm.train_transform.transforms[0], nn.Identity)
 
-        args.ood_ds = "other"
         with pytest.raises(ValueError):
-            MNISTDataModule(**vars(args))
+            MNISTDataModule(root="./data/", batch_size=128, ood_ds="other")
 
         dm.dataset = DummyClassificationDataset
         dm.ood_dataset = DummyClassificationDataset

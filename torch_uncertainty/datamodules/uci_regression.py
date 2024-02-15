@@ -1,7 +1,5 @@
-from argparse import ArgumentParser
 from functools import partial
 from pathlib import Path
-from typing import Any
 
 from torch import Generator
 from torch.utils.data import random_split
@@ -96,13 +94,3 @@ class UCIDataModule(AbstractDataModule):
     #         DataLoader: UCI Regression test dataloader.
     #     """
     #     return self._data_loader(self.test)
-
-    @classmethod
-    def add_argparse_args(
-        cls,
-        parent_parser: ArgumentParser,
-        **kwargs: Any,
-    ) -> ArgumentParser:
-        super().add_argparse_args(parent_parser)
-
-        return parent_parser

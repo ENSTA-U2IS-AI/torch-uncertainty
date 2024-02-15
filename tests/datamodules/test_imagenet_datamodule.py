@@ -1,5 +1,4 @@
-import pathlib
-from argparse import ArgumentParser
+from pathlib import Path
 
 import pytest
 from torchvision.datasets import ImageNet
@@ -12,12 +11,7 @@ class TestImageNetDataModule:
     """Testing the ImageNetDataModule datamodule class."""
 
     def test_imagenet(self):
-        parser = ArgumentParser()
-        parser = ImageNetDataModule.add_argparse_args(parser)
-
-        args = parser.parse_args("")
-        args.val_split = 0.1
-        dm = ImageNetDataModule(**vars(args))
+        dm = ImageNetDataModule(root="./data/", batch_size=128, val_split=0.1)
 
         assert dm.dataset == ImageNet
 
@@ -27,11 +21,8 @@ class TestImageNetDataModule:
         dm.setup()
         dm.setup("test")
 
-        args.val_split = (
-            pathlib.Path(__file__).parent.resolve()
-            / "../assets/dummy_indices.yaml"
-        )
-        dm = ImageNetDataModule(**vars(args))
+        path = Path(__file__).parent.resolve() / "../assets/dummy_indices.yaml"
+        dm = ImageNetDataModule(root="./data/", batch_size=128, val_split=path)
         dm.dataset = DummyClassificationDataset
         dm.ood_dataset = DummyClassificationDataset
         dm.setup("fit")
@@ -55,21 +46,22 @@ class TestImageNetDataModule:
             dm.setup("other")
 
         for test_alt in ["r", "o", "a"]:
-            args.test_alt = test_alt
-            dm = ImageNetDataModule(**vars(args))
+            dm = ImageNetDataModule(
+                root="./data/", batch_size=128, test_alt=test_alt
+            )
 
         with pytest.raises(ValueError):
             dm.setup()
 
-        args.test_alt = "x"
         with pytest.raises(ValueError):
-            dm = ImageNetDataModule(**vars(args))
-
-        args.test_alt = None
+            dm = ImageNetDataModule(
+                root="./data/", batch_size=128, test_alt="x"
+            )
 
         for ood_ds in ["inaturalist", "imagenet-o", "textures", "openimage-o"]:
-            args.ood_ds = ood_ds
-            dm = ImageNetDataModule(**vars(args))
+            dm = ImageNetDataModule(
+                root="./data/", batch_size=128, ood_ds=ood_ds
+            )
             if ood_ds == "inaturalist":
                 dm.eval_ood = True
                 dm.dataset = DummyClassificationDataset
@@ -78,21 +70,23 @@ class TestImageNetDataModule:
                 dm.setup("test")
                 dm.test_dataloader()
 
-        args.ood_ds = "other"
         with pytest.raises(ValueError):
-            dm = ImageNetDataModule(**vars(args))
-
-        args.ood_ds = "svhn"
+            dm = ImageNetDataModule(
+                root="./data/", batch_size=128, ood_ds="other"
+            )
 
         for procedure in ["ViT", "A3"]:
-            args.procedure = procedure
-            dm = ImageNetDataModule(**vars(args))
+            dm = ImageNetDataModule(
+                root="./data/",
+                batch_size=128,
+                ood_ds="svhn",
+                procedure=procedure,
+            )
 
-        args.procedure = "A2"
         with pytest.raises(ValueError):
-            dm = ImageNetDataModule(**vars(args))
+            dm = ImageNetDataModule(
+                root="./data/", batch_size=128, procedure="A2"
+            )
 
-        args.procedure = None
-        args.rand_augment_opt = "rand-m9-n2-mstd0.5"
         with pytest.raises(FileNotFoundError):
             dm._verify_splits(split="test")

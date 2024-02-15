@@ -1,6 +1,3 @@
-from argparse import ArgumentParser
-from pathlib import Path
-
 import pytest
 from torchvision.datasets import CIFAR100
 
@@ -13,14 +10,7 @@ class TestCIFAR100DataModule:
     """Testing the CIFAR100DataModule datamodule class."""
 
     def test_cifar100(self):
-        parser = ArgumentParser()
-        parser = CIFAR100DataModule.add_argparse_args(parser)
-
-        # Simulate that cutout is set to 8
-        args = parser.parse_args("")
-        args.cutout = 8
-
-        dm = CIFAR100DataModule(**vars(args))
+        dm = CIFAR100DataModule(root="./data/", batch_size=128, cutout=16)
 
         assert dm.dataset == CIFAR100
         assert isinstance(dm.train_transform.transforms[2], Cutout)
@@ -41,18 +31,21 @@ class TestCIFAR100DataModule:
         dm.setup("test")
         dm.test_dataloader()
 
-        args.test_alt = "c"
-        args.cutout = 0
-        args.root = Path(args.root)
-        dm = CIFAR100DataModule(**vars(args))
+        dm = CIFAR100DataModule(
+            root="./data/", batch_size=128, cutout=0, test_alt="c"
+        )
         dm.dataset = DummyClassificationDataset
         with pytest.raises(ValueError):
             dm.setup()
 
-        args.test_alt = None
-        args.num_dataloaders = 2
-        args.val_split = 0.1
-        dm = CIFAR100DataModule(**vars(args))
+        dm = CIFAR100DataModule(
+            root="./data/",
+            batch_size=128,
+            cutout=0,
+            test_alt=None,
+            val_split=0.1,
+            num_dataloaders=2,
+        )
         dm.dataset = DummyClassificationDataset
         dm.ood_dataset = DummyClassificationDataset
         dm.ood_dataset = DummyClassificationDataset
@@ -62,27 +55,25 @@ class TestCIFAR100DataModule:
         with pytest.raises(ValueError):
             dm.setup("other")
 
-        args.num_dataloaders = 1
-        args.cutout = 8
-        args.randaugment = True
         with pytest.raises(ValueError):
-            dm = CIFAR100DataModule(**vars(args))
+            dm = CIFAR100DataModule(
+                root="./data/",
+                batch_size=128,
+                num_dataloaders=1,
+                cutout=8,
+                randaugment=True,
+            )
 
-        args.cutout = None
-        dm = CIFAR100DataModule(**vars(args))
-        args.randaugment = False
+        dm = CIFAR100DataModule(
+            root="./data/", batch_size=128, randaugment=True
+        )
 
-        args.auto_augment = "rand-m9-n2-mstd0.5"
-        dm = CIFAR100DataModule(**vars(args))
+        dm = CIFAR100DataModule(
+            root="./data/", batch_size=128, auto_augment="rand-m9-n2-mstd0.5"
+        )
 
     def test_cifar100_cv(self):
-        parser = ArgumentParser()
-        parser = CIFAR100DataModule.add_argparse_args(parser)
-
-        # Simulate that cutout is set to 8
-        args = parser.parse_args("")
-
-        dm = CIFAR100DataModule(**vars(args))
+        dm = CIFAR100DataModule(root="./data/", batch_size=128)
         dm.dataset = (
             lambda root, train, download, transform: DummyClassificationDataset(
                 root,
@@ -94,8 +85,7 @@ class TestCIFAR100DataModule:
         )
         dm.make_cross_val_splits(2, 1)
 
-        args.val_split = 0.1
-        dm = CIFAR100DataModule(**vars(args))
+        dm = CIFAR100DataModule(root="./data/", batch_size=128, val_split=0.1)
         dm.dataset = (
             lambda root, train, download, transform: DummyClassificationDataset(
                 root,

@@ -1,6 +1,5 @@
-from argparse import ArgumentParser
 from pathlib import Path
-from typing import Any, Literal
+from typing import Literal
 
 import torchvision.transforms as T
 from torch import nn
@@ -31,7 +30,6 @@ class MNISTDataModule(AbstractDataModule):
         test_alt: Literal["c"] | None = None,
         pin_memory: bool = True,
         persistent_workers: bool = True,
-        **kwargs,
     ) -> None:
         """DataModule for MNIST.
 
@@ -158,17 +156,3 @@ class MNISTDataModule(AbstractDataModule):
         if self.eval_ood:
             dataloader.append(self._data_loader(self.ood))
         return dataloader
-
-    @classmethod
-    def add_argparse_args(
-        cls,
-        parent_parser: ArgumentParser,
-        **kwargs: Any,
-    ) -> ArgumentParser:
-        p = super().add_argparse_args(parent_parser)
-
-        # Arguments for MNIST
-        p.add_argument("--eval-ood", action="store_true")
-        p.add_argument("--ood_ds", choices=cls.ood_datasets, default="fashion")
-        p.add_argument("--test_alt", choices=["c"], default=None)
-        return parent_parser

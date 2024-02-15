@@ -1,12 +1,12 @@
-from argparse import ArgumentParser
 from pathlib import Path
-from typing import Any, Literal
+from typing import Literal
 
+import numpy as np
 import torchvision.transforms as T
 from numpy.typing import ArrayLike
 from timm.data.auto_augment import rand_augment_transform
 from torch import nn
-from torch.utils.data import ConcatDataset, DataLoader
+from torch.utils.data import ConcatDataset, DataLoader, random_split
 from torchvision.datasets import DTD, SVHN
 
 from torch_uncertainty.datamodules.abstract import AbstractDataModule
@@ -23,12 +23,12 @@ class TinyImageNetDataModule(AbstractDataModule):
         root: str | Path,
         batch_size: int,
         eval_ood: bool = False,
+        val_split: float | None = None,
         ood_ds: str = "svhn",
         rand_augment_opt: str | None = None,
         num_workers: int = 1,
         pin_memory: bool = True,
         persistent_workers: bool = True,
-        **kwargs,
     ) -> None:
         super().__init__(
             root=root,
@@ -40,6 +40,7 @@ class TinyImageNetDataModule(AbstractDataModule):
         # TODO: COMPUTE STATS
 
         self.eval_ood = eval_ood
+        self.val_split = val_split
         self.ood_ds = ood_ds
 
         self.dataset = TinyImageNet
@@ -120,16 +121,26 @@ class TinyImageNetDataModule(AbstractDataModule):
 
     def setup(self, stage: Literal["fit", "test"] | None = None) -> None:
         if stage == "fit" or stage is None:
-            self.train = self.dataset(
+            full = self.dataset(
                 self.root,
                 split="train",
                 transform=self.train_transform,
             )
-            self.val = self.dataset(
-                self.root,
-                split="val",
-                transform=self.test_transform,
-            )
+            if self.val_split:
+                self.train, self.val = random_split(
+                    full,
+                    [
+                        1 - self.val_split,
+                        self.val_split,
+                    ],
+                )
+            else:
+                self.train = full
+                self.val = self.dataset(
+                    self.root,
+                    split="val",
+                    transform=self.test_transform,
+                )
         elif stage == "test":
             self.test = self.dataset(
                 self.root,
@@ -199,22 +210,11 @@ class TinyImageNetDataModule(AbstractDataModule):
         return dataloader
 
     def _get_train_data(self) -> ArrayLike:
+        if self.val_split:
+            return self.train.dataset.samples[self.train.indices]
         return self.train.samples
 
     def _get_train_targets(self) -> ArrayLike:
-        return self.train.label_data
-
-    @classmethod
-    def add_argparse_args(
-        cls,
-        parent_parser: ArgumentParser,
-        **kwargs: Any,
-    ) -> ArgumentParser:
-        p = super().add_argparse_args(parent_parser)
-
-        # Arguments for Tiny Imagenet
-        p.add_argument(
-            "--rand_augment", dest="rand_augment_opt", type=str, default=None
-        )
-        p.add_argument("--eval-ood", action="store_true")
-        return parent_parser
+        if self.val_split:
+            return np.array(self.train.dataset.label_data)[self.train.indices]
+        return np.array(self.train.label_data)

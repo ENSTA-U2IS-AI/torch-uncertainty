@@ -1,7 +1,6 @@
 import copy
-from argparse import ArgumentParser
 from pathlib import Path
-from typing import Any, Literal
+from typing import Literal
 
 import torchvision.transforms as T
 import yaml
@@ -49,7 +48,6 @@ class ImageNetDataModule(AbstractDataModule):
         num_workers: int = 1,
         pin_memory: bool = True,
         persistent_workers: bool = True,
-        **kwargs,
     ) -> None:
         """DataModule for ImageNet.
 
@@ -256,25 +254,6 @@ class ImageNetDataModule(AbstractDataModule):
         if self.eval_ood:
             dataloader.append(self._data_loader(self.ood))
         return dataloader
-
-    @classmethod
-    def add_argparse_args(
-        cls,
-        parent_parser: ArgumentParser,
-        **kwargs: Any,
-    ) -> ArgumentParser:
-        p = super().add_argparse_args(parent_parser)
-
-        # Arguments for ImageNet
-        p.add_argument("--eval-ood", action="store_true")
-        p.add_argument("--ood_ds", choices=cls.ood_datasets, default="svhn")
-        p.add_argument("--test_alt", choices=cls.test_datasets, default=None)
-        p.add_argument("--procedure", choices=["ViT", "A3"], default=None)
-        p.add_argument("--train_size", type=int, default=224)
-        p.add_argument(
-            "--rand_augment", dest="rand_augment_opt", type=str, default=None
-        )
-        return parent_parser
 
 
 def read_indices(path: Path) -> list[str]:  # coverage: ignore

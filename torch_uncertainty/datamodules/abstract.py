@@ -1,6 +1,5 @@
-from argparse import ArgumentParser
 from pathlib import Path
-from typing import Any, Literal
+from typing import Literal
 
 from lightning.pytorch.core import LightningDataModule
 from numpy.typing import ArrayLike
@@ -147,22 +146,6 @@ class AbstractDataModule(LightningDataModule):
             cv_dm.append(fold_dm)
 
         return cv_dm
-
-    @classmethod
-    def add_argparse_args(
-        cls,
-        parent_parser: ArgumentParser,
-        **kwargs: Any,
-    ) -> ArgumentParser:
-        p = parent_parser.add_argument_group("datamodule")
-        p.add_argument("--root", type=str, default="./data/")
-        p.add_argument("--batch_size", type=int, default=128)
-        p.add_argument("--val_split", type=float, default=None)
-        p.add_argument("--num_workers", type=int, default=4)
-        p.add_argument("--use_cv", action="store_true")
-        p.add_argument("--n_splits", type=int, default=10)
-        p.add_argument("--train_over", type=int, default=4)
-        return parent_parser
 
 
 class CrossValDataModule(AbstractDataModule):
