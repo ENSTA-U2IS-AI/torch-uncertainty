@@ -52,10 +52,7 @@ class ClassificationRoutine(LightningModule):
         cutmix_alpha: float = 0,
         eval_ood: bool = False,
         eval_grouping_loss: bool = False,
-        use_entropy: bool = False,
-        use_logits: bool = False,
-        use_mi: bool = False,
-        use_variation_ratio: bool = False,
+        ood_criterion: Literal["msp", "logit", "entropy", "mi", "vr"] = "msp",
         log_plots: bool = False,
         save_in_csv: bool = False,
         calibration_set: Literal["val", "test"] | None = None,
@@ -84,14 +81,11 @@ class ClassificationRoutine(LightningModule):
                 detection performance or not. Defaults to ``False``.
             eval_grouping_loss (bool, optional): Indicates whether to evaluate the
                 grouping loss or not. Defaults to ``False``.
-            use_entropy (bool, optional): Indicates whether to use the entropy
-                values as the OOD criterion or not. Defaults to ``False``.
-            use_logits (bool, optional): Indicates whether to use the logits as the
-                OOD criterion or not. Defaults to ``False``.
-            use_mi (bool, optional): Indicates whether to use the mutual
-                information as the OOD criterion or not. Defaults to ``False``.
-            use_variation_ratio (bool, optional): Indicates whether to use the
-                variation ratio as the OOD criterion or not. Defaults to ``False``.
+            ood_criterion (str, optional): OOD criterion. Defaults to ``"msp"``.
+                MSP is the maximum softmax probability, logit is the maximum
+                logit, entropy is the entropy of the mean prediction, mi is the
+                mutual information of the ensemble and vr is the variation ratio
+                of the ensemble.
             log_plots (bool, optional): Indicates whether to log plots from
                 metrics. Defaults to ``False``.
             save_in_csv(bool, optional): __TODO__
@@ -109,16 +103,19 @@ class ClassificationRoutine(LightningModule):
         if format_batch_fn is None:
             format_batch_fn = nn.Identity()
 
-        if (use_logits + use_entropy + use_mi + use_variation_ratio) > 1:
-            raise ValueError("You cannot choose more than one OOD criterion.")
-
         if not isinstance(num_estimators, int) and num_estimators < 1:
             raise ValueError(
                 "The number of estimators must be a positive integer >= 1."
                 f"Got {num_estimators}."
             )
 
-        if num_estimators == 1 and (use_mi or use_variation_ratio):
+        if ood_criterion not in ["msp", "logit", "entropy", "mi", "vr"]:
+            raise ValueError(
+                "The OOD criterion must be one of 'msp', 'logit', 'entropy',"
+                f" 'mi' or 'vr'. Got {ood_criterion}."
+            )
+
+        if num_estimators == 1 and ood_criterion in ["mi", "vr"]:
             raise ValueError(
                 "You cannot use mutual information or variation ratio with a single"
                 " model."
@@ -147,10 +144,7 @@ class ClassificationRoutine(LightningModule):
         self.num_estimators = num_estimators
         self.eval_ood = eval_ood
         self.eval_grouping_loss = eval_grouping_loss
-        self.use_logits = use_logits
-        self.use_entropy = use_entropy
-        self.use_mi = use_mi
-        self.use_variation_ratio = use_variation_ratio
+        self.ood_criterion = ood_criterion
         self.log_plots = log_plots
         self.save_in_csv = save_in_csv
         self.calibration_set = calibration_set
@@ -443,16 +437,16 @@ class ClassificationRoutine(LightningModule):
 
         confs = probs.max(-1)[0]
 
-        if self.use_logits:
+        if self.criterion == "logit":
             ood_scores = -logits.mean(dim=1).max(dim=-1)[0]
-        elif self.use_entropy:
+        elif self.criterion == "entropy":
             ood_scores = (
                 torch.special.entr(probs_per_est).sum(dim=-1).mean(dim=1)
             )
-        elif self.use_mi:
+        elif self.criterion == "mi":
             mi_metric = MutualInformation(reduction="none")
             ood_scores = mi_metric(probs_per_est)
-        elif self.use_variation_ratio:
+        elif self.criterion == "vr":
             vr_metric = VariationRatio(reduction="none", probabilistic=False)
             ood_scores = vr_metric(probs_per_est.transpose(0, 1))
         else:

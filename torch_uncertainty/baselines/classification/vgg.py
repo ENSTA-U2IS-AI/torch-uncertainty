@@ -53,14 +53,12 @@ class VGG(ClassificationRoutine):
         groups: int = 1,
         alpha: int | None = None,
         gamma: int = 1,
-        use_entropy: bool = False,
-        use_logits: bool = False,
-        use_mi: bool = False,
-        use_variation_ratio: bool = False,
+        ood_criterion: Literal["msp", "logit", "entropy", "mi", "vr"] = "msp",
         log_plots: bool = False,
         save_in_csv: bool = False,
         calibration_set: Literal["val", "test"] | None = None,
         eval_ood: bool = False,
+        eval_grouping_loss: bool = False,
     ) -> None:
         r"""VGG backbone baseline for classification providing support for
         various versions and architectures.
@@ -110,14 +108,11 @@ class VGG(ClassificationRoutine):
             gamma (int, optional): Number of groups within each estimator. Only
                 used if :attr:`version` is ``"packed"`` and scales with
                 :attr:`groups`. Defaults to ``1s``.
-            use_entropy (bool, optional): Indicates whether to use the entropy
-                values as the OOD criterion or not. Defaults to ``False``.
-            use_logits (bool, optional): Indicates whether to use the logits as the
-                OOD criterion or not. Defaults to ``False``.
-            use_mi (bool, optional): Indicates whether to use the mutual
-                information as the OOD criterion or not. Defaults to ``False``.
-            use_variation_ratio (bool, optional): Indicates whether to use the
-                variation ratio as the OOD criterion or not. Defaults to ``False``.
+            ood_criterion (str, optional): OOD criterion. Defaults to ``"msp"``.
+                MSP is the maximum softmax probability, logit is the maximum
+                logit, entropy is the entropy of the mean prediction, mi is the
+                mutual information of the ensemble and vr is the variation ratio
+                of the ensemble.
             log_plots (bool, optional): Indicates whether to log the plots or not.
                 Defaults to ``False``.
             save_in_csv (bool, optional): Indicates whether to save the results in
@@ -126,6 +121,8 @@ class VGG(ClassificationRoutine):
                 ``None``.
             eval_ood (bool, optional): Indicates whether to evaluate the
                 OOD detection or not. Defaults to ``False``.
+            eval_grouping_loss (bool, optional): Indicates whether to evaluate the
+                grouping loss or not. Defaults to ``False``.
 
         Raises:
             ValueError: If :attr:`version` is not either ``"std"``,
@@ -196,10 +193,7 @@ class VGG(ClassificationRoutine):
             mixup_alpha=mixup_alpha,
             cutmix_alpha=cutmix_alpha,
             eval_ood=eval_ood,
-            use_entropy=use_entropy,
-            use_logits=use_logits,
-            use_mi=use_mi,
-            use_variation_ratio=use_variation_ratio,
+            ood_criterion=ood_criterion,
             log_plots=log_plots,
             save_in_csv=save_in_csv,
             calibration_set=calibration_set,

@@ -90,34 +90,27 @@ class TestCIFAR10DataModule:
             auto_augment="rand-m9-n2-mstd0.5",
         )
 
-    # def test_cifar10_cv(self):
-    #     parser = ArgumentParser()
-    #     parser = CIFAR10DataModule.add_argparse_args(parser)
+    def test_cifar100_cv(self):
+        dm = CIFAR10DataModule(root="./data/", batch_size=128)
+        dm.dataset = (
+            lambda root, train, download, transform: DummyClassificationDataset(
+                root,
+                train=train,
+                download=download,
+                transform=transform,
+                num_images=20,
+            )
+        )
+        dm.make_cross_val_splits(2, 1)
 
-    #     # Simulate that cutout is set to 8
-    #     args = parser.parse_args("")
-
-    #     dm = CIFAR10DataModule(**vars(args))
-    #     dm.dataset = (
-    #         lambda root, train, download, transform: DummyClassificationDataset(
-    #             root,
-    #             train=train,
-    #             download=download,
-    #             transform=transform,
-    #             num_images=20,
-    #         )
-    #     )
-    #     dm.make_cross_val_splits(2, 1)
-
-    #     args.val_split = 0.1
-    #     dm = CIFAR10DataModule(**vars(args))
-    #     dm.dataset = (
-    #         lambda root, train, download, transform: DummyClassificationDataset(
-    #             root,
-    #             train=train,
-    #             download=download,
-    #             transform=transform,
-    #             num_images=20,
-    #         )
-    #     )
-    #     dm.make_cross_val_splits(2, 1)
+        dm = CIFAR10DataModule(root="./data/", batch_size=128, val_split=0.1)
+        dm.dataset = (
+            lambda root, train, download, transform: DummyClassificationDataset(
+                root,
+                train=train,
+                download=download,
+                transform=transform,
+                num_images=20,
+            )
+        )
+        dm.make_cross_val_splits(2, 1)

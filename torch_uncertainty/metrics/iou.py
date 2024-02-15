@@ -5,6 +5,8 @@ from torchmetrics.utilities.compute import _safe_divide
 
 
 class IntersectionOverUnion(MulticlassStatScores):
+    """Compute the Intersection over Union (IoU) score."""
+
     is_differentiable: bool = False
     higher_is_better: bool = True
     full_state_update: bool = False
@@ -27,8 +29,6 @@ class IntersectionOverUnion(MulticlassStatScores):
         super().update(preds, target)
 
     def compute(self) -> Tensor:
-        """Compute the Intersection over Union (IoU) based on inputs passed to
-        ``update``.
-        """
+        """Compute the Intersection over Union (IoU) based on saved inputs."""
         tp, fp, _, fn = self._final_state()
         return _safe_divide(tp, tp + fp + fn)
