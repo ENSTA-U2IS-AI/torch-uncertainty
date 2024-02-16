@@ -40,6 +40,7 @@ dependencies = [
     "huggingface-hub",
     "scikit-learn",
     "matplotlib",
+    "cli-test-helpers",
     "glest==0.0.1a0",
 ]
 
@@ -49,7 +50,6 @@ dev = [
     "pytest-cov",
     "pre-commit",
     "pre-commit-hooks",
-    "cli-test-helpers",
 ]
 docs = [
     "sphinx<6",
