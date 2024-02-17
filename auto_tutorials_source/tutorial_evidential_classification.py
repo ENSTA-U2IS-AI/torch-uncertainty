@@ -36,8 +36,7 @@ from torch_uncertainty.datamodules import MNISTDataModule
 # neural network utils withing torch.nn, as well as the partial util to provide
 # the modified default arguments for the DEC loss.
 #
-# We also import ArgvContext to avoid using the jupyter arguments as cli
-# arguments, and therefore avoid errors.
+# We also import sys to override the command line arguments.
 
 import os
 from functools import partial
