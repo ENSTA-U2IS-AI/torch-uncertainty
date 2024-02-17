@@ -42,15 +42,14 @@ from torch_uncertainty.routines.classification import ClassificationSingle
 # neural network utils withing torch.nn, as well as the partial util to provide
 # the modified default arguments for the ELBO loss.
 #
-# We also import ArgvContext to avoid using the jupyter arguments as cli
-# arguments, and therefore avoid errors.
+# We also import sys to override the command line arguments.
 
 import os
 from functools import partial
 from pathlib import Path
+import sys
 
 from torch import nn, optim
-from cli_test_helpers import ArgvContext
 
 # %%
 # 2. Creating the Optimizer Wrapper
@@ -79,14 +78,8 @@ def optim_lenet(model: nn.Module) -> dict:
 root = Path(os.path.abspath(""))
 
 # We mock the arguments for the trainer
-with ArgvContext(
-    "file.py",
-    "--max_epochs",
-    "1",
-    "--enable_progress_bar",
-    "False",
-):
-    args = init_args(datamodule=MNISTDataModule)
+sys.argv = ["file.py", "--max_epochs", "1", "--enable_progress_bar", "False"]
+args = init_args(datamodule=MNISTDataModule)
 
 net_name = "logs/bayesian-lenet-mnist"
 
