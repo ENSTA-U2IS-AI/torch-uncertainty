@@ -35,15 +35,14 @@ from torch_uncertainty.routines.regression import RegressionSingle
 # neural network utils withing torch.nn, as well as the partial util to provide
 # the modified default arguments for the NIG loss.
 #
-# We also import ArgvContext to avoid using the jupyter arguments as cli
-# arguments, and therefore avoid errors.
+# We also import sys to override the command line arguments.
 
 import os
+import sys
 from functools import partial
 from pathlib import Path
 
 import torch
-from cli_test_helpers import ArgvContext
 from torch import nn, optim
 
 # %%
@@ -78,15 +77,8 @@ def optim_regression(
 root = Path(os.path.abspath(""))
 
 # We mock the arguments for the trainer
-with ArgvContext(
-    "file.py",
-    "--max_epochs",
-    "50",
-    "--enable_progress_bar",
-    "False",
-):
-    args = init_args()
-    args.use_cv = False
+sys.argv = ["file.py", "--max_epochs", "50", "--enable_progress_bar", "False"]
+args = init_args()
 
 net_name = "logs/der-mlp-cubic"
 
@@ -96,7 +88,6 @@ val_ds = Cubic(num_samples=300)
 test_ds = train_ds
 
 # datamodule
-
 datamodule = LightningDataModule.from_datasets(
     train_ds, val_dataset=val_ds, test_dataset=test_ds, batch_size=32
 )

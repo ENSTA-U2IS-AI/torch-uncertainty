@@ -33,8 +33,7 @@ from torch_uncertainty.optimization_procedures import optim_cifar10_resnet18
 # %%
 # We will also need import the neural network utils withing `torch.nn`.
 #
-# We also import ArgvContext to avoid using the jupyter arguments as cli
-# arguments, and therefore avoid errors.
+# We also import sys to override the command line arguments.
 
 import os
 from pathlib import Path

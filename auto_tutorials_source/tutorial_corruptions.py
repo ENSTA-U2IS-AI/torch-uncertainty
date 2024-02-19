@@ -91,7 +91,7 @@ show_images(DefocusBlur)
 
 #%%
 # 8. JPEG Compression
-# ~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~
 from torch_uncertainty.transforms.corruptions import JPEGCompression
 
 show_images(JPEGCompression)
