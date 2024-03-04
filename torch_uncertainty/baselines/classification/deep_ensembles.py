@@ -23,7 +23,9 @@ class DeepEnsembles(ClassificationRoutine):
         backbone: Literal["resnet", "vgg", "wideresnet"],
         eval_ood: bool = False,
         eval_grouping_loss: bool = False,
-        ood_criterion: Literal["msp", "logits", "entropy", "mi", "VR"] = "msp",
+        ood_criterion: Literal[
+            "msp", "logits", "energy", "entropy", "mi", "VR"
+        ] = "msp",
         log_plots: bool = False,
         calibration_set: Literal["val", "test"] | None = None,
     ) -> None:

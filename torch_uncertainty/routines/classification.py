@@ -52,7 +52,9 @@ class ClassificationRoutine(LightningModule):
         cutmix_alpha: float = 0,
         eval_ood: bool = False,
         eval_grouping_loss: bool = False,
-        ood_criterion: Literal["msp", "logit", "entropy", "mi", "vr"] = "msp",
+        ood_criterion: Literal[
+            "msp", "logit", "energy", "entropy", "mi", "vr"
+        ] = "msp",
         log_plots: bool = False,
         save_in_csv: bool = False,
         calibration_set: Literal["val", "test"] | None = None,
@@ -83,9 +85,9 @@ class ClassificationRoutine(LightningModule):
                 grouping loss or not. Defaults to ``False``.
             ood_criterion (str, optional): OOD criterion. Defaults to ``"msp"``.
                 MSP is the maximum softmax probability, logit is the maximum
-                logit, entropy is the entropy of the mean prediction, mi is the
-                mutual information of the ensemble and vr is the variation ratio
-                of the ensemble.
+                logit, energy the logsumexp of the mean logits, entropy the
+                entropy of the mean prediction, mi is the mutual information of
+                the ensemble and vr is the variation ratio of the ensemble.
             log_plots (bool, optional): Indicates whether to log plots from
                 metrics. Defaults to ``False``.
             save_in_csv(bool, optional): __TODO__
@@ -109,9 +111,16 @@ class ClassificationRoutine(LightningModule):
                 f"Got {num_estimators}."
             )
 
-        if ood_criterion not in ["msp", "logit", "entropy", "mi", "vr"]:
+        if ood_criterion not in [
+            "msp",
+            "logit",
+            "energy",
+            "entropy",
+            "mi",
+            "vr",
+        ]:
             raise ValueError(
-                "The OOD criterion must be one of 'msp', 'logit', 'entropy',"
+                "The OOD criterion must be one of 'msp', 'logit', 'energy', 'entropy',"
                 f" 'mi' or 'vr'. Got {ood_criterion}."
             )
 
@@ -437,16 +446,18 @@ class ClassificationRoutine(LightningModule):
 
         confs = probs.max(-1)[0]
 
-        if self.criterion == "logit":
-            ood_scores = -logits.mean(dim=1).max(dim=-1)[0]
-        elif self.criterion == "entropy":
+        if self.ood_criterion == "logit":
+            ood_scores = -logits.mean(dim=1).max(dim=-1).values
+        elif self.ood_criterion == "energy":
+            ood_scores = -logits.mean(dim=1).logsumexp(dim=-1)
+        elif self.ood_criterion == "entropy":
             ood_scores = (
                 torch.special.entr(probs_per_est).sum(dim=-1).mean(dim=1)
             )
-        elif self.criterion == "mi":
+        elif self.ood_criterion == "mi":
             mi_metric = MutualInformation(reduction="none")
             ood_scores = mi_metric(probs_per_est)
-        elif self.criterion == "vr":
+        elif self.ood_criterion == "vr":
             vr_metric = VariationRatio(reduction="none", probabilistic=False)
             ood_scores = vr_metric(probs_per_est.transpose(0, 1))
         else:
