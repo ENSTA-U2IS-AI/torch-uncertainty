@@ -42,10 +42,10 @@ from torch_uncertainty.optimization_procedures import optim_cifar10_resnet18
 # We also import sys to override the command line arguments.
 
 import os
+import sys
 from pathlib import Path
 
 from torch import nn
-from cli_test_helpers import ArgvContext
 
 # %%
 # 2. Creating the necessary variables
@@ -63,20 +63,8 @@ from cli_test_helpers import ArgvContext
 root = Path(os.path.abspath(""))
 
 # We mock the arguments for the trainer
-with ArgvContext(
-    "file.py",
-    "--max_epochs",
-    "1",
-    "--enable_progress_bar",
-    "False",
-    "--dropout_rate",
-    "0.6",
-    "--num_estimators",
-    "16",
-    "--max_epochs",
-    "2"
-):
-    args = init_args(network=ResNet, datamodule=MNISTDataModule)
+sys.argv = ["file.py", "--max_epochs", "1", "--enable_progress_bar", "False", "--dropout_rate", "0.6", "--num_estimators", "16", "--max_epochs", "2"]
+args = init_args(network=ResNet, datamodule=MNISTDataModule)
 
 net_name = "logs/mc-dropout-lenet-mnist"
 
