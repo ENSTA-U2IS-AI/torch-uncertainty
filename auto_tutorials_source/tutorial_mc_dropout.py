@@ -63,7 +63,7 @@ from torch import nn
 root = Path(os.path.abspath(""))
 
 # We mock the arguments for the trainer
-sys.argv = ["file.py", "--max_epochs", "1", "--enable_progress_bar", "False", "--dropout_rate", "0.6", "--num_estimators", "16", "--max_epochs", "2"]
+sys.argv = ["file.py", "--enable_progress_bar", "False", "--dropout_rate", "0.6", "--num_estimators", "16", "--max_epochs", "2"]
 args = init_args(network=ResNet, datamodule=MNISTDataModule)
 
 net_name = "logs/mc-dropout-lenet-mnist"

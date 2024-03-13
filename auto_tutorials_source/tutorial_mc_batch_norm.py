@@ -57,7 +57,7 @@ from torch import nn
 root = Path(os.path.abspath(""))
 
 # We mock the arguments for the trainer
-sys.argv = ["file.py", "--max_epochs", "1", "--enable_progress_bar", "False", "--num_estimators", "8", "--max_epochs", "2"]
+sys.argv = ["file.py", "--enable_progress_bar", "False", "--num_estimators", "8", "--max_epochs", "2"]
 args = init_args(network=ResNet, datamodule=MNISTDataModule)
 
 net_name = "logs/lenet-mnist"
