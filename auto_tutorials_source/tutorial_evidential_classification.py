@@ -39,11 +39,11 @@ from torch_uncertainty.datamodules import MNISTDataModule
 # We also import sys to override the command line arguments.
 
 import os
+import sys
 from functools import partial
 from pathlib import Path
 
 import torch
-from cli_test_helpers import ArgvContext
 from torch import nn, optim
 
 
@@ -71,14 +71,8 @@ def optim_lenet(model: nn.Module) -> dict:
 root = Path(os.path.abspath(""))
 
 # We mock the arguments for the trainer. Replace with 25 epochs on your machine.
-with ArgvContext(
-    "file.py",
-    "--max_epochs",
-    "5",
-    "--enable_progress_bar",
-    "True",
-):
-    args = init_args(datamodule=MNISTDataModule)
+sys.argv = ["file.py", "--max_epochs", "5", "--enable_progress_bar", "True"]
+args = init_args(datamodule=MNISTDataModule)
 
 net_name = "logs/dec-lenet-mnist"
 

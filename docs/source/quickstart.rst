@@ -68,16 +68,16 @@ trains any ResNet architecture on CIFAR10:
     # model
     model = ResNet(
         num_classes=dm.num_classes,
-        in_channels=dm.in_channels,
+        in_channels=dm.num_channels,
         loss=nn.CrossEntropyLoss(),
         optimization_procedure=get_procedure(
             f"resnet{args.arch}", "cifar10", args.version
         ),
-        imagenet_structure=False,
+        style="cifar",
         **vars(args),
     )
 
-    cli_main(model, dm, root, net_name, args)
+    cli_main(model, dm, args.exp_dir, args.exp_name, args)
 
 Run this model with, for instance:
 
