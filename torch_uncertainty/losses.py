@@ -1,5 +1,5 @@
 import torch
-from torch import Tensor, nn
+from torch import Tensor, distributions, nn
 from torch.nn import functional as F
 
 from .layers.bayesian import bayesian_modules
@@ -376,3 +376,8 @@ class DECLoss(nn.Module):
         elif self.reduction == "sum":
             loss = loss.sum()
         return loss
+
+
+class DistributionNLL(nn.Module):
+    def forward(self, dist: distributions.Distribution, target: Tensor):
+        return -dist.log_prob(target).mean()

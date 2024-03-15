@@ -7,9 +7,9 @@ from torchmetrics.utilities.data import dim_zero_cat
 
 
 class NegativeLogLikelihood(Metric):
-    is_differentiable: bool = False
-    higher_is_better: bool | None = False
-    full_state_update: bool = False
+    is_differentiabled = False
+    higher_is_better = False
+    full_state_update = False
 
     def __init__(
         self,
@@ -140,3 +140,31 @@ class GaussianNegativeLogLikelihood(NegativeLogLikelihood):
                 mean, target, var, reduction="sum"
             )
             self.total += target.size(0)
+
+
+class DistributionNLL(NegativeLogLikelihood):
+    def update(
+        self, dists: torch.distributions.Distribution, target: torch.Tensor
+    ) -> None:
+        """Update state with the predicted distributions and the targets.
+
+        Args:
+            dists (torch.distributions.Distribution): Predicted distributions.
+            target (torch.Tensor): Ground truth labels.
+        """
+        if self.reduction is None or self.reduction == "none":
+            self.values.append(-dists.log_prob(target))
+        else:
+            self.values += -dists.log_prob(target).sum()
+            self.total += target.size(0)
+
+    def compute(self) -> torch.Tensor:
+        """Computes NLL based on inputs passed in to ``update`` previously."""
+        values = dim_zero_cat(self.values)
+
+        if self.reduction == "sum":
+            return values.sum(dim=-1)
+        if self.reduction == "mean":
+            return values.sum(dim=-1) / self.total
+        # reduction is None or "none"
+        return values

@@ -66,7 +66,6 @@ class ClassificationRoutine(LightningModule):
             model (nn.Module): Model to train.
             loss (type[nn.Module]): Loss function.
             num_estimators (int): _description_
-            optimization_procedure (Any): Optimization procedure.
             format_batch_fn (nn.Module, optional): Function to format the batch.
                 Defaults to :class:`torch.nn.Identity()`.
             mixtype (str, optional): Mixup type. Defaults to ``"erm"``.
