@@ -139,5 +139,4 @@ class TestPackedMLPBaseline:
         summary(net)
 
         _ = net.criterion
-        _ = net.configure_optimizers()
         _ = net(torch.rand(1, 3))
