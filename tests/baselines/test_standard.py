@@ -111,7 +111,6 @@ class TestStandardMLPBaseline:
             loss=nn.MSELoss,
             version="std",
             hidden_dims=[1],
-            dist_estimation=1,
         )
         summary(net)
 
@@ -130,5 +129,4 @@ class TestStandardMLPBaseline:
                 loss=nn.MSELoss,
                 version="test",
                 hidden_dims=[1],
-                dist_estimation=1,
             )

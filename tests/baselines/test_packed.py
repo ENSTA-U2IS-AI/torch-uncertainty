@@ -5,9 +5,6 @@ from torchinfo import summary
 
 from torch_uncertainty.baselines.classification import VGG, ResNet, WideResNet
 from torch_uncertainty.baselines.regression import MLP
-from torch_uncertainty.optimization_procedures import (
-    optim_cifar10_resnet18,
-)
 
 
 class TestPackedBaseline:
@@ -133,13 +130,11 @@ class TestPackedMLPBaseline:
             in_features=3,
             num_outputs=10,
             loss=nn.MSELoss,
-            optimization_procedure=optim_cifar10_resnet18,
             version="packed",
             hidden_dims=[1],
             num_estimators=2,
             alpha=2,
             gamma=1,
-            dist_estimation=1,
         )
         summary(net)
 
