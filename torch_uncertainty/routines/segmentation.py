@@ -3,7 +3,7 @@ from lightning.pytorch.utilities.types import STEP_OUTPUT
 from torch import Tensor, nn
 from torchmetrics import MetricCollection
 
-from torch_uncertainty.metrics import IntersectionOverUnion
+from torch_uncertainty.metrics import MeanIntersectionOverUnion
 
 
 class SegmentationRoutine(LightningModule):
@@ -11,27 +11,34 @@ class SegmentationRoutine(LightningModule):
         self,
         num_classes: int,
         model: nn.Module,
-        loss: nn.Module,
+        loss: type[nn.Module],
         num_estimators: int,
         format_batch_fn: nn.Module | None = None,
     ) -> None:
         super().__init__()
 
+        if format_batch_fn is None:
+            format_batch_fn = nn.Identity()
+
         self.num_classes = num_classes
         self.model = model
         self.loss = loss
 
-        self.metric_to_monitor = "hp/val_iou"
+        self.metric_to_monitor = "val/mean_iou"
 
         # metrics
         seg_metrics = MetricCollection(
             {
-                "iou": IntersectionOverUnion(num_classes=num_classes),
+                "mean_iou": MeanIntersectionOverUnion(num_classes=num_classes),
             }
         )
 
-        self.val_seg_metrics = seg_metrics.clone(prefix="hp/val_")
-        self.test_seg_metrics = seg_metrics.clone(prefix="hp/test_")
+        self.val_seg_metrics = seg_metrics.clone(prefix="val/")
+        self.test_seg_metrics = seg_metrics.clone(prefix="test/")
+
+    @property
+    def criterion(self) -> nn.Module:
+        return self.loss()
 
     def forward(self, img: Tensor) -> Tensor:
         return self.model(img)
@@ -47,16 +54,16 @@ class SegmentationRoutine(LightningModule):
     ) -> STEP_OUTPUT:
         img, target = batch
         pred = self.forward(img)
-        loss = self.loss(pred, target)
+        loss = self.criterion(pred, target)
         self.log("train_loss", loss)
         return loss
 
     def validation_step(
         self, batch: tuple[Tensor, Tensor], batch_idx: int
     ) -> None:
-        img, target = batch
-        pred = self.forward(img)
-        self.val_seg_metrics.update(pred, target)
+        img, targets = batch
+        logits = self.forward(img)
+        self.val_seg_metrics.update(logits, targets)
 
     def test_step(self, batch: tuple[Tensor, Tensor], batch_idx: int) -> None:
         img, target = batch
