@@ -12,7 +12,7 @@ import tu_sphinx_theme
 project = "TorchUncertainty"
 
 copyright = (  # noqa: A001
-    f"{datetime.now(datetime.UTC).year!s}, Adrien Lafage and Olivier Laurent"
+    f"{datetime.now().year!s}, Adrien Lafage and Olivier Laurent"
 )
 author = "Adrien Lafage and Olivier Laurent"
 release = "0.2.0"
