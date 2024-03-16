@@ -1,5 +1,6 @@
 import torch.nn.functional as F
-from torch import Tensor, distributions, nn
+from torch import Tensor, nn
+from torch.distributions import Distribution, Laplace, Normal
 
 
 class AbstractDistLayer(nn.Module):
@@ -9,53 +10,47 @@ class AbstractDistLayer(nn.Module):
             raise ValueError(f"dim must be positive, got {dim}.")
         self.dim = dim
 
-    def forward(self, x: Tensor) -> distributions.Distribution:
+    def forward(self, x: Tensor) -> Distribution:
         raise NotImplementedError
 
 
-class IndptNormalDistLayer(AbstractDistLayer):
+class IndptNormalLayer(AbstractDistLayer):
     def __init__(self, dim: int, min_scale: float = 1e-3) -> None:
         super().__init__(dim)
         if min_scale <= 0:
             raise ValueError(f"min_scale must be positive, got {min_scale}.")
         self.min_scale = min_scale
 
-    def forward(self, x: Tensor) -> distributions.Normal:
+    def forward(self, x: Tensor) -> Normal:
         """Forward pass of the independent normal distribution layer.
 
         Args:
             x (Tensor): The input tensor of shape (dx2).
 
         Returns:
-            distributions.Normal: The independent normal distribution.
+            Normal: The independent normal distribution.
         """
         loc = x[:, : self.dim]
         scale = F.softplus(x[:, self.dim :]) + self.min_scale
-        if self.dim == 1:
-            loc = loc.squeeze(1)
-            scale = scale.squeeze(1)
-        return distributions.Normal(loc, scale)
+        return Normal(loc, scale)
 
 
-class IndptLaplaceDistLayer(AbstractDistLayer):
+class IndptLaplaceLayer(AbstractDistLayer):
     def __init__(self, dim: int, min_scale: float = 1e-3) -> None:
         super().__init__(dim)
         if min_scale <= 0:
             raise ValueError(f"min_scale must be positive, got {min_scale}.")
         self.min_scale = min_scale
 
-    def forward(self, x: Tensor) -> distributions.Laplace:
-        """Forward pass of the independent normal distribution layer.
+    def forward(self, x: Tensor) -> Laplace:
+        """Forward pass of the independent Laplace distribution layer.
 
         Args:
             x (Tensor): The input tensor of shape (dx2).
 
         Returns:
-            distributions.Laplace: The independent Laplace distribution.
+            Laplace: The independent Laplace distribution.
         """
         loc = x[:, : self.dim]
         scale = F.softplus(x[:, self.dim :]) + self.min_scale
-        if self.dim == 1:
-            loc = loc.squeeze(1)
-            scale = scale.squeeze(1)
-        return distributions.Laplace(loc, scale)
+        return Laplace(loc, scale)
