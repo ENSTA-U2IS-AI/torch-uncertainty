@@ -134,7 +134,7 @@ class MNISTDataModule(AbstractDataModule):
                 download=False,
                 transform=self.test_transform,
             )
-        else:
+        if stage not in ["fit", "test", None]:
             raise ValueError(f"Stage {stage} is not supported.")
 
         if self.eval_ood:
