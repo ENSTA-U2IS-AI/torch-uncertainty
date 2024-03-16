@@ -4,6 +4,8 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Literal, NamedTuple
 
+import torch
+from einops import rearrange, repeat
 from PIL import Image
 from torchvision import tv_tensors
 from torchvision.datasets import VisionDataset
@@ -11,6 +13,7 @@ from torchvision.datasets.utils import (
     download_and_extract_archive,
     download_url,
 )
+from torchvision.transforms.v2 import functional as F
 
 
 class CamVidClass(NamedTuple):
@@ -61,7 +64,7 @@ class CamVid(VisionDataset):
         self,
         root: str,
         split: Literal["train", "val", "test"] | None = None,
-        transforms: Callable | None = None,
+        transform: Callable | None = None,
         download: bool = False,
     ) -> None:
         """`CamVid <http://web4.cs.ucl.ac.uk/staff/g.brostow/MotionSegRecData/>`_ Dataset.
@@ -71,7 +74,7 @@ class CamVid(VisionDataset):
                 will be saved to if download is set to ``True``.
             split (str, optional): The dataset split, supports ``train``,
                 ``val`` and ``test``. Default: ``None``.
-            transforms (callable, optional): A function/transform that takes
+            transform (callable, optional): A function/transform that takes
                 input sample and its target as entry and returns a transformed
                 version.
             download (bool, optional): If true, downloads the dataset from the
@@ -84,7 +87,7 @@ class CamVid(VisionDataset):
                 "Supported splits are ['train', 'val', 'test', None]"
             )
 
-        super().__init__(root, transforms, None, None)
+        super().__init__(root, transform, None, None)
 
         if download:
             self.download()
@@ -122,11 +125,56 @@ class CamVid(VisionDataset):
                     for path in (Path(self.root) / "camvid" / "label").glob(
                         "*.png"
                     )
-                    if path.stem in filenames
+                    if path.stem[:-2] in filenames
                 ]
             )
 
+        self.transform = transform
         self.split = split if split is not None else "all"
+
+    def encode_target(self, target: Image.Image) -> torch.Tensor:
+        """Encode target image to tensor.
+
+        Args:
+            target (Image.Image): Target image.
+
+        Returns:
+            torch.Tensor: Encoded target.
+        """
+        colored_target = F.pil_to_tensor(target)
+        colored_target = rearrange(colored_target, "c h w -> h w c")
+        target = torch.zeros_like(colored_target[..., :1])
+        # convert target color to index
+        for camvid_class in self.classes:
+            target[
+                (
+                    colored_target
+                    == torch.tensor(camvid_class.color, dtype=target.dtype)
+                ).all(dim=-1)
+            ] = camvid_class.index
+
+        return rearrange(target, "h w c -> c h w").squeeze(0)
+
+    def decode_target(self, target: torch.Tensor) -> Image.Image:
+        """Decode target tensor to image.
+
+        Args:
+            target (torch.Tensor): Target tensor.
+
+        Returns:
+            Image.Image: Decoded target.
+        """
+        colored_target = repeat(target.clone(), "h w  -> h w 3", c=3)
+
+        for camvid_class in self.classes:
+            colored_target[
+                (
+                    target
+                    == torch.tensor(camvid_class.index, dtype=target.dtype)
+                ).all(dim=0)
+            ] = torch.tensor(camvid_class.color, dtype=target.dtype)
+
+        return F.to_pil_image(rearrange(colored_target, "h w c -> c h w"))
 
     def __getitem__(self, index: int) -> tuple:
         """Get image and target at index.
@@ -138,10 +186,12 @@ class CamVid(VisionDataset):
             tuple: (image, target) where target is the segmentation mask.
         """
         image = tv_tensors.Image(Image.open(self.images[index]).convert("RGB"))
-        target = tv_tensors.Mask(Image.open(self.targets[index]))
+        target = tv_tensors.Mask(
+            self.encode_target(Image.open(self.targets[index]))
+        )
 
-        if self.transforms is not None:
-            image, target = self.transforms(image, target)
+        if self.transform is not None:
+            image, target = self.transform(image, target)
 
         return image, target
 
@@ -173,7 +223,7 @@ class CamVid(VisionDataset):
             print("Files already downloaded and verified")
             return
 
-        if Path(self.root) / self.base_folder:
+        if (Path(self.root) / self.base_folder).exists():
             shutil.rmtree(Path(self.root) / self.base_folder)
 
         download_and_extract_archive(
