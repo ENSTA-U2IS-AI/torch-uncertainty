@@ -127,7 +127,7 @@ class MNISTDataModule(AbstractDataModule):
                     download=False,
                     transform=self.test_transform,
                 )
-        elif stage == "test":
+        if stage == "test" or stage is None:
             self.test = self.dataset(
                 self.root,
                 train=False,
