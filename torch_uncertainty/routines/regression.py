@@ -21,6 +21,7 @@ class RegressionRoutine(LightningModule):
         loss: type[nn.Module],
         num_estimators: int = 1,
         format_batch_fn: nn.Module | None = None,
+        optimization_procedure=None,
     ) -> None:
         super().__init__()
 
@@ -58,6 +59,11 @@ class RegressionRoutine(LightningModule):
         self.one_dim_regression = False
         if num_outputs == 1:
             self.one_dim_regression = True
+
+        self.optimization_procedure = optimization_procedure
+
+    def configure_optimizers(self):
+        return self.optimization_procedure(self.model)
 
     def on_train_start(self) -> None:
         # hyperparameters for performances

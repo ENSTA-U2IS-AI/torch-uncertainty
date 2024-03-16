@@ -32,6 +32,27 @@ def cat_dist(distributions: list[Distribution]) -> Distribution:
     )
 
 
+def squeeze_dist(distribution: Distribution, dim: int) -> Distribution:
+    """Squeeze the distribution along a given dimension.
+
+    Args:
+        distribution (Distribution): The distribution to squeeze.
+        dim (int): The dimension to squeeze.
+
+    Returns:
+        Distribution: The squeezed distribution.
+    """
+    dist_type = type(distribution)
+    if isinstance(distribution, Normal | Laplace):
+        loc = distribution.loc.squeeze(dim)
+        scale = distribution.scale.squeeze(dim)
+        return dist_type(loc=loc, scale=scale)
+    raise NotImplementedError(
+        f"Squeezing of {dist_type} distributions is not supported."
+        "Raise an issue if needed."
+    )
+
+
 def to_ens_dist(
     distribution: Distribution, num_estimators: int = 1
 ) -> Distribution:

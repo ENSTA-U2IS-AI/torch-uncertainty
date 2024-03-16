@@ -116,13 +116,11 @@ class DummyRegressionDataModule(AbstractDataModule):
     def __init__(
         self,
         root: str | Path,
-        eval_ood: bool,
         batch_size: int,
         out_features: int = 2,
         num_workers: int = 1,
         pin_memory: bool = True,
         persistent_workers: bool = True,
-        **kwargs,
     ) -> None:
         super().__init__(
             root=root,
@@ -130,9 +128,9 @@ class DummyRegressionDataModule(AbstractDataModule):
             num_workers=num_workers,
             pin_memory=pin_memory,
             persistent_workers=persistent_workers,
+            val_split=0,
         )
 
-        self.eval_ood = eval_ood
         self.out_features = out_features
 
         self.dataset = DummyRegressionDataset
@@ -162,25 +160,6 @@ class DummyRegressionDataModule(AbstractDataModule):
                 out_features=self.out_features,
                 transform=self.test_transform,
             )
-        if self.eval_ood:
-            self.ood = self.ood_dataset(
-                self.root,
-                out_features=self.out_features,
-                transform=self.test_transform,
-            )
 
     def test_dataloader(self) -> DataLoader | list[DataLoader]:
-        dataloader = [self._data_loader(self.test)]
-        if self.eval_ood:
-            dataloader.append(self._data_loader(self.ood))
-        return dataloader
-
-    @classmethod
-    def add_argparse_args(
-        cls,
-        parent_parser: ArgumentParser,
-        **kwargs: Any,
-    ) -> ArgumentParser:
-        p = super().add_argparse_args(parent_parser)
-        p.add_argument("--eval-ood", action="store_true")
-        return parent_parser
+        return [self._data_loader(self.test)]

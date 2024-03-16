@@ -1,6 +1,10 @@
+import copy
+
 from pytorch_lightning import LightningModule
 from torch import nn
 
+from torch_uncertainty.layers.distributions import IndptNormalLayer
+from torch_uncertainty.models.deep_ensembles import deep_ensembles
 from torch_uncertainty.routines import ClassificationRoutine, RegressionRoutine
 from torch_uncertainty.transforms import RepeatTarget
 
@@ -44,52 +48,39 @@ class DummyClassificationBaseline:
             num_estimators=2,
         )
 
-    # @classmethod
-    # def add_model_specific_args(
-    #     cls,
-    #     parser: ArgumentParser,
-    # ) -> ArgumentParser:
-    #     return ClassificationEnsemble.add_model_specific_args(parser)
-
 
 class DummyRegressionBaseline:
     def __new__(
         cls,
         in_features: int,
-        out_features: int,
+        num_outputs: int,
         loss: type[nn.Module],
         baseline_type: str = "single",
-        dist_estimation: int = 1,
-        **kwargs,
+        optimization_procedure=None,
     ) -> LightningModule:
+        kwargs = {}
         model = dummy_model(
             in_channels=in_features,
-            num_classes=out_features,
-            num_estimators=1 + int(baseline_type == "ensemble"),
+            num_classes=num_outputs * 2,
+            num_estimators=1,
+            last_layer=IndptNormalLayer(num_outputs),
         )
-
         if baseline_type == "single":
             return RegressionRoutine(
-                out_features=out_features,
+                num_outputs=num_outputs * 2,
                 model=model,
                 loss=loss,
-                dist_estimation=dist_estimation,
                 num_estimators=1,
+                optimization_procedure=optimization_procedure,
             )
         # baseline_type == "ensemble":
         kwargs["num_estimators"] = 2
+        model = deep_ensembles([model, copy.deepcopy(model)], task="regression")
         return RegressionRoutine(
+            num_outputs=num_outputs * 2,
             model=model,
             loss=loss,
-            dist_estimation=dist_estimation,
-            mode="mean",
-            out_features=out_features,
             num_estimators=2,
+            optimization_procedure=optimization_procedure,
+            format_batch_fn=RepeatTarget(2),
         )
-
-    # @classmethod
-    # def add_model_specific_args(
-    #     cls,
-    #     parser: ArgumentParser,
-    # ) -> ArgumentParser:
-    #     return ClassificationEnsemble.add_model_specific_args(parser)
