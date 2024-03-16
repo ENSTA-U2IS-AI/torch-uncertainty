@@ -1,5 +1,5 @@
 # lightning.pytorch==2.1.3
-seed_everything: true
+seed_everything: false
 eval_after_fit: true
 trainer:
   accelerator: gpu
