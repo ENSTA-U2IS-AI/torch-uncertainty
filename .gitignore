@@ -8,6 +8,7 @@ docs/*/auto_tutorials/
 *.pth
 *.ckpt
 *.out
+sg_execution_times.rst
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -53,7 +53,7 @@ dev = [
     "cli-test-helpers",
 ]
 docs = [
-    "sphinx<6",
+    "sphinx<7",
     "tu_sphinx_theme",
     "sphinx-copybutton",
     "sphinx-gallery",

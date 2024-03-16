@@ -119,7 +119,7 @@ print(" ".join(f"{classes[labels[j]]:5s}" for j in range(batch_size)))
 
 # %%
 # 2. Define a Packed-Ensemble from a standard classifier
-# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 # First we define a standard classifier for CIFAR10 for reference. We will use a
 # convolutional neural network.
 
