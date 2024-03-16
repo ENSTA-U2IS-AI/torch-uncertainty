@@ -1,10 +1,14 @@
 import copy
+from typing import Literal
 
 import torch
 from torch import nn
+from torch.distributions import Distribution
+
+from torch_uncertainty.utils.distributions import cat_dist
 
 
-class _DeepEnsembles(nn.Module):
+class _ClsDeepEnsembles(nn.Module):
     def __init__(
         self,
         models: list[nn.Module],
@@ -29,15 +33,40 @@ class _DeepEnsembles(nn.Module):
         return torch.cat([model.forward(x) for model in self.models], dim=0)
 
 
+class _RegDeepEnsembles(nn.Module):
+    def __init__(
+        self,
+        models: list[nn.Module],
+    ) -> None:
+        """Create a deep ensembles from a list of models."""
+        super().__init__()
+
+        self.models = nn.ModuleList(models)
+        self.num_estimators = len(models)
+
+    def forward(self, x: torch.Tensor) -> Distribution:
+        r"""Return the logits of the ensemble.
+
+        Args:
+            x (Tensor): The input of the model.
+
+        Returns:
+            Distribution:
+        """
+        return cat_dist([model.forward(x) for model in self.models])
+
+
 def deep_ensembles(
     models: list[nn.Module] | nn.Module,
     num_estimators: int | None = None,
+    task: Literal["classification", "regression"] = "classification",
 ) -> nn.Module:
     """Build a Deep Ensembles out of the original models.
 
     Args:
         models (list[nn.Module] | nn.Module): The model to be ensembled.
         num_estimators (int | None): The number of estimators in the ensemble.
+        task (Literal["classification", "regression"]): The model task.
 
     Returns:
         nn.Module: The ensembled model.
@@ -82,4 +111,10 @@ def deep_ensembles(
             "num_estimators must be None if you provided a non-singleton list."
         )
 
-    return _DeepEnsembles(models=models)
+    if task == "classification":
+        return _ClsDeepEnsembles(models=models)
+    if task == "regression":
+        return _RegDeepEnsembles(models=models)
+    raise ValueError(
+        f"task must be either 'classification' or 'regression'. Got {task}."
+    )
