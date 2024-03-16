@@ -282,7 +282,6 @@ class ResNet(ClassificationRoutine):
                 last_layer=last_layer_dropout,
             )
 
-        model = self.versions[version][self.archs.index(arch)](**params)
         super().__init__(
             num_classes=num_classes,
             model=model,
