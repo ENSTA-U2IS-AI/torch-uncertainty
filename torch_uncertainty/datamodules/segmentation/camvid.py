@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import torch
+from torchvision import tv_tensors
 from torchvision.transforms import v2
 
 from torch_uncertainty.datamodules.abstract import AbstractDataModule
@@ -27,10 +29,34 @@ class CamVidDataModule(AbstractDataModule):
         self.dataset = CamVid
 
         self.transform_train = v2.Compose(
-            [v2.Resize((360, 480), interpolation=v2.InterpolationMode.NEAREST)]
+            [
+                v2.Resize(
+                    (360, 480), interpolation=v2.InterpolationMode.NEAREST
+                ),
+                v2.ToDtype(
+                    dtype={
+                        tv_tensors.Image: torch.float32,
+                        tv_tensors.Mask: torch.int64,
+                        "others": None,
+                    },
+                    scale=True,
+                ),
+            ]
         )
         self.transform_test = v2.Compose(
-            [v2.Resize((360, 480), interpolation=v2.InterpolationMode.NEAREST)]
+            [
+                v2.Resize(
+                    (360, 480), interpolation=v2.InterpolationMode.NEAREST
+                ),
+                v2.ToDtype(
+                    dtype={
+                        tv_tensors.Image: torch.float32,
+                        tv_tensors.Mask: torch.int64,
+                        "others": None,
+                    },
+                    scale=True,
+                ),
+            ]
         )
 
     def prepare_data(self) -> None:  # coverage: ignore
