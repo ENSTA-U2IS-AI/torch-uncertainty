@@ -1,4 +1,5 @@
 import torch
+from einops import rearrange
 from lightning.pytorch import LightningModule
 from lightning.pytorch.utilities.types import STEP_OUTPUT
 from torch import Tensor, nn
@@ -42,6 +43,10 @@ class RegressionRoutine(LightningModule):
         Warning:
             If :attr:`probabilistic` is True, the model must output a `PyTorch
             distribution <https://pytorch.org/docs/stable/distributions.html>_`.
+
+        Warning:
+            You must define :attr:`optimization_procedure` if you do not use
+            the CLI.
         """
         super().__init__()
 
@@ -100,16 +105,33 @@ class RegressionRoutine(LightningModule):
             )
 
     def forward(self, inputs: Tensor) -> Tensor:
+        """Forward pass of the routine.
+
+        The forward pass automatically squeezes the output if the regression
+        is one-dimensional and if the routine contains a single model.
+
+        Args:
+            inputs (Tensor): The input tensor.
+
+        Returns:
+            Tensor: The output tensor.
+        """
         pred = self.model(inputs)
         if self.probabilistic:
             if self.one_dim_regression:
                 pred = squeeze_dist(pred, -1)
             if self.num_estimators == 1:
                 pred = squeeze_dist(pred, -1)
+        else:
+            if self.one_dim_regression:
+                pred = pred.squeeze(-1)
+            if self.num_estimators == 1:
+                pred = pred.squeeze(-1)
         return pred
 
     @property
     def criterion(self) -> nn.Module:
+        """The loss function of the routine."""
         return self.loss()
 
     def training_step(
@@ -130,26 +152,27 @@ class RegressionRoutine(LightningModule):
         self, batch: tuple[Tensor, Tensor], batch_idx: int
     ) -> None:
         inputs, targets = batch
-        pred = self.model(inputs)
+        if self.one_dim_regression:
+            targets = targets.unsqueeze(-1)
+        preds = self.model(inputs)
 
         if self.probabilistic:
             ens_dist = Independent(
-                to_ensemble_dist(pred, num_estimators=self.num_estimators), 1
+                to_ensemble_dist(preds, num_estimators=self.num_estimators), 1
             )
             mix = Categorical(
                 torch.ones(self.num_estimators, device=self.device)
             )
             mixture = MixtureSameFamily(mix, ens_dist)
-            pred = mixture.mean
-
-        if self.one_dim_regression:
-            print("one dim")
-            targets = targets.unsqueeze(-1)
-
-        self.val_metrics.mse.update(pred, targets)
-        self.val_metrics.mae.update(pred, targets)
-        if self.probabilistic:
             self.val_metrics.nll.update(mixture, targets)
+
+            preds = mixture.mean
+        else:
+            preds = rearrange(preds, "(m b) c -> b m c", m=self.num_estimators)
+            preds = preds.mean(dim=1)
+
+        self.val_metrics.mse.update(preds, targets)
+        self.val_metrics.mae.update(preds, targets)
 
     def on_validation_epoch_end(self) -> None:
         self.log_dict(self.val_metrics.compute())
@@ -168,25 +191,28 @@ class RegressionRoutine(LightningModule):
             )
 
         inputs, targets = batch
-        pred = self.model(inputs)
+        if self.one_dim_regression:
+            targets = targets.unsqueeze(-1)
+        preds = self.model(inputs)
 
         if self.probabilistic:
             ens_dist = Independent(
-                to_ensemble_dist(pred, num_estimators=self.num_estimators), 1
+                to_ensemble_dist(preds, num_estimators=self.num_estimators), 1
             )
             mix = Categorical(
                 torch.ones(self.num_estimators, device=self.device)
             )
             mixture = MixtureSameFamily(mix, ens_dist)
-            pred = mixture.mean
-
-        if self.one_dim_regression:
-            targets = targets.unsqueeze(-1)
-
-        self.test_metrics.mse.update(pred, targets)
-        self.test_metrics.mae.update(pred, targets)
-        if self.probabilistic:
             self.test_metrics.nll.update(mixture, targets)
+
+            preds = mixture.mean
+
+        else:
+            preds = rearrange(preds, "(m b) c -> b m c", m=self.num_estimators)
+            preds = preds.mean(dim=1)
+
+        self.test_metrics.mse.update(preds, targets)
+        self.test_metrics.mae.update(preds, targets)
 
     def on_test_epoch_end(self) -> None:
         self.log_dict(

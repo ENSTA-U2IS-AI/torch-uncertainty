@@ -20,6 +20,21 @@ class TestRegression:
         dm = DummyRegressionDataModule(out_features=1, root=root, batch_size=4)
 
         model = DummyRegressionBaseline(
+            probabilistic=True,
+            in_features=dm.in_features,
+            num_outputs=1,
+            loss=DistributionNLL,
+            optimization_procedure=optim_cifar10_resnet18,
+            baseline_type="single",
+        )
+
+        trainer.fit(model, dm)
+        trainer.test(model, dm)
+
+        model(dm.get_test_set()[0][0])
+
+        model = DummyRegressionBaseline(
+            probabilistic=False,
             in_features=dm.in_features,
             num_outputs=1,
             loss=DistributionNLL,
@@ -37,6 +52,19 @@ class TestRegression:
         dm = DummyRegressionDataModule(out_features=2, root=root, batch_size=4)
 
         model = DummyRegressionBaseline(
+            probabilistic=True,
+            in_features=dm.in_features,
+            num_outputs=2,
+            loss=DistributionNLL,
+            optimization_procedure=optim_cifar10_resnet18,
+            baseline_type="single",
+        )
+
+        trainer.fit(model, dm)
+        trainer.test(model, dm)
+
+        model = DummyRegressionBaseline(
+            probabilistic=False,
             in_features=dm.in_features,
             num_outputs=2,
             loss=DistributionNLL,
@@ -54,6 +82,19 @@ class TestRegression:
         dm = DummyRegressionDataModule(out_features=1, root=root, batch_size=4)
 
         model = DummyRegressionBaseline(
+            probabilistic=True,
+            in_features=dm.in_features,
+            num_outputs=1,
+            loss=DistributionNLL,
+            optimization_procedure=optim_cifar10_resnet18,
+            baseline_type="ensemble",
+        )
+
+        trainer.fit(model, dm)
+        trainer.test(model, dm)
+
+        model = DummyRegressionBaseline(
+            probabilistic=False,
             in_features=dm.in_features,
             num_outputs=1,
             loss=DistributionNLL,
@@ -71,6 +112,19 @@ class TestRegression:
         dm = DummyRegressionDataModule(out_features=2, root=root, batch_size=4)
 
         model = DummyRegressionBaseline(
+            probabilistic=True,
+            in_features=dm.in_features,
+            num_outputs=2,
+            loss=DistributionNLL,
+            optimization_procedure=optim_cifar10_resnet18,
+            baseline_type="ensemble",
+        )
+
+        trainer.fit(model, dm)
+        trainer.test(model, dm)
+
+        model = DummyRegressionBaseline(
+            probabilistic=False,
             in_features=dm.in_features,
             num_outputs=2,
             loss=DistributionNLL,

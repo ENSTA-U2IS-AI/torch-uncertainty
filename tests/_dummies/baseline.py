@@ -52,22 +52,24 @@ class DummyClassificationBaseline:
 class DummyRegressionBaseline:
     def __new__(
         cls,
+        probabilistic: bool,
         in_features: int,
         num_outputs: int,
         loss: type[nn.Module],
         baseline_type: str = "single",
         optimization_procedure=None,
     ) -> LightningModule:
-        kwargs = {}
         model = dummy_model(
             in_channels=in_features,
-            num_classes=num_outputs * 2,
+            num_classes=num_outputs * 2 if probabilistic else num_outputs,
             num_estimators=1,
-            last_layer=IndptNormalLayer(num_outputs),
+            last_layer=IndptNormalLayer(num_outputs)
+            if probabilistic
+            else nn.Identity(),
         )
         if baseline_type == "single":
             return RegressionRoutine(
-                probabilistic=True,
+                probabilistic=probabilistic,
                 num_outputs=num_outputs,
                 model=model,
                 loss=loss,
@@ -75,10 +77,13 @@ class DummyRegressionBaseline:
                 optimization_procedure=optimization_procedure,
             )
         # baseline_type == "ensemble":
-        kwargs["num_estimators"] = 2
-        model = deep_ensembles([model, copy.deepcopy(model)], task="regression")
+        model = deep_ensembles(
+            [model, copy.deepcopy(model)],
+            task="regression",
+            probabilistic=probabilistic,
+        )
         return RegressionRoutine(
-            probabilistic=True,
+            probabilistic=probabilistic,
             num_outputs=num_outputs,
             model=model,
             loss=loss,

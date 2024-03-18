@@ -8,12 +8,12 @@ from torch.distributions import Distribution
 from torch_uncertainty.utils.distributions import cat_dist
 
 
-class _ClsDeepEnsembles(nn.Module):
+class _DeepEnsembles(nn.Module):
     def __init__(
         self,
         models: list[nn.Module],
     ) -> None:
-        """Create a deep ensembles from a list of models."""
+        """Create a classification deep ensembles from a list of models."""
         super().__init__()
 
         self.models = nn.ModuleList(models)
@@ -33,16 +33,16 @@ class _ClsDeepEnsembles(nn.Module):
         return torch.cat([model.forward(x) for model in self.models], dim=0)
 
 
-class _RegDeepEnsembles(nn.Module):
+class _RegDeepEnsembles(_DeepEnsembles):
     def __init__(
         self,
+        probabilistic: bool,
         models: list[nn.Module],
     ) -> None:
-        """Create a deep ensembles from a list of models."""
-        super().__init__()
+        """Create a regression deep ensembles from a list of models."""
+        super().__init__(models)
 
-        self.models = nn.ModuleList(models)
-        self.num_estimators = len(models)
+        self.probabilistic = probabilistic
 
     def forward(self, x: torch.Tensor) -> Distribution:
         r"""Return the logits of the ensemble.
@@ -53,13 +53,16 @@ class _RegDeepEnsembles(nn.Module):
         Returns:
             Distribution:
         """
-        return cat_dist([model.forward(x) for model in self.models])
+        if self.probabilistic:
+            return cat_dist([model.forward(x) for model in self.models], dim=0)
+        return super().forward(x)
 
 
 def deep_ensembles(
     models: list[nn.Module] | nn.Module,
     num_estimators: int | None = None,
     task: Literal["classification", "regression"] = "classification",
+    probabilistic=None,
 ) -> nn.Module:
     """Build a Deep Ensembles out of the original models.
 
@@ -67,6 +70,7 @@ def deep_ensembles(
         models (list[nn.Module] | nn.Module): The model to be ensembled.
         num_estimators (int | None): The number of estimators in the ensemble.
         task (Literal["classification", "regression"]): The model task.
+        probabilistic (bool): Whether the regression model is probabilistic.
 
     Returns:
         nn.Module: The ensembled model.
@@ -112,9 +116,11 @@ def deep_ensembles(
         )
 
     if task == "classification":
-        return _ClsDeepEnsembles(models=models)
+        return _DeepEnsembles(models=models)
     if task == "regression":
-        return _RegDeepEnsembles(models=models)
-    raise ValueError(
-        f"task must be either 'classification' or 'regression'. Got {task}."
-    )
+        if probabilistic is None:
+            raise ValueError(
+                "probabilistic must be specified for regression models."
+            )
+        return _RegDeepEnsembles(probabilistic=probabilistic, models=models)
+    raise ValueError(f"Unknown task: {task}.")

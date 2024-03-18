@@ -3,11 +3,12 @@ from einops import rearrange
 from torch.distributions import Distribution, Laplace, Normal
 
 
-def cat_dist(distributions: list[Distribution]) -> Distribution:
+def cat_dist(distributions: list[Distribution], dim: int) -> Distribution:
     r"""Concatenate a list of distributions into a single distribution.
 
     Args:
         distributions (list[Distribution]): The list of distributions.
+        dim (int): The dimension to concatenate.
 
     Returns:
         Distribution: The concatenated distributions.
@@ -20,10 +21,10 @@ def cat_dist(distributions: list[Distribution]) -> Distribution:
 
     if isinstance(distributions[0], Normal | Laplace):
         locs = torch.cat(
-            [distribution.loc for distribution in distributions], dim=0
+            [distribution.loc for distribution in distributions], dim=dim
         )
         scales = torch.cat(
-            [distribution.scale for distribution in distributions], dim=0
+            [distribution.scale for distribution in distributions], dim=dim
         )
         return dist_type(loc=locs, scale=scales)
     raise NotImplementedError(
