@@ -3,7 +3,10 @@ import copy
 from pytorch_lightning import LightningModule
 from torch import nn
 
-from torch_uncertainty.layers.distributions import IndptNormalLayer
+from torch_uncertainty.layers.distributions import (
+    IndptLaplaceLayer,
+    IndptNormalLayer,
+)
 from torch_uncertainty.models.deep_ensembles import deep_ensembles
 from torch_uncertainty.routines import ClassificationRoutine, RegressionRoutine
 from torch_uncertainty.transforms import RepeatTarget
@@ -58,12 +61,17 @@ class DummyRegressionBaseline:
         loss: type[nn.Module],
         baseline_type: str = "single",
         optimization_procedure=None,
+        dist_type: str = "normal",
     ) -> LightningModule:
         model = dummy_model(
             in_channels=in_features,
             num_classes=num_outputs * 2 if probabilistic else num_outputs,
             num_estimators=1,
-            last_layer=IndptNormalLayer(num_outputs)
+            last_layer=(
+                IndptNormalLayer(num_outputs)
+                if dist_type == "normal"
+                else IndptLaplaceLayer(num_outputs)
+            )
             if probabilistic
             else nn.Identity(),
         )

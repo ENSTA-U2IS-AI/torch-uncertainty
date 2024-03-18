@@ -29,8 +29,8 @@ class TestRegression:
         )
 
         trainer.fit(model, dm)
+        trainer.validate(model, dm)
         trainer.test(model, dm)
-
         model(dm.get_test_set()[0][0])
 
         model = DummyRegressionBaseline(
@@ -43,7 +43,9 @@ class TestRegression:
         )
 
         trainer.fit(model, dm)
+        trainer.validate(model, dm)
         trainer.test(model, dm)
+        model(dm.get_test_set()[0][0])
 
     def test_one_estimator_two_outputs(self):
         trainer = Trainer(accelerator="cpu", fast_dev_run=True)
@@ -58,10 +60,11 @@ class TestRegression:
             loss=DistributionNLL,
             optimization_procedure=optim_cifar10_resnet18,
             baseline_type="single",
+            dist_type="laplace",
         )
-
         trainer.fit(model, dm)
         trainer.test(model, dm)
+        model(dm.get_test_set()[0][0])
 
         model = DummyRegressionBaseline(
             probabilistic=False,
@@ -71,9 +74,9 @@ class TestRegression:
             optimization_procedure=optim_cifar10_resnet18,
             baseline_type="single",
         )
-
         trainer.fit(model, dm)
         trainer.test(model, dm)
+        model(dm.get_test_set()[0][0])
 
     def test_two_estimators_one_output(self):
         trainer = Trainer(accelerator="cpu", fast_dev_run=True)
@@ -88,10 +91,11 @@ class TestRegression:
             loss=DistributionNLL,
             optimization_procedure=optim_cifar10_resnet18,
             baseline_type="ensemble",
+            dist_type="laplace",
         )
-
         trainer.fit(model, dm)
         trainer.test(model, dm)
+        model(dm.get_test_set()[0][0])
 
         model = DummyRegressionBaseline(
             probabilistic=False,
@@ -101,9 +105,9 @@ class TestRegression:
             optimization_procedure=optim_cifar10_resnet18,
             baseline_type="ensemble",
         )
-
         trainer.fit(model, dm)
         trainer.test(model, dm)
+        model(dm.get_test_set()[0][0])
 
     def test_two_estimators_two_outputs(self):
         trainer = Trainer(accelerator="cpu", fast_dev_run=True)
@@ -119,9 +123,10 @@ class TestRegression:
             optimization_procedure=optim_cifar10_resnet18,
             baseline_type="ensemble",
         )
-
         trainer.fit(model, dm)
+        trainer.validate(model, dm)
         trainer.test(model, dm)
+        model(dm.get_test_set()[0][0])
 
         model = DummyRegressionBaseline(
             probabilistic=False,
@@ -131,9 +136,10 @@ class TestRegression:
             optimization_procedure=optim_cifar10_resnet18,
             baseline_type="ensemble",
         )
-
         trainer.fit(model, dm)
+        trainer.validate(model, dm)
         trainer.test(model, dm)
+        model(dm.get_test_set()[0][0])
 
     def test_regression_failures(self):
         with pytest.raises(ValueError):
