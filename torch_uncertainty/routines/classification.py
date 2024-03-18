@@ -41,7 +41,7 @@ class ClassificationRoutine(LightningModule):
         num_classes: int,
         model: nn.Module,
         loss: type[nn.Module],
-        num_estimators: int,
+        num_estimators: int = 1,
         format_batch_fn: nn.Module | None = None,
         optimization_procedure=None,
         mixtype: str = "erm",
@@ -66,7 +66,8 @@ class ClassificationRoutine(LightningModule):
             num_classes (int): Number of classes.
             model (nn.Module): Model to train.
             loss (type[nn.Module]): Loss function.
-            num_estimators (int): _description_
+            num_estimators (int, optional): Number of estimators for the
+                ensemble. Defaults to 1.
             format_batch_fn (nn.Module, optional): Function to format the batch.
                 Defaults to :class:`torch.nn.Identity()`.
             optimization_procedure (optional): Training recipe. Defaults to None.
