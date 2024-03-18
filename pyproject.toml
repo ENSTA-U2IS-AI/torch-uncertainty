@@ -50,7 +50,6 @@ dev = [
     "pytest-cov",
     "pre-commit",
     "pre-commit-hooks",
-    "cli-test-helpers",
 ]
 docs = [
     "sphinx<7",
