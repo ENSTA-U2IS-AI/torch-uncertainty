@@ -1,3 +1,4 @@
+import copy
 from pathlib import Path
 from typing import Literal
 
@@ -24,7 +25,7 @@ class MNISTDataModule(AbstractDataModule):
         batch_size: int,
         eval_ood: bool = False,
         ood_ds: Literal["fashion", "not"] = "fashion",
-        val_split: float = 0.0,
+        val_split: float | None = None,
         num_workers: int = 1,
         cutout: int | None = None,
         test_alt: Literal["c"] | None = None,
@@ -112,13 +113,16 @@ class MNISTDataModule(AbstractDataModule):
                 transform=self.train_transform,
             )
             if self.val_split:
-                self.train, self.val = random_split(
+                self.train, val = random_split(
                     full,
                     [
                         1 - self.val_split,
                         self.val_split,
                     ],
                 )
+                # FIXME: memory cost issues might arise here
+                self.val = copy.deepcopy(val)
+                self.val.dataset.transform = self.test_transform
             else:
                 self.train = full
                 self.val = self.dataset(

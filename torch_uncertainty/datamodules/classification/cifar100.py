@@ -1,3 +1,4 @@
+import copy
 from pathlib import Path
 from typing import Literal
 
@@ -27,7 +28,7 @@ class CIFAR100DataModule(AbstractDataModule):
         root: str | Path,
         batch_size: int,
         eval_ood: bool = False,
-        val_split: float = 0.0,
+        val_split: float | None = None,
         cutout: int | None = None,
         randaugment: bool = False,
         auto_augment: str | None = None,
@@ -148,13 +149,16 @@ class CIFAR100DataModule(AbstractDataModule):
                 transform=self.train_transform,
             )
             if self.val_split:
-                self.train, self.val = random_split(
+                self.train, val = random_split(
                     full,
                     [
                         1 - self.val_split,
                         self.val_split,
                     ],
                 )
+                # FIXME: memory cost issues might arise here
+                self.val = copy.deepcopy(val)
+                self.val.dataset.transform = self.test_transform
             else:
                 self.train = full
                 self.val = self.dataset(

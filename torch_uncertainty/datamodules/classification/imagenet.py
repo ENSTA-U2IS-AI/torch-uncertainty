@@ -202,13 +202,16 @@ class ImageNetDataModule(AbstractDataModule):
                 transform=self.train_transform,
             )
             if self.val_split and isinstance(self.val_split, float):
-                self.train, self.val = random_split(
+                self.train, val = random_split(
                     full,
                     [
                         1 - self.val_split,
                         self.val_split,
                     ],
                 )
+                # FIXME: memory cost issues might arise here
+                self.val = copy.deepcopy(val)
+                self.val.dataset.transform = self.test_transform
             elif isinstance(self.val_split, Path):
                 self.train = Subset(full, self.train_indices)
                 # TODO: improve the performance

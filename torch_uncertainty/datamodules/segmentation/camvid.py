@@ -13,7 +13,7 @@ class CamVidDataModule(AbstractDataModule):
         self,
         root: str | Path,
         batch_size: int,
-        val_split: float = 0.0,  # FIXME: not used for now
+        val_split: float | None = None,  # FIXME: not used for now
         num_workers: int = 1,
         pin_memory: bool = True,
         persistent_workers: bool = True,
