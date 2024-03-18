@@ -1,5 +1,6 @@
 from typing import Literal
 
+from einops import rearrange
 from torch import Tensor, nn
 from torchvision.transforms.v2 import functional as F
 
@@ -87,7 +88,10 @@ class SegFormer(SegmentationRoutine):
         target = F.resize(
             target, logits.shape[-2:], interpolation=F.InterpolationMode.NEAREST
         )
-        loss = self.criterion(logits, target)
+        logits = rearrange(logits, "b c h w -> (b h w) c")
+        target = target.flatten()
+        valid_mask = target != 255
+        loss = self.criterion(logits[valid_mask], target[valid_mask])
         self.log("train_loss", loss)
         return loss
 
@@ -99,7 +103,10 @@ class SegFormer(SegmentationRoutine):
         target = F.resize(
             target, logits.shape[-2:], interpolation=F.InterpolationMode.NEAREST
         )
-        self.val_seg_metrics.update(logits, target)
+        logits = rearrange(logits, "b c h w -> (b h w) c")
+        target = target.flatten()
+        valid_mask = target != 255
+        self.val_seg_metrics.update(logits[valid_mask], target[valid_mask])
 
     def test_step(self, batch: tuple[Tensor, Tensor], batch_idx: int) -> None:
         img, target = batch
@@ -107,4 +114,7 @@ class SegFormer(SegmentationRoutine):
         target = F.resize(
             target, logits.shape[-2:], interpolation=F.InterpolationMode.NEAREST
         )
-        self.test_seg_metrics.update(logits, target)
+        logits = rearrange(logits, "b c h w -> (b h w) c")
+        target = target.flatten()
+        valid_mask = target != 255
+        self.test_seg_metrics.update(logits[valid_mask], target[valid_mask])

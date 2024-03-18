@@ -1,7 +1,8 @@
+from einops import rearrange
 from lightning.pytorch import LightningModule
 from lightning.pytorch.utilities.types import STEP_OUTPUT
 from torch import Tensor, nn
-from torchmetrics import MetricCollection
+from torchmetrics import Accuracy, MetricCollection
 
 from torch_uncertainty.metrics import MeanIntersectionOverUnion
 
@@ -29,8 +30,10 @@ class SegmentationRoutine(LightningModule):
         # metrics
         seg_metrics = MetricCollection(
             {
+                "acc": Accuracy(task="multiclass", num_classes=num_classes),
                 "mean_iou": MeanIntersectionOverUnion(num_classes=num_classes),
-            }
+            },
+            compute_groups=[["acc", "mean_iou"]],
         )
 
         self.val_seg_metrics = seg_metrics.clone(prefix="val/")
@@ -53,22 +56,32 @@ class SegmentationRoutine(LightningModule):
         self, batch: tuple[Tensor, Tensor], batch_idx: int
     ) -> STEP_OUTPUT:
         img, target = batch
-        pred = self.forward(img)
-        loss = self.criterion(pred, target)
+        logits = self.forward(img)
+        logits = rearrange(logits, "b c h w -> (b h w) c")
+        target = target.flatten()
+        valid_mask = target != 255
+        loss = self.criterion(logits[valid_mask], target[valid_mask])
         self.log("train_loss", loss)
         return loss
 
     def validation_step(
         self, batch: tuple[Tensor, Tensor], batch_idx: int
     ) -> None:
-        img, targets = batch
+        img, target = batch
+        # (B, num_classes, H, W)
         logits = self.forward(img)
-        self.val_seg_metrics.update(logits, targets)
+        logits = rearrange(logits, "b c h w -> (b h w) c")
+        target = target.flatten()
+        valid_mask = target != 255
+        self.val_seg_metrics.update(logits[valid_mask], target[valid_mask])
 
     def test_step(self, batch: tuple[Tensor, Tensor], batch_idx: int) -> None:
         img, target = batch
-        pred = self.forward(img)
-        self.test_seg_metrics.update(pred, target)
+        logits = self.forward(img)
+        logits = rearrange(logits, "b c h w -> (b h w) c")
+        target = target.flatten()
+        valid_mask = target != 255
+        self.test_seg_metrics.update(logits[valid_mask], target[valid_mask])
 
     def on_validation_epoch_end(self) -> None:
         self.log_dict(self.val_seg_metrics.compute())

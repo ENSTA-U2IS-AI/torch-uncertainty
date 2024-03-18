@@ -13,7 +13,7 @@ class CamVidDataModule(AbstractDataModule):
         self,
         root: str | Path,
         batch_size: int,
-        val_split: float = 0.0,
+        val_split: float = 0.0,  # FIXME: not used for now
         num_workers: int = 1,
         pin_memory: bool = True,
         persistent_workers: bool = True,
@@ -28,7 +28,7 @@ class CamVidDataModule(AbstractDataModule):
         )
         self.dataset = CamVid
 
-        self.transform_train = v2.Compose(
+        self.train_transform = v2.Compose(
             [
                 v2.Resize(
                     (360, 480), interpolation=v2.InterpolationMode.NEAREST
@@ -43,7 +43,7 @@ class CamVidDataModule(AbstractDataModule):
                 ),
             ]
         )
-        self.transform_test = v2.Compose(
+        self.test_transform = v2.Compose(
             [
                 v2.Resize(
                     (360, 480), interpolation=v2.InterpolationMode.NEAREST
@@ -68,20 +68,21 @@ class CamVidDataModule(AbstractDataModule):
                 root=self.root,
                 split="train",
                 download=False,
-                transform=self.transform_train,
+                transforms=self.train_transform,
             )
             self.val = self.dataset(
                 root=self.root,
                 split="val",
                 download=False,
-                transform=self.transform_test,
+                transforms=self.test_transform,
             )
-        elif stage == "test":
+        if stage == "test" or stage is None:
             self.test = self.dataset(
                 root=self.root,
                 split="test",
                 download=False,
-                transform=self.transform_test,
+                transforms=self.test_transform,
             )
-        else:
+
+        if stage not in ["fit", "test", None]:
             raise ValueError(f"Stage {stage} is not supported.")

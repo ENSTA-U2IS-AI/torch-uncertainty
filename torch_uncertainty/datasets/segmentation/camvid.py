@@ -64,7 +64,7 @@ class CamVid(VisionDataset):
         self,
         root: str,
         split: Literal["train", "val", "test"] | None = None,
-        transform: Callable | None = None,
+        transforms: Callable | None = None,
         download: bool = False,
     ) -> None:
         """`CamVid <http://web4.cs.ucl.ac.uk/staff/g.brostow/MotionSegRecData/>`_ Dataset.
@@ -74,9 +74,9 @@ class CamVid(VisionDataset):
                 will be saved to if download is set to ``True``.
             split (str, optional): The dataset split, supports ``train``,
                 ``val`` and ``test``. Default: ``None``.
-            transform (callable, optional): A function/transform that takes
+            transforms (callable, optional): A function/transform that takes
                 input sample and its target as entry and returns a transformed
-                version.
+                version. Default: ``None``.
             download (bool, optional): If true, downloads the dataset from the
                 internet and puts it in root directory. If dataset is already
                 downloaded, it is not downloaded again.
@@ -87,7 +87,7 @@ class CamVid(VisionDataset):
                 "Supported splits are ['train', 'val', 'test', None]"
             )
 
-        super().__init__(root, transform, None, None)
+        super().__init__(root, transforms, None, None)
 
         if download:
             self.download()
@@ -129,14 +129,14 @@ class CamVid(VisionDataset):
                 ]
             )
 
-        self.transform = transform
+        # self.transforms = transforms
         self.split = split if split is not None else "all"
 
     def encode_target(self, target: Image.Image) -> torch.Tensor:
         """Encode target image to tensor.
 
         Args:
-            target (Image.Image): Target image.
+            target (Image.Image): Target PIL image.
 
         Returns:
             torch.Tensor: Encoded target.
@@ -146,12 +146,13 @@ class CamVid(VisionDataset):
         target = torch.zeros_like(colored_target[..., :1])
         # convert target color to index
         for camvid_class in self.classes:
+            index = camvid_class.index if camvid_class.index != 12 else 255
             target[
                 (
                     colored_target
                     == torch.tensor(camvid_class.color, dtype=target.dtype)
                 ).all(dim=-1)
-            ] = camvid_class.index
+            ] = index
 
         return rearrange(target, "h w c -> c h w").squeeze(0)
 
@@ -162,7 +163,7 @@ class CamVid(VisionDataset):
             target (torch.Tensor): Target tensor.
 
         Returns:
-            Image.Image: Decoded target.
+            Image.Image: Decoded target as a PIL.Image.
         """
         colored_target = repeat(target.clone(), "h w  -> h w 3", c=3)
 
@@ -176,22 +177,24 @@ class CamVid(VisionDataset):
 
         return F.to_pil_image(rearrange(colored_target, "h w c -> c h w"))
 
-    def __getitem__(self, index: int) -> tuple:
-        """Get image and target at index.
+    def __getitem__(
+        self, index: int
+    ) -> tuple[tv_tensors.Image, tv_tensors.Mask]:
+        """Get the image and target at the given index.
 
         Args:
-            index (int): Index
+            index (int): Sample index.
 
         Returns:
-            tuple: (image, target) where target is the segmentation mask.
+            tuple[tv_tensors.Image, tv_tensors.Mask]: Image and target.
         """
         image = tv_tensors.Image(Image.open(self.images[index]).convert("RGB"))
         target = tv_tensors.Mask(
             self.encode_target(Image.open(self.targets[index]))
         )
 
-        if self.transform is not None:
-            image, target = self.transform(image, target)
+        if self.transforms is not None:
+            image, target = self.transforms(image, target)
 
         return image, target
 
@@ -247,8 +250,3 @@ class CamVid(VisionDataset):
             filename="splits.json",
             md5=self.splits_md5,
         )
-
-
-if __name__ == "__main__":
-    dataset = CamVid("data", split=None, download=True)
-    print(dataset)
