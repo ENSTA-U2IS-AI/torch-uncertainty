@@ -16,36 +16,28 @@ In this part, we train a neural network, based on the model and routines already
 
 To train a LeNet with the DEC loss function using TorchUncertainty, we have to load the following utilities from TorchUncertainty:
 
-- the cli handler: cli_main and argument parser: init_args
+- the Trainer from Lightning
 - the model: LeNet, which lies in torch_uncertainty.models
-- the classification training routine in the torch_uncertainty.training.classification module
-- the evidential objective: the DECLoss, which lies in the torch_uncertainty.losses file
-- the datamodule that handles dataloaders: MNISTDataModule, which lies in the torch_uncertainty.datamodule
+- the classification training routine in the torch_uncertainty.routines
+- the evidential objective: the DECLoss from torch_uncertainty.losses
+- the datamodule that handles dataloaders & transforms: MNISTDataModule from torch_uncertainty.datamodules
+
+We also need to define an optimizer using torch.optim, the neural network utils within torch.nn, as well as the partial util to provide
+the modified default arguments for the DEC loss.
 """
 
 # %%
-from torch_uncertainty import cli_main, init_args
-from torch_uncertainty.models.lenet import lenet
-from torch_uncertainty.routines.classification import ClassificationSingle
-from torch_uncertainty.losses import DECLoss
-from torch_uncertainty.datamodules import MNISTDataModule
-
-
-# %%
-# We also need to define an optimizer using torch.optim as well as the
-# neural network utils withing torch.nn, as well as the partial util to provide
-# the modified default arguments for the DEC loss.
-#
-# We also import sys to override the command line arguments.
-
-import os
-import sys
 from functools import partial
 from pathlib import Path
 
 import torch
+from lightning.pytorch import Trainer
 from torch import nn, optim
 
+from torch_uncertainty.datamodules import MNISTDataModule
+from torch_uncertainty.losses import DECLoss
+from torch_uncertainty.models.lenet import lenet
+from torch_uncertainty.routines import ClassificationRoutine
 
 # %%
 # 2. Creating the Optimizer Wrapper
@@ -59,7 +51,6 @@ def optim_lenet(model: nn.Module) -> dict:
     )
     return {"optimizer": optimizer, "lr_scheduler": exp_lr_scheduler}
 
-
 # %%
 # 3. Creating the necessary variables
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -68,22 +59,15 @@ def optim_lenet(model: nn.Module) -> dict:
 # fake-parse the arguments needed for using the PyTorch Lightning Trainer. We
 # also use the same MNIST classification example as that used in the
 # original DEC paper. We only train for 5 epochs for the sake of time.
-root = Path(os.path.abspath(""))
-
-# We mock the arguments for the trainer. Replace with 25 epochs on your machine.
-sys.argv = ["file.py", "--max_epochs", "5", "--enable_progress_bar", "True"]
-args = init_args(datamodule=MNISTDataModule)
-
-net_name = "logs/dec-lenet-mnist"
+trainer = Trainer(accelerator="cpu", max_epochs=5, enable_progress_bar=False)
 
 # datamodule
-args.root = str(root / "data")
-dm = MNISTDataModule(**vars(args))
-
+root = Path() / "data"
+datamodule = MNISTDataModule(root=root, batch_size=128)
 
 model = lenet(
-    in_channels=dm.num_channels,
-    num_classes=dm.num_classes,
+    in_channels=datamodule.num_channels,
+    num_classes=datamodule.num_classes,
 )
 
 # %%
@@ -102,20 +86,19 @@ loss = partial(
     reg_weight=1e-2,
 )
 
-baseline = ClassificationSingle(
+routine = ClassificationRoutine(
     model=model,
-    num_classes=dm.num_classes,
-    in_channels=dm.num_channels,
+    num_classes=datamodule.num_classes,
     loss=loss,
     optimization_procedure=optim_lenet,
-    **vars(args),
 )
 
 # %%
 # 5. Gathering Everything and Training the Model
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-results = cli_main(baseline, dm, root, net_name, args)
+trainer.fit(model=routine, datamodule=datamodule)
+trainer.test(model=routine, datamodule=datamodule)
 
 # %%
 # 6. Testing the Model
@@ -123,11 +106,9 @@ results = cli_main(baseline, dm, root, net_name, args)
 # Now that the model is trained, let's test it on MNIST.
 
 import matplotlib.pyplot as plt
-import torch
+import numpy as np
 import torchvision
 import torchvision.transforms.functional as F
-
-import numpy as np
 
 
 def imshow(img) -> None:
@@ -148,7 +129,7 @@ def rotated_mnist(angle: int) -> None:
     imshow(torchvision.utils.make_grid(rotated_images[:4, ...]))
     print("Ground truth: ", " ".join(f"{labels[j]}" for j in range(4)))
 
-    evidence = baseline(rotated_images)
+    evidence = routine(rotated_images)
     alpha = torch.relu(evidence) + 1
     strength = torch.sum(alpha, dim=1, keepdim=True)
     probs = alpha / strength
@@ -161,15 +142,14 @@ def rotated_mnist(angle: int) -> None:
         )
 
 
-dataiter = iter(dm.val_dataloader())
+dataiter = iter(datamodule.val_dataloader())
 images, labels = next(dataiter)
 
 with torch.no_grad():
-    baseline.eval()
+    routine.eval()
     rotated_mnist(0)
     rotated_mnist(45)
     rotated_mnist(90)
-
 
 # %%
 # References
