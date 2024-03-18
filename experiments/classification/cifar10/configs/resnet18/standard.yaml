@@ -30,7 +30,7 @@ model:
   num_classes: 10
   in_channels: 3
   loss: torch.nn.CrossEntropyLoss
-  version: standard
+  version: std
   arch: 18
   style: cifar
 data:
