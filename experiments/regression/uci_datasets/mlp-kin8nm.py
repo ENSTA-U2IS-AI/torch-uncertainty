@@ -40,7 +40,7 @@ if __name__ == "__main__":
         in_features=8,
         hidden_dims=[100],
         loss=nn.GaussianNLLLoss,
-        optimization_procedure=optim_regression,
+        optim_recipe=optim_regression,
         dist_estimation=2,
         **vars(args),
     )

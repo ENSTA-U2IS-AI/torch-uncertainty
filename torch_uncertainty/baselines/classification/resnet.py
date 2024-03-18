@@ -142,7 +142,7 @@ class ResNet(ClassificationRoutine):
             num_classes (int): Number of classes to predict.
             in_channels (int): Number of input channels.
             loss (nn.Module): Training loss.
-            optimization_procedure (Any): Optimization procedure, corresponds to
+            optim_recipe (Any): optimization recipe, corresponds to
                 what expect the `LightningModule.configure_optimizers()
                 <https://pytorch-lightning.readthedocs.io/en/stable/common/lightning_module.html#configure-optimizers>`_
                 method.

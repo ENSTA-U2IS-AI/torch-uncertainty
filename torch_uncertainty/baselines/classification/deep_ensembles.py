@@ -42,7 +42,7 @@ class DeepEnsembles(ClassificationRoutine):
                 checkpoint_path=ckpt_file,
                 hparams_file=hparams_file,
                 loss=None,
-                optimization_procedure=None,
+                optim_recipe=None,
             ).eval()
             models.append(trained_model.model)
 

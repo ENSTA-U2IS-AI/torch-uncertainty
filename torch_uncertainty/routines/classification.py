@@ -43,7 +43,7 @@ class ClassificationRoutine(LightningModule):
         loss: type[nn.Module],
         num_estimators: int = 1,
         format_batch_fn: nn.Module | None = None,
-        optimization_procedure=None,
+        optim_recipe=None,
         mixtype: str = "erm",
         mixmode: str = "elem",
         dist_sim: str = "emb",
@@ -70,7 +70,7 @@ class ClassificationRoutine(LightningModule):
                 ensemble. Defaults to 1.
             format_batch_fn (nn.Module, optional): Function to format the batch.
                 Defaults to :class:`torch.nn.Identity()`.
-            optimization_procedure (optional): Training recipe. Defaults to None.
+            optim_recipe (optional): Training recipe. Defaults to None.
             mixtype (str, optional): Mixup type. Defaults to ``"erm"``.
             mixmode (str, optional): Mixup mode. Defaults to ``"elem"``.
             dist_sim (str, optional): Distance similarity. Defaults to ``"emb"``.
@@ -164,7 +164,7 @@ class ClassificationRoutine(LightningModule):
         self.model = model
         self.loss = loss
         self.format_batch_fn = format_batch_fn
-        self.optimization_procedure = optimization_procedure
+        self.optim_recipe = optim_recipe
 
         # metrics
         if self.binary_cls:
@@ -304,7 +304,7 @@ class ClassificationRoutine(LightningModule):
         return nn.Identity()
 
     def configure_optimizers(self):
-        return self.optimization_procedure(self.model)
+        return self.optim_recipe(self.model)
 
     def on_train_start(self) -> None:
         init_metrics = {k: 0 for k in self.val_cls_metrics}

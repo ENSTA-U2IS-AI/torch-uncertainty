@@ -5,7 +5,7 @@ from torch import nn, optim
 from torch_uncertainty import cli_main, init_args
 from torch_uncertainty.baselines import ResNet
 from torch_uncertainty.datamodules import TinyImageNetDataModule
-from torch_uncertainty.optimization_procedures import get_procedure
+from torch_uncertainty.optim_recipes import get_procedure
 from torch_uncertainty.utils import csv_writer
 
 
@@ -50,7 +50,7 @@ if __name__ == "__main__":
                 num_classes=list_dm[i].dm.num_classes,
                 in_channels=list_dm[i].dm.num_channels,
                 loss=nn.CrossEntropyLoss,
-                optimization_procedure=get_procedure(
+                optim_recipe=get_procedure(
                     f"resnet{args.arch}", "tiny-imagenet", args.version
                 ),
                 style="cifar",
@@ -69,7 +69,7 @@ if __name__ == "__main__":
             num_classes=dm.num_classes,
             in_channels=dm.num_channels,
             loss=nn.CrossEntropyLoss,
-            optimization_procedure=get_procedure(
+            optim_recipe=get_procedure(
                 f"resnet{args.arch}", "tiny-imagenet", args.version
             ),
             calibration_set=calibration_set,

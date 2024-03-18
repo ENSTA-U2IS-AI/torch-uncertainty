@@ -9,7 +9,7 @@ from tests._dummies import (
     DummyClassificationDataModule,
     dummy_model,
 )
-from torch_uncertainty.optimization_procedures import optim_cifar10_resnet18
+from torch_uncertainty.optim_recipes import optim_cifar10_resnet18
 from torch_uncertainty.routines import ClassificationRoutine
 
 
@@ -29,7 +29,7 @@ class TestClassificationSingle:
             in_channels=dm.num_channels,
             num_classes=dm.num_classes,
             loss=nn.BCEWithLogitsLoss,
-            optimization_procedure=optim_cifar10_resnet18,
+            optim_recipe=optim_cifar10_resnet18,
             ensemble=False,
             ood_criterion="msp",
         )
@@ -52,7 +52,7 @@ class TestClassificationSingle:
             in_channels=dm.num_channels,
             num_classes=dm.num_classes,
             loss=nn.BCEWithLogitsLoss,
-            optimization_procedure=optim_cifar10_resnet18,
+            optim_recipe=optim_cifar10_resnet18,
             ensemble=True,
             ood_criterion="logit",
         )
@@ -76,7 +76,7 @@ class TestClassificationSingle:
             num_classes=dm.num_classes,
             in_channels=dm.num_channels,
             loss=nn.CrossEntropyLoss,
-            optimization_procedure=optim_cifar10_resnet18,
+            optim_recipe=optim_cifar10_resnet18,
             ensemble=False,
             ood_criterion="entropy",
             eval_ood=True,
@@ -100,7 +100,7 @@ class TestClassificationSingle:
             num_classes=dm.num_classes,
             in_channels=dm.num_channels,
             loss=nn.CrossEntropyLoss,
-            optimization_procedure=optim_cifar10_resnet18,
+            optim_recipe=optim_cifar10_resnet18,
             ensemble=True,
             ood_criterion="energy",
         )
@@ -181,7 +181,7 @@ class TestClassificationSingle:
 #                 num_classes=dm.num_classes,
 #                 in_channels=dm.num_channels,
 #                 loss=DECLoss,
-#                 optimization_procedure=optim_cifar10_resnet18,
+#                 optim_recipe=optim_cifar10_resnet18,
 #                 ensemble=False,
 #                 **vars(args),
 #             )
@@ -227,7 +227,7 @@ class TestClassificationSingle:
 #                     num_classes=list_dm[i].dm.num_classes,
 #                     in_channels=list_dm[i].dm.num_channels,
 #                     loss=nn.CrossEntropyLoss,
-#                     optimization_procedure=optim_cifar10_resnet18,
+#                     optim_recipe=optim_cifar10_resnet18,
 #                     ensemble=False,
 #                     calibration_set=dm.get_val_set,
 #                     **vars(args),
@@ -276,7 +276,7 @@ class TestClassificationSingle:
 #                         num_classes=list_dm[i].dm.num_classes,
 #                         in_channels=list_dm[i].dm.num_channels,
 #                         loss=nn.CrossEntropyLoss,
-#                         optimization_procedure=optim_cifar10_resnet18,
+#                         optim_recipe=optim_cifar10_resnet18,
 #                         ensemble=False,
 #                         calibration_set=dm.get_val_set,
 #                         **vars(args),
@@ -295,7 +295,7 @@ class TestClassificationSingle:
 #                 num_classes=dm.num_classes,
 #                 in_channels=dm.num_channels,
 #                 loss=nn.BCEWithLogitsLoss,
-#                 optimization_procedure=optim_cifar10_resnet18,
+#                 optim_recipe=optim_cifar10_resnet18,
 #                 ensemble=True,
 #                 **vars(args),
 #             )
@@ -316,7 +316,7 @@ class TestClassificationSingle:
 #                 num_classes=dm.num_classes,
 #                 in_channels=dm.num_channels,
 #                 loss=nn.CrossEntropyLoss,
-#                 optimization_procedure=optim_cifar10_resnet18,
+#                 optim_recipe=optim_cifar10_resnet18,
 #                 ensemble=True,
 #                 **vars(args),
 #             )

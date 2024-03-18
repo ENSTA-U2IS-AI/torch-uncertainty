@@ -23,7 +23,7 @@ class RegressionRoutine(LightningModule):
         loss: type[nn.Module],
         num_estimators: int = 1,
         format_batch_fn: nn.Module | None = None,
-        optimization_procedure=None,
+        optim_recipe=None,
     ) -> None:
         """Regression routine for PyTorch Lightning.
 
@@ -37,7 +37,7 @@ class RegressionRoutine(LightningModule):
                 ensemble. Defaults to 1.
             format_batch_fn (nn.Module, optional): The function to format the
                 batch. Defaults to None.
-            optimization_procedure (optional): The optimization procedure
+            optim_recipe (optional): The optimization recipe
                 to use. Defaults to None.
 
         Warning:
@@ -45,7 +45,7 @@ class RegressionRoutine(LightningModule):
             distribution <https://pytorch.org/docs/stable/distributions.html>_`.
 
         Warning:
-            You must define :attr:`optimization_procedure` if you do not use
+            You must define :attr:`optim_recipe` if you do not use
             the CLI.
         """
         super().__init__()
@@ -88,10 +88,10 @@ class RegressionRoutine(LightningModule):
         if num_outputs == 1:
             self.one_dim_regression = True
 
-        self.optimization_procedure = optimization_procedure
+        self.optim_recipe = optim_recipe
 
     def configure_optimizers(self):
-        return self.optimization_procedure(self.model)
+        return self.optim_recipe(self.model)
 
     def on_train_start(self) -> None:
         # hyperparameters for performances

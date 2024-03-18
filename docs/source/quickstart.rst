@@ -27,9 +27,9 @@ routine, which takes as arguments:
   sets with again its arguments and logic. CIFAR-10/100, ImageNet, and
   ImageNet-200 are available, for instance.
 * a PyTorch loss such as the torch.nn.CrossEntropyLoss
-* a dictionary containing the optimization procedure, namely a scheduler and
+* a dictionary containing the optimization recipe, namely a scheduler and
   an optimizer. Many procedures are available at 
-  `torch_uncertainty/optimization_procedures.py <https://github.com/ENSTA-U2IS-AI/torch-uncertainty/blob/main/torch_uncertainty/optimization_procedures.py>`_
+  `torch_uncertainty/optim_recipes.py <https://github.com/ENSTA-U2IS-AI/torch-uncertainty/blob/main/torch_uncertainty/optim_recipes.py>`_
 
 * the path to the data and logs folder, in the example below, the root of the library
 * and finally, the name of your model (used for logs)
@@ -53,7 +53,7 @@ trains any ResNet architecture on CIFAR10:
     from torch_uncertainty import cli_main, init_args
     from torch_uncertainty.baselines import ResNet
     from torch_uncertainty.datamodules import CIFAR10DataModule
-    from torch_uncertainty.optimization_procedures import get_procedure
+    from torch_uncertainty.optim_recipes import get_procedure
 
     root = Path(__file__).parent.absolute().parents[1]
 
@@ -70,7 +70,7 @@ trains any ResNet architecture on CIFAR10:
         num_classes=dm.num_classes,
         in_channels=dm.num_channels,
         loss=nn.CrossEntropyLoss(),
-        optimization_procedure=get_procedure(
+        optim_recipe=get_procedure(
             f"resnet{args.arch}", "cifar10", args.version
         ),
         style="cifar",
@@ -86,7 +86,7 @@ Run this model with, for instance:
     python3 resnet.py --version std --arch 18 --accelerator gpu --device 1 --benchmark True --max_epochs 75 --precision 16
 
 You may replace the architecture (which should be a Lightning Module), the
-Datamodule (a Lightning Datamodule), the loss or the optimization procedure to your likings.
+Datamodule (a Lightning Datamodule), the loss or the optimization recipe to your likings.
 
 Using the PyTorch-based models
 ------------------------------

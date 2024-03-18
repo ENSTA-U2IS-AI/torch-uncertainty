@@ -6,7 +6,7 @@ from torch import nn
 
 from tests._dummies import DummyRegressionBaseline, DummyRegressionDataModule
 from torch_uncertainty.losses import DistributionNLL
-from torch_uncertainty.optimization_procedures import optim_cifar10_resnet18
+from torch_uncertainty.optim_recipes import optim_cifar10_resnet18
 from torch_uncertainty.routines import RegressionRoutine
 
 
@@ -24,7 +24,7 @@ class TestRegression:
             in_features=dm.in_features,
             num_outputs=1,
             loss=DistributionNLL,
-            optimization_procedure=optim_cifar10_resnet18,
+            optim_recipe=optim_cifar10_resnet18,
             baseline_type="single",
         )
 
@@ -38,7 +38,7 @@ class TestRegression:
             in_features=dm.in_features,
             num_outputs=1,
             loss=DistributionNLL,
-            optimization_procedure=optim_cifar10_resnet18,
+            optim_recipe=optim_cifar10_resnet18,
             baseline_type="single",
         )
 
@@ -58,7 +58,7 @@ class TestRegression:
             in_features=dm.in_features,
             num_outputs=2,
             loss=DistributionNLL,
-            optimization_procedure=optim_cifar10_resnet18,
+            optim_recipe=optim_cifar10_resnet18,
             baseline_type="single",
             dist_type="laplace",
         )
@@ -71,7 +71,7 @@ class TestRegression:
             in_features=dm.in_features,
             num_outputs=2,
             loss=DistributionNLL,
-            optimization_procedure=optim_cifar10_resnet18,
+            optim_recipe=optim_cifar10_resnet18,
             baseline_type="single",
         )
         trainer.fit(model, dm)
@@ -89,7 +89,7 @@ class TestRegression:
             in_features=dm.in_features,
             num_outputs=1,
             loss=DistributionNLL,
-            optimization_procedure=optim_cifar10_resnet18,
+            optim_recipe=optim_cifar10_resnet18,
             baseline_type="ensemble",
             dist_type="laplace",
         )
@@ -102,7 +102,7 @@ class TestRegression:
             in_features=dm.in_features,
             num_outputs=1,
             loss=DistributionNLL,
-            optimization_procedure=optim_cifar10_resnet18,
+            optim_recipe=optim_cifar10_resnet18,
             baseline_type="ensemble",
         )
         trainer.fit(model, dm)
@@ -120,7 +120,7 @@ class TestRegression:
             in_features=dm.in_features,
             num_outputs=2,
             loss=DistributionNLL,
-            optimization_procedure=optim_cifar10_resnet18,
+            optim_recipe=optim_cifar10_resnet18,
             baseline_type="ensemble",
         )
         trainer.fit(model, dm)
@@ -133,7 +133,7 @@ class TestRegression:
             in_features=dm.in_features,
             num_outputs=2,
             loss=DistributionNLL,
-            optimization_procedure=optim_cifar10_resnet18,
+            optim_recipe=optim_cifar10_resnet18,
             baseline_type="ensemble",
         )
         trainer.fit(model, dm)

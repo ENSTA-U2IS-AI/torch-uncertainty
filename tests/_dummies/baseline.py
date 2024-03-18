@@ -21,7 +21,7 @@ class DummyClassificationBaseline:
         in_channels: int,
         loss: type[nn.Module],
         ensemble=False,
-        optimization_procedure=None,
+        optim_recipe=None,
         with_feats: bool = True,
         with_linear: bool = True,
         ood_criterion: str = "msp",
@@ -43,7 +43,7 @@ class DummyClassificationBaseline:
                 loss=loss,
                 format_batch_fn=nn.Identity(),
                 log_plots=True,
-                optimization_procedure=optimization_procedure,
+                optim_recipe=optim_recipe,
                 num_estimators=1,
                 ood_criterion=ood_criterion,
                 eval_ood=eval_ood,
@@ -54,7 +54,7 @@ class DummyClassificationBaseline:
             num_classes=num_classes,
             model=model,
             loss=loss,
-            optimization_procedure=optimization_procedure,
+            optim_recipe=optim_recipe,
             format_batch_fn=RepeatTarget(2),
             log_plots=True,
             num_estimators=2,
@@ -72,7 +72,7 @@ class DummyRegressionBaseline:
         num_outputs: int,
         loss: type[nn.Module],
         baseline_type: str = "single",
-        optimization_procedure=None,
+        optim_recipe=None,
         dist_type: str = "normal",
     ) -> LightningModule:
         model = dummy_model(
@@ -94,7 +94,7 @@ class DummyRegressionBaseline:
                 model=model,
                 loss=loss,
                 num_estimators=1,
-                optimization_procedure=optimization_procedure,
+                optim_recipe=optim_recipe,
             )
         # baseline_type == "ensemble":
         model = deep_ensembles(
@@ -108,6 +108,6 @@ class DummyRegressionBaseline:
             model=model,
             loss=loss,
             num_estimators=2,
-            optimization_procedure=optimization_procedure,
+            optim_recipe=optim_recipe,
             format_batch_fn=RepeatTarget(2),
         )

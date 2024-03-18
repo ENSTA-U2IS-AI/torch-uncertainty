@@ -90,7 +90,7 @@ routine = ClassificationRoutine(
     model=model,
     num_classes=datamodule.num_classes,
     loss=loss,
-    optimization_procedure=optim_lenet,
+    optim_recipe=optim_lenet,
 )
 
 # %%

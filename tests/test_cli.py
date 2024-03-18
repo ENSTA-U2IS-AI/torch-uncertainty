@@ -9,7 +9,7 @@
 # from torch_uncertainty.baselines.classification import VGG, ResNet, WideResNet
 # from torch_uncertainty.baselines.regression import MLP
 # from torch_uncertainty.datamodules import CIFAR10DataModule, UCIDataModule
-# from torch_uncertainty.optimization_procedures import (
+# from torch_uncertainty.optim_recipes import (
 #     optim_cifar10_resnet18,
 #     optim_cifar10_vgg16,
 #     optim_cifar10_wideresnet,
@@ -40,7 +40,7 @@
 #                 in_channels=dm.num_channels,
 #                 style="cifar",
 #                 loss=nn.CrossEntropyLoss,
-#                 optimization_procedure=optim_cifar10_resnet18,
+#                 optim_recipe=optim_cifar10_resnet18,
 #                 **vars(args),
 #             )
 
@@ -80,7 +80,7 @@
 #                 in_channels=dm.num_channels,
 #                 style="cifar",
 #                 loss=nn.CrossEntropyLoss,
-#                 optimization_procedure=optim_cifar10_resnet18,
+#                 optim_recipe=optim_cifar10_resnet18,
 #                 **vars(args),
 #             )
 
@@ -101,7 +101,7 @@
 #                 num_classes=dm.num_classes,
 #                 in_channels=dm.num_channels,
 #                 loss=nn.CrossEntropyLoss,
-#                 optimization_procedure=optim_cifar10_wideresnet,
+#                 optim_recipe=optim_cifar10_wideresnet,
 #                 **vars(args),
 #             )
 
@@ -122,7 +122,7 @@
 #                 num_classes=dm.num_classes,
 #                 in_channels=dm.num_channels,
 #                 loss=nn.CrossEntropyLoss,
-#                 optimization_procedure=optim_cifar10_vgg16,
+#                 optim_recipe=optim_cifar10_vgg16,
 #                 **vars(args),
 #             )
 
@@ -145,7 +145,7 @@
 #                 hidden_dims=[],
 #                 dist_estimation=1,
 #                 loss=nn.MSELoss,
-#                 optimization_procedure=optim_regression,
+#                 optim_recipe=optim_regression,
 #                 **vars(args),
 #             )
 
@@ -173,7 +173,7 @@
 #                 hidden_dims=[],
 #                 dist_estimation=1,
 #                 loss=nn.MSELoss,
-#                 optimization_procedure=optim_regression,
+#                 optim_recipe=optim_regression,
 #                 **vars(args),
 #             )
 #             with pytest.raises(ValueError):
@@ -208,7 +208,7 @@
 #                     in_channels=list_dm[i].dm.num_channels,
 #                     style="cifar",
 #                     loss=nn.CrossEntropyLoss,
-#                     optimization_procedure=optim_cifar10_resnet18,
+#                     optim_recipe=optim_cifar10_resnet18,
 #                     **vars(args),
 #                 )
 #                 for i in range(len(list_dm))
@@ -245,7 +245,7 @@
 #                             in_channels=list_dm[i].dm.num_channels,
 #                             style="cifar",
 #                             loss=nn.CrossEntropyLoss,
-#                             optimization_procedure=optim_cifar10_resnet18,
+#                             optim_recipe=optim_cifar10_resnet18,
 #                             **vars(args),
 #                         )
 #                     )
@@ -281,7 +281,7 @@
 #                             in_channels=list_dm[i].dm.num_channels,
 #                             style="cifar",
 #                             loss=nn.CrossEntropyLoss,
-#                             optimization_procedure=optim_cifar10_resnet18,
+#                             optim_recipe=optim_cifar10_resnet18,
 #                             **vars(args),
 #                         )
 #                     )
@@ -317,7 +317,7 @@
 #                             in_channels=list_dm[i].dm.num_channels,
 #                             style="cifar",
 #                             loss=nn.CrossEntropyLoss,
-#                             optimization_procedure=optim_cifar10_resnet18,
+#                             optim_recipe=optim_cifar10_resnet18,
 #                             **vars(args),
 #                         )
 #                     )
@@ -353,7 +353,7 @@
 #                             in_channels=list_dm[i].dm.num_channels,
 #                             style="cifar",
 #                             loss=nn.CrossEntropyLoss,
-#                             optimization_procedure=optim_cifar10_resnet18,
+#                             optim_recipe=optim_cifar10_resnet18,
 #                             **vars(args),
 #                         )
 #                     )

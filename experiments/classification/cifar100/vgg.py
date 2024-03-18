@@ -5,7 +5,7 @@ from torch import nn
 from torch_uncertainty import cli_main, init_args
 from torch_uncertainty.baselines import VGG
 from torch_uncertainty.datamodules import CIFAR100DataModule
-from torch_uncertainty.optimization_procedures import get_procedure
+from torch_uncertainty.optim_recipes import get_procedure
 
 if __name__ == "__main__":
     args = init_args(VGG, CIFAR100DataModule)
@@ -26,9 +26,7 @@ if __name__ == "__main__":
         num_classes=dm.num_classes,
         in_channels=dm.num_channels,
         loss=nn.CrossEntropyLoss,
-        optimization_procedure=get_procedure(
-            f"vgg{args.arch}", "cifar100", args.version
-        ),
+        optim_recipe=get_procedure(f"vgg{args.arch}", "cifar100", args.version),
         style="cifar",
         **vars(args),
     )

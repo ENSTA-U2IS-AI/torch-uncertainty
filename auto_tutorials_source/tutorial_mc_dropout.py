@@ -25,7 +25,7 @@ First, we have to load the following utilities from TorchUncertainty:
 - the mc-dropout wrapper: mc_dropout, which lies in torch_uncertainty.models
 - a resnet baseline to get the command line arguments: ResNet, which lies in torch_uncertainty.baselines
 - the classification training routine in the torch_uncertainty.training.classification module
-- the optimizer wrapper in the torch_uncertainty.optimization_procedures module.
+- the optimizer wrapper in the torch_uncertainty.optim_recipes module.
 
 We also need import the neural network utils within `torch.nn`.
 """
@@ -38,7 +38,7 @@ from torch import nn
 from torch_uncertainty.datamodules import MNISTDataModule
 from torch_uncertainty.models.lenet import lenet
 from torch_uncertainty.models.mc_dropout import mc_dropout
-from torch_uncertainty.optimization_procedures import optim_cifar10_resnet18
+from torch_uncertainty.optim_recipes import optim_cifar10_resnet18
 from torch_uncertainty.routines import ClassificationRoutine
 
 # %%
@@ -83,7 +83,7 @@ routine = ClassificationRoutine(
     num_classes=datamodule.num_classes,
     model=mc_model,
     loss=nn.CrossEntropyLoss,
-    optimization_procedure=optim_cifar10_resnet18,
+    optim_recipe=optim_cifar10_resnet18,
     num_estimators=16,
 
 )

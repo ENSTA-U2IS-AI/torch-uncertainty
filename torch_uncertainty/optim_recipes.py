@@ -270,7 +270,7 @@ def optim_cifar100_resnet34(
 def optim_tinyimagenet_resnet34(
     model: nn.Module,
 ) -> dict[str, Optimizer | LRScheduler]:
-    """Optimization procedure from 'The Devil is in the Margin: Margin-based
+    """Optimization recipe from 'The Devil is in the Margin: Margin-based
     Label Smoothing for Network Calibration',
     (CVPR 2022, https://arxiv.org/abs/2111.15430):
     'We train for 100 epochs with a learning rate of 0.1 for the first
@@ -295,7 +295,7 @@ def optim_tinyimagenet_resnet34(
 def optim_tinyimagenet_resnet50(
     model: nn.Module,
 ) -> dict[str, Optimizer | LRScheduler]:
-    """Optimization procedure from 'The Devil is in the Margin: Margin-based
+    """Optimization recipe from 'The Devil is in the Margin: Margin-based
     Label Smoothing for Network Calibration',
     (CVPR 2022, https://arxiv.org/abs/2111.15430):
     'We train for 100 epochs with a learning rate of 0.1 for the first
@@ -332,10 +332,8 @@ def optim_regression(
     }
 
 
-def batch_ensemble_wrapper(
-    model: nn.Module, optimization_procedure: Callable
-) -> dict:
-    procedure = optimization_procedure(model)
+def batch_ensemble_wrapper(model: nn.Module, optim_recipe: Callable) -> dict:
+    procedure = optim_recipe(model)
     param_optimizer = procedure["optimizer"]
     scheduler = procedure["lr_scheduler"]
 
@@ -379,7 +377,7 @@ def get_procedure(
     method: str = "",
     imagenet_recipe: str | None = None,
 ) -> Callable:
-    """Get the optimization procedure for a given architecture and dataset.
+    """Get the optimization recipe for a given architecture and dataset.
 
     Args:
         arch_name (str): The name of the architecture.
@@ -389,7 +387,7 @@ def get_procedure(
             ImageNet. Defaults to None.
 
     Returns:
-        callable: The optimization procedure.
+        callable: The optimization recipe.
     """
     if arch_name in ["resnet18", "resnet20"]:
         if ds_name == "cifar10":
@@ -437,8 +435,6 @@ def get_procedure(
         raise NotImplementedError(f"No recipe for architecture: {arch_name}.")
 
     if method == "batched":
-        procedure = partial(
-            batch_ensemble_wrapper, optimization_procedure=procedure
-        )
+        procedure = partial(batch_ensemble_wrapper, optim_recipe=procedure)
 
     return procedure

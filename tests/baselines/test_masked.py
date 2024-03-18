@@ -5,7 +5,7 @@ from torchinfo import summary
 
 from torch_uncertainty.baselines.classification import ResNet, WideResNet
 
-# from torch_uncertainty.optimization_procedures import (
+# from torch_uncertainty.optim_recipes import (
 #     optim_cifar10_wideresnet,
 #     optim_cifar100_resnet18,
 #     optim_cifar100_resnet50,

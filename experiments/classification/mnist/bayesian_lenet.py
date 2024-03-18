@@ -11,7 +11,7 @@ from torch_uncertainty.routines.classification import ClassificationSingle
 
 
 def optim_lenet(model: nn.Module) -> dict:
-    """Optimization procedure for LeNet.
+    """Optimization recipe for LeNet.
 
     Uses Adam default hyperparameters.
 
@@ -55,7 +55,7 @@ if __name__ == "__main__":
         num_classes=dm.num_classes,
         in_channels=dm.num_channels,
         loss=loss,
-        optimization_procedure=optim_lenet,
+        optim_recipe=optim_lenet,
         **vars(args),
     )
 
