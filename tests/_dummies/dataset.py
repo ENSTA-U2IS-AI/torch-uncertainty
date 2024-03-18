@@ -122,7 +122,10 @@ class DummyRegressionDataset(Dataset):
         self.targets = []
 
         input_shape = (num_samples, in_features)
-        output_shape = (num_samples, out_features)
+        if out_features != 1:
+            output_shape = (num_samples, out_features)
+        else:
+            output_shape = (num_samples,)
 
         self.data = torch.rand(
             size=input_shape,

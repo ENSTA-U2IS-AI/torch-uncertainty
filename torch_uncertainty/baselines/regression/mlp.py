@@ -51,6 +51,7 @@ class MLP(RegressionRoutine):
 
         # version in self.versions:
         super().__init__(
+            probabilistic=False,
             num_outputs=num_outputs,
             model=model,
             loss=loss,

@@ -67,7 +67,8 @@ class DummyRegressionBaseline:
         )
         if baseline_type == "single":
             return RegressionRoutine(
-                num_outputs=num_outputs * 2,
+                probabilistic=True,
+                num_outputs=num_outputs,
                 model=model,
                 loss=loss,
                 num_estimators=1,
@@ -77,7 +78,8 @@ class DummyRegressionBaseline:
         kwargs["num_estimators"] = 2
         model = deep_ensembles([model, copy.deepcopy(model)], task="regression")
         return RegressionRoutine(
-            num_outputs=num_outputs * 2,
+            probabilistic=True,
+            num_outputs=num_outputs,
             model=model,
             loss=loss,
             num_estimators=2,

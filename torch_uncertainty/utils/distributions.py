@@ -53,7 +53,7 @@ def squeeze_dist(distribution: Distribution, dim: int) -> Distribution:
     )
 
 
-def to_ens_dist(
+def to_ensemble_dist(
     distribution: Distribution, num_estimators: int = 1
 ) -> Distribution:
     dist_type = type(distribution)
