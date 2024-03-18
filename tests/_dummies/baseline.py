@@ -21,6 +21,7 @@ class DummyClassificationBaseline:
         in_channels: int,
         loss: type[nn.Module],
         baseline_type: str = "single",
+        optimization_procedure=None,
         with_feats: bool = True,
         with_linear: bool = True,
     ) -> LightningModule:
@@ -39,6 +40,7 @@ class DummyClassificationBaseline:
                 loss=loss,
                 format_batch_fn=nn.Identity(),
                 log_plots=True,
+                optimization_procedure=optimization_procedure,
                 num_estimators=1,
             )
         # baseline_type == "ensemble":
@@ -46,6 +48,7 @@ class DummyClassificationBaseline:
             num_classes=num_classes,
             model=model,
             loss=loss,
+            optimization_procedure=optimization_procedure,
             format_batch_fn=RepeatTarget(2),
             log_plots=True,
             num_estimators=2,

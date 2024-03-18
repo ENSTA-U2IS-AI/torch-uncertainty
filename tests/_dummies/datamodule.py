@@ -1,6 +1,4 @@
-from argparse import ArgumentParser
 from pathlib import Path
-from typing import Any
 
 import numpy as np
 import torchvision.transforms as T
@@ -20,17 +18,17 @@ class DummyClassificationDataModule(AbstractDataModule):
     def __init__(
         self,
         root: str | Path,
-        eval_ood: bool,
         batch_size: int,
         num_classes: int = 2,
         num_workers: int = 1,
+        eval_ood: bool = False,
         pin_memory: bool = True,
         persistent_workers: bool = True,
         num_images: int = 2,
-        **kwargs,
     ) -> None:
         super().__init__(
             root=root,
+            val_split=None,
             batch_size=batch_size,
             num_workers=num_workers,
             pin_memory=pin_memory,
@@ -97,16 +95,6 @@ class DummyClassificationDataModule(AbstractDataModule):
 
     def _get_train_targets(self) -> ArrayLike:
         return np.array(self.train.targets)
-
-    @classmethod
-    def add_argparse_args(
-        cls,
-        parent_parser: ArgumentParser,
-        **kwargs: Any,
-    ) -> ArgumentParser:
-        p = super().add_argparse_args(parent_parser)
-        p.add_argument("--eval-ood", action="store_true")
-        return parent_parser
 
 
 class DummyRegressionDataModule(AbstractDataModule):

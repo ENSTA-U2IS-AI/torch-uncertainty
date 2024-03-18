@@ -1,3 +1,82 @@
+from pathlib import Path
+
+from lightning import Trainer
+from torch import nn
+
+from tests._dummies import (
+    DummyClassificationBaseline,
+    DummyClassificationDataModule,
+)
+from torch_uncertainty.optimization_procedures import optim_cifar10_resnet18
+
+
+class TestClassificationSingle:
+    """Testing the classification routine with a single model."""
+
+    def test_one_estimator_binary(self):
+        trainer = Trainer(accelerator="cpu", fast_dev_run=True)
+
+        dm = DummyClassificationDataModule(
+            root=Path(),
+            batch_size=16,
+            num_classes=1,
+            num_images=100,
+        )
+        model = DummyClassificationBaseline(
+            in_channels=dm.num_channels,
+            num_classes=dm.num_classes,
+            loss=nn.BCEWithLogitsLoss,
+            optimization_procedure=optim_cifar10_resnet18,
+            baseline_type="single",
+        )
+
+        trainer.fit(model, dm)
+        trainer.validate(model, dm)
+        trainer.test(model, dm)
+        model(dm.get_test_set()[0][0])
+
+    def test_one_estimator_two_classes(self):
+        trainer = Trainer(accelerator="cpu", fast_dev_run=True)
+
+        dm = DummyClassificationDataModule(
+            root=Path(),
+            batch_size=16,
+            num_classes=2,
+            num_images=100,
+        )
+        model = DummyClassificationBaseline(
+            num_classes=dm.num_classes,
+            in_channels=dm.num_channels,
+            loss=nn.CrossEntropyLoss,
+            optimization_procedure=optim_cifar10_resnet18,
+            baseline_type="single",
+        )
+
+        trainer.fit(model, dm)
+        trainer.validate(model, dm)
+        trainer.test(model, dm)
+        model(dm.get_test_set()[0][0])
+
+
+# def test_two_estimators_binary(self):
+#     trainer = Trainer(accelerator="cpu", fast_dev_run=True)
+
+#     dm = DummyClassificationDataModule(
+#         root=Path(""), batch_size=16, num_classes=1, num_images=100,
+#     )
+#     model = DummyClassificationBaseline(
+#         in_channels=dm.num_channels,
+#         num_classes=dm.num_classes,
+#         loss=nn.BCEWithLogitsLoss,
+#         optimization_procedure=optim_cifar10_resnet18,
+#         baseline_type="ensemble",
+#     )
+
+#     trainer.fit(model, dm)
+#     trainer.validate(model, dm)
+#     trainer.test(model, dm)
+#     model(dm.get_test_set()[0][0])
+
 # from functools import partial
 # from pathlib import Path
 
@@ -13,15 +92,6 @@
 # )
 # from torch_uncertainty import cli_main, init_args
 # from torch_uncertainty.losses import DECLoss, ELBOLoss
-# from torch_uncertainty.optimization_procedures import optim_cifar10_resnet18
-# from torch_uncertainty.routines.classification import (
-#     ClassificationEnsemble,
-#     ClassificationSingle,
-# )
-
-
-# class TestClassificationSingle:
-#     """Testing the classification routine with a single model."""
 
 #     def test_cli_main_dummy_binary(self):
 #         root = Path(__file__).parent.absolute().parents[0]
