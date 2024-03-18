@@ -54,6 +54,7 @@ class DeepEnsembles(ClassificationRoutine):
             loss=None,
             num_estimators=de.num_estimators,
             eval_ood=eval_ood,
+            eval_grouping_loss=eval_grouping_loss,
             ood_criterion=ood_criterion,
             log_plots=log_plots,
             calibration_set=calibration_set,
