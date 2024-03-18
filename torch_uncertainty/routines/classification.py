@@ -132,7 +132,7 @@ class ClassificationRoutine(LightningModule):
                 " model."
             )
 
-        if num_estimators == 1 and eval_grouping_loss:
+        if num_estimators != 1 and eval_grouping_loss:
             raise NotImplementedError(
                 "Groupng loss for ensembles is not yet implemented. Raise an issue if needed."
             )
@@ -443,7 +443,7 @@ class ClassificationRoutine(LightningModule):
         logits = rearrange(logits, "(n b) c -> b n c", n=self.num_estimators)
 
         if self.binary_cls:
-            probs_per_est = torch.sigmoid(logits).squeeze(-1)
+            probs_per_est = torch.sigmoid(logits)
         else:
             probs_per_est = F.softmax(logits, dim=-1)
 

@@ -20,20 +20,21 @@ class DummyClassificationBaseline:
         num_classes: int,
         in_channels: int,
         loss: type[nn.Module],
-        baseline_type: str = "single",
+        ensemble=False,
         optimization_procedure=None,
         with_feats: bool = True,
         with_linear: bool = True,
+        ood_criterion: str = "msp",
     ) -> LightningModule:
         model = dummy_model(
             in_channels=in_channels,
             num_classes=num_classes,
-            num_estimators=1 + int(baseline_type == "ensemble"),
+            num_estimators=1 + int(ensemble),
             with_feats=with_feats,
             with_linear=with_linear,
         )
 
-        if baseline_type == "single":
+        if not ensemble:
             return ClassificationRoutine(
                 num_classes=num_classes,
                 model=model,
@@ -42,8 +43,9 @@ class DummyClassificationBaseline:
                 log_plots=True,
                 optimization_procedure=optimization_procedure,
                 num_estimators=1,
+                ood_criterion=ood_criterion,
             )
-        # baseline_type == "ensemble":
+        # ensemble
         return ClassificationRoutine(
             num_classes=num_classes,
             model=model,
@@ -52,6 +54,7 @@ class DummyClassificationBaseline:
             format_batch_fn=RepeatTarget(2),
             log_plots=True,
             num_estimators=2,
+            ood_criterion=ood_criterion,
         )
 
 
