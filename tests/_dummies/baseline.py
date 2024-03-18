@@ -25,6 +25,8 @@ class DummyClassificationBaseline:
         with_feats: bool = True,
         with_linear: bool = True,
         ood_criterion: str = "msp",
+        eval_ood: bool = False,
+        eval_grouping_loss: bool = False,
     ) -> LightningModule:
         model = dummy_model(
             in_channels=in_channels,
@@ -44,6 +46,8 @@ class DummyClassificationBaseline:
                 optimization_procedure=optimization_procedure,
                 num_estimators=1,
                 ood_criterion=ood_criterion,
+                eval_ood=eval_ood,
+                eval_grouping_loss=eval_grouping_loss,
             )
         # ensemble
         return ClassificationRoutine(
@@ -55,6 +59,8 @@ class DummyClassificationBaseline:
             log_plots=True,
             num_estimators=2,
             ood_criterion=ood_criterion,
+            eval_ood=eval_ood,
+            eval_grouping_loss=eval_grouping_loss,
         )
 
 

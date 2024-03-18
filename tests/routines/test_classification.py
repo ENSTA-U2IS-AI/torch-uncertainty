@@ -79,6 +79,7 @@ class TestClassificationSingle:
             optimization_procedure=optim_cifar10_resnet18,
             ensemble=False,
             ood_criterion="entropy",
+            eval_ood=True,
         )
 
         trainer.fit(model, dm)
@@ -110,6 +111,15 @@ class TestClassificationSingle:
         model(dm.get_test_set()[0][0])
 
     def test_classification_failures(self):
+        # num_estimators
+        with pytest.raises(ValueError):
+            ClassificationRoutine(10, nn.Module(), None, num_estimators=-1)
+        # single & MI
+        with pytest.raises(ValueError):
+            ClassificationRoutine(
+                10, nn.Module(), None, num_estimators=1, ood_criterion="mi"
+            )
+
         with pytest.raises(ValueError):
             ClassificationRoutine(10, nn.Module(), None, ood_criterion="other")
 

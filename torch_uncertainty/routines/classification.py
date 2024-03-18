@@ -107,7 +107,7 @@ class ClassificationRoutine(LightningModule):
         if format_batch_fn is None:
             format_batch_fn = nn.Identity()
 
-        if not isinstance(num_estimators, int) and num_estimators < 1:
+        if not isinstance(num_estimators, int) or num_estimators < 1:
             raise ValueError(
                 "The number of estimators must be a positive integer >= 1."
                 f"Got {num_estimators}."
