@@ -3,10 +3,9 @@ Improve Top-label Calibration with Temperature Scaling
 ======================================================
 
 In this tutorial, we use *TorchUncertainty* to improve the calibration
-of the top-label predictions
-and the reliability of the underlying neural network.
+of the top-label predictions and the reliability of the underlying neural network.
 
-We also see how to use the datamodules outside any Lightning trainers, 
+We also see how to use the datamodules outside any Lightning trainers,
 and how to use TorchUncertainty's models.
 
 1. Loading the Utilities
@@ -17,11 +16,12 @@ In this tutorial, we will need:
 - torch for its objects
 - the "calibration error" metric to compute the ECE and evaluate the top-label calibration
 - the CIFAR-100 datamodule to handle the data
-- a ResNet 18 as starting model 
+- a ResNet 18 as starting model
 - the temperature scaler to improve the top-label calibration
 - a utility to download hf models easily
-- the calibration plot to visualize the calibration. If you use the classification routine, 
-    the plots will be automatically available in the tensorboard logs.
+- the calibration plot to visualize the calibration.
+
+If you use the classification routine, the plots will be automatically available in the tensorboard logs.
 """
 
 from torch_uncertainty.datamodules import CIFAR100DataModule
@@ -52,7 +52,8 @@ model.load_state_dict(weights)
 #
 # To get the dataloader from the datamodule, just call prepare_data, setup, and
 # extract the first element of the test dataloader list. There are more than one
-# element if `:attr:eval_ood` is True.
+# element if eval_ood is True: the dataloader of in-distribution data and the dataloader
+# of out-of-distribution data. Otherwise, it is a list of 1 element.
 
 dm = CIFAR100DataModule(root="./data", eval_ood=False, batch_size=32)
 dm.prepare_data()
@@ -60,7 +61,6 @@ dm.setup("test")
 
 # Get the full test dataloader (unused in this tutorial)
 dataloader = dm.test_dataloader()[0]
-
 
 # %%
 # 4. Iterating on the Dataloader and Computing the ECE
@@ -93,8 +93,7 @@ for sample, target in test_dataloader:
     ece.update(probs, target)
 
 # Compute & print the calibration error
-cal = ece.compute()
-print(f"ECE before scaling - {cal*100:.3}%.")
+print(f"ECE before scaling - {ece.compute():.3%}.")
 
 # %%
 # We also compute and plot the top-label calibration figure. We see that the
@@ -133,8 +132,7 @@ for sample, target in test_dataloader:
     probs = logits.softmax(-1)
     ece.update(probs, target)
 
-cal = ece.compute()
-print(f"ECE after scaling - {cal*100:.3}%.")
+print(f"ECE after scaling - {ece.compute():.3%}.")
 
 # %%
 # We finally compute and plot the scaled top-label calibration figure. We see
