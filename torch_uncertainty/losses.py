@@ -1,8 +1,34 @@
+from typing import Literal
+
 import torch
 from torch import Tensor, distributions, nn
 from torch.nn import functional as F
 
-from .layers.bayesian import bayesian_modules
+from torch_uncertainty.layers.bayesian import bayesian_modules
+from torch_uncertainty.utils.distributions import NormalInverseGamma
+
+
+class DistributionNLL(nn.Module):
+    def __init__(
+        self, reduction: Literal["mean", "sum"] | None = "mean"
+    ) -> None:
+        """Negative Log-Likelihood loss for a given distribution.
+
+        Args:
+            reduction (str, optional): specifies the reduction to apply to the
+            output:``'none'`` | ``'mean'`` | ``'sum'``. Defaults to "mean".
+
+        """
+        super().__init__()
+        self.reduction = reduction
+
+    def forward(self, dist: distributions.Distribution, target: Tensor):
+        loss = -dist.log_prob(target)
+        if self.reduction == "mean":
+            loss = loss.mean()
+        elif self.reduction == "sum":
+            loss = loss.sum()
+        return loss
 
 
 class KLDiv(nn.Module):
@@ -98,11 +124,14 @@ class ELBOLoss(nn.Module):
         return aggregated_elbo / self.num_samples
 
 
-class NIGLoss(nn.Module):
+class DERLoss(DistributionNLL):
     def __init__(
         self, reg_weight: float, reduction: str | None = "mean"
     ) -> None:
         """The Normal Inverse-Gamma loss.
+
+        This loss combines the negative log-likelihood loss of the normal
+        inverse gamma distribution and a weighted regularization term.
 
         Args:
             reg_weight (float): The weight of the regularization term.
@@ -113,7 +142,11 @@ class NIGLoss(nn.Module):
             Amini, A., Schwarting, W., Soleimany, A., & Rus, D. (2019). Deep
             evidential regression. https://arxiv.org/abs/1910.02600.
         """
-        super().__init__()
+        super().__init__(reduction=None)
+
+        if reduction not in (None, "none", "mean", "sum"):
+            raise ValueError(f"{reduction} is not a valid value for reduction.")
+        self.final_reduction = reduction
 
         if reg_weight < 0:
             raise ValueError(
@@ -121,49 +154,24 @@ class NIGLoss(nn.Module):
                 f"{reg_weight}."
             )
         self.reg_weight = reg_weight
-        if reduction not in ("none", "mean", "sum"):
-            raise ValueError(f"{reduction} is not a valid value for reduction.")
-        self.reduction = reduction
 
-    def _nig_nll(
-        self,
-        gamma: Tensor,
-        v: Tensor,
-        alpha: Tensor,
-        beta: Tensor,
-        targets: Tensor,
-    ) -> Tensor:
-        gam = 2 * beta * (1 + v)
-        return (
-            0.5 * torch.log(torch.pi / v)
-            - alpha * gam.log()
-            + (alpha + 0.5) * torch.log(gam + v * (targets - gamma) ** 2)
-            + torch.lgamma(alpha)
-            - torch.lgamma(alpha + 0.5)
-        )
-
-    def _nig_reg(
-        self, gamma: Tensor, v: Tensor, alpha: Tensor, targets: Tensor
-    ) -> Tensor:
-        return torch.norm(targets - gamma, 1, dim=1, keepdim=True) * (
-            2 * v + alpha
+    def _reg(self, dist: NormalInverseGamma, targets: Tensor) -> Tensor:
+        return torch.norm(targets - dist.loc, 1, dim=1, keepdim=True) * (
+            2 * dist.lmbda + dist.alpha
         )
 
     def forward(
         self,
-        gamma: Tensor,
-        v: Tensor,
-        alpha: Tensor,
-        beta: Tensor,
+        dist: NormalInverseGamma,
         targets: Tensor,
     ) -> Tensor:
-        loss_nll = self._nig_nll(gamma, v, alpha, beta, targets)
-        loss_reg = self._nig_reg(gamma, v, alpha, targets)
+        loss_nll = super().forward(dist, targets)
+        loss_reg = self._reg(dist, targets)
         loss = loss_nll + self.reg_weight * loss_reg
 
-        if self.reduction == "mean":
+        if self.final_reduction == "mean":
             return loss.mean()
-        if self.reduction == "sum":
+        if self.final_reduction == "sum":
             return loss.sum()
         return loss
 
@@ -376,8 +384,3 @@ class DECLoss(nn.Module):
         elif self.reduction == "sum":
             loss = loss.sum()
         return loss
-
-
-class DistributionNLL(nn.Module):
-    def forward(self, dist: distributions.Distribution, target: Tensor):
-        return -dist.log_prob(target).mean()

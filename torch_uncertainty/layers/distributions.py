@@ -2,6 +2,8 @@ import torch.nn.functional as F
 from torch import Tensor, nn
 from torch.distributions import Distribution, Laplace, Normal
 
+from torch_uncertainty.utils.distributions import NormalInverseGamma
+
 
 class AbstractDistLayer(nn.Module):
     def __init__(self, dim: int) -> None:
@@ -54,3 +56,24 @@ class IndptLaplaceLayer(AbstractDistLayer):
         loc = x[:, : self.dim]
         scale = F.softplus(x[:, self.dim :]) + self.min_scale
         return Laplace(loc, scale)
+
+
+class IndptNormalInverseGammaLayer(AbstractDistLayer):
+    def __init__(self, dim: int, eps: float = 1e-6) -> None:
+        super().__init__(dim)
+        self.eps = eps
+
+    def forward(self, x: Tensor) -> Laplace:
+        """Forward pass of the independent Laplace distribution layer.
+
+        Args:
+            x (Tensor): The input tensor of shape (dx2).
+
+        Returns:
+            Laplace: The independent Laplace distribution.
+        """
+        loc = x[:, : self.dim]
+        lmbda = F.softplus(x[:, self.dim : 2 * self.dim]) + self.eps
+        alpha = 1 + F.softplus(x[:, 2 * self.dim : 3 * self.dim]) + self.eps
+        beta = F.softplus(x[:, 3 * self.dim :]) + self.eps
+        return NormalInverseGamma(loc, lmbda, alpha, beta)

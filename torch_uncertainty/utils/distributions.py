@@ -1,6 +1,10 @@
+from numbers import Number
+
 import torch
 from einops import rearrange
-from torch.distributions import Distribution, Laplace, Normal
+from torch import Tensor
+from torch.distributions import Distribution, Laplace, Normal, constraints
+from torch.distributions.utils import broadcast_all
 
 
 def cat_dist(distributions: list[Distribution], dim: int) -> Distribution:
@@ -48,6 +52,12 @@ def squeeze_dist(distribution: Distribution, dim: int) -> Distribution:
         loc = distribution.loc.squeeze(dim)
         scale = distribution.scale.squeeze(dim)
         return dist_type(loc=loc, scale=scale)
+    if isinstance(distribution, NormalInverseGamma):
+        loc = distribution.loc.squeeze(dim)
+        lmbda = distribution.lmbda.squeeze(dim)
+        alpha = distribution.alpha.squeeze(dim)
+        beta = distribution.beta.squeeze(dim)
+        return dist_type(loc=loc, lmbda=lmbda, alpha=alpha, beta=beta)
     raise NotImplementedError(
         f"Squeezing of {dist_type} distributions is not supported."
         "Raise an issue if needed."
@@ -64,7 +74,94 @@ def to_ensemble_dist(
             distribution.scale, "(n b) c -> b n c", n=num_estimators
         )
         return dist_type(loc=loc, scale=scale)
+    if isinstance(distribution, NormalInverseGamma):
+        loc = rearrange(distribution.loc, "(n b) c -> b n c", n=num_estimators)
+        lmbda = rearrange(
+            distribution.lmbda, "(n b) c -> b n c", n=num_estimators
+        )
+        alpha = rearrange(
+            distribution.alpha, "(n b) c -> b n c", n=num_estimators
+        )
+        beta = rearrange(
+            distribution.beta, "(n b) c -> b n c", n=num_estimators
+        )
+        return dist_type(loc=loc, lmbda=lmbda, alpha=alpha, beta=beta)
     raise NotImplementedError(
         f"Ensemble distribution of {dist_type} is not supported."
         "Raise an issue if needed."
     )
+
+
+class NormalInverseGamma(Distribution):
+    arg_constraints = {
+        "loc": constraints.real,
+        "lmbda": constraints.positive,
+        "alpha": constraints.greater_than(1),
+        "beta": constraints.positive,
+    }
+    support = constraints.real
+    has_rsample = False
+
+    def __init__(self, loc, lmbda, alpha, beta, validate_args=None):
+        self.loc, self.lmbda, self.alpha, self.beta = broadcast_all(
+            loc, lmbda, alpha, beta
+        )
+        if (
+            isinstance(loc, Number)
+            and isinstance(lmbda, Number)
+            and isinstance(alpha, Number)
+            and isinstance(beta, Number)
+        ):
+            batch_shape = torch.Size()
+        else:
+            batch_shape = self.loc.size()
+        super().__init__(batch_shape, validate_args=validate_args)
+
+    @property
+    def mean(self):
+        """Impromper mean of the NormalInverseGamma distribution.
+
+        This value is necessary to perform point-wise predictions in the
+        regression routine.
+        """
+        return self.loc
+
+    def mode(self):
+        raise NotImplementedError(
+            "Mode is not meaningful for the NormalInverseGamma distribution"
+        )
+
+    def stddev(self):
+        raise NotImplementedError(
+            "Standard deviation is not meaningful for the NormalInverseGamma distribution"
+        )
+
+    def variance(self):
+        raise NotImplementedError(
+            "Variance is not meaningful for the NormalInverseGamma distribution"
+        )
+
+    @property
+    def mean_loc(self) -> Tensor:
+        return self.loc
+
+    @property
+    def mean_variance(self) -> Tensor:
+        return self.beta / (self.alpha - 1)
+
+    @property
+    def variance_loc(self) -> Tensor:
+        return self.beta / (self.alpha - 1) / self.lmbda
+
+    def log_prob(self, value: Tensor) -> Tensor:
+        if self._validate_args:
+            self._validate_sample(value)
+        gam: Tensor = 2 * self.beta * (1 + self.lmbda)
+        return (
+            -0.5 * torch.log(torch.pi / self.lmbda)
+            + self.alpha * gam.log()
+            - (self.alpha + 0.5)
+            * torch.log(gam + self.lmbda * (value - self.loc) ** 2)
+            - torch.lgamma(self.alpha)
+            + torch.lgamma(self.alpha + 0.5)
+        )
