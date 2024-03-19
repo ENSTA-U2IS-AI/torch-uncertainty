@@ -96,7 +96,7 @@ class NormalInverseGamma(Distribution):
     arg_constraints = {
         "loc": constraints.real,
         "lmbda": constraints.positive,
-        "alpha": constraints.greater_than(1),
+        "alpha": constraints.greater_than_eq(1),
         "beta": constraints.positive,
     }
     support = constraints.real
