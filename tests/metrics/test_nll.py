@@ -22,6 +22,11 @@ class TestCategoricalNegativeLogLikelihood:
         res_sum = metric.compute()
         assert torch.all(res_sum == torch.zeros(2))
 
+        metric = CategoricalNLL(reduction="sum")
+        metric.update(probs, targets)
+        res_sum = metric.compute()
+        assert torch.all(res_sum == torch.zeros(1))
+
     def test_bad_argument(self) -> None:
         with pytest.raises(Exception):
             _ = CategoricalNLL(reduction="geometric_mean")

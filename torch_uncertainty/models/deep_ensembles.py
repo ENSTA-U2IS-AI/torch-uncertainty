@@ -63,6 +63,7 @@ def deep_ensembles(
     num_estimators: int | None = None,
     task: Literal["classification", "regression"] = "classification",
     probabilistic=None,
+    reset_model_parameters: bool = False,
 ) -> nn.Module:
     """Build a Deep Ensembles out of the original models.
 
@@ -71,6 +72,8 @@ def deep_ensembles(
         num_estimators (int | None): The number of estimators in the ensemble.
         task (Literal["classification", "regression"]): The model task.
         probabilistic (bool): Whether the regression model is probabilistic.
+        reset_model_parameters (bool): Whether to reset the model parameters
+            when :attr:models is a module or a list of length 1.
 
     Returns:
         nn.Module: The ensembled model.
@@ -106,6 +109,13 @@ def deep_ensembles(
             models = models[0]
 
         models = [copy.deepcopy(models) for _ in range(num_estimators)]
+
+        if reset_model_parameters:
+            for model in models:
+                for layer in model.children():
+                    if hasattr(layer, "reset_parameters"):
+                        layer.reset_parameters()
+
     elif (
         isinstance(models, list)
         and len(models) > 1

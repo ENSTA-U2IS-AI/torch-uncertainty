@@ -25,8 +25,8 @@ class TestDeepEnsemblesModel:
     def test_list_singleton(self):
         model_1 = dummy_model(1, 10, 1)
 
-        deep_ensembles([model_1], num_estimators=2)
-        deep_ensembles(model_1, num_estimators=2)
+        deep_ensembles([model_1], num_estimators=2, reset_model_parameters=True)
+        deep_ensembles(model_1, num_estimators=2, reset_model_parameters=False)
 
         with pytest.raises(ValueError):
             deep_ensembles([model_1], num_estimators=1)
@@ -43,7 +43,7 @@ class TestDeepEnsemblesModel:
             deep_ensembles(model_1, num_estimators=1)
 
         with pytest.raises(ValueError):
-            deep_ensembles(model_1, num_estimators=1, task="regression")
+            deep_ensembles(model_1, num_estimators=2, task="regression")
 
         with pytest.raises(ValueError):
-            deep_ensembles(model_1, num_estimators=1, task="other")
+            deep_ensembles(model_1, num_estimators=2, task="other")

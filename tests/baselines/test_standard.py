@@ -1,5 +1,3 @@
-from argparse import ArgumentParser
-
 import pytest
 import torch
 from torch import nn
@@ -11,9 +9,6 @@ from torch_uncertainty.baselines.classification import (
     WideResNetBaseline,
 )
 from torch_uncertainty.baselines.regression import MLP
-from torch_uncertainty.baselines.utils.parser_addons import (
-    add_mlp_specific_args,
-)
 
 
 class TestStandardBaseline:
@@ -120,9 +115,6 @@ class TestStandardMLPBaseline:
 
         _ = net.criterion
         _ = net(torch.rand(1, 3))
-
-        parser = ArgumentParser()
-        add_mlp_specific_args(parser)
 
     def test_errors(self):
         with pytest.raises(ValueError):
