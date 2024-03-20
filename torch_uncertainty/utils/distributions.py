@@ -31,6 +31,20 @@ def cat_dist(distributions: list[Distribution], dim: int) -> Distribution:
             [distribution.scale for distribution in distributions], dim=dim
         )
         return dist_type(loc=locs, scale=scales)
+    if isinstance(distributions[0], NormalInverseGamma):
+        locs = torch.cat(
+            [distribution.loc for distribution in distributions], dim=dim
+        )
+        lmbdas = torch.cat(
+            [distribution.lmbda for distribution in distributions], dim=dim
+        )
+        alphas = torch.cat(
+            [distribution.alpha for distribution in distributions], dim=dim
+        )
+        betas = torch.cat(
+            [distribution.beta for distribution in distributions], dim=dim
+        )
+        return dist_type(loc=locs, lmbda=lmbdas, alpha=alphas, beta=betas)
     raise NotImplementedError(
         f"Concatenation of {dist_type} distributions is not supported."
         "Raise an issue if needed."

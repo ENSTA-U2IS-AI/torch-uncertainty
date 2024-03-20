@@ -17,7 +17,7 @@ class AbstractDistLayer(nn.Module):
 
 
 class IndptNormalLayer(AbstractDistLayer):
-    def __init__(self, dim: int, min_scale: float = 1e-3) -> None:
+    def __init__(self, dim: int, min_scale: float = 1e-6) -> None:
         super().__init__(dim)
         if min_scale <= 0:
             raise ValueError(f"min_scale must be positive, got {min_scale}.")
@@ -38,7 +38,7 @@ class IndptNormalLayer(AbstractDistLayer):
 
 
 class IndptLaplaceLayer(AbstractDistLayer):
-    def __init__(self, dim: int, min_scale: float = 1e-3) -> None:
+    def __init__(self, dim: int, min_scale: float = 1e-6) -> None:
         super().__init__(dim)
         if min_scale <= 0:
             raise ValueError(f"min_scale must be positive, got {min_scale}.")

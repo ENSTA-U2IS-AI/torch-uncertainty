@@ -5,6 +5,7 @@ from torch import nn
 
 from torch_uncertainty.layers.distributions import (
     IndptLaplaceLayer,
+    IndptNormalInverseGammaLayer,
     IndptNormalLayer,
 )
 from torch_uncertainty.models.deep_ensembles import deep_ensembles
@@ -75,17 +76,25 @@ class DummyRegressionBaseline:
         optim_recipe=None,
         dist_type: str = "normal",
     ) -> LightningModule:
+        if probabilistic:
+            if dist_type == "normal":
+                last_layer = IndptNormalLayer(num_outputs)
+                num_classes = num_outputs * 2
+            elif dist_type == "laplace":
+                last_layer = IndptLaplaceLayer(num_outputs)
+                num_classes = num_outputs * 2
+            else:  # dist_type == "nig"
+                last_layer = IndptNormalInverseGammaLayer(num_outputs)
+                num_classes = num_outputs * 4
+        else:
+            last_layer = nn.Identity()
+            num_classes = num_outputs
+
         model = dummy_model(
             in_channels=in_features,
-            num_classes=num_outputs * 2 if probabilistic else num_outputs,
+            num_classes=num_classes,
             num_estimators=1,
-            last_layer=(
-                IndptNormalLayer(num_outputs)
-                if dist_type == "normal"
-                else IndptLaplaceLayer(num_outputs)
-            )
-            if probabilistic
-            else nn.Identity(),
+            last_layer=last_layer,
         )
         if baseline_type == "single":
             return RegressionRoutine(

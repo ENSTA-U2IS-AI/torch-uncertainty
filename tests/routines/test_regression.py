@@ -91,7 +91,7 @@ class TestRegression:
             loss=DistributionNLL,
             optim_recipe=optim_cifar10_resnet18,
             baseline_type="ensemble",
-            dist_type="laplace",
+            dist_type="nig",
         )
         trainer.fit(model, dm)
         trainer.test(model, dm)
