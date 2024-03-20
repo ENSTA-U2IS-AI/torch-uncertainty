@@ -3,10 +3,26 @@ import math
 import pytest
 import torch
 from torch import nn
+from torch.distributions import Normal
 
 from torch_uncertainty.layers.bayesian import BayesLinear
 from torch_uncertainty.layers.distributions import NormalInverseGamma
-from torch_uncertainty.losses import BetaNLL, DECLoss, DERLoss, ELBOLoss
+from torch_uncertainty.losses import (
+    BetaNLL,
+    DECLoss,
+    DERLoss,
+    DistributionNLLLoss,
+    ELBOLoss,
+)
+
+
+class TestDistributionNLL:
+    """Testing the DistributionNLLLoss class."""
+
+    def test_sum(self):
+        loss = DistributionNLLLoss(reduction="sum")
+        dist = Normal(0, 1)
+        loss(dist, torch.tensor([0.0]))
 
 
 class TestELBOLoss:

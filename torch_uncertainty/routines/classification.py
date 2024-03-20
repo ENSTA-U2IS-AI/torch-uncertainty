@@ -22,11 +22,11 @@ from torch_uncertainty.metrics import (
     CE,
     FPR95,
     BrierScore,
+    CategoricalNLL,
     Disagreement,
     Entropy,
     GroupingLoss,
     MutualInformation,
-    NegativeLogLikelihood,
     VariationRatio,
 )
 from torch_uncertainty.plotting_utils import plot_hist
@@ -179,7 +179,7 @@ class ClassificationRoutine(LightningModule):
         else:
             cls_metrics = MetricCollection(
                 {
-                    "nll": NegativeLogLikelihood(),
+                    "nll": CategoricalNLL(),
                     "acc": Accuracy(
                         task="multiclass", num_classes=self.num_classes
                     ),

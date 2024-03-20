@@ -168,7 +168,7 @@ class NormalInverseGamma(Distribution):
         return self.beta / (self.alpha - 1) / self.lmbda
 
     def log_prob(self, value: Tensor) -> Tensor:
-        if self._validate_args:
+        if self._validate_args:  # coverage: ignore
             self._validate_sample(value)
         gam: Tensor = 2 * self.beta * (1 + self.lmbda)
         return (

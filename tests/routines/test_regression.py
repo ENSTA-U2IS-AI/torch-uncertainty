@@ -5,7 +5,7 @@ from lightning.pytorch import Trainer
 from torch import nn
 
 from tests._dummies import DummyRegressionBaseline, DummyRegressionDataModule
-from torch_uncertainty.losses import DistributionNLL
+from torch_uncertainty.losses import DistributionNLLLoss
 from torch_uncertainty.optim_recipes import optim_cifar10_resnet18
 from torch_uncertainty.routines import RegressionRoutine
 
@@ -23,7 +23,7 @@ class TestRegression:
             probabilistic=True,
             in_features=dm.in_features,
             num_outputs=1,
-            loss=DistributionNLL,
+            loss=DistributionNLLLoss,
             optim_recipe=optim_cifar10_resnet18,
             baseline_type="single",
         )
@@ -37,7 +37,7 @@ class TestRegression:
             probabilistic=False,
             in_features=dm.in_features,
             num_outputs=1,
-            loss=DistributionNLL,
+            loss=DistributionNLLLoss,
             optim_recipe=optim_cifar10_resnet18,
             baseline_type="single",
         )
@@ -57,7 +57,7 @@ class TestRegression:
             probabilistic=True,
             in_features=dm.in_features,
             num_outputs=2,
-            loss=DistributionNLL,
+            loss=DistributionNLLLoss,
             optim_recipe=optim_cifar10_resnet18,
             baseline_type="single",
             dist_type="laplace",
@@ -70,7 +70,7 @@ class TestRegression:
             probabilistic=False,
             in_features=dm.in_features,
             num_outputs=2,
-            loss=DistributionNLL,
+            loss=DistributionNLLLoss,
             optim_recipe=optim_cifar10_resnet18,
             baseline_type="single",
         )
@@ -88,7 +88,7 @@ class TestRegression:
             probabilistic=True,
             in_features=dm.in_features,
             num_outputs=1,
-            loss=DistributionNLL,
+            loss=DistributionNLLLoss,
             optim_recipe=optim_cifar10_resnet18,
             baseline_type="ensemble",
             dist_type="nig",
@@ -101,7 +101,7 @@ class TestRegression:
             probabilistic=False,
             in_features=dm.in_features,
             num_outputs=1,
-            loss=DistributionNLL,
+            loss=DistributionNLLLoss,
             optim_recipe=optim_cifar10_resnet18,
             baseline_type="ensemble",
         )
@@ -119,7 +119,7 @@ class TestRegression:
             probabilistic=True,
             in_features=dm.in_features,
             num_outputs=2,
-            loss=DistributionNLL,
+            loss=DistributionNLLLoss,
             optim_recipe=optim_cifar10_resnet18,
             baseline_type="ensemble",
         )
@@ -132,7 +132,7 @@ class TestRegression:
             probabilistic=False,
             in_features=dm.in_features,
             num_outputs=2,
-            loss=DistributionNLL,
+            loss=DistributionNLLLoss,
             optim_recipe=optim_cifar10_resnet18,
             baseline_type="ensemble",
         )

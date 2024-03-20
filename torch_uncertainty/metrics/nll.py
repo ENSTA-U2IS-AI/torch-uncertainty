@@ -2,11 +2,12 @@ from typing import Any, Literal
 
 import torch
 import torch.nn.functional as F
+from torch import Tensor, distributions
 from torchmetrics import Metric
 from torchmetrics.utilities.data import dim_zero_cat
 
 
-class NegativeLogLikelihood(Metric):
+class CategoricalNLL(Metric):
     is_differentiabled = False
     higher_is_better = False
     full_state_update = False
@@ -66,12 +67,12 @@ class NegativeLogLikelihood(Metric):
             self.add_state("values", default=[], dist_reduce_fx="cat")
         self.add_state("total", default=torch.tensor(0), dist_reduce_fx="sum")
 
-    def update(self, probs: torch.Tensor, target: torch.Tensor) -> None:
+    def update(self, probs: Tensor, target: Tensor) -> None:
         """Update state with prediction probabilities and targets.
 
         Args:
-            probs (torch.Tensor): Probabilities from the model.
-            target (torch.Tensor): Ground truth labels.
+            probs (Tensor): Probabilities from the model.
+            target (Tensor): Ground truth labels.
         """
         if self.reduction is None or self.reduction == "none":
             self.values.append(
@@ -81,7 +82,7 @@ class NegativeLogLikelihood(Metric):
             self.values += F.nll_loss(torch.log(probs), target, reduction="sum")
             self.total += target.size(0)
 
-    def compute(self) -> torch.Tensor:
+    def compute(self) -> Tensor:
         """Computes NLL based on inputs passed in to ``update`` previously."""
         values = dim_zero_cat(self.values)
 
@@ -93,64 +94,13 @@ class NegativeLogLikelihood(Metric):
         return values
 
 
-class GaussianNegativeLogLikelihood(NegativeLogLikelihood):
-    """The Gaussian Negative Log Likelihood Metric.
-
-    Args:
-        reduction (str, optional): Determines how to reduce over the
-            :math:`B`/batch dimension:
-
-            - ``'mean'`` [default]: Averages score across samples
-            - ``'sum'``: Sum score across samples
-            - ``'none'`` or ``None``: Returns score per sample
-
-        kwargs: Additional keyword arguments, see `Advanced metric settings
-            <https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metric-kwargs>`_.
-
-    Inputs:
-        - :attr:`mean`: :math:`(B, D)`
-        - :attr:`target`: :math:`(B, D)`
-        - :attr:`var`: :math:`(B, D)`
-
-        where :math:`B` is the batch size and :math:`D` is the number of
-        dimensions. :math:`D` is optional.
-
-    Raises:
-        ValueError:
-            If :attr:`reduction` is not one of ``'mean'``, ``'sum'``,
-            ``'none'`` or ``None``.
-    """
-
-    def update(
-        self, mean: torch.Tensor, target: torch.Tensor, var: torch.Tensor
-    ) -> None:
-        """Update state with prediction mean, targets, and prediction varoance.
-
-        Args:
-            mean (torch.Tensor): Probabilities from the model.
-            target (torch.Tensor): Ground truth labels.
-            var (torch.Tensor): Predicted variance from the model.
-        """
-        if self.reduction is None or self.reduction == "none":
-            self.values.append(
-                F.gaussian_nll_loss(mean, target, var, reduction="none")
-            )
-        else:
-            self.values += F.gaussian_nll_loss(
-                mean, target, var, reduction="sum"
-            )
-            self.total += target.size(0)
-
-
-class DistributionNLL(NegativeLogLikelihood):
-    def update(
-        self, dists: torch.distributions.Distribution, target: torch.Tensor
-    ) -> None:
+class DistributionNLL(CategoricalNLL):
+    def update(self, dists: distributions.Distribution, target: Tensor) -> None:
         """Update state with the predicted distributions and the targets.
 
         Args:
             dists (torch.distributions.Distribution): Predicted distributions.
-            target (torch.Tensor): Ground truth labels.
+            target (Tensor): Ground truth labels.
         """
         if self.reduction is None or self.reduction == "none":
             self.values.append(-dists.log_prob(target))
@@ -158,7 +108,7 @@ class DistributionNLL(NegativeLogLikelihood):
             self.values += -dists.log_prob(target).sum()
             self.total += target.size(0)
 
-    def compute(self) -> torch.Tensor:
+    def compute(self) -> Tensor:
         """Computes NLL based on inputs passed in to ``update`` previously."""
         values = dim_zero_cat(self.values)
 

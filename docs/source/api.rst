@@ -197,8 +197,8 @@ Metrics
     Disagreement
     Entropy
     MutualInformation
-    NegativeLogLikelihood
-    GaussianNegativeLogLikelihood
+    CategoricalNLL
+    DistributionNLL
     FPR95
 
 Losses

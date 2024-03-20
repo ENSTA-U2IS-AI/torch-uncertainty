@@ -42,6 +42,12 @@ class TestDistributions:
 
     def test_nig(self):
         dist = distributions.NormalInverseGamma(
+            0.0,
+            1.1,
+            1.1,
+            1.1,
+        )
+        dist = distributions.NormalInverseGamma(
             torch.tensor(0.0),
             torch.tensor(1.1),
             torch.tensor(1.1),

@@ -8,7 +8,7 @@ from torch_uncertainty.layers.bayesian import bayesian_modules
 from torch_uncertainty.utils.distributions import NormalInverseGamma
 
 
-class DistributionNLL(nn.Module):
+class DistributionNLLLoss(nn.Module):
     def __init__(
         self, reduction: Literal["mean", "sum"] | None = "mean"
     ) -> None:
@@ -124,7 +124,7 @@ class ELBOLoss(nn.Module):
         return aggregated_elbo / self.num_samples
 
 
-class DERLoss(DistributionNLL):
+class DERLoss(DistributionNLLLoss):
     def __init__(
         self, reg_weight: float, reduction: str | None = "mean"
     ) -> None:
