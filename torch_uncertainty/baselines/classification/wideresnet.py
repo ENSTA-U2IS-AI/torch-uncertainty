@@ -16,7 +16,7 @@ from torch_uncertainty.routines.classification import (
 from torch_uncertainty.transforms import MIMOBatchFormat, RepeatTarget
 
 
-class WideResNet(ClassificationRoutine):
+class WideResNetBaseline(ClassificationRoutine):
     single = ["std"]
     ensemble = ["packed", "batched", "masked", "mimo", "mc-dropout"]
     versions = {

@@ -5,7 +5,11 @@ import torch
 from torch import nn
 from torchinfo import summary
 
-from torch_uncertainty.baselines.classification import VGG, ResNet, WideResNet
+from torch_uncertainty.baselines.classification import (
+    ResNetBaseline,
+    VGGBaseline,
+    WideResNetBaseline,
+)
 from torch_uncertainty.baselines.regression import MLP
 from torch_uncertainty.baselines.utils.parser_addons import (
     add_mlp_specific_args,
@@ -13,10 +17,10 @@ from torch_uncertainty.baselines.utils.parser_addons import (
 
 
 class TestStandardBaseline:
-    """Testing the ResNet baseline class."""
+    """Testing the ResNetBaseline baseline class."""
 
     def test_standard(self):
-        net = ResNet(
+        net = ResNetBaseline(
             num_classes=10,
             in_channels=3,
             loss=nn.CrossEntropyLoss,
@@ -32,7 +36,7 @@ class TestStandardBaseline:
 
     def test_errors(self):
         with pytest.raises(ValueError):
-            ResNet(
+            ResNetBaseline(
                 num_classes=10,
                 in_channels=3,
                 loss=nn.CrossEntropyLoss,
@@ -44,10 +48,10 @@ class TestStandardBaseline:
 
 
 class TestStandardWideBaseline:
-    """Testing the WideResNet baseline class."""
+    """Testing the WideResNetBaseline baseline class."""
 
     def test_standard(self):
-        net = WideResNet(
+        net = WideResNetBaseline(
             num_classes=10,
             in_channels=3,
             loss=nn.CrossEntropyLoss,
@@ -62,7 +66,7 @@ class TestStandardWideBaseline:
 
     def test_errors(self):
         with pytest.raises(ValueError):
-            WideResNet(
+            WideResNetBaseline(
                 num_classes=10,
                 in_channels=3,
                 loss=nn.CrossEntropyLoss,
@@ -73,10 +77,10 @@ class TestStandardWideBaseline:
 
 
 class TestStandardVGGBaseline:
-    """Testing the VGG baseline class."""
+    """Testing the VGGBaseline baseline class."""
 
     def test_standard(self):
-        net = VGG(
+        net = VGGBaseline(
             num_classes=10,
             in_channels=3,
             loss=nn.CrossEntropyLoss,
@@ -91,7 +95,7 @@ class TestStandardVGGBaseline:
 
     def test_errors(self):
         with pytest.raises(ValueError):
-            VGG(
+            VGGBaseline(
                 num_classes=10,
                 in_channels=3,
                 loss=nn.CrossEntropyLoss,

@@ -2,19 +2,18 @@ import torch
 from torch import nn
 from torchinfo import summary
 
-from torch_uncertainty.baselines.classification import VGG, ResNet, WideResNet
-
-# from torch_uncertainty.optim_recipes import (
-#     optim_cifar10_resnet18,
-#     optim_cifar10_wideresnet,
-# )
+from torch_uncertainty.baselines.classification import (
+    ResNetBaseline,
+    VGGBaseline,
+    WideResNetBaseline,
+)
 
 
 class TestStandardBaseline:
-    """Testing the ResNet baseline class."""
+    """Testing the ResNetBaseline baseline class."""
 
     def test_standard(self):
-        net = ResNet(
+        net = ResNetBaseline(
             num_classes=10,
             in_channels=3,
             loss=nn.CrossEntropyLoss,
@@ -32,10 +31,10 @@ class TestStandardBaseline:
 
 
 class TestStandardWideBaseline:
-    """Testing the WideResNet baseline class."""
+    """Testing the WideResNetBaseline baseline class."""
 
     def test_standard(self):
-        net = WideResNet(
+        net = WideResNetBaseline(
             num_classes=10,
             in_channels=3,
             loss=nn.CrossEntropyLoss,
@@ -52,10 +51,10 @@ class TestStandardWideBaseline:
 
 
 class TestStandardVGGBaseline:
-    """Testing the VGG baseline class."""
+    """Testing the VGGBaseline baseline class."""
 
     def test_standard(self):
-        net = VGG(
+        net = VGGBaseline(
             num_classes=10,
             in_channels=3,
             loss=nn.CrossEntropyLoss,
@@ -71,7 +70,7 @@ class TestStandardVGGBaseline:
         _ = net.criterion
         net(torch.rand(1, 3, 32, 32))
 
-        net = VGG(
+        net = VGGBaseline(
             num_classes=10,
             in_channels=3,
             loss=nn.CrossEntropyLoss,

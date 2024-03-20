@@ -2,7 +2,7 @@ import torch
 from lightning.pytorch.cli import LightningArgumentParser
 from lightning.pytorch.loggers import TensorBoardLogger  # noqa: F401
 
-from torch_uncertainty.baselines.classification import ResNet
+from torch_uncertainty.baselines.classification import ResNetBaseline
 from torch_uncertainty.datamodules import CIFAR10DataModule
 from torch_uncertainty.utils import TULightningCLI
 
@@ -14,7 +14,7 @@ class ResNetCLI(TULightningCLI):
 
 
 def cli_main() -> ResNetCLI:
-    return ResNetCLI(ResNet, CIFAR10DataModule)
+    return ResNetCLI(ResNetBaseline, CIFAR10DataModule)
 
 
 if __name__ == "__main__":

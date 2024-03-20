@@ -3,12 +3,12 @@ from pathlib import Path
 from torch import nn
 
 from torch_uncertainty import cli_main, init_args
-from torch_uncertainty.baselines import WideResNet
+from torch_uncertainty.baselines import WideResNetBaseline
 from torch_uncertainty.datamodules import CIFAR100DataModule
 from torch_uncertainty.optim_recipes import get_procedure
 
 if __name__ == "__main__":
-    args = init_args(WideResNet, CIFAR100DataModule)
+    args = init_args(WideResNetBaseline, CIFAR100DataModule)
     if args.root == "./data/":
         root = Path(__file__).parent.absolute().parents[2]
     else:
@@ -22,7 +22,7 @@ if __name__ == "__main__":
     dm = CIFAR100DataModule(**vars(args))
 
     # model
-    model = WideResNet(
+    model = WideResNetBaseline(
         num_classes=dm.num_classes,
         in_channels=dm.num_channels,
         loss=nn.CrossEntropyLoss,

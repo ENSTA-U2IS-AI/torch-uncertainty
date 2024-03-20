@@ -1,7 +1,7 @@
 import pytest
 
 from torch_uncertainty.baselines.classification.deep_ensembles import (
-    DeepEnsembles,
+    DeepEnsemblesBaseline,
 )
 
 
@@ -10,7 +10,7 @@ class TestDeepEnsembles:
 
     def test_failure(self):
         with pytest.raises(ValueError):
-            DeepEnsembles(
+            DeepEnsemblesBaseline(
                 log_path=".",
                 checkpoint_ids=[],
                 backbone="resnet",

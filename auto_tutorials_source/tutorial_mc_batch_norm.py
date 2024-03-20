@@ -17,9 +17,8 @@ First, we have to load the following utilities from TorchUncertainty:
 - the datamodule that handles dataloaders: MNISTDataModule, which lies in the torch_uncertainty.datamodule
 - the model: LeNet, which lies in torch_uncertainty.models
 - the mc-batch-norm wrapper: mc_dropout, which lies in torch_uncertainty.models
-- a resnet baseline to get the command line arguments: ResNet, which lies in torch_uncertainty.baselines
 - the classification training routine in the torch_uncertainty.training.classification module
-- the optimizer wrapper in the torch_uncertainty.optim_recipes module.
+- an optimization recipe in the torch_uncertainty.optim_recipes module.
 
 We also need import the neural network utils withing `torch.nn`.
 """

@@ -5,14 +5,14 @@ from torch_uncertainty.models import deep_ensembles
 from torch_uncertainty.routines.classification import ClassificationRoutine
 from torch_uncertainty.utils import get_version
 
-from . import VGG, ResNet, WideResNet
+from . import ResNetBaseline, VGGBaseline, WideResNetBaseline
 
 
-class DeepEnsembles(ClassificationRoutine):
+class DeepEnsemblesBaseline(ClassificationRoutine):
     backbones = {
-        "resnet": ResNet,
-        "vgg": VGG,
-        "wideresnet": WideResNet,
+        "resnet": ResNetBaseline,
+        "vgg": VGGBaseline,
+        "wideresnet": WideResNetBaseline,
     }
 
     def __init__(

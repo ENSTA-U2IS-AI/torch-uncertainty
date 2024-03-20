@@ -39,7 +39,7 @@ from torch_uncertainty.routines.classification import ClassificationRoutine
 from torch_uncertainty.transforms import MIMOBatchFormat, RepeatTarget
 
 
-class ResNet(ClassificationRoutine):
+class ResNetBaseline(ClassificationRoutine):
     single = ["std"]
     ensemble = ["packed", "batched", "masked", "mc-dropout", "mimo"]
     versions = {

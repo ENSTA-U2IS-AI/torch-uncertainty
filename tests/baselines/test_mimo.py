@@ -2,7 +2,10 @@ import torch
 from torch import nn
 from torchinfo import summary
 
-from torch_uncertainty.baselines.classification import ResNet, WideResNet
+from torch_uncertainty.baselines.classification import (
+    ResNetBaseline,
+    WideResNetBaseline,
+)
 
 # from torch_uncertainty.optim_recipes import (
 #     optim_cifar10_resnet18,
@@ -15,7 +18,7 @@ class TestMIMOBaseline:
     """Testing the MIMOResNet baseline class."""
 
     def test_mimo_50(self):
-        net = ResNet(
+        net = ResNetBaseline(
             num_classes=10,
             in_channels=3,
             loss=nn.CrossEntropyLoss,
@@ -34,7 +37,7 @@ class TestMIMOBaseline:
         _ = net(torch.rand(1, 3, 32, 32))
 
     def test_mimo_18(self):
-        net = ResNet(
+        net = ResNetBaseline(
             num_classes=10,
             in_channels=3,
             loss=nn.CrossEntropyLoss,
@@ -57,7 +60,7 @@ class TestMIMOWideBaseline:
     """Testing the PackedWideResNet baseline class."""
 
     def test_mimo(self):
-        net = WideResNet(
+        net = WideResNetBaseline(
             num_classes=10,
             in_channels=3,
             loss=nn.CrossEntropyLoss,

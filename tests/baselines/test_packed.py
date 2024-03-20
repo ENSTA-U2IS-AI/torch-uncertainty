@@ -3,7 +3,11 @@ import torch
 from torch import nn
 from torchinfo import summary
 
-from torch_uncertainty.baselines.classification import VGG, ResNet, WideResNet
+from torch_uncertainty.baselines.classification import (
+    ResNetBaseline,
+    VGGBaseline,
+    WideResNetBaseline,
+)
 from torch_uncertainty.baselines.regression import MLP
 
 
@@ -11,7 +15,7 @@ class TestPackedBaseline:
     """Testing the PackedResNet baseline class."""
 
     def test_packed_50(self):
-        net = ResNet(
+        net = ResNetBaseline(
             num_classes=10,
             in_channels=3,
             loss=nn.CrossEntropyLoss,
@@ -30,7 +34,7 @@ class TestPackedBaseline:
         _ = net(torch.rand(1, 3, 32, 32))
 
     def test_packed_18(self):
-        net = ResNet(
+        net = ResNetBaseline(
             num_classes=10,
             in_channels=3,
             loss=nn.CrossEntropyLoss,
@@ -50,7 +54,7 @@ class TestPackedBaseline:
 
     def test_packed_exception(self):
         with pytest.raises(Exception):
-            _ = ResNet(
+            _ = ResNetBaseline(
                 num_classes=10,
                 in_channels=3,
                 loss=nn.CrossEntropyLoss,
@@ -64,7 +68,7 @@ class TestPackedBaseline:
             )
 
         with pytest.raises(Exception):
-            _ = ResNet(
+            _ = ResNetBaseline(
                 num_classes=10,
                 in_channels=3,
                 loss=nn.CrossEntropyLoss,
@@ -82,7 +86,7 @@ class TestPackedWideBaseline:
     """Testing the PackedWideResNet baseline class."""
 
     def test_packed(self):
-        net = WideResNet(
+        net = WideResNetBaseline(
             num_classes=10,
             in_channels=3,
             loss=nn.CrossEntropyLoss,
@@ -104,7 +108,7 @@ class TestPackedVGGBaseline:
     """Testing the PackedWideResNet baseline class."""
 
     def test_packed(self):
-        net = VGG(
+        net = VGGBaseline(
             num_classes=10,
             in_channels=3,
             arch=13,

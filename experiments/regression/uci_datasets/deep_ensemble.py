@@ -1,11 +1,11 @@
 from pathlib import Path
 
 from torch_uncertainty import cli_main, init_args
-from torch_uncertainty.baselines import DeepEnsembles
+from torch_uncertainty.baselines import DeepEnsemblesBaseline
 from torch_uncertainty.datamodules import UCIDataModule
 
 if __name__ == "__main__":
-    args = init_args(DeepEnsembles, UCIDataModule)
+    args = init_args(DeepEnsemblesBaseline, UCIDataModule)
     if args.root == "./data/":
         root = Path(__file__).parent.absolute().parents[2]
     else:
@@ -19,7 +19,7 @@ if __name__ == "__main__":
 
     # model
     args.task = "regression"
-    model = DeepEnsembles(
+    model = DeepEnsemblesBaseline(
         **vars(args),
     )
 

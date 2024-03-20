@@ -3,12 +3,12 @@ from pathlib import Path
 from torch import nn
 
 from torch_uncertainty import cli_main, init_args
-from torch_uncertainty.baselines import ResNet
+from torch_uncertainty.baselines import ResNetBaseline
 from torch_uncertainty.datamodules import CIFAR100DataModule
 from torch_uncertainty.optim_recipes import get_procedure
 
 if __name__ == "__main__":
-    args = init_args(ResNet, CIFAR100DataModule)
+    args = init_args(ResNetBaseline, CIFAR100DataModule)
     if args.root == "./data/":
         root = Path(__file__).parent.absolute().parents[2]
     else:
@@ -22,7 +22,7 @@ if __name__ == "__main__":
     dm = CIFAR100DataModule(**vars(args))
 
     # model
-    model = ResNet(
+    model = ResNetBaseline(
         num_classes=dm.num_classes,
         in_channels=dm.num_channels,
         loss=nn.CrossEntropyLoss,

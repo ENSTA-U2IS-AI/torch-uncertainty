@@ -17,7 +17,7 @@ from torch_uncertainty.routines.classification import ClassificationRoutine
 from torch_uncertainty.transforms import RepeatTarget
 
 
-class VGG(ClassificationRoutine):
+class VGGBaseline(ClassificationRoutine):
     single = ["std"]
     ensemble = ["mc-dropout", "packed"]
     versions = {
