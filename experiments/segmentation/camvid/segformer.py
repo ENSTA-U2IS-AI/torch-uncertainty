@@ -1,7 +1,7 @@
 import torch
 from lightning.pytorch.cli import LightningArgumentParser
 
-from torch_uncertainty.baselines.segmentation import SegFormer
+from torch_uncertainty.baselines.segmentation import SegFormerBaseline
 from torch_uncertainty.datamodules import CamVidDataModule
 from torch_uncertainty.utils import TULightningCLI
 
@@ -13,7 +13,7 @@ class SegFormerCLI(TULightningCLI):
 
 
 def cli_main() -> SegFormerCLI:
-    return SegFormerCLI(SegFormer, CamVidDataModule)
+    return SegFormerCLI(SegFormerBaseline, CamVidDataModule)
 
 
 if __name__ == "__main__":

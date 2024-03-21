@@ -1,2 +1,2 @@
 # ruff: noqa: F401
-from .segformer import SegFormer
+from .segformer import SegFormerBaseline

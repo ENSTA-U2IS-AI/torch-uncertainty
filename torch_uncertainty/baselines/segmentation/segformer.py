@@ -13,7 +13,7 @@ from torch_uncertainty.models.segmentation.segformer import (
 from torch_uncertainty.routines.segmentation import SegmentationRoutine
 
 
-class SegFormer(SegmentationRoutine):
+class SegFormerBaseline(SegmentationRoutine):
     single = ["std"]
     versions = {
         "std": [
