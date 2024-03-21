@@ -9,10 +9,14 @@ from torch_uncertainty.layers.distributions import (
     IndptNormalLayer,
 )
 from torch_uncertainty.models.deep_ensembles import deep_ensembles
-from torch_uncertainty.routines import ClassificationRoutine, RegressionRoutine
+from torch_uncertainty.routines import (
+    ClassificationRoutine,
+    RegressionRoutine,
+    SegmentationRoutine,
+)
 from torch_uncertainty.transforms import RepeatTarget
 
-from .model import dummy_model
+from .model import dummy_model, dummy_segmentation_model
 
 
 class DummyClassificationBaseline:
@@ -119,4 +123,39 @@ class DummyRegressionBaseline:
             num_estimators=2,
             optim_recipe=optim_recipe,
             format_batch_fn=RepeatTarget(2),
+        )
+
+
+class DummySegmentationBaseline:
+    def __new__(
+        cls,
+        in_channels: int,
+        num_classes: int,
+        loss: type[nn.Module],
+        ensemble: bool = False,
+    ) -> LightningModule:
+        model = dummy_segmentation_model(
+            in_channels=in_channels,
+            num_classes=num_classes,
+            num_estimators=1 + int(ensemble),
+        )
+
+        if not ensemble:
+            return SegmentationRoutine(
+                num_classes=num_classes,
+                model=model,
+                loss=loss,
+                format_batch_fn=nn.Identity(),
+                optim_recipe=None,
+                num_estimators=1,
+            )
+
+        # ensemble
+        return SegmentationRoutine(
+            num_classes=num_classes,
+            model=model,
+            loss=loss,
+            format_batch_fn=RepeatTarget(2),
+            optim_recipe=None,
+            num_estimators=2,
         )

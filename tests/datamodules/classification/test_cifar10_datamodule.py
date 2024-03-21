@@ -24,7 +24,6 @@ class TestCIFAR10DataModule:
 
         dm.prepare_data()
         dm.setup()
-        dm.setup("test")
 
         with pytest.raises(ValueError):
             dm.setup("xxx")
@@ -66,7 +65,6 @@ class TestCIFAR10DataModule:
         dm.dataset = DummyClassificationDataset
         dm.ood_dataset = DummyClassificationDataset
         dm.setup()
-        dm.setup("test")
         dm.train_dataloader()
 
         # args.cutout = 8

@@ -52,6 +52,35 @@ class _DummyWithFeats(_Dummy):
         return self.forward(x)
 
 
+class _DummySegmentation(nn.Module):
+    def __init__(
+        self,
+        in_channels: int,
+        num_classes: int,
+        dropout_rate: float,
+        num_estimators: int,
+    ) -> None:
+        super().__init__()
+        self.dropout_rate = dropout_rate
+
+        self.conv = nn.Conv2d(
+            in_channels, num_classes, kernel_size=3, padding=1
+        )
+        self.dropout = nn.Dropout(p=dropout_rate)
+
+        self.num_estimators = num_estimators
+
+    def forward(self, x: Tensor) -> Tensor:
+        return self.dropout(
+            self.conv(
+                torch.ones(
+                    (x.shape[0] * self.num_estimators, 1, 32, 32),
+                    dtype=torch.float32,
+                )
+            )
+        )
+
+
 def dummy_model(
     in_channels: int,
     num_classes: int,
@@ -94,4 +123,30 @@ def dummy_model(
         dropout_rate=dropout_rate,
         with_linear=with_linear,
         last_layer=last_layer,
+    )
+
+
+def dummy_segmentation_model(
+    in_channels: int,
+    num_classes: int,
+    dropout_rate: float = 0.0,
+    num_estimators: int = 1,
+) -> nn.Module:
+    """Dummy segmentation model for testing purposes.
+
+    Args:
+        in_channels (int): Number of input channels.
+        num_classes (int): Number of output classes.
+        dropout_rate (float, optional): Dropout rate. Defaults to 0.0.
+        num_estimators (int, optional): Number of estimators in the ensemble.
+            Defaults to 1.
+
+    Returns:
+        nn.Module: Dummy segmentation model.
+    """
+    return _DummySegmentation(
+        in_channels=in_channels,
+        num_classes=num_classes,
+        dropout_rate=dropout_rate,
+        num_estimators=num_estimators,
     )

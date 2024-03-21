@@ -1,6 +1,6 @@
 import pytest
 
-from tests._dummies.dataset import DummyClassificationDataset
+from tests._dummies.dataset import DummySegmentationDataset
 from torch_uncertainty.datamodules.segmentation import CamVidDataModule
 from torch_uncertainty.datasets.segmentation import CamVid
 
@@ -9,19 +9,23 @@ class TestCamVidDataModule:
     """Testing the CamVidDataModule datamodule."""
 
     def test_camvid_main(self):
-        # parser = ArgumentParser()
-        # parser = CIFAR10DataModule.add_argparse_args(parser)
-
-        # Simulate that cutout is set to 16
         dm = CamVidDataModule(root="./data/", batch_size=128)
 
         assert dm.dataset == CamVid
 
-        dm.dataset = DummyClassificationDataset
+        dm.dataset = DummySegmentationDataset
 
         dm.prepare_data()
         dm.setup()
-        dm.setup("test")
 
         with pytest.raises(ValueError):
             dm.setup("xxx")
+
+        # test abstract methods
+        dm.get_train_set()
+        dm.get_val_set()
+        dm.get_test_set()
+
+        dm.train_dataloader()
+        dm.val_dataloader()
+        dm.test_dataloader()

@@ -6,6 +6,7 @@ import numpy as np
 import torch
 from PIL import Image
 from torch.utils.data import Dataset
+from torchvision import tv_tensors
 
 
 class DummyClassificationDataset(Dataset):
@@ -151,6 +152,61 @@ class DummyRegressionDataset(Dataset):
 
         if self.target_transform is not None:
             target = self.target_transform(target)
+
+        return img, target
+
+    def __len__(self) -> int:
+        return len(self.data)
+
+
+class DummySegmentationDataset(Dataset):
+    def __init__(
+        self,
+        root: Path,
+        split: str = "train",
+        transforms: Callable[..., Any] | None = None,
+        num_channels: int = 3,
+        image_size: int = 4,
+        num_classes: int = 10,
+        num_images: int = 2,
+        **kwargs: Any,
+    ) -> None:
+        super().__init__()
+
+        self.root = root
+        self.split = split
+        self.transforms = transforms
+
+        self.data: Any = []
+        self.targets = []
+
+        if num_channels == 1:
+            img_shape = (num_images, image_size, image_size)
+        else:
+            img_shape = (num_images, num_channels, image_size, image_size)
+
+        smnt_shape = (num_images, 1, image_size, image_size)
+
+        self.data = np.random.randint(
+            low=0,
+            high=255,
+            size=img_shape,
+            dtype=np.uint8,
+        )
+
+        self.targets = np.random.randint(
+            low=0,
+            high=num_classes,
+            size=smnt_shape,
+            dtype=np.uint8,
+        )
+
+    def __getitem__(self, index: int) -> tuple[Any, Any]:
+        img = tv_tensors.Image(self.data[index])
+        target = tv_tensors.Mask(self.targets[index])
+
+        if self.transforms is not None:
+            img, target = self.transforms(img, target)
 
         return img, target
 

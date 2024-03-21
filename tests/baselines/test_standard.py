@@ -9,6 +9,7 @@ from torch_uncertainty.baselines.classification import (
     WideResNetBaseline,
 )
 from torch_uncertainty.baselines.regression import MLP
+from torch_uncertainty.baselines.segmentation import SegFormer
 
 
 class TestStandardBaseline:
@@ -124,4 +125,29 @@ class TestStandardMLPBaseline:
                 loss=nn.MSELoss,
                 version="test",
                 hidden_dims=[1],
+            )
+
+
+class TestStandardSegFormerBaseline:
+    """Testing the SegFormer baseline class."""
+
+    def test_standard(self):
+        net = SegFormer(
+            num_classes=10,
+            loss=nn.CrossEntropyLoss,
+            version="std",
+            arch=0,
+        )
+        summary(net)
+
+        _ = net.criterion
+        _ = net(torch.rand(1, 3, 32, 32))
+
+    def test_errors(self):
+        with pytest.raises(ValueError):
+            SegFormer(
+                num_classes=10,
+                loss=nn.CrossEntropyLoss,
+                version="test",
+                arch=0,
             )

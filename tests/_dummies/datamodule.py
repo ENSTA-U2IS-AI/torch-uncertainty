@@ -1,13 +1,19 @@
 from pathlib import Path
 
 import numpy as np
-import torchvision.transforms as T
+import torch
+import torchvision.transforms.v2 as T
 from numpy.typing import ArrayLike
 from torch.utils.data import DataLoader
+from torchvision import tv_tensors
 
 from torch_uncertainty.datamodules.abstract import AbstractDataModule
 
-from .dataset import DummyClassificationDataset, DummyRegressionDataset
+from .dataset import (
+    DummyClassificationDataset,
+    DummyRegressionDataset,
+    DummySegmentationDataset,
+)
 
 
 class DummyClassificationDataModule(AbstractDataModule):
@@ -151,3 +157,89 @@ class DummyRegressionDataModule(AbstractDataModule):
 
     def test_dataloader(self) -> DataLoader | list[DataLoader]:
         return [self._data_loader(self.test)]
+
+
+class DummySegmentationDataModule(AbstractDataModule):
+    num_channels = 3
+    training_task = "segmentation"
+
+    def __init__(
+        self,
+        root: str | Path,
+        batch_size: int,
+        num_classes: int = 2,
+        num_workers: int = 1,
+        pin_memory: bool = True,
+        persistent_workers: bool = True,
+        num_images: int = 2,
+    ) -> None:
+        super().__init__(
+            root=root,
+            val_split=None,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            persistent_workers=persistent_workers,
+        )
+
+        self.num_classes = num_classes
+        self.num_images = num_images
+
+        self.dataset = DummySegmentationDataset
+
+        self.train_transform = T.ToDtype(
+            dtype={
+                tv_tensors.Image: torch.float32,
+                tv_tensors.Mask: torch.int64,
+                "others": None,
+            },
+            scale=True,
+        )
+        self.test_transform = T.ToDtype(
+            dtype={
+                tv_tensors.Image: torch.float32,
+                tv_tensors.Mask: torch.int64,
+                "others": None,
+            },
+            scale=True,
+        )
+
+    def prepare_data(self) -> None:
+        pass
+
+    def setup(self, stage: str | None = None) -> None:
+        if stage == "fit" or stage is None:
+            self.train = self.dataset(
+                self.root,
+                num_channels=self.num_channels,
+                num_classes=self.num_classes,
+                image_size=self.image_size,
+                transforms=self.train_transform,
+                num_images=self.num_images,
+            )
+            self.val = self.dataset(
+                self.root,
+                num_channels=self.num_channels,
+                num_classes=self.num_classes,
+                image_size=self.image_size,
+                transforms=self.test_transform,
+                num_images=self.num_images,
+            )
+        elif stage == "test":
+            self.test = self.dataset(
+                self.root,
+                num_channels=self.num_channels,
+                num_classes=self.num_classes,
+                image_size=self.image_size,
+                transforms=self.test_transform,
+                num_images=self.num_images,
+            )
+
+    def test_dataloader(self) -> DataLoader | list[DataLoader]:
+        return [self._data_loader(self.test)]
+
+    def _get_train_data(self) -> ArrayLike:
+        return self.train.data
+
+    def _get_train_targets(self) -> ArrayLike:
+        return np.array(self.train.targets)
