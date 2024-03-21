@@ -29,10 +29,9 @@ from torch_uncertainty.metrics import (
     MutualInformation,
     VariationRatio,
 )
-from torch_uncertainty.plotting_utils import plot_hist
 from torch_uncertainty.post_processing import TemperatureScaler
 from torch_uncertainty.transforms import Mixup, MixupIO, RegMixup, WarpingMixup
-from torch_uncertainty.utils import csv_writer
+from torch_uncertainty.utils import csv_writer, plot_hist
 
 
 class ClassificationRoutine(LightningModule):
