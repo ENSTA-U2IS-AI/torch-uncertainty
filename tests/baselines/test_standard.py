@@ -8,7 +8,7 @@ from torch_uncertainty.baselines.classification import (
     VGGBaseline,
     WideResNetBaseline,
 )
-from torch_uncertainty.baselines.regression import MLP
+from torch_uncertainty.baselines.regression import MLPBaseline
 from torch_uncertainty.baselines.segmentation import SegFormer
 
 
@@ -105,9 +105,9 @@ class TestStandardMLPBaseline:
     """Testing the MLP baseline class."""
 
     def test_standard(self):
-        net = MLP(
+        net = MLPBaseline(
             in_features=3,
-            num_outputs=10,
+            output_dim=10,
             loss=nn.MSELoss,
             version="std",
             hidden_dims=[1],
@@ -119,9 +119,9 @@ class TestStandardMLPBaseline:
 
     def test_errors(self):
         with pytest.raises(ValueError):
-            MLP(
+            MLPBaseline(
                 in_features=3,
-                num_outputs=10,
+                output_dim=10,
                 loss=nn.MSELoss,
                 version="test",
                 hidden_dims=[1],

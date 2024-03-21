@@ -22,7 +22,7 @@ class TestRegression:
         model = DummyRegressionBaseline(
             probabilistic=True,
             in_features=dm.in_features,
-            num_outputs=1,
+            output_dim=1,
             loss=DistributionNLLLoss,
             optim_recipe=optim_cifar10_resnet18,
             baseline_type="single",
@@ -36,7 +36,7 @@ class TestRegression:
         model = DummyRegressionBaseline(
             probabilistic=False,
             in_features=dm.in_features,
-            num_outputs=1,
+            output_dim=1,
             loss=DistributionNLLLoss,
             optim_recipe=optim_cifar10_resnet18,
             baseline_type="single",
@@ -56,7 +56,7 @@ class TestRegression:
         model = DummyRegressionBaseline(
             probabilistic=True,
             in_features=dm.in_features,
-            num_outputs=2,
+            output_dim=2,
             loss=DistributionNLLLoss,
             optim_recipe=optim_cifar10_resnet18,
             baseline_type="single",
@@ -69,7 +69,7 @@ class TestRegression:
         model = DummyRegressionBaseline(
             probabilistic=False,
             in_features=dm.in_features,
-            num_outputs=2,
+            output_dim=2,
             loss=DistributionNLLLoss,
             optim_recipe=optim_cifar10_resnet18,
             baseline_type="single",
@@ -87,7 +87,7 @@ class TestRegression:
         model = DummyRegressionBaseline(
             probabilistic=True,
             in_features=dm.in_features,
-            num_outputs=1,
+            output_dim=1,
             loss=DistributionNLLLoss,
             optim_recipe=optim_cifar10_resnet18,
             baseline_type="ensemble",
@@ -100,7 +100,7 @@ class TestRegression:
         model = DummyRegressionBaseline(
             probabilistic=False,
             in_features=dm.in_features,
-            num_outputs=1,
+            output_dim=1,
             loss=DistributionNLLLoss,
             optim_recipe=optim_cifar10_resnet18,
             baseline_type="ensemble",
@@ -118,7 +118,7 @@ class TestRegression:
         model = DummyRegressionBaseline(
             probabilistic=True,
             in_features=dm.in_features,
-            num_outputs=2,
+            output_dim=2,
             loss=DistributionNLLLoss,
             optim_recipe=optim_cifar10_resnet18,
             baseline_type="ensemble",
@@ -131,7 +131,7 @@ class TestRegression:
         model = DummyRegressionBaseline(
             probabilistic=False,
             in_features=dm.in_features,
-            num_outputs=2,
+            output_dim=2,
             loss=DistributionNLLLoss,
             optim_recipe=optim_cifar10_resnet18,
             baseline_type="ensemble",

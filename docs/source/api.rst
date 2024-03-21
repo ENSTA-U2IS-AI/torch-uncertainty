@@ -18,9 +18,9 @@ Classification
     :nosignatures:
     :template: class.rst
 
-    ResNet
-    VGG
-    WideResNet
+    ResNetBaseline
+    VGGBaseline
+    WideResNetBaseline
 
 .. currentmodule:: torch_uncertainty.baselines.regression
 
@@ -32,7 +32,18 @@ Regression
     :nosignatures:
     :template: class.rst
 
-    MLP
+    MLPBaseline
+
+Segmentation
+^^^^^^^^^^^^
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: class.rst
+
+    SegformerBaseline
+
 
 .. Models
 .. ------

@@ -8,7 +8,7 @@ from torch_uncertainty.baselines.classification import (
     VGGBaseline,
     WideResNetBaseline,
 )
-from torch_uncertainty.baselines.regression import MLP
+from torch_uncertainty.baselines.regression import MLPBaseline
 
 
 class TestPackedBaseline:
@@ -130,9 +130,9 @@ class TestPackedMLPBaseline:
     """Testing the Packed MLP baseline class."""
 
     def test_packed(self):
-        net = MLP(
+        net = MLPBaseline(
             in_features=3,
-            num_outputs=10,
+            output_dim=10,
             loss=nn.MSELoss,
             version="packed",
             hidden_dims=[1],

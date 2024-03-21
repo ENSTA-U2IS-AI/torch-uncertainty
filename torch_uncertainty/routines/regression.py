@@ -18,7 +18,7 @@ class RegressionRoutine(LightningModule):
     def __init__(
         self,
         probabilistic: bool,
-        num_outputs: int,
+        output_dim: int,
         model: nn.Module,
         loss: type[nn.Module],
         num_estimators: int = 1,
@@ -30,7 +30,7 @@ class RegressionRoutine(LightningModule):
         Args:
             probabilistic (bool): Whether the model is probabilistic, i.e.,
                 outputs a PyTorch distribution.
-            num_outputs (int): The number of outputs of the model.
+            output_dim (int): The number of outputs of the model.
             model (nn.Module): The model to train.
             loss (type[nn.Module]): The loss function to use.
             num_estimators (int, optional): The number of estimators for the
@@ -78,14 +78,12 @@ class RegressionRoutine(LightningModule):
             )
         self.num_estimators = num_estimators
 
-        if num_outputs < 1:
-            raise ValueError(
-                f"num_outputs must be positive, got {num_outputs}."
-            )
-        self.num_outputs = num_outputs
+        if output_dim < 1:
+            raise ValueError(f"output_dim must be positive, got {output_dim}.")
+        self.output_dim = output_dim
 
         self.one_dim_regression = False
-        if num_outputs == 1:
+        if output_dim == 1:
             self.one_dim_regression = True
 
         self.optim_recipe = optim_recipe
