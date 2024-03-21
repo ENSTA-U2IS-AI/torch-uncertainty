@@ -32,6 +32,7 @@ class DummyClassificationBaseline:
         ood_criterion: str = "msp",
         eval_ood: bool = False,
         eval_grouping_loss: bool = False,
+        calibrate: bool = False,
     ) -> LightningModule:
         model = dummy_model(
             in_channels=in_channels,
@@ -52,6 +53,7 @@ class DummyClassificationBaseline:
                 ood_criterion=ood_criterion,
                 eval_ood=eval_ood,
                 eval_grouping_loss=eval_grouping_loss,
+                calibration_set="val" if calibrate else None,
             )
         # baseline_type == "ensemble":
         model = deep_ensembles(
@@ -69,6 +71,7 @@ class DummyClassificationBaseline:
             ood_criterion=ood_criterion,
             eval_ood=eval_ood,
             eval_grouping_loss=eval_grouping_loss,
+            calibration_set="val" if calibrate else None,
         )
 
 

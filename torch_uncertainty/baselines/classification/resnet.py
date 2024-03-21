@@ -302,4 +302,4 @@ class ResNetBaseline(ClassificationRoutine):
             save_in_csv=save_in_csv,
             calibration_set=calibration_set,
         )
-        self.save_hyperparameters()
+        self.save_hyperparameters(ignore=["loss"])

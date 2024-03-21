@@ -76,4 +76,4 @@ class SegFormerBaseline(SegmentationRoutine):
             num_estimators=num_estimators,
             format_batch_fn=format_batch_fn,
         )
-        self.save_hyperparameters()
+        self.save_hyperparameters(ignore=["loss"])

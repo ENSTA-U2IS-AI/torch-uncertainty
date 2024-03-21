@@ -6,7 +6,7 @@ import torch
 import torch.nn.functional as F
 from einops import rearrange
 from lightning.pytorch import LightningModule
-from lightning.pytorch.loggers import TensorBoardLogger
+from lightning.pytorch.loggers import Logger
 from lightning.pytorch.utilities.types import STEP_OUTPUT
 from timm.data import Mixup as timm_Mixup
 from torch import Tensor, nn
@@ -325,19 +325,16 @@ class ClassificationRoutine(LightningModule):
                 if self.calibration_set == "val"
                 else self.trainer.datamodule.test_dataloader().dataset
             )
-            self.scaler = TemperatureScaler(device=self.device).fit(
-                model=self.model, calibration_set=dataset
-            )
+            with torch.inference_mode(False):
+                self.scaler = TemperatureScaler(
+                    model=self.model, device=self.device
+                ).fit(calibration_set=dataset)
             self.cal_model = torch.nn.Sequential(self.model, self.scaler)
         else:
             self.scaler = None
             self.cal_model = None
 
-        if (
-            self.eval_ood
-            and self.log_plots
-            and isinstance(self.logger, TensorBoardLogger)
-        ):
+        if self.eval_ood and self.log_plots and isinstance(self.logger, Logger):
             self.id_logit_storage = []
             self.ood_logit_storage = []
 
@@ -574,7 +571,7 @@ class ClassificationRoutine(LightningModule):
                 result_dict.update(tmp_metrics)
                 self.test_ood_ens_metrics.reset()
 
-        if isinstance(self.logger, TensorBoardLogger) and self.log_plots:
+        if isinstance(self.logger, Logger) and self.log_plots:
             self.logger.experiment.add_figure(
                 "Calibration Plot", self.test_cls_metrics["ece"].plot()[0]
             )

@@ -87,7 +87,34 @@ class TestClassification:
         trainer.test(model, dm)
         model(dm.get_test_set()[0][0])
 
-    def test_two_estimators_two_classes(self):
+    def test_one_estimator_two_classes_calibrated_with_ood(self):
+        trainer = Trainer(accelerator="cpu", fast_dev_run=True, logger=True)
+
+        dm = DummyClassificationDataModule(
+            root=Path(),
+            batch_size=16,
+            num_classes=2,
+            num_images=100,
+            eval_ood=True,
+        )
+        model = DummyClassificationBaseline(
+            num_classes=dm.num_classes,
+            in_channels=dm.num_channels,
+            loss=nn.CrossEntropyLoss(),
+            optim_recipe=optim_cifar10_resnet18,
+            baseline_type="single",
+            ood_criterion="entropy",
+            eval_ood=True,
+            # eval_grouping_loss=True,
+            calibrate=True,
+        )
+
+        trainer.fit(model, dm)
+        trainer.validate(model, dm)
+        trainer.test(model, dm)
+        model(dm.get_test_set()[0][0])
+
+    def test_two_estimators_two_classes_with_ood(self):
         trainer = Trainer(accelerator="cpu", fast_dev_run=True)
 
         dm = DummyClassificationDataModule(
@@ -95,6 +122,7 @@ class TestClassification:
             batch_size=16,
             num_classes=2,
             num_images=100,
+            eval_ood=True,
         )
         model = DummyClassificationBaseline(
             num_classes=dm.num_classes,
@@ -103,6 +131,7 @@ class TestClassification:
             optim_recipe=optim_cifar10_resnet18,
             baseline_type="ensemble",
             ood_criterion="energy",
+            eval_ood=True,
         )
 
         trainer.fit(model, dm)
