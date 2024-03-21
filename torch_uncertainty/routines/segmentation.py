@@ -13,7 +13,8 @@ class SegmentationRoutine(LightningModule):
         num_classes: int,
         model: nn.Module,
         loss: type[nn.Module],
-        num_estimators: int,
+        num_estimators: int = 1,
+        optim_recipe=None,
         format_batch_fn: nn.Module | None = None,
     ) -> None:
         super().__init__()
@@ -24,6 +25,9 @@ class SegmentationRoutine(LightningModule):
         self.num_classes = num_classes
         self.model = model
         self.loss = loss
+        self.num_estimators = num_estimators
+        self.format_batch_fn = format_batch_fn
+        self.optim_recipe = optim_recipe
 
         self.metric_to_monitor = "val/mean_iou"
 
@@ -38,6 +42,9 @@ class SegmentationRoutine(LightningModule):
 
         self.val_seg_metrics = seg_metrics.clone(prefix="val/")
         self.test_seg_metrics = seg_metrics.clone(prefix="test/")
+
+    def configure_optimizers(self):
+        return self.optim_recipe(self.model)
 
     @property
     def criterion(self) -> nn.Module:
@@ -56,6 +63,7 @@ class SegmentationRoutine(LightningModule):
         self, batch: tuple[Tensor, Tensor], batch_idx: int
     ) -> STEP_OUTPUT:
         img, target = batch
+        img, target = self.format_batch_fn((img, target))
         logits = self.forward(img)
         logits = rearrange(logits, "b c h w -> (b h w) c")
         target = target.flatten()
@@ -68,20 +76,27 @@ class SegmentationRoutine(LightningModule):
         self, batch: tuple[Tensor, Tensor], batch_idx: int
     ) -> None:
         img, target = batch
-        # (B, num_classes, H, W)
         logits = self.forward(img)
-        logits = rearrange(logits, "b c h w -> (b h w) c")
+        logits = rearrange(
+            logits, "(m b) c h w -> (b h w) m c", m=self.num_estimators
+        )
+        probs_per_est = logits.softmax(dim=-1)
+        probs = probs_per_est.mean(dim=1)
         target = target.flatten()
         valid_mask = target != 255
-        self.val_seg_metrics.update(logits[valid_mask], target[valid_mask])
+        self.val_seg_metrics.update(probs[valid_mask], target[valid_mask])
 
     def test_step(self, batch: tuple[Tensor, Tensor], batch_idx: int) -> None:
         img, target = batch
         logits = self.forward(img)
-        logits = rearrange(logits, "b c h w -> (b h w) c")
+        logits = rearrange(
+            logits, "(m b) c h w -> (b h w) m c", m=self.num_estimators
+        )
+        probs_per_est = logits.softmax(dim=-1)
+        probs = probs_per_est.mean(dim=1)
         target = target.flatten()
         valid_mask = target != 255
-        self.test_seg_metrics.update(logits[valid_mask], target[valid_mask])
+        self.test_seg_metrics.update(probs[valid_mask], target[valid_mask])
 
     def on_validation_epoch_end(self) -> None:
         self.log_dict(self.val_seg_metrics.compute())
