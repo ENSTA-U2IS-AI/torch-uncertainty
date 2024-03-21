@@ -31,9 +31,14 @@ class TestELBOLoss:
     def test_main(self):
         model = BayesLinear(1, 1)
         criterion = nn.BCEWithLogitsLoss()
-
         loss = ELBOLoss(model, criterion, kl_weight=1e-5, num_samples=1)
+        loss(model(torch.randn(1, 1)), torch.randn(1, 1))
 
+        model = nn.Linear(1, 1)
+        criterion = nn.BCEWithLogitsLoss()
+
+        ELBOLoss(None, criterion, kl_weight=1e-5, num_samples=1)
+        loss = ELBOLoss(model, criterion, kl_weight=1e-5, num_samples=1)
         loss(model(torch.randn(1, 1)), torch.randn(1, 1))
 
     def test_failures(self):
@@ -51,13 +56,6 @@ class TestELBOLoss:
 
         with pytest.raises(TypeError):
             ELBOLoss(model, criterion, kl_weight=1e-5, num_samples=1.5)
-
-    def test_no_bayes(self):
-        model = nn.Linear(1, 1)
-        criterion = nn.BCEWithLogitsLoss()
-
-        loss = ELBOLoss(model, criterion, kl_weight=1e-5, num_samples=1)
-        loss(model(torch.randn(1, 1)), torch.randn(1, 1))
 
 
 class TestNIGLoss:

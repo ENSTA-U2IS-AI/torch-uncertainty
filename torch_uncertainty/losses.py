@@ -84,8 +84,7 @@ class ELBOLoss(nn.Module):
         """
         super().__init__()
 
-        if model is not None:
-            self.set_model(model)
+        self.set_model(model)
 
         if isinstance(criterion, type):
             raise TypeError(
