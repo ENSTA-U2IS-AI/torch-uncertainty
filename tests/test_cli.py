@@ -1,4 +1,4 @@
-from cli_test_helpers import ArgvContext
+import sys
 
 from torch_uncertainty.baselines.classification import ResNetBaseline
 from torch_uncertainty.datamodules import CIFAR10DataModule
@@ -10,7 +10,7 @@ class TestCLI:
 
     def test_cli_init(self):
         """Test CLI initialization."""
-        with ArgvContext(
+        sys.argv = [
             "file.py",
             "--model.in_channels",
             "3",
@@ -25,8 +25,8 @@ class TestCLI:
             "--data.root",
             "./data",
             "--data.batch_size",
-            "32",
-        ):
-            cli = TULightningCLI(ResNetBaseline, CIFAR10DataModule, run=False)
-            assert cli.eval_after_fit_default is False
-            assert cli.save_config_callback == TUSaveConfigCallback
+            "4",
+        ]
+        cli = TULightningCLI(ResNetBaseline, CIFAR10DataModule, run=False)
+        assert cli.eval_after_fit_default is False
+        assert cli.save_config_callback == TUSaveConfigCallback

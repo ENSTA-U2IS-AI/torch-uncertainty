@@ -42,9 +42,9 @@ class TestMisc:
 
     def test_csv_writer(self):
         root = Path(__file__).parent.resolve()
-        csv_writer(root / "logs" / "results.csv", {"a": 1.0, "b": 2.0})
+        csv_writer(root / "testlog" / "results.csv", {"a": 1.0, "b": 2.0})
         csv_writer(
-            root / "logs" / "results.csv", {"a": 1.0, "b": 2.0, "c": 3.0}
+            root / "testlog" / "results.csv", {"a": 1.0, "b": 2.0, "c": 3.0}
         )
 
 
