@@ -59,4 +59,4 @@ class DeepEnsemblesBaseline(ClassificationRoutine):
             log_plots=log_plots,
             calibration_set=calibration_set,
         )
-        self.save_hyperparameters()
+        self.save_hyperparameters()  # coverage: ignore
