@@ -6,7 +6,6 @@ from torch_uncertainty.models.vgg import vgg16
 from torch_uncertainty.models.wideresnet import wideresnet28x10
 from torch_uncertainty.optim_recipes import (
     get_procedure,
-    optim_regression,
 )
 
 
@@ -71,10 +70,6 @@ class TestOptProcedures:
         procedure = get_procedure("resnet50", "imagenet", "standard")
         model = resnet50(in_channels=3, num_classes=1000)
         procedure(model)
-
-    def test_optim_regression(self):
-        model = resnet18(in_channels=3, num_classes=1)
-        optim_regression(model)
 
     def test_optim_unknown(self):
         with pytest.raises(NotImplementedError):

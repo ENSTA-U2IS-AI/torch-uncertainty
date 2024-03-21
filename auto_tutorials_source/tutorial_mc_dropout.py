@@ -36,7 +36,7 @@ from torch import nn
 
 from torch_uncertainty.datamodules import MNISTDataModule
 from torch_uncertainty.models.lenet import lenet
-from torch_uncertainty.models.mc_dropout import mc_dropout
+from torch_uncertainty.models import mc_dropout
 from torch_uncertainty.optim_recipes import optim_cifar10_resnet18
 from torch_uncertainty.routines import ClassificationRoutine
 

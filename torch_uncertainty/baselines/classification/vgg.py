@@ -2,7 +2,7 @@ from typing import Literal
 
 from torch import nn
 
-from torch_uncertainty.models.mc_dropout import mc_dropout
+from torch_uncertainty.models import mc_dropout
 from torch_uncertainty.models.vgg import (
     packed_vgg11,
     packed_vgg13,

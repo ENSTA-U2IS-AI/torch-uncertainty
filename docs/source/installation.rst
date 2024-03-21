@@ -5,7 +5,7 @@ Installation
     :language: bash
 
 
-You can install the package from PyPI or from source. Choose the latter if you
+You can install the package either from PyPI or from source. Choose the latter if you
 want to access the files included the `experiments <https://github.com/ENSTA-U2IS-AI/torch-uncertainty/tree/main/experiments>`_
 folder or if you want to contribute to the project.
 
@@ -59,11 +59,11 @@ Options
 You can install the package with the following options:
 
 * dev: includes all the dependencies for the development of the package
-including ruff and the pre-commits hooks.
+    including ruff and the pre-commits hooks.
 * docs: includes all the dependencies for the documentation of the package
-based on sphinx
+    based on sphinx
 * image: includes all the dependencies for the image processing module
-including opencv and scikit-image
+    including opencv and scikit-image
 * tabular: includes pandas
 * all: includes all the aforementioned dependencies
 
