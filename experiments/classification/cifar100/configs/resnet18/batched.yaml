@@ -46,4 +46,4 @@ lr_scheduler:
   milestones:
   - 25
   - 50
-  gamma: 0.1
+  gamma: 0.2
