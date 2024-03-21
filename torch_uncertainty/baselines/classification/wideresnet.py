@@ -2,7 +2,7 @@ from typing import Literal
 
 from torch import nn
 
-from torch_uncertainty.models.mc_dropout import mc_dropout
+from torch_uncertainty.models import mc_dropout
 from torch_uncertainty.models.wideresnet import (
     batched_wideresnet28x10,
     masked_wideresnet28x10,

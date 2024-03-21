@@ -110,7 +110,7 @@ loss = partial(
 
 routine = RegressionRoutine(
     probabilistic=True,
-    num_outputs=1,
+    output_dim=1,
     model=model,
     loss=loss,
     optim_recipe=optim_regression,

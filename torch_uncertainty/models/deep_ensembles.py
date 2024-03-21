@@ -64,7 +64,7 @@ def deep_ensembles(
     task: Literal["classification", "regression"] = "classification",
     probabilistic=None,
     reset_model_parameters: bool = False,
-) -> nn.Module:
+) -> _DeepEnsembles:
     """Build a Deep Ensembles out of the original models.
 
     Args:
@@ -76,7 +76,7 @@ def deep_ensembles(
             when :attr:models is a module or a list of length 1.
 
     Returns:
-        nn.Module: The ensembled model.
+        _DeepEnsembles: The ensembled model.
 
     Raises:
         ValueError: If :attr:num_estimators is not specified and :attr:models

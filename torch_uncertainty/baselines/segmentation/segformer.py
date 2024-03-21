@@ -3,12 +3,12 @@ from typing import Literal
 from torch import nn
 
 from torch_uncertainty.models.segmentation.segformer import (
-    segformer_b0,
-    segformer_b1,
-    segformer_b2,
-    segformer_b3,
-    segformer_b4,
-    segformer_b5,
+    seg_former_b0,
+    seg_former_b1,
+    seg_former_b2,
+    seg_former_b3,
+    seg_former_b4,
+    seg_former_b5,
 )
 from torch_uncertainty.routines.segmentation import SegmentationRoutine
 
@@ -17,12 +17,12 @@ class SegFormerBaseline(SegmentationRoutine):
     single = ["std"]
     versions = {
         "std": [
-            segformer_b0,
-            segformer_b1,
-            segformer_b2,
-            segformer_b3,
-            segformer_b4,
-            segformer_b5,
+            seg_former_b0,
+            seg_former_b1,
+            seg_former_b2,
+            seg_former_b3,
+            seg_former_b4,
+            seg_former_b5,
         ]
     }
     archs = [0, 1, 2, 3, 4, 5]
