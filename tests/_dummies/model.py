@@ -46,7 +46,10 @@ class _Dummy(nn.Module):
 
 class _DummyWithFeats(_Dummy):
     def feats_forward(self, x: Tensor) -> Tensor:
-        return self.forward(x)
+        return torch.ones(
+            (x.shape[0], 1),
+            dtype=torch.float32,
+        )
 
 
 class _DummySegmentation(nn.Module):

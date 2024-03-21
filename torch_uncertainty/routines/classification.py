@@ -403,7 +403,9 @@ class ClassificationRoutine(LightningModule):
         self, batch: tuple[Tensor, Tensor], batch_idx: int
     ) -> None:
         inputs, targets = batch
-        logits = self.forward(inputs)  # (m*b, c)
+        logits = self.forward(
+            inputs, save_feats=self.eval_grouping_loss
+        )  # (m*b, c)
         logits = rearrange(logits, "(m b) c -> b m c", m=self.num_estimators)
 
         if self.binary_cls:
