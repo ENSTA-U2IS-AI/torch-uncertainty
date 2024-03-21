@@ -35,3 +35,5 @@ class TestCLI:
         assert cli.save_config_callback == TUSaveConfigCallback
         assert isinstance(cli.trainer.callbacks[0], TUSaveConfigCallback)
         cli.trainer.callbacks[0].setup(cli.trainer, cli.model, stage="fit")
+        cli.trainer.callbacks[0].already_saved = True
+        cli.trainer.callbacks[0].setup(cli.trainer, cli.model, stage="fit")
