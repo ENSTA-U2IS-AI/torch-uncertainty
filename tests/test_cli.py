@@ -26,8 +26,14 @@ class TestCLI:
             "./data",
             "--data.batch_size",
             "4",
+            "--trainer.callbacks+=ModelCheckpoint",
+            "--trainer.callbacks.monitor=cls_val/acc",
+            "--trainer.callbacks.mode=max",
         ]
         cli = TULightningCLI(ResNetBaseline, CIFAR10DataModule, run=False)
         assert cli.eval_after_fit_default is False
         assert cli.save_config_callback == TUSaveConfigCallback
-        cli.instantiate_trainer()
+        assert isinstance(cli.trainer.callbacks[0], TUSaveConfigCallback)
+        cli.trainer.callbacks[0].setup(cli.trainer, cli.model, stage="fit")
+        cli.trainer.callbacks[0].already_saved = True
+        cli.trainer.callbacks[0].setup(cli.trainer, cli.model, stage="fit")

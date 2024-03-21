@@ -34,7 +34,7 @@ class TUSaveConfigCallback(SaveConfigCallback):
                 )
                 # broadcast whether to fail to all ranks
                 file_exists = trainer.strategy.broadcast(file_exists)
-                if file_exists:
+                if file_exists:  # coverage: ignore
                     raise RuntimeError(
                         f"{self.__class__.__name__} expected {config_path} to NOT exist. Aborting to avoid overwriting"
                         " results of a previous run. You can delete the previous config file,"
@@ -117,6 +117,7 @@ class TULightningCLI(LightningCLI):
             run,
             auto_configure_optimizers,
         )
+        print("IN TU CLI INIT")
 
     def add_default_arguments_to_parser(
         self, parser: LightningArgumentParser
