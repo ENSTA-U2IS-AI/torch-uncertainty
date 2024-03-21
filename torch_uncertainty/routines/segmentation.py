@@ -3,6 +3,7 @@ from lightning.pytorch import LightningModule
 from lightning.pytorch.utilities.types import STEP_OUTPUT
 from torch import Tensor, nn
 from torchmetrics import Accuracy, MetricCollection
+from torchvision.transforms.v2 import functional as F
 
 from torch_uncertainty.metrics import MeanIntersectionOverUnion
 
@@ -65,6 +66,9 @@ class SegmentationRoutine(LightningModule):
         img, target = batch
         img, target = self.format_batch_fn((img, target))
         logits = self.forward(img)
+        target = F.resize(
+            target, logits.shape[-2:], interpolation=F.InterpolationMode.NEAREST
+        )
         logits = rearrange(logits, "b c h w -> (b h w) c")
         target = target.flatten()
         valid_mask = target != 255
@@ -77,6 +81,9 @@ class SegmentationRoutine(LightningModule):
     ) -> None:
         img, target = batch
         logits = self.forward(img)
+        target = F.resize(
+            target, logits.shape[-2:], interpolation=F.InterpolationMode.NEAREST
+        )
         logits = rearrange(
             logits, "(m b) c h w -> (b h w) m c", m=self.num_estimators
         )
@@ -89,6 +96,9 @@ class SegmentationRoutine(LightningModule):
     def test_step(self, batch: tuple[Tensor, Tensor], batch_idx: int) -> None:
         img, target = batch
         logits = self.forward(img)
+        target = F.resize(
+            target, logits.shape[-2:], interpolation=F.InterpolationMode.NEAREST
+        )
         logits = rearrange(
             logits, "(m b) c h w -> (b h w) m c", m=self.num_estimators
         )

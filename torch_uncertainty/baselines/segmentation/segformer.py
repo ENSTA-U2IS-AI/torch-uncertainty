@@ -1,8 +1,6 @@
 from typing import Literal
 
-from einops import rearrange
-from torch import Tensor, nn
-from torchvision.transforms.v2 import functional as F
+from torch import nn
 
 from torch_uncertainty.models.segmentation.segformer import (
     segformer_b0,
@@ -79,42 +77,3 @@ class SegFormer(SegmentationRoutine):
             format_batch_fn=format_batch_fn,
         )
         self.save_hyperparameters()
-
-    def training_step(
-        self, batch: tuple[Tensor, Tensor], batch_idx: int
-    ) -> Tensor:
-        img, target = batch
-        logits = self.forward(img)
-        target = F.resize(
-            target, logits.shape[-2:], interpolation=F.InterpolationMode.NEAREST
-        )
-        logits = rearrange(logits, "b c h w -> (b h w) c")
-        target = target.flatten()
-        valid_mask = target != 255
-        loss = self.criterion(logits[valid_mask], target[valid_mask])
-        self.log("train_loss", loss)
-        return loss
-
-    def validation_step(
-        self, batch: tuple[Tensor, Tensor], batch_idx: int
-    ) -> None:
-        img, target = batch
-        logits = self.forward(img)
-        target = F.resize(
-            target, logits.shape[-2:], interpolation=F.InterpolationMode.NEAREST
-        )
-        logits = rearrange(logits, "b c h w -> (b h w) c")
-        target = target.flatten()
-        valid_mask = target != 255
-        self.val_seg_metrics.update(logits[valid_mask], target[valid_mask])
-
-    def test_step(self, batch: tuple[Tensor, Tensor], batch_idx: int) -> None:
-        img, target = batch
-        logits = self.forward(img)
-        target = F.resize(
-            target, logits.shape[-2:], interpolation=F.InterpolationMode.NEAREST
-        )
-        logits = rearrange(logits, "b c h w -> (b h w) c")
-        target = target.flatten()
-        valid_mask = target != 255
-        self.test_seg_metrics.update(logits[valid_mask], target[valid_mask])
