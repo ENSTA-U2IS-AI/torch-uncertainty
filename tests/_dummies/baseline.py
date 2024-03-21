@@ -74,7 +74,7 @@ class DummyRegressionBaseline:
         cls,
         probabilistic: bool,
         in_features: int,
-        num_outputs: int,
+        output_dim: int,
         loss: type[nn.Module],
         baseline_type: str = "single",
         optim_recipe=None,
@@ -82,17 +82,17 @@ class DummyRegressionBaseline:
     ) -> LightningModule:
         if probabilistic:
             if dist_type == "normal":
-                last_layer = NormalLayer(num_outputs)
-                num_classes = num_outputs * 2
+                last_layer = NormalLayer(output_dim)
+                num_classes = output_dim * 2
             elif dist_type == "laplace":
-                last_layer = LaplaceLayer(num_outputs)
-                num_classes = num_outputs * 2
+                last_layer = LaplaceLayer(output_dim)
+                num_classes = output_dim * 2
             else:  # dist_type == "nig"
-                last_layer = NormalInverseGammaLayer(num_outputs)
-                num_classes = num_outputs * 4
+                last_layer = NormalInverseGammaLayer(output_dim)
+                num_classes = output_dim * 4
         else:
             last_layer = nn.Identity()
-            num_classes = num_outputs
+            num_classes = output_dim
 
         model = dummy_model(
             in_channels=in_features,
@@ -103,7 +103,7 @@ class DummyRegressionBaseline:
         if baseline_type == "single":
             return RegressionRoutine(
                 probabilistic=probabilistic,
-                num_outputs=num_outputs,
+                output_dim=output_dim,
                 model=model,
                 loss=loss,
                 num_estimators=1,
@@ -117,7 +117,7 @@ class DummyRegressionBaseline:
         )
         return RegressionRoutine(
             probabilistic=probabilistic,
-            num_outputs=num_outputs,
+            output_dim=output_dim,
             model=model,
             loss=loss,
             num_estimators=2,

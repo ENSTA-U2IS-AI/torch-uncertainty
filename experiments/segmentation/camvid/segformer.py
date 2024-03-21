@@ -1,6 +1,5 @@
 import torch
 from lightning.pytorch.cli import LightningArgumentParser
-from lightning.pytorch.loggers import TensorBoardLogger  # noqa: F401
 
 from torch_uncertainty.baselines.segmentation import SegFormer
 from torch_uncertainty.datamodules import CamVidDataModule
