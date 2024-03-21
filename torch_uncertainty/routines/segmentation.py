@@ -20,15 +20,26 @@ class SegmentationRoutine(LightningModule):
     ) -> None:
         super().__init__()
 
+        if num_estimators < 1:
+            raise ValueError(
+                f"num_estimators must be positive, got {num_estimators}."
+            )
+
+        if num_classes < 2:
+            raise ValueError(
+                f"num_classes must be at least 2, got {num_classes}."
+            )
+
         if format_batch_fn is None:
             format_batch_fn = nn.Identity()
 
         self.num_classes = num_classes
         self.model = model
         self.loss = loss
-        self.num_estimators = num_estimators
         self.format_batch_fn = format_batch_fn
         self.optim_recipe = optim_recipe
+
+        self.num_estimators = num_estimators
 
         self.metric_to_monitor = "val/mean_iou"
 

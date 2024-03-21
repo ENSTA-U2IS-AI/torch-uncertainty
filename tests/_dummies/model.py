@@ -11,7 +11,6 @@ class _Dummy(nn.Module):
         self,
         in_channels: int,
         num_classes: int,
-        num_estimators: int,
         dropout_rate: float,
         with_linear: bool,
         last_layer: nn.Module,
@@ -32,14 +31,12 @@ class _Dummy(nn.Module):
         self.last_layer = last_layer
         self.dropout = nn.Dropout(p=dropout_rate)
 
-        self.num_estimators = num_estimators
-
     def forward(self, x: Tensor) -> Tensor:
         return self.last_layer(
             self.dropout(
                 self.linear(
                     torch.ones(
-                        (x.shape[0] * self.num_estimators, 1),
+                        (x.shape[0], 1),
                         dtype=torch.float32,
                     )
                 )
@@ -58,23 +55,28 @@ class _DummySegmentation(nn.Module):
         in_channels: int,
         num_classes: int,
         dropout_rate: float,
-        num_estimators: int,
+        image_size: int,
     ) -> None:
         super().__init__()
         self.dropout_rate = dropout_rate
-
+        self.in_channels = in_channels
+        self.num_classes = num_classes
+        self.image_size = image_size
         self.conv = nn.Conv2d(
             in_channels, num_classes, kernel_size=3, padding=1
         )
         self.dropout = nn.Dropout(p=dropout_rate)
 
-        self.num_estimators = num_estimators
-
     def forward(self, x: Tensor) -> Tensor:
         return self.dropout(
             self.conv(
                 torch.ones(
-                    (x.shape[0] * self.num_estimators, 1, 32, 32),
+                    (
+                        x.shape[0],
+                        self.in_channels,
+                        self.image_size,
+                        self.image_size,
+                    ),
                     dtype=torch.float32,
                 )
             )
@@ -84,7 +86,6 @@ class _DummySegmentation(nn.Module):
 def dummy_model(
     in_channels: int,
     num_classes: int,
-    num_estimators: int,
     dropout_rate: float = 0.0,
     with_feats: bool = True,
     with_linear: bool = True,
@@ -111,7 +112,6 @@ def dummy_model(
         return _DummyWithFeats(
             in_channels=in_channels,
             num_classes=num_classes,
-            num_estimators=num_estimators,
             dropout_rate=dropout_rate,
             with_linear=with_linear,
             last_layer=last_layer,
@@ -119,7 +119,6 @@ def dummy_model(
     return _Dummy(
         in_channels=in_channels,
         num_classes=num_classes,
-        num_estimators=num_estimators,
         dropout_rate=dropout_rate,
         with_linear=with_linear,
         last_layer=last_layer,
@@ -129,17 +128,16 @@ def dummy_model(
 def dummy_segmentation_model(
     in_channels: int,
     num_classes: int,
+    image_size: int,
     dropout_rate: float = 0.0,
-    num_estimators: int = 1,
 ) -> nn.Module:
     """Dummy segmentation model for testing purposes.
 
     Args:
         in_channels (int): Number of input channels.
         num_classes (int): Number of output classes.
+        image_size (int): Size of the input image.
         dropout_rate (float, optional): Dropout rate. Defaults to 0.0.
-        num_estimators (int, optional): Number of estimators in the ensemble.
-            Defaults to 1.
 
     Returns:
         nn.Module: Dummy segmentation model.
@@ -148,5 +146,5 @@ def dummy_segmentation_model(
         in_channels=in_channels,
         num_classes=num_classes,
         dropout_rate=dropout_rate,
-        num_estimators=num_estimators,
+        image_size=image_size,
     )

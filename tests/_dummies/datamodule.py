@@ -169,6 +169,7 @@ class DummySegmentationDataModule(AbstractDataModule):
         batch_size: int,
         num_classes: int = 2,
         num_workers: int = 1,
+        image_size: int = 4,
         pin_memory: bool = True,
         persistent_workers: bool = True,
         num_images: int = 2,
@@ -183,7 +184,9 @@ class DummySegmentationDataModule(AbstractDataModule):
         )
 
         self.num_classes = num_classes
+        self.num_channels = 3
         self.num_images = num_images
+        self.image_size = image_size
 
         self.dataset = DummySegmentationDataset
 

@@ -137,6 +137,12 @@ class ClassificationRoutine(LightningModule):
                 "Groupng loss for ensembles is not yet implemented. Raise an issue if needed."
             )
 
+        if num_classes < 1:
+            raise ValueError(
+                "The number of classes must be a positive integer >= 1."
+                f"Got {num_classes}."
+            )
+
         if eval_grouping_loss and not hasattr(model, "feats_forward"):
             raise ValueError(
                 "Your model must have a `feats_forward` method to compute the "

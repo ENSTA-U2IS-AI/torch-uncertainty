@@ -112,27 +112,27 @@ class MUAD(VisionDataset):
 
         self._make_dataset(self.root / split)
 
-    def encode_target(self, smnt: Image.Image) -> Image.Image:
+    def encode_target(self, target: Image.Image) -> Image.Image:
         """Encode target image to tensor.
 
         Args:
-            smnt (Image.Image): Target PIL image.
+            target (Image.Image): Target PIL image.
 
         Returns:
             torch.Tensor: Encoded target.
         """
-        smnt = F.pil_to_tensor(smnt)
-        smnt = rearrange(smnt, "c h w -> h w c")
-        target = torch.zeros_like(smnt[..., :1])
+        target = F.pil_to_tensor(target)
+        target = rearrange(target, "c h w -> h w c")
+        out = torch.zeros_like(target[..., :1])
         # convert target color to index
         for muad_class in self.classes:
-            target[
+            out[
                 (
-                    smnt == torch.tensor(muad_class["id"], dtype=target.dtype)
+                    target == torch.tensor(muad_class["id"], dtype=target.dtype)
                 ).all(dim=-1)
             ] = muad_class["train_id"]
 
-        return F.to_pil_image(rearrange(target, "h w c -> c h w"))
+        return F.to_pil_image(rearrange(out, "h w c -> c h w"))
 
     def decode_target(self, target: Image.Image) -> np.ndarray:
         target[target == 255] = 19

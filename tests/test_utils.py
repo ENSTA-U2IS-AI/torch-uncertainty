@@ -4,7 +4,7 @@ import pytest
 import torch
 from torch.distributions import Laplace, Normal
 
-from torch_uncertainty.utils import distributions, get_version, hub
+from torch_uncertainty.utils import csv_writer, distributions, get_version, hub
 
 
 class TestUtils:
@@ -35,6 +35,17 @@ class TestHub:
 
         with pytest.raises(ValueError):
             hub.load_hf("test", version=42)
+
+
+class TestMisc:
+    """Testing misc methods."""
+
+    def test_csv_writer(self):
+        root = Path(__file__).parent.resolve()
+        csv_writer(root / "logs" / "results.csv", {"a": 1.0, "b": 2.0})
+        csv_writer(
+            root / "logs" / "results.csv", {"a": 1.0, "b": 2.0, "c": 3.0}
+        )
 
 
 class TestDistributions:

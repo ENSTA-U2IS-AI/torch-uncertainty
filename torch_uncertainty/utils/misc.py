@@ -15,7 +15,8 @@ def csv_writer(path: Path, dic: dict) -> None:
     else:
         append_mode = False
         rw_mode = "w"
-
+    print(f"Writing to {path}")
+    print(f"Append mode: {append_mode}")
     # Write dic
     with path.open(rw_mode) as csvfile:
         writer = csv.writer(csvfile, delimiter=",")

@@ -25,7 +25,7 @@ class DummyClassificationBaseline:
         num_classes: int,
         in_channels: int,
         loss: type[nn.Module],
-        ensemble=False,
+        baseline_type: str = "single",
         optim_recipe=None,
         with_feats: bool = True,
         with_linear: bool = True,
@@ -36,12 +36,11 @@ class DummyClassificationBaseline:
         model = dummy_model(
             in_channels=in_channels,
             num_classes=num_classes,
-            num_estimators=1 + int(ensemble),
             with_feats=with_feats,
             with_linear=with_linear,
         )
 
-        if not ensemble:
+        if baseline_type == "single":
             return ClassificationRoutine(
                 num_classes=num_classes,
                 model=model,
@@ -54,7 +53,11 @@ class DummyClassificationBaseline:
                 eval_ood=eval_ood,
                 eval_grouping_loss=eval_grouping_loss,
             )
-        # ensemble
+        # baseline_type == "ensemble":
+        model = deep_ensembles(
+            [model, copy.deepcopy(model)],
+            task="classification",
+        )
         return ClassificationRoutine(
             num_classes=num_classes,
             model=model,
@@ -97,7 +100,6 @@ class DummyRegressionBaseline:
         model = dummy_model(
             in_channels=in_features,
             num_classes=num_classes,
-            num_estimators=1,
             last_layer=last_layer,
         )
         if baseline_type == "single":
@@ -131,31 +133,37 @@ class DummySegmentationBaseline:
         cls,
         in_channels: int,
         num_classes: int,
+        image_size: int,
         loss: type[nn.Module],
-        ensemble: bool = False,
+        baseline_type: bool = False,
+        optim_recipe=None,
     ) -> LightningModule:
         model = dummy_segmentation_model(
             in_channels=in_channels,
             num_classes=num_classes,
-            num_estimators=1 + int(ensemble),
+            image_size=image_size,
         )
 
-        if not ensemble:
+        if baseline_type == "single":
             return SegmentationRoutine(
                 num_classes=num_classes,
                 model=model,
                 loss=loss,
                 format_batch_fn=nn.Identity(),
-                optim_recipe=None,
                 num_estimators=1,
+                optim_recipe=optim_recipe,
             )
 
-        # ensemble
+        # baseline_type == "ensemble":
+        model = deep_ensembles(
+            [model, copy.deepcopy(model)],
+            task="segmentation",
+        )
         return SegmentationRoutine(
             num_classes=num_classes,
             model=model,
             loss=loss,
             format_batch_fn=RepeatTarget(2),
-            optim_recipe=None,
             num_estimators=2,
+            optim_recipe=optim_recipe,
         )

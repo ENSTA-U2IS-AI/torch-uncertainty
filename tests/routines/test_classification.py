@@ -13,8 +13,8 @@ from torch_uncertainty.optim_recipes import optim_cifar10_resnet18
 from torch_uncertainty.routines import ClassificationRoutine
 
 
-class TestClassificationSingle:
-    """Testing the classification routine with a single model."""
+class TestClassification:
+    """Testing the classification routine."""
 
     def test_one_estimator_binary(self):
         trainer = Trainer(accelerator="cpu", fast_dev_run=True)
@@ -30,7 +30,7 @@ class TestClassificationSingle:
             num_classes=dm.num_classes,
             loss=nn.BCEWithLogitsLoss,
             optim_recipe=optim_cifar10_resnet18,
-            ensemble=False,
+            baseline_type="single",
             ood_criterion="msp",
         )
 
@@ -53,7 +53,7 @@ class TestClassificationSingle:
             num_classes=dm.num_classes,
             loss=nn.BCEWithLogitsLoss,
             optim_recipe=optim_cifar10_resnet18,
-            ensemble=True,
+            baseline_type="single",
             ood_criterion="logit",
         )
 
@@ -77,7 +77,7 @@ class TestClassificationSingle:
             in_channels=dm.num_channels,
             loss=nn.CrossEntropyLoss,
             optim_recipe=optim_cifar10_resnet18,
-            ensemble=False,
+            baseline_type="single",
             ood_criterion="entropy",
             eval_ood=True,
         )
@@ -101,7 +101,7 @@ class TestClassificationSingle:
             in_channels=dm.num_channels,
             loss=nn.CrossEntropyLoss,
             optim_recipe=optim_cifar10_resnet18,
-            ensemble=True,
+            baseline_type="ensemble",
             ood_criterion="energy",
         )
 
@@ -114,12 +114,14 @@ class TestClassificationSingle:
         # num_estimators
         with pytest.raises(ValueError):
             ClassificationRoutine(10, nn.Module(), None, num_estimators=-1)
+        # num_classes
+        with pytest.raises(ValueError):
+            ClassificationRoutine(0, nn.Module(), None)
         # single & MI
         with pytest.raises(ValueError):
             ClassificationRoutine(
                 10, nn.Module(), None, num_estimators=1, ood_criterion="mi"
             )
-
         with pytest.raises(ValueError):
             ClassificationRoutine(10, nn.Module(), None, ood_criterion="other")
 
@@ -136,201 +138,10 @@ class TestClassificationSingle:
                 10, nn.Module(), None, 2, eval_grouping_loss=True
             )
 
-        model = dummy_model(1, 1, 1, 0, with_feats=False, with_linear=True)
+        model = dummy_model(1, 1, 0, with_feats=False, with_linear=True)
         with pytest.raises(ValueError):
             ClassificationRoutine(10, model, None, eval_grouping_loss=True)
 
-        model = dummy_model(1, 1, 1, 0, with_feats=True, with_linear=False)
+        model = dummy_model(1, 1, 0, with_feats=True, with_linear=False)
         with pytest.raises(ValueError):
             ClassificationRoutine(10, model, None, eval_grouping_loss=True)
-
-
-# from functools import partial
-# from pathlib import Path
-
-# import pytest
-# from cli_test_helpers import ArgvContext
-# from torch import nn
-
-# from tests._dummies import (
-#     DummyClassificationBaseline,
-#     DummyClassificationDataModule,
-#     DummyClassificationDataset,
-#     dummy_model,
-# )
-# from torch_uncertainty import cli_main, init_args
-# from torch_uncertainty.losses import DECLoss, ELBOLoss
-
-# with ArgvContext(
-#     "file.py",
-#     "--eval-ood",
-#     "--entropy",
-#     "--cutmix_alpha",
-#     "0.5",
-#     "--mixtype",
-#     "timm",
-# ):
-#     args = init_args(
-#         DummyClassificationBaseline, DummyClassificationDataModule
-#     )
-
-#             args.root = str(root / "data")
-#             dm = DummyClassificationDataModule(**vars(args))
-
-#             model = DummyClassificationBaseline(
-#                 num_classes=dm.num_classes,
-#                 in_channels=dm.num_channels,
-#                 loss=DECLoss,
-#                 optim_recipe=optim_cifar10_resnet18,
-#                 ensemble=False,
-#                 **vars(args),
-#             )
-#             with pytest.raises(NotImplementedError):
-#                 cli_main(model, dm, root, "logs/dummy", args)
-
-#     def test_cli_main_dummy_mixup_ts_cv(self):
-#         root = Path(__file__).parent.absolute().parents[0]
-#         with ArgvContext(
-#             "file.py",
-#             "--mixtype",
-#             "kernel_warping",
-#             "--mixup_alpha",
-#             "1.",
-#             "--dist_sim",
-#             "inp",
-#             "--val_temp_scaling",
-#             "--use_cv",
-#         ):
-#             args = init_args(DummyClassificationBaseline, DummyClassificationDataModule)
-
-# args.root = str(root / "data")
-# dm = DummyClassificationDataModule(num_classes=10, **vars(args))
-# dm.dataset = (
-#     lambda root,
-#     num_channels,
-#     num_classes,
-#     image_size,
-#     transform,
-#     num_images: DummyClassificationDataset(
-#         root,
-#         num_channels=num_channels,
-#         num_classes=num_classes,
-#         image_size=image_size,
-#         transform=transform,
-#         num_images=20,
-#     )
-# )
-
-#             list_dm = dm.make_cross_val_splits(2, 1)
-#             list_model = [
-#                 DummyClassificationBaseline(
-#                     num_classes=list_dm[i].dm.num_classes,
-#                     in_channels=list_dm[i].dm.num_channels,
-#                     loss=nn.CrossEntropyLoss,
-#                     optim_recipe=optim_cifar10_resnet18,
-#                     ensemble=False,
-#                     calibration_set=dm.get_val_set,
-#                     **vars(args),
-#                 )
-#                 for i in range(len(list_dm))
-#             ]
-
-#             cli_main(list_model, list_dm, root, "logs/dummy", args)
-
-#         with ArgvContext(
-#             "file.py",
-#             "--mixtype",
-#             "kernel_warping",
-#             "--mixup_alpha",
-#             "1.",
-#             "--dist_sim",
-#             "emb",
-#             "--val_temp_scaling",
-#             "--use_cv",
-#         ):
-#             args = init_args(DummyClassificationBaseline, DummyClassificationDataModule)
-
-# args.root = str(root / "data")
-# dm = DummyClassificationDataModule(num_classes=10, **vars(args))
-# dm.dataset = (
-#     lambda root,
-#     num_channels,
-#     num_classes,
-#     image_size,
-#     transform,
-#     num_images: DummyClassificationDataset(
-#         root,
-#         num_channels=num_channels,
-#         num_classes=num_classes,
-#         image_size=image_size,
-#         transform=transform,
-#         num_images=20,
-#     )
-# )
-
-#             list_dm = dm.make_cross_val_splits(2, 1)
-#             list_model = []
-#             for i in range(len(list_dm)):
-#                 list_model.append(
-#                     DummyClassificationBaseline(
-#                         num_classes=list_dm[i].dm.num_classes,
-#                         in_channels=list_dm[i].dm.num_channels,
-#                         loss=nn.CrossEntropyLoss,
-#                         optim_recipe=optim_cifar10_resnet18,
-#                         ensemble=False,
-#                         calibration_set=dm.get_val_set,
-#                         **vars(args),
-#                     )
-#                 )
-
-#             cli_main(list_model, list_dm, root, "logs/dummy", args)
-#         with ArgvContext("file.py", "--mutual_information"):
-#             args = init_args(DummyClassificationBaseline, DummyClassificationDataModule)
-
-#             # datamodule
-#             args.root = str(root / "data")
-#             dm = DummyClassificationDataModule(num_classes=1, **vars(args))
-
-#             model = DummyClassificationBaseline(
-#                 num_classes=dm.num_classes,
-#                 in_channels=dm.num_channels,
-#                 loss=nn.BCEWithLogitsLoss,
-#                 optim_recipe=optim_cifar10_resnet18,
-#                 ensemble=True,
-#                 **vars(args),
-#             )
-
-#             cli_main(model, dm, root, "logs/dummy", args)
-
-
-# with ArgvContext("file.py", "--eval-ood", "--variation_ratio"):
-#     args = init_args(
-#         DummyClassificationBaseline, DummyClassificationDataModule
-#     )
-
-#             # datamodule
-#             args.root = str(root / "data")
-#             dm = DummyClassificationDataModule(**vars(args))
-
-#             model = DummyClassificationBaseline(
-#                 num_classes=dm.num_classes,
-#                 in_channels=dm.num_channels,
-#                 loss=nn.CrossEntropyLoss,
-#                 optim_recipe=optim_cifar10_resnet18,
-#                 ensemble=True,
-#                 **vars(args),
-#             )
-
-#             cli_main(model, dm, root, "logs/dummy", args)
-
-#     def test_classification_failures(self):
-#         with pytest.raises(ValueError):
-#             ClassificationRoutine(
-#                 10,
-#                 nn.Module(),
-#                 None,
-#                 None,
-#                 2,
-#                 use_entropy=True,
-#                 use_variation_ratio=True,
-#             )

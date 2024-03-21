@@ -61,7 +61,9 @@ class _RegDeepEnsembles(_DeepEnsembles):
 def deep_ensembles(
     models: list[nn.Module] | nn.Module,
     num_estimators: int | None = None,
-    task: Literal["classification", "regression"] = "classification",
+    task: Literal[
+        "classification", "regression", "segmentation"
+    ] = "classification",
     probabilistic=None,
     reset_model_parameters: bool = False,
 ) -> nn.Module:
@@ -125,7 +127,7 @@ def deep_ensembles(
             "num_estimators must be None if you provided a non-singleton list."
         )
 
-    if task == "classification":
+    if task in ("classification", "segmentation"):
         return _DeepEnsembles(models=models)
     if task == "regression":
         if probabilistic is None:
