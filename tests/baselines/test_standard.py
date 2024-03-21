@@ -117,6 +117,16 @@ class TestStandardMLPBaseline:
         _ = net.criterion
         _ = net(torch.rand(1, 3))
 
+        for distribution in ["normal", "laplace", "nig"]:
+            MLPBaseline(
+                in_features=3,
+                output_dim=10,
+                loss=nn.MSELoss,
+                version="std",
+                hidden_dims=[1],
+                distribution=distribution,
+            )
+
     def test_errors(self):
         with pytest.raises(ValueError):
             MLPBaseline(
