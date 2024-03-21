@@ -4,6 +4,7 @@ import torch
 from einops import rearrange
 from PIL import Image
 from torchmetrics.utilities.plot import _AX_TYPE, _PLOT_OUT_TYPE
+from torchvision import tv_tensors
 from torchvision.datasets import Cityscapes as OriginalCityscapes
 from torchvision.transforms.v2 import functional as F
 
@@ -33,7 +34,9 @@ class Cityscapes(OriginalCityscapes):
         return F.to_pil_image(rearrange(target, "h w c -> c h w"))
 
     def __getitem__(self, index: int) -> tuple[Any, Any]:
-        """Args:
+        """Get the sample at the given index.
+
+        Args:
             index (int): Index
         Returns:
             tuple: (image, target) where target is a tuple of all target types
@@ -41,14 +44,16 @@ class Cityscapes(OriginalCityscapes):
             than one item. Otherwise, target is a json object if
                 ``target_type="polygon"``, else the image segmentation.
         """
-        image = Image.open(self.images[index]).convert("RGB")
+        image = tv_tensors.Image(Image.open(self.images[index]).convert("RGB"))
 
         targets: Any = []
         for i, t in enumerate(self.target_type):
             if t == "polygon":
                 target = self._load_json(self.targets[index][i])
             elif t == "semantic":
-                target = self.encode_target(Image.open(self.targets[index][i]))
+                target = tv_tensors.Mask(
+                    self.encode_target(Image.open(self.targets[index][i]))
+                )
             else:
                 target = Image.open(self.targets[index][i])
 

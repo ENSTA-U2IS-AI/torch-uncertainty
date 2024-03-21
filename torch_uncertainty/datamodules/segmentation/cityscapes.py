@@ -5,7 +5,7 @@ import torch
 from torch.nn.common_types import _size_2_t
 from torch.nn.modules.utils import _pair
 from torch.utils.data import random_split
-from torchvision import datasets, tv_tensors
+from torchvision import tv_tensors
 from torchvision.transforms import v2
 
 from torch_uncertainty.datamodules.abstract import AbstractDataModule
@@ -82,14 +82,12 @@ class CityscapesDataModule(AbstractDataModule):
 
     def setup(self, stage: str | None = None) -> None:
         if stage == "fit" or stage is None:
-            full = datasets.wrap_dataset_for_transforms_v2(
-                self.dataset(
-                    root=self.root,
-                    split="train",
-                    mode=self.mode,
-                    target_type="semantic",
-                    transforms=self.train_transform,
-                )
+            full = self.dataset(
+                root=self.root,
+                split="train",
+                mode=self.mode,
+                target_type="semantic",
+                transforms=self.train_transform,
             )
 
             if self.val_split is not None:
@@ -105,25 +103,21 @@ class CityscapesDataModule(AbstractDataModule):
                 self.val.dataset.transforms = self.test_transform
             else:
                 self.train = full
-                self.val = datasets.wrap_dataset_for_transforms_v2(
-                    self.dataset(
-                        root=self.root,
-                        split="val",
-                        mode=self.mode,
-                        target_type="semantic",
-                        transforms=self.test_transform,
-                    )
-                )
-
-        if stage == "test" or stage is None:
-            self.test = datasets.wrap_dataset_for_transforms_v2(
-                self.dataset(
+                self.val = self.dataset(
                     root=self.root,
                     split="val",
                     mode=self.mode,
                     target_type="semantic",
                     transforms=self.test_transform,
                 )
+
+        if stage == "test" or stage is None:
+            self.test = self.dataset(
+                root=self.root,
+                split="val",
+                mode=self.mode,
+                target_type="semantic",
+                transforms=self.test_transform,
             )
 
         if stage not in ["fit", "test", None]:

@@ -154,7 +154,7 @@ class CamVid(VisionDataset):
                 ).all(dim=-1)
             ] = index
 
-        return rearrange(target, "h w c -> c h w").squeeze(0)
+        return rearrange(target, "h w c -> c h w")
 
     def decode_target(self, target: torch.Tensor) -> Image.Image:
         """Decode target tensor to image.
