@@ -30,3 +30,4 @@ class TestCLI:
         cli = TULightningCLI(ResNetBaseline, CIFAR10DataModule, run=False)
         assert cli.eval_after_fit_default is False
         assert cli.save_config_callback == TUSaveConfigCallback
+        cli.instantiate_trainer()

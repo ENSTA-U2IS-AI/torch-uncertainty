@@ -135,7 +135,7 @@ class DummySegmentationBaseline:
         num_classes: int,
         image_size: int,
         loss: type[nn.Module],
-        baseline_type: bool = False,
+        baseline_type: str = "single",
         optim_recipe=None,
     ) -> LightningModule:
         model = dummy_segmentation_model(
@@ -149,7 +149,7 @@ class DummySegmentationBaseline:
                 num_classes=num_classes,
                 model=model,
                 loss=loss,
-                format_batch_fn=nn.Identity(),
+                format_batch_fn=None,
                 num_estimators=1,
                 optim_recipe=optim_recipe,
             )

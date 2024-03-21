@@ -61,12 +61,14 @@ class TUSaveConfigCallback(SaveConfigCallback):
 class TULightningCLI(LightningCLI):
     def __init__(
         self,
-        model_class: type[LightningModule]
-        | Callable[..., LightningModule]
-        | None = None,
-        datamodule_class: type[LightningDataModule]
-        | Callable[..., LightningDataModule]
-        | None = None,
+        model_class: (
+            type[LightningModule] | Callable[..., LightningModule] | None
+        ) = None,
+        datamodule_class: (
+            type[LightningDataModule]
+            | Callable[..., LightningDataModule]
+            | None
+        ) = None,
         save_config_callback: type[SaveConfigCallback]
         | None = TUSaveConfigCallback,
         save_config_kwargs: dict[str, Any] | None = None,
