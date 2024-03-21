@@ -1,18 +1,20 @@
 import json
 from collections.abc import Callable
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
-import cv2 as cv
-import matplotlib.pyplot as plt
 import numpy as np
+import torch
+from einops import rearrange
 from PIL import Image
+from torchvision import tv_tensors
 from torchvision.datasets import VisionDataset
 from torchvision.datasets.utils import (
     check_integrity,
     download_and_extract_archive,
     download_url,
 )
+from torchvision.transforms.v2 import functional as F
 
 
 class MUAD(VisionDataset):
@@ -34,7 +36,8 @@ class MUAD(VisionDataset):
         self,
         root: str | Path,
         split: Literal["train", "val", "train_depth", "val_depth"],
-        transform: Callable | None = None,
+        target_type: Literal["semantic", "depth"] = "semantic",
+        transforms: Callable | None = None,
         download: bool = False,
     ) -> None:
         """The MUAD Dataset.
@@ -44,7 +47,9 @@ class MUAD(VisionDataset):
                 and 'leftLabel' are located.
             split (str, optional): The image split to use, 'train', 'val',
             'train_depth' or 'val_depth'.
-            transform (callable, optional): A function/transform that takes in
+            target_type (str, optional): The type of target to use, 'semantic'
+                or 'depth'.
+            transforms (callable, optional): A function/transform that takes in
                 a tuple of PIL images and returns a transformed version.
             download (bool, optional): If true, downloads the dataset from the
                 internet and puts it in root directory. If dataset is already
@@ -63,23 +68,30 @@ class MUAD(VisionDataset):
         )
         super().__init__(
             root=Path(root) / "MUAD",
-            transform=transform,
+            transforms=transforms,
         )
 
-        if split not in ["train", "val", "train_depth", "val_depth"]:
+        if split not in ["train", "val"]:
             raise ValueError(
-                "split must be one of ['train', 'val', 'train_depth', "
-                f"'val_depth']. Got {split}."
+                f"split must be one of ['train', 'val']. Got {split}."
             )
         self.split = split
+        self.target_type = target_type
 
         split_path = self.root / (split + ".zip")
-        if not check_integrity(split_path, self.zip_md5[split]) and download:
-            self._download()
+        if (not check_integrity(split_path, self.zip_md5[split])) and download:
+            self._download(split=self.split)
+
+        if (
+            self.target_type == "depth"
+            and not check_integrity(split_path, self.zip_md5[split + "_depth"])
+            and download
+        ):
+            self._download(split=f"{split}_depth")
 
         # Load classes metadata
         cls_path = self.root / "classes.json"
-        if not check_integrity(cls_path, self.classes_md5) and download:
+        if (not check_integrity(cls_path, self.classes_md5)) and download:
             download_url(
                 self.classes_url,
                 self.root,
@@ -100,32 +112,50 @@ class MUAD(VisionDataset):
 
         self._make_dataset(self.root / split)
 
+    def encode_target(self, smnt: Image.Image) -> Image.Image:
+        """Encode target image to tensor.
+
+        Args:
+            smnt (Image.Image): Target PIL image.
+
+        Returns:
+            torch.Tensor: Encoded target.
+        """
+        smnt = F.pil_to_tensor(smnt)
+        smnt = rearrange(smnt, "c h w -> h w c")
+        target = torch.zeros_like(smnt[..., :1])
+        # convert target color to index
+        for muad_class in self.classes:
+            target[
+                (
+                    smnt == torch.tensor(muad_class["id"], dtype=target.dtype)
+                ).all(dim=-1)
+            ] = muad_class["train_id"]
+
+        return F.to_pil_image(rearrange(target, "h w c -> c h w"))
+
     def decode_target(self, target: Image.Image) -> np.ndarray:
         target[target == 255] = 19
         return self.train_id_to_color[target]
 
-    def __getitem__(self, index: int) -> tuple[Image.Image, Image.Image]:
-        """Get the image and its segmentation target."""
-        img_path = self.samples[index]
-        seg_path = self.targets[index]
+    def __getitem__(self, index: int) -> tuple[Any, Any]:
+        """Get the sample at the given index.
 
-        image = cv.imread(img_path)
-        image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
+        Args:
+            index (int): Index
 
-        segm = plt.imread(seg_path) * 255.0
-        target = np.zeros((segm.shape[0], segm.shape[1])) + 255.0
+        Returns:
+            tuple: (image, target) where target is either a segmentation mask
+                or a depth map.
+        """
+        image = tv_tensors.Image(Image.open(self.samples[index]).convert("RGB"))
+        target = tv_tensors.Mask(
+            self.encode_target(Image.open(self.targets[index]))
+        )
 
-        for c in self.classes:
-            upper = np.array(c["train_id"])
-            mask = cv.inRange(segm, upper, upper)
-            target[mask == 255] = c["train_id"]
-        target = target.astype(np.uint8)
-        target = Image.fromarray(target)
+        if self.transforms is not None:
+            image, target = self.transforms(image, target)
 
-        image = Image.fromarray(image)
-
-        if self.transform:
-            image, target = self.transform(image, target)
         return image, target
 
     def __len__(self) -> int:
@@ -144,11 +174,17 @@ class MUAD(VisionDataset):
                 "if you need it."
             )
         self.samples = list((path / "leftImg8bit/").glob("**/*"))
-        self.targets = list((path / "leftLabel/").glob("**/*"))
+        if self.target_type == "semantic":
+            self.targets = list((path / "leftLabel/").glob("**/*"))
+        else:
+            raise NotImplementedError(
+                "Depth regression mode is not implemented yet. Raise an issue "
+                "if you need it."
+            )
 
-    def _download(self):
+    def _download(self, split: str):
         """Download and extract the chosen split of the dataset."""
-        split_url = self.base_url + self.split + ".zip"
+        split_url = self.base_url + split + ".zip"
         download_and_extract_archive(
-            split_url, self.root, md5=self.zip_md5[self.split]
+            split_url, self.root, md5=self.zip_md5[split]
         )

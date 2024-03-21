@@ -872,9 +872,3 @@ def segformer_b5(num_classes: int):
         dropout_ratio=0.1,
         mit=MitB5,
     )
-
-
-if __name__ == "__main__":
-    x = torch.randn((1, 3, 224, 224))
-    model = segformer_b0()
-    print(model(x).size())  # torch.Size([1, 19, 56, 56])
