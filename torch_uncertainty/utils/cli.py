@@ -117,6 +117,7 @@ class TULightningCLI(LightningCLI):
             run,
             auto_configure_optimizers,
         )
+        print("IN TU CLI INIT")
 
     def add_default_arguments_to_parser(
         self, parser: LightningArgumentParser
