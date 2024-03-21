@@ -18,7 +18,7 @@ class TestPackedBaseline:
         net = ResNetBaseline(
             num_classes=10,
             in_channels=3,
-            loss=nn.CrossEntropyLoss,
+            loss=nn.CrossEntropyLoss(),
             version="packed",
             arch=50,
             style="cifar",
@@ -30,14 +30,13 @@ class TestPackedBaseline:
 
         summary(net)
 
-        _ = net.criterion
         _ = net(torch.rand(1, 3, 32, 32))
 
     def test_packed_18(self):
         net = ResNetBaseline(
             num_classes=10,
             in_channels=3,
-            loss=nn.CrossEntropyLoss,
+            loss=nn.CrossEntropyLoss(),
             version="packed",
             arch=18,
             style="imagenet",
@@ -49,7 +48,6 @@ class TestPackedBaseline:
 
         summary(net)
 
-        _ = net.criterion
         _ = net(torch.rand(1, 3, 40, 40))
 
     def test_packed_exception(self):
@@ -57,7 +55,7 @@ class TestPackedBaseline:
             _ = ResNetBaseline(
                 num_classes=10,
                 in_channels=3,
-                loss=nn.CrossEntropyLoss,
+                loss=nn.CrossEntropyLoss(),
                 version="packed",
                 arch=50,
                 style="cifar",
@@ -71,7 +69,7 @@ class TestPackedBaseline:
             _ = ResNetBaseline(
                 num_classes=10,
                 in_channels=3,
-                loss=nn.CrossEntropyLoss,
+                loss=nn.CrossEntropyLoss(),
                 version="packed",
                 arch=50,
                 style="cifar",
@@ -89,7 +87,7 @@ class TestPackedWideBaseline:
         net = WideResNetBaseline(
             num_classes=10,
             in_channels=3,
-            loss=nn.CrossEntropyLoss,
+            loss=nn.CrossEntropyLoss(),
             version="packed",
             style="cifar",
             num_estimators=4,
@@ -100,7 +98,6 @@ class TestPackedWideBaseline:
 
         summary(net)
 
-        _ = net.criterion
         _ = net(torch.rand(1, 3, 32, 32))
 
 
@@ -112,7 +109,7 @@ class TestPackedVGGBaseline:
             num_classes=10,
             in_channels=3,
             arch=13,
-            loss=nn.CrossEntropyLoss,
+            loss=nn.CrossEntropyLoss(),
             version="packed",
             num_estimators=4,
             alpha=2,
@@ -122,7 +119,6 @@ class TestPackedVGGBaseline:
 
         summary(net)
 
-        _ = net.criterion
         _ = net(torch.rand(2, 3, 32, 32))
 
 
@@ -133,7 +129,7 @@ class TestPackedMLPBaseline:
         net = MLPBaseline(
             in_features=3,
             output_dim=10,
-            loss=nn.MSELoss,
+            loss=nn.MSELoss(),
             version="packed",
             hidden_dims=[1],
             num_estimators=2,
@@ -142,5 +138,4 @@ class TestPackedMLPBaseline:
         )
         summary(net)
 
-        _ = net.criterion
         _ = net(torch.rand(1, 3))

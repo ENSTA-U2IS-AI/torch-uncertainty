@@ -36,7 +36,7 @@ class VGGBaseline(ClassificationRoutine):
         self,
         num_classes: int,
         in_channels: int,
-        loss: type[nn.Module],
+        loss: nn.Module,
         version: Literal["std", "mc-dropout", "packed"],
         arch: int,
         style: str = "imagenet",

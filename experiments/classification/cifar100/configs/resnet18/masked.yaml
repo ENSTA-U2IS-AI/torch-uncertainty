@@ -29,7 +29,8 @@ trainer:
 model:
   num_classes: 100
   in_channels: 3
-  loss: torch.nn.CrossEntropyLoss
+  loss:
+    class_path: torch.nn.CrossEntropyLoss
   version: masked
   arch: 18
   style: cifar

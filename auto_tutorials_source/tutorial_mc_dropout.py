@@ -81,7 +81,7 @@ mc_model = mc_dropout(model, num_estimators=16, last_layer=False)
 routine = ClassificationRoutine(
     num_classes=datamodule.num_classes,
     model=mc_model,
-    loss=nn.CrossEntropyLoss,
+    loss=nn.CrossEntropyLoss(),
     optim_recipe=optim_cifar10_resnet18,
     num_estimators=16,
 

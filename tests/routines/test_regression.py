@@ -23,7 +23,7 @@ class TestRegression:
             probabilistic=True,
             in_features=dm.in_features,
             output_dim=1,
-            loss=DistributionNLLLoss,
+            loss=DistributionNLLLoss(),
             optim_recipe=optim_cifar10_resnet18,
             baseline_type="single",
         )
@@ -37,7 +37,7 @@ class TestRegression:
             probabilistic=False,
             in_features=dm.in_features,
             output_dim=1,
-            loss=DistributionNLLLoss,
+            loss=DistributionNLLLoss(),
             optim_recipe=optim_cifar10_resnet18,
             baseline_type="single",
         )
@@ -57,7 +57,7 @@ class TestRegression:
             probabilistic=True,
             in_features=dm.in_features,
             output_dim=2,
-            loss=DistributionNLLLoss,
+            loss=DistributionNLLLoss(),
             optim_recipe=optim_cifar10_resnet18,
             baseline_type="single",
             dist_type="laplace",
@@ -70,7 +70,7 @@ class TestRegression:
             probabilistic=False,
             in_features=dm.in_features,
             output_dim=2,
-            loss=DistributionNLLLoss,
+            loss=DistributionNLLLoss(),
             optim_recipe=optim_cifar10_resnet18,
             baseline_type="single",
         )
@@ -88,7 +88,7 @@ class TestRegression:
             probabilistic=True,
             in_features=dm.in_features,
             output_dim=1,
-            loss=DistributionNLLLoss,
+            loss=DistributionNLLLoss(),
             optim_recipe=optim_cifar10_resnet18,
             baseline_type="ensemble",
             dist_type="nig",
@@ -101,7 +101,7 @@ class TestRegression:
             probabilistic=False,
             in_features=dm.in_features,
             output_dim=1,
-            loss=DistributionNLLLoss,
+            loss=DistributionNLLLoss(),
             optim_recipe=optim_cifar10_resnet18,
             baseline_type="ensemble",
         )
@@ -119,7 +119,7 @@ class TestRegression:
             probabilistic=True,
             in_features=dm.in_features,
             output_dim=2,
-            loss=DistributionNLLLoss,
+            loss=DistributionNLLLoss(),
             optim_recipe=optim_cifar10_resnet18,
             baseline_type="ensemble",
         )
@@ -132,7 +132,7 @@ class TestRegression:
             probabilistic=False,
             in_features=dm.in_features,
             output_dim=2,
-            loss=DistributionNLLLoss,
+            loss=DistributionNLLLoss(),
             optim_recipe=optim_cifar10_resnet18,
             baseline_type="ensemble",
         )

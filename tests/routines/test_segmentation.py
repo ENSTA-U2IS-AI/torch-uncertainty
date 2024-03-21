@@ -23,7 +23,7 @@ class TestSegmentation:
             in_channels=dm.num_channels,
             num_classes=dm.num_classes,
             image_size=dm.image_size,
-            loss=nn.CrossEntropyLoss,
+            loss=nn.CrossEntropyLoss(),
             baseline_type="single",
             optim_recipe=optim_cifar10_resnet18,
         )
@@ -43,7 +43,7 @@ class TestSegmentation:
             in_channels=dm.num_channels,
             num_classes=dm.num_classes,
             image_size=dm.image_size,
-            loss=nn.CrossEntropyLoss,
+            loss=nn.CrossEntropyLoss(),
             baseline_type="ensemble",
             optim_recipe=optim_cifar10_resnet18,
         )

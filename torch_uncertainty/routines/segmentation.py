@@ -58,10 +58,6 @@ class SegmentationRoutine(LightningModule):
     def configure_optimizers(self):
         return self.optim_recipe(self.model)
 
-    @property
-    def criterion(self) -> nn.Module:
-        return self.loss()
-
     def forward(self, img: Tensor) -> Tensor:
         return self.model(img)
 
@@ -83,7 +79,7 @@ class SegmentationRoutine(LightningModule):
         logits = rearrange(logits, "b c h w -> (b h w) c")
         target = target.flatten()
         valid_mask = target != 255
-        loss = self.criterion(logits[valid_mask], target[valid_mask])
+        loss = self.loss(logits[valid_mask], target[valid_mask])
         self.log("train_loss", loss)
         return loss
 

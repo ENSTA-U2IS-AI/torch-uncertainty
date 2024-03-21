@@ -1,5 +1,4 @@
 from collections.abc import Callable
-from functools import partial
 from pathlib import Path
 from typing import Literal
 
@@ -39,7 +38,7 @@ class ClassificationRoutine(LightningModule):
         self,
         num_classes: int,
         model: nn.Module,
-        loss: type[nn.Module],
+        loss: nn.Module,
         num_estimators: int = 1,
         format_batch_fn: nn.Module | None = None,
         optim_recipe=None,
@@ -237,15 +236,10 @@ class ClassificationRoutine(LightningModule):
                     prefix="gpl/test_"
                 )
 
-        # Handle ELBO special cases
-        self.is_elbo = (
-            isinstance(self.loss, partial) and self.loss.func == ELBOLoss
-        )
-
-        # Deep Evidential Classification
-        self.is_dec = self.loss == DECLoss or (
-            isinstance(self.loss, partial) and self.loss.func == DECLoss
-        )
+        self.is_elbo = isinstance(self.loss, ELBOLoss)
+        if self.is_elbo:
+            self.loss.set_model(self.model)
+        self.is_dec = isinstance(self.loss, DECLoss)
 
         # metrics for ensembles only
         if self.num_estimators > 1:
@@ -349,9 +343,7 @@ class ClassificationRoutine(LightningModule):
 
     @property
     def criterion(self) -> nn.Module:
-        if self.is_elbo:
-            self.loss = partial(self.loss, model=self.model)
-        return self.loss()
+        return self.loss
 
     def forward(self, inputs: Tensor, save_feats: bool = False) -> Tensor:
         """Forward pass of the model.
@@ -394,18 +386,18 @@ class ClassificationRoutine(LightningModule):
         inputs, targets = self.format_batch_fn(batch)
 
         if self.is_elbo:
-            loss = self.criterion(inputs, targets)
+            loss = self.loss(inputs, targets)
         else:
             logits = self.forward(inputs)
             # BCEWithLogitsLoss expects float targets
-            if self.binary_cls and self.loss == nn.BCEWithLogitsLoss:
+            if self.binary_cls and isinstance(self.loss, nn.BCEWithLogitsLoss):
                 logits = logits.squeeze(-1)
                 targets = targets.float()
 
             if not self.is_dec:
-                loss = self.criterion(logits, targets)
+                loss = self.loss(logits, targets)
             else:
-                loss = self.criterion(logits, targets, self.current_epoch)
+                loss = self.loss(logits, targets, self.current_epoch)
 
         self.log("train_loss", loss)
         return loss

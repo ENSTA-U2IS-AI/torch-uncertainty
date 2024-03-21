@@ -39,6 +39,7 @@ from torch_uncertainty.losses import DECLoss
 from torch_uncertainty.models.lenet import lenet
 from torch_uncertainty.routines import ClassificationRoutine
 
+
 # %%
 # 2. Creating the Optimizer Wrapper
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -46,10 +47,9 @@ from torch_uncertainty.routines import ClassificationRoutine
 # with the default learning rate of 0.001 and a step scheduler.
 def optim_lenet(model: nn.Module) -> dict:
     optimizer = optim.Adam(model.parameters(), lr=1e-3, weight_decay=0.005)
-    exp_lr_scheduler = optim.lr_scheduler.StepLR(
-        optimizer, step_size=7, gamma=0.1
-    )
+    exp_lr_scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
     return {"optimizer": optimizer, "lr_scheduler": exp_lr_scheduler}
+
 
 # %%
 # 3. Creating the necessary variables
@@ -81,10 +81,7 @@ model = lenet(
 # In this routine, we provide the model, the DEC loss, the optimizer,
 # and all the default arguments.
 
-loss = partial(
-    DECLoss,
-    reg_weight=1e-2,
-)
+loss = DECLoss(reg_weight=1e-2)
 
 routine = ClassificationRoutine(
     model=model,
@@ -125,7 +122,7 @@ def rotated_mnist(angle: int) -> None:
     """
     rotated_images = F.rotate(images, angle)
     # print rotated images
-    plt.axis('off')
+    plt.axis("off")
     imshow(torchvision.utils.make_grid(rotated_images[:4, ...]))
     print("Ground truth: ", " ".join(f"{labels[j]}" for j in range(4)))
 

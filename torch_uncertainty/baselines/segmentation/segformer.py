@@ -30,7 +30,7 @@ class SegFormerBaseline(SegmentationRoutine):
     def __init__(
         self,
         num_classes: int,
-        loss: type[nn.Module],
+        loss: nn.Module,
         version: Literal["std"],
         arch: int,
         num_estimators: int = 1,

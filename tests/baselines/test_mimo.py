@@ -21,7 +21,7 @@ class TestMIMOBaseline:
         net = ResNetBaseline(
             num_classes=10,
             in_channels=3,
-            loss=nn.CrossEntropyLoss,
+            loss=nn.CrossEntropyLoss(),
             version="mimo",
             arch=50,
             style="cifar",
@@ -40,7 +40,7 @@ class TestMIMOBaseline:
         net = ResNetBaseline(
             num_classes=10,
             in_channels=3,
-            loss=nn.CrossEntropyLoss,
+            loss=nn.CrossEntropyLoss(),
             version="mimo",
             arch=18,
             style="imagenet",
@@ -63,7 +63,7 @@ class TestMIMOWideBaseline:
         net = WideResNetBaseline(
             num_classes=10,
             in_channels=3,
-            loss=nn.CrossEntropyLoss,
+            loss=nn.CrossEntropyLoss(),
             version="mimo",
             style="cifar",
             num_estimators=4,

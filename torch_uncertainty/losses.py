@@ -66,7 +66,7 @@ class KLDiv(nn.Module):
 class ELBOLoss(nn.Module):
     def __init__(
         self,
-        model: nn.Module,
+        model: nn.Module | None,
         criterion: nn.Module,
         kl_weight: float,
         num_samples: int,
@@ -83,8 +83,9 @@ class ELBOLoss(nn.Module):
             num_samples (int): The number of samples to use for the ELBO loss
         """
         super().__init__()
-        self.model = model
-        self._kl_div = KLDiv(model)
+
+        if model is not None:
+            self.set_model(model)
 
         if isinstance(criterion, type):
             raise TypeError(
@@ -128,6 +129,11 @@ class ELBOLoss(nn.Module):
             aggregated_elbo += self.criterion(logits, targets)
             aggregated_elbo += self.kl_weight * self._kl_div()
         return aggregated_elbo / self.num_samples
+
+    def set_model(self, model: nn.Module) -> None:
+        self.model = model
+        if model is not None:
+            self._kl_div = KLDiv(model)
 
 
 class DERLoss(DistributionNLLLoss):

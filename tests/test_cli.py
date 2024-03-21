@@ -20,7 +20,7 @@ class TestCLI:
             "std",
             "--model.arch",
             "18",
-            "--model.loss",
+            "--model.loss.class_path",
             "torch.nn.CrossEntropyLoss",
             "--data.root",
             "./data",
