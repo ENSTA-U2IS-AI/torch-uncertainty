@@ -37,8 +37,8 @@ We will also need to define an optimizer using torch.optim, the
 neural network utils from torch.nn, as well as the partial util to provide
 the modified default arguments for the ELBO loss.
 """
+
 # %%
-from functools import partial
 from pathlib import Path
 
 from lightning.pytorch import Trainer
@@ -76,7 +76,7 @@ trainer = Trainer(accelerator="cpu", enable_progress_bar=False, max_epochs=1)
 
 # datamodule
 root = Path("") / "data"
-datamodule = MNISTDataModule(root = root, batch_size=128, eval_ood=False)
+datamodule = MNISTDataModule(root=root, batch_size=128, eval_ood=False)
 
 # model
 model = bayesian_lenet(datamodule.num_channels, datamodule.num_classes)
@@ -93,8 +93,7 @@ model = bayesian_lenet(datamodule.num_channels, datamodule.num_classes)
 # from torch_uncertainty.classification. We provide the model, the ELBO
 # loss and the optimizer to the routine.
 
-loss = partial(
-    ELBOLoss,
+loss = ELBOLoss(
     model=model,
     criterion=nn.CrossEntropyLoss(),
     kl_weight=1 / 50000,

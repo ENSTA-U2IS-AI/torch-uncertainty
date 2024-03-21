@@ -19,7 +19,7 @@ class TestStandardBaseline:
         net = ResNetBaseline(
             num_classes=10,
             in_channels=3,
-            loss=nn.CrossEntropyLoss,
+            loss=nn.CrossEntropyLoss(),
             version="std",
             arch=18,
             style="cifar",
@@ -27,7 +27,6 @@ class TestStandardBaseline:
         )
         summary(net)
 
-        _ = net.criterion
         _ = net(torch.rand(1, 3, 32, 32))
 
     def test_errors(self):
@@ -35,7 +34,7 @@ class TestStandardBaseline:
             ResNetBaseline(
                 num_classes=10,
                 in_channels=3,
-                loss=nn.CrossEntropyLoss,
+                loss=nn.CrossEntropyLoss(),
                 version="test",
                 arch=18,
                 style="cifar",
@@ -50,14 +49,13 @@ class TestStandardWideBaseline:
         net = WideResNetBaseline(
             num_classes=10,
             in_channels=3,
-            loss=nn.CrossEntropyLoss,
+            loss=nn.CrossEntropyLoss(),
             version="std",
             style="cifar",
             groups=1,
         )
         summary(net)
 
-        _ = net.criterion
         _ = net(torch.rand(1, 3, 32, 32))
 
     def test_errors(self):
@@ -65,7 +63,7 @@ class TestStandardWideBaseline:
             WideResNetBaseline(
                 num_classes=10,
                 in_channels=3,
-                loss=nn.CrossEntropyLoss,
+                loss=nn.CrossEntropyLoss(),
                 version="test",
                 style="cifar",
                 groups=1,
@@ -79,14 +77,13 @@ class TestStandardVGGBaseline:
         net = VGGBaseline(
             num_classes=10,
             in_channels=3,
-            loss=nn.CrossEntropyLoss,
+            loss=nn.CrossEntropyLoss(),
             version="std",
             arch=11,
             groups=1,
         )
         summary(net)
 
-        _ = net.criterion
         _ = net(torch.rand(1, 3, 32, 32))
 
     def test_errors(self):
@@ -94,7 +91,7 @@ class TestStandardVGGBaseline:
             VGGBaseline(
                 num_classes=10,
                 in_channels=3,
-                loss=nn.CrossEntropyLoss,
+                loss=nn.CrossEntropyLoss(),
                 version="test",
                 arch=11,
                 groups=1,
@@ -108,20 +105,19 @@ class TestStandardMLPBaseline:
         net = MLPBaseline(
             in_features=3,
             output_dim=10,
-            loss=nn.MSELoss,
+            loss=nn.MSELoss(),
             version="std",
             hidden_dims=[1],
         )
         summary(net)
 
-        _ = net.criterion
         _ = net(torch.rand(1, 3))
 
         for distribution in ["normal", "laplace", "nig"]:
             MLPBaseline(
                 in_features=3,
                 output_dim=10,
-                loss=nn.MSELoss,
+                loss=nn.MSELoss(),
                 version="std",
                 hidden_dims=[1],
                 distribution=distribution,
@@ -132,7 +128,7 @@ class TestStandardMLPBaseline:
             MLPBaseline(
                 in_features=3,
                 output_dim=10,
-                loss=nn.MSELoss,
+                loss=nn.MSELoss(),
                 version="test",
                 hidden_dims=[1],
             )
@@ -144,20 +140,19 @@ class TestStandardSegFormerBaseline:
     def test_standard(self):
         net = SegFormerBaseline(
             num_classes=10,
-            loss=nn.CrossEntropyLoss,
+            loss=nn.CrossEntropyLoss(),
             version="std",
             arch=0,
         )
         summary(net)
 
-        _ = net.criterion
         _ = net(torch.rand(1, 3, 32, 32))
 
     def test_errors(self):
         with pytest.raises(ValueError):
             SegFormerBaseline(
                 num_classes=10,
-                loss=nn.CrossEntropyLoss,
+                loss=nn.CrossEntropyLoss(),
                 version="test",
                 arch=0,
             )

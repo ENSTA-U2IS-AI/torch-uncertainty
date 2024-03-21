@@ -1,4 +1,3 @@
-import copy
 from pathlib import Path
 from typing import Literal
 
@@ -7,11 +6,12 @@ import torchvision.transforms as T
 from numpy.typing import ArrayLike
 from timm.data.auto_augment import rand_augment_transform
 from torch import nn
-from torch.utils.data import ConcatDataset, DataLoader, random_split
+from torch.utils.data import ConcatDataset, DataLoader
 from torchvision.datasets import DTD, SVHN
 
 from torch_uncertainty.datamodules.abstract import AbstractDataModule
 from torch_uncertainty.datasets.classification import ImageNetO, TinyImageNet
+from torch_uncertainty.utils import create_train_val_split
 
 
 class TinyImageNetDataModule(AbstractDataModule):
@@ -128,16 +128,11 @@ class TinyImageNetDataModule(AbstractDataModule):
                 transform=self.train_transform,
             )
             if self.val_split:
-                self.train, val = random_split(
+                self.train, self.val = create_train_val_split(
                     full,
-                    [
-                        1 - self.val_split,
-                        self.val_split,
-                    ],
+                    self.val_split,
+                    self.test_transform,
                 )
-                # FIXME: memory cost issues might arise here
-                self.val = copy.deepcopy(val)
-                self.val.dataset.transform = self.test_transform
             else:
                 self.train = full
                 self.val = self.dataset(

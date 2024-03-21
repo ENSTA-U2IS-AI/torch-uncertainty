@@ -1,16 +1,15 @@
-import copy
 from pathlib import Path
 
 import torch
 from torch.nn.common_types import _size_2_t
 from torch.nn.modules.utils import _pair
-from torch.utils.data import random_split
 from torchvision import tv_tensors
 from torchvision.transforms import v2
 
 from torch_uncertainty.datamodules.abstract import AbstractDataModule
 from torch_uncertainty.datasets import MUAD
 from torch_uncertainty.transforms import RandomRescale
+from torch_uncertainty.utils.misc import create_train_val_split
 
 
 class MUADDataModule(AbstractDataModule):
@@ -94,16 +93,11 @@ class MUADDataModule(AbstractDataModule):
             )
 
             if self.val_split is not None:
-                self.train, val = random_split(
+                self.train, self.val = create_train_val_split(
                     full,
-                    [
-                        1 - self.val_split,
-                        self.val_split,
-                    ],
+                    self.val_split,
+                    self.test_transform,
                 )
-                # FIXME: memory cost issues might arise here
-                self.val = copy.deepcopy(val)
-                self.val.dataset.transforms = self.test_transform
             else:
                 self.train = full
                 self.val = self.dataset(

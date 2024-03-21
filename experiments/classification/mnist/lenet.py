@@ -44,7 +44,7 @@ if __name__ == "__main__":
         model=model,
         num_classes=dm.num_classes,
         in_channels=dm.num_channels,
-        loss=nn.CrossEntropyLoss,
+        loss=nn.CrossEntropyLoss(),
         optim_recipe=optim_lenet,
         **vars(args),
     )

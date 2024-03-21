@@ -15,7 +15,7 @@ class TestBatchedBaseline:
         net = ResNetBaseline(
             num_classes=10,
             in_channels=3,
-            loss=nn.CrossEntropyLoss,
+            loss=nn.CrossEntropyLoss(),
             version="batched",
             arch=18,
             style="cifar",
@@ -32,7 +32,7 @@ class TestBatchedBaseline:
         net = ResNetBaseline(
             num_classes=10,
             in_channels=3,
-            loss=nn.CrossEntropyLoss,
+            loss=nn.CrossEntropyLoss(),
             version="batched",
             arch=50,
             style="imagenet",
@@ -53,7 +53,7 @@ class TestBatchedWideBaseline:
         net = WideResNetBaseline(
             num_classes=10,
             in_channels=3,
-            loss=nn.CrossEntropyLoss,
+            loss=nn.CrossEntropyLoss(),
             version="batched",
             style="cifar",
             num_estimators=4,

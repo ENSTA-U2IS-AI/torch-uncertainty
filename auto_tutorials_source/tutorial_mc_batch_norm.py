@@ -51,7 +51,7 @@ datamodule = MNISTDataModule(root, batch_size=128)
 model = lenet(
     in_channels=datamodule.num_channels,
     num_classes=datamodule.num_classes,
-    norm = nn.BatchNorm2d,
+    norm=nn.BatchNorm2d,
 )
 
 # %%
@@ -59,13 +59,13 @@ model = lenet(
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # This is a classification problem, and we use CrossEntropyLoss as likelihood.
 # We define the training routine using the classification training routine from
-# torch_uncertainty.training.classification. We provide the number of classes, 
+# torch_uncertainty.training.classification. We provide the number of classes,
 # and the optimization recipe.
 
 routine = ClassificationRoutine(
     num_classes=datamodule.num_classes,
     model=model,
-    loss=nn.CrossEntropyLoss,
+    loss=nn.CrossEntropyLoss(),
     optim_recipe=optim_cifar10_resnet18,
 )
 
@@ -87,7 +87,9 @@ trainer.test(model=routine, datamodule=datamodule)
 # The authors suggest 32 as a good value for ``mc_batch_size`` but we use 4 here
 # to highlight the effect of stochasticity on the predictions.
 
-routine.model = MCBatchNorm(routine.model, num_estimators=8, convert=True, mc_batch_size=4)
+routine.model = MCBatchNorm(
+    routine.model, num_estimators=8, convert=True, mc_batch_size=4
+)
 routine.model.fit(datamodule.train)
 routine.eval()
 

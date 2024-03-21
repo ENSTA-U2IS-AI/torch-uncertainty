@@ -23,7 +23,7 @@ class MLPBaseline(RegressionRoutine):
         self,
         output_dim: int,
         in_features: int,
-        loss: type[nn.Module],
+        loss: nn.Module,
         version: Literal["std", "packed"],
         hidden_dims: list[int],
         num_estimators: int | None = 1,

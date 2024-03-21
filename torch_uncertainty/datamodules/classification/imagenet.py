@@ -7,7 +7,7 @@ import yaml
 from timm.data.auto_augment import rand_augment_transform
 from timm.data.mixup import Mixup
 from torch import nn
-from torch.utils.data import DataLoader, Subset, random_split
+from torch.utils.data import DataLoader, Subset
 from torchvision.datasets import DTD, SVHN, ImageNet, INaturalist
 
 from torch_uncertainty.datamodules.abstract import AbstractDataModule
@@ -17,6 +17,7 @@ from torch_uncertainty.datasets.classification import (
     ImageNetR,
     OpenImageO,
 )
+from torch_uncertainty.utils.misc import create_train_val_split
 
 
 class ImageNetDataModule(AbstractDataModule):
@@ -202,16 +203,11 @@ class ImageNetDataModule(AbstractDataModule):
                 transform=self.train_transform,
             )
             if self.val_split and isinstance(self.val_split, float):
-                self.train, val = random_split(
+                self.train, self.val = create_train_val_split(
                     full,
-                    [
-                        1 - self.val_split,
-                        self.val_split,
-                    ],
+                    self.val_split,
+                    self.test_transform,
                 )
-                # FIXME: memory cost issues might arise here
-                self.val = copy.deepcopy(val)
-                self.val.dataset.transform = self.test_transform
             elif isinstance(self.val_split, Path):
                 self.train = Subset(full, self.train_indices)
                 # TODO: improve the performance

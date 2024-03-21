@@ -31,7 +31,8 @@ model:
   in_features: 8
   hidden_dims: 
   - 100
-  loss: torch.nn.MSELoss
+  loss:
+    class_path: torch.nn.MSELoss
   version: std
 data:
   root: ./data

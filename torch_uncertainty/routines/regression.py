@@ -82,9 +82,7 @@ class RegressionRoutine(LightningModule):
             raise ValueError(f"output_dim must be positive, got {output_dim}.")
         self.output_dim = output_dim
 
-        self.one_dim_regression = False
-        if output_dim == 1:
-            self.one_dim_regression = True
+        self.one_dim_regression = output_dim == 1
 
         self.optim_recipe = optim_recipe
 
@@ -127,11 +125,6 @@ class RegressionRoutine(LightningModule):
                 pred = pred.squeeze(-1)
         return pred
 
-    @property
-    def criterion(self) -> nn.Module:
-        """The loss function of the routine."""
-        return self.loss()
-
     def training_step(
         self, batch: tuple[Tensor, Tensor], batch_idx: int
     ) -> STEP_OUTPUT:
@@ -141,7 +134,7 @@ class RegressionRoutine(LightningModule):
         if self.one_dim_regression:
             targets = targets.unsqueeze(-1)
 
-        loss = self.criterion(dists, targets)
+        loss = self.loss(dists, targets)
 
         self.log("train_loss", loss)
         return loss

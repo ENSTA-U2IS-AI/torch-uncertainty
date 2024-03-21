@@ -16,7 +16,7 @@ class TestMaskedBaseline:
         net = ResNetBaseline(
             num_classes=10,
             in_channels=3,
-            loss=nn.CrossEntropyLoss,
+            loss=nn.CrossEntropyLoss(),
             version="masked",
             arch=18,
             style="cifar",
@@ -34,7 +34,7 @@ class TestMaskedBaseline:
         net = ResNetBaseline(
             num_classes=10,
             in_channels=3,
-            loss=nn.CrossEntropyLoss,
+            loss=nn.CrossEntropyLoss(),
             version="masked",
             arch=50,
             style="imagenet",
@@ -53,7 +53,7 @@ class TestMaskedBaseline:
             _ = ResNetBaseline(
                 num_classes=10,
                 in_channels=3,
-                loss=nn.CrossEntropyLoss,
+                loss=nn.CrossEntropyLoss(),
                 version="masked",
                 arch=18,
                 style="cifar",
@@ -67,7 +67,7 @@ class TestMaskedBaseline:
             _ = ResNetBaseline(
                 num_classes=10,
                 in_channels=3,
-                loss=nn.CrossEntropyLoss,
+                loss=nn.CrossEntropyLoss(),
                 version="masked",
                 arch=18,
                 style="cifar",
@@ -84,7 +84,7 @@ class TestMaskedWideBaseline:
         net = WideResNetBaseline(
             num_classes=10,
             in_channels=3,
-            loss=nn.CrossEntropyLoss,
+            loss=nn.CrossEntropyLoss(),
             version="masked",
             style="cifar",
             num_estimators=4,

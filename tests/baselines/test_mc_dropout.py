@@ -16,7 +16,7 @@ class TestStandardBaseline:
         net = ResNetBaseline(
             num_classes=10,
             in_channels=3,
-            loss=nn.CrossEntropyLoss,
+            loss=nn.CrossEntropyLoss(),
             version="mc-dropout",
             dropout_rate=0.1,
             num_estimators=4,
@@ -37,7 +37,7 @@ class TestStandardWideBaseline:
         net = WideResNetBaseline(
             num_classes=10,
             in_channels=3,
-            loss=nn.CrossEntropyLoss,
+            loss=nn.CrossEntropyLoss(),
             version="mc-dropout",
             dropout_rate=0.1,
             num_estimators=4,
@@ -57,7 +57,7 @@ class TestStandardVGGBaseline:
         net = VGGBaseline(
             num_classes=10,
             in_channels=3,
-            loss=nn.CrossEntropyLoss,
+            loss=nn.CrossEntropyLoss(),
             version="mc-dropout",
             dropout_rate=0.1,
             num_estimators=4,
@@ -73,7 +73,7 @@ class TestStandardVGGBaseline:
         net = VGGBaseline(
             num_classes=10,
             in_channels=3,
-            loss=nn.CrossEntropyLoss,
+            loss=nn.CrossEntropyLoss(),
             version="mc-dropout",
             num_estimators=4,
             arch=11,

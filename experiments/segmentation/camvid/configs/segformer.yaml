@@ -6,7 +6,8 @@ trainer:
   devices: 1
 model:
   num_classes: 12
-  loss: torch.nn.CrossEntropyLoss
+  loss:
+    class_path: torch.nn.CrossEntropyLoss
   version: std
   arch: 0
   num_estimators: 1

@@ -29,3 +29,9 @@ class TestCamVidDataModule:
         dm.train_dataloader()
         dm.val_dataloader()
         dm.test_dataloader()
+
+        dm.val_split = 0.1
+        dm.prepare_data()
+        dm.setup()
+        dm.train_dataloader()
+        dm.val_dataloader()

@@ -28,7 +28,7 @@ class TestClassification:
         model = DummyClassificationBaseline(
             in_channels=dm.num_channels,
             num_classes=dm.num_classes,
-            loss=nn.BCEWithLogitsLoss,
+            loss=nn.BCEWithLogitsLoss(),
             optim_recipe=optim_cifar10_resnet18,
             baseline_type="single",
             ood_criterion="msp",
@@ -51,7 +51,7 @@ class TestClassification:
         model = DummyClassificationBaseline(
             in_channels=dm.num_channels,
             num_classes=dm.num_classes,
-            loss=nn.BCEWithLogitsLoss,
+            loss=nn.BCEWithLogitsLoss(),
             optim_recipe=optim_cifar10_resnet18,
             baseline_type="single",
             ood_criterion="logit",
@@ -75,7 +75,7 @@ class TestClassification:
         model = DummyClassificationBaseline(
             num_classes=dm.num_classes,
             in_channels=dm.num_channels,
-            loss=nn.CrossEntropyLoss,
+            loss=nn.CrossEntropyLoss(),
             optim_recipe=optim_cifar10_resnet18,
             baseline_type="single",
             ood_criterion="entropy",
@@ -99,7 +99,7 @@ class TestClassification:
         model = DummyClassificationBaseline(
             num_classes=dm.num_classes,
             in_channels=dm.num_channels,
-            loss=nn.CrossEntropyLoss,
+            loss=nn.CrossEntropyLoss(),
             optim_recipe=optim_cifar10_resnet18,
             baseline_type="ensemble",
             ood_criterion="energy",

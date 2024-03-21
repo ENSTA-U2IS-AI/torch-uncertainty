@@ -49,7 +49,7 @@ if __name__ == "__main__":
             ResNetBaseline(
                 num_classes=list_dm[i].dm.num_classes,
                 in_channels=list_dm[i].dm.num_channels,
-                loss=nn.CrossEntropyLoss,
+                loss=nn.CrossEntropyLoss(),
                 optim_recipe=get_procedure(
                     f"resnet{args.arch}", "tiny-imagenet", args.version
                 ),
@@ -68,7 +68,7 @@ if __name__ == "__main__":
         model = ResNetBaseline(
             num_classes=dm.num_classes,
             in_channels=dm.num_channels,
-            loss=nn.CrossEntropyLoss,
+            loss=nn.CrossEntropyLoss(),
             optim_recipe=get_procedure(
                 f"resnet{args.arch}", "tiny-imagenet", args.version
             ),

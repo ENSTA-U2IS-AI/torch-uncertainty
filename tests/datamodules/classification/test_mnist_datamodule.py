@@ -31,7 +31,6 @@ class TestMNISTDataModule:
 
         dm.prepare_data()
         dm.setup()
-        dm.setup("test")
 
         dm.train_dataloader()
         dm.val_dataloader()
@@ -43,5 +42,5 @@ class TestMNISTDataModule:
         dm.eval_ood = True
         dm.val_split = 0.1
         dm.prepare_data()
-        dm.setup("test")
+        dm.setup()
         dm.test_dataloader()
