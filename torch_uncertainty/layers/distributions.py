@@ -5,7 +5,7 @@ from torch.distributions import Distribution, Laplace, Normal
 from torch_uncertainty.utils.distributions import NormalInverseGamma
 
 
-class AbstractDistLayer(nn.Module):
+class _AbstractDist(nn.Module):
     def __init__(self, dim: int) -> None:
         super().__init__()
         if dim < 1:
@@ -16,61 +16,89 @@ class AbstractDistLayer(nn.Module):
         raise NotImplementedError
 
 
-class IndptNormalLayer(AbstractDistLayer):
-    def __init__(self, dim: int, min_scale: float = 1e-6) -> None:
+class NormalLayer(_AbstractDist):
+    """Normal distribution layer.
+
+    Converts model outputs to Independent Normal distributions.
+
+    Args:
+        dim (int): The number of independent dimensions for each prediction.
+        eps (float): The minimal value of the :attr:`scale` parameter.
+    """
+
+    def __init__(self, dim: int, eps: float = 1e-6) -> None:
         super().__init__(dim)
-        if min_scale <= 0:
-            raise ValueError(f"min_scale must be positive, got {min_scale}.")
-        self.min_scale = min_scale
+        if eps <= 0:
+            raise ValueError(f"eps must be positive, got {eps}.")
+        self.eps = eps
 
     def forward(self, x: Tensor) -> Normal:
-        """Forward pass of the independent normal distribution layer.
+        r"""Forward pass of the Normal distribution layer.
 
         Args:
-            x (Tensor): The input tensor of shape (dx2).
+            x (Tensor): A tensor of shape (:attr:`dim` :math:`\times`2).
 
         Returns:
-            Normal: The independent normal distribution.
+            Normal: The output normal distribution.
         """
         loc = x[:, : self.dim]
-        scale = F.softplus(x[:, self.dim :]) + self.min_scale
+        scale = F.softplus(x[:, self.dim :]) + self.eps
         return Normal(loc, scale)
 
 
-class IndptLaplaceLayer(AbstractDistLayer):
-    def __init__(self, dim: int, min_scale: float = 1e-6) -> None:
+class LaplaceLayer(_AbstractDist):
+    """Laplace distribution layer.
+
+    Converts model outputs to Independent Laplace distributions.
+
+    Args:
+        dim (int): The number of independent dimensions for each prediction.
+        eps (float): The minimal value of the :attr:`scale` parameter.
+    """
+
+    def __init__(self, dim: int, eps: float = 1e-6) -> None:
         super().__init__(dim)
-        if min_scale <= 0:
-            raise ValueError(f"min_scale must be positive, got {min_scale}.")
-        self.min_scale = min_scale
+        if eps <= 0:
+            raise ValueError(f"eps must be positive, got {eps}.")
+        self.eps = eps
 
     def forward(self, x: Tensor) -> Laplace:
-        """Forward pass of the independent Laplace distribution layer.
+        r"""Forward pass of the Laplace distribution layer.
 
         Args:
-            x (Tensor): The input tensor of shape (dx2).
+            x (Tensor): A tensor of shape (:attr:`dim` :math:`\times`2).
 
         Returns:
-            Laplace: The independent Laplace distribution.
+            Laplace: The output Laplace distribution.
         """
         loc = x[:, : self.dim]
-        scale = F.softplus(x[:, self.dim :]) + self.min_scale
+        scale = F.softplus(x[:, self.dim :]) + self.eps
         return Laplace(loc, scale)
 
 
-class IndptNormalInverseGammaLayer(AbstractDistLayer):
+class NormalInverseGammaLayer(_AbstractDist):
+    """Normal-Inverse-Gamma distribution layer.
+
+    Converts model outputs to Independent Normal-Inverse-Gamma distributions.
+
+    Args:
+        dim (int): The number of independent dimensions for each prediction.
+        eps (float): The minimal values of the :attr:`lmbda`, :attr:`alpha`-1
+            and :attr:`beta` parameters.
+    """
+
     def __init__(self, dim: int, eps: float = 1e-6) -> None:
         super().__init__(dim)
         self.eps = eps
 
-    def forward(self, x: Tensor) -> Laplace:
-        """Forward pass of the independent Laplace distribution layer.
+    def forward(self, x: Tensor) -> NormalInverseGamma:
+        r"""Forward pass of the NormalInverseGamma distribution layer.
 
         Args:
-            x (Tensor): The input tensor of shape (dx2).
+            x (Tensor): A tensor of shape (:attr:`dim` :math:`\times`4).
 
         Returns:
-            Laplace: The independent Laplace distribution.
+            NormalInverseGamma: The output NormalInverseGamma distribution.
         """
         loc = x[:, : self.dim]
         lmbda = F.softplus(x[:, self.dim : 2 * self.dim]) + self.eps

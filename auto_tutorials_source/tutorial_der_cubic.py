@@ -43,7 +43,7 @@ from torch_uncertainty.models.mlp import mlp
 from torch_uncertainty.datasets.regression.toy import Cubic
 from torch_uncertainty.losses import DERLoss
 from torch_uncertainty.routines import RegressionRoutine
-from torch_uncertainty.layers.distributions import IndptNormalInverseGammaLayer
+from torch_uncertainty.layers.distributions import NormalInverseGammaLayer
 
 # %%
 # 2. The Optimization Recipe
@@ -70,7 +70,7 @@ def optim_regression(
 #
 # In the following, we create a trainer to train the model, the same synthetic regression 
 # datasets as in the original DER paper and the model, a simple MLP with 2 hidden layers of 64 neurons each.
-# Please note that this MLP finishes with a IndptNormalInverseGammaLayer that interpret the outputs of the model
+# Please note that this MLP finishes with a NormalInverseGammaLayer that interpret the outputs of the model
 # as the parameters of a Normal Inverse Gamma distribution.
 
 trainer = Trainer(accelerator="cpu", max_epochs=50)#, enable_progress_bar=False)
@@ -90,7 +90,7 @@ model = mlp(
     in_features=1,
     num_outputs=4,
     hidden_dims=[64, 64],
-    final_layer=IndptNormalInverseGammaLayer,
+    final_layer=NormalInverseGammaLayer,
     final_layer_args={"dim": 1},
 )
 

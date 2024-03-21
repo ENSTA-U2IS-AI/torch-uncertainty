@@ -4,9 +4,9 @@ from pytorch_lightning import LightningModule
 from torch import nn
 
 from torch_uncertainty.layers.distributions import (
-    IndptLaplaceLayer,
-    IndptNormalInverseGammaLayer,
-    IndptNormalLayer,
+    LaplaceLayer,
+    NormalInverseGammaLayer,
+    NormalLayer,
 )
 from torch_uncertainty.models.deep_ensembles import deep_ensembles
 from torch_uncertainty.routines import (
@@ -82,13 +82,13 @@ class DummyRegressionBaseline:
     ) -> LightningModule:
         if probabilistic:
             if dist_type == "normal":
-                last_layer = IndptNormalLayer(num_outputs)
+                last_layer = NormalLayer(num_outputs)
                 num_classes = num_outputs * 2
             elif dist_type == "laplace":
-                last_layer = IndptLaplaceLayer(num_outputs)
+                last_layer = LaplaceLayer(num_outputs)
                 num_classes = num_outputs * 2
             else:  # dist_type == "nig"
-                last_layer = IndptNormalInverseGammaLayer(num_outputs)
+                last_layer = NormalInverseGammaLayer(num_outputs)
                 num_classes = num_outputs * 4
         else:
             last_layer = nn.Identity()

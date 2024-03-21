@@ -1,7 +1,8 @@
 from typing import Literal
 
 import torch
-from torch import Tensor, distributions, nn
+from torch import Tensor, nn
+from torch.distributions import Distribution
 from torch.nn import functional as F
 
 from torch_uncertainty.layers.bayesian import bayesian_modules
@@ -12,18 +13,23 @@ class DistributionNLLLoss(nn.Module):
     def __init__(
         self, reduction: Literal["mean", "sum"] | None = "mean"
     ) -> None:
-        """Negative Log-Likelihood loss for a given distribution.
+        """Negative Log-Likelihood loss using given distributions as inputs.
 
         Args:
             reduction (str, optional): specifies the reduction to apply to the
             output:``'none'`` | ``'mean'`` | ``'sum'``. Defaults to "mean".
-
         """
         super().__init__()
         self.reduction = reduction
 
-    def forward(self, dist: distributions.Distribution, target: Tensor):
-        loss = -dist.log_prob(target)
+    def forward(self, dist: Distribution, targets: Tensor) -> Tensor:
+        """Compute the NLL of the targets given predicted distributions.
+
+        Args:
+            dist (Distribution): The predicted distributions
+            targets (Tensor): The target values
+        """
+        loss = -dist.log_prob(targets)
         if self.reduction == "mean":
             loss = loss.mean()
         elif self.reduction == "sum":
@@ -106,11 +112,11 @@ class ELBOLoss(nn.Module):
         self.num_samples = num_samples
 
     def forward(self, inputs: Tensor, targets: Tensor) -> Tensor:
-        """Gather the kl divergence from the bayesian modules and aggregate
+        """Gather the KL divergence from the bayesian modules and aggregate
         the ELBO loss for a given network.
 
         Args:
-            inputs (Tensor): The *inputs* of the Bayesian Neural Network
+            inputs (Tensor): The inputs of the Bayesian Neural Network
             targets (Tensor): The target values
 
         Returns:
@@ -128,7 +134,7 @@ class DERLoss(DistributionNLLLoss):
     def __init__(
         self, reg_weight: float, reduction: str | None = "mean"
     ) -> None:
-        """The Normal Inverse-Gamma loss.
+        """The Deep Evidential loss.
 
         This loss combines the negative log-likelihood loss of the normal
         inverse gamma distribution and a weighted regularization term.

@@ -8,19 +8,19 @@ from torch.optim.lr_scheduler import LRScheduler
 
 __all__ = [
     "optim_cifar10_resnet18",
+    "optim_cifar10_resnet34",
     "optim_cifar10_resnet50",
     "optim_cifar10_wideresnet",
     "optim_cifar10_vgg16",
     "optim_cifar100_resnet18",
+    "optim_cifar100_resnet34",
     "optim_cifar100_resnet50",
     "optim_cifar100_vgg16",
     "optim_imagenet_resnet50",
     "optim_imagenet_resnet50_a3",
-    "optim_regression",
-    "optim_cifar10_resnet34",
-    "optim_cifar100_resnet34",
     "optim_tinyimagenet_resnet34",
     "optim_tinyimagenet_resnet50",
+    "optim_regression",
 ]
 
 
