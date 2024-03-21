@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 import torch
 from PIL import Image
+from torchvision import tv_tensors
 
 from torch_uncertainty.transforms import (
     AutoContrast,
@@ -11,6 +12,7 @@ from torch_uncertainty.transforms import (
     Equalize,
     MIMOBatchFormat,
     Posterize,
+    RandomRescale,
     RepeatTarget,
     Rotate,
     Sharpen,
@@ -24,6 +26,16 @@ from torch_uncertainty.transforms import (
 def img_input() -> torch.Tensor:
     imarray = np.random.rand(28, 28, 3) * 255
     return Image.fromarray(imarray.astype("uint8")).convert("RGB")
+
+
+@pytest.fixture()
+def tv_tensors_input() -> tuple[torch.Tensor, torch.Tensor]:
+    imarray1 = np.random.rand(3, 28, 28) * 255
+    imarray2 = np.random.rand(1, 28, 28) * 255
+    return (
+        tv_tensors.Image(imarray1.astype("uint8")),
+        tv_tensors.Mask(imarray2.astype("uint8")),
+    )
 
 
 @pytest.fixture()
@@ -210,3 +222,11 @@ class TestMIMOBatchFormat:
 
         with pytest.raises(ValueError):
             _ = MIMOBatchFormat(1, 0, 0)
+
+
+class TestRandomRescale:
+    """Testing the RandomRescale transform."""
+
+    def test_tv_tensors(self, tv_tensors_input):
+        aug = RandomRescale(0.5, 2.0)
+        _ = aug(tv_tensors_input)

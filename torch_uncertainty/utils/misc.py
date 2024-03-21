@@ -1,10 +1,13 @@
+import copy
 import csv
+from collections.abc import Callable
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import torch
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
+from torch.utils.data import Dataset, random_split
 
 
 def csv_writer(path: Path, dic: dict) -> None:
@@ -20,8 +23,6 @@ def csv_writer(path: Path, dic: dict) -> None:
     else:
         append_mode = False
         rw_mode = "w"
-    print(f"Writing to {path}")
-    print(f"Append mode: {append_mode}")
     # Write dic
     with path.open(rw_mode) as csvfile:
         writer = csv.writer(csvfile, delimiter=",")
@@ -68,3 +69,14 @@ def plot_hist(
     plt.legend()
     fig.tight_layout()
     return fig, ax
+
+
+def create_train_val_split(
+    dataset: Dataset,
+    val_split_rate: float,
+    val_transforms: Callable | None = None,
+):
+    train, val = random_split(dataset, [1 - val_split_rate, val_split_rate])
+    val = copy.deepcopy(val)
+    val.dataset.transform = val_transforms
+    return train, val
