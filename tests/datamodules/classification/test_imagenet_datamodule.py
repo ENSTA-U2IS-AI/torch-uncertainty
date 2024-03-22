@@ -12,9 +12,7 @@ class TestImageNetDataModule:
 
     def test_imagenet(self):
         dm = ImageNetDataModule(root="./data/", batch_size=128, val_split=0.1)
-
         assert dm.dataset == ImageNet
-
         dm.dataset = DummyClassificationDataset
         dm.ood_dataset = DummyClassificationDataset
         dm.prepare_data()
@@ -43,6 +41,13 @@ class TestImageNetDataModule:
         dm.prepare_data()
         dm.setup("test")
         dm.test_dataloader()
+
+        ImageNetDataModule(
+            root="./data/",
+            batch_size=128,
+            val_split=path,
+            rand_augment_opt="rand-m9-n1",
+        )
 
         with pytest.raises(ValueError):
             dm.setup("other")
@@ -91,4 +96,8 @@ class TestImageNetDataModule:
             )
 
         with pytest.raises(FileNotFoundError):
+            dm._verify_splits(split="test")
+
+        with pytest.raises(FileNotFoundError):
+            dm.root = Path("./tests/testlog")
             dm._verify_splits(split="test")

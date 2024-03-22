@@ -35,6 +35,7 @@ class TestCIFAR100DataModule:
             root="./data/", batch_size=128, cutout=0, test_alt="c"
         )
         dm.dataset = DummyClassificationDataset
+        dm.setup("test")
         with pytest.raises(ValueError):
             dm.setup()
 

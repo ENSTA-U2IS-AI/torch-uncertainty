@@ -26,6 +26,8 @@ class TestMNISTDataModule:
         with pytest.raises(ValueError):
             MNISTDataModule(root="./data/", batch_size=128, ood_ds="other")
 
+        MNISTDataModule(root="./data/", batch_size=128, test_alt="c")
+
         dm.dataset = DummyClassificationDataset
         dm.ood_dataset = DummyClassificationDataset
 

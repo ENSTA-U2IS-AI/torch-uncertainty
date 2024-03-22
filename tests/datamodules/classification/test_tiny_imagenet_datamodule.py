@@ -48,6 +48,15 @@ class TestTinyImageNetDataModule:
         dm.setup("test")
         dm.test_dataloader()
 
+        dm = TinyImageNetDataModule(
+            root="./data/", batch_size=128, ood_ds="svhn"
+        )
+        dm.dataset = DummyClassificationDataset
+        dm.ood_dataset = DummyClassificationDataset
+        dm.eval_ood = True
+        dm.prepare_data()
+        dm.setup("test")
+
     def test_tiny_imagenet_cv(self):
         dm = TinyImageNetDataModule(root="./data/", batch_size=128)
         dm.dataset = lambda root, split, transform: DummyClassificationDataset(
