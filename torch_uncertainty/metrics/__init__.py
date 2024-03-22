@@ -5,7 +5,8 @@ from .disagreement import Disagreement
 from .entropy import Entropy
 from .fpr95 import FPR95
 from .grouping_loss import GroupingLoss
+from .mean_iou import MeanIntersectionOverUnion
 from .mutual_information import MutualInformation
-from .nll import GaussianNegativeLogLikelihood, NegativeLogLikelihood
+from .nll import CategoricalNLL, DistributionNLL
 from .sparsification import AUSE
 from .variation_ratio import VariationRatio

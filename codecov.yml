@@ -6,3 +6,6 @@ coverage:
     patch:
       default:
         target: 95%
+
+codecov:
+  disable_default_path_fixes: true

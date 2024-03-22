@@ -3,9 +3,9 @@ from pathlib import Path
 from torch import nn, optim
 
 from torch_uncertainty import cli_main, init_args
-from torch_uncertainty.baselines import ResNet
+from torch_uncertainty.baselines import ResNetBaseline
 from torch_uncertainty.datamodules import TinyImageNetDataModule
-from torch_uncertainty.optimization_procedures import get_procedure
+from torch_uncertainty.optim_recipes import get_procedure
 from torch_uncertainty.utils import csv_writer
 
 
@@ -22,7 +22,7 @@ def optim_tiny(model: nn.Module) -> dict:
 
 
 if __name__ == "__main__":
-    args = init_args(ResNet, TinyImageNetDataModule)
+    args = init_args(ResNetBaseline, TinyImageNetDataModule)
     if args.root == "./data/":
         root = Path(__file__).parent.absolute().parents[2]
     else:
@@ -46,11 +46,11 @@ if __name__ == "__main__":
     if args.use_cv:
         list_dm = dm.make_cross_val_splits(args.n_splits, args.train_over)
         list_model = [
-            ResNet(
+            ResNetBaseline(
                 num_classes=list_dm[i].dm.num_classes,
                 in_channels=list_dm[i].dm.num_channels,
-                loss=nn.CrossEntropyLoss,
-                optimization_procedure=get_procedure(
+                loss=nn.CrossEntropyLoss(),
+                optim_recipe=get_procedure(
                     f"resnet{args.arch}", "tiny-imagenet", args.version
                 ),
                 style="cifar",
@@ -65,11 +65,11 @@ if __name__ == "__main__":
         )
     else:
         # model
-        model = ResNet(
+        model = ResNetBaseline(
             num_classes=dm.num_classes,
             in_channels=dm.num_channels,
-            loss=nn.CrossEntropyLoss,
-            optimization_procedure=get_procedure(
+            loss=nn.CrossEntropyLoss(),
+            optim_recipe=get_procedure(
                 f"resnet{args.arch}", "tiny-imagenet", args.version
             ),
             calibration_set=calibration_set,

@@ -1,12 +1,53 @@
-API reference
+API Reference
 =============
 
 .. currentmodule:: torch_uncertainty
 
+Routines
+--------
+
+The routine are the main building blocks of the library. They define the framework 
+in which the models are trained and evaluated. They allow for easy computation of different
+metrics crucial for uncertainty estimation in different contexts, namely classification, regression and segmentation.
+
+.. currentmodule:: torch_uncertainty.routines
+
+Classification
+^^^^^^^^^^^^^^
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: class.rst
+
+    ClassificationRoutine
+
+Regression
+^^^^^^^^^^
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: class.rst
+
+    RegressionRoutine
+
+Segmentation
+^^^^^^^^^^^^
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: class.rst
+
+    SegmentationRoutine
+
 Baselines
 ---------
 
-This API provides lightning-based models that can be easily trained and evaluated.
+TorchUncertainty provide lightning-based models that can be easily trained and evaluated. 
+These models inherit from the routines and are specifically designed to benchmark
+different methods in similar settings, here with constant architectures.
 
 .. currentmodule:: torch_uncertainty.baselines.classification
 
@@ -18,9 +59,9 @@ Classification
     :nosignatures:
     :template: class.rst
 
-    ResNet
-    VGG
-    WideResNet
+    ResNetBaseline
+    VGGBaseline
+    WideResNetBaseline
 
 .. currentmodule:: torch_uncertainty.baselines.regression
 
@@ -32,118 +73,19 @@ Regression
     :nosignatures:
     :template: class.rst
 
-    MLP
+    MLPBaseline
 
-.. Models
-.. ------
+.. currentmodule:: torch_uncertainty.baselines.segmentation
 
-.. This section encapsulates the model backbones currently supported by the library.
+Segmentation
+^^^^^^^^^^^^
 
-.. ResNet
-.. ^^^^^^
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: class.rst
 
-.. .. currentmodule:: torch_uncertainty.models.resnet
-
-.. Concerning ResNet backbones, we provide building functions for ResNet18, ResNet34,
-.. ResNet50, ResNet101 and, ResNet152 (from `Deep Residual Learning for Image Recognition
-.. <https://arxiv.org/pdf/1512.03385.pdf>`_, CVPR 2016). 
-
-.. Standard
-.. ~~~~~~~
-
-.. .. autosummary::
-..     :toctree: generated/
-..     :nosignatures:
-
-..     resnet18
-..     resnet34
-..     resnet50
-..     resnet101
-..     resnet152
-
-.. Packed-Ensembles
-.. ~~~~~~~~~~~~~~~~
-
-.. .. autosummary::
-..     :toctree: generated/
-..     :nosignatures:
-
-..     packed_resnet18
-..     packed_resnet34
-..     packed_resnet50
-..     packed_resnet101
-..     packed_resnet152
-
-.. Masksembles
-.. ~~~~~~~~~~~
-
-.. .. autosummary::
-..     :toctree: generated/
-..     :nosignatures:
-
-..     masked_resnet18
-..     masked_resnet34
-..     masked_resnet50
-..     masked_resnet101
-..     masked_resnet152
-
-.. BatchEnsemble
-.. ~~~~~~~~~~~~~
-
-.. .. autosummary::
-..     :toctree: generated/
-..     :nosignatures:
-
-..     batched_resnet18
-..     batched_resnet34
-..     batched_resnet50
-..     batched_resnet101
-..     batched_resnet152
-
-.. Wide-ResNet
-.. ^^^^^^^^^^^
-
-.. .. currentmodule:: torch_uncertainty.models.wideresnet
-
-.. Concerning Wide-ResNet backbones, we provide building functions for Wide-ResNet28x10
-.. (from `Wide Residual Networks <https://arxiv.org/pdf/1605.07146.pdf>`_, British
-.. Machine Vision Conference 2016).
-
-.. Standard
-.. ~~~~~~~
-
-.. .. autosummary::
-..     :toctree: generated/
-..     :nosignatures:
-
-..     wideresnet28x10
-
-.. Packed-Ensembles
-.. ~~~~~~~~~~~~~~~~
-
-.. .. autosummary::
-..     :toctree: generated/
-..     :nosignatures:
-
-..     packed_wideresnet28x10
-
-.. Masksembles
-.. ~~~~~~~~~~~
-
-.. .. autosummary::
-..     :toctree: generated/
-..     :nosignatures:
-
-..     masked_wideresnet28x10
-
-.. BatchEnsemble
-.. ~~~~~~~~~~~~~
-
-.. .. autosummary::
-..     :toctree: generated/
-..     :nosignatures:
-
-..     batched_wideresnet28x10
+    SegFormerBaseline
 
 Layers
 ------
@@ -181,6 +123,30 @@ Bayesian layers
     BayesConv2d
     BayesConv3d
 
+Models
+------
+
+.. currentmodule:: torch_uncertainty.models
+
+Deep Ensembles
+^^^^^^^^^^^^^^
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: class.rst
+
+    deep_ensembles
+
+Monte Carlo Dropout
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: class.rst
+
+    mc_dropout
+
 Metrics
 -------
 
@@ -197,8 +163,8 @@ Metrics
     Disagreement
     Entropy
     MutualInformation
-    NegativeLogLikelihood
-    GaussianNegativeLogLikelihood
+    CategoricalNLL
+    DistributionNLL
     FPR95
 
 Losses
@@ -211,10 +177,10 @@ Losses
     :nosignatures:
     :template: class.rst
 
+    DistributionNLLLoss
     KLDiv
     ELBOLoss
     BetaNLL
-    NIGLoss
     DECLoss
 
 Post-Processing Methods
@@ -230,11 +196,23 @@ Post-Processing Methods
     TemperatureScaler
     VectorScaler
     MatrixScaler
+    MCBatchNorm
 
 Datamodules
 -----------
 
+.. currentmodule:: torch_uncertainty.datamodules.abstract
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: class.rst
+
+
 .. currentmodule:: torch_uncertainty.datamodules
+
+Classification
+^^^^^^^^^^^^^^
 
 .. autosummary::
     :toctree: generated/
@@ -246,4 +224,24 @@ Datamodules
     MNISTDataModule
     TinyImageNetDataModule
     ImageNetDataModule
+
+Regression
+^^^^^^^^^^
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: class.rst
+
     UCIDataModule
+
+Segmentation
+^^^^^^^^^^^^
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: class.rst
+
+    CamVidDataModule
+    CityscapesDataModule
+    

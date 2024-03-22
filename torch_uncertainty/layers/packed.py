@@ -8,6 +8,13 @@ from torch.nn.common_types import _size_1_t, _size_2_t, _size_3_t
 def check_packed_parameters_consistency(
     alpha: float, num_estimators: int, gamma: int
 ) -> None:
+    """Check the consistency of the parameters of the Packed-Ensembles layers.
+
+    Args:
+        alpha (float): The width multiplier of the layer.
+        num_estimators (int): The number of estimators in the ensemble.
+        gamma (int): The number of groups in the ensemble.
+    """
     if alpha is None:
         raise ValueError("You must specify the value of the arg. `alpha`")
 
@@ -92,7 +99,7 @@ class PackedLinear(nn.Module):
             this constraint.
 
         Note:
-            The input should be of size (`batch_size`, :attr:`in_features`, 1,
+            The input should be of shape (`batch_size`, :attr:`in_features`, 1,
             1). The (often) necessary rearrange operation is executed by
             default.
         """

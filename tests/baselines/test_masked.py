@@ -3,11 +3,9 @@ import torch
 from torch import nn
 from torchinfo import summary
 
-from torch_uncertainty.baselines import ResNet, WideResNet
-from torch_uncertainty.optimization_procedures import (
-    optim_cifar10_wideresnet,
-    optim_cifar100_resnet18,
-    optim_cifar100_resnet50,
+from torch_uncertainty.baselines.classification import (
+    ResNetBaseline,
+    WideResNetBaseline,
 )
 
 
@@ -15,11 +13,10 @@ class TestMaskedBaseline:
     """Testing the MaskedResNet baseline class."""
 
     def test_masked_18(self):
-        net = ResNet(
+        net = ResNetBaseline(
             num_classes=10,
             in_channels=3,
-            loss=nn.CrossEntropyLoss,
-            optimization_procedure=optim_cifar100_resnet18,
+            loss=nn.CrossEntropyLoss(),
             version="masked",
             arch=18,
             style="cifar",
@@ -29,17 +26,13 @@ class TestMaskedBaseline:
         )
 
         summary(net)
-
-        _ = net.criterion
-        _ = net.configure_optimizers()
         _ = net(torch.rand(1, 3, 32, 32))
 
     def test_masked_50(self):
-        net = ResNet(
+        net = ResNetBaseline(
             num_classes=10,
             in_channels=3,
-            loss=nn.CrossEntropyLoss,
-            optimization_procedure=optim_cifar100_resnet50,
+            loss=nn.CrossEntropyLoss(),
             version="masked",
             arch=50,
             style="imagenet",
@@ -49,18 +42,14 @@ class TestMaskedBaseline:
         )
 
         summary(net)
-
-        _ = net.criterion
-        _ = net.configure_optimizers()
         _ = net(torch.rand(1, 3, 40, 40))
 
-    def test_masked_scale_lt_1(self):
+    def test_masked_errors(self):
         with pytest.raises(Exception):
-            _ = ResNet(
+            _ = ResNetBaseline(
                 num_classes=10,
                 in_channels=3,
-                loss=nn.CrossEntropyLoss,
-                optimization_procedure=optim_cifar100_resnet18,
+                loss=nn.CrossEntropyLoss(),
                 version="masked",
                 arch=18,
                 style="cifar",
@@ -69,13 +58,11 @@ class TestMaskedBaseline:
                 groups=1,
             )
 
-    def test_masked_groups_lt_1(self):
         with pytest.raises(Exception):
-            _ = ResNet(
+            _ = ResNetBaseline(
                 num_classes=10,
                 in_channels=3,
-                loss=nn.CrossEntropyLoss,
-                optimization_procedure=optim_cifar100_resnet18,
+                loss=nn.CrossEntropyLoss(),
                 version="masked",
                 arch=18,
                 style="cifar",
@@ -89,11 +76,10 @@ class TestMaskedWideBaseline:
     """Testing the MaskedWideResNet baseline class."""
 
     def test_masked(self):
-        net = WideResNet(
+        net = WideResNetBaseline(
             num_classes=10,
             in_channels=3,
-            loss=nn.CrossEntropyLoss,
-            optimization_procedure=optim_cifar10_wideresnet,
+            loss=nn.CrossEntropyLoss(),
             version="masked",
             style="cifar",
             num_estimators=4,
@@ -102,7 +88,4 @@ class TestMaskedWideBaseline:
         )
 
         summary(net)
-
-        _ = net.criterion
-        _ = net.configure_optimizers()
         _ = net(torch.rand(1, 3, 32, 32))

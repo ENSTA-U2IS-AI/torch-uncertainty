@@ -1,9 +1,8 @@
-from argparse import ArgumentParser
 from pathlib import Path
-from typing import Any, Literal
+from typing import Literal
 
+from lightning.pytorch.core import LightningDataModule
 from numpy.typing import ArrayLike
-from pytorch_lightning import LightningDataModule
 from sklearn.model_selection import StratifiedKFold
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.sampler import SubsetRandomSampler
@@ -19,10 +18,10 @@ class AbstractDataModule(LightningDataModule):
         self,
         root: str | Path,
         batch_size: int,
-        num_workers: int = 1,
-        pin_memory: bool = True,
-        persistent_workers: bool = True,
-        **kwargs,
+        val_split: float,
+        num_workers: int,
+        pin_memory: bool,
+        persistent_workers: bool,
     ) -> None:
         """Abstract DataModule class.
 
@@ -33,17 +32,16 @@ class AbstractDataModule(LightningDataModule):
         Args:
             root (str): Root directory of the datasets.
             batch_size (int): Number of samples per batch.
-            num_workers (int): Number of workers to use for data loading. Defaults
-                to ``1``.
-            pin_memory (bool): Whether to pin memory. Defaults to ``True``.
-            persistent_workers (bool): Whether to use persistent workers. Defaults
-                to ``True``.
-            kwargs (Any): Other arguments.
+            val_split (float): Share of samples to use for validation.
+            num_workers (int): Number of workers to use for data loading.
+            pin_memory (bool): Whether to pin memory.
+            persistent_workers (bool): Whether to use persistent workers.
         """
         super().__init__()
 
         self.root = Path(root)
         self.batch_size = batch_size
+        self.val_split = val_split
         self.num_workers = num_workers
 
         self.pin_memory = pin_memory
@@ -140,6 +138,7 @@ class AbstractDataModule(LightningDataModule):
                 val_idx=val_idx,
                 datamodule=self,
                 batch_size=self.batch_size,
+                val_split=self.val_split,
                 num_workers=self.num_workers,
                 pin_memory=self.pin_memory,
                 persistent_workers=self.persistent_workers,
@@ -147,22 +146,6 @@ class AbstractDataModule(LightningDataModule):
             cv_dm.append(fold_dm)
 
         return cv_dm
-
-    @classmethod
-    def add_argparse_args(
-        cls,
-        parent_parser: ArgumentParser,
-        **kwargs: Any,
-    ) -> ArgumentParser:
-        p = parent_parser.add_argument_group("datamodule")
-        p.add_argument("--root", type=str, default="./data/")
-        p.add_argument("--batch_size", type=int, default=128)
-        p.add_argument("--val_split", type=float, default=None)
-        p.add_argument("--num_workers", type=int, default=4)
-        p.add_argument("--use_cv", action="store_true")
-        p.add_argument("--n_splits", type=int, default=10)
-        p.add_argument("--train_over", type=int, default=4)
-        return parent_parser
 
 
 class CrossValDataModule(AbstractDataModule):
@@ -173,18 +156,18 @@ class CrossValDataModule(AbstractDataModule):
         val_idx: ArrayLike,
         datamodule: AbstractDataModule,
         batch_size: int,
-        num_workers: int = 1,
-        pin_memory: bool = True,
-        persistent_workers: bool = True,
-        **kwargs,
+        val_split: float,
+        num_workers: int,
+        pin_memory: bool,
+        persistent_workers: bool,
     ) -> None:
         super().__init__(
-            root,
-            batch_size,
-            num_workers,
-            pin_memory,
-            persistent_workers,
-            **kwargs,
+            root=root,
+            batch_size=batch_size,
+            val_split=val_split,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            persistent_workers=persistent_workers,
         )
 
         self.train_idx = train_idx
@@ -197,6 +180,8 @@ class CrossValDataModule(AbstractDataModule):
             self.val = self.dm.val
         elif stage == "test":
             self.test = self.val
+        else:
+            raise ValueError(f"Stage {stage} not supported.")
 
     def _data_loader(self, dataset: Dataset, idx: ArrayLike) -> DataLoader:
         return DataLoader(

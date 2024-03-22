@@ -1,7 +1,5 @@
-from argparse import ArgumentParser
 from functools import partial
 from pathlib import Path
-from typing import Any
 
 from torch import Generator
 from torch.utils.data import random_split
@@ -25,7 +23,6 @@ class UCIDataModule(AbstractDataModule):
         persistent_workers: bool = True,
         input_shape: tuple[int, ...] | None = None,
         split_seed: int = 42,
-        **kwargs,
     ) -> None:
         """The UCI regression datasets.
 
@@ -48,17 +45,15 @@ class UCIDataModule(AbstractDataModule):
                 ``None``.
             split_seed (int, optional): The seed to use for splitting the dataset.
                 Defaults to ``42``.
-            **kwargs: Additional arguments.
         """
         super().__init__(
             root=root,
             batch_size=batch_size,
+            val_split=val_split,
             num_workers=num_workers,
             pin_memory=pin_memory,
             persistent_workers=persistent_workers,
         )
-
-        self.val_split = val_split
 
         self.dataset = partial(
             UCIRegression, dataset_name=dataset_name, seed=split_seed
@@ -96,13 +91,3 @@ class UCIDataModule(AbstractDataModule):
     #         DataLoader: UCI Regression test dataloader.
     #     """
     #     return self._data_loader(self.test)
-
-    @classmethod
-    def add_argparse_args(
-        cls,
-        parent_parser: ArgumentParser,
-        **kwargs: Any,
-    ) -> ArgumentParser:
-        super().add_argparse_args(parent_parser)
-
-        return parent_parser

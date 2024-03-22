@@ -1,50 +1,70 @@
-from argparse import ArgumentParser
-from pathlib import Path
-from typing import Any, Literal
+from typing import Literal
 
-import torch
-from pytorch_lightning import LightningModule
-from pytorch_lightning.core.saving import (
-    load_hparams_from_tags_csv,
-    load_hparams_from_yaml,
-)
 from torch import nn
 
-from torch_uncertainty.baselines.utils.parser_addons import (
-    add_packed_specific_args,
+from torch_uncertainty.layers.distributions import (
+    LaplaceLayer,
+    NormalInverseGammaLayer,
+    NormalLayer,
 )
 from torch_uncertainty.models.mlp import mlp, packed_mlp
 from torch_uncertainty.routines.regression import (
-    RegressionEnsemble,
-    RegressionSingle,
+    RegressionRoutine,
 )
+from torch_uncertainty.transforms.batch import RepeatTarget
 
 
-class MLP:
+class MLPBaseline(RegressionRoutine):
     single = ["std"]
     ensemble = ["packed"]
     versions = {"std": mlp, "packed": packed_mlp}
 
-    def __new__(
-        cls,
-        num_outputs: int,
+    def __init__(
+        self,
+        output_dim: int,
         in_features: int,
-        loss: type[nn.Module],
-        optimization_procedure: Any,
+        loss: nn.Module,
         version: Literal["std", "packed"],
         hidden_dims: list[int],
-        dist_estimation: int,
         num_estimators: int | None = 1,
+        dropout_rate: float = 0.0,
         alpha: float | None = None,
         gamma: int = 1,
-        **kwargs,
-    ) -> LightningModule:
+        distribution: Literal["normal", "laplace", "nig"] | None = None,
+    ) -> None:
         r"""MLP baseline for regression providing support for various versions."""
+        probabilistic = True
         params = {
+            "dropout_rate": dropout_rate,
             "in_features": in_features,
-            "num_outputs": num_outputs,
+            "num_outputs": output_dim,
             "hidden_dims": hidden_dims,
         }
+
+        if distribution == "normal":
+            final_layer = NormalLayer
+            final_layer_args = {"dim": output_dim}
+            params["num_outputs"] *= 2
+        elif distribution == "laplace":
+            final_layer = LaplaceLayer
+            final_layer_args = {"dim": output_dim}
+            params["num_outputs"] *= 2
+        elif distribution == "nig":
+            final_layer = NormalInverseGammaLayer
+            final_layer_args = {"dim": output_dim}
+            params["num_outputs"] *= 4
+        else:  # distribution is None:
+            probabilistic = False
+            final_layer = nn.Identity
+            final_layer_args = {}
+
+        params["final_layer"] = final_layer
+        params["final_layer_args"] = final_layer_args
+
+        format_batch_fn = nn.Identity()
+
+        if version not in self.versions:
+            raise ValueError(f"Unknown version: {version}")
 
         if version == "packed":
             params |= {
@@ -52,67 +72,17 @@ class MLP:
                 "num_estimators": num_estimators,
                 "gamma": gamma,
             }
+            format_batch_fn = RepeatTarget(num_repeats=num_estimators)
 
-        if version not in cls.versions:
-            raise ValueError(f"Unknown version: {version}")
+        model = self.versions[version](**params)
 
-        model = cls.versions[version](**params)
-
-        kwargs.update(params)
-        kwargs.update({"version": version})
-        # routine specific parameters
-        if version in cls.single:
-            return RegressionSingle(
-                model=model,
-                loss=loss,
-                optimization_procedure=optimization_procedure,
-                dist_estimation=dist_estimation,
-                **kwargs,
-            )
-        # version in cls.versions.keys():
-        return RegressionEnsemble(
+        # version in self.versions:
+        super().__init__(
+            probabilistic=probabilistic,
+            output_dim=output_dim,
             model=model,
             loss=loss,
-            optimization_procedure=optimization_procedure,
-            dist_estimation=dist_estimation,
-            mode="mean",
-            **kwargs,
+            num_estimators=num_estimators,
+            format_batch_fn=format_batch_fn,
         )
-        return None
-
-    @classmethod
-    def load_from_checkpoint(
-        cls,
-        checkpoint_path: str | Path,
-        hparams_file: str | Path,
-        **kwargs,
-    ) -> LightningModule:  # coverage: ignore
-        if hparams_file is not None:
-            extension = str(hparams_file).split(".")[-1]
-            if extension.lower() == "csv":
-                hparams = load_hparams_from_tags_csv(hparams_file)
-            elif extension.lower() in ("yml", "yaml"):
-                hparams = load_hparams_from_yaml(hparams_file)
-            else:
-                raise ValueError(
-                    ".csv, .yml or .yaml is required for `hparams_file`"
-                )
-
-        hparams.update(kwargs)
-        checkpoint = torch.load(checkpoint_path)
-        obj = cls(**hparams)
-        obj.load_state_dict(checkpoint["state_dict"])
-        return obj
-
-    @classmethod
-    def add_model_specific_args(cls, parser: ArgumentParser) -> ArgumentParser:
-        parser = RegressionEnsemble.add_model_specific_args(parser)
-        parser = add_packed_specific_args(parser)
-        parser.add_argument(
-            "--version",
-            type=str,
-            choices=cls.versions.keys(),
-            default="std",
-            help=f"Variation of MLP. Choose among: {cls.versions.keys()}",
-        )
-        return parser
+        self.save_hyperparameters(ignore=["loss"])

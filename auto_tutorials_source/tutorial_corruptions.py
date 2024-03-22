@@ -105,7 +105,7 @@ show_images(Pixelate)
 
 #%% 
 # 10. Frost
-# ~~~~~~~~
+# ~~~~~~~~~
 from torch_uncertainty.transforms.corruptions import Frost
 
 show_images(Frost)

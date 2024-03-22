@@ -1,61 +1,56 @@
 import pytest
 import torch
+from torch.distributions import Normal
 
-from torch_uncertainty.metrics import (
-    GaussianNegativeLogLikelihood,
-    NegativeLogLikelihood,
-)
+from torch_uncertainty.metrics import CategoricalNLL, DistributionNLL
 
 
-@pytest.fixture()
-def probs_zero() -> torch.Tensor:
-    return torch.as_tensor([[1, 0.0], [0.0, 1.0]])
+class TestCategoricalNegativeLogLikelihood:
+    """Testing the CategoricalNLL metric class."""
 
+    def test_compute_zero(self) -> None:
+        probs = torch.as_tensor([[1, 0.0], [0.0, 1.0]])
+        targets = torch.as_tensor([0, 1])
 
-@pytest.fixture()
-def targets_zero() -> torch.Tensor:
-    return torch.as_tensor([0, 1])
-
-
-class TestNegativeLogLikelihood:
-    """Testing the NegativeLogLikelihood metric class."""
-
-    def test_compute_zero(
-        self, probs_zero: torch.Tensor, targets_zero: torch.Tensor
-    ) -> None:
-        metric = NegativeLogLikelihood()
-        metric.update(probs_zero, targets_zero)
+        metric = CategoricalNLL()
+        metric.update(probs, targets)
         res = metric.compute()
         assert res == 0
 
-        metric = NegativeLogLikelihood(reduction="none")
-        metric.update(probs_zero, targets_zero)
+        metric = CategoricalNLL(reduction="none")
+        metric.update(probs, targets)
         res_sum = metric.compute()
         assert torch.all(res_sum == torch.zeros(2))
 
+        metric = CategoricalNLL(reduction="sum")
+        metric.update(probs, targets)
+        res_sum = metric.compute()
+        assert torch.all(res_sum == torch.zeros(1))
+
     def test_bad_argument(self) -> None:
         with pytest.raises(Exception):
-            _ = NegativeLogLikelihood(reduction="geometric_mean")
+            _ = CategoricalNLL(reduction="geometric_mean")
 
 
-class TestGaussianNegativeLogLikelihood:
-    """Testing the NegativeLogLikelihood metric class."""
+class TestDistributionNLL:
+    """Testing the TestDistributionNLL metric class."""
 
     def test_compute_zero(self) -> None:
-        metric = GaussianNegativeLogLikelihood()
+        metric = DistributionNLL(reduction="mean")
         means = torch.as_tensor([1, 10]).float()
-        variances = torch.as_tensor([1, 2]).float()
+        stds = torch.as_tensor([1, 2]).float()
         targets = torch.as_tensor([1, 10]).float()
-        metric.update(means, targets, variances)
+        dist = Normal(means, stds)
+        metric.update(dist, targets)
         res_mean = metric.compute()
-        assert res_mean == torch.log(variances).mean() / 2
+        assert res_mean == torch.mean(torch.log(2 * torch.pi * (stds**2)) / 2)
 
-        metric = GaussianNegativeLogLikelihood(reduction="sum")
-        metric.update(means, targets, variances)
+        metric = DistributionNLL(reduction="sum")
+        metric.update(dist, targets)
         res_sum = metric.compute()
-        assert res_sum == torch.log(variances).sum() / 2
+        assert res_sum == torch.log(2 * torch.pi * (stds**2)).sum() / 2
 
-        metric = GaussianNegativeLogLikelihood(reduction="none")
-        metric.update(means, targets, variances)
-        res_sum = metric.compute()
-        assert torch.all(res_sum == torch.log(variances) / 2)
+        metric = DistributionNLL(reduction="none")
+        metric.update(dist, targets)
+        res_all = metric.compute()
+        assert torch.all(res_all == torch.log(2 * torch.pi * (stds**2)) / 2)

@@ -1,7 +1,11 @@
 import copy
+from typing import Literal
 
 import torch
 from torch import nn
+from torch.distributions import Distribution
+
+from torch_uncertainty.utils.distributions import cat_dist
 
 
 class _DeepEnsembles(nn.Module):
@@ -9,7 +13,7 @@ class _DeepEnsembles(nn.Module):
         self,
         models: list[nn.Module],
     ) -> None:
-        """Create a deep ensembles from a list of models."""
+        """Create a classification deep ensembles from a list of models."""
         super().__init__()
 
         self.models = nn.ModuleList(models)
@@ -29,18 +33,52 @@ class _DeepEnsembles(nn.Module):
         return torch.cat([model.forward(x) for model in self.models], dim=0)
 
 
+class _RegDeepEnsembles(_DeepEnsembles):
+    def __init__(
+        self,
+        probabilistic: bool,
+        models: list[nn.Module],
+    ) -> None:
+        """Create a regression deep ensembles from a list of models."""
+        super().__init__(models)
+
+        self.probabilistic = probabilistic
+
+    def forward(self, x: torch.Tensor) -> Distribution:
+        r"""Return the logits of the ensemble.
+
+        Args:
+            x (Tensor): The input of the model.
+
+        Returns:
+            Distribution:
+        """
+        if self.probabilistic:
+            return cat_dist([model.forward(x) for model in self.models], dim=0)
+        return super().forward(x)
+
+
 def deep_ensembles(
     models: list[nn.Module] | nn.Module,
     num_estimators: int | None = None,
-) -> nn.Module:
+    task: Literal[
+        "classification", "regression", "segmentation"
+    ] = "classification",
+    probabilistic=None,
+    reset_model_parameters: bool = False,
+) -> _DeepEnsembles:
     """Build a Deep Ensembles out of the original models.
 
     Args:
         models (list[nn.Module] | nn.Module): The model to be ensembled.
         num_estimators (int | None): The number of estimators in the ensemble.
+        task (Literal["classification", "regression"]): The model task.
+        probabilistic (bool): Whether the regression model is probabilistic.
+        reset_model_parameters (bool): Whether to reset the model parameters
+            when :attr:models is a module or a list of length 1.
 
     Returns:
-        nn.Module: The ensembled model.
+        _DeepEnsembles: The ensembled model.
 
     Raises:
         ValueError: If :attr:num_estimators is not specified and :attr:models
@@ -73,6 +111,13 @@ def deep_ensembles(
             models = models[0]
 
         models = [copy.deepcopy(models) for _ in range(num_estimators)]
+
+        if reset_model_parameters:
+            for model in models:
+                for layer in model.children():
+                    if hasattr(layer, "reset_parameters"):
+                        layer.reset_parameters()
+
     elif (
         isinstance(models, list)
         and len(models) > 1
@@ -82,4 +127,12 @@ def deep_ensembles(
             "num_estimators must be None if you provided a non-singleton list."
         )
 
-    return _DeepEnsembles(models=models)
+    if task in ("classification", "segmentation"):
+        return _DeepEnsembles(models=models)
+    if task == "regression":
+        if probabilistic is None:
+            raise ValueError(
+                "probabilistic must be specified for regression models."
+            )
+        return _RegDeepEnsembles(probabilistic=probabilistic, models=models)
+    raise ValueError(f"Unknown task: {task}.")

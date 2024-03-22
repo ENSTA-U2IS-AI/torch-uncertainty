@@ -1,7 +1,8 @@
 # ruff: noqa: F401
-from .cifar10 import CIFAR10DataModule
-from .cifar100 import CIFAR100DataModule
-from .imagenet import ImageNetDataModule
-from .mnist import MNISTDataModule
-from .tiny_imagenet import TinyImageNetDataModule
+from .classification.cifar10 import CIFAR10DataModule
+from .classification.cifar100 import CIFAR100DataModule
+from .classification.imagenet import ImageNetDataModule
+from .classification.mnist import MNISTDataModule
+from .classification.tiny_imagenet import TinyImageNetDataModule
+from .segmentation import CamVidDataModule, CityscapesDataModule
 from .uci_regression import UCIDataModule

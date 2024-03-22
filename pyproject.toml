@@ -4,7 +4,7 @@ build-backend = "flit_core.buildapi"
 
 [project]
 name = "torch_uncertainty"
-version = "0.1.6"
+version = "0.2.0"
 authors = [
     { name = "ENSTA U2IS", email = "olivier.laurent@ensta-paris.fr" },
     { name = "Adrien Lafage", email = "adrienlafage@outlook.com" },
@@ -32,7 +32,8 @@ classifiers = [
 ]
 dependencies = [
     "timm",
-    "pytorch-lightning<2",
+    "lightning[pytorch-extra]",
+    "torchvision>=0.16",
     "tensorboard",
     "einops",
     "torchinfo",
@@ -49,10 +50,9 @@ dev = [
     "pytest-cov",
     "pre-commit",
     "pre-commit-hooks",
-    "cli-test-helpers",
 ]
 docs = [
-    "sphinx<6",
+    "sphinx<7",
     "tu_sphinx_theme",
     "sphinx-copybutton",
     "sphinx-gallery",
@@ -74,7 +74,7 @@ name = "torch_uncertainty"
 [tool.ruff]
 line-length = 80
 target-version = "py310"
-extend-select = [
+lint.extend-select = [
     "A",
     "B",
     "C4",
@@ -99,7 +99,7 @@ extend-select = [
     "TRY",
     "YTT",
 ]
-ignore = [
+lint.ignore = [
     "B017",
     "D100",
     "D101",
@@ -142,7 +142,7 @@ exclude = [
     "venv",
 ]
 
-[tool.ruff.pydocstyle]
+[tool.ruff.lint.pydocstyle]
 convention = "google"
 
 [tool.coverage.run]

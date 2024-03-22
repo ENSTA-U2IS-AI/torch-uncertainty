@@ -28,6 +28,6 @@ class Cubic(TensorDataset):
 
         samples = torch.linspace(
             lower_bound, upper_bound, num_samples
-        ).unsqueeze(1)
+        ).unsqueeze(-1)
         targets = samples**3 + torch.normal(*noise, size=samples.size())
-        super().__init__(samples, targets)
+        super().__init__(samples, targets.squeeze(-1))

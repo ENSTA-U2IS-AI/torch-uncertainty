@@ -33,14 +33,10 @@ class GroupingLoss(Metric):
         Inputs:
             - :attr:`probs`: :math:`(B, C)` or :math:`(B, N, C)`
             - :attr:`target`: :math:`(B)` or :math:`(B, C)`
+            - :attr:`features`: :math:`(B, F)` or :math:`(B, N, F)`
 
             where :math:`B` is the batch size, :math:`C` is the number of classes
             and :math:`N` is the number of estimators.
-
-        Note:
-            If :attr:`probs` is a 3d tensor, then the metric computes the mean of
-            the Brier score over the estimators ie. :math:`t = \frac{1}{N}
-            \sum_{i=0}^{N-1} BrierScore(probs[:,i,:], target)`.
 
         Warning:
             Make sure that the probabilities in :attr:`probs` are normalized to sum

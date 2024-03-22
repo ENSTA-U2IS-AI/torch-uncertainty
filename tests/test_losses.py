@@ -3,9 +3,26 @@ import math
 import pytest
 import torch
 from torch import nn
+from torch.distributions import Normal
 
 from torch_uncertainty.layers.bayesian import BayesLinear
-from torch_uncertainty.losses import BetaNLL, DECLoss, ELBOLoss, NIGLoss
+from torch_uncertainty.layers.distributions import NormalInverseGamma
+from torch_uncertainty.losses import (
+    BetaNLL,
+    DECLoss,
+    DERLoss,
+    DistributionNLLLoss,
+    ELBOLoss,
+)
+
+
+class TestDistributionNLL:
+    """Testing the DistributionNLLLoss class."""
+
+    def test_sum(self):
+        loss = DistributionNLLLoss(reduction="sum")
+        dist = Normal(0, 1)
+        loss(dist, torch.tensor([0.0]))
 
 
 class TestELBOLoss:
@@ -14,9 +31,14 @@ class TestELBOLoss:
     def test_main(self):
         model = BayesLinear(1, 1)
         criterion = nn.BCEWithLogitsLoss()
-
         loss = ELBOLoss(model, criterion, kl_weight=1e-5, num_samples=1)
+        loss(model(torch.randn(1, 1)), torch.randn(1, 1))
 
+        model = nn.Linear(1, 1)
+        criterion = nn.BCEWithLogitsLoss()
+
+        ELBOLoss(None, criterion, kl_weight=1e-5, num_samples=1)
+        loss = ELBOLoss(model, criterion, kl_weight=1e-5, num_samples=1)
         loss(model(torch.randn(1, 1)), torch.randn(1, 1))
 
     def test_failures(self):
@@ -35,53 +57,52 @@ class TestELBOLoss:
         with pytest.raises(TypeError):
             ELBOLoss(model, criterion, kl_weight=1e-5, num_samples=1.5)
 
-    def test_no_bayes(self):
-        model = nn.Linear(1, 1)
-        criterion = nn.BCEWithLogitsLoss()
-
-        loss = ELBOLoss(model, criterion, kl_weight=1e-5, num_samples=1)
-        loss(model(torch.randn(1, 1)), torch.randn(1, 1))
-
 
 class TestNIGLoss:
-    """Testing the NIGLoss class."""
+    """Testing the DERLoss class."""
 
     def test_main(self):
-        loss = NIGLoss(reg_weight=1e-2)
-
-        inputs = torch.tensor([[1.0, 1.0, 1.0, 1.0]], dtype=torch.float32)
+        loss = DERLoss(reg_weight=1e-2)
+        layer = NormalInverseGamma
+        inputs = layer(
+            torch.ones(1), torch.ones(1), torch.ones(1), torch.ones(1)
+        )
         targets = torch.tensor([[1.0]], dtype=torch.float32)
 
-        assert loss(*inputs.split(1, dim=-1), targets) == pytest.approx(
-            2 * math.log(2)
-        )
+        assert loss(inputs, targets) == pytest.approx(2 * math.log(2))
 
-        loss = NIGLoss(
+        loss = DERLoss(
             reg_weight=1e-2,
             reduction="sum",
         )
+        inputs = layer(
+            torch.ones((2, 1)),
+            torch.ones((2, 1)),
+            torch.ones((2, 1)),
+            torch.ones((2, 1)),
+        )
 
         assert loss(
-            *inputs.repeat(2, 1).split(1, dim=-1),
-            targets.repeat(2, 1),
+            inputs,
+            targets,
         ) == pytest.approx(4 * math.log(2))
 
-        loss = NIGLoss(
+        loss = DERLoss(
             reg_weight=1e-2,
             reduction="none",
         )
 
         assert loss(
-            *inputs.repeat(2, 1).split(1, dim=-1),
-            targets.repeat(2, 1),
+            inputs,
+            targets,
         ) == pytest.approx([2 * math.log(2), 2 * math.log(2)])
 
     def test_failures(self):
         with pytest.raises(ValueError):
-            NIGLoss(reg_weight=-1)
+            DERLoss(reg_weight=-1)
 
         with pytest.raises(ValueError):
-            NIGLoss(reg_weight=1.0, reduction="median")
+            DERLoss(reg_weight=1.0, reduction="median")
 
 
 class TestDECLoss:

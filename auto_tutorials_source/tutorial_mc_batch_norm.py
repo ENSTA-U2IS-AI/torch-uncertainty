@@ -13,93 +13,71 @@ In this part, we train a LeNet with batch normalization layers, based on the mod
 
 First, we have to load the following utilities from TorchUncertainty:
 
-- the cli handler: cli_main and argument parser: init_args
+- the Trainer from Lightning
 - the datamodule that handles dataloaders: MNISTDataModule, which lies in the torch_uncertainty.datamodule
 - the model: LeNet, which lies in torch_uncertainty.models
 - the mc-batch-norm wrapper: mc_dropout, which lies in torch_uncertainty.models
-- a resnet baseline to get the command line arguments: ResNet, which lies in torch_uncertainty.baselines
 - the classification training routine in the torch_uncertainty.training.classification module
-- the optimizer wrapper in the torch_uncertainty.optimization_procedures module.
+- an optimization recipe in the torch_uncertainty.optim_recipes module.
+
+We also need import the neural network utils withing `torch.nn`.
 """
 # %%
-from torch_uncertainty import cli_main, init_args
-from torch_uncertainty.datamodules import MNISTDataModule
-from torch_uncertainty.models.lenet import lenet
-from torch_uncertainty.post_processing.mc_batch_norm import MCBatchNorm
-from torch_uncertainty.baselines.classification import ResNet
-from torch_uncertainty.routines.classification import ClassificationSingle
-from torch_uncertainty.optimization_procedures import optim_cifar10_resnet18
-
-# %%
-# We will also need import the neural network utils withing `torch.nn`.
-#
-# We also import sys to override the command line arguments.
-
-import os
-import sys
 from pathlib import Path
 
+from lightning import Trainer
 from torch import nn
+
+from torch_uncertainty.datamodules import MNISTDataModule
+from torch_uncertainty.models.lenet import lenet
+from torch_uncertainty.optim_recipes import optim_cifar10_resnet18
+from torch_uncertainty.post_processing.mc_batch_norm import MCBatchNorm
+from torch_uncertainty.routines import ClassificationRoutine
 
 # %%
 # 2. Creating the necessary variables
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#
-# In the following, we will need to define the root of the datasets and the
-# logs, and to fake-parse the arguments needed for using the PyTorch Lightning
-# Trainer. We also create the datamodule that handles the MNIST dataset,
-# dataloaders and transforms. We create the model using the
-# blueprint from torch_uncertainty.models and we wrap it into mc-dropout.
-#
-# It is important to specify the arguments ``version`` as ``mc-dropout``,
-# ``num_estimators`` and the ``dropout_rate`` to use Monte Carlo dropout.
+# In the following, we define the root of the datasets and the
+# logs. We also create the datamodule that handles the MNIST dataset
+# dataloaders and transforms.
 
-root = Path(os.path.abspath(""))
-
-# We mock the arguments for the trainer
-sys.argv = ["file.py", "--enable_progress_bar", "False", "--num_estimators", "8", "--max_epochs", "2"]
-args = init_args(network=ResNet, datamodule=MNISTDataModule)
-
-net_name = "logs/lenet-mnist"
+trainer = Trainer(accelerator="cpu", max_epochs=2, enable_progress_bar=False)
 
 # datamodule
-args.root = str(root / "data")
-dm = MNISTDataModule(**vars(args))
+root = Path("") / "data"
+datamodule = MNISTDataModule(root, batch_size=128)
 
 
 model = lenet(
-    in_channels=dm.num_channels,
-    num_classes=dm.num_classes,
-    norm = nn.BatchNorm2d,
+    in_channels=datamodule.num_channels,
+    num_classes=datamodule.num_classes,
+    norm=nn.BatchNorm2d,
 )
 
 # %%
 # 3. The Loss and the Training Routine
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# This is a classification problem, and we use CrossEntropyLoss as the likelihood.
+# This is a classification problem, and we use CrossEntropyLoss as likelihood.
 # We define the training routine using the classification training routine from
-# torch_uncertainty.training.classification. We provide the number of classes
-# and channels, the optimizer wrapper, the dropout rate, and the number of
-# forward passes to perform through the network, as well as all the default
-# arguments.
+# torch_uncertainty.training.classification. We provide the number of classes,
+# and the optimization recipe.
 
-baseline = ClassificationSingle(
-    num_classes=dm.num_classes,
+routine = ClassificationRoutine(
+    num_classes=datamodule.num_classes,
     model=model,
-    loss=nn.CrossEntropyLoss,
-    optimization_procedure=optim_cifar10_resnet18,
-    **vars(args),
+    loss=nn.CrossEntropyLoss(),
+    optim_recipe=optim_cifar10_resnet18(model),
 )
 
 # %%
-# 5. Gathering Everything and Training the Model
+# 4. Gathering Everything and Training the Model
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-results = cli_main(baseline, dm, root, net_name, args)
-
+trainer.fit(model=routine, datamodule=datamodule)
+trainer.test(model=routine, datamodule=datamodule)
 
 # %%
-# 6. Wrapping the Model in a MCBatchNorm
+# 5. Wrapping the Model in a MCBatchNorm
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # We can now wrap the model in a MCBatchNorm to add stochasticity to the
 # predictions. We specify that the BatchNorm layers are to be converted to
@@ -109,12 +87,14 @@ results = cli_main(baseline, dm, root, net_name, args)
 # The authors suggest 32 as a good value for ``mc_batch_size`` but we use 4 here
 # to highlight the effect of stochasticity on the predictions.
 
-baseline.model = MCBatchNorm(baseline.model, num_estimators=8, convert=True, mc_batch_size=32)
-baseline.model.fit(dm.train)
-baseline.eval()
+routine.model = MCBatchNorm(
+    routine.model, num_estimators=8, convert=True, mc_batch_size=4
+)
+routine.model.fit(datamodule.train)
+routine.eval()
 
 # %%
-# 7. Testing the Model
+# 6. Testing the Model
 # ~~~~~~~~~~~~~~~~~~~~
 # Now that the model is trained, let's test it on MNIST. Don't forget to call
 # .eval() to enable Monte Carlo batch normalization at inference.
@@ -122,27 +102,28 @@ baseline.eval()
 # the variance of the predictions is the highest.
 
 import matplotlib.pyplot as plt
+import numpy as np
 import torch
 import torchvision
-
-import numpy as np
 
 
 def imshow(img):
     npimg = img.numpy()
     plt.imshow(np.transpose(npimg, (1, 2, 0)))
+    plt.axis("off")
+    plt.tight_layout()
     plt.show()
 
 
-dataiter = iter(dm.val_dataloader())
+dataiter = iter(datamodule.val_dataloader())
 images, labels = next(dataiter)
 
 # print images
 imshow(torchvision.utils.make_grid(images[:4, ...]))
 print("Ground truth: ", " ".join(f"{labels[j]}" for j in range(4)))
 
-baseline.eval()
-logits = baseline(images).reshape(8, 128, 10)
+routine.eval()
+logits = routine(images).reshape(8, 128, 10)
 
 probs = torch.nn.functional.softmax(logits, dim=-1)
 

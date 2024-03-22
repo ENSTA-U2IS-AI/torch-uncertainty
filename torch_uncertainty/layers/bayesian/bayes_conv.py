@@ -84,9 +84,7 @@ class _BayesConvNd(Module):
         valid_padding_modes = {"zeros", "reflect", "replicate", "circular"}
         if padding_mode not in valid_padding_modes:
             raise ValueError(
-                "padding_mode must be one of {}, but got '{}'".format(
-                    valid_padding_modes, padding_mode
-                )
+                f"padding_mode must be one of {valid_padding_modes}, but got '{padding_mode}'"
             )
 
         if transposed:
