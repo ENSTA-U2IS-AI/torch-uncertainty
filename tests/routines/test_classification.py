@@ -88,6 +88,170 @@ class TestClassification:
         trainer.test(model, dm)
         model(dm.get_test_set()[0][0])
 
+    def test_one_estimator_two_classes_timm(self):
+        trainer = Trainer(accelerator="cpu", fast_dev_run=True)
+
+        dm = DummyClassificationDataModule(
+            root=Path(),
+            batch_size=16,
+            num_classes=2,
+            num_images=100,
+            eval_ood=True,
+        )
+        model = DummyClassificationBaseline(
+            num_classes=dm.num_classes,
+            in_channels=dm.num_channels,
+            loss=nn.CrossEntropyLoss(),
+            optim_recipe=optim_cifar10_resnet18,
+            baseline_type="single",
+            ood_criterion="entropy",
+            eval_ood=True,
+            mixtype="timm",
+            mixup_alpha=1.0,
+            cutmix_alpha=0.5,
+        )
+
+        trainer.fit(model, dm)
+        trainer.validate(model, dm)
+        trainer.test(model, dm)
+        model(dm.get_test_set()[0][0])
+
+    def test_one_estimator_two_classes_mixup(self):
+        trainer = Trainer(accelerator="cpu", fast_dev_run=True)
+
+        dm = DummyClassificationDataModule(
+            root=Path(),
+            batch_size=16,
+            num_classes=2,
+            num_images=100,
+            eval_ood=True,
+        )
+        model = DummyClassificationBaseline(
+            num_classes=dm.num_classes,
+            in_channels=dm.num_channels,
+            loss=nn.CrossEntropyLoss(),
+            optim_recipe=optim_cifar10_resnet18,
+            baseline_type="single",
+            ood_criterion="entropy",
+            eval_ood=True,
+            mixtype="mixup",
+            mixup_alpha=1.0,
+        )
+
+        trainer.fit(model, dm)
+        trainer.validate(model, dm)
+        trainer.test(model, dm)
+        model(dm.get_test_set()[0][0])
+
+    def test_one_estimator_two_classes_mixup_io(self):
+        trainer = Trainer(accelerator="cpu", fast_dev_run=True)
+
+        dm = DummyClassificationDataModule(
+            root=Path(),
+            batch_size=16,
+            num_classes=2,
+            num_images=100,
+            eval_ood=True,
+        )
+        model = DummyClassificationBaseline(
+            num_classes=dm.num_classes,
+            in_channels=dm.num_channels,
+            loss=nn.CrossEntropyLoss(),
+            optim_recipe=optim_cifar10_resnet18,
+            baseline_type="single",
+            ood_criterion="entropy",
+            eval_ood=True,
+            mixtype="mixup_io",
+            mixup_alpha=1.0,
+        )
+
+        trainer.fit(model, dm)
+        trainer.validate(model, dm)
+        trainer.test(model, dm)
+        model(dm.get_test_set()[0][0])
+
+    def test_one_estimator_two_classes_regmixup(self):
+        trainer = Trainer(accelerator="cpu", fast_dev_run=True)
+
+        dm = DummyClassificationDataModule(
+            root=Path(),
+            batch_size=16,
+            num_classes=2,
+            num_images=100,
+            eval_ood=True,
+        )
+        model = DummyClassificationBaseline(
+            num_classes=dm.num_classes,
+            in_channels=dm.num_channels,
+            loss=nn.CrossEntropyLoss(),
+            optim_recipe=optim_cifar10_resnet18,
+            baseline_type="single",
+            ood_criterion="entropy",
+            eval_ood=True,
+            mixtype="regmixup",
+            mixup_alpha=1.0,
+        )
+
+        trainer.fit(model, dm)
+        trainer.validate(model, dm)
+        trainer.test(model, dm)
+        model(dm.get_test_set()[0][0])
+
+    def test_one_estimator_two_classes_kernel_warping_emb(self):
+        trainer = Trainer(accelerator="cpu", fast_dev_run=True)
+
+        dm = DummyClassificationDataModule(
+            root=Path(),
+            batch_size=16,
+            num_classes=2,
+            num_images=100,
+            eval_ood=True,
+        )
+        model = DummyClassificationBaseline(
+            num_classes=dm.num_classes,
+            in_channels=dm.num_channels,
+            loss=nn.CrossEntropyLoss(),
+            optim_recipe=optim_cifar10_resnet18,
+            baseline_type="single",
+            ood_criterion="entropy",
+            eval_ood=True,
+            mixtype="kernel_warping",
+            mixup_alpha=0.5,
+        )
+
+        trainer.fit(model, dm)
+        trainer.validate(model, dm)
+        trainer.test(model, dm)
+        model(dm.get_test_set()[0][0])
+
+    def test_one_estimator_two_classes_kernel_warping_inp(self):
+        trainer = Trainer(accelerator="cpu", fast_dev_run=True)
+
+        dm = DummyClassificationDataModule(
+            root=Path(),
+            batch_size=16,
+            num_classes=2,
+            num_images=100,
+            eval_ood=True,
+        )
+        model = DummyClassificationBaseline(
+            num_classes=dm.num_classes,
+            in_channels=dm.num_channels,
+            loss=nn.CrossEntropyLoss(),
+            optim_recipe=optim_cifar10_resnet18,
+            baseline_type="single",
+            ood_criterion="entropy",
+            eval_ood=True,
+            mixtype="kernel_warping",
+            mixmode="inp",
+            mixup_alpha=0.5,
+        )
+
+        trainer.fit(model, dm)
+        trainer.validate(model, dm)
+        trainer.test(model, dm)
+        model(dm.get_test_set()[0][0])
+
     def test_one_estimator_two_classes_calibrated_with_ood(self):
         trainer = Trainer(accelerator="cpu", fast_dev_run=True, logger=True)
 
@@ -115,7 +279,7 @@ class TestClassification:
         trainer.test(model, dm)
         model(dm.get_test_set()[0][0])
 
-    def test_two_estimators_two_classes_with_ood(self):
+    def test_two_estimators_two_classes_mi(self):
         trainer = Trainer(accelerator="cpu", fast_dev_run=True)
 
         dm = DummyClassificationDataModule(
@@ -140,7 +304,7 @@ class TestClassification:
         trainer.test(model, dm)
         model(dm.get_test_set()[0][0])
 
-    def test_two_estimator_two_classes(self):
+    def test_two_estimator_two_classes_elbo_vr_logs(self):
         trainer = Trainer(
             accelerator="cpu",
             max_epochs=1,

@@ -17,6 +17,7 @@ from torchmetrics.classification import (
     BinaryAveragePrecision,
 )
 
+from torch_uncertainty.layers import Identity
 from torch_uncertainty.losses import DECLoss, ELBOLoss
 from torch_uncertainty.metrics import (
     CE,
@@ -258,7 +259,7 @@ class ClassificationRoutine(LightningModule):
                 tau_max=kernel_tau_max,
                 tau_std=kernel_tau_std,
             )
-        return nn.Identity()
+        return Identity()
 
     def configure_optimizers(self):
         return self.optim_recipe
@@ -328,11 +329,11 @@ class ClassificationRoutine(LightningModule):
                     with torch.no_grad():
                         feats = self.model.feats_forward(batch[0]).detach()
 
-                    batch = self.mixup(batch, feats)
+                    batch = self.mixup(*batch, feats)
                 elif self.dist_sim == "inp":
-                    batch = self.mixup(batch, batch[0])
+                    batch = self.mixup(*batch, batch[0])
             else:
-                batch = self.mixup(batch)
+                batch = self.mixup(*batch)
 
         inputs, targets = self.format_batch_fn(batch)
 
