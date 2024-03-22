@@ -92,7 +92,7 @@ class TestClassification:
 
         dm = DummyClassificationDataModule(
             root=Path(),
-            batch_size=16,
+            batch_size=19,  # lower than 19 it doesn't work :'(
             num_classes=2,
             num_images=100,
             eval_ood=True,
@@ -105,7 +105,7 @@ class TestClassification:
             baseline_type="single",
             ood_criterion="entropy",
             eval_ood=True,
-            # eval_grouping_loss=True,
+            eval_grouping_loss=True,
             calibrate=True,
         )
 
