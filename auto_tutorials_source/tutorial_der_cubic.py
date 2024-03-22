@@ -27,13 +27,9 @@ To train a MLP with the DER loss function using TorchUncertainty, we have to loa
 - the evidential objective: the DERLoss from torch_uncertainty.losses. This loss contains the classic NLL loss and a regularization term.
 - a dataset that generates samples from a noisy cubic function: Cubic from torch_uncertainty.datasets.regression
 
-We also need to define an optimizer using torch.optim, the neural network utils within torch.nn, as well as the partial util to provide
-the modified default arguments for the DER loss.
+We also need to define an optimizer using torch.optim and the neural network utils within torch.nn.
 """
-
 # %%
-from functools import partial
-
 import torch
 from lightning.pytorch import Trainer
 from lightning import LightningDataModule
@@ -98,15 +94,12 @@ model = mlp(
 # 4. The Loss and the Training Routine
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Next, we need to define the loss to be used during training. To do this, we
-# set the weight of the regularizer of the DER Loss in advance using the partial
-# function from functools. After that, we define the training routine using
-# the probabilistic regression training routine from torch_uncertainty.routines. In
-# this routine, we provide the model, the DER loss, and the optimization recipe.
+# set the weight of the regularizer of the DER Loss. After that, we define the
+# training routine using the probabilistic regression training routine from
+# torch_uncertainty.routines. In this routine, we provide the model, the DER
+# loss, and the optimization recipe.
 
-loss = partial(
-    DERLoss,
-    reg_weight=1e-2,
-)
+loss = DERLoss(reg_weight=1e-2)
 
 routine = RegressionRoutine(
     probabilistic=True,

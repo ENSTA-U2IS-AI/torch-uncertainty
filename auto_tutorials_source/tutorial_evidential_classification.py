@@ -58,8 +58,8 @@ def optim_lenet(model: nn.Module) -> dict:
 # In the following, we need to define the root of the logs, and to
 # fake-parse the arguments needed for using the PyTorch Lightning Trainer. We
 # also use the same MNIST classification example as that used in the
-# original DEC paper. We only train for 5 epochs for the sake of time.
-trainer = Trainer(accelerator="cpu", max_epochs=5, enable_progress_bar=False)
+# original DEC paper. We only train for 3 epochs for the sake of time.
+trainer = Trainer(accelerator="cpu", max_epochs=3, enable_progress_bar=False)
 
 # datamodule
 root = Path() / "data"
