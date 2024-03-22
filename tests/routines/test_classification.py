@@ -243,7 +243,7 @@ class TestClassification:
             ood_criterion="entropy",
             eval_ood=True,
             mixtype="kernel_warping",
-            mixmode="inp",
+            dist_sim="inp",
             mixup_alpha=0.5,
         )
 
