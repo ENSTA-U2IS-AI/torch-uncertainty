@@ -82,7 +82,7 @@ routine = ClassificationRoutine(
     num_classes=datamodule.num_classes,
     model=mc_model,
     loss=nn.CrossEntropyLoss(),
-    optim_recipe=optim_cifar10_resnet18,
+    optim_recipe=optim_cifar10_resnet18(mc_model),
     num_estimators=16,
 
 )

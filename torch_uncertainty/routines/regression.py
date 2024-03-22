@@ -8,6 +8,7 @@ from torch.distributions import (
     Independent,
     MixtureSameFamily,
 )
+from torch.optim import Optimizer
 from torchmetrics import MeanAbsoluteError, MeanSquaredError, MetricCollection
 
 from torch_uncertainty.metrics.nll import DistributionNLL
@@ -17,28 +18,28 @@ from torch_uncertainty.utils.distributions import squeeze_dist, to_ensemble_dist
 class RegressionRoutine(LightningModule):
     def __init__(
         self,
-        probabilistic: bool,
-        output_dim: int,
         model: nn.Module,
+        output_dim: int,
+        probabilistic: bool,
         loss: type[nn.Module],
         num_estimators: int = 1,
+        optim_recipe: dict | Optimizer | None = None,
         format_batch_fn: nn.Module | None = None,
-        optim_recipe=None,
     ) -> None:
-        """Regression routine for PyTorch Lightning.
+        """Regression routine for Lightning.
 
         Args:
+            model (nn.Module): Model to train.
             probabilistic (bool): Whether the model is probabilistic, i.e.,
                 outputs a PyTorch distribution.
-            output_dim (int): The number of outputs of the model.
-            model (nn.Module): The model to train.
-            loss (type[nn.Module]): The loss function to use.
+            output_dim (int): Number of outputs of the model.
+            loss (type[nn.Module]): Loss function to optimize the :attr:`model`.
             num_estimators (int, optional): The number of estimators for the
-                ensemble. Defaults to 1.
+                ensemble. Defaults to 1 (single model).
+            optim_recipe (dict | Optimizer, optional): The optimizer and
+                optionally the scheduler to use. Defaults to ``None``.
             format_batch_fn (nn.Module, optional): The function to format the
                 batch. Defaults to None.
-            optim_recipe (optional): The optimization recipe
-                to use. Defaults to None.
 
         Warning:
             If :attr:`probabilistic` is True, the model must output a `PyTorch
@@ -49,14 +50,18 @@ class RegressionRoutine(LightningModule):
             the CLI.
         """
         super().__init__()
+        _regression_routine_checks(num_estimators, output_dim)
 
-        self.probabilistic = probabilistic
         self.model = model
+        self.probabilistic = probabilistic
+        self.output_dim = output_dim
         self.loss = loss
+        self.num_estimators = num_estimators
 
         if format_batch_fn is None:
             format_batch_fn = nn.Identity()
 
+        self.optim_recipe = optim_recipe
         self.format_batch_fn = format_batch_fn
 
         reg_metrics = MetricCollection(
@@ -72,25 +77,12 @@ class RegressionRoutine(LightningModule):
         self.val_metrics = reg_metrics.clone(prefix="reg_val/")
         self.test_metrics = reg_metrics.clone(prefix="reg_test/")
 
-        if num_estimators < 1:
-            raise ValueError(
-                f"num_estimators must be positive, got {num_estimators}."
-            )
-        self.num_estimators = num_estimators
-
-        if output_dim < 1:
-            raise ValueError(f"output_dim must be positive, got {output_dim}.")
-        self.output_dim = output_dim
-
         self.one_dim_regression = output_dim == 1
 
-        self.optim_recipe = optim_recipe
-
     def configure_optimizers(self):
-        return self.optim_recipe(self.model)
+        return self.optim_recipe
 
     def on_train_start(self) -> None:
-        # hyperparameters for performances
         init_metrics = {k: 0 for k in self.val_metrics}
         init_metrics.update({k: 0 for k in self.test_metrics})
 
@@ -210,3 +202,13 @@ class RegressionRoutine(LightningModule):
             self.test_metrics.compute(),
         )
         self.test_metrics.reset()
+
+
+def _regression_routine_checks(num_estimators, output_dim):
+    if num_estimators < 1:
+        raise ValueError(
+            f"num_estimators must be positive, got {num_estimators}."
+        )
+
+    if output_dim < 1:
+        raise ValueError(f"output_dim must be positive, got {output_dim}.")

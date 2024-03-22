@@ -26,8 +26,6 @@ class TestMaskedBaseline:
         )
 
         summary(net)
-
-        _ = net.criterion
         _ = net(torch.rand(1, 3, 32, 32))
 
     def test_masked_50(self):
@@ -44,11 +42,9 @@ class TestMaskedBaseline:
         )
 
         summary(net)
-
-        _ = net.criterion
         _ = net(torch.rand(1, 3, 40, 40))
 
-    def test_masked_scale_lt_1(self):
+    def test_masked_errors(self):
         with pytest.raises(Exception):
             _ = ResNetBaseline(
                 num_classes=10,
@@ -62,7 +58,6 @@ class TestMaskedBaseline:
                 groups=1,
             )
 
-    def test_masked_groups_lt_1(self):
         with pytest.raises(Exception):
             _ = ResNetBaseline(
                 num_classes=10,
@@ -93,6 +88,4 @@ class TestMaskedWideBaseline:
         )
 
         summary(net)
-
-        _ = net.criterion
         _ = net(torch.rand(1, 3, 32, 32))

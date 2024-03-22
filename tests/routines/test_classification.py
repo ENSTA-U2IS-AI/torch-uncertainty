@@ -142,35 +142,59 @@ class TestClassification:
     def test_classification_failures(self):
         # num_estimators
         with pytest.raises(ValueError):
-            ClassificationRoutine(10, nn.Module(), None, num_estimators=-1)
+            ClassificationRoutine(
+                num_classes=10, model=nn.Module(), loss=None, num_estimators=-1
+            )
         # num_classes
         with pytest.raises(ValueError):
-            ClassificationRoutine(0, nn.Module(), None)
+            ClassificationRoutine(num_classes=0, model=nn.Module(), loss=None)
         # single & MI
         with pytest.raises(ValueError):
             ClassificationRoutine(
-                10, nn.Module(), None, num_estimators=1, ood_criterion="mi"
+                num_classes=10,
+                model=nn.Module(),
+                loss=None,
+                num_estimators=1,
+                ood_criterion="mi",
             )
         with pytest.raises(ValueError):
-            ClassificationRoutine(10, nn.Module(), None, ood_criterion="other")
-
-        with pytest.raises(ValueError):
-            ClassificationRoutine(10, nn.Module(), None, cutmix_alpha=-1)
+            ClassificationRoutine(
+                num_classes=10,
+                model=nn.Module(),
+                loss=None,
+                ood_criterion="other",
+            )
 
         with pytest.raises(ValueError):
             ClassificationRoutine(
-                10, nn.Module(), None, eval_grouping_loss=True
+                num_classes=10, model=nn.Module(), loss=None, cutmix_alpha=-1
+            )
+
+        with pytest.raises(ValueError):
+            ClassificationRoutine(
+                num_classes=10,
+                model=nn.Module(),
+                loss=None,
+                eval_grouping_loss=True,
             )
 
         with pytest.raises(NotImplementedError):
             ClassificationRoutine(
-                10, nn.Module(), None, 2, eval_grouping_loss=True
+                num_classes=10,
+                model=nn.Module(),
+                loss=None,
+                num_estimators=2,
+                eval_grouping_loss=True,
             )
 
         model = dummy_model(1, 1, 0, with_feats=False, with_linear=True)
         with pytest.raises(ValueError):
-            ClassificationRoutine(10, model, None, eval_grouping_loss=True)
+            ClassificationRoutine(
+                num_classes=10, model=model, loss=None, eval_grouping_loss=True
+            )
 
         model = dummy_model(1, 1, 0, with_feats=True, with_linear=False)
         with pytest.raises(ValueError):
-            ClassificationRoutine(10, model, None, eval_grouping_loss=True)
+            ClassificationRoutine(
+                num_classes=10, model=model, loss=None, eval_grouping_loss=True
+            )

@@ -56,7 +56,12 @@ class TestSegmentation:
     def test_segmentation_failures(self):
         with pytest.raises(ValueError):
             SegmentationRoutine(
-                2, nn.Identity(), nn.CrossEntropyLoss(), num_estimators=0
+                model=nn.Identity(),
+                num_classes=2,
+                loss=nn.CrossEntropyLoss(),
+                num_estimators=0,
             )
         with pytest.raises(ValueError):
-            SegmentationRoutine(1, nn.Identity(), nn.CrossEntropyLoss())
+            SegmentationRoutine(
+                model=nn.Identity(), num_classes=1, loss=nn.CrossEntropyLoss()
+            )

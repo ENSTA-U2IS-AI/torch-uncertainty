@@ -47,7 +47,6 @@ class TestPackedBaseline:
         )
 
         summary(net)
-
         _ = net(torch.rand(1, 3, 40, 40))
 
     def test_packed_exception(self):
@@ -97,7 +96,6 @@ class TestPackedWideBaseline:
         )
 
         summary(net)
-
         _ = net(torch.rand(1, 3, 32, 32))
 
 
@@ -118,7 +116,6 @@ class TestPackedVGGBaseline:
         )
 
         summary(net)
-
         _ = net(torch.rand(2, 3, 32, 32))
 
 
@@ -137,5 +134,4 @@ class TestPackedMLPBaseline:
             gamma=1,
         )
         summary(net)
-
         _ = net(torch.rand(1, 3))

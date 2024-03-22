@@ -25,8 +25,6 @@ class TestStandardBaseline:
             groups=1,
         )
         summary(net)
-
-        _ = net.criterion
         net(torch.rand(1, 3, 32, 32))
 
 
@@ -45,8 +43,6 @@ class TestStandardWideBaseline:
             groups=1,
         )
         summary(net)
-
-        _ = net.criterion
         net(torch.rand(1, 3, 32, 32))
 
 
@@ -66,8 +62,6 @@ class TestStandardVGGBaseline:
             last_layer_dropout=True,
         )
         summary(net)
-
-        _ = net.criterion
         net(torch.rand(1, 3, 32, 32))
 
         net = VGGBaseline(

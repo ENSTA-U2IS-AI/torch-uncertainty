@@ -113,7 +113,7 @@ routine = RegressionRoutine(
     output_dim=1,
     model=model,
     loss=loss,
-    optim_recipe=optim_regression,
+    optim_recipe=optim_regression(model),
 )
 
 # %%

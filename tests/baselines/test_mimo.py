@@ -32,8 +32,6 @@ class TestMIMOBaseline:
         ).eval()
 
         summary(net)
-
-        _ = net.criterion
         _ = net(torch.rand(1, 3, 32, 32))
 
     def test_mimo_18(self):
@@ -51,8 +49,6 @@ class TestMIMOBaseline:
         ).eval()
 
         summary(net)
-
-        _ = net.criterion
         _ = net(torch.rand(1, 3, 40, 40))
 
 
@@ -73,6 +69,4 @@ class TestMIMOWideBaseline:
         ).eval()
 
         summary(net)
-
-        _ = net.criterion
         _ = net(torch.rand(1, 3, 32, 32))

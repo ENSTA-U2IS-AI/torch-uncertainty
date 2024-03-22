@@ -2,6 +2,7 @@ from einops import rearrange
 from lightning.pytorch import LightningModule
 from lightning.pytorch.utilities.types import STEP_OUTPUT
 from torch import Tensor, nn
+from torch.optim import Optimizer
 from torchmetrics import Accuracy, MetricCollection
 from torchvision.transforms.v2 import functional as F
 
@@ -11,37 +12,43 @@ from torch_uncertainty.metrics import MeanIntersectionOverUnion
 class SegmentationRoutine(LightningModule):
     def __init__(
         self,
-        num_classes: int,
         model: nn.Module,
+        num_classes: int,
         loss: type[nn.Module],
         num_estimators: int = 1,
-        optim_recipe=None,
+        optim_recipe: dict | Optimizer | None = None,
         format_batch_fn: nn.Module | None = None,
     ) -> None:
+        """Segmentation routine for Lightning.
+
+        Args:
+            model (nn.Module): Model to train.
+            num_classes (int): Number of classes in the segmentation task.
+            loss (type[nn.Module]): Loss function to optimize the :attr:`model`.
+            num_estimators (int, optional): The number of estimators for the
+                ensemble. Defaults to 1 (single model).
+            optim_recipe (dict | Optimizer, optional): The optimizer and
+                optionally the scheduler to use. Defaults to ``None``.
+            format_batch_fn (nn.Module, optional): The function to format the
+                batch. Defaults to None.
+
+        Warning:
+            You must define :attr:`optim_recipe` if you do not use
+            the CLI.
+        """
         super().__init__()
+        _segmentation_routine_checks(num_estimators, num_classes)
 
-        if num_estimators < 1:
-            raise ValueError(
-                f"num_estimators must be positive, got {num_estimators}."
-            )
-
-        if num_classes < 2:
-            raise ValueError(
-                f"num_classes must be at least 2, got {num_classes}."
-            )
+        self.model = model
+        self.num_classes = num_classes
+        self.loss = loss
+        self.num_estimators = num_estimators
 
         if format_batch_fn is None:
             format_batch_fn = nn.Identity()
 
-        self.num_classes = num_classes
-        self.model = model
-        self.loss = loss
-        self.format_batch_fn = format_batch_fn
         self.optim_recipe = optim_recipe
-
-        self.num_estimators = num_estimators
-
-        self.metric_to_monitor = "val/mean_iou"
+        self.format_batch_fn = format_batch_fn
 
         # metrics
         seg_metrics = MetricCollection(
@@ -56,7 +63,7 @@ class SegmentationRoutine(LightningModule):
         self.test_seg_metrics = seg_metrics.clone(prefix="test/")
 
     def configure_optimizers(self):
-        return self.optim_recipe(self.model)
+        return self.optim_recipe
 
     def forward(self, img: Tensor) -> Tensor:
         return self.model(img)
@@ -122,3 +129,13 @@ class SegmentationRoutine(LightningModule):
     def on_test_epoch_end(self) -> None:
         self.log_dict(self.test_seg_metrics.compute())
         self.test_seg_metrics.reset()
+
+
+def _segmentation_routine_checks(num_estimators, num_classes):
+    if num_estimators < 1:
+        raise ValueError(
+            f"num_estimators must be positive, got {num_estimators}."
+        )
+
+    if num_classes < 2:
+        raise ValueError(f"num_classes must be at least 2, got {num_classes}.")

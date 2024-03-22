@@ -10,6 +10,7 @@ from lightning.pytorch.loggers import Logger
 from lightning.pytorch.utilities.types import STEP_OUTPUT
 from timm.data import Mixup as timm_Mixup
 from torch import Tensor, nn
+from torch.optim import Optimizer
 from torchmetrics import Accuracy, MetricCollection
 from torchmetrics.classification import (
     BinaryAUROC,
@@ -36,12 +37,12 @@ from torch_uncertainty.utils import csv_writer, plot_hist
 class ClassificationRoutine(LightningModule):
     def __init__(
         self,
-        num_classes: int,
         model: nn.Module,
+        num_classes: int,
         loss: nn.Module,
         num_estimators: int = 1,
         format_batch_fn: nn.Module | None = None,
-        optim_recipe=None,
+        optim_recipe: dict | Optimizer | None = None,
         mixtype: str = "erm",
         mixmode: str = "elem",
         dist_sim: str = "emb",
@@ -58,17 +59,18 @@ class ClassificationRoutine(LightningModule):
         save_in_csv: bool = False,
         calibration_set: Literal["val", "test"] | None = None,
     ) -> None:
-        """Classification routine.
+        """Classification routine for Lightning.
 
         Args:
-            num_classes (int): Number of classes.
             model (nn.Module): Model to train.
-            loss (type[nn.Module]): Loss function.
+            num_classes (int): Number of classes.
+            loss (type[nn.Module]): Loss function to optimize the :attr:`model`.
             num_estimators (int, optional): Number of estimators for the
-                ensemble. Defaults to 1.
+                ensemble. Defaults to 1 (single model).
             format_batch_fn (nn.Module, optional): Function to format the batch.
                 Defaults to :class:`torch.nn.Identity()`.
-            optim_recipe (optional): Training recipe. Defaults to None.
+            optim_recipe (dict | Optimizer, optional): The optimizer and
+                optionally the scheduler to use. Defaults to ``None``.
             mixtype (str, optional): Mixup type. Defaults to ``"erm"``.
             mixmode (str, optional): Mixup mode. Defaults to ``"elem"``.
             dist_sim (str, optional): Distance similarity. Defaults to ``"emb"``.
@@ -99,61 +101,22 @@ class ClassificationRoutine(LightningModule):
             ValueError: _description_
             ValueError: _description_
             ValueError: _description_
+
+        Warning:
+            You must define :attr:`optim_recipe` if you do not use
+            the CLI.
         """
         super().__init__()
+        _classification_routine_checks(
+            model=model,
+            num_classes=num_classes,
+            num_estimators=num_estimators,
+            ood_criterion=ood_criterion,
+            eval_grouping_loss=eval_grouping_loss,
+        )
 
         if format_batch_fn is None:
             format_batch_fn = nn.Identity()
-
-        if not isinstance(num_estimators, int) or num_estimators < 1:
-            raise ValueError(
-                "The number of estimators must be a positive integer >= 1."
-                f"Got {num_estimators}."
-            )
-
-        if ood_criterion not in [
-            "msp",
-            "logit",
-            "energy",
-            "entropy",
-            "mi",
-            "vr",
-        ]:
-            raise ValueError(
-                "The OOD criterion must be one of 'msp', 'logit', 'energy', 'entropy',"
-                f" 'mi' or 'vr'. Got {ood_criterion}."
-            )
-
-        if num_estimators == 1 and ood_criterion in ["mi", "vr"]:
-            raise ValueError(
-                "You cannot use mutual information or variation ratio with a single"
-                " model."
-            )
-
-        if num_estimators != 1 and eval_grouping_loss:
-            raise NotImplementedError(
-                "Groupng loss for ensembles is not yet implemented. Raise an issue if needed."
-            )
-
-        if num_classes < 1:
-            raise ValueError(
-                "The number of classes must be a positive integer >= 1."
-                f"Got {num_classes}."
-            )
-
-        if eval_grouping_loss and not hasattr(model, "feats_forward"):
-            raise ValueError(
-                "Your model must have a `feats_forward` method to compute the "
-                "grouping loss."
-            )
-
-        if eval_grouping_loss and not (
-            hasattr(model, "classification_head") or hasattr(model, "linear")
-        ):
-            raise ValueError(
-                "Your model must have a `classification_head` or `linear` "
-                "attribute to compute the grouping loss."
-            )
 
         self.num_classes = num_classes
         self.num_estimators = num_estimators
@@ -303,7 +266,7 @@ class ClassificationRoutine(LightningModule):
         return nn.Identity()
 
     def configure_optimizers(self):
-        return self.optim_recipe(self.model)
+        return self.optim_recipe
 
     def on_train_start(self) -> None:
         init_metrics = {k: 0 for k in self.val_cls_metrics}
@@ -337,10 +300,6 @@ class ClassificationRoutine(LightningModule):
         if self.eval_ood and self.log_plots and isinstance(self.logger, Logger):
             self.id_logit_storage = []
             self.ood_logit_storage = []
-
-    @property
-    def criterion(self) -> nn.Module:
-        return self.loss
 
     def forward(self, inputs: Tensor, save_feats: bool = False) -> Tensor:
         """Forward pass of the model.
@@ -616,3 +575,57 @@ class ClassificationRoutine(LightningModule):
                 Path(self.logger.log_dir) / "results.csv",
                 results,
             )
+
+
+def _classification_routine_checks(
+    model, num_classes, num_estimators, ood_criterion, eval_grouping_loss
+):
+    if not isinstance(num_estimators, int) or num_estimators < 1:
+        raise ValueError(
+            "The number of estimators must be a positive integer >= 1."
+            f"Got {num_estimators}."
+        )
+
+    if ood_criterion not in [
+        "msp",
+        "logit",
+        "energy",
+        "entropy",
+        "mi",
+        "vr",
+    ]:
+        raise ValueError(
+            "The OOD criterion must be one of 'msp', 'logit', 'energy', 'entropy',"
+            f" 'mi' or 'vr'. Got {ood_criterion}."
+        )
+
+    if num_estimators == 1 and ood_criterion in ["mi", "vr"]:
+        raise ValueError(
+            "You cannot use mutual information or variation ratio with a single"
+            " model."
+        )
+
+    if num_estimators != 1 and eval_grouping_loss:
+        raise NotImplementedError(
+            "Groupng loss for ensembles is not yet implemented. Raise an issue if needed."
+        )
+
+    if num_classes < 1:
+        raise ValueError(
+            "The number of classes must be a positive integer >= 1."
+            f"Got {num_classes}."
+        )
+
+    if eval_grouping_loss and not hasattr(model, "feats_forward"):
+        raise ValueError(
+            "Your model must have a `feats_forward` method to compute the "
+            "grouping loss."
+        )
+
+    if eval_grouping_loss and not (
+        hasattr(model, "classification_head") or hasattr(model, "linear")
+    ):
+        raise ValueError(
+            "Your model must have a `classification_head` or `linear` "
+            "attribute to compute the grouping loss."
+        )

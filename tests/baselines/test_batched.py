@@ -24,8 +24,6 @@ class TestBatchedBaseline:
         )
 
         summary(net)
-
-        _ = net.criterion
         _ = net(torch.rand(1, 3, 32, 32))
 
     def test_batched_50(self):
@@ -41,8 +39,6 @@ class TestBatchedBaseline:
         )
 
         summary(net)
-
-        _ = net.criterion
         _ = net(torch.rand(1, 3, 40, 40))
 
 
@@ -61,6 +57,4 @@ class TestBatchedWideBaseline:
         )
 
         summary(net)
-
-        _ = net.criterion
         _ = net(torch.rand(1, 3, 32, 32))

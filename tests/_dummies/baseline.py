@@ -48,7 +48,7 @@ class DummyClassificationBaseline:
                 loss=loss,
                 format_batch_fn=nn.Identity(),
                 log_plots=True,
-                optim_recipe=optim_recipe,
+                optim_recipe=optim_recipe(model),
                 num_estimators=1,
                 ood_criterion=ood_criterion,
                 eval_ood=eval_ood,
@@ -64,7 +64,7 @@ class DummyClassificationBaseline:
             num_classes=num_classes,
             model=model,
             loss=loss,
-            optim_recipe=optim_recipe,
+            optim_recipe=optim_recipe(model),
             format_batch_fn=RepeatTarget(2),
             log_plots=True,
             num_estimators=2,
@@ -112,7 +112,7 @@ class DummyRegressionBaseline:
                 model=model,
                 loss=loss,
                 num_estimators=1,
-                optim_recipe=optim_recipe,
+                optim_recipe=optim_recipe(model),
             )
         # baseline_type == "ensemble":
         model = deep_ensembles(
@@ -126,7 +126,7 @@ class DummyRegressionBaseline:
             model=model,
             loss=loss,
             num_estimators=2,
-            optim_recipe=optim_recipe,
+            optim_recipe=optim_recipe(model),
             format_batch_fn=RepeatTarget(2),
         )
 
@@ -154,7 +154,7 @@ class DummySegmentationBaseline:
                 loss=loss,
                 format_batch_fn=None,
                 num_estimators=1,
-                optim_recipe=optim_recipe,
+                optim_recipe=optim_recipe(model),
             )
 
         # baseline_type == "ensemble":
@@ -168,5 +168,5 @@ class DummySegmentationBaseline:
             loss=loss,
             format_batch_fn=RepeatTarget(2),
             num_estimators=2,
-            optim_recipe=optim_recipe,
+            optim_recipe=optim_recipe(model),
         )

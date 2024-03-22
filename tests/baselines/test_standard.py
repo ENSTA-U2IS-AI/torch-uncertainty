@@ -26,7 +26,6 @@ class TestStandardBaseline:
             groups=1,
         )
         summary(net)
-
         _ = net(torch.rand(1, 3, 32, 32))
 
     def test_errors(self):
@@ -55,7 +54,6 @@ class TestStandardWideBaseline:
             groups=1,
         )
         summary(net)
-
         _ = net(torch.rand(1, 3, 32, 32))
 
     def test_errors(self):
@@ -83,7 +81,6 @@ class TestStandardVGGBaseline:
             groups=1,
         )
         summary(net)
-
         _ = net(torch.rand(1, 3, 32, 32))
 
     def test_errors(self):
@@ -110,7 +107,6 @@ class TestStandardMLPBaseline:
             hidden_dims=[1],
         )
         summary(net)
-
         _ = net(torch.rand(1, 3))
 
         for distribution in ["normal", "laplace", "nig"]:
@@ -145,7 +141,6 @@ class TestStandardSegFormerBaseline:
             arch=0,
         )
         summary(net)
-
         _ = net(torch.rand(1, 3, 32, 32))
 
     def test_errors(self):

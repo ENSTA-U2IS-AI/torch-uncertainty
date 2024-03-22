@@ -104,7 +104,7 @@ routine = ClassificationRoutine(
     model=model,
     num_classes=datamodule.num_classes,
     loss=loss,
-    optim_recipe=optim_lenet,
+    optim_recipe=optim_lenet(model),
 )
 
 # %%
