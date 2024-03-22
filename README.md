@@ -11,7 +11,7 @@
 [![Discord Badge](https://dcbadge.vercel.app/api/server/HMCawt5MJu?compact=true&style=flat)](https://discord.gg/HMCawt5MJu)
 </div>
 
-_TorchUncertainty_ is a package designed to help you leverage uncertainty quantification techniques and make your deep neural networks more reliable. It aims at being collaborative and including as many methods as possible, so reach out to add yours!
+_TorchUncertainty_ is a package designed to help you leverage [uncertainty quantification techniques](https://github.com/ENSTA-U2IS-AI/awesome-uncertainty-deeplearning) and make your deep neural networks more reliable. It aims at being collaborative and including as many methods as possible, so reach out to add yours!
 
 :construction: _TorchUncertainty_ is in early development :construction: - expect changes, but reach out and contribute if you are interested in the project! **Please raise an issue if you have any bugs or difficulties and join the [discord server](https://discord.gg/HMCawt5MJu).**
 
@@ -19,24 +19,24 @@ _TorchUncertainty_ is a package designed to help you leverage uncertainty quanti
 
 This package provides a multi-level API, including:
 
+- easy-to-use ⚡️ lightning **uncertainty-aware** training & evaluation routines for **4 tasks**: classification, probabilistic and pointwise regression, and segmentation.
 - ready-to-train baselines on research datasets, such as ImageNet and CIFAR
-- deep learning baselines available for training on your datasets
 - [pretrained weights](https://huggingface.co/torch-uncertainty) for these baselines on ImageNet and CIFAR (work in progress 🚧).
-- layers available for use in your networks
-- scikit-learn style post-processing methods such as Temperature Scaling
+- **layers**, **models**, **metrics**, & **losses** available for use in your networks
+- scikit-learn style post-processing methods such as Temperature Scaling.
 
-See the [Reference page](https://torch-uncertainty.github.io/references.html) or the [API reference](https://torch-uncertainty.github.io/api.html) for a more exhaustive list of the implemented methods, datasets, metrics, etc.
+Have a look at the [Reference page](https://torch-uncertainty.github.io/references.html) or the [API reference](https://torch-uncertainty.github.io/api.html) for a more exhaustive list of the implemented methods, datasets, metrics, etc.
 
-## Installation
+## ⚙️ Installation
 
-Install the desired PyTorch version in your environment.
+TorchUncertainty requires Python 3.10 or greater. Install the desired PyTorch version in your environment.
 Then, install the package from PyPI:
 
 ```sh
 pip install torch-uncertainty
 ```
 
-If you aim to contribute, have a look at the [contribution page](https://torch-uncertainty.github.io/contributing.html).
+The installation procedure for contributors is different: have a look at the [contribution page](https://torch-uncertainty.github.io/contributing.html).
 
 ## Getting Started and Documentation
 
@@ -45,6 +45,8 @@ Please find the documentation at [torch-uncertainty.github.io](https://torch-unc
 A quickstart is available at [torch-uncertainty.github.io/quickstart](https://torch-uncertainty.github.io/quickstart.html).
 
 ## Implemented methods
+
+TorchUncertainty currently supports **Classification**, **probabilistic** and pointwise **Regression** and **Segmentation**.
 
 ### Baselines
 
@@ -75,7 +77,7 @@ To date, the following post-processing methods have been implemented:
 
 ## Tutorials
 
-We provide the following tutorials in our documentation:
+The following tutorials willWe provide the following tutorials in our documentation:
 
 - [From a Standard Classifier to a Packed-Ensemble](https://torch-uncertainty.github.io/auto_tutorials/tutorial_pe_cifar10.html)
 - [Training a Bayesian Neural Network in 3 minutes](https://torch-uncertainty.github.io/auto_tutorials/tutorial_bayesian.html)
@@ -84,10 +86,6 @@ We provide the following tutorials in our documentation:
 - [Training a LeNet with Monte-Carlo Dropout](https://torch-uncertainty.github.io/auto_tutorials/tutorial_mc_dropout.html)
 - [Training a LeNet with Deep Evidential Classification](https://torch-uncertainty.github.io/auto_tutorials/tutorial_evidential_classification.html)
   
-## Awesome Uncertainty repositories
-
-You may find a lot of papers about modern uncertainty estimation techniques on the [Awesome Uncertainty in Deep Learning](https://github.com/ENSTA-U2IS-AI/awesome-uncertainty-deeplearning).
-
 ## Other References
 
 This package also contains the official implementation of Packed-Ensembles.
