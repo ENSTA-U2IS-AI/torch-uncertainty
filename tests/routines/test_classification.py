@@ -9,6 +9,7 @@ from tests._dummies import (
     DummyClassificationDataModule,
     dummy_model,
 )
+from torch_uncertainty.losses import ELBOLoss
 from torch_uncertainty.optim_recipes import optim_cifar10_resnet18
 from torch_uncertainty.routines import ClassificationRoutine
 
@@ -103,7 +104,7 @@ class TestClassification:
             loss=nn.CrossEntropyLoss(),
             optim_recipe=optim_cifar10_resnet18,
             baseline_type="single",
-            ood_criterion="entropy",
+            ood_criterion="energy",
             eval_ood=True,
             eval_grouping_loss=True,
             calibrate=True,
@@ -130,8 +131,43 @@ class TestClassification:
             loss=nn.CrossEntropyLoss(),
             optim_recipe=optim_cifar10_resnet18,
             baseline_type="ensemble",
-            ood_criterion="energy",
+            ood_criterion="mi",
             eval_ood=True,
+        )
+
+        trainer.fit(model, dm)
+        trainer.validate(model, dm)
+        trainer.test(model, dm)
+        model(dm.get_test_set()[0][0])
+
+    def test_two_estimator_two_classes(self):
+        trainer = Trainer(
+            accelerator="cpu",
+            max_epochs=1,
+            limit_train_batches=1,
+            limit_val_batches=1,
+            limit_test_batches=1,
+            enable_checkpointing=False,
+        )
+
+        dm = DummyClassificationDataModule(
+            root=Path(),
+            batch_size=16,
+            num_classes=2,
+            num_images=100,
+            eval_ood=True,
+        )
+        model = DummyClassificationBaseline(
+            num_classes=dm.num_classes,
+            in_channels=dm.num_channels,
+            loss=ELBOLoss(
+                None, nn.CrossEntropyLoss(), kl_weight=1.0, num_samples=4
+            ),
+            optim_recipe=optim_cifar10_resnet18,
+            baseline_type="ensemble",
+            ood_criterion="vr",
+            eval_ood=True,
+            save_in_csv=True,
         )
 
         trainer.fit(model, dm)

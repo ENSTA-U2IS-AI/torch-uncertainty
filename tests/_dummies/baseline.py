@@ -33,6 +33,7 @@ class DummyClassificationBaseline:
         eval_ood: bool = False,
         eval_grouping_loss: bool = False,
         calibrate: bool = False,
+        save_in_csv: bool = False,
     ) -> LightningModule:
         model = dummy_model(
             in_channels=in_channels,
@@ -54,6 +55,7 @@ class DummyClassificationBaseline:
                 eval_ood=eval_ood,
                 eval_grouping_loss=eval_grouping_loss,
                 calibration_set="val" if calibrate else None,
+                save_in_csv=save_in_csv,
             )
         # baseline_type == "ensemble":
         model = deep_ensembles(
@@ -72,6 +74,7 @@ class DummyClassificationBaseline:
             eval_ood=eval_ood,
             eval_grouping_loss=eval_grouping_loss,
             calibration_set="val" if calibrate else None,
+            save_in_csv=save_in_csv,
         )
 
 
