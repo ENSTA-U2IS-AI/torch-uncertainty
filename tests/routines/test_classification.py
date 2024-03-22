@@ -9,7 +9,7 @@ from tests._dummies import (
     DummyClassificationDataModule,
     dummy_model,
 )
-from torch_uncertainty.losses import ELBOLoss
+from torch_uncertainty.losses import DECLoss, ELBOLoss
 from torch_uncertainty.optim_recipes import optim_cifar10_resnet18
 from torch_uncertainty.routines import ClassificationRoutine
 
@@ -292,7 +292,7 @@ class TestClassification:
         model = DummyClassificationBaseline(
             num_classes=dm.num_classes,
             in_channels=dm.num_channels,
-            loss=nn.CrossEntropyLoss(),
+            loss=DECLoss(1, 1e-2),
             optim_recipe=optim_cifar10_resnet18,
             baseline_type="ensemble",
             ood_criterion="mi",

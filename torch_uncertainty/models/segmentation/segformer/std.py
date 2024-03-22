@@ -267,24 +267,6 @@ class OverlapPatchEmbed(nn.Module):
         return x, h, w
 
 
-class SegFormerSegmentationHead(nn.Module):
-    def __init__(self, channels: int, num_classes: int, num_features: int = 4):
-        super().__init__()
-        self.fuse = nn.Sequential(
-            nn.Conv2d(
-                channels * num_features, channels, kernel_size=1, bias=False
-            ),
-            nn.ReLU(),
-            nn.BatchNorm2d(channels),
-        )
-        self.predict = nn.Conv2d(channels, num_classes, kernel_size=1)
-
-    def forward(self, features):
-        x = torch.cat(features, dim=1)
-        x = self.fuse(x)
-        return self.predict(x)
-
-
 class MixVisionTransformer(nn.Module):
     def __init__(
         self,
@@ -432,10 +414,6 @@ class MixVisionTransformer(nn.Module):
         )
         self.norm4 = norm_layer(embed_dims[3])
 
-        # classification head
-        # self.head = nn.Linear(embed_dims[3], num_classes) if num_classes > 0
-        #   else nn.Identity()
-
         self.apply(self._init_weights)
 
     def _init_weights(self, m):
@@ -452,51 +430,6 @@ class MixVisionTransformer(nn.Module):
             m.weight.data.normal_(0, math.sqrt(2.0 / fan_out))
             if m.bias is not None:
                 m.bias.data.zero_()
-
-    def reset_drop_path(self, drop_path_rate):
-        dpr = [
-            x.item()
-            for x in torch.linspace(0, drop_path_rate, sum(self.depths))
-        ]
-        cur = 0
-        for i in range(self.depths[0]):
-            self.block1[i].drop_path.drop_prob = dpr[cur + i]
-
-        cur += self.depths[0]
-        for i in range(self.depths[1]):
-            self.block2[i].drop_path.drop_prob = dpr[cur + i]
-
-        cur += self.depths[1]
-        for i in range(self.depths[2]):
-            self.block3[i].drop_path.drop_prob = dpr[cur + i]
-
-        cur += self.depths[2]
-        for i in range(self.depths[3]):
-            self.block4[i].drop_path.drop_prob = dpr[cur + i]
-
-    def freeze_patch_emb(self):
-        self.patch_embed1.requires_grad = False
-
-    @torch.jit.ignore
-    def no_weight_decay(self):
-        return {
-            "pos_embed1",
-            "pos_embed2",
-            "pos_embed3",
-            "pos_embed4",
-            "cls_token",
-        }  # has pos_embed may be better
-
-    def get_classifier(self):
-        return self.head
-
-    def reset_classifier(self, num_classes, global_pool=""):
-        self.num_classes = num_classes
-        self.head = (
-            nn.Linear(self.embed_dim, num_classes)
-            if num_classes > 0
-            else nn.Identity()
-        )
 
     def forward_features(self, x):
         b = x.shape[0]
