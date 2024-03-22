@@ -7,12 +7,6 @@ from torch_uncertainty.baselines.classification import (
     WideResNetBaseline,
 )
 
-# from torch_uncertainty.optim_recipes import (
-#     optim_cifar10_resnet18,
-#     optim_cifar10_resnet50,
-#     optim_cifar10_wideresnet,
-# )
-
 
 class TestMIMOBaseline:
     """Testing the MIMOResNet baseline class."""

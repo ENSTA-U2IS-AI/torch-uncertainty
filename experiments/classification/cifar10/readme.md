@@ -27,8 +27,6 @@ python resnet.py fit --config configs/resnet50/packed.yaml
 python resnet.py fit --config configs/resnet.yaml --model.arch 101 --model.version mimo --model.num_estimators 4 --model.rho 1.0
 ```
 
-
-
 ## Available configurations:
 
 ### ResNet

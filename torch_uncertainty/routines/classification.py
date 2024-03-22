@@ -92,15 +92,10 @@ class ClassificationRoutine(LightningModule):
                 the ensemble and vr is the variation ratio of the ensemble.
             log_plots (bool, optional): Indicates whether to log plots from
                 metrics. Defaults to ``False``.
-            save_in_csv(bool, optional): __TODO__
+            save_in_csv(bool, optional): Save the results in csv. Defaults to
+                ``False``.
             calibration_set (Callable, optional): Function to get the calibration
                 set. Defaults to ``None``.
-
-        Raises:
-            ValueError: _description_
-            ValueError: _description_
-            ValueError: _description_
-            ValueError: _description_
 
         Warning:
             You must define :attr:`optim_recipe` if you do not use

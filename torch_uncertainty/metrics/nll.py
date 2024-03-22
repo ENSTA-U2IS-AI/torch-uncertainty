@@ -8,7 +8,7 @@ from torchmetrics.utilities.data import dim_zero_cat
 
 
 class CategoricalNLL(Metric):
-    is_differentiabled = False
+    is_differentiable = False
     higher_is_better = False
     full_state_update = False
 

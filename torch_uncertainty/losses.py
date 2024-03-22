@@ -67,48 +67,31 @@ class ELBOLoss(nn.Module):
     def __init__(
         self,
         model: nn.Module | None,
-        criterion: nn.Module,
+        inner_loss: nn.Module,
         kl_weight: float,
         num_samples: int,
     ) -> None:
         """The Evidence Lower Bound (ELBO) loss for Bayesian Neural Networks.
 
         ELBO loss for Bayesian Neural Networks. Use this loss function with the
-        objective that you seek to minimize as :attr:`criterion`.
+        objective that you seek to minimize as :attr:`inner_loss`.
 
         Args:
             model (nn.Module): The Bayesian Neural Network to compute the loss for
-            criterion (nn.Module): The loss function to use during training
+            inner_loss (nn.Module): The loss function to use during training
             kl_weight (float): The weight of the KL divergence term
             num_samples (int): The number of samples to use for the ELBO loss
+
+        Note:
+            Set the model to None if you use the ELBOLoss within
+            the ClassificationRoutine. It will get filled automatically.
         """
         super().__init__()
-
+        _elbo_loss_checks(inner_loss, kl_weight, num_samples)
         self.set_model(model)
 
-        if isinstance(criterion, type):
-            raise TypeError(
-                "The criterion should be an instance of a class."
-                f"Got {criterion}."
-            )
-        self.criterion = criterion
-
-        if kl_weight < 0:
-            raise ValueError(
-                f"The KL weight should be non-negative. Got {kl_weight}."
-            )
+        self.inner_loss = inner_loss
         self.kl_weight = kl_weight
-
-        if num_samples < 1:
-            raise ValueError(
-                "The number of samples should not be lower than 1."
-                f"Got {num_samples}."
-            )
-        if not isinstance(num_samples, int):
-            raise TypeError(
-                "The number of samples should be an integer. "
-                f"Got {type(num_samples)}."
-            )
         self.num_samples = num_samples
 
     def forward(self, inputs: Tensor, targets: Tensor) -> Tensor:
@@ -125,7 +108,7 @@ class ELBOLoss(nn.Module):
         aggregated_elbo = torch.zeros(1, device=inputs.device)
         for _ in range(self.num_samples):
             logits = self.model(inputs)
-            aggregated_elbo += self.criterion(logits, targets)
+            aggregated_elbo += self.inner_loss(logits, targets)
             aggregated_elbo += self.kl_weight * self._kl_div()
         return aggregated_elbo / self.num_samples
 
@@ -133,6 +116,32 @@ class ELBOLoss(nn.Module):
         self.model = model
         if model is not None:
             self._kl_div = KLDiv(model)
+
+
+def _elbo_loss_checks(
+    inner_loss: nn.Module, kl_weight: float, num_samples: int
+):
+    if isinstance(inner_loss, type):
+        raise TypeError(
+            "The inner_loss should be an instance of a class."
+            f"Got {inner_loss}."
+        )
+
+    if kl_weight < 0:
+        raise ValueError(
+            f"The KL weight should be non-negative. Got {kl_weight}."
+        )
+
+    if num_samples < 1:
+        raise ValueError(
+            "The number of samples should not be lower than 1."
+            f"Got {num_samples}."
+        )
+    if not isinstance(num_samples, int):
+        raise TypeError(
+            "The number of samples should be an integer. "
+            f"Got {type(num_samples)}."
+        )
 
 
 class DERLoss(DistributionNLLLoss):

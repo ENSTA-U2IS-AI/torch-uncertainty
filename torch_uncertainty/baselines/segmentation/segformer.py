@@ -56,7 +56,8 @@ class SegFormerBaseline(SegmentationRoutine):
                 - ``4``: SegFormer-B4
                 - ``5``: SegFormer-B5
 
-            num_estimators (int, optional): _description_. Defaults to 1.
+            num_estimators (int, optional): Number of estimators in the
+                ensemble. Defaults to 1 (single model).
         """
         params = {
             "num_classes": num_classes,

@@ -95,7 +95,7 @@ model = bayesian_lenet(datamodule.num_channels, datamodule.num_classes)
 
 loss = ELBOLoss(
     model=model,
-    criterion=nn.CrossEntropyLoss(),
+    inner_loss=nn.CrossEntropyLoss(),
     kl_weight=1 / 50000,
     num_samples=3,
 )
