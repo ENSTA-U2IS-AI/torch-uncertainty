@@ -180,6 +180,8 @@ class CrossValDataModule(AbstractDataModule):
             self.val = self.dm.val
         elif stage == "test":
             self.test = self.val
+        else:
+            raise ValueError(f"Stage {stage} not supported.")
 
     def _data_loader(self, dataset: Dataset, idx: ArrayLike) -> DataLoader:
         return DataLoader(

@@ -58,3 +58,6 @@ class TestCrossValDataModule:
             cv_dm.setup()
             cv_dm._get_train_data()
             cv_dm._get_train_targets()
+
+        with pytest.raises(ValueError):
+            cv_dm.setup("other")

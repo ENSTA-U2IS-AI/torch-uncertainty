@@ -53,7 +53,7 @@ class MLPBaseline(RegressionRoutine):
             final_layer = NormalInverseGammaLayer
             final_layer_args = {"dim": output_dim}
             params["num_outputs"] *= 4
-        elif distribution is None:
+        else:  # distribution is None:
             probabilistic = False
             final_layer = nn.Identity
             final_layer_args = {}

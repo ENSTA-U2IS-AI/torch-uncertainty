@@ -4,15 +4,18 @@ import torch
 from torch_uncertainty.metrics import GroupingLoss
 
 
-@pytest.fixture()
-def disagreement_probas_3() -> torch.Tensor:
-    return torch.as_tensor([[[0.0, 1.0], [0.0, 1.0], [1.0, 0.0]]])
-
-
 class TestGroupingLoss:
     """Testing the GroupingLoss metric class."""
 
     def test_compute(self):
+        metric = GroupingLoss()
+        metric.update(
+            torch.rand(100),
+            (torch.rand(100) > 0.3).long(),
+            torch.rand((100, 10)),
+        )
+        metric.compute()
+
         metric = GroupingLoss()
         metric.update(
             torch.ones((100, 4, 10)) / 10,
