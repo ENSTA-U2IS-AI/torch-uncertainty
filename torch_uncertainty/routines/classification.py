@@ -160,7 +160,7 @@ class ClassificationRoutine(LightningModule):
         self.test_cls_metrics = cls_metrics.clone(prefix="cls_test/")
 
         if self.calibration_set is not None:
-            self.ts_cls_metrics = cls_metrics.clone(prefix="ts_")
+            self.ts_cls_metrics = cls_metrics.clone(prefix="cls_test/ts_")
 
         self.test_entropy_id = Entropy()
 
@@ -289,10 +289,9 @@ class ClassificationRoutine(LightningModule):
                 else self.trainer.datamodule.test_dataloader().dataset
             )
             with torch.inference_mode(False):
-                self.scaler = TemperatureScaler(
+                self.cal_model = TemperatureScaler(
                     model=self.model, device=self.device
                 ).fit(calibration_set=dataset)
-            self.cal_model = self.scaler
         else:
             self.scaler = None
             self.cal_model = None

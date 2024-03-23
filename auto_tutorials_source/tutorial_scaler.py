@@ -5,7 +5,11 @@ Improve Top-label Calibration with Temperature Scaling
 In this tutorial, we use *TorchUncertainty* to improve the calibration
 of the top-label predictions and the reliability of the underlying neural network.
 
-We also see how to use the datamodules outside any Lightning trainers,
+This tutorial provides extensive details on how to use the TemperatureScaler
+class, however, this is done automatically in the classification routine when setting
+the `calibration_set` to val or test.
+
+Through this tutorial, we also see how to use the datamodules outside any Lightning trainers,
 and how to use TorchUncertainty's models.
 
 1. Loading the Utilities
