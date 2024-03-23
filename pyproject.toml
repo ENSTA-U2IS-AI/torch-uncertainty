@@ -52,7 +52,7 @@ dev = [
     "pre-commit-hooks",
 ]
 docs = [
-    "sphinx<7",
+    "sphinx<6",
     "tu_sphinx_theme",
     "sphinx-copybutton",
     "sphinx-gallery",
