@@ -101,6 +101,10 @@ class ClassificationRoutine(LightningModule):
         Warning:
             You must define :attr:`optim_recipe` if you do not use
             the CLI.
+
+        Warning:
+            You must provide a datamodule to the trainer or use the CLI for if
+            :attr:`calibration_set` is not ``None``.
         """
         super().__init__()
         _classification_routine_checks(
@@ -288,7 +292,7 @@ class ClassificationRoutine(LightningModule):
                 self.scaler = TemperatureScaler(
                     model=self.model, device=self.device
                 ).fit(calibration_set=dataset)
-            self.cal_model = torch.nn.Sequential(self.model, self.scaler)
+            self.cal_model = self.scaler
         else:
             self.scaler = None
             self.cal_model = None
