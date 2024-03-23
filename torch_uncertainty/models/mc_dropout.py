@@ -13,7 +13,8 @@ class _MCDropout(nn.Module):
             last_layer (bool): whether to apply dropout to the last layer only.
 
         Warning:
-            The underlying models must have a `dropout_rate` attribute.
+            The underlying models must have a non-zero :attr:`dropout_rate`
+            attribute.
 
         Warning:
             For the `last-layer` option to work properly, the model must
@@ -70,7 +71,7 @@ class _MCDropout(nn.Module):
     def forward(
         self,
         x: Tensor,
-    ) -> tuple[Tensor, Tensor]:
+    ) -> Tensor:
         if not self.training:
             x = x.repeat(self.num_estimators, 1, 1, 1)
         return self.model(x)
@@ -85,7 +86,7 @@ def mc_dropout(
         model (nn.Module): model to wrap
         num_estimators (int): number of estimators to use
         last_layer (bool, optional): whether to apply dropout to the last
-            layer. Defaults to False.
+            layer only. Defaults to False.
     """
     return _MCDropout(
         model=model, num_estimators=num_estimators, last_layer=last_layer

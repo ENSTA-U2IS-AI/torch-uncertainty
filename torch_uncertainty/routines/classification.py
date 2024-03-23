@@ -210,7 +210,7 @@ class ClassificationRoutine(LightningModule):
                 }
             )
 
-            self.test_id_ens_metrics = ens_metrics.clone(prefix="ood/ens_")
+            self.test_id_ens_metrics = ens_metrics.clone(prefix="cls_test/ens_")
 
             if self.eval_ood:
                 self.test_ood_ens_metrics = ens_metrics.clone(prefix="ood/ens_")
@@ -574,7 +574,11 @@ class ClassificationRoutine(LightningModule):
 
 
 def _classification_routine_checks(
-    model, num_classes, num_estimators, ood_criterion, eval_grouping_loss
+    model: nn.Module,
+    num_classes: int,
+    num_estimators: int,
+    ood_criterion: str,
+    eval_grouping_loss: bool,
 ):
     if not isinstance(num_estimators, int) or num_estimators < 1:
         raise ValueError(
