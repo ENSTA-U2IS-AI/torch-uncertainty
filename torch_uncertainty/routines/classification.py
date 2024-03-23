@@ -293,7 +293,6 @@ class ClassificationRoutine(LightningModule):
                     model=self.model, device=self.device
                 ).fit(calibration_set=dataset)
         else:
-            self.scaler = None
             self.cal_model = None
 
         if self.eval_ood and self.log_plots and isinstance(self.logger, Logger):
@@ -426,7 +425,6 @@ class ClassificationRoutine(LightningModule):
         if (
             self.num_estimators == 1
             and self.calibration_set is not None
-            and self.scaler is not None
             and self.cal_model is not None
         ):
             cal_logits = self.cal_model(inputs)
@@ -497,7 +495,6 @@ class ClassificationRoutine(LightningModule):
         if (
             self.num_estimators == 1
             and self.calibration_set is not None
-            and self.scaler is not None
             and self.cal_model is not None
         ):
             tmp_metrics = self.ts_cls_metrics.compute()
