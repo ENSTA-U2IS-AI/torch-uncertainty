@@ -46,7 +46,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "ruff",
+    "ruff==0.3.4",
     "pytest-cov",
     "pre-commit",
     "pre-commit-hooks",
