@@ -70,9 +70,7 @@ class CIFAR10N(CIFAR10):
     def _check_specific_integrity(self) -> bool:
         filename, md5 = self.n_test_list
         fpath = self.root / filename
-        if not check_integrity(fpath, md5):
-            return False
-        return True
+        return check_integrity(fpath, md5)
 
     def download_n(self) -> None:
         download_and_extract_archive(
@@ -124,9 +122,7 @@ class CIFAR100N(CIFAR100):
     def _check_specific_integrity(self) -> bool:
         filename, md5 = self.n_test_list
         fpath = self.root / filename
-        if not check_integrity(fpath, md5):
-            return False
-        return True
+        return check_integrity(fpath, md5)
 
     def download_n(self) -> None:
         download_and_extract_archive(

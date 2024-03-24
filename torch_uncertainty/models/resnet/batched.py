@@ -300,7 +300,7 @@ class _BatchedResNet(nn.Module):
             self.in_planes = planes * block.expansion
         return nn.Sequential(*layers)
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         out = x.repeat(self.num_estimators, 1, 1, 1)
         out = F.relu(self.bn1(self.conv1(out)))
         out = self.optional_pool(out)

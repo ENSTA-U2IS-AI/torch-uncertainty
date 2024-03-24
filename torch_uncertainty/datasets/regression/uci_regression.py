@@ -174,11 +174,11 @@ class UCIRegression(Dataset):
             self.md5,
         )
 
-    def _standardize(self):
+    def _standardize(self) -> None:
         self.data = (self.data - self.data_mean) / self.data_std
         self.targets = (self.targets - self.target_mean) / self.target_std
 
-    def _compute_statistics(self):
+    def _compute_statistics(self) -> None:
         self.data_mean = self.data.mean(axis=0)
         self.data_std = self.data.std(axis=0)
         self.data_std[self.data_std == 0] = 1
@@ -253,8 +253,6 @@ class UCIRegression(Dataset):
             )
             # convert Ex to 10^x and remove second target
             array = df.apply(pd.to_numeric, errors="coerce").to_numpy()[:, :-1]
-        # elif self.dataset_name == "power-plant":
-        #     array = pd.read_excel(path / "Folds5x2_pp.xlsx").to_numpy()
         elif self.dataset_name == "protein":
             array = pd.read_csv(
                 path / "CASP.csv",

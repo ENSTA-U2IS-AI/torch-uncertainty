@@ -471,11 +471,10 @@ class MixVisionTransformer(nn.Module):
 
     def forward(self, x):
         return self.forward_features(x)
-        # x = self.head(x)
 
 
 class MitB0(MixVisionTransformer):
-    def __init__(self, **kwargs):
+    def __init__(self):
         super().__init__(
             patch_size=4,
             embed_dims=[32, 64, 160, 256],
@@ -491,7 +490,7 @@ class MitB0(MixVisionTransformer):
 
 
 class MitB1(MixVisionTransformer):
-    def __init__(self, **kwargs):
+    def __init__(self):
         super().__init__(
             patch_size=4,
             embed_dims=[64, 128, 320, 512],
@@ -507,7 +506,7 @@ class MitB1(MixVisionTransformer):
 
 
 class MitB2(MixVisionTransformer):
-    def __init__(self, **kwargs):
+    def __init__(self):
         super().__init__(
             patch_size=4,
             embed_dims=[64, 128, 320, 512],
@@ -523,7 +522,7 @@ class MitB2(MixVisionTransformer):
 
 
 class MitB3(MixVisionTransformer):
-    def __init__(self, **kwargs):
+    def __init__(self):
         super().__init__(
             patch_size=4,
             embed_dims=[64, 128, 320, 512],
@@ -539,7 +538,7 @@ class MitB3(MixVisionTransformer):
 
 
 class MitB4(MixVisionTransformer):
-    def __init__(self, **kwargs):
+    def __init__(self):
         super().__init__(
             patch_size=4,
             embed_dims=[64, 128, 320, 512],
@@ -555,7 +554,7 @@ class MitB4(MixVisionTransformer):
 
 
 class MitB5(MixVisionTransformer):
-    def __init__(self, **kwargs):
+    def __init__(self):
         super().__init__(
             patch_size=4,
             embed_dims=[64, 128, 320, 512],
@@ -629,7 +628,7 @@ class SegFormerHead(nn.Module):
         assert min(feature_strides) == feature_strides[0]
         self.feature_strides = feature_strides
         self.num_classes = num_classes
-        # self.in_index = [0, 1, 2, 3],
+        # --- self in_index [0, 1, 2, 3]
 
         (
             c1_in_channels,
@@ -671,10 +670,10 @@ class SegFormerHead(nn.Module):
             self.dropout = None
 
     def forward(self, inputs):
-        # x = [inputs[i] for i in self.in_index] # len=4, 1/4,1/8,1/16,1/32
+        # x [inputs[i] for i in self.in_index] # len=4, 1/4,1/8,1/16,1/32
         c1, c2, c3, c4 = inputs[0], inputs[1], inputs[2], inputs[3]
 
-        n, _, h, w = c4.shape
+        n, _, _, _ = c4.shape
 
         _c4 = (
             self.linear_c4(c4)

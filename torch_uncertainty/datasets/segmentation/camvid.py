@@ -129,7 +129,6 @@ class CamVid(VisionDataset):
                 ]
             )
 
-        # self.transforms = transforms
         self.split = split if split is not None else "all"
 
     def encode_target(self, target: Image.Image) -> torch.Tensor:
@@ -215,10 +214,7 @@ class CamVid(VisionDataset):
         ):
             return False
 
-        if not (Path(self.root) / "camvid" / "splits.json").exists():
-            return False
-
-        return True
+        return (Path(self.root) / "camvid" / "splits.json").exists()
 
     def download(self) -> None:
         """Download the CamVid data if it doesn't exist already."""

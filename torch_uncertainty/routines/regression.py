@@ -79,12 +79,12 @@ class RegressionRoutine(LightningModule):
 
         self.one_dim_regression = output_dim == 1
 
-    def configure_optimizers(self):
+    def configure_optimizers(self) -> Optimizer | dict:
         return self.optim_recipe
 
     def on_train_start(self) -> None:
-        init_metrics = {k: 0 for k in self.val_metrics}
-        init_metrics.update({k: 0 for k in self.test_metrics})
+        init_metrics = dict.fromkeys(self.val_metrics, 0)
+        init_metrics.update(dict.fromkeys(self.test_metrics, 0))
 
         if self.logger is not None:  # coverage: ignore
             self.logger.log_hyperparams(
@@ -204,7 +204,7 @@ class RegressionRoutine(LightningModule):
         self.test_metrics.reset()
 
 
-def _regression_routine_checks(num_estimators, output_dim):
+def _regression_routine_checks(num_estimators: int, output_dim: int) -> None:
     if num_estimators < 1:
         raise ValueError(
             f"num_estimators must be positive, got {num_estimators}."

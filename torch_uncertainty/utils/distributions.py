@@ -116,7 +116,14 @@ class NormalInverseGamma(Distribution):
     support = constraints.real
     has_rsample = False
 
-    def __init__(self, loc, lmbda, alpha, beta, validate_args=None):
+    def __init__(
+        self,
+        loc: Number | Tensor,
+        lmbda: Number | Tensor,
+        alpha: Number | Tensor,
+        beta: Number | Tensor,
+        validate_args: bool | None = None,
+    ) -> None:
         self.loc, self.lmbda, self.alpha, self.beta = broadcast_all(
             loc, lmbda, alpha, beta
         )
@@ -132,7 +139,7 @@ class NormalInverseGamma(Distribution):
         super().__init__(batch_shape, validate_args=validate_args)
 
     @property
-    def mean(self):
+    def mean(self) -> Tensor:
         """Impromper mean of the NormalInverseGamma distribution.
 
         This value is necessary to perform point-wise predictions in the
@@ -140,17 +147,17 @@ class NormalInverseGamma(Distribution):
         """
         return self.loc
 
-    def mode(self):
+    def mode(self) -> None:
         raise NotImplementedError(
             "Mode is not meaningful for the NormalInverseGamma distribution"
         )
 
-    def stddev(self):
+    def stddev(self) -> None:
         raise NotImplementedError(
             "Standard deviation is not meaningful for the NormalInverseGamma distribution"
         )
 
-    def variance(self):
+    def variance(self) -> None:
         raise NotImplementedError(
             "Variance is not meaningful for the NormalInverseGamma distribution"
         )

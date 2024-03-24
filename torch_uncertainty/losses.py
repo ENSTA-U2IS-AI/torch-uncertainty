@@ -120,7 +120,7 @@ class ELBOLoss(nn.Module):
 
 def _elbo_loss_checks(
     inner_loss: nn.Module, kl_weight: float, num_samples: int
-):
+) -> None:
     if isinstance(inner_loss, type):
         raise TypeError(
             "The inner_loss should be an instance of a class."
@@ -375,7 +375,7 @@ class DECLoss(nn.Module):
             raise NotImplementedError(
                 "DECLoss does not yet support mixup/cutmix."
             )
-        # else:  # TODO: handle binary
+        # TODO: handle binary
         targets = F.one_hot(targets, num_classes=evidence.size()[-1])
 
         if self.loss_type == "mse":

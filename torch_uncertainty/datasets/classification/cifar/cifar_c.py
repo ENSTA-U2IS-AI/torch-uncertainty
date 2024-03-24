@@ -1,8 +1,8 @@
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any
 
 import numpy as np
+from torch import Tensor
 from torchvision.datasets import VisionDataset
 from torchvision.datasets.utils import (
     check_integrity,
@@ -169,7 +169,7 @@ class CIFAR10C(VisionDataset):
         """The number of samples in the dataset."""
         return self.labels.shape[0]
 
-    def __getitem__(self, index: int) -> Any:
+    def __getitem__(self, index: int) -> tuple[np.ndarray | Tensor, int]:
         """Get the samples and targets of the dataset.
 
         Args:

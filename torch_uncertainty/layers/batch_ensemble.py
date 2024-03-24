@@ -110,10 +110,6 @@ class BatchLinear(nn.Module):
         self.reset_parameters()
 
     def reset_parameters(self) -> None:
-        # Setting a=sqrt(5) in kaiming_uniform is the same as initializing with
-        # uniform(-1/sqrt(in_features), 1/sqrt(in_features)). For details, see
-        # https://github.com/pytorch/pytorch/issues/57109
-        # nn.init.kaiming_uniform_(self.weight, a=math.sqrt(5))
         nn.init.normal_(self.r_group, mean=1.0, std=0.5)
         nn.init.normal_(self.s_group, mean=1.0, std=0.5)
         if self.bias is not None:
@@ -335,12 +331,6 @@ class BatchConv2d(nn.Module):
         self.reset_parameters()
 
     def reset_parameters(self) -> None:
-        # Setting a=sqrt(5) in kaiming_uniform is the same as initializing with
-        # uniform(-1/sqrt(k), 1/sqrt(k)), where
-        # k = weight.size(1) * prod(*kernel_size)
-        # For more details see:
-        # https://github.com/pytorch/pytorch/issues/15314#issuecomment-477448573
-        # nn.init.kaiming_uniform_(self.weight, a=math.sqrt(5))
         nn.init.normal_(self.r_group, mean=1.0, std=0.5)
         nn.init.normal_(self.s_group, mean=1.0, std=0.5)
         if self.bias is not None:
@@ -408,7 +398,7 @@ class BatchConv2d(nn.Module):
             bias if bias is not None else 0
         )
 
-    def extra_repr(self):
+    def extra_repr(self) -> str:
         s = (
             "{in_channels}, {out_channels}, kernel_size={kernel_size}"
             ", num_estimators={num_estimators}, stride={stride}"

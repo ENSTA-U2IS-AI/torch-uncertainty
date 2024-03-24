@@ -28,7 +28,6 @@ if __name__ == "__main__":
     else:
         root = Path(args.root)
 
-    # net_name = f"{args.version}-resnet{args.arch}-tiny-imagenet"
     if args.exp_name == "":
         args.exp_name = f"{args.version}-resnet{args.arch}-tinyimagenet"
 

@@ -10,10 +10,6 @@ class TestCIFAR10DataModule:
     """Testing the CIFAR10DataModule datamodule class."""
 
     def test_cifar10_main(self):
-        # parser = ArgumentParser()
-        # parser = CIFAR10DataModule.add_argparse_args(parser)
-
-        # Simulate that cutout is set to 16
         dm = CIFAR10DataModule(root="./data/", batch_size=128, cutout=16)
 
         assert dm.dataset == CIFAR10
@@ -67,8 +63,6 @@ class TestCIFAR10DataModule:
         dm.setup()
         dm.train_dataloader()
 
-        # args.cutout = 8
-        # args.auto_augment = "rand-m9-n2-mstd0.5"
         with pytest.raises(ValueError):
             dm = CIFAR10DataModule(
                 root="./data/",

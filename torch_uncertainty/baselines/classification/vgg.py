@@ -199,5 +199,6 @@ class VGGBaseline(ClassificationRoutine):
             log_plots=log_plots,
             save_in_csv=save_in_csv,
             calibration_set=calibration_set,
+            eval_grouping_loss=eval_grouping_loss,
         )
         self.save_hyperparameters(ignore=["loss"])

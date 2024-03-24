@@ -182,7 +182,7 @@ class MUAD(VisionDataset):
                 "if you need it."
             )
 
-    def _download(self, split: str):
+    def _download(self, split: str) -> None:
         """Download and extract the chosen split of the dataset."""
         split_url = self.base_url + split + ".zip"
         download_and_extract_archive(

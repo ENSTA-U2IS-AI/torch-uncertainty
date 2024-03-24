@@ -113,7 +113,7 @@ class BayesLinear(nn.Module):
             return self._frozen_forward(inputs)
         return self._forward(inputs)
 
-    def _frozen_forward(self, inputs):
+    def _frozen_forward(self, inputs) -> Tensor:
         return F.linear(inputs, self.weight_mu, self.bias_mu)
 
     def _forward(self, inputs: Tensor) -> Tensor:

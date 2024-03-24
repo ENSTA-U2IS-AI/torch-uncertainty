@@ -49,6 +49,7 @@ class ImageNetVariation(ImageFolder):
             self.download()
 
         self.root = Path(root)
+        self.split = split
 
         if not self._check_integrity():
             raise RuntimeError(

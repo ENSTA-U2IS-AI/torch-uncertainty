@@ -62,7 +62,7 @@ class MCBatchNorm(nn.Module):
                     "model does not contain any MCBatchNorm2d after conversion."
                 )
 
-    def fit(self, dataset: Dataset):
+    def fit(self, dataset: Dataset) -> None:
         """Fit the model on the dataset.
 
         Args:

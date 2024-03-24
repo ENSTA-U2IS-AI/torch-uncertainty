@@ -265,12 +265,12 @@ class ClassificationRoutine(LightningModule):
             )
         return Identity()
 
-    def configure_optimizers(self):
+    def configure_optimizers(self) -> Optimizer | dict:
         return self.optim_recipe
 
     def on_train_start(self) -> None:
-        init_metrics = {k: 0 for k in self.val_cls_metrics}
-        init_metrics.update({k: 0 for k in self.test_cls_metrics})
+        init_metrics = dict.fromkeys(self.val_cls_metrics, 0)
+        init_metrics.update(dict.fromkeys(self.test_cls_metrics, 0))
 
         if self.logger is not None:  # coverage: ignore
             self.logger.log_hyperparams(
@@ -579,7 +579,7 @@ def _classification_routine_checks(
     num_estimators: int,
     ood_criterion: str,
     eval_grouping_loss: bool,
-):
+) -> None:
     if not isinstance(num_estimators, int) or num_estimators < 1:
         raise ValueError(
             "The number of estimators must be a positive integer >= 1."

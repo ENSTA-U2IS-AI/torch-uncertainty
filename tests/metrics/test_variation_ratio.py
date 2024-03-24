@@ -52,5 +52,5 @@ class TestVariationRatio:
         assert res == pytest.approx(0.8, 1e-6)
 
     def test_bad_argument(self):
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError):
             _ = VariationRatio(reduction="geometric_mean")

@@ -2,6 +2,7 @@ from pathlib import Path
 
 import pytest
 import torch
+from huggingface_hub.utils._errors import RepositoryNotFoundError
 from torch.distributions import Laplace, Normal
 
 from torch_uncertainty.utils import (
@@ -23,7 +24,7 @@ class TestUtils:
         get_version("tests/testlog", version=42, checkpoint=45)
 
     def test_getversion_log_failure(self):
-        with pytest.raises(Exception):
+        with pytest.raises(FileNotFoundError):
             get_version("tests/testlog", version=52)
 
 
@@ -36,7 +37,7 @@ class TestHub:
         hub.load_hf("test", version=2)
 
     def test_hub_notexists(self):
-        with pytest.raises(Exception):
+        with pytest.raises(RepositoryNotFoundError):
             hub.load_hf("tests")
 
         with pytest.raises(ValueError):

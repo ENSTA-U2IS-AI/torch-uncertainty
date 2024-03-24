@@ -82,7 +82,6 @@ class FPR95(Metric):
         in_scores = conf[np.logical_not(out_labels)]
         out_scores = conf[out_labels]
 
-        # pos = OOD
         neg = np.array(in_scores[:]).reshape((-1, 1))
         pos = np.array(out_scores[:]).reshape((-1, 1))
         examples = np.squeeze(np.vstack((pos, neg)))

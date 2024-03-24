@@ -61,7 +61,6 @@ class WideResNetBaseline(ClassificationRoutine):
         calibration_set: Literal["val", "test"] | None = None,
         eval_ood: bool = False,
         eval_grouping_loss: bool = False,
-        # pretrained: bool = False,
     ) -> None:
         r"""Wide-ResNet28x10 backbone baseline for classification providing support
         for various versions.

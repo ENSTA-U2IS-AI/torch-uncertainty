@@ -62,7 +62,7 @@ def deep_ensembles(
     task: Literal[
         "classification", "regression", "segmentation"
     ] = "classification",
-    probabilistic=None,
+    probabilistic: bool | None = None,
     reset_model_parameters: bool = False,
 ) -> _DeepEnsembles:
     """Build a Deep Ensembles out of the original models.
@@ -91,10 +91,8 @@ def deep_ensembles(
         Simple and scalable predictive uncertainty estimation using deep
         ensembles. In NeurIPS, 2017.
     """
-    if (
-        isinstance(models, list)
-        and len(models) == 1
-        or isinstance(models, nn.Module)
+    if (isinstance(models, list) and len(models) == 1) or isinstance(
+        models, nn.Module
     ):
         if num_estimators is None:
             raise ValueError(

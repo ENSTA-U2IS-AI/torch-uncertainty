@@ -75,7 +75,7 @@ def create_train_val_split(
     dataset: Dataset,
     val_split_rate: float,
     val_transforms: Callable | None = None,
-):
+) -> tuple[Dataset, Dataset]:
     train, val = random_split(dataset, [1 - val_split_rate, val_split_rate])
     val = copy.deepcopy(val)
     val.dataset.transform = val_transforms

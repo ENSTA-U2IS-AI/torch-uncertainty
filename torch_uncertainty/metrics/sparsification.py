@@ -19,7 +19,7 @@ class AUSE(Metric):
     scores: list[Tensor]
     errors: list[Tensor]
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs) -> None:
         """The Area Under the Sparsification Error curve (AUSE) metric to estimate
         the quality of the uncertainty estimates, i.e., how much they coincide with
         the true errors.

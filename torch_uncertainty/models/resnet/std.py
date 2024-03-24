@@ -143,6 +143,7 @@ class _Bottleneck(nn.Module):
         return self.activation_fn(out)
 
 
+# ruff: noqa: ERA001
 # class Robust_Bottleneck(nn.Module):
 #     """Robust _Bottleneck from "Can CNNs be more robust than transformers?"
 #     This corresponds to ResNet-Up-Inverted-DW in the paper.

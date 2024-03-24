@@ -62,15 +62,15 @@ class SegmentationRoutine(LightningModule):
         self.val_seg_metrics = seg_metrics.clone(prefix="val/")
         self.test_seg_metrics = seg_metrics.clone(prefix="test/")
 
-    def configure_optimizers(self):
+    def configure_optimizers(self) -> Optimizer | dict:
         return self.optim_recipe
 
     def forward(self, img: Tensor) -> Tensor:
         return self.model(img)
 
     def on_train_start(self) -> None:
-        init_metrics = {k: 0 for k in self.val_seg_metrics}
-        init_metrics.update({k: 0 for k in self.test_seg_metrics})
+        init_metrics = dict.fromkeys(self.val_seg_metrics, 0)
+        init_metrics.update(dict.fromkeys(self.test_seg_metrics, 0))
 
         self.logger.log_hyperparams(self.hparams, init_metrics)
 
@@ -131,7 +131,7 @@ class SegmentationRoutine(LightningModule):
         self.test_seg_metrics.reset()
 
 
-def _segmentation_routine_checks(num_estimators, num_classes):
+def _segmentation_routine_checks(num_estimators: int, num_classes: int) -> None:
     if num_estimators < 1:
         raise ValueError(
             f"num_estimators must be positive, got {num_estimators}."

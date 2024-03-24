@@ -28,7 +28,7 @@ class TestCategoricalNegativeLogLikelihood:
         assert torch.all(res_sum == torch.zeros(1))
 
     def test_bad_argument(self) -> None:
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError):
             _ = CategoricalNLL(reduction="geometric_mean")
 
 

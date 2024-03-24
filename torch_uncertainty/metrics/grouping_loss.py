@@ -7,7 +7,9 @@ from torchmetrics.utilities.data import dim_zero_cat
 
 
 class GLEstimator(GLEstimatorBase):
-    def fit(self, probs: Tensor, targets: Tensor, features: Tensor):
+    def fit(
+        self, probs: Tensor, targets: Tensor, features: Tensor
+    ) -> "GLEstimator":
         probs = probs.detach().cpu().numpy()
         features = features.detach().cpu().numpy()
         targets = (targets * 1).detach().cpu().numpy()

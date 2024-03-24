@@ -16,6 +16,7 @@ def sim_gauss_kernel(dist, tau_max: float = 1.0, tau_std: float = 0.5) -> float:
     return 1 / (dist_rate + 1e-12)
 
 
+# ruff: noqa: ERA001
 # def tensor_linspace(start: Tensor, stop: Tensor, num: int):
 #     """
 #     Creates a tensor of shape [num, *start.shape] whose values are evenly

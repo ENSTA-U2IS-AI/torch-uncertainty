@@ -38,7 +38,6 @@ class DummyClassificationDataset(Dataset):
         image_size: int = 4,
         num_classes: int = 10,
         num_images: int = 2,
-        **kwargs: Any,
     ) -> None:
         self.root = root
         self.train = train  # training set or test set
@@ -112,7 +111,6 @@ class DummyRegressionDataset(Dataset):
         in_features: int = 3,
         out_features: int = 10,
         num_samples: int = 2,
-        **kwargs: Any,
     ) -> None:
         self.root = root
         self.train = train  # training set or test set
@@ -169,7 +167,6 @@ class DummySegmentationDataset(Dataset):
         image_size: int = 4,
         num_classes: int = 10,
         num_images: int = 2,
-        **kwargs: Any,
     ) -> None:
         super().__init__()
 

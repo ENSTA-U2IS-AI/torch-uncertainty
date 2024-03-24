@@ -83,5 +83,5 @@ class TestEntropy:
         assert res == math.log(2)
 
     def test_bad_argument(self):
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError):
             _ = Entropy("geometric_mean")

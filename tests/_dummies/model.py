@@ -16,6 +16,7 @@ class _Dummy(nn.Module):
         last_layer: nn.Module,
     ) -> None:
         super().__init__()
+        self.in_channels = in_channels
         self.dropout_rate = dropout_rate
 
         if with_linear:

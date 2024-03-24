@@ -55,5 +55,5 @@ class TestMutualInformation:
         assert res[1] == pytest.approx(math.log(2), 1e-5)
 
     def test_bad_argument(self):
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError):
             _ = MutualInformation("geometric_mean")

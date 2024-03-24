@@ -50,7 +50,7 @@ class TestPackedBaseline:
         _ = net(torch.rand(1, 3, 40, 40))
 
     def test_packed_exception(self):
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError):
             _ = ResNetBaseline(
                 num_classes=10,
                 in_channels=3,
@@ -64,7 +64,7 @@ class TestPackedBaseline:
                 groups=1,
             )
 
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError):
             _ = ResNetBaseline(
                 num_classes=10,
                 in_channels=3,

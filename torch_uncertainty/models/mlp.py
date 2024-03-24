@@ -7,7 +7,7 @@ from torch_uncertainty.layers.bayesian import BayesLinear
 from torch_uncertainty.layers.packed import PackedLinear
 from torch_uncertainty.models.utils import stochastic_model
 
-__all__ = ["mlp", "packed_mlp", "bayesian_mlp"]
+__all__ = ["bayesian_mlp", "mlp", "packed_mlp"]
 
 
 class _MLP(nn.Module):

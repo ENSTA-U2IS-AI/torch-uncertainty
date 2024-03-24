@@ -65,6 +65,7 @@ class UCIDataModule(AbstractDataModule):
         """Download the dataset."""
         self.dataset(root=self.root, download=True)
 
+    # ruff: noqa: ARG002
     def setup(self, stage: str | None = None) -> None:
         """Split the datasets into train, val, and test."""
         full = self.dataset(
@@ -82,12 +83,3 @@ class UCIDataModule(AbstractDataModule):
         )
         if self.val_split == 0:
             self.val = self.test
-
-    # Change by default test_dataloader -> List[DataLoader]
-    # def test_dataloader(self) -> DataLoader:
-    #     """Get the test dataloader for UCI Regression.
-
-    #     Return:
-    #         DataLoader: UCI Regression test dataloader.
-    #     """
-    #     return self._data_loader(self.test)

@@ -101,7 +101,7 @@ class MCBatchNorm1d(_MCBatchNorm):
         Check MCBatchNorm in torch_uncertainty/post_processing/.
     """
 
-    def _check_input_dim(self, inputs):
+    def _check_input_dim(self, inputs) -> None:
         if inputs.dim() != 2 and inputs.dim() != 3:
             raise ValueError(
                 f"expected 2D or 3D input (got {inputs.dim()}D input)"
@@ -127,7 +127,7 @@ class MCBatchNorm2d(_MCBatchNorm):
         Check MCBatchNorm in torch_uncertainty/post_processing/.
     """
 
-    def _check_input_dim(self, inputs):
+    def _check_input_dim(self, inputs) -> None:
         if inputs.dim() != 3 and inputs.dim() != 4:
             raise ValueError(
                 f"expected 3D or 4D input (got {inputs.dim()}D input)"
@@ -153,7 +153,7 @@ class MCBatchNorm3d(_MCBatchNorm):
         Check MCBatchNorm in torch_uncertainty/post_processing/.
     """
 
-    def _check_input_dim(self, inputs):
+    def _check_input_dim(self, inputs) -> None:
         if inputs.dim() != 4 and inputs.dim() != 5:
             raise ValueError(
                 f"expected 4D or 5D input (got {inputs.dim()}D input)"

@@ -51,7 +51,7 @@ class TinyImageNet(Dataset):
         self.samples = samples
         self.label_data = torch.as_tensor(labels).long()
 
-    def _add_channels(self, img):
+    def _add_channels(self, img: np.ndarray) -> np.ndarray:
         while len(img.shape) < 3:  # third axis is the channels
             img = np.expand_dims(img, axis=-1)
         while (img.shape[-1]) < 3:
@@ -78,7 +78,7 @@ class TinyImageNet(Dataset):
 
         return sample, target
 
-    def _make_paths(self):
+    def _make_paths(self) -> list[tuple[Path, int]]:
         self.ids = []
         with self.wnids_path.open() as idf:
             for nid in idf:
@@ -103,7 +103,7 @@ class TinyImageNet(Dataset):
                 label_id = self.ids.index(nid)
                 with anno_path.open() as annof:
                     for line in annof:
-                        fname, x0, y0, x1, y1 = line.split()
+                        fname, _, _, _, _ = line.split()
                         fname = imgs_path / fname
                         paths.append((fname, label_id))
 
@@ -111,7 +111,7 @@ class TinyImageNet(Dataset):
             val_path = self.root / "val"
             with (val_path / "val_annotations.txt").open() as valf:
                 for line in valf:
-                    fname, nid, x0, y0, x1, y1 = line.split()
+                    fname, nid, _, _, _, _ = line.split()
                     fname = val_path / "images" / fname
                     label_id = self.ids.index(nid)
                     paths.append((fname, label_id))

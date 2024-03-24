@@ -46,6 +46,7 @@ class OpenImageO(ImageFolder):
             Wang H., et al. In CVPR 2022.
         """
         self.root = Path(root)
+        self.split = split
 
         self.transform = transform
         self.target_transform = target_transform
@@ -78,4 +79,3 @@ class OpenImageO(ImageFolder):
             filename=self.filename,
             md5=self.md5sum,
         )
-        print(f"Downloaded {self.filename} to {self.root}")

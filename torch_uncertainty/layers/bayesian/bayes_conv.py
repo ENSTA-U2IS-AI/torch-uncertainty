@@ -178,7 +178,7 @@ class _BayesConvNd(Module):
         bias = self.bias_sampler.sample() if self.bias_mu is not None else None
         return weight, bias
 
-    def extra_repr(self):  # coverage: ignore
+    def extra_repr(self) -> str:  # coverage: ignore
         s = (
             "{in_channels}, {out_channels}, kernel_size={kernel_size}"
             ", stride={stride}"
@@ -197,7 +197,7 @@ class _BayesConvNd(Module):
             s += ", padding_mode={padding_mode}"
         return s.format(**self.__dict__)
 
-    def __setstate__(self, state):
+    def __setstate__(self, state) -> None:
         super().__setstate__(state)
         if not hasattr(self, "padding_mode"):  # coverage: ignore
             self.padding_mode = "zeros"
