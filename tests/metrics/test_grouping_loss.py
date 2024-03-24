@@ -10,25 +10,27 @@ class TestGroupingLoss:
     def test_compute(self):
         metric = GroupingLoss()
         metric.update(
-            torch.rand(100),
-            (torch.rand(100) > 0.3).long(),
-            torch.rand((100, 10)),
+            torch.cat([torch.tensor([0, 1, 0, 1]), torch.ones(200) / 10]),
+            torch.cat(
+                [torch.tensor([0, 0, 1, 1]), torch.zeros(100), torch.ones(100)]
+            ).long(),
+            torch.cat([torch.zeros((104, 10)), torch.ones((100, 10))]),
         )
         metric.compute()
 
         metric = GroupingLoss()
         metric.update(
-            torch.ones((100, 4, 10)) / 10,
-            torch.arange(100),
-            torch.rand((100, 4, 10)),
+            torch.ones((200, 4, 10)),
+            torch.cat([torch.arange(100), torch.arange(100)]),
+            torch.cat([torch.zeros((100, 4, 10)), torch.ones((100, 4, 10))]),
         )
         metric.compute()
         metric.reset()
 
         metric.update(
-            torch.ones((100, 10)) / 10,
-            torch.nn.functional.one_hot(torch.arange(100)),
-            torch.rand((100, 10)),
+            torch.ones((200, 10)) / 10,
+            torch.nn.functional.one_hot(torch.arange(200)),
+            torch.cat([torch.zeros((100, 10)), torch.ones((1004, 10))]),
         )
 
     def test_errors(self):
