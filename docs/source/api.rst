@@ -244,4 +244,4 @@ Segmentation
 
     CamVidDataModule
     CityscapesDataModule
-    
+    MUADDataModule
