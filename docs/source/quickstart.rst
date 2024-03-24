@@ -4,10 +4,91 @@ Quickstart
 .. role:: bash(code)
     :language: bash
 
-Torch Uncertainty comes with different usage levels ranging from specific
-PyTorch layers to ready to train Lightning-based models. The following
-presents a short introduction to each one of them. Let's start with the
-highest-level usage.
+TorchUncertainty is centered around **uncertainty-aware** training and evaluation routines.
+These routines make it very easy to:
+
+- train ensembles-like methods (Deep Ensembles, Packed-Ensembles, MIMO, Masksembles, etc)
+- compute and monitor uncertainty metrics: calibration, out-of-distribution detection, proper scores, grouping loss, etc.
+- leverage calibration methods automatically during evaluation
+
+Yet, we take account that their will be as many different uses of TorchUncertainty as there are of users. 
+This page provides ideas on how to benefit from TorchUncertainty at all levels: from ready-to-train lightning-based models to using only specific
+PyTorch layers. 
+
+Training with TorchUncertainty's Uncertainty-aware Routines
+-----------------------------------------------------------
+
+Let's have a look at the `Classification routine <https://github.com/ENSTA-U2IS-AI/torch-uncertainty/blob/main/torch_uncertainty/routines/classification.py>`_. 
+
+.. code:: python
+  from lightning.pytorch import LightningModule
+
+  class ClassificationRoutine(LightningModule):
+    def __init__(
+      self,
+      model: nn.Module,
+      num_classes: int,
+      loss: nn.Module,
+      num_estimators: int = 1,
+      format_batch_fn: nn.Module | None = None,
+      optim_recipe: dict | Optimizer | None = None,
+      mixtype: str = "erm",
+      mixmode: str = "elem",
+      dist_sim: str = "emb",
+      kernel_tau_max: float = 1.0,
+      kernel_tau_std: float = 0.5,
+      mixup_alpha: float = 0,
+      cutmix_alpha: float = 0,
+      eval_ood: bool = False,
+      eval_grouping_loss: bool = False,
+      ood_criterion: Literal[
+          "msp", "logit", "energy", "entropy", "mi", "vr"
+      ] = "msp",
+      log_plots: bool = False,
+      save_in_csv: bool = False,
+      calibration_set: Literal["val", "test"] | None = None,
+    ) -> None:
+
+
+Building your First Routine
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+This routine is a wrapper of any custom or TorchUncertainty classification model. To use it, 
+just build your model and pass it to the routine as argument along with the optimization criterion (the loss)
+as well as the number of classes that we use for torch metrics. 
+
+.. code:: python
+  model = MyModel(num_classes=10)
+  routine = ClassificationRoutine(model, num_classes=10, loss=nn.CrossEntropyLoss())
+
+
+Training with the Routine
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To train with this routine, you will first need to create a lightning Trainer and have either a lightning datamodule
+or PyTorch dataloaders. When benchmarking models, we advise to use lightning datamodules that will automatically handle
+train/val/test splits, out-of-distribution detection and dataset shift. For this example, let us use TorchUncertainty's 
+CIFAR10 datamodule. Please keep in mind that you could use your own datamodule or dataloaders.
+
+.. code:: python
+  from torch_uncertainty.datamodules import CIFAR10DataModule
+  from pytorch_lightning import Trainer
+
+  dm = CIFAR10DataModule(root="data", batch_size=32)
+  trainer = Trainer(gpus=1, max_epochs=100)
+  trainer.fit(routine, dm)
+  trainer.eval(routine, dm)
+
+Here it is, you have trained your first model with TorchUncertainty! As a result, you will get access to various metrics
+measuring the ability of your model to handle uncertainty.
+
+More metrics
+^^^^^^^^^^^^
+
+With TorchUncertainty datamodules, you can easily test models on out-of-distribution datasets, by
+setting the `eval_ood` parameter to True. You can also evaluate the grouping loss by setting `eval_grouping_loss` to True.
+Finally, you can calibrate your model using the `calibration_set` parameter. In this case, you will get 
+metrics for but the uncalibrated and calibrated models: the metrics corresponding to the temperature scaled
+model will begin with `ts_`.
 
 Using the Lightning-based CLI tool
 ----------------------------------

@@ -1,6 +1,6 @@
 <div align="center">
 
-![Torch Uncertainty Logo](https://github.com/ENSTA-U2IS-AI/torch-uncertainty/blob/main/docs/source/_static/images/torch_uncertainty.png)
+![TorchUncertaintyLogo](https://github.com/ENSTA-U2IS-AI/torch-uncertainty/blob/main/docs/source/_static/images/torch_uncertainty.png)
 
 [![pypi](https://img.shields.io/pypi/v/torch_uncertainty.svg)](https://pypi.python.org/pypi/torch_uncertainty)
 [![tests](https://github.com/ENSTA-U2IS-AI/torch-uncertainty/actions/workflows/run-tests.yml/badge.svg?branch=main&event=push)](https://github.com/ENSTA-U2IS-AI/torch-uncertainty/actions/workflows/run-tests.yml)
@@ -14,6 +14,8 @@
 _TorchUncertainty_ is a package designed to help you leverage [uncertainty quantification techniques](https://github.com/ENSTA-U2IS-AI/awesome-uncertainty-deeplearning) and make your deep neural networks more reliable. It aims at being collaborative and including as many methods as possible, so reach out to add yours!
 
 :construction: _TorchUncertainty_ is in early development :construction: - expect changes, but reach out and contribute if you are interested in the project! **Please raise an issue if you have any bugs or difficulties and join the [discord server](https://discord.gg/HMCawt5MJu).**
+
+Our webpage and documentation is available here: [torch-uncertainty.github.io](https://torch-uncertainty.github.io).
 
 ---
 
@@ -38,13 +40,11 @@ pip install torch-uncertainty
 
 The installation procedure for contributors is different: have a look at the [contribution page](https://torch-uncertainty.github.io/contributing.html).
 
-## Getting Started and Documentation
+## :racehorse: Quckstart
 
-Please find the documentation at [torch-uncertainty.github.io](https://torch-uncertainty.github.io).
+We make a quickstart available at [torch-uncertainty.github.io/quickstart](https://torch-uncertainty.github.io/quickstart.html).
 
-A quickstart is available at [torch-uncertainty.github.io/quickstart](https://torch-uncertainty.github.io/quickstart.html).
-
-## Implemented methods
+## :books: Implemented methods
 
 TorchUncertainty currently supports **Classification**, **probabilistic** and pointwise **Regression** and **Segmentation**.
 
@@ -57,7 +57,7 @@ To date, the following deep learning baselines have been implemented:
 - BatchEnsemble
 - Masksembles
 - MIMO
-- Packed-Ensembles (see [blog post](https://medium.com/@adrien.lafage/make-your-neural-networks-more-reliable-with-packed-ensembles-7ad0b737a873)) - [Tutorial](https://torch-uncertainty.github.io/auto_tutorials/tutorial_pe_cifar10.html)
+- Packed-Ensembles (see [Blog post](https://medium.com/@adrien.lafage/make-your-neural-networks-more-reliable-with-packed-ensembles-7ad0b737a873)) - [Tutorial](https://torch-uncertainty.github.io/auto_tutorials/tutorial_pe_cifar10.html)
 - Bayesian Neural Networks :construction: Work in progress :construction: - [Tutorial](https://torch-uncertainty.github.io/auto_tutorials/tutorial_bayesian.html)
 - Regression with Beta Gaussian NLL Loss
 - Deep Evidential Classification & Regression - [Tutorial](https://torch-uncertainty.github.io/auto_tutorials/tutorial_evidential_classification.html)
@@ -77,7 +77,7 @@ To date, the following post-processing methods have been implemented:
 
 ## Tutorials
 
-The following tutorials willWe provide the following tutorials in our documentation:
+Our documentation contains the following tutorials:
 
 - [From a Standard Classifier to a Packed-Ensemble](https://torch-uncertainty.github.io/auto_tutorials/tutorial_pe_cifar10.html)
 - [Training a Bayesian Neural Network in 3 minutes](https://torch-uncertainty.github.io/auto_tutorials/tutorial_bayesian.html)
