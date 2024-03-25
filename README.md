@@ -40,7 +40,7 @@ pip install torch-uncertainty
 
 The installation procedure for contributors is different: have a look at the [contribution page](https://torch-uncertainty.github.io/contributing.html).
 
-## :racehorse: Quckstart
+## :racehorse: Quickstart
 
 We make a quickstart available at [torch-uncertainty.github.io/quickstart](https://torch-uncertainty.github.io/quickstart.html).
 
