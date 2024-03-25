@@ -26,7 +26,7 @@ class BatchLinear(nn.Module):
         dtype=None,
     ) -> None:
         r"""Applies a linear transformation using BatchEnsemble method to the
-        incoming data: :math:`y=(x\circ \hat{r_{group}})W^{T}\circ \hat{s_{group}} + \hat{b}`.
+        incoming data: :math:`y=(x\circ \widehat{r_{group}})W^{T}\circ \widehat{s_{group}} + \widehat{b}`.
 
         Args:
             in_features (int): size of each input sample.
@@ -70,9 +70,9 @@ class BatchLinear(nn.Module):
 
         Shape:
             - Input: :math:`(N, H_{in})` where :math:`N` is the batch size and
-            :math:`H_{in} = \text{in_features}`.
+              :math:`H_{in} = \text{in_features}`.
             - Output: :math:`(N, H_{out})` where
-            :math:`H_{out} = \text{out_features}`.
+              :math:`H_{out} = \text{out_features}`.
 
         Warning:
             Make sure that :attr:`num_estimators` divides :attr:`out_features` when calling :func:`forward()`.
@@ -208,12 +208,12 @@ class BatchConv2d(nn.Module):
         :math:`(N, C_{out}, H_{out}, W_{out})` can be precisely described as:
 
         .. math::
-        \text{out}(N_i, C_{\text{out}_j})=\
-        &\hat{b}(N_i,C_{\text{out}_j})
-        +\hat{s_group}(N_{i},C_{\text{out}_j}) \\
-        &\times \sum_{k = 0}^{C_{\text{in}} - 1}
-        \text{weight}(C_{\text{out}_j}, k)\star (\text{input}(N_i, k)
-        \times \hat{r_group}(N_i, k))
+            \text{out}(N_i, C_{\text{out}_j})=\
+            &\widehat{b}(N_i,C_{\text{out}_j})
+            +\widehat{s_{group}}(N_{i},C_{\text{out}_j}) \\
+            &\times \sum_{k = 0}^{C_{\text{in}} - 1}
+            \text{weight}(C_{\text{out}_j}, k)\star (\text{input}(N_i, k)
+            \times \widehat{r_{group}}(N_i, k))
 
         Reference:
             Introduced by the paper `BatchEnsemble: An Alternative Approach to

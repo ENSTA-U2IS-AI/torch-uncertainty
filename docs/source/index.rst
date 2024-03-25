@@ -45,6 +45,7 @@ the following paper:
    quickstart
    introduction_uncertainty
    auto_tutorials/index
+   cli_guide
    api
    contributing
    references

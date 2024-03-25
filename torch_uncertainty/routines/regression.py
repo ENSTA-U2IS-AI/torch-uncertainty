@@ -29,21 +29,21 @@ class RegressionRoutine(LightningModule):
         """Regression routine for Lightning.
 
         Args:
-            model (nn.Module): Model to train.
+            model (torch.nn.Module): Model to train.
             probabilistic (bool): Whether the model is probabilistic, i.e.,
                 outputs a PyTorch distribution.
             output_dim (int): Number of outputs of the model.
-            loss (type[nn.Module]): Loss function to optimize the :attr:`model`.
+            loss (torch.nn.Module): Loss function to optimize the :attr:`model`.
             num_estimators (int, optional): The number of estimators for the
                 ensemble. Defaults to 1 (single model).
-            optim_recipe (dict | Optimizer, optional): The optimizer and
+            optim_recipe (dict or torch.optim.Optimizer, optional): The optimizer and
                 optionally the scheduler to use. Defaults to ``None``.
-            format_batch_fn (nn.Module, optional): The function to format the
-                batch. Defaults to None.
+            format_batch_fn (torch.nn.Module, optional): The function to format the
+                batch. Defaults to ``None``.
 
         Warning:
             If :attr:`probabilistic` is True, the model must output a `PyTorch
-            distribution <https://pytorch.org/docs/stable/distributions.html>_`.
+            distribution <https://pytorch.org/docs/stable/distributions.html>`_.
 
         Warning:
             You must define :attr:`optim_recipe` if you do not use
