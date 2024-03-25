@@ -1,20 +1,20 @@
 from pathlib import Path
 
 import pytest
-from lightning.pytorch import Trainer
 from torch import nn
 
 from tests._dummies import DummyRegressionBaseline, DummyRegressionDataModule
 from torch_uncertainty.losses import DistributionNLLLoss
 from torch_uncertainty.optim_recipes import optim_cifar10_resnet18
 from torch_uncertainty.routines import RegressionRoutine
+from torch_uncertainty.utils import TUTrainer
 
 
 class TestRegression:
     """Testing the Regression routine."""
 
     def test_one_estimator_one_output(self):
-        trainer = Trainer(accelerator="cpu", fast_dev_run=True)
+        trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
 
         root = Path(__file__).parent.absolute().parents[0] / "data"
         dm = DummyRegressionDataModule(out_features=1, root=root, batch_size=4)
@@ -48,7 +48,7 @@ class TestRegression:
         model(dm.get_test_set()[0][0])
 
     def test_one_estimator_two_outputs(self):
-        trainer = Trainer(accelerator="cpu", fast_dev_run=True)
+        trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
 
         root = Path(__file__).parent.absolute().parents[0] / "data"
         dm = DummyRegressionDataModule(out_features=2, root=root, batch_size=4)
@@ -79,7 +79,7 @@ class TestRegression:
         model(dm.get_test_set()[0][0])
 
     def test_two_estimators_one_output(self):
-        trainer = Trainer(accelerator="cpu", fast_dev_run=True)
+        trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
 
         root = Path(__file__).parent.absolute().parents[0] / "data"
         dm = DummyRegressionDataModule(out_features=1, root=root, batch_size=4)
@@ -110,7 +110,7 @@ class TestRegression:
         model(dm.get_test_set()[0][0])
 
     def test_two_estimators_two_outputs(self):
-        trainer = Trainer(accelerator="cpu", fast_dev_run=True)
+        trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
 
         root = Path(__file__).parent.absolute().parents[0] / "data"
         dm = DummyRegressionDataModule(out_features=2, root=root, batch_size=4)

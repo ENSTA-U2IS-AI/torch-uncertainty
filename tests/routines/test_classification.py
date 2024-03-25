@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import pytest
-from lightning import Trainer
 from torch import nn
 
 from tests._dummies import (
@@ -12,13 +11,14 @@ from tests._dummies import (
 from torch_uncertainty.losses import DECLoss, ELBOLoss
 from torch_uncertainty.optim_recipes import optim_cifar10_resnet18
 from torch_uncertainty.routines import ClassificationRoutine
+from torch_uncertainty.utils import TUTrainer
 
 
 class TestClassification:
     """Testing the classification routine."""
 
     def test_one_estimator_binary(self):
-        trainer = Trainer(accelerator="cpu", fast_dev_run=True)
+        trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
 
         dm = DummyClassificationDataModule(
             root=Path(),
@@ -41,7 +41,7 @@ class TestClassification:
         model(dm.get_test_set()[0][0])
 
     def test_two_estimators_binary(self):
-        trainer = Trainer(accelerator="cpu", fast_dev_run=True)
+        trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
 
         dm = DummyClassificationDataModule(
             root=Path(),
@@ -64,7 +64,7 @@ class TestClassification:
         model(dm.get_test_set()[0][0])
 
     def test_one_estimator_two_classes(self):
-        trainer = Trainer(accelerator="cpu", fast_dev_run=True)
+        trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
 
         dm = DummyClassificationDataModule(
             root=Path(),
@@ -89,7 +89,7 @@ class TestClassification:
         model(dm.get_test_set()[0][0])
 
     def test_one_estimator_two_classes_timm(self):
-        trainer = Trainer(accelerator="cpu", fast_dev_run=True)
+        trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
 
         dm = DummyClassificationDataModule(
             root=Path(),
@@ -117,7 +117,7 @@ class TestClassification:
         model(dm.get_test_set()[0][0])
 
     def test_one_estimator_two_classes_mixup(self):
-        trainer = Trainer(accelerator="cpu", fast_dev_run=True)
+        trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
 
         dm = DummyClassificationDataModule(
             root=Path(),
@@ -144,7 +144,7 @@ class TestClassification:
         model(dm.get_test_set()[0][0])
 
     def test_one_estimator_two_classes_mixup_io(self):
-        trainer = Trainer(accelerator="cpu", fast_dev_run=True)
+        trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
 
         dm = DummyClassificationDataModule(
             root=Path(),
@@ -171,7 +171,7 @@ class TestClassification:
         model(dm.get_test_set()[0][0])
 
     def test_one_estimator_two_classes_regmixup(self):
-        trainer = Trainer(accelerator="cpu", fast_dev_run=True)
+        trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
 
         dm = DummyClassificationDataModule(
             root=Path(),
@@ -198,7 +198,7 @@ class TestClassification:
         model(dm.get_test_set()[0][0])
 
     def test_one_estimator_two_classes_kernel_warping_emb(self):
-        trainer = Trainer(accelerator="cpu", fast_dev_run=True)
+        trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
 
         dm = DummyClassificationDataModule(
             root=Path(),
@@ -225,7 +225,7 @@ class TestClassification:
         model(dm.get_test_set()[0][0])
 
     def test_one_estimator_two_classes_kernel_warping_inp(self):
-        trainer = Trainer(accelerator="cpu", fast_dev_run=True)
+        trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
 
         dm = DummyClassificationDataModule(
             root=Path(),
@@ -253,7 +253,7 @@ class TestClassification:
         model(dm.get_test_set()[0][0])
 
     def test_one_estimator_two_classes_calibrated_with_ood(self):
-        trainer = Trainer(accelerator="cpu", fast_dev_run=True, logger=True)
+        trainer = TUTrainer(accelerator="cpu", fast_dev_run=True, logger=True)
 
         dm = DummyClassificationDataModule(
             root=Path(),
@@ -280,7 +280,7 @@ class TestClassification:
         model(dm.get_test_set()[0][0])
 
     def test_two_estimators_two_classes_mi(self):
-        trainer = Trainer(accelerator="cpu", fast_dev_run=True)
+        trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
 
         dm = DummyClassificationDataModule(
             root=Path(),
@@ -305,7 +305,7 @@ class TestClassification:
         model(dm.get_test_set()[0][0])
 
     def test_two_estimator_two_classes_elbo_vr_logs(self):
-        trainer = Trainer(
+        trainer = TUTrainer(
             accelerator="cpu",
             max_epochs=1,
             limit_train_batches=1,

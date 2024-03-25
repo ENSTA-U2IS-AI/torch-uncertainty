@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import pytest
-from lightning.pytorch import Trainer
 from torch import nn
 
 from tests._dummies import (
@@ -10,11 +9,12 @@ from tests._dummies import (
 )
 from torch_uncertainty.optim_recipes import optim_cifar10_resnet18
 from torch_uncertainty.routines import SegmentationRoutine
+from torch_uncertainty.utils import TUTrainer
 
 
 class TestSegmentation:
     def test_one_estimator_two_classes(self):
-        trainer = Trainer(accelerator="cpu", fast_dev_run=True)
+        trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
 
         root = Path(__file__).parent.absolute().parents[0] / "data"
         dm = DummySegmentationDataModule(root=root, batch_size=4, num_classes=2)
@@ -34,7 +34,7 @@ class TestSegmentation:
         model(dm.get_test_set()[0][0])
 
     def test_two_estimators_two_classes(self):
-        trainer = Trainer(accelerator="cpu", fast_dev_run=True)
+        trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
 
         root = Path(__file__).parent.absolute().parents[0] / "data"
         dm = DummySegmentationDataModule(root=root, batch_size=4, num_classes=2)
