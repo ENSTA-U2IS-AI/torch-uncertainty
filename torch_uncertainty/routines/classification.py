@@ -107,6 +107,11 @@ class ClassificationRoutine(LightningModule):
 
         Warning:
             You must define :attr:`optim_recipe` if you do not use the CLI.
+
+        Note:
+            :attr:`optim_recipe` can be anything that can be returned by
+            :meth:`LightningModule.configure_optimizers()`. Find more details
+            `here <https://lightning.ai/docs/pytorch/stable/common/lightning_module.html#configure-optimizers>`_.
         """
         super().__init__()
         _classification_routine_checks(

@@ -35,7 +35,7 @@ class AUSE(Metric):
 
         Inputs:
             - :attr:`scores`: Uncertainty scores of shape :math:`(B,)`. A higher
-            score means a higher uncertainty.
+              score means a higher uncertainty.
             - :attr:`errors`: Binary errors of shape :math:`(B,)`,
 
         where :math:`B` is the batch size.

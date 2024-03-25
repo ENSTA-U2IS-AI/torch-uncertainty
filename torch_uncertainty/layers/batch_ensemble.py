@@ -25,8 +25,13 @@ class BatchLinear(nn.Module):
         device=None,
         dtype=None,
     ) -> None:
-        r"""Applies a linear transformation using BatchEnsemble method to the
-        incoming data: :math:`y=(x\circ \widehat{r_{group}})W^{T}\circ \widehat{s_{group}} + \widehat{b}`.
+        r"""BatchEnsemble-style Linear layer.
+
+        Applies a linear transformation using BatchEnsemble method to the incoming
+        data.
+
+        .. math::
+            y=(x\circ \widehat{r_{group}})W^{T}\circ \widehat{s_{group}} + \widehat{b}
 
         Args:
             in_features (int): size of each input sample.
@@ -200,7 +205,9 @@ class BatchConv2d(nn.Module):
         device=None,
         dtype=None,
     ) -> None:
-        r"""Applies a 2d convolution over an input signal composed of several input
+        r"""BatchEnsemble-style Conv2d layer.
+        
+        Applies a 2d convolution over an input signal composed of several input
         planes using BatchEnsemble method to the incoming data.
 
         In the simplest case, the output value of the layer with input size

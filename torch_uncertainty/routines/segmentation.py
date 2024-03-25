@@ -14,27 +14,33 @@ class SegmentationRoutine(LightningModule):
         self,
         model: nn.Module,
         num_classes: int,
-        loss: type[nn.Module],
+        loss: nn.Module,
         num_estimators: int = 1,
         optim_recipe: dict | Optimizer | None = None,
         format_batch_fn: nn.Module | None = None,
     ) -> None:
-        """Segmentation routine for Lightning.
+        """Routine for efficient training and testing on **segmentation tasks**
+        using LightningModule.
 
         Args:
-            model (nn.Module): Model to train.
+            model (torch.nn.Module): Model to train.
             num_classes (int): Number of classes in the segmentation task.
-            loss (type[nn.Module]): Loss function to optimize the :attr:`model`.
+            loss (torch.nn.Module): Loss function to optimize the :attr:`model`.
             num_estimators (int, optional): The number of estimators for the
-                ensemble. Defaults to 1 (single model).
-            optim_recipe (dict | Optimizer, optional): The optimizer and
+                ensemble. Defaults to ̀`1̀` (single model).
+            optim_recipe (dict or Optimizer, optional): The optimizer and
                 optionally the scheduler to use. Defaults to ``None``.
-            format_batch_fn (nn.Module, optional): The function to format the
-                batch. Defaults to None.
+            format_batch_fn (torch.nn.Module, optional): The function to format the
+                batch. Defaults to ``None``.
 
         Warning:
             You must define :attr:`optim_recipe` if you do not use
             the CLI.
+
+        Note:
+            :attr:`optim_recipe` can be anything that can be returned by
+            :meth:`LightningModule.configure_optimizers()`. Find more details
+            `here <https://lightning.ai/docs/pytorch/stable/common/lightning_module.html#configure-optimizers>`_.
         """
         super().__init__()
         _segmentation_routine_checks(num_estimators, num_classes)
