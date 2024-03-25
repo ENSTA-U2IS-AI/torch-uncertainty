@@ -95,7 +95,7 @@ class TUEvaluationLoop(_EvaluationLoop):
 
                 console = get_console()
                 console.print(table)
-            else:
+            else:  # coverage: ignore
                 row_format = f"{{:^{max_length}}}" * len(table_headers)
                 half_term_size = int(term_size / 2)
 
