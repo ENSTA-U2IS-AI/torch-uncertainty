@@ -73,7 +73,7 @@ mc_model = mc_dropout(model, num_estimators=16, last_layer=False)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # This is a classification problem, and we use CrossEntropyLoss as the likelihood.
 # We define the training routine using the classification training routine from
-# torch_uncertainty.training.classification. We provide the number of classes
+# torch_uncertainty.routines.classification. We provide the number of classes
 # and channels, the optimizer wrapper, the dropout rate, and the number of
 # forward passes to perform through the network, as well as all the default
 # arguments.
