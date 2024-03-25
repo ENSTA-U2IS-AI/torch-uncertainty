@@ -212,3 +212,59 @@ class DummySegmentationDataset(Dataset):
 
     def __len__(self) -> int:
         return len(self.data)
+
+
+class DummyDepthRegressionDataset(Dataset):
+    def __init__(
+        self,
+        root: Path,
+        split: str = "train",
+        transforms: Callable[..., Any] | None = None,
+        num_channels: int = 3,
+        image_size: int = 4,
+        num_images: int = 2,
+        **args,
+    ) -> None:
+        super().__init__()
+
+        self.root = root
+        self.split = split
+        self.transforms = transforms
+
+        self.data: Any = []
+        self.targets = []
+
+        if num_channels == 1:
+            img_shape = (num_images, image_size, image_size)
+        else:
+            img_shape = (num_images, num_channels, image_size, image_size)
+
+        smnt_shape = (num_images, 1, image_size, image_size)
+
+        self.data = np.random.randint(
+            low=0,
+            high=255,
+            size=img_shape,
+            dtype=np.uint8,
+        )
+
+        self.targets = (
+            np.random.uniform(
+                low=0,
+                high=1,
+                size=smnt_shape,
+            )
+            * 100
+        )
+
+    def __getitem__(self, index: int) -> tuple[Any, Any]:
+        img = tv_tensors.Image(self.data[index])
+        target = tv_tensors.Mask(self.targets[index])
+
+        if self.transforms is not None:
+            img, target = self.transforms(img, target)
+
+        return img, target
+
+    def __len__(self) -> int:
+        return len(self.data)
