@@ -5,7 +5,7 @@ Deep Evidential Regression on a Toy Example
 This tutorial provides an introduction to probabilistic regression in TorchUncertainty.
 
 More specifically, we present Deep Evidential Regression (DER) using a practical example. We demonstrate an application of DER by tackling the toy-problem of fitting :math:`y=x^3` using a Multi-Layer Perceptron (MLP) neural network model. 
-The output layer of the MLP provides a NormalInverseGamma distribution which is used to optimize the model, trhough its negative log-likelihood. 
+The output layer of the MLP provides a NormalInverseGamma distribution which is used to optimize the model, through its negative log-likelihood. 
 
 DER represents an evidential approach to quantifying epistemic and aleatoric uncertainty in neural network regression models. 
 This method involves introducing prior distributions over the parameters of the Gaussian likelihood function. 

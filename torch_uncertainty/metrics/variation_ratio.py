@@ -52,7 +52,7 @@ class VariationRatio(Metric):
         n_estimators = probs_per_est.shape[1]
         probs = probs_per_est.mean(dim=1)
 
-        # best class for exemple
+        # best class for example
         max_classes = probs.argmax(dim=-1)
 
         if self.probabilistic:
@@ -61,7 +61,7 @@ class VariationRatio(Metric):
                 torch.arange(probs_per_est.size(0)), max_classes
             ].mean(dim=1)
         else:
-            # best class for (exemple, estimator)
+            # best class for (example, estimator)
             max_classes_per_est = probs_per_est.argmax(dim=-1)
             variation_ratio = (
                 1

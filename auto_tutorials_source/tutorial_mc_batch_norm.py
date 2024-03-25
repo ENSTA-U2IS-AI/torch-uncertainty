@@ -20,7 +20,7 @@ First, we have to load the following utilities from TorchUncertainty:
 - the classification training routine in the torch_uncertainty.training.classification module
 - an optimization recipe in the torch_uncertainty.optim_recipes module.
 
-We also need import the neural network utils withing `torch.nn`.
+We also need import the neural network utils within `torch.nn`.
 """
 # %%
 from pathlib import Path

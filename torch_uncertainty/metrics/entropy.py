@@ -16,7 +16,7 @@ class Entropy(Metric):
         **kwargs: Any,
     ) -> None:
         """The Shannon Entropy Metric to estimate the confidence of a single model
-        or the mean confidence accross estimators.
+        or the mean confidence across estimators.
 
         Args:
             reduction (str, optional): Determines how to reduce over the
