@@ -115,7 +115,11 @@ class CityscapesDataModule(AbstractDataModule):
             [
                 v2.ToImage(),
                 RandomRescale(min_scale=0.5, max_scale=2.0, antialias=True),
-                v2.RandomCrop(size=self.crop_size, pad_if_needed=True),
+                v2.RandomCrop(
+                    size=self.crop_size,
+                    pad_if_needed=True,
+                    fill={tv_tensors.Image: 0, tv_tensors.Mask: 255},
+                ),
                 v2.ColorJitter(brightness=0.5, contrast=0.5, saturation=0.5),
                 v2.RandomHorizontalFlip(),
                 v2.ToDtype(

@@ -234,6 +234,8 @@ Regression
 
     UCIDataModule
 
+.. currentmodule:: torch_uncertainty.datamodules.segmentation
+
 Segmentation
 ^^^^^^^^^^^^
 
