@@ -12,6 +12,8 @@ from lightning.pytorch.cli import (
 )
 from typing_extensions import override
 
+from torch_uncertainty.utils.trainer import TUTrainer
+
 
 class TUSaveConfigCallback(SaveConfigCallback):
     @override
@@ -72,7 +74,7 @@ class TULightningCLI(LightningCLI):
         save_config_callback: type[SaveConfigCallback]
         | None = TUSaveConfigCallback,
         save_config_kwargs: dict[str, Any] | None = None,
-        trainer_class: type[Trainer] | Callable[..., Trainer] = Trainer,
+        trainer_class: type[Trainer] | Callable[..., Trainer] = TUTrainer,
         trainer_defaults: dict[str, Any] | None = None,
         seed_everything_default: bool | int = True,
         parser_kwargs: dict[str, Any] | dict[str, dict[str, Any]] | None = None,
