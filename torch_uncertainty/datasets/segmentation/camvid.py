@@ -23,21 +23,6 @@ class CamVidClass(NamedTuple):
 
 
 class CamVid(VisionDataset):
-    """`CamVid <http://web4.cs.ucl.ac.uk/staff/g.brostow/MotionSegRecData/>`_ Dataset.
-
-    Args:
-        root (str): Root directory of dataset where ``camvid/`` exists or
-            will be saved to if download is set to ``True``.
-        split (str, optional): The dataset split, supports ``train``,
-            ``val`` and ``test``. Default: ``None``.
-        transforms (callable, optional): A function/transform that takes
-            input sample and its target as entry and returns a transformed
-            version. Default: ``None``.
-        download (bool, optional): If true, downloads the dataset from the
-            internet and puts it in root directory. If dataset is already
-            downloaded, it is not downloaded again.
-    """
-
     # Notes: some classes are not used here
     classes = [
         CamVidClass("sky", 0, (128, 128, 128)),
@@ -82,6 +67,20 @@ class CamVid(VisionDataset):
         transforms: Callable | None = None,
         download: bool = False,
     ) -> None:
+        """`CamVid <http://web4.cs.ucl.ac.uk/staff/g.brostow/MotionSegRecData/>`_ Dataset.
+
+        Args:
+            root (str): Root directory of dataset where ``camvid/`` exists or
+                will be saved to if download is set to ``True``.
+            split (str, optional): The dataset split, supports ``train``,
+                ``val`` and ``test``. Default: ``None``.
+            transforms (callable, optional): A function/transform that takes
+                input sample and its target as entry and returns a transformed
+                version. Default: ``None``.
+            download (bool, optional): If true, downloads the dataset from the
+                internet and puts it in root directory. If dataset is already
+                downloaded, it is not downloaded again.
+        """
         if split not in ["train", "val", "test", None]:
             raise ValueError(
                 f"Unknown split '{split}'. "

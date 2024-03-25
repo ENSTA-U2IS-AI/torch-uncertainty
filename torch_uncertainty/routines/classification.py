@@ -60,51 +60,53 @@ class ClassificationRoutine(LightningModule):
         save_in_csv: bool = False,
         calibration_set: Literal["val", "test"] | None = None,
     ) -> None:
-        """Classification routine for Lightning.
+        r"""Routine for efficient training and testing on **classification tasks**
+        using LightningModule.
 
         Args:
-            model (nn.Module): Model to train.
+            model (torch.nn.Module): Model to train.
             num_classes (int): Number of classes.
-            loss (type[nn.Module]): Loss function to optimize the :attr:`model`.
+            loss (torch.nn.Module): Loss function to optimize the :attr:`model`.
             num_estimators (int, optional): Number of estimators for the
-                ensemble. Defaults to 1 (single model).
-            format_batch_fn (nn.Module, optional): Function to format the batch.
+                ensemble. Defaults to ``1`` (single model).
+            format_batch_fn (torch.nn.Module, optional): Function to format the batch.
                 Defaults to :class:`torch.nn.Identity()`.
-            optim_recipe (dict | Optimizer, optional): The optimizer and
+            optim_recipe (dict or torch.optim.Optimizer, optional): The optimizer and
                 optionally the scheduler to use. Defaults to ``None``.
             mixtype (str, optional): Mixup type. Defaults to ``"erm"``.
             mixmode (str, optional): Mixup mode. Defaults to ``"elem"``.
             dist_sim (str, optional): Distance similarity. Defaults to ``"emb"``.
             kernel_tau_max (float, optional): Maximum value for the kernel tau.
-                Defaults to 1.0.
+                Defaults to ``1.0``.
             kernel_tau_std (float, optional): Standard deviation for the kernel tau.
-                Defaults to 0.5.
-            mixup_alpha (float, optional): Alpha parameter for Mixup. Defaults to 0.
+                Defaults to ``0.5``.
+            mixup_alpha (float, optional): Alpha parameter for Mixup. Defaults to ``0``.
             cutmix_alpha (float, optional): Alpha parameter for Cutmix.
-                Defaults to 0.
+                Defaults to ``0``.
             eval_ood (bool, optional): Indicates whether to evaluate the OOD
                 detection performance or not. Defaults to ``False``.
             eval_grouping_loss (bool, optional): Indicates whether to evaluate the
                 grouping loss or not. Defaults to ``False``.
-            ood_criterion (str, optional): OOD criterion. Defaults to ``"msp"``.
-                MSP is the maximum softmax probability, logit is the maximum
-                logit, energy the logsumexp of the mean logits, entropy the
-                entropy of the mean prediction, mi is the mutual information of
-                the ensemble and vr is the variation ratio of the ensemble.
+            ood_criterion (str, optional): OOD criterion. Available options are
+
+                - ``"msp"`` (default): Maximum softmax probability.
+                - ``"logit"``: Maximum logit.
+                - ``"energy"``: Logsumexp of the mean logits.
+                - ``"entropy"``: Entropy of the mean prediction.
+                - ``"mi"``: Mutual information of the ensemble.
+                - ``"vr"``: Variation ratio of the ensemble.
+
             log_plots (bool, optional): Indicates whether to log plots from
                 metrics. Defaults to ``False``.
             save_in_csv(bool, optional): Save the results in csv. Defaults to
                 ``False``.
-            calibration_set (Callable, optional): Function to get the calibration
-                set. Defaults to ``None``.
+            calibration_set (str, optional): The calibration dataset to use for
+                scaling. If not ``None``, it uses either the validation set when
+                set to ``"val"`` or the test set when set to ``"test"``.
+                Defaults to ``None``.
 
         Warning:
-            You must define :attr:`optim_recipe` if you do not use
-            the CLI.
-
-        Warning:
-            You must provide a datamodule to the trainer or use the CLI for if
-            :attr:`calibration_set` is not ``None``.
+            You must define :attr:`optim_recipe` if you do not use the CLI.
         """
         super().__init__()
         _classification_routine_checks(
@@ -308,7 +310,7 @@ class ClassificationRoutine(LightningModule):
                 not. Defaults to ``False``.
 
         Note:
-            The features are stored in the :attr:`features` attribute.
+            The features are stored in the :attr:`self.features` attribute.
         """
         if save_feats:
             self.features = self.model.feats_forward(inputs)
