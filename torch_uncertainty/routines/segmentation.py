@@ -6,7 +6,12 @@ from torch.optim import Optimizer
 from torchmetrics import Accuracy, MetricCollection
 from torchvision.transforms.v2 import functional as F
 
-from torch_uncertainty.metrics import MeanIntersectionOverUnion
+from torch_uncertainty.metrics import (
+    CE,
+    BrierScore,
+    CategoricalNLL,
+    MeanIntersectionOverUnion,
+)
 
 
 class SegmentationRoutine(LightningModule):
@@ -60,13 +65,16 @@ class SegmentationRoutine(LightningModule):
         seg_metrics = MetricCollection(
             {
                 "acc": Accuracy(task="multiclass", num_classes=num_classes),
+                "ece": CE(task="multiclass", num_classes=num_classes),
                 "mean_iou": MeanIntersectionOverUnion(num_classes=num_classes),
+                "brier": BrierScore(num_classes=num_classes),
+                "nll": CategoricalNLL(),
             },
-            compute_groups=[["acc", "mean_iou"]],
+            compute_groups=[["acc", "mean_iou"], ["ece"], ["brier"], ["nll"]],
         )
 
-        self.val_seg_metrics = seg_metrics.clone(prefix="val/")
-        self.test_seg_metrics = seg_metrics.clone(prefix="test/")
+        self.val_seg_metrics = seg_metrics.clone(prefix="seg_val/")
+        self.test_seg_metrics = seg_metrics.clone(prefix="seg_test/")
 
     def configure_optimizers(self) -> Optimizer | dict:
         return self.optim_recipe
