@@ -38,7 +38,7 @@ def stable_cumsum(arr: ArrayLike, rtol: float = 1e-05, atol: float = 1e-08):
     return out
 
 
-class FPR95(Metric):
+class FPRx(Metric):
     is_differentiable: bool = False
     higher_is_better: bool = False
     full_state_update: bool = False
@@ -46,29 +46,46 @@ class FPR95(Metric):
     conf: list[Tensor]
     targets: list[Tensor]
 
-    def __init__(self, pos_label: int, **kwargs) -> None:
-        """The False Positive Rate at 95% Recall metric."""
+    def __init__(self, recall_level: float, pos_label: int, **kwargs) -> None:
+        """The False Positive Rate at x% Recall metric.
+
+        Args:
+            recall_level (float): The recall level at which to compute the FPR.
+            pos_label (int): The positive label.
+            kwargs: Additional arguments to pass to the metric class.
+        """
         super().__init__(**kwargs)
 
+        if recall_level < 0 or recall_level > 1:
+            raise ValueError(
+                f"Recall level must be between 0 and 1. Got {recall_level}."
+            )
+        self.recall_level = recall_level
         self.pos_label = pos_label
         self.add_state("conf", [], dist_reduce_fx="cat")
         self.add_state("targets", [], dist_reduce_fx="cat")
 
         rank_zero_warn(
-            "Metric `FPR95` will save all targets and predictions"
+            f"Metric `FPR{int(recall_level*100)}` will save all targets and predictions"
             " in buffer. For large datasets this may lead to large memory"
             " footprint."
         )
 
     def update(self, conf: Tensor, target: Tensor) -> None:
+        """Update the metric state.
+
+        Args:
+            conf (Tensor): The confidence scores.
+            target (Tensor): The target labels.
+        """
         self.conf.append(conf)
         self.targets.append(target)
 
     def compute(self) -> Tensor:
-        r"""Compute the actual False Positive Rate at 95% Recall.
+        r"""Compute the actual False Positive Rate at x% Recall.
 
         Returns:
-            Tensor: The value of the FPR95.
+            Tensor: The value of the FPRx.
 
         Reference:
             Inpired by https://github.com/hendrycks/anomaly-seg.
@@ -119,8 +136,20 @@ class FPR95(Metric):
             thresholds[sl],
         )
 
-        cutoff = np.argmin(np.abs(recall - 0.95))
+        cutoff = np.argmin(np.abs(recall - self.recall_level))
 
         return torch.tensor(
             fps[cutoff] / (np.sum(np.logical_not(labels))), dtype=torch.float32
         )
+
+
+class FPR95(FPRx):
+    def __init__(self, pos_label: int, **kwargs) -> None:
+        """The False Positive Rate at 95% Recall metric.
+
+        Args:
+            recall_level (float): The recall level at which to compute the FPR.
+            pos_label (int): The positive label.
+            kwargs: Additional arguments to pass to the metric class.
+        """
+        super().__init__(recall_level=0.95, pos_label=pos_label, **kwargs)
