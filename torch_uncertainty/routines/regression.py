@@ -167,13 +167,17 @@ class RegressionRoutine(LightningModule):
             preds = preds.mean(dim=1)
 
         self.val_metrics.update(preds, targets)
-
         if self.probabilistic:
             self.val_prob_metrics.update(mixture, targets)
 
     def on_validation_epoch_end(self) -> None:
         self.log_dict(self.val_metrics.compute())
         self.val_metrics.reset()
+        if self.probabilistic:
+            self.log_dict(
+                self.val_prob_metrics.compute(),
+            )
+            self.val_prob_metrics.reset()
 
     def test_step(
         self,
@@ -206,15 +210,20 @@ class RegressionRoutine(LightningModule):
             preds = preds.mean(dim=1)
 
         self.test_metrics.update(preds, targets)
-
         if self.probabilistic:
-            self.val_prob_metrics.update(mixture, targets)
+            self.test_prob_metrics.update(mixture, targets)
 
     def on_test_epoch_end(self) -> None:
         self.log_dict(
             self.test_metrics.compute(),
         )
         self.test_metrics.reset()
+
+        if self.probabilistic:
+            self.log_dict(
+                self.test_prob_metrics.compute(),
+            )
+            self.test_prob_metrics.reset()
 
 
 def _regression_routine_checks(num_estimators: int, output_dim: int) -> None:
