@@ -159,13 +159,18 @@ Metrics
 
     AUSE
     BrierScore
+    CategoricalNLL
     CE
     Disagreement
-    Entropy
-    MutualInformation
-    CategoricalNLL
     DistributionNLL
+    Entropy
     FPR95
+    Log10
+    MeanGTRelativeAbsoluteError
+    MeanGTRelativeSquaredError
+    MutualInformation
+    SILog
+    ThresholdAccuracy
 
 Losses
 ------
