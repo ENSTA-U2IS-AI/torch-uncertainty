@@ -145,7 +145,7 @@ class ClassificationRoutine(LightningModule):
             cls_metrics = MetricCollection(
                 {
                     "acc": Accuracy(task="binary"),
-                    "ece": CE(task="binary"),
+                    "ECE": CE(task="binary"),
                     "brier": BrierScore(num_classes=1),
                 },
                 compute_groups=False,
@@ -153,11 +153,11 @@ class ClassificationRoutine(LightningModule):
         else:
             cls_metrics = MetricCollection(
                 {
-                    "nll": CategoricalNLL(),
+                    "NLL": CategoricalNLL(),
                     "acc": Accuracy(
                         task="multiclass", num_classes=self.num_classes
                     ),
-                    "ece": CE(task="multiclass", num_classes=self.num_classes),
+                    "ECE": CE(task="multiclass", num_classes=self.num_classes),
                     "brier": BrierScore(num_classes=self.num_classes),
                 },
                 compute_groups=False,
@@ -174,11 +174,11 @@ class ClassificationRoutine(LightningModule):
         if self.eval_ood:
             ood_metrics = MetricCollection(
                 {
-                    "fpr95": FPR95(pos_label=1),
-                    "auroc": BinaryAUROC(),
-                    "aupr": BinaryAveragePrecision(),
+                    "FPR95": FPR95(pos_label=1),
+                    "AUROC": BinaryAUROC(),
+                    "AUPR": BinaryAveragePrecision(),
                 },
-                compute_groups=[["auroc", "aupr"], ["fpr95"]],
+                compute_groups=[["AUROC", "AUPR"], ["FPR95"]],
             )
             self.test_ood_metrics = ood_metrics.clone(prefix="ood/")
             self.test_entropy_ood = Entropy()
@@ -216,7 +216,7 @@ class ClassificationRoutine(LightningModule):
             ens_metrics = MetricCollection(
                 {
                     "disagreement": Disagreement(),
-                    "mi": MutualInformation(),
+                    "MI": MutualInformation(),
                     "entropy": Entropy(),
                 }
             )
@@ -537,7 +537,7 @@ class ClassificationRoutine(LightningModule):
 
         if isinstance(self.logger, Logger) and self.log_plots:
             self.logger.experiment.add_figure(
-                "Calibration Plot", self.test_cls_metrics["ece"].plot()[0]
+                "Calibration Plot", self.test_cls_metrics["ECE"].plot()[0]
             )
 
             # plot histograms of logits and likelihoods

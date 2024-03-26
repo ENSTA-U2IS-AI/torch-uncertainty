@@ -38,7 +38,6 @@ class MUAD(VisionDataset):
     }
     targets: list[Path] = []
 
-    # TODO: Add depth regression mode
     def __init__(
         self,
         root: str | Path,
