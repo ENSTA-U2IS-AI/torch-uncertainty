@@ -11,7 +11,7 @@ from torch.distributions import (
 from torch.optim import Optimizer
 from torchmetrics import MeanAbsoluteError, MeanSquaredError, MetricCollection
 
-from torch_uncertainty.metrics.nll import DistributionNLL
+from torch_uncertainty.metrics.regression.nll import DistributionNLL
 from torch_uncertainty.utils.distributions import squeeze_dist, to_ensemble_dist
 
 
@@ -73,15 +73,21 @@ class RegressionRoutine(LightningModule):
         reg_metrics = MetricCollection(
             {
                 "mae": MeanAbsoluteError(),
-                "mse": MeanSquaredError(squared=False),
+                "mse": MeanSquaredError(squared=True),
+                "rmse": MeanSquaredError(squared=False),
             },
-            compute_groups=False,
+            compute_groups=True,
         )
-        if self.probabilistic:
-            reg_metrics["nll"] = DistributionNLL(reduction="mean")
 
         self.val_metrics = reg_metrics.clone(prefix="reg_val/")
         self.test_metrics = reg_metrics.clone(prefix="reg_test/")
+
+        if self.probabilistic:
+            reg_prob_metrics = MetricCollection(
+                DistributionNLL(reduction="mean")
+            )
+            self.val_prob_metrics = reg_prob_metrics.clone(prefix="reg_val/")
+            self.test_prob_metrics = reg_prob_metrics.clone(prefix="reg_test/")
 
         self.one_dim_regression = output_dim == 1
 
@@ -91,6 +97,9 @@ class RegressionRoutine(LightningModule):
     def on_train_start(self) -> None:
         init_metrics = dict.fromkeys(self.val_metrics, 0)
         init_metrics.update(dict.fromkeys(self.test_metrics, 0))
+        if self.probabilistic:
+            init_metrics.update(dict.fromkeys(self.val_prob_metrics, 0))
+            init_metrics.update(dict.fromkeys(self.test_prob_metrics, 0))
 
         if self.logger is not None:  # coverage: ignore
             self.logger.log_hyperparams(
@@ -133,7 +142,6 @@ class RegressionRoutine(LightningModule):
             targets = targets.unsqueeze(-1)
 
         loss = self.loss(dists, targets)
-
         self.log("train_loss", loss)
         return loss
 
@@ -153,15 +161,15 @@ class RegressionRoutine(LightningModule):
                 torch.ones(self.num_estimators, device=self.device)
             )
             mixture = MixtureSameFamily(mix, ens_dist)
-            self.val_metrics.nll.update(mixture, targets)
-
             preds = mixture.mean
         else:
             preds = rearrange(preds, "(m b) c -> b m c", m=self.num_estimators)
             preds = preds.mean(dim=1)
 
-        self.val_metrics.mse.update(preds, targets)
-        self.val_metrics.mae.update(preds, targets)
+        self.val_metrics.update(preds, targets)
+
+        if self.probabilistic:
+            self.val_prob_metrics.update(mixture, targets)
 
     def on_validation_epoch_end(self) -> None:
         self.log_dict(self.val_metrics.compute())
@@ -192,16 +200,15 @@ class RegressionRoutine(LightningModule):
                 torch.ones(self.num_estimators, device=self.device)
             )
             mixture = MixtureSameFamily(mix, ens_dist)
-            self.test_metrics.nll.update(mixture, targets)
-
             preds = mixture.mean
-
         else:
             preds = rearrange(preds, "(m b) c -> b m c", m=self.num_estimators)
             preds = preds.mean(dim=1)
 
-        self.test_metrics.mse.update(preds, targets)
-        self.test_metrics.mae.update(preds, targets)
+        self.test_metrics.update(preds, targets)
+
+        if self.probabilistic:
+            self.val_prob_metrics.update(mixture, targets)
 
     def on_test_epoch_end(self) -> None:
         self.log_dict(
