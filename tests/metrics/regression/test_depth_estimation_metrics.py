@@ -5,6 +5,7 @@ from torch_uncertainty.metrics import (
     Log10,
     MeanGTRelativeAbsoluteError,
     MeanGTRelativeSquaredError,
+    MeanSquaredLogError,
     SILog,
     ThresholdAccuracy,
 )
@@ -95,3 +96,17 @@ class TestThresholdAccuracy:
             ThresholdAccuracy(power=-1)
         with pytest.raises(ValueError, match="Lambda must be"):
             ThresholdAccuracy(power=1, lmbda=0.5)
+
+
+class TestMeanSquaredLogError:
+    """Testing the MeanSquaredLogError metric."""
+
+    def test_main(self):
+        metric = MeanSquaredLogError()
+        preds = torch.rand((10, 2)).double()
+        targets = torch.rand((10, 2)).double()
+        metric.update(preds[:, 0], targets[:, 0])
+        metric.update(preds[:, 1], targets[:, 1])
+        assert torch.mean(
+            (preds.log() - targets.log()).flatten() ** 2
+        ) == pytest.approx(metric.compute())

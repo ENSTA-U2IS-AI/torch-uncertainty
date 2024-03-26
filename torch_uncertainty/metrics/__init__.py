@@ -17,6 +17,7 @@ from .regression import (
     Log10,
     MeanGTRelativeAbsoluteError,
     MeanGTRelativeSquaredError,
+    MeanSquaredLogError,
     SILog,
     ThresholdAccuracy,
 )
