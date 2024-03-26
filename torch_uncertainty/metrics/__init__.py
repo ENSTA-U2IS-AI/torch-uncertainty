@@ -1,12 +1,22 @@
 # ruff: noqa: F401
-from .brier_score import BrierScore
-from .calibration import CE
-from .disagreement import Disagreement
-from .entropy import Entropy
-from .fpr95 import FPR95
-from .grouping_loss import GroupingLoss
-from .mean_iou import MeanIntersectionOverUnion
-from .mutual_information import MutualInformation
-from .nll import CategoricalNLL, DistributionNLL
-from .sparsification import AUSE
-from .variation_ratio import VariationRatio
+from .classification import (
+    AUSE,
+    CE,
+    FPR95,
+    BrierScore,
+    CategoricalNLL,
+    Disagreement,
+    Entropy,
+    GroupingLoss,
+    MeanIntersectionOverUnion,
+    MutualInformation,
+    VariationRatio,
+)
+from .regression import (
+    DistributionNLL,
+    Log10,
+    MeanGTRelativeAbsoluteError,
+    MeanGTRelativeSquaredError,
+    SILog,
+    ThresholdAccuracy,
+)

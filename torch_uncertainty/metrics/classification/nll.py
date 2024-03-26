@@ -2,7 +2,7 @@ from typing import Any, Literal
 
 import torch
 import torch.nn.functional as F
-from torch import Tensor, distributions
+from torch import Tensor
 from torchmetrics import Metric
 from torchmetrics.utilities.data import dim_zero_cat
 
@@ -80,32 +80,6 @@ class CategoricalNLL(Metric):
             )
         else:
             self.values += F.nll_loss(torch.log(probs), target, reduction="sum")
-            self.total += target.size(0)
-
-    def compute(self) -> Tensor:
-        """Computes NLL based on inputs passed in to ``update`` previously."""
-        values = dim_zero_cat(self.values)
-
-        if self.reduction == "sum":
-            return values.sum(dim=-1)
-        if self.reduction == "mean":
-            return values.sum(dim=-1) / self.total
-        # reduction is None or "none"
-        return values
-
-
-class DistributionNLL(CategoricalNLL):
-    def update(self, dists: distributions.Distribution, target: Tensor) -> None:
-        """Update state with the predicted distributions and the targets.
-
-        Args:
-            dists (torch.distributions.Distribution): Predicted distributions.
-            target (Tensor): Ground truth labels.
-        """
-        if self.reduction is None or self.reduction == "none":
-            self.values.append(-dists.log_prob(target))
-        else:
-            self.values += -dists.log_prob(target).sum()
             self.total += target.size(0)
 
     def compute(self) -> Tensor:
