@@ -63,7 +63,7 @@ class TUEvaluationLoop(_EvaluationLoop):
                 if val is not None:
                     if isinstance(val, Tensor):
                         val = val.item() if val.numel() == 1 else val.tolist()
-                    row.append(f"{val:.3f}")
+                    row.append(f"{val:.5f}")
                 else:
                     row.append(" ")
 
