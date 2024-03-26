@@ -1,6 +1,6 @@
 import pytest
 
-from tests._dummies.dataset import DummyDepthRegressionDataset
+from tests._dummies.dataset import DummyDepthDataset
 from torch_uncertainty.datamodules.depth_regression import MUADDataModule
 from torch_uncertainty.datasets import MUAD
 
@@ -13,7 +13,7 @@ class TestMUADDataModule:
 
         assert dm.dataset == MUAD
 
-        dm.dataset = DummyDepthRegressionDataset
+        dm.dataset = DummyDepthDataset
 
         dm.prepare_data()
         dm.setup()

@@ -214,7 +214,7 @@ class DummySegmentationDataset(Dataset):
         return len(self.data)
 
 
-class DummyDepthRegressionDataset(Dataset):
+class DummyDepthDataset(Dataset):
     def __init__(
         self,
         root: Path,

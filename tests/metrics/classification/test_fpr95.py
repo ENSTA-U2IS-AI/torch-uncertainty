@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from torch_uncertainty.metrics.fpr95 import FPR95, FPRx
+from torch_uncertainty.metrics.classification.fpr95 import FPR95, FPRx
 
 
 class TestFPR95:
