@@ -58,7 +58,7 @@ class TestELBOLoss:
             ELBOLoss(model, criterion, kl_weight=1e-5, num_samples=1.5)
 
 
-class TestNIGLoss:
+class TestDERLoss:
     """Testing the DERLoss class."""
 
     def test_main(self):
