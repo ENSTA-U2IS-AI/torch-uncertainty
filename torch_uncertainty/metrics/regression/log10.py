@@ -16,8 +16,6 @@ class Log10(Metric):
             - :attr:`preds`: :math:`(N)`
             - :attr:`target`: :math:`(N)`
 
-            where :math:`N` is the batch size.
-
         Args:
             kwargs: Additional keyword arguments, see :ref:`Metric kwargs` for more info.
         """
