@@ -64,13 +64,13 @@ class SegmentationRoutine(LightningModule):
         # metrics
         seg_metrics = MetricCollection(
             {
-                "acc": Accuracy(task="multiclass", num_classes=num_classes),
-                "ece": CE(task="multiclass", num_classes=num_classes),
-                "mean_iou": MeanIntersectionOverUnion(num_classes=num_classes),
-                "brier": BrierScore(num_classes=num_classes),
-                "nll": CategoricalNLL(),
+                "Acc": Accuracy(task="multiclass", num_classes=num_classes),
+                "ECE": CE(task="multiclass", num_classes=num_classes),
+                "mIoU": MeanIntersectionOverUnion(num_classes=num_classes),
+                "Brier": BrierScore(num_classes=num_classes),
+                "NLL": CategoricalNLL(),
             },
-            compute_groups=[["acc", "mean_iou"], ["ece"], ["brier"], ["nll"]],
+            compute_groups=[["Acc", "mIoU"], ["ECE"], ["Brier"], ["NLL"]],
         )
 
         self.val_seg_metrics = seg_metrics.clone(prefix="seg_val/")

@@ -15,7 +15,7 @@ trainer:
   callbacks:
   - class_path: lightning.pytorch.callbacks.ModelCheckpoint
     init_args:
-      monitor: reg_val/nll
+      monitor: reg_val/NLL
       mode: min
       save_last: true
   - class_path: lightning.pytorch.callbacks.LearningRateMonitor
@@ -23,7 +23,7 @@ trainer:
       logging_interval: step
   - class_path: lightning.pytorch.callbacks.EarlyStopping
     init_args:
-      monitor: reg_val/nll
+      monitor: reg_val/NLL
       patience: 1000
       check_finite: true
 model:
@@ -31,8 +31,7 @@ model:
   in_features: 8
   hidden_dims: 
   - 100
-  loss:
-    class_path:  torch_uncertainty.losses.DistributionNLLLoss
+  loss: torch_uncertainty.losses.DistributionNLLLoss
   version: std
   distribution: laplace
 data:

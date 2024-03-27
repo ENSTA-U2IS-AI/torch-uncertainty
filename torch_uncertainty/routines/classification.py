@@ -144,9 +144,9 @@ class ClassificationRoutine(LightningModule):
         if self.binary_cls:
             cls_metrics = MetricCollection(
                 {
-                    "acc": Accuracy(task="binary"),
+                    "Acc": Accuracy(task="binary"),
                     "ECE": CE(task="binary"),
-                    "brier": BrierScore(num_classes=1),
+                    "Brier": BrierScore(num_classes=1),
                 },
                 compute_groups=False,
             )
@@ -154,11 +154,11 @@ class ClassificationRoutine(LightningModule):
             cls_metrics = MetricCollection(
                 {
                     "NLL": CategoricalNLL(),
-                    "acc": Accuracy(
+                    "Acc": Accuracy(
                         task="multiclass", num_classes=self.num_classes
                     ),
                     "ECE": CE(task="multiclass", num_classes=self.num_classes),
-                    "brier": BrierScore(num_classes=self.num_classes),
+                    "Brier": BrierScore(num_classes=self.num_classes),
                 },
                 compute_groups=False,
             )
@@ -215,9 +215,9 @@ class ClassificationRoutine(LightningModule):
         if self.num_estimators > 1:
             ens_metrics = MetricCollection(
                 {
-                    "disagreement": Disagreement(),
+                    "Disagreement": Disagreement(),
                     "MI": MutualInformation(),
-                    "entropy": Entropy(),
+                    "Entropy": Entropy(),
                 }
             )
 
