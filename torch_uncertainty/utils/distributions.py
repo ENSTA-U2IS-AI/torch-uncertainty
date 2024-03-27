@@ -78,27 +78,19 @@ def squeeze_dist(distribution: Distribution, dim: int) -> Distribution:
     )
 
 
-def to_ensemble_dist(
-    distribution: Distribution, num_estimators: int = 1
+def dist_rearrange(
+    distribution: Distribution, pattern: str, **axes_lengths: int
 ) -> Distribution:
     dist_type = type(distribution)
     if isinstance(distribution, Normal | Laplace):
-        loc = rearrange(distribution.loc, "(n b) c -> b n c", n=num_estimators)
-        scale = rearrange(
-            distribution.scale, "(n b) c -> b n c", n=num_estimators
-        )
+        loc = rearrange(distribution.loc, pattern=pattern, **axes_lengths)
+        scale = rearrange(distribution.scale, pattern=pattern, **axes_lengths)
         return dist_type(loc=loc, scale=scale)
     if isinstance(distribution, NormalInverseGamma):
-        loc = rearrange(distribution.loc, "(n b) c -> b n c", n=num_estimators)
-        lmbda = rearrange(
-            distribution.lmbda, "(n b) c -> b n c", n=num_estimators
-        )
-        alpha = rearrange(
-            distribution.alpha, "(n b) c -> b n c", n=num_estimators
-        )
-        beta = rearrange(
-            distribution.beta, "(n b) c -> b n c", n=num_estimators
-        )
+        loc = rearrange(distribution.loc, pattern=pattern, **axes_lengths)
+        lmbda = rearrange(distribution.lmbda, pattern=pattern, **axes_lengths)
+        alpha = rearrange(distribution.alpha, pattern=pattern, **axes_lengths)
+        beta = rearrange(distribution.beta, pattern=pattern, **axes_lengths)
         return dist_type(loc=loc, lmbda=lmbda, alpha=alpha, beta=beta)
     raise NotImplementedError(
         f"Ensemble distribution of {dist_type} is not supported."

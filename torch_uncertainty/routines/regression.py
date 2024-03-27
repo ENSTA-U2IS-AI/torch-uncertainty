@@ -12,7 +12,7 @@ from torch.optim import Optimizer
 from torchmetrics import MeanAbsoluteError, MeanSquaredError, MetricCollection
 
 from torch_uncertainty.metrics.regression.nll import DistributionNLL
-from torch_uncertainty.utils.distributions import squeeze_dist, to_ensemble_dist
+from torch_uncertainty.utils.distributions import dist_rearrange, squeeze_dist
 
 
 class RegressionRoutine(LightningModule):
@@ -155,7 +155,10 @@ class RegressionRoutine(LightningModule):
 
         if self.probabilistic:
             ens_dist = Independent(
-                to_ensemble_dist(preds, num_estimators=self.num_estimators), 1
+                dist_rearrange(
+                    preds, "(m b) c -> b m c", m=self.num_estimators
+                ),
+                1,
             )
             mix = Categorical(
                 torch.ones(self.num_estimators, device=self.device)
@@ -198,7 +201,10 @@ class RegressionRoutine(LightningModule):
 
         if self.probabilistic:
             ens_dist = Independent(
-                to_ensemble_dist(preds, num_estimators=self.num_estimators), 1
+                dist_rearrange(
+                    preds, "(m b) c -> b m c", m=self.num_estimators
+                ),
+                1,
             )
             mix = Categorical(
                 torch.ones(self.num_estimators, device=self.device)
