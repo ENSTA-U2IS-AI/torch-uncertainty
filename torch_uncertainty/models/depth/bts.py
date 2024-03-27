@@ -19,6 +19,7 @@ import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as torch_nn_func
+import torchvision.models as models
 
 
 # This sets the batch norm layers in pytorch as if {'is_training': False, 'scale': True} in tensorflow
@@ -489,7 +490,6 @@ class BTSEncoder(nn.Module):
     def __init__(self, params):
         super().__init__()
         self.params = params
-        import torchvision.models as models
 
         if params.encoder == "densenet121_bts":
             self.base_model = models.densenet121(pretrained=True).features
