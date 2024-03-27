@@ -10,7 +10,6 @@ trainer:
     class_path: lightning.pytorch.loggers.TensorBoardLogger
     init_args:
       save_dir: logs/wideresnet28x10
-      name: standard
       default_hp_metric: false
   callbacks:
   - class_path: lightning.pytorch.callbacks.ModelCheckpoint
@@ -29,8 +28,7 @@ trainer:
 model:
   num_classes: 10
   in_channels: 3
-  loss:
-    class_path: torch.nn.CrossEntropyLoss
+  loss: CrossEntropyLoss
   style: cifar
 data:
   root: ./data

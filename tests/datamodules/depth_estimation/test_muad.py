@@ -1,7 +1,7 @@
 import pytest
 
 from tests._dummies.dataset import DummyDepthDataset
-from torch_uncertainty.datamodules.depth_regression import MUADDataModule
+from torch_uncertainty.datamodules.depth_estimation import MUADDataModule
 from torch_uncertainty.datasets import MUAD
 
 
