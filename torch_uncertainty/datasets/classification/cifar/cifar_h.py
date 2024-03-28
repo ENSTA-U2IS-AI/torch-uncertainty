@@ -70,9 +70,7 @@ class CIFAR10H(CIFAR10):
     def _check_specific_integrity(self) -> bool:
         filename, md5 = self.h_test_list
         fpath = self.root / filename
-        if not check_integrity(fpath, md5):
-            return False
-        return True
+        return check_integrity(fpath, md5)
 
     def download_h(self) -> None:
         download_url(

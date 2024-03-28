@@ -1,11 +1,11 @@
 from pathlib import Path
 
 from torch_uncertainty import cli_main, init_args
-from torch_uncertainty.baselines import DeepEnsembles
+from torch_uncertainty.baselines import DeepEnsemblesBaseline
 from torch_uncertainty.datamodules import CIFAR10DataModule
 
 if __name__ == "__main__":
-    args = init_args(DeepEnsembles, CIFAR10DataModule)
+    args = init_args(DeepEnsemblesBaseline, CIFAR10DataModule)
     if args.root == "./data/":
         root = Path(__file__).parent.absolute().parents[2]
     else:
@@ -19,7 +19,7 @@ if __name__ == "__main__":
 
     # model
     args.task = "classification"
-    model = DeepEnsembles(
+    model = DeepEnsemblesBaseline(
         **vars(args),
         num_classes=dm.num_classes,
         in_channels=dm.num_channels,

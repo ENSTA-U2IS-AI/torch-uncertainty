@@ -4,89 +4,136 @@ Quickstart
 .. role:: bash(code)
     :language: bash
 
-Torch Uncertainty comes with different usage levels ranging from specific
-PyTorch layers to ready to train Lightning-based models. The following
-presents a short introduction to each one of them. Let's start with the
-highest-level usage.
+TorchUncertainty is centered around **uncertainty-aware** training and evaluation routines.
+These routines make it very easy to:
 
-Using the Lightning-based CLI tool
+- train ensembles-like methods (Deep Ensembles, Packed-Ensembles, MIMO, Masksembles, etc)
+- compute and monitor uncertainty metrics: calibration, out-of-distribution detection, proper scores, grouping loss, etc.
+- leverage calibration methods automatically during evaluation
+
+Yet, we take account that their will be as many different uses of TorchUncertainty as there are of users. 
+This page provides ideas on how to benefit from TorchUncertainty at all levels: from ready-to-train lightning-based models to using only specific
+PyTorch layers. 
+
+Training with TorchUncertainty's Uncertainty-aware Routines
+-----------------------------------------------------------
+
+Let's have a look at the `Classification routine <https://github.com/ENSTA-U2IS-AI/torch-uncertainty/blob/main/torch_uncertainty/routines/classification.py>`_. 
+
+.. code:: python
+
+	from lightning.pytorch import LightningModule
+
+	class ClassificationRoutine(LightningModule):
+		def __init__(
+			self,
+			model: nn.Module,
+			num_classes: int,
+			loss: nn.Module,
+			num_estimators: int = 1,
+			format_batch_fn: nn.Module | None = None,
+			optim_recipe: dict | Optimizer | None = None,
+			mixtype: str = "erm",
+			mixmode: str = "elem",
+			dist_sim: str = "emb",
+			kernel_tau_max: float = 1.0,
+			kernel_tau_std: float = 0.5,
+			mixup_alpha: float = 0,
+			cutmix_alpha: float = 0,
+			eval_ood: bool = False,
+			eval_grouping_loss: bool = False,
+			ood_criterion: Literal[
+				"msp", "logit", "energy", "entropy", "mi", "vr"
+			] = "msp",
+			log_plots: bool = False,
+			save_in_csv: bool = False,
+			calibration_set: Literal["val", "test"] | None = None,
+		) -> None:
+			...
+
+
+Building your First Routine
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+This routine is a wrapper of any custom or TorchUncertainty classification model. To use it, 
+just build your model and pass it to the routine as argument along with an optimization recipe
+and the loss as well as the number of classes that we use for torch metrics.
+
+.. code:: python
+
+  from torch import nn, optim
+
+  model = MyModel(num_classes=10)
+  routine = ClassificationRoutine(
+    model,
+    num_classes=10,
+    loss=nn.CrossEntropyLoss(),
+    optim_recipe=optim.Adam(model.parameters(), lr=1e-3),
+  )
+
+
+Training with the Routine
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To train with this routine, you will first need to create a lightning Trainer and have either a lightning datamodule
+or PyTorch dataloaders. When benchmarking models, we advise to use lightning datamodules that will automatically handle
+train/val/test splits, out-of-distribution detection and dataset shift. For this example, let us use TorchUncertainty's 
+CIFAR10 datamodule. Please keep in mind that you could use your own datamodule or dataloaders.
+
+.. code:: python
+
+  from torch_uncertainty.datamodules import CIFAR10DataModule
+  from pytorch_lightning import Trainer
+
+  dm = CIFAR10DataModule(root="data", batch_size=32)
+  trainer = Trainer(gpus=1, max_epochs=100)
+  trainer.fit(routine, dm)
+  trainer.test(routine, dm)
+
+Here it is, you have trained your first model with TorchUncertainty! As a result, you will get access to various metrics
+measuring the ability of your model to handle uncertainty.
+
+More metrics
+^^^^^^^^^^^^
+
+With TorchUncertainty datamodules, you can easily test models on out-of-distribution datasets, by
+setting the ``eval_ood`` parameter to ``True``. You can also evaluate the grouping loss by setting ``eval_grouping_loss`` to ``True``.
+Finally, you can calibrate your model using the ``calibration_set`` parameter. In this case, you will get 
+metrics for but the uncalibrated and calibrated models: the metrics corresponding to the temperature scaled
+model will begin with ``ts_``.
+
+----
+
+Using the Lightning CLI tool
 ----------------------------------
 
 Procedure
 ^^^^^^^^^
 
-The library provides a full-fledged trainer which can be used directly, via
-CLI. To do so, create a file in the experiments folder and use the `cli_main`
-routine, which takes as arguments:
+The library leverages the `Lightning CLI tool <https://lightning.ai/docs/pytorch/stable/cli/lightning_cli.html>`_
+to provide a simple way to train models and evaluate them, while insuring reproducibility via configuration files.
+Under the ``experiment`` folder, you will find scripts for the three application tasks covered by the library:
+classification, regression and segmentation. Take the most out of the CLI by checking our `CLI Guide <cli_guide.html>`_.
 
-* a Lightning Module corresponding to the model, its own arguments, and
-  forward/validation/test logic. For instance, you might use already available
-  modules, such as the Packed-Ensembles-style ResNet available at
-  `torch_uncertainty/baselines/packed/resnet.py <https://github.com/ENSTA-U2IS-AI/torch-uncertainty/blob/main/torch_uncertainty/baselines/classification/resnet.py>`_
-* a Lightning DataModule corresponding to the training, validation, and test
-  sets with again its arguments and logic. CIFAR-10/100, ImageNet, and
-  ImageNet-200 are available, for instance.
-* a PyTorch loss such as the torch.nn.CrossEntropyLoss
-* a dictionary containing the optimization procedure, namely a scheduler and
-  an optimizer. Many procedures are available at 
-  `torch_uncertainty/optimization_procedures.py <https://github.com/ENSTA-U2IS-AI/torch-uncertainty/blob/main/torch_uncertainty/optimization_procedures.py>`_
+.. note::
 
-* the path to the data and logs folder, in the example below, the root of the library
-* and finally, the name of your model (used for logs)
+  In particular, the ``experiments/classification`` folder contains scripts to reproduce the experiments covered
+  in the paper: *Packed-Ensembles for Efficient Uncertainty Estimation*, O. Laurent & A. Lafage, et al., in ICLR 2023.
 
-Move to the directory containing your file and execute the code with :bash:`python3 experiment.py`.
-Add lightning arguments such as :bash:`--accelerator gpu --devices "0, 1" --benchmark True` 
-for multi-gpu training and cuDNN benchmark, etc.
+
 
 Example
 ^^^^^^^
 
-The following code - `available in the experiments folder <https://github.com/ENSTA-U2IS-AI/torch-uncertainty/blob/main/experiments/classification/cifar10/resnet.py>`_ - 
-trains any ResNet architecture on CIFAR10:
-
-.. code:: python
-
-    from pathlib import Path
-
-    from torch import nn
-
-    from torch_uncertainty import cli_main, init_args
-    from torch_uncertainty.baselines import ResNet
-    from torch_uncertainty.datamodules import CIFAR10DataModule
-    from torch_uncertainty.optimization_procedures import get_procedure
-
-    root = Path(__file__).parent.absolute().parents[1]
-
-    args = init_args(ResNet, CIFAR10DataModule)
-
-    net_name = f"{args.version}-resnet{args.arch}-cifar10"
-
-    # datamodule
-    args.root = str(root / "data")
-    dm = CIFAR10DataModule(**vars(args))
-
-    # model
-    model = ResNet(
-        num_classes=dm.num_classes,
-        in_channels=dm.in_channels,
-        loss=nn.CrossEntropyLoss(),
-        optimization_procedure=get_procedure(
-            f"resnet{args.arch}", "cifar10", args.version
-        ),
-        imagenet_structure=False,
-        **vars(args),
-    )
-
-    cli_main(model, dm, root, net_name, args)
-
-Run this model with, for instance:
+Training a model with the Lightning CLI tool is as simple as running the following command:
 
 .. code:: bash
 
-    python3 resnet.py --version std --arch 18 --accelerator gpu --device 1 --benchmark True --max_epochs 75 --precision 16
+  # in pyjam/experiments/classification/cifar10
+  python resnet.py fit --config configs/resnet18/standard.yaml
 
-You may replace the architecture (which should be a Lightning Module), the
-Datamodule (a Lightning Datamodule), the loss or the optimization procedure to your likings.
+Which trains a classic ResNet18 model on CIFAR10 with the settings used in the Packed-Ensembles paper.
+
+----
 
 Using the PyTorch-based models
 ------------------------------
@@ -118,6 +165,8 @@ backbone with the following code:
         num_classes = 10,
     )
 
+----
+
 Using the PyTorch-based layers
 ------------------------------
 
@@ -135,7 +184,7 @@ issue on the GitHub repository!
 
 .. tip::
 
-  Do not hesitate to go to the API reference to get better explanations on the
+  Do not hesitate to go to the `API Reference <api.html#layers>`_ to get better explanations on the
   layer usage.
 
 Example
@@ -177,6 +226,8 @@ code:
           return x
 
   packed_net = PackedNet()
+
+----
 
 Other usage
 -----------

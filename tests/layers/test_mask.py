@@ -34,7 +34,7 @@ class TestMaskedLinear:
 
     def test_linear_two_estimators_odd(self, feat_input_odd: torch.Tensor):
         layer = MaskedLinear(10, 2, num_estimators=2, scale=2)
-        with pytest.raises(Exception):
+        with pytest.raises(RuntimeError):
             _ = layer(feat_input_odd)
 
     def test_linear_two_estimators_even(self, feat_input_even: torch.Tensor):

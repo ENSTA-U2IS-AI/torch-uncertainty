@@ -10,7 +10,7 @@ from torch_uncertainty.layers.mc_batch_norm import MCBatchNorm2d
 from torch_uncertainty.layers.packed import PackedConv2d, PackedLinear
 from torch_uncertainty.models.utils import stochastic_model
 
-__all__ = ["lenet", "packed_lenet", "bayesian_lenet"]
+__all__ = ["bayesian_lenet", "lenet", "packed_lenet"]
 
 
 class _LeNet(nn.Module):

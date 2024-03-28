@@ -4,7 +4,6 @@ Contributing
 .. role:: bash(code)
     :language: bash
 
-
 TorchUncertainty is in early development stage. We are looking for
 contributors to help us build a comprehensive library for uncertainty
 quantification in PyTorch.
@@ -53,7 +52,6 @@ Then navigate to :bash:`./docs` and build the documentation with:
 .. parsed-literal::
     
     make html
-
 
 Optionally, specify :bash:`html-noplot` instead of :bash:`html` to avoid running the tutorials.
 

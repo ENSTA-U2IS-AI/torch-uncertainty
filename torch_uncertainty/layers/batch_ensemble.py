@@ -25,8 +25,13 @@ class BatchLinear(nn.Module):
         device=None,
         dtype=None,
     ) -> None:
-        r"""Applies a linear transformation using BatchEnsemble method to the
-        incoming data: :math:`y=(x\circ \hat{r_{group}})W^{T}\circ \hat{s_{group}} + \hat{b}`.
+        r"""BatchEnsemble-style Linear layer.
+
+        Applies a linear transformation using BatchEnsemble method to the incoming
+        data.
+
+        .. math::
+            y=(x\circ \widehat{r_{group}})W^{T}\circ \widehat{s_{group}} + \widehat{b}
 
         Args:
             in_features (int): size of each input sample.
@@ -70,9 +75,9 @@ class BatchLinear(nn.Module):
 
         Shape:
             - Input: :math:`(N, H_{in})` where :math:`N` is the batch size and
-            :math:`H_{in} = \text{in_features}`.
+              :math:`H_{in} = \text{in_features}`.
             - Output: :math:`(N, H_{out})` where
-            :math:`H_{out} = \text{out_features}`.
+              :math:`H_{out} = \text{out_features}`.
 
         Warning:
             Make sure that :attr:`num_estimators` divides :attr:`out_features` when calling :func:`forward()`.
@@ -110,10 +115,6 @@ class BatchLinear(nn.Module):
         self.reset_parameters()
 
     def reset_parameters(self) -> None:
-        # Setting a=sqrt(5) in kaiming_uniform is the same as initializing with
-        # uniform(-1/sqrt(in_features), 1/sqrt(in_features)). For details, see
-        # https://github.com/pytorch/pytorch/issues/57109
-        # nn.init.kaiming_uniform_(self.weight, a=math.sqrt(5))
         nn.init.normal_(self.r_group, mean=1.0, std=0.5)
         nn.init.normal_(self.s_group, mean=1.0, std=0.5)
         if self.bias is not None:
@@ -204,7 +205,9 @@ class BatchConv2d(nn.Module):
         device=None,
         dtype=None,
     ) -> None:
-        r"""Applies a 2d convolution over an input signal composed of several input
+        r"""BatchEnsemble-style Conv2d layer.
+        
+        Applies a 2d convolution over an input signal composed of several input
         planes using BatchEnsemble method to the incoming data.
 
         In the simplest case, the output value of the layer with input size
@@ -212,12 +215,12 @@ class BatchConv2d(nn.Module):
         :math:`(N, C_{out}, H_{out}, W_{out})` can be precisely described as:
 
         .. math::
-        \text{out}(N_i, C_{\text{out}_j})=\
-        &\hat{b}(N_i,C_{\text{out}_j})
-        +\hat{s_group}(N_{i},C_{\text{out}_j}) \\
-        &\times \sum_{k = 0}^{C_{\text{in}} - 1}
-        \text{weight}(C_{\text{out}_j}, k)\star (\text{input}(N_i, k)
-        \times \hat{r_group}(N_i, k))
+            \text{out}(N_i, C_{\text{out}_j})=\
+            &\widehat{b}(N_i,C_{\text{out}_j})
+            +\widehat{s_{group}}(N_{i},C_{\text{out}_j}) \\
+            &\times \sum_{k = 0}^{C_{\text{in}} - 1}
+            \text{weight}(C_{\text{out}_j}, k)\star (\text{input}(N_i, k)
+            \times \widehat{r_{group}}(N_i, k))
 
         Reference:
             Introduced by the paper `BatchEnsemble: An Alternative Approach to
@@ -335,12 +338,6 @@ class BatchConv2d(nn.Module):
         self.reset_parameters()
 
     def reset_parameters(self) -> None:
-        # Setting a=sqrt(5) in kaiming_uniform is the same as initializing with
-        # uniform(-1/sqrt(k), 1/sqrt(k)), where
-        # k = weight.size(1) * prod(*kernel_size)
-        # For more details see:
-        # https://github.com/pytorch/pytorch/issues/15314#issuecomment-477448573
-        # nn.init.kaiming_uniform_(self.weight, a=math.sqrt(5))
         nn.init.normal_(self.r_group, mean=1.0, std=0.5)
         nn.init.normal_(self.s_group, mean=1.0, std=0.5)
         if self.bias is not None:
@@ -408,7 +405,7 @@ class BatchConv2d(nn.Module):
             bias if bias is not None else 0
         )
 
-    def extra_repr(self):
+    def extra_repr(self) -> str:
         s = (
             "{in_channels}, {out_channels}, kernel_size={kernel_size}"
             ", num_estimators={num_estimators}, stride={stride}"

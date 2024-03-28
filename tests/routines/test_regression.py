@@ -1,160 +1,153 @@
-from functools import partial
 from pathlib import Path
 
 import pytest
-from cli_test_helpers import ArgvContext
 from torch import nn
 
 from tests._dummies import DummyRegressionBaseline, DummyRegressionDataModule
-from torch_uncertainty import cli_main, init_args
-from torch_uncertainty.losses import BetaNLL, NIGLoss
-from torch_uncertainty.optimization_procedures import optim_cifar10_resnet18
+from torch_uncertainty.losses import DistributionNLLLoss
+from torch_uncertainty.optim_recipes import optim_cifar10_resnet18
+from torch_uncertainty.routines import RegressionRoutine
+from torch_uncertainty.utils import TUTrainer
 
 
-class TestRegressionSingle:
-    """Testing the Regression routine with a single model."""
+class TestRegression:
+    """Testing the Regression routine."""
 
-    def test_cli_main_dummy_dist(self):
-        root = Path(__file__).parent.absolute().parents[0]
-        with ArgvContext("file.py"):
-            args = init_args(DummyRegressionBaseline, DummyRegressionDataModule)
+    def test_one_estimator_one_output(self):
+        trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
 
-            # datamodule
-            args.root = str(root / "data")
-            dm = DummyRegressionDataModule(out_features=1, **vars(args))
+        root = Path(__file__).parent.absolute().parents[0] / "data"
+        dm = DummyRegressionDataModule(out_features=1, root=root, batch_size=4)
 
-            model = DummyRegressionBaseline(
-                in_features=dm.in_features,
-                out_features=2,
-                loss=nn.GaussianNLLLoss,
-                optimization_procedure=optim_cifar10_resnet18,
-                baseline_type="single",
-                dist_estimation=2,
-                **vars(args),
-            )
+        model = DummyRegressionBaseline(
+            probabilistic=True,
+            in_features=dm.in_features,
+            output_dim=1,
+            loss=DistributionNLLLoss(),
+            optim_recipe=optim_cifar10_resnet18,
+            baseline_type="single",
+        )
 
-            cli_main(model, dm, root, "logs/dummy", args)
+        trainer.fit(model, dm)
+        trainer.validate(model, dm)
+        trainer.test(model, dm)
+        model(dm.get_test_set()[0][0])
 
-    def test_cli_main_dummy_dist_der(self):
-        root = Path(__file__).parent.absolute().parents[0]
-        with ArgvContext("file.py"):
-            args = init_args(DummyRegressionBaseline, DummyRegressionDataModule)
+        model = DummyRegressionBaseline(
+            probabilistic=False,
+            in_features=dm.in_features,
+            output_dim=1,
+            loss=DistributionNLLLoss(),
+            optim_recipe=optim_cifar10_resnet18,
+            baseline_type="single",
+        )
 
-            # datamodule
-            args.root = str(root / "data")
-            dm = DummyRegressionDataModule(out_features=1, **vars(args))
+        trainer.fit(model, dm)
+        trainer.validate(model, dm)
+        trainer.test(model, dm)
+        model(dm.get_test_set()[0][0])
 
-            loss = partial(
-                NIGLoss,
-                reg_weight=1e-2,
-            )
+    def test_one_estimator_two_outputs(self):
+        trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
 
-            model = DummyRegressionBaseline(
-                in_features=dm.in_features,
-                out_features=4,
-                loss=loss,
-                optimization_procedure=optim_cifar10_resnet18,
-                baseline_type="single",
-                dist_estimation=4,
-                **vars(args),
-            )
+        root = Path(__file__).parent.absolute().parents[0] / "data"
+        dm = DummyRegressionDataModule(out_features=2, root=root, batch_size=4)
 
-            cli_main(model, dm, root, "logs/dummy_der", args)
+        model = DummyRegressionBaseline(
+            probabilistic=True,
+            in_features=dm.in_features,
+            output_dim=2,
+            loss=DistributionNLLLoss(),
+            optim_recipe=optim_cifar10_resnet18,
+            baseline_type="single",
+            dist_type="laplace",
+        )
+        trainer.fit(model, dm)
+        trainer.test(model, dm)
+        model(dm.get_test_set()[0][0])
 
-    def test_cli_main_dummy_dist_betanll(self):
-        root = Path(__file__).parent.absolute().parents[0]
-        with ArgvContext("file.py"):
-            args = init_args(DummyRegressionBaseline, DummyRegressionDataModule)
+        model = DummyRegressionBaseline(
+            probabilistic=False,
+            in_features=dm.in_features,
+            output_dim=2,
+            loss=DistributionNLLLoss(),
+            optim_recipe=optim_cifar10_resnet18,
+            baseline_type="single",
+        )
+        trainer.fit(model, dm)
+        trainer.test(model, dm)
+        model(dm.get_test_set()[0][0])
 
-            # datamodule
-            args.root = str(root / "data")
-            dm = DummyRegressionDataModule(out_features=1, **vars(args))
+    def test_two_estimators_one_output(self):
+        trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
 
-            loss = partial(
-                BetaNLL,
-                beta=0.5,
-            )
+        root = Path(__file__).parent.absolute().parents[0] / "data"
+        dm = DummyRegressionDataModule(out_features=1, root=root, batch_size=4)
 
-            model = DummyRegressionBaseline(
-                in_features=dm.in_features,
-                out_features=2,
-                loss=loss,
-                optimization_procedure=optim_cifar10_resnet18,
-                baseline_type="single",
-                dist_estimation=2,
-                **vars(args),
-            )
+        model = DummyRegressionBaseline(
+            probabilistic=True,
+            in_features=dm.in_features,
+            output_dim=1,
+            loss=DistributionNLLLoss(),
+            optim_recipe=optim_cifar10_resnet18,
+            baseline_type="ensemble",
+            dist_type="nig",
+        )
+        trainer.fit(model, dm)
+        trainer.test(model, dm)
+        model(dm.get_test_set()[0][0])
 
-            cli_main(model, dm, root, "logs/dummy_betanll", args)
+        model = DummyRegressionBaseline(
+            probabilistic=False,
+            in_features=dm.in_features,
+            output_dim=1,
+            loss=DistributionNLLLoss(),
+            optim_recipe=optim_cifar10_resnet18,
+            baseline_type="ensemble",
+        )
+        trainer.fit(model, dm)
+        trainer.test(model, dm)
+        model(dm.get_test_set()[0][0])
 
-    def test_cli_main_dummy(self):
-        root = Path(__file__).parent.absolute().parents[0]
-        with ArgvContext("file.py"):
-            args = init_args(DummyRegressionBaseline, DummyRegressionDataModule)
+    def test_two_estimators_two_outputs(self):
+        trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
 
-            # datamodule
-            args.root = str(root / "data")
-            dm = DummyRegressionDataModule(out_features=2, **vars(args))
+        root = Path(__file__).parent.absolute().parents[0] / "data"
+        dm = DummyRegressionDataModule(out_features=2, root=root, batch_size=4)
 
-            model = DummyRegressionBaseline(
-                in_features=dm.in_features,
-                out_features=dm.out_features,
-                loss=nn.MSELoss,
-                optimization_procedure=optim_cifar10_resnet18,
-                baseline_type="single",
-                **vars(args),
-            )
+        model = DummyRegressionBaseline(
+            probabilistic=True,
+            in_features=dm.in_features,
+            output_dim=2,
+            loss=DistributionNLLLoss(),
+            optim_recipe=optim_cifar10_resnet18,
+            baseline_type="ensemble",
+        )
+        trainer.fit(model, dm)
+        trainer.validate(model, dm)
+        trainer.test(model, dm)
+        model(dm.get_test_set()[0][0])
 
-            cli_main(model, dm, root, "logs/dummy", args)
+        model = DummyRegressionBaseline(
+            probabilistic=False,
+            in_features=dm.in_features,
+            output_dim=2,
+            loss=DistributionNLLLoss(),
+            optim_recipe=optim_cifar10_resnet18,
+            baseline_type="ensemble",
+        )
+        trainer.fit(model, dm)
+        trainer.validate(model, dm)
+        trainer.test(model, dm)
+        model(dm.get_test_set()[0][0])
 
     def test_regression_failures(self):
         with pytest.raises(ValueError):
-            DummyRegressionBaseline(
-                in_features=10,
-                out_features=3,
-                loss=nn.GaussianNLLLoss,
-                optimization_procedure=optim_cifar10_resnet18,
-                dist_estimation=4,
+            RegressionRoutine(
+                True, 1, nn.Identity(), nn.MSELoss, num_estimators=0
             )
 
         with pytest.raises(ValueError):
-            DummyRegressionBaseline(
-                in_features=10,
-                out_features=3,
-                loss=nn.GaussianNLLLoss,
-                optimization_procedure=optim_cifar10_resnet18,
-                dist_estimation=-4,
+            RegressionRoutine(
+                True, 0, nn.Identity(), nn.MSELoss, num_estimators=1
             )
-
-        with pytest.raises(TypeError):
-            DummyRegressionBaseline(
-                in_features=10,
-                out_features=4,
-                loss=nn.GaussianNLLLoss,
-                optimization_procedure=optim_cifar10_resnet18,
-                dist_estimation=4.2,
-            )
-
-
-class TestRegressionEnsemble:
-    """Testing the Regression routine with an ensemble model."""
-
-    def test_cli_main_dummy(self):
-        root = Path(__file__).parent.absolute().parents[0]
-        with ArgvContext("file.py"):
-            args = init_args(DummyRegressionBaseline, DummyRegressionDataModule)
-
-            # datamodule
-            args.root = str(root / "data")
-            dm = DummyRegressionDataModule(out_features=1, **vars(args))
-
-            model = DummyRegressionBaseline(
-                in_features=dm.in_features,
-                out_features=dm.out_features,
-                loss=nn.MSELoss,
-                optimization_procedure=optim_cifar10_resnet18,
-                baseline_type="ensemble",
-                **vars(args),
-            )
-
-            cli_main(model, dm, root, "logs/dummy", args)

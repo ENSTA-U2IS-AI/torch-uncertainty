@@ -24,16 +24,16 @@ from torchvision.transforms import (
 from torch_uncertainty.datasets import FrostImages
 
 __all__ = [
-    "GaussianNoise",
-    "ShotNoise",
-    "ImpulseNoise",
-    "SpeckleNoise",
-    "GaussianBlur",
-    "GlassBlur",
     "DefocusBlur",
+    "Frost",
+    "GaussianBlur",
+    "GaussianNoise",
+    "GlassBlur",
+    "ImpulseNoise",
     "JPEGCompression",
     "Pixelate",
-    "Frost",
+    "ShotNoise",
+    "SpeckleNoise",
 ]
 
 

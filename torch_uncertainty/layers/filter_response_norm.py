@@ -2,7 +2,7 @@ import torch
 from torch import Tensor, nn
 
 
-class FilterResponseNormNd(nn.Module):
+class _FilterResponseNormNd(nn.Module):
     def __init__(
         self,
         dimension: int,
@@ -49,7 +49,7 @@ class FilterResponseNormNd(nn.Module):
         return torch.max(y, self.tau)
 
 
-class FilterResponseNorm1d(FilterResponseNormNd):
+class FilterResponseNorm1d(_FilterResponseNormNd):
     def __init__(
         self, num_channels: int, eps: float = 1e-6, device=None, dtype=None
     ) -> None:
@@ -70,7 +70,7 @@ class FilterResponseNorm1d(FilterResponseNormNd):
         )
 
 
-class FilterResponseNorm2d(FilterResponseNormNd):
+class FilterResponseNorm2d(_FilterResponseNormNd):
     def __init__(
         self, num_channels: int, eps: float = 1e-6, device=None, dtype=None
     ) -> None:
@@ -91,7 +91,7 @@ class FilterResponseNorm2d(FilterResponseNormNd):
         )
 
 
-class FilterResponseNorm3d(FilterResponseNormNd):
+class FilterResponseNorm3d(_FilterResponseNormNd):
     def __init__(
         self, num_channels: int, eps: float = 1e-6, device=None, dtype=None
     ) -> None:

@@ -1,8 +1,40 @@
+from typing import Literal
+
 import torch
 from torch import Tensor, nn
+from torch.distributions import Distribution
 from torch.nn import functional as F
 
-from .layers.bayesian import bayesian_modules
+from torch_uncertainty.layers.bayesian import bayesian_modules
+from torch_uncertainty.utils.distributions import NormalInverseGamma
+
+
+class DistributionNLLLoss(nn.Module):
+    def __init__(
+        self, reduction: Literal["mean", "sum"] | None = "mean"
+    ) -> None:
+        """Negative Log-Likelihood loss using given distributions as inputs.
+
+        Args:
+            reduction (str, optional): specifies the reduction to apply to the
+            output:``'none'`` | ``'mean'`` | ``'sum'``. Defaults to "mean".
+        """
+        super().__init__()
+        self.reduction = reduction
+
+    def forward(self, dist: Distribution, targets: Tensor) -> Tensor:
+        """Compute the NLL of the targets given predicted distributions.
+
+        Args:
+            dist (Distribution): The predicted distributions
+            targets (Tensor): The target values
+        """
+        loss = -dist.log_prob(targets)
+        if self.reduction == "mean":
+            loss = loss.mean()
+        elif self.reduction == "sum":
+            loss = loss.sum()
+        return loss
 
 
 class KLDiv(nn.Module):
@@ -34,57 +66,40 @@ class KLDiv(nn.Module):
 class ELBOLoss(nn.Module):
     def __init__(
         self,
-        model: nn.Module,
-        criterion: nn.Module,
+        model: nn.Module | None,
+        inner_loss: nn.Module,
         kl_weight: float,
         num_samples: int,
     ) -> None:
         """The Evidence Lower Bound (ELBO) loss for Bayesian Neural Networks.
 
         ELBO loss for Bayesian Neural Networks. Use this loss function with the
-        objective that you seek to minimize as :attr:`criterion`.
+        objective that you seek to minimize as :attr:`inner_loss`.
 
         Args:
             model (nn.Module): The Bayesian Neural Network to compute the loss for
-            criterion (nn.Module): The loss function to use during training
+            inner_loss (nn.Module): The loss function to use during training
             kl_weight (float): The weight of the KL divergence term
             num_samples (int): The number of samples to use for the ELBO loss
+
+        Note:
+            Set the model to None if you use the ELBOLoss within
+            the ClassificationRoutine. It will get filled automatically.
         """
         super().__init__()
-        self.model = model
-        self._kl_div = KLDiv(model)
+        _elbo_loss_checks(inner_loss, kl_weight, num_samples)
+        self.set_model(model)
 
-        if isinstance(criterion, type):
-            raise TypeError(
-                "The criterion should be an instance of a class."
-                f"Got {criterion}."
-            )
-        self.criterion = criterion
-
-        if kl_weight < 0:
-            raise ValueError(
-                f"The KL weight should be non-negative. Got {kl_weight}."
-            )
+        self.inner_loss = inner_loss
         self.kl_weight = kl_weight
-
-        if num_samples < 1:
-            raise ValueError(
-                "The number of samples should not be lower than 1."
-                f"Got {num_samples}."
-            )
-        if not isinstance(num_samples, int):
-            raise TypeError(
-                "The number of samples should be an integer. "
-                f"Got {type(num_samples)}."
-            )
         self.num_samples = num_samples
 
     def forward(self, inputs: Tensor, targets: Tensor) -> Tensor:
-        """Gather the kl divergence from the bayesian modules and aggregate
+        """Gather the KL divergence from the bayesian modules and aggregate
         the ELBO loss for a given network.
 
         Args:
-            inputs (Tensor): The *inputs* of the Bayesian Neural Network
+            inputs (Tensor): The inputs of the Bayesian Neural Network
             targets (Tensor): The target values
 
         Returns:
@@ -93,16 +108,50 @@ class ELBOLoss(nn.Module):
         aggregated_elbo = torch.zeros(1, device=inputs.device)
         for _ in range(self.num_samples):
             logits = self.model(inputs)
-            aggregated_elbo += self.criterion(logits, targets)
+            aggregated_elbo += self.inner_loss(logits, targets)
             aggregated_elbo += self.kl_weight * self._kl_div()
         return aggregated_elbo / self.num_samples
 
+    def set_model(self, model: nn.Module) -> None:
+        self.model = model
+        if model is not None:
+            self._kl_div = KLDiv(model)
 
-class NIGLoss(nn.Module):
+
+def _elbo_loss_checks(
+    inner_loss: nn.Module, kl_weight: float, num_samples: int
+) -> None:
+    if isinstance(inner_loss, type):
+        raise TypeError(
+            "The inner_loss should be an instance of a class."
+            f"Got {inner_loss}."
+        )
+
+    if kl_weight < 0:
+        raise ValueError(
+            f"The KL weight should be non-negative. Got {kl_weight}."
+        )
+
+    if num_samples < 1:
+        raise ValueError(
+            "The number of samples should not be lower than 1."
+            f"Got {num_samples}."
+        )
+    if not isinstance(num_samples, int):
+        raise TypeError(
+            "The number of samples should be an integer. "
+            f"Got {type(num_samples)}."
+        )
+
+
+class DERLoss(DistributionNLLLoss):
     def __init__(
         self, reg_weight: float, reduction: str | None = "mean"
     ) -> None:
-        """The Normal Inverse-Gamma loss.
+        """The Deep Evidential loss.
+
+        This loss combines the negative log-likelihood loss of the normal
+        inverse gamma distribution and a weighted regularization term.
 
         Args:
             reg_weight (float): The weight of the regularization term.
@@ -113,7 +162,11 @@ class NIGLoss(nn.Module):
             Amini, A., Schwarting, W., Soleimany, A., & Rus, D. (2019). Deep
             evidential regression. https://arxiv.org/abs/1910.02600.
         """
-        super().__init__()
+        super().__init__(reduction=None)
+
+        if reduction not in (None, "none", "mean", "sum"):
+            raise ValueError(f"{reduction} is not a valid value for reduction.")
+        self.final_reduction = reduction
 
         if reg_weight < 0:
             raise ValueError(
@@ -121,49 +174,24 @@ class NIGLoss(nn.Module):
                 f"{reg_weight}."
             )
         self.reg_weight = reg_weight
-        if reduction not in ("none", "mean", "sum"):
-            raise ValueError(f"{reduction} is not a valid value for reduction.")
-        self.reduction = reduction
 
-    def _nig_nll(
-        self,
-        gamma: Tensor,
-        v: Tensor,
-        alpha: Tensor,
-        beta: Tensor,
-        targets: Tensor,
-    ) -> Tensor:
-        gam = 2 * beta * (1 + v)
-        return (
-            0.5 * torch.log(torch.pi / v)
-            - alpha * gam.log()
-            + (alpha + 0.5) * torch.log(gam + v * (targets - gamma) ** 2)
-            + torch.lgamma(alpha)
-            - torch.lgamma(alpha + 0.5)
-        )
-
-    def _nig_reg(
-        self, gamma: Tensor, v: Tensor, alpha: Tensor, targets: Tensor
-    ) -> Tensor:
-        return torch.norm(targets - gamma, 1, dim=1, keepdim=True) * (
-            2 * v + alpha
+    def _reg(self, dist: NormalInverseGamma, targets: Tensor) -> Tensor:
+        return torch.norm(targets - dist.loc, 1, dim=1, keepdim=True) * (
+            2 * dist.lmbda + dist.alpha
         )
 
     def forward(
         self,
-        gamma: Tensor,
-        v: Tensor,
-        alpha: Tensor,
-        beta: Tensor,
+        dist: NormalInverseGamma,
         targets: Tensor,
     ) -> Tensor:
-        loss_nll = self._nig_nll(gamma, v, alpha, beta, targets)
-        loss_reg = self._nig_reg(gamma, v, alpha, targets)
+        loss_nll = super().forward(dist, targets)
+        loss_reg = self._reg(dist, targets)
         loss = loss_nll + self.reg_weight * loss_reg
 
-        if self.reduction == "mean":
+        if self.final_reduction == "mean":
             return loss.mean()
-        if self.reduction == "sum":
+        if self.final_reduction == "sum":
             return loss.sum()
         return loss
 
@@ -347,7 +375,7 @@ class DECLoss(nn.Module):
             raise NotImplementedError(
                 "DECLoss does not yet support mixup/cutmix."
             )
-        # else:  # TODO: handle binary
+        # TODO: handle binary
         targets = F.one_hot(targets, num_classes=evidence.size()[-1])
 
         if self.loss_type == "mse":

@@ -1,0 +1,26 @@
+# lightning.pytorch==2.2.0
+eval_after_fit: true
+seed_everything: false
+trainer:
+  accelerator: gpu
+  devices: 1
+  max_steps: 160000
+model:
+  num_classes: 19
+  loss: CrossEntropyLoss
+  version: std
+  arch: 0
+  num_estimators: 1
+data:
+  root: ./data
+  batch_size: 8
+  crop_size: 1024
+  inference_size:
+  - 1024
+  - 2048
+  num_workers: 30
+optimizer:
+  lr: 6e-5
+lr_scheduler:
+  step_size: 10000
+  gamma: 0.1

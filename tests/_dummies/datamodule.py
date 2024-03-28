@@ -1,15 +1,19 @@
-from argparse import ArgumentParser
 from pathlib import Path
-from typing import Any
 
 import numpy as np
-import torchvision.transforms as T
+import torch
+import torchvision.transforms.v2 as T
 from numpy.typing import ArrayLike
 from torch.utils.data import DataLoader
+from torchvision import tv_tensors
 
 from torch_uncertainty.datamodules.abstract import AbstractDataModule
 
-from .dataset import DummyClassificationDataset, DummyRegressionDataset
+from .dataset import (
+    DummyClassificationDataset,
+    DummyRegressionDataset,
+    DummySegmentationDataset,
+)
 
 
 class DummyClassificationDataModule(AbstractDataModule):
@@ -20,17 +24,17 @@ class DummyClassificationDataModule(AbstractDataModule):
     def __init__(
         self,
         root: str | Path,
-        eval_ood: bool,
         batch_size: int,
         num_classes: int = 2,
         num_workers: int = 1,
+        eval_ood: bool = False,
         pin_memory: bool = True,
         persistent_workers: bool = True,
         num_images: int = 2,
-        **kwargs,
     ) -> None:
         super().__init__(
             root=root,
+            val_split=None,
             batch_size=batch_size,
             num_workers=num_workers,
             pin_memory=pin_memory,
@@ -98,16 +102,6 @@ class DummyClassificationDataModule(AbstractDataModule):
     def _get_train_targets(self) -> ArrayLike:
         return np.array(self.train.targets)
 
-    @classmethod
-    def add_argparse_args(
-        cls,
-        parent_parser: ArgumentParser,
-        **kwargs: Any,
-    ) -> ArgumentParser:
-        p = super().add_argparse_args(parent_parser)
-        p.add_argument("--eval-ood", action="store_true")
-        return parent_parser
-
 
 class DummyRegressionDataModule(AbstractDataModule):
     in_features = 4
@@ -116,13 +110,11 @@ class DummyRegressionDataModule(AbstractDataModule):
     def __init__(
         self,
         root: str | Path,
-        eval_ood: bool,
         batch_size: int,
         out_features: int = 2,
         num_workers: int = 1,
         pin_memory: bool = True,
         persistent_workers: bool = True,
-        **kwargs,
     ) -> None:
         super().__init__(
             root=root,
@@ -130,9 +122,9 @@ class DummyRegressionDataModule(AbstractDataModule):
             num_workers=num_workers,
             pin_memory=pin_memory,
             persistent_workers=persistent_workers,
+            val_split=0,
         )
 
-        self.eval_ood = eval_ood
         self.out_features = out_features
 
         self.dataset = DummyRegressionDataset
@@ -162,25 +154,95 @@ class DummyRegressionDataModule(AbstractDataModule):
                 out_features=self.out_features,
                 transform=self.test_transform,
             )
-        if self.eval_ood:
-            self.ood = self.ood_dataset(
+
+    def test_dataloader(self) -> DataLoader | list[DataLoader]:
+        return [self._data_loader(self.test)]
+
+
+class DummySegmentationDataModule(AbstractDataModule):
+    num_channels = 3
+    training_task = "segmentation"
+
+    def __init__(
+        self,
+        root: str | Path,
+        batch_size: int,
+        num_classes: int = 2,
+        num_workers: int = 1,
+        image_size: int = 4,
+        pin_memory: bool = True,
+        persistent_workers: bool = True,
+        num_images: int = 2,
+    ) -> None:
+        super().__init__(
+            root=root,
+            val_split=None,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            persistent_workers=persistent_workers,
+        )
+
+        self.num_classes = num_classes
+        self.num_channels = 3
+        self.num_images = num_images
+        self.image_size = image_size
+
+        self.dataset = DummySegmentationDataset
+
+        self.train_transform = T.ToDtype(
+            dtype={
+                tv_tensors.Image: torch.float32,
+                tv_tensors.Mask: torch.int64,
+                "others": None,
+            },
+            scale=True,
+        )
+        self.test_transform = T.ToDtype(
+            dtype={
+                tv_tensors.Image: torch.float32,
+                tv_tensors.Mask: torch.int64,
+                "others": None,
+            },
+            scale=True,
+        )
+
+    def prepare_data(self) -> None:
+        pass
+
+    def setup(self, stage: str | None = None) -> None:
+        if stage == "fit" or stage is None:
+            self.train = self.dataset(
                 self.root,
-                out_features=self.out_features,
-                transform=self.test_transform,
+                num_channels=self.num_channels,
+                num_classes=self.num_classes,
+                image_size=self.image_size,
+                transforms=self.train_transform,
+                num_images=self.num_images,
+            )
+            self.val = self.dataset(
+                self.root,
+                num_channels=self.num_channels,
+                num_classes=self.num_classes,
+                image_size=self.image_size,
+                transforms=self.test_transform,
+                num_images=self.num_images,
+            )
+        elif stage == "test":
+            self.test = self.dataset(
+                self.root,
+                num_channels=self.num_channels,
+                num_classes=self.num_classes,
+                image_size=self.image_size,
+                transforms=self.test_transform,
+                num_images=self.num_images,
             )
 
     def test_dataloader(self) -> DataLoader | list[DataLoader]:
-        dataloader = [self._data_loader(self.test)]
-        if self.eval_ood:
-            dataloader.append(self._data_loader(self.ood))
-        return dataloader
+        return [self._data_loader(self.test)]
 
-    @classmethod
-    def add_argparse_args(
-        cls,
-        parent_parser: ArgumentParser,
-        **kwargs: Any,
-    ) -> ArgumentParser:
-        p = super().add_argparse_args(parent_parser)
-        p.add_argument("--eval-ood", action="store_true")
-        return parent_parser
+    def _get_train_data(self) -> ArrayLike:
+        return self.train.data
+
+    def _get_train_targets(self) -> ArrayLike:
+        return np.array(self.train.targets)

@@ -16,11 +16,12 @@ def sim_gauss_kernel(dist, tau_max: float = 1.0, tau_std: float = 0.5) -> float:
     return 1 / (dist_rate + 1e-12)
 
 
+# ruff: noqa: ERA001
 # def tensor_linspace(start: Tensor, stop: Tensor, num: int):
 #     """
 #     Creates a tensor of shape [num, *start.shape] whose values are evenly
 #     spaced from start to end, inclusive.
-#     Replicates but the multi-dimensional bahaviour of numpy.linspace in PyTorch.
+#     Replicates but the multi-dimensional behaviour of numpy.linspace in PyTorch.
 #     """
 #     # create a tensor of 'num' steps from 0 to 1
 #     steps = torch.arange(num, dtype=torch.float32, device=start.device) / (
@@ -31,7 +32,7 @@ def sim_gauss_kernel(dist, tau_max: float = 1.0, tau_std: float = 0.5) -> float:
 #     # to allow for broadcastings
 #     # using 'steps.reshape([-1, *([1]*start.ndim)])' would be nice here
 #     # but torchscript
-#     # "cannot statically infer the expected size of a list in this contex",
+#     # "cannot statically infer the expected size of a list in this context",
 #     # hence the code below
 #     for i in range(start.ndim):
 #         steps = steps.unsqueeze(-1)

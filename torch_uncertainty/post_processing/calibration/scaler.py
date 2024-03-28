@@ -96,7 +96,7 @@ class Scaler(nn.Module):
     def forward(self, inputs: Tensor) -> Tensor:
         if not self.trained:
             print(
-                "TemperatureScaler has not been trained yet. Returning a "
+                "TemperatureScaler has not been trained yet. Returning "
                 "manually tempered inputs."
             )
         return self._scale(self.model(inputs))

@@ -8,6 +8,7 @@ from .image import (
     Contrast,
     Equalize,
     Posterize,
+    RandomRescale,
     Rotate,
     Sharpen,
     Shear,

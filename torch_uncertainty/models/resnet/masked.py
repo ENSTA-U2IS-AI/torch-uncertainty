@@ -105,7 +105,7 @@ class Bottleneck(nn.Module):
             num_estimators=num_estimators,
             scale=scale,
             groups=groups,
-            bias=False,
+            bias=conv_bias,
         )
         self.bn1 = normalization_layer(planes)
         self.conv2 = MaskedConv2d(
@@ -117,7 +117,7 @@ class Bottleneck(nn.Module):
             stride=stride,
             padding=1,
             groups=groups,
-            bias=False,
+            bias=conv_bias,
         )
         self.dropout = nn.Dropout2d(p=dropout_rate)
         self.bn2 = normalization_layer(planes)
@@ -128,7 +128,7 @@ class Bottleneck(nn.Module):
             num_estimators=num_estimators,
             scale=scale,
             groups=groups,
-            bias=False,
+            bias=conv_bias,
         )
         self.bn3 = normalization_layer(self.expansion * planes)
 
@@ -143,7 +143,7 @@ class Bottleneck(nn.Module):
                     scale=scale,
                     stride=stride,
                     groups=groups,
-                    bias=False,
+                    bias=conv_bias,
                 ),
                 normalization_layer(self.expansion * planes),
             )

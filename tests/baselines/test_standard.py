@@ -1,48 +1,39 @@
-from argparse import ArgumentParser
-
 import pytest
 import torch
 from torch import nn
 from torchinfo import summary
 
-from torch_uncertainty.baselines import VGG, ResNet, WideResNet
-from torch_uncertainty.baselines.regression import MLP
-from torch_uncertainty.baselines.utils.parser_addons import (
-    add_mlp_specific_args,
+from torch_uncertainty.baselines.classification import (
+    ResNetBaseline,
+    VGGBaseline,
+    WideResNetBaseline,
 )
-from torch_uncertainty.optimization_procedures import (
-    optim_cifar10_resnet18,
-    optim_cifar10_wideresnet,
-)
+from torch_uncertainty.baselines.regression import MLPBaseline
+from torch_uncertainty.baselines.segmentation import SegFormerBaseline
 
 
 class TestStandardBaseline:
-    """Testing the ResNet baseline class."""
+    """Testing the ResNetBaseline baseline class."""
 
     def test_standard(self):
-        net = ResNet(
+        net = ResNetBaseline(
             num_classes=10,
             in_channels=3,
-            loss=nn.CrossEntropyLoss,
-            optimization_procedure=optim_cifar10_resnet18,
+            loss=nn.CrossEntropyLoss(),
             version="std",
             arch=18,
             style="cifar",
             groups=1,
         )
         summary(net)
-
-        _ = net.criterion
-        _ = net.configure_optimizers()
         _ = net(torch.rand(1, 3, 32, 32))
 
     def test_errors(self):
         with pytest.raises(ValueError):
-            ResNet(
+            ResNetBaseline(
                 num_classes=10,
                 in_channels=3,
-                loss=nn.CrossEntropyLoss,
-                optimization_procedure=optim_cifar10_resnet18,
+                loss=nn.CrossEntropyLoss(),
                 version="test",
                 arch=18,
                 style="cifar",
@@ -51,31 +42,26 @@ class TestStandardBaseline:
 
 
 class TestStandardWideBaseline:
-    """Testing the WideResNet baseline class."""
+    """Testing the WideResNetBaseline baseline class."""
 
     def test_standard(self):
-        net = WideResNet(
+        net = WideResNetBaseline(
             num_classes=10,
             in_channels=3,
-            loss=nn.CrossEntropyLoss,
-            optimization_procedure=optim_cifar10_wideresnet,
+            loss=nn.CrossEntropyLoss(),
             version="std",
             style="cifar",
             groups=1,
         )
         summary(net)
-
-        _ = net.criterion
-        _ = net.configure_optimizers()
         _ = net(torch.rand(1, 3, 32, 32))
 
     def test_errors(self):
         with pytest.raises(ValueError):
-            WideResNet(
+            WideResNetBaseline(
                 num_classes=10,
                 in_channels=3,
-                loss=nn.CrossEntropyLoss,
-                optimization_procedure=optim_cifar10_wideresnet,
+                loss=nn.CrossEntropyLoss(),
                 version="test",
                 style="cifar",
                 groups=1,
@@ -83,31 +69,26 @@ class TestStandardWideBaseline:
 
 
 class TestStandardVGGBaseline:
-    """Testing the VGG baseline class."""
+    """Testing the VGGBaseline baseline class."""
 
     def test_standard(self):
-        net = VGG(
+        net = VGGBaseline(
             num_classes=10,
             in_channels=3,
-            loss=nn.CrossEntropyLoss,
-            optimization_procedure=optim_cifar10_resnet18,
+            loss=nn.CrossEntropyLoss(),
             version="std",
             arch=11,
             groups=1,
         )
         summary(net)
-
-        _ = net.criterion
-        _ = net.configure_optimizers()
         _ = net(torch.rand(1, 3, 32, 32))
 
     def test_errors(self):
         with pytest.raises(ValueError):
-            VGG(
+            VGGBaseline(
                 num_classes=10,
                 in_channels=3,
-                loss=nn.CrossEntropyLoss,
-                optimization_procedure=optim_cifar10_resnet18,
+                loss=nn.CrossEntropyLoss(),
                 version="test",
                 arch=11,
                 groups=1,
@@ -118,32 +99,55 @@ class TestStandardMLPBaseline:
     """Testing the MLP baseline class."""
 
     def test_standard(self):
-        net = MLP(
+        net = MLPBaseline(
             in_features=3,
-            num_outputs=10,
-            loss=nn.MSELoss,
-            optimization_procedure=optim_cifar10_resnet18,
+            output_dim=10,
+            loss=nn.MSELoss(),
             version="std",
             hidden_dims=[1],
-            dist_estimation=1,
         )
         summary(net)
-
-        _ = net.criterion
-        _ = net.configure_optimizers()
         _ = net(torch.rand(1, 3))
 
-        parser = ArgumentParser()
-        add_mlp_specific_args(parser)
+        for distribution in ["normal", "laplace", "nig"]:
+            MLPBaseline(
+                in_features=3,
+                output_dim=10,
+                loss=nn.MSELoss(),
+                version="std",
+                hidden_dims=[1],
+                distribution=distribution,
+            )
 
     def test_errors(self):
         with pytest.raises(ValueError):
-            MLP(
+            MLPBaseline(
                 in_features=3,
-                num_outputs=10,
-                loss=nn.MSELoss,
-                optimization_procedure=optim_cifar10_resnet18,
+                output_dim=10,
+                loss=nn.MSELoss(),
                 version="test",
                 hidden_dims=[1],
-                dist_estimation=1,
+            )
+
+
+class TestStandardSegFormerBaseline:
+    """Testing the SegFormer baseline class."""
+
+    def test_standard(self):
+        net = SegFormerBaseline(
+            num_classes=10,
+            loss=nn.CrossEntropyLoss(),
+            version="std",
+            arch=0,
+        )
+        summary(net)
+        _ = net(torch.rand(1, 3, 32, 32))
+
+    def test_errors(self):
+        with pytest.raises(ValueError):
+            SegFormerBaseline(
+                num_classes=10,
+                loss=nn.CrossEntropyLoss(),
+                version="test",
+                arch=0,
             )

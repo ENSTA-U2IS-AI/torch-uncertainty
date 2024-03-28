@@ -163,7 +163,7 @@ class _WideResNet(nn.Module):
         num_blocks: int,
         dropout_rate: float,
         stride: int,
-        groups,
+        groups: int,
     ) -> nn.Module:
         strides = [stride] + [1] * (int(num_blocks) - 1)
         layers = []

@@ -113,7 +113,7 @@ class BayesLinear(nn.Module):
             return self._frozen_forward(inputs)
         return self._forward(inputs)
 
-    def _frozen_forward(self, inputs):
+    def _frozen_forward(self, inputs) -> Tensor:
         return F.linear(inputs, self.weight_mu, self.bias_mu)
 
     def _forward(self, inputs: Tensor) -> Tensor:
@@ -146,6 +146,4 @@ class BayesLinear(nn.Module):
         return weight, bias
 
     def extra_repr(self) -> str:
-        return "in_features={}, out_features={}, bias={}".format(
-            self.in_features, self.out_features, self.bias_mu is not None
-        )
+        return f"in_features={self.in_features}, out_features={self.out_features}, bias={self.bias_mu is not None}"
