@@ -15,6 +15,12 @@ Yet, we take account that their will be as many different uses of TorchUncertain
 This page provides ideas on how to benefit from TorchUncertainty at all levels: from ready-to-train lightning-based models to using only specific
 PyTorch layers. 
 
+.. figure:: _static/images/structure_torch_uncertainty.jpg
+  :alt: TorchUncertainty structure
+  :figclass: figure-caption
+
+  **TorchUncertainty structure**
+
 Training with TorchUncertainty's Uncertainty-aware Routines
 -----------------------------------------------------------
 

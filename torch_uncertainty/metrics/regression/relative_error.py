@@ -5,7 +5,7 @@ from torchmetrics import MeanAbsoluteError, MeanSquaredError
 
 class MeanGTRelativeAbsoluteError(MeanAbsoluteError):
     def __init__(self, **kwargs) -> None:
-        r"""`Compute Mean Absolute Error relative to the Ground Truth`_ (MAErel or ARE).
+        r"""Compute Mean Absolute Error relative to the Ground Truth (MAErel or ARE).
 
         .. math:: \text{MAErel} = \frac{1}{N}\sum_i^N \frac{| y_i - \hat{y_i} |}{y_i}
 
@@ -22,7 +22,8 @@ class MeanGTRelativeAbsoluteError(MeanAbsoluteError):
             relative mean absolute error over the state
 
         Args:
-            kwargs: Additional keyword arguments, see :ref:`Metric kwargs` for more info.
+            kwargs: Additional keyword arguments, see `Advanced metric settings
+                <https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metric-kwargs>`_.
 
         Reference:
             As in e.g. From big to small: Multi-scale local planar guidance for monocular depth estimation
@@ -38,7 +39,7 @@ class MeanGTRelativeSquaredError(MeanSquaredError):
     def __init__(
         self, squared: bool = True, num_outputs: int = 1, **kwargs
     ) -> None:
-        r"""Compute `mean squared error relative to the Ground Truth`_ (MSErel or SRE).
+        r"""Compute mean squared error relative to the Ground Truth (MSErel or SRE).
 
         .. math:: \text{MSErel} = \frac{1}{N}\sum_i^N \frac{(y_i - \hat{y_i})^2}{y_i}
 
@@ -56,7 +57,8 @@ class MeanGTRelativeSquaredError(MeanSquaredError):
         Args:
             squared: If True returns MSErel value, if False returns RMSErel value.
             num_outputs: Number of outputs in multioutput setting
-            kwargs: Additional keyword arguments, see :ref:`Metric kwargs` for more info.
+            kwargs: Additional keyword arguments, see `Advanced metric settings
+                <https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metric-kwargs>`_.
 
         Reference:
             As in e.g. From big to small: Multi-scale local planar guidance for monocular depth estimation
