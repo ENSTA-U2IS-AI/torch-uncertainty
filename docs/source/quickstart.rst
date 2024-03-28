@@ -77,12 +77,12 @@ Training with the Routine
 To train with this routine, you will first need to create a lightning Trainer and have either a lightning datamodule
 or PyTorch dataloaders. When benchmarking models, we advise to use lightning datamodules that will automatically handle
 train/val/test splits, out-of-distribution detection and dataset shift. For this example, let us use TorchUncertainty's 
-CIFAR10 datamodule. Please keep in mind that you could use your own datamodule or dataloaders.
+CIFAR10 datamodule.
 
 .. code:: python
 
   from torch_uncertainty.datamodules import CIFAR10DataModule
-  from pytorch_lightning import Trainer
+  from lightning.pytorch import Trainer
 
   dm = CIFAR10DataModule(root="data", batch_size=32)
   trainer = Trainer(gpus=1, max_epochs=100)
@@ -90,7 +90,8 @@ CIFAR10 datamodule. Please keep in mind that you could use your own datamodule o
   trainer.test(routine, dm)
 
 Here it is, you have trained your first model with TorchUncertainty! As a result, you will get access to various metrics
-measuring the ability of your model to handle uncertainty.
+measuring the ability of your model to handle uncertainty. You can get other examples of training with lightning Trainers
+looking at the `Tutorials <tutorials.html#layers>`_ 
 
 More metrics
 ^^^^^^^^^^^^

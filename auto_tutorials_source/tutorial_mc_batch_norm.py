@@ -72,9 +72,11 @@ routine = ClassificationRoutine(
 # %%
 # 4. Gathering Everything and Training the Model
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# You can also save the results in a variable by saving the output of
+# `trainer.test`.
 
 trainer.fit(model=routine, datamodule=datamodule)
-trainer.test(model=routine, datamodule=datamodule)
+trainer.test(model=routine, datamodule=datamodule);
 
 # %%
 # 5. Wrapping the Model in a MCBatchNorm
@@ -88,10 +90,10 @@ trainer.test(model=routine, datamodule=datamodule)
 # to highlight the effect of stochasticity on the predictions.
 
 routine.model = MCBatchNorm(
-    routine.model, num_estimators=8, convert=True, mc_batch_size=4
+    routine.model, num_estimators=8, convert=True, mc_batch_size=32
 )
 routine.model.fit(datamodule.train)
-routine.eval()
+routine.eval();
 
 # %%
 # 6. Testing the Model
