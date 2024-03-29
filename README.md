@@ -15,7 +15,7 @@ _TorchUncertainty_ is a package designed to help you leverage [uncertainty quant
 
 :construction: _TorchUncertainty_ is in early development :construction: - expect changes, but reach out and contribute if you are interested in the project! **Please raise an issue if you have any bugs or difficulties and join the [discord server](https://discord.gg/HMCawt5MJu).**
 
-Our webpage and documentation is available here: [torch-uncertainty.github.io](https://torch-uncertainty.github.io).
+:books: Our webpage and documentation is available here: [torch-uncertainty.github.io](https://torch-uncertainty.github.io). :books:
 
 ---
 

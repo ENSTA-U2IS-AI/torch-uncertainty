@@ -17,13 +17,11 @@ and how to use TorchUncertainty's models.
 
 In this tutorial, we will need:
 
-- torch for its objects
-- the "calibration error" metric to compute the ECE and evaluate the top-label calibration
+- the calibration error metric CE to compute the ECE: the top-label calibration
 - the CIFAR-100 datamodule to handle the data
 - a ResNet 18 as starting model
 - the temperature scaler to improve the top-label calibration
-- a utility to download hf models easily
-- the calibration plot to visualize the calibration.
+- a utility function to download HF models easily
 
 If you use the classification routine, the plots will be automatically available in the tensorboard logs.
 """
