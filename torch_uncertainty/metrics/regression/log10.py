@@ -17,7 +17,8 @@ class Log10(Metric):
             - :attr:`target`: :math:`(N)`
 
         Args:
-            kwargs: Additional keyword arguments, see :ref:`Metric kwargs` for more info.
+            kwargs: Additional keyword arguments, see `Advanced metric settings
+                <https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metric-kwargs>`_.
         """
         super().__init__(**kwargs)
         self.add_state(

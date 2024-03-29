@@ -4,7 +4,7 @@ from torchmetrics import MeanSquaredError
 
 class MeanSquaredLogError(MeanSquaredError):
     def __init__(self, squared: bool = True, **kwargs) -> None:
-        r"""`Compute MeanSquaredLogError`_ (MSELog).
+        r"""Compute MeanSquaredLogError (MSELog).
 
         .. math:: \text{MSELog} = \frac{1}{N}\sum_i^N  (\log \hat{y_i} - \log y_i)^2
 
@@ -22,7 +22,8 @@ class MeanSquaredLogError(MeanSquaredError):
 
         Args:
             squared: If True returns MSELog value, if False returns EMSELog value.
-            kwargs: Additional keyword arguments, see :ref:`Metric kwargs` for more info.
+            kwargs: Additional keyword arguments, see `Advanced metric settings
+                <https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metric-kwargs>`_.
 
         Reference:
             As in e.g. From big to small: Multi-scale local planar guidance for monocular depth estimation

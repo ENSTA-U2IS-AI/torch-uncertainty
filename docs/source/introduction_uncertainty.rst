@@ -1,3 +1,5 @@
+:orphan:
+
 Introduction to Classification Uncertainty
 ==========================================
 

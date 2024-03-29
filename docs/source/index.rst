@@ -43,7 +43,6 @@ the following paper:
 
    installation
    quickstart
-   introduction_uncertainty
    auto_tutorials/index
    cli_guide
    api

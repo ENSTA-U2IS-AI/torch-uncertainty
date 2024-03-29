@@ -34,7 +34,6 @@ class TestTinyImageNetDataModule:
 
         dm.prepare_data()
         dm.setup()
-        dm.setup("test")
 
         dm.train_dataloader()
         dm.val_dataloader()

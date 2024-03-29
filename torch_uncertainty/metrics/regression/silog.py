@@ -20,7 +20,8 @@ class SILog(Metric):
 
         Args:
             lmbda: The regularization parameter on the variance of error (default 1).
-            kwargs: Additional keyword arguments, see :ref:`Metric kwargs` for more info.
+            kwargs: Additional keyword arguments, see `Advanced metric settings
+                <https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metric-kwargs>`_.
 
         Reference:
             Depth Map Prediction from a Single Image using a Multi-Scale Deep Network.

@@ -17,7 +17,6 @@ class TestImageNetDataModule:
         dm.ood_dataset = DummyClassificationDataset
         dm.prepare_data()
         dm.setup()
-        dm.setup("test")
 
         path = (
             Path(__file__).parent.resolve() / "../../assets/dummy_indices.yaml"

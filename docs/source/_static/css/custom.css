@@ -87,3 +87,7 @@
 .tutorials-header .header-logo {
     background-image: url("../images/torch_uncertainty.png");
 }
+
+.figure-caption {
+    text-align: center;
+}
