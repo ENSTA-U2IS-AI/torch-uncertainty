@@ -1,10 +1,3 @@
-"""_BatchedResNet in PyTorch.
-
-Reference:
-[1] Kaiming He, Xiangyu Zhang, Shaoqing Ren, Jian Sun
-    Deep Residual Learning for Image Recognition. arXiv:1512.03385
-"""
-
 from typing import Literal
 
 import torch.nn.functional as F
