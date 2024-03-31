@@ -25,7 +25,9 @@ class RepeatTarget(nn.Module):
 
     def forward(self, batch: tuple[Tensor, Tensor]) -> tuple[Tensor, Tensor]:
         inputs, targets = batch
-        return inputs, targets.repeat_interleave(self.num_repeats, dim=0)
+        return inputs, targets.repeat(
+            self.num_repeats, *[1] * (targets.ndim - 1)
+        )
 
 
 class MIMOBatchFormat(nn.Module):
