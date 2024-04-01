@@ -25,7 +25,7 @@ class _BasicBlock(nn.Module):
         dropout_rate: float,
         groups: int,
         activation_fn: Callable,
-        normalization_layer: nn.Module,
+        normalization_layer: type[nn.Module],
         conv_bias: bool,
     ) -> None:
         super().__init__()
@@ -87,7 +87,7 @@ class _Bottleneck(nn.Module):
         dropout_rate: float,
         groups: int,
         activation_fn: Callable,
-        normalization_layer: nn.Module,
+        normalization_layer: type[nn.Module],
         conv_bias: bool,
     ) -> None:
         super().__init__()
@@ -207,7 +207,7 @@ class _ResNet(nn.Module):
         style: Literal["imagenet", "cifar"] = "imagenet",
         in_planes: int = 64,
         activation_fn: Callable = relu,
-        normalization_layer: nn.Module = nn.BatchNorm2d,
+        normalization_layer: type[nn.Module] = nn.BatchNorm2d,
     ) -> None:
         """ResNet from `Deep Residual Learning for Image Recognition`."""
         super().__init__()
@@ -317,7 +317,7 @@ class _ResNet(nn.Module):
         dropout_rate: float,
         groups: int,
         activation_fn: Callable,
-        normalization_layer: nn.Module,
+        normalization_layer: type[nn.Module],
         conv_bias: bool,
     ) -> nn.Module:
         strides = [stride] + [1] * (num_blocks - 1)
@@ -360,7 +360,7 @@ def resnet18(
     groups: int = 1,
     style: Literal["imagenet", "cifar"] = "imagenet",
     activation_fn: Callable = relu,
-    normalization_layer: nn.Module = nn.BatchNorm2d,
+    normalization_layer: type[nn.Module] = nn.BatchNorm2d,
 ) -> _ResNet:
     """ResNet-18 model.
 
@@ -404,7 +404,7 @@ def resnet20(
     groups: int = 1,
     style: Literal["imagenet", "cifar"] = "imagenet",
     activation_fn: Callable = relu,
-    normalization_layer: nn.Module = nn.BatchNorm2d,
+    normalization_layer: type[nn.Module] = nn.BatchNorm2d,
 ) -> _ResNet:
     """ResNet-18 model.
 
@@ -446,7 +446,7 @@ def resnet34(
     groups: int = 1,
     style: Literal["imagenet", "cifar"] = "imagenet",
     activation_fn: Callable = relu,
-    normalization_layer: nn.Module = nn.BatchNorm2d,
+    normalization_layer: type[nn.Module] = nn.BatchNorm2d,
 ) -> _ResNet:
     """ResNet-34 model.
 
@@ -488,7 +488,7 @@ def resnet50(
     groups: int = 1,
     style: Literal["imagenet", "cifar"] = "imagenet",
     activation_fn: Callable = relu,
-    normalization_layer: nn.Module = nn.BatchNorm2d,
+    normalization_layer: type[nn.Module] = nn.BatchNorm2d,
 ) -> _ResNet:
     """ResNet-50 model.
 
@@ -530,7 +530,7 @@ def resnet101(
     groups: int = 1,
     style: Literal["imagenet", "cifar"] = "imagenet",
     activation_fn: Callable = relu,
-    normalization_layer: nn.Module = nn.BatchNorm2d,
+    normalization_layer: type[nn.Module] = nn.BatchNorm2d,
 ) -> _ResNet:
     """ResNet-101 model.
 
@@ -572,7 +572,7 @@ def resnet152(
     groups: int = 1,
     style: Literal["imagenet", "cifar"] = "imagenet",
     activation_fn: Callable = relu,
-    normalization_layer: nn.Module = nn.BatchNorm2d,
+    normalization_layer: type[nn.Module] = nn.BatchNorm2d,
 ) -> _ResNet:
     """ResNet-152 model.
 

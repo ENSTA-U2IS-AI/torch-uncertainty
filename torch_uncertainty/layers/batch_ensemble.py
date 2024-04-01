@@ -1,7 +1,7 @@
 import math
 
 import torch
-from torch import nn
+from torch import Tensor, nn
 from torch.nn.common_types import _size_2_t
 from torch.nn.modules.utils import _pair
 
@@ -10,11 +10,10 @@ class BatchLinear(nn.Module):
     __constants__ = ["in_features", "out_features", "num_estimators"]
     in_features: int
     out_features: int
-    n_estimator: int
-    weight: torch.Tensor
-    r_group: torch.Tensor
-    s_group: torch.Tensor
-    bias: torch.Tensor | None
+    num_estimators: int
+    r_group: Tensor
+    s_group: Tensor
+    bias: Tensor | None
 
     def __init__(
         self,
@@ -27,17 +26,17 @@ class BatchLinear(nn.Module):
     ) -> None:
         r"""BatchEnsemble-style Linear layer.
 
-        Applies a linear transformation using BatchEnsemble method to the incoming
+        Apply a linear transformation using BatchEnsemble method to the incoming
         data.
 
         .. math::
             y=(x\circ \widehat{r_{group}})W^{T}\circ \widehat{s_{group}} + \widehat{b}
 
         Args:
-            in_features (int): size of each input sample.
-            out_features (int): size of each output sample.
-            num_estimators (int): number of estimators in the ensemble referred as
-                :math:`M` here.
+            in_features (int): Number of input features..
+            out_features (int): Number of output features.
+            num_estimators (int): number of estimators in the ensemble, referred as
+                :math:`M`.
             bias (bool, optional): if ``True``, adds a learnable bias to the
                 output. Defaults to ``True``.
             device (Any, optional): device to use for the parameters and
@@ -97,7 +96,10 @@ class BatchLinear(nn.Module):
         self.num_estimators = num_estimators
 
         self.linear = nn.Linear(
-            in_features=in_features, out_features=out_features, bias=False
+            in_features=in_features,
+            out_features=out_features,
+            bias=False,
+            **factory_kwargs,
         )
 
         self.r_group = nn.Parameter(
@@ -124,7 +126,7 @@ class BatchLinear(nn.Module):
             bound = 1 / math.sqrt(fan_in) if fan_in > 0 else 0
             nn.init.uniform_(self.bias, -bound, bound)
 
-    def forward(self, inputs: torch.Tensor) -> torch.Tensor:
+    def forward(self, inputs: Tensor) -> Tensor:
         batch_size = inputs.size(0)
         examples_per_estimator = torch.tensor(
             batch_size // self.num_estimators, device=inputs.device
@@ -143,7 +145,6 @@ class BatchLinear(nn.Module):
         s_group = torch.cat(
             [s_group, s_group[:extra]], dim=0
         )  # .unsqueeze(-1).unsqueeze(-1)
-        bias: torch.Tensor | None
         if self.bias is not None:
             bias = torch.repeat_interleave(
                 self.bias,
@@ -181,15 +182,15 @@ class BatchConv2d(nn.Module):
     in_channels: int
     out_channels: int
     kernel_size: tuple[int, ...]
-    n_estimator: int
+    num_estimators: int
     stride: tuple[int, ...]
     padding: str | tuple[int, ...]
     dilation: tuple[int, ...]
     groups: int
-    weight: torch.Tensor
-    r_group: torch.Tensor
-    s_group: torch.Tensor
-    bias: torch.Tensor | None
+    weight: Tensor
+    r_group: Tensor
+    s_group: Tensor
+    bias: Tensor | None
 
     def __init__(
         self,
@@ -232,7 +233,7 @@ class BatchConv2d(nn.Module):
             <https://www.tensorflow.org>`_.
 
         Args:
-            in_channels (int): number of channels in the input image.
+            in_channels (int): number of channels in the input images.
             out_channels (int): number of channels produced by the convolution.
             kernel_size (int or tuple): size of the convolving kernel.
             num_estimators (int): number of estimators in the ensemble referred as
@@ -321,6 +322,7 @@ class BatchConv2d(nn.Module):
             dilation=dilation,
             groups=groups,
             bias=False,
+            **factory_kwargs,
         )
         self.r_group = nn.Parameter(
             torch.empty((num_estimators, in_channels), **factory_kwargs)
@@ -345,7 +347,7 @@ class BatchConv2d(nn.Module):
             bound = 1 / math.sqrt(fan_in) if fan_in > 0 else 0
             nn.init.uniform_(self.bias, -bound, bound)
 
-    def forward(self, inputs: torch.Tensor) -> torch.Tensor:
+    def forward(self, inputs: Tensor) -> Tensor:
         batch_size = inputs.size(0)
         examples_per_estimator = batch_size // self.num_estimators
         extra = batch_size % self.num_estimators
@@ -381,7 +383,6 @@ class BatchConv2d(nn.Module):
         )
         s_group = torch.cat([s_group, s_group[:extra]], dim=0)  #
 
-        bias: torch.Tensor | None
         if self.bias is not None:
             bias = (
                 torch.repeat_interleave(
@@ -406,8 +407,10 @@ class BatchConv2d(nn.Module):
         )
 
     def extra_repr(self) -> str:
-        s = (
-            "{in_channels}, {out_channels}, kernel_size={kernel_size}"
-            ", num_estimators={num_estimators}, stride={stride}"
+        return (
+            f"in_channels={self.in_channels},"
+            f" out_channels={self.out_channels},"
+            f" kernel_size={self.kernel_size},"
+            f" num_estimators={self.num_estimators},"
+            f" stride={self.stride}"
         )
-        return s.format(**self.__dict__)
