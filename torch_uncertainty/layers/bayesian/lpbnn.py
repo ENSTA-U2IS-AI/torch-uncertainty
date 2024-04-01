@@ -12,11 +12,17 @@ def check_lpbnn_parameters_consistency(
     hidden_size: int, std_factor: float, num_estimators: int
 ) -> None:
     if hidden_size < 1:
-        raise ValueError("hidden_size must be greater than 0")
+        raise ValueError(
+            f"hidden_size must be greater than 0. Got {hidden_size}."
+        )
     if std_factor < 0:
-        raise ValueError("std_factor must be greater than or equal to 0")
+        raise ValueError(
+            f"std_factor must be greater than 0. Got {std_factor}."
+        )
     if num_estimators < 1:
-        raise ValueError("num_estimators must be greater than 0")
+        raise ValueError(
+            f"num_estimators must be greater than 0. Got {num_estimators}."
+        )
 
 
 def _sample(mu: Tensor, logvar: Tensor, std_factor: float) -> Tensor:

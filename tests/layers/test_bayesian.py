@@ -6,6 +6,8 @@ from torch_uncertainty.layers.bayesian import (
     BayesConv2d,
     BayesConv3d,
     BayesLinear,
+    LPBNNConv2d,
+    LPBNNLinear,
 )
 from torch_uncertainty.layers.bayesian.sampler import TrainableDistribution
 
@@ -157,3 +159,56 @@ class TestTrainableDistribution:
         sampler = TrainableDistribution(torch.ones(1), torch.ones(1))
         with pytest.raises(ValueError):
             sampler.log_posterior()
+
+
+class TestLPBNNLinear:
+    """Testing the LPBNNLinear layer class."""
+
+    def test_linear(self, feat_input_odd: torch.Tensor) -> None:
+        layer = LPBNNLinear(10, 2, num_estimators=4)
+        print(layer)
+        out = layer(feat_input_odd.repeat(4, 1))
+        assert out.shape == torch.Size([5 * 4, 2])
+
+        layer = LPBNNLinear(10, 2, num_estimators=4, bias=False)
+        out = layer(feat_input_odd.repeat(4, 1))
+        assert out.shape == torch.Size([5 * 4, 2])
+
+    def test_linear_even(self, feat_input_even: torch.Tensor) -> None:
+        layer = LPBNNLinear(10, 2, num_estimators=4)
+        out = layer(feat_input_even.repeat(4, 1))
+        assert out.shape == torch.Size([8 * 4, 2])
+
+        out = layer(feat_input_even)
+
+
+class TestLPBNNConv2d:
+    """Testing the LPBNNConv2d layer class."""
+
+    def test_conv2(self, img_input_odd: torch.Tensor) -> None:
+        layer = LPBNNConv2d(10, 2, kernel_size=1, num_estimators=4)
+        print(layer)
+        out = layer(img_input_odd.repeat(4, 1, 1, 1))
+        assert out.shape == torch.Size([5 * 4, 2, 3, 3])
+
+        layer = LPBNNConv2d(10, 2, kernel_size=1, num_estimators=4, bias=False)
+        out = layer(img_input_odd.repeat(4, 1, 1, 1))
+        assert out.shape == torch.Size([5 * 4, 2, 3, 3])
+
+    def test_conv2_even(self, img_input_even: torch.Tensor) -> None:
+        layer = LPBNNConv2d(
+            10, 2, kernel_size=1, num_estimators=4, padding_mode="reflect"
+        )
+        print(layer)
+        out = layer(img_input_even.repeat(4, 1, 1, 1))
+        assert out.shape == torch.Size([8 * 4, 2, 3, 3])
+
+        out = layer(img_input_even)
+
+    def test_errors(self) -> None:
+        with pytest.raises(ValueError, match="std_factor must be"):
+            LPBNNConv2d(10, 2, kernel_size=1, num_estimators=1, std_factor=-1)
+        with pytest.raises(ValueError, match="num_estimators must be"):
+            LPBNNConv2d(10, 2, kernel_size=1, num_estimators=-1)
+        with pytest.raises(ValueError, match="hidden_size must be"):
+            LPBNNConv2d(10, 2, kernel_size=1, num_estimators=1, hidden_size=-1)
