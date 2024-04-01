@@ -171,6 +171,7 @@ class TestLPBNNLinear:
         assert out.shape == torch.Size([5 * 4, 2])
 
         layer = LPBNNLinear(10, 2, num_estimators=4, bias=False)
+        layer = layer.eval()
         out = layer(feat_input_odd.repeat(4, 1))
         assert out.shape == torch.Size([5 * 4, 2])
 
@@ -191,7 +192,10 @@ class TestLPBNNConv2d:
         out = layer(img_input_odd.repeat(4, 1, 1, 1))
         assert out.shape == torch.Size([5 * 4, 2, 3, 3])
 
-        layer = LPBNNConv2d(10, 2, kernel_size=1, num_estimators=4, bias=False)
+        layer = LPBNNConv2d(
+            10, 2, kernel_size=1, num_estimators=4, bias=False, gamma=False
+        )
+        layer = layer.eval()
         out = layer(img_input_odd.repeat(4, 1, 1, 1))
         assert out.shape == torch.Size([5 * 4, 2, 3, 3])
 
