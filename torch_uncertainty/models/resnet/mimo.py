@@ -29,7 +29,7 @@ class _MIMOResNet(_ResNet):
         groups: int = 1,
         style: Literal["imagenet", "cifar"] = "imagenet",
         in_planes: int = 64,
-        normalization_layer: nn.Module = nn.BatchNorm2d,
+        normalization_layer: type[nn.Module] = nn.BatchNorm2d,
     ) -> None:
         super().__init__(
             block=block,
@@ -63,7 +63,7 @@ def mimo_resnet18(
     dropout_rate: float = 0.0,
     groups: int = 1,
     style: Literal["imagenet", "cifar"] = "imagenet",
-    normalization_layer: nn.Module = nn.BatchNorm2d,
+    normalization_layer: type[nn.Module] = nn.BatchNorm2d,
 ) -> _MIMOResNet:
     return _MIMOResNet(
         block=_BasicBlock,
@@ -88,7 +88,7 @@ def mimo_resnet20(
     dropout_rate: float = 0.0,
     groups: int = 1,
     style: Literal["imagenet", "cifar"] = "imagenet",
-    normalization_layer: nn.Module = nn.BatchNorm2d,
+    normalization_layer: type[nn.Module] = nn.BatchNorm2d,
 ) -> _MIMOResNet:
     return _MIMOResNet(
         block=_BasicBlock,
@@ -113,7 +113,7 @@ def mimo_resnet34(
     dropout_rate: float = 0.0,
     groups: int = 1,
     style: Literal["imagenet", "cifar"] = "imagenet",
-    normalization_layer: nn.Module = nn.BatchNorm2d,
+    normalization_layer: type[nn.Module] = nn.BatchNorm2d,
 ) -> _MIMOResNet:
     return _MIMOResNet(
         block=_BasicBlock,
@@ -138,7 +138,7 @@ def mimo_resnet50(
     dropout_rate: float = 0.0,
     groups: int = 1,
     style: Literal["imagenet", "cifar"] = "imagenet",
-    normalization_layer: nn.Module = nn.BatchNorm2d,
+    normalization_layer: type[nn.Module] = nn.BatchNorm2d,
 ) -> _MIMOResNet:
     return _MIMOResNet(
         block=_Bottleneck,
@@ -163,7 +163,7 @@ def mimo_resnet101(
     dropout_rate: float = 0.0,
     groups: int = 1,
     style: Literal["imagenet", "cifar"] = "imagenet",
-    normalization_layer: nn.Module = nn.BatchNorm2d,
+    normalization_layer: type[nn.Module] = nn.BatchNorm2d,
 ) -> _MIMOResNet:
     return _MIMOResNet(
         block=_Bottleneck,
@@ -188,7 +188,7 @@ def mimo_resnet152(
     dropout_rate: float = 0.0,
     groups: int = 1,
     style: Literal["imagenet", "cifar"] = "imagenet",
-    normalization_layer: nn.Module = nn.BatchNorm2d,
+    normalization_layer: type[nn.Module] = nn.BatchNorm2d,
 ) -> _MIMOResNet:
     return _MIMOResNet(
         block=_Bottleneck,

@@ -122,6 +122,8 @@ Bayesian layers
     BayesConv1d
     BayesConv2d
     BayesConv3d
+    LPBNNLinear
+    LPBNNConv2d
 
 Models
 ------

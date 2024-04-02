@@ -169,7 +169,7 @@ class ClassificationRoutine(LightningModule):
         if self.calibration_set is not None:
             self.ts_cls_metrics = cls_metrics.clone(prefix="cls_test/ts_")
 
-        self.test_entropy_id = Entropy()
+        self.test_id_entropy = Entropy()
 
         if self.eval_ood:
             ood_metrics = MetricCollection(
@@ -181,7 +181,7 @@ class ClassificationRoutine(LightningModule):
                 compute_groups=[["AUROC", "AUPR"], ["FPR95"]],
             )
             self.test_ood_metrics = ood_metrics.clone(prefix="ood/")
-            self.test_entropy_ood = Entropy()
+            self.test_ood_entropy = Entropy()
 
         self.mixtype = mixtype
         self.mixmode = mixmode
@@ -450,10 +450,10 @@ class ClassificationRoutine(LightningModule):
             self.log_dict(
                 self.test_cls_metrics, on_epoch=True, add_dataloader_idx=False
             )
-            self.test_entropy_id(probs)
+            self.test_id_entropy(probs)
             self.log(
                 "cls_test/entropy",
-                self.test_entropy_id,
+                self.test_id_entropy,
                 on_epoch=True,
                 add_dataloader_idx=False,
             )
@@ -471,10 +471,10 @@ class ClassificationRoutine(LightningModule):
 
         elif self.eval_ood and dataloader_idx == 1:
             self.test_ood_metrics.update(ood_scores, torch.ones_like(targets))
-            self.test_entropy_ood(probs)
+            self.test_ood_entropy(probs)
             self.log(
                 "ood/entropy",
-                self.test_entropy_ood,
+                self.test_ood_entropy,
                 on_epoch=True,
                 add_dataloader_idx=False,
             )
@@ -497,7 +497,7 @@ class ClassificationRoutine(LightningModule):
         result_dict = self.test_cls_metrics.compute()
 
         # already logged
-        result_dict.update({"cls_test/entropy": self.test_entropy_id.compute()})
+        result_dict.update({"cls_test/entropy": self.test_id_entropy.compute()})
 
         if (
             self.num_estimators == 1
@@ -527,7 +527,7 @@ class ClassificationRoutine(LightningModule):
             self.test_ood_metrics.reset()
 
             # already logged
-            result_dict.update({"ood/entropy": self.test_entropy_ood.compute()})
+            result_dict.update({"ood/entropy": self.test_ood_entropy.compute()})
 
             if self.num_estimators > 1:
                 tmp_metrics = self.test_ood_ens_metrics.compute()

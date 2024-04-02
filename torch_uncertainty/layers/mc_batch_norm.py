@@ -83,7 +83,7 @@ class _MCBatchNorm(_BatchNorm):
 
 
 class MCBatchNorm1d(_MCBatchNorm):
-    """Applies Monte Carlo Batch Normalization over a 2D or 3D input.
+    """Monte Carlo Batch Normalization over a 2D or 3D (batched) input.
 
     Args:
         num_features (int): Number of features.
@@ -96,7 +96,7 @@ class MCBatchNorm1d(_MCBatchNorm):
         device (optional): Device. Defaults to None.
         dtype (optional): Data type. Defaults to None.
 
-    Note:
+    Warning:
         This layer should not be used out of the corresponding wrapper.
         Check MCBatchNorm in torch_uncertainty/post_processing/.
     """
@@ -109,7 +109,7 @@ class MCBatchNorm1d(_MCBatchNorm):
 
 
 class MCBatchNorm2d(_MCBatchNorm):
-    """Applies Monte Carlo Batch Normalization over a 4D input.
+    """Monte Carlo Batch Normalization over a 3D or 4D (batched) input.
 
     Args:
         num_features (int): Number of features.
@@ -122,7 +122,7 @@ class MCBatchNorm2d(_MCBatchNorm):
         device (optional): Device. Defaults to None.
         dtype (optional): Data type. Defaults to None.
 
-    Note:
+    Warning:
         This layer should not be used out of the corresponding wrapper.
         Check MCBatchNorm in torch_uncertainty/post_processing/.
     """
@@ -135,7 +135,7 @@ class MCBatchNorm2d(_MCBatchNorm):
 
 
 class MCBatchNorm3d(_MCBatchNorm):
-    """Applies Monte Carlo Batch Normalization over a 5D input.
+    """Monte Carlo Batch Normalization over a 4D or 5D (batched) input.
 
     Args:
         num_features (int): Number of features.
@@ -148,7 +148,7 @@ class MCBatchNorm3d(_MCBatchNorm):
         device (optional): Device. Defaults to None.
         dtype (optional): Data type. Defaults to None.
 
-    Note:
+    Warning:
         This layer should not be used out of the corresponding wrapper.
         Check MCBatchNorm in torch_uncertainty/post_processing/.
     """
