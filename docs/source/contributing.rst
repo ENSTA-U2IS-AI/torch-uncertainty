@@ -4,6 +4,9 @@ Contributing
 .. role:: bash(code)
     :language: bash
 
+.. role:: cmd(code)
+    :language: bash
+
 TorchUncertainty is in early development stage. We are looking for
 contributors to help us build a comprehensive library for uncertainty
 quantification in PyTorch.
@@ -16,8 +19,9 @@ The scope of TorchUncertainty
 
 TorchUncertainty can host any method - if possible linked to a paper - and
 roughly contained in the following fields:
-* uncertainty quantification in general, including Bayesian deep learning,
-Monte Carlo dropout, ensemble methods, etc.
+
+* Uncertainty quantification in general, including Bayesian deep learning,
+  Monte Carlo dropout, ensemble methods, etc.
 * Out-of-distribution detection methods
 * Applications (e.g. object detection, segmentation, etc.)
 
@@ -34,8 +38,8 @@ ensuring continuous integration does not break.
 1. Check that you have PyTorch already installed on your system
 2. Clone the repository
 3. Install torch-uncertainty in editable mode with the dev packages:
-   :bash:`python3 -m pip install -e .[dev]`
-4. Install pre-commit hooks with :bash:`pre-commit install`
+   :cmd:`python3 -m pip install -e .[dev]`
+4. Install pre-commit hooks with :cmd:`pre-commit install`
 
 Build the documentation locally
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -47,13 +51,13 @@ group:
 
     python3 -m pip install -e .[dev,docs]
 
-Then navigate to :bash:`./docs` and build the documentation with:
+Then navigate to ``./docs`` and build the documentation with:
 
 .. parsed-literal::
     
     make html
 
-Optionally, specify :bash:`html-noplot` instead of :bash:`html` to avoid running the tutorials.
+Optionally, specify ``html-noplot`` instead of ``html`` to avoid running the tutorials.
 
 Guidelines
 ^^^^^^^^^^
@@ -81,19 +85,18 @@ To make your changes, create a branch on a personal fork and create a PR when yo
 is mostly finished or if you need help.
 
 Check that your PR complies with the following conditions:
-* The name of your branch is not `main` nor `dev` (see issue #58)
+
+* The name of your branch is not ``main`` nor ``dev`` (see issue #58)
 * Your PR does not reduce the code coverage
-* Your code is documented: the function signatures are typed, and the main functions have clear
-docstrings
-* Your code is mostly original, and the parts coming from licensed sources are explicitly
-stated as such
-* If you implement a method, please add a reference to the corresponding paper in the
-`references page <https://torch-uncertainty.github.io/references.html>`_.
+* Your code is documented: the function signatures are typed, and the main functions have clear docstrings
+* Your code is mostly original, and the parts coming from licensed sources are explicitly stated as such
+* If you implement a method, please add a reference to the corresponding paper in the 
+  `references page <https://torch-uncertainty.github.io/references.html>`_.
 * Also, remember to add TorchUncertainty to the list of libraries implementing this reference
-on `PapersWithCode <https://paperswithcode.com>`_.
+  on `PapersWithCode <https://paperswithcode.com>`_.
 
 If you need help to implement a method, increase the coverage, or solve ruff-raised errors,
-create the PR with the `need-help` flag and explain your problems in the comments. A maintainer
+create the PR with the ``need-help`` flag and explain your problems in the comments. A maintainer
 will do their best to help you.
 
 Datasets & Datamodules
