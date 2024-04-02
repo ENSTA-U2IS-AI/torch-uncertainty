@@ -1,112 +1,84 @@
-# Copyright (C) 2019 Jin Han Lee
-#
-# This file is a part of BTS.
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program. If not, see <http://www.gnu.org/licenses/>
-
 import math
 
 import torch
-import torch.nn as nn
-import torch.nn.functional as torch_nn_func
-import torchvision.models as models
+import torchvision.models as tv_models
+from torch import Tensor, nn
+from torch.nn import functional as F
 
 
-# This sets the batch norm layers in pytorch as if {'is_training': False, 'scale': True} in tensorflow
-def bn_init_as_tf(m):
-    if isinstance(m, nn.BatchNorm2d):
-        m.track_running_stats = True  # These two lines enable using stats (moving mean and var) loaded from pretrained model
-        m.eval()  # or zero mean and variance of one if the batch norm layer has no pretrained values
-        m.affine = True
-        m.requires_grad = True
-
-
-def weights_init_xavier(m):
-    if isinstance(m, nn.Conv2d):
-        torch.nn.init.xavier_uniform_(m.weight)
-        if m.bias is not None:
-            torch.nn.init.zeros_(m.bias)
-
-
-# ruff: noqa: ERA001
-# class silog_loss(nn.Module):
-#     def __init__(self, variance_focus):
-#         super().__init__()
-#         self.variance_focus = variance_focus
-
-#     def forward(self, depth_est, depth_gt, mask):
-#         d = torch.log(depth_est[mask]) - torch.log(depth_gt[mask])
-#         return (
-#             torch.sqrt((d**2).mean() - self.variance_focus * (d.mean() ** 2))
-#             * 10.0
-#         )
-
-
-class AtrousConv2d(nn.Sequential):
+class AtrousBlock2d(nn.Module):
     def __init__(
-        self, in_channels, out_channels, dilation, apply_bn_first=True
+        self,
+        in_channels: int,
+        out_channels: int,
+        dilation: int,
+        norm_first: bool = True,
+        **factory_kwargs,
     ):
+        """Atrous block with 1x1 and 3x3 convolutions.
+
+        Args:
+            in_channels (int): Number of input channels.
+            out_channels (int): Number of output channels.
+            dilation (int): Dilation rate for the 3x3 convolution.
+            norm_first (bool): Whether to apply normalization before the 1x1 convolution.
+            factory_kwargs: Additional arguments for the convolution layers.
+        """
         super().__init__()
-        self.atrous_conv = torch.nn.Sequential()
-        if apply_bn_first:
-            self.atrous_conv.add_module(
-                "first_bn",
-                nn.BatchNorm2d(
-                    in_channels,
-                    momentum=0.01,
-                    affine=True,
-                    track_running_stats=True,
-                    eps=1.1e-5,
-                ),
+
+        self.norm_first = norm_first
+        if norm_first:
+            self.first_norm = nn.BatchNorm2d(
+                in_channels, momentum=0.01, **factory_kwargs
             )
 
-        self.atrous_conv.add_module(
-            "aconv_sequence",
-            nn.Sequential(
-                nn.ReLU(),
-                nn.Conv2d(
-                    in_channels=in_channels,
-                    out_channels=out_channels * 2,
-                    bias=False,
-                    kernel_size=1,
-                    stride=1,
-                    padding=0,
-                ),
-                nn.BatchNorm2d(
-                    out_channels * 2,
-                    momentum=0.01,
-                    affine=True,
-                    track_running_stats=True,
-                ),
-                nn.ReLU(),
-                nn.Conv2d(
-                    in_channels=out_channels * 2,
-                    out_channels=out_channels,
-                    bias=False,
-                    kernel_size=3,
-                    stride=1,
-                    padding=(dilation, dilation),
-                    dilation=dilation,
-                ),
-            ),
+        self.conv1 = nn.Conv2d(
+            in_channels=in_channels,
+            out_channels=out_channels * 2,
+            bias=False,
+            kernel_size=1,
+            stride=1,
+            padding=0,
+            **factory_kwargs,
+        )
+        self.norm = nn.BatchNorm2d(
+            out_channels * 2, momentum=0.01, **factory_kwargs
+        )
+        self.conv2 = nn.Conv2d(
+            in_channels=out_channels * 2,
+            out_channels=out_channels,
+            bias=False,
+            kernel_size=3,
+            stride=1,
+            padding=(dilation, dilation),
+            dilation=dilation,
+            **factory_kwargs,
         )
 
-    def forward(self, x):
-        return self.atrous_conv.forward(x)
+    def forward(self, x: Tensor) -> Tensor:
+        if self.norm_first:
+            x = self.first_norm(x)
+        out = F.relu(self.conv1(x))
+        out = F.relu(self.norm(out))
+        return self.conv2(out)
 
 
 class UpConv2d(nn.Module):
-    def __init__(self, in_channels, out_channels, ratio=2):
+    def __init__(
+        self,
+        in_channels: int,
+        out_channels: int,
+        ratio: int = 2,
+        **factory_kwargs,
+    ):
+        """Upsampling convolution.
+
+        Args:
+            in_channels (int): Number of input channels.
+            out_channels (int): Number of output channels.
+            ratio (int): Upsampling ratio.
+            factory_kwargs: Additional arguments for the convolution layers.
+        """
         super().__init__()
         self.elu = nn.ELU()
         self.conv = nn.Conv2d(
@@ -116,20 +88,23 @@ class UpConv2d(nn.Module):
             kernel_size=3,
             stride=1,
             padding=1,
+            **factory_kwargs,
         )
         self.ratio = ratio
 
-    def forward(self, x):
-        up_x = torch_nn_func.interpolate(
-            x, scale_factor=self.ratio, mode="nearest"
-        )
-        out = self.conv(up_x)
-        return self.elu(out)
+    def forward(self, x: Tensor) -> Tensor:
+        out = F.interpolate(x, scale_factor=self.ratio, mode="nearest")
+        return self.elu(self.conv(out))
 
 
-class Reduction1x1(nn.Sequential):
+class Reduction1x1(nn.Module):
     def __init__(
-        self, num_in_filters, num_out_filters, max_depth, is_final=False
+        self,
+        num_in_filters: int,
+        num_out_filters: int,
+        max_depth: int,
+        is_final: bool = False,
+        **factory_kwargs,
     ):
         super().__init__()
         self.max_depth = max_depth
@@ -150,6 +125,7 @@ class Reduction1x1(nn.Sequential):
                                 kernel_size=1,
                                 stride=1,
                                 padding=0,
+                                **factory_kwargs,
                             ),
                             nn.Sigmoid(),
                         ),
@@ -164,6 +140,7 @@ class Reduction1x1(nn.Sequential):
                             kernel_size=1,
                             stride=1,
                             padding=0,
+                            **factory_kwargs,
                         ),
                     )
                 break
@@ -178,6 +155,7 @@ class Reduction1x1(nn.Sequential):
                         kernel_size=1,
                         stride=1,
                         padding=0,
+                        **factory_kwargs,
                     ),
                     nn.ELU(),
                 ),
@@ -186,41 +164,36 @@ class Reduction1x1(nn.Sequential):
             num_in_filters = num_out_filters
             num_out_filters = num_out_filters // 2
 
-    def forward(self, net):
-        net = self.reduc.forward(net)
+    def forward(self, x: Tensor) -> Tensor:
+        x = self.reduc.forward(x)
         if not self.is_final:
-            theta = self.sigmoid(net[:, 0, :, :]) * math.pi / 3
-            phi = self.sigmoid(net[:, 1, :, :]) * math.pi * 2
-            dist = self.sigmoid(net[:, 2, :, :]) * self.max_depth
+            theta = self.sigmoid(x[:, 0, :, :]) * math.pi / 3
+            phi = self.sigmoid(x[:, 1, :, :]) * math.pi * 2
+            dist = self.sigmoid(x[:, 2, :, :]) * self.max_depth
             n1 = torch.mul(torch.sin(theta), torch.cos(phi)).unsqueeze(1)
             n2 = torch.mul(torch.sin(theta), torch.sin(phi)).unsqueeze(1)
             n3 = torch.cos(theta).unsqueeze(1)
             n4 = dist.unsqueeze(1)
-            net = torch.cat([n1, n2, n3, n4], dim=1)
-
-        return net
+            x = torch.cat([n1, n2, n3, n4], dim=1)
+        return x
 
 
 class LocalPlanarGuidance(nn.Module):
-    def __init__(self, upratio):
+    def __init__(self, up_ratio: int) -> None:
         super().__init__()
-        self.upratio = upratio
+        self.up_ratio = up_ratio
         self.u = (
-            torch.arange(self.upratio).reshape([1, 1, self.upratio]).float()
+            torch.arange(self.up_ratio).reshape([1, 1, self.up_ratio]).float()
         )
         self.v = (
-            torch.arange(int(self.upratio))
-            .reshape([1, self.upratio, 1])
-            .float()
+            torch.arange(self.up_ratio).reshape([1, self.up_ratio, 1]).float()
         )
-        self.upratio = float(upratio)
+        self.up_ratio = up_ratio
 
-    def forward(self, plane_eq, focal):
+    def forward(self, x: Tensor) -> Tensor:
+        plane_eq_expanded = torch.repeat_interleave(x, self.up_ratio, 2)
         plane_eq_expanded = torch.repeat_interleave(
-            plane_eq, int(self.upratio), 2
-        )
-        plane_eq_expanded = torch.repeat_interleave(
-            plane_eq_expanded, int(self.upratio), 3
+            plane_eq_expanded, self.up_ratio, 3
         )
         n1 = plane_eq_expanded[:, 0, :, :]
         n2 = plane_eq_expanded[:, 1, :, :]
@@ -228,26 +201,31 @@ class LocalPlanarGuidance(nn.Module):
         n4 = plane_eq_expanded[:, 3, :, :]
 
         u = self.u.repeat(
-            plane_eq.size(0),
-            plane_eq.size(2) * int(self.upratio),
-            plane_eq.size(3),
-        ).cuda()
-        u = (u - (self.upratio - 1) * 0.5) / self.upratio
+            x.size(0),
+            x.size(2) * self.up_ratio,
+            x.size(3),
+        )
+        u = (u - (self.up_ratio - 1) * 0.5) / self.up_ratio
 
         v = self.v.repeat(
-            plane_eq.size(0),
-            plane_eq.size(2),
-            plane_eq.size(3) * int(self.upratio),
-        ).cuda()
-        v = (v - (self.upratio - 1) * 0.5) / self.upratio
+            x.size(0),
+            x.size(2),
+            x.size(3) * self.up_ratio,
+        )
+        v = (v - (self.up_ratio - 1) * 0.5) / self.up_ratio
 
         return n4 / (n1 * u + n2 * v + n3)
 
 
-class BTS(nn.Module):
-    def __init__(self, params, feat_out_channels, num_features=512):
+class BTSDecoder(nn.Module):
+    def __init__(
+        self,
+        max_depth: int,
+        feat_out_channels: list[int],
+        num_features: int = 512,
+    ):
         super().__init__()
-        self.params = params
+        self.max_depth = max_depth
 
         self.upconv5 = UpConv2d(feat_out_channels[4], num_features)
         self.bn5 = nn.BatchNorm2d(
@@ -258,9 +236,9 @@ class BTS(nn.Module):
             nn.Conv2d(
                 num_features + feat_out_channels[3],
                 num_features,
-                3,
-                1,
-                1,
+                kernel_size=3,
+                stride=1,
+                padding=1,
                 bias=False,
             ),
             nn.ELU(),
@@ -273,9 +251,9 @@ class BTS(nn.Module):
             nn.Conv2d(
                 num_features // 2 + feat_out_channels[2],
                 num_features // 2,
-                3,
-                1,
-                1,
+                kernel_size=3,
+                stride=1,
+                padding=1,
                 bias=False,
             ),
             nn.ELU(),
@@ -284,23 +262,23 @@ class BTS(nn.Module):
             num_features // 2, momentum=0.01, affine=True, eps=1.1e-5
         )
 
-        self.daspp_3 = AtrousConv2d(
-            num_features // 2, num_features // 4, 3, apply_bn_first=False
+        self.daspp_3 = AtrousBlock2d(
+            num_features // 2, num_features // 4, 3, norm_first=False
         )
-        self.daspp_6 = AtrousConv2d(
+        self.daspp_6 = AtrousBlock2d(
             num_features // 2 + num_features // 4 + feat_out_channels[2],
             num_features // 4,
             6,
         )
-        self.daspp_12 = AtrousConv2d(
+        self.daspp_12 = AtrousBlock2d(
             num_features + feat_out_channels[2], num_features // 4, 12
         )
-        self.daspp_18 = AtrousConv2d(
+        self.daspp_18 = AtrousBlock2d(
             num_features + num_features // 4 + feat_out_channels[2],
             num_features // 4,
             18,
         )
-        self.daspp_24 = AtrousConv2d(
+        self.daspp_24 = AtrousBlock2d(
             num_features + num_features // 2 + feat_out_channels[2],
             num_features // 4,
             24,
@@ -309,15 +287,15 @@ class BTS(nn.Module):
             nn.Conv2d(
                 num_features + num_features // 2 + num_features // 4,
                 num_features // 4,
-                3,
-                1,
-                1,
+                kernel_size=3,
+                stride=1,
+                padding=1,
                 bias=False,
             ),
             nn.ELU(),
         )
         self.reduc8x8 = Reduction1x1(
-            num_features // 4, num_features // 4, self.params.max_depth
+            num_features // 4, num_features // 4, self.max_depth
         )
         self.lpg8x8 = LocalPlanarGuidance(8)
 
@@ -329,15 +307,15 @@ class BTS(nn.Module):
             nn.Conv2d(
                 num_features // 4 + feat_out_channels[1] + 1,
                 num_features // 4,
-                3,
-                1,
-                1,
+                kernel_size=3,
+                stride=1,
+                padding=1,
                 bias=False,
             ),
             nn.ELU(),
         )
         self.reduc4x4 = Reduction1x1(
-            num_features // 4, num_features // 8, self.params.max_depth
+            num_features // 4, num_features // 8, self.max_depth
         )
         self.lpg4x4 = LocalPlanarGuidance(4)
 
@@ -349,16 +327,16 @@ class BTS(nn.Module):
             nn.Conv2d(
                 num_features // 8 + feat_out_channels[0] + 1,
                 num_features // 8,
-                3,
-                1,
-                1,
+                kernel_size=3,
+                stride=1,
+                padding=1,
                 bias=False,
             ),
             nn.ELU(),
         )
 
         self.reduc2x2 = Reduction1x1(
-            num_features // 8, num_features // 16, self.params.max_depth
+            num_features // 8, num_features // 16, self.max_depth
         )
         self.lpg2x2 = LocalPlanarGuidance(2)
 
@@ -366,7 +344,7 @@ class BTS(nn.Module):
         self.reduc1x1 = Reduction1x1(
             num_features // 16,
             num_features // 32,
-            self.params.max_depth,
+            self.max_depth,
             is_final=True,
         )
         self.conv1 = torch.nn.Sequential(
@@ -386,7 +364,7 @@ class BTS(nn.Module):
             features[2],
             features[3],
         )
-        dense_features = torch.nn.ReLU()(features[4])
+        dense_features = F.relu(features[4])
         upconv5 = self.upconv5(dense_features)  # H/16
         upconv5 = self.bn5(upconv5)
         concat5 = torch.cat([upconv5, skip3], dim=1)
@@ -414,14 +392,14 @@ class BTS(nn.Module):
 
         reduc8x8 = self.reduc8x8(daspp_feat)
         plane_normal_8x8 = reduc8x8[:, :3, :, :]
-        plane_normal_8x8 = torch_nn_func.normalize(plane_normal_8x8, 2, 1)
+        plane_normal_8x8 = F.normalize(plane_normal_8x8, 2, 1)
         plane_dist_8x8 = reduc8x8[:, 3, :, :]
         plane_eq_8x8 = torch.cat(
             [plane_normal_8x8, plane_dist_8x8.unsqueeze(1)], 1
         )
         depth_8x8 = self.lpg8x8(plane_eq_8x8, focal)
-        depth_8x8_scaled = depth_8x8.unsqueeze(1) / self.params.max_depth
-        depth_8x8_scaled_ds = torch_nn_func.interpolate(
+        depth_8x8_scaled = depth_8x8.unsqueeze(1) / self.max_depth
+        depth_8x8_scaled_ds = F.interpolate(
             depth_8x8_scaled, scale_factor=0.25, mode="nearest"
         )
 
@@ -432,14 +410,14 @@ class BTS(nn.Module):
 
         reduc4x4 = self.reduc4x4(iconv3)
         plane_normal_4x4 = reduc4x4[:, :3, :, :]
-        plane_normal_4x4 = torch_nn_func.normalize(plane_normal_4x4, 2, 1)
+        plane_normal_4x4 = F.normalize(plane_normal_4x4, 2, 1)
         plane_dist_4x4 = reduc4x4[:, 3, :, :]
         plane_eq_4x4 = torch.cat(
             [plane_normal_4x4, plane_dist_4x4.unsqueeze(1)], 1
         )
         depth_4x4 = self.lpg4x4(plane_eq_4x4, focal)
-        depth_4x4_scaled = depth_4x4.unsqueeze(1) / self.params.max_depth
-        depth_4x4_scaled_ds = torch_nn_func.interpolate(
+        depth_4x4_scaled = depth_4x4.unsqueeze(1) / self.max_depth
+        depth_4x4_scaled_ds = F.interpolate(
             depth_4x4_scaled, scale_factor=0.5, mode="nearest"
         )
 
@@ -450,13 +428,13 @@ class BTS(nn.Module):
 
         reduc2x2 = self.reduc2x2(iconv2)
         plane_normal_2x2 = reduc2x2[:, :3, :, :]
-        plane_normal_2x2 = torch_nn_func.normalize(plane_normal_2x2, 2, 1)
+        plane_normal_2x2 = F.normalize(plane_normal_2x2, 2, 1)
         plane_dist_2x2 = reduc2x2[:, 3, :, :]
         plane_eq_2x2 = torch.cat(
             [plane_normal_2x2, plane_dist_2x2.unsqueeze(1)], 1
         )
         depth_2x2 = self.lpg2x2(plane_eq_2x2, focal)
-        depth_2x2_scaled = depth_2x2.unsqueeze(1) / self.params.max_depth
+        depth_2x2_scaled = depth_2x2.unsqueeze(1) / self.max_depth
 
         upconv1 = self.upconv1(iconv2)
         reduc1x1 = self.reduc1x1(upconv1)
@@ -471,7 +449,7 @@ class BTS(nn.Module):
             dim=1,
         )
         iconv1 = self.conv1(concat1)
-        final_depth = self.params.max_depth * self.get_depth(iconv1)
+        final_depth = self.max_depth * self.get_depth(iconv1)
         if self.params.dataset == "kitti":
             final_depth = (
                 final_depth * focal.view(-1, 1, 1, 1).float() / 715.0873
@@ -487,12 +465,12 @@ class BTS(nn.Module):
 
 
 class BTSEncoder(nn.Module):
-    def __init__(self, params):
+    def __init__(self, encoder_name: str):
         super().__init__()
-        self.params = params
+        self.encoder_name = encoder_name
 
-        if params.encoder == "densenet121_bts":
-            self.base_model = models.densenet121(pretrained=True).features
+        if encoder_name == "densenet121_bts":
+            self.base_model = tv_models.densenet121(pretrained=True).features
             self.feat_names = [
                 "relu0",
                 "pool0",
@@ -501,8 +479,8 @@ class BTSEncoder(nn.Module):
                 "norm5",
             ]
             self.feat_out_channels = [64, 64, 128, 256, 1024]
-        elif params.encoder == "densenet161_bts":
-            self.base_model = models.densenet161(pretrained=True).features
+        elif encoder_name == "densenet161_bts":
+            self.base_model = tv_models.densenet161(pretrained=True).features
             self.feat_names = [
                 "relu0",
                 "pool0",
@@ -511,31 +489,31 @@ class BTSEncoder(nn.Module):
                 "norm5",
             ]
             self.feat_out_channels = [96, 96, 192, 384, 2208]
-        elif params.encoder == "resnet50_bts":
-            self.base_model = models.resnet50(pretrained=True)
+        elif encoder_name == "resnet50_bts":
+            self.base_model = tv_models.resnet50(pretrained=True)
             self.feat_names = ["relu", "layer1", "layer2", "layer3", "layer4"]
             self.feat_out_channels = [64, 256, 512, 1024, 2048]
-        elif params.encoder == "resnet101_bts":
-            self.base_model = models.resnet101(pretrained=True)
+        elif encoder_name == "resnet101_bts":
+            self.base_model = tv_models.resnet101(pretrained=True)
             self.feat_names = ["relu", "layer1", "layer2", "layer3", "layer4"]
             self.feat_out_channels = [64, 256, 512, 1024, 2048]
-        elif params.encoder == "resnext50_bts":
-            self.base_model = models.resnext50_32x4d(pretrained=True)
+        elif encoder_name == "resnext50_bts":
+            self.base_model = tv_models.resnext50_32x4d(pretrained=True)
             self.feat_names = ["relu", "layer1", "layer2", "layer3", "layer4"]
             self.feat_out_channels = [64, 256, 512, 1024, 2048]
-        elif params.encoder == "resnext101_bts":
-            self.base_model = models.resnext101_32x8d(pretrained=True)
+        elif encoder_name == "resnext101_bts":
+            self.base_model = tv_models.resnext101_32x8d(pretrained=True)
             self.feat_names = ["relu", "layer1", "layer2", "layer3", "layer4"]
             self.feat_out_channels = [64, 256, 512, 1024, 2048]
-        elif params.encoder == "mobilenetv2_bts":
-            self.base_model = models.mobilenet_v2(pretrained=True).features
+        elif encoder_name == "mobilenetv2_bts":
+            self.base_model = tv_models.mobilenet_v2(pretrained=True).features
             self.feat_inds = [2, 4, 7, 11, 19]
             self.feat_out_channels = [16, 24, 32, 64, 1280]
             self.feat_names = []
         else:
-            print(f"Not supported encoder: {params.encoder}")
+            print(f"Not supported encoder: {encoder_name}")
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> list[torch.Tensor]:
         feature = x
         skip_feat = []
         i = 1
@@ -543,8 +521,8 @@ class BTSEncoder(nn.Module):
             if "fc" in k or "avgpool" in k:
                 continue
             feature = v(feature)
-            if self.params.encoder == "mobilenetv2_bts":
-                if i == 2 or i == 4 or i == 7 or i == 11 or i == 19:
+            if self.encoder_name == "mobilenetv2_bts":
+                if i in [2, 4, 7, 11, 19]:
                     skip_feat.append(feature)
             else:
                 if any(x in k for x in self.feat_names):
@@ -553,14 +531,14 @@ class BTSEncoder(nn.Module):
         return skip_feat
 
 
-class BtsModel(nn.Module):
-    def __init__(self, params):
+class BTS(nn.Module):
+    def __init__(self, encoder_name, max_depth, bts_size):
         super().__init__()
-        self.encoder = BTSEncoder(params)
-        self.decoder = BTS(
-            params, self.encoder.feat_out_channels, params.bts_size
+        self.encoder = BTSEncoder(encoder_name)
+        self.decoder = BTSDecoder(
+            max_depth, self.encoder.feat_out_channels, bts_size
         )
 
-    def forward(self, x, focal):
+    def forward(self, x: Tensor, focal) -> Tensor:
         skip_feat = self.encoder(x)
         return self.decoder(skip_feat, focal)
