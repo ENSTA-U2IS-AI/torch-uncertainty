@@ -11,6 +11,7 @@ For this tutorial, we will only load the corruption transforms available in
 torch_uncertainty.transforms.corruptions. We also need to load utilities from
 torchvision and matplotlib.
 """
+
 import torch
 from torchvision.datasets import CIFAR10
 from torchvision.transforms import Compose, ToTensor, Resize
@@ -20,95 +21,97 @@ import matplotlib.pyplot as plt
 
 ds = CIFAR10("./data", train=False, download=True)
 
-def get_images(main_transform, severity):
-    ds_transforms = Compose([ToTensor(), main_transform(severity), Resize(256)])
-    ds = CIFAR10("./data", train=False, download=False, transform=ds_transforms)
-    return make_grid([ds[i][0] for i in range(6)]).permute(1, 2, 0)
 
-def show_images(transform):
-    print("Original Images")
-    with torch.no_grad():
-        plt.axis('off')
-        plt.imshow(get_images(transform, 0))
-        plt.show()
+def get_images(main_corruption, index: int = 0):
+    """Create an image showing the 6 levels of corruption of a given transform."""
+    images = []
+    for severity in range(6):
+        ds_transforms = Compose(
+            [ToTensor(), main_corruption(severity), Resize(256, antialias=True)]
+        )
+        ds = CIFAR10("./data", train=False, download=False, transform=ds_transforms)
+        images.append(ds[index][0].permute(1, 2, 0).numpy())
+    return images
 
-    for severity in range(1, 6):
-        print(f"Severity {severity}")
-        with torch.no_grad():
-            plt.axis('off')
-            plt.imshow(get_images(transform, severity))
-            plt.show()
 
-# %%
-# 1. Gaussian Noise
-# ~~~~~~~~~~~~~~~~~
-from torch_uncertainty.transforms.corruptions import GaussianNoise
+def show_images(transforms):
+    """Show the effect of all given transforms."""
+    num_corruptions = len(transforms)
+    _, ax = plt.subplots(num_corruptions, 6, figsize=(10, int(1.5 * num_corruptions)))
+    for i, transform in enumerate(transforms):
+        images = get_images(transform, index=i)
+        ax[i][0].text(
+            -0.1,
+            0.5,
+            transform.__name__,
+            transform=ax[i][0].transAxes,
+            rotation="vertical",
+            horizontalalignment="right",
+            verticalalignment="center",
+            fontsize=12,
+        )
+        for j in range(6):
+            ax[i][j].imshow(images[j])
+            if i == 0 and j == 0:
+                ax[i][j].set_title("Original")
+            elif i == 0:
+                ax[i][j].set_title(f"Severity {j}")
+            ax[i][j].axis("off")
+    plt.show()
 
-show_images(GaussianNoise)
-
-# %%
-# 2. Shot Noise
-# ~~~~~~~~~~~~~
-from torch_uncertainty.transforms.corruptions import ShotNoise
-
-show_images(ShotNoise)
-
-# %%
-# 3. Impulse Noise
-# ~~~~~~~~~~~~~~~~
-from torch_uncertainty.transforms.corruptions import ImpulseNoise
-
-show_images(ImpulseNoise)
-
-# %%
-# 4. Speckle Noise
-# ~~~~~~~~~~~~~~~~
-from torch_uncertainty.transforms.corruptions import SpeckleNoise
-
-show_images(SpeckleNoise)
 
 # %%
-# 5. Gaussian Blur
-# ~~~~~~~~~~~~~~~~
-from torch_uncertainty.transforms.corruptions import GaussianBlur
+# 1. Noise Corruptions
+# ~~~~~~~~~~~~~~~~~~~~
+from torch_uncertainty.transforms.corruptions import (
+    GaussianNoise,
+    ShotNoise,
+    ImpulseNoise,
+    SpeckleNoise,
+)
 
-show_images(GaussianBlur)
+show_images(
+    [
+        GaussianNoise,
+        ShotNoise,
+        ImpulseNoise,
+        SpeckleNoise,
+    ]
+)
 
 # %%
-# 6. Glass Blur
-# ~~~~~~~~~~~~~
-from torch_uncertainty.transforms.corruptions import GlassBlur
+# 2. Blur Corruptions
+# ~~~~~~~~~~~~~~~~~~~~
+from torch_uncertainty.transforms.corruptions import (
+    GaussianBlur,
+    GlassBlur,
+    DefocusBlur,
+)
 
-show_images(GlassBlur)
+show_images(
+    [
+        GaussianBlur,
+        GlassBlur,
+        DefocusBlur,
+    ]
+)
 
 # %%
-# 7. Defocus Blur
-# ~~~~~~~~~~~~~~~
+# 3. Other Corruptions
+# ~~~~~~~~~~~~~~~~~~~~
+from torch_uncertainty.transforms.corruptions import (
+    JPEGCompression,
+    Pixelate,
+    Frost,
+)
 
-from torch_uncertainty.transforms.corruptions import DefocusBlur
-
-show_images(DefocusBlur)
-
-#%%
-# 8. JPEG Compression
-# ~~~~~~~~~~~~~~~~~~~
-from torch_uncertainty.transforms.corruptions import JPEGCompression
-
-show_images(JPEGCompression)
-
-#%%
-# 9. Pixelate
-# ~~~~~~~~~~~
-from torch_uncertainty.transforms.corruptions import Pixelate
-
-show_images(Pixelate)
-
-#%% 
-# 10. Frost
-# ~~~~~~~~~
-from torch_uncertainty.transforms.corruptions import Frost
-
-show_images(Frost)
+show_images(
+    [
+        JPEGCompression,
+        Pixelate,
+        Frost,
+    ]
+)
 
 # %%
 # Reference

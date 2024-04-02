@@ -20,8 +20,9 @@ Here is an example of what the data looks like:
 
 .. figure:: /_static/img/cifar10.png
    :alt: cifar10
+   :figclass: figure-caption
 
-   cifar10
+   Sample of the CIFAR-10 dataset
 
 Training an image Packed-Ensemble classifier
 --------------------------------------------
@@ -39,6 +40,8 @@ Here is the outline of the process:
 1. Load and normalize CIFAR10
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 """
+
+# %%
 import torch
 import torchvision
 import torchvision.transforms as transforms
@@ -103,6 +106,8 @@ import numpy as np
 def imshow(img):
     img = img / 2 + 0.5  # unnormalize
     npimg = img.numpy()
+    plt.figure(figsize=(10, 3))
+    plt.axis("off")
     plt.imshow(np.transpose(npimg, (1, 2, 0)))
     plt.show()
 
@@ -112,7 +117,7 @@ dataiter = iter(trainloader)
 images, labels = next(dataiter)
 
 # show images
-imshow(torchvision.utils.make_grid(images))
+imshow(torchvision.utils.make_grid(images, pad_value=1))
 # print labels
 print(" ".join(f"{classes[labels[j]]:5s}" for j in range(batch_size)))
 
@@ -244,7 +249,7 @@ dataiter = iter(testloader)
 images, labels = next(dataiter)
 
 # print images
-imshow(torchvision.utils.make_grid(images))
+imshow(torchvision.utils.make_grid(images, pad_value=1))
 print(
     "GroundTruth: ",
     " ".join(f"{classes[labels[j]]:5s}" for j in range(batch_size)),
