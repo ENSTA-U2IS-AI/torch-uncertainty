@@ -27,7 +27,7 @@ class _BasicBlock(nn.Module):
         conv_bias: bool,
         dropout_rate: float,
         groups: int,
-        normalization_layer: nn.Module,
+        normalization_layer: type[nn.Module],
     ) -> None:
         super().__init__()
         self.conv1 = BatchConv2d(
@@ -41,7 +41,6 @@ class _BasicBlock(nn.Module):
             bias=conv_bias,
         )
         self.bn1 = normalization_layer(planes)
-
         self.dropout = nn.Dropout2d(p=dropout_rate)
         self.conv2 = BatchConv2d(
             planes,
@@ -54,7 +53,6 @@ class _BasicBlock(nn.Module):
             bias=conv_bias,
         )
         self.bn2 = normalization_layer(planes)
-
         self.shortcut = nn.Sequential()
         if stride != 1 or in_planes != self.expansion * planes:
             self.shortcut = nn.Sequential(
@@ -88,7 +86,7 @@ class _Bottleneck(nn.Module):
         conv_bias: bool,
         dropout_rate: float,
         groups: int,
-        normalization_layer: nn.Module,
+        normalization_layer: type[nn.Module],
     ) -> None:
         super().__init__()
         self.conv1 = BatchConv2d(
@@ -159,7 +157,7 @@ class _BatchedResNet(nn.Module):
         width_multiplier: int = 1,
         style: Literal["imagenet", "cifar"] = "imagenet",
         in_planes: int = 64,
-        normalization_layer: nn.Module = nn.BatchNorm2d,
+        normalization_layer: type[nn.Module] = nn.BatchNorm2d,
     ) -> None:
         super().__init__()
         self.in_planes = in_planes * width_multiplier
@@ -273,7 +271,7 @@ class _BatchedResNet(nn.Module):
         conv_bias: bool,
         dropout_rate: float,
         groups: int,
-        normalization_layer: nn.Module,
+        normalization_layer: type[nn.Module],
     ) -> nn.Module:
         strides = [stride] + [1] * (num_blocks - 1)
         layers = []
@@ -314,7 +312,7 @@ def batched_resnet18(
     dropout_rate: float = 0,
     groups: int = 1,
     style: Literal["imagenet", "cifar"] = "imagenet",
-    normalization_layer: nn.Module = nn.BatchNorm2d,
+    normalization_layer: type[nn.Module] = nn.BatchNorm2d,
 ) -> _BatchedResNet:
     """BatchEnsemble of ResNet-18.
 
@@ -356,7 +354,7 @@ def batched_resnet20(
     dropout_rate: float = 0,
     groups: int = 1,
     style: Literal["imagenet", "cifar"] = "imagenet",
-    normalization_layer: nn.Module = nn.BatchNorm2d,
+    normalization_layer: type[nn.Module] = nn.BatchNorm2d,
 ) -> _BatchedResNet:
     """BatchEnsemble of ResNet-20.
 
@@ -398,7 +396,7 @@ def batched_resnet34(
     dropout_rate: float = 0,
     groups: int = 1,
     style: Literal["imagenet", "cifar"] = "imagenet",
-    normalization_layer: nn.Module = nn.BatchNorm2d,
+    normalization_layer: type[nn.Module] = nn.BatchNorm2d,
 ) -> _BatchedResNet:
     """BatchEnsemble of ResNet-34.
 
@@ -441,7 +439,7 @@ def batched_resnet50(
     groups: int = 1,
     width_multiplier: int = 1,
     style: Literal["imagenet", "cifar"] = "imagenet",
-    normalization_layer: nn.Module = nn.BatchNorm2d,
+    normalization_layer: type[nn.Module] = nn.BatchNorm2d,
 ) -> _BatchedResNet:
     """BatchEnsemble of ResNet-50.
 
@@ -486,7 +484,7 @@ def batched_resnet101(
     dropout_rate: float = 0,
     groups: int = 1,
     style: Literal["imagenet", "cifar"] = "imagenet",
-    normalization_layer: nn.Module = nn.BatchNorm2d,
+    normalization_layer: type[nn.Module] = nn.BatchNorm2d,
 ) -> _BatchedResNet:
     """BatchEnsemble of ResNet-101.
 
@@ -528,7 +526,7 @@ def batched_resnet152(
     dropout_rate: float = 0,
     groups: int = 1,
     style: Literal["imagenet", "cifar"] = "imagenet",
-    normalization_layer: nn.Module = nn.BatchNorm2d,
+    normalization_layer: type[nn.Module] = nn.BatchNorm2d,
 ) -> _BatchedResNet:
     """BatchEnsemble of ResNet-152.
 

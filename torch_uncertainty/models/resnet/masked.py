@@ -28,7 +28,7 @@ class _BasicBlock(nn.Module):
         conv_bias: bool,
         dropout_rate: float,
         groups: int,
-        normalization_layer: nn.Module,
+        normalization_layer: type[nn.Module],
     ) -> None:
         super().__init__()
 
@@ -94,7 +94,7 @@ class Bottleneck(nn.Module):
         conv_bias: bool,
         dropout_rate: float,
         groups: int,
-        normalization_layer: nn.Module,
+        normalization_layer: type[nn.Module],
     ) -> None:
         super().__init__()
 
@@ -170,7 +170,7 @@ class _MaskedResNet(nn.Module):
         groups: int = 1,
         style: Literal["imagenet", "cifar"] = "imagenet",
         in_planes: int = 64,
-        normalization_layer: nn.Module = nn.BatchNorm2d,
+        normalization_layer: type[nn.Module] = nn.BatchNorm2d,
     ) -> None:
         super().__init__()
         self.in_channels = in_channels
@@ -287,7 +287,7 @@ class _MaskedResNet(nn.Module):
         dropout_rate: float,
         scale: float,
         groups: int,
-        normalization_layer: nn.Module,
+        normalization_layer: type[nn.Module],
     ) -> nn.Module:
         strides = [stride] + [1] * (num_blocks - 1)
         layers = []
@@ -331,7 +331,7 @@ def masked_resnet18(
     conv_bias: bool = True,
     dropout_rate: float = 0,
     style: Literal["imagenet", "cifar"] = "imagenet",
-    normalization_layer: nn.Module = nn.BatchNorm2d,
+    normalization_layer: type[nn.Module] = nn.BatchNorm2d,
 ) -> _MaskedResNet:
     """Masksembles of ResNet-18.
 
@@ -375,7 +375,7 @@ def masked_resnet20(
     conv_bias: bool = True,
     dropout_rate: float = 0,
     style: Literal["imagenet", "cifar"] = "imagenet",
-    normalization_layer: nn.Module = nn.BatchNorm2d,
+    normalization_layer: type[nn.Module] = nn.BatchNorm2d,
 ) -> _MaskedResNet:
     """Masksembles of ResNet-20.
 
@@ -419,7 +419,7 @@ def masked_resnet34(
     conv_bias: bool = True,
     dropout_rate: float = 0,
     style: Literal["imagenet", "cifar"] = "imagenet",
-    normalization_layer: nn.Module = nn.BatchNorm2d,
+    normalization_layer: type[nn.Module] = nn.BatchNorm2d,
 ) -> _MaskedResNet:
     """Masksembles of ResNet-34.
 
@@ -463,7 +463,7 @@ def masked_resnet50(
     conv_bias: bool = True,
     dropout_rate: float = 0,
     style: Literal["imagenet", "cifar"] = "imagenet",
-    normalization_layer: nn.Module = nn.BatchNorm2d,
+    normalization_layer: type[nn.Module] = nn.BatchNorm2d,
 ) -> _MaskedResNet:
     """Masksembles of ResNet-50.
 
@@ -507,7 +507,7 @@ def masked_resnet101(
     conv_bias: bool = True,
     dropout_rate: float = 0,
     style: Literal["imagenet", "cifar"] = "imagenet",
-    normalization_layer: nn.Module = nn.BatchNorm2d,
+    normalization_layer: type[nn.Module] = nn.BatchNorm2d,
 ) -> _MaskedResNet:
     """Masksembles of ResNet-101.
 
@@ -551,7 +551,7 @@ def masked_resnet152(
     conv_bias: bool = True,
     dropout_rate: float = 0,
     style: Literal["imagenet", "cifar"] = "imagenet",
-    normalization_layer: nn.Module = nn.BatchNorm2d,
+    normalization_layer: type[nn.Module] = nn.BatchNorm2d,
 ) -> _MaskedResNet:  # coverage: ignore
     """Masksembles of ResNet-152.
 
