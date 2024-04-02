@@ -17,14 +17,18 @@ PyTorch layers.
 
 .. figure:: _static/images/structure_torch_uncertainty.jpg
   :alt: TorchUncertainty structure
+  :align: center
   :figclass: figure-caption
+  :width: 70%
 
-  **TorchUncertainty structure**
+  **Structure of TorchUncertainty**
 
 Training with TorchUncertainty's Uncertainty-aware Routines
 -----------------------------------------------------------
 
-Let's have a look at the `Classification routine <https://github.com/ENSTA-U2IS-AI/torch-uncertainty/blob/main/torch_uncertainty/routines/classification.py>`_. 
+TorchUncertainty provides a set of Ligthning training and evaluation routines that wrap PyTorch models. Let's have a look at the 
+`Classification routine <https://github.com/ENSTA-U2IS-AI/torch-uncertainty/blob/main/torch_uncertainty/routines/classification.py>`_
+and its parameters. 
 
 .. code:: python
 
@@ -39,13 +43,7 @@ Let's have a look at the `Classification routine <https://github.com/ENSTA-U2IS-
 			num_estimators: int = 1,
 			format_batch_fn: nn.Module | None = None,
 			optim_recipe: dict | Optimizer | None = None,
-			mixtype: str = "erm",
-			mixmode: str = "elem",
-			dist_sim: str = "emb",
-			kernel_tau_max: float = 1.0,
-			kernel_tau_std: float = 0.5,
-			mixup_alpha: float = 0,
-			cutmix_alpha: float = 0,
+			# ...
 			eval_ood: bool = False,
 			eval_grouping_loss: bool = False,
 			ood_criterion: Literal[
@@ -132,9 +130,9 @@ Example
 
 Training a model with the Lightning CLI tool is as simple as running the following command:
 
-.. code:: bash
+.. parsed-literal::
 
-  # in pyjam/experiments/classification/cifar10
+  # in torch-uncertainty/experiments/classification/cifar10
   python resnet.py fit --config configs/resnet18/standard.yaml
 
 Which trains a classic ResNet18 model on CIFAR10 with the settings used in the Packed-Ensembles paper.
