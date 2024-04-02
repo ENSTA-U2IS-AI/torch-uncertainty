@@ -63,6 +63,17 @@ For Deep Ensembles, consider citing:
 * Paper: `NeurIPS 2017 <https://arxiv.org/pdf/1612.01474.pdf>`__.
 
 
+Monte-Carlo Dropout
+^^^^^^^^^^^^^^^^^^^
+
+For Monte-Carlo Dropout, consider citing:
+
+**Dropout as a Bayesian Approximation: Representing Model Uncertainty in Deep Learning**
+
+* Authors: *Yarin Gal and Zoubin Ghahramani*
+* Paper: `ICML 2016 <https://arxiv.org/pdf/1506.02142.pdf>`__.
+
+
 BatchEnsemble
 ^^^^^^^^^^^^^
 
@@ -104,15 +115,17 @@ For Packed-Ensembles, consider citing:
 * Authors: *Olivier Laurent, Adrien Lafage, Enzo Tartaglione, Geoffrey Daniel, Jean-Marc Martinez, Andrei Bursuc, and Gianni Franchi*
 * Paper: `ICLR 2023 <https://arxiv.org/abs/2210.09184>`__.
 
-Monte-Carlo Dropout
-^^^^^^^^^^^^^^^^^^^
 
-For Monte-Carlo Dropout, consider citing:
+LPBNN
+^^^^^
 
-**Dropout as a Bayesian Approximation: Representing Model Uncertainty in Deep Learning**
+For LPBNN, consider citing:
 
-* Authors: *Yarin Gal and Zoubin Ghahramani*
-* Paper: `ICML 2016 <https://arxiv.org/pdf/1506.02142.pdf>`__.
+**Encoding the latent posterior of Bayesian Neural Networks for uncertainty quantification**
+
+* Authors: *Gianni Franchi, Andrei Bursuc, Emanuel Aldea, Severine Dubuisson, Isabelle Bloch*
+* Paper: `IEEE TPAMI 2024 <https://arxiv.org/abs/2012.02818>`__.
+
 
 Data Augmentation Methods
 -------------------------

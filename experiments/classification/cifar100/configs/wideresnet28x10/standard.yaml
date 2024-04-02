@@ -9,7 +9,7 @@ trainer:
   logger:
     class_path: lightning.pytorch.loggers.TensorBoardLogger
     init_args:
-      save_dir: logs/resnet50
+      save_dir: logs/wideresnet28x10
       name: standard
       default_hp_metric: false
   callbacks:
@@ -31,11 +31,12 @@ model:
   in_channels: 3
   loss: CrossEntropyLoss
   version: std
-  arch: 50
   style: cifar
+  dropout_rate: 0.3
 data:
   root: ./data
   batch_size: 128
+  auto_augment: rand-m9-n2-mstd1
 optimizer:
   lr: 0.1
   momentum: 0.9

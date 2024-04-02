@@ -55,7 +55,7 @@ class _BasicBlock(nn.Module):
         conv_bias: bool,
         dropout_rate: float,
         groups: int,
-        normalization_layer: nn.Module,
+        normalization_layer: type[nn.Module],
     ) -> None:
         super().__init__()
 
@@ -125,7 +125,7 @@ class _Bottleneck(nn.Module):
         conv_bias: bool,
         dropout_rate: float,
         groups: int,
-        normalization_layer: nn.Module,
+        normalization_layer: type[nn.Module],
     ) -> None:
         super().__init__()
 
@@ -207,7 +207,7 @@ class _PackedResNet(nn.Module):
         groups: int = 1,
         style: Literal["imagenet", "cifar"] = "imagenet",
         in_planes: int = 64,
-        normalization_layer: nn.Module = nn.BatchNorm2d,
+        normalization_layer: type[nn.Module] = nn.BatchNorm2d,
     ) -> None:
         super().__init__()
 
@@ -342,7 +342,7 @@ class _PackedResNet(nn.Module):
         dropout_rate: float,
         gamma: int,
         groups: int,
-        normalization_layer: nn.Module,
+        normalization_layer: type[nn.Module],
     ) -> nn.Module:
         strides = [stride] + [1] * (num_blocks - 1)
         layers = []
@@ -400,7 +400,7 @@ def packed_resnet18(
     groups: int = 1,
     dropout_rate: float = 0,
     style: Literal["imagenet", "cifar"] = "imagenet",
-    normalization_layer: nn.Module = nn.BatchNorm2d,
+    normalization_layer: type[nn.Module] = nn.BatchNorm2d,
     pretrained: bool = False,
 ) -> _PackedResNet:
     """Packed-Ensembles of ResNet-18.
@@ -462,7 +462,7 @@ def packed_resnet20(
     conv_bias: bool = True,
     dropout_rate: float = 0,
     style: Literal["imagenet", "cifar"] = "imagenet",
-    normalization_layer: nn.Module = nn.BatchNorm2d,
+    normalization_layer: type[nn.Module] = nn.BatchNorm2d,
     pretrained: bool = False,
 ) -> _PackedResNet:
     """Packed-Ensembles of ResNet-20.
@@ -524,7 +524,7 @@ def packed_resnet34(
     conv_bias: bool = True,
     dropout_rate: float = 0,
     style: Literal["imagenet", "cifar"] = "imagenet",
-    normalization_layer: nn.Module = nn.BatchNorm2d,
+    normalization_layer: type[nn.Module] = nn.BatchNorm2d,
     pretrained: bool = False,
 ) -> _PackedResNet:
     """Packed-Ensembles of ResNet-34.
@@ -586,7 +586,7 @@ def packed_resnet50(
     conv_bias: bool = True,
     dropout_rate: float = 0,
     style: Literal["imagenet", "cifar"] = "imagenet",
-    normalization_layer: nn.Module = nn.BatchNorm2d,
+    normalization_layer: type[nn.Module] = nn.BatchNorm2d,
     pretrained: bool = False,
 ) -> _PackedResNet:
     """Packed-Ensembles of ResNet-50.
@@ -648,7 +648,7 @@ def packed_resnet101(
     conv_bias: bool = True,
     dropout_rate: float = 0,
     style: Literal["imagenet", "cifar"] = "imagenet",
-    normalization_layer: nn.Module = nn.BatchNorm2d,
+    normalization_layer: type[nn.Module] = nn.BatchNorm2d,
     pretrained: bool = False,
 ) -> _PackedResNet:
     """Packed-Ensembles of ResNet-101.
@@ -710,7 +710,7 @@ def packed_resnet152(
     conv_bias: bool = True,
     dropout_rate: float = 0,
     style: Literal["imagenet", "cifar"] = "imagenet",
-    normalization_layer: nn.Module = nn.BatchNorm2d,
+    normalization_layer: type[nn.Module] = nn.BatchNorm2d,
     pretrained: bool = False,
 ) -> _PackedResNet:
     """Packed-Ensembles of ResNet-152.

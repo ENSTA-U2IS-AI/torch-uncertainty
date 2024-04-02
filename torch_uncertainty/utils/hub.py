@@ -51,5 +51,4 @@ def load_hf(weight_id: str, version: int = 0) -> tuple[torch.Tensor, dict]:
     # Load the config
     config_path = hf_hub_download(repo_id=repo_id, filename="config.yaml")
     config = yaml.safe_load(Path(config_path).read_text())
-
     return weight, config
