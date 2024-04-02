@@ -6,8 +6,8 @@ In this tutorial, we will train a LeNet classifier on the MNIST dataset using Mo
 
 For more information on Monte-Carlo Dropout, we refer the reader to the following resources:
 
+- Dropout as a Bayesian Approximation: Representing Model Uncertainty in Deep Learning `ICML 2016 <https://browse.arxiv.org/pdf/1506.02142.pdf>`_
 - What Uncertainties Do We Need in Bayesian Deep Learning for Computer Vision? `NeurIPS 2017 <https://browse.arxiv.org/pdf/1703.04977.pdf>`_
-- Dropout as a Bayesian Approximation: Representing Model Uncertainty in Deep Learning `PMLR 2016 <https://browse.arxiv.org/pdf/1506.02142.pdf>`_
 
 Training a LeNet with MC Dropout using TorchUncertainty models and PyTorch Lightning
 -------------------------------------------------------------------------------------
@@ -20,14 +20,15 @@ In this part, we train a LeNet with dropout layers, based on the model and routi
 First, we have to load the following utilities from TorchUncertainty:
 
 - the Trainer from Lightning
-- the datamodule that handles dataloaders: MNISTDataModule, which lies in the torch_uncertainty.datamodule
+- the datamodule handling dataloaders: MNISTDataModule from torch_uncertainty.datamodules
 - the model: LeNet, which lies in torch_uncertainty.models
-- the mc-dropout wrapper: mc_dropout, which lies in torch_uncertainty.models
-- the classification training routine in the torch_uncertainty.training.classification module
+- the MC Dropout wrapper: mc_dropout, which lies in torch_uncertainty.models
+- the classification training routine in the torch_uncertainty.routines
 - an optimization recipe in the torch_uncertainty.optim_recipes module.
 
 We also need import the neural network utils within `torch.nn`.
 """
+
 # %%
 from pathlib import Path
 
@@ -48,22 +49,22 @@ from torch_uncertainty.routines import ClassificationRoutine
 # logs, and to fake-parse the arguments needed for using the PyTorch Lightning
 # Trainer. We also create the datamodule that handles the MNIST dataset,
 # dataloaders and transforms. We create the model using the
-# blueprint from torch_uncertainty.models and we wrap it into mc-dropout.
+# blueprint from torch_uncertainty.models and we wrap it into mc_dropout.
 #
-# It is important to specify the arguments ``version`` as ``mc-dropout``,
-# ``num_estimators`` and the ``dropout_rate`` to use Monte Carlo dropout.
+# It is important to specify the arguments,``num_estimators`` and the ``dropout_rate``
+# to use Monte Carlo dropout.
 
 trainer = Trainer(accelerator="cpu", max_epochs=2, enable_progress_bar=False)
 
 # datamodule
-root = Path("")  / "data"
+root = Path("") / "data"
 datamodule = MNISTDataModule(root=root, batch_size=128)
 
 
 model = lenet(
     in_channels=datamodule.num_channels,
     num_classes=datamodule.num_classes,
-    dropout_rate=0.6,
+    dropout_rate=0.4,
 )
 
 mc_model = mc_dropout(model, num_estimators=16, last_layer=False)
@@ -84,7 +85,6 @@ routine = ClassificationRoutine(
     loss=nn.CrossEntropyLoss(),
     optim_recipe=optim_cifar10_resnet18(mc_model),
     num_estimators=16,
-
 )
 
 # %%
@@ -134,5 +134,6 @@ for j in range(4):
         " ".join([str(image_id.item()) for image_id in predicted]),
     )
 
-# %% We see that there is some disagreement between the samples of the dropout
+# %%
+# We see that there is some disagreement between the samples of the dropout
 # approximation of the posterior distribution.

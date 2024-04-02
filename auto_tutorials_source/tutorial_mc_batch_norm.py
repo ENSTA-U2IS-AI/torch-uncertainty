@@ -14,10 +14,10 @@ In this part, we train a LeNet with batch normalization layers, based on the mod
 First, we have to load the following utilities from TorchUncertainty:
 
 - the Trainer from Lightning
-- the datamodule that handles dataloaders: MNISTDataModule, which lies in the torch_uncertainty.datamodule
+- the datamodule handling dataloaders: MNISTDataModule from torch_uncertainty.datamodules
 - the model: LeNet, which lies in torch_uncertainty.models
-- the mc-batch-norm wrapper: mc_dropout, which lies in torch_uncertainty.models
-- the classification training routine in the torch_uncertainty.training.classification module
+- the MC Batch Normalization wrapper: mc_batch_norm, which lies in torch_uncertainty.post_processing
+- the classification training routine in the torch_uncertainty.routines
 - an optimization recipe in the torch_uncertainty.optim_recipes module.
 
 We also need import the neural network utils within `torch.nn`.

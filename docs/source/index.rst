@@ -3,8 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-TorchUncertainty
-=================
+Welcome to Torch Uncertainty
+============================
 
 .. role:: bash(code)
    :language: bash
@@ -18,7 +18,10 @@ details on the `API <https://torch-uncertainty.github.io/api.html>`_, and a
 `comprehensive list of the references <https://torch-uncertainty.github.io/references.html>`_  of
 the models and metrics implemented.
 
-You can install TorchUncertainty directly from PyPI:
+-----
+
+Installation
+^^^^^^^^^^^^
 
 .. parsed-literal::
    pip install torch-uncertainty

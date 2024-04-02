@@ -74,13 +74,13 @@ model and the ``CIFAR10DataModule`` as arguments.
 Depending on the CLI subcommand calling ``cli_main()`` will either train or test the model on the using
 the CIFAR-10 dataset. But what are these subcommands?
 
-.. code:: bash
+.. parsed-literal::
 
     python resnet.py --help
 
 This command will display the available subcommands of the CLI tool.
 
-.. code:: bash
+.. parsed-literal::
 
     subcommands:
     For more details of each subcommand, add it as an argument followed by --help.
@@ -93,7 +93,7 @@ This command will display the available subcommands of the CLI tool.
 
 You can execute whichever subcommand you like and set up all your hyperparameters directly using the command line
 
-.. code:: bash
+.. parsed-literal::
 
     python resnet.py fit --trainer.max_epochs 75 --trainer.accelerators gpu --trainer.devices 1 --model.version std --model.arch 18 --model.in_channels 3 --model.num_classes 10 --model.loss CrossEntropyLoss --model.style cifar --data.root ./data --data.batch_size 128 --optimizer.lr 0.05 --lr_scheduler.milestones [25,50]
 
@@ -160,7 +160,7 @@ Taking the previous example, we can create a configuration file named ``config.y
 
 Then, we can run the following command to train the model:
 
-.. code:: bash
+.. parsed-literal::
 
     python resnet.py fit --config config.yaml
 
@@ -171,7 +171,7 @@ In addition, all arguments passed to instanciate the ``Trainer``, ``ResNetBaseli
 ``lightning_logs/version_{int}/config.yaml``. When testing the model, we advise to use this configuration file
 to ensure that the same hyperparameters are used for training and testing.
 
-.. code:: bash
+.. parsed-literal::
 
     python resnet.py test --config lightning_logs/version_{int}/config.yaml --ckpt_path lightning_logs/version_{int}/checkpoints/{filename}.ckpt
 
@@ -222,13 +222,13 @@ If you are interested in using a ResNet model but want to choose some of the hyp
 you can use the configuration file and override the hyperparameters using the command line. For example, to train
 a ResNet-18 model on the CIFAR-10 dataset with a batch size of :math:`256`, you can use the following command:
 
-.. code:: bash
+.. parsed-literal::
 
     python resnet.py fit --config configs/resnet18/standard.yaml --data.batch_size 256
 
 To use the weights argument of the ``torch.nn.CrossEntropyLoss`` class, you can use the following command:
 
-.. code:: bash
+.. parsed-literal::
 
     python resnet.py fit --config configs/resnet18/standard.yaml --model.loss CrossEntropyLoss --model.loss.weight Tensor --model.loss.weight.dict_kwargs.data [1,2,3,4,5,6,7,8,9,10]
 
@@ -240,7 +240,7 @@ on the CIFAR-10 dataset. Yet, some hyperparameters are purposely missing to be s
 For instance, to train a Packed ResNet-34 model on the CIFAR-10 dataset with :math:`4` estimators and a :math:`\alpha` value of :math:`2`,
 you can use the following command:
 
-.. code:: bash
+.. parsed-literal::
 
     python resnet.py fit --config configs/resnet.yaml --trainer.max_epochs 75 --model.version packed --model.arch 34 --model.num_estimators 4 --model.alpha 2 --optimizer.lr 0.05 --lr_scheduler.milestones [25,50]
 
