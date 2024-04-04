@@ -11,10 +11,10 @@ Welcome to Torch Uncertainty
 
 Welcome to the documentation of TorchUncertainty.
 
-This website contains the documentation for 
+This website contains the documentation for
 `installing <https://torch-uncertainty.github.io/installation.html>`_
-and `contributing <https://torch-uncertainty.github.io/>`_ to TorchUncertainty, 
-details on the `API <https://torch-uncertainty.github.io/api.html>`_, and a 
+and `contributing <https://torch-uncertainty.github.io/>`_ to TorchUncertainty,
+details on the `API <https://torch-uncertainty.github.io/api.html>`_, and a
 `comprehensive list of the references <https://torch-uncertainty.github.io/references.html>`_  of
 the models and metrics implemented.
 

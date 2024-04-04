@@ -11,9 +11,9 @@ These routines make it very easy to:
 - compute and monitor uncertainty metrics: calibration, out-of-distribution detection, proper scores, grouping loss, etc.
 - leverage calibration methods automatically during evaluation
 
-Yet, we take account that their will be as many different uses of TorchUncertainty as there are of users. 
+Yet, we take account that their will be as many different uses of TorchUncertainty as there are of users.
 This page provides ideas on how to benefit from TorchUncertainty at all levels: from ready-to-train lightning-based models to using only specific
-PyTorch layers. 
+PyTorch layers.
 
 .. figure:: _static/images/structure_torch_uncertainty.jpg
   :alt: TorchUncertainty structure
@@ -26,39 +26,39 @@ PyTorch layers.
 Training with TorchUncertainty's Uncertainty-aware Routines
 -----------------------------------------------------------
 
-TorchUncertainty provides a set of Ligthning training and evaluation routines that wrap PyTorch models. Let's have a look at the 
+TorchUncertainty provides a set of Ligthning training and evaluation routines that wrap PyTorch models. Let's have a look at the
 `Classification routine <https://github.com/ENSTA-U2IS-AI/torch-uncertainty/blob/main/torch_uncertainty/routines/classification.py>`_
-and its parameters. 
+and its parameters.
 
 .. code:: python
 
-	from lightning.pytorch import LightningModule
+  from lightning.pytorch import LightningModule
 
-	class ClassificationRoutine(LightningModule):
-		def __init__(
-			self,
-			model: nn.Module,
-			num_classes: int,
-			loss: nn.Module,
-			num_estimators: int = 1,
-			format_batch_fn: nn.Module | None = None,
-			optim_recipe: dict | Optimizer | None = None,
-			# ...
-			eval_ood: bool = False,
-			eval_grouping_loss: bool = False,
-			ood_criterion: Literal[
-				"msp", "logit", "energy", "entropy", "mi", "vr"
-			] = "msp",
-			log_plots: bool = False,
-			save_in_csv: bool = False,
-			calibration_set: Literal["val", "test"] | None = None,
-		) -> None:
-			...
+  class ClassificationRoutine(LightningModule):
+    def __init__(
+      self,
+      model: nn.Module,
+      num_classes: int,
+      loss: nn.Module,
+      num_estimators: int = 1,
+      format_batch_fn: nn.Module | None = None,
+      optim_recipe: dict | Optimizer | None = None,
+      # ...
+      eval_ood: bool = False,
+      eval_grouping_loss: bool = False,
+      ood_criterion: Literal[
+        "msp", "logit", "energy", "entropy", "mi", "vr"
+      ] = "msp",
+      log_plots: bool = False,
+      save_in_csv: bool = False,
+      calibration_set: Literal["val", "test"] | None = None,
+    ) -> None:
+      ...
 
 
 Building your First Routine
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-This routine is a wrapper of any custom or TorchUncertainty classification model. To use it, 
+This routine is a wrapper of any custom or TorchUncertainty classification model. To use it,
 just build your model and pass it to the routine as argument along with an optimization recipe
 and the loss as well as the number of classes that we use for torch metrics.
 
@@ -80,7 +80,7 @@ Training with the Routine
 
 To train with this routine, you will first need to create a lightning Trainer and have either a lightning datamodule
 or PyTorch dataloaders. When benchmarking models, we advise to use lightning datamodules that will automatically handle
-train/val/test splits, out-of-distribution detection and dataset shift. For this example, let us use TorchUncertainty's 
+train/val/test splits, out-of-distribution detection and dataset shift. For this example, let us use TorchUncertainty's
 CIFAR10 datamodule.
 
 .. code:: python
@@ -95,14 +95,14 @@ CIFAR10 datamodule.
 
 Here it is, you have trained your first model with TorchUncertainty! As a result, you will get access to various metrics
 measuring the ability of your model to handle uncertainty. You can get other examples of training with lightning Trainers
-looking at the `Tutorials <tutorials.html#layers>`_ 
+looking at the `Tutorials <tutorials.html#layers>`_.
 
 More metrics
 ^^^^^^^^^^^^
 
 With TorchUncertainty datamodules, you can easily test models on out-of-distribution datasets, by
 setting the ``eval_ood`` parameter to ``True``. You can also evaluate the grouping loss by setting ``eval_grouping_loss`` to ``True``.
-Finally, you can calibrate your model using the ``calibration_set`` parameter. In this case, you will get 
+Finally, you can calibrate your model using the ``calibration_set`` parameter. In this case, you will get
 metrics for but the uncalibrated and calibrated models: the metrics corresponding to the temperature scaled
 model will begin with ``ts_``.
 
