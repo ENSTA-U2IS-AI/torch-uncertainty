@@ -1,9 +1,36 @@
 import math
+from typing import Literal
 
 import torch
 import torchvision.models as tv_models
 from torch import Tensor, nn
 from torch.nn import functional as F
+from torchvision.models.densenet import DenseNet121_Weights, DenseNet161_Weights
+from torchvision.models.resnet import (
+    ResNet50_Weights,
+    ResNet101_Weights,
+    ResNeXt50_32X4D_Weights,
+    ResNeXt101_32X8D_Weights,
+)
+
+resnet_feat_out_channels = [64, 256, 512, 1024, 2048]
+resnet_feat_names = ["relu", "layer1", "layer2", "layer3", "layer4"]
+densenet_feat_names = [
+    "relu0",
+    "pool0",
+    "transition1",
+    "transition2",
+    "norm5",
+]
+
+bts_encoders = [
+    "densenet121",
+    "densenet161",
+    "resnet50",
+    "resnet101",
+    "resnext50",
+    "resnext101",
+]
 
 
 class AtrousBlock2d(nn.Module):
@@ -13,6 +40,7 @@ class AtrousBlock2d(nn.Module):
         out_channels: int,
         dilation: int,
         norm_first: bool = True,
+        momentum: float = 0.1,
         **factory_kwargs,
     ):
         """Atrous block with 1x1 and 3x3 convolutions.
@@ -22,14 +50,16 @@ class AtrousBlock2d(nn.Module):
             out_channels (int): Number of output channels.
             dilation (int): Dilation rate for the 3x3 convolution.
             norm_first (bool): Whether to apply normalization before the 1x1 convolution.
-            factory_kwargs: Additional arguments for the convolution layers.
+                Defaults to True.
+            momentum (float): Momentum for the normalization layer. Defaults to 0.1.
+            factory_kwargs: Additional arguments for the PyTorch layers.
         """
         super().__init__()
 
         self.norm_first = norm_first
         if norm_first:
             self.first_norm = nn.BatchNorm2d(
-                in_channels, momentum=0.01, **factory_kwargs
+                in_channels, momentum=momentum, **factory_kwargs
             )
 
         self.conv1 = nn.Conv2d(
@@ -42,7 +72,7 @@ class AtrousBlock2d(nn.Module):
             **factory_kwargs,
         )
         self.norm = nn.BatchNorm2d(
-            out_channels * 2, momentum=0.01, **factory_kwargs
+            out_channels * 2, momentum=momentum, **factory_kwargs
         )
         self.conv2 = nn.Conv2d(
             in_channels=out_channels * 2,
@@ -77,10 +107,9 @@ class UpConv2d(nn.Module):
             in_channels (int): Number of input channels.
             out_channels (int): Number of output channels.
             ratio (int): Upsampling ratio.
-            factory_kwargs: Additional arguments for the convolution layers.
+            factory_kwargs: Additional arguments for the convolution layer.
         """
         super().__init__()
-        self.elu = nn.ELU()
         self.conv = nn.Conv2d(
             in_channels=in_channels,
             out_channels=out_channels,
@@ -94,7 +123,7 @@ class UpConv2d(nn.Module):
 
     def forward(self, x: Tensor) -> Tensor:
         out = F.interpolate(x, scale_factor=self.ratio, mode="nearest")
-        return self.elu(self.conv(out))
+        return F.elu(self.conv(out))
 
 
 class Reduction1x1(nn.Module):
@@ -109,7 +138,6 @@ class Reduction1x1(nn.Module):
         super().__init__()
         self.max_depth = max_depth
         self.is_final = is_final
-        self.sigmoid = nn.Sigmoid()
         self.reduc = torch.nn.Sequential()
 
         while num_out_filters >= 4:
@@ -167,14 +195,18 @@ class Reduction1x1(nn.Module):
     def forward(self, x: Tensor) -> Tensor:
         x = self.reduc.forward(x)
         if not self.is_final:
-            theta = self.sigmoid(x[:, 0, :, :]) * math.pi / 3
-            phi = self.sigmoid(x[:, 1, :, :]) * math.pi * 2
-            dist = self.sigmoid(x[:, 2, :, :]) * self.max_depth
-            n1 = torch.mul(torch.sin(theta), torch.cos(phi)).unsqueeze(1)
-            n2 = torch.mul(torch.sin(theta), torch.sin(phi)).unsqueeze(1)
-            n3 = torch.cos(theta).unsqueeze(1)
-            n4 = dist.unsqueeze(1)
-            x = torch.cat([n1, n2, n3, n4], dim=1)
+            theta = F.sigmoid(x[:, 0, :, :]) * math.pi / 3
+            phi = F.sigmoid(x[:, 1, :, :]) * math.pi * 2
+            dist = F.sigmoid(x[:, 2, :, :]) * self.max_depth
+            x = torch.cat(
+                [
+                    torch.mul(torch.sin(theta), torch.cos(phi)).unsqueeze(1),
+                    torch.mul(torch.sin(theta), torch.sin(phi)).unsqueeze(1),
+                    torch.cos(theta).unsqueeze(1),
+                    dist.unsqueeze(1),
+                ],
+                dim=1,
+            )
         return x
 
 
@@ -191,14 +223,9 @@ class LocalPlanarGuidance(nn.Module):
         self.up_ratio = up_ratio
 
     def forward(self, x: Tensor) -> Tensor:
-        plane_eq_expanded = torch.repeat_interleave(x, self.up_ratio, 2)
-        plane_eq_expanded = torch.repeat_interleave(
-            plane_eq_expanded, self.up_ratio, 3
+        x_expanded = torch.repeat_interleave(
+            torch.repeat_interleave(x, self.up_ratio, 2), self.up_ratio, 3
         )
-        n1 = plane_eq_expanded[:, 0, :, :]
-        n2 = plane_eq_expanded[:, 1, :, :]
-        n3 = plane_eq_expanded[:, 2, :, :]
-        n4 = plane_eq_expanded[:, 3, :, :]
 
         u = self.u.repeat(
             x.size(0),
@@ -214,7 +241,76 @@ class LocalPlanarGuidance(nn.Module):
         )
         v = (v - (self.up_ratio - 1) * 0.5) / self.up_ratio
 
-        return n4 / (n1 * u + n2 * v + n3)
+        return x_expanded[:, 3, :, :] / (
+            x_expanded[:, 0, :, :] * u
+            + x_expanded[:, 1, :, :] * v
+            + x_expanded[:, 2, :, :]
+        )
+
+
+class BTSEncoder(nn.Module):
+    def __init__(self, encoder_name: str) -> None:
+        """BTS backbone.
+
+        Args:
+            encoder_name (str): Name of the encoder.
+        """
+        super().__init__()
+        if encoder_name == "densenet121":
+            self.base_model = tv_models.densenet121(
+                weights=DenseNet121_Weights.DEFAULT
+            ).features
+            self.feat_names = densenet_feat_names
+            self.feat_out_channels = [64, 64, 128, 256, 1024]
+        elif encoder_name == "densenet161":
+            self.base_model = tv_models.densenet161(
+                weights=DenseNet161_Weights.DEFAULT
+            ).features
+            self.feat_names = densenet_feat_names
+            self.feat_out_channels = [96, 96, 192, 384, 2208]
+        elif encoder_name == "resnet50":
+            self.base_model = tv_models.resnet50(
+                weights=ResNet50_Weights.DEFAULT
+            )
+            self.feat_names = resnet_feat_names
+            self.feat_out_channels = resnet_feat_out_channels
+        elif encoder_name == "resnet101":
+            self.base_model = tv_models.resnet101(
+                weights=ResNet101_Weights.DEFAULT
+            )
+            self.feat_names = resnet_feat_names
+            self.feat_out_channels = resnet_feat_out_channels
+        elif encoder_name == "resnext50":
+            self.base_model = tv_models.resnext50_32x4d(
+                weights=ResNeXt50_32X4D_Weights.DEFAULT
+            )
+            self.feat_names = resnet_feat_names
+            self.feat_out_channels = resnet_feat_out_channels
+        else:  # encoder_name == "resnext101":
+            self.base_model = tv_models.resnext101_32x8d(
+                weights=ResNeXt101_32X8D_Weights.DEFAULT
+            )
+            self.feat_names = resnet_feat_names
+            self.feat_out_channels = resnet_feat_out_channels
+
+    def forward(self, x: Tensor) -> list[Tensor]:
+        """Encoder forward pass.
+
+        Args:
+            x (Tensor): Input tensor.
+
+        Returns:
+            list[Tensor]: List of the skip features.
+        """
+        feature = x
+        skip_feat = []
+        for k, v in self.base_model._modules.items():
+            if k in ("fc", "avgpool"):
+                continue
+            feature = v(feature)
+            if k in self.feat_names:
+                skip_feat.append(feature)
+        return skip_feat
 
 
 class BTSDecoder(nn.Module):
@@ -232,56 +328,60 @@ class BTSDecoder(nn.Module):
             num_features, momentum=0.01, affine=True, eps=1.1e-5
         )
 
-        self.conv5 = torch.nn.Sequential(
-            nn.Conv2d(
-                num_features + feat_out_channels[3],
-                num_features,
-                kernel_size=3,
-                stride=1,
-                padding=1,
-                bias=False,
-            ),
-            nn.ELU(),
+        self.conv5 = nn.Conv2d(
+            num_features + feat_out_channels[3],
+            num_features,
+            kernel_size=3,
+            stride=1,
+            padding=1,
+            bias=False,
         )
         self.upconv4 = UpConv2d(num_features, num_features // 2)
         self.bn4 = nn.BatchNorm2d(
             num_features // 2, momentum=0.01, affine=True, eps=1.1e-5
         )
-        self.conv4 = torch.nn.Sequential(
-            nn.Conv2d(
-                num_features // 2 + feat_out_channels[2],
-                num_features // 2,
-                kernel_size=3,
-                stride=1,
-                padding=1,
-                bias=False,
-            ),
-            nn.ELU(),
+        self.conv4 = nn.Conv2d(
+            num_features // 2 + feat_out_channels[2],
+            num_features // 2,
+            kernel_size=3,
+            stride=1,
+            padding=1,
+            bias=False,
         )
         self.bn4_2 = nn.BatchNorm2d(
             num_features // 2, momentum=0.01, affine=True, eps=1.1e-5
         )
 
         self.daspp_3 = AtrousBlock2d(
-            num_features // 2, num_features // 4, 3, norm_first=False
+            num_features // 2,
+            num_features // 4,
+            3,
+            norm_first=False,
+            momentum=0.01,
         )
         self.daspp_6 = AtrousBlock2d(
             num_features // 2 + num_features // 4 + feat_out_channels[2],
             num_features // 4,
             6,
+            momentum=0.01,
         )
         self.daspp_12 = AtrousBlock2d(
-            num_features + feat_out_channels[2], num_features // 4, 12
+            num_features + feat_out_channels[2],
+            num_features // 4,
+            12,
+            momentum=0.01,
         )
         self.daspp_18 = AtrousBlock2d(
             num_features + num_features // 4 + feat_out_channels[2],
             num_features // 4,
             18,
+            momentum=0.01,
         )
         self.daspp_24 = AtrousBlock2d(
             num_features + num_features // 2 + feat_out_channels[2],
             num_features // 4,
             24,
+            momentum=0.01,
         )
         self.daspp_conv = torch.nn.Sequential(
             nn.Conv2d(
@@ -303,16 +403,13 @@ class BTSDecoder(nn.Module):
         self.bn3 = nn.BatchNorm2d(
             num_features // 4, momentum=0.01, affine=True, eps=1.1e-5
         )
-        self.conv3 = torch.nn.Sequential(
-            nn.Conv2d(
-                num_features // 4 + feat_out_channels[1] + 1,
-                num_features // 4,
-                kernel_size=3,
-                stride=1,
-                padding=1,
-                bias=False,
-            ),
-            nn.ELU(),
+        self.conv3 = nn.Conv2d(
+            num_features // 4 + feat_out_channels[1] + 1,
+            num_features // 4,
+            kernel_size=3,
+            stride=1,
+            padding=1,
+            bias=False,
         )
         self.reduc4x4 = Reduction1x1(
             num_features // 4, num_features // 8, self.max_depth
@@ -323,16 +420,13 @@ class BTSDecoder(nn.Module):
         self.bn2 = nn.BatchNorm2d(
             num_features // 8, momentum=0.01, affine=True, eps=1.1e-5
         )
-        self.conv2 = torch.nn.Sequential(
-            nn.Conv2d(
-                num_features // 8 + feat_out_channels[0] + 1,
-                num_features // 8,
-                kernel_size=3,
-                stride=1,
-                padding=1,
-                bias=False,
-            ),
-            nn.ELU(),
+        self.conv2 = nn.Conv2d(
+            num_features // 8 + feat_out_channels[0] + 1,
+            num_features // 8,
+            kernel_size=3,
+            stride=1,
+            padding=1,
+            bias=False,
         )
 
         self.reduc2x2 = Reduction1x1(
@@ -347,34 +441,19 @@ class BTSDecoder(nn.Module):
             self.max_depth,
             is_final=True,
         )
-        self.conv1 = torch.nn.Sequential(
-            nn.Conv2d(
-                num_features // 16 + 4, num_features // 16, 3, 1, 1, bias=False
-            ),
-            nn.ELU(),
+        self.conv1 = nn.Conv2d(
+            num_features // 16 + 4, num_features // 16, 3, 1, 1, bias=False
         )
-        self.get_depth = torch.nn.Sequential(
-            nn.Conv2d(num_features // 16, 1, 3, 1, 1, bias=False), nn.Sigmoid()
-        )
+        self.depth = nn.Conv2d(num_features // 16, 1, 3, 1, 1, bias=False)
 
-    def forward(self, features, focal):
-        skip0, skip1, skip2, skip3 = (
-            features[0],
-            features[1],
-            features[2],
-            features[3],
-        )
+    def feat_forward(self, features: list[Tensor]) -> Tensor:
         dense_features = F.relu(features[4])
-        upconv5 = self.upconv5(dense_features)  # H/16
-        upconv5 = self.bn5(upconv5)
-        concat5 = torch.cat([upconv5, skip3], dim=1)
-        iconv5 = self.conv5(concat5)
+        upconv5 = self.bn5(self.upconv5(dense_features))  # H/16
+        iconv5 = F.elu(self.conv5(torch.cat([upconv5, features[3]], dim=1)))
 
-        upconv4 = self.upconv4(iconv5)  # H/8
-        upconv4 = self.bn4(upconv4)
-        concat4 = torch.cat([upconv4, skip2], dim=1)
-        iconv4 = self.conv4(concat4)
-        iconv4 = self.bn4_2(iconv4)
+        upconv4 = self.bn4(self.upconv4(iconv5))  # H/8
+        concat4 = torch.cat([upconv4, features[2]], dim=1)
+        iconv4 = self.bn4_2(F.elu(self.conv4(concat4)))
 
         daspp_3 = self.daspp_3(iconv4)
         concat4_2 = torch.cat([concat4, daspp_3], dim=1)
@@ -383,8 +462,7 @@ class BTSDecoder(nn.Module):
         daspp_12 = self.daspp_12(concat4_3)
         concat4_4 = torch.cat([concat4_3, daspp_12], dim=1)
         daspp_18 = self.daspp_18(concat4_4)
-        concat4_5 = torch.cat([concat4_4, daspp_18], dim=1)
-        daspp_24 = self.daspp_24(concat4_5)
+        daspp_24 = self.daspp_24(torch.cat([concat4_4, daspp_18], dim=1))
         concat4_daspp = torch.cat(
             [iconv4, daspp_3, daspp_6, daspp_12, daspp_18, daspp_24], dim=1
         )
@@ -397,16 +475,15 @@ class BTSDecoder(nn.Module):
         plane_eq_8x8 = torch.cat(
             [plane_normal_8x8, plane_dist_8x8.unsqueeze(1)], 1
         )
-        depth_8x8 = self.lpg8x8(plane_eq_8x8, focal)
+        depth_8x8 = self.lpg8x8(plane_eq_8x8)
         depth_8x8_scaled = depth_8x8.unsqueeze(1) / self.max_depth
         depth_8x8_scaled_ds = F.interpolate(
             depth_8x8_scaled, scale_factor=0.25, mode="nearest"
         )
 
-        upconv3 = self.upconv3(daspp_feat)  # H/4
-        upconv3 = self.bn3(upconv3)
-        concat3 = torch.cat([upconv3, skip1, depth_8x8_scaled_ds], dim=1)
-        iconv3 = self.conv3(concat3)
+        upconv3 = self.bn3(self.upconv3(daspp_feat))  # H/4
+        concat3 = torch.cat([upconv3, features[1], depth_8x8_scaled_ds], dim=1)
+        iconv3 = F.elu(self.conv3(concat3))
 
         reduc4x4 = self.reduc4x4(iconv3)
         plane_normal_4x4 = reduc4x4[:, :3, :, :]
@@ -415,16 +492,18 @@ class BTSDecoder(nn.Module):
         plane_eq_4x4 = torch.cat(
             [plane_normal_4x4, plane_dist_4x4.unsqueeze(1)], 1
         )
-        depth_4x4 = self.lpg4x4(plane_eq_4x4, focal)
+        depth_4x4 = self.lpg4x4(plane_eq_4x4)
         depth_4x4_scaled = depth_4x4.unsqueeze(1) / self.max_depth
         depth_4x4_scaled_ds = F.interpolate(
             depth_4x4_scaled, scale_factor=0.5, mode="nearest"
         )
 
-        upconv2 = self.upconv2(iconv3)  # H/2
-        upconv2 = self.bn2(upconv2)
-        concat2 = torch.cat([upconv2, skip0, depth_4x4_scaled_ds], dim=1)
-        iconv2 = self.conv2(concat2)
+        upconv2 = self.bn2(self.upconv2(iconv3))  # H/2
+        iconv2 = F.elu(
+            self.conv2(
+                torch.cat([upconv2, features[0], depth_4x4_scaled_ds], dim=1)
+            )
+        )
 
         reduc2x2 = self.reduc2x2(iconv2)
         plane_normal_2x2 = reduc2x2[:, :3, :, :]
@@ -433,7 +512,7 @@ class BTSDecoder(nn.Module):
         plane_eq_2x2 = torch.cat(
             [plane_normal_2x2, plane_dist_2x2.unsqueeze(1)], 1
         )
-        depth_2x2 = self.lpg2x2(plane_eq_2x2, focal)
+        depth_2x2 = self.lpg2x2(plane_eq_2x2)
         depth_2x2_scaled = depth_2x2.unsqueeze(1) / self.max_depth
 
         upconv1 = self.upconv1(iconv2)
@@ -448,97 +527,59 @@ class BTSDecoder(nn.Module):
             ],
             dim=1,
         )
-        iconv1 = self.conv1(concat1)
-        final_depth = self.max_depth * self.get_depth(iconv1)
-        if self.params.dataset == "kitti":
-            final_depth = (
-                final_depth * focal.view(-1, 1, 1, 1).float() / 715.0873
-            )
+        return F.elu(self.conv1(concat1))
 
-        return (
-            depth_8x8_scaled,
-            depth_4x4_scaled,
-            depth_2x2_scaled,
-            reduc1x1,
-            final_depth,
+    def forward(self, features: list[Tensor]) -> Tensor:
+        # TODO: handle focal
+        return self.max_depth * F.sigmoid(
+            self.depth(self.feat_forward(features))
         )
-
-
-class BTSEncoder(nn.Module):
-    def __init__(self, encoder_name: str):
-        super().__init__()
-        self.encoder_name = encoder_name
-
-        if encoder_name == "densenet121_bts":
-            self.base_model = tv_models.densenet121(pretrained=True).features
-            self.feat_names = [
-                "relu0",
-                "pool0",
-                "transition1",
-                "transition2",
-                "norm5",
-            ]
-            self.feat_out_channels = [64, 64, 128, 256, 1024]
-        elif encoder_name == "densenet161_bts":
-            self.base_model = tv_models.densenet161(pretrained=True).features
-            self.feat_names = [
-                "relu0",
-                "pool0",
-                "transition1",
-                "transition2",
-                "norm5",
-            ]
-            self.feat_out_channels = [96, 96, 192, 384, 2208]
-        elif encoder_name == "resnet50_bts":
-            self.base_model = tv_models.resnet50(pretrained=True)
-            self.feat_names = ["relu", "layer1", "layer2", "layer3", "layer4"]
-            self.feat_out_channels = [64, 256, 512, 1024, 2048]
-        elif encoder_name == "resnet101_bts":
-            self.base_model = tv_models.resnet101(pretrained=True)
-            self.feat_names = ["relu", "layer1", "layer2", "layer3", "layer4"]
-            self.feat_out_channels = [64, 256, 512, 1024, 2048]
-        elif encoder_name == "resnext50_bts":
-            self.base_model = tv_models.resnext50_32x4d(pretrained=True)
-            self.feat_names = ["relu", "layer1", "layer2", "layer3", "layer4"]
-            self.feat_out_channels = [64, 256, 512, 1024, 2048]
-        elif encoder_name == "resnext101_bts":
-            self.base_model = tv_models.resnext101_32x8d(pretrained=True)
-            self.feat_names = ["relu", "layer1", "layer2", "layer3", "layer4"]
-            self.feat_out_channels = [64, 256, 512, 1024, 2048]
-        elif encoder_name == "mobilenetv2_bts":
-            self.base_model = tv_models.mobilenet_v2(pretrained=True).features
-            self.feat_inds = [2, 4, 7, 11, 19]
-            self.feat_out_channels = [16, 24, 32, 64, 1280]
-            self.feat_names = []
-        else:
-            print(f"Not supported encoder: {encoder_name}")
-
-    def forward(self, x: torch.Tensor) -> list[torch.Tensor]:
-        feature = x
-        skip_feat = []
-        i = 1
-        for k, v in self.base_model._modules.items():
-            if "fc" in k or "avgpool" in k:
-                continue
-            feature = v(feature)
-            if self.encoder_name == "mobilenetv2_bts":
-                if i in [2, 4, 7, 11, 19]:
-                    skip_feat.append(feature)
-            else:
-                if any(x in k for x in self.feat_names):
-                    skip_feat.append(feature)
-            i = i + 1
-        return skip_feat
 
 
 class BTS(nn.Module):
-    def __init__(self, encoder_name, max_depth, bts_size):
+    def __init__(
+        self,
+        encoder_name: Literal[
+            "densenet121",
+            "densenet161",
+            "resnet50",
+            "resnet101",
+            "resnext50",
+            "resnext101",
+        ],
+        max_depth: int,
+        bts_size: int = 512,
+    ):
+        """BTS model.
+
+        Args:
+            encoder_name (str): Name of the encoding backbone.
+            max_depth (int): Maximum predicted depth.
+            bts_size (int): BTS feature size.
+
+        Reference:
+            From Big to Small: Multi-Scale Local Planar Guidance for Monocular Depth Estimation.
+            Jin Han Lee, Myung-Kyu Han, Dong Wook Ko, Il Hong Suh. ArXiv.
+        """
         super().__init__()
         self.encoder = BTSEncoder(encoder_name)
         self.decoder = BTSDecoder(
-            max_depth, self.encoder.feat_out_channels, bts_size
+            max_depth,
+            self.encoder.feat_out_channels,
+            bts_size,
         )
 
-    def forward(self, x: Tensor, focal) -> Tensor:
-        skip_feat = self.encoder(x)
-        return self.decoder(skip_feat, focal)
+    def forward(self, x: Tensor, focal: float | None = None) -> Tensor:
+        """Forward pass.
+
+        Args:
+            x (Tensor): Input tensor.
+            focal (float): Focal length for API consistency.
+        """
+        return self.decoder(self.encoder(x))
+
+
+def bts(encoder_name: str, max_depth: int, bts_size: int = 512) -> BTS:
+    if encoder_name not in bts_encoders:
+        raise ValueError(f"Unsupported encoder. Got {encoder_name}.")
+    return BTS(encoder_name, max_depth, bts_size)
