@@ -11,8 +11,6 @@ from torch_uncertainty.models.utils import Backbone
 
 
 class SeparableConv2d(nn.Module):
-    """Separable Convolution with dilation."""
-
     def __init__(
         self,
         in_channels: int,
@@ -23,6 +21,17 @@ class SeparableConv2d(nn.Module):
         dilation: _size_2_t = 1,
         bias=True,
     ) -> None:
+        """Separable Convolution with dilation.
+
+        Args:
+            in_channels (int): Number of input channels.
+            out_channels (int): Number of output channels.
+            kernel_size (_size_2_t): Kernel size.
+            stride (_size_2_t, optional): Stride. Defaults to 1.
+            padding (_size_2_t, optional): Padding. Defaults to 0.
+            dilation (_size_2_t, optional): Dilation. Defaults to 1.
+            bias (bool, optional): Use biases. Defaults to True.
+        """
         super().__init__()
         self.separable = nn.Conv2d(
             in_channels,
@@ -52,9 +61,18 @@ class InnerConv(nn.Module):
         self,
         in_channels: int,
         out_channels: int,
-        dilation: int,
+        dilation: _size_2_t,
         separable: bool,
     ) -> None:
+        """Inner convolution block.
+
+        Args:
+            in_channels (int): Number of input channels.
+            out_channels (int): Number of output channels.
+            dilation (_size_2_t): Dilation.
+            separable (bool): Use separable convolutions to reduce the number
+                of parameters.
+        """
         super().__init__()
         if not separable:
             self.conv = nn.Conv2d(
@@ -82,6 +100,12 @@ class InnerConv(nn.Module):
 
 class InnerPooling(nn.Module):
     def __init__(self, in_channels: int, out_channels: int) -> None:
+        """Inner pooling block.
+
+        Args:
+            in_channels (int): Number of input channels.
+            out_channels (int): Number of output channels.
+        """
         super().__init__()
         self.pool = nn.AdaptiveAvgPool2d(1)
         self.conv = nn.Conv2d(
@@ -103,7 +127,15 @@ class ASPP(nn.Module):
         separable: bool,
         dropout_rate: float,
     ) -> None:
-        """Atrous Spatial Pyramid Pooling."""
+        """Atrous Spatial Pyramid Pooling.
+
+        Args:
+            in_channels (int): Number of input channels.
+            atrous_rates (list[int]): Atrous rates for the ASPP module.
+            separable (bool): Use separable convolutions to reduce the number
+                of parameters.
+            dropout_rate (float): Dropout rate of the ASPP.
+        """
         super().__init__()
         out_channels = 256
         modules = []
@@ -137,6 +169,12 @@ class ASPP(nn.Module):
 
 class DeepLabV3Backbone(Backbone):
     def __init__(self, backbone_name: str, style: str) -> None:
+        """DeepLab V3(+) backbone.
+
+        Args:
+            backbone_name (str): Backbone name.
+            style (str): Whether to use a DeepLab V3 or V3+ model.
+        """
         # TODO: handle dilations
         if backbone_name == "resnet50":
             base_model = tv_models.resnet50(weights=ResNet50_Weights.DEFAULT)
@@ -149,16 +187,25 @@ class DeepLabV3Backbone(Backbone):
 
 
 class DeepLabV3Decoder(nn.Module):
+    """Decoder for the DeepLabV3 model.
+
+    Args:
+        in_channels (int): Number of channels of the input latent space.
+        num_classes (int): Number of classes.
+        aspp_dilate (list[int], optional): Atrous rates for the ASPP module.
+        separable (bool, optional): Use separable convolutions to reduce the number
+            of parameters. Defaults to False.
+        dropout_rate (float, optional): Dropout rate of the ASPP. Defaults to 0.1.
+    """
+
     def __init__(
         self,
         in_channels: int,
         num_classes: int,
-        aspp_dilate: list[int] | None = None,
+        aspp_dilate: list[int],
         separable: bool = False,
         dropout_rate: float = 0.1,
     ) -> None:
-        if aspp_dilate is None:
-            aspp_dilate = [12, 24, 36]
         super().__init__()
         self.aspp = ASPP(in_channels, aspp_dilate, separable, dropout_rate)
         if not separable:
@@ -183,6 +230,18 @@ class DeepLabV3PlusDecoder(nn.Module):
         separable: bool,
         dropout_rate: float = 0.1,
     ) -> None:
+        """Decoder for the DeepLabV3+ model.
+
+        Args:
+            in_channels (int): Number of channels of the input latent space.
+            low_level_channels (int): Number of low-level features channels.
+            num_classes (int): Number of classes.
+            aspp_dilate (list[int]): Atrous rates for the ASPP module.
+            separable (bool): Use separable convolutions to reduce the number
+                of parameters.
+            dropout_rate (float, optional): Dropout rate of the ASPP. Defaults
+                to 0.1.
+        """
         super().__init__()
         self.project = nn.Sequential(
             nn.Conv2d(low_level_channels, 48, kernel_size=1, bias=False),
@@ -215,14 +274,30 @@ class DeepLabV3PlusDecoder(nn.Module):
         return self.classifier(out)
 
 
-class DeepLabV3(nn.Module):
+class _DeepLabV3(nn.Module):
     def __init__(
         self,
+        num_classes: int,
         backbone_name: str,
-        style=Literal["v3", "v3+"],
+        style: Literal["v3", "v3+"],
         output_stride: int = 16,
         separable: bool = False,
     ) -> None:
+        """DeepLab V3(+) model.
+
+        Args:
+            num_classes (int): Number of classes.
+            backbone_name (str): Backbone name.
+            style (Literal["v3", "v3+"]):  Whether to use a DeepLab V3 or V3+ model.
+            output_stride (int, optional): Output stride. Defaults to 16.
+            separable (bool, optional): Use separable convolutions. Defaults to False.
+
+        References:
+            - Rethinking atrous convolution for semantic image segmentation.
+            Chen, L. C., Papandreou, G., Schroff, F., & Adam, H. (2018).
+            - Encoder-decoder with atrous separable convolution for semantic image segmentation.
+            Chen, L. C., Zhu, Y., Papandreou, G., Schroff, F., & Adam, H. In ECCV 2018.
+        """
         super().__init__()
         if output_stride == 16:
             dilations = [6, 12, 18]
@@ -234,19 +309,19 @@ class DeepLabV3(nn.Module):
             )
 
         self.backbone = DeepLabV3Backbone(backbone_name, style)
-        if style == "v3+":
-            self.decoder = DeepLabV3PlusDecoder(
+        if style == "v3":
+            self.decoder = DeepLabV3Decoder(
                 in_channels=2048,
-                low_level_channels=256,
-                num_classes=21,
+                num_classes=num_classes,
                 aspp_dilate=dilations,
                 separable=separable,
                 dropout_rate=0.1,
             )
-        elif style == "v3":
-            self.decoder = DeepLabV3Decoder(
+        elif style == "v3+":
+            self.decoder = DeepLabV3PlusDecoder(
                 in_channels=2048,
-                num_classes=21,
+                low_level_channels=256,
+                num_classes=num_classes,
                 aspp_dilate=dilations,
                 separable=separable,
                 dropout_rate=0.1,
@@ -262,3 +337,49 @@ class DeepLabV3(nn.Module):
             mode="bilinear",
             align_corners=False,
         )
+
+
+def deep_lab_v3_resnet50(
+    num_classes: int,
+    style: Literal["v3", "v3+"],
+    output_stride: int = 16,
+    separable: bool = False,
+) -> _DeepLabV3:
+    """DeepLab V3(+) model with ResNet-50 backbone.
+
+    Args:
+        num_classes (int): Number of classes.
+        style (Literal["v3", "v3+"]): Whether to use a DeepLab V3 or V3+ model.
+        output_stride (int, optional): Output stride. Defaults to 16.
+        separable (bool, optional): Use separable convolutions. Defaults to False.
+    """
+    return _DeepLabV3(
+        num_classes,
+        "resnet50",
+        style,
+        output_stride=output_stride,
+        separable=separable,
+    )
+
+
+def deep_lab_v3_resnet101(
+    num_classes: int,
+    style: Literal["v3", "v3+"],
+    output_stride: int = 16,
+    separable: bool = False,
+) -> _DeepLabV3:
+    """DeepLab V3(+) model with ResNet-50 backbone.
+
+    Args:
+        num_classes (int): Number of classes.
+        style (Literal["v3", "v3+"]): Whether to use a DeepLab V3 or V3+ model.
+        output_stride (int, optional): Output stride. Defaults to 16.
+        separable (bool, optional): Use separable convolutions. Defaults to False.
+    """
+    return _DeepLabV3(
+        num_classes,
+        "resnet101",
+        style,
+        output_stride=output_stride,
+        separable=separable,
+    )
