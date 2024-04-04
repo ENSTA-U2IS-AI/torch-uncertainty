@@ -49,17 +49,31 @@ class SeparableConv2d(nn.Module):
 
 class InnerConv(nn.Module):
     def __init__(
-        self, in_channels: int, out_channels: int, dilation: int
+        self,
+        in_channels: int,
+        out_channels: int,
+        dilation: int,
+        separable: bool,
     ) -> None:
         super().__init__()
-        self.conv = nn.Conv2d(
-            in_channels,
-            out_channels,
-            3,
-            padding=dilation,
-            dilation=dilation,
-            bias=False,
-        )
+        if not separable:
+            self.conv = nn.Conv2d(
+                in_channels,
+                out_channels,
+                kernel_size=3,
+                padding=dilation,
+                dilation=dilation,
+                bias=False,
+            )
+        else:
+            self.conv = SeparableConv2d(
+                in_channels,
+                out_channels,
+                kernel_size=3,
+                padding=dilation,
+                dilation=dilation,
+                bias=False,
+            )
         self.bn = nn.BatchNorm2d(out_channels)
 
     def forward(self, x: Tensor) -> Tensor:
@@ -70,7 +84,9 @@ class InnerPooling(nn.Module):
     def __init__(self, in_channels: int, out_channels: int) -> None:
         super().__init__()
         self.pool = nn.AdaptiveAvgPool2d(1)
-        self.conv = nn.Conv2d(in_channels, out_channels, 1, bias=False)
+        self.conv = nn.Conv2d(
+            in_channels, out_channels, kernel_size=1, bias=False
+        )
         self.bn = nn.BatchNorm2d(out_channels)
 
     def forward(self, x: Tensor) -> Tensor:
@@ -84,6 +100,7 @@ class ASPP(nn.Module):
         self,
         in_channels: int,
         atrous_rates: list[int],
+        separable: bool,
         dropout_rate: float,
     ) -> None:
         """Atrous Spatial Pyramid Pooling."""
@@ -92,19 +109,22 @@ class ASPP(nn.Module):
         modules = []
         modules.append(
             nn.Sequential(
-                nn.Conv2d(in_channels, out_channels, 1, bias=False),
+                nn.Conv2d(in_channels, out_channels, kernel_size=1, bias=False),
                 nn.BatchNorm2d(out_channels),
                 nn.ReLU(inplace=True),
             )
         )
         modules += [
-            InnerConv(in_channels, out_channels, rate) for rate in atrous_rates
+            InnerConv(in_channels, out_channels, dilation, separable)
+            for dilation in atrous_rates
         ]
         modules.append(InnerPooling(in_channels, out_channels))
         self.convs = nn.ModuleList(modules)
 
         self.projection = nn.Sequential(
-            nn.Conv2d(5 * out_channels, out_channels, 1, bias=False),
+            nn.Conv2d(
+                5 * out_channels, out_channels, kernel_size=1, bias=False
+            ),
             nn.BatchNorm2d(out_channels),
             nn.ReLU(inplace=True),
             nn.Dropout(dropout_rate),
@@ -113,23 +133,6 @@ class ASPP(nn.Module):
     def forward(self, x: Tensor) -> Tensor:
         res = torch.cat([conv(x) for conv in self.convs], dim=1)
         return self.projection(res)
-
-
-def convert_to_separable_conv(module):
-    new_module = module
-    if isinstance(module, nn.Conv2d) and module.kernel_size[0] > 1:
-        new_module = SeparableConv2d(
-            module.in_channels,
-            module.out_channels,
-            module.kernel_size,
-            module.stride,
-            module.padding,
-            module.dilation,
-            module.bias,
-        )
-    for name, child in module.named_children():
-        new_module.add_module(name, convert_to_separable_conv(child))
-    return new_module
 
 
 class DeepLabV3Backbone(Backbone):
@@ -145,32 +148,56 @@ class DeepLabV3Backbone(Backbone):
         super().__init__(base_model, feat_names)
 
 
+class DeepLabV3Decoder(nn.Module):
+    def __init__(
+        self,
+        in_channels: int,
+        num_classes: int,
+        aspp_dilate: list[int] | None = None,
+        separable: bool = False,
+        dropout_rate: float = 0.1,
+    ) -> None:
+        if aspp_dilate is None:
+            aspp_dilate = [12, 24, 36]
+        super().__init__()
+        self.aspp = ASPP(in_channels, aspp_dilate, separable, dropout_rate)
+        if not separable:
+            self.conv = nn.Conv2d(256, 256, 3, padding=1, bias=False)
+        else:
+            self.conv = SeparableConv2d(256, 256, 3, padding=1, bias=False)
+        self.bn = nn.BatchNorm2d(256)
+        self.classifier = nn.Conv2d(256, num_classes, kernel_size=1)
+
+    def forward(self, features: list[Tensor]) -> Tensor:
+        out = F.relu(self.bn(self.conv(self.aspp(features[0]))))
+        return self.classifier(out)
+
+
 class DeepLabV3PlusDecoder(nn.Module):
     def __init__(
         self,
         in_channels: int,
         low_level_channels: int,
         num_classes: int,
-        aspp_dilate: list[int] | None = None,
+        aspp_dilate: list[int],
+        separable: bool,
         dropout_rate: float = 0.1,
     ) -> None:
-        if aspp_dilate is None:
-            aspp_dilate = [12, 24, 36]
         super().__init__()
         self.project = nn.Sequential(
-            nn.Conv2d(low_level_channels, 48, 1, bias=False),
+            nn.Conv2d(low_level_channels, 48, kernel_size=1, bias=False),
             nn.BatchNorm2d(48),
             nn.ReLU(inplace=True),
         )
         self.atrous_spatial_pyramid_pool = ASPP(
-            in_channels, aspp_dilate, dropout_rate
+            in_channels, aspp_dilate, separable, dropout_rate
         )
-        self.classifier = nn.Sequential(
-            nn.Conv2d(304, 256, 3, padding=1, bias=False),
-            nn.BatchNorm2d(256),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(256, num_classes, 1),
-        )
+        if separable:
+            self.conv = SeparableConv2d(304, 256, 3, padding=1, bias=False)
+        else:
+            self.conv = nn.Conv2d(304, 256, 3, padding=1, bias=False)
+        self.bn = nn.BatchNorm2d(256)
+        self.classifier = nn.Conv2d(256, num_classes, kernel_size=1)
 
     def forward(self, features: list[Tensor]) -> Tensor:
         low_level_features = self.project(features[0])
@@ -181,32 +208,11 @@ class DeepLabV3PlusDecoder(nn.Module):
             mode="bilinear",
             align_corners=False,
         )
-        return self.classifier(
-            torch.cat([low_level_features, output_features], dim=1)
+        output_features = torch.cat(
+            [low_level_features, output_features], dim=1
         )
-
-
-class DeepLabV3Decoder(nn.Module):
-    def __init__(
-        self,
-        in_channels: int,
-        num_classes: int,
-        aspp_dilate: list[int] | None = None,
-    ) -> None:
-        if aspp_dilate is None:
-            aspp_dilate = [12, 24, 36]
-        super().__init__()
-
-        self.classifier = nn.Sequential(
-            ASPP(in_channels, aspp_dilate, dropout_rate=0.1),
-            nn.Conv2d(256, 256, 3, padding=1, bias=False),
-            nn.BatchNorm2d(256),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(256, num_classes, 1),
-        )
-
-    def forward(self, features: list[Tensor]) -> Tensor:
-        return self.classifier(features[1])
+        out = F.relu(self.bn(self.conv(output_features)))
+        return self.classifier(out)
 
 
 class DeepLabV3(nn.Module):
@@ -215,6 +221,7 @@ class DeepLabV3(nn.Module):
         backbone_name: str,
         style=Literal["v3", "v3+"],
         output_stride: int = 16,
+        separable: bool = False,
     ) -> None:
         super().__init__()
         if output_stride == 16:
@@ -233,10 +240,16 @@ class DeepLabV3(nn.Module):
                 low_level_channels=256,
                 num_classes=21,
                 aspp_dilate=dilations,
+                separable=separable,
+                dropout_rate=0.1,
             )
         elif style == "v3":
             self.decoder = DeepLabV3Decoder(
-                in_channels=2048, num_classes=21, aspp_dilate=dilations
+                in_channels=2048,
+                num_classes=21,
+                aspp_dilate=dilations,
+                separable=separable,
+                dropout_rate=0.1,
             )
         else:
             raise ValueError(f"Unknown style: {style}.")
