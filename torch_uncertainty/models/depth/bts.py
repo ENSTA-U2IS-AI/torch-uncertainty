@@ -4,6 +4,7 @@ from typing import Literal
 import torch
 import torchvision.models as tv_models
 from torch import Tensor, nn
+from torch.distributions import Distribution
 from torch.nn import functional as F
 from torchvision.models.densenet import DenseNet121_Weights, DenseNet161_Weights
 from torchvision.models.resnet import (
@@ -12,6 +13,9 @@ from torchvision.models.resnet import (
     ResNeXt50_32X4D_Weights,
     ResNeXt101_32X8D_Weights,
 )
+
+from torch_uncertainty.layers.distributions import LaplaceLayer, NormalLayer
+from torch_uncertainty.models.utils import Backbone
 
 resnet_feat_out_channels = [64, 256, 512, 1024, 2048]
 resnet_feat_names = ["relu", "layer1", "layer2", "layer3", "layer4"]
@@ -23,7 +27,7 @@ densenet_feat_names = [
     "norm5",
 ]
 
-bts_encoders = [
+bts_backbones = [
     "densenet121",
     "densenet161",
     "resnet50",
@@ -248,69 +252,44 @@ class LocalPlanarGuidance(nn.Module):
         )
 
 
-class BTSEncoder(nn.Module):
-    def __init__(self, encoder_name: str) -> None:
+class BTSBackbone(Backbone):
+    def __init__(self, backbone_name: str) -> None:
         """BTS backbone.
 
         Args:
-            encoder_name (str): Name of the encoder.
+            backbone_name (str): Name of the backbone.
         """
-        super().__init__()
-        if encoder_name == "densenet121":
-            self.base_model = tv_models.densenet121(
+        if backbone_name == "densenet121":
+            base_model = tv_models.densenet121(
                 weights=DenseNet121_Weights.DEFAULT
             ).features
-            self.feat_names = densenet_feat_names
+            feat_names = densenet_feat_names
             self.feat_out_channels = [64, 64, 128, 256, 1024]
-        elif encoder_name == "densenet161":
-            self.base_model = tv_models.densenet161(
+        elif backbone_name == "densenet161":
+            base_model = tv_models.densenet161(
                 weights=DenseNet161_Weights.DEFAULT
             ).features
-            self.feat_names = densenet_feat_names
+            feat_names = densenet_feat_names
             self.feat_out_channels = [96, 96, 192, 384, 2208]
-        elif encoder_name == "resnet50":
-            self.base_model = tv_models.resnet50(
-                weights=ResNet50_Weights.DEFAULT
-            )
-            self.feat_names = resnet_feat_names
-            self.feat_out_channels = resnet_feat_out_channels
-        elif encoder_name == "resnet101":
-            self.base_model = tv_models.resnet101(
-                weights=ResNet101_Weights.DEFAULT
-            )
-            self.feat_names = resnet_feat_names
-            self.feat_out_channels = resnet_feat_out_channels
-        elif encoder_name == "resnext50":
-            self.base_model = tv_models.resnext50_32x4d(
+        elif backbone_name == "resnet50":
+            base_model = tv_models.resnet50(weights=ResNet50_Weights.DEFAULT)
+
+        elif backbone_name == "resnet101":
+            base_model = tv_models.resnet101(weights=ResNet101_Weights.DEFAULT)
+        elif backbone_name == "resnext50":
+            base_model = tv_models.resnext50_32x4d(
                 weights=ResNeXt50_32X4D_Weights.DEFAULT
             )
-            self.feat_names = resnet_feat_names
-            self.feat_out_channels = resnet_feat_out_channels
-        else:  # encoder_name == "resnext101":
-            self.base_model = tv_models.resnext101_32x8d(
+        else:  # backbone_name == "resnext101":
+            base_model = tv_models.resnext101_32x8d(
                 weights=ResNeXt101_32X8D_Weights.DEFAULT
             )
-            self.feat_names = resnet_feat_names
+        if "res" in backbone_name:  # remove classification heads from resnets
+            feat_names = resnet_feat_names
             self.feat_out_channels = resnet_feat_out_channels
-
-    def forward(self, x: Tensor) -> list[Tensor]:
-        """Encoder forward pass.
-
-        Args:
-            x (Tensor): Input tensor.
-
-        Returns:
-            list[Tensor]: List of the skip features.
-        """
-        feature = x
-        skip_feat = []
-        for k, v in self.base_model._modules.items():
-            if k in ("fc", "avgpool"):
-                continue
-            feature = v(feature)
-            if k in self.feat_names:
-                skip_feat.append(feature)
-        return skip_feat
+            base_model.avgpool = nn.Identity()
+            base_model.fc = nn.Identity()
+        super().__init__(base_model=base_model, feat_names=feat_names)
 
 
 class BTSDecoder(nn.Module):
@@ -318,7 +297,8 @@ class BTSDecoder(nn.Module):
         self,
         max_depth: int,
         feat_out_channels: list[int],
-        num_features: int = 512,
+        num_features: int,
+        dist_layer: type[nn.Module],
     ):
         super().__init__()
         self.max_depth = max_depth
@@ -444,7 +424,17 @@ class BTSDecoder(nn.Module):
         self.conv1 = nn.Conv2d(
             num_features // 16 + 4, num_features // 16, 3, 1, 1, bias=False
         )
-        self.depth = nn.Conv2d(num_features // 16, 1, 3, 1, 1, bias=False)
+        self.output_channels = 1
+        if dist_layer in (NormalLayer, LaplaceLayer):
+            self.output_channels = 2
+        elif dist_layer != nn.Identity:
+            raise ValueError(
+                f"Unsupported distribution layer. Got {dist_layer}."
+            )
+        self.depth = nn.Conv2d(
+            num_features // 16, self.output_channels, 3, 1, 1, bias=False
+        )
+        self.dist_layer = dist_layer(dim=1)
 
     def feat_forward(self, features: list[Tensor]) -> Tensor:
         dense_features = F.relu(features[4])
@@ -529,17 +519,31 @@ class BTSDecoder(nn.Module):
         )
         return F.elu(self.conv1(concat1))
 
-    def forward(self, features: list[Tensor]) -> Tensor:
+    def forward(self, features: list[Tensor]) -> Tensor | Distribution:
+        """Forward pass.
+
+        Args:
+            features (list[Tensor]): List of the features from the backbone.
+
+        Note:
+            Depending of the :attr:`dist_layer` of the backbone, the output can
+            be a distribution or a single tensor.
+        """
         # TODO: handle focal
-        return self.max_depth * F.sigmoid(
-            self.depth(self.feat_forward(features))
-        )
+        out = self.depth(self.feat_forward(features))
+        if self.output_channels != 1:
+            loc = self.max_depth * F.sigmoid(out[:, 0, :, :])
+            scale = self.max_depth * out[:, 1, :, :]
+            out = self.dist_layer(torch.stack([loc, scale], -1))
+        else:
+            out = self.max_depth * F.sigmoid(out)
+        return out
 
 
 class BTS(nn.Module):
     def __init__(
         self,
-        encoder_name: Literal[
+        backbone_name: Literal[
             "densenet121",
             "densenet161",
             "resnet50",
@@ -549,24 +553,25 @@ class BTS(nn.Module):
         ],
         max_depth: int,
         bts_size: int = 512,
-    ):
+        dist_layer: type[nn.Module] = nn.Identity,
+    ) -> None:
         """BTS model.
 
         Args:
-            encoder_name (str): Name of the encoding backbone.
+            backbone_name (str): Name of the encoding backbone.
             max_depth (int): Maximum predicted depth.
-            bts_size (int): BTS feature size.
+            bts_size (int): BTS feature size. Defaults to 512.
+            dist_layer (nn.Module): Distribution layer for probabilistic depth
+            estimation. Defaults to nn.Identity.
 
         Reference:
             From Big to Small: Multi-Scale Local Planar Guidance for Monocular Depth Estimation.
             Jin Han Lee, Myung-Kyu Han, Dong Wook Ko, Il Hong Suh. ArXiv.
         """
         super().__init__()
-        self.encoder = BTSEncoder(encoder_name)
+        self.backbone = BTSBackbone(backbone_name)
         self.decoder = BTSDecoder(
-            max_depth,
-            self.encoder.feat_out_channels,
-            bts_size,
+            max_depth, self.backbone.feat_out_channels, bts_size, dist_layer
         )
 
     def forward(self, x: Tensor, focal: float | None = None) -> Tensor:
@@ -576,10 +581,10 @@ class BTS(nn.Module):
             x (Tensor): Input tensor.
             focal (float): Focal length for API consistency.
         """
-        return self.decoder(self.encoder(x))
+        return self.decoder(self.backbone(x))
 
 
-def bts(encoder_name: str, max_depth: int, bts_size: int = 512) -> BTS:
-    if encoder_name not in bts_encoders:
-        raise ValueError(f"Unsupported encoder. Got {encoder_name}.")
-    return BTS(encoder_name, max_depth, bts_size)
+def bts(backbone_name: str, max_depth: int, bts_size: int = 512) -> BTS:
+    if backbone_name not in bts_backbones:
+        raise ValueError(f"Unsupported backbone. Got {backbone_name}.")
+    return BTS(backbone_name, max_depth, bts_size)
