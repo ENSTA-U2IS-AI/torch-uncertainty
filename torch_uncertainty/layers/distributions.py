@@ -66,13 +66,13 @@ class LaplaceLayer(_AbstractDist):
         r"""Forward pass of the Laplace distribution layer.
 
         Args:
-            x (Tensor): A tensor of shape (:attr:`dim` :math:`\times`2).
+            x (Tensor): A tensor of shape (..., :attr:`dim` :math:`\times`2).
 
         Returns:
             Laplace: The output Laplace distribution.
         """
-        loc = x[:, : self.dim]
-        scale = F.softplus(x[:, self.dim :]) + self.eps
+        loc = x[..., : self.dim]
+        scale = F.softplus(x[..., self.dim :]) + self.eps
         return Laplace(loc, scale)
 
 
@@ -100,8 +100,8 @@ class NormalInverseGammaLayer(_AbstractDist):
         Returns:
             NormalInverseGamma: The output NormalInverseGamma distribution.
         """
-        loc = x[:, : self.dim]
-        lmbda = F.softplus(x[:, self.dim : 2 * self.dim]) + self.eps
-        alpha = 1 + F.softplus(x[:, 2 * self.dim : 3 * self.dim]) + self.eps
-        beta = F.softplus(x[:, 3 * self.dim :]) + self.eps
+        loc = x[..., : self.dim]
+        lmbda = F.softplus(x[..., self.dim : 2 * self.dim]) + self.eps
+        alpha = 1 + F.softplus(x[..., 2 * self.dim : 3 * self.dim]) + self.eps
+        beta = F.softplus(x[..., 3 * self.dim :]) + self.eps
         return NormalInverseGamma(loc, lmbda, alpha, beta)
