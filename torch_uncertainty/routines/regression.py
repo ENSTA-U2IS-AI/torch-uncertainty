@@ -5,6 +5,7 @@ from lightning.pytorch.utilities.types import STEP_OUTPUT
 from torch import Tensor, nn
 from torch.distributions import (
     Categorical,
+    Distribution,
     Independent,
     MixtureSameFamily,
 )
@@ -107,7 +108,7 @@ class RegressionRoutine(LightningModule):
                 init_metrics,
             )
 
-    def forward(self, inputs: Tensor) -> Tensor:
+    def forward(self, inputs: Tensor) -> Tensor | Distribution:
         """Forward pass of the routine.
 
         The forward pass automatically squeezes the output if the regression
@@ -173,15 +174,6 @@ class RegressionRoutine(LightningModule):
         if self.probabilistic:
             self.val_prob_metrics.update(mixture, targets)
 
-    def on_validation_epoch_end(self) -> None:
-        self.log_dict(self.val_metrics.compute())
-        self.val_metrics.reset()
-        if self.probabilistic:
-            self.log_dict(
-                self.val_prob_metrics.compute(),
-            )
-            self.val_prob_metrics.reset()
-
     def test_step(
         self,
         batch: tuple[Tensor, Tensor],
@@ -219,15 +211,24 @@ class RegressionRoutine(LightningModule):
         if self.probabilistic:
             self.test_prob_metrics.update(mixture, targets)
 
+    def on_validation_epoch_end(self) -> None:
+        self.log_dict(self.val_metrics.compute(), sync_dist=True)
+        self.val_metrics.reset()
+        if self.probabilistic:
+            self.log_dict(self.val_prob_metrics.compute(), sync_dist=True)
+            self.val_prob_metrics.reset()
+
     def on_test_epoch_end(self) -> None:
         self.log_dict(
             self.test_metrics.compute(),
+            sync_dist=True,
         )
         self.test_metrics.reset()
 
         if self.probabilistic:
             self.log_dict(
                 self.test_prob_metrics.compute(),
+                sync_dist=True,
             )
             self.test_prob_metrics.reset()
 

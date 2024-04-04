@@ -147,15 +147,6 @@ class DepthRoutine(LightningModule):
         if self.probabilistic:
             self.val_prob_metrics.update(mixture, targets)
 
-    def on_validation_epoch_end(self) -> None:
-        self.log_dict(self.val_metrics.compute())
-        self.val_metrics.reset()
-        if self.probabilistic:
-            self.log_dict(
-                self.val_prob_metrics.compute(),
-            )
-            self.val_prob_metrics.reset()
-
     def test_step(
         self,
         batch: tuple[Tensor, Tensor],
@@ -189,14 +180,26 @@ class DepthRoutine(LightningModule):
         if self.probabilistic:
             self.test_prob_metrics.update(mixture, targets)
 
+    def on_validation_epoch_end(self) -> None:
+        self.log_dict(self.val_metrics.compute(), sync_dist=True)
+        self.val_metrics.reset()
+        if self.probabilistic:
+            self.log_dict(
+                self.val_prob_metrics.compute(),
+                sync_dist=True,
+            )
+            self.val_prob_metrics.reset()
+
     def on_test_epoch_end(self) -> None:
         self.log_dict(
             self.test_metrics.compute(),
+            sync_dist=True,
         )
         self.test_metrics.reset()
         if self.probabilistic:
             self.log_dict(
                 self.test_prob_metrics.compute(),
+                sync_dist=True,
             )
             self.test_prob_metrics.reset()
 

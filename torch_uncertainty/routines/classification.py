@@ -485,11 +485,11 @@ class ClassificationRoutine(LightningModule):
                 self.ood_logit_storage.append(logits.detach().cpu())
 
     def on_validation_epoch_end(self) -> None:
-        self.log_dict(self.val_cls_metrics.compute())
+        self.log_dict(self.val_cls_metrics.compute(), sync_dist=True)
         self.val_cls_metrics.reset()
 
         if self.eval_grouping_loss:
-            self.log_dict(self.val_grouping_loss.compute())
+            self.log_dict(self.val_grouping_loss.compute(), sync_dist=True)
             self.val_grouping_loss.reset()
 
     def on_test_epoch_end(self) -> None:
@@ -497,7 +497,9 @@ class ClassificationRoutine(LightningModule):
         result_dict = self.test_cls_metrics.compute()
 
         # already logged
-        result_dict.update({"cls_test/entropy": self.test_id_entropy.compute()})
+        result_dict.update(
+            {"cls_test/entropy": self.test_id_entropy.compute()}, sync_dist=True
+        )
 
         if (
             self.num_estimators == 1
@@ -505,24 +507,25 @@ class ClassificationRoutine(LightningModule):
             and self.cal_model is not None
         ):
             tmp_metrics = self.ts_cls_metrics.compute()
-            self.log_dict(tmp_metrics)
+            self.log_dict(tmp_metrics, sync_dist=True)
             result_dict.update(tmp_metrics)
             self.ts_cls_metrics.reset()
 
         if self.eval_grouping_loss:
             self.log_dict(
                 self.test_grouping_loss.compute(),
+                sync_dist=True,
             )
 
         if self.num_estimators > 1:
             tmp_metrics = self.test_id_ens_metrics.compute()
-            self.log_dict(tmp_metrics)
+            self.log_dict(tmp_metrics, sync_dist=True)
             result_dict.update(tmp_metrics)
             self.test_id_ens_metrics.reset()
 
         if self.eval_ood:
             tmp_metrics = self.test_ood_metrics.compute()
-            self.log_dict(tmp_metrics)
+            self.log_dict(tmp_metrics, sync_dist=True)
             result_dict.update(tmp_metrics)
             self.test_ood_metrics.reset()
 
@@ -531,7 +534,7 @@ class ClassificationRoutine(LightningModule):
 
             if self.num_estimators > 1:
                 tmp_metrics = self.test_ood_ens_metrics.compute()
-                self.log_dict(tmp_metrics)
+                self.log_dict(tmp_metrics, sync_dist=True)
                 result_dict.update(tmp_metrics)
                 self.test_ood_ens_metrics.reset()
 

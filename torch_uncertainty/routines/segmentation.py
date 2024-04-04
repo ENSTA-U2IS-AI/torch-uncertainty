@@ -70,7 +70,12 @@ class SegmentationRoutine(LightningModule):
                 "Brier": BrierScore(num_classes=num_classes),
                 "NLL": CategoricalNLL(),
             },
-            compute_groups=[["Acc", "mIoU"], ["ECE"], ["Brier"], ["NLL"]],
+            compute_groups=[
+                ["Acc", "mIoU"],
+                ["ECE"],
+                ["Brier"],
+                ["NLL"],
+            ],
         )
 
         self.val_seg_metrics = seg_metrics.clone(prefix="seg_val/")
@@ -137,11 +142,11 @@ class SegmentationRoutine(LightningModule):
         self.test_seg_metrics.update(probs[valid_mask], target[valid_mask])
 
     def on_validation_epoch_end(self) -> None:
-        self.log_dict(self.val_seg_metrics.compute())
+        self.log_dict(self.val_seg_metrics.compute(), sync_dist=True)
         self.val_seg_metrics.reset()
 
     def on_test_epoch_end(self) -> None:
-        self.log_dict(self.test_seg_metrics.compute())
+        self.log_dict(self.test_seg_metrics.compute(), sync_dist=True)
         self.test_seg_metrics.reset()
 
 
