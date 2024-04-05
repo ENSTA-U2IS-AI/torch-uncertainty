@@ -168,18 +168,25 @@ class ASPP(nn.Module):
 
 
 class DeepLabV3Backbone(Backbone):
-    def __init__(self, backbone_name: str, style: str) -> None:
+    def __init__(
+        self, backbone_name: str, style: str, pretrained: bool
+    ) -> None:
         """DeepLab V3(+) backbone.
 
         Args:
             backbone_name (str): Backbone name.
             style (str): Whether to use a DeepLab V3 or V3+ model.
+            pretrained (bool): Use pretrained backbone.
         """
         # TODO: handle dilations
         if backbone_name == "resnet50":
-            base_model = tv_models.resnet50(weights=ResNet50_Weights.DEFAULT)
+            base_model = tv_models.resnet50(
+                weights=ResNet50_Weights.DEFAULT if pretrained else None
+            )
         elif backbone_name == "resnet101":
-            base_model = tv_models.resnet101(weights=ResNet101_Weights.DEFAULT)
+            base_model = tv_models.resnet101(
+                weights=ResNet101_Weights.DEFAULT if pretrained else None
+            )
         base_model.avgpool = nn.Identity()
         base_model.fc = nn.Identity()
         feat_names = ["layer1", "layer4"] if style == "v3+" else ["layer4"]
@@ -282,6 +289,7 @@ class _DeepLabV3(nn.Module):
         style: Literal["v3", "v3+"],
         output_stride: int = 16,
         separable: bool = False,
+        pretrained_backbone: bool = True,
     ) -> None:
         """DeepLab V3(+) model.
 
@@ -291,6 +299,7 @@ class _DeepLabV3(nn.Module):
             style (Literal["v3", "v3+"]):  Whether to use a DeepLab V3 or V3+ model.
             output_stride (int, optional): Output stride. Defaults to 16.
             separable (bool, optional): Use separable convolutions. Defaults to False.
+            pretrained_backbone (bool, optional): Use pretrained backbone. Defaults to True.
 
         References:
             - Rethinking atrous convolution for semantic image segmentation.
@@ -308,7 +317,9 @@ class _DeepLabV3(nn.Module):
                 f"output_stride: {output_stride} is not supported."
             )
 
-        self.backbone = DeepLabV3Backbone(backbone_name, style)
+        self.backbone = DeepLabV3Backbone(
+            backbone_name, style, pretrained_backbone
+        )
         if style == "v3":
             self.decoder = DeepLabV3Decoder(
                 in_channels=2048,
@@ -344,6 +355,7 @@ def deep_lab_v3_resnet50(
     style: Literal["v3", "v3+"],
     output_stride: int = 16,
     separable: bool = False,
+    pretrained_backbone: bool = True,
 ) -> _DeepLabV3:
     """DeepLab V3(+) model with ResNet-50 backbone.
 
@@ -352,6 +364,7 @@ def deep_lab_v3_resnet50(
         style (Literal["v3", "v3+"]): Whether to use a DeepLab V3 or V3+ model.
         output_stride (int, optional): Output stride. Defaults to 16.
         separable (bool, optional): Use separable convolutions. Defaults to False.
+        pretrained_backbone (bool, optional): Use pretrained backbone. Defaults to True.
     """
     return _DeepLabV3(
         num_classes,
@@ -359,6 +372,7 @@ def deep_lab_v3_resnet50(
         style,
         output_stride=output_stride,
         separable=separable,
+        pretrained_backbone=pretrained_backbone,
     )
 
 
@@ -367,6 +381,7 @@ def deep_lab_v3_resnet101(
     style: Literal["v3", "v3+"],
     output_stride: int = 16,
     separable: bool = False,
+    pretrained_backbone: bool = True,
 ) -> _DeepLabV3:
     """DeepLab V3(+) model with ResNet-50 backbone.
 
@@ -375,6 +390,7 @@ def deep_lab_v3_resnet101(
         style (Literal["v3", "v3+"]): Whether to use a DeepLab V3 or V3+ model.
         output_stride (int, optional): Output stride. Defaults to 16.
         separable (bool, optional): Use separable convolutions. Defaults to False.
+        pretrained_backbone (bool, optional): Use pretrained backbone. Defaults to True.
     """
     return _DeepLabV3(
         num_classes,
@@ -382,4 +398,5 @@ def deep_lab_v3_resnet101(
         style,
         output_stride=output_stride,
         separable=separable,
+        pretrained_backbone=pretrained_backbone,
     )

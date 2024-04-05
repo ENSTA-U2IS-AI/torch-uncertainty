@@ -253,43 +253,47 @@ class LocalPlanarGuidance(nn.Module):
 
 
 class BTSBackbone(Backbone):
-    def __init__(self, backbone_name: str) -> None:
+    def __init__(self, backbone_name: str, pretrained: bool) -> None:
         """BTS backbone.
 
         Args:
             backbone_name (str): Name of the backbone.
+            pretrained (bool): Use a pretrained backbone.
         """
         if backbone_name == "densenet121":
-            base_model = tv_models.densenet121(
-                weights=DenseNet121_Weights.DEFAULT
+            model = tv_models.densenet121(
+                weights=DenseNet121_Weights.DEFAULT if pretrained else None
             ).features
             feat_names = densenet_feat_names
             self.feat_out_channels = [64, 64, 128, 256, 1024]
         elif backbone_name == "densenet161":
-            base_model = tv_models.densenet161(
-                weights=DenseNet161_Weights.DEFAULT
+            model = tv_models.densenet161(
+                weights=DenseNet161_Weights.DEFAULT if pretrained else None
             ).features
             feat_names = densenet_feat_names
             self.feat_out_channels = [96, 96, 192, 384, 2208]
         elif backbone_name == "resnet50":
-            base_model = tv_models.resnet50(weights=ResNet50_Weights.DEFAULT)
-
+            model = tv_models.resnet50(
+                weights=ResNet50_Weights.DEFAULT if pretrained else None
+            )
         elif backbone_name == "resnet101":
-            base_model = tv_models.resnet101(weights=ResNet101_Weights.DEFAULT)
+            model = tv_models.resnet101(
+                weights=ResNet101_Weights.DEFAULT if pretrained else None
+            )
         elif backbone_name == "resnext50":
-            base_model = tv_models.resnext50_32x4d(
-                weights=ResNeXt50_32X4D_Weights.DEFAULT
+            model = tv_models.resnext50_32x4d(
+                weights=ResNeXt50_32X4D_Weights.DEFAULT if pretrained else None
             )
         else:  # backbone_name == "resnext101":
-            base_model = tv_models.resnext101_32x8d(
-                weights=ResNeXt101_32X8D_Weights.DEFAULT
+            model = tv_models.resnext101_32x8d(
+                weights=ResNeXt101_32X8D_Weights.DEFAULT if pretrained else None
             )
         if "res" in backbone_name:  # remove classification heads from resnets
             feat_names = resnet_feat_names
             self.feat_out_channels = resnet_feat_out_channels
-            base_model.avgpool = nn.Identity()
-            base_model.fc = nn.Identity()
-        super().__init__(base_model=base_model, feat_names=feat_names)
+            model.avgpool = nn.Identity()
+            model.fc = nn.Identity()
+        super().__init__(model=model, feat_names=feat_names)
 
 
 class BTSDecoder(nn.Module):
@@ -540,7 +544,7 @@ class BTSDecoder(nn.Module):
         return out
 
 
-class BTS(nn.Module):
+class _BTS(nn.Module):
     def __init__(
         self,
         backbone_name: Literal[
@@ -554,6 +558,7 @@ class BTS(nn.Module):
         max_depth: int,
         bts_size: int = 512,
         dist_layer: type[nn.Module] = nn.Identity,
+        pretrained_backbone: bool = True,
     ) -> None:
         """BTS model.
 
@@ -563,13 +568,14 @@ class BTS(nn.Module):
             bts_size (int): BTS feature size. Defaults to 512.
             dist_layer (nn.Module): Distribution layer for probabilistic depth
             estimation. Defaults to nn.Identity.
+            pretrained_backbone (bool): Use a pretrained backbone. Defaults to True.
 
         Reference:
             From Big to Small: Multi-Scale Local Planar Guidance for Monocular Depth Estimation.
             Jin Han Lee, Myung-Kyu Han, Dong Wook Ko, Il Hong Suh. ArXiv.
         """
         super().__init__()
-        self.backbone = BTSBackbone(backbone_name)
+        self.backbone = BTSBackbone(backbone_name, pretrained_backbone)
         self.decoder = BTSDecoder(
             max_depth, self.backbone.feat_out_channels, bts_size, dist_layer
         )
@@ -584,7 +590,15 @@ class BTS(nn.Module):
         return self.decoder(self.backbone(x))
 
 
-def bts(backbone_name: str, max_depth: int, bts_size: int = 512) -> BTS:
+def bts(
+    backbone_name: str,
+    max_depth: int,
+    bts_size: int = 512,
+    dist_layer: type[nn.Module] = nn.Identity,
+    pretrained_backbone: bool = True,
+) -> _BTS:
     if backbone_name not in bts_backbones:
         raise ValueError(f"Unsupported backbone. Got {backbone_name}.")
-    return BTS(backbone_name, max_depth, bts_size)
+    return _BTS(
+        backbone_name, max_depth, bts_size, dist_layer, pretrained_backbone
+    )
