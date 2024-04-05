@@ -4,12 +4,13 @@ from lightning.pytorch.cli import LightningArgumentParser
 from torch_uncertainty.baselines.segmentation import DeepLabV3Baseline
 from torch_uncertainty.datamodules.segmentation import CityscapesDataModule
 from torch_uncertainty.utils import TULightningCLI
+from torch_uncertainty.utils.learning_rate import PolyLR
 
 
 class DeepLabV3CLI(TULightningCLI):
     def add_arguments_to_parser(self, parser: LightningArgumentParser) -> None:
         parser.add_optimizer_args(torch.optim.SGD)
-        parser.add_lr_scheduler_args(torch.optim.lr_scheduler.StepLR)
+        parser.add_lr_scheduler_args(PolyLR)
 
 
 def cli_main() -> DeepLabV3CLI:
