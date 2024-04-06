@@ -276,13 +276,9 @@ class ClassificationRoutine(LightningModule):
         return self.optim_recipe
 
     def on_train_start(self) -> None:
-        init_metrics = dict.fromkeys(self.val_cls_metrics, 0)
-        init_metrics.update(dict.fromkeys(self.test_cls_metrics, 0))
-
         if self.logger is not None:  # coverage: ignore
             self.logger.log_hyperparams(
                 self.hparams,
-                init_metrics,
             )
 
     def on_test_start(self) -> None:

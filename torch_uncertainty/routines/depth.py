@@ -80,17 +80,9 @@ class DepthRoutine(LightningModule):
         return self.optim_recipe
 
     def on_train_start(self) -> None:
-        init_metrics = dict.fromkeys(self.val_metrics, 0)
-        init_metrics.update(dict.fromkeys(self.test_metrics, 0))
-
-        if self.probabilistic:
-            init_metrics.update(dict.fromkeys(self.val_prob_metrics, 0))
-            init_metrics.update(dict.fromkeys(self.test_prob_metrics, 0))
-
         if self.logger is not None:  # coverage: ignore
             self.logger.log_hyperparams(
                 self.hparams,
-                init_metrics,
             )
 
     def forward(self, inputs: Tensor) -> Tensor:

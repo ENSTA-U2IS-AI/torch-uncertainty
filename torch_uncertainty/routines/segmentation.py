@@ -88,10 +88,8 @@ class SegmentationRoutine(LightningModule):
         return self.model(img)
 
     def on_train_start(self) -> None:
-        init_metrics = dict.fromkeys(self.val_seg_metrics, 0)
-        init_metrics.update(dict.fromkeys(self.test_seg_metrics, 0))
-
-        self.logger.log_hyperparams(self.hparams, init_metrics)
+        if self.logger is not None:  # coverage: ignore
+            self.logger.log_hyperparams(self.hparams)
 
     def training_step(
         self, batch: tuple[Tensor, Tensor], batch_idx: int
