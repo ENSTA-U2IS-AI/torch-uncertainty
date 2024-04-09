@@ -3,17 +3,15 @@ from einops import rearrange
 from lightning.pytorch import LightningModule
 from lightning.pytorch.utilities.types import STEP_OUTPUT
 from torch import Tensor, nn
-from torch.distributions import (
-    Categorical,
-    Distribution,
-    Independent,
-    MixtureSameFamily,
-)
+from torch.distributions import Categorical,Independent,MixtureSameFamily
 from torch.optim import Optimizer
 from torchmetrics import MeanAbsoluteError, MeanSquaredError, MetricCollection
 
 from torch_uncertainty.metrics.regression.nll import DistributionNLL
 from torch_uncertainty.utils.distributions import dist_rearrange, squeeze_dist
+from metrics.regression.inverse import *
+
+
 
 
 class RegressionRoutine(LightningModule):
@@ -76,6 +74,8 @@ class RegressionRoutine(LightningModule):
                 "MAE": MeanAbsoluteError(),
                 "MSE": MeanSquaredError(squared=True),
                 "RMSE": MeanSquaredError(squared=False),
+                "iMAE": InverseMAE(),
+                "iRMSE": InverseRMSE(),
             },
             compute_groups=True,
         )
@@ -96,12 +96,19 @@ class RegressionRoutine(LightningModule):
         return self.optim_recipe
 
     def on_train_start(self) -> None:
+        init_metrics = dict.fromkeys(self.val_metrics, 0)
+        init_metrics.update(dict.fromkeys(self.test_metrics, 0))
+        if self.probabilistic:
+            init_metrics.update(dict.fromkeys(self.val_prob_metrics, 0))
+            init_metrics.update(dict.fromkeys(self.test_prob_metrics, 0))
+
         if self.logger is not None:  # coverage: ignore
             self.logger.log_hyperparams(
                 self.hparams,
+                init_metrics,
             )
 
-    def forward(self, inputs: Tensor) -> Tensor | Distribution:
+    def forward(self, inputs: Tensor) -> Tensor:
         """Forward pass of the routine.
 
         The forward pass automatically squeezes the output if the regression
@@ -167,6 +174,15 @@ class RegressionRoutine(LightningModule):
         if self.probabilistic:
             self.val_prob_metrics.update(mixture, targets)
 
+    def on_validation_epoch_end(self) -> None:
+        self.log_dict(self.val_metrics.compute())
+        self.val_metrics.reset()
+        if self.probabilistic:
+            self.log_dict(
+                self.val_prob_metrics.compute(),
+            )
+            self.val_prob_metrics.reset()
+
     def test_step(
         self,
         batch: tuple[Tensor, Tensor],
@@ -204,24 +220,15 @@ class RegressionRoutine(LightningModule):
         if self.probabilistic:
             self.test_prob_metrics.update(mixture, targets)
 
-    def on_validation_epoch_end(self) -> None:
-        self.log_dict(self.val_metrics.compute(), sync_dist=True)
-        self.val_metrics.reset()
-        if self.probabilistic:
-            self.log_dict(self.val_prob_metrics.compute(), sync_dist=True)
-            self.val_prob_metrics.reset()
-
     def on_test_epoch_end(self) -> None:
         self.log_dict(
             self.test_metrics.compute(),
-            sync_dist=True,
         )
         self.test_metrics.reset()
 
         if self.probabilistic:
             self.log_dict(
                 self.test_prob_metrics.compute(),
-                sync_dist=True,
             )
             self.test_prob_metrics.reset()
 
@@ -234,3 +241,4 @@ def _regression_routine_checks(num_estimators: int, output_dim: int) -> None:
 
     if output_dim < 1:
         raise ValueError(f"output_dim must be positive, got {output_dim}.")
+

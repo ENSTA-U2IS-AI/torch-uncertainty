@@ -8,3 +8,4 @@ from .relative_error import (
 )
 from .silog import SILog
 from .threshold_accuracy import ThresholdAccuracy
+from inverse import *
