@@ -20,8 +20,7 @@ The scope of TorchUncertainty
 TorchUncertainty can host any method - if possible linked to a paper - and
 roughly contained in the following fields:
 
-* Uncertainty quantification in general, including Bayesian deep learning,
-  Monte Carlo dropout, ensemble methods, etc.
+* Uncertainty quantification in general, including Bayesian deep learning, Monte Carlo dropout, ensemble methods, etc.
 * Out-of-distribution detection methods
 * Applications (e.g. object detection, segmentation, etc.)
 
@@ -86,11 +85,11 @@ is mostly finished or if you need help.
 
 Check that your PR complies with the following conditions:
 
-* The name of your branch is not ``main`` nor ``dev`` (see issue #58)
+* The name of your branch is not `main` nor `dev` (see issue #58)
 * Your PR does not reduce the code coverage
 * Your code is documented: the function signatures are typed, and the main functions have clear docstrings
 * Your code is mostly original, and the parts coming from licensed sources are explicitly stated as such
-* If you implement a method, please add a reference to the corresponding paper in the 
+* If you implement a method, please add a reference to the corresponding paper in the
   `references page <https://torch-uncertainty.github.io/references.html>`_.
 * Also, remember to add TorchUncertainty to the list of libraries implementing this reference
   on `PapersWithCode <https://paperswithcode.com>`_.

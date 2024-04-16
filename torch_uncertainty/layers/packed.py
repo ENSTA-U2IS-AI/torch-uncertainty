@@ -6,20 +6,27 @@ from torch.nn.common_types import _size_1_t, _size_2_t, _size_3_t
 
 
 def check_packed_parameters_consistency(
-    alpha: float, num_estimators: int, gamma: int
+    alpha: float, gamma: int, num_estimators: int
 ) -> None:
     """Check the consistency of the parameters of the Packed-Ensembles layers.
 
     Args:
         alpha (float): The width multiplier of the layer.
-        num_estimators (int): The number of estimators in the ensemble.
         gamma (int): The number of groups in the ensemble.
+        num_estimators (int): The number of estimators in the ensemble.
     """
     if alpha is None:
         raise ValueError("You must specify the value of the arg. `alpha`")
 
     if alpha <= 0:
         raise ValueError(f"Attribute `alpha` should be > 0, not {alpha}")
+
+    if not isinstance(gamma, int):
+        raise TypeError(
+            f"Attribute `gamma` should be an int, not {type(gamma)}"
+        )
+    if gamma <= 0:
+        raise ValueError(f"Attribute `gamma` should be >= 1, not {gamma}")
 
     if num_estimators is None:
         raise ValueError(
@@ -35,13 +42,6 @@ def check_packed_parameters_consistency(
             "Attribute `num_estimators` should be >= 1, not "
             f"{num_estimators}"
         )
-
-    if not isinstance(gamma, int):
-        raise TypeError(
-            f"Attribute `gamma` should be an int, not {type(gamma)}"
-        )
-    if gamma <= 0:
-        raise ValueError(f"Attribute `gamma` should be >= 1, not {gamma}")
 
 
 class PackedLinear(nn.Module):
@@ -103,10 +103,9 @@ class PackedLinear(nn.Module):
             1). The (often) necessary rearrange operation is executed by
             default.
         """
+        check_packed_parameters_consistency(alpha, gamma, num_estimators)
         factory_kwargs = {"device": device, "dtype": dtype}
         super().__init__()
-
-        check_packed_parameters_consistency(alpha, num_estimators, gamma)
 
         self.first = first
         self.num_estimators = num_estimators
@@ -237,10 +236,9 @@ class PackedConv1d(nn.Module):
             :attr:`groups`. However, the number of input and output channels will
             be changed to comply with this constraint.
         """
+        check_packed_parameters_consistency(alpha, gamma, num_estimators)
         factory_kwargs = {"device": device, "dtype": dtype}
         super().__init__()
-
-        check_packed_parameters_consistency(alpha, num_estimators, gamma)
 
         self.num_estimators = num_estimators
 
@@ -366,10 +364,9 @@ class PackedConv2d(nn.Module):
             :attr:`groups`. However, the number of input and output channels will
             be changed to comply with this constraint.
         """
+        check_packed_parameters_consistency(alpha, gamma, num_estimators)
         factory_kwargs = {"device": device, "dtype": dtype}
         super().__init__()
-
-        check_packed_parameters_consistency(alpha, num_estimators, gamma)
 
         self.num_estimators = num_estimators
 
@@ -497,8 +494,7 @@ class PackedConv3d(nn.Module):
         """
         factory_kwargs = {"device": device, "dtype": dtype}
         super().__init__()
-
-        check_packed_parameters_consistency(alpha, num_estimators, gamma)
+        check_packed_parameters_consistency(alpha, gamma, num_estimators)
 
         self.num_estimators = num_estimators
 
