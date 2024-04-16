@@ -1,6 +1,6 @@
 # ruff: noqa: F401
 from .brier_score import BrierScore
-from .calibration import CE
+from .calibration import CE, AdaptiveCalibrationError
 from .disagreement import Disagreement
 from .entropy import Entropy
 from .fpr95 import FPR95

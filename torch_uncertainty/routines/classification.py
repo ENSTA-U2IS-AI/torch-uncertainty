@@ -22,6 +22,7 @@ from torch_uncertainty.losses import DECLoss, ELBOLoss
 from torch_uncertainty.metrics import (
     CE,
     FPR95,
+    AdaptiveCalibrationError,
     BrierScore,
     CategoricalNLL,
     Disagreement,
@@ -158,6 +159,7 @@ class ClassificationRoutine(LightningModule):
                         task="multiclass", num_classes=self.num_classes
                     ),
                     "ECE": CE(task="multiclass", num_classes=self.num_classes),
+                    "AECE": AdaptiveCalibrationError(),
                     "Brier": BrierScore(num_classes=self.num_classes),
                 },
                 compute_groups=False,
