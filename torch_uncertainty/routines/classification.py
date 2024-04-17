@@ -295,7 +295,7 @@ class ClassificationRoutine(LightningModule):
             dataset = (
                 self.trainer.datamodule.val_dataloader().dataset
                 if self.calibration_set == "val"
-                else self.trainer.datamodule.test_dataloader().dataset
+                else self.trainer.datamodule.test_dataloader()[0].dataset
             )
             with torch.inference_mode(False):
                 self.cal_model = TemperatureScaler(

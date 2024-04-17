@@ -3,6 +3,7 @@ from .classification import (
     AUSE,
     CE,
     FPR95,
+    AdaptiveCalibrationError,
     BrierScore,
     CategoricalNLL,
     Disagreement,

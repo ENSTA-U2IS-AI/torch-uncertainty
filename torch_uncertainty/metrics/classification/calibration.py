@@ -207,7 +207,7 @@ class AdaptiveCalibrationError(Metric):
 
         n, bin_boundaries = np.histogram(
             confidences.cpu().detach(),
-            self.histedges_equalN(confidences.cpu().detach()),
+            self.histedges_equal(confidences.cpu().detach()),
         )
 
         self.bin_lowers = bin_boundaries[:-1]
