@@ -41,11 +41,15 @@ dependencies = [
     "huggingface-hub",
     "scikit-learn",
     "matplotlib",
+    "opencv-python",
     "glest==0.0.1a0",
 ]
 
 [project.optional-dependencies]
+image = ["scikit-image"]
+tabular = ["pandas"]
 dev = [
+    "torch_uncertainty[image]",
     "ruff==0.3.4",
     "pytest-cov",
     "pre-commit",
@@ -59,8 +63,6 @@ docs = [
     "sphinx-design",
     "sphinx-codeautolink",
 ]
-image = ["scikit-image", "opencv-python"]
-tabular = ["pandas"]
 all = ["torch_uncertainty[dev,docs,image,tabular]"]
 
 [project.urls]
