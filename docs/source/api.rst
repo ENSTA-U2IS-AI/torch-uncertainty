@@ -160,9 +160,10 @@ Metrics
     :template: class.rst
 
     AUSE
+    AdaptiveCalibrationError
     BrierScore
     CategoricalNLL
-    CE
+    CalibrationError
     Disagreement
     DistributionNLL
     Entropy

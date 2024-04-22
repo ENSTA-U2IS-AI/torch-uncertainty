@@ -2,14 +2,14 @@ import matplotlib.pyplot as plt
 import pytest
 import torch
 
-from torch_uncertainty.metrics import CE
+from torch_uncertainty.metrics import CalibrationError
 
 
-class TestCE:
-    """Testing the CE metric class."""
+class TestCalibrationError:
+    """Testing the CalibrationError metric class."""
 
     def test_plot_binary(self) -> None:
-        metric = CE(task="binary", n_bins=2, norm="l1")
+        metric = CalibrationError(task="binary", n_bins=2, norm="l1")
         metric.update(
             torch.as_tensor([0.25, 0.25, 0.55, 0.75, 0.75]),
             torch.as_tensor([0, 0, 1, 1, 1]),
@@ -24,7 +24,9 @@ class TestCE:
     def test_plot_multiclass(
         self,
     ) -> None:
-        metric = CE(task="multiclass", n_bins=3, norm="l1", num_classes=3)
+        metric = CalibrationError(
+            task="multiclass", n_bins=3, norm="l1", num_classes=3
+        )
         metric.update(
             torch.as_tensor(
                 [
@@ -45,7 +47,7 @@ class TestCE:
 
     def test_errors(self) -> None:
         with pytest.raises(ValueError):
-            _ = CE(task="geometric_mean")
+            _ = CalibrationError(task="geometric_mean")
 
         with pytest.raises(ValueError):
-            _ = CE(task="multiclass", num_classes=1.5)
+            _ = CalibrationError(task="multiclass", num_classes=1.5)

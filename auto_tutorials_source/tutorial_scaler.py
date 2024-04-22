@@ -29,7 +29,7 @@ If you use the classification routine, the plots will be automatically available
 """
 
 from torch_uncertainty.datamodules import CIFAR100DataModule
-from torch_uncertainty.metrics import CE
+from torch_uncertainty.metrics import CalibrationError
 from torch_uncertainty.models.resnet import resnet18
 from torch_uncertainty.post_processing import TemperatureScaler
 from torch_uncertainty.utils import load_hf
@@ -88,7 +88,7 @@ cal_dataset, test_dataset, other = random_split(
 test_dataloader = DataLoader(test_dataset, batch_size=32)
 
 # Initialize the ECE
-ece = CE(task="multiclass", num_classes=100)
+ece = CalibrationError(task="multiclass", num_classes=100)
 
 # Iterate on the calibration dataloader
 for sample, target in test_dataloader:

@@ -20,10 +20,9 @@ from torchmetrics.classification import (
 from torch_uncertainty.layers import Identity
 from torch_uncertainty.losses import DECLoss, ELBOLoss
 from torch_uncertainty.metrics import (
-    CE,
     FPR95,
-    AdaptiveCalibrationError,
     BrierScore,
+    CalibrationError,
     CategoricalNLL,
     Disagreement,
     Entropy,
@@ -149,7 +148,14 @@ class ClassificationRoutine(LightningModule):
             cls_metrics = MetricCollection(
                 {
                     "Acc": Accuracy(task="binary"),
-                    "ECE": CE(task="binary", n_bins=num_calibration_bins),
+                    "ECE": CalibrationError(
+                        task="binary", num_bins=num_calibration_bins
+                    ),
+                    "AECE": CalibrationError(
+                        task="binary",
+                        adaptive=True,
+                        num_bins=num_calibration_bins,
+                    ),
                     "Brier": BrierScore(num_classes=1),
                 },
                 compute_groups=False,
@@ -161,8 +167,17 @@ class ClassificationRoutine(LightningModule):
                     "Acc": Accuracy(
                         task="multiclass", num_classes=self.num_classes
                     ),
-                    "ECE": CE(task="multiclass", num_classes=self.num_classes),
-                    "AECE": AdaptiveCalibrationError(),
+                    "ECE": CalibrationError(
+                        task="multiclass",
+                        num_bins=num_calibration_bins,
+                        num_classes=self.num_classes,
+                    ),
+                    "AECE": CalibrationError(
+                        task="multiclass",
+                        adaptive=True,
+                        num_bins=num_calibration_bins,
+                        num_classes=self.num_classes,
+                    ),
                     "Brier": BrierScore(num_classes=self.num_classes),
                 },
                 compute_groups=False,
