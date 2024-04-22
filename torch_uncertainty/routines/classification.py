@@ -60,6 +60,7 @@ class ClassificationRoutine(LightningModule):
         log_plots: bool = False,
         save_in_csv: bool = False,
         calibration_set: Literal["val", "test"] | None = None,
+        num_calibration_bins: int = 15,
     ) -> None:
         r"""Routine for efficient training and testing on **classification tasks**
         using LightningModule.
@@ -101,10 +102,12 @@ class ClassificationRoutine(LightningModule):
                 metrics. Defaults to ``False``.
             save_in_csv(bool, optional): Save the results in csv. Defaults to
                 ``False``.
-            calibration_set (str, optional): The calibration dataset to use for
-                scaling. If not ``None``, it uses either the validation set when
-                set to ``"val"`` or the test set when set to ``"test"``.
-                Defaults to ``None``.
+            calibration_set (str, optional): The post-hoc calibration dataset to
+                use for scaling. If not ``None``, it uses either the validation
+                set when set to ``"val"`` or the test set when set to ``"test"``.
+                Defaults to ``None``. Else, no post-hoc calibration.
+            num_calibration_bins (int, optional): Number of bins to compute calibration
+                metrics. Defaults to ``15``.
 
         Warning:
             You must define :attr:`optim_recipe` if you do not use the CLI.
@@ -146,7 +149,7 @@ class ClassificationRoutine(LightningModule):
             cls_metrics = MetricCollection(
                 {
                     "Acc": Accuracy(task="binary"),
-                    "ECE": CE(task="binary"),
+                    "ECE": CE(task="binary", n_bins=num_calibration_bins),
                     "Brier": BrierScore(num_classes=1),
                 },
                 compute_groups=False,
@@ -292,7 +295,7 @@ class ClassificationRoutine(LightningModule):
             "val",
             "test",
         ]:
-            dataset = (
+            calibration_dataset = (
                 self.trainer.datamodule.val_dataloader().dataset
                 if self.calibration_set == "val"
                 else self.trainer.datamodule.test_dataloader()[0].dataset
@@ -300,7 +303,7 @@ class ClassificationRoutine(LightningModule):
             with torch.inference_mode(False):
                 self.cal_model = TemperatureScaler(
                     model=self.model, device=self.device
-                ).fit(calibration_set=dataset)
+                ).fit(calibration_dataset)
         else:
             self.cal_model = None
 
