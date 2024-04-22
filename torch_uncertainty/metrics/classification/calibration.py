@@ -134,12 +134,15 @@ class MulticlassCE(MulticlassCalibrationError):  # noqa: N818
 
 
 class CE:
-    r"""`Top-label Calibration Error <https://arxiv.org/pdf/1909.10155.pdf>`_.
+    r"""`Top-label Calibration Error`_.
 
     See
     `CalibrationError <https://torchmetrics.readthedocs.io/en/stable/classification/calibration_error.html>`_
     for details. Our version of the metric is a wrapper around the original
     metric providing a plotting functionality.
+
+    Reference:
+        Naeini et al. "Obtaining well calibrated probabilities using Bayesian binning." In AAAI, 2015.
     """
 
     def __new__(  # type: ignore[misc]
@@ -174,7 +177,17 @@ class CE:
 
 
 class AdaptiveCalibrationError(Metric):
-    r"""Compute Adaptive ECE metric."""
+    r"""`Adaptive Top-label Calibration Error`.
+
+    See
+    `CalibrationError <https://torchmetrics.readthedocs.io/en/stable/classification/calibration_error.html>`_
+    for details of the original ECE. Instead of using fixed-length bins, this
+    metric uses adaptive bins based on the confidence values. Each bin contains
+    the same number of samples.
+
+    Reference:
+        Nixon et al. Measuring calibration in deep learning. In CVPRW, 2019.
+    """
 
     is_differentiable: bool = False
     higher_is_better: bool = False
@@ -196,37 +209,39 @@ class AdaptiveCalibrationError(Metric):
         )
 
     def update(self, probs: torch.Tensor, targets: torch.Tensor) -> None:
+        """Update metric states with predictions and targets."""
         confidences, preds = torch.max(probs, 1)
         accuracies = preds.eq(targets)
         self.confidences.append(confidences)
         self.accuracies.append(accuracies)
 
     def compute(self) -> torch.Tensor:
+        """Compute metric."""
         confidences = dim_zero_cat(self.confidences)
         accuracies = dim_zero_cat(self.accuracies)
 
-        n, bin_boundaries = np.histogram(
-            confidences.cpu().detach(),
-            self.histedges_equal(confidences.cpu().detach()),
-        )
+        # Get edges
+        bin_boundaries = np.histogram(
+            a=confidences.cpu().detach(),
+            bins=self.histedges_equal(confidences.cpu().detach()),
+        )[1]
 
         self.bin_lowers = bin_boundaries[:-1]
         self.bin_uppers = bin_boundaries[1:]
 
-        ece = torch.zeros(1, device=confidences.device)
+        adaptive_ece = torch.zeros(1, device=confidences.device)
         for bin_lower, bin_upper in zip(
             self.bin_lowers, self.bin_uppers, strict=False
         ):
-            in_bin = confidences.gt(bin_lower.item()) * confidences.le(
-                bin_upper.item()
+            in_bin = (confidences > bin_lower.item()) * (
+                confidences < bin_upper.item()
             )
             prop_in_bin = in_bin.float().mean()
             if prop_in_bin.item() > 0:
                 accuracy_in_bin = accuracies[in_bin].float().mean()
                 avg_confidence_in_bin = confidences[in_bin].mean()
-                ece += (
+                adaptive_ece += (
                     torch.abs(avg_confidence_in_bin - accuracy_in_bin)
                     * prop_in_bin
                 )
-
-        return ece
+        return adaptive_ece
