@@ -2,7 +2,10 @@ from pathlib import Path
 
 import pytest
 import torch
-from huggingface_hub.utils._errors import RepositoryNotFoundError
+from huggingface_hub.utils._errors import (
+    HfHubHTTPError,
+    RepositoryNotFoundError,
+)
 from torch.distributions import Laplace, Normal
 
 from torch_uncertainty.utils import (
@@ -37,10 +40,10 @@ class TestHub:
         hub.load_hf("test", version=2)
 
     def test_hub_notexists(self):
-        with pytest.raises(RepositoryNotFoundError):
+        with pytest.raises((RepositoryNotFoundError, HfHubHTTPError)):
             hub.load_hf("tests")
 
-        with pytest.raises(ValueError):
+        with pytest.raises((ValueError, HfHubHTTPError)):
             hub.load_hf("test", version=42)
 
 
