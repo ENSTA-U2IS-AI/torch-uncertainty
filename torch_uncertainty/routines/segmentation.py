@@ -7,8 +7,8 @@ from torchmetrics import Accuracy, MetricCollection
 from torchvision.transforms.v2 import functional as F
 
 from torch_uncertainty.metrics import (
-    CE,
     BrierScore,
+    CalibrationError,
     CategoricalNLL,
     MeanIntersectionOverUnion,
 )
@@ -65,7 +65,9 @@ class SegmentationRoutine(LightningModule):
         seg_metrics = MetricCollection(
             {
                 "Acc": Accuracy(task="multiclass", num_classes=num_classes),
-                "ECE": CE(task="multiclass", num_classes=num_classes),
+                "ECE": CalibrationError(
+                    task="multiclass", num_classes=num_classes
+                ),
                 "mIoU": MeanIntersectionOverUnion(num_classes=num_classes),
                 "Brier": BrierScore(num_classes=num_classes),
                 "NLL": CategoricalNLL(),

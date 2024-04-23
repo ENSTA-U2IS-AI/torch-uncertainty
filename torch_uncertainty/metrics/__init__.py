@@ -1,9 +1,10 @@
 # ruff: noqa: F401
 from .classification import (
     AUSE,
-    CE,
     FPR95,
+    AdaptiveCalibrationError,
     BrierScore,
+    CalibrationError,
     CategoricalNLL,
     Disagreement,
     Entropy,
