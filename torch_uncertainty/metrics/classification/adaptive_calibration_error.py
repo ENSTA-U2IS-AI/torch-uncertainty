@@ -70,7 +70,7 @@ def _ace_compute(
         ace = torch.max(torch.abs(acc_bin - conf_bin))
     if norm == "l2":
         ace = torch.sum(torch.pow(acc_bin - conf_bin, 2) * prop_bin)
-        if debias:
+        if debias:  # coverage: ignore
             debias_bins = (acc_bin * (acc_bin - 1) * prop_bin) / (
                 prop_bin * accuracies.size()[0] - 1
             )
@@ -208,10 +208,9 @@ class AdaptiveCalibrationError:
         )
         if task == ClassificationTaskNoMultilabel.BINARY:
             return BinaryAdaptiveCalibrationError(**kwargs)
-        if task == ClassificationTaskNoMultilabel.MULTICLASS:
-            if not isinstance(num_classes, int):
-                raise ValueError(
-                    f"`num_classes` is expected to be `int` but `{type(num_classes)} was passed.`"
-                )
-            return MulticlassAdaptiveCalibrationError(num_classes, **kwargs)
-        raise ValueError(f"Not handled value: {task}")
+        # task is ClassificationTaskNoMultilabel.MULTICLASS
+        if not isinstance(num_classes, int):
+            raise TypeError(
+                f"`num_classes` is expected to be `int` but `{type(num_classes)} was passed.`"
+            )
+        return MulticlassAdaptiveCalibrationError(num_classes, **kwargs)

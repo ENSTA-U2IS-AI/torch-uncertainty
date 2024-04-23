@@ -45,6 +45,10 @@ class TestCalibrationError:
         assert ax.get_ylabel() == "Success Rate (%)"
         plt.close(fig)
 
+    def test_errors(self) -> None:
+        with pytest.raises(TypeError, match="is expected to be `int`"):
+            CalibrationError(task="multiclass", num_classes=None)
+
 
 class TestAdaptiveCalibrationError:
     """Testing the AdaptiveCalibrationError metric class."""
@@ -108,3 +112,7 @@ class TestAdaptiveCalibrationError:
             torch.as_tensor([0, 0, 0, 1, 1]),
         )
         assert ace.compute().item() ** 2 == pytest.approx((0.8 - 0.5) ** 2)
+
+    def test_errors(self) -> None:
+        with pytest.raises(TypeError, match="is expected to be `int`"):
+            AdaptiveCalibrationError(task="multiclass", num_classes=None)
