@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import pytest
 import torch
 
-from torch_uncertainty.metrics import CalibrationError
+from torch_uncertainty.metrics import AdaptiveCalibrationError, CalibrationError
 
 
 class TestCalibrationError:
@@ -45,9 +45,85 @@ class TestCalibrationError:
         assert ax.get_ylabel() == "Success Rate (%)"
         plt.close(fig)
 
-    def test_errors(self) -> None:
-        with pytest.raises(ValueError):
-            _ = CalibrationError(task="geometric_mean")
 
-        with pytest.raises(ValueError):
-            _ = CalibrationError(task="multiclass", num_classes=1.5)
+class TestAdaptiveCalibrationError:
+    """Testing the AdaptiveCalibrationError metric class."""
+
+    def test_main(self) -> None:
+        ace = AdaptiveCalibrationError(
+            task="binary", num_bins=2, norm="l1", validate_args=True
+        )
+        ace = AdaptiveCalibrationError(
+            task="binary", num_bins=2, norm="l1", validate_args=False
+        )
+        ece = CalibrationError(task="binary", num_bins=2, norm="l1")
+        ace.update(
+            torch.as_tensor([0.35, 0.35, 0.75, 0.75]),
+            torch.as_tensor([0, 0, 1, 1]),
+        )
+        ece.update(
+            torch.as_tensor([0.35, 0.35, 0.75, 0.75]),
+            torch.as_tensor([0, 0, 1, 1]),
+        )
+        assert ace.compute().item() == ece.compute().item()
+
+        ace.reset()
+        ace.update(
+            torch.as_tensor([0.3, 0.24, 0.25, 0.2, 0.8]),
+            torch.as_tensor([0, 0, 0, 1, 1]),
+        )
+        assert ace.compute().item() == pytest.approx(
+            3 / 5 * (1 - 1 / 3 * (0.7 + 0.76 + 0.75)) + 2 / 5 * (0.8 - 0.5)
+        )
+
+        ace = AdaptiveCalibrationError(
+            task="multiclass",
+            num_classes=2,
+            num_bins=2,
+            norm="l2",
+            validate_args=True,
+        )
+        ace.update(
+            torch.as_tensor(
+                [[0.7, 0.3], [0.76, 0.24], [0.75, 0.25], [0.2, 0.8], [0.8, 0.2]]
+            ),
+            torch.as_tensor([0, 0, 0, 1, 1]),
+        )
+        assert ace.compute().item() ** 2 == pytest.approx(
+            3 / 5 * (1 - 1 / 3 * (0.7 + 0.76 + 0.75)) ** 2
+            + 2 / 5 * (0.8 - 0.5) ** 2
+        )
+
+        ace = AdaptiveCalibrationError(
+            task="multiclass",
+            num_classes=2,
+            num_bins=2,
+            norm="max",
+            validate_args=False,
+        )
+        ace.update(
+            torch.as_tensor(
+                [[0.7, 0.3], [0.76, 0.24], [0.75, 0.25], [0.2, 0.8], [0.8, 0.2]]
+            ),
+            torch.as_tensor([0, 0, 0, 1, 1]),
+        )
+        assert ace.compute().item() ** 2 == pytest.approx((0.8 - 0.5) ** 2)
+
+    def test_errors(self) -> None:
+        with pytest.raises(ValueError, match="is expected to be one of 'l1'"):
+            ace = AdaptiveCalibrationError(
+                task="multiclass", num_classes=2, norm="l3"
+            )
+            ace.update(
+                torch.as_tensor(
+                    [
+                        [0.3, 0.7],
+                        [0.24, 0.76],
+                        [0.25, 0.75],
+                        [0.2, 0.8],
+                        [0.8, 0.2],
+                    ]
+                ),
+                torch.as_tensor([0, 0, 0, 1, 1]),
+            )
+            ace.compute()

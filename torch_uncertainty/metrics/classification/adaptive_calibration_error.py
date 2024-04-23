@@ -1,17 +1,41 @@
 from typing import Any, Literal
 
-import numpy as np
 import torch
 from torch import Tensor
+from torch.nn.utils.rnn import pad_sequence
+from torchmetrics.classification.calibration_error import (
+    _binary_calibration_error_arg_validation,
+    _multiclass_calibration_error_arg_validation,
+)
 from torchmetrics.metric import Metric
 from torchmetrics.utilities.data import dim_zero_cat
 from torchmetrics.utilities.enums import ClassificationTaskNoMultilabel
 
 
-def _hist_edges_equal(x: Tensor, num_bins: int):
-    npt = len(x)
-    return np.interp(
-        np.linspace(0, npt, num_bins + 1), np.arange(npt), np.sort(x)
+def _equal_binning_bucketize(
+    confidences: Tensor, accuracies: Tensor, num_bins: int
+) -> tuple[Tensor, Tensor, Tensor]:
+    """Compute bins for the adaptive calibration error.
+
+    Args:
+        confidences: The confidence (i.e. predicted prob) of the top1 prediction.
+        accuracies: 1.0 if the top-1 prediction was correct, 0.0 otherwise.
+        num_bins: Number of bins to use when computing adaptive calibration error.
+
+    Returns:
+        tuple with binned accuracy, binned confidence and binned probabilities
+    """
+    confidences, indices = torch.sort(confidences)
+    accuracies = accuracies[indices]
+    acc_bin, conf_bin = (
+        accuracies.tensor_split(num_bins),
+        confidences.tensor_split(num_bins),
+    )
+    count_bin = torch.as_tensor([len(cb) for cb in conf_bin])
+    return (
+        pad_sequence(acc_bin, batch_first=True).sum(1) / count_bin,
+        pad_sequence(conf_bin, batch_first=True).sum(1) / count_bin,
+        torch.as_tensor(count_bin) / len(confidences),
     )
 
 
@@ -19,38 +43,47 @@ def _ace_compute(
     confidences: Tensor,
     accuracies: Tensor,
     num_bins: int,
-    norm: Literal["l1", "l2", "max"],
+    norm: Literal["l1", "l2", "max"] = "l1",
+    debias: bool = False,
 ) -> Tensor:
-    """Compute metric."""
-    # Get edges
-    bin_boundaries = np.histogram(
-        a=confidences.cpu().detach(),
-        bins=_hist_edges_equal(confidences.cpu().detach(), num_bins),
-    )[1]
+    """Compute the adaptive calibration error given the provided number of bins and norm.
 
-    bin_lowers = bin_boundaries[:-1]
-    bin_uppers = bin_boundaries[1:]
+    Args:
+        confidences: The confidence (i.e. predicted prob) of the top1 prediction.
+        accuracies: 1.0 if the top-1 prediction was correct, 0.0 otherwise.
+        num_bins: Number of bins to use when computing adaptive calibration error.
+        norm: Norm function to use when computing calibration error. Defaults to "l1".
+        debias: Apply debiasing to L2 norm computation as in
+            `Verified Uncertainty Calibration`_. Defaults to False.
 
-    adaptive_ece = torch.zeros(1, device=confidences.device)
-    for bin_lower, bin_upper in zip(bin_lowers, bin_uppers, strict=False):
-        in_bin = (confidences > bin_lower.item()) * (
-            confidences < bin_upper.item()
+    Returns:
+        Tensor: Adaptive Calibration error scalar.
+    """
+    if norm not in {"l1", "l2", "max"}:
+        raise ValueError(
+            f"Argument `norm` is expected to be one of 'l1', 'l2', 'max' but got {norm}"
         )
-        prop_bin = in_bin.float().mean()
-        if prop_bin.item() > 0:
-            acc_bin = accuracies[in_bin].float().mean()
-            conf_bin = confidences[in_bin].mean()
-            if norm == "l1":
-                ace = torch.sum(torch.abs(acc_bin - conf_bin) * prop_bin)
-                adaptive_ece += ace
-            if norm == "max":
-                ace = torch.max(torch.abs(acc_bin - conf_bin))
-                adaptive_ece = torch.max(adaptive_ece, ace)
-            if norm == "l2":
-                ace = torch.sum(torch.pow(acc_bin - conf_bin, 2) * prop_bin)
-                ace = torch.sqrt(ace) if ace > 0 else torch.tensor(0)
-                adaptive_ece += ace
-    return adaptive_ece
+
+    with torch.no_grad():
+        acc_bin, conf_bin, prop_bin = _equal_binning_bucketize(
+            confidences, accuracies, num_bins
+        )
+
+    if norm == "l1":
+        return torch.sum(torch.abs(acc_bin - conf_bin) * prop_bin)
+    if norm == "max":
+        ace = torch.max(torch.abs(acc_bin - conf_bin))
+    if norm == "l2":
+        ace = torch.sum(torch.pow(acc_bin - conf_bin, 2) * prop_bin)
+        if debias:
+            debias_bins = (acc_bin * (acc_bin - 1) * prop_bin) / (
+                prop_bin * accuracies.size()[0] - 1
+            )
+            ace += torch.sum(
+                torch.nan_to_num(debias_bins)
+            )  # replace nans with zeros if nothing appeared in a bin
+        return torch.sqrt(ace) if ace > 0 else torch.tensor(0)
+    return ace
 
 
 class BinaryAdaptiveCalibrationError(Metric):
@@ -72,8 +105,16 @@ class BinaryAdaptiveCalibrationError(Metric):
         **kwargs: Any,
     ) -> None:
         super().__init__(**kwargs)
+        if ignore_index is not None:  # coverage: ignore
+            raise ValueError(
+                "ignore_index is not supported for multiclass tasks."
+            )
+
+        if validate_args:
+            _binary_calibration_error_arg_validation(n_bins, norm, ignore_index)
         self.n_bins = n_bins
         self.norm = norm
+
         self.add_state("confidences", [], dist_reduce_fx="cat")
         self.add_state("accuracies", [], dist_reduce_fx="cat")
 
@@ -81,8 +122,8 @@ class BinaryAdaptiveCalibrationError(Metric):
         """Update metric states with predictions and targets."""
         confidences, preds = torch.max(probs, 1 - probs), torch.round(probs)
         accuracies = preds == targets
-        self.confidences.append(confidences)
-        self.accuracies.append(accuracies)
+        self.confidences.append(confidences.float())
+        self.accuracies.append(accuracies.float())
 
     def compute(self) -> Tensor:
         """Compute metric."""
@@ -96,6 +137,13 @@ class BinaryAdaptiveCalibrationError(Metric):
 class MulticlassAdaptiveCalibrationError(Metric):
     r"""`Adaptive Top-label Calibration Error` for multiclass tasks."""
 
+    is_differentiable: bool = False
+    higher_is_better: bool = False
+    full_state_update: bool = False
+
+    confidences: list[Tensor]
+    accuracies: list[Tensor]
+
     def __init__(
         self,
         num_classes: int,
@@ -106,8 +154,18 @@ class MulticlassAdaptiveCalibrationError(Metric):
         **kwargs: Any,
     ) -> None:
         super().__init__(**kwargs)
+        if ignore_index is not None:  # coverage: ignore
+            raise ValueError(
+                "ignore_index is not supported for multiclass tasks."
+            )
+
+        if validate_args:
+            _multiclass_calibration_error_arg_validation(
+                num_classes, n_bins, norm, ignore_index
+            )
         self.n_bins = n_bins
         self.norm = norm
+
         self.add_state("confidences", [], dist_reduce_fx="cat")
         self.add_state("accuracies", [], dist_reduce_fx="cat")
 
@@ -115,8 +173,8 @@ class MulticlassAdaptiveCalibrationError(Metric):
         """Update metric states with predictions and targets."""
         confidences, preds = torch.max(probs, 1)
         accuracies = preds == targets
-        self.confidences.append(confidences)
-        self.accuracies.append(accuracies)
+        self.confidences.append(confidences.float())
+        self.accuracies.append(accuracies.float())
 
     def compute(self) -> Tensor:
         """Compute metric."""
