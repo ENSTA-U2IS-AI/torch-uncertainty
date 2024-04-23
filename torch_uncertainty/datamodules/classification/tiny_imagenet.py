@@ -69,7 +69,7 @@ class TinyImageNetDataModule(AbstractDataModule):
 
         self.train_transform = T.Compose(
             [
-                T.RandomCrop(64, padding=4, interpolation=interpolation),
+                T.RandomCrop(64, padding=4),
                 T.RandomHorizontalFlip(),
                 main_transform,
                 T.ToTensor(),
