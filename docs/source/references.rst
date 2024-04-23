@@ -208,6 +208,16 @@ For the expected calibration error, consider citing:
 * Authors: *Mahdi Pakdaman Naeini, Gregory F. Cooper, and Milos Hauskrecht*
 * Paper: `AAAI 2015 <https://www.dbmi.pitt.edu/wp-content/uploads/2022/10/Obtaining-well-calibrated-probabilities-using-Bayesian-binning.pdf>`__.
 
+Adaptive Calibration Error
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For the adaptive calibration error, consider citing:
+
+**Measuring Calibration in Deep Learning**
+
+* Authors: Jeremy Nixon, Mike Dusenberry, Ghassen Jerfel, Timothy Nguyen, Jeremiah Liu, Linchuan Zhang, Dustin Tran
+* Paper: `CVPRW 2019 <https://arxiv.org/pdf/1904.01685.pdf>`__.
+
 Grouping Loss
 ^^^^^^^^^^^^^
 
