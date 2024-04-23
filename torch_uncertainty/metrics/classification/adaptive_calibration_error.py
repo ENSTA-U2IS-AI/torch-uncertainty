@@ -59,11 +59,6 @@ def _ace_compute(
     Returns:
         Tensor: Adaptive Calibration error scalar.
     """
-    if norm not in {"l1", "l2", "max"}:
-        raise ValueError(
-            f"Argument `norm` is expected to be one of 'l1', 'l2', 'max' but got {norm}"
-        )
-
     with torch.no_grad():
         acc_bin, conf_bin, prop_bin = _equal_binning_bucketize(
             confidences, accuracies, num_bins

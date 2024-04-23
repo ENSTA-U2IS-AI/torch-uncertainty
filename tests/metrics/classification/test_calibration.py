@@ -108,22 +108,3 @@ class TestAdaptiveCalibrationError:
             torch.as_tensor([0, 0, 0, 1, 1]),
         )
         assert ace.compute().item() ** 2 == pytest.approx((0.8 - 0.5) ** 2)
-
-    def test_errors(self) -> None:
-        with pytest.raises(ValueError, match="is expected to be one of 'l1'"):
-            ace = AdaptiveCalibrationError(
-                task="multiclass", num_classes=2, norm="l3"
-            )
-            ace.update(
-                torch.as_tensor(
-                    [
-                        [0.3, 0.7],
-                        [0.24, 0.76],
-                        [0.25, 0.75],
-                        [0.2, 0.8],
-                        [0.8, 0.2],
-                    ]
-                ),
-                torch.as_tensor([0, 0, 0, 1, 1]),
-            )
-            ace.compute()
