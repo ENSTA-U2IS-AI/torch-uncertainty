@@ -98,16 +98,9 @@ class RegressionRoutine(LightningModule):
         return self.optim_recipe
 
     def on_train_start(self) -> None:
-        init_metrics = dict.fromkeys(self.val_metrics, 0)
-        init_metrics.update(dict.fromkeys(self.test_metrics, 0))
-        if self.probabilistic:
-            init_metrics.update(dict.fromkeys(self.val_prob_metrics, 0))
-            init_metrics.update(dict.fromkeys(self.test_prob_metrics, 0))
-
         if self.logger is not None:  # coverage: ignore
             self.logger.log_hyperparams(
                 self.hparams,
-                init_metrics,
             )
 
     def forward(self, inputs: Tensor) -> Tensor | Distribution:
@@ -176,15 +169,6 @@ class RegressionRoutine(LightningModule):
         if self.probabilistic:
             self.val_prob_metrics.update(mixture, targets)
 
-    def on_validation_epoch_end(self) -> None:
-        self.log_dict(self.val_metrics.compute())
-        self.val_metrics.reset()
-        if self.probabilistic:
-            self.log_dict(
-                self.val_prob_metrics.compute(),
-            )
-            self.val_prob_metrics.reset()
-
     def test_step(
         self,
         batch: tuple[Tensor, Tensor],
@@ -221,6 +205,13 @@ class RegressionRoutine(LightningModule):
         self.test_metrics.update(preds, targets)
         if self.probabilistic:
             self.test_prob_metrics.update(mixture, targets)
+
+    def on_validation_epoch_end(self) -> None:
+        self.log_dict(self.val_metrics.compute(), sync_dist=True)
+        self.val_metrics.reset()
+        if self.probabilistic:
+            self.log_dict(self.val_prob_metrics.compute(), sync_dist=True)
+            self.val_prob_metrics.reset()
 
     def on_test_epoch_end(self) -> None:
         self.log_dict(

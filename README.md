@@ -46,7 +46,7 @@ We make a quickstart available at [torch-uncertainty.github.io/quickstart](https
 
 ## :books: Implemented methods
 
-TorchUncertainty currently supports **Classification**, **probabilistic** and pointwise **Regression** and **Segmentation**.
+TorchUncertainty currently supports **classification**, **probabilistic** and pointwise **regression**, **segmentation** and **monocular depth estimation**.
 
 ### Baselines
 
