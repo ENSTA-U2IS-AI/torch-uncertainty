@@ -64,16 +64,22 @@ class SegmentationRoutine(LightningModule):
         # metrics
         seg_metrics = MetricCollection(
             {
-                "Acc": Accuracy(task="multiclass", num_classes=num_classes),
+                "Overall Acc": Accuracy(
+                    task="multiclass", num_classes=num_classes
+                ),
                 "ECE": CalibrationError(
                     task="multiclass", num_classes=num_classes
+                ),
+                "mAcc": Accuracy(
+                    task="multiclass", average="macro", num_classes=num_classes
                 ),
                 "mIoU": MeanIntersectionOverUnion(num_classes=num_classes),
                 "Brier": BrierScore(num_classes=num_classes),
                 "NLL": CategoricalNLL(),
             },
             compute_groups=[
-                ["Acc", "mIoU"],
+                ["Overall Acc"],
+                ["mAcc", "mIoU"],
                 ["ECE"],
                 ["Brier"],
                 ["NLL"],
