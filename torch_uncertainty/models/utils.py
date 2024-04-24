@@ -89,3 +89,9 @@ class Backbone(nn.Module):
             if k in self.feat_names:
                 features.append(feature)
         return features
+
+
+def set_bn_momentum(model: nn.Module, momentum: float) -> None:
+    for m in model.modules():
+        if isinstance(m, nn.BatchNorm2d):
+            m.momentum = momentum

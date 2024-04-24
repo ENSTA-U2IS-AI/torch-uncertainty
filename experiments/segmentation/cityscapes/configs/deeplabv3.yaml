@@ -4,7 +4,8 @@ seed_everything: false
 trainer:
   accelerator: gpu
   devices: 1
-  max_epochs: 35
+  precision: 16-mixed
+  max_steps: 30000
   logger:
     class_path: lightning.pytorch.loggers.TensorBoardLogger
     init_args:
@@ -27,17 +28,19 @@ model:
   arch: 50
   style: v3+
   output_stride: 16
-  separable: true
+  separable: false
   num_estimators: 1
 data:
   root: ./data/Cityscapes
   batch_size: 8
-  crop_size: 728
+  crop_size: 768
   inference_size:
   - 1024
   - 2048
   num_workers: 12
 optimizer:
   lr: 1e-2
+  weight_decay: 1e-4
+  momentum: 0.9
 lr_scheduler:
   total_iters: 35

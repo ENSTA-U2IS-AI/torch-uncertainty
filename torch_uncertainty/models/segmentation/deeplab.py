@@ -7,7 +7,7 @@ from torch.nn import functional as F
 from torch.nn.common_types import _size_2_t
 from torchvision.models.resnet import ResNet50_Weights, ResNet101_Weights
 
-from torch_uncertainty.models.utils import Backbone
+from torch_uncertainty.models.utils import Backbone, set_bn_momentum
 
 
 class SeparableConv2d(nn.Module):
@@ -169,7 +169,11 @@ class ASPP(nn.Module):
 
 class DeepLabV3Backbone(Backbone):
     def __init__(
-        self, backbone_name: str, style: str, pretrained: bool
+        self,
+        backbone_name: Literal["resnet50", "resnet101"],
+        style: str,
+        pretrained: bool,
+        norm_momentum: float,
     ) -> None:
         """DeepLab V3(+) backbone.
 
@@ -177,6 +181,7 @@ class DeepLabV3Backbone(Backbone):
             backbone_name (str): Backbone name.
             style (str): Whether to use a DeepLab V3 or V3+ model.
             pretrained (bool): Use pretrained backbone.
+            norm_momentum (float): BatchNorm momentum.
         """
         # TODO: handle dilations
         if backbone_name == "resnet50":
@@ -189,6 +194,8 @@ class DeepLabV3Backbone(Backbone):
             )
         base_model.avgpool = nn.Identity()
         base_model.fc = nn.Identity()
+        set_bn_momentum(base_model, norm_momentum)
+
         feat_names = ["layer1", "layer4"] if style == "v3+" else ["layer4"]
         super().__init__(base_model, feat_names)
 
@@ -290,16 +297,22 @@ class _DeepLabV3(nn.Module):
         output_stride: int = 16,
         separable: bool = False,
         pretrained_backbone: bool = True,
+        norm_momentum: float = 0.01,
     ) -> None:
         """DeepLab V3(+) model.
 
         Args:
             num_classes (int): Number of classes.
             backbone_name (str): Backbone name.
-            style (Literal["v3", "v3+"]):  Whether to use a DeepLab V3 or V3+ model.
+            style (Literal["v3", "v3+"]):  Whether to use a DeepLab V3 or
+                V3+ model.
             output_stride (int, optional): Output stride. Defaults to 16.
-            separable (bool, optional): Use separable convolutions. Defaults to False.
-            pretrained_backbone (bool, optional): Use pretrained backbone. Defaults to True.
+            separable (bool, optional): Use separable convolutions. Defaults
+                to False.
+            pretrained_backbone (bool, optional): Use pretrained backbone.
+                Defaults to True.
+            norm_momentum (float, optional): BatchNorm momentum. Defaults to
+                0.01.
 
         References:
             - Rethinking atrous convolution for semantic image segmentation.
@@ -318,7 +331,7 @@ class _DeepLabV3(nn.Module):
             )
 
         self.backbone = DeepLabV3Backbone(
-            backbone_name, style, pretrained_backbone
+            backbone_name, style, pretrained_backbone, norm_momentum
         )
         if style == "v3":
             self.decoder = DeepLabV3Decoder(
@@ -363,8 +376,10 @@ def deep_lab_v3_resnet50(
         num_classes (int): Number of classes.
         style (Literal["v3", "v3+"]): Whether to use a DeepLab V3 or V3+ model.
         output_stride (int, optional): Output stride. Defaults to 16.
-        separable (bool, optional): Use separable convolutions. Defaults to False.
-        pretrained_backbone (bool, optional): Use pretrained backbone. Defaults to True.
+        separable (bool, optional): Use separable convolutions. Defaults to
+            False.
+        pretrained_backbone (bool, optional): Use pretrained backbone. Defaults
+            to True.
     """
     return _DeepLabV3(
         num_classes,

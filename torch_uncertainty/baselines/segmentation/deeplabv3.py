@@ -43,7 +43,6 @@ class DeepLabV3Baseline(SegmentationRoutine):
             raise ValueError(f"Unknown version {version}")
 
         model = self.versions[version][self.archs.index(arch)](**params)
-
         super().__init__(
             num_classes=num_classes,
             model=model,
