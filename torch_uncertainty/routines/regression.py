@@ -3,15 +3,19 @@ from einops import rearrange
 from lightning.pytorch import LightningModule
 from lightning.pytorch.utilities.types import STEP_OUTPUT
 from torch import Tensor, nn
-from torch.distributions import Categorical,Independent,MixtureSameFamily
+from torch.distributions import (
+    Categorical,
+    Distribution,
+    Independent,
+    MixtureSameFamily,
+)
 from torch.optim import Optimizer
 from torchmetrics import MeanAbsoluteError, MeanSquaredError, MetricCollection
 
-from torch_uncertainty.metrics.regression.nll import DistributionNLL
+from torch_uncertainty.metrics import (
+    DistributionNLL,
+)
 from torch_uncertainty.utils.distributions import dist_rearrange, squeeze_dist
-from metrics.regression.inverse import *
-
-
 
 
 class RegressionRoutine(LightningModule):
@@ -74,8 +78,6 @@ class RegressionRoutine(LightningModule):
                 "MAE": MeanAbsoluteError(),
                 "MSE": MeanSquaredError(squared=True),
                 "RMSE": MeanSquaredError(squared=False),
-                "iMAE": InverseMAE(),
-                "iRMSE": InverseRMSE(),
             },
             compute_groups=True,
         )
@@ -108,7 +110,7 @@ class RegressionRoutine(LightningModule):
                 init_metrics,
             )
 
-    def forward(self, inputs: Tensor) -> Tensor:
+    def forward(self, inputs: Tensor) -> Tensor | Distribution:
         """Forward pass of the routine.
 
         The forward pass automatically squeezes the output if the regression
@@ -241,4 +243,3 @@ def _regression_routine_checks(num_estimators: int, output_dim: int) -> None:
 
     if output_dim < 1:
         raise ValueError(f"output_dim must be positive, got {output_dim}.")
-
