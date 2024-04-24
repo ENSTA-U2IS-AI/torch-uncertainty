@@ -20,7 +20,7 @@ class AUSE(Metric):
     errors: list[Tensor]
 
     def __init__(self, **kwargs) -> None:
-        """The Area Under the Sparsification Error curve (AUSE) metric to estimate
+        r"""The Area Under the Sparsification Error curve (AUSE) metric to estimate
         the quality of the uncertainty estimates, i.e., how much they coincide with
         the true errors.
 
@@ -57,6 +57,13 @@ class AUSE(Metric):
         self.scores.append(scores)
         self.errors.append(errors)
 
+    def partial_compute(self) -> tuple[Tensor, Tensor]:
+        scores = dim_zero_cat(self.scores)
+        errors = dim_zero_cat(self.errors)
+        error_rates = _ause_rejection_rate_compute(scores, errors)
+        optimal_error_rates = _ause_rejection_rate_compute(errors, errors)
+        return error_rates.cpu(), optimal_error_rates.cpu()
+
     def compute(self) -> Tensor:
         """Compute the Area Under the Sparsification Error curve (AUSE) based
         on inputs passed to ``update``.
@@ -64,16 +71,10 @@ class AUSE(Metric):
         Returns:
             Tensor: The AUSE.
         """
-        scores = dim_zero_cat(self.scores)
-        errors = dim_zero_cat(self.errors)
-        computed_error_rates = _rejection_rate_compute(scores, errors)
-        computed_optimal_error_rates = _rejection_rate_compute(errors, errors)
-
-        x = np.arange(computed_error_rates.size(0)) / computed_error_rates.size(
-            0
-        )
-        y = (computed_error_rates - computed_optimal_error_rates).numpy()
-
+        error_rates, optimal_error_rates = self.partial_compute()
+        num_samples = error_rates.size(0)
+        x = np.arange(1, num_samples + 1) / num_samples
+        y = (error_rates - optimal_error_rates).numpy()
         return torch.tensor([auc(x, y)])
 
     def plot(
@@ -99,32 +100,24 @@ class AUSE(Metric):
         fig, ax = plt.subplots() if ax is None else (None, ax)
 
         # Computation of AUSEC
-        scores = dim_zero_cat(self.scores)
-        errors = dim_zero_cat(self.errors)
-        computed_error_rates = _rejection_rate_compute(scores, errors)
-        computed_optimal_error_rates = _rejection_rate_compute(errors, errors)
-
-        x = np.arange(computed_error_rates.size(0)) / computed_error_rates.size(
-            0
-        )
-        y = (computed_error_rates - computed_optimal_error_rates).numpy()
+        error_rates, optimal_error_rates = self.partial_compute()
+        num_samples = error_rates.size(0)
+        x = np.arange(num_samples) / num_samples
+        y = (error_rates - optimal_error_rates).numpy()
 
         ausec = auc(x, y)
 
-        rejection_rates = (
-            np.arange(computed_error_rates.size(0))
-            / computed_error_rates.size(0)
-        ) * 100
+        rejection_rates = (np.arange(num_samples) / num_samples) * 100
 
         ax.plot(
             rejection_rates,
-            computed_error_rates * 100,
+            error_rates * 100,
             label="Model",
         )
         if plot_oracle:
             ax.plot(
                 rejection_rates,
-                computed_optimal_error_rates * 100,
+                optimal_error_rates * 100,
                 label="Oracle",
             )
 
@@ -148,7 +141,7 @@ class AUSE(Metric):
         return fig, ax
 
 
-def _rejection_rate_compute(
+def _ause_rejection_rate_compute(
     scores: Tensor,
     errors: Tensor,
 ) -> Tensor:
@@ -166,5 +159,4 @@ def _rejection_rate_compute(
     error_rates = torch.zeros(num_samples + 1)
     error_rates[0] = errors.sum()
     error_rates[1:] = errors.cumsum(dim=-1).flip(0)
-
     return error_rates / error_rates[0]
