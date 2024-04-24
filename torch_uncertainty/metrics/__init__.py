@@ -1,5 +1,6 @@
 # ruff: noqa: F401
 from .classification import (
+    AURC,
     AUSE,
     FPR95,
     AdaptiveCalibrationError,
