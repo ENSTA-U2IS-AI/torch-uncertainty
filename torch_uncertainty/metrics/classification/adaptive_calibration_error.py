@@ -31,7 +31,11 @@ def _equal_binning_bucketize(
         accuracies.tensor_split(num_bins),
         confidences.tensor_split(num_bins),
     )
-    count_bin = torch.as_tensor([len(cb) for cb in conf_bin])
+    count_bin = torch.as_tensor(
+        [len(cb) for cb in conf_bin],
+        dtype=confidences.dtype,
+        device=confidences.device,
+    )
     return (
         pad_sequence(acc_bin, batch_first=True).sum(1) / count_bin,
         pad_sequence(conf_bin, batch_first=True).sum(1) / count_bin,
