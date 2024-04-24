@@ -5,6 +5,7 @@ from lightning.pytorch.utilities.types import STEP_OUTPUT
 from torch import Tensor, nn
 from torch.distributions import (
     Categorical,
+    Distribution,
     Independent,
     MixtureSameFamily,
 )
@@ -14,8 +15,10 @@ from torchmetrics import MeanSquaredError, MetricCollection
 from torch_uncertainty.metrics import (
     DistributionNLL,
     Log10,
+    MeanAbsoluteErrorInverse,
     MeanGTRelativeAbsoluteError,
     MeanGTRelativeSquaredError,
+    MeanSquaredErrorInverse,
     MeanSquaredLogError,
     SILog,
     ThresholdAccuracy,
@@ -55,6 +58,8 @@ class DepthRoutine(LightningModule):
                 "RSRE": MeanGTRelativeSquaredError(squared=False),
                 "RMSE": MeanSquaredError(squared=False),
                 "RMSELog": MeanSquaredLogError(squared=False),
+                "iMAE": MeanAbsoluteErrorInverse(),
+                "iRMSE": MeanSquaredErrorInverse(squared=False),
                 "d1": ThresholdAccuracy(power=1),
                 "d2": ThresholdAccuracy(power=2),
                 "d3": ThresholdAccuracy(power=3),
@@ -85,7 +90,7 @@ class DepthRoutine(LightningModule):
                 self.hparams,
             )
 
-    def forward(self, inputs: Tensor) -> Tensor:
+    def forward(self, inputs: Tensor) -> Tensor | Distribution:
         """Forward pass of the routine.
 
         The forward pass automatically squeezes the output if the regression
