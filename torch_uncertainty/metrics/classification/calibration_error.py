@@ -15,11 +15,10 @@ from .adaptive_calibration_error import AdaptiveCalibrationError
 
 
 def _ce_plot(self, ax: _AX_TYPE | None = None) -> _PLOT_OUT_TYPE:
-    fig, ax = plt.subplots() if ax is None else (None, ax)
+    fig, ax = plt.subplots(figsize=(6, 6)) if ax is None else (None, ax)
 
     conf = dim_zero_cat(self.confidences)
     acc = dim_zero_cat(self.accuracies)
-
     bin_width = 1 / self.n_bins
 
     bin_ids = torch.round(
@@ -28,37 +27,31 @@ def _ce_plot(self, ax: _AX_TYPE | None = None) -> _PLOT_OUT_TYPE:
     val, inverse, counts = bin_ids.unique(
         return_inverse=True, return_counts=True
     )
-    val_oh = torch.nn.functional.one_hot(val.long(), num_classes=self.n_bins)
+    counts = counts.float()
+    val_oh = torch.nn.functional.one_hot(
+        val.long(), num_classes=self.n_bins
+    ).float()
 
     # add 1e-6 to avoid division NaNs
     values = (
-        val_oh.T.float()
+        val_oh.T
         @ torch.sum(
             acc.unsqueeze(1) * torch.nn.functional.one_hot(inverse).float(),
             0,
         )
-        / (val_oh.T @ counts + 1e-6).float()
+        / (val_oh.T @ counts + 1e-6)
     )
-    counts_all = (val_oh.T @ counts).float()
-    total = torch.sum(counts)
 
     plt.rc("axes", axisbelow=True)
     ax.hist(
         x=[bin_width * i * 100 for i in range(self.n_bins)],
-        weights=values * 100,
+        weights=values.cpu() * 100,
         bins=[bin_width * i * 100 for i in range(self.n_bins + 1)],
         alpha=0.7,
         linewidth=1,
         edgecolor="#0d559f",
         color="#1f77b4",
     )
-    for i, count in enumerate(counts_all):
-        ax.text(
-            3.0 + 9.9 * i,
-            1,
-            f"{int(count/total*100)}%",
-            fontsize=8,
-        )
 
     ax.plot([0, 100], [0, 100], "--", color="#0d559f")
     plt.grid(True, linestyle="--", alpha=0.7, zorder=0)
