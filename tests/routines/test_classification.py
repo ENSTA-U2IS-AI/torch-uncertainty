@@ -370,6 +370,16 @@ class TestClassification:
                 num_classes=10, model=nn.Module(), loss=None, cutmix_alpha=-1
             )
 
+        with pytest.raises(
+            ValueError, match="num_calibration_bins must be positive, got"
+        ):
+            ClassificationRoutine(
+                model=nn.Identity(),
+                num_classes=2,
+                loss=nn.CrossEntropyLoss(),
+                num_calibration_bins=0,
+            )
+
         with pytest.raises(ValueError):
             ClassificationRoutine(
                 num_classes=10,
