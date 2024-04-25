@@ -83,7 +83,7 @@ class AURC(Metric):
         num_samples = error_rates.size(0)
         x = np.arange(1, num_samples + 1) / num_samples
         y = (error_rates - optimal_error_rates).numpy()
-        return torch.tensor([auc(x, y)])
+        return torch.tensor([auc(x, y)], device=self.device)
 
     def plot(
         self,
