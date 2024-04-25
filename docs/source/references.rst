@@ -218,6 +218,16 @@ For the adaptive calibration error, consider citing:
 * Authors: Jeremy Nixon, Mike Dusenberry, Ghassen Jerfel, Timothy Nguyen, Jeremiah Liu, Linchuan Zhang, Dustin Tran
 * Paper: `CVPRW 2019 <https://arxiv.org/pdf/1904.01685.pdf>`__.
 
+Area Under the Risk-Coverage curve
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For the area under the risk-coverage curve, consider citing:
+
+**Selective classification for deep neural networks**
+
+* Authors: Yonatan Geifman, Ran El-Yaniv
+* Paper: `NeurIPS 2017 <https://arxiv.org/pdf/1705.08500.pdf>`__.
+
 Grouping Loss
 ^^^^^^^^^^^^^
 

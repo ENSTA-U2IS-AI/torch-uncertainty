@@ -160,6 +160,7 @@ Metrics
     :template: class.rst
 
     AUSE
+    AURC
     AdaptiveCalibrationError
     BrierScore
     CategoricalNLL

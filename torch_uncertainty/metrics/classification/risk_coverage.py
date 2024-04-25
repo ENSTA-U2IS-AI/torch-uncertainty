@@ -17,6 +17,33 @@ class AURC(Metric):
     errors: list[Tensor]
 
     def __init__(self, **kwargs) -> None:
+        r"""`Area Under the Risk-Coverage curve`_.
+
+        The Area Under the Risk-Coverage curve (AURC) is the main metric for
+        selective classification performance assessment. It evaluates the
+        quality of uncertainty estimates by measuring the ability to
+        discriminate between correct and incorrect predictions based on their
+        rank (and not their values in contrast with calibration).
+
+        As input to ``forward`` and ``update`` the metric accepts the following
+            input:
+
+        - ``preds`` (:class:`~torch.Tensor`): A float tensor of shape
+            ``(N, ...)`` containing probabilities for each observation.
+        - ``target`` (:class:`~torch.Tensor`): An int tensor of shape
+            ``(N, ...)`` containing ground-truth labels.
+
+        As output to ``forward`` and ``compute`` the metric returns the
+            following output:
+        - ``aurc`` (:class:`~torch.Tensor`): A scalar tensor containing the
+            area under the risk-coverage curve
+
+        Args:
+            kwargs: Additional keyword arguments.
+
+        Reference:
+            Geifman & El-Yaniv. "Selective classification for deep neural networks." In NeurIPS, 2017.
+        """
         super().__init__(**kwargs)
         self.add_state("scores", default=[], dist_reduce_fx="cat")
         self.add_state("errors", default=[], dist_reduce_fx="cat")
@@ -45,8 +72,7 @@ class AURC(Metric):
         return error_rates.cpu(), optimal_error_rates.cpu()
 
     def compute(self) -> Tensor:
-        """Compute the Area Under the Risk-Coverage curve (AURC) based
-        on inputs passed to ``update``.
+        """Compute the Area Under the Risk-Coverage curve (AURC).
 
         Returns:
             Tensor: The AURC.
@@ -64,14 +90,14 @@ class AURC(Metric):
         plot_value: bool = True,
         name: str | None = None,
     ) -> tuple[plt.Figure | None, plt.Axes]:
-        """Plot the sparsification curve corresponding to the inputs passed to
-        ``update``, and the oracle sparsification curve.
+        """Plot the risk-cov. curve corresponding to the inputs passed to
+        ``update``, and the oracle risk-cov. curve.
 
         Args:
             ax (Axes | None, optional): An matplotlib axis object. If provided
                 will add plot to this axis. Defaults to None.
             plot_oracle (bool, optional): Whether to plot the oracle
-                sparsification curve. Defaults to True.
+                risk-cov. curve. Defaults to True.
             plot_value (bool, optional): Whether to print the AURC value on the
                 plot. Defaults to True.
             name (str | None, optional): Name of the model. Defaults to None.
