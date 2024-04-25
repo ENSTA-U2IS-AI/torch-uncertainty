@@ -124,6 +124,7 @@ class ClassificationRoutine(LightningModule):
             num_estimators=num_estimators,
             ood_criterion=ood_criterion,
             eval_grouping_loss=eval_grouping_loss,
+            num_calibration_bins=num_calibration_bins,
         )
 
         if format_batch_fn is None:
@@ -592,6 +593,7 @@ def _classification_routine_checks(
     num_estimators: int,
     ood_criterion: str,
     eval_grouping_loss: bool,
+    num_calibration_bins: int,
 ) -> None:
     if not isinstance(num_estimators, int) or num_estimators < 1:
         raise ValueError(
@@ -641,4 +643,9 @@ def _classification_routine_checks(
         raise ValueError(
             "Your model must have a `classification_head` or `linear` "
             "attribute to compute the grouping loss."
+        )
+
+    if num_calibration_bins < 2:
+        raise ValueError(
+            f"num_calibration_bins must be at least 2, got {num_calibration_bins}."
         )
