@@ -188,6 +188,7 @@ class SegmentationRoutine(LightningModule):
 
     def on_validation_epoch_end(self) -> None:
         self.log_dict(self.val_seg_metrics.compute(), sync_dist=True)
+        self.log_dict(self.val_sbsmpl_seg_metrics.compute(), sync_dist=True)
         self.val_seg_metrics.reset()
         self.val_sbsmpl_seg_metrics.reset()
 
