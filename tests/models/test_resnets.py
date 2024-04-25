@@ -36,6 +36,7 @@ class TestPackedResnet:
     """Testing the ResNet packed class."""
 
     def test_main(self):
+        model = packed_resnet(1, 10, 20, 2, 2, 1)
         model = packed_resnet(1, 10, 152, 2, 2, 1)
         assert model.check_config(
             {"alpha": 2, "gamma": 1, "groups": 1, "num_estimators": 2}
@@ -82,10 +83,17 @@ class TestLPBNNResnet:
         model = lpbnn_resnet(1, 10, 20, 2, conv_bias=True)
         with torch.no_grad():
             model(torch.randn(1, 1, 32, 32))
+        model = lpbnn_resnet(1, 10, 50, 2, conv_bias=False, style="cifar")
+        with torch.no_grad():
+            model(torch.randn(1, 1, 32, 32))
 
     def test_error(self):
         with pytest.raises(ValueError):
             lpbnn_resnet(1, 10, 20, 2, style="test")
+        with pytest.raises(
+            ValueError, match="Unknown ResNet architecture. Got"
+        ):
+            lpbnn_resnet(1, 10, 42, 2, style="test")
 
 
 class TestMIMOResnet:

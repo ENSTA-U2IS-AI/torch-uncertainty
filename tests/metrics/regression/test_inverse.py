@@ -22,6 +22,9 @@ class TestMeanAbsoluteErrorInverse:
         metric.update(preds, target)
         assert metric.compute() == pytest.approx(1)
 
+        MeanAbsoluteErrorInverse(unit="mm")
+        MeanAbsoluteErrorInverse(unit="km")
+
     def test_error(self):
         with pytest.raises(ValueError, match="unit must be one of 'mm'"):
             MeanAbsoluteErrorInverse(unit="cm")

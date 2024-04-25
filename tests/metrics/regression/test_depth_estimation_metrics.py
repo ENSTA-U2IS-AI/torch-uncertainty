@@ -70,6 +70,19 @@ class TestSILog:
             ** 2
         ) == pytest.approx(metric.compute())
 
+        metric = SILog(sqrt=True)
+        preds = torch.rand((10, 2)).double()
+        targets = torch.rand((10, 2)).double()
+        metric.update(preds[:, 0], targets[:, 0])
+        metric.update(preds[:, 1], targets[:, 1])
+        mean_log_dists = torch.mean(
+            targets.flatten().log() - preds.flatten().log()
+        )
+        assert torch.mean(
+            (preds.flatten().log() - targets.flatten().log() + mean_log_dists)
+            ** 2
+        ) ** 0.5 == pytest.approx(metric.compute())
+
 
 class TestThresholdAccuracy:
     """Testing the ThresholdAccuracy metric."""
