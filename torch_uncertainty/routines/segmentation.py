@@ -72,6 +72,7 @@ class SegmentationRoutine(LightningModule):
                 "Brier": BrierScore(num_classes=num_classes),
                 "NLL": CategoricalNLL(),
             },
+            # compute_groups=False,
             compute_groups=[
                 ["Acc", "mIoU"],
                 ["ECE"],

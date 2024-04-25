@@ -1,19 +1,13 @@
-
 import torch
-from einops import rearrange
-from lightning.pytorch import LightningModule
-from lightning.pytorch.utilities.types import STEP_OUTPUT
-from torch import Tensor, nn
-from torchmetrics import MeanSquaredError,  Metric
-
-from torch_uncertainty.utils.distributions import dist_rearrange, squeeze_dist
+from torch import Tensor
+from torchmetrics import MeanSquaredError, Metric
 
 
 # Custom Metric for iMAE
 class InverseMAE(Metric):
     def __init__(self):
         super().__init__(compute_on_step=False)
-        self.add_state("total", default=torch.tensor(0.), dist_reduce_fx="sum")
+        self.add_state("total", default=torch.tensor(0.0), dist_reduce_fx="sum")
         self.add_state("count", default=torch.tensor(0), dist_reduce_fx="sum")
 
     def update(self, preds: Tensor, target: Tensor):
@@ -23,6 +17,7 @@ class InverseMAE(Metric):
 
     def compute(self):
         return self.total / self.count
+
 
 # Custom Metric for iRMSE
 class InverseRMSE(Metric):
@@ -36,4 +31,3 @@ class InverseRMSE(Metric):
     def compute(self):
         mse_val = self.mse.compute()
         return torch.reciprocal(torch.sqrt(mse_val))
-

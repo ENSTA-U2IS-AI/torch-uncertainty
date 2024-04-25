@@ -8,7 +8,7 @@ trainer:
   logger:
     class_path: lightning.pytorch.loggers.TensorBoardLogger
     init_args:
-      save_dir: logs/deeplabv3
+      save_dir: logs/segformer
       name: standard
       default_hp_metric: false
   callbacks:
@@ -27,7 +27,7 @@ model:
   arch: 0
   num_estimators: 1
 data:
-  root: ./data
+  root: ./data/Cityscapes
   batch_size: 8
   crop_size: 1024
   inference_size:

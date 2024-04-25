@@ -36,7 +36,7 @@ data:
   inference_size:
   - 1024
   - 2048
-  num_workers: 12
+  num_workers: 8
 optimizer:
   lr: 1e-2
 lr_scheduler:

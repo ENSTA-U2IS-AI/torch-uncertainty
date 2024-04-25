@@ -1,7 +1,9 @@
 import unittest
+
 import torch
-from torch_uncertainty.metrics import InverseMAE 
-from torch_uncertainty.metrics import InverseRMSE 
+
+from torch_uncertainty.metrics import InverseMAE, InverseRMSE
+
 
 class TestInverseMAE(unittest.TestCase):
     def test_simple_case(self):
@@ -10,7 +12,7 @@ class TestInverseMAE(unittest.TestCase):
         metric = InverseMAE()
         metric.update(preds, target)
         result = metric.compute()
-        expected = torch.tensor(1.0) 
+        expected = torch.tensor(1.0)
         torch.testing.assert_allclose(result, expected)
 
 
@@ -21,12 +23,13 @@ class TestInverseRMSE(unittest.TestCase):
         metric = InverseRMSE()
         metric.update(preds, target)
         result = metric.compute()
-        
+
         # Calculate the expected inverse RMSE
         mse_val = torch.mean((preds - target) ** 2)
         expected = torch.reciprocal(torch.sqrt(mse_val))
-        
+
         torch.testing.assert_allclose(result, expected)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

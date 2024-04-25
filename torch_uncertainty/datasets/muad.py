@@ -3,7 +3,7 @@ import os
 import shutil
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Literal
+from typing import Literal
 
 import cv2
 import numpy as np
@@ -108,7 +108,7 @@ class MUAD(VisionDataset):
         ):
             if download:
                 self._download(split=f"{split}_depth")
-                # FIXME: Depth target for train are in a different folder
+                # Depth target for train are in a different folder
                 # thus we move them to the correct folder
                 if split == "train":
                     shutil.move(
@@ -169,7 +169,9 @@ class MUAD(VisionDataset):
         target[target == 255] = 19
         return self.train_id_to_color[target]
 
-    def __getitem__(self, index: int) -> tuple[Any, Any]:
+    def __getitem__(
+        self, index: int
+    ) -> tuple[tv_tensors.Image, tv_tensors.Mask]:
         """Get the sample at the given index.
 
         Args:
@@ -196,6 +198,7 @@ class MUAD(VisionDataset):
             # tv_tensor for depth maps (e.g. tv_tensors.DepthMap)
             target = np.asarray(target, np.float32)
             target = tv_tensors.Mask(400 * (1 - target))  # convert to meters
+            target[target == -float("inf")] = float("nan")
 
         if self.transforms is not None:
             image, target = self.transforms(image, target)

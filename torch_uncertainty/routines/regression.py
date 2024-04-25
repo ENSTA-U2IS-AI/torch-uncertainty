@@ -2,16 +2,14 @@ import torch
 from einops import rearrange
 from lightning.pytorch import LightningModule
 from lightning.pytorch.utilities.types import STEP_OUTPUT
+from metrics.regression.inverse import *
 from torch import Tensor, nn
-from torch.distributions import Categorical,Independent,MixtureSameFamily
+from torch.distributions import Categorical, Independent, MixtureSameFamily
 from torch.optim import Optimizer
 from torchmetrics import MeanAbsoluteError, MeanSquaredError, MetricCollection
 
 from torch_uncertainty.metrics.regression.nll import DistributionNLL
 from torch_uncertainty.utils.distributions import dist_rearrange, squeeze_dist
-from metrics.regression.inverse import *
-
-
 
 
 class RegressionRoutine(LightningModule):
@@ -241,4 +239,3 @@ def _regression_routine_checks(num_estimators: int, output_dim: int) -> None:
 
     if output_dim < 1:
         raise ValueError(f"output_dim must be positive, got {output_dim}.")
-
