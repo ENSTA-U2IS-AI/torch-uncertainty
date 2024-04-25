@@ -448,11 +448,7 @@ class ClassificationRoutine(LightningModule):
             ood_scores = -confs
 
         # Scaling for single models
-        if (
-            self.num_estimators == 1
-            and self.calibration_set is not None
-            and self.cal_model is not None
-        ):
+        if self.num_estimators == 1 and self.cal_model is not None:
             cal_logits = self.cal_model(inputs)
             cal_probs = F.softmax(cal_logits, dim=-1)
             self.ts_cls_metrics.update(cal_probs, targets)
@@ -528,7 +524,6 @@ class ClassificationRoutine(LightningModule):
             tmp_metrics = self.ts_cls_metrics.compute()
             self.log_dict(tmp_metrics, sync_dist=True)
             result_dict.update(tmp_metrics)
-            self.ts_cls_metrics.reset()
 
         if self.eval_grouping_loss:
             self.log_dict(
@@ -540,13 +535,11 @@ class ClassificationRoutine(LightningModule):
             tmp_metrics = self.test_id_ens_metrics.compute()
             self.log_dict(tmp_metrics, sync_dist=True)
             result_dict.update(tmp_metrics)
-            self.test_id_ens_metrics.reset()
 
         if self.eval_ood:
             tmp_metrics = self.test_ood_metrics.compute()
             self.log_dict(tmp_metrics, sync_dist=True)
             result_dict.update(tmp_metrics)
-            self.test_ood_metrics.reset()
 
             # already logged
             result_dict.update({"ood/entropy": self.test_ood_entropy.compute()})
@@ -555,7 +548,6 @@ class ClassificationRoutine(LightningModule):
                 tmp_metrics = self.test_ood_ens_metrics.compute()
                 self.log_dict(tmp_metrics, sync_dist=True)
                 result_dict.update(tmp_metrics)
-                self.test_ood_ens_metrics.reset()
 
         if isinstance(self.logger, Logger) and self.log_plots:
             self.logger.experiment.add_figure(
