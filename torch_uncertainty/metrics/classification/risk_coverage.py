@@ -111,13 +111,21 @@ class AURC(Metric):
 
         # Computation of AUSEC
         error_rates, optimal_error_rates = self.partial_compute()
-        num_errors = error_rates.size(0)
-        x = np.arange(num_errors) / num_errors
+        num_samples = error_rates.size(0)
+        rejection_rates = (np.arange(num_samples) / num_samples) * 100
+
+        x = np.arange(num_samples) / num_samples
         y = (error_rates - optimal_error_rates).numpy()
         aurc = auc(x, y)
 
-        rejection_rates = (np.arange(num_errors) / num_errors) * 100
+        # reduce plot size
+        plot_xs = np.arange(0.01, 100 + 0.01, 0.01)
+        xs = np.arange(start=1, stop=num_samples + 1, step=1) / num_samples
+        rejection_rates = np.interp(plot_xs, xs, rejection_rates)
+        error_rates = np.interp(plot_xs, xs, error_rates)
+        optimal_error_rates = np.interp(plot_xs, xs, optimal_error_rates)
 
+        # plot
         ax.plot(
             100 - rejection_rates,
             error_rates * 100,
