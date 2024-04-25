@@ -145,46 +145,28 @@ class ClassificationRoutine(LightningModule):
         self.optim_recipe = optim_recipe
 
         # metrics
-        if self.binary_cls:
-            cls_metrics = MetricCollection(
-                {
-                    "Acc": Accuracy(task="binary"),
-                    "ECE": CalibrationError(
-                        task="binary", num_bins=num_calibration_bins
-                    ),
-                    "aECE": CalibrationError(
-                        task="binary",
-                        adaptive=True,
-                        num_bins=num_calibration_bins,
-                    ),
-                    "Brier": BrierScore(num_classes=1),
-                    "AURC": AURC(),
-                },
-                compute_groups=False,
-            )
-        else:
-            cls_metrics = MetricCollection(
-                {
-                    "NLL": CategoricalNLL(),
-                    "Acc": Accuracy(
-                        task="multiclass", num_classes=self.num_classes
-                    ),
-                    "ECE": CalibrationError(
-                        task="multiclass",
-                        num_bins=num_calibration_bins,
-                        num_classes=self.num_classes,
-                    ),
-                    "aECE": CalibrationError(
-                        task="multiclass",
-                        adaptive=True,
-                        num_bins=num_calibration_bins,
-                        num_classes=self.num_classes,
-                    ),
-                    "Brier": BrierScore(num_classes=self.num_classes),
-                    "AURC": AURC(),
-                },
-                compute_groups=False,
-            )
+        task = "binary" if self.binary_cls else "multiclass"
+
+        cls_metrics = MetricCollection(
+            {
+                "Acc": Accuracy(task=task, num_classes=num_classes),
+                "ECE": CalibrationError(
+                    task=task,
+                    num_bins=num_calibration_bins,
+                    num_classes=num_classes,
+                ),
+                "aECE": CalibrationError(
+                    task=task,
+                    adaptive=True,
+                    num_bins=num_calibration_bins,
+                    num_classes=num_classes,
+                ),
+                "Brier": BrierScore(num_classes=num_classes),
+                "AURC": AURC(),
+                "NLL": CategoricalNLL(),
+            },
+            compute_groups=False,
+        )
 
         self.val_cls_metrics = cls_metrics.clone(prefix="cls_val/")
         self.test_cls_metrics = cls_metrics.clone(prefix="cls_test/")
@@ -206,6 +188,22 @@ class ClassificationRoutine(LightningModule):
             self.test_ood_metrics = ood_metrics.clone(prefix="ood/")
             self.test_ood_entropy = Entropy()
 
+        # metrics for ensembles only
+        if self.num_estimators > 1:
+            ens_metrics = MetricCollection(
+                {
+                    "Disagreement": Disagreement(),
+                    "MI": MutualInformation(),
+                    "Entropy": Entropy(),
+                }
+            )
+
+            self.test_id_ens_metrics = ens_metrics.clone(prefix="cls_test/ens_")
+
+            if self.eval_ood:
+                self.test_ood_ens_metrics = ens_metrics.clone(prefix="ood/ens_")
+
+        # Mixup
         self.mixtype = mixtype
         self.mixmode = mixmode
         self.dist_sim = dist_sim
@@ -233,21 +231,6 @@ class ClassificationRoutine(LightningModule):
         if self.is_elbo:
             self.loss.set_model(self.model)
         self.is_dec = isinstance(self.loss, DECLoss)
-
-        # metrics for ensembles only
-        if self.num_estimators > 1:
-            ens_metrics = MetricCollection(
-                {
-                    "Disagreement": Disagreement(),
-                    "MI": MutualInformation(),
-                    "Entropy": Entropy(),
-                }
-            )
-
-            self.test_id_ens_metrics = ens_metrics.clone(prefix="cls_test/ens_")
-
-            if self.eval_ood:
-                self.test_ood_ens_metrics = ens_metrics.clone(prefix="ood/ens_")
 
         self.id_logit_storage = None
         self.ood_logit_storage = None
@@ -553,14 +536,15 @@ class ClassificationRoutine(LightningModule):
             self.logger.experiment.add_figure(
                 "Reliabity diagram", self.test_cls_metrics["ECE"].plot()[0]
             )
+            self.logger.experiment.add_figure(
+                "Risk-Coverage curve", self.test_cls_metrics["AURC"].plot()[0]
+            )
+
             if self.cal_model is not None:
                 self.logger.experiment.add_figure(
                     "Reliabity diagram after calibration",
                     self.ts_cls_metrics["ECE"].plot()[0],
                 )
-            self.logger.experiment.add_figure(
-                "Risk-Coverage curve", self.test_cls_metrics["AURC"].plot()[0]
-            )
 
             # plot histograms of logits and likelihoods
             if self.eval_ood:
