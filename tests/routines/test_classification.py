@@ -371,7 +371,7 @@ class TestClassification:
             )
 
         with pytest.raises(
-            ValueError, match="num_calibration_bins must be positive, got"
+            ValueError, match="num_calibration_bins must be at least 2, got"
         ):
             ClassificationRoutine(
                 model=nn.Identity(),
