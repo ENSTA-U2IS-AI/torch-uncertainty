@@ -5,13 +5,10 @@ from torch import Tensor, nn
 
 from torch_uncertainty.layers import MaskedConv2d, MaskedLinear
 
+from .utils import get_resnet_num_blocks
+
 __all__ = [
-    "masked_resnet18",
-    "masked_resnet20",
-    "masked_resnet34",
-    "masked_resnet50",
-    "masked_resnet101",
-    "masked_resnet152",
+    "masked_resnet",
 ]
 
 
@@ -81,7 +78,7 @@ class _BasicBlock(nn.Module):
         return F.relu(out)
 
 
-class Bottleneck(nn.Module):
+class _Bottleneck(nn.Module):
     expansion = 4
 
     def __init__(
@@ -159,7 +156,7 @@ class Bottleneck(nn.Module):
 class _MaskedResNet(nn.Module):
     def __init__(
         self,
-        block: type[_BasicBlock | Bottleneck],
+        block: type[_BasicBlock | _Bottleneck],
         num_blocks: list[int],
         in_channels: int,
         num_classes: int,
@@ -278,7 +275,7 @@ class _MaskedResNet(nn.Module):
 
     def _make_layer(
         self,
-        block: type[_BasicBlock | Bottleneck],
+        block: type[_BasicBlock | _Bottleneck],
         planes: int,
         num_blocks: int,
         stride: int,
@@ -322,9 +319,10 @@ class _MaskedResNet(nn.Module):
         return self.linear(out)
 
 
-def masked_resnet18(
+def masked_resnet(
     in_channels: int,
     num_classes: int,
+    arch: int,
     num_estimators: int,
     scale: float,
     groups: int = 1,
@@ -333,11 +331,12 @@ def masked_resnet18(
     style: Literal["imagenet", "cifar"] = "imagenet",
     normalization_layer: type[nn.Module] = nn.BatchNorm2d,
 ) -> _MaskedResNet:
-    """Masksembles of ResNet-18.
+    """Masksembles of ResNet.
 
     Args:
         in_channels (int): Number of input channels.
         num_classes (int): Number of classes to predict.
+        arch (int): The architecture of the ResNet.
         num_estimators (int): Number of estimators in the ensemble.
         scale (float): The scale of the mask.
         groups (int): Number of groups within each estimator. Defaults to 1.
@@ -348,232 +347,13 @@ def masked_resnet18(
         normalization_layer (nn.Module, optional): Normalization layer.
 
     Returns:
-        _MaskedResNet: A Masksembles-style ResNet-18.
+        _MaskedResNet: A Masksembles-style ResNet.
     """
+    block = _BasicBlock if arch in [18, 20, 34] else _Bottleneck
     return _MaskedResNet(
+        block=block,
+        num_blocks=get_resnet_num_blocks(arch),
         num_classes=num_classes,
-        block=_BasicBlock,
-        num_blocks=[2, 2, 2, 2],
-        in_channels=in_channels,
-        num_estimators=num_estimators,
-        scale=scale,
-        groups=groups,
-        conv_bias=conv_bias,
-        dropout_rate=dropout_rate,
-        style=style,
-        in_planes=64,
-        normalization_layer=normalization_layer,
-    )
-
-
-def masked_resnet20(
-    in_channels: int,
-    num_classes: int,
-    num_estimators: int,
-    scale: float,
-    groups: int = 1,
-    conv_bias: bool = True,
-    dropout_rate: float = 0,
-    style: Literal["imagenet", "cifar"] = "imagenet",
-    normalization_layer: type[nn.Module] = nn.BatchNorm2d,
-) -> _MaskedResNet:
-    """Masksembles of ResNet-20.
-
-    Args:
-        in_channels (int): Number of input channels.
-        num_classes (int): Number of classes to predict.
-        num_estimators (int): Number of estimators in the ensemble.
-        scale (float): The scale of the mask.
-        groups (int): Number of groups within each estimator. Defaults to 1.
-        conv_bias (bool): Whether to use bias in convolutions. Defaults to
-            ``True``.
-        dropout_rate (float): Dropout rate. Defaults to 0.
-        style (str, optional): The style of the model. Defaults to "imagenet".
-        normalization_layer (nn.Module, optional): Normalization layer.
-
-    Returns:
-        _MaskedResNet: A Masksembles-style ResNet-20.
-    """
-    return _MaskedResNet(
-        num_classes=num_classes,
-        block=_BasicBlock,
-        num_blocks=[3, 3, 3],
-        in_channels=in_channels,
-        num_estimators=num_estimators,
-        scale=scale,
-        groups=groups,
-        conv_bias=conv_bias,
-        dropout_rate=dropout_rate,
-        style=style,
-        in_planes=16,
-        normalization_layer=normalization_layer,
-    )
-
-
-def masked_resnet34(
-    in_channels: int,
-    num_classes: int,
-    num_estimators: int,
-    scale: float,
-    groups: int = 1,
-    conv_bias: bool = True,
-    dropout_rate: float = 0,
-    style: Literal["imagenet", "cifar"] = "imagenet",
-    normalization_layer: type[nn.Module] = nn.BatchNorm2d,
-) -> _MaskedResNet:
-    """Masksembles of ResNet-34.
-
-    Args:
-        in_channels (int): Number of input channels.
-        num_classes (int): Number of classes to predict.
-        num_estimators (int): Number of estimators in the ensemble.
-        scale (float): The scale of the mask.
-        groups (int): Number of groups within each estimator. Defaults to 1.
-        conv_bias (bool): Whether to use bias in convolutions. Defaults to
-            ``True``.
-        dropout_rate (float): Dropout rate. Defaults to 0.
-        style (str, optional): The style of the model. Defaults to "imagenet".
-        normalization_layer (nn.Module, optional): Normalization layer.
-
-    Returns:
-        _MaskedResNet: A Masksembles-style ResNet-34.
-    """
-    return _MaskedResNet(
-        num_classes=num_classes,
-        block=_BasicBlock,
-        num_blocks=[3, 4, 6, 3],
-        in_channels=in_channels,
-        num_estimators=num_estimators,
-        scale=scale,
-        groups=groups,
-        conv_bias=conv_bias,
-        dropout_rate=dropout_rate,
-        style=style,
-        in_planes=64,
-        normalization_layer=normalization_layer,
-    )
-
-
-def masked_resnet50(
-    in_channels: int,
-    num_classes: int,
-    num_estimators: int,
-    scale: float,
-    groups: int = 1,
-    conv_bias: bool = True,
-    dropout_rate: float = 0,
-    style: Literal["imagenet", "cifar"] = "imagenet",
-    normalization_layer: type[nn.Module] = nn.BatchNorm2d,
-) -> _MaskedResNet:
-    """Masksembles of ResNet-50.
-
-    Args:
-        in_channels (int): Number of input channels.
-        num_classes (int): Number of classes to predict.
-        num_estimators (int): Number of estimators in the ensemble.
-        scale (float): The scale of the mask.
-        groups (int): Number of groups within each estimator. Defaults to 1.
-        conv_bias (bool): Whether to use bias in convolutions. Defaults to
-            ``True``.
-        dropout_rate (float): Dropout rate. Defaults to 0.
-        style (str, optional): The style of the model. Defaults to "imagenet".
-        normalization_layer (nn.Module, optional): Normalization layer.
-
-    Returns:
-        _MaskedResNet: A Masksembles-style ResNet-50.
-    """
-    return _MaskedResNet(
-        num_classes=num_classes,
-        block=Bottleneck,
-        num_blocks=[3, 4, 6, 3],
-        in_channels=in_channels,
-        num_estimators=num_estimators,
-        scale=scale,
-        groups=groups,
-        conv_bias=conv_bias,
-        dropout_rate=dropout_rate,
-        style=style,
-        in_planes=64,
-        normalization_layer=normalization_layer,
-    )
-
-
-def masked_resnet101(
-    in_channels: int,
-    num_classes: int,
-    num_estimators: int,
-    scale: float,
-    groups: int = 1,
-    conv_bias: bool = True,
-    dropout_rate: float = 0,
-    style: Literal["imagenet", "cifar"] = "imagenet",
-    normalization_layer: type[nn.Module] = nn.BatchNorm2d,
-) -> _MaskedResNet:
-    """Masksembles of ResNet-101.
-
-    Args:
-        in_channels (int): Number of input channels.
-        num_classes (int): Number of classes to predict.
-        num_estimators (int): Number of estimators in the ensemble.
-        scale (float): The scale of the mask.
-        groups (int): Number of groups within each estimator. Defaults to 1.
-        conv_bias (bool): Whether to use bias in convolutions. Defaults to
-            ``True``.
-        dropout_rate (float): Dropout rate. Defaults to 0.
-        style (str, optional): The style of the model. Defaults to "imagenet".
-        normalization_layer (nn.Module, optional): Normalization layer.
-
-    Returns:
-        _MaskedResNet: A Masksembles-style ResNet-101.
-    """
-    return _MaskedResNet(
-        num_classes=num_classes,
-        block=Bottleneck,
-        num_blocks=[3, 4, 23, 3],
-        in_channels=in_channels,
-        num_estimators=num_estimators,
-        scale=scale,
-        groups=groups,
-        conv_bias=conv_bias,
-        dropout_rate=dropout_rate,
-        style=style,
-        in_planes=64,
-        normalization_layer=normalization_layer,
-    )
-
-
-def masked_resnet152(
-    in_channels: int,
-    num_classes: int,
-    num_estimators: int,
-    scale: float,
-    groups: int = 1,
-    conv_bias: bool = True,
-    dropout_rate: float = 0,
-    style: Literal["imagenet", "cifar"] = "imagenet",
-    normalization_layer: type[nn.Module] = nn.BatchNorm2d,
-) -> _MaskedResNet:  # coverage: ignore
-    """Masksembles of ResNet-152.
-
-    Args:
-        in_channels (int): Number of input channels.
-        num_classes (int): Number of classes to predict.
-        num_estimators (int): Number of estimators in the ensemble.
-        scale (float): The scale of the mask.
-        groups (int): Number of groups within each estimator. Defaults to 1.
-        conv_bias (bool): Whether to use bias in convolutions. Defaults to
-            ``True``.
-        dropout_rate (float): Dropout rate. Defaults to 0.
-        style (str, optional): The style of the model. Defaults to "imagenet".
-        normalization_layer (nn.Module, optional): Normalization layer.
-
-    Returns:
-        _MaskedResNet: A Masksembles-style ResNet-152.
-    """
-    return _MaskedResNet(
-        num_classes=num_classes,
-        block=Bottleneck,
-        num_blocks=[3, 8, 36, 3],
         in_channels=in_channels,
         num_estimators=num_estimators,
         scale=scale,
