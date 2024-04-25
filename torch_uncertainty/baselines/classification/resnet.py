@@ -69,6 +69,7 @@ class ResNetBaseline(ClassificationRoutine):
         calibration_set: Literal["val", "test"] | None = None,
         eval_ood: bool = False,
         eval_grouping_loss: bool = False,
+        num_calibration_bins: int = 15,
         pretrained: bool = False,
     ) -> None:
         r"""ResNet backbone baseline for classification providing support for
@@ -155,6 +156,8 @@ class ResNetBaseline(ClassificationRoutine):
                 OOD detection or not. Defaults to ``False``.
             eval_grouping_loss (bool, optional): Indicates whether to evaluate the
                 grouping loss or not. Defaults to ``False``.
+            num_calibration_bins (int, optional): Number of calibration bins.
+                Defaults to ``15``.
             pretrained (bool, optional): Indicates whether to use the pretrained
                 weights or not. Only used if :attr:`version` is ``"packed"``.
                 Defaults to ``False``.
@@ -238,5 +241,6 @@ class ResNetBaseline(ClassificationRoutine):
             log_plots=log_plots,
             save_in_csv=save_in_csv,
             calibration_set=calibration_set,
+            num_calibration_bins=num_calibration_bins,
         )
         self.save_hyperparameters(ignore=["loss"])

@@ -157,6 +157,7 @@ class DummySegmentationBaseline:
         loss: type[nn.Module],
         baseline_type: str = "single",
         optim_recipe=None,
+        metric_subsampling_rate: float = 1,
     ) -> LightningModule:
         model = dummy_segmentation_model(
             in_channels=in_channels,
@@ -172,6 +173,7 @@ class DummySegmentationBaseline:
                 format_batch_fn=None,
                 num_estimators=1,
                 optim_recipe=optim_recipe(model),
+                metric_subsampling_rate=metric_subsampling_rate,
             )
 
         # baseline_type == "ensemble":
@@ -186,4 +188,5 @@ class DummySegmentationBaseline:
             format_batch_fn=RepeatTarget(2),
             num_estimators=2,
             optim_recipe=optim_recipe(model),
+            metric_subsampling_rate=metric_subsampling_rate,
         )

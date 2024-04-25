@@ -29,6 +29,9 @@ class DeepLabV3Baseline(SegmentationRoutine):
         output_stride: int,
         separable: bool,
         num_estimators: int = 1,
+        metric_subsampling_rate: float = 1e-2,
+        log_plots: bool = False,
+        num_calibration_bins: int = 15,
     ) -> None:
         params = {
             "num_classes": num_classes,
@@ -49,5 +52,8 @@ class DeepLabV3Baseline(SegmentationRoutine):
             loss=loss,
             num_estimators=num_estimators,
             format_batch_fn=format_batch_fn,
+            metric_subsampling_rate=metric_subsampling_rate,
+            log_plots=log_plots,
+            num_calibration_bins=num_calibration_bins,
         )
         self.save_hyperparameters(ignore=["loss"])
