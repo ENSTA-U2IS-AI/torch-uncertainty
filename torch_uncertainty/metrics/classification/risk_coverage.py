@@ -20,7 +20,7 @@ class AURC(Metric):
         r"""`Area Under the Risk-Coverage curve`_.
 
         The Area Under the Risk-Coverage curve (AURC) is the main metric for
-        selective classification performance assessment. It evaluates the
+        Selective Classification (SC) performance assessment. It evaluates the
         quality of uncertainty estimates by measuring the ability to
         discriminate between correct and incorrect predictions based on their
         rank (and not their values in contrast with calibration).
@@ -55,6 +55,8 @@ class AURC(Metric):
             probs (Tensor): The predicted probabilities of shape :math:`(N, C)`.
             targets (Tensor): The ground truth labels of shape :math:`(N,)`.
         """
+        if probs.ndim == 1:
+            probs = torch.stack([probs, 1 - probs], dim=-1)
         self.scores.append(-probs.max(-1).values)
         self.errors.append((probs.argmax(-1) != targets) * 1.0)
 
