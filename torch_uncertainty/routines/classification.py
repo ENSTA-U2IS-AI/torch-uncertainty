@@ -20,6 +20,7 @@ from torchmetrics.classification import (
 from torch_uncertainty.layers import Identity
 from torch_uncertainty.losses import DECLoss, ELBOLoss
 from torch_uncertainty.metrics import (
+    AURC,
     FPR95,
     BrierScore,
     CalibrationError,
@@ -151,12 +152,13 @@ class ClassificationRoutine(LightningModule):
                     "ECE": CalibrationError(
                         task="binary", num_bins=num_calibration_bins
                     ),
-                    "AECE": CalibrationError(
+                    "aECE": CalibrationError(
                         task="binary",
                         adaptive=True,
                         num_bins=num_calibration_bins,
                     ),
                     "Brier": BrierScore(num_classes=1),
+                    "AURC": AURC(),
                 },
                 compute_groups=False,
             )
@@ -172,13 +174,14 @@ class ClassificationRoutine(LightningModule):
                         num_bins=num_calibration_bins,
                         num_classes=self.num_classes,
                     ),
-                    "AECE": CalibrationError(
+                    "aECE": CalibrationError(
                         task="multiclass",
                         adaptive=True,
                         num_bins=num_calibration_bins,
                         num_classes=self.num_classes,
                     ),
                     "Brier": BrierScore(num_classes=self.num_classes),
+                    "AURC": AURC(),
                 },
                 compute_groups=False,
             )
@@ -445,11 +448,7 @@ class ClassificationRoutine(LightningModule):
             ood_scores = -confs
 
         # Scaling for single models
-        if (
-            self.num_estimators == 1
-            and self.calibration_set is not None
-            and self.cal_model is not None
-        ):
+        if self.num_estimators == 1 and self.cal_model is not None:
             cal_logits = self.cal_model(inputs)
             cal_probs = F.softmax(cal_logits, dim=-1)
             self.ts_cls_metrics.update(cal_probs, targets)
@@ -525,7 +524,6 @@ class ClassificationRoutine(LightningModule):
             tmp_metrics = self.ts_cls_metrics.compute()
             self.log_dict(tmp_metrics, sync_dist=True)
             result_dict.update(tmp_metrics)
-            self.ts_cls_metrics.reset()
 
         if self.eval_grouping_loss:
             self.log_dict(
@@ -537,13 +535,11 @@ class ClassificationRoutine(LightningModule):
             tmp_metrics = self.test_id_ens_metrics.compute()
             self.log_dict(tmp_metrics, sync_dist=True)
             result_dict.update(tmp_metrics)
-            self.test_id_ens_metrics.reset()
 
         if self.eval_ood:
             tmp_metrics = self.test_ood_metrics.compute()
             self.log_dict(tmp_metrics, sync_dist=True)
             result_dict.update(tmp_metrics)
-            self.test_ood_metrics.reset()
 
             # already logged
             result_dict.update({"ood/entropy": self.test_ood_entropy.compute()})
@@ -552,11 +548,18 @@ class ClassificationRoutine(LightningModule):
                 tmp_metrics = self.test_ood_ens_metrics.compute()
                 self.log_dict(tmp_metrics, sync_dist=True)
                 result_dict.update(tmp_metrics)
-                self.test_ood_ens_metrics.reset()
 
         if isinstance(self.logger, Logger) and self.log_plots:
             self.logger.experiment.add_figure(
-                "Calibration Plot", self.test_cls_metrics["ECE"].plot()[0]
+                "Reliabity diagram", self.test_cls_metrics["ECE"].plot()[0]
+            )
+            if self.cal_model is not None:
+                self.logger.experiment.add_figure(
+                    "Reliabity diagram after calibration",
+                    self.ts_cls_metrics["ECE"].plot()[0],
+                )
+            self.logger.experiment.add_figure(
+                "Risk-Coverage curve", self.test_cls_metrics["AURC"].plot()[0]
             )
 
             # plot histograms of logits and likelihoods

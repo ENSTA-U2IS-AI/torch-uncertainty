@@ -4,36 +4,12 @@ from torch import nn
 
 from torch_uncertainty.models import mc_dropout
 from torch_uncertainty.models.resnet import (
-    batched_resnet18,
-    batched_resnet20,
-    batched_resnet34,
-    batched_resnet50,
-    batched_resnet101,
-    batched_resnet152,
-    masked_resnet18,
-    masked_resnet20,
-    masked_resnet34,
-    masked_resnet50,
-    masked_resnet101,
-    masked_resnet152,
-    mimo_resnet18,
-    mimo_resnet20,
-    mimo_resnet34,
-    mimo_resnet50,
-    mimo_resnet101,
-    mimo_resnet152,
-    packed_resnet18,
-    packed_resnet20,
-    packed_resnet34,
-    packed_resnet50,
-    packed_resnet101,
-    packed_resnet152,
-    resnet18,
-    resnet20,
-    resnet34,
-    resnet50,
-    resnet101,
-    resnet152,
+    batched_resnet,
+    lpbnn_resnet,
+    masked_resnet,
+    mimo_resnet,
+    packed_resnet,
+    resnet,
 )
 from torch_uncertainty.routines.classification import ClassificationRoutine
 from torch_uncertainty.transforms import MIMOBatchFormat, RepeatTarget
@@ -41,56 +17,15 @@ from torch_uncertainty.transforms import MIMOBatchFormat, RepeatTarget
 
 class ResNetBaseline(ClassificationRoutine):
     single = ["std"]
-    ensemble = ["packed", "batched", "masked", "mc-dropout", "mimo"]
+    ensemble = ["packed", "batched", "lpbnn", "masked", "mc-dropout", "mimo"]
     versions = {
-        "std": [
-            resnet18,
-            resnet20,
-            resnet34,
-            resnet50,
-            resnet101,
-            resnet152,
-        ],
-        "packed": [
-            packed_resnet18,
-            packed_resnet20,
-            packed_resnet34,
-            packed_resnet50,
-            packed_resnet101,
-            packed_resnet152,
-        ],
-        "batched": [
-            batched_resnet18,
-            batched_resnet20,
-            batched_resnet34,
-            batched_resnet50,
-            batched_resnet101,
-            batched_resnet152,
-        ],
-        "masked": [
-            masked_resnet18,
-            masked_resnet20,
-            masked_resnet34,
-            masked_resnet50,
-            masked_resnet101,
-            masked_resnet152,
-        ],
-        "mimo": [
-            mimo_resnet18,
-            mimo_resnet20,
-            mimo_resnet34,
-            mimo_resnet50,
-            mimo_resnet101,
-            mimo_resnet152,
-        ],
-        "mc-dropout": [
-            resnet18,
-            resnet20,
-            resnet34,
-            resnet50,
-            resnet101,
-            resnet152,
-        ],
+        "std": resnet,
+        "packed": packed_resnet,
+        "batched": batched_resnet,
+        "lpbnn": lpbnn_resnet,
+        "masked": masked_resnet,
+        "mimo": mimo_resnet,
+        "mc-dropout": resnet,
     }
     archs = [18, 20, 34, 50, 101, 152]
 
@@ -104,6 +39,7 @@ class ResNetBaseline(ClassificationRoutine):
             "mc-dropout",
             "packed",
             "batched",
+            "lpbnn",
             "masked",
             "mimo",
         ],
@@ -231,6 +167,7 @@ class ResNetBaseline(ClassificationRoutine):
             LightningModule: ResNet baseline ready for training and evaluation.
         """
         params = {
+            "arch": arch,
             "conv_bias": False,
             "dropout_rate": dropout_rate,
             "groups": groups,
@@ -274,7 +211,7 @@ class ResNetBaseline(ClassificationRoutine):
         if version == "mc-dropout":  # std ResNets don't have `num_estimators`
             del params["num_estimators"]
 
-        model = self.versions[version][self.archs.index(arch)](**params)
+        model = self.versions[version](**params)
         if version == "mc-dropout":
             model = mc_dropout(
                 model=model,

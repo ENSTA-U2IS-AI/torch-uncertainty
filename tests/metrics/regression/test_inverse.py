@@ -1,35 +1,43 @@
-import unittest
-
+import pytest
 import torch
 
-from torch_uncertainty.metrics import InverseMAE, InverseRMSE
+from torch_uncertainty.metrics import (
+    MeanAbsoluteErrorInverse,
+    MeanSquaredErrorInverse,
+)
 
 
-class TestInverseMAE(unittest.TestCase):
-    def test_simple_case(self):
-        preds = torch.tensor([1.0, 2.0, 3.0])
-        target = torch.tensor([1.0, 2.0, 3.0])
-        metric = InverseMAE()
+class TestMeanAbsoluteErrorInverse:
+    """Test the MeanAbsoluteErrorInverse metric."""
+
+    def test_main(self):
+        preds = torch.tensor([1, 1 / 2, 1 / 3])
+        target = torch.tensor([1, 1 / 2, 1 / 3])
+        metric = MeanAbsoluteErrorInverse(unit="m")
         metric.update(preds, target)
-        result = metric.compute()
-        expected = torch.tensor(1.0)
-        torch.testing.assert_allclose(result, expected)
+        assert metric.compute() == pytest.approx(0)
 
-
-class TestInverseRMSE(unittest.TestCase):
-    def test_inverse_rmse_simple_case(self):
-        preds = torch.tensor([2.5, 0.0, 2, 8])
-        target = torch.tensor([3.0, -0.5, 2, 7])
-        metric = InverseRMSE()
+        metric.reset()
+        target = torch.tensor([1, 1, 1])
         metric.update(preds, target)
-        result = metric.compute()
+        assert metric.compute() == pytest.approx(1)
 
-        # Calculate the expected inverse RMSE
-        mse_val = torch.mean((preds - target) ** 2)
-        expected = torch.reciprocal(torch.sqrt(mse_val))
-
-        torch.testing.assert_allclose(result, expected)
+    def test_error(self):
+        with pytest.raises(ValueError, match="unit must be one of 'mm'"):
+            MeanAbsoluteErrorInverse(unit="cm")
 
 
-if __name__ == "__main__":
-    unittest.main()
+class TestMeanSquaredErrorInverse:
+    """Test the MeanSquaredErrorInverse metric."""
+
+    def test_main(self):
+        preds = torch.tensor([1, 1 / 2, 1 / 3])
+        target = torch.tensor([1, 1 / 2, 1 / 3])
+        metric = MeanSquaredErrorInverse(unit="m")
+        metric.update(preds, target)
+        assert metric.compute() == pytest.approx(0)
+
+        metric.reset()
+        target = torch.tensor([1, 1, 1])
+        metric.update(preds, target)
+        assert metric.compute() == pytest.approx(5 / 3)

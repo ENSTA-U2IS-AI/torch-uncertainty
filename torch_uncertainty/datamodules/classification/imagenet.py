@@ -17,7 +17,10 @@ from torch_uncertainty.datasets.classification import (
     ImageNetR,
     OpenImageO,
 )
-from torch_uncertainty.utils.misc import create_train_val_split
+from torch_uncertainty.utils import (
+    create_train_val_split,
+    interpolation_modes_from_str,
+)
 
 
 class ImageNetDataModule(AbstractDataModule):
@@ -45,6 +48,7 @@ class ImageNetDataModule(AbstractDataModule):
         test_alt: str | None = None,
         procedure: str | None = None,
         train_size: int = 224,
+        interpolation: str = "bilinear",
         rand_augment_opt: str | None = None,
         num_workers: int = 1,
         pin_memory: bool = True,
@@ -65,6 +69,8 @@ class ImageNetDataModule(AbstractDataModule):
             test_alt (str): Which test set to use. Defaults to ``None``.
             procedure (str): Which procedure to use. Defaults to ``None``.
             train_size (int): Size of training images. Defaults to ``224``.
+            interpolation (str): Interpolation method for the Resize Crops.
+                Defaults to ``"bilinear"``.
             rand_augment_opt (str): Which RandAugment to use. Defaults to ``None``.
             num_workers (int): Number of workers to use for data loading. Defaults
                 to ``1``.
@@ -89,6 +95,7 @@ class ImageNetDataModule(AbstractDataModule):
         self.val_split = val_split
         self.ood_ds = ood_ds
         self.test_alt = test_alt
+        self.interpolation = interpolation_modes_from_str(interpolation)
 
         if test_alt is None:
             self.dataset = ImageNet
@@ -137,7 +144,7 @@ class ImageNetDataModule(AbstractDataModule):
 
         self.train_transform = T.Compose(
             [
-                T.RandomResizedCrop(train_size),
+                T.RandomResizedCrop(train_size, interpolation=interpolation),
                 T.RandomHorizontalFlip(),
                 main_transform,
                 T.ToTensor(),
@@ -147,7 +154,7 @@ class ImageNetDataModule(AbstractDataModule):
 
         self.test_transform = T.Compose(
             [
-                T.Resize(256),
+                T.Resize(256, interpolation=interpolation),
                 T.CenterCrop(224),
                 T.ToTensor(),
                 T.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),

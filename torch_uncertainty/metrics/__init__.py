@@ -1,5 +1,6 @@
 # ruff: noqa: F401
 from .classification import (
+    AURC,
     AUSE,
     FPR95,
     AdaptiveCalibrationError,
@@ -16,8 +17,10 @@ from .classification import (
 from .regression import (
     DistributionNLL,
     Log10,
+    MeanAbsoluteErrorInverse,
     MeanGTRelativeAbsoluteError,
     MeanGTRelativeSquaredError,
+    MeanSquaredErrorInverse,
     MeanSquaredLogError,
     SILog,
     ThresholdAccuracy,

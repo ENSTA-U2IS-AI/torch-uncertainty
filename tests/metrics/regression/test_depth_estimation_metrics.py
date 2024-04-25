@@ -16,8 +16,8 @@ class TestLog10:
 
     def test_main(self):
         metric = Log10()
-        preds = torch.rand((10, 2)).double()
-        targets = torch.rand((10, 2)).double()
+        preds = torch.rand((10, 2)).double() + 0.01
+        targets = torch.rand((10, 2)).double() + 0.01
         metric.update(preds[:, 0], targets[:, 0])
         metric.update(preds[:, 1], targets[:, 1])
         assert torch.mean(
