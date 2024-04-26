@@ -9,7 +9,7 @@ from torch_uncertainty.models.segmentation.deeplab import (
 from torch_uncertainty.routines.segmentation import SegmentationRoutine
 
 
-class DeepLabV3Baseline(SegmentationRoutine):
+class DeepLabBaseline(SegmentationRoutine):
     single = ["std"]
     versions = {
         "std": [
@@ -32,12 +32,14 @@ class DeepLabV3Baseline(SegmentationRoutine):
         metric_subsampling_rate: float = 1e-2,
         log_plots: bool = False,
         num_calibration_bins: int = 15,
+        pretrained_backbone: bool = True,
     ) -> None:
         params = {
             "num_classes": num_classes,
             "style": style,
             "output_stride": output_stride,
             "separable": separable,
+            "pretrained_backbone": pretrained_backbone,
         }
 
         format_batch_fn = nn.Identity()

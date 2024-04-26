@@ -1,7 +1,7 @@
 import torch
 from lightning.pytorch.cli import LightningArgumentParser
 
-from torch_uncertainty.baselines.segmentation import DeepLabV3Baseline
+from torch_uncertainty.baselines.segmentation import DeepLabBaseline
 from torch_uncertainty.datamodules.segmentation import CityscapesDataModule
 from torch_uncertainty.utils import TULightningCLI
 from torch_uncertainty.utils.learning_rate import PolyLR
@@ -14,7 +14,7 @@ class DeepLabV3CLI(TULightningCLI):
 
 
 def cli_main() -> DeepLabV3CLI:
-    return DeepLabV3CLI(DeepLabV3Baseline, CityscapesDataModule)
+    return DeepLabV3CLI(DeepLabBaseline, CityscapesDataModule)
 
 
 if __name__ == "__main__":

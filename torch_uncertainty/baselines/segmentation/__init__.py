@@ -1,3 +1,3 @@
 # ruff: noqa: F401
-from .deeplabv3 import DeepLabV3Baseline
+from .deeplabv3 import DeepLabBaseline
 from .segformer import SegFormerBaseline

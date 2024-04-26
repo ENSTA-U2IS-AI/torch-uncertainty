@@ -11,12 +11,17 @@ from torch_uncertainty.models.segmentation.deeplab import (
 class TestDeeplab:
     """Testing the Deeplab class."""
 
+    @torch.no_grad()
     def test_main(self):
-        deep_lab_v3_resnet101(10, "v3+", 8, False, False)
         model = deep_lab_v3_resnet50(10, "v3", 16, True, False).eval()
-        with torch.no_grad():
-            model(torch.randn(1, 3, 32, 32))
+        model(torch.randn(1, 3, 32, 32))
+        model = deep_lab_v3_resnet101(10, "v3+", 8, False, False).eval()
+        model(torch.randn(1, 3, 32, 32))
 
     def test_errors(self):
         with pytest.raises(ValueError, match="Unknown backbone:"):
             _DeepLabV3(10, "other", "v3", 16, True, False)
+        with pytest.raises(ValueError, match="output_stride: "):
+            deep_lab_v3_resnet50(10, "v3", 15, True, False)
+        with pytest.raises(ValueError, match="Unknown style: "):
+            deep_lab_v3_resnet50(10, "v2", 16, True, False)
