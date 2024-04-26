@@ -25,10 +25,12 @@ from torch_uncertainty.metrics import (
     BrierScore,
     CalibrationError,
     CategoricalNLL,
+    CovAt5Risk,
     Disagreement,
     Entropy,
     GroupingLoss,
     MutualInformation,
+    RiskAt80Cov,
     VariationRatio,
 )
 from torch_uncertainty.post_processing import TemperatureScaler
@@ -149,30 +151,38 @@ class ClassificationRoutine(LightningModule):
 
         cls_metrics = MetricCollection(
             {
-                "Acc": Accuracy(task=task, num_classes=num_classes),
-                "ECE": CalibrationError(
+                "cls/Acc": Accuracy(task=task, num_classes=num_classes),
+                "cls/Brier": BrierScore(num_classes=num_classes),
+                "cls/NLL": CategoricalNLL(),
+                "cal/ECE": CalibrationError(
                     task=task,
                     num_bins=num_calibration_bins,
                     num_classes=num_classes,
                 ),
-                "aECE": CalibrationError(
+                "cal/aECE": CalibrationError(
                     task=task,
                     adaptive=True,
                     num_bins=num_calibration_bins,
                     num_classes=num_classes,
                 ),
-                "Brier": BrierScore(num_classes=num_classes),
-                "AURC": AURC(),
-                "NLL": CategoricalNLL(),
+                "sc/AURC": AURC(),
+                "sc/CovAt5Risk": CovAt5Risk(),
+                "sc/RiskAt80Cov": RiskAt80Cov(),
             },
-            compute_groups=False,
+            compute_groups=[
+                ["cls/Acc"],
+                ["cls/Brier"],
+                ["cls/NLL"],
+                ["cal/ECE", "cal/aECE"],
+                ["sc/AURC", "sc/CovAt5Risk", "sc/RiskAt80Cov"],
+            ],
         )
 
-        self.val_cls_metrics = cls_metrics.clone(prefix="cls_val/")
-        self.test_cls_metrics = cls_metrics.clone(prefix="cls_test/")
+        self.val_cls_metrics = cls_metrics.clone(prefix="val/")
+        self.test_cls_metrics = cls_metrics.clone(prefix="test/")
 
         if self.calibration_set is not None:
-            self.ts_cls_metrics = cls_metrics.clone(prefix="cls_test/ts_")
+            self.ts_cls_metrics = cls_metrics.clone(prefix="test/ts_")
 
         self.test_id_entropy = Entropy()
 
@@ -198,7 +208,7 @@ class ClassificationRoutine(LightningModule):
                 }
             )
 
-            self.test_id_ens_metrics = ens_metrics.clone(prefix="cls_test/ens_")
+            self.test_id_ens_metrics = ens_metrics.clone(prefix="test/ens_")
 
             if self.eval_ood:
                 self.test_ood_ens_metrics = ens_metrics.clone(prefix="ood/ens_")
@@ -220,12 +230,10 @@ class ClassificationRoutine(LightningModule):
 
             if self.eval_grouping_loss:
                 grouping_loss = MetricCollection(
-                    {"grouping_loss": GroupingLoss()}
+                    {"cls/grouping_loss": GroupingLoss()}
                 )
-                self.val_grouping_loss = grouping_loss.clone(prefix="gpl/val_")
-                self.test_grouping_loss = grouping_loss.clone(
-                    prefix="gpl/test_"
-                )
+                self.val_grouping_loss = grouping_loss.clone(prefix="val/")
+                self.test_grouping_loss = grouping_loss.clone(prefix="test/")
 
         self.is_elbo = isinstance(self.loss, ELBOLoss)
         if self.is_elbo:
@@ -450,7 +458,7 @@ class ClassificationRoutine(LightningModule):
             )
             self.test_id_entropy(probs)
             self.log(
-                "cls_test/entropy",
+                "test/cls/entropy",
                 self.test_id_entropy,
                 on_epoch=True,
                 add_dataloader_idx=False,
@@ -471,7 +479,7 @@ class ClassificationRoutine(LightningModule):
             self.test_ood_metrics.update(ood_scores, torch.ones_like(targets))
             self.test_ood_entropy(probs)
             self.log(
-                "ood/entropy",
+                "ood/Entropy",
                 self.test_ood_entropy,
                 on_epoch=True,
                 add_dataloader_idx=False,
@@ -496,7 +504,7 @@ class ClassificationRoutine(LightningModule):
 
         # already logged
         result_dict.update(
-            {"cls_test/entropy": self.test_id_entropy.compute()}, sync_dist=True
+            {"test/Entropy": self.test_id_entropy.compute()}, sync_dist=True
         )
 
         if (
@@ -525,7 +533,7 @@ class ClassificationRoutine(LightningModule):
             result_dict.update(tmp_metrics)
 
             # already logged
-            result_dict.update({"ood/entropy": self.test_ood_entropy.compute()})
+            result_dict.update({"ood/Entropy": self.test_ood_entropy.compute()})
 
             if self.num_estimators > 1:
                 tmp_metrics = self.test_ood_ens_metrics.compute()
@@ -534,16 +542,17 @@ class ClassificationRoutine(LightningModule):
 
         if isinstance(self.logger, Logger) and self.log_plots:
             self.logger.experiment.add_figure(
-                "Reliabity diagram", self.test_cls_metrics["ECE"].plot()[0]
+                "Reliabity diagram", self.test_cls_metrics["cal/ECE"].plot()[0]
             )
             self.logger.experiment.add_figure(
-                "Risk-Coverage curve", self.test_cls_metrics["AURC"].plot()[0]
+                "Risk-Coverage curve",
+                self.test_cls_metrics["sc/AURC"].plot()[0],
             )
 
             if self.cal_model is not None:
                 self.logger.experiment.add_figure(
                     "Reliabity diagram after calibration",
-                    self.ts_cls_metrics["ECE"].plot()[0],
+                    self.ts_cls_metrics["cal/ECE"].plot()[0],
                 )
 
             # plot histograms of logits and likelihoods

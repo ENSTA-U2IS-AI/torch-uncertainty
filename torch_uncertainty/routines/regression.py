@@ -81,15 +81,15 @@ class RegressionRoutine(LightningModule):
             compute_groups=True,
         )
 
-        self.val_metrics = reg_metrics.clone(prefix="reg_val/")
-        self.test_metrics = reg_metrics.clone(prefix="reg_test/")
+        self.val_metrics = reg_metrics.clone(prefix="val/")
+        self.test_metrics = reg_metrics.clone(prefix="test/")
 
         if self.probabilistic:
             reg_prob_metrics = MetricCollection(
                 {"NLL": DistributionNLL(reduction="mean")}
             )
-            self.val_prob_metrics = reg_prob_metrics.clone(prefix="reg_val/")
-            self.test_prob_metrics = reg_prob_metrics.clone(prefix="reg_test/")
+            self.val_prob_metrics = reg_prob_metrics.clone(prefix="val/")
+            self.test_prob_metrics = reg_prob_metrics.clone(prefix="test/")
 
         self.one_dim_regression = output_dim == 1
 

@@ -81,42 +81,40 @@ class SegmentationRoutine(LightningModule):
         # metrics
         seg_metrics = MetricCollection(
             {
-                "mIoU": MeanIntersectionOverUnion(num_classes=num_classes),
+                "seg/mIoU": MeanIntersectionOverUnion(num_classes=num_classes),
             },
             compute_groups=False,
         )
         sbsmpl_seg_metrics = MetricCollection(
             {
-                "pixAcc": Accuracy(task="multiclass", num_classes=num_classes),
-                "AURC": AURC(),
-                "ECE": CalibrationError(
+                "seg/mAcc": Accuracy(
+                    task="multiclass", average="macro", num_classes=num_classes
+                ),
+                "seg/Brier": BrierScore(num_classes=num_classes),
+                "seg/NLL": CategoricalNLL(),
+                "seg/pixAcc": Accuracy(
+                    task="multiclass", num_classes=num_classes
+                ),
+                "cal/ECE": CalibrationError(
                     task="multiclass",
                     num_classes=num_classes,
                     num_bins=num_calibration_bins,
                 ),
-                "aECE": CalibrationError(
+                "cal/aECE": CalibrationError(
                     task="multiclass",
                     adaptive=True,
                     num_bins=num_calibration_bins,
                     num_classes=num_classes,
                 ),
-                "mAcc": Accuracy(
-                    task="multiclass", average="macro", num_classes=num_classes
-                ),
-                "Brier": BrierScore(num_classes=num_classes),
-                "NLL": CategoricalNLL(),
+                "sc/AURC": AURC(),
             },
             compute_groups=False,
         )
 
-        self.val_seg_metrics = seg_metrics.clone(prefix="seg_val/")
-        self.val_sbsmpl_seg_metrics = sbsmpl_seg_metrics.clone(
-            prefix="seg_val/"
-        )
-        self.test_seg_metrics = seg_metrics.clone(prefix="seg_test/")
-        self.test_sbsmpl_seg_metrics = sbsmpl_seg_metrics.clone(
-            prefix="seg_test/"
-        )
+        self.val_seg_metrics = seg_metrics.clone(prefix="val/")
+        self.val_sbsmpl_seg_metrics = sbsmpl_seg_metrics.clone(prefix="val/")
+        self.test_seg_metrics = seg_metrics.clone(prefix="test/")
+        self.test_sbsmpl_seg_metrics = sbsmpl_seg_metrics.clone(prefix="test/")
 
     def configure_optimizers(self) -> Optimizer | dict:
         return self.optim_recipe
@@ -197,11 +195,11 @@ class SegmentationRoutine(LightningModule):
         if isinstance(self.logger, Logger) and self.log_plots:
             self.logger.experiment.add_figure(
                 "Reliabity diagram",
-                self.test_sbsmpl_seg_metrics["ECE"].plot()[0],
+                self.test_sbsmpl_seg_metrics["cal/ECE"].plot()[0],
             )
             self.logger.experiment.add_figure(
                 "Risk-Coverage curve",
-                self.test_sbsmpl_seg_metrics["AURC"].plot()[0],
+                self.test_sbsmpl_seg_metrics["sc/AURC"].plot()[0],
             )
 
     def subsample(self, pred: Tensor, target: Tensor) -> tuple[Tensor, Tensor]:

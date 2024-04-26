@@ -15,7 +15,7 @@ trainer:
   callbacks:
   - class_path: lightning.pytorch.callbacks.ModelCheckpoint
     init_args:
-      monitor: seg_val/mIoU
+      monitor: val/seg/mIoU
       mode: max
       save_last: true
   - class_path: lightning.pytorch.callbacks.LearningRateMonitor

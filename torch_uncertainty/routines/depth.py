@@ -67,19 +67,15 @@ class DepthRoutine(LightningModule):
             compute_groups=True,
         )
 
-        self.val_metrics = depth_metrics.clone(prefix="depth_val/")
-        self.test_metrics = depth_metrics.clone(prefix="depth_test/")
+        self.val_metrics = depth_metrics.clone(prefix="val/")
+        self.test_metrics = depth_metrics.clone(prefix="test/")
 
         if self.probabilistic:
             depth_prob_metrics = MetricCollection(
                 {"NLL": DistributionNLL(reduction="mean")}
             )
-            self.val_prob_metrics = depth_prob_metrics.clone(
-                prefix="depth_val/"
-            )
-            self.test_prob_metrics = depth_prob_metrics.clone(
-                prefix="depth_test/"
-            )
+            self.val_prob_metrics = depth_prob_metrics.clone(prefix="val/")
+            self.test_prob_metrics = depth_prob_metrics.clone(prefix="test/")
 
     def configure_optimizers(self) -> Optimizer | dict:
         return self.optim_recipe
