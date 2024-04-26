@@ -7,42 +7,43 @@ from torchvision import tv_tensors
 from torchvision.transforms import v2
 
 from torch_uncertainty.datamodules.abstract import AbstractDataModule
-from torch_uncertainty.datasets import MUAD
+from torch_uncertainty.datasets import KITTIDepth
 from torch_uncertainty.transforms import RandomRescale
 from torch_uncertainty.utils.misc import create_train_val_split
 
 
-class MUADDataModule(AbstractDataModule):
+class KITTIDataModule(AbstractDataModule):
     def __init__(
         self,
         root: str | Path,
         batch_size: int,
-        max_depth: float,
-        crop_size: _size_2_t = 1024,
-        inference_size: _size_2_t = (1024, 2048),
+        max_depth: float = 80.0,
+        crop_size: _size_2_t = (375, 1242),
+        inference_size: _size_2_t = (375, 1242),
         val_split: float | None = None,
         num_workers: int = 1,
         pin_memory: bool = True,
         persistent_workers: bool = True,
     ) -> None:
-        r"""Depth DataModule for the MUAD dataset.
+        r"""Depth DataModule for the KITTI-Depth dataset.
 
         Args:
             root (str or Path): Root directory of the datasets.
             batch_size (int): Number of samples per batch.
-            max_depth (float): Maximum depth value.
+            max_depth (float, optional): Maximum depth value. Defaults to
+                ``80.0``.
             crop_size (sequence or int, optional): Desired input image and
                 depth mask sizes during training. If :attr:`crop_size` is an
                 int instead of sequence like :math:`(H, W)`, a square crop
                 :math:`(\text{size},\text{size})` is made. If provided a sequence
                 of length :math:`1`, it will be interpreted as
-                :math:`(\text{size[0]},\text{size[1]})`. Defaults to ``1024``.
+                :math:`(\text{size[0]},\text{size[1]})`. Defaults to ``(375, 1242)``.
             inference_size (sequence or int, optional): Desired input image and
                 depth mask sizes during inference. If size is an int,
                 smaller edge of the images will be matched to this number, i.e.,
                 :math:`\text{height}>\text{width}`, then image will be rescaled to
                 :math:`(\text{size}\times\text{height}/\text{width},\text{size})`.
-                Defaults to ``(1024,2048)``.
+                Defaults to ``(375, 1242)``.
             val_split (float or None, optional): Share of training samples to use
                 for validation. Defaults to ``None``.
             num_workers (int, optional): Number of dataloaders to use. Defaults to
@@ -61,7 +62,7 @@ class MUADDataModule(AbstractDataModule):
             persistent_workers=persistent_workers,
         )
 
-        self.dataset = MUAD
+        self.dataset = KITTIDepth
         self.max_depth = max_depth
         self.crop_size = _pair(crop_size)
         self.inference_size = _pair(inference_size)
@@ -108,24 +109,18 @@ class MUADDataModule(AbstractDataModule):
             root=self.root,
             split="train",
             max_depth=self.max_depth,
-            target_type="depth",
             download=True,
         )
         self.dataset(
-            root=self.root,
-            split="val",
-            max_depth=self.max_depth,
-            target_type="depth",
-            download=True,
+            root=self.root, split="val", max_depth=self.max_depth, download=True
         )
 
     def setup(self, stage: str | None = None) -> None:
         if stage == "fit" or stage is None:
             full = self.dataset(
                 root=self.root,
-                split="train",
                 max_depth=self.max_depth,
-                target_type="depth",
+                split="train",
                 transforms=self.train_transform,
             )
 
@@ -139,18 +134,16 @@ class MUADDataModule(AbstractDataModule):
                 self.train = full
                 self.val = self.dataset(
                     root=self.root,
-                    split="val",
                     max_depth=self.max_depth,
-                    target_type="depth",
+                    split="val",
                     transforms=self.test_transform,
                 )
 
         if stage == "test" or stage is None:
             self.test = self.dataset(
                 root=self.root,
-                split="val",
                 max_depth=self.max_depth,
-                target_type="depth",
+                split="val",
                 transforms=self.test_transform,
             )
 

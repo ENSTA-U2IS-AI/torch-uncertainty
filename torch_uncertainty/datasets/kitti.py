@@ -31,6 +31,7 @@ class KITTIDepth(VisionDataset):
     def __init__(
         self,
         root: str | Path,
+        max_depth: float,
         split: Literal["train", "val"],
         transforms: Callable | None = None,
         download: bool = False,
@@ -51,6 +52,7 @@ class KITTIDepth(VisionDataset):
             root=Path(root) / "KITTIDepth",
             transforms=transforms,
         )
+        self.max_depth = max_depth
 
         if split not in ["train", "val"]:
             raise ValueError(
@@ -100,7 +102,7 @@ class KITTIDepth(VisionDataset):
         target = tv_tensors.Mask(
             F.pil_to_tensor(Image.open(self.targets[index])).squeeze(0) / 256.0
         )
-        target[target == 0.0] = float("nan")
+        target[(target <= 0) | (target > self.max_depth)] = float("nan")
 
         if self.transforms is not None:
             image, target = self.transforms(image, target)
