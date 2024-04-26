@@ -220,9 +220,10 @@ class DummyDepthDataset(Dataset):
         root: Path,
         split: str = "train",
         transforms: Callable[..., Any] | None = None,
-        num_channels: int = 3,
+        input_channels: int = 3,
         image_size: int = 4,
         num_images: int = 2,
+        output_dim: int = 1,
         **args,
     ) -> None:
         super().__init__()
@@ -234,12 +235,12 @@ class DummyDepthDataset(Dataset):
         self.data: Any = []
         self.targets = []
 
-        if num_channels == 1:
+        if input_channels == 1:
             img_shape = (num_images, image_size, image_size)
         else:
-            img_shape = (num_images, num_channels, image_size, image_size)
+            img_shape = (num_images, input_channels, image_size, image_size)
 
-        smnt_shape = (num_images, 1, image_size, image_size)
+        smnt_shape = (num_images, output_dim, image_size, image_size)
 
         self.data = np.random.randint(
             low=0,

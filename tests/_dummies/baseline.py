@@ -1,6 +1,5 @@
 import copy
 
-from pytorch_lightning import LightningModule
 from torch import nn
 
 from torch_uncertainty.layers.distributions import (
@@ -11,6 +10,7 @@ from torch_uncertainty.layers.distributions import (
 from torch_uncertainty.models.deep_ensembles import deep_ensembles
 from torch_uncertainty.routines import (
     ClassificationRoutine,
+    DepthRoutine,
     RegressionRoutine,
     SegmentationRoutine,
 )
@@ -41,7 +41,7 @@ class DummyClassificationBaseline:
         kernel_tau_std: float = 0.5,
         mixup_alpha: float = 0,
         cutmix_alpha: float = 0,
-    ) -> LightningModule:
+    ) -> ClassificationRoutine:
         model = dummy_model(
             in_channels=in_channels,
             num_classes=num_classes,
@@ -102,7 +102,7 @@ class DummyRegressionBaseline:
         baseline_type: str = "single",
         optim_recipe=None,
         dist_type: str = "normal",
-    ) -> LightningModule:
+    ) -> RegressionRoutine:
         if probabilistic:
             if dist_type == "normal":
                 last_layer = NormalLayer(output_dim)
@@ -159,7 +159,7 @@ class DummySegmentationBaseline:
         optim_recipe=None,
         metric_subsampling_rate: float = 1,
         log_plots: bool = False,
-    ) -> LightningModule:
+    ) -> SegmentationRoutine:
         model = dummy_segmentation_model(
             in_channels=in_channels,
             num_classes=num_classes,
@@ -192,4 +192,46 @@ class DummySegmentationBaseline:
             optim_recipe=optim_recipe(model),
             metric_subsampling_rate=metric_subsampling_rate,
             log_plots=log_plots,
+        )
+
+
+class DummyDepthBaseline:
+    def __new__(
+        cls,
+        in_channels: int,
+        output_dim: int,
+        image_size: int,
+        loss: type[nn.Module],
+        baseline_type: str = "single",
+        optim_recipe=None,
+    ) -> DepthRoutine:
+        model = dummy_segmentation_model(
+            num_classes=output_dim,
+            in_channels=in_channels,
+            image_size=image_size,
+        )
+
+        if baseline_type == "single":
+            return DepthRoutine(
+                output_dim=output_dim,
+                probabilistic=False,
+                model=model,
+                loss=loss,
+                format_batch_fn=None,
+                num_estimators=1,
+                optim_recipe=optim_recipe(model),
+            )
+
+        # baseline_type == "ensemble":
+        model = deep_ensembles(
+            [model, copy.deepcopy(model)], task="depth", probabilistic=False
+        )
+        return DepthRoutine(
+            output_dim=output_dim,
+            probabilistic=False,
+            model=model,
+            loss=loss,
+            format_batch_fn=RepeatTarget(2),
+            num_estimators=2,
+            optim_recipe=optim_recipe(model),
         )

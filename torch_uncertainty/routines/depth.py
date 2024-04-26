@@ -114,25 +114,25 @@ class DepthRoutine(LightningModule):
     def training_step(
         self, batch: tuple[Tensor, Tensor], batch_idx: int
     ) -> STEP_OUTPUT:
-        inputs, targets = self.format_batch_fn(batch)
+        inputs, target = self.format_batch_fn(batch)
         if self.one_dim_depth:
-            targets = targets.unsqueeze(1)
+            target = target.unsqueeze(1)
 
         dists = self.model(inputs)
-        targets = F.resize(
-            targets, dists.shape[-2:], interpolation=F.InterpolationMode.NEAREST
+        target = F.resize(
+            target, dists.shape[-2:], interpolation=F.InterpolationMode.NEAREST
         )
-        valid_mask = ~torch.isnan(targets)
-        loss = self.loss(dists[valid_mask], targets[valid_mask])
+        valid_mask = ~torch.isnan(target)
+        loss = self.loss(dists[valid_mask], target[valid_mask])
         self.log("train_loss", loss)
         return loss
 
     def validation_step(
         self, batch: tuple[Tensor, Tensor], batch_idx: int
     ) -> None:
-        inputs, targets = batch
+        inputs, target = batch
         if self.one_dim_depth:
-            targets = targets.unsqueeze(1)
+            target = target.unsqueeze(1)
         preds = self.model(inputs)
 
         if self.probabilistic:
@@ -153,11 +153,11 @@ class DepthRoutine(LightningModule):
             )
             preds = preds.mean(dim=1)
 
-        valid_mask = ~torch.isnan(targets)
-        self.val_metrics.update(preds[valid_mask], targets[valid_mask])
+        valid_mask = ~torch.isnan(target)
+        self.val_metrics.update(preds[valid_mask], target[valid_mask])
         if self.probabilistic:
             self.val_prob_metrics.update(
-                mixture[valid_mask], targets[valid_mask]
+                mixture[valid_mask], target[valid_mask]
             )
 
     def test_step(
@@ -172,9 +172,9 @@ class DepthRoutine(LightningModule):
                 "if needed."
             )
 
-        inputs, targets = batch
+        inputs, target = batch
         if self.one_dim_depth:
-            targets = targets.unsqueeze(1)
+            target = target.unsqueeze(1)
         preds = self.model(inputs)
 
         if self.probabilistic:
@@ -185,7 +185,7 @@ class DepthRoutine(LightningModule):
                 torch.ones(self.num_estimators, device=self.device)
             )
             mixture = MixtureSameFamily(mix, ens_dist)
-            self.test_metrics.nll.update(mixture, targets)
+            self.test_metrics.nll.update(mixture, target)
             preds = mixture.mean
         else:
             preds = rearrange(
@@ -193,11 +193,11 @@ class DepthRoutine(LightningModule):
             )
             preds = preds.mean(dim=1)
 
-        valid_mask = ~torch.isnan(targets)
-        self.test_metrics.update(preds[valid_mask], targets[valid_mask])
+        valid_mask = ~torch.isnan(target)
+        self.test_metrics.update(preds[valid_mask], target[valid_mask])
         if self.probabilistic:
             self.test_prob_metrics.update(
-                mixture[valid_mask], targets[valid_mask]
+                mixture[valid_mask], target[valid_mask]
             )
 
     def on_validation_epoch_end(self) -> None:

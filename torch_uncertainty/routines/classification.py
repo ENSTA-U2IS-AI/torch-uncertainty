@@ -354,21 +354,21 @@ class ClassificationRoutine(LightningModule):
             else:
                 batch = self.mixup(*batch)
 
-        inputs, targets = self.format_batch_fn(batch)
+        inputs, target = self.format_batch_fn(batch)
 
         if self.is_elbo:
-            loss = self.loss(inputs, targets)
+            loss = self.loss(inputs, target)
         else:
             logits = self.forward(inputs)
-            # BCEWithLogitsLoss expects float targets
+            # BCEWithLogitsLoss expects float target
             if self.binary_cls and isinstance(self.loss, nn.BCEWithLogitsLoss):
                 logits = logits.squeeze(-1)
-                targets = targets.float()
+                target = target.float()
 
             if not self.is_dec:
-                loss = self.loss(logits, targets)
+                loss = self.loss(logits, target)
             else:
-                loss = self.loss(logits, targets, self.current_epoch)
+                loss = self.loss(logits, target, self.current_epoch)
 
         self.log("train_loss", loss)
         return loss
@@ -376,7 +376,7 @@ class ClassificationRoutine(LightningModule):
     def validation_step(
         self, batch: tuple[Tensor, Tensor], batch_idx: int
     ) -> None:
-        inputs, targets = batch
+        inputs, target = batch
         logits = self.forward(
             inputs, save_feats=self.eval_grouping_loss
         )  # (m*b, c)
@@ -388,10 +388,10 @@ class ClassificationRoutine(LightningModule):
             probs_per_est = F.softmax(logits, dim=-1)
 
         probs = probs_per_est.mean(dim=1)
-        self.val_cls_metrics.update(probs, targets)
+        self.val_cls_metrics.update(probs, target)
 
         if self.eval_grouping_loss:
-            self.val_grouping_loss.update(probs, targets, self.features)
+            self.val_grouping_loss.update(probs, target, self.features)
 
     def test_step(
         self,
@@ -399,7 +399,7 @@ class ClassificationRoutine(LightningModule):
         batch_idx: int,
         dataloader_idx: int = 0,
     ) -> None:
-        inputs, targets = batch
+        inputs, target = batch
         logits = self.forward(
             inputs, save_feats=self.eval_grouping_loss
         )  # (m*b, c)
@@ -442,16 +442,16 @@ class ClassificationRoutine(LightningModule):
         if self.num_estimators == 1 and self.cal_model is not None:
             cal_logits = self.cal_model(inputs)
             cal_probs = F.softmax(cal_logits, dim=-1)
-            self.ts_cls_metrics.update(cal_probs, targets)
+            self.ts_cls_metrics.update(cal_probs, target)
 
         if dataloader_idx == 0:
             # squeeze if binary classification only for binary metrics
             self.test_cls_metrics.update(
                 probs.squeeze(-1) if self.binary_cls else probs,
-                targets,
+                target,
             )
             if self.eval_grouping_loss:
-                self.test_grouping_loss.update(probs, targets, self.features)
+                self.test_grouping_loss.update(probs, target, self.features)
 
             self.log_dict(
                 self.test_cls_metrics, on_epoch=True, add_dataloader_idx=False
@@ -469,14 +469,14 @@ class ClassificationRoutine(LightningModule):
 
             if self.eval_ood:
                 self.test_ood_metrics.update(
-                    ood_scores, torch.zeros_like(targets)
+                    ood_scores, torch.zeros_like(target)
                 )
 
             if self.id_logit_storage is not None:
                 self.id_logit_storage.append(logits.detach().cpu())
 
         elif self.eval_ood and dataloader_idx == 1:
-            self.test_ood_metrics.update(ood_scores, torch.ones_like(targets))
+            self.test_ood_metrics.update(ood_scores, torch.ones_like(target))
             self.test_ood_entropy(probs)
             self.log(
                 "ood/Entropy",

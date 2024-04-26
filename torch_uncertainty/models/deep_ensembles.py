@@ -60,7 +60,7 @@ def deep_ensembles(
     models: list[nn.Module] | nn.Module,
     num_estimators: int | None = None,
     task: Literal[
-        "classification", "regression", "segmentation"
+        "classification", "regression", "segmentation", "depth"
     ] = "classification",
     probabilistic: bool | None = None,
     reset_model_parameters: bool = False,
@@ -70,7 +70,8 @@ def deep_ensembles(
     Args:
         models (list[nn.Module] | nn.Module): The model to be ensembled.
         num_estimators (int | None): The number of estimators in the ensemble.
-        task (Literal["classification", "regression"]): The model task.
+        task (Literal["classification", "regression", "segmentation", "depth"]): The model task.
+            Defaults to "classification".
         probabilistic (bool): Whether the regression model is probabilistic.
         reset_model_parameters (bool): Whether to reset the model parameters
             when :attr:models is a module or a list of length 1.
@@ -125,7 +126,7 @@ def deep_ensembles(
 
     if task in ("classification", "segmentation"):
         return _DeepEnsembles(models=models)
-    if task == "regression":
+    if task in ("regression", "depth"):
         if probabilistic is None:
             raise ValueError(
                 "probabilistic must be specified for regression models."
