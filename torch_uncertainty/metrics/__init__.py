@@ -7,11 +7,13 @@ from .classification import (
     BrierScore,
     CalibrationError,
     CategoricalNLL,
+    CovAt5Risk,
     Disagreement,
     Entropy,
     GroupingLoss,
     MeanIntersectionOverUnion,
     MutualInformation,
+    RiskAt80Cov,
     VariationRatio,
 )
 from .regression import (

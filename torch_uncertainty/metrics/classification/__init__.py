@@ -9,6 +9,6 @@ from .fpr95 import FPR95
 from .grouping_loss import GroupingLoss
 from .mean_iou import MeanIntersectionOverUnion
 from .mutual_information import MutualInformation
-from .risk_coverage import AURC
+from .risk_coverage import AURC, CovAt5Risk, RiskAt80Cov
 from .sparsification import AUSE
 from .variation_ratio import VariationRatio

@@ -200,6 +200,8 @@ class CovAtxRisk(Metric):
             kwargs: Additional arguments to pass to the metric class.
         """
         super().__init__(**kwargs)
+        self.add_state("scores", default=[], dist_reduce_fx="cat")
+        self.add_state("errors", default=[], dist_reduce_fx="cat")
         _risk_coverage_checks(risk_threshold)
         self.risk_threshold = risk_threshold
 
@@ -251,6 +253,8 @@ class RiskAtxCov(Metric):
             kwargs: Additional arguments to pass to the metric class.
         """
         super().__init__(**kwargs)
+        self.add_state("scores", default=[], dist_reduce_fx="cat")
+        self.add_state("errors", default=[], dist_reduce_fx="cat")
         _risk_coverage_checks(cov_threshold)
         self.cov_threshold = cov_threshold
 
