@@ -1,3 +1,5 @@
+import math
+
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
@@ -180,3 +182,112 @@ def _aurc_rejection_rate_compute(
         1, num_samples + 1, dtype=scores.dtype, device=scores.device
     )
     return cumulative_errors.flip(0)
+
+
+class CovAtxRisk(Metric):
+    is_differentiable: bool = False
+    higher_is_better: bool = False
+    full_state_update: bool = False
+
+    scores: list[Tensor]
+    errors: list[Tensor]
+
+    def __init__(self, risk_threshold: float, **kwargs) -> None:
+        r"""`Coverage at x Risk`_.
+
+        Args:
+            risk_threshold (float): The risk threshold at which to compute the coverage.
+            kwargs: Additional arguments to pass to the metric class.
+        """
+        super().__init__(**kwargs)
+        _risk_coverage_checks(risk_threshold)
+        self.risk_threshold = risk_threshold
+
+    def update(self, probs: Tensor, targets: Tensor) -> None:
+        """Store the scores and their associated errors for later computation.
+
+        Args:
+            probs (Tensor): The predicted probabilities of shape :math:`(N, C)`.
+            targets (Tensor): The ground truth labels of shape :math:`(N,)`.
+        """
+        if probs.ndim == 1:
+            probs = torch.stack([probs, 1 - probs], dim=-1)
+        self.scores.append(-probs.max(-1).values)
+        self.errors.append((probs.argmax(-1) != targets) * 1.0)
+
+    def compute(self) -> Tensor:
+        """Compute the coverage at x Risk.
+
+        Returns:
+            Tensor: The coverage at x risk.
+        """
+        scores = dim_zero_cat(self.scores)
+        errors = dim_zero_cat(self.errors)
+        num_samples = scores.size(0)
+        error_rates = _aurc_rejection_rate_compute(scores, errors)
+        index = (error_rates >= self.risk_threshold).sum()
+        return (num_samples - index) / num_samples
+
+
+class CovAt5Risk(CovAtxRisk):
+    def __init__(self, **kwargs) -> None:
+        r"""`Coverage at 5% Risk`_."""
+        super().__init__(risk_threshold=0.05, **kwargs)
+
+
+class RiskAtxCov(Metric):
+    is_differentiable: bool = False
+    higher_is_better: bool = False
+    full_state_update: bool = False
+
+    scores: list[Tensor]
+    errors: list[Tensor]
+
+    def __init__(self, cov_threshold: float, **kwargs) -> None:
+        r"""`Risk at x Coverage`_.
+
+        Args:
+            cov_threshold (float): The coverage threshold at which to compute the risk.
+            kwargs: Additional arguments to pass to the metric class.
+        """
+        super().__init__(**kwargs)
+        _risk_coverage_checks(cov_threshold)
+        self.cov_threshold = cov_threshold
+
+    def update(self, probs: Tensor, targets: Tensor) -> None:
+        """Store the scores and their associated errors for later computation.
+
+        Args:
+            probs (Tensor): The predicted probabilities of shape :math:`(N, C)`.
+            targets (Tensor): The ground truth labels of shape :math:`(N,)`.
+        """
+        if probs.ndim == 1:
+            probs = torch.stack([probs, 1 - probs], dim=-1)
+        self.scores.append(-probs.max(-1).values)
+        self.errors.append((probs.argmax(-1) != targets) * 1.0)
+
+    def compute(self) -> Tensor:
+        """Compute the risk at x coverage.
+
+        Returns:
+            Tensor: The risk at x coverage.
+        """
+        scores = dim_zero_cat(self.scores)
+        errors = dim_zero_cat(self.errors)
+        error_rates = _aurc_rejection_rate_compute(scores, errors)
+        return error_rates[math.ceil(error_rates.size(0) * self.cov_threshold)]
+
+
+class RiskAt80Cov(RiskAtxCov):
+    def __init__(self, **kwargs) -> None:
+        r"""`Risk at 80% Coverage`_."""
+        super().__init__(cov_threshold=0.8, **kwargs)
+
+
+def _risk_coverage_checks(threshold: float) -> None:
+    if not isinstance(threshold, float):
+        raise TypeError(
+            f"Expected threshold to be of type float, but got {type(threshold)}"
+        )
+    if threshold < 0 or threshold > 1:
+        raise ValueError("Threshold should be in the range [0, 1]")
