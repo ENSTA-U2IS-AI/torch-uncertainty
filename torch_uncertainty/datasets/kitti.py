@@ -31,8 +31,8 @@ class KITTIDepth(VisionDataset):
     def __init__(
         self,
         root: str | Path,
-        max_depth: float,
         split: Literal["train", "val"],
+        max_depth: float = 80.0,
         transforms: Callable | None = None,
         download: bool = False,
         remove_unused: bool = False,

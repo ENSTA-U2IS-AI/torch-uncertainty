@@ -9,7 +9,7 @@ class TestMUADDataModule:
     """Testing the MUADDataModule datamodule."""
 
     def test_camvid_main(self):
-        dm = MUADDataModule(root="./data/", batch_size=128)
+        dm = MUADDataModule(root="./data/", max_depth=100, batch_size=128)
 
         assert dm.dataset == MUAD
 
