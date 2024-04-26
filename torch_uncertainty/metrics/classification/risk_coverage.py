@@ -44,7 +44,8 @@ class AURC(Metric):
             kwargs: Additional keyword arguments.
 
         Reference:
-            Geifman & El-Yaniv. "Selective classification for deep neural networks." In NeurIPS, 2017.
+            Geifman & El-Yaniv. "Selective classification for deep neural
+                networks." In NeurIPS, 2017.
         """
         super().__init__(**kwargs)
         self.add_state("scores", default=[], dist_reduce_fx="cat")
@@ -196,7 +197,8 @@ class CovAtxRisk(Metric):
         r"""`Coverage at x Risk`_.
 
         Args:
-            risk_threshold (float): The risk threshold at which to compute the coverage.
+            risk_threshold (float): The risk threshold at which to compute the
+                coverage.
             kwargs: Additional arguments to pass to the metric class.
         """
         super().__init__(**kwargs)
@@ -249,7 +251,8 @@ class RiskAtxCov(Metric):
         r"""`Risk at x Coverage`_.
 
         Args:
-            cov_threshold (float): The coverage threshold at which to compute the risk.
+            cov_threshold (float): The coverage threshold at which to compute
+                the risk.
             kwargs: Additional arguments to pass to the metric class.
         """
         super().__init__(**kwargs)

@@ -78,7 +78,8 @@ class CalibrationError:
     metric providing a plotting functionality.
 
     Reference:
-        Naeini et al. "Obtaining well calibrated probabilities using Bayesian binning." In AAAI, 2015.
+        Naeini et al. "Obtaining well calibrated probabilities using Bayesian
+            binning." In AAAI, 2015.
     """
 
     def __new__(  # type: ignore[misc]

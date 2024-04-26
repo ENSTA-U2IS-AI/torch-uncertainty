@@ -19,7 +19,6 @@ class VariationRatio(Metric):
         **kwargs,
     ) -> None:
         super().__init__(**kwargs)
-
         allowed_reduction = ("sum", "mean", "none", None)
         if reduction not in allowed_reduction:
             raise ValueError(

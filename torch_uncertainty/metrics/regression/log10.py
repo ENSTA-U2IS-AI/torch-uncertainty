@@ -10,7 +10,8 @@ class Log10(Metric):
 
         .. math:: \text{Log10} = \frac{1}{N} \sum_{i=1}^{N} \log_{10}(y_i) - \log_{10}(\hat{y_i})
 
-        where :math:`N` is the batch size, :math:`y_i` is a tensor of target values and :math:`\hat{y_i}` is a tensor of prediction.
+        where :math:`N` is the batch size, :math:`y_i` is a tensor of target
+            values and :math:`\hat{y_i}` is a tensor of prediction.
 
         Inputs:
             - :attr:`preds`: :math:`(N)`
