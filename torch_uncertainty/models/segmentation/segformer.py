@@ -1,29 +1,21 @@
-# ---------------------------------------------------------------
-# Copyright (c) 2021, NVIDIA Corporation. All rights reserved.
-#
-# This work is licensed under the NVIDIA Source Code License
-# ---------------------------------------------------------------
-
 import math
-import warnings
 from functools import partial
 
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 from timm.models.layers import DropPath, to_2tuple, trunc_normal_
+from torch import Tensor, nn
 
 
 class DWConv(nn.Module):
-    def __init__(self, dim=768):
+    def __init__(self, dim: int = 768) -> None:
         super().__init__()
         self.dwconv = nn.Conv2d(dim, dim, 3, 1, 1, bias=True, groups=dim)
 
-    def forward(self, x, h, w):
-        b, _, c = x.shape
-        x = x.transpose(1, 2).view(b, c, h, w)
-        x = self.dwconv(x)
-        return x.flatten(2).transpose(1, 2)
+    def forward(self, inputs: Tensor, h: int, w: int) -> Tensor:
+        b, _, c = inputs.shape
+        inputs = self.dwconv(inputs.transpose(1, 2).view(b, c, h, w))
+        return inputs.flatten(2).transpose(1, 2)
 
 
 class Mlp(nn.Module):
@@ -437,7 +429,7 @@ class MixVisionTransformer(nn.Module):
 
         # stage 1
         x, h, w = self.patch_embed1(x)
-        for _i, blk in enumerate(self.block1):
+        for blk in self.block1:
             x = blk(x, h, w)
         x = self.norm1(x)
         x = x.reshape(b, h, w, -1).permute(0, 3, 1, 2).contiguous()
@@ -445,7 +437,7 @@ class MixVisionTransformer(nn.Module):
 
         # stage 2
         x, h, w = self.patch_embed2(x)
-        for _i, blk in enumerate(self.block2):
+        for blk in self.block2:
             x = blk(x, h, w)
         x = self.norm2(x)
         x = x.reshape(b, h, w, -1).permute(0, 3, 1, 2).contiguous()
@@ -453,7 +445,7 @@ class MixVisionTransformer(nn.Module):
 
         # stage 3
         x, h, w = self.patch_embed3(x)
-        for _i, blk in enumerate(self.block3):
+        for blk in self.block3:
             x = blk(x, h, w)
         x = self.norm3(x)
         x = x.reshape(b, h, w, -1).permute(0, 3, 1, 2).contiguous()
@@ -461,7 +453,7 @@ class MixVisionTransformer(nn.Module):
 
         # stage 4
         x, h, w = self.patch_embed4(x)
-        for _i, blk in enumerate(self.block4):
+        for blk in self.block4:
             x = blk(x, h, w)
         x = self.norm4(x)
         x = x.reshape(b, h, w, -1).permute(0, 3, 1, 2).contiguous()
@@ -473,96 +465,37 @@ class MixVisionTransformer(nn.Module):
         return self.forward_features(x)
 
 
-class MitB0(MixVisionTransformer):
-    def __init__(self):
+def _get_embed_dims(arch: int) -> list[int]:
+    if arch == 0:
+        return [32, 64, 160, 256]
+    return [64, 128, 320, 512]
+
+
+def _get_depths(arch: int) -> list[int]:
+    if arch == 0 or arch == 1:
+        return [2, 2, 2, 2]
+    if arch == 2:
+        return [3, 4, 6, 3]
+    if arch == 3:
+        return [3, 4, 18, 3]
+    if arch == 4:
+        return [3, 8, 27, 3]
+    # arch == 5:
+    return [3, 6, 40, 3]
+
+
+class Mit(MixVisionTransformer):
+    def __init__(self, arch: int):
+        embed_dims = _get_embed_dims(arch)
+        depths = _get_depths(arch)
         super().__init__(
             patch_size=4,
-            embed_dims=[32, 64, 160, 256],
+            embed_dims=embed_dims,
             num_heads=[1, 2, 5, 8],
             mlp_ratios=[4, 4, 4, 4],
             qkv_bias=True,
             norm_layer=partial(nn.LayerNorm, eps=1e-6),
-            depths=[2, 2, 2, 2],
-            sr_ratios=[8, 4, 2, 1],
-            drop_rate=0.0,
-            drop_path_rate=0.1,
-        )
-
-
-class MitB1(MixVisionTransformer):
-    def __init__(self):
-        super().__init__(
-            patch_size=4,
-            embed_dims=[64, 128, 320, 512],
-            num_heads=[1, 2, 5, 8],
-            mlp_ratios=[4, 4, 4, 4],
-            qkv_bias=True,
-            norm_layer=partial(nn.LayerNorm, eps=1e-6),
-            depths=[2, 2, 2, 2],
-            sr_ratios=[8, 4, 2, 1],
-            drop_rate=0.0,
-            drop_path_rate=0.1,
-        )
-
-
-class MitB2(MixVisionTransformer):
-    def __init__(self):
-        super().__init__(
-            patch_size=4,
-            embed_dims=[64, 128, 320, 512],
-            num_heads=[1, 2, 5, 8],
-            mlp_ratios=[4, 4, 4, 4],
-            qkv_bias=True,
-            norm_layer=partial(nn.LayerNorm, eps=1e-6),
-            depths=[3, 4, 6, 3],
-            sr_ratios=[8, 4, 2, 1],
-            drop_rate=0.0,
-            drop_path_rate=0.1,
-        )
-
-
-class MitB3(MixVisionTransformer):
-    def __init__(self):
-        super().__init__(
-            patch_size=4,
-            embed_dims=[64, 128, 320, 512],
-            num_heads=[1, 2, 5, 8],
-            mlp_ratios=[4, 4, 4, 4],
-            qkv_bias=True,
-            norm_layer=partial(nn.LayerNorm, eps=1e-6),
-            depths=[3, 4, 18, 3],
-            sr_ratios=[8, 4, 2, 1],
-            drop_rate=0.0,
-            drop_path_rate=0.1,
-        )
-
-
-class MitB4(MixVisionTransformer):
-    def __init__(self):
-        super().__init__(
-            patch_size=4,
-            embed_dims=[64, 128, 320, 512],
-            num_heads=[1, 2, 5, 8],
-            mlp_ratios=[4, 4, 4, 4],
-            qkv_bias=True,
-            norm_layer=partial(nn.LayerNorm, eps=1e-6),
-            depths=[3, 8, 27, 3],
-            sr_ratios=[8, 4, 2, 1],
-            drop_rate=0.0,
-            drop_path_rate=0.1,
-        )
-
-
-class MitB5(MixVisionTransformer):
-    def __init__(self):
-        super().__init__(
-            patch_size=4,
-            embed_dims=[64, 128, 320, 512],
-            num_heads=[1, 2, 5, 8],
-            mlp_ratios=[4, 4, 4, 4],
-            qkv_bias=True,
-            norm_layer=partial(nn.LayerNorm, eps=1e-6),
-            depths=[3, 6, 40, 3],
+            depths=depths,
             sr_ratios=[8, 4, 2, 1],
             drop_rate=0.0,
             drop_path_rate=0.1,
@@ -572,23 +505,22 @@ class MitB5(MixVisionTransformer):
 class MLPHead(nn.Module):
     """Linear Embedding."""
 
-    def __init__(self, input_dim=2048, embed_dim=768):
+    def __init__(self, input_dim: int = 2048, embed_dim: int = 768) -> None:
         super().__init__()
         self.proj = nn.Linear(input_dim, embed_dim)
 
-    def forward(self, x):
-        x = x.flatten(2).transpose(1, 2)
-        return self.proj(x)
+    def forward(self, inputs: Tensor) -> Tensor:
+        return self.proj(inputs.flatten(2).transpose(1, 2))
 
 
 def resize(
-    inputs,
-    size=None,
+    inputs: Tensor,
+    size: tuple[int] | torch.Size | None = None,
     scale_factor=None,
-    mode="nearest",
-    align_corners=None,
-    warning=True,
-):
+    mode: str = "nearest",
+    align_corners: bool | None = None,
+    warning: bool = True,
+) -> Tensor:
     if warning and size is not None and align_corners:
         input_h, input_w = tuple(int(x) for x in inputs.shape[2:])
         output_h, output_w = tuple(int(x) for x in size)
@@ -597,12 +529,11 @@ def resize(
             and (output_h - 1) % (input_h - 1)
             and (output_w - 1) % (input_w - 1)
         ):
-            warnings.warn(
+            print(
                 f"When align_corners={align_corners}, "
                 "the output would more aligned if "
                 f"input size {(input_h, input_w)} is `x+1` and "
                 f"out size {(output_h, output_w)} is `nx+1`",
-                stacklevel=2,
             )
     if isinstance(size, torch.Size):
         size = tuple(int(x) for x in size)
@@ -610,66 +541,47 @@ def resize(
 
 
 class SegFormerHead(nn.Module):
-    """SegFormer: Simple and Efficient Design for Semantic Segmentation with
-    Transformers.
+    """Head for SegFormer.
+
+    Reference:
+        SegFormer: Simple and Efficient Design for Semantic Segmentation with
+        Transformers.
     """
 
     def __init__(
         self,
-        in_channels,
-        feature_strides,
-        decoder_params,
-        num_classes,
-        dropout_ratio=0.1,
+        in_channels: list[int],
+        feature_strides: list[int],
+        embed_dim: int,
+        num_classes: int,
+        dropout_ratio: float = 0.1,
     ):
         super().__init__()
         self.in_channels = in_channels
-        assert len(feature_strides) == len(self.in_channels)
+        assert len(feature_strides) == len(in_channels)
         assert min(feature_strides) == feature_strides[0]
         self.feature_strides = feature_strides
         self.num_classes = num_classes
-        # --- self in_index [0, 1, 2, 3]
 
-        (
-            c1_in_channels,
-            c2_in_channels,
-            c3_in_channels,
-            c4_in_channels,
-        ) = self.in_channels
-
-        embedding_dim = decoder_params["embed_dim"]
-
-        self.linear_c4 = MLPHead(
-            input_dim=c4_in_channels, embed_dim=embedding_dim
-        )
-        self.linear_c3 = MLPHead(
-            input_dim=c3_in_channels, embed_dim=embedding_dim
-        )
-        self.linear_c2 = MLPHead(
-            input_dim=c2_in_channels, embed_dim=embedding_dim
-        )
-        self.linear_c1 = MLPHead(
-            input_dim=c1_in_channels, embed_dim=embedding_dim
-        )
+        self.linear_c4 = MLPHead(input_dim=in_channels[3], embed_dim=embed_dim)
+        self.linear_c3 = MLPHead(input_dim=in_channels[2], embed_dim=embed_dim)
+        self.linear_c2 = MLPHead(input_dim=in_channels[1], embed_dim=embed_dim)
+        self.linear_c1 = MLPHead(input_dim=in_channels[0], embed_dim=embed_dim)
 
         self.fuse = nn.Sequential(
-            nn.Conv2d(
-                embedding_dim * 4, embedding_dim, kernel_size=1, bias=False
-            ),
+            nn.Conv2d(embed_dim * 4, embed_dim, kernel_size=1, bias=False),
             nn.ReLU(),
-            nn.BatchNorm2d(embedding_dim),
+            nn.BatchNorm2d(embed_dim),
         )
 
-        self.linear_pred = nn.Conv2d(
-            embedding_dim, self.num_classes, kernel_size=1
-        )
+        self.classifier = nn.Conv2d(embed_dim, self.num_classes, kernel_size=1)
 
         if dropout_ratio > 0:
             self.dropout = nn.Dropout2d(dropout_ratio)
         else:
-            self.dropout = None
+            self.dropout = nn.Identity()
 
-    def forward(self, inputs):
+    def forward(self, inputs: Tensor) -> Tensor:
         # x [inputs[i] for i in self.in_index] # len=4, 1/4,1/8,1/16,1/32
         c1, c2, c3, c4 = inputs[0], inputs[1], inputs[2], inputs[3]
 
@@ -711,96 +623,42 @@ class SegFormerHead(nn.Module):
         _c = self.fuse(torch.cat([_c4, _c3, _c2, _c1], dim=1))
 
         x = self.dropout(_c)
-        return self.linear_pred(x)
+        return self.classifier(x)
 
 
 class _SegFormer(nn.Module):
     def __init__(
         self,
-        in_channels,
-        feature_strides,
-        decoder_params,
-        num_classes,
-        dropout_ratio,
+        in_channels: list[int],
+        feature_strides: list[int],
+        embed_dim: int,
+        num_classes: int,
+        dropout_ratio: float,
         mit: nn.Module,
     ):
         super().__init__()
 
-        self.encoder = mit()
+        self.encoder = mit
         self.head = SegFormerHead(
             in_channels,
             feature_strides,
-            decoder_params,
+            embed_dim,
             num_classes,
             dropout_ratio,
         )
 
-    def forward(self, x):
-        features = self.encoder(x)
+    def forward(self, inputs: Tensor) -> Tensor:
+        features = self.encoder(inputs)
         return self.head(features)
 
 
-def seg_former_b0(num_classes: int):
+def seg_former(num_classes: int, arch: int) -> _SegFormer:
+    in_channels = _get_embed_dims(arch)
     return _SegFormer(
-        in_channels=[32, 64, 160, 256],
+        in_channels=in_channels,
         feature_strides=[4, 8, 16, 32],
-        decoder_params={"embed_dim": 256},
+        embed_dim=256 if arch == 0 else 512,
         num_classes=num_classes,
         dropout_ratio=0.1,
-        mit=MitB0,
-    )
-
-
-def seg_former_b1(num_classes: int):
-    return _SegFormer(
-        in_channels=[64, 128, 320, 512],
-        feature_strides=[4, 8, 16, 32],
-        decoder_params={"embed_dim": 512},
-        num_classes=num_classes,
-        dropout_ratio=0.1,
-        mit=MitB1,
-    )
-
-
-def seg_former_b2(num_classes: int):
-    return _SegFormer(
-        in_channels=[64, 128, 320, 512],
-        feature_strides=[4, 8, 16, 32],
-        decoder_params={"embed_dim": 512},
-        num_classes=num_classes,
-        dropout_ratio=0.1,
-        mit=MitB2,
-    )
-
-
-def seg_former_b3(num_classes: int):
-    return _SegFormer(
-        in_channels=[64, 128, 320, 512],
-        feature_strides=[4, 8, 16, 32],
-        decoder_params={"embed_dim": 512},
-        num_classes=num_classes,
-        dropout_ratio=0.1,
-        mit=MitB3,
-    )
-
-
-def seg_former_b4(num_classes: int):
-    return _SegFormer(
-        in_channels=[64, 128, 320, 512],
-        feature_strides=[4, 8, 16, 32],
-        decoder_params={"embed_dim": 512},
-        num_classes=num_classes,
-        dropout_ratio=0.1,
-        mit=MitB4,
-    )
-
-
-def seg_former_b5(num_classes: int):
-    return _SegFormer(
-        in_channels=[64, 128, 320, 512],
-        feature_strides=[4, 8, 16, 32],
-        decoder_params={"embed_dim": 512},
-        num_classes=num_classes,
-        dropout_ratio=0.1,
-        mit=MitB5,
+        mit=Mit(arch),
     )
