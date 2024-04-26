@@ -4,14 +4,8 @@ from torch import nn
 
 from torch_uncertainty.models import mc_dropout
 from torch_uncertainty.models.vgg import (
-    packed_vgg11,
-    packed_vgg13,
-    packed_vgg16,
-    packed_vgg19,
-    vgg11,
-    vgg13,
-    vgg16,
-    vgg19,
+    packed_vgg,
+    vgg,
 )
 from torch_uncertainty.routines.classification import ClassificationRoutine
 from torch_uncertainty.transforms import RepeatTarget
@@ -21,14 +15,9 @@ class VGGBaseline(ClassificationRoutine):
     single = ["std"]
     ensemble = ["mc-dropout", "packed"]
     versions = {
-        "std": [vgg11, vgg13, vgg16, vgg19],
-        "mc-dropout": [vgg11, vgg13, vgg16, vgg19],
-        "packed": [
-            packed_vgg11,
-            packed_vgg13,
-            packed_vgg16,
-            packed_vgg19,
-        ],
+        "std": vgg,
+        "mc-dropout": vgg,
+        "packed": packed_vgg,
     }
     archs = [11, 13, 16, 19]
 
@@ -139,6 +128,7 @@ class VGGBaseline(ClassificationRoutine):
             "num_classes": num_classes,
             "style": style,
             "groups": groups,
+            "arch": arch,
         }
 
         if version not in self.versions:
@@ -174,7 +164,7 @@ class VGGBaseline(ClassificationRoutine):
 
         if version == "mc-dropout":  # std VGGs don't have `num_estimators`
             del params["num_estimators"]
-        model = self.versions[version][self.archs.index(arch)](**params)
+        model = self.versions[version](**params)
         if version == "mc-dropout":
             model = mc_dropout(
                 model=model,
