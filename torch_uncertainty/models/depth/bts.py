@@ -44,7 +44,7 @@ class AtrousBlock2d(nn.Module):
         out_channels: int,
         dilation: int,
         norm_first: bool = True,
-        momentum: float = 0.1,
+        norm_momentum: float = 0.1,
         **factory_kwargs,
     ):
         """Atrous block with 1x1 and 3x3 convolutions.
@@ -55,7 +55,7 @@ class AtrousBlock2d(nn.Module):
             dilation (int): Dilation rate for the 3x3 convolution.
             norm_first (bool): Whether to apply normalization before the 1x1 convolution.
                 Defaults to True.
-            momentum (float): Momentum for the normalization layer. Defaults to 0.1.
+            norm_momentum (float): Momentum for the normalization layer. Defaults to 0.1.
             factory_kwargs: Additional arguments for the PyTorch layers.
         """
         super().__init__()
@@ -63,7 +63,7 @@ class AtrousBlock2d(nn.Module):
         self.norm_first = norm_first
         if norm_first:
             self.first_norm = nn.BatchNorm2d(
-                in_channels, momentum=momentum, **factory_kwargs
+                in_channels, momentum=norm_momentum, **factory_kwargs
             )
 
         self.conv1 = nn.Conv2d(
@@ -76,7 +76,7 @@ class AtrousBlock2d(nn.Module):
             **factory_kwargs,
         )
         self.norm = nn.BatchNorm2d(
-            out_channels * 2, momentum=momentum, **factory_kwargs
+            out_channels * 2, momentum=norm_momentum, **factory_kwargs
         )
         self.conv2 = nn.Conv2d(
             in_channels=out_channels * 2,
@@ -135,7 +135,7 @@ class Reduction1x1(nn.Module):
         self,
         num_in_filters: int,
         num_out_filters: int,
-        max_depth: int,
+        max_depth: float,
         is_final: bool = False,
         **factory_kwargs,
     ):
@@ -217,6 +217,8 @@ class Reduction1x1(nn.Module):
 class LocalPlanarGuidance(nn.Module):
     def __init__(self, up_ratio: int) -> None:
         super().__init__()
+        self.register_buffer("u", torch.tensor([]))
+        self.register_buffer("v", torch.tensor([]))
         self.up_ratio = up_ratio
         self.u = (
             torch.arange(self.up_ratio).reshape([1, 1, self.up_ratio]).float()
@@ -224,7 +226,6 @@ class LocalPlanarGuidance(nn.Module):
         self.v = (
             torch.arange(self.up_ratio).reshape([1, self.up_ratio, 1]).float()
         )
-        self.up_ratio = up_ratio
 
     def forward(self, x: Tensor) -> Tensor:
         x_expanded = torch.repeat_interleave(
@@ -288,7 +289,7 @@ class BTSBackbone(Backbone):
             model = tv_models.resnext101_32x8d(
                 weights=ResNeXt101_32X8D_Weights.DEFAULT if pretrained else None
             )
-        if "res" in backbone_name:  # remove classification heads from resnets
+        if "res" in backbone_name:  # remove classification heads from ResNets
             feat_names = resnet_feat_names
             self.feat_out_channels = resnet_feat_out_channels
             model.avgpool = nn.Identity()
@@ -299,7 +300,7 @@ class BTSBackbone(Backbone):
 class BTSDecoder(nn.Module):
     def __init__(
         self,
-        max_depth: int,
+        max_depth: float,
         feat_out_channels: list[int],
         num_features: int,
         dist_layer: type[nn.Module],
@@ -307,10 +308,10 @@ class BTSDecoder(nn.Module):
         super().__init__()
         self.max_depth = max_depth
 
-        self.upconv5 = UpConv2d(feat_out_channels[4], num_features)
-        self.bn5 = nn.BatchNorm2d(
-            num_features, momentum=0.01, affine=True, eps=1.1e-5
+        self.upconv5 = UpConv2d(
+            in_channels=feat_out_channels[4], out_channels=num_features
         )
+        self.bn5 = nn.BatchNorm2d(num_features, momentum=0.01, affine=True)
 
         self.conv5 = nn.Conv2d(
             num_features + feat_out_channels[3],
@@ -320,10 +321,10 @@ class BTSDecoder(nn.Module):
             padding=1,
             bias=False,
         )
-        self.upconv4 = UpConv2d(num_features, num_features // 2)
-        self.bn4 = nn.BatchNorm2d(
-            num_features // 2, momentum=0.01, affine=True, eps=1.1e-5
+        self.upconv4 = UpConv2d(
+            in_channels=num_features, out_channels=num_features // 2
         )
+        self.bn4 = nn.BatchNorm2d(num_features // 2, momentum=0.01, affine=True)
         self.conv4 = nn.Conv2d(
             num_features // 2 + feat_out_channels[2],
             num_features // 2,
@@ -333,7 +334,7 @@ class BTSDecoder(nn.Module):
             bias=False,
         )
         self.bn4_2 = nn.BatchNorm2d(
-            num_features // 2, momentum=0.01, affine=True, eps=1.1e-5
+            num_features // 2, momentum=0.01, affine=True
         )
 
         self.daspp_3 = AtrousBlock2d(
@@ -341,31 +342,31 @@ class BTSDecoder(nn.Module):
             num_features // 4,
             3,
             norm_first=False,
-            momentum=0.01,
+            norm_momentum=0.01,
         )
         self.daspp_6 = AtrousBlock2d(
             num_features // 2 + num_features // 4 + feat_out_channels[2],
             num_features // 4,
             6,
-            momentum=0.01,
+            norm_momentum=0.01,
         )
         self.daspp_12 = AtrousBlock2d(
             num_features + feat_out_channels[2],
             num_features // 4,
             12,
-            momentum=0.01,
+            norm_momentum=0.01,
         )
         self.daspp_18 = AtrousBlock2d(
             num_features + num_features // 4 + feat_out_channels[2],
             num_features // 4,
             18,
-            momentum=0.01,
+            norm_momentum=0.01,
         )
         self.daspp_24 = AtrousBlock2d(
             num_features + num_features // 2 + feat_out_channels[2],
             num_features // 4,
             24,
-            momentum=0.01,
+            norm_momentum=0.01,
         )
         self.daspp_conv = torch.nn.Sequential(
             nn.Conv2d(
@@ -383,10 +384,10 @@ class BTSDecoder(nn.Module):
         )
         self.lpg8x8 = LocalPlanarGuidance(8)
 
-        self.upconv3 = UpConv2d(num_features // 4, num_features // 4)
-        self.bn3 = nn.BatchNorm2d(
-            num_features // 4, momentum=0.01, affine=True, eps=1.1e-5
+        self.upconv3 = UpConv2d(
+            in_channels=num_features // 4, out_channels=num_features // 4
         )
+        self.bn3 = nn.BatchNorm2d(num_features // 4, momentum=0.01, affine=True)
         self.conv3 = nn.Conv2d(
             num_features // 4 + feat_out_channels[1] + 1,
             num_features // 4,
@@ -400,10 +401,10 @@ class BTSDecoder(nn.Module):
         )
         self.lpg4x4 = LocalPlanarGuidance(4)
 
-        self.upconv2 = UpConv2d(num_features // 4, num_features // 8)
-        self.bn2 = nn.BatchNorm2d(
-            num_features // 8, momentum=0.01, affine=True, eps=1.1e-5
+        self.upconv2 = UpConv2d(
+            in_channels=num_features // 4, out_channels=num_features // 8
         )
+        self.bn2 = nn.BatchNorm2d(num_features // 8, momentum=0.01, affine=True)
         self.conv2 = nn.Conv2d(
             num_features // 8 + feat_out_channels[0] + 1,
             num_features // 8,
@@ -418,7 +419,9 @@ class BTSDecoder(nn.Module):
         )
         self.lpg2x2 = LocalPlanarGuidance(2)
 
-        self.upconv1 = UpConv2d(num_features // 8, num_features // 16)
+        self.upconv1 = UpConv2d(
+            in_channels=num_features // 8, out_channels=num_features // 16
+        )
         self.reduc1x1 = Reduction1x1(
             num_features // 16,
             num_features // 32,
@@ -464,7 +467,7 @@ class BTSDecoder(nn.Module):
 
         reduc8x8 = self.reduc8x8(daspp_feat)
         plane_normal_8x8 = reduc8x8[:, :3, :, :]
-        plane_normal_8x8 = F.normalize(plane_normal_8x8, 2, 1)
+        plane_normal_8x8 = F.normalize(plane_normal_8x8, p=2, dim=1)
         plane_dist_8x8 = reduc8x8[:, 3, :, :]
         plane_eq_8x8 = torch.cat(
             [plane_normal_8x8, plane_dist_8x8.unsqueeze(1)], 1
@@ -481,7 +484,7 @@ class BTSDecoder(nn.Module):
 
         reduc4x4 = self.reduc4x4(iconv3)
         plane_normal_4x4 = reduc4x4[:, :3, :, :]
-        plane_normal_4x4 = F.normalize(plane_normal_4x4, 2, 1)
+        plane_normal_4x4 = F.normalize(plane_normal_4x4, p=2, dim=1)
         plane_dist_4x4 = reduc4x4[:, 3, :, :]
         plane_eq_4x4 = torch.cat(
             [plane_normal_4x4, plane_dist_4x4.unsqueeze(1)], 1
@@ -501,7 +504,7 @@ class BTSDecoder(nn.Module):
 
         reduc2x2 = self.reduc2x2(iconv2)
         plane_normal_2x2 = reduc2x2[:, :3, :, :]
-        plane_normal_2x2 = F.normalize(plane_normal_2x2, 2, 1)
+        plane_normal_2x2 = F.normalize(plane_normal_2x2, p=2, dim=1)
         plane_dist_2x2 = reduc2x2[:, 3, :, :]
         plane_eq_2x2 = torch.cat(
             [plane_normal_2x2, plane_dist_2x2.unsqueeze(1)], 1
@@ -555,7 +558,7 @@ class _BTS(nn.Module):
             "resnext50",
             "resnext101",
         ],
-        max_depth: int,
+        max_depth: float,
         bts_size: int = 512,
         dist_layer: type[nn.Module] = nn.Identity,
         pretrained_backbone: bool = True,
@@ -564,7 +567,7 @@ class _BTS(nn.Module):
 
         Args:
             backbone_name (str): Name of the encoding backbone.
-            max_depth (int): Maximum predicted depth.
+            max_depth (float): Maximum predicted depth.
             bts_size (int): BTS feature size. Defaults to 512.
             dist_layer (nn.Module): Distribution layer for probabilistic depth
             estimation. Defaults to nn.Identity.
@@ -580,6 +583,7 @@ class _BTS(nn.Module):
             max_depth, self.backbone.feat_out_channels, bts_size, dist_layer
         )
 
+    # TODO: Handle focal
     def forward(self, x: Tensor, focal: float | None = None) -> Tensor:
         """Forward pass.
 
@@ -590,9 +594,9 @@ class _BTS(nn.Module):
         return self.decoder(self.backbone(x))
 
 
-def bts(
+def _bts(
     backbone_name: str,
-    max_depth: int,
+    max_depth: float,
     bts_size: int = 512,
     dist_layer: type[nn.Module] = nn.Identity,
     pretrained_backbone: bool = True,
@@ -601,4 +605,52 @@ def bts(
         raise ValueError(f"Unsupported backbone. Got {backbone_name}.")
     return _BTS(
         backbone_name, max_depth, bts_size, dist_layer, pretrained_backbone
+    )
+
+
+def bts_resnet50(
+    max_depth: float,
+    bts_size: int = 512,
+    dist_layer: type[nn.Module] = nn.Identity,
+    pretrained_backbone: bool = True,
+) -> _BTS:
+    """BTS model with ResNet-50 backbone.
+
+    Args:
+        max_depth (float): Maximum predicted depth.
+        bts_size (int): BTS feature size. Defaults to 512.
+        dist_layer (nn.Module): Distribution layer for probabilistic depth
+            estimation. Defaults to nn.Identity.
+        pretrained_backbone (bool): Use a pretrained backbone. Defaults to True.
+    """
+    return _bts(
+        "resnet50",
+        max_depth,
+        bts_size=bts_size,
+        dist_layer=dist_layer,
+        pretrained_backbone=pretrained_backbone,
+    )
+
+
+def bts_resnet101(
+    max_depth: float,
+    bts_size: int = 512,
+    dist_layer: type[nn.Module] = nn.Identity,
+    pretrained_backbone: bool = True,
+) -> _BTS:
+    """BTS model with ResNet-101 backbone.
+
+    Args:
+        max_depth (float): Maximum predicted depth.
+        bts_size (int): BTS feature size. Defaults to 512.
+        dist_layer (nn.Module): Distribution layer for probabilistic depth
+            estimation. Defaults to nn.Identity.
+        pretrained_backbone (bool): Use a pretrained backbone. Defaults to True.
+    """
+    return _bts(
+        "resnet101",
+        max_depth,
+        bts_size=bts_size,
+        dist_layer=dist_layer,
+        pretrained_backbone=pretrained_backbone,
     )
