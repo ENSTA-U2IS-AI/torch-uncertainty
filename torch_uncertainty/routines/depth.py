@@ -11,6 +11,7 @@ from torch.distributions import (
 )
 from torch.optim import Optimizer
 from torchmetrics import MeanSquaredError, MetricCollection
+from torchvision.transforms.v2 import functional as F
 
 from torch_uncertainty.metrics import (
     DistributionNLL,
@@ -30,6 +31,7 @@ class DepthRoutine(LightningModule):
     def __init__(
         self,
         model: nn.Module,
+        output_dim: int,
         probabilistic: bool,
         loss: nn.Module,
         num_estimators: int = 1,
@@ -37,9 +39,11 @@ class DepthRoutine(LightningModule):
         format_batch_fn: nn.Module | None = None,
     ) -> None:
         super().__init__()
-        _depth_routine_checks(num_estimators)
+        _depth_routine_checks(num_estimators, output_dim)
 
         self.model = model
+        self.output_dim = output_dim
+        self.one_dim_depth = output_dim == 1
         self.probabilistic = probabilistic
         self.loss = loss
         self.num_estimators = num_estimators
@@ -111,9 +115,15 @@ class DepthRoutine(LightningModule):
         self, batch: tuple[Tensor, Tensor], batch_idx: int
     ) -> STEP_OUTPUT:
         inputs, targets = self.format_batch_fn(batch)
+        if self.one_dim_depth:
+            targets = targets.unsqueeze(1)
+
         dists = self.model(inputs)
-        targets = targets.unsqueeze(-1)
-        loss = self.loss(dists, targets)
+        targets = F.resize(
+            targets, dists.shape[-2:], interpolation=F.InterpolationMode.NEAREST
+        )
+        valid_mask = ~torch.isnan(targets)
+        loss = self.loss(dists[valid_mask], targets[valid_mask])
         self.log("train_loss", loss)
         return loss
 
@@ -121,11 +131,16 @@ class DepthRoutine(LightningModule):
         self, batch: tuple[Tensor, Tensor], batch_idx: int
     ) -> None:
         inputs, targets = batch
+        if self.one_dim_depth:
+            targets = targets.unsqueeze(1)
         preds = self.model(inputs)
 
         if self.probabilistic:
             ens_dist = Independent(
-                dist_rearrange(preds, "(m b) -> b m", m=self.num_estimators), 1
+                dist_rearrange(
+                    preds, "(m b) c h w -> b m c h w", m=self.num_estimators
+                ),
+                1,
             )
             mix = Categorical(
                 torch.ones(self.num_estimators, device=self.device)
@@ -133,12 +148,17 @@ class DepthRoutine(LightningModule):
             mixture = MixtureSameFamily(mix, ens_dist)
             preds = mixture.mean
         else:
-            preds = rearrange(preds, "(m b) -> b m", m=self.num_estimators)
+            preds = rearrange(
+                preds, "(m b) c h w -> b m c h w", m=self.num_estimators
+            )
             preds = preds.mean(dim=1)
 
-        self.val_metrics.update(preds, targets)
+        valid_mask = ~torch.isnan(targets)
+        self.val_metrics.update(preds[valid_mask], targets[valid_mask])
         if self.probabilistic:
-            self.val_prob_metrics.update(mixture, targets)
+            self.val_prob_metrics.update(
+                mixture[valid_mask], targets[valid_mask]
+            )
 
     def test_step(
         self,
@@ -153,11 +173,13 @@ class DepthRoutine(LightningModule):
             )
 
         inputs, targets = batch
+        if self.one_dim_depth:
+            targets = targets.unsqueeze(1)
         preds = self.model(inputs)
 
         if self.probabilistic:
             ens_dist = dist_rearrange(
-                preds, "(m b) -> b m", m=self.num_estimators
+                preds, "(m b) c h w -> b m c h w", m=self.num_estimators
             )
             mix = Categorical(
                 torch.ones(self.num_estimators, device=self.device)
@@ -166,12 +188,17 @@ class DepthRoutine(LightningModule):
             self.test_metrics.nll.update(mixture, targets)
             preds = mixture.mean
         else:
-            preds = rearrange(preds, "(m b)-> b m", m=self.num_estimators)
+            preds = rearrange(
+                preds, "(m b) c h w -> b m c h w", m=self.num_estimators
+            )
             preds = preds.mean(dim=1)
 
-        self.test_metrics.update(preds, targets)
+        valid_mask = ~torch.isnan(targets)
+        self.test_metrics.update(preds[valid_mask], targets[valid_mask])
         if self.probabilistic:
-            self.test_prob_metrics.update(mixture, targets)
+            self.test_prob_metrics.update(
+                mixture[valid_mask], targets[valid_mask]
+            )
 
     def on_validation_epoch_end(self) -> None:
         self.log_dict(self.val_metrics.compute(), sync_dist=True)
@@ -197,8 +224,11 @@ class DepthRoutine(LightningModule):
             self.test_prob_metrics.reset()
 
 
-def _depth_routine_checks(num_estimators: int) -> None:
+def _depth_routine_checks(num_estimators: int, output_dim: int) -> None:
     if num_estimators < 1:
         raise ValueError(
             f"num_estimators must be positive, got {num_estimators}."
         )
+
+    if output_dim < 1:
+        raise ValueError(f"output_dim must be positive, got {output_dim}.")
