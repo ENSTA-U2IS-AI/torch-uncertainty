@@ -26,6 +26,7 @@ class TestSegmentation:
             loss=nn.CrossEntropyLoss(),
             baseline_type="single",
             optim_recipe=optim_cifar10_resnet18,
+            log_plots=True,
         )
 
         trainer.fit(model, dm)
