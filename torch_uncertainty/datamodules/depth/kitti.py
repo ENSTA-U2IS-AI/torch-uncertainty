@@ -18,7 +18,7 @@ class KITTIDataModule(AbstractDataModule):
         root: str | Path,
         batch_size: int,
         max_depth: float = 80.0,
-        crop_size: _size_2_t = (375, 1242),
+        crop_size: _size_2_t = (352, 704),
         inference_size: _size_2_t = (375, 1242),
         val_split: float | None = None,
         num_workers: int = 1,
