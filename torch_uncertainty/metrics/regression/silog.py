@@ -47,19 +47,26 @@ class SILog(Metric):
             default=torch.tensor(0.0),
             dist_reduce_fx="sum",
         )
+        self.add_state(
+            "sq_log_dists",
+            default=torch.tensor(0.0),
+            dist_reduce_fx="sum",
+        )
         self.add_state("total", default=torch.tensor(0), dist_reduce_fx="sum")
 
     def update(self, pred: Tensor, target: Tensor) -> None:
         """Update state with predictions and targets."""
         self.log_dists += torch.sum(pred.log() - target.log())
+        self.sq_log_dists += torch.sum((pred.log() - target.log()) ** 2)
         self.total += target.size(0)
 
     def compute(self) -> Tensor:
         """Compute the Scale-Invariant Logarithmic Loss."""
         log_dists = dim_zero_cat(self.log_dists)
-        out = torch.mean(log_dists**2) - self.lmbda * torch.sum(
-            log_dists
-        ) ** 2 / (self.total * self.total)
+        sq_log_dists = dim_zero_cat(self.sq_log_dists)
+        out = sq_log_dists / self.total - self.lmbda * log_dists**2 / (
+            self.total * self.total
+        )
         if self.sqrt:
             return torch.sqrt(out)
         return out
