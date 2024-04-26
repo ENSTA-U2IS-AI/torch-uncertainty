@@ -165,6 +165,7 @@ Metrics
     BrierScore
     CategoricalNLL
     CalibrationError
+    CovAt5Risk,
     Disagreement
     DistributionNLL
     Entropy
@@ -173,6 +174,7 @@ Metrics
     MeanGTRelativeAbsoluteError
     MeanGTRelativeSquaredError
     MutualInformation
+    RiskAt80Cov, 
     SILog
     ThresholdAccuracy
 
