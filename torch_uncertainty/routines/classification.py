@@ -62,8 +62,7 @@ class ClassificationRoutine(LightningModule):
         calibration_set: Literal["val", "test"] | None = None,
         num_calibration_bins: int = 15,
     ) -> None:
-        r"""Routine for efficient training and testing on **classification tasks**
-        using LightningModule.
+        r"""Routine for training & testing on **classification tasks**.
 
         Args:
             model (torch.nn.Module): Model to train.

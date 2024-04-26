@@ -29,8 +29,7 @@ class RegressionRoutine(LightningModule):
         optim_recipe: dict | Optimizer | None = None,
         format_batch_fn: nn.Module | None = None,
     ) -> None:
-        r"""Routine for efficient training and testing on **regression tasks**
-        using LightningModule.
+        r"""Routine for training & testing on **regression tasks**.
 
         Args:
             model (torch.nn.Module): Model to train.

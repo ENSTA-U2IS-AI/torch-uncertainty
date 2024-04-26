@@ -192,6 +192,8 @@ class DeepLabV3Backbone(Backbone):
             base_model = tv_models.resnet101(
                 weights=ResNet101_Weights.DEFAULT if pretrained else None
             )
+        else:
+            raise ValueError(f"Unknown backbone: {backbone_name}.")
         base_model.avgpool = nn.Identity()
         base_model.fc = nn.Identity()
         set_bn_momentum(base_model, norm_momentum)
