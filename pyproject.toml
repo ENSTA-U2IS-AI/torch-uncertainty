@@ -46,7 +46,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-image = ["scikit-image"]
+image = ["scikit-image", "h5py",]
 tabular = ["pandas"]
 dev = [
     "torch_uncertainty[image]",

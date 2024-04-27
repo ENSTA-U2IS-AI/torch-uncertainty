@@ -42,6 +42,16 @@ Segmentation
 
     SegmentationRoutine
 
+Monocular Depth Estimation
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: class.rst
+
+    DepthRoutine
+
 Baselines
 ---------
 
@@ -85,7 +95,18 @@ Segmentation
     :nosignatures:
     :template: class.rst
 
+    DeepLabBaseline
     SegFormerBaseline
+
+Monocular Depth Estimation 
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: class.rst
+
+    BTSBaseline
 
 Layers
 ------

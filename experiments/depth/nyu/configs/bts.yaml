@@ -28,21 +28,23 @@ model:
       sqrt: true
   version: std
   arch: 50
-  max_depth: 80.0
+  max_depth: 10.0
   num_estimators: 1
   pretrained_backbone: true
 data:
   root: ./data
   batch_size: 4
   crop_size: 
-    - 352
-    - 704
+    - 416
+    - 544
   inference_size:
-    - 352
-    - 1216
+    - 416
+    - 544
   num_workers: 4
 optimizer:
   lr: 1e-4
+  weight_decay: 1e-2
+  eps: 1e-3
 lr_scheduler:
   power: 0.9
   total_iters: 50

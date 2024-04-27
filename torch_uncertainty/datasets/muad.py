@@ -198,7 +198,7 @@ class MUAD(VisionDataset):
                     cv2.IMREAD_ANYCOLOR | cv2.IMREAD_ANYDEPTH,
                 )
             )
-            # TODO: in the long tun it would be better to use a custom
+            # TODO: in the long run it would be better to use a custom
             # tv_tensor for depth maps (e.g. tv_tensors.DepthMap)
             target = np.asarray(target, np.float32)
             target = tv_tensors.Mask(400 * (1 - target))  # convert to meters
@@ -229,7 +229,7 @@ class MUAD(VisionDataset):
         """
         if "depth" in path.name:
             raise NotImplementedError(
-                "Depth regression mode is not implemented yet. Raise an issue "
+                "Depth mode is not implemented yet. Raise an issue "
                 "if you need it."
             )
         self.samples = sorted((path / "leftImg8bit/").glob("**/*"))
