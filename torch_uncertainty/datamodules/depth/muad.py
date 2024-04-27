@@ -1,18 +1,14 @@
 from pathlib import Path
 
-import torch
 from torch.nn.common_types import _size_2_t
-from torch.nn.modules.utils import _pair
-from torchvision import tv_tensors
-from torchvision.transforms import v2
 
-from torch_uncertainty.datamodules.abstract import AbstractDataModule
 from torch_uncertainty.datasets import MUAD
-from torch_uncertainty.transforms import RandomRescale
 from torch_uncertainty.utils.misc import create_train_val_split
 
+from .base import DepthDataModule
 
-class MUADDataModule(AbstractDataModule):
+
+class MUADDataModule(DepthDataModule):
     def __init__(
         self,
         root: str | Path,
@@ -53,54 +49,16 @@ class MUADDataModule(AbstractDataModule):
                 Defaults to ``True``.
         """
         super().__init__(
+            dataset=MUAD,
             root=root,
             batch_size=batch_size,
+            max_depth=max_depth,
+            crop_size=crop_size,
+            inference_size=inference_size,
             val_split=val_split,
             num_workers=num_workers,
             pin_memory=pin_memory,
             persistent_workers=persistent_workers,
-        )
-
-        self.dataset = MUAD
-        self.max_depth = max_depth
-        self.crop_size = _pair(crop_size)
-        self.inference_size = _pair(inference_size)
-
-        self.train_transform = v2.Compose(
-            [
-                RandomRescale(min_scale=0.5, max_scale=2.0, antialias=True),
-                v2.RandomCrop(
-                    size=self.crop_size,
-                    pad_if_needed=True,
-                    fill={tv_tensors.Image: 0, tv_tensors.Mask: float("nan")},
-                ),
-                v2.RandomHorizontalFlip(),
-                v2.ToDtype(
-                    dtype={
-                        tv_tensors.Image: torch.float32,
-                        "others": None,
-                    },
-                    scale=True,
-                ),
-                v2.Normalize(
-                    mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
-                ),
-            ]
-        )
-        self.test_transform = v2.Compose(
-            [
-                v2.Resize(size=self.inference_size, antialias=True),
-                v2.ToDtype(
-                    dtype={
-                        tv_tensors.Image: torch.float32,
-                        "others": None,
-                    },
-                    scale=True,
-                ),
-                v2.Normalize(
-                    mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
-                ),
-            ]
         )
 
     def prepare_data(self) -> None:  # coverage: ignore
