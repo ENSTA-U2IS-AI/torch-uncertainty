@@ -262,32 +262,21 @@ class OverlapPatchEmbed(nn.Module):
 class MixVisionTransformer(nn.Module):
     def __init__(
         self,
-        img_size=224,
-        patch_size=16,
-        in_chans=3,
-        num_classes=1000,
-        embed_dims=None,
-        num_heads=None,
-        mlp_ratios=None,
-        qkv_bias=False,
-        qk_scale=None,
-        drop_rate=0.0,
-        attn_drop_rate=0.0,
-        drop_path_rate=0.0,
-        norm_layer=nn.LayerNorm,
-        depths=None,
-        sr_ratios=None,
+        img_size,
+        in_channels,
+        num_classes,
+        embed_dims,
+        num_heads,
+        mlp_ratios,
+        qkv_bias,
+        qk_scale,
+        drop_rate,
+        attn_drop_rate,
+        drop_path_rate,
+        norm_layer,
+        depths,
+        sr_ratios,
     ):
-        if sr_ratios is None:
-            sr_ratios = [8, 4, 2, 1]
-        if depths is None:
-            depths = [3, 4, 6, 3]
-        if mlp_ratios is None:
-            mlp_ratios = [4, 4, 4, 4]
-        if num_heads is None:
-            num_heads = [1, 2, 4, 8]
-        if embed_dims is None:
-            embed_dims = [64, 128, 256, 512]
         super().__init__()
         self.num_classes = num_classes
         self.depths = depths
@@ -297,7 +286,7 @@ class MixVisionTransformer(nn.Module):
             img_size=img_size,
             patch_size=7,
             stride=4,
-            in_chans=in_chans,
+            in_chans=in_channels,
             embed_dim=embed_dims[0],
         )
         self.patch_embed2 = OverlapPatchEmbed(
@@ -489,7 +478,10 @@ class Mit(MixVisionTransformer):
         embed_dims = _get_embed_dims(arch)
         depths = _get_depths(arch)
         super().__init__(
-            patch_size=4,
+            img_size=224,
+            in_channels=3,
+            num_classes=1000,
+            qk_scale=None,
             embed_dims=embed_dims,
             num_heads=[1, 2, 5, 8],
             mlp_ratios=[4, 4, 4, 4],
@@ -499,6 +491,7 @@ class Mit(MixVisionTransformer):
             sr_ratios=[8, 4, 2, 1],
             drop_rate=0.0,
             drop_path_rate=0.1,
+            attn_drop_rate=0.0,
         )
 
 
