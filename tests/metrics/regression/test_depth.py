@@ -21,7 +21,7 @@ class TestLog10:
         metric.update(preds[:, 0], targets[:, 0])
         metric.update(preds[:, 1], targets[:, 1])
         assert torch.mean(
-            preds.log10().flatten() - targets.log10().flatten()
+            torch.abs(preds.log10().flatten() - targets.log10().flatten())
         ) == pytest.approx(metric.compute())
 
 
