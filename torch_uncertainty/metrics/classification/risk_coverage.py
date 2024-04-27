@@ -59,39 +59,40 @@ class AURC(Metric):
             targets (Tensor): The ground truth labels of shape :math:`(N,)`.
         """
         if probs.ndim == 1:
-            probs = torch.stack([probs, 1 - probs], dim=-1)
-        self.scores.append(-probs.max(-1).values)
+            probs = torch.stack([1 - probs, probs], dim=-1)
+        self.scores.append(probs.max(-1).values)
         self.errors.append((probs.argmax(-1) != targets) * 1.0)
 
-    def partial_compute(self) -> tuple[Tensor, Tensor]:
+    def partial_compute(self) -> Tensor:
         """Compute the error and optimal error rates for the RC curve.
 
         Returns:
-            tuple[Tensor, Tensor]: The error rates and the optimal/oracle error
+            Tensor: The error rates and the optimal/oracle error
                 rates.
         """
         scores = dim_zero_cat(self.scores)
         errors = dim_zero_cat(self.errors)
-        error_rates = _aurc_rejection_rate_compute(scores, errors)
-        optimal_error_rates = _aurc_rejection_rate_compute(errors, errors)
-        return error_rates.cpu(), optimal_error_rates.cpu()
+        return _aurc_rejection_rate_compute(scores, errors)
 
     def compute(self) -> Tensor:
         """Compute the Area Under the Risk-Coverage curve (AURC).
 
+        Normalize the AURC as if its support was between 0 and 1. This has an
+        impact on the AURC when the number of samples is small.
+
         Returns:
             Tensor: The AURC.
         """
-        error_rates, optimal_error_rates = self.partial_compute()
+        error_rates = self.partial_compute().cpu()
         num_samples = error_rates.size(0)
-        x = np.arange(1, num_samples + 1) / num_samples
-        y = (error_rates - optimal_error_rates).numpy()
-        return torch.tensor([auc(x, y)], device=self.device)
+        x = torch.arange(1, num_samples + 1, device="cpu") / num_samples
+        return torch.tensor([auc(x, error_rates)], device=self.device) / (
+            1 - 1 / num_samples
+        )
 
     def plot(
         self,
         ax: _AX_TYPE | None = None,
-        plot_oracle: bool = True,
         plot_value: bool = True,
         name: str | None = None,
     ) -> tuple[plt.Figure | None, plt.Axes]:
@@ -101,8 +102,6 @@ class AURC(Metric):
         Args:
             ax (Axes | None, optional): An matplotlib axis object. If provided
                 will add plot to this axis. Defaults to None.
-            plot_oracle (bool, optional): Whether to plot the oracle
-                risk-cov. curve. Defaults to True.
             plot_value (bool, optional): Whether to print the AURC value on the
                 plot. Defaults to True.
             name (str | None, optional): Name of the model. Defaults to None.
@@ -113,20 +112,18 @@ class AURC(Metric):
         fig, ax = plt.subplots(figsize=(6, 6)) if ax is None else (None, ax)
 
         # Computation of AUSEC
-        error_rates, optimal_error_rates = self.partial_compute()
+        error_rates = self.partial_compute().cpu().flip(0)
         num_samples = error_rates.size(0)
         rejection_rates = (np.arange(num_samples) / num_samples) * 100
 
         x = np.arange(num_samples) / num_samples
-        y = (error_rates - optimal_error_rates).numpy()
-        aurc = auc(x, y)
+        aurc = auc(x, error_rates)
 
         # reduce plot size
         plot_xs = np.arange(0.01, 100 + 0.01, 0.01)
         xs = np.arange(start=1, stop=num_samples + 1, step=1) / num_samples
         rejection_rates = np.interp(plot_xs, xs, rejection_rates)
         error_rates = np.interp(plot_xs, xs, error_rates)
-        optimal_error_rates = np.interp(plot_xs, xs, optimal_error_rates)
 
         # plot
         ax.plot(
@@ -134,18 +131,6 @@ class AURC(Metric):
             error_rates * 100,
             label="Model" if name is None else name,
         )
-        if plot_oracle:
-            ax.plot(
-                100 - rejection_rates,
-                optimal_error_rates * 100,
-                label="Oracle",
-            )
-
-        ax.set_xlabel("Coverage (%)")
-        ax.set_ylabel("Error Rate (%)")
-        ax.set_xlim(self.plot_lower_bound, self.plot_upper_bound)
-        ax.set_ylim(self.plot_lower_bound, self.plot_upper_bound)
-        ax.legend(loc="upper right")
 
         if plot_value:
             ax.text(
@@ -163,6 +148,7 @@ class AURC(Metric):
         ax.set_xlim(0, 100)
         ax.set_ylim(0, 100)
         ax.set_aspect("equal", "box")
+        ax.legend(loc="upper right")
         fig.tight_layout()
         return fig, ax
 
@@ -178,11 +164,10 @@ def _aurc_rejection_rate_compute(
         errors (Tensor): binary errors of shape :math:`(B,)`
     """
     num_samples = scores.size(0)
-    errors = errors[scores.argsort()]
-    cumulative_errors = errors.cumsum(dim=-1) / torch.arange(
+    errors = errors[scores.argsort(descending=True)]
+    return errors.cumsum(dim=-1) / torch.arange(
         1, num_samples + 1, dtype=scores.dtype, device=scores.device
     )
-    return cumulative_errors.flip(0)
 
 
 class CovAtxRisk(Metric):
@@ -215,8 +200,8 @@ class CovAtxRisk(Metric):
             targets (Tensor): The ground truth labels of shape :math:`(N,)`.
         """
         if probs.ndim == 1:
-            probs = torch.stack([probs, 1 - probs], dim=-1)
-        self.scores.append(-probs.max(-1).values)
+            probs = torch.stack([1 - probs, probs], dim=-1)
+        self.scores.append(probs.max(-1).values)
         self.errors.append((probs.argmax(-1) != targets) * 1.0)
 
     def compute(self) -> Tensor:
@@ -228,8 +213,9 @@ class CovAtxRisk(Metric):
         scores = dim_zero_cat(self.scores)
         errors = dim_zero_cat(self.errors)
         num_samples = scores.size(0)
+        # FIXME: not necessarily monotonous
         error_rates = _aurc_rejection_rate_compute(scores, errors)
-        index = (error_rates >= self.risk_threshold).sum()
+        index = (error_rates > self.risk_threshold).sum()
         return (num_samples - index) / num_samples
 
 
@@ -269,8 +255,8 @@ class RiskAtxCov(Metric):
             targets (Tensor): The ground truth labels of shape :math:`(N,)`.
         """
         if probs.ndim == 1:
-            probs = torch.stack([probs, 1 - probs], dim=-1)
-        self.scores.append(-probs.max(-1).values)
+            probs = torch.stack([1 - probs, probs], dim=-1)
+        self.scores.append(probs.max(-1).values)
         self.errors.append((probs.argmax(-1) != targets) * 1.0)
 
     def compute(self) -> Tensor:
@@ -282,7 +268,7 @@ class RiskAtxCov(Metric):
         scores = dim_zero_cat(self.scores)
         errors = dim_zero_cat(self.errors)
         error_rates = _aurc_rejection_rate_compute(scores, errors)
-        return error_rates[math.ceil(error_rates.size(0) * self.cov_threshold)]
+        return error_rates[math.ceil(scores.size(0) * self.cov_threshold) - 1]
 
 
 class RiskAt80Cov(RiskAtxCov):
