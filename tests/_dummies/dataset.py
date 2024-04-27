@@ -240,7 +240,10 @@ class DummyDepthDataset(Dataset):
         else:
             img_shape = (num_images, input_channels, image_size, image_size)
 
-        smnt_shape = (num_images, output_dim, image_size, image_size)
+        if output_dim == 1:
+            smnt_shape = (num_images, image_size, image_size)
+        else:
+            smnt_shape = (num_images, output_dim, image_size, image_size)
 
         self.data = np.random.randint(
             low=0,

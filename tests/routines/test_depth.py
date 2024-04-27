@@ -33,11 +33,11 @@ class TestDepth:
         trainer.test(model, dm)
         model(dm.get_test_set()[0][0])
 
-    def test_two_estimators_two_classes(self):
+    def test_two_estimators_one_class(self):
         trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
 
         root = Path(__file__).parent.absolute().parents[0] / "data"
-        dm = DummyDepthDataModule(root=root, batch_size=4, output_dim=2)
+        dm = DummyDepthDataModule(root=root, batch_size=4, output_dim=1)
 
         model = DummyDepthBaseline(
             in_channels=dm.num_channels,
@@ -62,5 +62,14 @@ class TestDepth:
                 output_dim=2,
                 loss=nn.MSELoss(),
                 num_estimators=0,
+                probabilistic=False,
+            )
+
+        with pytest.raises(ValueError, match="output_dim must be positive"):
+            DepthRoutine(
+                model=nn.Identity(),
+                output_dim=0,
+                loss=nn.MSELoss(),
+                num_estimators=1,
                 probabilistic=False,
             )
