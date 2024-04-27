@@ -79,6 +79,16 @@ class TestCovAtxRisk:
         metric = CovAtxRisk(risk_threshold=0.5)
         assert metric(probs, targets) == 1
 
+    def test_errors(self):
+        with pytest.raises(
+            TypeError, match="Expected threshold to be of type float"
+        ):
+            CovAtxRisk(risk_threshold="0.5")
+        with pytest.raises(
+            ValueError, match="Threshold should be in the range"
+        ):
+            CovAtxRisk(risk_threshold=-0.5)
+
 
 class TestRiskAtxCov:
     """Testing the RiskAtxCov metric class."""

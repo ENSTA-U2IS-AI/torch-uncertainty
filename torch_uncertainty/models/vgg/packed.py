@@ -22,13 +22,13 @@ def packed_vgg(
     dropout_rate: float = 0.5,
     style: str = "imagenet",
 ) -> VGG:
-    if arch == 11:  # coverage: ignore
+    if arch == 11:
         config = cfgs["A"]
-    elif arch == 13:
+    elif arch == 13:  # coverage: ignore
         config = cfgs["B"]
-    elif arch == 16:
+    elif arch == 16:  # coverage: ignore
         config = cfgs["D"]
-    elif arch == 19:
+    elif arch == 19:  # coverage: ignore
         config = cfgs["E"]
     else:
         raise ValueError(f"Unknown VGG arch {arch}.")

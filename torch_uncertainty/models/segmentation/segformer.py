@@ -18,14 +18,14 @@ class DWConv(nn.Module):
         return inputs.flatten(2).transpose(1, 2)
 
 
-class Mlp(nn.Module):
+class MLP(nn.Module):
     def __init__(
         self,
-        in_features,
-        hidden_features=None,
-        out_features=None,
-        act_layer=nn.GELU,
-        drop=0.0,
+        in_features: int,
+        hidden_features: int | None = None,
+        out_features: int | None = None,
+        act_layer: type[nn.Module] = nn.GELU,
+        dropout_rate: float = 0.0,
     ):
         super().__init__()
         out_features = out_features or in_features
@@ -34,7 +34,7 @@ class Mlp(nn.Module):
         self.dwconv = DWConv(hidden_features)
         self.act = act_layer()
         self.fc2 = nn.Linear(hidden_features, out_features)
-        self.drop = nn.Dropout(drop)
+        self.dropout = nn.Dropout(dropout_rate)
 
         self.apply(self._init_weights)
 
@@ -57,9 +57,9 @@ class Mlp(nn.Module):
         x = self.fc1(x)
         x = self.dwconv(x, h, w)
         x = self.act(x)
-        x = self.drop(x)
+        x = self.dropout(x)
         x = self.fc2(x)
-        return self.drop(x)
+        return self.dropout(x)
 
 
 class Attention(nn.Module):
@@ -153,7 +153,7 @@ class Block(nn.Module):
         mlp_ratio=4.0,
         qkv_bias=False,
         qk_scale=None,
-        drop=0.0,
+        dropout=0.0,
         attn_drop=0.0,
         drop_path=0.0,
         act_layer=nn.GELU,
@@ -168,7 +168,7 @@ class Block(nn.Module):
             qkv_bias=qkv_bias,
             qk_scale=qk_scale,
             attn_drop=attn_drop,
-            proj_drop=drop,
+            proj_drop=dropout,
             sr_ratio=sr_ratio,
         )
         # NOTE: drop path for stochastic depth, we shall see if this is better
@@ -178,11 +178,11 @@ class Block(nn.Module):
         )
         self.norm2 = norm_layer(dim)
         mlp_hidden_dim = int(dim * mlp_ratio)
-        self.mlp = Mlp(
+        self.mlp = MLP(
             in_features=dim,
             hidden_features=mlp_hidden_dim,
             act_layer=act_layer,
-            drop=drop,
+            dropout_rate=dropout,
         )
 
         self.apply(self._init_weights)
@@ -335,7 +335,7 @@ class MixVisionTransformer(nn.Module):
                     mlp_ratio=mlp_ratios[0],
                     qkv_bias=qkv_bias,
                     qk_scale=qk_scale,
-                    drop=drop_rate,
+                    dropout=drop_rate,
                     attn_drop=attn_drop_rate,
                     drop_path=dpr[cur + i],
                     norm_layer=norm_layer,
@@ -355,7 +355,7 @@ class MixVisionTransformer(nn.Module):
                     mlp_ratio=mlp_ratios[1],
                     qkv_bias=qkv_bias,
                     qk_scale=qk_scale,
-                    drop=drop_rate,
+                    dropout=drop_rate,
                     attn_drop=attn_drop_rate,
                     drop_path=dpr[cur + i],
                     norm_layer=norm_layer,
@@ -375,7 +375,7 @@ class MixVisionTransformer(nn.Module):
                     mlp_ratio=mlp_ratios[2],
                     qkv_bias=qkv_bias,
                     qk_scale=qk_scale,
-                    drop=drop_rate,
+                    dropout=drop_rate,
                     attn_drop=attn_drop_rate,
                     drop_path=dpr[cur + i],
                     norm_layer=norm_layer,
@@ -395,7 +395,7 @@ class MixVisionTransformer(nn.Module):
                     mlp_ratio=mlp_ratios[3],
                     qkv_bias=qkv_bias,
                     qk_scale=qk_scale,
-                    drop=drop_rate,
+                    dropout=drop_rate,
                     attn_drop=attn_drop_rate,
                     drop_path=dpr[cur + i],
                     norm_layer=norm_layer,
@@ -503,7 +503,7 @@ class Mit(MixVisionTransformer):
 
 
 class MLPHead(nn.Module):
-    """Linear Embedding."""
+    """Linear Embedding with transposition."""
 
     def __init__(self, input_dim: int = 2048, embed_dim: int = 768) -> None:
         super().__init__()
@@ -521,7 +521,7 @@ def resize(
     align_corners: bool | None = None,
     warning: bool = True,
 ) -> Tensor:
-    if warning and size is not None and align_corners:
+    if warning and size is not None and align_corners:  # coverage: ignore
         input_h, input_w = tuple(int(x) for x in inputs.shape[2:])
         output_h, output_w = tuple(int(x) for x in size)
         if (output_h > input_h or output_w > output_h) and (
@@ -560,8 +560,6 @@ class SegFormerHead(nn.Module):
         self.in_channels = in_channels
         assert len(feature_strides) == len(in_channels)
         assert min(feature_strides) == feature_strides[0]
-        self.feature_strides = feature_strides
-        self.num_classes = num_classes
 
         self.linear_c4 = MLPHead(input_dim=in_channels[3], embed_dim=embed_dim)
         self.linear_c3 = MLPHead(input_dim=in_channels[2], embed_dim=embed_dim)
@@ -573,13 +571,8 @@ class SegFormerHead(nn.Module):
             nn.ReLU(),
             nn.BatchNorm2d(embed_dim),
         )
-
-        self.classifier = nn.Conv2d(embed_dim, self.num_classes, kernel_size=1)
-
-        if dropout_ratio > 0:
-            self.dropout = nn.Dropout2d(dropout_ratio)
-        else:
-            self.dropout = nn.Identity()
+        self.classifier = nn.Conv2d(embed_dim, num_classes, kernel_size=1)
+        self.dropout = nn.Dropout2d(dropout_ratio)
 
     def forward(self, inputs: Tensor) -> Tensor:
         # x [inputs[i] for i in self.in_index] # len=4, 1/4,1/8,1/16,1/32
