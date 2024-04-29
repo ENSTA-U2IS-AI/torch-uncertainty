@@ -12,6 +12,7 @@ class KITTIDataModule(DepthDataModule):
         self,
         root: str | Path,
         batch_size: int,
+        min_depth: float = 1e-3,
         max_depth: float = 80.0,
         crop_size: _size_2_t = (352, 704),
         inference_size: _size_2_t = (375, 1242),
@@ -25,8 +26,10 @@ class KITTIDataModule(DepthDataModule):
         Args:
             root (str or Path): Root directory of the datasets.
             batch_size (int): Number of samples per batch.
-            max_depth (float, optional): Maximum depth value. Defaults to
-                ``80.0``.
+            min_depth (float, optional): Minimum depth value for evaluation.
+                Defaults to ``1e-3``.
+            max_depth (float, optional): Maximum depth value for training and
+                evaluation. Defaults to ``80.0``.
             crop_size (sequence or int, optional): Desired input image and
                 depth mask sizes during training. If :attr:`crop_size` is an
                 int instead of sequence like :math:`(H, W)`, a square crop
@@ -52,6 +55,7 @@ class KITTIDataModule(DepthDataModule):
             dataset=KITTIDepth,
             root=root,
             batch_size=batch_size,
+            min_depth=min_depth,
             max_depth=max_depth,
             crop_size=crop_size,
             inference_size=inference_size,

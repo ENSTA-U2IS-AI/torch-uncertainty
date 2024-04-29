@@ -13,6 +13,7 @@ class MUADDataModule(DepthDataModule):
         self,
         root: str | Path,
         batch_size: int,
+        min_depth: float,
         max_depth: float,
         crop_size: _size_2_t = 1024,
         inference_size: _size_2_t = (1024, 2048),
@@ -26,7 +27,9 @@ class MUADDataModule(DepthDataModule):
         Args:
             root (str or Path): Root directory of the datasets.
             batch_size (int): Number of samples per batch.
-            max_depth (float): Maximum depth value.
+            min_depth (float, optional): Minimum depth value for evaluation
+            max_depth (float, optional): Maximum depth value for training and
+                evaluation.
             crop_size (sequence or int, optional): Desired input image and
                 depth mask sizes during training. If :attr:`crop_size` is an
                 int instead of sequence like :math:`(H, W)`, a square crop
@@ -52,6 +55,7 @@ class MUADDataModule(DepthDataModule):
             dataset=MUAD,
             root=root,
             batch_size=batch_size,
+            min_depth=min_depth,
             max_depth=max_depth,
             crop_size=crop_size,
             inference_size=inference_size,
@@ -72,6 +76,7 @@ class MUADDataModule(DepthDataModule):
         self.dataset(
             root=self.root,
             split="val",
+            min_depth=self.min_depth,
             max_depth=self.max_depth,
             target_type="depth",
             download=True,
@@ -93,11 +98,13 @@ class MUADDataModule(DepthDataModule):
                     self.val_split,
                     self.test_transform,
                 )
+                self.val.min_depth = self.min_depth
             else:
                 self.train = full
                 self.val = self.dataset(
                     root=self.root,
                     split="val",
+                    min_depth=self.min_depth,
                     max_depth=self.max_depth,
                     target_type="depth",
                     transforms=self.test_transform,
@@ -107,6 +114,7 @@ class MUADDataModule(DepthDataModule):
             self.test = self.dataset(
                 root=self.root,
                 split="val",
+                min_depth=self.min_depth,
                 max_depth=self.max_depth,
                 target_type="depth",
                 transforms=self.test_transform,

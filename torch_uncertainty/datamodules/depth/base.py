@@ -18,6 +18,7 @@ class DepthDataModule(AbstractDataModule):
         dataset: type[VisionDataset],
         root: str | Path,
         batch_size: int,
+        min_depth: float,
         max_depth: float,
         crop_size: _size_2_t,
         inference_size: _size_2_t,
@@ -26,6 +27,32 @@ class DepthDataModule(AbstractDataModule):
         pin_memory: bool = True,
         persistent_workers: bool = True,
     ) -> None:
+        r"""Base depth datamodule.
+
+        Args:
+            dataset (type[VisionDataset]): Dataset class to use.
+            root (str or Path): Root directory of the datasets.
+            batch_size (int): Number of samples per batch.
+            min_depth (float, optional): Minimum depth value for evaluation.
+            max_depth (float, optional): Maximum depth value for training and
+                evaluation.
+            crop_size (sequence or int, optional): Desired input image and
+                depth mask sizes during training. If :attr:`crop_size` is an
+                int instead of sequence like :math:`(H, W)`, a square crop
+                :math:`(\text{size},\text{size})` is made. If provided a sequence
+                of length :math:`1`, it will be interpreted as
+                :math:`(\text{size[0]},\text{size[1]})`.
+            inference_size (sequence or int, optional): Desired input image and
+                depth mask sizes during inference. If size is an int,
+                smaller edge of the images will be matched to this number, i.e.,
+                :math:`\text{height}>\text{width}`, then image will be rescaled to
+                :math:`(\text{size}\times\text{height}/\text{width},\text{size})`.
+            val_split (float or None, optional): Share of training samples to use
+                for validation.
+            num_workers (int, optional): Number of dataloaders to use.
+            pin_memory (bool, optional):  Whether to pin memory.
+            persistent_workers (bool, optional): Whether to use persistent workers.
+        """
         super().__init__(
             root=root,
             batch_size=batch_size,
@@ -36,13 +63,14 @@ class DepthDataModule(AbstractDataModule):
         )
 
         self.dataset = dataset
+        self.min_depth = min_depth
         self.max_depth = max_depth
         self.crop_size = _pair(crop_size)
         self.inference_size = _pair(inference_size)
 
         self.train_transform = v2.Compose(
             [
-                RandomRescale(min_scale=0.5, max_scale=2.0, antialias=True),
+                RandomRescale(min_scale=0.5, max_scale=2.0),
                 v2.RandomCrop(
                     size=self.crop_size,
                     pad_if_needed=True,
@@ -63,7 +91,7 @@ class DepthDataModule(AbstractDataModule):
         )
         self.test_transform = v2.Compose(
             [
-                v2.Resize(size=self.inference_size, antialias=True),
+                v2.Resize(size=self.inference_size),
                 v2.ToDtype(
                     dtype={
                         tv_tensors.Image: torch.float32,
@@ -103,10 +131,12 @@ class DepthDataModule(AbstractDataModule):
                     self.val_split,
                     self.test_transform,
                 )
+                self.val.min_depth = self.min_depth
             else:
                 self.train = full
                 self.val = self.dataset(
                     root=self.root,
+                    min_depth=self.min_depth,
                     max_depth=self.max_depth,
                     split="val",
                     transforms=self.test_transform,
@@ -115,6 +145,7 @@ class DepthDataModule(AbstractDataModule):
         if stage == "test" or stage is None:
             self.test = self.dataset(
                 root=self.root,
+                min_depth=self.min_depth,
                 max_depth=self.max_depth,
                 split="val",
                 transforms=self.test_transform,

@@ -1,6 +1,10 @@
+from typing import Literal
+
+import matplotlib.cm as cm
 import torch
 from einops import rearrange
 from lightning.pytorch import LightningModule
+from lightning.pytorch.loggers import TensorBoardLogger
 from lightning.pytorch.utilities.types import STEP_OUTPUT
 from torch import Tensor, nn
 from torch.distributions import (
@@ -12,6 +16,7 @@ from torch.distributions import (
 from torch.optim import Optimizer
 from torchmetrics import MeanSquaredError, MetricCollection
 from torchvision.transforms.v2 import functional as F
+from torchvision.utils import make_grid
 
 from torch_uncertainty.metrics import (
     DistributionNLL,
@@ -28,6 +33,11 @@ from torch_uncertainty.utils.distributions import dist_rearrange, squeeze_dist
 
 
 class DepthRoutine(LightningModule):
+    inv_norm_params = {
+        "mean": [-0.485 / 0.229, -0.456 / 0.224, -0.406 / 0.255],
+        "std": [1 / 0.229, 1 / 0.224, 1 / 0.255],
+    }
+
     def __init__(
         self,
         model: nn.Module,
@@ -37,6 +47,7 @@ class DepthRoutine(LightningModule):
         num_estimators: int = 1,
         optim_recipe: dict | Optimizer | None = None,
         format_batch_fn: nn.Module | None = None,
+        num_image_plot: int = 4,
     ) -> None:
         super().__init__()
         _depth_routine_checks(num_estimators, output_dim)
@@ -47,6 +58,7 @@ class DepthRoutine(LightningModule):
         self.probabilistic = probabilistic
         self.loss = loss
         self.num_estimators = num_estimators
+        self.num_image_plot = num_image_plot
 
         if format_batch_fn is None:
             format_batch_fn = nn.Identity()
@@ -68,7 +80,7 @@ class DepthRoutine(LightningModule):
                 "d2": ThresholdAccuracy(power=2),
                 "d3": ThresholdAccuracy(power=3),
             },
-            compute_groups=True,
+            compute_groups=False,
         )
 
         self.val_metrics = depth_metrics.clone(prefix="val/")
@@ -153,6 +165,14 @@ class DepthRoutine(LightningModule):
             )
             preds = preds.mean(dim=1)
 
+        if batch_idx == 0:
+            self._plot_depth(
+                inputs[: self.num_image_plot, ...],
+                preds[: self.num_image_plot, ...],
+                target[: self.num_image_plot, ...],
+                stage="val",
+            )
+
         valid_mask = ~torch.isnan(target)
         self.val_metrics.update(preds[valid_mask], target[valid_mask])
         if self.probabilistic:
@@ -193,6 +213,19 @@ class DepthRoutine(LightningModule):
             )
             preds = preds.mean(dim=1)
 
+        if batch_idx == 0:
+            num_images = (
+                self.num_image_plot
+                if self.num_image_plot < inputs.size(0)
+                else inputs.size(0)
+            )
+            self._plot_depth(
+                inputs[:num_images, ...],
+                preds[:num_images, ...],
+                target[:num_images, ...],
+                stage="test",
+            )
+
         valid_mask = ~torch.isnan(target)
         self.test_metrics.update(preds[valid_mask], target[valid_mask])
         if self.probabilistic:
@@ -222,6 +255,60 @@ class DepthRoutine(LightningModule):
                 sync_dist=True,
             )
             self.test_prob_metrics.reset()
+
+    def _plot_depth(
+        self,
+        inputs: Tensor,
+        preds: Tensor,
+        target: Tensor,
+        stage: Literal["val", "test"],
+    ) -> None:
+        if (
+            self.logger is not None
+            and isinstance(self.logger, TensorBoardLogger)
+            and self.one_dim_depth
+        ):
+            all_imgs = []
+            for i in range(inputs.size(0)):
+                img = F.normalize(inputs[i, ...].cpu(), **self.inv_norm_params)
+                pred = colorize(
+                    preds[i, 0, ...].cpu(), vmin=0, vmax=self.model.max_depth
+                )
+                tgt = colorize(
+                    target[i, 0, ...].cpu(), vmin=0, vmax=self.model.max_depth
+                )
+                all_imgs.extend([img, pred, tgt])
+
+            self.logger.experiment.add_image(
+                f"{stage}/samples",
+                make_grid(torch.stack(all_imgs, dim=0), nrow=3),
+                self.current_epoch,
+            )
+
+
+def colorize(
+    value: Tensor,
+    vmin: float | None = None,
+    vmax: float | None = None,
+    cmap: str = "magma",
+):
+    """Colorize a tensor of depth values.
+
+    Args:
+        value (Tensor): The tensor of depth values.
+        vmin (float, optional): The minimum depth value. Defaults to None.
+        vmax (float, optional): The maximum depth value. Defaults to None.
+        cmap (str, optional): The colormap to use. Defaults to 'magma'.
+    """
+    vmin = value.min().item() if vmin is None else vmin
+    vmax = value.max().item() if vmax is None else vmax
+    if vmin == vmax:
+        return torch.zeros_like(value)
+    value = (value - vmin) / (vmax - vmin)
+    cmapper = cm.get_cmap(cmap)
+    value = cmapper(value.numpy(), bytes=True)
+    img = value[:, :, :3]
+    return torch.as_tensor(img).permute(2, 0, 1).float() / 255.0
 
 
 def _depth_routine_checks(num_estimators: int, output_dim: int) -> None:

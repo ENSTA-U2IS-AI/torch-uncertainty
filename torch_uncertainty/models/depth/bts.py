@@ -275,19 +275,23 @@ class BTSBackbone(Backbone):
             self.feat_out_channels = [96, 96, 192, 384, 2208]
         elif backbone_name == "resnet50":
             model = tv_models.resnet50(
-                weights=ResNet50_Weights.DEFAULT if pretrained else None
+                weights=ResNet50_Weights.IMAGENET1K_V2 if pretrained else None
             )
         elif backbone_name == "resnet101":
             model = tv_models.resnet101(
-                weights=ResNet101_Weights.DEFAULT if pretrained else None
+                weights=ResNet101_Weights.IMAGENET1K_V2 if pretrained else None
             )
         elif backbone_name == "resnext50":
             model = tv_models.resnext50_32x4d(
-                weights=ResNeXt50_32X4D_Weights.DEFAULT if pretrained else None
+                weights=ResNeXt50_32X4D_Weights.IMAGENET1K_V2
+                if pretrained
+                else None
             )
         else:  # backbone_name == "resnext101":
             model = tv_models.resnext101_32x8d(
-                weights=ResNeXt101_32X8D_Weights.DEFAULT if pretrained else None
+                weights=ResNeXt101_32X8D_Weights.IMAGENET1K_V2
+                if pretrained
+                else None
             )
         if "res" in backbone_name:  # remove classification heads from ResNets
             feat_names = resnet_feat_names
@@ -578,6 +582,8 @@ class _BTS(nn.Module):
             Jin Han Lee, Myung-Kyu Han, Dong Wook Ko, Il Hong Suh. ArXiv.
         """
         super().__init__()
+        self.max_depth = max_depth
+
         self.backbone = BTSBackbone(backbone_name, pretrained_backbone)
         self.decoder = BTSDecoder(
             max_depth, self.backbone.feat_out_channels, bts_size, dist_layer

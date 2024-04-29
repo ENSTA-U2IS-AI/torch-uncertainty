@@ -12,9 +12,10 @@ class NYUv2DataModule(DepthDataModule):
         self,
         root: str | Path,
         batch_size: int,
+        min_depth: float = 1e-3,
         max_depth: float = 10.0,
         crop_size: _size_2_t = (416, 544),
-        inference_size: _size_2_t = (416, 544),
+        inference_size: _size_2_t = (480, 640),
         val_split: float | None = None,
         num_workers: int = 1,
         pin_memory: bool = True,
@@ -25,8 +26,10 @@ class NYUv2DataModule(DepthDataModule):
         Args:
             root (str or Path): Root directory of the datasets.
             batch_size (int): Number of samples per batch.
-            max_depth (float, optional): Maximum depth value. Defaults to
-                ``80.0``.
+            min_depth (float, optional): Minimum depth value for evaluation.
+                Defaults to ``1e-3``.
+            max_depth (float, optional): Maximum depth value for training and
+                evaluation. Defaults to ``10.0``.
             crop_size (sequence or int, optional): Desired input image and
                 depth mask sizes during training. If :attr:`crop_size` is an
                 int instead of sequence like :math:`(H, W)`, a square crop
@@ -38,7 +41,7 @@ class NYUv2DataModule(DepthDataModule):
                 smaller edge of the images will be matched to this number, i.e.,
                 :math:`\text{height}>\text{width}`, then image will be rescaled to
                 :math:`(\text{size}\times\text{height}/\text{width},\text{size})`.
-                Defaults to ``(416, 544)``.
+                Defaults to ``(480, 640)``.
             val_split (float or None, optional): Share of training samples to use
                 for validation. Defaults to ``None``.
             num_workers (int, optional): Number of dataloaders to use. Defaults to
@@ -52,6 +55,7 @@ class NYUv2DataModule(DepthDataModule):
             dataset=NYUv2,
             root=root,
             batch_size=batch_size,
+            min_depth=min_depth,
             max_depth=max_depth,
             crop_size=crop_size,
             inference_size=inference_size,

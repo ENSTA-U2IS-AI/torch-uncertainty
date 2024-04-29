@@ -33,7 +33,8 @@ class NYUv2(VisionDataset):
         root: Path | str,
         split: Literal["train", "val"],
         transforms: Callable | None = None,
-        max_depth: float = 10,
+        min_depth: float = 0.0,
+        max_depth: float = 10.0,
         download: bool = False,
     ):
         """NYUv2 depth dataset.
@@ -43,10 +44,12 @@ class NYUv2(VisionDataset):
             split (Literal["train", "val"]): Dataset split.
             transforms (Callable | None): Transform to apply to samples & targets.
                 Defaults to None.
+            min_depth (float): Minimum depth value. Defaults to 1e-3.
             max_depth (float): Maximum depth value. Defaults to 10.
             download (bool): Download dataset if not found. Defaults to False.
         """
         super().__init__(Path(root) / "NYUv2", transforms=transforms)
+        self.min_depth = min_depth
         self.max_depth = max_depth
 
         if split not in ["train", "val"]:
@@ -83,7 +86,9 @@ class NYUv2(VisionDataset):
         )
         target = np.asarray(target, np.uint16)
         target = tv_tensors.Mask(target / 1e4)  # convert to meters
-        target[(target <= 0) | (target > self.max_depth)] = float("nan")
+        target[(target <= self.min_depth) | (target > self.max_depth)] = float(
+            "nan"
+        )
         if self.transforms is not None:
             image, target = self.transforms(image, target)
         return image, target
