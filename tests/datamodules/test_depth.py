@@ -13,7 +13,9 @@ class TestMUADDataModule:
     """Testing the MUADDataModule datamodule."""
 
     def test_muad_main(self):
-        dm = MUADDataModule(root="./data/", max_depth=100, batch_size=128)
+        dm = MUADDataModule(
+            root="./data/", min_depth=0, max_depth=100, batch_size=128
+        )
 
         assert dm.dataset == MUAD
 
