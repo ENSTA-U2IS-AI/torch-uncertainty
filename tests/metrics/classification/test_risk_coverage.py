@@ -66,7 +66,9 @@ class TestCovAtxRisk:
     """Testing the CovAtxRisk metric class."""
 
     def test_compute_zero(self) -> None:
-        probs = torch.as_tensor([0.1, 0.2, 0.3, 0.4, 0.2])
+        probs = torch.as_tensor(
+            [[0.9, 0.1], [0.8, 0.2], [0.7, 0.3], [0.6, 0.4], [0.8, 0.2]]
+        )
         targets = torch.as_tensor([1, 1, 1, 1, 1])
         metric = CovAtxRisk(risk_threshold=0.5)
         # no cov for given risk
@@ -104,11 +106,14 @@ class TestRiskAtxCov:
     """Testing the RiskAtxCov metric class."""
 
     def test_compute_zero(self) -> None:
-        probs = torch.as_tensor([0.1, 0.2, 0.3, 0.4, 0.2])
+        probs = torch.as_tensor(
+            [[0.9, 0.1], [0.8, 0.2], [0.7, 0.3], [0.6, 0.4], [0.8, 0.2]]
+        )
         targets = torch.as_tensor([1, 1, 1, 1, 1])
         metric = RiskAtxCov(cov_threshold=0.5)
         assert metric(probs, targets) == 1
 
+        probs = torch.as_tensor([0.1, 0.2, 0.3, 0.4, 0.2])
         targets = torch.as_tensor([0, 0, 1, 1, 1])
         metric = RiskAtxCov(cov_threshold=0.5)
         assert metric(probs, targets) == pytest.approx(1 / 3)

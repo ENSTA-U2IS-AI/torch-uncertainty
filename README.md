@@ -17,6 +17,8 @@ _TorchUncertainty_ is a package designed to help you leverage [uncertainty quant
 
 :books: Our webpage and documentation is available here: [torch-uncertainty.github.io](https://torch-uncertainty.github.io). :books:
 
+TorchUncertainty contains the *official implementations* of multiple papers from *major machine-learning and computer vision conferences* and was/will be featured in tutorials at **WACV 2024** and **ECCV 2024**.
+
 ---
 
 This package provides a multi-level API, including:
