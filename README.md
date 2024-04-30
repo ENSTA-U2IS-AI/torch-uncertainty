@@ -48,10 +48,10 @@ We make a quickstart available at [torch-uncertainty.github.io/quickstart](https
 
 TorchUncertainty currently supports **classification**, **probabilistic** and pointwise **regression**, **segmentation** and **monocular depth estimation**. It includes the official codes of the following papers:
 
-- A Symmetry-Aware Exploration of Bayesian Neural Network Posteriors - [ICLR 2024](https://arxiv.org/abs/2310.08287)
-- Encoding the latent posterior of Bayesian Neural Networks for uncertainty quantification (LP-BNN) - [IEEE TPAMI](https://arxiv.org/abs/2012.02818)
-- Packed-Ensembles for Efficient Uncertainty Estimation - [ICLR 2023](https://arxiv.org/abs/2210.09184) - [Tutorial](https://torch-uncertainty.github.io/auto_tutorials/tutorial_pe_cifar10.html)
-- MUAD: Multiple Uncertainties for Autonomous Driving, a benchmark for multiple uncertainty types and tasks - [BMVC 2022](https://arxiv.org/abs/2203.01437)
+- *A Symmetry-Aware Exploration of Bayesian Neural Network Posteriors* - [ICLR 2024](https://arxiv.org/abs/2310.08287)
+- *LP-BNN: Encoding the latent posterior of Bayesian Neural Networks for uncertainty quantification* - [IEEE TPAMI](https://arxiv.org/abs/2012.02818)
+- *Packed-Ensembles for Efficient Uncertainty Estimation* - [ICLR 2023](https://arxiv.org/abs/2210.09184) - [Tutorial](https://torch-uncertainty.github.io/auto_tutorials/tutorial_pe_cifar10.html)
+- *MUAD: Multiple Uncertainties for Autonomous Driving, a benchmark for multiple uncertainty types and tasks* - [BMVC 2022](https://arxiv.org/abs/2203.01437)
 
 We also provide the following methods:
 

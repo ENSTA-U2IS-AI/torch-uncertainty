@@ -69,11 +69,21 @@ class TestCovAtxRisk:
         probs = torch.as_tensor([0.1, 0.2, 0.3, 0.4, 0.2])
         targets = torch.as_tensor([1, 1, 1, 1, 1])
         metric = CovAtxRisk(risk_threshold=0.5)
-        assert metric(probs, targets) == 0
+        # no cov for given risk
+        assert torch.isnan(metric(probs, targets))
 
+        probs = torch.as_tensor(
+            [0.1, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.48, 0.49]
+        )
+        targets = torch.as_tensor([1, 0, 1, 1, 1, 0, 0, 0, 1])
+        metric = CovAtxRisk(risk_threshold=0.55)
+        # multiple cov for given risk
+        assert metric(probs, targets) == pytest.approx(8 / 9)
+
+        probs = torch.as_tensor([0.1, 0.2, 0.3, 0.4, 0.2])
         targets = torch.as_tensor([0, 0, 1, 1, 1])
         metric = CovAtxRisk(risk_threshold=0.5)
-        assert metric(probs, targets) == 4 / 5
+        assert metric(probs, targets) == pytest.approx(4 / 5)
 
         targets = torch.as_tensor([0, 0, 1, 1, 0])
         metric = CovAtxRisk(risk_threshold=0.5)

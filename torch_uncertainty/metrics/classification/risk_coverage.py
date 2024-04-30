@@ -181,6 +181,12 @@ class CovAtxRisk(Metric):
     def __init__(self, risk_threshold: float, **kwargs) -> None:
         r"""`Coverage at x Risk`_.
 
+        If there are mutliple coverage values corresponding to the given risk,
+        i.e., the risk(coverage) is not monotonic, the coverage at x risk is
+        the maximum coverage value corresponding to the given risk. If no
+        there is no coverage value corresponding to the given risk, return
+        float("nan").
+
         Args:
             risk_threshold (float): The risk threshold at which to compute the
                 coverage.
@@ -213,15 +219,25 @@ class CovAtxRisk(Metric):
         scores = dim_zero_cat(self.scores)
         errors = dim_zero_cat(self.errors)
         num_samples = scores.size(0)
-        # FIXME: not necessarily monotonous
         error_rates = _aurc_rejection_rate_compute(scores, errors)
-        index = (error_rates > self.risk_threshold).sum()
-        return (num_samples - index) / num_samples
+        admissible_risks = (error_rates > self.risk_threshold) * 1
+        max_cov_at_risk = admissible_risks.flip(0).argmin()
+        # check if max_cov_at_risk is really admissible, if not return nan
+        risk = admissible_risks[max_cov_at_risk]
+        if risk > self.risk_threshold:
+            return torch.tensor([float("nan")])
+        return 1 - max_cov_at_risk / num_samples
 
 
 class CovAt5Risk(CovAtxRisk):
     def __init__(self, **kwargs) -> None:
-        r"""`Coverage at 5% Risk`_."""
+        r"""`Coverage at 5% Risk`_.
+
+        If there are mutliple coverage values corresponding to 5% risk, the
+        coverage at 5% risk is the maximum coverage value corresponding to 5%
+        risk. If no there is no coverage value corresponding to the given risk,
+        this metric returns float("nan").
+        """
         super().__init__(risk_threshold=0.05, **kwargs)
 
 
