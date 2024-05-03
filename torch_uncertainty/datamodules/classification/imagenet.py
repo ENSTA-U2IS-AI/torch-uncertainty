@@ -144,7 +144,9 @@ class ImageNetDataModule(AbstractDataModule):
 
         self.train_transform = T.Compose(
             [
-                T.RandomResizedCrop(train_size, interpolation=interpolation),
+                T.RandomResizedCrop(
+                    train_size, interpolation=self.interpolation
+                ),
                 T.RandomHorizontalFlip(),
                 main_transform,
                 T.ToTensor(),
@@ -154,7 +156,7 @@ class ImageNetDataModule(AbstractDataModule):
 
         self.test_transform = T.Compose(
             [
-                T.Resize(256, interpolation=interpolation),
+                T.Resize(256, interpolation=self.interpolation),
                 T.CenterCrop(224),
                 T.ToTensor(),
                 T.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),

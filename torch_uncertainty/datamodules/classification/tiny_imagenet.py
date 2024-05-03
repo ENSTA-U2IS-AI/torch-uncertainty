@@ -79,7 +79,7 @@ class TinyImageNetDataModule(AbstractDataModule):
 
         self.test_transform = T.Compose(
             [
-                T.Resize(64, interpolation=interpolation),
+                T.Resize(64, interpolation=self.interpolation),
                 T.ToTensor(),
                 T.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
             ]
