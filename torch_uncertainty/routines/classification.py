@@ -20,14 +20,17 @@ from torchmetrics.classification import (
 from torch_uncertainty.layers import Identity
 from torch_uncertainty.losses import DECLoss, ELBOLoss
 from torch_uncertainty.metrics import (
+    AURC,
     FPR95,
     BrierScore,
     CalibrationError,
     CategoricalNLL,
+    CovAt5Risk,
     Disagreement,
     Entropy,
     GroupingLoss,
     MutualInformation,
+    RiskAt80Cov,
     VariationRatio,
 )
 from torch_uncertainty.post_processing import TemperatureScaler
@@ -61,8 +64,7 @@ class ClassificationRoutine(LightningModule):
         calibration_set: Literal["val", "test"] | None = None,
         num_calibration_bins: int = 15,
     ) -> None:
-        r"""Routine for efficient training and testing on **classification tasks**
-        using LightningModule.
+        r"""Routine for training & testing on **classification tasks**.
 
         Args:
             model (torch.nn.Module): Model to train.
@@ -123,6 +125,7 @@ class ClassificationRoutine(LightningModule):
             num_estimators=num_estimators,
             ood_criterion=ood_criterion,
             eval_grouping_loss=eval_grouping_loss,
+            num_calibration_bins=num_calibration_bins,
         )
 
         if format_batch_fn is None:
@@ -144,50 +147,42 @@ class ClassificationRoutine(LightningModule):
         self.optim_recipe = optim_recipe
 
         # metrics
-        if self.binary_cls:
-            cls_metrics = MetricCollection(
-                {
-                    "Acc": Accuracy(task="binary"),
-                    "ECE": CalibrationError(
-                        task="binary", num_bins=num_calibration_bins
-                    ),
-                    "AECE": CalibrationError(
-                        task="binary",
-                        adaptive=True,
-                        num_bins=num_calibration_bins,
-                    ),
-                    "Brier": BrierScore(num_classes=1),
-                },
-                compute_groups=False,
-            )
-        else:
-            cls_metrics = MetricCollection(
-                {
-                    "NLL": CategoricalNLL(),
-                    "Acc": Accuracy(
-                        task="multiclass", num_classes=self.num_classes
-                    ),
-                    "ECE": CalibrationError(
-                        task="multiclass",
-                        num_bins=num_calibration_bins,
-                        num_classes=self.num_classes,
-                    ),
-                    "AECE": CalibrationError(
-                        task="multiclass",
-                        adaptive=True,
-                        num_bins=num_calibration_bins,
-                        num_classes=self.num_classes,
-                    ),
-                    "Brier": BrierScore(num_classes=self.num_classes),
-                },
-                compute_groups=False,
-            )
+        task = "binary" if self.binary_cls else "multiclass"
 
-        self.val_cls_metrics = cls_metrics.clone(prefix="cls_val/")
-        self.test_cls_metrics = cls_metrics.clone(prefix="cls_test/")
+        cls_metrics = MetricCollection(
+            {
+                "cls/Acc": Accuracy(task=task, num_classes=num_classes),
+                "cls/Brier": BrierScore(num_classes=num_classes),
+                "cls/NLL": CategoricalNLL(),
+                "cal/ECE": CalibrationError(
+                    task=task,
+                    num_bins=num_calibration_bins,
+                    num_classes=num_classes,
+                ),
+                "cal/aECE": CalibrationError(
+                    task=task,
+                    adaptive=True,
+                    num_bins=num_calibration_bins,
+                    num_classes=num_classes,
+                ),
+                "sc/AURC": AURC(),
+                "sc/CovAt5Risk": CovAt5Risk(),
+                "sc/RiskAt80Cov": RiskAt80Cov(),
+            },
+            compute_groups=[
+                ["cls/Acc"],
+                ["cls/Brier"],
+                ["cls/NLL"],
+                ["cal/ECE", "cal/aECE"],
+                ["sc/AURC", "sc/CovAt5Risk", "sc/RiskAt80Cov"],
+            ],
+        )
+
+        self.val_cls_metrics = cls_metrics.clone(prefix="val/")
+        self.test_cls_metrics = cls_metrics.clone(prefix="test/")
 
         if self.calibration_set is not None:
-            self.ts_cls_metrics = cls_metrics.clone(prefix="cls_test/ts_")
+            self.ts_cls_metrics = cls_metrics.clone(prefix="test/ts_")
 
         self.test_id_entropy = Entropy()
 
@@ -203,6 +198,22 @@ class ClassificationRoutine(LightningModule):
             self.test_ood_metrics = ood_metrics.clone(prefix="ood/")
             self.test_ood_entropy = Entropy()
 
+        # metrics for ensembles only
+        if self.num_estimators > 1:
+            ens_metrics = MetricCollection(
+                {
+                    "Disagreement": Disagreement(),
+                    "MI": MutualInformation(),
+                    "Entropy": Entropy(),
+                }
+            )
+
+            self.test_id_ens_metrics = ens_metrics.clone(prefix="test/ens_")
+
+            if self.eval_ood:
+                self.test_ood_ens_metrics = ens_metrics.clone(prefix="ood/ens_")
+
+        # Mixup
         self.mixtype = mixtype
         self.mixmode = mixmode
         self.dist_sim = dist_sim
@@ -219,32 +230,15 @@ class ClassificationRoutine(LightningModule):
 
             if self.eval_grouping_loss:
                 grouping_loss = MetricCollection(
-                    {"grouping_loss": GroupingLoss()}
+                    {"cls/grouping_loss": GroupingLoss()}
                 )
-                self.val_grouping_loss = grouping_loss.clone(prefix="gpl/val_")
-                self.test_grouping_loss = grouping_loss.clone(
-                    prefix="gpl/test_"
-                )
+                self.val_grouping_loss = grouping_loss.clone(prefix="val/")
+                self.test_grouping_loss = grouping_loss.clone(prefix="test/")
 
         self.is_elbo = isinstance(self.loss, ELBOLoss)
         if self.is_elbo:
             self.loss.set_model(self.model)
         self.is_dec = isinstance(self.loss, DECLoss)
-
-        # metrics for ensembles only
-        if self.num_estimators > 1:
-            ens_metrics = MetricCollection(
-                {
-                    "Disagreement": Disagreement(),
-                    "MI": MutualInformation(),
-                    "Entropy": Entropy(),
-                }
-            )
-
-            self.test_id_ens_metrics = ens_metrics.clone(prefix="cls_test/ens_")
-
-            if self.eval_ood:
-                self.test_ood_ens_metrics = ens_metrics.clone(prefix="ood/ens_")
 
         self.id_logit_storage = None
         self.ood_logit_storage = None
@@ -296,13 +290,9 @@ class ClassificationRoutine(LightningModule):
         return self.optim_recipe
 
     def on_train_start(self) -> None:
-        init_metrics = dict.fromkeys(self.val_cls_metrics, 0)
-        init_metrics.update(dict.fromkeys(self.test_cls_metrics, 0))
-
         if self.logger is not None:  # coverage: ignore
             self.logger.log_hyperparams(
                 self.hparams,
-                init_metrics,
             )
 
     def on_test_start(self) -> None:
@@ -364,21 +354,21 @@ class ClassificationRoutine(LightningModule):
             else:
                 batch = self.mixup(*batch)
 
-        inputs, targets = self.format_batch_fn(batch)
+        inputs, target = self.format_batch_fn(batch)
 
         if self.is_elbo:
-            loss = self.loss(inputs, targets)
+            loss = self.loss(inputs, target)
         else:
             logits = self.forward(inputs)
-            # BCEWithLogitsLoss expects float targets
+            # BCEWithLogitsLoss expects float target
             if self.binary_cls and isinstance(self.loss, nn.BCEWithLogitsLoss):
                 logits = logits.squeeze(-1)
-                targets = targets.float()
+                target = target.float()
 
             if not self.is_dec:
-                loss = self.loss(logits, targets)
+                loss = self.loss(logits, target)
             else:
-                loss = self.loss(logits, targets, self.current_epoch)
+                loss = self.loss(logits, target, self.current_epoch)
 
         self.log("train_loss", loss)
         return loss
@@ -386,7 +376,7 @@ class ClassificationRoutine(LightningModule):
     def validation_step(
         self, batch: tuple[Tensor, Tensor], batch_idx: int
     ) -> None:
-        inputs, targets = batch
+        inputs, target = batch
         logits = self.forward(
             inputs, save_feats=self.eval_grouping_loss
         )  # (m*b, c)
@@ -398,10 +388,10 @@ class ClassificationRoutine(LightningModule):
             probs_per_est = F.softmax(logits, dim=-1)
 
         probs = probs_per_est.mean(dim=1)
-        self.val_cls_metrics.update(probs, targets)
+        self.val_cls_metrics.update(probs, target)
 
         if self.eval_grouping_loss:
-            self.val_grouping_loss.update(probs, targets, self.features)
+            self.val_grouping_loss.update(probs, target, self.features)
 
     def test_step(
         self,
@@ -409,7 +399,7 @@ class ClassificationRoutine(LightningModule):
         batch_idx: int,
         dataloader_idx: int = 0,
     ) -> None:
-        inputs, targets = batch
+        inputs, target = batch
         logits = self.forward(
             inputs, save_feats=self.eval_grouping_loss
         )  # (m*b, c)
@@ -449,30 +439,26 @@ class ClassificationRoutine(LightningModule):
             ood_scores = -confs
 
         # Scaling for single models
-        if (
-            self.num_estimators == 1
-            and self.calibration_set is not None
-            and self.cal_model is not None
-        ):
+        if self.num_estimators == 1 and self.cal_model is not None:
             cal_logits = self.cal_model(inputs)
             cal_probs = F.softmax(cal_logits, dim=-1)
-            self.ts_cls_metrics.update(cal_probs, targets)
+            self.ts_cls_metrics.update(cal_probs, target)
 
         if dataloader_idx == 0:
             # squeeze if binary classification only for binary metrics
             self.test_cls_metrics.update(
                 probs.squeeze(-1) if self.binary_cls else probs,
-                targets,
+                target,
             )
             if self.eval_grouping_loss:
-                self.test_grouping_loss.update(probs, targets, self.features)
+                self.test_grouping_loss.update(probs, target, self.features)
 
             self.log_dict(
                 self.test_cls_metrics, on_epoch=True, add_dataloader_idx=False
             )
             self.test_id_entropy(probs)
             self.log(
-                "cls_test/entropy",
+                "test/cls/entropy",
                 self.test_id_entropy,
                 on_epoch=True,
                 add_dataloader_idx=False,
@@ -483,17 +469,17 @@ class ClassificationRoutine(LightningModule):
 
             if self.eval_ood:
                 self.test_ood_metrics.update(
-                    ood_scores, torch.zeros_like(targets)
+                    ood_scores, torch.zeros_like(target)
                 )
 
             if self.id_logit_storage is not None:
                 self.id_logit_storage.append(logits.detach().cpu())
 
         elif self.eval_ood and dataloader_idx == 1:
-            self.test_ood_metrics.update(ood_scores, torch.ones_like(targets))
+            self.test_ood_metrics.update(ood_scores, torch.ones_like(target))
             self.test_ood_entropy(probs)
             self.log(
-                "ood/entropy",
+                "ood/Entropy",
                 self.test_ood_entropy,
                 on_epoch=True,
                 add_dataloader_idx=False,
@@ -505,11 +491,11 @@ class ClassificationRoutine(LightningModule):
                 self.ood_logit_storage.append(logits.detach().cpu())
 
     def on_validation_epoch_end(self) -> None:
-        self.log_dict(self.val_cls_metrics.compute())
+        self.log_dict(self.val_cls_metrics.compute(), sync_dist=True)
         self.val_cls_metrics.reset()
 
         if self.eval_grouping_loss:
-            self.log_dict(self.val_grouping_loss.compute())
+            self.log_dict(self.val_grouping_loss.compute(), sync_dist=True)
             self.val_grouping_loss.reset()
 
     def on_test_epoch_end(self) -> None:
@@ -517,7 +503,9 @@ class ClassificationRoutine(LightningModule):
         result_dict = self.test_cls_metrics.compute()
 
         # already logged
-        result_dict.update({"cls_test/entropy": self.test_id_entropy.compute()})
+        result_dict.update(
+            {"test/Entropy": self.test_id_entropy.compute()}, sync_dist=True
+        )
 
         if (
             self.num_estimators == 1
@@ -525,40 +513,47 @@ class ClassificationRoutine(LightningModule):
             and self.cal_model is not None
         ):
             tmp_metrics = self.ts_cls_metrics.compute()
-            self.log_dict(tmp_metrics)
+            self.log_dict(tmp_metrics, sync_dist=True)
             result_dict.update(tmp_metrics)
-            self.ts_cls_metrics.reset()
 
         if self.eval_grouping_loss:
             self.log_dict(
                 self.test_grouping_loss.compute(),
+                sync_dist=True,
             )
 
         if self.num_estimators > 1:
             tmp_metrics = self.test_id_ens_metrics.compute()
-            self.log_dict(tmp_metrics)
+            self.log_dict(tmp_metrics, sync_dist=True)
             result_dict.update(tmp_metrics)
-            self.test_id_ens_metrics.reset()
 
         if self.eval_ood:
             tmp_metrics = self.test_ood_metrics.compute()
-            self.log_dict(tmp_metrics)
+            self.log_dict(tmp_metrics, sync_dist=True)
             result_dict.update(tmp_metrics)
-            self.test_ood_metrics.reset()
 
             # already logged
-            result_dict.update({"ood/entropy": self.test_ood_entropy.compute()})
+            result_dict.update({"ood/Entropy": self.test_ood_entropy.compute()})
 
             if self.num_estimators > 1:
                 tmp_metrics = self.test_ood_ens_metrics.compute()
-                self.log_dict(tmp_metrics)
+                self.log_dict(tmp_metrics, sync_dist=True)
                 result_dict.update(tmp_metrics)
-                self.test_ood_ens_metrics.reset()
 
         if isinstance(self.logger, Logger) and self.log_plots:
             self.logger.experiment.add_figure(
-                "Calibration Plot", self.test_cls_metrics["ECE"].plot()[0]
+                "Reliabity diagram", self.test_cls_metrics["cal/ECE"].plot()[0]
             )
+            self.logger.experiment.add_figure(
+                "Risk-Coverage curve",
+                self.test_cls_metrics["sc/AURC"].plot()[0],
+            )
+
+            if self.cal_model is not None:
+                self.logger.experiment.add_figure(
+                    "Reliabity diagram after calibration",
+                    self.ts_cls_metrics["cal/ECE"].plot()[0],
+                )
 
             # plot histograms of logits and likelihoods
             if self.eval_ood:
@@ -606,6 +601,7 @@ def _classification_routine_checks(
     num_estimators: int,
     ood_criterion: str,
     eval_grouping_loss: bool,
+    num_calibration_bins: int,
 ) -> None:
     if not isinstance(num_estimators, int) or num_estimators < 1:
         raise ValueError(
@@ -655,4 +651,9 @@ def _classification_routine_checks(
         raise ValueError(
             "Your model must have a `classification_head` or `linear` "
             "attribute to compute the grouping loss."
+        )
+
+    if num_calibration_bins < 2:
+        raise ValueError(
+            f"num_calibration_bins must be at least 2, got {num_calibration_bins}."
         )

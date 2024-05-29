@@ -21,7 +21,7 @@ In this tutorial, we will need:
 - the CIFAR-100 datamodule to handle the data
 - a ResNet 18 as starting model
 - the temperature scaler to improve the top-label calibration
-- a utility to download hf models easily
+- a utility function to download HF models easily
 
 If you use the classification routine, the plots will be automatically available in the tensorboard logs if you use the `log_plots` flag.
 """

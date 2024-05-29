@@ -53,7 +53,7 @@ group:
 Then navigate to ``./docs`` and build the documentation with:
 
 .. parsed-literal::
-    
+
     make html
 
 Optionally, specify ``html-noplot`` instead of ``html`` to avoid running the tutorials.
@@ -72,7 +72,7 @@ PR. This will avoid multiplying the number featureless commits. To do this,
 run, at the root of the folder:
 
 .. parsed-literal::
-    
+
     python3 -m pytest tests
 
 Try to include an emoji at the start of each commit message following the suggestions

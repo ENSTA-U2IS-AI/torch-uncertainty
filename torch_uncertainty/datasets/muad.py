@@ -3,7 +3,7 @@ import os
 import shutil
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Literal
+from typing import Literal
 
 import cv2
 import numpy as np
@@ -42,6 +42,8 @@ class MUAD(VisionDataset):
         self,
         root: str | Path,
         split: Literal["train", "val"],
+        min_depth: float | None = None,
+        max_depth: float | None = None,
         target_type: Literal["semantic", "depth"] = "semantic",
         transforms: Callable | None = None,
         download: bool = False,
@@ -52,6 +54,10 @@ class MUAD(VisionDataset):
             root (str): Root directory of dataset where directory 'leftImg8bit'
                 and 'leftLabel' or 'leftDepth' are located.
             split (str, optional): The image split to use, 'train' or 'val'.
+            min_depth (float, optional): The maximum depth value to use if
+                target_type is 'depth'. Defaults to None.
+            max_depth (float, optional): The maximum depth value to use if
+                target_type is 'depth'. Defaults to None.
             target_type (str, optional): The type of target to use, 'semantic'
                 or 'depth'.
             transforms (callable, optional): A function/transform that takes in
@@ -75,6 +81,8 @@ class MUAD(VisionDataset):
             root=Path(root) / "MUAD",
             transforms=transforms,
         )
+        self.min_depth = min_depth
+        self.max_depth = max_depth
 
         if split not in ["train", "val"]:
             raise ValueError(
@@ -108,7 +116,7 @@ class MUAD(VisionDataset):
         ):
             if download:
                 self._download(split=f"{split}_depth")
-                # FIXME: Depth target for train are in a different folder
+                # Depth target for train are in a different folder
                 # thus we move them to the correct folder
                 if split == "train":
                     shutil.move(
@@ -169,7 +177,9 @@ class MUAD(VisionDataset):
         target[target == 255] = 19
         return self.train_id_to_color[target]
 
-    def __getitem__(self, index: int) -> tuple[Any, Any]:
+    def __getitem__(
+        self, index: int
+    ) -> tuple[tv_tensors.Image, tv_tensors.Mask]:
         """Get the sample at the given index.
 
         Args:
@@ -192,10 +202,13 @@ class MUAD(VisionDataset):
                     cv2.IMREAD_ANYCOLOR | cv2.IMREAD_ANYDEPTH,
                 )
             )
-            # TODO: in the long tun it would be better to use a custom
+            # TODO: in the long run it would be better to use a custom
             # tv_tensor for depth maps (e.g. tv_tensors.DepthMap)
             target = np.asarray(target, np.float32)
             target = tv_tensors.Mask(400 * (1 - target))  # convert to meters
+            target[(target <= self.min_depth) | (target > self.max_depth)] = (
+                float("nan")
+            )
 
         if self.transforms is not None:
             image, target = self.transforms(image, target)
@@ -222,7 +235,7 @@ class MUAD(VisionDataset):
         """
         if "depth" in path.name:
             raise NotImplementedError(
-                "Depth regression mode is not implemented yet. Raise an issue "
+                "Depth mode is not implemented yet. Raise an issue "
                 "if you need it."
             )
         self.samples = sorted((path / "leftImg8bit/").glob("**/*"))

@@ -46,7 +46,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-image = ["scikit-image"]
+image = ["scikit-image", "h5py",]
 tabular = ["pandas"]
 dev = [
     "torch_uncertainty[image]",
@@ -116,6 +116,7 @@ lint.ignore = [
     "D205",
     "D206",
     "ISC001",
+    "N818",
     "N812",
     "RUF012",
     "S101",

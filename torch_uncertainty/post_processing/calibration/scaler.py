@@ -68,8 +68,7 @@ class Scaler(nn.Module):
         )
         with torch.no_grad():
             for inputs, labels in tqdm(calibration_dl, disable=not progress):
-                inputs = inputs.to(self.device)
-                logits = self.model(inputs)
+                logits = self.model(inputs.to(self.device))
                 logits_list.append(logits)
                 labels_list.append(labels)
         all_logits = torch.cat(logits_list).detach().to(self.device)

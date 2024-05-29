@@ -158,7 +158,7 @@ For MixupIO, consider citing:
 **On the Pitfall of Mixup for Uncertainty Calibration**
 
 * Authors: *Deng-Bao Wang, Lanqing Li, Peilin Zhao, Pheng-Ann Heng, and Min-Ling Zhang*
-* Paper: `CVPR 2023 <https://openaccess.thecvf.com/content/CVPR2023/papers/Wang_On_the_Pitfall_of_Mixup_for_Uncertainty_Calibration_CVPR_2023_paper.pdf>`
+* Paper: `CVPR 2023 <https://openaccess.thecvf.com/content/CVPR2023/papers/Wang_On_the_Pitfall_of_Mixup_for_Uncertainty_Calibration_CVPR_2023_paper.pdf>__`
 
 Warping Mixup
 ^^^^^^^^^^^^^
@@ -218,6 +218,16 @@ For the adaptive calibration error, consider citing:
 * Authors: Jeremy Nixon, Mike Dusenberry, Ghassen Jerfel, Timothy Nguyen, Jeremiah Liu, Linchuan Zhang, Dustin Tran
 * Paper: `CVPRW 2019 <https://arxiv.org/pdf/1904.01685.pdf>`__.
 
+Area Under the Risk-Coverage curve
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For the area under the risk-coverage curve, consider citing:
+
+**Selective classification for deep neural networks**
+
+* Authors: Yonatan Geifman, Ran El-Yaniv
+* Paper: `NeurIPS 2017 <https://arxiv.org/pdf/1705.08500.pdf>`__.
+
 Grouping Loss
 ^^^^^^^^^^^^^
 
@@ -237,7 +247,7 @@ The following datasets are used/implemented.
 MNIST
 ^^^^^
 
-**Gradient-based learning applied to document recognition** 
+**Gradient-based learning applied to document recognition**
 
 * Authors: *Yann LeCun, Leon Bottou, Yoshua Bengio, and Patrick Haffner*
 * Paper: `Proceedings of the IEEE 1998 <http://yann.lecun.com/exdb/publis/pdf/lecun-98.pdf>`__.
@@ -351,7 +361,7 @@ MUAD
 **MUAD: Multiple Uncertainties for Autonomous Driving Dataset**
 
 * Authors: Gianni Franchi, Xuanlong Yu, Andrei Bursuc, et al.*
-* Paper: `BMVC 2022 <https://arxiv.org/pdf/2203.01437.pdf>`
+* Paper: `BMVC 2022 <https://arxiv.org/pdf/2203.01437.pdf>__`
 
 Architectures
 -------------

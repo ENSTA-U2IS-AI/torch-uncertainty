@@ -18,9 +18,11 @@ def _equal_binning_bucketize(
     """Compute bins for the adaptive calibration error.
 
     Args:
-        confidences: The confidence (i.e. predicted prob) of the top1 prediction.
+        confidences: The confidence (i.e. predicted prob) of the top1
+            prediction.
         accuracies: 1.0 if the top-1 prediction was correct, 0.0 otherwise.
-        num_bins: Number of bins to use when computing adaptive calibration error.
+        num_bins: Number of bins to use when computing adaptive calibration
+            error.
 
     Returns:
         tuple with binned accuracy, binned confidence and binned probabilities
@@ -32,7 +34,9 @@ def _equal_binning_bucketize(
         confidences.tensor_split(num_bins),
     )
     count_bin = torch.as_tensor(
-        [len(cb) for cb in conf_bin], device=confidences.device
+        [len(cb) for cb in conf_bin],
+        dtype=confidences.dtype,
+        device=confidences.device,
     )
     return (
         pad_sequence(acc_bin, batch_first=True).sum(1) / count_bin,
@@ -48,13 +52,17 @@ def _ace_compute(
     norm: Literal["l1", "l2", "max"] = "l1",
     debias: bool = False,
 ) -> Tensor:
-    """Compute the adaptive calibration error given the provided number of bins and norm.
+    """Compute the adaptive calibration error given the provided number of bins
+        and norm.
 
     Args:
-        confidences: The confidence (i.e. predicted prob) of the top1 prediction.
+        confidences: The confidence (i.e. predicted prob) of the top1
+            prediction.
         accuracies: 1.0 if the top-1 prediction was correct, 0.0 otherwise.
-        num_bins: Number of bins to use when computing adaptive calibration error.
-        norm: Norm function to use when computing calibration error. Defaults to "l1".
+        num_bins: Number of bins to use when computing adaptive calibration
+            error.
+        norm: Norm function to use when computing calibration error. Defaults
+            to "l1".
         debias: Apply debiasing to L2 norm computation as in
             `Verified Uncertainty Calibration`_. Defaults to False.
 

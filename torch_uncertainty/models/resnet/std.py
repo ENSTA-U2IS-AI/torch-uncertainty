@@ -4,14 +4,9 @@ from typing import Literal
 from torch import Tensor, nn
 from torch.nn.functional import relu
 
-__all__ = [
-    "resnet18",
-    "resnet20",
-    "resnet34",
-    "resnet50",
-    "resnet101",
-    "resnet152",
-]
+from .utils import get_resnet_num_blocks
+
+__all__ = ["resnet"]
 
 
 class _BasicBlock(nn.Module):
@@ -211,7 +206,6 @@ class _ResNet(nn.Module):
     ) -> None:
         """ResNet from `Deep Residual Learning for Image Recognition`."""
         super().__init__()
-
         self.in_planes = in_planes
         block_planes = in_planes
         self.dropout_rate = dropout_rate
@@ -352,9 +346,10 @@ class _ResNet(nn.Module):
         return self.linear(self.feats_forward(x))
 
 
-def resnet18(
+def resnet(
     in_channels: int,
     num_classes: int,
+    arch: int,
     conv_bias: bool = True,
     dropout_rate: float = 0.0,
     groups: int = 1,
@@ -367,6 +362,7 @@ def resnet18(
     Args:
         in_channels (int): Number of input channels.
         num_classes (int): Number of classes to predict.
+        arch (int): The architecture of the ResNet.
         conv_bias (bool): Whether to use bias in convolutions. Defaults to
             ``True``.
         conv_bias (bool): Whether to use bias in convolutions. Defaults to
@@ -379,222 +375,12 @@ def resnet18(
         normalization_layer (nn.Module, optional): Normalization layer.
 
     Returns:
-        _ResNet: A ResNet-18.
+        _ResNet: The ResNet model.
     """
+    block = _BasicBlock if arch in [18, 20, 34] else _Bottleneck
     return _ResNet(
-        block=_BasicBlock,
-        num_blocks=[2, 2, 2, 2],
-        in_channels=in_channels,
-        num_classes=num_classes,
-        conv_bias=conv_bias,
-        dropout_rate=dropout_rate,
-        groups=groups,
-        style=style,
-        in_planes=64,
-        activation_fn=activation_fn,
-        normalization_layer=normalization_layer,
-    )
-
-
-def resnet20(
-    in_channels: int,
-    num_classes: int,
-    conv_bias: bool = True,
-    dropout_rate: float = 0.0,
-    groups: int = 1,
-    style: Literal["imagenet", "cifar"] = "imagenet",
-    activation_fn: Callable = relu,
-    normalization_layer: type[nn.Module] = nn.BatchNorm2d,
-) -> _ResNet:
-    """ResNet-18 model.
-
-    Args:
-        in_channels (int): Number of input channels.
-        num_classes (int): Number of classes to predict.
-        conv_bias (bool): Whether to use bias in convolutions. Defaults to
-            ``True``.
-        dropout_rate (float): Dropout rate. Defaults to 0.
-        groups (int): Number of groups in convolutions. Defaults to 1.
-        style (bool, optional): Whether to use the ImageNet
-            structure. Defaults to ``True``.
-        activation_fn (Callable, optional): Activation function.
-        normalization_layer (nn.Module, optional): Normalization layer.
-
-    Returns:
-        _ResNet: A ResNet-20.
-    """
-    return _ResNet(
-        block=_BasicBlock,
-        num_blocks=[3, 3, 3],
-        in_channels=in_channels,
-        num_classes=num_classes,
-        conv_bias=conv_bias,
-        dropout_rate=dropout_rate,
-        groups=groups,
-        style=style,
-        in_planes=16,
-        activation_fn=activation_fn,
-        normalization_layer=normalization_layer,
-    )
-
-
-def resnet34(
-    in_channels: int,
-    num_classes: int,
-    conv_bias: bool = True,
-    dropout_rate: float = 0,
-    groups: int = 1,
-    style: Literal["imagenet", "cifar"] = "imagenet",
-    activation_fn: Callable = relu,
-    normalization_layer: type[nn.Module] = nn.BatchNorm2d,
-) -> _ResNet:
-    """ResNet-34 model.
-
-    Args:
-        in_channels (int): Number of input channels.
-        num_classes (int): Number of classes to predict.
-        conv_bias (bool): Whether to use bias in convolutions. Defaults to
-            ``True``.
-        dropout_rate (float): Dropout rate. Defaults to 0.
-        groups (int): Number of groups in convolutions. Defaults to 1.
-        style (bool, optional): Whether to use the ImageNet
-            structure. Defaults to ``True``.
-        activation_fn (Callable, optional): Activation function.
-        normalization_layer (nn.Module, optional): Normalization layer.
-
-    Returns:
-        _ResNet: A ResNet-34.
-    """
-    return _ResNet(
-        block=_BasicBlock,
-        num_blocks=[3, 4, 6, 3],
-        in_channels=in_channels,
-        num_classes=num_classes,
-        conv_bias=conv_bias,
-        dropout_rate=dropout_rate,
-        groups=groups,
-        style=style,
-        in_planes=64,
-        activation_fn=activation_fn,
-        normalization_layer=normalization_layer,
-    )
-
-
-def resnet50(
-    in_channels: int,
-    num_classes: int,
-    conv_bias: bool = True,
-    dropout_rate: float = 0,
-    groups: int = 1,
-    style: Literal["imagenet", "cifar"] = "imagenet",
-    activation_fn: Callable = relu,
-    normalization_layer: type[nn.Module] = nn.BatchNorm2d,
-) -> _ResNet:
-    """ResNet-50 model.
-
-    Args:
-        in_channels (int): Number of input channels.
-        num_classes (int): Number of classes to predict.
-        conv_bias (bool): Whether to use bias in convolutions. Defaults to
-            ``True``.
-        dropout_rate (float): Dropout rate. Defaults to 0.
-        groups (int): Number of groups in convolutions. Defaults to 1.
-        style (bool, optional): Whether to use the ImageNet
-            structure. Defaults to ``True``.
-        activation_fn (Callable, optional): Activation function.
-        normalization_layer (nn.Module, optional): Normalization layer.
-
-    Returns:
-        _ResNet: A ResNet-50.
-    """
-    return _ResNet(
-        block=_Bottleneck,
-        num_blocks=[3, 4, 6, 3],
-        in_channels=in_channels,
-        num_classes=num_classes,
-        conv_bias=conv_bias,
-        dropout_rate=dropout_rate,
-        groups=groups,
-        style=style,
-        in_planes=64,
-        activation_fn=activation_fn,
-        normalization_layer=normalization_layer,
-    )
-
-
-def resnet101(
-    in_channels: int,
-    num_classes: int,
-    conv_bias: bool = True,
-    dropout_rate: float = 0,
-    groups: int = 1,
-    style: Literal["imagenet", "cifar"] = "imagenet",
-    activation_fn: Callable = relu,
-    normalization_layer: type[nn.Module] = nn.BatchNorm2d,
-) -> _ResNet:
-    """ResNet-101 model.
-
-    Args:
-        in_channels (int): Number of input channels.
-        num_classes (int): Number of classes to predict.
-        conv_bias (bool): Whether to use bias in convolutions. Defaults to
-            ``True``.
-        dropout_rate (float): Dropout rate. Defaults to 0.
-        groups (int): Number of groups in convolutions. Defaults to 1.
-        style (bool, optional): Whether to use the ImageNet
-            structure. Defaults to ``True``.
-        activation_fn (Callable, optional): Activation function.
-        normalization_layer (nn.Module, optional): Normalization layer.
-
-    Returns:
-        _ResNet: A ResNet-101.
-    """
-    return _ResNet(
-        block=_Bottleneck,
-        num_blocks=[3, 4, 23, 3],
-        in_channels=in_channels,
-        num_classes=num_classes,
-        conv_bias=conv_bias,
-        dropout_rate=dropout_rate,
-        groups=groups,
-        style=style,
-        in_planes=64,
-        activation_fn=activation_fn,
-        normalization_layer=normalization_layer,
-    )
-
-
-def resnet152(
-    in_channels: int,
-    num_classes: int,
-    conv_bias: bool = True,
-    dropout_rate: float = 0,
-    groups: int = 1,
-    style: Literal["imagenet", "cifar"] = "imagenet",
-    activation_fn: Callable = relu,
-    normalization_layer: type[nn.Module] = nn.BatchNorm2d,
-) -> _ResNet:
-    """ResNet-152 model.
-
-    Args:
-        in_channels (int): Number of input channels.
-        num_classes (int): Number of classes to predict.
-        conv_bias (bool): Whether to use bias in convolutions. Defaults to
-            ``True``.
-        dropout_rate (float): Dropout rate. Defaults to 0.
-        groups (int, optional): Number of groups in convolutions. Defaults to
-            ``1``.
-        style (bool, optional): Whether to use the ImageNet
-            structure. Defaults to ``True``.
-        activation_fn (Callable, optional): Activation function.
-        normalization_layer (nn.Module, optional): Normalization layer.
-
-    Returns:
-        _ResNet: A ResNet-152.
-    """
-    return _ResNet(
-        block=_Bottleneck,
-        num_blocks=[3, 8, 36, 3],
+        block=block,
+        num_blocks=get_resnet_num_blocks(arch),
         in_channels=in_channels,
         num_classes=num_classes,
         conv_bias=conv_bias,

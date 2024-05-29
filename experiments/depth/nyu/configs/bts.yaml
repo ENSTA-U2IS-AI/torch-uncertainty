@@ -1,0 +1,52 @@
+# lightning.pytorch==2.2.0
+eval_after_fit: true
+seed_everything: false
+trainer:
+  accelerator: gpu
+  devices: 1
+  precision: 16-mixed
+  max_epochs: 100
+  logger:
+    class_path: lightning.pytorch.loggers.TensorBoardLogger
+    init_args:
+      save_dir: logs/bts
+      name: standard
+      default_hp_metric: false
+  callbacks:
+  - class_path: lightning.pytorch.callbacks.ModelCheckpoint
+    init_args:
+      monitor: val/SILog
+      mode: min
+      save_last: true
+  - class_path: lightning.pytorch.callbacks.LearningRateMonitor
+    init_args:
+      logging_interval: step
+model:
+  loss: 
+    class_path: torch_uncertainty.metrics.SILog
+    init_args:
+      sqrt: true
+  version: std
+  arch: 50
+  max_depth: 10.0
+  num_estimators: 1
+  pretrained_backbone: true
+data:
+  root: ./data
+  batch_size: 8
+  crop_size: 
+    - 416
+    - 544
+  inference_size:
+    - 480
+    - 640
+  num_workers: 8
+  max_depth: 10.0
+  min_depth: 1e-3
+optimizer:
+  lr: 1e-4
+  weight_decay: 1e-2
+  eps: 1e-3
+lr_scheduler:
+  power: 0.9
+  total_iters: 100

@@ -3,12 +3,7 @@ from typing import Literal
 from torch import nn
 
 from torch_uncertainty.models.segmentation.segformer import (
-    seg_former_b0,
-    seg_former_b1,
-    seg_former_b2,
-    seg_former_b3,
-    seg_former_b4,
-    seg_former_b5,
+    seg_former,
 )
 from torch_uncertainty.routines.segmentation import SegmentationRoutine
 
@@ -16,14 +11,7 @@ from torch_uncertainty.routines.segmentation import SegmentationRoutine
 class SegFormerBaseline(SegmentationRoutine):
     single = ["std"]
     versions = {
-        "std": [
-            seg_former_b0,
-            seg_former_b1,
-            seg_former_b2,
-            seg_former_b3,
-            seg_former_b4,
-            seg_former_b5,
-        ]
+        "std": seg_former,
     }
     archs = [0, 1, 2, 3, 4, 5]
 
@@ -61,6 +49,7 @@ class SegFormerBaseline(SegmentationRoutine):
         """
         params = {
             "num_classes": num_classes,
+            "arch": arch,
         }
 
         format_batch_fn = nn.Identity()
@@ -68,7 +57,7 @@ class SegFormerBaseline(SegmentationRoutine):
         if version not in self.versions:
             raise ValueError(f"Unknown version {version}")
 
-        model = self.versions[version][self.archs.index(arch)](**params)
+        model = self.versions[version](**params)
 
         super().__init__(
             num_classes=num_classes,

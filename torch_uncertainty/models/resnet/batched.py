@@ -5,13 +5,10 @@ from torch import Tensor, nn
 
 from torch_uncertainty.layers import BatchConv2d, BatchLinear
 
+from .utils import get_resnet_num_blocks
+
 __all__ = [
-    "batched_resnet18",
-    "batched_resnet20",
-    "batched_resnet34",
-    "batched_resnet50",
-    "batched_resnet101",
-    "batched_resnet152",
+    "batched_resnet",
 ]
 
 
@@ -304,9 +301,10 @@ class _BatchedResNet(nn.Module):
         return self.linear(out)
 
 
-def batched_resnet18(
+def batched_resnet(
     in_channels: int,
     num_classes: int,
+    arch: int,
     num_estimators: int,
     conv_bias: bool = True,
     dropout_rate: float = 0,
@@ -314,240 +312,28 @@ def batched_resnet18(
     style: Literal["imagenet", "cifar"] = "imagenet",
     normalization_layer: type[nn.Module] = nn.BatchNorm2d,
 ) -> _BatchedResNet:
-    """BatchEnsemble of ResNet-18.
+    """BatchEnsemble of ResNet.
 
     Args:
         in_channels (int): Number of input channels.
+        num_classes (int): Number of classes to predict.
+        arch (int): The architecture of the ResNet.
         num_estimators (int): Number of estimators in the ensemble.
         conv_bias (bool): Whether to use bias in convolutions. Defaults to
             ``True``.
         dropout_rate (float): Dropout rate. Defaults to 0.
         groups (int): Number of groups within each estimator.
-        num_classes (int): Number of classes to predict.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
         normalization_layer (nn.Module, optional): Normalization layer.
 
     Returns:
-        _BatchedResNet: A BatchEnsemble-style ResNet-18.
+        _BatchedResNet: A BatchEnsemble-style ResNet.
     """
+    block = _BasicBlock if arch in [18, 20, 34] else _Bottleneck
     return _BatchedResNet(
-        _BasicBlock,
-        [2, 2, 2, 2],
-        in_channels=in_channels,
-        num_classes=num_classes,
-        num_estimators=num_estimators,
-        conv_bias=conv_bias,
-        dropout_rate=dropout_rate,
-        groups=groups,
-        style=style,
-        in_planes=64,
-        normalization_layer=normalization_layer,
-    )
-
-
-def batched_resnet20(
-    in_channels: int,
-    num_classes: int,
-    num_estimators: int,
-    conv_bias: bool = True,
-    dropout_rate: float = 0,
-    groups: int = 1,
-    style: Literal["imagenet", "cifar"] = "imagenet",
-    normalization_layer: type[nn.Module] = nn.BatchNorm2d,
-) -> _BatchedResNet:
-    """BatchEnsemble of ResNet-20.
-
-    Args:
-        in_channels (int): Number of input channels.
-        num_estimators (int): Number of estimators in the ensemble.
-        conv_bias (bool): Whether to use bias in convolutions. Defaults to
-            ``True``.
-        dropout_rate (float): Dropout rate. Defaults to 0.
-        groups (int): Number of groups within each estimator.
-        num_classes (int): Number of classes to predict.
-        style (bool, optional): Whether to use the ImageNet
-            structure. Defaults to ``True``.
-        normalization_layer (nn.Module, optional): Normalization layer.
-
-    Returns:
-        _BatchedResNet: A BatchEnsemble-style ResNet-20.
-    """
-    return _BatchedResNet(
-        _BasicBlock,
-        [3, 3, 3],
-        in_channels=in_channels,
-        num_classes=num_classes,
-        num_estimators=num_estimators,
-        conv_bias=conv_bias,
-        dropout_rate=dropout_rate,
-        groups=groups,
-        style=style,
-        in_planes=16,
-        normalization_layer=normalization_layer,
-    )
-
-
-def batched_resnet34(
-    in_channels: int,
-    num_classes: int,
-    num_estimators: int,
-    conv_bias: bool = True,
-    dropout_rate: float = 0,
-    groups: int = 1,
-    style: Literal["imagenet", "cifar"] = "imagenet",
-    normalization_layer: type[nn.Module] = nn.BatchNorm2d,
-) -> _BatchedResNet:
-    """BatchEnsemble of ResNet-34.
-
-    Args:
-        in_channels (int): Number of input channels.
-        num_estimators (int): Number of estimators in the ensemble.
-        conv_bias (bool): Whether to use bias in convolutions. Defaults to
-            ``True``.
-        dropout_rate (float): Dropout rate. Defaults to 0.
-        groups (int): Number of groups within each estimator.
-        num_classes (int): Number of classes to predict.
-        style (bool, optional): Whether to use the ImageNet
-            structure. Defaults to ``True``.
-        normalization_layer (nn.Module, optional): Normalization layer.
-
-    Returns:
-        _BatchedResNet: A BatchEnsemble-style ResNet-34.
-    """
-    return _BatchedResNet(
-        _BasicBlock,
-        [3, 4, 6, 3],
-        in_channels=in_channels,
-        num_classes=num_classes,
-        num_estimators=num_estimators,
-        conv_bias=conv_bias,
-        dropout_rate=dropout_rate,
-        groups=groups,
-        style=style,
-        in_planes=64,
-        normalization_layer=normalization_layer,
-    )
-
-
-def batched_resnet50(
-    in_channels: int,
-    num_classes: int,
-    num_estimators: int,
-    conv_bias: bool = True,
-    dropout_rate: float = 0,
-    groups: int = 1,
-    width_multiplier: int = 1,
-    style: Literal["imagenet", "cifar"] = "imagenet",
-    normalization_layer: type[nn.Module] = nn.BatchNorm2d,
-) -> _BatchedResNet:
-    """BatchEnsemble of ResNet-50.
-
-    Args:
-        in_channels (int): Number of input channels.
-        num_estimators (int): Number of estimators in the ensemble.
-        conv_bias (bool): Whether to use bias in convolutions. Defaults to
-            ``True``.
-        dropout_rate (float): Dropout rate. Defaults to 0.
-        groups (int): Number of groups within each estimator.
-        num_classes (int): Number of classes to predict.
-        width_multiplier (int, optional): Expansion factor affecting the width
-            of the estimators. Defaults to ``1``.
-        style (bool, optional): Whether to use the ImageNet
-            structure. Defaults to ``True``.
-        normalization_layer (nn.Module, optional): Normalization layer.
-
-    Returns:
-        _BatchedResNet: A BatchEnsemble-style ResNet-50.
-    """
-    return _BatchedResNet(
-        _Bottleneck,
-        [3, 4, 6, 3],
-        in_channels=in_channels,
-        num_classes=num_classes,
-        num_estimators=num_estimators,
-        width_multiplier=width_multiplier,
-        conv_bias=conv_bias,
-        dropout_rate=dropout_rate,
-        groups=groups,
-        style=style,
-        in_planes=64,
-        normalization_layer=normalization_layer,
-    )
-
-
-def batched_resnet101(
-    in_channels: int,
-    num_classes: int,
-    num_estimators: int,
-    conv_bias: bool = True,
-    dropout_rate: float = 0,
-    groups: int = 1,
-    style: Literal["imagenet", "cifar"] = "imagenet",
-    normalization_layer: type[nn.Module] = nn.BatchNorm2d,
-) -> _BatchedResNet:
-    """BatchEnsemble of ResNet-101.
-
-    Args:
-        in_channels (int): Number of input channels.
-        num_estimators (int): Number of estimators in the ensemble.
-        conv_bias (bool): Whether to use bias in convolutions. Defaults to
-            ``True``.
-        dropout_rate (float): Dropout rate. Defaults to 0.
-        groups (int): Number of groups within each estimator.
-        num_classes (int): Number of classes to predict.
-        style (bool, optional): Whether to use the ImageNet
-            structure. Defaults to ``True``.
-        normalization_layer (nn.Module, optional): Normalization layer.
-
-    Returns:
-        _BatchedResNet: A BatchEnsemble-style ResNet-101.
-    """
-    return _BatchedResNet(
-        _Bottleneck,
-        [3, 4, 23, 3],
-        in_channels=in_channels,
-        num_classes=num_classes,
-        num_estimators=num_estimators,
-        conv_bias=conv_bias,
-        dropout_rate=dropout_rate,
-        groups=groups,
-        style=style,
-        in_planes=64,
-        normalization_layer=normalization_layer,
-    )
-
-
-def batched_resnet152(
-    in_channels: int,
-    num_classes: int,
-    num_estimators: int,
-    conv_bias: bool = True,
-    dropout_rate: float = 0,
-    groups: int = 1,
-    style: Literal["imagenet", "cifar"] = "imagenet",
-    normalization_layer: type[nn.Module] = nn.BatchNorm2d,
-) -> _BatchedResNet:
-    """BatchEnsemble of ResNet-152.
-
-    Args:
-        in_channels (int): Number of input channels.
-        num_estimators (int): Number of estimators in the ensemble.
-        conv_bias (bool): Whether to use bias in convolutions. Defaults to
-            ``True``.
-        dropout_rate (float): Dropout rate. Defaults to 0.
-        groups (int): Number of groups within each estimator.
-        num_classes (int): Number of classes to predict.
-        style (bool, optional): Whether to use the ImageNet
-            structure. Defaults to ``True``.
-        normalization_layer (nn.Module, optional): Normalization layer.
-
-    Returns:
-        _BatchedResNet: A BatchEnsemble-style ResNet-152.
-    """
-    return _BatchedResNet(
-        _Bottleneck,
-        [3, 8, 36, 3],
+        block=block,
+        num_blocks=get_resnet_num_blocks(arch),
         in_channels=in_channels,
         num_classes=num_classes,
         num_estimators=num_estimators,

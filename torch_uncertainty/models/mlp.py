@@ -19,7 +19,7 @@ class _MLP(nn.Module):
         layer: type[nn.Module],
         activation: Callable,
         layer_args: dict,
-        final_layer: nn.Module,
+        final_layer: type[nn.Module],
         final_layer_args: dict,
         dropout_rate: float,
     ) -> None:
@@ -97,7 +97,7 @@ def _mlp(
     layer_args: dict | None = None,
     layer: type[nn.Module] = nn.Linear,
     activation: Callable = F.relu,
-    final_layer: nn.Module = nn.Identity,
+    final_layer: type[nn.Module] = nn.Identity,
     final_layer_args: dict | None = None,
     dropout_rate: float = 0.0,
 ) -> _MLP | _StochasticMLP:
@@ -125,7 +125,7 @@ def mlp(
     hidden_dims: list[int],
     layer: type[nn.Module] = nn.Linear,
     activation: Callable = F.relu,
-    final_layer: nn.Module = nn.Identity,
+    final_layer: type[nn.Module] = nn.Identity,
     final_layer_args: dict | None = None,
     dropout_rate: float = 0.0,
 ) -> _MLP:
@@ -167,7 +167,7 @@ def packed_mlp(
     alpha: float = 2,
     gamma: float = 1,
     activation: Callable = F.relu,
-    final_layer: nn.Module = nn.Identity,
+    final_layer: type[nn.Module] = nn.Identity,
     final_layer_args: dict | None = None,
     dropout_rate: float = 0.0,
 ) -> _MLP:
@@ -195,7 +195,7 @@ def bayesian_mlp(
     num_outputs: int,
     hidden_dims: list[int],
     activation: Callable = F.relu,
-    final_layer: nn.Module = nn.Identity,
+    final_layer: type[nn.Module] = nn.Identity,
     final_layer_args: dict | None = None,
     dropout_rate: float = 0.0,
 ) -> _StochasticMLP:

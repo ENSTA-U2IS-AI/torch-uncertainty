@@ -11,10 +11,10 @@ Welcome to Torch Uncertainty
 
 Welcome to the documentation of TorchUncertainty.
 
-This website contains the documentation for 
+This website contains the documentation for
 `installing <https://torch-uncertainty.github.io/installation.html>`_
-and `contributing <https://torch-uncertainty.github.io/>`_ to TorchUncertainty, 
-details on the `API <https://torch-uncertainty.github.io/api.html>`_, and a 
+and `contributing <https://torch-uncertainty.github.io/>`_ to TorchUncertainty,
+details on the `API <https://torch-uncertainty.github.io/api.html>`_, and a
 `comprehensive list of the references <https://torch-uncertainty.github.io/references.html>`_  of
 the models and metrics implemented.
 
@@ -29,11 +29,35 @@ Installation
 To install TorchUncertainty with contribution in mind, check the
 `contribution page <https://torch-uncertainty.github.io/contributing.html>`_.
 
+-----
+
+Official Implementations
+^^^^^^^^^^^^^^^^^^^^^^^^ 
+
+TorchUncertainty also houses multiple official implementations of papers from major conferences & journals.
+
+**A Symmetry-Aware Exploration of Bayesian Neural Network Posteriors**
+
+* Authors: *Olivier Laurent, Emanuel Aldea, and Gianni Franchi*
+* Paper: `ICLR 2024 <https://arxiv.org/abs/2310.08287>`_.
+
+**Encoding the latent posterior of Bayesian Neural Networks for uncertainty quantification**
+
+* Authors: *Gianni Franchi, Andrei Bursuc, Emanuel Aldea, Severine Dubuisson, and Isabelle Bloch*
+* Paper: `IEEE TPAMI <https://arxiv.org/abs/2012.02818>`_.
+
+**Packed-Ensembles for Efficient Uncertainty Estimation**
+
+* Authors: *Olivier Laurent, Adrien Lafage, Enzo Tartaglione, Geoffrey Daniel, Jean-Marc Martinez, Andrei Bursuc, and Gianni Franchi*
+* Paper: `ICLR 2023 <https://arxiv.org/abs/2210.09184>`_.
+
+**MUAD: Multiple Uncertainties for Autonomous Driving, a benchmark for multiple uncertainty types and tasks**
+
+* Authors: *Gianni Franchi, Xuanlong Yu, Andrei Bursuc, Angel Tena, Rémi Kazmierczak, Séverine Dubuisson, Emanuel Aldea, David Filliat*
+* Paper: `BMVC 2022 <https://arxiv.org/abs/2203.01437>`_.
+
 Packed-Ensembles
 ^^^^^^^^^^^^^^^^
-
-Finally, TorchUncertainty also includes the official PyTorch implementation for
-the following paper:
 
 **Packed-Ensembles for Efficient Uncertainty Estimation**
 

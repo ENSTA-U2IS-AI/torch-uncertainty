@@ -124,7 +124,7 @@ def lenet(
     last_layer_dropout: bool = False,
 ) -> _LeNet:
     return _lenet(
-        False,
+        stochastic=False,
         in_channels=in_channels,
         num_classes=num_classes,
         linear_layer=nn.Linear,
