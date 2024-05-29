@@ -8,6 +8,7 @@
 [![PRWelcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/ENSTA-U2IS-AI/torch-uncertainty/pulls)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![Code Coverage](https://codecov.io/github/ENSTA-U2IS-AI/torch-uncertainty/coverage.svg?branch=master)](https://codecov.io/gh/ENSTA-U2IS-AI/torch-uncertainty)
+[![Downloads](https://static.pepy.tech/badge/torch-uncertainty)](https://pepy.tech/project/torch-uncertainty)
 [![Discord Badge](https://dcbadge.vercel.app/api/server/HMCawt5MJu?compact=true&style=flat)](https://discord.gg/HMCawt5MJu)
 </div>
 
