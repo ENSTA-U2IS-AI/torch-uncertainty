@@ -28,7 +28,7 @@ If you use the classification routine, the plots will be automatically available
 
 from torch_uncertainty.datamodules import CIFAR100DataModule
 from torch_uncertainty.metrics import CalibrationError
-from torch_uncertainty.models.resnet import resnet18
+from torch_uncertainty.models.resnet import resnet
 from torch_uncertainty.post_processing import TemperatureScaler
 from torch_uncertainty.utils import load_hf
 
@@ -40,7 +40,7 @@ from torch_uncertainty.utils import load_hf
 # This can be done in a one liner:
 
 # Build the model
-model = resnet18(in_channels=3, num_classes=100, style="cifar", conv_bias=False)
+model = resnet(in_channels=3, num_classes=100, arch=18, style="cifar", conv_bias=False)
 
 # Download the weights (the config is not used here)
 weights, config = load_hf("resnet18_c100")

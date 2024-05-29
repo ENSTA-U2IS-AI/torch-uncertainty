@@ -15,12 +15,8 @@ class SILog(Metric):
         .. math:: \text{SILog} = \frac{1}{N} \sum_{i=1}^{N} \left(\log(y_i) - \log(\hat{y_i})\right)^2 - \left(\frac{1}{N} \sum_{i=1}^{N} \log(y_i) \right)^2,
 
         where :math:`N` is the batch size, :math:`y_i` is a tensor of target
-            values and :math:`\hat{y_i}` is a tensor of prediction.
+        values and :math:`\hat{y_i}` is a tensor of prediction.
         Return the square root of SILog by setting :attr:`sqrt` to `True`.
-
-        Inputs:
-            - :attr:`pred`: :math:`(N)`
-            - :attr:`target`: :math:`(N)`
 
         Args:
             sqrt: If `True`, return the square root of the metric. Defaults to
@@ -31,13 +27,8 @@ class SILog(Metric):
                 <https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metric-kwargs>`_.
 
         Reference:
-            Depth Map Prediction from a Single Image using a Multi-Scale Deep
-                Network.
-            David Eigen, Christian Puhrsch, Rob Fergus. NeurIPS 2014.
-            From Big to Small: Multi-Scale Local Planar Guidance for Monocular
-                Depth Estimation.
-            Jin Han Lee, Myung-Kyu Han, Dong Wook Ko and Il Hong Suh. (For
-                :attr:`lmbda`)
+            Depth Map Prediction from a Single Image using a Multi-Scale Deep Network. David Eigen, Christian Puhrsch, Rob Fergus. NeurIPS 2014.
+            From Big to Small: Multi-Scale Local Planar Guidance for Monocular Depth Estimation. Jin Han Lee, Myung-Kyu Han, Dong Wook Ko and Il Hong Suh. (For :attr:`lmbda`)
         """
         super().__init__(**kwargs)
         self.sqrt = sqrt
@@ -55,7 +46,12 @@ class SILog(Metric):
         self.add_state("total", default=torch.tensor(0), dist_reduce_fx="sum")
 
     def update(self, pred: Tensor, target: Tensor) -> None:
-        """Update state with predictions and targets."""
+        """Update state with predictions and targets.
+
+        Args:
+            pred (Tensor): A prediction tensor of shape (batch)
+            target (Tensor): A tensor of ground truth labels of shape (batch)
+        """
         self.log_dists += torch.sum(pred.log() - target.log())
         self.sq_log_dists += torch.sum((pred.log() - target.log()) ** 2)
         self.total += target.size(0)

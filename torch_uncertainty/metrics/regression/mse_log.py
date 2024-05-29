@@ -4,7 +4,7 @@ from torchmetrics import MeanSquaredError
 
 class MeanSquaredLogError(MeanSquaredError):
     def __init__(self, squared: bool = True, **kwargs) -> None:
-        r"""Compute MeanSquaredLogError (MSELog).
+        r"""MeanSquaredLogError (MSELog) regression metric.
 
         .. math:: \text{MSELog} = \frac{1}{N}\sum_i^N  (\log \hat{y_i} - \log y_i)^2
 
