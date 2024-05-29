@@ -224,7 +224,9 @@ class DummyDepthBaseline:
 
         # baseline_type == "ensemble":
         model = deep_ensembles(
-            [model, copy.deepcopy(model)], task="depth", probabilistic=False
+            [model, copy.deepcopy(model)],
+            task="pixel_regression",
+            probabilistic=False,
         )
         return PixelRegressionRoutine(
             output_dim=output_dim,

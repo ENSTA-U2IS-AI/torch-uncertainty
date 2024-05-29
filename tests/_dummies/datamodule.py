@@ -251,7 +251,7 @@ class DummySegmentationDataModule(AbstractDataModule):
 
 class DummyDepthDataModule(AbstractDataModule):
     num_channels = 3
-    training_task = "depth"
+    training_task = "pixel_regression"
 
     def __init__(
         self,
