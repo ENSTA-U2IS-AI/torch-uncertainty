@@ -217,15 +217,15 @@ class Reduction1x1(nn.Module):
 class LocalPlanarGuidance(nn.Module):
     def __init__(self, up_ratio: int) -> None:
         super().__init__()
-        self.register_buffer("u", torch.tensor([]))
-        self.register_buffer("v", torch.tensor([]))
+        u = torch.arange(
+            self.up_ratio, dtype=torch.float32, device=self.device
+        ).reshape([1, 1, self.up_ratio])
+        v = torch.arange(
+            self.up_ratio, dtype=torch.float32, device=self.device
+        ).reshape([1, self.up_ratio, 1])
+        self.register_buffer("u", u)
+        self.register_buffer("v", v)
         self.up_ratio = up_ratio
-        self.u = (
-            torch.arange(self.up_ratio).reshape([1, 1, self.up_ratio]).float()
-        )
-        self.v = (
-            torch.arange(self.up_ratio).reshape([1, self.up_ratio, 1]).float()
-        )
 
     def forward(self, x: Tensor) -> Tensor:
         x_expanded = torch.repeat_interleave(

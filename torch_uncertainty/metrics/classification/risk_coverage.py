@@ -181,7 +181,7 @@ class CovAtxRisk(Metric):
     def __init__(self, risk_threshold: float, **kwargs) -> None:
         r"""`Coverage at x Risk`_.
 
-        If there are mutliple coverage values corresponding to the given risk,
+        If there are multiple coverage values corresponding to the given risk,
         i.e., the risk(coverage) is not monotonic, the coverage at x risk is
         the maximum coverage value corresponding to the given risk. If no
         there is no coverage value corresponding to the given risk, return
@@ -233,7 +233,7 @@ class CovAt5Risk(CovAtxRisk):
     def __init__(self, **kwargs) -> None:
         r"""`Coverage at 5% Risk`_.
 
-        If there are mutliple coverage values corresponding to 5% risk, the
+        If there are multiple coverage values corresponding to 5% risk, the
         coverage at 5% risk is the maximum coverage value corresponding to 5%
         risk. If no there is no coverage value corresponding to the given risk,
         this metric returns float("nan").
