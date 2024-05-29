@@ -5,13 +5,16 @@ from lightning.pytorch.utilities.types import STEP_OUTPUT
 from torch import Tensor, nn
 from torch.distributions import (
     Categorical,
+    Distribution,
     Independent,
     MixtureSameFamily,
 )
 from torch.optim import Optimizer
 from torchmetrics import MeanAbsoluteError, MeanSquaredError, MetricCollection
 
-from torch_uncertainty.metrics.regression.nll import DistributionNLL
+from torch_uncertainty.metrics import (
+    DistributionNLL,
+)
 from torch_uncertainty.utils.distributions import dist_rearrange, squeeze_dist
 
 
@@ -26,8 +29,7 @@ class RegressionRoutine(LightningModule):
         optim_recipe: dict | Optimizer | None = None,
         format_batch_fn: nn.Module | None = None,
     ) -> None:
-        r"""Routine for efficient training and testing on **regression tasks**
-        using LightningModule.
+        r"""Routine for training & testing on **regression tasks**.
 
         Args:
             model (torch.nn.Module): Model to train.
@@ -79,15 +81,15 @@ class RegressionRoutine(LightningModule):
             compute_groups=True,
         )
 
-        self.val_metrics = reg_metrics.clone(prefix="reg_val/")
-        self.test_metrics = reg_metrics.clone(prefix="reg_test/")
+        self.val_metrics = reg_metrics.clone(prefix="val/")
+        self.test_metrics = reg_metrics.clone(prefix="test/")
 
         if self.probabilistic:
             reg_prob_metrics = MetricCollection(
                 {"NLL": DistributionNLL(reduction="mean")}
             )
-            self.val_prob_metrics = reg_prob_metrics.clone(prefix="reg_val/")
-            self.test_prob_metrics = reg_prob_metrics.clone(prefix="reg_test/")
+            self.val_prob_metrics = reg_prob_metrics.clone(prefix="val/")
+            self.test_prob_metrics = reg_prob_metrics.clone(prefix="test/")
 
         self.one_dim_regression = output_dim == 1
 
@@ -95,19 +97,12 @@ class RegressionRoutine(LightningModule):
         return self.optim_recipe
 
     def on_train_start(self) -> None:
-        init_metrics = dict.fromkeys(self.val_metrics, 0)
-        init_metrics.update(dict.fromkeys(self.test_metrics, 0))
-        if self.probabilistic:
-            init_metrics.update(dict.fromkeys(self.val_prob_metrics, 0))
-            init_metrics.update(dict.fromkeys(self.test_prob_metrics, 0))
-
         if self.logger is not None:  # coverage: ignore
             self.logger.log_hyperparams(
                 self.hparams,
-                init_metrics,
             )
 
-    def forward(self, inputs: Tensor) -> Tensor:
+    def forward(self, inputs: Tensor) -> Tensor | Distribution:
         """Forward pass of the routine.
 
         The forward pass automatically squeezes the output if the regression
@@ -173,15 +168,6 @@ class RegressionRoutine(LightningModule):
         if self.probabilistic:
             self.val_prob_metrics.update(mixture, targets)
 
-    def on_validation_epoch_end(self) -> None:
-        self.log_dict(self.val_metrics.compute())
-        self.val_metrics.reset()
-        if self.probabilistic:
-            self.log_dict(
-                self.val_prob_metrics.compute(),
-            )
-            self.val_prob_metrics.reset()
-
     def test_step(
         self,
         batch: tuple[Tensor, Tensor],
@@ -218,6 +204,13 @@ class RegressionRoutine(LightningModule):
         self.test_metrics.update(preds, targets)
         if self.probabilistic:
             self.test_prob_metrics.update(mixture, targets)
+
+    def on_validation_epoch_end(self) -> None:
+        self.log_dict(self.val_metrics.compute(), sync_dist=True)
+        self.val_metrics.reset()
+        if self.probabilistic:
+            self.log_dict(self.val_prob_metrics.compute(), sync_dist=True)
+            self.val_prob_metrics.reset()
 
     def on_test_epoch_end(self) -> None:
         self.log_dict(

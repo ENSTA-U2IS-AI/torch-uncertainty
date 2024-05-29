@@ -14,7 +14,7 @@ From PyPI
 ---------
 
 Check that you have PyTorch (cpu or gpu) installed on your system. Then, install
-the package via pip: 
+the package via pip:
 
 .. parsed-literal::
 
@@ -24,7 +24,7 @@ To update the package, run:
 
 .. parsed-literal::
 
-    pip install -U torch-uncertainty 
+    pip install -U torch-uncertainty
 
 From source
 -----------

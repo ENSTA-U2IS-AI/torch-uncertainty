@@ -11,6 +11,7 @@ from torch_uncertainty.datamodules.abstract import AbstractDataModule
 
 from .dataset import (
     DummyClassificationDataset,
+    DummyDepthDataset,
     DummyRegressionDataset,
     DummySegmentationDataset,
 )
@@ -233,6 +234,95 @@ class DummySegmentationDataModule(AbstractDataModule):
                 self.root,
                 num_channels=self.num_channels,
                 num_classes=self.num_classes,
+                image_size=self.image_size,
+                transforms=self.test_transform,
+                num_images=self.num_images,
+            )
+
+    def test_dataloader(self) -> DataLoader | list[DataLoader]:
+        return [self._data_loader(self.test)]
+
+    def _get_train_data(self) -> ArrayLike:
+        return self.train.data
+
+    def _get_train_targets(self) -> ArrayLike:
+        return np.array(self.train.targets)
+
+
+class DummyDepthDataModule(AbstractDataModule):
+    num_channels = 3
+    training_task = "pixel_regression"
+
+    def __init__(
+        self,
+        root: str | Path,
+        batch_size: int,
+        output_dim: int = 2,
+        num_workers: int = 1,
+        image_size: int = 4,
+        pin_memory: bool = True,
+        persistent_workers: bool = True,
+        num_images: int = 2,
+    ) -> None:
+        super().__init__(
+            root=root,
+            val_split=None,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            persistent_workers=persistent_workers,
+        )
+
+        self.output_dim = output_dim
+        self.num_channels = 3
+        self.num_images = num_images
+        self.image_size = image_size
+
+        self.dataset = DummyDepthDataset
+
+        self.train_transform = T.ToDtype(
+            dtype={
+                tv_tensors.Image: torch.float32,
+                tv_tensors.Mask: torch.float32,
+                "others": None,
+            },
+            scale=True,
+        )
+        self.test_transform = T.ToDtype(
+            dtype={
+                tv_tensors.Image: torch.float32,
+                tv_tensors.Mask: torch.float32,
+                "others": None,
+            },
+            scale=True,
+        )
+
+    def prepare_data(self) -> None:
+        pass
+
+    def setup(self, stage: str | None = None) -> None:
+        if stage == "fit" or stage is None:
+            self.train = self.dataset(
+                self.root,
+                num_channels=self.num_channels,
+                output_dim=self.output_dim,
+                image_size=self.image_size,
+                transforms=self.train_transform,
+                num_images=self.num_images,
+            )
+            self.val = self.dataset(
+                self.root,
+                num_channels=self.num_channels,
+                output_dim=self.output_dim,
+                image_size=self.image_size,
+                transforms=self.test_transform,
+                num_images=self.num_images,
+            )
+        elif stage == "test":
+            self.test = self.dataset(
+                self.root,
+                num_channels=self.num_channels,
+                output_dim=self.output_dim,
                 image_size=self.image_size,
                 transforms=self.test_transform,
                 num_images=self.num_images,

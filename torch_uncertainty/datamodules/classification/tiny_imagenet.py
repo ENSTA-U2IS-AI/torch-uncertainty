@@ -11,7 +11,10 @@ from torchvision.datasets import DTD, SVHN
 
 from torch_uncertainty.datamodules.abstract import AbstractDataModule
 from torch_uncertainty.datasets.classification import ImageNetO, TinyImageNet
-from torch_uncertainty.utils import create_train_val_split
+from torch_uncertainty.utils import (
+    create_train_val_split,
+    interpolation_modes_from_str,
+)
 
 
 class TinyImageNetDataModule(AbstractDataModule):
@@ -26,6 +29,7 @@ class TinyImageNetDataModule(AbstractDataModule):
         eval_ood: bool = False,
         val_split: float | None = None,
         ood_ds: str = "svhn",
+        interpolation: str = "bilinear",
         rand_augment_opt: str | None = None,
         num_workers: int = 1,
         pin_memory: bool = True,
@@ -43,6 +47,7 @@ class TinyImageNetDataModule(AbstractDataModule):
 
         self.eval_ood = eval_ood
         self.ood_ds = ood_ds
+        self.interpolation = interpolation_modes_from_str(interpolation)
 
         self.dataset = TinyImageNet
 
@@ -74,7 +79,7 @@ class TinyImageNetDataModule(AbstractDataModule):
 
         self.test_transform = T.Compose(
             [
-                T.Resize(64),
+                T.Resize(64, interpolation=self.interpolation),
                 T.ToTensor(),
                 T.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
             ]

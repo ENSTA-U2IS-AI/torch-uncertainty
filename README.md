@@ -16,7 +16,9 @@ _TorchUncertainty_ is a package designed to help you leverage [uncertainty quant
 
 :construction: _TorchUncertainty_ is in early development :construction: - expect changes, but reach out and contribute if you are interested in the project! **Please raise an issue if you have any bugs or difficulties and join the [discord server](https://discord.gg/HMCawt5MJu).**
 
-Our webpage and documentation is available here: [torch-uncertainty.github.io](https://torch-uncertainty.github.io).
+:books: Our webpage and documentation is available here: [torch-uncertainty.github.io](https://torch-uncertainty.github.io). :books:
+
+TorchUncertainty contains the *official implementations* of multiple papers from *major machine-learning and computer vision conferences* and was/will be featured in tutorials at **WACV 2024** and **ECCV 2024**.
 
 ---
 
@@ -47,7 +49,14 @@ We make a quickstart available at [torch-uncertainty.github.io/quickstart](https
 
 ## :books: Implemented methods
 
-TorchUncertainty currently supports **Classification**, **probabilistic** and pointwise **Regression** and **Segmentation**.
+TorchUncertainty currently supports **classification**, **probabilistic** and pointwise **regression**, **segmentation** and **pixelwise regression** (such as monocular depth estimation). It includes the official codes of the following papers:
+
+- *A Symmetry-Aware Exploration of Bayesian Neural Network Posteriors* - [ICLR 2024](https://arxiv.org/abs/2310.08287)
+- *LP-BNN: Encoding the latent posterior of Bayesian Neural Networks for uncertainty quantification* - [IEEE TPAMI](https://arxiv.org/abs/2012.02818)
+- *Packed-Ensembles for Efficient Uncertainty Estimation* - [ICLR 2023](https://arxiv.org/abs/2210.09184) - [Tutorial](https://torch-uncertainty.github.io/auto_tutorials/tutorial_pe_cifar10.html)
+- *MUAD: Multiple Uncertainties for Autonomous Driving, a benchmark for multiple uncertainty types and tasks* - [BMVC 2022](https://arxiv.org/abs/2203.01437)
+
+We also provide the following methods:
 
 ### Baselines
 
@@ -86,18 +95,3 @@ Our documentation contains the following tutorials:
 - [Deep Evidential Regression on a Toy Example](https://torch-uncertainty.github.io/auto_tutorials/tutorial_der_cubic.html)
 - [Training a LeNet with Monte-Carlo Dropout](https://torch-uncertainty.github.io/auto_tutorials/tutorial_mc_dropout.html)
 - [Training a LeNet with Deep Evidential Classification](https://torch-uncertainty.github.io/auto_tutorials/tutorial_evidential_classification.html)
-  
-## Other References
-
-This package also contains the official implementation of Packed-Ensembles.
-
-If you find the corresponding models interesting, please consider citing our [paper](https://arxiv.org/abs/2210.09184):
-
-```text
-@inproceedings{laurent2023packed,
-    title={Packed-Ensembles for Efficient Uncertainty Estimation},
-    author={Laurent, Olivier and Lafage, Adrien and Tartaglione, Enzo and Daniel, Geoffrey and Martinez, Jean-Marc and Bursuc, Andrei and Franchi, Gianni},
-    booktitle={ICLR},
-    year={2023}
-}
-```

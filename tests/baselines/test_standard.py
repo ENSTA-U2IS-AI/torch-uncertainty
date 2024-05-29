@@ -9,7 +9,10 @@ from torch_uncertainty.baselines.classification import (
     WideResNetBaseline,
 )
 from torch_uncertainty.baselines.regression import MLPBaseline
-from torch_uncertainty.baselines.segmentation import SegFormerBaseline
+from torch_uncertainty.baselines.segmentation import (
+    DeepLabBaseline,
+    SegFormerBaseline,
+)
 
 
 class TestStandardBaseline:
@@ -150,4 +153,33 @@ class TestStandardSegFormerBaseline:
                 loss=nn.CrossEntropyLoss(),
                 version="test",
                 arch=0,
+            )
+
+
+class TestStandardDeepLabBaseline:
+    """Testing the DeepLab baseline class."""
+
+    def test_standard(self):
+        net = DeepLabBaseline(
+            num_classes=10,
+            loss=nn.CrossEntropyLoss(),
+            version="std",
+            style="v3",
+            output_stride=16,
+            arch=50,
+            separable=True,
+        ).eval()
+        summary(net)
+        _ = net(torch.rand(1, 3, 32, 32))
+
+    def test_errors(self):
+        with pytest.raises(ValueError):
+            DeepLabBaseline(
+                num_classes=10,
+                loss=nn.CrossEntropyLoss(),
+                version="test",
+                style="v3",
+                output_stride=16,
+                arch=50,
+                separable=True,
             )

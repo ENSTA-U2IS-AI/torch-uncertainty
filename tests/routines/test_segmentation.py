@@ -26,6 +26,7 @@ class TestSegmentation:
             loss=nn.CrossEntropyLoss(),
             baseline_type="single",
             optim_recipe=optim_cifar10_resnet18,
+            log_plots=True,
         )
 
         trainer.fit(model, dm)
@@ -53,15 +54,40 @@ class TestSegmentation:
         trainer.test(model, dm)
         model(dm.get_test_set()[0][0])
 
-    def test_segmentation_failures(self):
-        with pytest.raises(ValueError):
+    def test_segmentation_errors(self):
+        with pytest.raises(
+            ValueError, match="num_estimators must be positive, got"
+        ):
             SegmentationRoutine(
                 model=nn.Identity(),
                 num_classes=2,
                 loss=nn.CrossEntropyLoss(),
                 num_estimators=0,
             )
-        with pytest.raises(ValueError):
+
+        with pytest.raises(
+            ValueError, match="num_classes must be at least 2, got"
+        ):
             SegmentationRoutine(
                 model=nn.Identity(), num_classes=1, loss=nn.CrossEntropyLoss()
+            )
+
+        with pytest.raises(
+            ValueError, match="metric_subsampling_rate must be in"
+        ):
+            SegmentationRoutine(
+                model=nn.Identity(),
+                num_classes=2,
+                loss=nn.CrossEntropyLoss(),
+                metric_subsampling_rate=-1,
+            )
+
+        with pytest.raises(
+            ValueError, match="num_calibration_bins must be at least 2, got"
+        ):
+            SegmentationRoutine(
+                model=nn.Identity(),
+                num_classes=2,
+                loss=nn.CrossEntropyLoss(),
+                num_calibration_bins=0,
             )

@@ -84,7 +84,7 @@ class _WideResNet(nn.Module):
         self.dropout_rate = dropout_rate
 
         if (depth - 4) % 6 != 0:
-            raise ValueError("Wide-resnet depth should be 6n+4.")
+            raise ValueError(f"Wide-resnet depth should be 6n+4. Got {depth}.")
         num_blocks = int((depth - 4) / 6)
         k = widen_factor
 
@@ -189,7 +189,7 @@ class _WideResNet(nn.Module):
         out = self.layer2(out)
         out = self.layer3(out)
         out = self.pool(out)
-        return self.dropout(self.flatten(out))
+        return self.flatten(out)
 
     def forward(self, x: Tensor) -> Tensor:
         return self.linear(self.feats_forward(x))

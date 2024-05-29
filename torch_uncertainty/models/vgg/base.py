@@ -130,7 +130,7 @@ class VGG(nn.Module):
 
 
 def _vgg(
-    vgg_cfg: dict[str, list[str | int]],
+    vgg_cfg: list[str | int],
     in_channels: int,
     num_classes: int,
     linear_layer: type[nn.Module] = nn.Linear,

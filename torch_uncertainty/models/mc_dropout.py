@@ -5,12 +5,16 @@ class _MCDropout(nn.Module):
     def __init__(
         self, model: nn.Module, num_estimators: int, last_layer: bool
     ) -> None:
-        """MC Dropout wrapper for a model.
+        """MC Dropout wrapper for a model containing nn.Dropout modules.
 
         Args:
             model (nn.Module): model to wrap
             num_estimators (int): number of estimators to use
             last_layer (bool): whether to apply dropout to the last layer only.
+
+        Warning:
+            Apply dropout using modules and not functional for this wrapper to
+            work as intended.
 
         Warning:
             The underlying models must have a non-zero :attr:`dropout_rate`

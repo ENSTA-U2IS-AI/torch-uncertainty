@@ -63,6 +63,17 @@ For Deep Ensembles, consider citing:
 * Paper: `NeurIPS 2017 <https://arxiv.org/pdf/1612.01474.pdf>`__.
 
 
+Monte-Carlo Dropout
+^^^^^^^^^^^^^^^^^^^
+
+For Monte-Carlo Dropout, consider citing:
+
+**Dropout as a Bayesian Approximation: Representing Model Uncertainty in Deep Learning**
+
+* Authors: *Yarin Gal and Zoubin Ghahramani*
+* Paper: `ICML 2016 <https://arxiv.org/pdf/1506.02142.pdf>`__.
+
+
 BatchEnsemble
 ^^^^^^^^^^^^^
 
@@ -104,15 +115,17 @@ For Packed-Ensembles, consider citing:
 * Authors: *Olivier Laurent, Adrien Lafage, Enzo Tartaglione, Geoffrey Daniel, Jean-Marc Martinez, Andrei Bursuc, and Gianni Franchi*
 * Paper: `ICLR 2023 <https://arxiv.org/abs/2210.09184>`__.
 
-Monte-Carlo Dropout
-^^^^^^^^^^^^^^^^^^^
 
-For Monte-Carlo Dropout, consider citing:
+LPBNN
+^^^^^
 
-**Dropout as a Bayesian Approximation: Representing Model Uncertainty in Deep Learning**
+For LPBNN, consider citing:
 
-* Authors: *Yarin Gal and Zoubin Ghahramani*
-* Paper: `ICML 2016 <https://arxiv.org/pdf/1506.02142.pdf>`__.
+**Encoding the latent posterior of Bayesian Neural Networks for uncertainty quantification**
+
+* Authors: *Gianni Franchi, Andrei Bursuc, Emanuel Aldea, Severine Dubuisson, Isabelle Bloch*
+* Paper: `IEEE TPAMI 2024 <https://arxiv.org/abs/2012.02818>`__.
+
 
 Data Augmentation Methods
 -------------------------
@@ -145,7 +158,7 @@ For MixupIO, consider citing:
 **On the Pitfall of Mixup for Uncertainty Calibration**
 
 * Authors: *Deng-Bao Wang, Lanqing Li, Peilin Zhao, Pheng-Ann Heng, and Min-Ling Zhang*
-* Paper: `CVPR 2023 <https://openaccess.thecvf.com/content/CVPR2023/papers/Wang_On_the_Pitfall_of_Mixup_for_Uncertainty_Calibration_CVPR_2023_paper.pdf>`
+* Paper: `CVPR 2023 <https://openaccess.thecvf.com/content/CVPR2023/papers/Wang_On_the_Pitfall_of_Mixup_for_Uncertainty_Calibration_CVPR_2023_paper.pdf>__`
 
 Warping Mixup
 ^^^^^^^^^^^^^
@@ -195,6 +208,26 @@ For the expected calibration error, consider citing:
 * Authors: *Mahdi Pakdaman Naeini, Gregory F. Cooper, and Milos Hauskrecht*
 * Paper: `AAAI 2015 <https://www.dbmi.pitt.edu/wp-content/uploads/2022/10/Obtaining-well-calibrated-probabilities-using-Bayesian-binning.pdf>`__.
 
+Adaptive Calibration Error
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For the adaptive calibration error, consider citing:
+
+**Measuring Calibration in Deep Learning**
+
+* Authors: Jeremy Nixon, Mike Dusenberry, Ghassen Jerfel, Timothy Nguyen, Jeremiah Liu, Linchuan Zhang, Dustin Tran
+* Paper: `CVPRW 2019 <https://arxiv.org/pdf/1904.01685.pdf>`__.
+
+Area Under the Risk-Coverage curve
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For the area under the risk-coverage curve, consider citing:
+
+**Selective classification for deep neural networks**
+
+* Authors: Yonatan Geifman, Ran El-Yaniv
+* Paper: `NeurIPS 2017 <https://arxiv.org/pdf/1705.08500.pdf>`__.
+
 Grouping Loss
 ^^^^^^^^^^^^^
 
@@ -214,7 +247,7 @@ The following datasets are used/implemented.
 MNIST
 ^^^^^
 
-**Gradient-based learning applied to document recognition** 
+**Gradient-based learning applied to document recognition**
 
 * Authors: *Yann LeCun, Leon Bottou, Yoshua Bengio, and Patrick Haffner*
 * Paper: `Proceedings of the IEEE 1998 <http://yann.lecun.com/exdb/publis/pdf/lecun-98.pdf>`__.
@@ -328,7 +361,7 @@ MUAD
 **MUAD: Multiple Uncertainties for Autonomous Driving Dataset**
 
 * Authors: Gianni Franchi, Xuanlong Yu, Andrei Bursuc, et al.*
-* Paper: `BMVC 2022 <https://arxiv.org/pdf/2203.01437.pdf>`
+* Paper: `BMVC 2022 <https://arxiv.org/pdf/2203.01437.pdf>__`
 
 Architectures
 -------------

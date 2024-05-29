@@ -5,14 +5,10 @@ from einops import rearrange
 from torch import nn
 
 from .std import _BasicBlock, _Bottleneck, _ResNet
+from .utils import get_resnet_num_blocks
 
 __all__ = [
-    "mimo_resnet18",
-    "mimo_resnet20",
-    "mimo_resnet34",
-    "mimo_resnet50",
-    "mimo_resnet101",
-    "mimo_resnet152",
+    "mimo_resnet",
 ]
 
 
@@ -29,7 +25,7 @@ class _MIMOResNet(_ResNet):
         groups: int = 1,
         style: Literal["imagenet", "cifar"] = "imagenet",
         in_planes: int = 64,
-        normalization_layer: nn.Module = nn.BatchNorm2d,
+        normalization_layer: type[nn.Module] = nn.BatchNorm2d,
     ) -> None:
         super().__init__(
             block=block,
@@ -49,150 +45,26 @@ class _MIMOResNet(_ResNet):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         if not self.training:
             x = x.repeat(self.num_estimators, 1, 1, 1)
-
         out = rearrange(x, "(m b) c h w -> b (m c) h w", m=self.num_estimators)
         out = super().forward(out)
         return rearrange(out, "b (m d) -> (m b) d", m=self.num_estimators)
 
 
-def mimo_resnet18(
+def mimo_resnet(
     in_channels: int,
     num_classes: int,
+    arch: int,
     num_estimators: int,
     conv_bias: bool = True,
     dropout_rate: float = 0.0,
     groups: int = 1,
     style: Literal["imagenet", "cifar"] = "imagenet",
-    normalization_layer: nn.Module = nn.BatchNorm2d,
+    normalization_layer: type[nn.Module] = nn.BatchNorm2d,
 ) -> _MIMOResNet:
+    block = _BasicBlock if arch in [18, 20, 34] else _Bottleneck
     return _MIMOResNet(
-        block=_BasicBlock,
-        num_blocks=[2, 2, 2, 2],
-        in_channels=in_channels,
-        num_classes=num_classes,
-        num_estimators=num_estimators,
-        conv_bias=conv_bias,
-        dropout_rate=dropout_rate,
-        groups=groups,
-        style=style,
-        in_planes=64,
-        normalization_layer=normalization_layer,
-    )
-
-
-def mimo_resnet20(
-    in_channels: int,
-    num_classes: int,
-    num_estimators: int,
-    conv_bias: bool = True,
-    dropout_rate: float = 0.0,
-    groups: int = 1,
-    style: Literal["imagenet", "cifar"] = "imagenet",
-    normalization_layer: nn.Module = nn.BatchNorm2d,
-) -> _MIMOResNet:
-    return _MIMOResNet(
-        block=_BasicBlock,
-        num_blocks=[3, 3, 3],
-        in_channels=in_channels,
-        num_classes=num_classes,
-        num_estimators=num_estimators,
-        conv_bias=conv_bias,
-        dropout_rate=dropout_rate,
-        groups=groups,
-        style=style,
-        in_planes=16,
-        normalization_layer=normalization_layer,
-    )
-
-
-def mimo_resnet34(
-    in_channels: int,
-    num_classes: int,
-    num_estimators: int,
-    conv_bias: bool = True,
-    dropout_rate: float = 0.0,
-    groups: int = 1,
-    style: Literal["imagenet", "cifar"] = "imagenet",
-    normalization_layer: nn.Module = nn.BatchNorm2d,
-) -> _MIMOResNet:
-    return _MIMOResNet(
-        block=_BasicBlock,
-        num_blocks=[3, 4, 6, 3],
-        in_channels=in_channels,
-        num_classes=num_classes,
-        num_estimators=num_estimators,
-        conv_bias=conv_bias,
-        dropout_rate=dropout_rate,
-        groups=groups,
-        style=style,
-        in_planes=64,
-        normalization_layer=normalization_layer,
-    )
-
-
-def mimo_resnet50(
-    in_channels: int,
-    num_classes: int,
-    num_estimators: int,
-    conv_bias: bool = True,
-    dropout_rate: float = 0.0,
-    groups: int = 1,
-    style: Literal["imagenet", "cifar"] = "imagenet",
-    normalization_layer: nn.Module = nn.BatchNorm2d,
-) -> _MIMOResNet:
-    return _MIMOResNet(
-        block=_Bottleneck,
-        num_blocks=[3, 4, 6, 3],
-        in_channels=in_channels,
-        num_classes=num_classes,
-        num_estimators=num_estimators,
-        conv_bias=conv_bias,
-        dropout_rate=dropout_rate,
-        groups=groups,
-        style=style,
-        in_planes=64,
-        normalization_layer=normalization_layer,
-    )
-
-
-def mimo_resnet101(
-    in_channels: int,
-    num_classes: int,
-    num_estimators: int,
-    conv_bias: bool = True,
-    dropout_rate: float = 0.0,
-    groups: int = 1,
-    style: Literal["imagenet", "cifar"] = "imagenet",
-    normalization_layer: nn.Module = nn.BatchNorm2d,
-) -> _MIMOResNet:
-    return _MIMOResNet(
-        block=_Bottleneck,
-        num_blocks=[3, 4, 23, 3],
-        in_channels=in_channels,
-        num_classes=num_classes,
-        num_estimators=num_estimators,
-        conv_bias=conv_bias,
-        dropout_rate=dropout_rate,
-        groups=groups,
-        style=style,
-        in_planes=64,
-        normalization_layer=normalization_layer,
-    )
-
-
-def mimo_resnet152(
-    in_channels: int,
-    num_classes: int,
-    num_estimators: int,
-    conv_bias: bool = True,
-    dropout_rate: float = 0.0,
-    groups: int = 1,
-    style: Literal["imagenet", "cifar"] = "imagenet",
-    normalization_layer: nn.Module = nn.BatchNorm2d,
-) -> _MIMOResNet:
-    return _MIMOResNet(
-        block=_Bottleneck,
-        num_blocks=[3, 8, 36, 3],
+        block=block,
+        num_blocks=get_resnet_num_blocks(arch),
         in_channels=in_channels,
         num_classes=num_classes,
         num_estimators=num_estimators,

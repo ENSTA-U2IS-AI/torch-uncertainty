@@ -7,13 +7,10 @@ from torch import Tensor, nn
 from torch_uncertainty.layers import PackedConv2d, PackedLinear
 from torch_uncertainty.utils import load_hf
 
+from .utils import get_resnet_num_blocks
+
 __all__ = [
-    "packed_resnet18",
-    "packed_resnet20",
-    "packed_resnet34",
-    "packed_resnet50",
-    "packed_resnet101",
-    "packed_resnet152",
+    "packed_resnet",
 ]
 
 weight_ids = {
@@ -55,7 +52,7 @@ class _BasicBlock(nn.Module):
         conv_bias: bool,
         dropout_rate: float,
         groups: int,
-        normalization_layer: nn.Module,
+        normalization_layer: type[nn.Module],
     ) -> None:
         super().__init__()
 
@@ -125,7 +122,7 @@ class _Bottleneck(nn.Module):
         conv_bias: bool,
         dropout_rate: float,
         groups: int,
-        normalization_layer: nn.Module,
+        normalization_layer: type[nn.Module],
     ) -> None:
         super().__init__()
 
@@ -207,7 +204,7 @@ class _PackedResNet(nn.Module):
         groups: int = 1,
         style: Literal["imagenet", "cifar"] = "imagenet",
         in_planes: int = 64,
-        normalization_layer: nn.Module = nn.BatchNorm2d,
+        normalization_layer: type[nn.Module] = nn.BatchNorm2d,
     ) -> None:
         super().__init__()
 
@@ -342,7 +339,7 @@ class _PackedResNet(nn.Module):
         dropout_rate: float,
         gamma: int,
         groups: int,
-        normalization_layer: nn.Module,
+        normalization_layer: type[nn.Module],
     ) -> nn.Module:
         strides = [stride] + [1] * (num_blocks - 1)
         layers = []
@@ -390,9 +387,10 @@ class _PackedResNet(nn.Module):
         )
 
 
-def packed_resnet18(
+def packed_resnet(
     in_channels: int,
     num_classes: int,
+    arch: int,
     num_estimators: int,
     alpha: int,
     gamma: int,
@@ -400,14 +398,15 @@ def packed_resnet18(
     groups: int = 1,
     dropout_rate: float = 0,
     style: Literal["imagenet", "cifar"] = "imagenet",
-    normalization_layer: nn.Module = nn.BatchNorm2d,
+    normalization_layer: type[nn.Module] = nn.BatchNorm2d,
     pretrained: bool = False,
 ) -> _PackedResNet:
-    """Packed-Ensembles of ResNet-18.
+    """Packed-Ensembles of ResNet.
 
     Args:
         in_channels (int): Number of input channels.
         num_classes (int): Number of classes to predict.
+        arch (int): The architecture of the ResNet.
         conv_bias (bool): Whether to use bias in convolutions. Defaults to
             ``True``.
         dropout_rate (float): Dropout rate. Defaults to 0.
@@ -422,11 +421,12 @@ def packed_resnet18(
             Defaults to ``False``.
 
     Returns:
-        _PackedResNet: A Packed-Ensembles ResNet-18.
+        _PackedResNet: A Packed-Ensembles ResNet.
     """
+    block = _BasicBlock if arch in [18, 20, 34] else _Bottleneck
     net = _PackedResNet(
-        block=_BasicBlock,
-        num_blocks=[2, 2, 2, 2],
+        block=block,
+        num_blocks=get_resnet_num_blocks(arch),
         in_channels=in_channels,
         num_estimators=num_estimators,
         alpha=alpha,
@@ -440,317 +440,7 @@ def packed_resnet18(
         normalization_layer=normalization_layer,
     )
     if pretrained:  # coverage: ignore
-        weights = weight_ids[str(num_classes)]["18"]
-        if weights is None:
-            raise ValueError("No pretrained weights for this configuration")
-        state_dict, config = load_hf(weights)
-        if not net.check_config(config):
-            raise ValueError(
-                "Pretrained weights do not match current configuration."
-            )
-        net.load_state_dict(state_dict)
-    return net
-
-
-def packed_resnet20(
-    in_channels: int,
-    num_classes: int,
-    num_estimators: int,
-    alpha: int,
-    gamma: int,
-    groups: int = 1,
-    conv_bias: bool = True,
-    dropout_rate: float = 0,
-    style: Literal["imagenet", "cifar"] = "imagenet",
-    normalization_layer: nn.Module = nn.BatchNorm2d,
-    pretrained: bool = False,
-) -> _PackedResNet:
-    """Packed-Ensembles of ResNet-20.
-
-    Args:
-        in_channels (int): Number of input channels.
-        num_classes (int): Number of classes to predict.
-        num_estimators (int): Number of estimators in the ensemble.
-        alpha (int): Expansion factor affecting the width of the estimators.
-        gamma (int): Number of groups within each estimator.
-        groups (int): Number of groups within each estimator. Defaults to 1.
-        conv_bias (bool): Whether to use bias in convolutions. Defaults to
-            ``True``.
-        dropout_rate (float): Dropout rate. Defaults to 0.
-        style (bool, optional): Whether to use the ImageNet
-            structure. Defaults to ``True``.
-        normalization_layer (nn.Module, optional): Normalization layer.
-        pretrained (bool, optional): Whether to load pretrained weights.
-            Defaults to ``False``.
-
-    Returns:
-        _PackedResNet: A Packed-Ensembles ResNet-20.
-    """
-    net = _PackedResNet(
-        block=_BasicBlock,
-        num_blocks=[3, 3, 3],
-        in_channels=in_channels,
-        num_estimators=num_estimators,
-        alpha=alpha,
-        gamma=gamma,
-        conv_bias=conv_bias,
-        dropout_rate=dropout_rate,
-        groups=groups,
-        num_classes=num_classes,
-        style=style,
-        in_planes=16,
-        normalization_layer=normalization_layer,
-    )
-    if pretrained:  # coverage: ignore
-        weights = weight_ids[str(num_classes)]["18"]
-        if weights is None:
-            raise ValueError("No pretrained weights for this configuration")
-        state_dict, config = load_hf(weights)
-        if not net.check_config(config):
-            raise ValueError(
-                "Pretrained weights do not match current configuration."
-            )
-        net.load_state_dict(state_dict)
-    return net
-
-
-def packed_resnet34(
-    in_channels: int,
-    num_classes: int,
-    num_estimators: int,
-    alpha: int,
-    gamma: int,
-    groups: int = 1,
-    conv_bias: bool = True,
-    dropout_rate: float = 0,
-    style: Literal["imagenet", "cifar"] = "imagenet",
-    normalization_layer: nn.Module = nn.BatchNorm2d,
-    pretrained: bool = False,
-) -> _PackedResNet:
-    """Packed-Ensembles of ResNet-34.
-
-    Args:
-        in_channels (int): Number of input channels.
-        num_classes (int): Number of classes to predict.
-        num_estimators (int): Number of estimators in the ensemble.
-        alpha (int): Expansion factor affecting the width of the estimators.
-        gamma (int): Number of groups within each estimator.
-        groups (int): Number of groups within each estimator. Defaults to 1.
-        conv_bias (bool): Whether to use bias in convolutions. Defaults to
-            ``True``.
-        dropout_rate (float): Dropout rate. Defaults to 0.
-        style (bool, optional): Whether to use the ImageNet
-            structure. Defaults to ``True``.
-        normalization_layer (nn.Module, optional): Normalization layer.
-        pretrained (bool, optional): Whether to load pretrained weights.
-            Defaults to ``False``.
-
-    Returns:
-        _PackedResNet: A Packed-Ensembles ResNet-34.
-    """
-    net = _PackedResNet(
-        block=_BasicBlock,
-        num_blocks=[3, 4, 6, 3],
-        in_channels=in_channels,
-        num_estimators=num_estimators,
-        alpha=alpha,
-        gamma=gamma,
-        groups=groups,
-        conv_bias=conv_bias,
-        dropout_rate=dropout_rate,
-        num_classes=num_classes,
-        style=style,
-        in_planes=64,
-        normalization_layer=normalization_layer,
-    )
-    if pretrained:  # coverage: ignore
-        weights = weight_ids[str(num_classes)]["34"]
-        if weights is None:
-            raise ValueError("No pretrained weights for this configuration")
-        state_dict, config = load_hf(weights)
-        if not net.check_config(config):
-            raise ValueError(
-                "Pretrained weights do not match current configuration."
-            )
-        net.load_state_dict(state_dict)
-    return net
-
-
-def packed_resnet50(
-    in_channels: int,
-    num_classes: int,
-    num_estimators: int,
-    alpha: int,
-    gamma: int,
-    groups: int = 1,
-    conv_bias: bool = True,
-    dropout_rate: float = 0,
-    style: Literal["imagenet", "cifar"] = "imagenet",
-    normalization_layer: nn.Module = nn.BatchNorm2d,
-    pretrained: bool = False,
-) -> _PackedResNet:
-    """Packed-Ensembles of ResNet-50.
-
-    Args:
-        in_channels (int): Number of input channels.
-        num_classes (int): Number of classes to predict.
-        num_estimators (int): Number of estimators in the ensemble.
-        alpha (int): Expansion factor affecting the width of the estimators.
-        gamma (int): Number of groups within each estimator.
-        groups (int): Number of groups within each estimator. Defaults to 1.
-        conv_bias (bool): Whether to use bias in convolutions. Defaults to
-            ``True``.
-        dropout_rate (float): Dropout rate. Defaults to 0.
-        style (bool, optional): Whether to use the ImageNet
-            structure. Defaults to ``True``.
-        normalization_layer (nn.Module, optional): Normalization layer.
-        pretrained (bool, optional): Whether to load pretrained weights.
-            Defaults to ``False``.
-
-    Returns:
-        _PackedResNet: A Packed-Ensembles ResNet-50.
-    """
-    net = _PackedResNet(
-        block=_Bottleneck,
-        num_blocks=[3, 4, 6, 3],
-        in_channels=in_channels,
-        num_estimators=num_estimators,
-        alpha=alpha,
-        gamma=gamma,
-        groups=groups,
-        conv_bias=conv_bias,
-        dropout_rate=dropout_rate,
-        num_classes=num_classes,
-        style=style,
-        in_planes=64,
-        normalization_layer=normalization_layer,
-    )
-    if pretrained:  # coverage: ignore
-        weights = weight_ids[str(num_classes)]["50"]
-        if weights is None:
-            raise ValueError("No pretrained weights for this configuration")
-        state_dict, config = load_hf(weights)
-        if not net.check_config(config):
-            raise ValueError(
-                "Pretrained weights do not match current configuration."
-            )
-        net.load_state_dict(state_dict)
-    return net
-
-
-def packed_resnet101(
-    in_channels: int,
-    num_classes: int,
-    num_estimators: int,
-    alpha: int,
-    gamma: int,
-    groups: int = 1,
-    conv_bias: bool = True,
-    dropout_rate: float = 0,
-    style: Literal["imagenet", "cifar"] = "imagenet",
-    normalization_layer: nn.Module = nn.BatchNorm2d,
-    pretrained: bool = False,
-) -> _PackedResNet:
-    """Packed-Ensembles of ResNet-101.
-
-    Args:
-        in_channels (int): Number of input channels.
-        num_classes (int): Number of classes to predict.
-        num_estimators (int): Number of estimators in the ensemble.
-        alpha (int): Expansion factor affecting the width of the estimators.
-        gamma (int): Number of groups within each estimator.
-        groups (int): Number of groups within each estimator. Defaults to 1.
-        conv_bias (bool): Whether to use bias in convolutions. Defaults to
-            ``True``.
-        dropout_rate (float): Dropout rate. Defaults to 0.
-        style (bool, optional): Whether to use the ImageNet
-            structure. Defaults to ``True``.
-        normalization_layer (nn.Module, optional): Normalization layer.
-        pretrained (bool, optional): Whether to load pretrained weights.
-            Defaults to ``False``.
-
-    Returns:
-        _PackedResNet: A Packed-Ensembles ResNet-101.
-    """
-    net = _PackedResNet(
-        block=_Bottleneck,
-        num_blocks=[3, 4, 23, 3],
-        in_channels=in_channels,
-        num_estimators=num_estimators,
-        alpha=alpha,
-        gamma=gamma,
-        groups=groups,
-        conv_bias=conv_bias,
-        dropout_rate=dropout_rate,
-        num_classes=num_classes,
-        style=style,
-        in_planes=64,
-        normalization_layer=normalization_layer,
-    )
-    if pretrained:  # coverage: ignore
-        weights = weight_ids[str(num_classes)]["101"]
-        if weights is None:
-            raise ValueError("No pretrained weights for this configuration")
-        state_dict, config = load_hf(weights)
-        if not net.check_config(config):
-            raise ValueError(
-                "Pretrained weights do not match current configuration."
-            )
-        net.load_state_dict(state_dict)
-    return net
-
-
-def packed_resnet152(
-    in_channels: int,
-    num_classes: int,
-    num_estimators: int,
-    alpha: int,
-    gamma: int,
-    groups: int = 1,
-    conv_bias: bool = True,
-    dropout_rate: float = 0,
-    style: Literal["imagenet", "cifar"] = "imagenet",
-    normalization_layer: nn.Module = nn.BatchNorm2d,
-    pretrained: bool = False,
-) -> _PackedResNet:
-    """Packed-Ensembles of ResNet-152.
-
-    Args:
-        in_channels (int): Number of input channels.
-        num_classes (int): Number of classes to predict.
-        num_estimators (int): Number of estimators in the ensemble.
-        alpha (int): Expansion factor affecting the width of the estimators.
-        gamma (int): Number of groups within each estimator.
-        groups (int): Number of groups within each estimator. Defaults to 1.
-        conv_bias (bool): Whether to use bias in convolutions. Defaults to
-            ``True``.
-        dropout_rate (float): Dropout rate. Defaults to 0.
-        style (bool, optional): Whether to use the ImageNet
-            structure. Defaults to ``True``.
-        normalization_layer (nn.Module, optional): Normalization layer.
-        pretrained (bool, optional): Whether to load pretrained weights.
-            Defaults to ``False``.
-
-    Returns:
-        _PackedResNet: A Packed-Ensembles ResNet-152.
-    """
-    net = _PackedResNet(
-        block=_Bottleneck,
-        num_blocks=[3, 8, 36, 3],
-        in_channels=in_channels,
-        num_estimators=num_estimators,
-        alpha=alpha,
-        gamma=gamma,
-        groups=groups,
-        conv_bias=conv_bias,
-        dropout_rate=dropout_rate,
-        num_classes=num_classes,
-        style=style,
-        in_planes=64,
-        normalization_layer=normalization_layer,
-    )
-    if pretrained:  # coverage: ignore
-        weights = weight_ids[str(num_classes)]["152"]
+        weights = weight_ids[str(num_classes)][str(arch)]
         if weights is None:
             raise ValueError("No pretrained weights for this configuration")
         state_dict, config = load_hf(weights)

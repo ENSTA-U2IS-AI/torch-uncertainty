@@ -17,19 +17,17 @@ and how to use TorchUncertainty's models.
 
 In this tutorial, we will need:
 
-- torch for its objects
-- the "calibration error" metric to compute the ECE and evaluate the top-label calibration
+- TorchUncertainty's Calibration Error metric to compute to evaluate the top-label calibration with ECE and plot the reliability diagrams
 - the CIFAR-100 datamodule to handle the data
 - a ResNet 18 as starting model
 - the temperature scaler to improve the top-label calibration
-- a utility to download hf models easily
-- the calibration plot to visualize the calibration.
+- a utility function to download HF models easily
 
-If you use the classification routine, the plots will be automatically available in the tensorboard logs.
+If you use the classification routine, the plots will be automatically available in the tensorboard logs if you use the `log_plots` flag.
 """
 
 from torch_uncertainty.datamodules import CIFAR100DataModule
-from torch_uncertainty.metrics import CE
+from torch_uncertainty.metrics import CalibrationError
 from torch_uncertainty.models.resnet import resnet18
 from torch_uncertainty.post_processing import TemperatureScaler
 from torch_uncertainty.utils import load_hf
@@ -88,7 +86,7 @@ cal_dataset, test_dataset, other = random_split(
 test_dataloader = DataLoader(test_dataset, batch_size=32)
 
 # Initialize the ECE
-ece = CE(task="multiclass", num_classes=100)
+ece = CalibrationError(task="multiclass", num_classes=100)
 
 # Iterate on the calibration dataloader
 for sample, target in test_dataloader:

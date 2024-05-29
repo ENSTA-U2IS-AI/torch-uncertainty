@@ -20,8 +20,7 @@ The scope of TorchUncertainty
 TorchUncertainty can host any method - if possible linked to a paper - and
 roughly contained in the following fields:
 
-* Uncertainty quantification in general, including Bayesian deep learning,
-  Monte Carlo dropout, ensemble methods, etc.
+* Uncertainty quantification in general, including Bayesian deep learning, Monte Carlo dropout, ensemble methods, etc.
 * Out-of-distribution detection methods
 * Applications (e.g. object detection, segmentation, etc.)
 
@@ -54,7 +53,7 @@ group:
 Then navigate to ``./docs`` and build the documentation with:
 
 .. parsed-literal::
-    
+
     make html
 
 Optionally, specify ``html-noplot`` instead of ``html`` to avoid running the tutorials.
@@ -73,7 +72,7 @@ PR. This will avoid multiplying the number featureless commits. To do this,
 run, at the root of the folder:
 
 .. parsed-literal::
-    
+
     python3 -m pytest tests
 
 Try to include an emoji at the start of each commit message following the suggestions
@@ -118,4 +117,4 @@ License
 
 If you feel that the current license is an obstacle to your contribution, let
 us know, and we may reconsider. However, the models’ weights hosted on Hugging
-Face are likely to stay Apache 2.0.
+Face are likely to remain Apache 2.0.

@@ -72,9 +72,11 @@ routine = ClassificationRoutine(
 # %%
 # 4. Gathering Everything and Training the Model
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# You can also save the results in a variable by saving the output of
+# `trainer.test`.
 
 trainer.fit(model=routine, datamodule=datamodule)
-trainer.test(model=routine, datamodule=datamodule)
+trainer.test(model=routine, datamodule=datamodule);
 
 # %%
 # 5. Wrapping the Model in a MCBatchNorm
@@ -88,10 +90,10 @@ trainer.test(model=routine, datamodule=datamodule)
 # to highlight the effect of stochasticity on the predictions.
 
 routine.model = MCBatchNorm(
-    routine.model, num_estimators=8, convert=True, mc_batch_size=4
+    routine.model, num_estimators=8, convert=True, mc_batch_size=16
 )
 routine.model.fit(datamodule.train)
-routine.eval()
+routine.eval();
 
 # %%
 # 6. Testing the Model
@@ -118,17 +120,17 @@ def imshow(img):
 dataiter = iter(datamodule.val_dataloader())
 images, labels = next(dataiter)
 
-# print images
-imshow(torchvision.utils.make_grid(images[:4, ...]))
-print("Ground truth: ", " ".join(f"{labels[j]}" for j in range(4)))
-
 routine.eval()
 logits = routine(images).reshape(8, 128, 10)
 
 probs = torch.nn.functional.softmax(logits, dim=-1)
+most_uncertain = sorted(probs.var(0).sum(-1).topk(4).indices)
 
+# print images
+imshow(torchvision.utils.make_grid(images[most_uncertain, ...]))
+print("Ground truth: ", " ".join(f"{labels[j]}" for j in range(4)))
 
-for j in sorted(probs.var(0).sum(-1).topk(4).indices):
+for j in most_uncertain:
     values, predicted = torch.max(probs[:, j], 1)
     print(
         f"Predicted digits for the image {j}: ",

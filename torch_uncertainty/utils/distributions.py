@@ -62,11 +62,11 @@ def squeeze_dist(distribution: Distribution, dim: int) -> Distribution:
         Distribution: The squeezed distribution.
     """
     dist_type = type(distribution)
-    if isinstance(distribution, Normal | Laplace):
+    if dist_type in (Normal, Laplace):
         loc = distribution.loc.squeeze(dim)
         scale = distribution.scale.squeeze(dim)
         return dist_type(loc=loc, scale=scale)
-    if isinstance(distribution, NormalInverseGamma):
+    if dist_type == NormalInverseGamma:
         loc = distribution.loc.squeeze(dim)
         lmbda = distribution.lmbda.squeeze(dim)
         alpha = distribution.alpha.squeeze(dim)
@@ -82,11 +82,11 @@ def dist_rearrange(
     distribution: Distribution, pattern: str, **axes_lengths: int
 ) -> Distribution:
     dist_type = type(distribution)
-    if isinstance(distribution, Normal | Laplace):
+    if dist_type in (Normal, Laplace):
         loc = rearrange(distribution.loc, pattern=pattern, **axes_lengths)
         scale = rearrange(distribution.scale, pattern=pattern, **axes_lengths)
         return dist_type(loc=loc, scale=scale)
-    if isinstance(distribution, NormalInverseGamma):
+    if dist_type == NormalInverseGamma:
         loc = rearrange(distribution.loc, pattern=pattern, **axes_lengths)
         lmbda = rearrange(distribution.lmbda, pattern=pattern, **axes_lengths)
         alpha = rearrange(distribution.alpha, pattern=pattern, **axes_lengths)
@@ -141,17 +141,17 @@ class NormalInverseGamma(Distribution):
 
     def mode(self) -> None:
         raise NotImplementedError(
-            "Mode is not meaningful for the NormalInverseGamma distribution"
+            "NormalInverseGamma distribution has no mode."
         )
 
     def stddev(self) -> None:
         raise NotImplementedError(
-            "Standard deviation is not meaningful for the NormalInverseGamma distribution"
+            "NormalInverseGamma distribution has no stddev."
         )
 
     def variance(self) -> None:
         raise NotImplementedError(
-            "Variance is not meaningful for the NormalInverseGamma distribution"
+            "NormalInverseGamma distribution has no variance."
         )
 
     @property

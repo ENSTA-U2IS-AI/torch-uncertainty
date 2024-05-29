@@ -6,7 +6,7 @@ API Reference
 Routines
 --------
 
-The routine are the main building blocks of the library. They define the framework 
+The routine are the main building blocks of the library. They define the framework
 in which the models are trained and evaluated. They allow for easy computation of different
 metrics crucial for uncertainty estimation in different contexts, namely classification, regression and segmentation.
 
@@ -42,10 +42,20 @@ Segmentation
 
     SegmentationRoutine
 
+Pixelwise Regression
+^^^^^^^^^^^^^^^^^^^^
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: class.rst
+
+    PixelRegressionRoutine
+
 Baselines
 ---------
 
-TorchUncertainty provide lightning-based models that can be easily trained and evaluated. 
+TorchUncertainty provide lightning-based models that can be easily trained and evaluated.
 These models inherit from the routines and are specifically designed to benchmark
 different methods in similar settings, here with constant architectures.
 
@@ -85,7 +95,18 @@ Segmentation
     :nosignatures:
     :template: class.rst
 
+    DeepLabBaseline
     SegFormerBaseline
+
+Monocular Depth Estimation 
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: class.rst
+
+    BTSBaseline
 
 Layers
 ------
@@ -122,6 +143,8 @@ Bayesian layers
     BayesConv1d
     BayesConv2d
     BayesConv3d
+    LPBNNLinear
+    LPBNNConv2d
 
 Models
 ------
@@ -158,9 +181,12 @@ Metrics
     :template: class.rst
 
     AUSE
+    AURC
+    AdaptiveCalibrationError
     BrierScore
     CategoricalNLL
-    CE
+    CalibrationError
+    CovAt5Risk,
     Disagreement
     DistributionNLL
     Entropy
@@ -169,6 +195,7 @@ Metrics
     MeanGTRelativeAbsoluteError
     MeanGTRelativeSquaredError
     MutualInformation
+    RiskAt80Cov, 
     SILog
     ThresholdAccuracy
 

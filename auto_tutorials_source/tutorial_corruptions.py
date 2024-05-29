@@ -12,11 +12,9 @@ torch_uncertainty.transforms.corruptions. We also need to load utilities from
 torchvision and matplotlib.
 """
 
-import torch
 from torchvision.datasets import CIFAR10
 from torchvision.transforms import Compose, ToTensor, Resize
 
-from torchvision.utils import make_grid
 import matplotlib.pyplot as plt
 
 ds = CIFAR10("./data", train=False, download=True)

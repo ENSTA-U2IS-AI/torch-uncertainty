@@ -15,7 +15,7 @@ trainer:
   callbacks:
   - class_path: lightning.pytorch.callbacks.ModelCheckpoint
     init_args:
-      monitor: cls_val/Acc
+      monitor: val/cls/Acc
       mode: max
       save_last: true
   - class_path: lightning.pytorch.callbacks.LearningRateMonitor
@@ -23,14 +23,14 @@ trainer:
       logging_interval: step
   - class_path: lightning.pytorch.callbacks.EarlyStopping
     init_args:
-      monitor: cls_val/Acc
+      monitor: val/cls/Acc
       patience: 1000
       check_finite: true
 model:
   num_classes: 100
   in_channels: 3
   loss: CrossEntropyLoss
-  version: standard
+  version: std
   arch: 50
   style: cifar
 data:
