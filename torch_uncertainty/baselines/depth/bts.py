@@ -3,10 +3,10 @@ from typing import Literal
 from torch import nn
 
 from torch_uncertainty.models.depth.bts import bts_resnet50, bts_resnet101
-from torch_uncertainty.routines import DepthRoutine
+from torch_uncertainty.routines import PixelRegressionRoutine
 
 
-class BTSBaseline(DepthRoutine):
+class BTSBaseline(PixelRegressionRoutine):
     single = ["std"]
     versions = {
         "std": [

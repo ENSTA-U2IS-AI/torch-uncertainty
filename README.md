@@ -48,7 +48,7 @@ We make a quickstart available at [torch-uncertainty.github.io/quickstart](https
 
 ## :books: Implemented methods
 
-TorchUncertainty currently supports **classification**, **probabilistic** and pointwise **regression**, **segmentation** and **monocular depth estimation**. It includes the official codes of the following papers:
+TorchUncertainty currently supports **classification**, **probabilistic** and pointwise **regression**, **segmentation** and **pixelwise regression** (such as monocular depth estimation). It includes the official codes of the following papers:
 
 - *A Symmetry-Aware Exploration of Bayesian Neural Network Posteriors* - [ICLR 2024](https://arxiv.org/abs/2310.08287)
 - *LP-BNN: Encoding the latent posterior of Bayesian Neural Networks for uncertainty quantification* - [IEEE TPAMI](https://arxiv.org/abs/2012.02818)

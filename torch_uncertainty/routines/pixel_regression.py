@@ -32,7 +32,7 @@ from torch_uncertainty.metrics import (
 from torch_uncertainty.utils.distributions import dist_rearrange, squeeze_dist
 
 
-class DepthRoutine(LightningModule):
+class PixelRegressionRoutine(LightningModule):
     inv_norm_params = {
         "mean": [-0.485 / 0.229, -0.456 / 0.224, -0.406 / 0.255],
         "std": [1 / 0.229, 1 / 0.224, 1 / 0.255],

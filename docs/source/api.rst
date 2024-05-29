@@ -42,15 +42,15 @@ Segmentation
 
     SegmentationRoutine
 
-Monocular Depth Estimation
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+Pixelwise Regression
+^^^^^^^^^^^^^^^^^^^^
 
 .. autosummary::
     :toctree: generated/
     :nosignatures:
     :template: class.rst
 
-    DepthRoutine
+    PixelRegressionRoutine
 
 Baselines
 ---------

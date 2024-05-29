@@ -8,7 +8,7 @@ from tests._dummies import (
     DummyDepthDataModule,
 )
 from torch_uncertainty.optim_recipes import optim_cifar10_resnet18
-from torch_uncertainty.routines import DepthRoutine
+from torch_uncertainty.routines import PixelRegressionRoutine
 from torch_uncertainty.utils import TUTrainer
 
 
@@ -57,7 +57,7 @@ class TestDepth:
         with pytest.raises(
             ValueError, match="num_estimators must be positive, got"
         ):
-            DepthRoutine(
+            PixelRegressionRoutine(
                 model=nn.Identity(),
                 output_dim=2,
                 loss=nn.MSELoss(),
@@ -66,7 +66,7 @@ class TestDepth:
             )
 
         with pytest.raises(ValueError, match="output_dim must be positive"):
-            DepthRoutine(
+            PixelRegressionRoutine(
                 model=nn.Identity(),
                 output_dim=0,
                 loss=nn.MSELoss(),

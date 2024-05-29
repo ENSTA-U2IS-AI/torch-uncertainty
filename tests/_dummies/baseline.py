@@ -10,7 +10,7 @@ from torch_uncertainty.layers.distributions import (
 from torch_uncertainty.models.deep_ensembles import deep_ensembles
 from torch_uncertainty.routines import (
     ClassificationRoutine,
-    DepthRoutine,
+    PixelRegressionRoutine,
     RegressionRoutine,
     SegmentationRoutine,
 )
@@ -204,7 +204,7 @@ class DummyDepthBaseline:
         loss: type[nn.Module],
         baseline_type: str = "single",
         optim_recipe=None,
-    ) -> DepthRoutine:
+    ) -> PixelRegressionRoutine:
         model = dummy_segmentation_model(
             num_classes=output_dim,
             in_channels=in_channels,
@@ -212,7 +212,7 @@ class DummyDepthBaseline:
         )
 
         if baseline_type == "single":
-            return DepthRoutine(
+            return PixelRegressionRoutine(
                 output_dim=output_dim,
                 probabilistic=False,
                 model=model,
@@ -226,7 +226,7 @@ class DummyDepthBaseline:
         model = deep_ensembles(
             [model, copy.deepcopy(model)], task="depth", probabilistic=False
         )
-        return DepthRoutine(
+        return PixelRegressionRoutine(
             output_dim=output_dim,
             probabilistic=False,
             model=model,
