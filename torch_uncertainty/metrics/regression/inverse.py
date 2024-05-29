@@ -21,7 +21,7 @@ def _unit_to_factor(unit: Literal["mm", "m", "km"]) -> float:
 
 
 class MeanSquaredErrorInverse(MeanSquaredError):
-    r"""Compute the `Mean Squared Error of the inverse predictions`_ (iMSE).
+    r"""Mean Squared Error of the inverse predictions (iMSE).
 
     .. math:: \text{iMSE} = \frac{1}{N}\sum_i^N(\frac{1}{y_i} - \frac{1}{\hat{y_i}})^2
 
@@ -47,8 +47,7 @@ class MeanSquaredErrorInverse(MeanSquaredError):
         num_outputs: Number of outputs in multioutput setting.
         unit: Unit for the computation of the metric. Must be one of 'mm', 'm',
             'km'. Defauts to 'km'.
-        kwargs: Additional keyword arguments, see :ref:`Metric kwargs` for more
-            info.
+        kwargs: Additional keyword arguments.
     """
 
     def __init__(
@@ -69,7 +68,7 @@ class MeanSquaredErrorInverse(MeanSquaredError):
 
 
 class MeanAbsoluteErrorInverse(MeanAbsoluteError):
-    r"""`Compute the Mean Absolute Error of the inverse predictions`_ (iMAE).
+    r"""Mean Absolute Error of the inverse predictions (iMAE).
 
     .. math:: \text{iMAE} = \frac{1}{N}\sum_i^N | \frac{1}{y_i} - \frac{1}{\hat{y_i}} |
 
@@ -93,8 +92,7 @@ class MeanAbsoluteErrorInverse(MeanAbsoluteError):
     Args:
         unit: Unit for the computation of the metric. Must be one of 'mm', 'm',
             'km'. Defauts to 'km'.
-        kwargs: Additional keyword arguments, see :ref:`Metric kwargs` for
-            more info.
+        kwargs: Additional keyword arguments.
     """
 
     def __init__(self, unit: str = "km", **kwargs) -> None:

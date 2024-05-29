@@ -19,7 +19,7 @@ class AURC(Metric):
     errors: list[Tensor]
 
     def __init__(self, **kwargs) -> None:
-        r"""`Area Under the Risk-Coverage curve`_.
+        r"""Area Under the Risk-Coverage curve.
 
         The Area Under the Risk-Coverage curve (AURC) is the main metric for
         Selective Classification (SC) performance assessment. It evaluates the
@@ -27,8 +27,7 @@ class AURC(Metric):
         discriminate between correct and incorrect predictions based on their
         rank (and not their values in contrast with calibration).
 
-        As input to ``forward`` and ``update`` the metric accepts the following
-            input:
+        As input to ``forward`` and ``update`` the metric accepts the following input:
 
         - ``preds`` (:class:`~torch.Tensor`): A float tensor of shape
             ``(N, ...)`` containing probabilities for each observation.
@@ -37,6 +36,7 @@ class AURC(Metric):
 
         As output to ``forward`` and ``compute`` the metric returns the
             following output:
+
         - ``aurc`` (:class:`~torch.Tensor`): A scalar tensor containing the
             area under the risk-coverage curve
 
@@ -231,7 +231,7 @@ class CovAtxRisk(Metric):
 
 class CovAt5Risk(CovAtxRisk):
     def __init__(self, **kwargs) -> None:
-        r"""`Coverage at 5% Risk`_.
+        r"""Coverage at 5% Risk.
 
         If there are multiple coverage values corresponding to 5% risk, the
         coverage at 5% risk is the maximum coverage value corresponding to 5%
@@ -250,7 +250,7 @@ class RiskAtxCov(Metric):
     errors: list[Tensor]
 
     def __init__(self, cov_threshold: float, **kwargs) -> None:
-        r"""`Risk at x Coverage`_.
+        r"""Risk at given Coverage.
 
         Args:
             cov_threshold (float): The coverage threshold at which to compute
@@ -276,10 +276,10 @@ class RiskAtxCov(Metric):
         self.errors.append((probs.argmax(-1) != targets) * 1.0)
 
     def compute(self) -> Tensor:
-        """Compute the risk at x coverage.
+        """Compute the risk at given coverage.
 
         Returns:
-            Tensor: The risk at x coverage.
+            Tensor: The risk at given coverage.
         """
         scores = dim_zero_cat(self.scores)
         errors = dim_zero_cat(self.errors)
@@ -289,7 +289,7 @@ class RiskAtxCov(Metric):
 
 class RiskAt80Cov(RiskAtxCov):
     def __init__(self, **kwargs) -> None:
-        r"""`Risk at 80% Coverage`_."""
+        r"""Risk at 80% Coverage."""
         super().__init__(cov_threshold=0.8, **kwargs)
 
 

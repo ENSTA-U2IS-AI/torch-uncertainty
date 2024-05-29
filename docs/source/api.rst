@@ -98,6 +98,8 @@ Segmentation
     DeepLabBaseline
     SegFormerBaseline
 
+.. currentmodule:: torch_uncertainty.baselines.depth
+
 Monocular Depth Estimation 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -173,29 +175,49 @@ Monte Carlo Dropout
 Metrics
 -------
 
-.. currentmodule:: torch_uncertainty.metrics
+Classification
+^^^^^^^^^^^^^^
+
+.. currentmodule:: torch_uncertainty.metrics.classification
 
 .. autosummary::
     :toctree: generated/
     :nosignatures:
     :template: class.rst
 
-    AUSE
     AURC
+    AUSE
+    FPR95
     AdaptiveCalibrationError
     BrierScore
-    CategoricalNLL
     CalibrationError
-    CovAt5Risk,
+    CategoricalNLL
+    CovAt5Risk
     Disagreement
-    DistributionNLL
     Entropy
-    FPR95
+    GroupingLoss
+    MeanIntersectionOverUnion
+    MutualInformation
+    RiskAt80Cov
+    VariationRatio
+
+Regression
+^^^^^^^^^^
+
+.. currentmodule:: torch_uncertainty.metrics.regression
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: class.rst
+
+    DistributionNLL
     Log10
+    MeanAbsoluteErrorInverse
     MeanGTRelativeAbsoluteError
     MeanGTRelativeSquaredError
-    MutualInformation
-    RiskAt80Cov, 
+    MeanSquaredErrorInverse
+    MeanSquaredLogError
     SILog
     ThresholdAccuracy
 

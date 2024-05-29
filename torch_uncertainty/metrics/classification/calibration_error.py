@@ -70,7 +70,7 @@ MulticlassCalibrationError.plot = _ce_plot
 
 
 class CalibrationError:
-    r"""`Top-label Calibration Error`_.
+    r"""Top-label Calibration Error.
 
     See
     `CalibrationError <https://torchmetrics.readthedocs.io/en/stable/classification/calibration_error.html>`_

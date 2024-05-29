@@ -92,7 +92,7 @@ def _ace_compute(
 
 
 class BinaryAdaptiveCalibrationError(Metric):
-    r"""`Adaptive Top-label Calibration Error` for binary tasks."""
+    r"""Adaptive Top-label Calibration Error for binary tasks."""
 
     is_differentiable: bool = False
     higher_is_better: bool = False
@@ -140,7 +140,7 @@ class BinaryAdaptiveCalibrationError(Metric):
 
 
 class MulticlassAdaptiveCalibrationError(Metric):
-    r"""`Adaptive Top-label Calibration Error` for multiclass tasks."""
+    r"""Adaptive Top-label Calibration Error for multiclass tasks."""
 
     is_differentiable: bool = False
     higher_is_better: bool = False
