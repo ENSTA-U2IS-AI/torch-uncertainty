@@ -84,6 +84,7 @@ To date, the following post-processing methods have been implemented:
 
 - Temperature, Vector, & Matrix scaling - [Tutorial](https://torch-uncertainty.github.io/auto_tutorials/tutorial_scaler.html)
 - Monte Carlo Batch Normalization - [Tutorial](https://torch-uncertainty.github.io/auto_tutorials/tutorial_mc_batch_norm.html)
+- A wrapper for Laplace appoximation using the [Laplace library](https://github.com/aleximmer/Laplace)
 
 ## Tutorials
 

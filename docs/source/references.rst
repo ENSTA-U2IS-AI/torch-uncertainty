@@ -193,6 +193,16 @@ For Monte-Carlo Batch Normalization, consider citing:
 * Authors: *Mathias Teye, Hossein Azizpour, and Kevin Smith*
 * Paper: `ICML 2018 <https://arxiv.org/pdf/1802.06455.pdf>`__.
 
+Laplace Approximation
+^^^^^^^^^^^^^^^^^^^^^
+
+For Laplace Approximation, consider citing:
+
+**Laplace Redux - Effortless Bayesian Deep Learning**
+
+* Authors: *Erik Daxberger, Agustinus Kristiadi, Alexander Immer, Runa Eschenhagen, Matthias Bauer, Philipp Hennig*
+* Paper: `NeurIPS 2021 <https://arxiv.org/abs/2106.14806>`__.
+
 Metrics
 -------
 
