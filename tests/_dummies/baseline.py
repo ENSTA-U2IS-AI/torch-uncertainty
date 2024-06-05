@@ -41,6 +41,7 @@ class DummyClassificationBaseline:
         kernel_tau_std: float = 0.5,
         mixup_alpha: float = 0,
         cutmix_alpha: float = 0,
+        no_mixup_params: bool = False,
     ) -> ClassificationRoutine:
         model = dummy_model(
             in_channels=in_channels,
@@ -48,7 +49,18 @@ class DummyClassificationBaseline:
             with_feats=with_feats,
             with_linear=with_linear,
         )
-
+        if not no_mixup_params:
+            mixup_params = {
+                "mixup_alpha": mixup_alpha,
+                "cutmix_alpha": cutmix_alpha,
+                "mixtype": mixtype,
+                "mixmode": mixmode,
+                "dist_sim": dist_sim,
+                "kernel_tau_max": kernel_tau_max,
+                "kernel_tau_std": kernel_tau_std,
+            }
+        else:
+            mixup_params = None
         if baseline_type == "single":
             return ClassificationRoutine(
                 num_classes=num_classes,
@@ -58,13 +70,7 @@ class DummyClassificationBaseline:
                 log_plots=True,
                 optim_recipe=optim_recipe(model),
                 num_estimators=1,
-                mixtype=mixtype,
-                mixmode=mixmode,
-                dist_sim=dist_sim,
-                kernel_tau_max=kernel_tau_max,
-                kernel_tau_std=kernel_tau_std,
-                mixup_alpha=mixup_alpha,
-                cutmix_alpha=cutmix_alpha,
+                mixup_params=mixup_params,
                 ood_criterion=ood_criterion,
                 eval_ood=eval_ood,
                 eval_grouping_loss=eval_grouping_loss,

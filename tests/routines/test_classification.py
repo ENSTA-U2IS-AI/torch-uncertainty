@@ -81,6 +81,7 @@ class TestClassification:
             baseline_type="single",
             ood_criterion="entropy",
             eval_ood=True,
+            no_mixup_params=True,
         )
 
         trainer.fit(model, dm)
@@ -366,8 +367,12 @@ class TestClassification:
             )
 
         with pytest.raises(ValueError):
+            mixup_params = {"cutmix_alpha": -1}
             ClassificationRoutine(
-                num_classes=10, model=nn.Module(), loss=None, cutmix_alpha=-1
+                num_classes=10,
+                model=nn.Module(),
+                loss=None,
+                mixup_params=mixup_params,
             )
 
         with pytest.raises(

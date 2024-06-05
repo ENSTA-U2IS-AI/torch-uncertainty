@@ -37,6 +37,16 @@ from torch_uncertainty.post_processing import TemperatureScaler
 from torch_uncertainty.transforms import Mixup, MixupIO, RegMixup, WarpingMixup
 from torch_uncertainty.utils import csv_writer, plot_hist
 
+MIXUP_PARAMS = {
+    "mixtype": "erm",
+    "mixmode": "elem",
+    "dist_sim": "emb",
+    "kernel_tau_max": 1.0,
+    "kernel_tau_std": 0.5,
+    "mixup_alpha": 0,
+    "cutmix_alpha": 0,
+}
+
 
 class ClassificationRoutine(LightningModule):
     def __init__(
@@ -47,13 +57,7 @@ class ClassificationRoutine(LightningModule):
         num_estimators: int = 1,
         format_batch_fn: nn.Module | None = None,
         optim_recipe: dict | Optimizer | None = None,
-        mixtype: str = "erm",
-        mixmode: str = "elem",
-        dist_sim: str = "emb",
-        kernel_tau_max: float = 1.0,
-        kernel_tau_std: float = 0.5,
-        mixup_alpha: float = 0,
-        cutmix_alpha: float = 0,
+        mixup_params: dict | None = None,
         eval_ood: bool = False,
         eval_grouping_loss: bool = False,
         ood_criterion: Literal[
@@ -76,16 +80,10 @@ class ClassificationRoutine(LightningModule):
                 Defaults to :class:`torch.nn.Identity()`.
             optim_recipe (dict or torch.optim.Optimizer, optional): The optimizer and
                 optionally the scheduler to use. Defaults to ``None``.
-            mixtype (str, optional): Mixup type. Defaults to ``"erm"``.
-            mixmode (str, optional): Mixup mode. Defaults to ``"elem"``.
-            dist_sim (str, optional): Distance similarity. Defaults to ``"emb"``.
-            kernel_tau_max (float, optional): Maximum value for the kernel tau.
-                Defaults to ``1.0``.
-            kernel_tau_std (float, optional): Standard deviation for the kernel tau.
-                Defaults to ``0.5``.
-            mixup_alpha (float, optional): Alpha parameter for Mixup. Defaults to ``0``.
-            cutmix_alpha (float, optional): Alpha parameter for Cutmix.
-                Defaults to ``0``.
+            mixup_params (dict, optional): Mixup parameters. Can include mixup type,
+                mixup mode, distance similarity, kernel tau max, kernel tau std,
+                mixup alpha, and cutmix alpha. If None, no augmentations.
+                Defaults to ``None``.
             eval_ood (bool, optional): Indicates whether to evaluate the OOD
                 detection performance or not. Defaults to ``False``.
             eval_grouping_loss (bool, optional): Indicates whether to evaluate the
@@ -214,19 +212,9 @@ class ClassificationRoutine(LightningModule):
                 self.test_ood_ens_metrics = ens_metrics.clone(prefix="ood/ens_")
 
         # Mixup
-        self.mixtype = mixtype
-        self.mixmode = mixmode
-        self.dist_sim = dist_sim
-        if num_estimators == 1:
-            if mixup_alpha < 0 or cutmix_alpha < 0:
-                raise ValueError(
-                    "Cutmix alpha and Mixup alpha must be positive."
-                    f"Got {mixup_alpha} and {cutmix_alpha}."
-                )
 
-            self.mixup = self.init_mixup(
-                mixup_alpha, cutmix_alpha, kernel_tau_max, kernel_tau_std
-            )
+        if num_estimators == 1:
+            self.mixup = self.init_mixup(mixup_params)
 
             if self.eval_grouping_loss:
                 grouping_loss = MetricCollection(
@@ -243,46 +231,51 @@ class ClassificationRoutine(LightningModule):
         self.id_logit_storage = None
         self.ood_logit_storage = None
 
-    def init_mixup(
-        self,
-        mixup_alpha: float,
-        cutmix_alpha: float,
-        kernel_tau_max: float,
-        kernel_tau_std: float,
-    ) -> Callable:
-        if self.mixtype == "timm":
+    def init_mixup(self, mixup_params: dict | None) -> Callable:
+        if mixup_params is None:
+            mixup_params = {}
+        mixup_params = MIXUP_PARAMS | mixup_params
+        self.mixup_params = mixup_params
+
+        if mixup_params["mixup_alpha"] < 0 or mixup_params["cutmix_alpha"] < 0:
+            raise ValueError(
+                "Cutmix alpha and Mixup alpha must be positive."
+                f"Got {mixup_params['mixup_alpha']} and {mixup_params['cutmix_alpha']}."
+            )
+
+        if mixup_params["mixtype"] == "timm":
             return timm_Mixup(
-                mixup_alpha=mixup_alpha,
-                cutmix_alpha=cutmix_alpha,
-                mode=self.mixmode,
+                mixup_alpha=mixup_params["mixup_alpha"],
+                cutmix_alpha=mixup_params["cutmix_alpha"],
+                mode=mixup_params["mixmode"],
                 num_classes=self.num_classes,
             )
-        if self.mixtype == "mixup":
+        if mixup_params["mixtype"] == "mixup":
             return Mixup(
-                alpha=mixup_alpha,
-                mode=self.mixmode,
+                alpha=mixup_params["mixup_alpha"],
+                mode=mixup_params["mixmode"],
                 num_classes=self.num_classes,
             )
-        if self.mixtype == "mixup_io":
+        if mixup_params["mixtype"] == "mixup_io":
             return MixupIO(
-                alpha=mixup_alpha,
-                mode=self.mixmode,
+                alpha=mixup_params["mixup_alpha"],
+                mode=mixup_params["mixmode"],
                 num_classes=self.num_classes,
             )
-        if self.mixtype == "regmixup":
+        if mixup_params["mixtype"] == "regmixup":
             return RegMixup(
-                alpha=mixup_alpha,
-                mode=self.mixmode,
+                alpha=mixup_params["mixup_alpha"],
+                mode=mixup_params["mixmode"],
                 num_classes=self.num_classes,
             )
-        if self.mixtype == "kernel_warping":
+        if mixup_params["mixtype"] == "kernel_warping":
             return WarpingMixup(
-                alpha=mixup_alpha,
-                mode=self.mixmode,
+                alpha=mixup_params["mixup_alpha"],
+                mode=mixup_params["mixmode"],
                 num_classes=self.num_classes,
                 apply_kernel=True,
-                tau_max=kernel_tau_max,
-                tau_std=kernel_tau_std,
+                tau_max=mixup_params["kernel_tau_max"],
+                tau_std=mixup_params["kernel_tau_std"],
             )
         return Identity()
 
@@ -338,22 +331,27 @@ class ClassificationRoutine(LightningModule):
             logits = self.model(inputs)
         return logits
 
-    def training_step(
-        self, batch: tuple[Tensor, Tensor], batch_idx: int
-    ) -> STEP_OUTPUT:
-        # Mixup only for single models
+    def apply_mixup(
+        self, batch: tuple[Tensor, Tensor]
+    ) -> tuple[Tensor, Tensor]:
         if self.num_estimators == 1:
-            if self.mixtype == "kernel_warping":
-                if self.dist_sim == "emb":
+            if self.mixup_params["mixtype"] == "kernel_warping":
+                if self.mixup_params["dist_sim"] == "emb":
                     with torch.no_grad():
                         feats = self.model.feats_forward(batch[0]).detach()
 
                     batch = self.mixup(*batch, feats)
-                elif self.dist_sim == "inp":
+                elif self.mixup_params["dist_sim"] == "inp":
                     batch = self.mixup(*batch, batch[0])
             else:
                 batch = self.mixup(*batch)
+        return batch
 
+    def training_step(
+        self, batch: tuple[Tensor, Tensor], batch_idx: int
+    ) -> STEP_OUTPUT:
+        # Mixup only for single models
+        batch = self.apply_mixup(batch)
         inputs, target = self.format_batch_fn(batch)
 
         if self.is_elbo:
