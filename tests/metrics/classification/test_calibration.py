@@ -15,6 +15,7 @@ class TestCalibrationError:
             torch.as_tensor([0, 0, 1, 1, 1]),
         )
         fig, ax = metric.plot()
+        metric.plot(ax=ax)
         assert isinstance(fig, plt.Figure)
         assert isinstance(ax, plt.Axes)
         assert ax.get_xlabel() == "Top-class Confidence (%)"

@@ -60,7 +60,8 @@ def _ce_plot(self, ax: _AX_TYPE | None = None) -> _PLOT_OUT_TYPE:
     ax.set_xlim(0, 100)
     ax.set_ylim(0, 100)
     ax.set_aspect("equal", "box")
-    fig.tight_layout()
+    if fig is not None:
+        fig.tight_layout()
     return fig, ax
 
 
