@@ -1,9 +1,14 @@
+import torch
 from torch import Tensor, nn
 
 
 class _MCDropout(nn.Module):
     def __init__(
-        self, model: nn.Module, num_estimators: int, last_layer: bool
+        self,
+        model: nn.Module,
+        num_estimators: int,
+        last_layer: bool,
+        on_batch: bool,
     ) -> None:
         """MC Dropout wrapper for a model containing nn.Dropout modules.
 
@@ -11,6 +16,8 @@ class _MCDropout(nn.Module):
             model (nn.Module): model to wrap
             num_estimators (int): number of estimators to use
             last_layer (bool): whether to apply dropout to the last layer only.
+            on_batch (bool): Increase the batch_size to perform MC-Dropout.
+                Otherwise in a for loop.
 
         Warning:
             Apply dropout using modules and not functional for this wrapper to
@@ -27,6 +34,7 @@ class _MCDropout(nn.Module):
         """
         super().__init__()
         self.last_layer = last_layer
+        self.on_batch = on_batch
 
         if not hasattr(model, "dropout_rate"):
             raise ValueError(
@@ -36,14 +44,14 @@ class _MCDropout(nn.Module):
             raise ValueError(
                 "`dropout_rate` must be strictly positive to use MC Dropout."
             )
+        self.model = model
+
         if num_estimators is None:
             raise ValueError("`num_estimators` must be set to use MC Dropout.")
         if num_estimators <= 0:
             raise ValueError(
                 "`num_estimators` must be strictly positive to use MC Dropout."
             )
-
-        self.model = model
         self.num_estimators = num_estimators
 
         self.filtered_modules = list(
@@ -77,12 +85,20 @@ class _MCDropout(nn.Module):
         x: Tensor,
     ) -> Tensor:
         if not self.training:
-            x = x.repeat(self.num_estimators, 1, 1, 1)
+            if self.on_batch:
+                x = x.repeat(self.num_estimators, 1, 1, 1)
+                return self.model(x)
+            return torch.cat(
+                [self.model(x) for _ in range(self.num_estimators)], dim=0
+            )
         return self.model(x)
 
 
 def mc_dropout(
-    model: nn.Module, num_estimators: int, last_layer: bool = False
+    model: nn.Module,
+    num_estimators: int,
+    last_layer: bool = False,
+    on_batch: bool = True,
 ) -> _MCDropout:
     """MC Dropout wrapper for a model.
 
@@ -91,7 +107,14 @@ def mc_dropout(
         num_estimators (int): number of estimators to use
         last_layer (bool, optional): whether to apply dropout to the last
             layer only. Defaults to False.
+        on_batch (bool): Increase the batch_size to perform MC-Dropout.
+            Otherwise in a for loop to reduce memory footprint. Defaults
+            to true.
+
     """
     return _MCDropout(
-        model=model, num_estimators=num_estimators, last_layer=last_layer
+        model=model,
+        num_estimators=num_estimators,
+        last_layer=last_layer,
+        on_batch=on_batch,
     )

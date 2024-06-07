@@ -39,7 +39,9 @@ class _LeNet(nn.Module):
         ):
             batchnorm = True
         else:
-            raise ValueError("norm must be nn.Identity or nn.BatchNorm2d")
+            raise ValueError(
+                f"norm must be nn.Identity or nn.BatchNorm2d. Got {norm}."
+            )
 
         self.dropout_rate = dropout_rate
         self.last_layer_dropout = last_layer_dropout
@@ -179,7 +181,7 @@ def bayesian_lenet(
     norm: type[nn.Module] = nn.Identity,
     groups: int = 1,
     dropout_rate: float = 0.0,
-) -> _LeNet:
+) -> _StochasticLeNet:
     layers_args = {}
     if prior_sigma_1 is not None:
         layers_args["prior_sigma_1"] = prior_sigma_1
