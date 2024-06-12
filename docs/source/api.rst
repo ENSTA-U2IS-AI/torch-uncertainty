@@ -153,8 +153,8 @@ Models
 
 .. currentmodule:: torch_uncertainty.models
 
-Deep Ensembles
-^^^^^^^^^^^^^^
+Wrappers
+^^^^^^^^
 
 .. autosummary::
     :toctree: generated/
@@ -162,14 +162,9 @@ Deep Ensembles
     :template: class.rst
 
     deep_ensembles
-
-Monte Carlo Dropout
-
-.. autosummary::
-    :toctree: generated/
-    :nosignatures:
-    :template: class.rst
-
+    EMA
+    SWA
+    MC_Dropout
     mc_dropout
 
 Metrics

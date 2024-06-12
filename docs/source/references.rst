@@ -73,6 +73,15 @@ For Monte-Carlo Dropout, consider citing:
 * Authors: *Yarin Gal and Zoubin Ghahramani*
 * Paper: `ICML 2016 <https://arxiv.org/pdf/1506.02142.pdf>`__.
 
+Stochastic Weight Averaging
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For Stochastic Weight Averaging, consider citing:
+
+**Averaging Weights Leads to Wider Optima and Better Generalization**
+
+* Authors: *Pavel Izmailov, Dmitrii Podoprikhin, Timur Garipov, Dmitry Vetrov, Andrew Gordon Wilson*
+* Paper: `UAI 2018 <https://arxiv.org/pdf/1803.05407.pdf>`__.
 
 BatchEnsemble
 ^^^^^^^^^^^^^
