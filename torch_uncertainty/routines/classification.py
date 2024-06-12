@@ -33,7 +33,11 @@ from torch_uncertainty.metrics import (
     RiskAt80Cov,
     VariationRatio,
 )
-from torch_uncertainty.models import TrajectoryEnsemble, TrajectoryModel
+from torch_uncertainty.models import (
+    EPOCH_UPDATE_MODEL,
+    STEP_UPDATE_MODEL,
+    CheckpointEnsemble,
+)
 from torch_uncertainty.post_processing import TemperatureScaler
 from torch_uncertainty.transforms import Mixup, MixupIO, RegMixup, WarpingMixup
 from torch_uncertainty.utils import csv_writer, plot_hist
@@ -139,8 +143,8 @@ class ClassificationRoutine(LightningModule):
         self.save_in_csv = save_in_csv
         self.calibration_set = calibration_set
         self.binary_cls = num_classes == 1
-        self.is_trajectory_ensemble = isinstance(model, TrajectoryEnsemble)
-        self.is_trajectory_model = isinstance(model, TrajectoryModel)
+        self.need_epoch_update = isinstance(model, EPOCH_UPDATE_MODEL)
+        self.need_step_update = isinstance(model, STEP_UPDATE_MODEL)
 
         self.model = model
         self.loss = loss
@@ -200,7 +204,7 @@ class ClassificationRoutine(LightningModule):
             self.test_ood_entropy = Entropy()
 
         # metrics for ensembles only
-        if self.num_estimators > 1 or self.is_trajectory_ensemble:
+        if self.num_estimators > 1 or isinstance(model, CheckpointEnsemble):
             ens_metrics = MetricCollection(
                 {
                     "Disagreement": Disagreement(),
@@ -289,6 +293,25 @@ class ClassificationRoutine(LightningModule):
                 self.hparams,
             )
 
+    def on_validation_start(self) -> None:
+        if (
+            self.need_epoch_update and self.current_epoch > 0
+        ):  # workaround of sanity checks
+            self.model.update_model(self.current_epoch)
+            if (
+                hasattr(self.model, "need_bn_update")
+                and self.model.need_bn_update
+            ):
+                torch.optim.swa_utils.update_bn(
+                    self.trainer.train_dataloader,
+                    self.model,
+                    device=self.device,
+                )
+                self.model.need_bn_update = False
+
+        if isinstance(self.model, CheckpointEnsemble):
+            self.num_estimators = self.model.num_estimators
+
     def on_test_start(self) -> None:
         if isinstance(self.calibration_set, str) and self.calibration_set in [
             "val",
@@ -368,7 +391,8 @@ class ClassificationRoutine(LightningModule):
                 loss = self.loss(logits, target)
             else:
                 loss = self.loss(logits, target, self.current_epoch)
-
+        if self.need_step_update:
+            self.model.update_model(self.current_epoch)
         self.log("train_loss", loss)
         return loss
 
@@ -376,9 +400,7 @@ class ClassificationRoutine(LightningModule):
         self, batch: tuple[Tensor, Tensor], batch_idx: int
     ) -> None:
         inputs, target = batch
-        logits = self.forward(
-            inputs, save_feats=self.eval_grouping_loss
-        )  # (m*b, c)
+        logits = self.forward(inputs, save_feats=self.eval_grouping_loss)
         logits = rearrange(logits, "(m b) c -> b m c", m=self.num_estimators)
 
         if self.binary_cls:
@@ -488,25 +510,6 @@ class ClassificationRoutine(LightningModule):
 
             if self.ood_logit_storage is not None:
                 self.ood_logit_storage.append(logits.detach().cpu())
-
-    def on_validation_epoch_start(self) -> None:
-        if (
-            self.is_trajectory_model and self.current_epoch > 0
-        ):  # workaround of sanity checks
-            self.model.update_model(self.current_epoch)
-            if (
-                hasattr(self.model, "need_bn_update")
-                and self.model.need_bn_update
-            ):
-                torch.optim.swa_utils.update_bn(
-                    self.trainer.train_dataloader,
-                    self.model,
-                    device=self.device,
-                )
-                self.model.need_bn_update = False
-
-        if self.is_trajectory_ensemble:
-            self.num_estimators = self.model.num_estimators
 
     def on_validation_epoch_end(self) -> None:
         self.log_dict(self.val_cls_metrics.compute(), sync_dist=True)

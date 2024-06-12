@@ -43,7 +43,7 @@ model:
           dropout_rate: 0
           last_layer_dropout: false
           layer_args: {}
-      cycle_start: 9
+      cycle_start: 19
       cycle_length: 5
   num_classes: 10
   loss: CrossEntropyLoss

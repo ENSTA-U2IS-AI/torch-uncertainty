@@ -83,6 +83,16 @@ For Stochastic Weight Averaging, consider citing:
 * Authors: *Pavel Izmailov, Dmitrii Podoprikhin, Timur Garipov, Dmitry Vetrov, Andrew Gordon Wilson*
 * Paper: `UAI 2018 <https://arxiv.org/pdf/1803.05407.pdf>`__.
 
+CheckpointEnsemble
+^^^^^^^^^^^^^^^^^^
+
+For CheckpointEnsemble, consider citing:
+
+**Checkpoint Ensembles: Ensemble Methods from a Single Training Process**
+
+* Authors: *Hugh Chen, Scott Lundberg, Su-In Lee*
+* Paper: `AAAI 2018 <https://arxiv.org/pdf/1710.03282>`__.
+
 BatchEnsemble
 ^^^^^^^^^^^^^
 

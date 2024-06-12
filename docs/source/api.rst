@@ -162,6 +162,7 @@ Wrappers
     :template: class.rst
 
     deep_ensembles
+    CheckpointEnsemble
     EMA
     SWA
     MC_Dropout

@@ -43,7 +43,7 @@ model:
           dropout_rate: 0
           last_layer_dropout: false
           layer_args: {}
-      momentum: 0.9
+      momentum: 0.99
   num_classes: 10
   loss: CrossEntropyLoss
 data:
