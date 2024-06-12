@@ -7,7 +7,7 @@ from torch_uncertainty.layers.distributions import (
     NormalInverseGammaLayer,
     NormalLayer,
 )
-from torch_uncertainty.models.deep_ensembles import deep_ensembles
+from torch_uncertainty.models import deep_ensembles
 from torch_uncertainty.routines import (
     ClassificationRoutine,
     PixelRegressionRoutine,

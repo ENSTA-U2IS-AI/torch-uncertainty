@@ -332,9 +332,10 @@ class ClassificationRoutine(LightningModule):
             logits = self.model(inputs)
         return logits
 
-    def apply_mixup(
+    def _apply_mixup(
         self, batch: tuple[Tensor, Tensor]
     ) -> tuple[Tensor, Tensor]:
+        # Mixup only for single models
         if self.num_estimators == 1:
             if self.mixup_params["mixtype"] == "kernel_warping":
                 if self.mixup_params["dist_sim"] == "emb":
@@ -351,8 +352,7 @@ class ClassificationRoutine(LightningModule):
     def training_step(
         self, batch: tuple[Tensor, Tensor], batch_idx: int
     ) -> STEP_OUTPUT:
-        # Mixup only for single models
-        batch = self.apply_mixup(batch)
+        batch = self._apply_mixup(batch)
         inputs, target = self.format_batch_fn(batch)
 
         if self.is_elbo:
@@ -489,9 +489,22 @@ class ClassificationRoutine(LightningModule):
             if self.ood_logit_storage is not None:
                 self.ood_logit_storage.append(logits.detach().cpu())
 
-    def on_train_epoch_end(self) -> None:
-        if self.is_trajectory_model:
-            self.model.save_model(self.current_epoch)
+    def on_validation_epoch_start(self) -> None:
+        if (
+            self.is_trajectory_model and self.current_epoch > 0
+        ):  # workaround of sanity checks
+            self.model.update_model(self.current_epoch)
+            if (
+                hasattr(self.model, "need_bn_update")
+                and self.model.need_bn_update
+            ):
+                torch.optim.swa_utils.update_bn(
+                    self.trainer.train_dataloader,
+                    self.model,
+                    device=self.device,
+                )
+                self.model.need_bn_update = False
+
         if self.is_trajectory_ensemble:
             self.num_estimators = self.model.num_estimators
 

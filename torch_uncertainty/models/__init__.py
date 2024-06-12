@@ -1,8 +1,10 @@
 # ruff: noqa: F401
-from .deep_ensembles import deep_ensembles
-from .mc_dropout import mc_dropout
-from .trajectory_models import (
+from .wrappers import (
+    EMA,
+    SWA,
+    MCDropout,
     TrajectoryEnsemble,
     TrajectoryModel,
-    trajectory_ensemble,
+    deep_ensembles,
+    mc_dropout,
 )

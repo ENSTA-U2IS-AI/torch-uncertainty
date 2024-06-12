@@ -2,7 +2,7 @@ import torch
 from torch import Tensor, nn
 
 
-class _MCDropout(nn.Module):
+class MCDropout(nn.Module):
     def __init__(
         self,
         model: nn.Module,
@@ -99,7 +99,7 @@ def mc_dropout(
     num_estimators: int,
     last_layer: bool = False,
     on_batch: bool = True,
-) -> _MCDropout:
+) -> MCDropout:
     """MC Dropout wrapper for a model.
 
     Args:
@@ -112,7 +112,7 @@ def mc_dropout(
             to true.
 
     """
-    return _MCDropout(
+    return MCDropout(
         model=model,
         num_estimators=num_estimators,
         last_layer=last_layer,
