@@ -33,6 +33,7 @@ from torch_uncertainty.metrics import (
     RiskAt80Cov,
     VariationRatio,
 )
+from torch_uncertainty.models import TrajectoryEnsemble, TrajectoryModel
 from torch_uncertainty.post_processing import TemperatureScaler
 from torch_uncertainty.transforms import Mixup, MixupIO, RegMixup, WarpingMixup
 from torch_uncertainty.utils import csv_writer, plot_hist
@@ -138,6 +139,8 @@ class ClassificationRoutine(LightningModule):
         self.save_in_csv = save_in_csv
         self.calibration_set = calibration_set
         self.binary_cls = num_classes == 1
+        self.is_trajectory_ensemble = isinstance(model, TrajectoryEnsemble)
+        self.is_trajectory_model = isinstance(model, TrajectoryModel)
 
         self.model = model
         self.loss = loss
@@ -197,7 +200,7 @@ class ClassificationRoutine(LightningModule):
             self.test_ood_entropy = Entropy()
 
         # metrics for ensembles only
-        if self.num_estimators > 1:
+        if self.num_estimators > 1 or self.is_trajectory_ensemble:
             ens_metrics = MetricCollection(
                 {
                     "Disagreement": Disagreement(),
@@ -211,10 +214,8 @@ class ClassificationRoutine(LightningModule):
             if self.eval_ood:
                 self.test_ood_ens_metrics = ens_metrics.clone(prefix="ood/ens_")
 
-        # Mixup
-
         if num_estimators == 1:
-            self.mixup = self.init_mixup(mixup_params)
+            self.mixup = self._init_mixup(mixup_params)
 
             if self.eval_grouping_loss:
                 grouping_loss = MetricCollection(
@@ -231,7 +232,7 @@ class ClassificationRoutine(LightningModule):
         self.id_logit_storage = None
         self.ood_logit_storage = None
 
-    def init_mixup(self, mixup_params: dict | None) -> Callable:
+    def _init_mixup(self, mixup_params: dict | None) -> Callable:
         if mixup_params is None:
             mixup_params = {}
         mixup_params = MIXUP_PARAMS | mixup_params
@@ -487,6 +488,12 @@ class ClassificationRoutine(LightningModule):
 
             if self.ood_logit_storage is not None:
                 self.ood_logit_storage.append(logits.detach().cpu())
+
+    def on_train_epoch_end(self) -> None:
+        if self.is_trajectory_model:
+            self.model.save_model(self.current_epoch)
+        if self.is_trajectory_ensemble:
+            self.num_estimators = self.model.num_estimators
 
     def on_validation_epoch_end(self) -> None:
         self.log_dict(self.val_cls_metrics.compute(), sync_dist=True)
