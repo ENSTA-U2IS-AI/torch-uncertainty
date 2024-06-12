@@ -23,7 +23,7 @@ class CheckpointEnsemble(nn.Module):
 
         Reference:
             Checkpoint Ensembles: Ensemble Methods from a Single Training Process.
-            Hugh Chen, Scott Lundberg, Su-In Lee. In AAAI 2018.
+            Hugh Chen, Scott Lundberg, Su-In Lee. In ArXiv 2018.
         """
         super().__init__()
         self.model = model

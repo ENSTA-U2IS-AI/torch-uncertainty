@@ -91,7 +91,7 @@ For CheckpointEnsemble, consider citing:
 **Checkpoint Ensembles: Ensemble Methods from a Single Training Process**
 
 * Authors: *Hugh Chen, Scott Lundberg, Su-In Lee*
-* Paper: `AAAI 2018 <https://arxiv.org/pdf/1710.03282>`__.
+* Paper: `ArXiv <https://arxiv.org/pdf/1710.03282>`__.
 
 BatchEnsemble
 ^^^^^^^^^^^^^
