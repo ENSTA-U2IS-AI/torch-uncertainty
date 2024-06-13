@@ -99,7 +99,7 @@ class MCBatchNorm(nn.Module):
     def forward(
         self,
         x: Tensor,
-    ) -> tuple[Tensor, Tensor]:
+    ) -> Tensor:
         if self.training:
             return self.model(x)
         if not self.trained:
