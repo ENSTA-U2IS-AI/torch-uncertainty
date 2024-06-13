@@ -242,11 +242,20 @@ Post-Processing Methods
     :toctree: generated/
     :nosignatures:
     :template: class_inherited.rst
+    MCBatchNorm
+    Laplace
+    
+Scaling Methods
+^^^^^^^^^^^^^^^
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: class_inherited.rst
 
     TemperatureScaler
     VectorScaler
     MatrixScaler
-    MCBatchNorm
 
 Datamodules
 -----------
