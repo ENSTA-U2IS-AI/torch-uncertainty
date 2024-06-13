@@ -115,13 +115,11 @@ class BaseDataModule(ABC, LightningDataModule):
     # by setting the correct path to the matrix of data for each dataset.
     # It is generally "Dataset.samples" or "Dataset.data"
     # They are used for constructing cross validation splits
-    @abstractmethod
     def _get_train_data(self) -> ArrayLike:
-        pass
+        raise NotImplementedError
 
-    @abstractmethod
     def _get_train_targets(self) -> ArrayLike:
-        pass
+        raise NotImplementedError
 
     def make_cross_val_splits(
         self, n_splits: int = 10, train_over: int = 4

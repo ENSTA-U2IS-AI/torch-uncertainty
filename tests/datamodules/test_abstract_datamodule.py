@@ -13,6 +13,7 @@ class TestBaseDataModule:
     """Testing the BaseDataModule class."""
 
     def test_errors(self):
+        BaseDataModule.__abstractmethods__ = set()
         dm = BaseDataModule("root", 128, 0.0, 4, True, True)
         with pytest.raises(NotImplementedError):
             dm.setup()
@@ -24,6 +25,7 @@ class TestCrossValDataModule:
     """Testing the CrossValDataModule class."""
 
     def test_cv_main(self):
+        BaseDataModule.__abstractmethods__ = set()
         dm = BaseDataModule("root", 128, 0.0, 4, True, True)
         ds = DummyClassificationDataset(Path("root"))
         dm.train = ds
@@ -46,6 +48,7 @@ class TestCrossValDataModule:
         cv_dm.test_dataloader()
 
     def test_errors(self):
+        BaseDataModule.__abstractmethods__ = set()
         dm = BaseDataModule("root", 128, 0.0, 4, True, True)
         ds = DummyClassificationDataset(Path("root"))
         dm.train = ds
