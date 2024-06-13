@@ -4,7 +4,7 @@ from torch import Tensor, nn
 from torch.utils.data import Dataset
 
 
-class PostProcessing(ABC, nn.Module):
+class BasePostProcessing(ABC, nn.Module):
     def __init__(self):
         super().__init__()
         self.trained = False

@@ -5,10 +5,10 @@ from torch import Tensor, device, nn, optim
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 
-from torch_uncertainty.post_processing import PostProcessing
+from torch_uncertainty.post_processing import BasePostProcessing
 
 
-class Scaler(PostProcessing):
+class Scaler(BasePostProcessing):
     criterion = nn.CrossEntropyLoss()
     trained = False
 

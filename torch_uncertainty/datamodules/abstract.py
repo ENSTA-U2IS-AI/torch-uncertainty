@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Literal
 
@@ -8,7 +9,7 @@ from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.sampler import SubsetRandomSampler
 
 
-class AbstractDataModule(LightningDataModule):
+class BaseDataModule(ABC, LightningDataModule):
     training_task: str
     train: Dataset
     val: Dataset
@@ -47,8 +48,9 @@ class AbstractDataModule(LightningDataModule):
         self.pin_memory = pin_memory
         self.persistent_workers = persistent_workers
 
+    @abstractmethod
     def setup(self, stage: Literal["fit", "test"] | None = None) -> None:
-        raise NotImplementedError
+        pass
 
     def get_train_set(self) -> Dataset:
         """Get the training set."""
@@ -113,11 +115,13 @@ class AbstractDataModule(LightningDataModule):
     # by setting the correct path to the matrix of data for each dataset.
     # It is generally "Dataset.samples" or "Dataset.data"
     # They are used for constructing cross validation splits
+    @abstractmethod
     def _get_train_data(self) -> ArrayLike:
-        raise NotImplementedError
+        pass
 
+    @abstractmethod
     def _get_train_targets(self) -> ArrayLike:
-        raise NotImplementedError
+        pass
 
     def make_cross_val_splits(
         self, n_splits: int = 10, train_over: int = 4
@@ -148,13 +152,13 @@ class AbstractDataModule(LightningDataModule):
         return cv_dm
 
 
-class CrossValDataModule(AbstractDataModule):
+class CrossValDataModule(BaseDataModule):
     def __init__(
         self,
         root: str | Path,
         train_idx: ArrayLike,
         val_idx: ArrayLike,
-        datamodule: AbstractDataModule,
+        datamodule: BaseDataModule,
         batch_size: int,
         val_split: float,
         num_workers: int,
