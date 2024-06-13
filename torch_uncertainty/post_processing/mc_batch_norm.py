@@ -6,9 +6,10 @@ from torch import Tensor, nn
 from torch.utils.data import DataLoader, Dataset
 
 from torch_uncertainty.layers.mc_batch_norm import MCBatchNorm2d
+from torch_uncertainty.post_processing import PostProcessing
 
 
-class MCBatchNorm(nn.Module):
+class MCBatchNorm(PostProcessing):
     counter: int = 0
     mc_batch_norm_layers: list[MCBatchNorm2d] = []
     trained = False
@@ -99,7 +100,7 @@ class MCBatchNorm(nn.Module):
     def forward(
         self,
         x: Tensor,
-    ) -> tuple[Tensor, Tensor]:
+    ) -> Tensor:
         if self.training:
             return self.model(x)
         if not self.trained:
