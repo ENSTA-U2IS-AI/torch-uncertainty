@@ -2,6 +2,7 @@ import copy
 
 import torch
 from torch import nn
+from torch.utils.data import DataLoader
 
 
 class SWA(nn.Module):
@@ -50,6 +51,13 @@ class SWA(nn.Module):
         if self.training:
             return self.model.forward(x)
         return self.eval_forward(x)
+
+    def update_bn(self, loader: DataLoader, device) -> None:
+        if self.need_bn_update:
+            torch.optim.swa_utils.update_bn(
+                loader, self.swag_model, device=device
+            )
+            self.need_bn_update = False
 
 
 def _swa_checks(cycle_start: int, cycle_length: int) -> None:

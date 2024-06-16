@@ -33,25 +33,10 @@ class MCDropout(nn.Module):
             (i.e. after all the other dropout layers).
         """
         super().__init__()
+        _dropout_checks(model, num_estimators)
         self.last_layer = last_layer
         self.on_batch = on_batch
-
-        if not hasattr(model, "dropout_rate"):
-            raise ValueError(
-                "`dropout_rate` must be set in the model to use MC Dropout."
-            )
-        if model.dropout_rate <= 0.0:
-            raise ValueError(
-                "`dropout_rate` must be strictly positive to use MC Dropout."
-            )
         self.model = model
-
-        if num_estimators is None:
-            raise ValueError("`num_estimators` must be set to use MC Dropout.")
-        if num_estimators <= 0:
-            raise ValueError(
-                "`num_estimators` must be strictly positive to use MC Dropout."
-            )
         self.num_estimators = num_estimators
 
         self.filtered_modules = list(
@@ -84,14 +69,15 @@ class MCDropout(nn.Module):
         self,
         x: Tensor,
     ) -> Tensor:
-        if not self.training:
-            if self.on_batch:
-                x = x.repeat(self.num_estimators, 1, 1, 1)
-                return self.model(x)
-            return torch.cat(
-                [self.model(x) for _ in range(self.num_estimators)], dim=0
-            )
-        return self.model(x)
+        if self.training:
+            return self.model(x)
+        if self.on_batch:
+            x = x.repeat(self.num_estimators, 1, 1, 1)
+            return self.model(x)
+        # Else, for loop
+        return torch.cat(
+            [self.model(x) for _ in range(self.num_estimators)], dim=0
+        )
 
 
 def mc_dropout(
@@ -118,3 +104,20 @@ def mc_dropout(
         last_layer=last_layer,
         on_batch=on_batch,
     )
+
+
+def _dropout_checks(model: nn.Module, num_estimators: int) -> None:
+    if not hasattr(model, "dropout_rate"):
+        raise ValueError(
+            "`dropout_rate` must be set in the model to use MC Dropout."
+        )
+    if model.dropout_rate <= 0.0:
+        raise ValueError(
+            "`dropout_rate` must be strictly positive to use MC Dropout."
+        )
+    if num_estimators is None:
+        raise ValueError("`num_estimators` must be set to use MC Dropout.")
+    if num_estimators <= 0:
+        raise ValueError(
+            "`num_estimators` must be strictly positive to use MC Dropout."
+        )

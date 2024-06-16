@@ -4,6 +4,7 @@ from .wrappers import (
     EPOCH_UPDATE_MODEL,
     STEP_UPDATE_MODEL,
     SWA,
+    SWAG,
     CheckpointEnsemble,
     MCDropout,
     deep_ensembles,

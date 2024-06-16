@@ -92,6 +92,8 @@ def deep_ensembles(
         Simple and scalable predictive uncertainty estimation using deep
         ensembles. In NeurIPS, 2017.
     """
+    if isinstance(models, list) and len(models) == 0:
+        raise ValueError("Models must not be an empty list.")
     if (isinstance(models, list) and len(models) == 1) or isinstance(
         models, nn.Module
     ):

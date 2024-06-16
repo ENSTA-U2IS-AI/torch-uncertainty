@@ -9,7 +9,7 @@ class EMA(nn.Module):
         model: nn.Module,
         momentum: float,
     ) -> None:
-        """Exponential moving average model.
+        """Exponential Moving Average.
 
         Args:
             model (nn.Module): The model to train and ensemble.
@@ -22,7 +22,7 @@ class EMA(nn.Module):
         self.momentum = momentum
         self.remainder = 1 - momentum
 
-    def update_model(self, epoch: int) -> None:
+    def update_model(self, epoch: int | None = None) -> None:
         """Update the EMA model.
 
         Args:
