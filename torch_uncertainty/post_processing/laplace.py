@@ -13,10 +13,10 @@ if util.find_spec("laplace"):
 class Laplace(nn.Module):
     def __init__(
         self,
-        model: nn.Module,
         task: Literal["classification", "regression"],
-        subset_of_weights="last_layer",
-        hessian_structure="kron",
+        model: nn.Module | None = None,
+        weight_subset="last_layer",
+        hessian_struct="kron",
         pred_type: Literal["glm", "nn"] = "glm",
         link_approx: Literal[
             "mc", "probit", "bridge", "bridge_norm"
@@ -27,11 +27,11 @@ class Laplace(nn.Module):
         This class is a wrapper of Laplace classes from the laplace-torch library.
 
         Args:
-            model (nn.Module): model to be converted.
             task (Literal["classification", "regression"]): task type.
-            subset_of_weights (str): subset of weights to be considered. Defaults to
+            model (nn.Module): model to be converted.
+            weight_subset (str): subset of weights to be considered. Defaults to
                 "last_layer".
-            hessian_structure (str): structure of the Hessian matrix. Defaults to
+            hessian_struct (str): structure of the Hessian matrix. Defaults to
                 "kron".
             pred_type (Literal["glm", "nn"], optional): type of posterior predictive,
                 See the Laplace library for more details. Defaults to "glm".
@@ -47,14 +47,26 @@ class Laplace(nn.Module):
             raise ImportError(
                 "The laplace-torch library is not installed. Please install it via `pip install laplace-torch`."
             )
-        self.la = Laplace(
-            model=model,
-            task=task,
-            subset_of_weights=subset_of_weights,
-            hessian_structure=hessian_structure,
-        )
+
         self.pred_type = pred_type
         self.link_approx = link_approx
+        self.task = task
+        self.weight_subset = weight_subset
+        self.hessian_struct = hessian_struct
+
+        if model is not None:
+            self._setup_model(model)
+
+    def _setup_model(self, model) -> None:
+        self.la = Laplace(
+            model=model,
+            task=self.task,
+            weight_subset=self.weight_subset,
+            hessian_struct=self.hessian_struct,
+        )
+
+    def set_model(self, model: nn.Module) -> None:
+        self._setup_model(model)
 
     def fit(self, dataset: Dataset) -> None:
         self.la.fit(dataset=dataset)

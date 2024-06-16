@@ -9,8 +9,8 @@ from .scaler import Scaler
 class MatrixScaler(Scaler):
     def __init__(
         self,
-        model: nn.Module,
         num_classes: int,
+        model: nn.Module | None = None,
         init_w: float = 1,
         init_b: float = 0,
         lr: float = 0.1,
