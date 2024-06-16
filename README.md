@@ -18,7 +18,7 @@ _TorchUncertainty_ is a package designed to help you leverage [uncertainty quant
 
 :books: Our webpage and documentation is available here: [torch-uncertainty.github.io](https://torch-uncertainty.github.io). :books:
 
-TorchUncertainty contains the *official implementations* of multiple papers from *major machine-learning and computer vision conferences* and was/will be featured in tutorials at **WACV 2024** and **ECCV 2024**.
+TorchUncertainty contains the *official implementations* of multiple papers from *major machine-learning and computer vision conferences* and was/will be featured in tutorials at **[WACV](https://wacv2024.thecvf.com/) 2024**, **[HAICON](https://haicon24.de/) 2024** and **[ECCV](https://eccv.ecva.net/) 2024**.
 
 ---
 
@@ -69,8 +69,8 @@ To date, the following deep learning baselines have been implemented:
 - MIMO
 - Packed-Ensembles (see [Blog post](https://medium.com/@adrien.lafage/make-your-neural-networks-more-reliable-with-packed-ensembles-7ad0b737a873)) - [Tutorial](https://torch-uncertainty.github.io/auto_tutorials/tutorial_pe_cifar10.html)
 - Bayesian Neural Networks :construction: Work in progress :construction: - [Tutorial](https://torch-uncertainty.github.io/auto_tutorials/tutorial_bayesian.html)
-- Checkpoint Ensembles
-- Stochastic Weight Averaging
+- Checkpoint Ensembles & Snapshot Ensembles
+- Stochastic Weight Averaging & Stochastic Weight Averaging Gaussian
 - Regression with Beta Gaussian NLL Loss
 - Deep Evidential Classification & Regression - [Tutorial](https://torch-uncertainty.github.io/auto_tutorials/tutorial_evidential_classification.html)
 
