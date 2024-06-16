@@ -9,7 +9,7 @@ trainer:
   logger:
     class_path: lightning.pytorch.loggers.TensorBoardLogger
     init_args:
-      save_dir: logs/lenet_swa
+      save_dir: logs/lenet_swag
       name: standard
       default_hp_metric: false
   callbacks:
@@ -28,7 +28,7 @@ trainer:
       check_finite: true
 model:
   model:
-    class_path: torch_uncertainty.models.wrappers.SWA
+    class_path: torch_uncertainty.models.wrappers.SWAG
     init_args:
       model:
         class_path: torch_uncertainty.models.lenet._LeNet
@@ -43,7 +43,7 @@ model:
           dropout_rate: 0
           last_layer_dropout: false
           layer_args: {}
-      cycle_start: 19
+      cycle_start: 2
       cycle_length: 5
   num_classes: 10
   loss: CrossEntropyLoss

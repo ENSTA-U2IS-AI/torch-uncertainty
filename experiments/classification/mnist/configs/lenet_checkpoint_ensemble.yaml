@@ -57,6 +57,7 @@ model:
         - 70
   num_classes: 10
   loss: CrossEntropyLoss
+  is_ensemble: true
 data:
   root: ./data
   batch_size: 128

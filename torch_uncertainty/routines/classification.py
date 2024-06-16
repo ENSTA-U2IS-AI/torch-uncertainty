@@ -36,10 +36,15 @@ from torch_uncertainty.metrics import (
 from torch_uncertainty.models import (
     EPOCH_UPDATE_MODEL,
     STEP_UPDATE_MODEL,
-    CheckpointEnsemble,
 )
-from torch_uncertainty.post_processing import TemperatureScaler
-from torch_uncertainty.transforms import Mixup, MixupIO, RegMixup, WarpingMixup
+from torch_uncertainty.post_processing import PostProcessing
+from torch_uncertainty.transforms import (
+    Mixup,
+    MixupIO,
+    RegMixup,
+    RepeatTarget,
+    WarpingMixup,
+)
 from torch_uncertainty.utils import csv_writer, plot_hist
 
 MIXUP_PARAMS = {
@@ -59,7 +64,7 @@ class ClassificationRoutine(LightningModule):
         model: nn.Module,
         num_classes: int,
         loss: nn.Module,
-        num_estimators: int = 1,
+        is_ensemble: bool = False,
         format_batch_fn: nn.Module | None = None,
         optim_recipe: dict | Optimizer | None = None,
         mixup_params: dict | None = None,
@@ -68,10 +73,11 @@ class ClassificationRoutine(LightningModule):
         ood_criterion: Literal[
             "msp", "logit", "energy", "entropy", "mi", "vr"
         ] = "msp",
+        post_processing_method: PostProcessing | None = None,
+        calibration_set: Literal["val", "test"] = "val",
+        num_calibration_bins: int = 15,
         log_plots: bool = False,
         save_in_csv: bool = False,
-        calibration_set: Literal["val", "test"] | None = None,
-        num_calibration_bins: int = 15,
     ) -> None:
         r"""Routine for training & testing on **classification tasks**.
 
@@ -79,8 +85,8 @@ class ClassificationRoutine(LightningModule):
             model (torch.nn.Module): Model to train.
             num_classes (int): Number of classes.
             loss (torch.nn.Module): Loss function to optimize the :attr:`model`.
-            num_estimators (int, optional): Number of estimators for the
-                ensemble. Defaults to ``1`` (single model).
+            is_ensemble (bool, optional): Indicates whether the model is an
+                ensemble at test time or not. Defaults to ``False``.
             format_batch_fn (torch.nn.Module, optional): Function to format the batch.
                 Defaults to :class:`torch.nn.Identity()`.
             optim_recipe (dict or torch.optim.Optimizer, optional): The optimizer and
@@ -94,27 +100,26 @@ class ClassificationRoutine(LightningModule):
             eval_grouping_loss (bool, optional): Indicates whether to evaluate the
                 grouping loss or not. Defaults to ``False``.
             ood_criterion (str, optional): OOD criterion. Available options are
-
                 - ``"msp"`` (default): Maximum softmax probability.
                 - ``"logit"``: Maximum logit.
                 - ``"energy"``: Logsumexp of the mean logits.
                 - ``"entropy"``: Entropy of the mean prediction.
                 - ``"mi"``: Mutual information of the ensemble.
                 - ``"vr"``: Variation ratio of the ensemble.
-
+            post_processing_method (PostProcessing, optional): Post-processing method
+                to train on the calibration set. No post-processing if None.
+                Defaults to ``None``.
+            calibration_set (str, optional): The post-hoc calibration dataset to
+                use for the post-processing method. Defaults to ``val``.
+            num_calibration_bins (int, optional): Number of bins to compute calibration
+                metrics. Defaults to ``15``.
             log_plots (bool, optional): Indicates whether to log plots from
                 metrics. Defaults to ``False``.
             save_in_csv(bool, optional): Save the results in csv. Defaults to
                 ``False``.
-            calibration_set (str, optional): The post-hoc calibration dataset to
-                use for scaling. If not ``None``, it uses either the validation
-                set when set to ``"val"`` or the test set when set to ``"test"``.
-                Defaults to ``None``. Else, no post-hoc calibration.
-            num_calibration_bins (int, optional): Number of bins to compute calibration
-                metrics. Defaults to ``15``.
 
         Warning:
-            You must define :attr:`optim_recipe` if you do not use the CLI.
+            You must define :attr:`optim_recipe` if you do not use the Lightning CLI.
 
         Note:
             :attr:`optim_recipe` can be anything that can be returned by
@@ -125,17 +130,19 @@ class ClassificationRoutine(LightningModule):
         _classification_routine_checks(
             model=model,
             num_classes=num_classes,
-            num_estimators=num_estimators,
+            is_ensemble=is_ensemble,
             ood_criterion=ood_criterion,
             eval_grouping_loss=eval_grouping_loss,
             num_calibration_bins=num_calibration_bins,
+            mixup_params=mixup_params,
+            post_processing_method=post_processing_method,
+            format_batch_fn=format_batch_fn,
         )
 
         if format_batch_fn is None:
             format_batch_fn = nn.Identity()
 
         self.num_classes = num_classes
-        self.num_estimators = num_estimators
         self.eval_ood = eval_ood
         self.eval_grouping_loss = eval_grouping_loss
         self.ood_criterion = ood_criterion
@@ -145,30 +152,46 @@ class ClassificationRoutine(LightningModule):
         self.binary_cls = num_classes == 1
         self.need_epoch_update = isinstance(model, EPOCH_UPDATE_MODEL)
         self.need_step_update = isinstance(model, STEP_UPDATE_MODEL)
-
+        self.num_calibration_bins = num_calibration_bins
         self.model = model
         self.loss = loss
         self.format_batch_fn = format_batch_fn
         self.optim_recipe = optim_recipe
+        self.is_ensemble = is_ensemble
 
-        # metrics
+        self.post_processing_method = post_processing_method
+        if self.post_processing_method is not None:
+            self.post_processing_method.set_model(self.model)
+
+        self._init_metrics()
+        self.mixup = self._init_mixup(mixup_params)
+
+        self.is_elbo = isinstance(self.loss, ELBOLoss)
+        if self.is_elbo:
+            self.loss.set_model(self.model)
+        self.is_dec = isinstance(self.loss, DECLoss)
+
+        self.id_logit_storage = None
+        self.ood_logit_storage = None
+
+    def _init_metrics(self) -> None:
         task = "binary" if self.binary_cls else "multiclass"
 
         cls_metrics = MetricCollection(
             {
-                "cls/Acc": Accuracy(task=task, num_classes=num_classes),
-                "cls/Brier": BrierScore(num_classes=num_classes),
+                "cls/Acc": Accuracy(task=task, num_classes=self.num_classes),
+                "cls/Brier": BrierScore(num_classes=self.num_classes),
                 "cls/NLL": CategoricalNLL(),
                 "cal/ECE": CalibrationError(
                     task=task,
-                    num_bins=num_calibration_bins,
-                    num_classes=num_classes,
+                    num_bins=self.num_calibration_bins,
+                    num_classes=self.num_classes,
                 ),
                 "cal/aECE": CalibrationError(
                     task=task,
                     adaptive=True,
-                    num_bins=num_calibration_bins,
-                    num_classes=num_classes,
+                    num_bins=self.num_calibration_bins,
+                    num_classes=self.num_classes,
                 ),
                 "sc/AURC": AURC(),
                 "sc/CovAt5Risk": CovAt5Risk(),
@@ -204,7 +227,7 @@ class ClassificationRoutine(LightningModule):
             self.test_ood_entropy = Entropy()
 
         # metrics for ensembles only
-        if self.num_estimators > 1 or isinstance(model, CheckpointEnsemble):
+        if self.is_ensemble:
             ens_metrics = MetricCollection(
                 {
                     "Disagreement": Disagreement(),
@@ -218,23 +241,12 @@ class ClassificationRoutine(LightningModule):
             if self.eval_ood:
                 self.test_ood_ens_metrics = ens_metrics.clone(prefix="ood/ens_")
 
-        if num_estimators == 1:
-            self.mixup = self._init_mixup(mixup_params)
-
-            if self.eval_grouping_loss:
-                grouping_loss = MetricCollection(
-                    {"cls/grouping_loss": GroupingLoss()}
-                )
-                self.val_grouping_loss = grouping_loss.clone(prefix="val/")
-                self.test_grouping_loss = grouping_loss.clone(prefix="test/")
-
-        self.is_elbo = isinstance(self.loss, ELBOLoss)
-        if self.is_elbo:
-            self.loss.set_model(self.model)
-        self.is_dec = isinstance(self.loss, DECLoss)
-
-        self.id_logit_storage = None
-        self.ood_logit_storage = None
+        if self.eval_grouping_loss:
+            grouping_loss = MetricCollection(
+                {"cls/grouping_loss": GroupingLoss()}
+            )
+            self.val_grouping_loss = grouping_loss.clone(prefix="val/")
+            self.test_grouping_loss = grouping_loss.clone(prefix="test/")
 
     def _init_mixup(self, mixup_params: dict | None) -> Callable:
         if mixup_params is None:
@@ -284,6 +296,21 @@ class ClassificationRoutine(LightningModule):
             )
         return Identity()
 
+    def _apply_mixup(
+        self, batch: tuple[Tensor, Tensor]
+    ) -> tuple[Tensor, Tensor]:
+        if not self.is_ensemble:
+            if self.mixup_params["mixtype"] == "kernel_warping":
+                if self.mixup_params["dist_sim"] == "emb":
+                    with torch.no_grad():
+                        feats = self.model.feats_forward(batch[0]).detach()
+                    batch = self.mixup(*batch, feats)
+                elif self.mixup_params["dist_sim"] == "inp":
+                    batch = self.mixup(*batch, batch[0])
+            else:
+                batch = self.mixup(*batch)
+        return batch
+
     def configure_optimizers(self) -> Optimizer | dict:
         return self.optim_recipe
 
@@ -294,40 +321,22 @@ class ClassificationRoutine(LightningModule):
             )
 
     def on_validation_start(self) -> None:
-        if (
-            self.need_epoch_update and self.current_epoch > 0
-        ):  # workaround of sanity checks
+        if self.need_epoch_update and not self.trainer.sanity_checking:
             self.model.update_model(self.current_epoch)
-            if (
-                hasattr(self.model, "need_bn_update")
-                and self.model.need_bn_update
-            ):
-                torch.optim.swa_utils.update_bn(
-                    self.trainer.train_dataloader,
-                    self.model,
-                    device=self.device,
+            if hasattr(self.model, "need_bn_update"):
+                self.model.update_bn(
+                    self.trainer.train_dataloader, device=self.device
                 )
-                self.model.need_bn_update = False
-
-        if isinstance(self.model, CheckpointEnsemble):
-            self.num_estimators = self.model.num_estimators
 
     def on_test_start(self) -> None:
-        if isinstance(self.calibration_set, str) and self.calibration_set in [
-            "val",
-            "test",
-        ]:
+        if self.post_processing_method is not None:
             calibration_dataset = (
                 self.trainer.datamodule.val_dataloader().dataset
                 if self.calibration_set == "val"
                 else self.trainer.datamodule.test_dataloader()[0].dataset
             )
             with torch.inference_mode(False):
-                self.cal_model = TemperatureScaler(
-                    model=self.model, device=self.device
-                ).fit(calibration_dataset)
-        else:
-            self.cal_model = None
+                self.post_processing_method.fit(calibration_dataset)
 
         if self.eval_ood and self.log_plots and isinstance(self.logger, Logger):
             self.id_logit_storage = []
@@ -354,23 +363,6 @@ class ClassificationRoutine(LightningModule):
             self.features = None
             logits = self.model(inputs)
         return logits
-
-    def _apply_mixup(
-        self, batch: tuple[Tensor, Tensor]
-    ) -> tuple[Tensor, Tensor]:
-        # Mixup only for single models
-        if self.num_estimators == 1:
-            if self.mixup_params["mixtype"] == "kernel_warping":
-                if self.mixup_params["dist_sim"] == "emb":
-                    with torch.no_grad():
-                        feats = self.model.feats_forward(batch[0]).detach()
-
-                    batch = self.mixup(*batch, feats)
-                elif self.mixup_params["dist_sim"] == "inp":
-                    batch = self.mixup(*batch, batch[0])
-            else:
-                batch = self.mixup(*batch)
-        return batch
 
     def training_step(
         self, batch: tuple[Tensor, Tensor], batch_idx: int
@@ -399,9 +391,9 @@ class ClassificationRoutine(LightningModule):
     def validation_step(
         self, batch: tuple[Tensor, Tensor], batch_idx: int
     ) -> None:
-        inputs, target = batch
+        inputs, targets = batch
         logits = self.forward(inputs, save_feats=self.eval_grouping_loss)
-        logits = rearrange(logits, "(m b) c -> b m c", m=self.num_estimators)
+        logits = rearrange(logits, "(m b) c -> b m c", b=targets.size(0))
 
         if self.binary_cls:
             probs_per_est = torch.sigmoid(logits).squeeze(-1)
@@ -409,10 +401,10 @@ class ClassificationRoutine(LightningModule):
             probs_per_est = F.softmax(logits, dim=-1)
 
         probs = probs_per_est.mean(dim=1)
-        self.val_cls_metrics.update(probs, target)
+        self.val_cls_metrics.update(probs, targets)
 
         if self.eval_grouping_loss:
-            self.val_grouping_loss.update(probs, target, self.features)
+            self.val_grouping_loss.update(probs, targets, self.features)
 
     def test_step(
         self,
@@ -420,18 +412,9 @@ class ClassificationRoutine(LightningModule):
         batch_idx: int,
         dataloader_idx: int = 0,
     ) -> None:
-        inputs, target = batch
-        logits = self.forward(
-            inputs, save_feats=self.eval_grouping_loss
-        )  # (m*b, c)
-        if logits.size(0) % self.num_estimators != 0:  # coverage: ignore
-            raise ValueError(
-                f"The number of predicted samples {logits.size(0)} is not "
-                "divisible by the reported number of estimators "
-                f"{self.num_estimators} of the routine. Please check the "
-                "correspondence between these values."
-            )
-        logits = rearrange(logits, "(n b) c -> b n c", n=self.num_estimators)
+        inputs, targets = batch
+        logits = self.forward(inputs, save_feats=self.eval_grouping_loss)
+        logits = rearrange(logits, "(n b) c -> b n c", b=targets.size(0))
 
         if self.binary_cls:
             probs_per_est = torch.sigmoid(logits)
@@ -459,20 +442,19 @@ class ClassificationRoutine(LightningModule):
         else:
             ood_scores = -confs
 
-        # Scaling for single models
-        if self.num_estimators == 1 and self.cal_model is not None:
-            cal_logits = self.cal_model(inputs)
-            cal_probs = F.softmax(cal_logits, dim=-1)
-            self.ts_cls_metrics.update(cal_probs, target)
+        if self.post_processing_method is not None:
+            pp_logits = self.post_processing_method(inputs)
+            pp_probs = F.softmax(pp_logits, dim=-1)
+            self.ts_cls_metrics.update(pp_probs, targets)
 
         if dataloader_idx == 0:
             # squeeze if binary classification only for binary metrics
             self.test_cls_metrics.update(
                 probs.squeeze(-1) if self.binary_cls else probs,
-                target,
+                targets,
             )
             if self.eval_grouping_loss:
-                self.test_grouping_loss.update(probs, target, self.features)
+                self.test_grouping_loss.update(probs, targets, self.features)
 
             self.log_dict(
                 self.test_cls_metrics, on_epoch=True, add_dataloader_idx=False
@@ -485,19 +467,19 @@ class ClassificationRoutine(LightningModule):
                 add_dataloader_idx=False,
             )
 
-            if self.num_estimators > 1:
+            if self.is_ensemble > 1:
                 self.test_id_ens_metrics.update(probs_per_est)
 
             if self.eval_ood:
                 self.test_ood_metrics.update(
-                    ood_scores, torch.zeros_like(target)
+                    ood_scores, torch.zeros_like(targets)
                 )
 
             if self.id_logit_storage is not None:
                 self.id_logit_storage.append(logits.detach().cpu())
 
         elif self.eval_ood and dataloader_idx == 1:
-            self.test_ood_metrics.update(ood_scores, torch.ones_like(target))
+            self.test_ood_metrics.update(ood_scores, torch.ones_like(targets))
             self.test_ood_entropy(probs)
             self.log(
                 "ood/Entropy",
@@ -505,7 +487,7 @@ class ClassificationRoutine(LightningModule):
                 on_epoch=True,
                 add_dataloader_idx=False,
             )
-            if self.num_estimators > 1:
+            if self.is_ensemble:
                 self.test_ood_ens_metrics.update(probs_per_est)
 
             if self.ood_logit_storage is not None:
@@ -528,11 +510,7 @@ class ClassificationRoutine(LightningModule):
             {"test/Entropy": self.test_id_entropy.compute()}, sync_dist=True
         )
 
-        if (
-            self.num_estimators == 1
-            and self.calibration_set is not None
-            and self.cal_model is not None
-        ):
+        if self.post_processing_method is not None:
             tmp_metrics = self.ts_cls_metrics.compute()
             self.log_dict(tmp_metrics, sync_dist=True)
             result_dict.update(tmp_metrics)
@@ -543,7 +521,7 @@ class ClassificationRoutine(LightningModule):
                 sync_dist=True,
             )
 
-        if self.num_estimators > 1:
+        if self.is_ensemble:
             tmp_metrics = self.test_id_ens_metrics.compute()
             self.log_dict(tmp_metrics, sync_dist=True)
             result_dict.update(tmp_metrics)
@@ -556,7 +534,7 @@ class ClassificationRoutine(LightningModule):
             # already logged
             result_dict.update({"ood/Entropy": self.test_ood_entropy.compute()})
 
-            if self.num_estimators > 1:
+            if self.is_ensemble:
                 tmp_metrics = self.test_ood_ens_metrics.compute()
                 self.log_dict(tmp_metrics, sync_dist=True)
                 result_dict.update(tmp_metrics)
@@ -570,7 +548,7 @@ class ClassificationRoutine(LightningModule):
                 self.test_cls_metrics["sc/AURC"].plot()[0],
             )
 
-            if self.cal_model is not None:
+            if self.post_processing_method is not None:
                 self.logger.experiment.add_figure(
                     "Reliabity diagram after calibration",
                     self.ts_cls_metrics["cal/ECE"].plot()[0],
@@ -619,17 +597,14 @@ class ClassificationRoutine(LightningModule):
 def _classification_routine_checks(
     model: nn.Module,
     num_classes: int,
-    num_estimators: int,
+    is_ensemble: bool,
     ood_criterion: str,
     eval_grouping_loss: bool,
     num_calibration_bins: int,
+    mixup_params: dict | None,
+    post_processing_method: PostProcessing | None,
+    format_batch_fn: nn.Module | None,
 ) -> None:
-    if not isinstance(num_estimators, int) or num_estimators < 1:
-        raise ValueError(
-            "The number of estimators must be a positive integer >= 1."
-            f"Got {num_estimators}."
-        )
-
     if ood_criterion not in [
         "msp",
         "logit",
@@ -643,13 +618,13 @@ def _classification_routine_checks(
             f" 'mi' or 'vr'. Got {ood_criterion}."
         )
 
-    if num_estimators == 1 and ood_criterion in ["mi", "vr"]:
+    if not is_ensemble and ood_criterion in ["mi", "vr"]:
         raise ValueError(
             "You cannot use mutual information or variation ratio with a single"
             " model."
         )
 
-    if num_estimators != 1 and eval_grouping_loss:
+    if is_ensemble and eval_grouping_loss:
         raise NotImplementedError(
             "Groupng loss for ensembles is not yet implemented. Raise an issue if needed."
         )
@@ -677,4 +652,14 @@ def _classification_routine_checks(
     if num_calibration_bins < 2:
         raise ValueError(
             f"num_calibration_bins must be at least 2, got {num_calibration_bins}."
+        )
+
+    if mixup_params is not None and isinstance(format_batch_fn, RepeatTarget):
+        raise ValueError(
+            "Mixup is not supported for ensembles at training time. Please set mixup_params to None."
+        )
+
+    if post_processing_method is not None and is_ensemble:
+        raise ValueError(
+            "Ensembles and post-processing methods cannot be used together. Raise an issue if needed."
         )

@@ -14,6 +14,6 @@ Torch-Uncertainty proposes various benchmarks to evaluate uncertainty quantifica
 
 *Work in progress*
 
-## Monocular Depth Estimation
+## Pixel Regression
 
 *Work in progress*
