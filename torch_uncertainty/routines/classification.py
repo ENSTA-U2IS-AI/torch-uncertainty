@@ -342,6 +342,11 @@ class ClassificationRoutine(LightningModule):
             self.id_logit_storage = []
             self.ood_logit_storage = []
 
+        if hasattr(self.model, "need_bn_update"):
+            self.model.update_bn(
+                self.trainer.train_dataloader, device=self.device
+            )
+
     def forward(self, inputs: Tensor, save_feats: bool = False) -> Tensor:
         """Forward pass of the model.
 
@@ -467,7 +472,7 @@ class ClassificationRoutine(LightningModule):
                 add_dataloader_idx=False,
             )
 
-            if self.is_ensemble > 1:
+            if self.is_ensemble:
                 self.test_id_ens_metrics.update(probs_per_est)
 
             if self.eval_ood:

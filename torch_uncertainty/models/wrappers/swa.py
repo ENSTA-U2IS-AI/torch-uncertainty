@@ -1,23 +1,42 @@
 import copy
 
 import torch
-from torch import nn
+from torch import Tensor, nn
 from torch.utils.data import DataLoader
 
 
 class SWA(nn.Module):
+    num_avgd_models: Tensor
+
     def __init__(
         self,
         model: nn.Module,
         cycle_start: int,
         cycle_length: int,
     ) -> None:
+        """Stochastic Weight Averaging.
+
+        Update the SWA model every :attr:`cycle_length` epochs starting at
+        :attr:`cycle_start`. Uses the SWA model only at test time. Otherwise,
+        uses the base model for training.
+
+        Args:
+            model (nn.Module): PyTorch model to be trained.
+            cycle_start (int): Epoch to start SWA.
+            cycle_length (int): Number of epochs between SWA updates.
+
+        Reference:
+            Izmailov, P., Podoprikhin, D., Garipov, T., Vetrov, D., & Wilson, A. G.
+            (2018). Averaging Weights Leads to Wider Optima and Better Generalization.
+            In NeurIPS 2018.
+        """
         super().__init__()
         _swa_checks(cycle_start, cycle_length)
         self.model = model
         self.cycle_start = cycle_start
         self.cycle_length = cycle_length
-        self.num_averaged = 0
+
+        self.register_buffer("num_avgd_models", torch.tensor(0, device="cpu"))
         self.swa_model = None
         self.need_bn_update = False
 
@@ -29,7 +48,7 @@ class SWA(nn.Module):
         ):
             if self.swa_model is None:
                 self.swa_model = copy.deepcopy(self.model)
-                self.num_averaged = 1
+                self.num_avgd_models = torch.tensor(1)
             else:
                 for swa_param, param in zip(
                     self.swa_model.parameters(),
@@ -37,9 +56,9 @@ class SWA(nn.Module):
                     strict=False,
                 ):
                     swa_param.data += (param.data - swa_param.data) / (
-                        self.num_averaged + 1
+                        self.num_avgd_models + 1
                     )
-            self.num_averaged += 1
+            self.num_avgd_models += 1
             self.need_bn_update = True
 
     def eval_forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -53,9 +72,9 @@ class SWA(nn.Module):
         return self.eval_forward(x)
 
     def update_bn(self, loader: DataLoader, device) -> None:
-        if self.need_bn_update:
+        if self.need_bn_update and self.swa_model is not None:
             torch.optim.swa_utils.update_bn(
-                loader, self.swag_model, device=device
+                loader, self.swa_model, device=device
             )
             self.need_bn_update = False
 
