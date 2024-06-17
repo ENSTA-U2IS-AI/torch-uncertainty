@@ -31,6 +31,7 @@ class TestClassification:
             loss=nn.BCEWithLogitsLoss(),
             baseline_type="single",
             ood_criterion="msp",
+            ema=True,
         )
 
         trainer.fit(model, dm)
@@ -53,6 +54,7 @@ class TestClassification:
             loss=nn.BCEWithLogitsLoss(),
             baseline_type="single",
             ood_criterion="logit",
+            swa=True,
         )
 
         trainer.fit(model, dm)
@@ -384,13 +386,7 @@ class TestClassification:
                 eval_grouping_loss=True,
             )
 
-        model = dummy_model(1, 1, 0, with_feats=False, with_linear=True)
-        with pytest.raises(ValueError):
-            ClassificationRoutine(
-                num_classes=10, model=model, loss=None, eval_grouping_loss=True
-            )
-
-        model = dummy_model(1, 1, 0, with_feats=True, with_linear=False)
+        model = dummy_model(1, 1, 0, with_feats=False)
         with pytest.raises(ValueError):
             ClassificationRoutine(
                 num_classes=10, model=model, loss=None, eval_grouping_loss=True

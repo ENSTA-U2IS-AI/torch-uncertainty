@@ -7,7 +7,7 @@ from torch_uncertainty.layers.distributions import (
     NormalInverseGammaLayer,
     NormalLayer,
 )
-from torch_uncertainty.models import deep_ensembles
+from torch_uncertainty.models import EMA, SWA, deep_ensembles
 from torch_uncertainty.optim_recipes import optim_cifar10_resnet18
 from torch_uncertainty.post_processing import TemperatureScaler
 from torch_uncertainty.routines import (
@@ -30,7 +30,6 @@ class DummyClassificationBaseline:
         baseline_type: str = "single",
         optim_recipe=optim_cifar10_resnet18,
         with_feats: bool = True,
-        with_linear: bool = True,
         ood_criterion: str = "msp",
         eval_ood: bool = False,
         eval_grouping_loss: bool = False,
@@ -44,13 +43,18 @@ class DummyClassificationBaseline:
         mixup_alpha: float = 0,
         cutmix_alpha: float = 0,
         no_mixup_params: bool = False,
+        ema: bool = False,
+        swa: bool = False,
     ) -> ClassificationRoutine:
         model = dummy_model(
             in_channels=in_channels,
             num_classes=num_classes,
             with_feats=with_feats,
-            with_linear=with_linear,
         )
+        if ema:
+            model = EMA(model, momentum=0.99)
+        if swa:
+            model = SWA(model, cycle_start=0, cycle_length=1)
         if not no_mixup_params:
             mixup_params = {
                 "mixup_alpha": mixup_alpha,
