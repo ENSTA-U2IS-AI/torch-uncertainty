@@ -41,10 +41,10 @@ For Deep Evidential Regression, consider citing:
 * Paper: `NeurIPS 2020 <https://arxiv.org/pdf/1910.02600>`__.
 
 
-Bayesian Neural Networks
-^^^^^^^^^^^^^^^^^^^^^^^^
+Variational Inference Bayesian Neural Networks
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-For Bayesian Neural Networks, consider citing:
+For Variational Inference Bayesian Neural Networks, consider citing:
 
 **Weight Uncertainty in Neural Networks**
 
@@ -82,6 +82,17 @@ For Stochastic Weight Averaging, consider citing:
 
 * Authors: *Pavel Izmailov, Dmitrii Podoprikhin, Timur Garipov, Dmitry Vetrov, Andrew Gordon Wilson*
 * Paper: `UAI 2018 <https://arxiv.org/pdf/1803.05407.pdf>`__.
+
+Stochastic Weight Averaging Gaussian
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For Stochastic Weight Averaging Gaussian, consider citing:
+
+**A simple baseline for Bayesian uncertainty in deep learning**
+
+* Authors: *Wesley Maddox, Timur Garipov, Pavel Izmailov, Dmitry Vetrov, Andrew Gordon Wilson*
+* Paper: `NeurIPS 2019 <https://arxiv.org/pdf/1902.02476.pdf>`__.
+
 
 CheckpointEnsemble
 ^^^^^^^^^^^^^^^^^^

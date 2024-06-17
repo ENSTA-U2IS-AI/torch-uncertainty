@@ -164,8 +164,10 @@ Wrappers
     deep_ensembles
     CheckpointEnsemble
     EMA
+    StochasticModel
     SWA
-    MC_Dropout
+    SWAG
+    MCDropout
     mc_dropout
 
 Metrics
