@@ -1,3 +1,4 @@
+import torch
 from torch import nn
 
 from torch_uncertainty.layers import BayesConv2d, BayesLinear
@@ -46,9 +47,11 @@ class TestStochasticModel:
     def test_main(self):
         model = StochasticModel(DummyModelLinear(), 2)
         model.freeze()
+        model(torch.randn(1, 1))
         assert model.model.layer.frozen
         model.unfreeze()
         assert not model.model.layer.frozen
+        model(torch.randn(1, 1))
 
         model = StochasticModel(DummyModelConv(), 2)
         model.freeze()
