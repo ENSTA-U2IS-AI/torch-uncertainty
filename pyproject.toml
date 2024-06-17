@@ -41,6 +41,7 @@ dependencies = [
     "huggingface-hub",
     "scikit-learn",
     "matplotlib",
+    "numpy<2",
     "opencv-python",
     "glest==0.0.1a0",
 ]
