@@ -3,7 +3,17 @@ from torch import nn
 from torch.utils.data import TensorDataset
 
 from tests._dummies.model import dummy_model
-from torch_uncertainty.post_processing import LaplaceApprox
+from torch_uncertainty.post_processing import LaplaceApprox, PostProcessing
+
+
+class TestPostProcessing:
+    """Testing the PostProcessing class."""
+
+    def test_errors(self):
+        PostProcessing.__abstractmethods__ = set()
+        pp = PostProcessing(nn.Identity())
+        pp.fit(None)
+        pp.forward(None)
 
 
 class TestLaplace:

@@ -2,9 +2,17 @@
 import pytest
 import torch
 
-from torch_uncertainty.optim_recipes import (
-    get_procedure,
-)
+from torch_uncertainty.optim_recipes import FullSWALR, get_procedure
+
+
+class TestFullSWALR:
+    def test_full_swa_lr(self):
+        FullSWALR(
+            torch.optim.SGD(torch.nn.Linear(1, 1).parameters(), lr=1e-3),
+            swa_lr=1,
+            milestone=12,
+            anneal_epochs=5,
+        )
 
 
 class TestOptProcedures:

@@ -42,11 +42,20 @@ class TestMCBatchNorm:
         stoch_model.eval()
         stoch_model(torch.randn(1, 1, 20, 20))
 
+        stoch_model = MCBatchNorm(
+            num_estimators=2, convert=False, mc_batch_size=1
+        )
+        stoch_model.set_model(mc_model)
+
     def test_errors(self):
         """Test errors."""
         model = nn.Identity()
         with pytest.raises(ValueError):
             MCBatchNorm(model, num_estimators=0, convert=True)
+        with pytest.raises(
+            ValueError, match="mc_batch_size must be a positive integer"
+        ):
+            MCBatchNorm(model, num_estimators=1, convert=True, mc_batch_size=-1)
         with pytest.raises(ValueError):
             MCBatchNorm(model, num_estimators=1, convert=False)
         with pytest.raises(ValueError):

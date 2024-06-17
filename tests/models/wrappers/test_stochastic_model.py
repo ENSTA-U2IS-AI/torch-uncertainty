@@ -51,6 +51,7 @@ class TestStochasticModel:
         assert model.model.layer.frozen
         model.unfreeze()
         assert not model.model.layer.frozen
+        model.eval()
         model(torch.randn(1, 1))
 
         model = StochasticModel(DummyModelConv(), 2)
