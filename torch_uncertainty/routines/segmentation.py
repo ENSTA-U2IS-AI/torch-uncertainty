@@ -37,7 +37,7 @@ class SegmentationRoutine(LightningModule):
             num_classes (int): Number of classes in the segmentation task.
             loss (torch.nn.Module): Loss function to optimize the :attr:`model`.
             num_estimators (int, optional): The number of estimators for the
-                ensemble. Defaults to ̀`1` (single model).
+                ensemble. Defaults to ``1`` (single model).
             optim_recipe (dict or Optimizer, optional): The optimizer and
                 optionally the scheduler to use. Defaults to ``None``.
             format_batch_fn (torch.nn.Module, optional): The function to format the
