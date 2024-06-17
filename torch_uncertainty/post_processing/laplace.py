@@ -2,7 +2,7 @@ from importlib import util
 from typing import Literal
 
 from torch import Tensor, nn
-from torch.utils.data import Dataset
+from torch.utils.data import DataLoader, Dataset
 
 if util.find_spec("laplace"):
     from laplace import Laplace
@@ -10,7 +10,7 @@ if util.find_spec("laplace"):
     laplace_installed = True
 
 
-class Laplace(nn.Module):
+class LaplaceApprox(nn.Module):
     def __init__(
         self,
         task: Literal["classification", "regression"],
@@ -21,6 +21,7 @@ class Laplace(nn.Module):
         link_approx: Literal[
             "mc", "probit", "bridge", "bridge_norm"
         ] = "probit",
+        batch_size: int = 256,
     ) -> None:
         """Laplace approximation for uncertainty estimation.
 
@@ -38,12 +39,14 @@ class Laplace(nn.Module):
             link_approx (Literal["mc", "probit", "bridge", "bridge_norm"], optional):
                 how to approximate the classification link function for the `'glm'`.
                 See the Laplace library for more details. Defaults to "probit".
+            batch_size (int, optional): batch size for the Laplace approximation.
+                Defaults to 256.
 
         Reference:
             Daxberger et al. Laplace Redux - Effortless Bayesian Deep Learning. In NeurIPS 2021.
         """
         super().__init__()
-        if not laplace_installed:
+        if not laplace_installed:  # coverage: ignore
             raise ImportError(
                 "The laplace-torch library is not installed. Please install it via `pip install laplace-torch`."
             )
@@ -53,6 +56,7 @@ class Laplace(nn.Module):
         self.task = task
         self.weight_subset = weight_subset
         self.hessian_struct = hessian_struct
+        self.batch_size = batch_size
 
         if model is not None:
             self._setup_model(model)
@@ -60,16 +64,17 @@ class Laplace(nn.Module):
     def _setup_model(self, model) -> None:
         self.la = Laplace(
             model=model,
-            task=self.task,
-            weight_subset=self.weight_subset,
-            hessian_struct=self.hessian_struct,
+            likelihood=self.task,
+            subset_of_weights=self.weight_subset,
+            hessian_structure=self.hessian_struct,
         )
 
     def set_model(self, model: nn.Module) -> None:
         self._setup_model(model)
 
     def fit(self, dataset: Dataset) -> None:
-        self.la.fit(dataset=dataset)
+        dl = DataLoader(dataset, batch_size=self.batch_size)
+        self.la.fit(train_loader=dl)
 
     def forward(
         self,

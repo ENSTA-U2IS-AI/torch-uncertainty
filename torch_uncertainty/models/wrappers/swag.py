@@ -226,7 +226,7 @@ class SWAG(SWA):
             *args, destination=destination, prefix=prefix, keep_vars=keep_vars
         )
 
-    def _load(self, state_dict):
+    def _load_swag_stats(self, state_dict):
         self.swag_stats = {
             k: v for k, v in state_dict.items() if k in self.swag_stats
         }
@@ -239,31 +239,10 @@ class SWAG(SWA):
         self.need_bn_update = True
         self.fit = True
 
-    def _load_from_state_dict(
-        self,
-        state_dict,
-        prefix,
-        local_metadata,
-        strict,
-        missing_keys,
-        unexpected_keys,
-        error_msgs,
-    ):
-        self._load(state_dict)
-        return super()._load_from_state_dict(
-            state_dict,
-            prefix,
-            local_metadata,
-            strict,
-            missing_keys,
-            unexpected_keys,
-            error_msgs,
-        )
-
     def load_state_dict(
         self, state_dict: Mapping, strict: bool = True, assign: bool = False
     ):
-        self._load(state_dict)
+        self._load_swag_stats(state_dict)
         return super().load_state_dict(state_dict, strict, assign)
 
     def compute_logdet(self, block=False):

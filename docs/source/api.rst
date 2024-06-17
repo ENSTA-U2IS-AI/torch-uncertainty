@@ -245,7 +245,7 @@ Post-Processing Methods
     :nosignatures:
     :template: class_inherited.rst
     MCBatchNorm
-    Laplace
+    LaplaceApprox
     
 Scaling Methods
 ^^^^^^^^^^^^^^^

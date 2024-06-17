@@ -22,8 +22,8 @@ class StochasticModel(nn.Module):
 
     def sample(self, num_samples: int = 1) -> list[dict]:
         sampled_models = [{}] * num_samples
-        for module_name in self._modules:
-            module = self._modules[module_name]
+        for module_name in self.model._modules:
+            module = self.model._modules[module_name]
             if isinstance(module, bayesian_modules):
                 for model in sampled_models:
                     weight, bias = module.sample()
@@ -43,13 +43,13 @@ class StochasticModel(nn.Module):
         return sampled_models
 
     def freeze(self) -> None:
-        for module_name in self._modules:
-            module = self._modules[module_name]
+        for module_name in self.model._modules:
+            module = self.model._modules[module_name]
             if isinstance(module, bayesian_modules):
                 module.freeze()
 
     def unfreeze(self) -> None:
-        for module_name in self._modules:
-            module = self._modules[module_name]
+        for module_name in self.model._modules:
+            module = self.model._modules[module_name]
             if isinstance(module, bayesian_modules):
                 module.unfreeze()

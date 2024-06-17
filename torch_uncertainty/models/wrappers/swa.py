@@ -28,7 +28,7 @@ class SWA(nn.Module):
         Reference:
             Izmailov, P., Podoprikhin, D., Garipov, T., Vetrov, D., & Wilson, A. G.
             (2018). Averaging Weights Leads to Wider Optima and Better Generalization.
-            In NeurIPS 2018.
+            In UAI 2018.
         """
         super().__init__()
         _swa_checks(cycle_start, cycle_length)
