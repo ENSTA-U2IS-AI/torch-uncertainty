@@ -1,9 +1,10 @@
 import copy
 
 import torch
-from swa import SWA
 from torch import Tensor, nn
 from torch.utils.data import DataLoader
+
+from .swa import SWA
 
 
 class SWAG(SWA):

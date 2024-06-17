@@ -6,12 +6,12 @@ from torch.nn.common_types import _size_1_t, _size_2_t, _size_3_t
 
 
 def check_packed_parameters_consistency(
-    alpha: float, gamma: int, num_estimators: int
+    alpha: int, gamma: int, num_estimators: int
 ) -> None:
     """Check the consistency of the parameters of the Packed-Ensembles layers.
 
     Args:
-        alpha (float): The width multiplier of the layer.
+        alpha (int): The width multiplier of the layer.
         gamma (int): The number of groups in the ensemble.
         num_estimators (int): The number of estimators in the ensemble.
     """
@@ -49,7 +49,7 @@ class PackedLinear(nn.Module):
         self,
         in_features: int,
         out_features: int,
-        alpha: float,
+        alpha: int,
         num_estimators: int,
         gamma: int = 1,
         bias: bool = True,
@@ -67,7 +67,7 @@ class PackedLinear(nn.Module):
         Args:
             in_features (int): Number of input features of the linear layer.
             out_features (int): Number of channels produced by the linear layer.
-            alpha (float): The width multiplier of the linear layer.
+            alpha (int): The width multiplier of the linear layer.
             num_estimators (int): The number of estimators grouped in the layer.
             gamma (int, optional): Defaults to ``1``.
             bias (bool, optional): It ``True``, adds a learnable bias to the
@@ -174,7 +174,7 @@ class PackedConv1d(nn.Module):
         in_channels: int,
         out_channels: int,
         kernel_size: _size_1_t,
-        alpha: float,
+        alpha: int,
         num_estimators: int,
         gamma: int = 1,
         stride: _size_1_t = 1,
@@ -195,7 +195,7 @@ class PackedConv1d(nn.Module):
             in_channels (int): Number of channels in the input image.
             out_channels (int): Number of channels produced by the convolution.
             kernel_size (int or tuple): Size of the convolving kernel.
-            alpha (float): The channel multiplier of the convolutional layer.
+            alpha (int): The channel multiplier of the convolutional layer.
             num_estimators (int): Number of estimators in the ensemble.
             gamma (int, optional): Defaults to ``1``.
             stride (int or tuple, optional): Stride of the convolution.
@@ -302,7 +302,7 @@ class PackedConv2d(nn.Module):
         in_channels: int,
         out_channels: int,
         kernel_size: _size_2_t,
-        alpha: float,
+        alpha: int,
         num_estimators: int,
         gamma: int = 1,
         stride: _size_2_t = 1,
@@ -323,7 +323,7 @@ class PackedConv2d(nn.Module):
             in_channels (int): Number of channels in the input image.
             out_channels (int): Number of channels produced by the convolution.
             kernel_size (int or tuple): Size of the convolving kernel.
-            alpha (float): The channel multiplier of the convolutional layer.
+            alpha (int): The channel multiplier of the convolutional layer.
             num_estimators (int): Number of estimators in the ensemble.
             gamma (int, optional): Defaults to ``1``.
             stride (int or tuple, optional): Stride of the convolution.
@@ -430,7 +430,7 @@ class PackedConv3d(nn.Module):
         in_channels: int,
         out_channels: int,
         kernel_size: _size_3_t,
-        alpha: float,
+        alpha: int,
         num_estimators: int,
         gamma: int = 1,
         stride: _size_3_t = 1,
@@ -451,7 +451,7 @@ class PackedConv3d(nn.Module):
             in_channels (int): Number of channels in the input image.
             out_channels (int): Number of channels produced by the convolution.
             kernel_size (int or tuple): Size of the convolving kernel.
-            alpha (float): The channel multiplier of the convolutional layer.
+            alpha (int): The channel multiplier of the convolutional layer.
             num_estimators (int): Number of estimators in the ensemble.
             gamma (int, optional): Defaults to ``1``.
             stride (int or tuple, optional): Stride of the convolution.
