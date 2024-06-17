@@ -51,9 +51,14 @@ class TestSWAG:
         swag(torch.randn(1, 1))
         swag.update_model(0)
         swag.update_bn(dl, "cpu")
+        swag(torch.randn(1, 1))
 
         swag.update_model(1)
         swag.update_bn(dl, "cpu")
+
+        swag.update_model(2)
+        swag.update_bn(dl, "cpu")
+        swag(torch.randn(1, 1))
 
         swag.eval()
         swag(torch.randn(1, 1))
