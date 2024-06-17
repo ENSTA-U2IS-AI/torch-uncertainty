@@ -61,12 +61,12 @@ class SWA(nn.Module):
             self.num_avgd_models += 1
             self.need_bn_update = True
 
-    def eval_forward(self, x: torch.Tensor) -> torch.Tensor:
+    def eval_forward(self, x: Tensor) -> Tensor:
         if self.swa_model is None:
             return self.model.forward(x)
         return self.swa_model.forward(x)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: Tensor) -> Tensor:
         if self.training:
             return self.model.forward(x)
         return self.eval_forward(x)

@@ -7,6 +7,7 @@ from .wrappers import (
     SWAG,
     CheckpointEnsemble,
     MCDropout,
+    StochasticModel,
     deep_ensembles,
     mc_dropout,
 )
