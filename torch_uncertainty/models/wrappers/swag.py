@@ -1,61 +1,51 @@
 import copy
 
 import torch
+from swa import SWA
 from torch import Tensor, nn
 from torch.utils.data import DataLoader
 
-from .swa import SWA
-
-
-def flatten(lst: list[Tensor]) -> Tensor:
-    tmp = [i.view(-1, 1) for i in lst]
-    return torch.cat(tmp).view(-1)
-
-
-def unflatten_like(vector, like_tensor_list):
-    """Takes a flat torch.tensor and unflattens it to a list of torch.tensors
-    shaped like like_tensor_list.
-
-    """
-    out_list = []
-    i = 0
-    for tensor in like_tensor_list:
-        n = tensor.numel()
-        out_list.append(vector[:, i : i + n].view(tensor.shape))
-        i += n
-    return out_list
-
 
 class SWAG(SWA):
+    swag_stats: dict[str, Tensor]
+
     def __init__(
         self,
         model: nn.Module,
         cycle_start: int,
         cycle_length: int,
         scale: float = 1.0,
-        diag_covariance: bool = True,
+        diag_covariance: bool = False,
         max_num_models: int = 20,
         var_clamp: float = 1e-30,
         num_estimators: int = 16,
     ) -> None:
         """Stochastic Weight Averaging Gaussian (SWAG).
 
+        Update the SWAG posterior every `cycle_length` epochs starting at
+        `cycle_start`. Samples :attr:`num_estimators` models from the SWAG
+        posterior after each update. Uses the SWAG posterior estimation only
+        at test time. Otherwise, uses the base model for training.
+
         Args:
             model (nn.Module): PyTorch model to be trained.
             cycle_start (int): Epoch to start SWAG.
             cycle_length (int): Number of epochs between SWAG updates.
             scale (float, optional): Scale of the Gaussian. Defaults to 1.0.
-            diag_covariance (bool, optional): Whether to use a diagonal covariance. Defaults to False.
-            max_num_models (int, optional): Maximum number of models to store. Defaults to 0.
+            diag_covariance (bool, optional): Whether to use a diagonal
+                covariance. Defaults to False.
+            max_num_models (int, optional): Maximum number of models to store.
+                Defaults to 0.
             var_clamp (float, optional): Minimum variance. Defaults to 1e-30.
-            num_estimators (int, optional): Number of posterior estimates to use. Defaults to 16.
+            num_estimators (int, optional): Number of posterior estimates to
+                use. Defaults to 16.
 
         Reference:
             Maddox, W. J. et al. A simple baseline for bayesian uncertainty in
             deep learning. In NeurIPS 2019.
 
         Note:
-            Modified from https://github.com/wjmaddox/swa_gaussian
+            Originates from https://github.com/wjmaddox/swa_gaussian.
         """
         super().__init__(model, cycle_start, cycle_length)
         _swag_checks(scale, max_num_models, var_clamp)
@@ -68,10 +58,7 @@ class SWAG(SWA):
         self.max_num_models = max_num_models
         self.var_clamp = var_clamp
 
-        self.swag_params = []
-        self.swag_model = copy.deepcopy(model)
-        self.swag_model.apply(lambda module: self.extract_parameters(module))
-
+        self.initialize_stats()
         self.fit = False
         self.samples = []
 
@@ -80,71 +67,77 @@ class SWAG(SWA):
             return self.model.forward(x)
         return torch.cat([mod(x) for mod in self.samples])
 
-    def extract_parameters(self, module: nn.Module) -> None:
-        for name in list(module._parameters.keys()):
-            if module._parameters[name] is None:
-                continue
-            data = module._parameters[name].data
-            delattr(module, name)
-
-            mean, squared_mean = torch.zeros_like(data), torch.zeros_like(data)
-            module.register_buffer(f"{name}_mean", mean)
-            module.register_buffer(f"{name}_sq_mean", squared_mean)
+    def initialize_stats(self) -> None:
+        """Initialize the SWAG dictionary of statistics."""
+        self.swag_stats = {}
+        for name_p, param in self.model.named_parameters():
+            mean, squared_mean = (
+                torch.zeros_like(param, device="cpu"),
+                torch.zeros_like(param, device="cpu"),
+            )
+            self.swag_stats[name_p + "_mean"] = mean
+            self.swag_stats[name_p + "_sq_mean"] = squared_mean
 
             if not self.diag_covariance:
-                covariance_sqrt = torch.zeros((0, data.numel()))
-                module.register_buffer(
-                    f"{name}_covariance_sqrt", covariance_sqrt
-                )
-
-            self.swag_params.append((module, name))
+                covariance_sqrt = torch.zeros((0, param.numel()), device="cpu")
+                self.swag_stats[name_p + "_covariance_sqrt"] = covariance_sqrt
 
     @torch.no_grad()
     def update_model(self, epoch: int) -> None:
-        if (
+        """Update the SWAG posterior.
+
+        The update is performed if the epoch is greater than the cycle start
+        and the difference between the epoch and the cycle start is a multiple
+        of the cycle length.
+
+        Args:
+            epoch (int): Current epoch.
+        """
+        if not (
             epoch >= self.cycle_start
             and (epoch - self.cycle_start) % self.cycle_length == 0
         ):
-            print("update SWAG model")
-            for (module, name), param in zip(
-                self.swag_params, self.model.parameters(), strict=False
-            ):
-                mean = module.__getattr__(f"{name}_mean")
-                squared_mean = module.__getattr__(f"{name}_sq_mean")
-                new_param = param.data
+            return
 
-                mean = mean * self.num_models / (
-                    self.num_models + 1
-                ) + new_param / (self.num_models + 1)
-                squared_mean = squared_mean * self.num_models / (
-                    self.num_models + 1
-                ) + new_param**2 / (self.num_models + 1)
+        for name_p, param in self.model.named_parameters():
+            mean = self.swag_stats[name_p + "_mean"]
+            squared_mean = self.swag_stats[name_p + "_sq_mean"]
+            new_param = param.data.detach().cpu()
 
-                module.__setattr__(f"{name}_mean", mean)
-                module.__setattr__(f"{name}_sq_mean", squared_mean)
+            mean = mean * self.num_models / (
+                self.num_models + 1
+            ) + new_param / (self.num_models + 1)
+            squared_mean = squared_mean * self.num_models / (
+                self.num_models + 1
+            ) + new_param**2 / (self.num_models + 1)
 
-                if not self.diag_covariance:
-                    covariance_sqrt = module.__getattr__(
-                        f"{name}_covariance_sqrt"
-                    )
-                    dev = (new_param - mean).view(-1, 1).t()
-                    covariance_sqrt = torch.cat((covariance_sqrt, dev), dim=0)
-                    if self.num_models + 1 > self.max_num_models:
-                        covariance_sqrt = covariance_sqrt[1:, :]
-                    module.__setattr__(
-                        f"{name}_covariance_sqrt", covariance_sqrt
-                    )
+            self.swag_stats[name_p + "_mean"] = mean
+            self.swag_stats[name_p + "_sq_mean"] = squared_mean
 
-            self.num_models += 1
+            if not self.diag_covariance:
+                covariance_sqrt = self.swag_stats[name_p + "_covariance_sqrt"]
+                dev = (new_param - mean).view(-1, 1).t()
+                covariance_sqrt = torch.cat((covariance_sqrt, dev), dim=0)
+                if self.num_models + 1 > self.max_num_models:
+                    covariance_sqrt = covariance_sqrt[1:, :]
+                self.swag_stats[name_p + "_covariance_sqrt"] = covariance_sqrt
 
-            self.samples = []
-            for _ in range(self.num_estimators):
-                self.sample(self.scale, self.diag_covariance)
-                self.samples.append(copy.deepcopy(self.swag_model))
-            self.need_bn_update = True
-            self.fit = True
+        self.num_models += 1
+
+        self.samples = [
+            self.sample(self.scale, self.diag_covariance)
+            for _ in range(self.num_estimators)
+        ]
+        self.need_bn_update = True
+        self.fit = True
 
     def update_bn(self, loader: DataLoader, device) -> None:
+        """Update the bachnorm statistics of the current SWAG samples.
+
+        Args:
+            loader (DataLoader): DataLoader to update the batchnorm statistics.
+            device (torch.device): Device to perform the update.
+        """
         if self.need_bn_update:
             for mod in self.samples:
                 torch.optim.swa_utils.update_bn(loader, mod, device=device)
@@ -156,7 +149,20 @@ class SWAG(SWA):
         diag_covariance: bool | None = None,
         block: bool = False,
         seed: int | None = None,
-    ) -> None:  # TODO: Fix sampling
+    ) -> nn.Module:
+        """Sample a model from the SWAG posterior.
+
+        Args:
+            scale (float): Rescale coefficient of the Gaussian.
+            diag_covariance (bool, optional): Whether to use a diagonal
+                covariance. Defaults to None.
+            block (bool, optional): Whether to sample a block diagonal
+                covariance. Defaults to False.
+            seed (int, optional): Random seed. Defaults to None.
+
+        Returns:
+            nn.Module: Sampled model.
+        """
         if seed is not None:
             torch.manual_seed(seed)
 
@@ -164,67 +170,42 @@ class SWAG(SWA):
             diag_covariance = self.diag_covariance
         if not diag_covariance and self.diag_covariance:
             raise ValueError(
-                "Cannot sample full rank from diagonal covariance matrices"
+                "Cannot sample full rank from diagonal covariance matrix."
             )
 
         if not block:
-            self._fullrank_sample(scale, diag_covariance)
-        else:
-            raise NotImplementedError("Raise an issue if you need this feature")
+            return self._fullrank_sample(scale, diag_covariance)
+        raise NotImplementedError("Raise an issue if you need this feature.")
 
-    def _fullrank_sample(self, scale: float, diagonal_covariance: bool) -> None:
-        mean_list, sq_mean_list = [], []
-        if not diagonal_covariance:
-            cov_mat_sqrt_list = []
+    def _fullrank_sample(
+        self, scale: float, diagonal_covariance: bool
+    ) -> nn.Module:
+        new_sample = copy.deepcopy(self.model)
 
-        for module, name in self.swag_params:
-            mean = module.__getattr__(f"{name}_mean")
-            sq_mean = module.__getattr__(f"{name}_sq_mean")
+        for name_p, param in new_sample.named_parameters():
+            mean = self.swag_stats[name_p + "_mean"]
+            sq_mean = self.swag_stats[name_p + "_sq_mean"]
 
             if not diagonal_covariance:
-                cov_mat_sqrt = module.__getattr__(f"{name}_covariance_sqrt")
-                cov_mat_sqrt_list.append(cov_mat_sqrt.cpu())
+                cov_mat_sqrt = self.swag_stats[name_p + "_covariance_sqrt"]
 
-            mean_list.append(mean.cpu())
-            sq_mean_list.append(sq_mean.cpu())
+            # draw diagonal variance sample
+            var = torch.clamp(sq_mean - mean**2, self.var_clamp)
+            var_sample = var.sqrt() * torch.randn_like(var, requires_grad=False)
 
-        mean = flatten(mean_list)
-        sq_mean = flatten(sq_mean_list)
+            # if covariance draw low rank sample
+            if not diagonal_covariance:
+                cov_sample = cov_mat_sqrt.t() @ torch.randn(
+                    (cov_mat_sqrt.size(0),)
+                )
+                cov_sample /= (self.max_num_models - 1) ** 0.5
+                rand_sample = var_sample + cov_sample.view_as(var_sample)
+            else:
+                rand_sample = var_sample
 
-        # draw diagonal variance sample
-        var = torch.clamp(sq_mean - mean**2, self.var_clamp)
-        var_sample = var.sqrt() * torch.randn_like(var, requires_grad=False)
-
-        # if covariance draw low rank sample
-        if not diagonal_covariance:
-            cov_mat_sqrt = torch.cat(cov_mat_sqrt_list, dim=1)
-
-            cov_sample = cov_mat_sqrt.t().matmul(
-                cov_mat_sqrt.new_empty(
-                    (cov_mat_sqrt.size(0),), requires_grad=False
-                ).normal_()
-            )
-            # vérifier le min
-            cov_sample /= (self.max_num_models - 1) ** 0.5
-
-            rand_sample = var_sample + cov_sample
-        else:
-            rand_sample = var_sample
-
-        # update sample with mean and scale
-        sample = mean + scale**0.5 * rand_sample
-        sample = sample.unsqueeze(0)
-
-        # unflatten new sample like the mean sample
-        samples_list = unflatten_like(sample, mean_list)
-
-        for (module, name), sample in zip(
-            self.swag_params, samples_list, strict=False
-        ):
-            module.__setattr__(name, sample.cuda())
-
-    def load_state_dict(self, state_dict: dict, strict: bool = True) -> None:
-        super().load_state_dict(state_dict, strict)
+            sample = mean + scale**0.5 * rand_sample
+            param.data = sample.to(device=param.device, dtype=param.dtype)
+        return new_sample
 
     def compute_logdet(self, block=False):
         raise NotImplementedError("Raise an issue if you need this feature")
