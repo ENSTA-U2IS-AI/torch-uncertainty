@@ -5,7 +5,7 @@ from torch import Tensor, nn
 
 from torch_uncertainty.layers.bayesian import BayesLinear
 from torch_uncertainty.layers.packed import PackedLinear
-from torch_uncertainty.models.utils import stochastic_model
+from torch_uncertainty.models import StochasticModel
 
 __all__ = ["bayesian_mlp", "mlp", "packed_mlp"]
 
@@ -84,29 +84,24 @@ class _MLP(nn.Module):
         return self.final_layer(self.layers[-1](x))
 
 
-@stochastic_model
-class _StochasticMLP(_MLP):
-    pass
-
-
 def _mlp(
     stochastic: bool,
     in_features: int,
     num_outputs: int,
     hidden_dims: list[int],
+    num_samples: int = 16,
     layer_args: dict | None = None,
     layer: type[nn.Module] = nn.Linear,
     activation: Callable = F.relu,
     final_layer: type[nn.Module] = nn.Identity,
     final_layer_args: dict | None = None,
     dropout_rate: float = 0.0,
-) -> _MLP | _StochasticMLP:
+) -> _MLP | StochasticModel:
     if layer_args is None:
         layer_args = {}
     if final_layer_args is None:
         final_layer_args = {}
-    model = _MLP if not stochastic else _StochasticMLP
-    return model(
+    model = _MLP(
         in_features=in_features,
         num_outputs=num_outputs,
         hidden_dims=hidden_dims,
@@ -117,6 +112,9 @@ def _mlp(
         final_layer_args=final_layer_args,
         dropout_rate=dropout_rate,
     )
+    if stochastic:
+        return StochasticModel(model, num_samples)
+    return model
 
 
 def mlp(
@@ -194,13 +192,15 @@ def bayesian_mlp(
     in_features: int,
     num_outputs: int,
     hidden_dims: list[int],
+    num_samples: int = 16,
     activation: Callable = F.relu,
     final_layer: type[nn.Module] = nn.Identity,
     final_layer_args: dict | None = None,
     dropout_rate: float = 0.0,
-) -> _StochasticMLP:
+) -> StochasticModel:
     return _mlp(
         stochastic=True,
+        num_samples=num_samples,
         in_features=in_features,
         num_outputs=num_outputs,
         hidden_dims=hidden_dims,

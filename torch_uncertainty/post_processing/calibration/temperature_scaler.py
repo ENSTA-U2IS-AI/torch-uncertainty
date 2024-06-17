@@ -9,7 +9,7 @@ from .scaler import Scaler
 class TemperatureScaler(Scaler):
     def __init__(
         self,
-        model: nn.Module,
+        model: nn.Module | None = None,
         init_val: float = 1,
         lr: float = 0.1,
         max_iter: int = 100,

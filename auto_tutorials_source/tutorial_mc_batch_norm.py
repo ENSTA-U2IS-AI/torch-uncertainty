@@ -102,6 +102,9 @@ routine.eval();
 # .eval() to enable Monte Carlo batch normalization at inference.
 # In this tutorial, we plot the most uncertain images, i.e. the images for which
 # the variance of the predictions is the highest.
+# Please note that we apply a reshape to the logits to determine the dimension corresponding to the ensemble
+# and to the batch. As for TorchUncertainty 2.0, the ensemble dimension is merged with the batch dimension
+# in this order (num_estimator x batch, classes).
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -121,7 +124,7 @@ dataiter = iter(datamodule.val_dataloader())
 images, labels = next(dataiter)
 
 routine.eval()
-logits = routine(images).reshape(8, 128, 10)
+logits = routine(images).reshape(8, 128, 10)  # num_estimators, batch_size, num_classes
 
 probs = torch.nn.functional.softmax(logits, dim=-1)
 most_uncertain = sorted(probs.var(0).sum(-1).topk(4).indices)

@@ -8,7 +8,7 @@ from torch import nn
 from torch_uncertainty.layers.bayesian import BayesConv2d, BayesLinear
 from torch_uncertainty.layers.mc_batch_norm import MCBatchNorm2d
 from torch_uncertainty.layers.packed import PackedConv2d, PackedLinear
-from torch_uncertainty.models.utils import stochastic_model
+from torch_uncertainty.models import StochasticModel
 
 __all__ = ["bayesian_lenet", "lenet", "packed_lenet"]
 
@@ -83,16 +83,12 @@ class _LeNet(nn.Module):
         return self.fc3(out)
 
 
-@stochastic_model
-class _StochasticLeNet(_LeNet):
-    pass
-
-
 def _lenet(
     stochastic: bool,
     in_channels: int,
     num_classes: int,
     layer_args: dict,
+    num_samples: int = 16,
     linear_layer: type[nn.Module] = nn.Linear,
     conv2d_layer: type[nn.Module] = nn.Conv2d,
     activation: Callable = nn.ReLU,
@@ -100,9 +96,8 @@ def _lenet(
     groups: int = 1,
     dropout_rate: float = 0.0,
     last_layer_dropout: bool = False,
-) -> _LeNet | _StochasticLeNet:
-    model = _LeNet if not stochastic else _StochasticLeNet
-    return model(
+) -> _LeNet | StochasticModel:
+    model = _LeNet(
         in_channels=in_channels,
         num_classes=num_classes,
         linear_layer=linear_layer,
@@ -114,6 +109,9 @@ def _lenet(
         dropout_rate=dropout_rate,
         last_layer_dropout=last_layer_dropout,
     )
+    if stochastic:
+        return StochasticModel(model, num_samples)
+    return model
 
 
 def lenet(
@@ -172,6 +170,7 @@ def packed_lenet(
 def bayesian_lenet(
     in_channels: int,
     num_classes: int,
+    num_samples: int = 16,
     prior_sigma_1: float | None = None,
     prior_sigma_2: float | None = None,
     prior_pi: float | None = None,
@@ -181,7 +180,7 @@ def bayesian_lenet(
     norm: type[nn.Module] = nn.Identity,
     groups: int = 1,
     dropout_rate: float = 0.0,
-) -> _StochasticLeNet:
+) -> StochasticModel:
     layers_args = {}
     if prior_sigma_1 is not None:
         layers_args["prior_sigma_1"] = prior_sigma_1
@@ -196,6 +195,7 @@ def bayesian_lenet(
 
     return _lenet(
         stochastic=True,
+        num_samples=num_samples,
         in_channels=in_channels,
         num_classes=num_classes,
         linear_layer=BayesLinear,

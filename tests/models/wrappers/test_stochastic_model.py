@@ -1,10 +1,10 @@
+import torch
 from torch import nn
 
 from torch_uncertainty.layers import BayesConv2d, BayesLinear
-from torch_uncertainty.models.utils import stochastic_model
+from torch_uncertainty.models import StochasticModel
 
 
-@stochastic_model
 class DummyModelLinear(nn.Module):
     """Dummy model for testing purposes."""
 
@@ -16,7 +16,6 @@ class DummyModelLinear(nn.Module):
         return self.layer(x)
 
 
-@stochastic_model
 class DummyModelConv(nn.Module):
     """Dummy conv model for testing purposes."""
 
@@ -28,7 +27,6 @@ class DummyModelConv(nn.Module):
         return self.layer(x)
 
 
-@stochastic_model
 class DummyModelMix(nn.Module):
     """Dummy mix model for testing purposes."""
 
@@ -47,27 +45,31 @@ class TestStochasticModel:
     """Testing the StochasticModel decorator."""
 
     def test_main(self):
-        model = DummyModelLinear()
+        model = StochasticModel(DummyModelLinear(), 2)
         model.freeze()
-        assert model.layer.frozen
+        model(torch.randn(1, 1))
+        assert model.model.layer.frozen
         model.unfreeze()
-        assert not model.layer.frozen
+        assert not model.model.layer.frozen
+        model.eval()
+        model(torch.randn(1, 1))
 
-        model = DummyModelConv()
+        model = StochasticModel(DummyModelConv(), 2)
         model.freeze()
-        assert model.layer.frozen
+        assert model.model.layer.frozen
         model.unfreeze()
-        assert not model.layer.frozen
+        assert not model.model.layer.frozen
 
     def test_mix(self):
-        model = DummyModelMix()
+        model = StochasticModel(DummyModelMix(), 2)
         model.freeze()
-        assert model.layer.frozen
+        assert model.model.layer.frozen
         model.unfreeze()
-        assert not model.layer.frozen
+        assert not model.model.layer.frozen
 
         state = model.sample()[0]
         keys = state.keys()
+        print(list(keys))
         assert list(keys) == [
             "layer.weight",
             "layer2.weight",

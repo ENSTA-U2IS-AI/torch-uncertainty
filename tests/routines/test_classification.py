@@ -9,7 +9,6 @@ from tests._dummies import (
     dummy_model,
 )
 from torch_uncertainty.losses import DECLoss, ELBOLoss
-from torch_uncertainty.optim_recipes import optim_cifar10_resnet18
 from torch_uncertainty.routines import ClassificationRoutine
 from torch_uncertainty.utils import TUTrainer
 
@@ -30,9 +29,9 @@ class TestClassification:
             in_channels=dm.num_channels,
             num_classes=dm.num_classes,
             loss=nn.BCEWithLogitsLoss(),
-            optim_recipe=optim_cifar10_resnet18,
             baseline_type="single",
             ood_criterion="msp",
+            ema=True,
         )
 
         trainer.fit(model, dm)
@@ -53,9 +52,9 @@ class TestClassification:
             in_channels=dm.num_channels,
             num_classes=dm.num_classes,
             loss=nn.BCEWithLogitsLoss(),
-            optim_recipe=optim_cifar10_resnet18,
             baseline_type="single",
             ood_criterion="logit",
+            swa=True,
         )
 
         trainer.fit(model, dm)
@@ -77,7 +76,6 @@ class TestClassification:
             num_classes=dm.num_classes,
             in_channels=dm.num_channels,
             loss=nn.CrossEntropyLoss(),
-            optim_recipe=optim_cifar10_resnet18,
             baseline_type="single",
             ood_criterion="entropy",
             eval_ood=True,
@@ -103,7 +101,6 @@ class TestClassification:
             num_classes=dm.num_classes,
             in_channels=dm.num_channels,
             loss=nn.CrossEntropyLoss(),
-            optim_recipe=optim_cifar10_resnet18,
             baseline_type="single",
             ood_criterion="entropy",
             eval_ood=True,
@@ -131,7 +128,6 @@ class TestClassification:
             num_classes=dm.num_classes,
             in_channels=dm.num_channels,
             loss=nn.CrossEntropyLoss(),
-            optim_recipe=optim_cifar10_resnet18,
             baseline_type="single",
             ood_criterion="entropy",
             eval_ood=True,
@@ -158,7 +154,6 @@ class TestClassification:
             num_classes=dm.num_classes,
             in_channels=dm.num_channels,
             loss=nn.CrossEntropyLoss(),
-            optim_recipe=optim_cifar10_resnet18,
             baseline_type="single",
             ood_criterion="entropy",
             eval_ood=True,
@@ -185,7 +180,6 @@ class TestClassification:
             num_classes=dm.num_classes,
             in_channels=dm.num_channels,
             loss=nn.CrossEntropyLoss(),
-            optim_recipe=optim_cifar10_resnet18,
             baseline_type="single",
             ood_criterion="entropy",
             eval_ood=True,
@@ -212,7 +206,6 @@ class TestClassification:
             num_classes=dm.num_classes,
             in_channels=dm.num_channels,
             loss=nn.CrossEntropyLoss(),
-            optim_recipe=optim_cifar10_resnet18,
             baseline_type="single",
             ood_criterion="entropy",
             eval_ood=True,
@@ -239,7 +232,6 @@ class TestClassification:
             num_classes=dm.num_classes,
             in_channels=dm.num_channels,
             loss=nn.CrossEntropyLoss(),
-            optim_recipe=optim_cifar10_resnet18,
             baseline_type="single",
             ood_criterion="entropy",
             eval_ood=True,
@@ -267,7 +259,6 @@ class TestClassification:
             num_classes=dm.num_classes,
             in_channels=dm.num_channels,
             loss=nn.CrossEntropyLoss(),
-            optim_recipe=optim_cifar10_resnet18,
             baseline_type="single",
             ood_criterion="energy",
             eval_ood=True,
@@ -294,7 +285,6 @@ class TestClassification:
             num_classes=dm.num_classes,
             in_channels=dm.num_channels,
             loss=DECLoss(1, 1e-2),
-            optim_recipe=optim_cifar10_resnet18,
             baseline_type="ensemble",
             ood_criterion="mi",
             eval_ood=True,
@@ -328,7 +318,6 @@ class TestClassification:
             loss=ELBOLoss(
                 None, nn.CrossEntropyLoss(), kl_weight=1.0, num_samples=4
             ),
-            optim_recipe=optim_cifar10_resnet18,
             baseline_type="ensemble",
             ood_criterion="vr",
             eval_ood=True,
@@ -341,11 +330,6 @@ class TestClassification:
         model(dm.get_test_set()[0][0])
 
     def test_classification_failures(self):
-        # num_estimators
-        with pytest.raises(ValueError):
-            ClassificationRoutine(
-                num_classes=10, model=nn.Module(), loss=None, num_estimators=-1
-            )
         # num_classes
         with pytest.raises(ValueError):
             ClassificationRoutine(num_classes=0, model=nn.Module(), loss=None)
@@ -355,7 +339,7 @@ class TestClassification:
                 num_classes=10,
                 model=nn.Module(),
                 loss=None,
-                num_estimators=1,
+                is_ensemble=False,
                 ood_criterion="mi",
             )
         with pytest.raises(ValueError):
@@ -398,17 +382,11 @@ class TestClassification:
                 num_classes=10,
                 model=nn.Module(),
                 loss=None,
-                num_estimators=2,
+                is_ensemble=True,
                 eval_grouping_loss=True,
             )
 
-        model = dummy_model(1, 1, 0, with_feats=False, with_linear=True)
-        with pytest.raises(ValueError):
-            ClassificationRoutine(
-                num_classes=10, model=model, loss=None, eval_grouping_loss=True
-            )
-
-        model = dummy_model(1, 1, 0, with_feats=True, with_linear=False)
+        model = dummy_model(1, 1, 0, with_feats=False)
         with pytest.raises(ValueError):
             ClassificationRoutine(
                 num_classes=10, model=model, loss=None, eval_grouping_loss=True

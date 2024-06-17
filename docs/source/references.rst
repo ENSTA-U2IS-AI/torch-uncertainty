@@ -41,10 +41,10 @@ For Deep Evidential Regression, consider citing:
 * Paper: `NeurIPS 2020 <https://arxiv.org/pdf/1910.02600>`__.
 
 
-Bayesian Neural Networks
-^^^^^^^^^^^^^^^^^^^^^^^^
+Variational Inference Bayesian Neural Networks
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-For Bayesian Neural Networks, consider citing:
+For Variational Inference Bayesian Neural Networks, consider citing:
 
 **Weight Uncertainty in Neural Networks**
 
@@ -73,6 +73,36 @@ For Monte-Carlo Dropout, consider citing:
 * Authors: *Yarin Gal and Zoubin Ghahramani*
 * Paper: `ICML 2016 <https://arxiv.org/pdf/1506.02142.pdf>`__.
 
+Stochastic Weight Averaging
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For Stochastic Weight Averaging, consider citing:
+
+**Averaging Weights Leads to Wider Optima and Better Generalization**
+
+* Authors: *Pavel Izmailov, Dmitrii Podoprikhin, Timur Garipov, Dmitry Vetrov, Andrew Gordon Wilson*
+* Paper: `UAI 2018 <https://arxiv.org/pdf/1803.05407.pdf>`__.
+
+Stochastic Weight Averaging Gaussian
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For Stochastic Weight Averaging Gaussian, consider citing:
+
+**A simple baseline for Bayesian uncertainty in deep learning**
+
+* Authors: *Wesley Maddox, Timur Garipov, Pavel Izmailov, Dmitry Vetrov, Andrew Gordon Wilson*
+* Paper: `NeurIPS 2019 <https://arxiv.org/pdf/1902.02476.pdf>`__.
+
+
+CheckpointEnsemble
+^^^^^^^^^^^^^^^^^^
+
+For CheckpointEnsemble, consider citing:
+
+**Checkpoint Ensembles: Ensemble Methods from a Single Training Process**
+
+* Authors: *Hugh Chen, Scott Lundberg, Su-In Lee*
+* Paper: `ArXiv <https://arxiv.org/pdf/1710.03282>`__.
 
 BatchEnsemble
 ^^^^^^^^^^^^^
@@ -192,6 +222,16 @@ For Monte-Carlo Batch Normalization, consider citing:
 
 * Authors: *Mathias Teye, Hossein Azizpour, and Kevin Smith*
 * Paper: `ICML 2018 <https://arxiv.org/pdf/1802.06455.pdf>`__.
+
+Laplace Approximation
+^^^^^^^^^^^^^^^^^^^^^
+
+For Laplace Approximation, consider citing:
+
+**Laplace Redux - Effortless Bayesian Deep Learning**
+
+* Authors: *Erik Daxberger, Agustinus Kristiadi, Alexander Immer, Runa Eschenhagen, Matthias Bauer, Philipp Hennig*
+* Paper: `NeurIPS 2021 <https://arxiv.org/abs/2106.14806>`__.
 
 Metrics
 -------

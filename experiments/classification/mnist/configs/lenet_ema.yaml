@@ -1,0 +1,61 @@
+# lightning.pytorch==2.1.3
+seed_everything: false
+eval_after_fit: true
+trainer:
+  accelerator: gpu
+  devices: 1
+  precision: 16-mixed
+  max_epochs: 75
+  logger:
+    class_path: lightning.pytorch.loggers.TensorBoardLogger
+    init_args:
+      save_dir: logs/lenet_ema
+      name: standard
+      default_hp_metric: false
+  callbacks:
+  - class_path: lightning.pytorch.callbacks.ModelCheckpoint
+    init_args:
+      monitor: val/cls/Acc
+      mode: max
+      save_last: true
+  - class_path: lightning.pytorch.callbacks.LearningRateMonitor
+    init_args:
+      logging_interval: step
+  - class_path: lightning.pytorch.callbacks.EarlyStopping
+    init_args:
+      monitor: val/cls/Acc
+      patience: 1000
+      check_finite: true
+model:
+  model:
+    class_path: torch_uncertainty.models.wrappers.EMA
+    init_args:
+      model:
+        class_path: torch_uncertainty.models.lenet._LeNet
+        init_args:
+          in_channels: 1
+          num_classes: 10
+          linear_layer: torch.nn.Linear
+          conv2d_layer: torch.nn.Conv2d
+          activation: torch.nn.ReLU
+          norm: torch.nn.Identity
+          groups: 1
+          dropout_rate: 0
+          last_layer_dropout: false
+          layer_args: {}
+      momentum: 0.99
+  num_classes: 10
+  loss: CrossEntropyLoss
+data:
+  root: ./data
+  batch_size: 128
+optimizer:
+  lr: 0.05
+  momentum: 0.9
+  weight_decay: 5e-4
+  nesterov: true
+lr_scheduler:
+  milestones:
+  - 25
+  - 50
+  gamma: 0.1

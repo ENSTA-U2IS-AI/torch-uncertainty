@@ -6,13 +6,13 @@ from torch.nn.modules.utils import _pair
 from torchvision import tv_tensors
 from torchvision.transforms import v2
 
-from torch_uncertainty.datamodules.abstract import AbstractDataModule
+from torch_uncertainty.datamodules.abstract import BaseDataModule
 from torch_uncertainty.datasets import MUAD
 from torch_uncertainty.transforms import RandomRescale
 from torch_uncertainty.utils.misc import create_train_val_split
 
 
-class MUADDataModule(AbstractDataModule):
+class MUADDataModule(BaseDataModule):
     def __init__(
         self,
         root: str | Path,

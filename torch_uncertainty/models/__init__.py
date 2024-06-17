@@ -1,3 +1,13 @@
 # ruff: noqa: F401
-from .deep_ensembles import deep_ensembles
-from .mc_dropout import mc_dropout
+from .wrappers import (
+    EMA,
+    EPOCH_UPDATE_MODEL,
+    STEP_UPDATE_MODEL,
+    SWA,
+    SWAG,
+    CheckpointEnsemble,
+    MCDropout,
+    StochasticModel,
+    deep_ensembles,
+    mc_dropout,
+)

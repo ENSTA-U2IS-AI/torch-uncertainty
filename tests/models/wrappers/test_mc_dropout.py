@@ -2,7 +2,7 @@ import pytest
 import torch
 
 from tests._dummies.model import dummy_model
-from torch_uncertainty.models.mc_dropout import _MCDropout, mc_dropout
+from torch_uncertainty.models import MCDropout, mc_dropout
 
 
 class TestMCDropout:
@@ -36,12 +36,12 @@ class TestMCDropout:
         model = dummy_model(10, 5, 0.1)
 
         with pytest.raises(ValueError):
-            _MCDropout(
+            MCDropout(
                 model=model, num_estimators=-1, last_layer=True, on_batch=True
             )
 
         with pytest.raises(ValueError):
-            _MCDropout(
+            MCDropout(
                 model=model, num_estimators=0, last_layer=False, on_batch=False
             )
 

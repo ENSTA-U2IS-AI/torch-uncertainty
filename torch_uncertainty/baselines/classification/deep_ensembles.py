@@ -24,10 +24,10 @@ class DeepEnsemblesBaseline(ClassificationRoutine):
         eval_ood: bool = False,
         eval_grouping_loss: bool = False,
         ood_criterion: Literal[
-            "msp", "logits", "energy", "entropy", "mi", "VR"
+            "msp", "logit", "energy", "entropy", "mi", "vr"
         ] = "msp",
         log_plots: bool = False,
-        calibration_set: Literal["val", "test"] | None = None,
+        calibration_set: Literal["val", "test"] = "val",
     ) -> None:
         log_path = Path(log_path)
 
@@ -45,14 +45,14 @@ class DeepEnsemblesBaseline(ClassificationRoutine):
                 optim_recipe=None,
             ).eval()
             models.append(trained_model.model)
-
+        print(models)
         de = deep_ensembles(models=models)
 
         super().__init__(
             num_classes=num_classes,
             model=de,
             loss=None,
-            num_estimators=de.num_estimators,
+            is_ensemble=de.num_estimators > 1,
             eval_ood=eval_ood,
             eval_grouping_loss=eval_grouping_loss,
             ood_criterion=ood_criterion,

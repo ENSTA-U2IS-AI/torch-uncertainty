@@ -12,23 +12,16 @@ class _Dummy(nn.Module):
         in_channels: int,
         num_classes: int,
         dropout_rate: float,
-        with_linear: bool,
         last_layer: nn.Module,
     ) -> None:
         super().__init__()
         self.in_channels = in_channels
         self.dropout_rate = dropout_rate
 
-        if with_linear:
-            self.linear = nn.Linear(
-                1,
-                num_classes,
-            )
-        else:
-            self.out = nn.Linear(
-                1,
-                num_classes,
-            )
+        self.linear = nn.Linear(
+            1,
+            num_classes,
+        )
         self.last_layer = last_layer
         self.dropout = nn.Dropout(p=dropout_rate)
 
@@ -92,7 +85,6 @@ def dummy_model(
     num_classes: int,
     dropout_rate: float = 0.0,
     with_feats: bool = True,
-    with_linear: bool = True,
     last_layer=None,
 ) -> _Dummy:
     """Dummy model for testing purposes.
@@ -103,8 +95,6 @@ def dummy_model(
         num_estimators (int): Number of estimators in the ensemble.
         dropout_rate (float, optional): Dropout rate. Defaults to 0.0.
         with_feats (bool, optional): Whether to include features. Defaults to True.
-        with_linear (bool, optional): Whether to include a linear layer.
-            Defaults to True.
         last_layer ([type], optional): Last layer of the model. Defaults to None.
 
     Returns:
@@ -117,14 +107,12 @@ def dummy_model(
             in_channels=in_channels,
             num_classes=num_classes,
             dropout_rate=dropout_rate,
-            with_linear=with_linear,
             last_layer=last_layer,
         )
     return _Dummy(
         in_channels=in_channels,
         num_classes=num_classes,
         dropout_rate=dropout_rate,
-        with_linear=with_linear,
         last_layer=last_layer,
     )
 

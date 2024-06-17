@@ -30,14 +30,14 @@ class SegmentationRoutine(LightningModule):
         log_plots: bool = False,
         num_calibration_bins: int = 15,
     ) -> None:
-        """Routine for training & testing on segmentation tasks.
+        r"""Routine for training & testing on segmentation tasks.
 
         Args:
             model (torch.nn.Module): Model to train.
             num_classes (int): Number of classes in the segmentation task.
             loss (torch.nn.Module): Loss function to optimize the :attr:`model`.
             num_estimators (int, optional): The number of estimators for the
-                ensemble. Defaults to ̀`1` (single model).
+                ensemble. Defaults to ``1`` (single model).
             optim_recipe (dict or Optimizer, optional): The optimizer and
                 optionally the scheduler to use. Defaults to ``None``.
             format_batch_fn (torch.nn.Module, optional): The function to format the

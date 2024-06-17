@@ -65,7 +65,7 @@ jobs:
       if: steps.changed-files-specific.outputs.only_changed != 'true'
       run: |
         python3 -m pip install torch torchvision --extra-index-url https://download.pytorch.org/whl/cpu
-        python3 -m pip install .[image,dev,docs]
+        python3 -m pip install .[all]
 
     - name: Check style & format
       if: steps.changed-files-specific.outputs.only_changed != 'true'

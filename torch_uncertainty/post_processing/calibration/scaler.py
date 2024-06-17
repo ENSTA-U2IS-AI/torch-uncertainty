@@ -5,14 +5,16 @@ from torch import Tensor, device, nn, optim
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 
+from torch_uncertainty.post_processing import PostProcessing
 
-class Scaler(nn.Module):
+
+class Scaler(PostProcessing):
     criterion = nn.CrossEntropyLoss()
     trained = False
 
     def __init__(
         self,
-        model: nn.Module,
+        model: nn.Module | None = None,
         lr: float = 0.1,
         max_iter: int = 100,
         device: Literal["cpu", "cuda"] | device | None = None,
@@ -31,8 +33,7 @@ class Scaler(nn.Module):
             Guo, C., Pleiss, G., Sun, Y., & Weinberger, K. Q. On calibration
             of modern neural networks. In ICML 2017.
         """
-        super().__init__()
-        self.model = model
+        super().__init__(model)
         self.device = device
 
         if lr <= 0:
@@ -48,7 +49,7 @@ class Scaler(nn.Module):
         calibration_set: Dataset,
         save_logits: bool = False,
         progress: bool = True,
-    ) -> "Scaler":
+    ) -> None:
         """Fit the temperature parameters to the calibration data.
 
         Args:
@@ -57,9 +58,6 @@ class Scaler(nn.Module):
                 labels. Defaults to False.
             progress (bool, optional): Whether to show a progress bar.
                 Defaults to True.
-
-        Returns:
-            Scaler: Calibrated scaler.
         """
         logits_list = []
         labels_list = []
@@ -89,7 +87,6 @@ class Scaler(nn.Module):
         if save_logits:
             self.logits = logits
             self.labels = labels
-        return self
 
     @torch.no_grad()
     def forward(self, inputs: Tensor) -> Tensor:

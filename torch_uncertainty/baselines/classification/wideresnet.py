@@ -52,7 +52,7 @@ class WideResNetBaseline(ClassificationRoutine):
         ] = "msp",
         log_plots: bool = False,
         save_in_csv: bool = False,
-        calibration_set: Literal["val", "test"] | None = None,
+        calibration_set: Literal["val", "test"] = "val",
         eval_ood: bool = False,
         eval_grouping_loss: bool = False,
     ) -> None:
@@ -184,7 +184,7 @@ class WideResNetBaseline(ClassificationRoutine):
             num_classes=num_classes,
             model=model,
             loss=loss,
-            num_estimators=num_estimators,
+            is_ensemble=version in self.ensemble,
             format_batch_fn=format_batch_fn,
             mixup_params=mixup_params,
             eval_ood=eval_ood,

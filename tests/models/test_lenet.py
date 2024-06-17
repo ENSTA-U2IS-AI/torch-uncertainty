@@ -20,7 +20,16 @@ class TestLeNet:
 
         packed_lenet(1, 1)
         bayesian_lenet(1, 1)
-        bayesian_lenet(1, 1, 1, 1, 1, 0, 1)
+        bayesian_lenet(
+            in_channels=1,
+            num_classes=1,
+            num_samples=1,
+            prior_sigma_1=1,
+            prior_sigma_2=1,
+            prior_pi=0,
+            mu_init=1,
+            sigma_init=1,
+        )
 
     def test_errors(self):
         with pytest.raises(ValueError):

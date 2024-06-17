@@ -18,9 +18,7 @@ class TrainableDistribution(nn.Module):
         self.weight = None
 
     def sample(self) -> Tensor:
-        w_sample = torch.normal(
-            mean=0, std=1, size=self.mu.shape, device=self.mu.device
-        )
+        w_sample = torch.randn(size=self.mu.shape, device=self.mu.device)
         self.sigma = torch.log1p(torch.exp(self.rho)).to(self.mu.device)
         self.weight = self.mu + self.sigma * w_sample
         return self.weight
@@ -43,26 +41,27 @@ class TrainableDistribution(nn.Module):
         return -lposterior.sum()
 
 
-class PriorDistribution(nn.Module):
+class CenteredGaussianMixture(nn.Module):
     def __init__(
         self,
         sigma_1: float,
         sigma_2: float,
         pi: float,
     ) -> None:
-        super().__init__()
-        self.pi = torch.tensor([pi, 1 - pi])
-        self.mus = torch.zeros(2)
-        self.sigmas = torch.tensor([sigma_1, sigma_2])
+        """Create a mixture of two centered Gaussian distributions.
 
-    def log_prior(self, weight: Tensor) -> Tensor:
-        self.convert(weight.device)
+        Args:
+            sigma_1 (float): Standard deviation of the first Gaussian.
+            sigma_2 (float): Standard deviation of the second Gaussian.
+            pi (float): Mixing coefficient.
+        """
+        super().__init__()
+        self.register_buffer("pi", torch.tensor([pi, 1 - pi]))
+        self.register_buffer("mus", torch.zeros(2))
+        self.register_buffer("sigmas", torch.tensor([sigma_1, sigma_2]))
+
+    def log_prob(self, weight: Tensor) -> Tensor:
         mix = distributions.Categorical(self.pi)
         normals = distributions.Normal(self.mus, self.sigmas)
-        self.distribution = distributions.MixtureSameFamily(mix, normals)
-        return self.distribution.log_prob(weight).sum()
-
-    def convert(self, device) -> None:
-        self.pi = self.pi.to(device)
-        self.mus = self.mus.to(device)
-        self.sigmas = self.sigmas.to(device)
+        distribution = distributions.MixtureSameFamily(mix, normals)
+        return distribution.log_prob(weight).sum()

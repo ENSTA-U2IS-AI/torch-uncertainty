@@ -6,13 +6,13 @@ from torch import nn
 from torch.utils.data import DataLoader
 from torchvision.datasets import MNIST, FashionMNIST
 
-from torch_uncertainty.datamodules.abstract import AbstractDataModule
+from torch_uncertainty.datamodules.abstract import BaseDataModule
 from torch_uncertainty.datasets.classification import MNISTC, NotMNIST
 from torch_uncertainty.transforms import Cutout
 from torch_uncertainty.utils import create_train_val_split
 
 
-class MNISTDataModule(AbstractDataModule):
+class MNISTDataModule(BaseDataModule):
     num_classes = 10
     num_channels = 1
     input_shape = (1, 28, 28)

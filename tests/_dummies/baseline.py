@@ -7,7 +7,9 @@ from torch_uncertainty.layers.distributions import (
     NormalInverseGammaLayer,
     NormalLayer,
 )
-from torch_uncertainty.models.deep_ensembles import deep_ensembles
+from torch_uncertainty.models import EMA, SWA, deep_ensembles
+from torch_uncertainty.optim_recipes import optim_cifar10_resnet18
+from torch_uncertainty.post_processing import TemperatureScaler
 from torch_uncertainty.routines import (
     ClassificationRoutine,
     PixelRegressionRoutine,
@@ -24,11 +26,10 @@ class DummyClassificationBaseline:
         cls,
         num_classes: int,
         in_channels: int,
-        loss: type[nn.Module],
+        loss: nn.Module,
         baseline_type: str = "single",
-        optim_recipe=None,
+        optim_recipe=optim_cifar10_resnet18,
         with_feats: bool = True,
-        with_linear: bool = True,
         ood_criterion: str = "msp",
         eval_ood: bool = False,
         eval_grouping_loss: bool = False,
@@ -42,13 +43,18 @@ class DummyClassificationBaseline:
         mixup_alpha: float = 0,
         cutmix_alpha: float = 0,
         no_mixup_params: bool = False,
+        ema: bool = False,
+        swa: bool = False,
     ) -> ClassificationRoutine:
         model = dummy_model(
             in_channels=in_channels,
             num_classes=num_classes,
             with_feats=with_feats,
-            with_linear=with_linear,
         )
+        if ema:
+            model = EMA(model, momentum=0.99)
+        if swa:
+            model = SWA(model, cycle_start=0, cycle_length=1)
         if not no_mixup_params:
             mixup_params = {
                 "mixup_alpha": mixup_alpha,
@@ -69,12 +75,14 @@ class DummyClassificationBaseline:
                 format_batch_fn=nn.Identity(),
                 log_plots=True,
                 optim_recipe=optim_recipe(model),
-                num_estimators=1,
+                is_ensemble=False,
                 mixup_params=mixup_params,
                 ood_criterion=ood_criterion,
                 eval_ood=eval_ood,
                 eval_grouping_loss=eval_grouping_loss,
-                calibration_set="val" if calibrate else None,
+                post_processing_method=TemperatureScaler()
+                if calibrate
+                else None,
                 save_in_csv=save_in_csv,
             )
         # baseline_type == "ensemble":
@@ -89,11 +97,11 @@ class DummyClassificationBaseline:
             optim_recipe=optim_recipe(model),
             format_batch_fn=RepeatTarget(2),
             log_plots=True,
-            num_estimators=2,
+            is_ensemble=True,
             ood_criterion=ood_criterion,
             eval_ood=eval_ood,
             eval_grouping_loss=eval_grouping_loss,
-            calibration_set="val" if calibrate else None,
+            post_processing_method=TemperatureScaler() if calibrate else None,
             save_in_csv=save_in_csv,
         )
 

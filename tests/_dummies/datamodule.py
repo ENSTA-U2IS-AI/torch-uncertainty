@@ -7,7 +7,7 @@ from numpy.typing import ArrayLike
 from torch.utils.data import DataLoader
 from torchvision import tv_tensors
 
-from torch_uncertainty.datamodules.abstract import AbstractDataModule
+from torch_uncertainty.datamodules.abstract import BaseDataModule
 
 from .dataset import (
     DummyClassificationDataset,
@@ -17,7 +17,7 @@ from .dataset import (
 )
 
 
-class DummyClassificationDataModule(AbstractDataModule):
+class DummyClassificationDataModule(BaseDataModule):
     num_channels = 1
     image_size: int = 4
     training_task = "classification"
@@ -104,7 +104,7 @@ class DummyClassificationDataModule(AbstractDataModule):
         return np.array(self.train.targets)
 
 
-class DummyRegressionDataModule(AbstractDataModule):
+class DummyRegressionDataModule(BaseDataModule):
     in_features = 4
     training_task = "regression"
 
@@ -160,7 +160,7 @@ class DummyRegressionDataModule(AbstractDataModule):
         return [self._data_loader(self.test)]
 
 
-class DummySegmentationDataModule(AbstractDataModule):
+class DummySegmentationDataModule(BaseDataModule):
     num_channels = 3
     training_task = "segmentation"
 
@@ -249,7 +249,7 @@ class DummySegmentationDataModule(AbstractDataModule):
         return np.array(self.train.targets)
 
 
-class DummyDepthDataModule(AbstractDataModule):
+class DummyDepthDataModule(BaseDataModule):
     num_channels = 3
     training_task = "pixel_regression"
 

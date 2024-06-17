@@ -6,18 +6,19 @@ from torch import Tensor, nn
 from torch.utils.data import DataLoader, Dataset
 
 from torch_uncertainty.layers.mc_batch_norm import MCBatchNorm2d
+from torch_uncertainty.post_processing import PostProcessing
 
 
-class MCBatchNorm(nn.Module):
+class MCBatchNorm(PostProcessing):
     counter: int = 0
     mc_batch_norm_layers: list[MCBatchNorm2d] = []
     trained = False
 
     def __init__(
         self,
-        model: nn.Module,
-        num_estimators: int,
-        convert: bool,
+        model: nn.Module | None = None,
+        num_estimators: int = 16,
+        convert: bool = True,
         mc_batch_size: int = 32,
         device: Literal["cpu", "cuda"] | torch.device | None = None,
     ) -> None:
@@ -39,28 +40,30 @@ class MCBatchNorm(nn.Module):
             batch normalized deep networks. In ICML 2018.
         """
         super().__init__()
-
         self.mc_batch_size = mc_batch_size
-        if num_estimators < 1 or not isinstance(num_estimators, int):
-            raise ValueError(
-                f"num_estimators must be a positive integer, got {num_estimators}."
-            )
+        self.convert = convert
         self.num_estimators = num_estimators
-
-        self.model = deepcopy(model)
-        if not convert and not self._has_mcbn():
-            raise ValueError(
-                "model does not contain any MCBatchNorm2d nor is not to be "
-                "converted."
-            )
         self.device = device
+
+        if model is not None:
+            self._setup_model(model)
+
+    def _setup_model(self, model):
+        _mcbn_checks(
+            model, self.num_estimators, self.mc_batch_size, self.convert
+        )
+        self.model = deepcopy(model)  # Is it necessary?
         self.model = self.model.eval()
-        if convert:
+        if self.convert:
             self._convert()
-            if not self._has_mcbn():
+            if not has_mcbn(self.model):
                 raise ValueError(
                     "model does not contain any MCBatchNorm2d after conversion."
                 )
+
+    def set_model(self, model: nn.Module) -> None:
+        self.model = model
+        self._setup_model(model)
 
     def fit(self, dataset: Dataset) -> None:
         """Fit the model on the dataset.
@@ -99,7 +102,7 @@ class MCBatchNorm(nn.Module):
     def forward(
         self,
         x: Tensor,
-    ) -> tuple[Tensor, Tensor]:
+    ) -> Tensor:
         if self.training:
             return self.model(x)
         if not self.trained:
@@ -110,13 +113,6 @@ class MCBatchNorm(nn.Module):
         return torch.cat(
             [self._est_forward(x) for _ in range(self.num_estimators)], dim=0
         )
-
-    def _has_mcbn(self) -> bool:
-        """Check if the model contains any MCBatchNorm2d layers."""
-        for module in self.model.modules():
-            if isinstance(module, MCBatchNorm2d):
-                return True
-        return False
 
     def _convert(self) -> None:
         """Convert all BatchNorm2d layers to MCBatchNorm2d layers."""
@@ -171,3 +167,24 @@ class MCBatchNorm(nn.Module):
 
                 # Save pointers to the MC BatchNorm layers
                 self.mc_batch_norm_layers.append(mc_layer)
+
+
+def has_mcbn(model: nn.Module) -> bool:
+    """Check if the model contains any MCBatchNorm2d layers."""
+    return any(isinstance(module, MCBatchNorm2d) for module in model.modules())
+
+
+def _mcbn_checks(model, num_estimators, mc_batch_size, convert):
+    if num_estimators < 1 or not isinstance(num_estimators, int):
+        raise ValueError(
+            f"num_estimators must be a positive integer, got {num_estimators}."
+        )
+    if mc_batch_size < 1 or not isinstance(mc_batch_size, int):
+        raise ValueError(
+            f"mc_batch_size must be a positive integer, got {mc_batch_size}."
+        )
+    if not convert and not has_mcbn(model):
+        raise ValueError(
+            "model does not contain any MCBatchNorm2d nor is not to be "
+            "converted."
+        )
