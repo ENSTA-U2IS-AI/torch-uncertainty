@@ -30,7 +30,7 @@ class SegmentationRoutine(LightningModule):
         log_plots: bool = False,
         num_calibration_bins: int = 15,
     ) -> None:
-        """Routine for training & testing on segmentation tasks.
+        r"""Routine for training & testing on segmentation tasks.
 
         Args:
             model (torch.nn.Module): Model to train.

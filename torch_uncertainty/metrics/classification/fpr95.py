@@ -1,41 +1,9 @@
 import numpy as np
 import torch
-from numpy.typing import ArrayLike
 from torch import Tensor
 from torchmetrics import Metric
 from torchmetrics.utilities import rank_zero_warn
 from torchmetrics.utilities.data import dim_zero_cat
-
-
-def stable_cumsum(arr: ArrayLike, rtol: float = 1e-05, atol: float = 1e-08):
-    """Uses high precision for cumsum and checks that the final value matches
-    the sum.
-
-    Args:
-        arr (ArrayLike): The array to be cumulatively summed as flat.
-        rtol (float, optional): Relative tolerance, see ``np.allclose``.
-            Defaults to 1e-05.
-        atol (float, optional): Absolute tolerance, see ``np.allclose``.
-            Defaults to 1e-08.
-
-    Returns:
-        ArrayLike: The cumulatively summed array.
-
-    Reference:
-        From https://github.com/hendrycks/anomaly-seg.
-
-    TODO: Check if necessary.
-    """
-    out = np.cumsum(arr, dtype=np.float64)
-    expected = np.sum(arr, dtype=np.float64)
-    if not np.allclose(
-        out[-1], expected, rtol=rtol, atol=atol
-    ):  # coverage: ignore
-        raise RuntimeError(
-            "cumsum was found to be unstable: "
-            "its last element does not correspond to sum"
-        )
-    return out
 
 
 class FPRx(Metric):
@@ -53,6 +21,9 @@ class FPRx(Metric):
             recall_level (float): The recall level at which to compute the FPR.
             pos_label (int): The positive label.
             kwargs: Additional arguments to pass to the metric class.
+
+        Reference:
+            Inpired by https://github.com/hendrycks/anomaly-seg.
         """
         super().__init__(**kwargs)
 
@@ -82,13 +53,10 @@ class FPRx(Metric):
         self.targets.append(target)
 
     def compute(self) -> Tensor:
-        r"""Compute the actual False Positive Rate at x% Recall.
+        """Compute the actual False Positive Rate at x% Recall.
 
         Returns:
             Tensor: The value of the FPRx.
-
-        Reference:
-            Inpired by https://github.com/hendrycks/anomaly-seg.
         """
         conf = dim_zero_cat(self.conf).cpu().numpy()
         targets = dim_zero_cat(self.targets).cpu().numpy()
@@ -120,7 +88,7 @@ class FPRx(Metric):
         threshold_idxs = np.r_[distinct_value_indices, labels.shape[0] - 1]
 
         # accumulate the true positives with decreasing threshold
-        tps = stable_cumsum(labels)[threshold_idxs]
+        tps = np.cumsum(labels)[threshold_idxs]
         fps = 1 + threshold_idxs - tps  # add one because of zero-based indexing
 
         thresholds = examples[threshold_idxs]
