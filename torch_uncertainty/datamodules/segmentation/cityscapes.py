@@ -18,7 +18,7 @@ class CityscapesDataModule(BaseDataModule):
         root: str | Path,
         batch_size: int,
         crop_size: _size_2_t = 1024,
-        inference_size: _size_2_t = (1024, 2048),
+        eval_size: _size_2_t = (1024, 2048),
         val_split: float | None = None,
         num_workers: int = 1,
         pin_memory: bool = True,
@@ -35,7 +35,7 @@ class CityscapesDataModule(BaseDataModule):
                 :math:`(\text{size},\text{size})` is made. If provided a sequence
                 of length :math:`1`, it will be interpreted as
                 :math:`(\text{size[0]},\text{size[1]})`. Defaults to ``1024``.
-            inference_size (sequence or int, optional): Desired input image and
+            eval_size (sequence or int, optional): Desired input image and
                 segmentation mask sizes during inference. If size is an int,
                 smaller edge of the images will be matched to this number, i.e.,
                 :math:`\text{height}>\text{width}`, then image will be rescaled to
@@ -84,7 +84,7 @@ class CityscapesDataModule(BaseDataModule):
 
                 v2.Compose([
                     v2.ToImage(),
-                    v2.Resize(size=inference_size, antialias=True),
+                    v2.Resize(size=eval_size, antialias=True),
                     v2.ToDtype({
                         tv_tensors.Image: torch.float32,
                         tv_tensors.Mask: torch.int64,
@@ -109,7 +109,7 @@ class CityscapesDataModule(BaseDataModule):
         self.dataset = Cityscapes
         self.mode = "fine"
         self.crop_size = _pair(crop_size)
-        self.inference_size = _pair(inference_size)
+        self.eval_size = _pair(eval_size)
 
         self.train_transform = v2.Compose(
             [
@@ -138,7 +138,7 @@ class CityscapesDataModule(BaseDataModule):
         self.test_transform = v2.Compose(
             [
                 v2.ToImage(),
-                v2.Resize(size=self.inference_size, antialias=True),
+                v2.Resize(size=self.eval_size, antialias=True),
                 v2.ToDtype(
                     dtype={
                         tv_tensors.Image: torch.float32,

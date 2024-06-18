@@ -14,7 +14,7 @@ data:
   root: ./data
   batch_size: 8
   crop_size: 1024
-  inference_size:
+  eval_size:
   - 1024
   - 2048
   num_workers: 30

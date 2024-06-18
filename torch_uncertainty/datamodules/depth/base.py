@@ -21,7 +21,7 @@ class DepthDataModule(BaseDataModule):
         min_depth: float,
         max_depth: float,
         crop_size: _size_2_t,
-        inference_size: _size_2_t,
+        eval_size: _size_2_t,
         val_split: float | None = None,
         num_workers: int = 1,
         pin_memory: bool = True,
@@ -42,7 +42,7 @@ class DepthDataModule(BaseDataModule):
                 :math:`(\text{size},\text{size})` is made. If provided a sequence
                 of length :math:`1`, it will be interpreted as
                 :math:`(\text{size[0]},\text{size[1]})`.
-            inference_size (sequence or int, optional): Desired input image and
+            eval_size (sequence or int, optional): Desired input image and
                 depth mask sizes during inference. If size is an int,
                 smaller edge of the images will be matched to this number, i.e.,
                 :math:`\text{height}>\text{width}`, then image will be rescaled to
@@ -66,7 +66,7 @@ class DepthDataModule(BaseDataModule):
         self.min_depth = min_depth
         self.max_depth = max_depth
         self.crop_size = _pair(crop_size)
-        self.inference_size = _pair(inference_size)
+        self.eval_size = _pair(eval_size)
 
         self.train_transform = v2.Compose(
             [
@@ -91,7 +91,7 @@ class DepthDataModule(BaseDataModule):
         )
         self.test_transform = v2.Compose(
             [
-                v2.Resize(size=self.inference_size),
+                v2.Resize(size=self.eval_size),
                 v2.ToDtype(
                     dtype={
                         tv_tensors.Image: torch.float32,
