@@ -22,8 +22,8 @@ First, we have to load the following utilities from TorchUncertainty:
 - the Trainer from Lightning
 - the datamodule handling dataloaders: MNISTDataModule from torch_uncertainty.datamodules
 - the model: LeNet, which lies in torch_uncertainty.models
-- the MC Dropout wrapper: mc_dropout, which lies in torch_uncertainty.models
-- the classification training routine in the torch_uncertainty.routines
+- the MC Dropout wrapper: mc_dropout, from torch_uncertainty.models.wrappers
+- the classification training & evaluation routine in the torch_uncertainty.routines
 - an optimization recipe in the torch_uncertainty.optim_recipes module.
 
 We also need import the neural network utils within `torch.nn`.
@@ -76,16 +76,14 @@ mc_model = mc_dropout(model, num_estimators=16, last_layer=False)
 # This is a classification problem, and we use CrossEntropyLoss as the likelihood.
 # We define the training routine using the classification training routine from
 # torch_uncertainty.routines.classification. We provide the number of classes
-# and channels, the optimizer wrapper, the dropout rate, and the number of
-# forward passes to perform through the network, as well as all the default
-# arguments.
+# and channels, the optimizer wrapper, and the dropout rate.
 
 routine = ClassificationRoutine(
     num_classes=datamodule.num_classes,
     model=mc_model,
     loss=nn.CrossEntropyLoss(),
     optim_recipe=optim_cifar10_resnet18(mc_model),
-    num_estimators=16,
+    is_ensemble=True,
 )
 
 # %%

@@ -45,6 +45,7 @@ Here is the outline of the process:
 import torch
 import torchvision
 import torchvision.transforms as transforms
+from torch.utils.data import DataLoader
 
 torch.set_num_threads(1)
 
@@ -69,14 +70,14 @@ batch_size = 4
 trainset = torchvision.datasets.CIFAR10(
     root="./data", train=True, download=True, transform=transform
 )
-trainloader = torch.utils.data.DataLoader(
+trainloader = DataLoader(
     trainset, batch_size=batch_size, shuffle=True, num_workers=2
 )
 
 testset = torchvision.datasets.CIFAR10(
     root="./data", train=False, download=True, transform=transform
 )
-testloader = torch.utils.data.DataLoader(
+testloader = DataLoader(
     testset, batch_size=batch_size, shuffle=False, num_workers=2
 )
 

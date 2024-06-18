@@ -243,7 +243,7 @@ Post-Processing Methods
 .. autosummary::
     :toctree: generated/
     :nosignatures:
-    :template: class_inherited.rst
+    :template: class.rst
     MCBatchNorm
     LaplaceApprox
     

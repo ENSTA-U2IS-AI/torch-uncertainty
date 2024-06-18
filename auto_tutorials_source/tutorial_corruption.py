@@ -1,6 +1,6 @@
 """
-Image Corruptions
-=================
+Corrupting Images with TorchUncertainty to Benchmark Robustness
+===============================================================
 
 This tutorial shows the impact of the different corruptions available in the
 TorchUncertainty library. These corruptions were first proposed in the paper

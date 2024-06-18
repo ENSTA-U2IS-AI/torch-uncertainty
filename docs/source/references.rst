@@ -111,7 +111,7 @@ For SnapshotEnsemble, consider citing:
 
 **Snapshot Ensembles: Train 1, get M for free**
 
-* Authors: *Gao Huang, Yixuan Li, Geoff Pleiss, Zhuang Liu, John E. Hopcroft, and Kilian Q. Weinberger
+* Authors: *Gao Huang, Yixuan Li, Geoff Pleiss, Zhuang Liu, John E. Hopcroft, and Kilian Q. Weinberger*
 * Paper: `ICLR 2017 <https://arxiv.org/pdf/1704.00109.pdf>`__.
 
 BatchEnsemble

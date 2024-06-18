@@ -25,7 +25,7 @@ In this tutorial, we will need:
 
 If you use the classification routine, the plots will be automatically available in the tensorboard logs if you use the `log_plots` flag.
 """
-
+# %%
 from torch_uncertainty.datamodules import CIFAR100DataModule
 from torch_uncertainty.metrics import CalibrationError
 from torch_uncertainty.models.resnet import resnet
@@ -114,7 +114,7 @@ fig.show()
 
 # Fit the scaler on the calibration dataset
 scaled_model = TemperatureScaler(model=model)
-scaled_model = scaled_model.fit(calibration_set=cal_dataset)
+scaled_model.fit(calibration_set=cal_dataset)
 
 # %%
 # 6. Iterating Again to Compute the Improved ECE

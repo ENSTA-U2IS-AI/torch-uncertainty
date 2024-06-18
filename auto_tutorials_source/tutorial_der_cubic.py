@@ -55,9 +55,7 @@ def optim_regression(
         lr=learning_rate,
         weight_decay=0,
     )
-    return {
-        "optimizer": optimizer,
-    }
+    return optimizer
 
 
 # %%
@@ -69,7 +67,7 @@ def optim_regression(
 # Please note that this MLP finishes with a NormalInverseGammaLayer that interpret the outputs of the model
 # as the parameters of a Normal Inverse Gamma distribution.
 
-trainer = Trainer(accelerator="cpu", max_epochs=50)#, enable_progress_bar=False)
+trainer = Trainer(accelerator="cpu", max_epochs=50) #, enable_progress_bar=False)
 
 # dataset
 train_ds = Cubic(num_samples=1000)

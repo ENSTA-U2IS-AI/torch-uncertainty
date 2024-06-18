@@ -45,7 +45,7 @@ class SegmentationRoutine(LightningModule):
             metric_subsampling_rate (float, optional): The rate of subsampling for the
                 memory consuming metrics. Defaults to ``1e-2``.
             log_plots (bool, optional): Indicates whether to log plots from
-                metrics. Defaults to ``False`
+                metrics. Defaults to ``False``.
             num_calibration_bins (int, optional): Number of bins to compute calibration
                 metrics. Defaults to ``15``.
 

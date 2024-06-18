@@ -76,7 +76,7 @@ routine = ClassificationRoutine(
 # `trainer.test`.
 
 trainer.fit(model=routine, datamodule=datamodule)
-trainer.test(model=routine, datamodule=datamodule);
+perf = trainer.test(model=routine, datamodule=datamodule)
 
 # %%
 # 5. Wrapping the Model in a MCBatchNorm
@@ -93,7 +93,7 @@ routine.model = MCBatchNorm(
     routine.model, num_estimators=8, convert=True, mc_batch_size=16
 )
 routine.model.fit(datamodule.train)
-routine.eval();
+routine = routine.eval()  # To avoid prints
 
 # %%
 # 6. Testing the Model
