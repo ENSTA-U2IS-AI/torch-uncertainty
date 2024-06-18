@@ -26,6 +26,7 @@ class TestRegression:
             loss=DistributionNLLLoss(),
             optim_recipe=optim_cifar10_resnet18,
             baseline_type="single",
+            ema=True,
         )
 
         trainer.fit(model, dm)
@@ -33,13 +34,15 @@ class TestRegression:
         trainer.test(model, dm)
         model(dm.get_test_set()[0][0])
 
+        trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
         model = DummyRegressionBaseline(
             probabilistic=False,
             in_features=dm.in_features,
             output_dim=1,
-            loss=DistributionNLLLoss(),
+            loss=nn.MSELoss(),
             optim_recipe=optim_cifar10_resnet18,
             baseline_type="single",
+            swa=True,
         )
 
         trainer.fit(model, dm)
@@ -63,18 +66,21 @@ class TestRegression:
             dist_type="laplace",
         )
         trainer.fit(model, dm)
+        trainer.validate(model, dm)
         trainer.test(model, dm)
         model(dm.get_test_set()[0][0])
 
+        trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
         model = DummyRegressionBaseline(
             probabilistic=False,
             in_features=dm.in_features,
             output_dim=2,
-            loss=DistributionNLLLoss(),
+            loss=nn.MSELoss(),
             optim_recipe=optim_cifar10_resnet18,
             baseline_type="single",
         )
         trainer.fit(model, dm)
+        trainer.validate(model, dm)
         trainer.test(model, dm)
         model(dm.get_test_set()[0][0])
 
@@ -94,18 +100,21 @@ class TestRegression:
             dist_type="nig",
         )
         trainer.fit(model, dm)
+        trainer.validate(model, dm)
         trainer.test(model, dm)
         model(dm.get_test_set()[0][0])
 
+        trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
         model = DummyRegressionBaseline(
             probabilistic=False,
             in_features=dm.in_features,
             output_dim=1,
-            loss=DistributionNLLLoss(),
+            loss=nn.MSELoss(),
             optim_recipe=optim_cifar10_resnet18,
             baseline_type="ensemble",
         )
         trainer.fit(model, dm)
+        trainer.validate(model, dm)
         trainer.test(model, dm)
         model(dm.get_test_set()[0][0])
 
@@ -128,11 +137,12 @@ class TestRegression:
         trainer.test(model, dm)
         model(dm.get_test_set()[0][0])
 
+        trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
         model = DummyRegressionBaseline(
             probabilistic=False,
             in_features=dm.in_features,
             output_dim=2,
-            loss=DistributionNLLLoss(),
+            loss=nn.MSELoss(),
             optim_recipe=optim_cifar10_resnet18,
             baseline_type="ensemble",
         )

@@ -116,6 +116,8 @@ class DummyRegressionBaseline:
         baseline_type: str = "single",
         optim_recipe=None,
         dist_type: str = "normal",
+        ema: bool = False,
+        swa: bool = False,
     ) -> RegressionRoutine:
         if probabilistic:
             if dist_type == "normal":
@@ -136,6 +138,11 @@ class DummyRegressionBaseline:
             num_classes=num_classes,
             last_layer=last_layer,
         )
+        if ema:
+            model = EMA(model, momentum=0.99)
+        if swa:
+            model = SWA(model, cycle_start=0, cycle_length=1)
+
         if baseline_type == "single":
             return RegressionRoutine(
                 probabilistic=probabilistic,
@@ -172,12 +179,18 @@ class DummySegmentationBaseline:
         optim_recipe=None,
         metric_subsampling_rate: float = 1,
         log_plots: bool = False,
+        ema: bool = False,
+        swa: bool = False,
     ) -> SegmentationRoutine:
         model = dummy_segmentation_model(
             in_channels=in_channels,
             num_classes=num_classes,
             image_size=image_size,
         )
+        if ema:
+            model = EMA(model, momentum=0.99)
+        if swa:
+            model = SWA(model, cycle_start=0, cycle_length=1)
 
         if baseline_type == "single":
             return SegmentationRoutine(
@@ -209,26 +222,48 @@ class DummySegmentationBaseline:
 class DummyPixelRegressionBaseline:
     def __new__(
         cls,
+        probabilistic: bool,
         in_channels: int,
         output_dim: int,
         image_size: int,
         loss: nn.Module,
+        dist_type: str = "normal",
         baseline_type: str = "single",
         optim_recipe=None,
+        ema: bool = False,
+        swa: bool = False,
     ) -> PixelRegressionRoutine:
+        if probabilistic:
+            if dist_type == "normal":
+                last_layer = NormalLayer(output_dim)
+                num_classes = output_dim * 2
+            elif dist_type == "laplace":
+                last_layer = LaplaceLayer(output_dim)
+                num_classes = output_dim * 2
+            else:  # dist_type == "nig"
+                last_layer = NormalInverseGammaLayer(output_dim)
+                num_classes = output_dim * 4
+        else:
+            last_layer = nn.Identity()
+            num_classes = output_dim
+
         model = dummy_segmentation_model(
-            num_classes=output_dim,
+            num_classes=num_classes,
             in_channels=in_channels,
             image_size=image_size,
+            last_layer=last_layer,
         )
+        if ema:
+            model = EMA(model, momentum=0.99)
+        if swa:
+            model = SWA(model, cycle_start=0, cycle_length=1)
 
         if baseline_type == "single":
             return PixelRegressionRoutine(
+                probabilistic=probabilistic,
                 output_dim=output_dim,
-                probabilistic=False,
                 model=model,
                 loss=loss,
-                format_batch_fn=None,
                 optim_recipe=optim_recipe(model),
             )
 
@@ -236,11 +271,11 @@ class DummyPixelRegressionBaseline:
         model = deep_ensembles(
             [model, copy.deepcopy(model)],
             task="pixel_regression",
-            probabilistic=False,
+            probabilistic=probabilistic,
         )
         return PixelRegressionRoutine(
+            probabilistic=probabilistic,
             output_dim=output_dim,
-            probabilistic=False,
             model=model,
             loss=loss,
             format_batch_fn=RepeatTarget(2),

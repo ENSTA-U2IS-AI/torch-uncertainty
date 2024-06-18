@@ -6,7 +6,6 @@ from torch import Tensor, nn
 from torch.distributions import (
     Categorical,
     Distribution,
-    Independent,
     MixtureSameFamily,
 )
 from torch.optim import Optimizer
@@ -21,8 +20,8 @@ from torch_uncertainty.models import (
 )
 from torch_uncertainty.utils.distributions import (
     dist_rearrange,
-    size_dist,
-    squeeze_dist,
+    dist_size,
+    dist_squeeze,
 )
 
 
@@ -141,9 +140,9 @@ class RegressionRoutine(LightningModule):
         pred = self.model(inputs)
         if self.probabilistic:
             if self.one_dim_regression:
-                pred = squeeze_dist(pred, -1)
+                pred = dist_squeeze(pred, -1)
             if not self.is_ensemble:
-                pred = squeeze_dist(pred, -1)
+                pred = dist_squeeze(pred, -1)
         else:
             if self.one_dim_regression:
                 pred = pred.squeeze(-1)
@@ -161,6 +160,8 @@ class RegressionRoutine(LightningModule):
             targets = targets.unsqueeze(-1)
 
         loss = self.loss(dists, targets)
+        if self.need_step_update:
+            self.model.update_model(self.current_epoch)
         self.log("train_loss", loss)
         return loss
 
@@ -170,22 +171,22 @@ class RegressionRoutine(LightningModule):
         inputs, targets = batch
         if self.one_dim_regression:
             targets = targets.unsqueeze(-1)
+        batch_size = targets.size(0)
+        targets = rearrange(targets, "b c -> (b c)")
         preds = self.model(inputs)
 
         if self.probabilistic:
-            ens_dist = Independent(
-                dist_rearrange(preds, "(m b) c -> b m c", b=targets.size(0)),
-                1,
-            )
+            ens_dist = dist_rearrange(preds, "(m b) c -> (b c) m", b=batch_size)
             mix = Categorical(
                 torch.ones(
-                    size_dist(preds)[0] // targets.size(0), device=self.device
+                    dist_size(preds)[0] // batch_size, device=self.device
                 )
             )
+            print(ens_dist, type(ens_dist))
             mixture = MixtureSameFamily(mix, ens_dist)
             preds = mixture.mean
         else:
-            preds = rearrange(preds, "(m b) c -> b m c", b=targets.size(0))
+            preds = rearrange(preds, "(m b) c -> (b c) m", b=batch_size)
             preds = preds.mean(dim=1)
 
         self.val_metrics.update(preds, targets)
@@ -207,22 +208,21 @@ class RegressionRoutine(LightningModule):
         inputs, targets = batch
         if self.one_dim_regression:
             targets = targets.unsqueeze(-1)
+        batch_size = targets.size(0)
+        targets = rearrange(targets, "b c -> (b c)")
         preds = self.model(inputs)
 
         if self.probabilistic:
-            ens_dist = Independent(
-                dist_rearrange(preds, "(m b) c -> b m c", b=targets.size(0)),
-                1,
-            )
+            ens_dist = dist_rearrange(preds, "(m b) c -> (b c) m", b=batch_size)
             mix = Categorical(
                 torch.ones(
-                    size_dist(preds)[0] // targets.size(0), device=self.device
+                    dist_size(preds)[0] // batch_size, device=self.device
                 )
             )
             mixture = MixtureSameFamily(mix, ens_dist)
             preds = mixture.mean
         else:
-            preds = rearrange(preds, "(m b) c -> b m c", b=targets.size(0))
+            preds = rearrange(preds, "(m b) c -> (b c) m", b=batch_size)
             preds = preds.mean(dim=1)
 
         self.test_metrics.update(preds, targets)

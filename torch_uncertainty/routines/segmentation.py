@@ -159,6 +159,8 @@ class SegmentationRoutine(LightningModule):
         target = target.flatten()
         valid_mask = target != 255
         loss = self.loss(logits[valid_mask], target[valid_mask])
+        if self.need_step_update:
+            self.model.update_model(self.current_epoch)
         self.log("train_loss", loss)
         return loss
 

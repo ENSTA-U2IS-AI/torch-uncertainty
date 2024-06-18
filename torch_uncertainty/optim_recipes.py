@@ -8,21 +8,28 @@ from torch import nn, optim
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import LRScheduler
 
-__all__ = [
-    "optim_cifar10_resnet18",
-    "optim_cifar10_resnet34",
-    "optim_cifar10_resnet50",
-    "optim_cifar10_vgg16",
-    "optim_cifar10_wideresnet",
-    "optim_cifar100_resnet18",
-    "optim_cifar100_resnet34",
-    "optim_cifar100_resnet50",
-    "optim_cifar100_vgg16",
-    "optim_imagenet_resnet50",
-    "optim_imagenet_resnet50_a3",
-    "optim_tinyimagenet_resnet34",
-    "optim_tinyimagenet_resnet50",
-]
+
+def optim_abnn(
+    model: nn.Module,
+    lr: float,
+    momentum: float = 0.9,
+    weight_decay: float = 1e-4,
+    nesterov: bool = True,
+) -> dict:
+    """ABNN finetuning recipe."""
+    optimizer = optim.SGD(
+        model.parameters(),
+        lr=lr,
+        momentum=momentum,
+        weight_decay=weight_decay,
+        nesterov=nesterov,
+    )
+    scheduler = optim.lr_scheduler.MultiStepLR(
+        optimizer,
+        milestones=[2, 4],
+        gamma=0.1,
+    )
+    return {"optimizer": optimizer, "lr_scheduler": scheduler}
 
 
 def optim_cifar10_resnet18(

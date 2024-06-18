@@ -27,6 +27,7 @@ class TestSegmentation:
             baseline_type="single",
             optim_recipe=optim_cifar10_resnet18,
             log_plots=True,
+            ema=True,
         )
 
         trainer.fit(model, dm)
@@ -47,6 +48,7 @@ class TestSegmentation:
             loss=nn.CrossEntropyLoss(),
             baseline_type="ensemble",
             optim_recipe=optim_cifar10_resnet18,
+            swa=True,
         )
 
         trainer.fit(model, dm)

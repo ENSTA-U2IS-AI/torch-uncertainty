@@ -305,7 +305,7 @@ class ClassificationRoutine(LightningModule):
                     with torch.no_grad():
                         feats = self.model.feats_forward(batch[0]).detach()
                     batch = self.mixup(*batch, feats)
-                elif self.mixup_params["dist_sim"] == "inp":
+                else:  # self.mixup_params["dist_sim"] == "inp":
                     batch = self.mixup(*batch, batch[0])
             else:
                 batch = self.mixup(*batch)

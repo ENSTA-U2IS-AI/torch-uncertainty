@@ -22,14 +22,24 @@ class DistributionNLLLoss(nn.Module):
         super().__init__()
         self.reduction = reduction
 
-    def forward(self, dist: Distribution, targets: Tensor) -> Tensor:
+    def forward(
+        self,
+        dist: Distribution,
+        targets: Tensor,
+        padding_mask: Tensor | None = None,
+    ) -> Tensor:
         """Compute the NLL of the targets given predicted distributions.
 
         Args:
             dist (Distribution): The predicted distributions
             targets (Tensor): The target values
+            padding_mask (Tensor, optional): The padding mask. Defaults to None.
+                Sets the loss to 0 for padded values.
         """
         loss = -dist.log_prob(targets)
+        if padding_mask is not None:
+            loss = loss.masked_fill(padding_mask, 0.0)
+
         if self.reduction == "mean":
             loss = loss.mean()
         elif self.reduction == "sum":

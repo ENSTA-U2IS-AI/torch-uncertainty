@@ -1,7 +1,7 @@
 from typing import Literal
 
 import torch
-from torch import Tensor, device, nn, optim
+from torch import Tensor, nn, optim
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 
@@ -17,7 +17,7 @@ class Scaler(PostProcessing):
         model: nn.Module | None = None,
         lr: float = 0.1,
         max_iter: int = 100,
-        device: Literal["cpu", "cuda"] | device | None = None,
+        device: Literal["cpu", "cuda"] | torch.device | None = None,
     ) -> None:
         """Virtual class for scaling post-processing for calibrated probabilities.
 
