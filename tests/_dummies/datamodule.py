@@ -10,8 +10,8 @@ from torchvision import tv_tensors
 from torch_uncertainty.datamodules.abstract import BaseDataModule
 
 from .dataset import (
+    DummPixelRegressionDataset,
     DummyClassificationDataset,
-    DummyDepthDataset,
     DummyRegressionDataset,
     DummySegmentationDataset,
 )
@@ -249,7 +249,7 @@ class DummySegmentationDataModule(BaseDataModule):
         return np.array(self.train.targets)
 
 
-class DummyDepthDataModule(BaseDataModule):
+class DummPixelRegressionDataModule(BaseDataModule):
     num_channels = 3
     training_task = "pixel_regression"
 
@@ -278,7 +278,7 @@ class DummyDepthDataModule(BaseDataModule):
         self.num_images = num_images
         self.image_size = image_size
 
-        self.dataset = DummyDepthDataset
+        self.dataset = DummPixelRegressionDataset
 
         self.train_transform = T.ToDtype(
             dtype={

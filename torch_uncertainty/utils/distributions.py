@@ -7,8 +7,17 @@ from torch.distributions import Distribution, Laplace, Normal, constraints
 from torch.distributions.utils import broadcast_all
 
 
+def size_dist(distribution: Distribution) -> torch.Size:
+    if isinstance(distribution, Normal | Laplace | NormalInverseGamma):
+        return distribution.loc.size()
+    raise NotImplementedError(
+        f"Size of {type(distribution)} distributions is not supported."
+        "Raise an issue if needed."
+    )
+
+
 def cat_dist(distributions: list[Distribution], dim: int) -> Distribution:
-    r"""Concatenate a list of distributions into a single distribution.
+    """Concatenate a list of distributions into a single distribution.
 
     Args:
         distributions (list[Distribution]): The list of distributions.

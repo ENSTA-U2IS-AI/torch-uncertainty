@@ -1,19 +1,19 @@
 # ruff: noqa: F401
 from .baseline import (
     DummyClassificationBaseline,
-    DummyDepthBaseline,
+    DummyPixelRegressionBaseline,
     DummyRegressionBaseline,
     DummySegmentationBaseline,
 )
 from .datamodule import (
+    DummPixelRegressionDataModule,
     DummyClassificationDataModule,
-    DummyDepthDataModule,
     DummyRegressionDataModule,
     DummySegmentationDataModule,
 )
 from .dataset import (
+    DummPixelRegressionDataset,
     DummyClassificationDataset,
-    DummyDepthDataset,
     DummyRegressionDataset,
     DummySegmentationDataset,
 )

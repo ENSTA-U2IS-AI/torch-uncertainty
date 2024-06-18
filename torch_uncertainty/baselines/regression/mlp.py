@@ -82,7 +82,7 @@ class MLPBaseline(RegressionRoutine):
             output_dim=output_dim,
             model=model,
             loss=loss,
-            num_estimators=num_estimators,
+            is_ensemble=version in self.ensemble,
             format_batch_fn=format_batch_fn,
         )
         self.save_hyperparameters(ignore=["loss"])

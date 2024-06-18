@@ -142,12 +142,10 @@ class TestRegression:
         model(dm.get_test_set()[0][0])
 
     def test_regression_failures(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="output_dim must be positive"):
             RegressionRoutine(
-                True, 1, nn.Identity(), nn.MSELoss, num_estimators=0
-            )
-
-        with pytest.raises(ValueError):
-            RegressionRoutine(
-                True, 0, nn.Identity(), nn.MSELoss, num_estimators=1
+                probabilistic=True,
+                output_dim=0,
+                model=nn.Identity(),
+                loss=nn.MSELoss(),
             )

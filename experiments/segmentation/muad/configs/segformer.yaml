@@ -10,7 +10,6 @@ model:
   loss: CrossEntropyLoss
   version: std
   arch: 0
-  num_estimators: 1
 data:
   root: ./data
   batch_size: 8

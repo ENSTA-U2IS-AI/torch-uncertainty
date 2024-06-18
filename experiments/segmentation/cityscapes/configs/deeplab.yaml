@@ -29,7 +29,6 @@ model:
   style: v3+
   output_stride: 16
   separable: false
-  num_estimators: 1
 data:
   root: ./data/Cityscapes
   batch_size: 8

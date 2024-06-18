@@ -25,7 +25,6 @@ model:
   loss: CrossEntropyLoss
   version: std
   arch: 0
-  num_estimators: 1
 data:
   root: ./data/Cityscapes
   batch_size: 8

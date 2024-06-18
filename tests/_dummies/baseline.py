@@ -112,7 +112,7 @@ class DummyRegressionBaseline:
         probabilistic: bool,
         in_features: int,
         output_dim: int,
-        loss: type[nn.Module],
+        loss: nn.Module,
         baseline_type: str = "single",
         optim_recipe=None,
         dist_type: str = "normal",
@@ -142,7 +142,6 @@ class DummyRegressionBaseline:
                 output_dim=output_dim,
                 model=model,
                 loss=loss,
-                num_estimators=1,
                 optim_recipe=optim_recipe(model),
             )
         # baseline_type == "ensemble":
@@ -156,7 +155,7 @@ class DummyRegressionBaseline:
             output_dim=output_dim,
             model=model,
             loss=loss,
-            num_estimators=2,
+            is_ensemble=True,
             optim_recipe=optim_recipe(model),
             format_batch_fn=RepeatTarget(2),
         )
@@ -168,7 +167,7 @@ class DummySegmentationBaseline:
         in_channels: int,
         num_classes: int,
         image_size: int,
-        loss: type[nn.Module],
+        loss: nn.Module,
         baseline_type: str = "single",
         optim_recipe=None,
         metric_subsampling_rate: float = 1,
@@ -186,7 +185,6 @@ class DummySegmentationBaseline:
                 model=model,
                 loss=loss,
                 format_batch_fn=None,
-                num_estimators=1,
                 optim_recipe=optim_recipe(model),
                 metric_subsampling_rate=metric_subsampling_rate,
                 log_plots=log_plots,
@@ -202,20 +200,19 @@ class DummySegmentationBaseline:
             model=model,
             loss=loss,
             format_batch_fn=RepeatTarget(2),
-            num_estimators=2,
             optim_recipe=optim_recipe(model),
             metric_subsampling_rate=metric_subsampling_rate,
             log_plots=log_plots,
         )
 
 
-class DummyDepthBaseline:
+class DummyPixelRegressionBaseline:
     def __new__(
         cls,
         in_channels: int,
         output_dim: int,
         image_size: int,
-        loss: type[nn.Module],
+        loss: nn.Module,
         baseline_type: str = "single",
         optim_recipe=None,
     ) -> PixelRegressionRoutine:
@@ -232,7 +229,6 @@ class DummyDepthBaseline:
                 model=model,
                 loss=loss,
                 format_batch_fn=None,
-                num_estimators=1,
                 optim_recipe=optim_recipe(model),
             )
 
@@ -248,6 +244,6 @@ class DummyDepthBaseline:
             model=model,
             loss=loss,
             format_batch_fn=RepeatTarget(2),
-            num_estimators=2,
+            is_ensemble=True,
             optim_recipe=optim_recipe(model),
         )

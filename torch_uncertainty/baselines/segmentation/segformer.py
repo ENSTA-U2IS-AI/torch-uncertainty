@@ -21,7 +21,6 @@ class SegFormerBaseline(SegmentationRoutine):
         loss: nn.Module,
         version: Literal["std"],
         arch: int,
-        num_estimators: int = 1,
     ) -> None:
         r"""SegFormer backbone baseline for segmentation providing support for
         various versions and architectures.
@@ -63,7 +62,6 @@ class SegFormerBaseline(SegmentationRoutine):
             num_classes=num_classes,
             model=model,
             loss=loss,
-            num_estimators=num_estimators,
             format_batch_fn=format_batch_fn,
         )
         self.save_hyperparameters(ignore=["loss"])

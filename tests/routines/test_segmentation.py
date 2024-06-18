@@ -56,16 +56,6 @@ class TestSegmentation:
 
     def test_segmentation_errors(self):
         with pytest.raises(
-            ValueError, match="num_estimators must be positive, got"
-        ):
-            SegmentationRoutine(
-                model=nn.Identity(),
-                num_classes=2,
-                loss=nn.CrossEntropyLoss(),
-                num_estimators=0,
-            )
-
-        with pytest.raises(
             ValueError, match="num_classes must be at least 2, got"
         ):
             SegmentationRoutine(
