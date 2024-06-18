@@ -10,6 +10,7 @@ from tests._dummies import (
 )
 from torch_uncertainty.losses import DECLoss, ELBOLoss
 from torch_uncertainty.routines import ClassificationRoutine
+from torch_uncertainty.transforms import RepeatTarget
 from torch_uncertainty.utils import TUTrainer
 
 
@@ -390,4 +391,28 @@ class TestClassification:
         with pytest.raises(ValueError):
             ClassificationRoutine(
                 num_classes=10, model=model, loss=None, eval_grouping_loss=True
+            )
+
+        with pytest.raises(
+            ValueError,
+            match="Mixup is not supported for ensembles at training time",
+        ):
+            ClassificationRoutine(
+                num_classes=10,
+                model=nn.Module(),
+                loss=None,
+                mixup_params={"mixtype": "mixup"},
+                format_batch_fn=RepeatTarget(2),
+            )
+
+        with pytest.raises(
+            ValueError,
+            match="Ensembles and post-processing methods cannot be used together. Raise an issue if needed.",
+        ):
+            ClassificationRoutine(
+                num_classes=10,
+                model=nn.Module(),
+                loss=None,
+                is_ensemble=True,
+                post_processing=nn.Module(),
             )

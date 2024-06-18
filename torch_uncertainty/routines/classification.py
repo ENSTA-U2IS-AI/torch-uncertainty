@@ -73,7 +73,7 @@ class ClassificationRoutine(LightningModule):
         ood_criterion: Literal[
             "msp", "logit", "energy", "entropy", "mi", "vr"
         ] = "msp",
-        post_processing_method: PostProcessing | None = None,
+        post_processing: PostProcessing | None = None,
         calibration_set: Literal["val", "test"] = "val",
         num_calibration_bins: int = 15,
         log_plots: bool = False,
@@ -106,7 +106,7 @@ class ClassificationRoutine(LightningModule):
                 - ``"entropy"``: Entropy of the mean prediction.
                 - ``"mi"``: Mutual information of the ensemble.
                 - ``"vr"``: Variation ratio of the ensemble.
-            post_processing_method (PostProcessing, optional): Post-processing method
+            post_processing (PostProcessing, optional): Post-processing method
                 to train on the calibration set. No post-processing if None.
                 Defaults to ``None``.
             calibration_set (str, optional): The post-hoc calibration dataset to
@@ -135,7 +135,7 @@ class ClassificationRoutine(LightningModule):
             eval_grouping_loss=eval_grouping_loss,
             num_calibration_bins=num_calibration_bins,
             mixup_params=mixup_params,
-            post_processing_method=post_processing_method,
+            post_processing=post_processing,
             format_batch_fn=format_batch_fn,
         )
 
@@ -159,9 +159,9 @@ class ClassificationRoutine(LightningModule):
         self.optim_recipe = optim_recipe
         self.is_ensemble = is_ensemble
 
-        self.post_processing_method = post_processing_method
-        if self.post_processing_method is not None:
-            self.post_processing_method.set_model(self.model)
+        self.post_processing = post_processing
+        if self.post_processing is not None:
+            self.post_processing.set_model(self.model)
 
         self._init_metrics()
         self.mixup = self._init_mixup(mixup_params)
@@ -209,7 +209,7 @@ class ClassificationRoutine(LightningModule):
         self.val_cls_metrics = cls_metrics.clone(prefix="val/")
         self.test_cls_metrics = cls_metrics.clone(prefix="test/")
 
-        if self.calibration_set is not None:
+        if self.post_processing is not None:
             self.ts_cls_metrics = cls_metrics.clone(prefix="test/ts_")
 
         self.test_id_entropy = Entropy()
@@ -329,14 +329,14 @@ class ClassificationRoutine(LightningModule):
                 )
 
     def on_test_start(self) -> None:
-        if self.post_processing_method is not None:
+        if self.post_processing is not None:
             calibration_dataset = (
                 self.trainer.datamodule.val_dataloader().dataset
                 if self.calibration_set == "val"
                 else self.trainer.datamodule.test_dataloader()[0].dataset
             )
             with torch.inference_mode(False):
-                self.post_processing_method.fit(calibration_dataset)
+                self.post_processing.fit(calibration_dataset)
 
         if self.eval_ood and self.log_plots and isinstance(self.logger, Logger):
             self.id_logit_storage = []
@@ -447,8 +447,8 @@ class ClassificationRoutine(LightningModule):
         else:
             ood_scores = -confs
 
-        if self.post_processing_method is not None:
-            pp_logits = self.post_processing_method(inputs)
+        if self.post_processing is not None:
+            pp_logits = self.post_processing(inputs)
             pp_probs = F.softmax(pp_logits, dim=-1)
             self.ts_cls_metrics.update(pp_probs, targets)
 
@@ -515,7 +515,7 @@ class ClassificationRoutine(LightningModule):
             {"test/Entropy": self.test_id_entropy.compute()}, sync_dist=True
         )
 
-        if self.post_processing_method is not None:
+        if self.post_processing is not None:
             tmp_metrics = self.ts_cls_metrics.compute()
             self.log_dict(tmp_metrics, sync_dist=True)
             result_dict.update(tmp_metrics)
@@ -553,7 +553,7 @@ class ClassificationRoutine(LightningModule):
                 self.test_cls_metrics["sc/AURC"].plot()[0],
             )
 
-            if self.post_processing_method is not None:
+            if self.post_processing is not None:
                 self.logger.experiment.add_figure(
                     "Reliabity diagram after calibration",
                     self.ts_cls_metrics["cal/ECE"].plot()[0],
@@ -607,7 +607,7 @@ def _classification_routine_checks(
     eval_grouping_loss: bool,
     num_calibration_bins: int,
     mixup_params: dict | None,
-    post_processing_method: PostProcessing | None,
+    post_processing: PostProcessing | None,
     format_batch_fn: nn.Module | None,
 ) -> None:
     if ood_criterion not in [
@@ -664,7 +664,7 @@ def _classification_routine_checks(
             "Mixup is not supported for ensembles at training time. Please set mixup_params to None."
         )
 
-    if post_processing_method is not None and is_ensemble:
+    if post_processing is not None and is_ensemble:
         raise ValueError(
             "Ensembles and post-processing methods cannot be used together. Raise an issue if needed."
         )

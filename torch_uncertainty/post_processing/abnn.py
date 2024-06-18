@@ -22,7 +22,7 @@ class ABNN(PostProcessing):
         num_models: int,
         num_samples: int,
         base_lr: float,
-        device: torch.device,
+        device: torch.device | str,
         max_epochs: int = 5,
         use_original_model: bool = True,
         batch_size: int = 128,
@@ -116,10 +116,12 @@ class ABNN(PostProcessing):
         for baseline in baselines:
             trainer = TUTrainer(
                 max_epochs=self.max_epochs,
-                devices=self.device,
+                accelerator=self.device,
                 enable_progress_bar=False,
                 precision=self.precision,
                 logger=None,
+                weights_summary=None,
+                progress_bar_refresh_rate=0,
             )
             trainer.fit(model=baseline, train_dataloaders=dl)
 

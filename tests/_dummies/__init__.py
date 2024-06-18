@@ -6,8 +6,8 @@ from .baseline import (
     DummySegmentationBaseline,
 )
 from .datamodule import (
-    DummPixelRegressionDataModule,
     DummyClassificationDataModule,
+    DummyPixelRegressionDataModule,
     DummyRegressionDataModule,
     DummySegmentationDataModule,
 )

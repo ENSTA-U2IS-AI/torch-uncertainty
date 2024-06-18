@@ -7,7 +7,9 @@ from huggingface_hub.utils._errors import EntryNotFoundError
 from safetensors.torch import load_file
 
 
-def load_hf(weight_id: str, version: int = 0) -> tuple[torch.Tensor, dict]:
+def load_hf(
+    weight_id: str, version: int = 0
+) -> tuple[dict[str, torch.Tensor], dict]:
     """Load a model from the HuggingFace hub.
 
     Args:
@@ -15,7 +17,7 @@ def load_hf(weight_id: str, version: int = 0) -> tuple[torch.Tensor, dict]:
         version (int): The id of the version when there are several on HF.
 
     Returns:
-        Tuple[Tensor, Dict]: The model weights and config.
+        Tuple[dict, dict]: The model weights and config.
 
     Note - License:
         TorchUncertainty's weights are released under the Apache 2.0 license.

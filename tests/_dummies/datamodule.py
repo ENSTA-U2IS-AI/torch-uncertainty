@@ -249,7 +249,7 @@ class DummySegmentationDataModule(BaseDataModule):
         return np.array(self.train.targets)
 
 
-class DummPixelRegressionDataModule(BaseDataModule):
+class DummyPixelRegressionDataModule(BaseDataModule):
     num_channels = 3
     training_task = "pixel_regression"
 

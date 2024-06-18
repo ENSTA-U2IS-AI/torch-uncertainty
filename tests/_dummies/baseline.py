@@ -80,9 +80,7 @@ class DummyClassificationBaseline:
                 ood_criterion=ood_criterion,
                 eval_ood=eval_ood,
                 eval_grouping_loss=eval_grouping_loss,
-                post_processing_method=TemperatureScaler()
-                if calibrate
-                else None,
+                post_processing=TemperatureScaler() if calibrate else None,
                 save_in_csv=save_in_csv,
             )
         # baseline_type == "ensemble":
@@ -101,7 +99,7 @@ class DummyClassificationBaseline:
             ood_criterion=ood_criterion,
             eval_ood=eval_ood,
             eval_grouping_loss=eval_grouping_loss,
-            post_processing_method=TemperatureScaler() if calibrate else None,
+            post_processing=TemperatureScaler() if calibrate else None,
             save_in_csv=save_in_csv,
         )
 
