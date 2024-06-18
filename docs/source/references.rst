@@ -15,7 +15,7 @@ For Deep Evidential Classification, consider citing:
 
 **Evidential Deep Learning to Quantify Classification Uncertainty**
 
-* Authors: *Murat Sensoy, Lance Kaplan, Melih Kandemir*
+* Authors: *Murat Sensoy, Lance Kaplan, and Melih Kandemir*
 * Paper: `NeurIPS 2018 <https://arxiv.org/pdf/1806.01768>`__.
 
 
@@ -26,7 +26,7 @@ For Beta NLL in Deep Regression, consider citing:
 
 **On the Pitfalls of Heteroscedastic Uncertainty Estimation with Probabilistic Neural Networks**
 
-* Authors: *Maximilian Seitzer, Arash Tavakoli, Dimitrije Antic, Georg Martius*
+* Authors: *Maximilian Seitzer, Arash Tavakoli, Dimitrije Antic, and Georg Martius*
 * Paper: `ICLR 2022 <https://arxiv.org/abs/2203.09168>`__.
 
 
@@ -37,7 +37,7 @@ For Deep Evidential Regression, consider citing:
 
 **Deep Evidential Regression**
 
-* Authors: *Alexander Amini, Wilko Schwarting, Ava Soleimany, Daniela Rus*
+* Authors: *Alexander Amini, Wilko Schwarting, Ava Soleimany, and Daniela Rus*
 * Paper: `NeurIPS 2020 <https://arxiv.org/pdf/1910.02600>`__.
 
 
@@ -80,7 +80,7 @@ For Stochastic Weight Averaging, consider citing:
 
 **Averaging Weights Leads to Wider Optima and Better Generalization**
 
-* Authors: *Pavel Izmailov, Dmitrii Podoprikhin, Timur Garipov, Dmitry Vetrov, Andrew Gordon Wilson*
+* Authors: *Pavel Izmailov, Dmitrii Podoprikhin, Timur Garipov, Dmitry Vetrov, and Andrew Gordon Wilson*
 * Paper: `UAI 2018 <https://arxiv.org/pdf/1803.05407.pdf>`__.
 
 Stochastic Weight Averaging Gaussian
@@ -101,8 +101,18 @@ For CheckpointEnsemble, consider citing:
 
 **Checkpoint Ensembles: Ensemble Methods from a Single Training Process**
 
-* Authors: *Hugh Chen, Scott Lundberg, Su-In Lee*
+* Authors: *Hugh Chen, Scott Lundberg, and Su-In Lee*
 * Paper: `ArXiv <https://arxiv.org/pdf/1710.03282>`__.
+
+SnapshotEnsemble
+^^^^^^^^^^^^^^^^
+
+For SnapshotEnsemble, consider citing:
+
+**Snapshot Ensembles: Train 1, get M for free**
+
+* Authors: *Gao Huang, Yixuan Li, Geoff Pleiss, Zhuang Liu, John E. Hopcroft, and Kilian Q. Weinberger
+* Paper: `ICLR 2017 <https://arxiv.org/pdf/1704.00109.pdf>`__.
 
 BatchEnsemble
 ^^^^^^^^^^^^^
@@ -177,7 +187,7 @@ For RegMixup, consider citing:
 
 **RegMixup: Mixup as a Regularizer Can Surprisingly Improve Accuracy and Out Distribution Robustness**
 
-* Authors: *Francesco Pinto, Harry Yang, Ser-Nam Lim, Philip H.S. Torr, Puneet K. Dokania*
+* Authors: *Francesco Pinto, Harry Yang, Ser-Nam Lim, Philip H.S. Torr, and Puneet K. Dokania*
 * Paper: `NeurIPS 2022 <https://arxiv.org/abs/2206.14502>`__.
 
 MixupIO
@@ -230,7 +240,7 @@ For Laplace Approximation, consider citing:
 
 **Laplace Redux - Effortless Bayesian Deep Learning**
 
-* Authors: *Erik Daxberger, Agustinus Kristiadi, Alexander Immer, Runa Eschenhagen, Matthias Bauer, Philipp Hennig*
+* Authors: *Erik Daxberger, Agustinus Kristiadi, Alexander Immer, Runa Eschenhagen, Matthias Bauer, and Philipp Hennig*
 * Paper: `NeurIPS 2021 <https://arxiv.org/abs/2106.14806>`__.
 
 Metrics
@@ -255,7 +265,7 @@ For the adaptive calibration error, consider citing:
 
 **Measuring Calibration in Deep Learning**
 
-* Authors: Jeremy Nixon, Mike Dusenberry, Ghassen Jerfel, Timothy Nguyen, Jeremiah Liu, Linchuan Zhang, Dustin Tran
+* Authors: *Jeremy Nixon, Mike Dusenberry, Ghassen Jerfel, Timothy Nguyen, Jeremiah Liu, Linchuan Zhang, and Dustin Tran*
 * Paper: `CVPRW 2019 <https://arxiv.org/pdf/1904.01685.pdf>`__.
 
 Area Under the Risk-Coverage curve
@@ -265,7 +275,7 @@ For the area under the risk-coverage curve, consider citing:
 
 **Selective classification for deep neural networks**
 
-* Authors: Yonatan Geifman, Ran El-Yaniv
+* Authors: *Yonatan Geifman and Ran El-Yaniv*
 * Paper: `NeurIPS 2017 <https://arxiv.org/pdf/1705.08500.pdf>`__.
 
 Grouping Loss
@@ -335,7 +345,7 @@ CIFAR-10 N / CIFAR-100 N
 
 **Learning with Noisy Labels Revisited: A Study Using Real-World Human Annotations**
 
-* Authors: *Jiaheng Wei, Zhaowei Zhu, Hao Cheng, Tongliang Liu, Gang Niu, Yang Liu*
+* Authors: *Jiaheng Wei, Zhaowei Zhu, Hao Cheng, Tongliang Liu, Gang Niu, and Yang Liu*
 * Paper: `ICLR 2022 <https://arxiv.org/pdf/2110.12088.pdf>`__.
 
 SVHN
@@ -400,7 +410,7 @@ MUAD
 
 **MUAD: Multiple Uncertainties for Autonomous Driving Dataset**
 
-* Authors: Gianni Franchi, Xuanlong Yu, Andrei Bursuc, et al.*
+* Authors: *Gianni Franchi, Xuanlong Yu, Andrei Bursuc, et al.*
 * Paper: `BMVC 2022 <https://arxiv.org/pdf/2203.01437.pdf>__`
 
 Architectures
