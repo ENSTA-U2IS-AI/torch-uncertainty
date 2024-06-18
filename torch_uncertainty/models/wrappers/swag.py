@@ -54,7 +54,6 @@ class SWAG(SWA):
         super().__init__(model, cycle_start, cycle_length)
         _swag_checks(scale, max_num_models, var_clamp)
 
-        self.num_models = 0
         self.num_estimators = num_estimators
         self.scale = scale
 
@@ -110,12 +109,12 @@ class SWAG(SWA):
             squared_mean = self.swag_stats[self.prfx + name_p + "_sq_mean"]
             new_param = param.data.detach().cpu()
 
-            mean = mean * self.num_models / (
-                self.num_models + 1
-            ) + new_param / (self.num_models + 1)
-            squared_mean = squared_mean * self.num_models / (
-                self.num_models + 1
-            ) + new_param**2 / (self.num_models + 1)
+            mean = mean * self.num_avgd_models / (
+                self.num_avgd_models + 1
+            ) + new_param / (self.num_avgd_models + 1)
+            squared_mean = squared_mean * self.num_avgd_models / (
+                self.num_avgd_models + 1
+            ) + new_param**2 / (self.num_avgd_models + 1)
 
             self.swag_stats[self.prfx + name_p + "_mean"] = mean
             self.swag_stats[self.prfx + name_p + "_sq_mean"] = squared_mean
@@ -126,13 +125,13 @@ class SWAG(SWA):
                 ]
                 dev = (new_param - mean).view(-1, 1).t()
                 covariance_sqrt = torch.cat((covariance_sqrt, dev), dim=0)
-                if self.num_models + 1 > self.max_num_models:
+                if self.num_avgd_models + 1 > self.max_num_models:
                     covariance_sqrt = covariance_sqrt[1:, :]
                 self.swag_stats[self.prfx + name_p + "_covariance_sqrt"] = (
                     covariance_sqrt
                 )
 
-        self.num_models += 1
+        self.num_avgd_models += 1
 
         self.samples = [
             self.sample(self.scale, self.diag_covariance)
@@ -246,10 +245,10 @@ class SWAG(SWA):
         return super().load_state_dict(state_dict, strict, assign)
 
     def compute_logdet(self, block=False):
-        raise NotImplementedError("Raise an issue if you need this feature")
+        raise NotImplementedError("Raise an issue if you need this feature.")
 
     def compute_logprob(self, vec=None, block=False, diag=False):
-        raise NotImplementedError("Raise an issue if you need this feature")
+        raise NotImplementedError("Raise an issue if you need this feature.")
 
 
 def _swag_checks(scale: float, max_num_models: int, var_clamp: float) -> None:

@@ -44,26 +44,52 @@ class TestSWAG:
     def test_training(self):
         dl = DataLoader(TensorDataset(torch.randn(1, 1)), batch_size=1)
         swag = SWAG(
-            dummy_model(1, 10), cycle_start=1, cycle_length=1, max_num_models=3
+            dummy_model(1, 10),
+            cycle_start=1,
+            cycle_length=1,
+            max_num_models=3,
+            num_estimators=2,
         )
+        assert swag.num_avgd_models == 0
         swag.eval()
         swag(torch.randn(1, 1))
 
         swag.train()
         swag(torch.randn(1, 1))
         swag.update_model(0)
+        assert swag.swag_stats[
+            "model.swag_stats.linear.weight_covariance_sqrt"
+        ].shape == (0, 10)
         swag.update_bn(dl, "cpu")
         swag(torch.randn(1, 1))
 
         swag.update_model(1)
+        assert swag.swag_stats[
+            "model.swag_stats.linear.weight_covariance_sqrt"
+        ].shape == (0, 10)
+        assert swag.num_avgd_models == 0
         swag.update_bn(dl, "cpu")
 
         swag.update_model(2)
+        assert swag.swag_stats[
+            "model.swag_stats.linear.weight_covariance_sqrt"
+        ].shape == (1, 10)
         swag.update_bn(dl, "cpu")
         swag(torch.randn(1, 1))
         swag.update_model(3)
+        assert swag.swag_stats[
+            "model.swag_stats.linear.weight_covariance_sqrt"
+        ].shape == (2, 10)
         swag.update_model(4)
-
+        assert swag.num_avgd_models == 3
+        assert swag.swag_stats[
+            "model.swag_stats.linear.weight_covariance_sqrt"
+        ].shape == (3, 10)
+        swag.update_model(5)
+        assert swag.num_avgd_models == 4
+        assert swag.swag_stats[
+            "model.swag_stats.linear.weight_covariance_sqrt"
+        ].shape == (3, 10)
         swag.eval()
         swag(torch.randn(1, 1))
 
