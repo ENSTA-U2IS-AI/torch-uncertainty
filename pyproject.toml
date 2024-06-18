@@ -40,7 +40,7 @@ dependencies = [
     "scipy",
     "huggingface-hub",
     "scikit-learn",
-    "matplotlib",
+    "matplotlib==3.5.2",
     "numpy<2",
     "opencv-python",
     "glest==0.0.1a0",
