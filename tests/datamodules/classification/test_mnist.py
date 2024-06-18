@@ -12,7 +12,11 @@ class TestMNISTDataModule:
 
     def test_mnist_cutout(self):
         dm = MNISTDataModule(
-            root="./data/", batch_size=128, cutout=16, val_split=0.1
+            root="./data/",
+            batch_size=128,
+            cutout=16,
+            val_split=0.1,
+            eval_ood=True,
         )
 
         assert dm.dataset == MNIST

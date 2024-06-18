@@ -43,7 +43,9 @@ class TestSWAG:
 
     def test_training(self):
         dl = DataLoader(TensorDataset(torch.randn(1, 1)), batch_size=1)
-        swag = SWAG(dummy_model(1, 10), cycle_start=1, cycle_length=1)
+        swag = SWAG(
+            dummy_model(1, 10), cycle_start=1, cycle_length=1, max_num_models=3
+        )
         swag.eval()
         swag(torch.randn(1, 1))
 
@@ -59,6 +61,8 @@ class TestSWAG:
         swag.update_model(2)
         swag.update_bn(dl, "cpu")
         swag(torch.randn(1, 1))
+        swag.update_model(3)
+        swag.update_model(4)
 
         swag.eval()
         swag(torch.randn(1, 1))
@@ -67,10 +71,11 @@ class TestSWAG:
             dummy_model(1, 10),
             cycle_start=1,
             cycle_length=1,
-            diag_covariance=False,
+            diag_covariance=True,
         )
         swag.train()
-        swag.update_model(1)
+        swag.update_model(2)
+        swag.sample(1, True, False, seed=1)
 
     def test_state_dict(self):
         mod = dummy_model(1, 10)
@@ -94,3 +99,11 @@ class TestSWAG:
             ValueError, match="`var_clamp` must be non-negative. "
         ):
             SWAG(nn.Module(), var_clamp=-1, cycle_start=1, cycle_length=1)
+        swag = SWAG(
+            nn.Module(), cycle_start=1, cycle_length=1, diag_covariance=True
+        )
+        with pytest.raises(
+            ValueError,
+            match="Cannot sample full rank from diagonal covariance matrix.",
+        ):
+            swag.sample(scale=1, diag_covariance=False)

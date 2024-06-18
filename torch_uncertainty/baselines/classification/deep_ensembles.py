@@ -45,10 +45,9 @@ class DeepEnsemblesBaseline(ClassificationRoutine):
                 optim_recipe=None,
             ).eval()
             models.append(trained_model.model)
-        print(models)
         de = deep_ensembles(models=models)
 
-        super().__init__(
+        super().__init__(  # coverage: ignore
             num_classes=num_classes,
             model=de,
             loss=None,
