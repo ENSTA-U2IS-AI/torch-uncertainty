@@ -36,7 +36,12 @@ class TestSegmentation:
         model(dm.get_test_set()[0][0])
 
     def test_two_estimators_two_classes(self):
-        trainer = TUTrainer(accelerator="cpu", max_epochs=1, logger=None)
+        trainer = TUTrainer(
+            accelerator="cpu",
+            max_epochs=1,
+            logger=None,
+            enable_checkpointing=False,
+        )
 
         root = Path(__file__).parent.absolute().parents[0] / "data"
         dm = DummySegmentationDataModule(root=root, batch_size=4, num_classes=2)

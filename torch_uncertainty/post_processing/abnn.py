@@ -119,9 +119,8 @@ class ABNN(PostProcessing):
                 accelerator=self.device,
                 enable_progress_bar=False,
                 precision=self.precision,
+                enable_checkpointing=False,
                 logger=None,
-                weights_summary=None,
-                progress_bar_refresh_rate=0,
             )
             trainer.fit(model=baseline, train_dataloaders=dl)
 

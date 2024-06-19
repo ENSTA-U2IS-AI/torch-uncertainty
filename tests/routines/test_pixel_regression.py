@@ -19,7 +19,12 @@ from torch_uncertainty.utils import TUTrainer
 
 class TestPixelRegression:
     def test_one_estimator_two_classes(self):
-        trainer = TUTrainer(accelerator="cpu", max_epochs=1, logger=None)
+        trainer = TUTrainer(
+            accelerator="cpu",
+            max_epochs=1,
+            logger=None,
+            enable_checkpointing=False,
+        )
 
         root = Path(__file__).parent.absolute().parents[0] / "data"
         dm = DummyPixelRegressionDataModule(
@@ -42,7 +47,12 @@ class TestPixelRegression:
         trainer.test(model, dm)
         model(dm.get_test_set()[0][0])
 
-        trainer = TUTrainer(accelerator="cpu", max_epochs=1, logger=None)
+        trainer = TUTrainer(
+            accelerator="cpu",
+            max_epochs=1,
+            logger=None,
+            enable_checkpointing=False,
+        )
         model = DummyPixelRegressionBaseline(
             probabilistic=True,
             in_channels=dm.num_channels,
