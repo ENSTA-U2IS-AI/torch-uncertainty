@@ -47,7 +47,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-image = ["scikit-image", "h5py", "webdataset"]
+image = ["scikit-image", "h5py"]
 tabular = ["pandas"]
 dev = [
     "torch_uncertainty[image]",
@@ -67,7 +67,7 @@ docs = [
 all = [
     "torch_uncertainty[dev,docs,image,tabular]",
     "laplace-torch"
-    ]
+]
 
 [project.urls]
 homepage = "https://torch-uncertainty.github.io/"
