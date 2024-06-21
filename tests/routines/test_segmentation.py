@@ -38,7 +38,7 @@ class TestSegmentation:
     def test_two_estimators_two_classes(self):
         trainer = TUTrainer(
             accelerator="cpu",
-            max_epochs=1,
+            max_epochs=2,
             logger=None,
             enable_checkpointing=False,
         )

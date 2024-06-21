@@ -188,7 +188,7 @@ class DummySegmentationBaseline:
         if ema:
             model = EMA(model, momentum=0.99)
         if swa:
-            model = SWA(model, cycle_start=0, cycle_length=1)
+            model = SWA(model, cycle_start=0, cycle_length=2)
 
         if baseline_type == "single":
             return SegmentationRoutine(

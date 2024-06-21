@@ -121,6 +121,7 @@ class ABNN(PostProcessing):
                 precision=self.precision,
                 enable_checkpointing=False,
                 logger=None,
+                enable_model_summary=False,
             )
             trainer.fit(model=baseline, train_dataloaders=dl)
 
