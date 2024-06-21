@@ -53,12 +53,31 @@ class PixelRegressionRoutine(LightningModule):
         probabilistic: bool,
         loss: nn.Module,
         is_ensemble: bool = False,
-        optim_recipe: dict | Optimizer | None = None,
         format_batch_fn: nn.Module | None = None,
+        optim_recipe: dict | Optimizer | None = None,
         num_image_plot: int = 4,
+        log_plots: bool = False,
     ) -> None:
+        """Routine for training & testing on **pixel regression** tasks.
+
+        Args:
+            model (nn.Module): Model to train.
+            output_dim (int): Number of outputs of the model.
+            probabilistic (bool): Whether the model is probabilistic, i.e.,
+                outputs a PyTorch distribution.
+            loss (nn.Module): Loss function to optimize the :attr:`model`.
+            is_ensemble (bool, optional): Whether the model is an ensemble.
+                Defaults to ``False``.
+            optim_recipe (dict or Optimizer, optional): The optimizer and
+                optionally the scheduler to use. Defaults to ``None``.
+            format_batch_fn (nn.Module, optional): The function to format the
+                batch. Defaults to ``None``.
+            num_image_plot (int, optional): Number of images to plot. Defaults to ``4``.
+            log_plots (bool, optional): Indicates whether to log plots from
+                metrics. Defaults to ``False``.
+        """
         super().__init__()
-        _depth_routine_checks(output_dim)
+        _depth_routine_checks(output_dim, num_image_plot)
 
         self.model = model
         self.output_dim = output_dim
@@ -67,6 +86,7 @@ class PixelRegressionRoutine(LightningModule):
         self.loss = loss
         self.num_image_plot = num_image_plot
         self.is_ensemble = is_ensemble
+        self.log_plots = log_plots
 
         self.need_epoch_update = isinstance(model, EPOCH_UPDATE_MODEL)
         self.need_step_update = isinstance(model, STEP_UPDATE_MODEL)
@@ -202,7 +222,7 @@ class PixelRegressionRoutine(LightningModule):
             preds = rearrange(preds, "(m b) c h w -> (b c h w) m", b=batch_size)
             preds = preds.mean(dim=1)
 
-        if batch_idx == 0:
+        if batch_idx == 0 and self.log_plots:
             self._plot_depth(
                 inputs[: self.num_image_plot, ...],
                 preds[: self.num_image_plot, ...],
@@ -248,7 +268,7 @@ class PixelRegressionRoutine(LightningModule):
             preds = rearrange(preds, "(m b) c h w -> (b c h w) m", b=batch_size)
             preds = preds.mean(dim=1)
 
-        if batch_idx == 0:
+        if batch_idx == 0 and self.log_plots:
             num_images = (
                 self.num_image_plot
                 if self.num_image_plot < inputs.size(0)
@@ -344,6 +364,10 @@ def colorize(
     return torch.as_tensor(img).permute(2, 0, 1).float() / 255.0
 
 
-def _depth_routine_checks(output_dim: int) -> None:
+def _depth_routine_checks(output_dim: int, num_image_plot) -> None:
     if output_dim < 1:
         raise ValueError(f"output_dim must be positive, got {output_dim}.")
+    if num_image_plot < 1:
+        raise ValueError(
+            f"num_image_plot must be positive, got {num_image_plot}."
+        )

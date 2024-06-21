@@ -79,7 +79,7 @@ class ClassificationRoutine(LightningModule):
         log_plots: bool = False,
         save_in_csv: bool = False,
     ) -> None:
-        r"""Routine for training & testing on **classification tasks**.
+        r"""Routine for training & testing on **classification** tasks.
 
         Args:
             model (torch.nn.Module): Model to train.

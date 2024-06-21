@@ -26,9 +26,9 @@ class ImageNetVariation(ImageFolder):
             downloaded, it is not downloaded again. Defaults to False.
     """
 
-    url: str
-    filename: str
-    tgz_md5: str
+    url: str | list[str]
+    filename: str | list[str]
+    tgz_md5: str | list[str]
     dataset_name: str
     root_appendix: str
 

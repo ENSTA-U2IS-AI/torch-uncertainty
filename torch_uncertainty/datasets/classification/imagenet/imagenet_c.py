@@ -1,7 +1,6 @@
 from .base import ImageNetVariation
 
 
-# todo, build or download
 class ImageNetC(ImageNetVariation):
     """The corrupted ImageNet-C dataset.
 
