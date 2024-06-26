@@ -10,7 +10,7 @@ from torch import nn
 from torch.utils.data import DataLoader, Subset
 from torchvision.datasets import DTD, SVHN, ImageNet, INaturalist
 
-from torch_uncertainty.datamodules.abstract import BaseDataModule
+from torch_uncertainty.datamodules.abstract import TUDataModule
 from torch_uncertainty.datasets.classification import (
     ImageNetA,
     ImageNetO,
@@ -23,7 +23,7 @@ from torch_uncertainty.utils import (
 )
 
 
-class ImageNetDataModule(BaseDataModule):
+class ImageNetDataModule(TUDataModule):
     num_classes = 1000
     num_channels = 3
     test_datasets = ["r", "o", "a"]

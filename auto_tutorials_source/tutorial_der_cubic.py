@@ -29,7 +29,6 @@ To train a MLP with the DER loss function using TorchUncertainty, we have to loa
 
 We also need to define an optimizer using torch.optim and the neural network utils within torch.nn.
 """
-# %%
 import torch
 from lightning.pytorch import Trainer
 from lightning import LightningDataModule
@@ -49,7 +48,7 @@ from torch_uncertainty.layers.distributions import NormalInverseGammaLayer
 def optim_regression(
     model: nn.Module,
     learning_rate: float = 5e-4,
-) -> dict:
+):
     optimizer = optim.Adam(
         model.parameters(),
         lr=learning_rate,

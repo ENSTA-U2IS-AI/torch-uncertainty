@@ -9,7 +9,7 @@ from torch import nn
 from torch.utils.data import ConcatDataset, DataLoader
 from torchvision.datasets import DTD, SVHN
 
-from torch_uncertainty.datamodules.abstract import BaseDataModule
+from torch_uncertainty.datamodules.abstract import TUDataModule
 from torch_uncertainty.datasets.classification import ImageNetO, TinyImageNet
 from torch_uncertainty.utils import (
     create_train_val_split,
@@ -17,7 +17,7 @@ from torch_uncertainty.utils import (
 )
 
 
-class TinyImageNetDataModule(BaseDataModule):
+class TinyImageNetDataModule(TUDataModule):
     num_classes = 200
     num_channels = 3
     training_task = "classification"

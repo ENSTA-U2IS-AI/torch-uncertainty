@@ -14,13 +14,13 @@ class TestCheckpointEnsemble:
 
         ens.train()
         ens(torch.randn(1, 1))
-        ens.update_model(0)
+        ens.update_wrapper(0)
         ens.eval()
         ens(torch.randn(1, 1))
 
         ens = CheckpointEnsemble(dummy_model(1, 10), use_final_checkpoint=False)
         ens.train()
         ens(torch.randn(1, 1))
-        ens.update_model(0)
+        ens.update_wrapper(0)
         ens.eval()
         ens(torch.randn(1, 1))

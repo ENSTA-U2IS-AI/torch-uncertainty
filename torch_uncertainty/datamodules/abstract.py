@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.sampler import SubsetRandomSampler
 
 
-class BaseDataModule(ABC, LightningDataModule):
+class TUDataModule(ABC, LightningDataModule):
     training_task: str
     train: Dataset
     val: Dataset
@@ -150,13 +150,13 @@ class BaseDataModule(ABC, LightningDataModule):
         return cv_dm
 
 
-class CrossValDataModule(BaseDataModule):
+class CrossValDataModule(TUDataModule):
     def __init__(
         self,
         root: str | Path,
         train_idx: ArrayLike,
         val_idx: ArrayLike,
-        datamodule: BaseDataModule,
+        datamodule: TUDataModule,
         batch_size: int,
         val_split: float,
         num_workers: int,

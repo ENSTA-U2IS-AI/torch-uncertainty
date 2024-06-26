@@ -9,7 +9,7 @@ from safetensors.torch import load_file
 
 def load_hf(
     weight_id: str, version: int = 0
-) -> tuple[dict[str, torch.Tensor], dict]:
+) -> tuple[dict[str, torch.Tensor], dict[str, str]]:
     """Load a model from the HuggingFace hub.
 
     Args:
@@ -17,7 +17,7 @@ def load_hf(
         version (int): The id of the version when there are several on HF.
 
     Returns:
-        Tuple[dict, dict]: The model weights and config.
+        tuple[dict[str, torch.Tensor], dict[str, str]]: The model weights and config.
 
     Note - License:
         TorchUncertainty's weights are released under the Apache 2.0 license.

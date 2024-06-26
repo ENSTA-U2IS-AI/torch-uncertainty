@@ -36,7 +36,7 @@ class MCDropout(nn.Module):
         _dropout_checks(model, num_estimators)
         self.last_layer = last_layer
         self.on_batch = on_batch
-        self.model = model
+        self.core_model = model
         self.num_estimators = num_estimators
 
         self.filtered_modules = list(
@@ -70,13 +70,13 @@ class MCDropout(nn.Module):
         x: Tensor,
     ) -> Tensor:
         if self.training:
-            return self.model(x)
+            return self.core_model(x)
         if self.on_batch:
             x = x.repeat(self.num_estimators, 1, 1, 1)
-            return self.model(x)
+            return self.core_model(x)
         # Else, for loop
         return torch.cat(
-            [self.model(x) for _ in range(self.num_estimators)], dim=0
+            [self.core_model(x) for _ in range(self.num_estimators)], dim=0
         )
 
 

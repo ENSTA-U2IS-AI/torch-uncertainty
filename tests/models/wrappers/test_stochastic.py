@@ -48,24 +48,24 @@ class TestStochasticModel:
         model = StochasticModel(DummyModelLinear(), 2)
         model.freeze()
         model(torch.randn(1, 1))
-        assert model.model.layer.frozen
+        assert model.core_model.layer.frozen
         model.unfreeze()
-        assert not model.model.layer.frozen
+        assert not model.core_model.layer.frozen
         model.eval()
         model(torch.randn(1, 1))
 
         model = StochasticModel(DummyModelConv(), 2)
         model.freeze()
-        assert model.model.layer.frozen
+        assert model.core_model.layer.frozen
         model.unfreeze()
-        assert not model.model.layer.frozen
+        assert not model.core_model.layer.frozen
 
     def test_mix(self):
         model = StochasticModel(DummyModelMix(), 2)
         model.freeze()
-        assert model.model.layer.frozen
+        assert model.core_model.layer.frozen
         model.unfreeze()
-        assert not model.model.layer.frozen
+        assert not model.core_model.layer.frozen
 
         state = model.sample()[0]
         keys = state.keys()

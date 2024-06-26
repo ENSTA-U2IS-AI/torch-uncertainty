@@ -156,19 +156,32 @@ Models
 Wrappers
 ^^^^^^^^
 
+
+
+Functions
+"""""""""
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+
+    deep_ensembles
+    mc_dropout
+
+Classes
+"""""""
+
 .. autosummary::
     :toctree: generated/
     :nosignatures:
     :template: class.rst
 
-    deep_ensembles
     CheckpointEnsemble
     EMA
+    MCDropout
     StochasticModel
     SWA
     SWAG
-    MCDropout
-    mc_dropout
 
 Metrics
 -------

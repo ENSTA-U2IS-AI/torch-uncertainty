@@ -26,7 +26,7 @@ def optim_abnn(
     )
     scheduler = optim.lr_scheduler.MultiStepLR(
         optimizer,
-        milestones=[2, 4],
+        milestones=[1, 4],
         gamma=0.1,
     )
     return {"optimizer": optimizer, "lr_scheduler": scheduler}

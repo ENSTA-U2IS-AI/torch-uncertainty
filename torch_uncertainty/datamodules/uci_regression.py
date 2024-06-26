@@ -6,10 +6,10 @@ from torch.utils.data import random_split
 
 from torch_uncertainty.datasets.regression import UCIRegression
 
-from .abstract import BaseDataModule
+from .abstract import TUDataModule
 
 
-class UCIDataModule(BaseDataModule):
+class UCIDataModule(TUDataModule):
     training_task = "regression"
 
     def __init__(

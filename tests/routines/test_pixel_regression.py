@@ -119,3 +119,13 @@ class TestPixelRegression:
                 output_dim=0,
                 loss=nn.MSELoss(),
             )
+
+        with pytest.raises(ValueError, match="num_image_plot must be positive"):
+            PixelRegressionRoutine(
+                probabilistic=False,
+                model=nn.Identity(),
+                output_dim=1,
+                loss=nn.MSELoss(),
+                num_image_plot=0,
+                log_plots=True,
+            )

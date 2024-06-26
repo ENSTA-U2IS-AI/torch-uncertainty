@@ -28,20 +28,29 @@ trainer:
       check_finite: true
 model:
   model:
-    class_path: torch_uncertainty.models.lenet._LeNet
+    class_path: torch_uncertainty.models.StochasticModel
     init_args:
-      in_channels: 1
-      num_classes: 10
-      linear_layer: torch.nn.Linear
-      conv2d_layer: torch.nn.Conv2d
-      activation: torch.nn.ReLU
-      norm: torch.nn.Identity
-      groups: 1
-      dropout_rate: 0
-      last_layer_dropout: false
-      layer_args: {}
+      model:
+        class_path: torch_uncertainty.models.lenet._LeNet
+        init_args:
+          in_channels: 1
+          num_classes: 10
+          linear_layer: torch.nn.Linear
+          conv2d_layer: torch.nn.Conv2d
+          activation: torch.nn.ReLU
+          norm: torch.nn.Identity
+          groups: 1
+          dropout_rate: 0
+          last_layer_dropout: false
+          layer_args: {}
+      num_samples: 16
   num_classes: 10
-  loss: CrossEntropyLoss
+  loss:
+    class_path: torch_uncertainty.losses.ELBOLoss
+    init_args:
+      kl_weight: 0.00002
+      inner_loss: torch.nn.CrossEntropyLoss
+      num_samples: 3
 data:
   root: ./data
   batch_size: 128

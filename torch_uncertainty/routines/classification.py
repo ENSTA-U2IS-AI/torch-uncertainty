@@ -150,8 +150,8 @@ class ClassificationRoutine(LightningModule):
         self.save_in_csv = save_in_csv
         self.calibration_set = calibration_set
         self.binary_cls = num_classes == 1
-        self.need_epoch_update = isinstance(model, EPOCH_UPDATE_MODEL)
-        self.need_step_update = isinstance(model, STEP_UPDATE_MODEL)
+        self.needs_epoch_update = isinstance(model, EPOCH_UPDATE_MODEL)
+        self.needs_step_update = isinstance(model, STEP_UPDATE_MODEL)
         self.num_calibration_bins = num_calibration_bins
         self.model = model
         self.loss = loss
@@ -321,10 +321,10 @@ class ClassificationRoutine(LightningModule):
             )
 
     def on_validation_start(self) -> None:
-        if self.need_epoch_update and not self.trainer.sanity_checking:
-            self.model.update_model(self.current_epoch)
+        if self.needs_epoch_update and not self.trainer.sanity_checking:
+            self.model.update_wrapper(self.current_epoch)
             if hasattr(self.model, "need_bn_update"):
-                self.model.update_bn(
+                self.model.bn_update(
                     self.trainer.train_dataloader, device=self.device
                 )
 
@@ -343,7 +343,7 @@ class ClassificationRoutine(LightningModule):
             self.ood_logit_storage = []
 
         if hasattr(self.model, "need_bn_update"):
-            self.model.update_bn(
+            self.model.bn_update(
                 self.trainer.train_dataloader, device=self.device
             )
 
@@ -388,8 +388,8 @@ class ClassificationRoutine(LightningModule):
                 loss = self.loss(logits, target)
             else:
                 loss = self.loss(logits, target, self.current_epoch)
-        if self.need_step_update:
-            self.model.update_model(self.current_epoch)
+        if self.needs_step_update:
+            self.model.update_wrapper(self.current_epoch)
         self.log("train_loss", loss)
         return loss
 

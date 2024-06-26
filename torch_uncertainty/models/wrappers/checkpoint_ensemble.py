@@ -26,7 +26,7 @@ class CheckpointEnsemble(nn.Module):
             Hugh Chen, Scott Lundberg, Su-In Lee. In ArXiv 2018.
         """
         super().__init__()
-        self.model = model
+        self.core_model = model
         self.save_schedule = save_schedule
         self.use_final_checkpoint = use_final_checkpoint
         self.num_estimators = int(use_final_checkpoint)
@@ -34,14 +34,14 @@ class CheckpointEnsemble(nn.Module):
         self.num_estimators = 1
 
     @torch.no_grad()
-    def update_model(self, epoch: int) -> None:
+    def update_wrapper(self, epoch: int) -> None:
         """Save the model at the given epoch if included in the schedule.
 
         Args:
             epoch (int): The current epoch.
         """
         if self.save_schedule is None or epoch in self.save_schedule:
-            self.saved_models.append(copy.deepcopy(self.model))
+            self.saved_models.append(copy.deepcopy(self.core_model))
             self.num_estimators += 1
 
     def eval_forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -58,16 +58,16 @@ class CheckpointEnsemble(nn.Module):
             torch.Tensor: The model or ensemble output.
         """
         if not len(self.saved_models):
-            return self.model.forward(x)
+            return self.core_model.forward(x)
         preds = torch.cat(
             [model.forward(x) for model in self.saved_models], dim=0
         )
         if self.use_final_checkpoint:
-            model_forward = self.model.forward(x)
+            model_forward = self.core_model.forward(x)
             preds = torch.cat([model_forward, preds], dim=0)
         return preds
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         if self.training:
-            return self.model.forward(x)
+            return self.core_model.forward(x)
         return self.eval_forward(x)

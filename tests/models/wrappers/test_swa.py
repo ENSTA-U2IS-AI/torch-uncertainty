@@ -18,11 +18,11 @@ class TestSWA:
 
         swa.train()
         swa(torch.randn(1, 1))
-        swa.update_model(0)
-        swa.update_bn(dl, "cpu")
+        swa.update_wrapper(0)
+        swa.bn_update(dl, "cpu")
 
-        swa.update_model(1)
-        swa.update_bn(dl, "cpu")
+        swa.update_wrapper(1)
+        swa.bn_update(dl, "cpu")
 
         swa.eval()
         swa(torch.randn(1, 1))
@@ -56,36 +56,36 @@ class TestSWAG:
 
         swag.train()
         swag(torch.randn(1, 1))
-        swag.update_model(0)
+        swag.update_wrapper(0)
         assert swag.swag_stats[
             "model.swag_stats.linear.weight_covariance_sqrt"
         ].shape == (0, 10)
-        swag.update_bn(dl, "cpu")
+        swag.bn_update(dl, "cpu")
         swag(torch.randn(1, 1))
 
-        swag.update_model(1)
+        swag.update_wrapper(1)
         assert swag.swag_stats[
             "model.swag_stats.linear.weight_covariance_sqrt"
         ].shape == (0, 10)
         assert swag.num_avgd_models == 0
-        swag.update_bn(dl, "cpu")
+        swag.bn_update(dl, "cpu")
 
-        swag.update_model(2)
+        swag.update_wrapper(2)
         assert swag.swag_stats[
             "model.swag_stats.linear.weight_covariance_sqrt"
         ].shape == (1, 10)
-        swag.update_bn(dl, "cpu")
+        swag.bn_update(dl, "cpu")
         swag(torch.randn(1, 1))
-        swag.update_model(3)
+        swag.update_wrapper(3)
         assert swag.swag_stats[
             "model.swag_stats.linear.weight_covariance_sqrt"
         ].shape == (2, 10)
-        swag.update_model(4)
+        swag.update_wrapper(4)
         assert swag.num_avgd_models == 3
         assert swag.swag_stats[
             "model.swag_stats.linear.weight_covariance_sqrt"
         ].shape == (3, 10)
-        swag.update_model(5)
+        swag.update_wrapper(5)
         assert swag.num_avgd_models == 4
         assert swag.swag_stats[
             "model.swag_stats.linear.weight_covariance_sqrt"
@@ -100,7 +100,7 @@ class TestSWAG:
             diag_covariance=True,
         )
         swag.train()
-        swag.update_model(2)
+        swag.update_wrapper(2)
         swag.sample(1, True, False, seed=1)
 
     def test_state_dict(self):

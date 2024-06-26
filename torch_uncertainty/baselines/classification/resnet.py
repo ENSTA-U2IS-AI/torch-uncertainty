@@ -14,10 +14,17 @@ from torch_uncertainty.models.resnet import (
 from torch_uncertainty.routines.classification import ClassificationRoutine
 from torch_uncertainty.transforms import MIMOBatchFormat, RepeatTarget
 
+ENSEMBLE_METHODS = [
+    "packed",
+    "batched",
+    "lpbnn",
+    "masked",
+    "mc-dropout",
+    "mimo",
+]
+
 
 class ResNetBaseline(ClassificationRoutine):
-    single = ["std"]
-    ensemble = ["packed", "batched", "lpbnn", "masked", "mc-dropout", "mimo"]
     versions = {
         "std": resnet,
         "packed": packed_resnet,
@@ -171,7 +178,7 @@ class ResNetBaseline(ClassificationRoutine):
         if version not in self.versions:
             raise ValueError(f"Unknown version: {version}")
 
-        if version in self.ensemble:
+        if version in ENSEMBLE_METHODS:
             params |= {
                 "num_estimators": num_estimators,
             }
@@ -213,7 +220,7 @@ class ResNetBaseline(ClassificationRoutine):
             num_classes=num_classes,
             model=model,
             loss=loss,
-            is_ensemble=version in self.ensemble,
+            is_ensemble=version in ENSEMBLE_METHODS,
             format_batch_fn=format_batch_fn,
             mixup_params=mixup_params,
             eval_ood=eval_ood,

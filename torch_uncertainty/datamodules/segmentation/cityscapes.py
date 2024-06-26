@@ -6,13 +6,13 @@ from torch.nn.modules.utils import _pair
 from torchvision import tv_tensors
 from torchvision.transforms import v2
 
-from torch_uncertainty.datamodules.abstract import BaseDataModule
+from torch_uncertainty.datamodules.abstract import TUDataModule
 from torch_uncertainty.datasets.segmentation import Cityscapes
 from torch_uncertainty.transforms import RandomRescale
 from torch_uncertainty.utils.misc import create_train_val_split
 
 
-class CityscapesDataModule(BaseDataModule):
+class CityscapesDataModule(TUDataModule):
     def __init__(
         self,
         root: str | Path,

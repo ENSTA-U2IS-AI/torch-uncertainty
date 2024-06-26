@@ -51,14 +51,12 @@ from torch_uncertainty.routines import ClassificationRoutine
 # dataloaders and transforms. We create the model using the
 # blueprint from torch_uncertainty.models and we wrap it into mc_dropout.
 #
-# It is important to specify the arguments,``num_estimators``
-# and the ``dropout_rate``
-# to use Monte Carlo dropout.
+# It is important to add a ``dropout_rate`` argument in your model to use Monte Carlo dropout.
 
 trainer = Trainer(accelerator="cpu", max_epochs=2, enable_progress_bar=False)
 
 # datamodule
-root = Path("") / "data"
+root = Path("data")
 datamodule = MNISTDataModule(root=root, batch_size=128)
 
 

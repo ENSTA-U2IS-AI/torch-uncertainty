@@ -17,12 +17,12 @@ class EMA(nn.Module):
         """
         super().__init__()
         _ema_checks(momentum)
-        self.model = model
+        self.core_model = model
         self.ema_model = copy.deepcopy(model)
         self.momentum = momentum
         self.remainder = 1 - momentum
 
-    def update_model(self, epoch: int | None = None) -> None:
+    def update_wrapper(self, epoch: int | None = None) -> None:
         """Update the EMA model.
 
         Args:
@@ -30,7 +30,7 @@ class EMA(nn.Module):
         """
         for ema_param, param in zip(
             self.ema_model.parameters(),
-            self.model.parameters(),
+            self.core_model.parameters(),
             strict=False,
         ):
             ema_param.data = (
@@ -42,7 +42,7 @@ class EMA(nn.Module):
 
     def forward(self, x: Tensor) -> Tensor:
         if self.training:
-            return self.model.forward(x)
+            return self.core_model.forward(x)
         return self.eval_forward(x)
 
 

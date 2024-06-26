@@ -15,7 +15,7 @@ class _DeepEnsembles(nn.Module):
     ) -> None:
         """Create a classification deep ensembles from a list of models."""
         super().__init__()
-        self.models = nn.ModuleList(models)
+        self.core_models = nn.ModuleList(models)
         self.num_estimators = len(models)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -29,7 +29,9 @@ class _DeepEnsembles(nn.Module):
                 where :math:`B` is the batch size, :math:`N` is the number of
                 estimators, and :math:`C` is the number of classes.
         """
-        return torch.cat([model.forward(x) for model in self.models], dim=0)
+        return torch.cat(
+            [model.forward(x) for model in self.core_models], dim=0
+        )
 
 
 class _RegDeepEnsembles(_DeepEnsembles):
@@ -52,7 +54,9 @@ class _RegDeepEnsembles(_DeepEnsembles):
             Distribution:
         """
         if self.probabilistic:
-            return cat_dist([model.forward(x) for model in self.models], dim=0)
+            return cat_dist(
+                [model.forward(x) for model in self.core_models], dim=0
+            )
         return super().forward(x)
 
 

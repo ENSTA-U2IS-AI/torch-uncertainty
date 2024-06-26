@@ -1,16 +1,16 @@
 import pytest
 
 from torch_uncertainty.layers.distributions import (
-    AbstractDist,
     LaplaceLayer,
     NormalLayer,
+    TUDist,
 )
 
 
 class TestDistributions:
     def test(self):
-        AbstractDist.__abstractmethods__ = set()
-        dist = AbstractDist(dim=1)
+        TUDist.__abstractmethods__ = set()
+        dist = TUDist(dim=1)
         dist.forward(None)
 
     def test_errors(self):

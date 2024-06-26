@@ -22,7 +22,6 @@ First, we have to load the following utilities from TorchUncertainty:
 
 We also need import the neural network utils within `torch.nn`.
 """
-# %%
 from pathlib import Path
 
 from lightning import Trainer
@@ -44,7 +43,7 @@ from torch_uncertainty.routines import ClassificationRoutine
 trainer = Trainer(accelerator="cpu", max_epochs=2, enable_progress_bar=False)
 
 # datamodule
-root = Path("") / "data"
+root = Path("data")
 datamodule = MNISTDataModule(root, batch_size=128)
 
 

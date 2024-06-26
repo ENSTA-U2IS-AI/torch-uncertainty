@@ -32,7 +32,7 @@ class SWA(nn.Module):
         """
         super().__init__()
         _swa_checks(cycle_start, cycle_length)
-        self.model = model
+        self.core_model = model
         self.cycle_start = cycle_start
         self.cycle_length = cycle_length
 
@@ -41,18 +41,18 @@ class SWA(nn.Module):
         self.need_bn_update = False
 
     @torch.no_grad()
-    def update_model(self, epoch: int) -> None:
+    def update_wrapper(self, epoch: int) -> None:
         if (
             epoch >= self.cycle_start
             and (epoch - self.cycle_start) % self.cycle_length == 0
         ):
             if self.swa_model is None:
-                self.swa_model = copy.deepcopy(self.model)
+                self.swa_model = copy.deepcopy(self.core_model)
                 self.num_avgd_models = torch.tensor(1)
             else:
                 for swa_param, param in zip(
                     self.swa_model.parameters(),
-                    self.model.parameters(),
+                    self.core_model.parameters(),
                     strict=False,
                 ):
                     swa_param.data += (param.data - swa_param.data) / (
@@ -63,15 +63,15 @@ class SWA(nn.Module):
 
     def eval_forward(self, x: Tensor) -> Tensor:
         if self.swa_model is None:
-            return self.model.forward(x)
+            return self.core_model.forward(x)
         return self.swa_model.forward(x)
 
     def forward(self, x: Tensor) -> Tensor:
         if self.training:
-            return self.model.forward(x)
+            return self.core_model.forward(x)
         return self.eval_forward(x)
 
-    def update_bn(self, loader: DataLoader, device) -> None:
+    def bn_update(self, loader: DataLoader, device) -> None:
         if self.need_bn_update and self.swa_model is not None:
             torch.optim.swa_utils.update_bn(
                 loader, self.swa_model, device=device

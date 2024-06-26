@@ -4,17 +4,17 @@ import pytest
 
 from tests._dummies.dataset import DummyClassificationDataset
 from torch_uncertainty.datamodules.abstract import (
-    BaseDataModule,
     CrossValDataModule,
+    TUDataModule,
 )
 
 
-class TestBaseDataModule:
-    """Testing the BaseDataModule class."""
+class TestTUDataModule:
+    """Testing the TUDataModule class."""
 
     def test_errors(self):
-        BaseDataModule.__abstractmethods__ = set()
-        dm = BaseDataModule("root", 128, 0.0, 4, True, True)
+        TUDataModule.__abstractmethods__ = set()
+        dm = TUDataModule("root", 128, 0.0, 4, True, True)
         with pytest.raises(NotImplementedError):
             dm.setup()
             dm._get_train_data()
@@ -25,8 +25,8 @@ class TestCrossValDataModule:
     """Testing the CrossValDataModule class."""
 
     def test_cv_main(self):
-        BaseDataModule.__abstractmethods__ = set()
-        dm = BaseDataModule("root", 128, 0.0, 4, True, True)
+        TUDataModule.__abstractmethods__ = set()
+        dm = TUDataModule("root", 128, 0.0, 4, True, True)
         ds = DummyClassificationDataset(Path("root"))
         dm.train = ds
         dm.val = ds
@@ -48,8 +48,8 @@ class TestCrossValDataModule:
         cv_dm.test_dataloader()
 
     def test_errors(self):
-        BaseDataModule.__abstractmethods__ = set()
-        dm = BaseDataModule("root", 128, 0.0, 4, True, True)
+        TUDataModule.__abstractmethods__ = set()
+        dm = TUDataModule("root", 128, 0.0, 4, True, True)
         ds = DummyClassificationDataset(Path("root"))
         dm.train = ds
         dm.val = ds

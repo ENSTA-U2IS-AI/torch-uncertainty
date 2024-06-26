@@ -68,8 +68,8 @@ class SegmentationRoutine(LightningModule):
         self.model = model
         self.num_classes = num_classes
         self.loss = loss
-        self.need_epoch_update = isinstance(model, EPOCH_UPDATE_MODEL)
-        self.need_step_update = isinstance(model, STEP_UPDATE_MODEL)
+        self.needs_epoch_update = isinstance(model, EPOCH_UPDATE_MODEL)
+        self.needs_step_update = isinstance(model, STEP_UPDATE_MODEL)
 
         if format_batch_fn is None:
             format_batch_fn = nn.Identity()
@@ -133,16 +133,16 @@ class SegmentationRoutine(LightningModule):
             self.logger.log_hyperparams(self.hparams)
 
     def on_validation_start(self) -> None:
-        if self.need_epoch_update and not self.trainer.sanity_checking:
-            self.model.update_model(self.current_epoch)
+        if self.needs_epoch_update and not self.trainer.sanity_checking:
+            self.model.update_wrapper(self.current_epoch)
             if hasattr(self.model, "need_bn_update"):
-                self.model.update_bn(
+                self.model.bn_update(
                     self.trainer.train_dataloader, device=self.device
                 )
 
     def on_test_start(self) -> None:
         if hasattr(self.model, "need_bn_update"):
-            self.model.update_bn(
+            self.model.bn_update(
                 self.trainer.train_dataloader, device=self.device
             )
 
@@ -159,8 +159,8 @@ class SegmentationRoutine(LightningModule):
         target = target.flatten()
         valid_mask = target != 255
         loss = self.loss(logits[valid_mask], target[valid_mask])
-        if self.need_step_update:
-            self.model.update_model(self.current_epoch)
+        if self.needs_step_update:
+            self.model.update_wrapper(self.current_epoch)
         self.log("train_loss", loss)
         return loss
 

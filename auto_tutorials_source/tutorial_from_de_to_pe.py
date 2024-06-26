@@ -10,9 +10,10 @@ In this notebook will work on the MNIST dataset that was introduced by Corinna C
 The MNIST dataset consists of 70 000 images of handwritten digits from 0 to 9. The images are grayscale and 28x28-pixel sized. The task is to classify the images into their respective digits. The dataset can be automatically downloaded using the `torchvision` library.
 
 In this notebook, we will train a model and an ensemble on this task and evaluate their performance. The performance will consist in the following metrics:
-- Accuracy: the proportion of correctly classified images
-- Brier score: a measure of the quality of the predicted probabilities
-- Calibration error: a measure of the calibration of the predicted probabilities
+- Accuracy: the proportion of correctly classified images,
+- Brier score: a measure of the quality of the predicted probabilities,
+- Calibration error: a measure of the calibration of the predicted probabilities,
+- Negative Log-Likelihood: the value of the loss on the test set.
 
 Throughout this notebook, we abstract the training and evaluation process using [PyTorch Lightning](https://lightning.ai/docs/pytorch/stable/)
 and [TorchUncertainty](https://torch-uncertainty.github.io/).
@@ -22,11 +23,10 @@ TorchUncertainty is partly built on top of PyTorch Lightning and provides tools 
 
 TorchUncertainty includes datamodules that handle the data loading and preprocessing. We don't use them here for tutorial purposes.
 """
-# %%
 # 1. Download, instantiate and visualize the datasets
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
-# The dataset is automatically downloaded using torchvision. We will then visualize a few images to get a sense of the data.
+# The dataset is automatically downloaded using torchvision. We then visualize a few images to see a bit what we are working with.
 
 # Create the transforms for the images
 import torch
@@ -139,11 +139,10 @@ def optim_recipe(model, lr_mult: float = 1.0):
 
 # %%
 # To train the model, we use [TorchUncertainty](https://torch-uncertainty.github.io/), a library that we have developed to ease
-# the training and evaluation of models with uncertainty. You can have a look at the
-# [documentation](https://torch-uncertainty.github.io/) and the [code](https://github.com/ENSTA-U2IS-AI/torch-uncertainty).
+# the training and evaluation of models with uncertainty.
 #
 # **Note:** To train supervised classification models we most often use the cross-entropy loss.
-# With weight-decay, this minimizing this loss amounts to finding a Maximum a posteriori (MAP) estimate of the model parameters.
+# With weight-decay, minimizing this loss amounts to finding a Maximum a posteriori (MAP) estimate of the model parameters.
 # This means that the model is trained to predict the most likely class for each input.
 
 
@@ -291,7 +290,7 @@ ens_perf = trainer.test(ens_routine, dataloaders=[test_dl, ood_dl])
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 # In the paper [Packed-Ensembles for Efficient Uncertainty Quantification](https://arxiv.org/abs/2210.09184)
-# published at the International Conference on Learning Representations (ICLR) last year, we introduced a
+# published at the International Conference on Learning Representations (ICLR) in 2023, we introduced a
 # modification of Deep Ensembles to make it more computationally-efficient. The idea is to pack the ensemble
 # members into a single model, which allows us to train the ensemble in a single forward pass.
 # This modification is particularly useful when the ensemble size is large, as it is often the case in practice.
@@ -386,7 +385,7 @@ trainer.fit(packed_routine, train_dataloaders=train_dl, val_dataloaders=test_dl)
 packed_perf = trainer.test(packed_routine, dataloaders=[test_dl, ood_dl])
 
 # %%
-# The training time should be approximately similar to the one of the single model that you trained before. However, please note that we are working with very small models, hence completely underusing the your GPU. As such, the training time is not representative of what you would observe with larger models.
+# The training time should be approximately similar to the one of the single model that you trained before. However, please note that we are working with very small models, hence completely underusing your GPU. As such, the training time is not representative of what you would observe with larger models.
 #
 # You can read more on Packed-Ensembles in the [paper](https://arxiv.org/abs/2210.09184) or the [Medium](https://medium.com/@adrien.lafage/make-your-neural-networks-more-reliable-with-packed-ensembles-7ad0b737a873) post.
 #
@@ -414,4 +413,4 @@ packed_perf = trainer.test(packed_routine, dataloaders=[test_dl, ood_dl])
 # Grouping Loss
 # ^^^^^^^^^^^^^
 #
-# The grouping loss is a measure of uncertainty orthogonal to calibration. Have a look at [this paper](https://arxiv.org/abs/2210.16315) to learn about it. Check out the small library [GLest](https://github.com/aperezlebel/glest) to learn more about it. TorchUncertainty includes a wrapper of the library to compute the grouping loss with eval_grouping_loss parameter.
+# The grouping loss is a measure of uncertainty orthogonal to calibration. Have a look at [this paper](https://arxiv.org/abs/2210.16315) to learn about it. Check out their small library [GLest](https://github.com/aperezlebel/glest). TorchUncertainty includes a wrapper of the library to compute the grouping loss with eval_grouping_loss parameter.

@@ -67,13 +67,13 @@ class SWAG(SWA):
 
     def eval_forward(self, x: torch.Tensor) -> torch.Tensor:
         if not self.fit:
-            return self.model.forward(x)
+            return self.core_model.forward(x)
         return torch.cat([mod.to(device=x.device)(x) for mod in self.samples])
 
     def initialize_stats(self) -> None:
         """Initialize the SWAG dictionary of statistics."""
         self.swag_stats = {}
-        for name_p, param in self.model.named_parameters():
+        for name_p, param in self.core_model.named_parameters():
             mean, squared_mean = (
                 torch.zeros_like(param, device="cpu"),
                 torch.zeros_like(param, device="cpu"),
@@ -88,7 +88,7 @@ class SWAG(SWA):
                 )
 
     @torch.no_grad()
-    def update_model(self, epoch: int) -> None:
+    def update_wrapper(self, epoch: int) -> None:
         """Update the SWAG posterior.
 
         The update is performed if the epoch is greater than the cycle start
@@ -104,7 +104,7 @@ class SWAG(SWA):
         ):
             return
 
-        for name_p, param in self.model.named_parameters():
+        for name_p, param in self.core_model.named_parameters():
             mean = self.swag_stats[self.prfx + name_p + "_mean"]
             squared_mean = self.swag_stats[self.prfx + name_p + "_sq_mean"]
             new_param = param.data.detach().cpu()
@@ -140,7 +140,7 @@ class SWAG(SWA):
         self.need_bn_update = True
         self.fit = True
 
-    def update_bn(self, loader: DataLoader, device) -> None:
+    def bn_update(self, loader: DataLoader, device) -> None:
         """Update the bachnorm statistics of the current SWAG samples.
 
         Args:
@@ -189,7 +189,7 @@ class SWAG(SWA):
     def _fullrank_sample(
         self, scale: float, diagonal_covariance: bool
     ) -> nn.Module:
-        new_sample = copy.deepcopy(self.model)
+        new_sample = copy.deepcopy(self.core_model)
 
         for name_p, param in new_sample.named_parameters():
             mean = self.swag_stats[self.prfx + name_p + "_mean"]

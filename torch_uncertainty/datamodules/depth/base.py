@@ -7,12 +7,12 @@ from torchvision import tv_tensors
 from torchvision.datasets import VisionDataset
 from torchvision.transforms import v2
 
-from torch_uncertainty.datamodules.abstract import BaseDataModule
+from torch_uncertainty.datamodules.abstract import TUDataModule
 from torch_uncertainty.transforms import RandomRescale
 from torch_uncertainty.utils.misc import create_train_val_split
 
 
-class DepthDataModule(BaseDataModule):
+class DepthDataModule(TUDataModule):
     def __init__(
         self,
         dataset: type[VisionDataset],

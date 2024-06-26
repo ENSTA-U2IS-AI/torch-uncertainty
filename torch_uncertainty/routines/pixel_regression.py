@@ -77,7 +77,7 @@ class PixelRegressionRoutine(LightningModule):
                 metrics. Defaults to ``False``.
         """
         super().__init__()
-        _depth_routine_checks(output_dim, num_image_plot)
+        _depth_routine_checks(output_dim, num_image_plot, log_plots)
 
         self.model = model
         self.output_dim = output_dim
@@ -88,8 +88,8 @@ class PixelRegressionRoutine(LightningModule):
         self.is_ensemble = is_ensemble
         self.log_plots = log_plots
 
-        self.need_epoch_update = isinstance(model, EPOCH_UPDATE_MODEL)
-        self.need_step_update = isinstance(model, STEP_UPDATE_MODEL)
+        self.needs_epoch_update = isinstance(model, EPOCH_UPDATE_MODEL)
+        self.needs_step_update = isinstance(model, STEP_UPDATE_MODEL)
 
         if format_batch_fn is None:
             format_batch_fn = nn.Identity()
@@ -134,16 +134,16 @@ class PixelRegressionRoutine(LightningModule):
             )
 
     def on_validation_start(self) -> None:
-        if self.need_epoch_update and not self.trainer.sanity_checking:
-            self.model.update_model(self.current_epoch)
+        if self.needs_epoch_update and not self.trainer.sanity_checking:
+            self.model.update_wrapper(self.current_epoch)
             if hasattr(self.model, "need_bn_update"):
-                self.model.update_bn(
+                self.model.bn_update(
                     self.trainer.train_dataloader, device=self.device
                 )
 
     def on_test_start(self) -> None:
         if hasattr(self.model, "need_bn_update"):
-            self.model.update_bn(
+            self.model.bn_update(
                 self.trainer.train_dataloader, device=self.device
             )
 
@@ -189,8 +189,8 @@ class PixelRegressionRoutine(LightningModule):
         else:
             loss = self.loss(dists[padding_mask], target[padding_mask])
 
-        if self.need_step_update:
-            self.model.update_model(self.current_epoch)
+        if self.needs_step_update:
+            self.model.update_wrapper(self.current_epoch)
         self.log("train_loss", loss)
         return loss
 
@@ -364,10 +364,12 @@ def colorize(
     return torch.as_tensor(img).permute(2, 0, 1).float() / 255.0
 
 
-def _depth_routine_checks(output_dim: int, num_image_plot) -> None:
+def _depth_routine_checks(
+    output_dim: int, num_image_plot: int, log_plots: bool
+) -> None:
     if output_dim < 1:
         raise ValueError(f"output_dim must be positive, got {output_dim}.")
-    if num_image_plot < 1:
+    if num_image_plot < 1 and log_plots:
         raise ValueError(
             f"num_image_plot must be positive, got {num_image_plot}."
         )

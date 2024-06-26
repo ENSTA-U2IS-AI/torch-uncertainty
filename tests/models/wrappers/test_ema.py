@@ -14,7 +14,7 @@ class TestEMA:
         ema.eval()
         ema(torch.randn(1, 1))
         ema.train()
-        ema.update_model(0)
+        ema.update_wrapper(0)
 
     def test_failures(self):
         with pytest.raises(ValueError, match="must be in the range"):

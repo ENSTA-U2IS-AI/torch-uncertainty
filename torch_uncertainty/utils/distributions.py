@@ -106,7 +106,6 @@ def dist_rearrange(
     distribution: Distribution, pattern: str, **axes_lengths: int
 ) -> Distribution:
     dist_type = type(distribution)
-    print(dist_type)
     if isinstance(distribution, Normal | Laplace):
         loc = rearrange(distribution.loc, pattern=pattern, **axes_lengths)
         scale = rearrange(distribution.scale, pattern=pattern, **axes_lengths)

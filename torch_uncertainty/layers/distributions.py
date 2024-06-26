@@ -7,7 +7,7 @@ from torch.distributions import Distribution, Laplace, Normal
 from torch_uncertainty.utils.distributions import NormalInverseGamma
 
 
-class AbstractDist(ABC, nn.Module):
+class TUDist(ABC, nn.Module):
     def __init__(self, dim: int) -> None:
         super().__init__()
         if dim < 1:
@@ -19,7 +19,7 @@ class AbstractDist(ABC, nn.Module):
         pass
 
 
-class NormalLayer(AbstractDist):
+class NormalLayer(TUDist):
     """Normal distribution layer.
 
     Converts model outputs to Independent Normal distributions.
@@ -49,7 +49,7 @@ class NormalLayer(AbstractDist):
         return Normal(loc, scale)
 
 
-class LaplaceLayer(AbstractDist):
+class LaplaceLayer(TUDist):
     """Laplace distribution layer.
 
     Converts model outputs to Independent Laplace distributions.
@@ -79,7 +79,7 @@ class LaplaceLayer(AbstractDist):
         return Laplace(loc, scale)
 
 
-class NormalInverseGammaLayer(AbstractDist):
+class NormalInverseGammaLayer(TUDist):
     """Normal-Inverse-Gamma distribution layer.
 
     Converts model outputs to Independent Normal-Inverse-Gamma distributions.

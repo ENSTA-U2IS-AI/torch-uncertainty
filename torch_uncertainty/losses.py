@@ -121,7 +121,8 @@ class ELBOLoss(nn.Module):
         for _ in range(self.num_samples):
             logits = self.model(inputs)
             aggregated_elbo += self.inner_loss(logits, targets)
-            aggregated_elbo += self.kl_weight * self._kl_div()
+            # TODO: This shouldn't be necessary
+            aggregated_elbo += self.kl_weight * self._kl_div().to(inputs.device)
         return aggregated_elbo / self.num_samples
 
     def set_model(self, model: nn.Module | None) -> None:

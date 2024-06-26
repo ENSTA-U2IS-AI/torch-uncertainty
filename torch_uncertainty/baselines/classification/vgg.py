@@ -10,10 +10,10 @@ from torch_uncertainty.models.vgg import (
 from torch_uncertainty.routines.classification import ClassificationRoutine
 from torch_uncertainty.transforms import RepeatTarget
 
+ENSEMBLE_METHODS = ["mc-dropout", "packed"]
+
 
 class VGGBaseline(ClassificationRoutine):
-    single = ["std"]
-    ensemble = ["mc-dropout", "packed"]
     versions = {
         "std": vgg,
         "mc-dropout": vgg,
@@ -134,7 +134,7 @@ class VGGBaseline(ClassificationRoutine):
                 "num_estimators": num_estimators,
             }
 
-        if version in self.ensemble:
+        if version in ENSEMBLE_METHODS:
             params |= {
                 "num_estimators": num_estimators,
             }
@@ -162,7 +162,7 @@ class VGGBaseline(ClassificationRoutine):
             num_classes=num_classes,
             model=model,
             loss=loss,
-            is_ensemble=version in self.ensemble,
+            is_ensemble=version in ENSEMBLE_METHODS,
             format_batch_fn=format_batch_fn,
             mixup_params=mixup_params,
             eval_ood=eval_ood,

@@ -66,7 +66,7 @@ class NotMNIST(ImageFolder):
             )
 
         super().__init__(
-            self.root / ("notMNIST_" + subset),
+            self.root / f"notMNIST_{subset}",
             transform=transform,
             target_transform=target_transform,
         )
