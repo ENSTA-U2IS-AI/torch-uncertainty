@@ -13,10 +13,10 @@ from torch_uncertainty.routines.regression import (
 )
 from torch_uncertainty.transforms.batch import RepeatTarget
 
+ENSEMBLE_METHODS = ["packed"]
+
 
 class MLPBaseline(RegressionRoutine):
-    single = ["std"]
-    ensemble = ["packed"]
     versions = {"std": mlp, "packed": packed_mlp}
 
     def __init__(
@@ -82,7 +82,7 @@ class MLPBaseline(RegressionRoutine):
             output_dim=output_dim,
             model=model,
             loss=loss,
-            num_estimators=num_estimators,
+            is_ensemble=version in ENSEMBLE_METHODS,
             format_batch_fn=format_batch_fn,
         )
         self.save_hyperparameters(ignore=["loss"])

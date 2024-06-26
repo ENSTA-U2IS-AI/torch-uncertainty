@@ -3,7 +3,7 @@ import torch.nn.functional as F
 from torch import Tensor, nn
 from torch.nn import init
 
-from .sampler import PriorDistribution, TrainableDistribution
+from .sampler import CenteredGaussianMixture, TrainableDistribution
 
 
 class BayesLinear(nn.Module):
@@ -91,11 +91,11 @@ class BayesLinear(nn.Module):
                 self.bias_mu, self.bias_sigma
             )
 
-        self.weight_prior_dist = PriorDistribution(
+        self.weight_prior_dist = CenteredGaussianMixture(
             prior_sigma_1, prior_sigma_2, prior_pi
         )
         if bias:
-            self.bias_prior_dist = PriorDistribution(
+            self.bias_prior_dist = CenteredGaussianMixture(
                 prior_sigma_1, prior_sigma_2, prior_pi
             )
 
@@ -122,12 +122,12 @@ class BayesLinear(nn.Module):
         if self.bias_mu is not None:
             bias = self.bias_sampler.sample()
             bias_lposterior = self.bias_sampler.log_posterior()
-            bias_lprior = self.bias_prior_dist.log_prior(bias)
+            bias_lprior = self.bias_prior_dist.log_prob(bias)
         else:
             bias, bias_lposterior, bias_lprior = None, 0, 0
 
         self.lvposterior = self.weight_sampler.log_posterior() + bias_lposterior
-        self.lprior = self.weight_prior_dist.log_prior(weight) + bias_lprior
+        self.lprior = self.weight_prior_dist.log_prob(weight) + bias_lprior
 
         return F.linear(inputs, weight, bias)
 

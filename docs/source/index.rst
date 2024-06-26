@@ -32,7 +32,7 @@ To install TorchUncertainty with contribution in mind, check the
 -----
 
 Official Implementations
-^^^^^^^^^^^^^^^^^^^^^^^^ 
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 TorchUncertainty also houses multiple official implementations of papers from major conferences & journals.
 
@@ -55,14 +55,6 @@ TorchUncertainty also houses multiple official implementations of papers from ma
 
 * Authors: *Gianni Franchi, Xuanlong Yu, Andrei Bursuc, Angel Tena, Rémi Kazmierczak, Séverine Dubuisson, Emanuel Aldea, David Filliat*
 * Paper: `BMVC 2022 <https://arxiv.org/abs/2203.01437>`_.
-
-Packed-Ensembles
-^^^^^^^^^^^^^^^^
-
-**Packed-Ensembles for Efficient Uncertainty Estimation**
-
-* Authors: *Olivier Laurent, Adrien Lafage, Enzo Tartaglione, Geoffrey Daniel, Jean-Marc Martinez, Andrei Bursuc, and Gianni Franchi*
-* Paper: `here <https://arxiv.org/abs/2210.09184>`_.
 
 .. toctree::
    :maxdepth: 2

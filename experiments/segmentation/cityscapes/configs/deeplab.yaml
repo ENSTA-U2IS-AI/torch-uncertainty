@@ -29,12 +29,11 @@ model:
   style: v3+
   output_stride: 16
   separable: false
-  num_estimators: 1
 data:
   root: ./data/Cityscapes
   batch_size: 8
   crop_size: 768
-  inference_size:
+  eval_size:
   - 1024
   - 2048
   num_workers: 8

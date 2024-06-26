@@ -1,3 +1,5 @@
+from abc import ABC, abstractmethod
+
 import torch.nn.functional as F
 from torch import Tensor, nn
 from torch.distributions import Distribution, Laplace, Normal
@@ -5,18 +7,19 @@ from torch.distributions import Distribution, Laplace, Normal
 from torch_uncertainty.utils.distributions import NormalInverseGamma
 
 
-class _AbstractDist(nn.Module):
+class TUDist(ABC, nn.Module):
     def __init__(self, dim: int) -> None:
         super().__init__()
         if dim < 1:
             raise ValueError(f"dim must be positive, got {dim}.")
         self.dim = dim
 
+    @abstractmethod
     def forward(self, x: Tensor) -> Distribution:
-        raise NotImplementedError
+        pass
 
 
-class NormalLayer(_AbstractDist):
+class NormalLayer(TUDist):
     """Normal distribution layer.
 
     Converts model outputs to Independent Normal distributions.
@@ -46,7 +49,7 @@ class NormalLayer(_AbstractDist):
         return Normal(loc, scale)
 
 
-class LaplaceLayer(_AbstractDist):
+class LaplaceLayer(TUDist):
     """Laplace distribution layer.
 
     Converts model outputs to Independent Laplace distributions.
@@ -76,7 +79,7 @@ class LaplaceLayer(_AbstractDist):
         return Laplace(loc, scale)
 
 
-class NormalInverseGammaLayer(_AbstractDist):
+class NormalInverseGammaLayer(TUDist):
     """Normal-Inverse-Gamma distribution layer.
 
     Converts model outputs to Independent Normal-Inverse-Gamma distributions.

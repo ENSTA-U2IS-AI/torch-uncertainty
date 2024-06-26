@@ -11,7 +11,7 @@ from torch.nn.modules.utils import (
 )
 from torch.nn.parameter import Parameter
 
-from .sampler import PriorDistribution, TrainableDistribution
+from .sampler import CenteredGaussianMixture, TrainableDistribution
 
 __all__ = ["BayesConv1d", "BayesConv2d", "BayesConv3d"]
 
@@ -137,11 +137,11 @@ class _BayesConvNd(Module):
             self.register_parameter("bias_mu", None)
             self.register_parameter("bias_sigma", None)
 
-        self.weight_prior_dist = PriorDistribution(
+        self.weight_prior_dist = CenteredGaussianMixture(
             prior_sigma_1, prior_sigma_2, prior_pi
         )
         if bias:
-            self.bias_prior_dist = PriorDistribution(
+            self.bias_prior_dist = CenteredGaussianMixture(
                 prior_sigma_1, prior_sigma_2, prior_pi
             )
 
@@ -290,14 +290,14 @@ class BayesConv1d(_BayesConvNd):
             if self.bias_mu is not None:
                 bias = self.bias_sampler.sample()
                 bias_lposterior = self.bias_sampler.log_posterior()
-                bias_lprior = self.bias_prior_dist.log_prior(bias)
+                bias_lprior = self.bias_prior_dist.log_prob(bias)
             else:
                 bias, bias_lposterior, bias_lprior = None, 0, 0
 
             self.lvposterior = (
                 self.weight_sampler.log_posterior() + bias_lposterior
             )
-            self.lprior = self.weight_prior_dist.log_prior(weight) + bias_lprior
+            self.lprior = self.weight_prior_dist.log_prob(weight) + bias_lprior
 
         return self._conv_forward(inputs, weight, bias)
 
@@ -323,9 +323,7 @@ class BayesConv2d(_BayesConvNd):
         device=None,
         dtype=None,
     ) -> None:
-        """Bayesian Conv2d Layer with Mixture of Normals prior and Normal
-        posterior.
-        """
+        """Bayesian Conv2d Layer with Gaussian Mixture prior and Normal posterior."""
         factory_kwargs = {"device": device, "dtype": dtype}
         kernel_size_ = _pair(kernel_size)
         stride_ = _pair(stride)
@@ -389,14 +387,14 @@ class BayesConv2d(_BayesConvNd):
             if self.bias_mu is not None:
                 bias = self.bias_sampler.sample()
                 bias_lposterior = self.bias_sampler.log_posterior()
-                bias_lprior = self.bias_prior_dist.log_prior(bias)
+                bias_lprior = self.bias_prior_dist.log_prob(bias)
             else:
                 bias, bias_lposterior, bias_lprior = None, 0, 0
 
             self.lvposterior = (
                 self.weight_sampler.log_posterior() + bias_lposterior
             )
-            self.lprior = self.weight_prior_dist.log_prior(weight) + bias_lprior
+            self.lprior = self.weight_prior_dist.log_prob(weight) + bias_lprior
 
         return self._conv_forward(inputs, weight, bias)
 
@@ -422,9 +420,7 @@ class BayesConv3d(_BayesConvNd):
         device=None,
         dtype=None,
     ) -> None:
-        """Bayesian Conv3d Layer with Mixture of Normals prior and Normal
-        posterior.
-        """
+        """Bayesian Conv3d Layer with Gaussian mixture prior and Normal posterior."""
         factory_kwargs = {"device": device, "dtype": dtype}
         kernel_size_ = _triple(kernel_size)
         stride_ = _triple(stride)
@@ -488,13 +484,13 @@ class BayesConv3d(_BayesConvNd):
             if self.bias_mu is not None:
                 bias = self.bias_sampler.sample()
                 bias_lposterior = self.bias_sampler.log_posterior()
-                bias_lprior = self.bias_prior_dist.log_prior(bias)
+                bias_lprior = self.bias_prior_dist.log_prob(bias)
             else:
                 bias, bias_lposterior, bias_lprior = None, 0, 0
 
             self.lvposterior = (
                 self.weight_sampler.log_posterior() + bias_lposterior
             )
-            self.lprior = self.weight_prior_dist.log_prior(weight) + bias_lprior
+            self.lprior = self.weight_prior_dist.log_prob(weight) + bias_lprior
 
         return self._conv_forward(inputs, weight, bias)

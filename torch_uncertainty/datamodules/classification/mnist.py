@@ -6,25 +6,25 @@ from torch import nn
 from torch.utils.data import DataLoader
 from torchvision.datasets import MNIST, FashionMNIST
 
-from torch_uncertainty.datamodules.abstract import AbstractDataModule
+from torch_uncertainty.datamodules.abstract import TUDataModule
 from torch_uncertainty.datasets.classification import MNISTC, NotMNIST
 from torch_uncertainty.transforms import Cutout
 from torch_uncertainty.utils import create_train_val_split
 
 
-class MNISTDataModule(AbstractDataModule):
+class MNISTDataModule(TUDataModule):
     num_classes = 10
     num_channels = 1
     input_shape = (1, 28, 28)
     training_task = "classification"
-    ood_datasets = ["fashion", "not"]
+    ood_datasets = ["fashion", "notMNIST"]
 
     def __init__(
         self,
         root: str | Path,
         batch_size: int,
         eval_ood: bool = False,
-        ood_ds: Literal["fashion", "not"] = "fashion",
+        ood_ds: Literal["fashion", "notMNIST"] = "fashion",
         val_split: float | None = None,
         num_workers: int = 1,
         cutout: int | None = None,
@@ -39,7 +39,7 @@ class MNISTDataModule(AbstractDataModule):
             eval_ood (bool): Whether to evaluate on out-of-distribution data.
             batch_size (int): Number of samples per batch.
             ood_ds (str): Which out-of-distribution dataset to use. Defaults to
-                ``"fashion"``; `fashion` stands for FashionMNIST and `not` for
+                ``"fashion"``; `fashion` stands for FashionMNIST and `notMNIST` for
                 notMNIST.
             val_split (float): Share of samples to use for validation. Defaults
                 to ``0.0``.
@@ -71,11 +71,11 @@ class MNISTDataModule(AbstractDataModule):
 
         if ood_ds == "fashion":
             self.ood_dataset = FashionMNIST
-        elif ood_ds == "not":
+        elif ood_ds == "notMNIST":
             self.ood_dataset = NotMNIST
         else:
             raise ValueError(
-                f"`ood_ds` should be `fashion` or `not`. Got {ood_ds}."
+                f"`ood_ds` should be in {self.ood_datasets}. Got {ood_ds}."
             )
 
         main_transform = Cutout(cutout) if cutout else nn.Identity()
@@ -95,6 +95,15 @@ class MNISTDataModule(AbstractDataModule):
                 T.Normalize((0.1307,), (0.3081,)),
             ]
         )
+        if self.eval_ood:  # NotMNIST has 3 channels
+            self.ood_transform = T.Compose(
+                [
+                    T.Grayscale(num_output_channels=1),
+                    T.ToTensor(),
+                    T.CenterCrop(28),
+                    T.Normalize((0.1307,), (0.3081,)),
+                ]
+            )
 
     def prepare_data(self) -> None:  # coverage: ignore
         """Download the datasets."""
@@ -140,7 +149,7 @@ class MNISTDataModule(AbstractDataModule):
             self.ood = self.ood_dataset(
                 self.root,
                 download=False,
-                transform=self.test_transform,
+                transform=self.ood_transform,
             )
 
     def test_dataloader(self) -> list[DataLoader]:

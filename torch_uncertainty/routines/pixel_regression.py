@@ -29,7 +29,15 @@ from torch_uncertainty.metrics import (
     SILog,
     ThresholdAccuracy,
 )
-from torch_uncertainty.utils.distributions import dist_rearrange, squeeze_dist
+from torch_uncertainty.models import (
+    EPOCH_UPDATE_MODEL,
+    STEP_UPDATE_MODEL,
+)
+from torch_uncertainty.utils.distributions import (
+    dist_rearrange,
+    dist_size,
+    dist_squeeze,
+)
 
 
 class PixelRegressionRoutine(LightningModule):
@@ -44,21 +52,44 @@ class PixelRegressionRoutine(LightningModule):
         output_dim: int,
         probabilistic: bool,
         loss: nn.Module,
-        num_estimators: int = 1,
-        optim_recipe: dict | Optimizer | None = None,
+        is_ensemble: bool = False,
         format_batch_fn: nn.Module | None = None,
+        optim_recipe: dict | Optimizer | None = None,
         num_image_plot: int = 4,
+        log_plots: bool = False,
     ) -> None:
+        """Routine for training & testing on **pixel regression** tasks.
+
+        Args:
+            model (nn.Module): Model to train.
+            output_dim (int): Number of outputs of the model.
+            probabilistic (bool): Whether the model is probabilistic, i.e.,
+                outputs a PyTorch distribution.
+            loss (nn.Module): Loss function to optimize the :attr:`model`.
+            is_ensemble (bool, optional): Whether the model is an ensemble.
+                Defaults to ``False``.
+            optim_recipe (dict or Optimizer, optional): The optimizer and
+                optionally the scheduler to use. Defaults to ``None``.
+            format_batch_fn (nn.Module, optional): The function to format the
+                batch. Defaults to ``None``.
+            num_image_plot (int, optional): Number of images to plot. Defaults to ``4``.
+            log_plots (bool, optional): Indicates whether to log plots from
+                metrics. Defaults to ``False``.
+        """
         super().__init__()
-        _depth_routine_checks(num_estimators, output_dim)
+        _depth_routine_checks(output_dim, num_image_plot, log_plots)
 
         self.model = model
         self.output_dim = output_dim
         self.one_dim_depth = output_dim == 1
         self.probabilistic = probabilistic
         self.loss = loss
-        self.num_estimators = num_estimators
         self.num_image_plot = num_image_plot
+        self.is_ensemble = is_ensemble
+        self.log_plots = log_plots
+
+        self.needs_epoch_update = isinstance(model, EPOCH_UPDATE_MODEL)
+        self.needs_step_update = isinstance(model, STEP_UPDATE_MODEL)
 
         if format_batch_fn is None:
             format_batch_fn = nn.Identity()
@@ -102,6 +133,20 @@ class PixelRegressionRoutine(LightningModule):
                 self.hparams,
             )
 
+    def on_validation_start(self) -> None:
+        if self.needs_epoch_update and not self.trainer.sanity_checking:
+            self.model.update_wrapper(self.current_epoch)
+            if hasattr(self.model, "need_bn_update"):
+                self.model.bn_update(
+                    self.trainer.train_dataloader, device=self.device
+                )
+
+    def on_test_start(self) -> None:
+        if hasattr(self.model, "need_bn_update"):
+            self.model.bn_update(
+                self.trainer.train_dataloader, device=self.device
+            )
+
     def forward(self, inputs: Tensor) -> Tensor | Distribution:
         """Forward pass of the routine.
 
@@ -116,10 +161,10 @@ class PixelRegressionRoutine(LightningModule):
         """
         pred = self.model(inputs)
         if self.probabilistic:
-            if self.num_estimators == 1:
-                pred = squeeze_dist(pred, -1)
+            if not self.is_ensemble:
+                pred = dist_squeeze(pred, -1)
         else:
-            if self.num_estimators == 1:
+            if not self.is_ensemble:
                 pred = pred.squeeze(-1)
         return pred
 
@@ -131,54 +176,64 @@ class PixelRegressionRoutine(LightningModule):
             target = target.unsqueeze(1)
 
         dists = self.model(inputs)
+        if self.probabilistic:
+            out_shape = dist_size(dists)[-2:]
+        else:
+            out_shape = dists.shape[-2:]
         target = F.resize(
-            target, dists.shape[-2:], interpolation=F.InterpolationMode.NEAREST
+            target, out_shape, interpolation=F.InterpolationMode.NEAREST
         )
-        valid_mask = ~torch.isnan(target)
-        loss = self.loss(dists[valid_mask], target[valid_mask])
+        padding_mask = torch.isnan(target)
+        if self.probabilistic:
+            loss = self.loss(dists, target, padding_mask)
+        else:
+            loss = self.loss(dists[padding_mask], target[padding_mask])
+
+        if self.needs_step_update:
+            self.model.update_wrapper(self.current_epoch)
         self.log("train_loss", loss)
         return loss
 
     def validation_step(
         self, batch: tuple[Tensor, Tensor], batch_idx: int
     ) -> None:
-        inputs, target = batch
+        inputs, targets = batch
         if self.one_dim_depth:
-            target = target.unsqueeze(1)
+            targets = targets.unsqueeze(1)
+        batch_size = targets.size(0)
+        targets = rearrange(targets, "b c h w -> (b c h w)")
         preds = self.model(inputs)
 
         if self.probabilistic:
             ens_dist = Independent(
                 dist_rearrange(
-                    preds, "(m b) c h w -> b m c h w", m=self.num_estimators
+                    preds, "(m b) c h w -> (b c h w) m", b=batch_size
                 ),
-                1,
+                0,
             )
             mix = Categorical(
-                torch.ones(self.num_estimators, device=self.device)
+                torch.ones(
+                    (dist_size(preds)[0] // batch_size), device=self.device
+                )
             )
             mixture = MixtureSameFamily(mix, ens_dist)
             preds = mixture.mean
         else:
-            preds = rearrange(
-                preds, "(m b) c h w -> b m c h w", m=self.num_estimators
-            )
+            preds = rearrange(preds, "(m b) c h w -> (b c h w) m", b=batch_size)
             preds = preds.mean(dim=1)
 
-        if batch_idx == 0:
+        if batch_idx == 0 and self.log_plots:
             self._plot_depth(
                 inputs[: self.num_image_plot, ...],
                 preds[: self.num_image_plot, ...],
-                target[: self.num_image_plot, ...],
+                targets[: self.num_image_plot, ...],
                 stage="val",
             )
 
-        valid_mask = ~torch.isnan(target)
-        self.val_metrics.update(preds[valid_mask], target[valid_mask])
+        padding_mask = torch.isnan(targets)
+        self.val_metrics.update(preds[padding_mask], targets[padding_mask])
         if self.probabilistic:
-            self.val_prob_metrics.update(
-                mixture[valid_mask], target[valid_mask]
-            )
+            self.val_prob_metrics.update(mixture, targets, padding_mask)
 
     def test_step(
         self,
@@ -191,29 +246,29 @@ class PixelRegressionRoutine(LightningModule):
                 "Depth OOD detection not implemented yet. Raise an issue "
                 "if needed."
             )
-
-        inputs, target = batch
+        inputs, targets = batch
         if self.one_dim_depth:
-            target = target.unsqueeze(1)
+            targets = targets.unsqueeze(1)
+        batch_size = targets.size(0)
+        targets = rearrange(targets, "b c h w -> (b c h w)")
         preds = self.model(inputs)
 
         if self.probabilistic:
             ens_dist = dist_rearrange(
-                preds, "(m b) c h w -> b m c h w", m=self.num_estimators
+                preds, "(m b) c h w -> (b c h w) m", b=batch_size
             )
             mix = Categorical(
-                torch.ones(self.num_estimators, device=self.device)
+                torch.ones(
+                    (dist_size(preds)[0] // batch_size), device=self.device
+                )
             )
             mixture = MixtureSameFamily(mix, ens_dist)
-            self.test_metrics.nll.update(mixture, target)
             preds = mixture.mean
         else:
-            preds = rearrange(
-                preds, "(m b) c h w -> b m c h w", m=self.num_estimators
-            )
+            preds = rearrange(preds, "(m b) c h w -> (b c h w) m", b=batch_size)
             preds = preds.mean(dim=1)
 
-        if batch_idx == 0:
+        if batch_idx == 0 and self.log_plots:
             num_images = (
                 self.num_image_plot
                 if self.num_image_plot < inputs.size(0)
@@ -222,16 +277,14 @@ class PixelRegressionRoutine(LightningModule):
             self._plot_depth(
                 inputs[:num_images, ...],
                 preds[:num_images, ...],
-                target[:num_images, ...],
+                targets[:num_images, ...],
                 stage="test",
             )
 
-        valid_mask = ~torch.isnan(target)
-        self.test_metrics.update(preds[valid_mask], target[valid_mask])
+        padding_mask = torch.isnan(targets)
+        self.test_metrics.update(preds[padding_mask], targets[padding_mask])
         if self.probabilistic:
-            self.test_prob_metrics.update(
-                mixture[valid_mask], target[valid_mask]
-            )
+            self.test_prob_metrics.update(mixture, targets, padding_mask)
 
     def on_validation_epoch_end(self) -> None:
         self.log_dict(self.val_metrics.compute(), sync_dist=True)
@@ -311,11 +364,12 @@ def colorize(
     return torch.as_tensor(img).permute(2, 0, 1).float() / 255.0
 
 
-def _depth_routine_checks(num_estimators: int, output_dim: int) -> None:
-    if num_estimators < 1:
-        raise ValueError(
-            f"num_estimators must be positive, got {num_estimators}."
-        )
-
+def _depth_routine_checks(
+    output_dim: int, num_image_plot: int, log_plots: bool
+) -> None:
     if output_dim < 1:
         raise ValueError(f"output_dim must be positive, got {output_dim}.")
+    if num_image_plot < 1 and log_plots:
+        raise ValueError(
+            f"num_image_plot must be positive, got {num_image_plot}."
+        )

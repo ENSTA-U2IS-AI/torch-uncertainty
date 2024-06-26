@@ -2,9 +2,17 @@
 import pytest
 import torch
 
-from torch_uncertainty.optim_recipes import (
-    get_procedure,
-)
+from torch_uncertainty.optim_recipes import FullSWALR, get_procedure, optim_abnn
+
+
+class TestFullSWALR:
+    def test_full_swa_lr(self):
+        FullSWALR(
+            torch.optim.SGD(torch.nn.Linear(1, 1).parameters(), lr=1e-3),
+            swa_lr=1,
+            milestone=12,
+            anneal_epochs=5,
+        )
 
 
 class TestOptProcedures:
@@ -15,6 +23,7 @@ class TestOptProcedures:
         get_procedure("resnet50", "cifar10", "packed")(model)
         get_procedure("wideresnet28x10", "cifar10", "batched")(model)
         get_procedure("vgg16", "cifar10", "standard")(model)
+        optim_abnn(model, lr=0.1)
 
     def test_optim_cifar100(self):
         model = torch.nn.Linear(1, 1)

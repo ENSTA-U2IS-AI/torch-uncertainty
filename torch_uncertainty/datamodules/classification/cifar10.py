@@ -9,14 +9,14 @@ from torch import nn
 from torch.utils.data import DataLoader
 from torchvision.datasets import CIFAR10, SVHN
 
-from torch_uncertainty.datamodules.abstract import AbstractDataModule
+from torch_uncertainty.datamodules.abstract import TUDataModule
 from torch_uncertainty.datasets import AggregatedDataset
 from torch_uncertainty.datasets.classification import CIFAR10C, CIFAR10H
 from torch_uncertainty.transforms import Cutout
 from torch_uncertainty.utils import create_train_val_split
 
 
-class CIFAR10DataModule(AbstractDataModule):
+class CIFAR10DataModule(TUDataModule):
     num_classes = 10
     num_channels = 3
     input_shape = (3, 32, 32)

@@ -37,7 +37,7 @@ data:
   crop_size: 
     - 416
     - 544
-  inference_size:
+  eval_size:
     - 480
     - 640
   num_workers: 8

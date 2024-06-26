@@ -7,17 +7,17 @@ from numpy.typing import ArrayLike
 from torch.utils.data import DataLoader
 from torchvision import tv_tensors
 
-from torch_uncertainty.datamodules.abstract import AbstractDataModule
+from torch_uncertainty.datamodules.abstract import TUDataModule
 
 from .dataset import (
+    DummPixelRegressionDataset,
     DummyClassificationDataset,
-    DummyDepthDataset,
     DummyRegressionDataset,
     DummySegmentationDataset,
 )
 
 
-class DummyClassificationDataModule(AbstractDataModule):
+class DummyClassificationDataModule(TUDataModule):
     num_channels = 1
     image_size: int = 4
     training_task = "classification"
@@ -104,7 +104,7 @@ class DummyClassificationDataModule(AbstractDataModule):
         return np.array(self.train.targets)
 
 
-class DummyRegressionDataModule(AbstractDataModule):
+class DummyRegressionDataModule(TUDataModule):
     in_features = 4
     training_task = "regression"
 
@@ -160,7 +160,7 @@ class DummyRegressionDataModule(AbstractDataModule):
         return [self._data_loader(self.test)]
 
 
-class DummySegmentationDataModule(AbstractDataModule):
+class DummySegmentationDataModule(TUDataModule):
     num_channels = 3
     training_task = "segmentation"
 
@@ -249,7 +249,7 @@ class DummySegmentationDataModule(AbstractDataModule):
         return np.array(self.train.targets)
 
 
-class DummyDepthDataModule(AbstractDataModule):
+class DummyPixelRegressionDataModule(TUDataModule):
     num_channels = 3
     training_task = "pixel_regression"
 
@@ -278,7 +278,7 @@ class DummyDepthDataModule(AbstractDataModule):
         self.num_images = num_images
         self.image_size = image_size
 
-        self.dataset = DummyDepthDataset
+        self.dataset = DummPixelRegressionDataset
 
         self.train_transform = T.ToDtype(
             dtype={

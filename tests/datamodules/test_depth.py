@@ -1,6 +1,6 @@
 import pytest
 
-from tests._dummies.dataset import DummyDepthDataset
+from tests._dummies.dataset import DummPixelRegressionDataset
 from torch_uncertainty.datamodules.depth import (
     KITTIDataModule,
     MUADDataModule,
@@ -19,7 +19,7 @@ class TestMUADDataModule:
 
         assert dm.dataset == MUAD
 
-        dm.dataset = DummyDepthDataset
+        dm.dataset = DummPixelRegressionDataset
 
         dm.prepare_data()
         dm.setup()
@@ -51,7 +51,7 @@ class TestNYUDataModule:
 
         assert dm.dataset == NYUv2
 
-        dm.dataset = DummyDepthDataset
+        dm.dataset = DummPixelRegressionDataset
 
         dm.prepare_data()
         dm.setup()

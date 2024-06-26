@@ -3,12 +3,34 @@ from numbers import Number
 import torch
 from einops import rearrange
 from torch import Tensor
-from torch.distributions import Distribution, Laplace, Normal, constraints
+from torch.distributions import (
+    Distribution,
+    Laplace,
+    Normal,
+    constraints,
+)
 from torch.distributions.utils import broadcast_all
 
 
+def dist_size(distribution: Distribution) -> torch.Size:
+    """Get the size of the distribution.
+
+    Args:
+        distribution (Distribution): The distribution.
+
+    Returns:
+        torch.Size: The size of the distribution.
+    """
+    if isinstance(distribution, Normal | Laplace | NormalInverseGamma):
+        return distribution.loc.size()
+    raise NotImplementedError(
+        f"Size of {type(distribution)} distributions is not supported."
+        "Raise an issue if needed."
+    )
+
+
 def cat_dist(distributions: list[Distribution], dim: int) -> Distribution:
-    r"""Concatenate a list of distributions into a single distribution.
+    """Concatenate a list of distributions into a single distribution.
 
     Args:
         distributions (list[Distribution]): The list of distributions.
@@ -44,14 +66,16 @@ def cat_dist(distributions: list[Distribution], dim: int) -> Distribution:
         betas = torch.cat(
             [distribution.beta for distribution in distributions], dim=dim
         )
-        return dist_type(loc=locs, lmbda=lmbdas, alpha=alphas, beta=betas)
+        return NormalInverseGamma(
+            loc=locs, lmbda=lmbdas, alpha=alphas, beta=betas
+        )
     raise NotImplementedError(
         f"Concatenation of {dist_type} distributions is not supported."
         "Raise an issue if needed."
     )
 
 
-def squeeze_dist(distribution: Distribution, dim: int) -> Distribution:
+def dist_squeeze(distribution: Distribution, dim: int) -> Distribution:
     """Squeeze the distribution along a given dimension.
 
     Args:
@@ -62,16 +86,16 @@ def squeeze_dist(distribution: Distribution, dim: int) -> Distribution:
         Distribution: The squeezed distribution.
     """
     dist_type = type(distribution)
-    if dist_type in (Normal, Laplace):
+    if isinstance(distribution, Normal | Laplace):
         loc = distribution.loc.squeeze(dim)
         scale = distribution.scale.squeeze(dim)
         return dist_type(loc=loc, scale=scale)
-    if dist_type == NormalInverseGamma:
+    if isinstance(distribution, NormalInverseGamma):
         loc = distribution.loc.squeeze(dim)
         lmbda = distribution.lmbda.squeeze(dim)
         alpha = distribution.alpha.squeeze(dim)
         beta = distribution.beta.squeeze(dim)
-        return dist_type(loc=loc, lmbda=lmbda, alpha=alpha, beta=beta)
+        return NormalInverseGamma(loc=loc, lmbda=lmbda, alpha=alpha, beta=beta)
     raise NotImplementedError(
         f"Squeezing of {dist_type} distributions is not supported."
         "Raise an issue if needed."
@@ -82,19 +106,18 @@ def dist_rearrange(
     distribution: Distribution, pattern: str, **axes_lengths: int
 ) -> Distribution:
     dist_type = type(distribution)
-    if dist_type in (Normal, Laplace):
+    if isinstance(distribution, Normal | Laplace):
         loc = rearrange(distribution.loc, pattern=pattern, **axes_lengths)
         scale = rearrange(distribution.scale, pattern=pattern, **axes_lengths)
         return dist_type(loc=loc, scale=scale)
-    if dist_type == NormalInverseGamma:
+    if isinstance(distribution, NormalInverseGamma):
         loc = rearrange(distribution.loc, pattern=pattern, **axes_lengths)
         lmbda = rearrange(distribution.lmbda, pattern=pattern, **axes_lengths)
         alpha = rearrange(distribution.alpha, pattern=pattern, **axes_lengths)
         beta = rearrange(distribution.beta, pattern=pattern, **axes_lengths)
-        return dist_type(loc=loc, lmbda=lmbda, alpha=alpha, beta=beta)
+        return NormalInverseGamma(loc=loc, lmbda=lmbda, alpha=alpha, beta=beta)
     raise NotImplementedError(
-        f"Ensemble distribution of {dist_type} is not supported."
-        "Raise an issue if needed."
+        f"Rearrange of {dist_type} is not supported. Raise an issue if needed."
     )
 
 

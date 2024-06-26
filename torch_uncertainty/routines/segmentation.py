@@ -15,6 +15,10 @@ from torch_uncertainty.metrics import (
     CategoricalNLL,
     MeanIntersectionOverUnion,
 )
+from torch_uncertainty.models import (
+    EPOCH_UPDATE_MODEL,
+    STEP_UPDATE_MODEL,
+)
 
 
 class SegmentationRoutine(LightningModule):
@@ -23,21 +27,18 @@ class SegmentationRoutine(LightningModule):
         model: nn.Module,
         num_classes: int,
         loss: nn.Module,
-        num_estimators: int = 1,
         optim_recipe: dict | Optimizer | None = None,
         format_batch_fn: nn.Module | None = None,
         metric_subsampling_rate: float = 1e-2,
         log_plots: bool = False,
         num_calibration_bins: int = 15,
     ) -> None:
-        """Routine for training & testing on segmentation tasks.
+        r"""Routine for training & testing on **segmentation** tasks.
 
         Args:
             model (torch.nn.Module): Model to train.
             num_classes (int): Number of classes in the segmentation task.
             loss (torch.nn.Module): Loss function to optimize the :attr:`model`.
-            num_estimators (int, optional): The number of estimators for the
-                ensemble. Defaults to ̀`1` (single model).
             optim_recipe (dict or Optimizer, optional): The optimizer and
                 optionally the scheduler to use. Defaults to ``None``.
             format_batch_fn (torch.nn.Module, optional): The function to format the
@@ -45,7 +46,7 @@ class SegmentationRoutine(LightningModule):
             metric_subsampling_rate (float, optional): The rate of subsampling for the
                 memory consuming metrics. Defaults to ``1e-2``.
             log_plots (bool, optional): Indicates whether to log plots from
-                metrics. Defaults to ``False`
+                metrics. Defaults to ``False``.
             num_calibration_bins (int, optional): Number of bins to compute calibration
                 metrics. Defaults to ``15``.
 
@@ -59,7 +60,6 @@ class SegmentationRoutine(LightningModule):
         """
         super().__init__()
         _segmentation_routine_checks(
-            num_estimators,
             num_classes,
             metric_subsampling_rate,
             num_calibration_bins,
@@ -68,7 +68,8 @@ class SegmentationRoutine(LightningModule):
         self.model = model
         self.num_classes = num_classes
         self.loss = loss
-        self.num_estimators = num_estimators
+        self.needs_epoch_update = isinstance(model, EPOCH_UPDATE_MODEL)
+        self.needs_step_update = isinstance(model, STEP_UPDATE_MODEL)
 
         if format_batch_fn is None:
             format_batch_fn = nn.Identity()
@@ -131,6 +132,20 @@ class SegmentationRoutine(LightningModule):
         if self.logger is not None:  # coverage: ignore
             self.logger.log_hyperparams(self.hparams)
 
+    def on_validation_start(self) -> None:
+        if self.needs_epoch_update and not self.trainer.sanity_checking:
+            self.model.update_wrapper(self.current_epoch)
+            if hasattr(self.model, "need_bn_update"):
+                self.model.bn_update(
+                    self.trainer.train_dataloader, device=self.device
+                )
+
+    def on_test_start(self) -> None:
+        if hasattr(self.model, "need_bn_update"):
+            self.model.bn_update(
+                self.trainer.train_dataloader, device=self.device
+            )
+
     def training_step(
         self, batch: tuple[Tensor, Tensor], batch_idx: int
     ) -> STEP_OUTPUT:
@@ -144,44 +159,50 @@ class SegmentationRoutine(LightningModule):
         target = target.flatten()
         valid_mask = target != 255
         loss = self.loss(logits[valid_mask], target[valid_mask])
+        if self.needs_step_update:
+            self.model.update_wrapper(self.current_epoch)
         self.log("train_loss", loss)
         return loss
 
     def validation_step(
         self, batch: tuple[Tensor, Tensor], batch_idx: int
     ) -> None:
-        img, target = batch
+        img, targets = batch
         logits = self.forward(img)
-        target = F.resize(
-            target, logits.shape[-2:], interpolation=F.InterpolationMode.NEAREST
+        targets = F.resize(
+            targets,
+            logits.shape[-2:],
+            interpolation=F.InterpolationMode.NEAREST,
         )
         logits = rearrange(
-            logits, "(m b) c h w -> (b h w) m c", m=self.num_estimators
+            logits, "(m b) c h w -> (b h w) m c", b=targets.size(0)
         )
         probs_per_est = logits.softmax(dim=-1)
         probs = probs_per_est.mean(dim=1)
-        target = target.flatten()
-        valid_mask = target != 255
-        probs, target = probs[valid_mask], target[valid_mask]
-        self.val_seg_metrics.update(probs, target)
-        self.val_sbsmpl_seg_metrics.update(*self.subsample(probs, target))
+        targets = targets.flatten()
+        valid_mask = targets != 255
+        probs, targets = probs[valid_mask], targets[valid_mask]
+        self.val_seg_metrics.update(probs, targets)
+        self.val_sbsmpl_seg_metrics.update(*self.subsample(probs, targets))
 
     def test_step(self, batch: tuple[Tensor, Tensor], batch_idx: int) -> None:
-        img, target = batch
+        img, targets = batch
         logits = self.forward(img)
-        target = F.resize(
-            target, logits.shape[-2:], interpolation=F.InterpolationMode.NEAREST
+        targets = F.resize(
+            targets,
+            logits.shape[-2:],
+            interpolation=F.InterpolationMode.NEAREST,
         )
         logits = rearrange(
-            logits, "(m b) c h w -> (b h w) m c", m=self.num_estimators
+            logits, "(m b) c h w -> (b h w) m c", b=targets.size(0)
         )
         probs_per_est = logits.softmax(dim=-1)
         probs = probs_per_est.mean(dim=1)
-        target = target.flatten()
-        valid_mask = target != 255
-        probs, target = probs[valid_mask], target[valid_mask]
-        self.test_seg_metrics.update(probs, target)
-        self.test_sbsmpl_seg_metrics.update(*self.subsample(probs, target))
+        targets = targets.flatten()
+        valid_mask = targets != 255
+        probs, targets = probs[valid_mask], targets[valid_mask]
+        self.test_seg_metrics.update(probs, targets)
+        self.test_sbsmpl_seg_metrics.update(*self.subsample(probs, targets))
 
     def on_validation_epoch_end(self) -> None:
         self.log_dict(self.val_seg_metrics.compute(), sync_dist=True)
@@ -210,16 +231,10 @@ class SegmentationRoutine(LightningModule):
 
 
 def _segmentation_routine_checks(
-    num_estimators: int,
     num_classes: int,
     metric_subsampling_rate: float,
     num_calibration_bins: int,
 ) -> None:
-    if num_estimators < 1:
-        raise ValueError(
-            f"num_estimators must be positive, got {num_estimators}."
-        )
-
     if num_classes < 2:
         raise ValueError(f"num_classes must be at least 2, got {num_classes}.")
 

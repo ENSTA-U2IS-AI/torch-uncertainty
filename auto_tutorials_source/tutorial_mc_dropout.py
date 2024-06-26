@@ -22,8 +22,8 @@ First, we have to load the following utilities from TorchUncertainty:
 - the Trainer from Lightning
 - the datamodule handling dataloaders: MNISTDataModule from torch_uncertainty.datamodules
 - the model: LeNet, which lies in torch_uncertainty.models
-- the MC Dropout wrapper: mc_dropout, which lies in torch_uncertainty.models
-- the classification training routine in the torch_uncertainty.routines
+- the MC Dropout wrapper: mc_dropout, from torch_uncertainty.models.wrappers
+- the classification training & evaluation routine in the torch_uncertainty.routines
 - an optimization recipe in the torch_uncertainty.optim_recipes module.
 
 We also need import the neural network utils within `torch.nn`.
@@ -51,20 +51,19 @@ from torch_uncertainty.routines import ClassificationRoutine
 # dataloaders and transforms. We create the model using the
 # blueprint from torch_uncertainty.models and we wrap it into mc_dropout.
 #
-# It is important to specify the arguments,``num_estimators`` and the ``dropout_rate``
-# to use Monte Carlo dropout.
+# It is important to add a ``dropout_rate`` argument in your model to use Monte Carlo dropout.
 
 trainer = Trainer(accelerator="cpu", max_epochs=2, enable_progress_bar=False)
 
 # datamodule
-root = Path("") / "data"
+root = Path("data")
 datamodule = MNISTDataModule(root=root, batch_size=128)
 
 
 model = lenet(
     in_channels=datamodule.num_channels,
     num_classes=datamodule.num_classes,
-    dropout_rate=0.4,
+    dropout_rate=0.5,
 )
 
 mc_model = mc_dropout(model, num_estimators=16, last_layer=False)
@@ -75,16 +74,14 @@ mc_model = mc_dropout(model, num_estimators=16, last_layer=False)
 # This is a classification problem, and we use CrossEntropyLoss as the likelihood.
 # We define the training routine using the classification training routine from
 # torch_uncertainty.routines.classification. We provide the number of classes
-# and channels, the optimizer wrapper, the dropout rate, and the number of
-# forward passes to perform through the network, as well as all the default
-# arguments.
+# and channels, the optimizer wrapper, and the dropout rate.
 
 routine = ClassificationRoutine(
     num_classes=datamodule.num_classes,
     model=mc_model,
     loss=nn.CrossEntropyLoss(),
     optim_recipe=optim_cifar10_resnet18(mc_model),
-    num_estimators=16,
+    is_ensemble=True,
 )
 
 # %%
@@ -118,8 +115,8 @@ dataiter = iter(datamodule.val_dataloader())
 images, labels = next(dataiter)
 
 # print images
-imshow(torchvision.utils.make_grid(images[:4, ...]))
-print("Ground truth: ", " ".join(f"{labels[j]}" for j in range(4)))
+imshow(torchvision.utils.make_grid(images[:6, ...], padding=0))
+print("Ground truth labels: ", " ".join(f"{labels[j]}" for j in range(6)))
 
 routine.eval()
 logits = routine(images).reshape(16, 128, 10)
@@ -127,7 +124,7 @@ logits = routine(images).reshape(16, 128, 10)
 probs = torch.nn.functional.softmax(logits, dim=-1)
 
 
-for j in range(4):
+for j in range(6):
     values, predicted = torch.max(probs[:, j], 1)
     print(
         f"Predicted digits for the image {j+1}: ",
@@ -135,5 +132,5 @@ for j in range(4):
     )
 
 # %%
-# We see that there is some disagreement between the samples of the dropout
+# Most of the time, we see that there is some disagreement between the samples of the dropout
 # approximation of the posterior distribution.

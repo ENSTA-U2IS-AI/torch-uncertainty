@@ -1,26 +1,35 @@
 from collections.abc import Callable
 from functools import partial
+from typing import Literal
 
+import torch
 from timm.optim import Lamb
 from torch import nn, optim
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import LRScheduler
 
-__all__ = [
-    "optim_cifar10_resnet18",
-    "optim_cifar10_resnet34",
-    "optim_cifar10_resnet50",
-    "optim_cifar10_vgg16",
-    "optim_cifar10_wideresnet",
-    "optim_cifar100_resnet18",
-    "optim_cifar100_resnet34",
-    "optim_cifar100_resnet50",
-    "optim_cifar100_vgg16",
-    "optim_imagenet_resnet50",
-    "optim_imagenet_resnet50_a3",
-    "optim_tinyimagenet_resnet34",
-    "optim_tinyimagenet_resnet50",
-]
+
+def optim_abnn(
+    model: nn.Module,
+    lr: float,
+    momentum: float = 0.9,
+    weight_decay: float = 1e-4,
+    nesterov: bool = True,
+) -> dict:
+    """ABNN finetuning recipe."""
+    optimizer = optim.SGD(
+        model.parameters(),
+        lr=lr,
+        momentum=momentum,
+        weight_decay=weight_decay,
+        nesterov=nesterov,
+    )
+    scheduler = optim.lr_scheduler.MultiStepLR(
+        optimizer,
+        milestones=[1, 4],
+        gamma=0.1,
+    )
+    return {"optimizer": optimizer, "lr_scheduler": scheduler}
 
 
 def optim_cifar10_resnet18(
@@ -422,3 +431,43 @@ def get_procedure(
         procedure = partial(batch_ensemble_wrapper, optim_recipe=procedure)
 
     return procedure
+
+
+class FullSWALR(torch.optim.lr_scheduler.SequentialLR):
+    def __init__(
+        self,
+        optimizer: Optimizer,
+        milestone: int,
+        swa_lr: float,
+        anneal_epochs: int,
+        optim_eta_min: float = 0,
+        anneal_strategy: Literal["cos", "linear"] = "cos",
+    ) -> None:
+        """Chains a Cosine scheduler and a SWA scheduler.
+
+        This class is an example of a wrapper to enable training SWA and SWAG
+        models using the CLI. You may create your own class following this
+        example.
+
+        Args:
+            optimizer (Optimizer): The optimizer to be used.
+            milestone (int): The epoch to start the SWA.
+            swa_lr (float): The learning rate to use for the SWA model.
+            anneal_epochs (int): The number of epochs to anneal the learning rate.
+            optim_eta_min (float): The minimum learning rate for the first optimizer.
+            anneal_strategy (Literal["cos", "linear"]): The strategy to anneal the learning rate.
+        """
+        optim_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+            optimizer=optimizer, T_max=milestone, eta_min=optim_eta_min
+        )
+        swa_scheduler = torch.optim.swa_utils.SWALR(
+            optimizer,
+            swa_lr=swa_lr,
+            anneal_epochs=anneal_epochs,
+            anneal_strategy=anneal_strategy,
+        )
+        super().__init__(
+            optimizer=optimizer,
+            schedulers=[optim_scheduler, swa_scheduler],
+            milestones=[milestone],
+        )

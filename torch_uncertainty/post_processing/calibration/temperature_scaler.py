@@ -1,7 +1,7 @@
 from typing import Literal
 
 import torch
-from torch import Tensor, device, nn
+from torch import Tensor, nn
 
 from .scaler import Scaler
 
@@ -9,11 +9,11 @@ from .scaler import Scaler
 class TemperatureScaler(Scaler):
     def __init__(
         self,
-        model: nn.Module,
+        model: nn.Module | None = None,
         init_val: float = 1,
         lr: float = 0.1,
         max_iter: int = 100,
-        device: Literal["cpu", "cuda"] | device | None = None,
+        device: Literal["cpu", "cuda"] | torch.device | None = None,
     ) -> None:
         """Temperature scaling post-processing for calibrated probabilities.
 

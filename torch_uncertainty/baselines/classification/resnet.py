@@ -14,10 +14,17 @@ from torch_uncertainty.models.resnet import (
 from torch_uncertainty.routines.classification import ClassificationRoutine
 from torch_uncertainty.transforms import MIMOBatchFormat, RepeatTarget
 
+ENSEMBLE_METHODS = [
+    "packed",
+    "batched",
+    "lpbnn",
+    "masked",
+    "mc-dropout",
+    "mimo",
+]
+
 
 class ResNetBaseline(ClassificationRoutine):
-    single = ["std"]
-    ensemble = ["packed", "batched", "lpbnn", "masked", "mc-dropout", "mimo"]
     versions = {
         "std": resnet,
         "packed": packed_resnet,
@@ -47,13 +54,7 @@ class ResNetBaseline(ClassificationRoutine):
         style: str = "imagenet",
         num_estimators: int = 1,
         dropout_rate: float = 0.0,
-        mixtype: str = "erm",
-        mixmode: str = "elem",
-        dist_sim: str = "emb",
-        kernel_tau_max: float = 1.0,
-        kernel_tau_std: float = 0.5,
-        mixup_alpha: float = 0,
-        cutmix_alpha: float = 0,
+        mixup_params: dict | None = None,
         last_layer_dropout: bool = False,
         groups: int = 1,
         scale: float | None = None,
@@ -66,7 +67,7 @@ class ResNetBaseline(ClassificationRoutine):
         ] = "msp",
         log_plots: bool = False,
         save_in_csv: bool = False,
-        calibration_set: Literal["val", "test"] | None = None,
+        calibration_set: Literal["val", "test"] = "val",
         eval_ood: bool = False,
         eval_grouping_loss: bool = False,
         num_calibration_bins: int = 15,
@@ -108,17 +109,10 @@ class ResNetBaseline(ClassificationRoutine):
                 Only used if :attr:`version` is either ``"packed"``, ``"batched"``,
                 ``"masked"`` or ``"mc-dropout"`` Defaults to ``None``.
             dropout_rate (float, optional): Dropout rate. Defaults to ``0.0``.
-            mixtype (str, optional): Mixup type. Defaults to ``"erm"``.
-            mixmode (str, optional): Mixup mode. Defaults to ``"elem"``.
-            dist_sim (str, optional): Distance similarity. Defaults to ``"emb"``.
-            kernel_tau_max (float, optional): Maximum value for the kernel tau.
-                Defaults to ``1.0``.
-            kernel_tau_std (float, optional): Standard deviation for the kernel
-                tau. Defaults to ``0.5``.
-            mixup_alpha (float, optional): Alpha parameter for Mixup. Defaults
-                to ``0``.
-            cutmix_alpha (float, optional): Alpha parameter for CutMix.
-                Defaults to ``0``.
+            mixup_params (dict, optional): Mixup parameters. Can include mixtype,
+                mixmode, dist_sim, kernel_tau_max, kernel_tau_std,
+                mixup_alpha, and cutmix_alpha. If None, no augmentations.
+                Defaults to ``None``.
             groups (int, optional): Number of groups in convolutions. Defaults
                 to ``1``.
             scale (float, optional): Expansion factor affecting the width of
@@ -184,7 +178,7 @@ class ResNetBaseline(ClassificationRoutine):
         if version not in self.versions:
             raise ValueError(f"Unknown version: {version}")
 
-        if version in self.ensemble:
+        if version in ENSEMBLE_METHODS:
             params |= {
                 "num_estimators": num_estimators,
             }
@@ -226,15 +220,9 @@ class ResNetBaseline(ClassificationRoutine):
             num_classes=num_classes,
             model=model,
             loss=loss,
-            num_estimators=num_estimators,
+            is_ensemble=version in ENSEMBLE_METHODS,
             format_batch_fn=format_batch_fn,
-            mixtype=mixtype,
-            mixmode=mixmode,
-            dist_sim=dist_sim,
-            kernel_tau_max=kernel_tau_max,
-            kernel_tau_std=kernel_tau_std,
-            mixup_alpha=mixup_alpha,
-            cutmix_alpha=cutmix_alpha,
+            mixup_params=mixup_params,
             eval_ood=eval_ood,
             eval_grouping_loss=eval_grouping_loss,
             ood_criterion=ood_criterion,

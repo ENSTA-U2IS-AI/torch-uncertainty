@@ -15,7 +15,7 @@ class NYUv2DataModule(DepthDataModule):
         min_depth: float = 1e-3,
         max_depth: float = 10.0,
         crop_size: _size_2_t = (416, 544),
-        inference_size: _size_2_t = (480, 640),
+        eval_size: _size_2_t = (480, 640),
         val_split: float | None = None,
         num_workers: int = 1,
         pin_memory: bool = True,
@@ -36,7 +36,7 @@ class NYUv2DataModule(DepthDataModule):
                 :math:`(\text{size},\text{size})` is made. If provided a sequence
                 of length :math:`1`, it will be interpreted as
                 :math:`(\text{size[0]},\text{size[1]})`. Defaults to ``(416, 544)``.
-            inference_size (sequence or int, optional): Desired input image and
+            eval_size (sequence or int, optional): Desired input image and
                 depth mask sizes during inference. If size is an int,
                 smaller edge of the images will be matched to this number, i.e.,
                 :math:`\text{height}>\text{width}`, then image will be rescaled to
@@ -58,7 +58,7 @@ class NYUv2DataModule(DepthDataModule):
             min_depth=min_depth,
             max_depth=max_depth,
             crop_size=crop_size,
-            inference_size=inference_size,
+            eval_size=eval_size,
             val_split=val_split,
             num_workers=num_workers,
             pin_memory=pin_memory,

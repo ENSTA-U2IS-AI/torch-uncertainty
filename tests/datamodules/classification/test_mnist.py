@@ -12,14 +12,22 @@ class TestMNISTDataModule:
 
     def test_mnist_cutout(self):
         dm = MNISTDataModule(
-            root="./data/", batch_size=128, cutout=16, val_split=0.1
+            root="./data/",
+            batch_size=128,
+            cutout=16,
+            val_split=0.1,
+            eval_ood=True,
         )
 
         assert dm.dataset == MNIST
         assert isinstance(dm.train_transform.transforms[0], Cutout)
 
         dm = MNISTDataModule(
-            root="./data/", batch_size=128, ood_ds="not", cutout=0, val_split=0
+            root="./data/",
+            batch_size=128,
+            ood_ds="notMNIST",
+            cutout=0,
+            val_split=0,
         )
         assert isinstance(dm.train_transform.transforms[0], nn.Identity)
 
@@ -42,6 +50,7 @@ class TestMNISTDataModule:
             dm.setup("other")
 
         dm.eval_ood = True
+        dm.ood_transform = dm.test_transform
         dm.val_split = 0.1
         dm.prepare_data()
         dm.setup()

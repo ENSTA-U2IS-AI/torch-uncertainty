@@ -55,12 +55,12 @@ from torch_uncertainty.routines import ClassificationRoutine
 # We will use the Adam optimizer with the default learning rate of 0.001.
 
 
-def optim_lenet(model: nn.Module) -> dict:
+def optim_lenet(model: nn.Module):
     optimizer = optim.Adam(
         model.parameters(),
         lr=1e-3,
     )
-    return {"optimizer": optimizer}
+    return optimizer
 
 
 # %%
@@ -75,7 +75,7 @@ def optim_lenet(model: nn.Module) -> dict:
 trainer = Trainer(accelerator="cpu", enable_progress_bar=False, max_epochs=1)
 
 # datamodule
-root = Path("") / "data"
+root = Path("data")
 datamodule = MNISTDataModule(root=root, batch_size=128, eval_ood=False)
 
 # model
@@ -105,6 +105,7 @@ routine = ClassificationRoutine(
     num_classes=datamodule.num_classes,
     loss=loss,
     optim_recipe=optim_lenet(model),
+    is_ensemble=True
 )
 
 # %%
@@ -125,8 +126,10 @@ trainer.test(model=routine, datamodule=datamodule)
 # 6. Testing the Model
 # ~~~~~~~~~~~~~~~~~~~~
 #
-# Now that the model is trained, let's test it on MNIST
-
+# Now that the model is trained, let's test it on MNIST.
+# Please note that we apply a reshape to the logits to determine the dimension corresponding to the ensemble
+# and to the batch. As for TorchUncertainty 0.2.0, the ensemble dimension is merged with the batch dimension
+# in this order (num_estimator x batch, classes).
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
@@ -148,14 +151,23 @@ images, labels = next(dataiter)
 imshow(torchvision.utils.make_grid(images[:4, ...]))
 print("Ground truth: ", " ".join(f"{labels[j]}" for j in range(4)))
 
-logits = model(images)
-probs = torch.nn.functional.softmax(logits, dim=-1)
+# Put the model in eval mode to use several samples
+model = model.eval()
+logits = model(images).reshape(16, 128, 10) # num_estimators, batch_size, num_classes
 
-_, predicted = torch.max(probs, 1)
+# We apply the softmax on the classes and average over the estimators
+probs = torch.nn.functional.softmax(logits, dim=-1)
+avg_probs = probs.mean(dim=0)
+var_probs = probs.std(dim=0)
+
+_, predicted = torch.max(avg_probs, 1)
 
 print("Predicted digits: ", " ".join(f"{predicted[j]}" for j in range(4)))
-
+print("Std. dev. of the scores over the posterior samples", " ".join(f"{var_probs[j][predicted[j]]:.3}" for j in range(4)))
 # %%
+# Here, we show the variance of the top prediction. This is a non-standard but intuitive way to show the diversity of the predictions
+# of the ensemble. Ideally, the variance should be high when the average top prediction is incorrect.
+#
 # References
 # ----------
 #

@@ -66,7 +66,7 @@ class NotMNIST(ImageFolder):
             )
 
         super().__init__(
-            self.root + f"/notMNIST_{subset}",
+            self.root / f"notMNIST_{subset}",
             transform=transform,
             target_transform=target_transform,
         )
@@ -97,4 +97,4 @@ class NotMNIST(ImageFolder):
         Args:
             index (int): The index of the sample to get.
         """
-        return super().__getitem__(index)[0]
+        return super().__getitem__(index)

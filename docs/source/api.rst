@@ -22,16 +22,6 @@ Classification
 
     ClassificationRoutine
 
-Regression
-^^^^^^^^^^
-
-.. autosummary::
-    :toctree: generated/
-    :nosignatures:
-    :template: class.rst
-
-    RegressionRoutine
-
 Segmentation
 ^^^^^^^^^^^^
 
@@ -41,6 +31,16 @@ Segmentation
     :template: class.rst
 
     SegmentationRoutine
+
+Regression
+^^^^^^^^^^
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: class.rst
+
+    RegressionRoutine
 
 Pixelwise Regression
 ^^^^^^^^^^^^^^^^^^^^
@@ -153,24 +153,35 @@ Models
 
 .. currentmodule:: torch_uncertainty.models
 
-Deep Ensembles
-^^^^^^^^^^^^^^
+Wrappers
+^^^^^^^^
+
+
+
+Functions
+"""""""""
 
 .. autosummary::
     :toctree: generated/
     :nosignatures:
-    :template: class.rst
 
     deep_ensembles
+    mc_dropout
 
-Monte Carlo Dropout
+Classes
+"""""""
 
 .. autosummary::
     :toctree: generated/
     :nosignatures:
     :template: class.rst
 
-    mc_dropout
+    CheckpointEnsemble
+    EMA
+    MCDropout
+    StochasticModel
+    SWA
+    SWAG
 
 Metrics
 -------
@@ -245,12 +256,22 @@ Post-Processing Methods
 .. autosummary::
     :toctree: generated/
     :nosignatures:
+    :template: class.rst
+    
+    MCBatchNorm
+    LaplaceApprox
+    
+Scaling Methods
+^^^^^^^^^^^^^^^
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
     :template: class_inherited.rst
 
     TemperatureScaler
     VectorScaler
     MatrixScaler
-    MCBatchNorm
 
 Datamodules
 -----------
@@ -301,3 +322,74 @@ Segmentation
     CamVidDataModule
     CityscapesDataModule
     MUADDataModule
+
+Datasets
+--------
+
+.. currentmodule:: torch_uncertainty.datasets
+
+Classification
+^^^^^^^^^^^^^^
+
+.. currentmodule:: torch_uncertainty.datasets.classification
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: class.rst
+
+    MNISTC
+    NotMNIST
+    CIFAR10C
+    CIFAR100C
+    CIFAR10H
+    CIFAR10N
+    CIFAR100N
+    ImageNetA
+    ImageNetC
+    ImageNetO
+    ImageNetR
+    TinyImageNet
+    TinyImageNetC
+    OpenImageO
+
+Regression
+^^^^^^^^^^
+
+.. currentmodule:: torch_uncertainty.datasets.regression
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: class.rst
+
+    UCIRegression
+
+Segmentation
+^^^^^^^^^^^^
+
+.. currentmodule:: torch_uncertainty.datasets.segmentation
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: class.rst
+
+    CamVid
+    Cityscapes
+
+Others & Cross-Categories
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. currentmodule:: torch_uncertainty.datasets
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: class.rst
+
+    Fractals
+    FrostImages
+    KITTIDepth
+    MUAD
+    NYUv2
