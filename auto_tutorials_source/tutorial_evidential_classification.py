@@ -22,12 +22,8 @@ To train a LeNet with the DEC loss function using TorchUncertainty, we have to l
 - the evidential objective: the DECLoss from torch_uncertainty.losses
 - the datamodule that handles dataloaders & transforms: MNISTDataModule from torch_uncertainty.datamodules
 
-We also need to define an optimizer using torch.optim, the neural network utils within torch.nn, as well as the partial util to provide
-the modified default arguments for the DEC loss.
+We also need to define an optimizer using torch.optim, the neural network utils within torch.nn.
 """
-
-# %%
-from functools import partial
 from pathlib import Path
 
 import torch
@@ -73,11 +69,10 @@ model = lenet(
 # %%
 # 4. The Loss and the Training Routine
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Next, we need to define the loss to be used during training. To do this, we
-# redefine the default parameters for the DEC loss using the partial
-# function from functools. After that, we define the training routine using
+# Next, we need to define the loss to be used during training.
+# After that, we define the training routine using
 # the single classification model training routine from
-# torch_uncertainty.routines.classification.ClassificationSingle.
+# torch_uncertainty.routines.ClassificationRoutine.
 # In this routine, we provide the model, the DEC loss, the optimizer,
 # and all the default arguments.
 
@@ -152,4 +147,4 @@ with torch.no_grad():
 # References
 # ----------
 #
-# - **Deep Evidential Classification:** Murat Sensoy, Lance Kaplan, & Melih Kandemir (2018). Evidential Deep Learning to Quantify Classification Uncertainty `NeurIPS 2018 <https://arxiv.org/pdf/1806.01768>`_
+# - **Deep Evidential Classification:** Murat Sensoy, Lance Kaplan, & Melih Kandemir (2018). Evidential Deep Learning to Quantify Classification Uncertainty `NeurIPS 2018 <https://arxiv.org/pdf/1806.01768>`_.
