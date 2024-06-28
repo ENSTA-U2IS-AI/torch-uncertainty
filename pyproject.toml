@@ -93,6 +93,7 @@ lint.extend-select = [
     "ISC",
     "ICN",
     "N",
+    "NPY",
     "PERF",
     "PIE",
     "PTH",

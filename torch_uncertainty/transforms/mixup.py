@@ -2,7 +2,7 @@ import numpy as np
 import scipy
 import torch
 import torch.nn.functional as F
-from torch import Tensor
+from torch import Tensor, nn
 
 
 def beta_warping(x, alpha_cdf: float = 1.0, eps: float = 1e-12) -> float:
@@ -79,20 +79,23 @@ def sim_gauss_kernel(dist, tau_max: float = 1.0, tau_std: float = 0.5) -> float:
 #     return 1 / (dist_rate + 1e-12)
 
 
-class AbstractMixup:
+# TODO: Should be a torchvision transform
+class AbstractMixup(nn.Module):
     def __init__(
         self, alpha: float = 1.0, mode: str = "batch", num_classes: int = 1000
     ) -> None:
+        super().__init__()
+        self.rng = np.random.default_rng()
         self.alpha = alpha
         self.num_classes = num_classes
         self.mode = mode
 
     def _get_params(self, batch_size: int, device: torch.device):
         if self.mode == "batch":
-            lam = np.random.beta(self.alpha, self.alpha)
+            lam = self.rng.beta(a=self.alpha, b=self.alpha)
         else:
             lam = torch.as_tensor(
-                np.random.beta(self.alpha, self.alpha, batch_size),
+                self.rng.beta(a=self.alpha, b=self.alpha, size=batch_size),
                 device=device,
             )
         index = torch.randperm(batch_size, device=device)
@@ -106,7 +109,6 @@ class AbstractMixup:
     ) -> Tensor:
         if isinstance(lam, Tensor):
             lam = lam.view(-1, *[1 for _ in range(inp.ndim - 1)]).float()
-
         return lam * inp + (1 - lam) * inp[index, :]
 
     def _mix_target(
@@ -202,9 +204,9 @@ class WarpingMixup(AbstractMixup):
 
     def _get_params(self, batch_size: int, device: torch.device):
         if self.mode == "batch":
-            lam = np.random.beta(self.alpha, self.alpha)
+            lam = self.rng.beta(a=self.alpha, b=self.alpha)
         else:
-            lam = np.random.beta(self.alpha, self.alpha, batch_size)
+            lam = self.rng.beta(a=self.alpha, b=self.alpha, size=batch_size)
 
         index = torch.randperm(batch_size, device=device)
         return lam, index

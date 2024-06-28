@@ -8,12 +8,13 @@ from torch_uncertainty.transforms import Shear, Translate, augmentations
 
 
 def get_ab(beta: float) -> tuple[float, float]:
-    if np.random.random() < 0.5:
-        a = np.float32(np.random.beta(beta, 1))
-        b = np.float32(np.random.beta(1, beta))
+    rng = np.random.default_rng()
+    if rng.uniform(low=0, high=1) < 0.5:
+        a = np.float32(rng.beta(a=beta, b=1))
+        b = np.float32(rng.beta(a=1, b=beta))
     else:
-        a = 1 + np.float32(np.random.beta(1, beta))
-        b = -np.float32(np.random.beta(1, beta))
+        a = 1 + np.float32(rng.beta(a=1, b=beta))
+        b = -np.float32(rng.beta(a=1, b=beta))
     return a, b
 
 
@@ -43,6 +44,7 @@ class PixMix(nn.Module):
         augmentation_severity: float = 3,
         mixing_severity: float = 3,
         all_ops: bool = True,
+        seed: int = 12345,
     ) -> None:
         """PixMix augmentation class.
 
@@ -53,11 +55,13 @@ class PixMix(nn.Module):
             mixing_severity (float): Severity of mixing.
             all_ops (bool): Whether to use augmentations included in ImageNet-C.
                 Defaults to True.
+            seed (int): Seed for random number generator. Defaults to 12345.
 
         Note:
             Default arguments are set to follow original guidelines.
         """
         super().__init__()
+        self.rng = np.random.default_rng(seed)
         self.mixing_set = mixing_set
         self.num_mixing_images = len(mixing_set)
         self.mixing_iterations = mixing_iterations
@@ -80,15 +84,17 @@ class PixMix(nn.Module):
                 self.aug_instances.append(aug())
 
     def __call__(self, img: Image.Image) -> np.ndarray:
-        mixed = self.augment_input(img) if np.random.random() < 0.5 else img
+        # TODO: Fix
+        mixed = self.augment_input(img) if self.rng.random() < 0.5 else img
 
-        for _ in range(np.random.randint(self.mixing_iterations + 1)):
-            if np.random.random() < 0.5:
+        for _ in range(self.rng.integers(low=0, high=self.mixing_iterations)):
+            if self.rng.random() < 0.5:
                 aug_image_copy = self._augment(img)
             else:
-                aug_image_copy = np.random.choice(self.num_mixing_images)
+                aug_image_copy = self.rng.choice(self.num_mixing_images)
 
-            mixed_op = np.random.choice(mixings)
+            # TODO: Fix
+            mixed_op = self.rng.choice(mixings)
             mixed = mixed_op(
                 np.array(mixed), np.array(aug_image_copy), self.mixing_severity
             )
@@ -96,7 +102,7 @@ class PixMix(nn.Module):
         return mixed
 
     def _augment(self, image: Image.Image) -> np.ndarray:
-        op = np.random.choice(self.aug_instances)
+        op = self.rng.choice(self.aug_instances, 1)
         if op.level_type is int:
             aug_level = self._sample_int(op.pixmix_max_level)
         else:
@@ -104,7 +110,7 @@ class PixMix(nn.Module):
         return op(image.copy(), aug_level)
 
     def _sample_level(self) -> float:
-        return np.random.uniform(low=0.1, high=self.augmentation_severity)
+        return self.rng.uniform(low=0.1, high=self.augmentation_severity)
 
     def _sample_int(self, maxval: int) -> int:
         """Helper method to scale `level` between 0 and maxval.

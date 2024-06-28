@@ -283,6 +283,7 @@ class Pixelate(nn.Module):  # TODO: batch
 class Frost(nn.Module):
     def __init__(self, severity: int) -> None:
         super().__init__()
+        self.rng = np.random.default_rng()
         if not (0 <= severity <= 5):
             raise ValueError("Severity must be between 0 and 5.")
         if not isinstance(severity, int):
@@ -300,7 +301,7 @@ class Frost(nn.Module):
             return img
         _, height, width = img.shape
         frost_img = RandomResizedCrop((height, width))(
-            self.frost_ds[np.random.randint(5)]
+            self.frost_ds[self.rng.integers(low=0, high=4)]
         )
 
         return torch.clip(self.mix[0] * img + self.mix[1] * frost_img, 0, 1)

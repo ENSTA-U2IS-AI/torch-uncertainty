@@ -53,7 +53,7 @@ class DummyClassificationDataset(Dataset):
         else:
             shape = (num_images, num_channels, image_size, image_size)
 
-        self.data = np.random.randint(
+        self.data = np.random.default_rng().integers(
             low=0,
             high=255,
             size=shape,
@@ -187,14 +187,15 @@ class DummySegmentationDataset(Dataset):
 
         smnt_shape = (num_images, 1, image_size, image_size)
 
-        self.data = np.random.randint(
+        rng = np.random.default_rng()
+        self.data = rng.integers(
             low=0,
             high=255,
             size=img_shape,
             dtype=np.uint8,
         )
 
-        self.targets = np.random.randint(
+        self.targets = rng.integers(
             low=0,
             high=num_classes,
             size=smnt_shape,
@@ -245,20 +246,18 @@ class DummPixelRegressionDataset(Dataset):
         else:
             smnt_shape = (num_images, output_dim, image_size, image_size)
 
-        self.data = np.random.randint(
+        rng = np.random.default_rng()
+        self.data = rng.integers(
             low=0,
             high=255,
             size=img_shape,
             dtype=np.uint8,
         )
 
-        self.targets = (
-            np.random.uniform(
-                low=0,
-                high=1,
-                size=smnt_shape,
-            )
-            * 100
+        self.targets = rng.uniform(
+            low=0,
+            high=100,
+            size=smnt_shape,
         )
 
     def __getitem__(self, index: int) -> tuple[Any, Any]:
