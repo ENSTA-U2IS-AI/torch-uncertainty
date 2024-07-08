@@ -30,6 +30,11 @@ class SWAG(SWA):
         posterior after each update. Uses the SWAG posterior estimation only
         at test time. Otherwise, uses the base model for training.
 
+        Call :meth:`update_wrapper` at the end of each epoch. It will update
+        the SWAG posterior if the current epoch number minus :attr:`cycle_start`
+        is a multiple of :attr:`cycle_length`. Call :meth:`bn_update` to update
+        the batchnorm statistics of the current SWAG samples.
+
         Args:
             model (nn.Module): PyTorch model to be trained.
             cycle_start (int): Begininning of the first SWAG averaging cycle.
@@ -65,13 +70,19 @@ class SWAG(SWA):
         self.fit = False
         self.samples = []
 
-    def eval_forward(self, x: torch.Tensor) -> torch.Tensor:
+    def eval_forward(self, x: Tensor) -> Tensor:
+        """Forward pass of the SWAG model when in eval mode."""
         if not self.fit:
             return self.core_model.forward(x)
         return torch.cat([mod.to(device=x.device)(x) for mod in self.samples])
 
     def initialize_stats(self) -> None:
-        """Initialize the SWAG dictionary of statistics."""
+        """Initialize the SWAG dictionary of statistics.
+
+        For each parameter, we create a mean, squared mean, and covariance
+        square root. The covariance square root is only used when
+        `diag_covariance` is False.
+        """
         self.swag_stats = {}
         for name_p, param in self.core_model.named_parameters():
             mean, squared_mean = (
@@ -140,7 +151,7 @@ class SWAG(SWA):
         self.need_bn_update = True
         self.fit = True
 
-    def bn_update(self, loader: DataLoader, device) -> None:
+    def bn_update(self, loader: DataLoader, device: torch.device) -> None:
         """Update the bachnorm statistics of the current SWAG samples.
 
         Args:
@@ -214,18 +225,21 @@ class SWAG(SWA):
             param.data = sample.to(device="cpu", dtype=param.dtype)
         return new_sample
 
-    def _save_to_state_dict(self, destination, prefix, keep_vars):
+    def _save_to_state_dict(self, destination, prefix: str, keep_vars: bool):
+        """Add the SWAG statistics to the destination dict."""
         super()._save_to_state_dict(destination, prefix, keep_vars)
         destination |= self.swag_stats
 
     def state_dict(
         self, *args, destination=None, prefix="", keep_vars=False
-    ) -> dict[str, Tensor]:
+    ) -> Mapping:
+        """Add the SWAG statistics to the state dict."""
         return self.swag_stats | super().state_dict(
             *args, destination=destination, prefix=prefix, keep_vars=keep_vars
         )
 
-    def _load_swag_stats(self, state_dict):
+    def _load_swag_stats(self, state_dict: Mapping):
+        """Load the SWAG statistics from the state dict."""
         self.swag_stats = {
             k: v for k, v in state_dict.items() if k in self.swag_stats
         }
