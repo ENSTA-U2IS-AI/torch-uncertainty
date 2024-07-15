@@ -19,9 +19,9 @@ In this part, we train a LeNet with dropout layers, based on the model and routi
 
 First, we have to load the following utilities from TorchUncertainty:
 
-- the Trainer from Lightning
+- the TUTrainer from TorchUncertainty utils
 - the datamodule handling dataloaders: MNISTDataModule from torch_uncertainty.datamodules
-- the model: LeNet, which lies in torch_uncertainty.models
+- the model: lenet from torch_uncertainty.models
 - the MC Dropout wrapper: mc_dropout, from torch_uncertainty.models.wrappers
 - the classification training & evaluation routine in the torch_uncertainty.routines
 - an optimization recipe in the torch_uncertainty.optim_recipes module.
@@ -29,10 +29,9 @@ First, we have to load the following utilities from TorchUncertainty:
 We also need import the neural network utils within `torch.nn`.
 """
 
-# %%
 from pathlib import Path
 
-from lightning.pytorch import Trainer
+from torch_uncertainty.utils import TUTrainer
 from torch import nn
 
 from torch_uncertainty.datamodules import MNISTDataModule
@@ -42,18 +41,17 @@ from torch_uncertainty.optim_recipes import optim_cifar10_resnet18
 from torch_uncertainty.routines import ClassificationRoutine
 
 # %%
-# 2. Creating the necessary variables
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# 2. Defining the Model and the Trainer
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
-# In the following, we will need to define the root of the datasets and the
-# logs, and to fake-parse the arguments needed for using the PyTorch Lightning
-# Trainer. We also create the datamodule that handles the MNIST dataset,
+# In the following, we first create the trainer and instantiate 
+# the datamodule that handles the MNIST dataset,
 # dataloaders and transforms. We create the model using the
-# blueprint from torch_uncertainty.models and we wrap it into mc_dropout.
-#
-# It is important to add a ``dropout_rate`` argument in your model to use Monte Carlo dropout.
+# blueprint from torch_uncertainty.models and we wrap it into an mc_dropout.
+# To use the mc_dropout wrapper, **make sure that you use dropout modules** and
+# not functionals. Moreover, **they have to be** instantiated in the __init__ method.
 
-trainer = Trainer(accelerator="cpu", max_epochs=2, enable_progress_bar=False)
+trainer = TUTrainer(accelerator="cpu", max_epochs=2, enable_progress_bar=False)
 
 # datamodule
 root = Path("data")
@@ -63,7 +61,7 @@ datamodule = MNISTDataModule(root=root, batch_size=128)
 model = lenet(
     in_channels=datamodule.num_channels,
     num_classes=datamodule.num_classes,
-    dropout_rate=0.5,
+    dropout_rate=0.4,
 )
 
 mc_model = mc_dropout(model, num_estimators=16, last_layer=False)
@@ -71,10 +69,10 @@ mc_model = mc_dropout(model, num_estimators=16, last_layer=False)
 # %%
 # 3. The Loss and the Training Routine
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# This is a classification problem, and we use CrossEntropyLoss as the likelihood.
+# This is a classification problem, and we use CrossEntropyLoss as the (negative-log-)likelihood.
 # We define the training routine using the classification training routine from
-# torch_uncertainty.routines.classification. We provide the number of classes
-# and channels, the optimizer wrapper, and the dropout rate.
+# torch_uncertainty.routines. We provide the number of classes
+# the optimization recipe, and tell the routine that our model is an ensemble at evalutation time.
 
 routine = ClassificationRoutine(
     num_classes=datamodule.num_classes,
@@ -87,15 +85,19 @@ routine = ClassificationRoutine(
 # %%
 # 4. Gathering Everything and Training the Model
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+# We can now train the model using the trainer. We pass the routine and the datamodule
+# to the fit and test methods of the trainer. It will automatically evaluate some uncertainty
+# metrics that you will find in the table below.
 
 trainer.fit(model=routine, datamodule=datamodule)
-trainer.test(model=routine, datamodule=datamodule)
+results = trainer.test(model=routine, datamodule=datamodule)
 
 # %%
 # 5. Testing the Model
 # ~~~~~~~~~~~~~~~~~~~~
 # Now that the model is trained, let's test it on MNIST. Don't forget to call
-# .eval() to enable dropout at inference.
+# .eval() to enable dropout at evaluation and get multiple (here 16) predictions.
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -127,7 +129,7 @@ probs = torch.nn.functional.softmax(logits, dim=-1)
 for j in range(6):
     values, predicted = torch.max(probs[:, j], 1)
     print(
-        f"Predicted digits for the image {j+1}: ",
+        f"MC-Dropout predictions for the image {j+1}: ",
         " ".join([str(image_id.item()) for image_id in predicted]),
     )
 

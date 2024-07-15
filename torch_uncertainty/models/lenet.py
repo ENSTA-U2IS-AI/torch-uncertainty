@@ -51,35 +51,28 @@ class _LeNet(nn.Module):
         )
         if batchnorm:
             self.norm1 = norm(6)
+        self.conv_dropout = nn.Dropout2d(p=dropout_rate)
         self.conv2 = conv2d_layer(6, 16, (5, 5), groups=groups, **layer_args)
         if batchnorm:
             self.norm2 = norm(16)
         self.pooling = nn.AdaptiveAvgPool2d((4, 4))
         self.fc1 = linear_layer(256, 120, **layer_args)
+        self.fc_dropout = nn.Dropout(p=dropout_rate)
         self.fc2 = linear_layer(120, 84, **layer_args)
+        self.last_fc_dropout = nn.Dropout(p=dropout_rate)
         self.fc3 = linear_layer(84, num_classes, **layer_args)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        out = F.dropout(
-            self.activation(self.norm1(self.conv1(x))),
-            p=self.dropout_rate,
-        )
+        out = self.conv_dropout(self.activation(self.norm1(self.conv1(x))))
         out = F.max_pool2d(out, 2)
-        out = F.dropout(
-            self.activation(self.norm2(self.conv2(out))),
-            p=self.dropout_rate,
-        )
+        out = self.conv_dropout(self.activation(self.norm2(self.conv2(out))))
         out = F.max_pool2d(out, 2)
         out = self.pooling(out)
         out = torch.flatten(out, 1)
-        out = F.dropout(
+        out = self.fc_dropout(
             self.activation(self.fc1(out)),
-            p=self.dropout_rate,
         )
-        out = F.dropout(
-            self.activation(self.fc2(out)),
-            p=self.dropout_rate,
-        )
+        out = self.last_fc_dropout(self.activation(self.fc2(out)))
         return self.fc3(out)
 
 
