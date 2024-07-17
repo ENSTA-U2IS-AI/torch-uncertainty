@@ -8,7 +8,7 @@ if util.find_spec("laplace"):
     from laplace import Laplace
 
     laplace_installed = True
-else:
+else:  # coverage: ignore
     laplace_installed = False
 
 

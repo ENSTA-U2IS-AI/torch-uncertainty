@@ -18,7 +18,7 @@ if util.find_spec("h5py"):
     import h5py
 
     h5py_installed = True
-else:
+else:  # coverage: ignore
     h5py_installed = False
 
 

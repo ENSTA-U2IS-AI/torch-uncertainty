@@ -6,7 +6,7 @@ if util.find_spec("pandas"):
     import pandas as pd
 
     pandas_installed = True
-else:
+else:  # coverage: ignore
     pandas_installed = False
 
 
