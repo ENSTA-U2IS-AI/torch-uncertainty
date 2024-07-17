@@ -425,7 +425,10 @@ def packed_resnet(
     Returns:
         _PackedResNet: A Packed-Ensembles ResNet.
     """
-    block = _BasicBlock if arch in [18, 20, 34] else _Bottleneck
+    block = (
+        _BasicBlock if arch in [18, 20, 34, 44, 56, 110, 1202] else _Bottleneck
+    )
+    in_planes = 16 if arch in [20, 44, 56, 110, 1202] else 64
     net = _PackedResNet(
         block=block,
         num_blocks=get_resnet_num_blocks(arch),
@@ -438,7 +441,7 @@ def packed_resnet(
         groups=groups,
         num_classes=num_classes,
         style=style,
-        in_planes=int(64 * width_multiplier),
+        in_planes=int(in_planes * width_multiplier),
         normalization_layer=normalization_layer,
     )
     if pretrained:  # coverage: ignore

@@ -9,6 +9,7 @@ from torch_uncertainty.models.resnet import (
     packed_resnet,
     resnet,
 )
+from torch_uncertainty.models.resnet.utils import get_resnet_num_blocks
 
 
 class TestResnet:
@@ -20,6 +21,11 @@ class TestResnet:
         with torch.no_grad():
             model(torch.randn(1, 1, 32, 32))
             model.feats_forward(torch.randn(1, 1, 32, 32))
+
+        get_resnet_num_blocks(44)
+        get_resnet_num_blocks(56)
+        get_resnet_num_blocks(110)
+        get_resnet_num_blocks(1202)
 
     def test_mc_dropout(self):
         resnet(1, 10, arch=20, conv_bias=False, style="cifar")

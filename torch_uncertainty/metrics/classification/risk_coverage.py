@@ -86,11 +86,8 @@ class AURC(Metric):
         error_rates = self.partial_compute()
         num_samples = error_rates.size(0)
         if num_samples < 2:
-            return torch.tensor([float("nan")], device=error_rates.device)
-        x = (
-            torch.arange(1, num_samples + 1, device=error_rates.device)
-            / num_samples
-        )
+            return torch.tensor([float("nan")], device=self.device)
+        x = torch.arange(1, num_samples + 1, device=self.device) / num_samples
         return _auc_compute(x, error_rates) / (1 - 1 / num_samples)
 
     def plot(
@@ -223,7 +220,7 @@ class CovAtxRisk(Metric):
         errors = dim_zero_cat(self.errors)
         num_samples = scores.size(0)
         if num_samples < 1:
-            return torch.tensor([float("nan")], device=scores.device)
+            return torch.tensor([float("nan")], device=self.device)
         error_rates = _aurc_rejection_rate_compute(scores, errors)
         admissible_risks = (error_rates > self.risk_threshold) * 1
         max_cov_at_risk = admissible_risks.flip(0).argmin()
@@ -231,7 +228,7 @@ class CovAtxRisk(Metric):
         # check if max_cov_at_risk is really admissible, if not return nan
         risk = admissible_risks[max_cov_at_risk]
         if risk > self.risk_threshold:
-            return torch.tensor([float("nan")], device=scores.device)
+            return torch.tensor([float("nan")], device=self.device)
         return 1 - max_cov_at_risk / num_samples
 
 

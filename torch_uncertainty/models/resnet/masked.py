@@ -351,7 +351,10 @@ def masked_resnet(
     Returns:
         _MaskedResNet: A Masksembles-style ResNet.
     """
-    block = _BasicBlock if arch in [18, 20, 34] else _Bottleneck
+    block = (
+        _BasicBlock if arch in [18, 20, 34, 44, 56, 110, 1202] else _Bottleneck
+    )
+    in_planes = 16 if arch in [20, 44, 56, 110, 1202] else 64
     return _MaskedResNet(
         block=block,
         num_blocks=get_resnet_num_blocks(arch),
@@ -363,6 +366,6 @@ def masked_resnet(
         conv_bias=conv_bias,
         dropout_rate=dropout_rate,
         style=style,
-        in_planes=int(64 * width_multiplier),
+        in_planes=int(in_planes * width_multiplier),
         normalization_layer=normalization_layer,
     )

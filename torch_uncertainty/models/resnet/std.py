@@ -358,7 +358,7 @@ def resnet(
     activation_fn: Callable = relu,
     normalization_layer: type[nn.Module] = nn.BatchNorm2d,
 ) -> _ResNet:
-    """ResNet-18 model.
+    """ResNet model.
 
     Args:
         in_channels (int): Number of input channels.
@@ -379,7 +379,10 @@ def resnet(
     Returns:
         _ResNet: The ResNet model.
     """
-    block = _BasicBlock if arch in [18, 20, 34] else _Bottleneck
+    block = (
+        _BasicBlock if arch in [18, 20, 34, 44, 56, 110, 1202] else _Bottleneck
+    )
+    in_planes = 16 if arch in [20, 44, 56, 110, 1202] else 64
     return _ResNet(
         block=block,
         num_blocks=get_resnet_num_blocks(arch),
@@ -389,7 +392,7 @@ def resnet(
         dropout_rate=dropout_rate,
         groups=groups,
         style=style,
-        in_planes=int(64 * width_multiplier),
+        in_planes=int(in_planes * width_multiplier),
         activation_fn=activation_fn,
         normalization_layer=normalization_layer,
     )

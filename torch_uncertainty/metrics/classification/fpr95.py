@@ -47,13 +47,13 @@ class FPRx(Metric):
 
         Args:
             conf (Tensor): The confidence scores.
-            target (Tensor): The target labels.
+            target (Tensor): The target labels, 0 if ID, 1 if OOD.
         """
         self.conf.append(conf)
         self.targets.append(target)
 
     def compute(self) -> Tensor:
-        """Compute the actual False Positive Rate at x% Recall.
+        """Compute the False Positive Rate at x% Recall.
 
         Returns:
             Tensor: The value of the FPRx.
@@ -61,7 +61,7 @@ class FPRx(Metric):
         conf = dim_zero_cat(self.conf).cpu().numpy()
         targets = dim_zero_cat(self.targets).cpu().numpy()
 
-        # out_labels is an array of 0s and 1s - 0 if IOD 1 if OOD
+        # out_labels is an array of 0s and 1s - 0 if ID, 1 if OOD
         out_labels = targets == self.pos_label
 
         in_scores = conf[np.logical_not(out_labels)]
@@ -77,7 +77,7 @@ class FPRx(Metric):
         labels = labels == self.pos_label
 
         # sort scores and corresponding truth values
-        desc_score_indices = np.argsort(examples, kind="mergesort")[::-1]
+        desc_score_indices = np.argsort(examples)[::-1]
         examples = examples[desc_score_indices]
         labels = labels[desc_score_indices]
 
@@ -93,6 +93,8 @@ class FPRx(Metric):
 
         thresholds = examples[threshold_idxs]
 
+        if tps[-1] == 0:
+            return torch.tensor([torch.nan], device=self.device)
         recall = tps / tps[-1]
 
         last_ind = tps.searchsorted(tps[-1])
@@ -107,7 +109,9 @@ class FPRx(Metric):
         cutoff = np.argmin(np.abs(recall - self.recall_level))
 
         return torch.tensor(
-            fps[cutoff] / (np.sum(np.logical_not(labels))), dtype=torch.float32
+            fps[cutoff] / (np.sum(np.logical_not(labels))),
+            dtype=self.dtype,
+            device=self.device,
         )
 
 
@@ -116,7 +120,6 @@ class FPR95(FPRx):
         """The False Positive Rate at 95% Recall metric.
 
         Args:
-            recall_level (float): The recall level at which to compute the FPR.
             pos_label (int): The positive label.
             kwargs: Additional arguments to pass to the metric class.
         """

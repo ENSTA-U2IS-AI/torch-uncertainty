@@ -34,7 +34,7 @@ class ResNetBaseline(ClassificationRoutine):
         "mimo": mimo_resnet,
         "mc-dropout": resnet,
     }
-    archs = [18, 20, 34, 50, 101, 152]
+    archs = [18, 20, 34, 44, 50, 56, 101, 110, 152, 1202]
 
     def __init__(
         self,
