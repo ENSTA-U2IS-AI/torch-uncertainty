@@ -72,7 +72,7 @@ mc_model = mc_dropout(model, num_estimators=16, last_layer=False)
 # This is a classification problem, and we use CrossEntropyLoss as the (negative-log-)likelihood.
 # We define the training routine using the classification training routine from
 # torch_uncertainty.routines. We provide the number of classes
-# the optimization recipe, and tell the routine that our model is an ensemble at evalutation time.
+# the optimization recipe and tell the routine that our model is an ensemble at evaluation time.
 
 routine = ClassificationRoutine(
     num_classes=datamodule.num_classes,
