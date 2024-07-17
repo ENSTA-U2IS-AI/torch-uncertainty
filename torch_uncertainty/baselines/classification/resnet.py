@@ -56,6 +56,7 @@ class ResNetBaseline(ClassificationRoutine):
         dropout_rate: float = 0.0,
         mixup_params: dict | None = None,
         last_layer_dropout: bool = False,
+        width_multiplier: float = 1.0,
         groups: int = 1,
         scale: float | None = None,
         alpha: int | None = None,
@@ -113,6 +114,8 @@ class ResNetBaseline(ClassificationRoutine):
                 mixmode, dist_sim, kernel_tau_max, kernel_tau_std,
                 mixup_alpha, and cutmix_alpha. If None, no augmentations.
                 Defaults to ``None``.
+            width_multiplier (float, optional): Expansion factor affecting the width
+                of the estimators. Defaults to ``1.0``
             groups (int, optional): Number of groups in convolutions. Defaults
                 to ``1``.
             scale (float, optional): Expansion factor affecting the width of
@@ -168,6 +171,7 @@ class ResNetBaseline(ClassificationRoutine):
             "conv_bias": False,
             "dropout_rate": dropout_rate,
             "groups": groups,
+            "width_multiplier": width_multiplier,
             "in_channels": in_channels,
             "num_classes": num_classes,
             "style": style,

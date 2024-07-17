@@ -3,9 +3,9 @@ import math
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-from sklearn.metrics import auc
 from torch import Tensor
 from torchmetrics.metric import Metric
+from torchmetrics.utilities.compute import _auc_compute
 from torchmetrics.utilities.data import dim_zero_cat
 from torchmetrics.utilities.plot import _AX_TYPE
 
@@ -83,12 +83,15 @@ class AURC(Metric):
         Returns:
             Tensor: The AURC.
         """
-        error_rates = self.partial_compute().cpu()
+        error_rates = self.partial_compute()
         num_samples = error_rates.size(0)
-        x = torch.arange(1, num_samples + 1, device="cpu") / num_samples
-        return torch.tensor([auc(x, error_rates)], device=self.device) / (
-            1 - 1 / num_samples
+        if num_samples < 2:
+            return torch.tensor([float("nan")], device=error_rates.device)
+        x = (
+            torch.arange(1, num_samples + 1, device=error_rates.device)
+            / num_samples
         )
+        return _auc_compute(x, error_rates) / (1 - 1 / num_samples)
 
     def plot(
         self,
@@ -114,15 +117,15 @@ class AURC(Metric):
         # Computation of AUSEC
         error_rates = self.partial_compute().cpu().flip(0)
         num_samples = error_rates.size(0)
-        rejection_rates = (np.arange(num_samples) / num_samples) * 100
 
-        x = np.arange(num_samples) / num_samples
-        aurc = auc(x, error_rates)
+        x = torch.arange(num_samples) / num_samples
+        aurc = _auc_compute(x, error_rates).cpu().item()
 
         # reduce plot size
         plot_xs = np.arange(0.01, 100 + 0.01, 0.01)
-        xs = np.arange(start=1, stop=num_samples + 1, step=1) / num_samples
-        rejection_rates = np.interp(plot_xs, xs, rejection_rates)
+        xs = np.arange(start=1, stop=num_samples + 1) / num_samples
+
+        rejection_rates = np.interp(plot_xs, xs, x * 100)
         error_rates = np.interp(plot_xs, xs, error_rates)
 
         # plot
@@ -136,7 +139,7 @@ class AURC(Metric):
             ax.text(
                 0.02,
                 0.95,
-                f"AUSEC={aurc:.3%}",
+                f"AUSEC={aurc:.2%}",
                 color="black",
                 ha="left",
                 va="bottom",
@@ -219,13 +222,16 @@ class CovAtxRisk(Metric):
         scores = dim_zero_cat(self.scores)
         errors = dim_zero_cat(self.errors)
         num_samples = scores.size(0)
+        if num_samples < 1:
+            return torch.tensor([float("nan")], device=scores.device)
         error_rates = _aurc_rejection_rate_compute(scores, errors)
         admissible_risks = (error_rates > self.risk_threshold) * 1
         max_cov_at_risk = admissible_risks.flip(0).argmin()
+
         # check if max_cov_at_risk is really admissible, if not return nan
         risk = admissible_risks[max_cov_at_risk]
         if risk > self.risk_threshold:
-            return torch.tensor([float("nan")])
+            return torch.tensor([float("nan")], device=scores.device)
         return 1 - max_cov_at_risk / num_samples
 
 
