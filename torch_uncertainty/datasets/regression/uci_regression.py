@@ -6,6 +6,9 @@ if util.find_spec("pandas"):
     import pandas as pd
 
     pandas_installed = True
+else:
+    pandas_installed = False
+
 
 import torch
 import torch.nn.functional as F
@@ -227,7 +230,7 @@ class UCIRegression(Dataset):
 
     def _make_dataset(self) -> None:
         """Create dataset from extracted files."""
-        if not pandas_installed:
+        if not pandas_installed:  # coverage: ignore
             raise ImportError(
                 "Please install torch_uncertainty with the tabular option:"
                 """pip install -U "torch_uncertainty[tabular]"."""

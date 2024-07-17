@@ -51,7 +51,7 @@ image = ["scikit-image", "h5py"]
 tabular = ["pandas"]
 dev = [
     "torch_uncertainty[image]",
-    "ruff==0.3.4",
+    "ruff==0.5.2",
     "pytest-cov",
     "pre-commit",
     "pre-commit-hooks",

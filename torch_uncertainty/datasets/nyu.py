@@ -18,6 +18,8 @@ if util.find_spec("h5py"):
     import h5py
 
     h5py_installed = True
+else:
+    h5py_installed = False
 
 
 class NYUv2(VisionDataset):

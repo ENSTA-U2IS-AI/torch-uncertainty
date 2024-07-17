@@ -5,6 +5,11 @@ from io import BytesIO
 
 if util.find_spec("cv2"):  # coverage: ignore
     import cv2
+
+    cv2_installed = True
+else:
+    cv2_installed = False
+
 import numpy as np
 import torch
 from PIL import Image
@@ -12,6 +17,11 @@ from PIL import Image
 if util.find_spec("skimage"):  # coverage: ignore
     from skimage.filters import gaussian
     from skimage.util import random_noise
+
+    skimage_installed = True
+else:
+    skimage_installed = False
+
 from torch import Tensor, nn
 from torchvision.transforms import (
     InterpolationMode,
@@ -80,6 +90,11 @@ class ShotNoise(nn.Module):
 class ImpulseNoise(nn.Module):
     def __init__(self, severity: int) -> None:
         super().__init__()
+        if not skimage_installed:  # coverage: ignore
+            raise ImportError(
+                "Please install torch_uncertainty with the image option:"
+                """pip install -U "torch_uncertainty[image]"."""
+            )
         if not (0 <= severity <= 5):
             raise ValueError("Severity must be between 0 and 5.")
         if not isinstance(severity, int):
@@ -128,6 +143,11 @@ class SpeckleNoise(nn.Module):
 class GaussianBlur(nn.Module):
     def __init__(self, severity: int) -> None:
         super().__init__()
+        if not skimage_installed:  # coverage: ignore
+            raise ImportError(
+                "Please install torch_uncertainty with the image option:"
+                """pip install -U "torch_uncertainty[image]"."""
+            )
         if not (0 <= severity <= 5):
             raise ValueError("Severity must be between 0 and 5.")
         if not isinstance(severity, int):
@@ -152,6 +172,11 @@ class GaussianBlur(nn.Module):
 class GlassBlur(nn.Module):  # TODO: batch
     def __init__(self, severity: int) -> None:
         super().__init__()
+        if not skimage_installed or not cv2_installed:  # coverage: ignore
+            raise ImportError(
+                "Please install torch_uncertainty with the image option:"
+                """pip install -U "torch_uncertainty[image]"."""
+            )
         if not (0 <= severity <= 5):
             raise ValueError("Severity must be between 0 and 5.")
         if not isinstance(severity, int):
@@ -203,6 +228,11 @@ def disk(radius: int, alias_blur: float = 0.1, dtype=np.float32):
 class DefocusBlur(nn.Module):
     def __init__(self, severity: int) -> None:
         super().__init__()
+        if not cv2_installed:  # coverage: ignore
+            raise ImportError(
+                "Please install torch_uncertainty with the image option:"
+                """pip install -U "torch_uncertainty[image]"."""
+            )
         if not (0 <= severity <= 5):
             raise ValueError("Severity must be between 0 and 5.")
         if not isinstance(severity, int):

@@ -8,6 +8,8 @@ if util.find_spec("laplace"):
     from laplace import Laplace
 
     laplace_installed = True
+else:
+    laplace_installed = False
 
 
 class LaplaceApprox(nn.Module):
