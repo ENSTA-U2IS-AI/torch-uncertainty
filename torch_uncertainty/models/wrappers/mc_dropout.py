@@ -1,7 +1,6 @@
 import torch
 from torch import Tensor, nn
-
-DROPOUT_MODULES = (nn.Dropout, nn.Dropout1d, nn.Dropout2d, nn.Dropout3d)
+from torch.nn.modules.dropout import _DropoutNd
 
 
 class MCDropout(nn.Module):
@@ -34,7 +33,7 @@ class MCDropout(nn.Module):
         super().__init__()
         filtered_modules = list(
             filter(
-                lambda m: isinstance(m, DROPOUT_MODULES),
+                lambda m: isinstance(m, _DropoutNd),
                 model.modules(),
             )
         )

@@ -322,6 +322,7 @@ def lpbnn_resnet(
     num_estimators: int,
     dropout_rate: float = 0,
     conv_bias: bool = True,
+    width_multiplier: float = 1.0,
     groups: int = 1,
     style: Literal["imagenet", "cifar"] = "imagenet",
 ) -> _LPBNNResNet:
@@ -336,4 +337,5 @@ def lpbnn_resnet(
         conv_bias=conv_bias,
         groups=groups,
         style=style,
+        in_planes=int(64 * width_multiplier),
     )

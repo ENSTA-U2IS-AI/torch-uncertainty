@@ -325,6 +325,7 @@ def masked_resnet(
     arch: int,
     num_estimators: int,
     scale: float,
+    width_multiplier: float = 1.0,
     groups: int = 1,
     conv_bias: bool = True,
     dropout_rate: float = 0,
@@ -339,6 +340,7 @@ def masked_resnet(
         arch (int): The architecture of the ResNet.
         num_estimators (int): Number of estimators in the ensemble.
         scale (float): The scale of the mask.
+        width_multiplier (float): Width multiplier. Defaults to 1.
         groups (int): Number of groups within each estimator. Defaults to 1.
         conv_bias (bool): Whether to use bias in convolutions. Defaults to
             ``True``.
@@ -361,6 +363,6 @@ def masked_resnet(
         conv_bias=conv_bias,
         dropout_rate=dropout_rate,
         style=style,
-        in_planes=64,
+        in_planes=int(64 * width_multiplier),
         normalization_layer=normalization_layer,
     )
