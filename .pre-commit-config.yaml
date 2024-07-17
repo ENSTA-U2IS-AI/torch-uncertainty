@@ -30,7 +30,7 @@ repos:
     language: python
     types_or: [python, pyi]
     require_serial: true
-    args: [--force-exclude, --fix, --exit-non-zero-on-fix]
+    args: [--force-exclude, --fix, --exit-non-zero-on-fix, --output-format, concise]
     exclude: ^auto_tutorials_source/
   - id: ruff-format
     name: ruff-format

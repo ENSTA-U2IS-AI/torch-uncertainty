@@ -53,6 +53,9 @@ class TestAURC:
         plt.close(fig)
 
         metric = AURC()
+        assert metric(torch.zeros(1), torch.zeros(1)).isnan()
+
+        metric = AURC()
         metric.update(scores, values)
         fig, ax = metric.plot(plot_value=False)
         assert isinstance(fig, plt.Figure)
@@ -90,6 +93,9 @@ class TestCovAtxRisk:
         targets = torch.as_tensor([0, 0, 1, 1, 0])
         metric = CovAtxRisk(risk_threshold=0.5)
         assert metric(probs, targets) == 1
+
+        metric = CovAtxRisk(risk_threshold=0.5)
+        assert metric(torch.zeros(0), torch.zeros(0)).isnan()
 
     def test_errors(self):
         with pytest.raises(

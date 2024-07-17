@@ -352,6 +352,7 @@ def resnet(
     arch: int,
     conv_bias: bool = True,
     dropout_rate: float = 0.0,
+    width_multiplier: float = 1.0,
     groups: int = 1,
     style: Literal["imagenet", "cifar"] = "imagenet",
     activation_fn: Callable = relu,
@@ -368,6 +369,7 @@ def resnet(
         conv_bias (bool): Whether to use bias in convolutions. Defaults to
             ``True``.
         dropout_rate (float): Dropout rate. Defaults to 0.
+        width_multiplier (float): Width multiplier. Defaults to 1.
         groups (int): Number of groups in convolutions. Defaults to 1.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
@@ -387,7 +389,7 @@ def resnet(
         dropout_rate=dropout_rate,
         groups=groups,
         style=style,
-        in_planes=64,
+        in_planes=int(64 * width_multiplier),
         activation_fn=activation_fn,
         normalization_layer=normalization_layer,
     )

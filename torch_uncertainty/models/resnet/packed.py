@@ -395,6 +395,7 @@ def packed_resnet(
     alpha: int,
     gamma: int,
     conv_bias: bool = True,
+    width_multiplier: float = 1.0,
     groups: int = 1,
     dropout_rate: float = 0,
     style: Literal["imagenet", "cifar"] = "imagenet",
@@ -413,6 +414,7 @@ def packed_resnet(
         num_estimators (int): Number of estimators in the ensemble.
         alpha (int): Expansion factor affecting the width of the estimators.
         gamma (int): Number of groups within each estimator.
+        width_multiplier (float): Width multiplier. Defaults to 1.
         groups (int): Number of groups within each estimator.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
@@ -436,7 +438,7 @@ def packed_resnet(
         groups=groups,
         num_classes=num_classes,
         style=style,
-        in_planes=64,
+        in_planes=int(64 * width_multiplier),
         normalization_layer=normalization_layer,
     )
     if pretrained:  # coverage: ignore

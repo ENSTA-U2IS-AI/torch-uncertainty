@@ -57,6 +57,7 @@ def mimo_resnet(
     num_estimators: int,
     conv_bias: bool = True,
     dropout_rate: float = 0.0,
+    width_multiplier: float = 1.0,
     groups: int = 1,
     style: Literal["imagenet", "cifar"] = "imagenet",
     normalization_layer: type[nn.Module] = nn.BatchNorm2d,
@@ -72,6 +73,6 @@ def mimo_resnet(
         dropout_rate=dropout_rate,
         groups=groups,
         style=style,
-        in_planes=64,
+        in_planes=int(64 * width_multiplier),
         normalization_layer=normalization_layer,
     )

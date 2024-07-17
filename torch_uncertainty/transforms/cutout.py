@@ -12,6 +12,7 @@ class Cutout(nn.Module):
             value (int): Pixel value to be filled in the cutout square.
         """
         super().__init__()
+        self.rng = np.random.default_rng()
 
         if length <= 0:
             raise ValueError("Cutout length must be positive.")
@@ -26,8 +27,8 @@ class Cutout(nn.Module):
             img = img.unsqueeze(0)
         h, w = img.size(1), img.size(2)
         mask = np.ones((h, w), np.float32)
-        y = np.random.randint(h)
-        x = np.random.randint(w)
+        y = self.rng.integers(low=0, high=h - 1)
+        x = self.rng.integers(low=0, high=w - 1)
 
         y1 = np.clip(y - self.length // 2, 0, h)
         y2 = np.clip(y + self.length // 2, 0, h)

@@ -1,5 +1,6 @@
 import torch
 from torch import Tensor, nn
+from torch.nn.modules.dropout import _DropoutNd
 
 
 class MCDropout(nn.Module):
@@ -14,50 +15,49 @@ class MCDropout(nn.Module):
 
         Args:
             model (nn.Module): model to wrap
-            num_estimators (int): number of estimators to use
+            num_estimators (int): number of estimators to use during the
+                evaluation
             last_layer (bool): whether to apply dropout to the last layer only.
-            on_batch (bool): Increase the batch_size to perform MC-Dropout.
-                Otherwise in a for loop.
+            on_batch (bool): Perform the MC-Dropout on the batch-size.
+                Otherwise in a for loop. Useful when constrained in memory.
 
         Warning:
-            Apply dropout using modules and not functional for this wrapper to
-            work as intended.
+            This module will work only if you apply dropout through modules
+            declared in the constructor (__init__).
 
         Warning:
-            The underlying models must have a non-zero :attr:`dropout_rate`
-            attribute.
-
-        Warning:
-            For the `last-layer` option to work properly, the model must
-            declare the last dropout at the end of the initialization
-            (i.e. after all the other dropout layers).
+            The `last-layer` option disables the lastly initialized dropout
+            during evaluation: make sure that the last dropout is either
+            functional or a module of its own.
         """
         super().__init__()
-        _dropout_checks(model, num_estimators)
-        self.last_layer = last_layer
-        self.on_batch = on_batch
-        self.core_model = model
-        self.num_estimators = num_estimators
-
-        self.filtered_modules = list(
+        filtered_modules = list(
             filter(
-                lambda m: isinstance(m, nn.Dropout | nn.Dropout2d),
+                lambda m: isinstance(m, _DropoutNd),
                 model.modules(),
             )
         )
         if last_layer:
-            self.filtered_modules = self.filtered_modules[-1:]
+            filtered_modules = filtered_modules[-1:]
+
+        _dropout_checks(filtered_modules, num_estimators)
+        self.last_layer = last_layer
+        self.on_batch = on_batch
+        self.core_model = model
+        self.num_estimators = num_estimators
+        self.filtered_modules = filtered_modules
 
     def train(self, mode: bool = True) -> nn.Module:
         """Override the default train method to set the training mode of
-        each submodule to be the same as the module itself.
+        each submodule to be the same as the module itself except for the
+        selected dropout modules.
 
         Args:
             mode (bool, optional): whether to set the module to training
                 mode. Defaults to True.
         """
-        if not isinstance(mode, bool):  # coverage: ignore
-            raise TypeError("training mode is expected to be boolean")
+        if not isinstance(mode, bool):
+            raise TypeError("Training mode is expected to be boolean")
         self.training = mode
         for module in self.children():
             module.train(mode)
@@ -69,6 +69,19 @@ class MCDropout(nn.Module):
         self,
         x: Tensor,
     ) -> Tensor:
+        """Forward pass of the model.
+
+        During training, the forward pass is the same as of the core model.
+        During evaluation, the forward pass is repeated `num_estimators` times
+        either on the batch size or in a for loop depending on
+        :attr:`last_layer`.
+
+        Args:
+            x (Tensor): input tensor of shape (B, ...)
+
+        Returns:
+            Tensor: output tensor of shape (:attr:`num_estimators` * B, ...)
+        """
         if self.training:
             return self.core_model(x)
         if self.on_batch:
@@ -96,7 +109,6 @@ def mc_dropout(
         on_batch (bool): Increase the batch_size to perform MC-Dropout.
             Otherwise in a for loop to reduce memory footprint. Defaults
             to true.
-
     """
     return MCDropout(
         model=model,
@@ -106,17 +118,19 @@ def mc_dropout(
     )
 
 
-def _dropout_checks(model: nn.Module, num_estimators: int) -> None:
-    if not hasattr(model, "dropout_rate"):
+def _dropout_checks(
+    filtered_modules: list[nn.Module], num_estimators: int
+) -> None:
+    if not filtered_modules:
         raise ValueError(
-            "`dropout_rate` must be set in the model to use MC Dropout."
+            "No dropout module found in the model. "
+            "Please use `nn.Dropout`-like modules to apply dropout."
         )
-    if model.dropout_rate <= 0.0:
+    # Check that at least one module has > 0.0 dropout rate
+    if not any(mod.p > 0.0 for mod in filtered_modules):
         raise ValueError(
-            "`dropout_rate` must be strictly positive to use MC Dropout."
+            "At least one dropout module must have a dropout rate > 0.0."
         )
-    if num_estimators is None:
-        raise ValueError("`num_estimators` must be set to use MC Dropout.")
     if num_estimators <= 0:
         raise ValueError(
             "`num_estimators` must be strictly positive to use MC Dropout."

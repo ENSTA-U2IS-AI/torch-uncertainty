@@ -23,12 +23,13 @@ def _generate_masks(m: int, n: int, s: float) -> np.ndarray:
     Returns:
         np.ndarray: Matrix of binary vectors.
     """
+    rng = np.random.default_rng()
     total_positions = int(m * s)
     masks = []
 
     for _ in range(n):
         new_vector = np.zeros([total_positions])
-        idx = np.random.choice(range(total_positions), m, replace=False)
+        idx = rng.choice(range(total_positions), m, replace=False)
         new_vector[idx] = 1
         masks.append(new_vector)
 

@@ -35,31 +35,32 @@ class TestMCDropout:
     def test_mc_dropout_errors(self):
         model = dummy_model(10, 5, 0.1)
 
-        with pytest.raises(ValueError):
+        with pytest.raises(
+            ValueError, match="`num_estimators` must be strictly positive"
+        ):
             MCDropout(
                 model=model, num_estimators=-1, last_layer=True, on_batch=True
             )
 
-        with pytest.raises(ValueError):
-            MCDropout(
-                model=model, num_estimators=0, last_layer=False, on_batch=False
-            )
-
         dropout_model = mc_dropout(model, 5)
-        with pytest.raises(TypeError):
+        with pytest.raises(
+            TypeError, match="Training mode is expected to be boolean"
+        ):
             dropout_model.train(mode=1)
 
-        with pytest.raises(TypeError):
+        with pytest.raises(
+            TypeError, match="Training mode is expected to be boolean"
+        ):
             dropout_model.train(mode=None)
 
-        del model.dropout_rate
-        with pytest.raises(ValueError):
+        model = dummy_model(10, 5, 0.0)
+        with pytest.raises(
+            ValueError,
+            match="At least one dropout module must have a dropout rate",
+        ):
             dropout_model = mc_dropout(model, 5)
 
-        model = dummy_model(10, 5, 0.1)
-        with pytest.raises(ValueError):
-            dropout_model = mc_dropout(model, None)
-
         model = dummy_model(10, 5, dropout_rate=0)
+        del model.dropout
         with pytest.raises(ValueError):
-            dropout_model = mc_dropout(model, None)
+            dropout_model = mc_dropout(model, 5)

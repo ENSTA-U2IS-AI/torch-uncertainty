@@ -26,7 +26,7 @@ This package provides a multi-level API, including:
 
 - easy-to-use :zap: lightning **uncertainty-aware** training & evaluation routines for **4 tasks**: classification, probabilistic and pointwise regression, and segmentation.
 - ready-to-train baselines on research datasets, such as ImageNet and CIFAR
-- [pretrained weights](https://huggingface.co/torch-uncertainty) for these baselines on ImageNet and CIFAR (:construction: work in progress :construction:).
+- [pretrained weights](https://huggingface.co/torch-uncertainty) for these baselines on ImageNet and CIFAR ( :construction: work in progress :construction: ).
 - **layers**, **models**, **metrics**, & **losses** available for use in your networks
 - scikit-learn style post-processing methods such as Temperature Scaling.
 
@@ -59,7 +59,7 @@ We also provide the following methods:
 
 ### Baselines
 
-To date, the following deep learning baselines have been implemented. **Click on the methods for tutorials**:
+To date, the following deep learning baselines have been implemented. **Click** :inbox_tray: **on the methods for tutorials**:
 
 - [Deep Ensembles](https://torch-uncertainty.github.io/auto_tutorials/tutorial_from_de_to_pe.html), BatchEnsemble, Masksembles, & MIMO
 - [MC-Dropout](https://torch-uncertainty.github.io/auto_tutorials/tutorial_mc_dropout.html)

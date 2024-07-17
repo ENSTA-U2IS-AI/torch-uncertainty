@@ -70,7 +70,7 @@ jobs:
     - name: Check style & format
       if: steps.changed-files-specific.outputs.only_changed != 'true'
       run: |
-        python3 -m ruff check torch_uncertainty --no-fix
+        python3 -m ruff check torch_uncertainty --no-fix --statistics
         python3 -m ruff format torch_uncertainty --check
 
     - name: Test with pytest and compute coverage

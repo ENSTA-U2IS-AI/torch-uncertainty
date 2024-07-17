@@ -5,6 +5,11 @@ from pathlib import Path
 if util.find_spec("pandas"):
     import pandas as pd
 
+    pandas_installed = True
+else:  # coverage: ignore
+    pandas_installed = False
+
+
 import torch
 import torch.nn.functional as F
 from torch.utils.data import Dataset
@@ -225,9 +230,10 @@ class UCIRegression(Dataset):
 
     def _make_dataset(self) -> None:
         """Create dataset from extracted files."""
-        if not util.find_spec("pandas"):
+        if not pandas_installed:  # coverage: ignore
             raise ImportError(
-                "Please install pandas manually to use the UCI datasets."
+                "Please install torch_uncertainty with the tabular option:"
+                """pip install -U "torch_uncertainty[tabular]"."""
             )
         path = self.root / self.root_appendix / self.dataset_name
         if self.dataset_name == "boston":

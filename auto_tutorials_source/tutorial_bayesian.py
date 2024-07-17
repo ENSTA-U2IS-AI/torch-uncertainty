@@ -37,8 +37,6 @@ We will also need to define an optimizer using torch.optim, the
 neural network utils from torch.nn, as well as the partial util to provide
 the modified default arguments for the ELBO loss.
 """
-
-# %%
 from pathlib import Path
 
 from lightning.pytorch import Trainer
