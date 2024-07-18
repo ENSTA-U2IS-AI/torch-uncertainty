@@ -25,7 +25,6 @@ class _LeNet(nn.Module):
         norm: type[nn.Module],
         groups: int,
         dropout_rate: float,
-        last_layer_dropout: bool,
     ) -> None:
         super().__init__()
         self.activation = activation
@@ -44,7 +43,6 @@ class _LeNet(nn.Module):
             )
 
         self.dropout_rate = dropout_rate
-        self.last_layer_dropout = last_layer_dropout
 
         self.conv1 = conv2d_layer(
             in_channels, 6, (5, 5), groups=groups, **layer_args
@@ -88,7 +86,6 @@ def _lenet(
     norm: type[nn.Module] = nn.Identity,
     groups: int = 1,
     dropout_rate: float = 0.0,
-    last_layer_dropout: bool = False,
 ) -> _LeNet | StochasticModel:
     model = _LeNet(
         in_channels=in_channels,
@@ -100,7 +97,6 @@ def _lenet(
         groups=groups,
         layer_args=layer_args,
         dropout_rate=dropout_rate,
-        last_layer_dropout=last_layer_dropout,
     )
     if stochastic:
         return StochasticModel(model, num_samples)
@@ -114,7 +110,6 @@ def lenet(
     norm: type[nn.Module] = nn.Identity,
     groups: int = 1,
     dropout_rate: float = 0.0,
-    last_layer_dropout: bool = False,
 ) -> _LeNet:
     return _lenet(
         stochastic=False,
@@ -127,7 +122,6 @@ def lenet(
         norm=norm,
         groups=groups,
         dropout_rate=dropout_rate,
-        last_layer_dropout=last_layer_dropout,
     )
 
 

@@ -4,6 +4,8 @@ from typing import Literal
 from torch import Tensor, nn
 from torch.utils.data import DataLoader, Dataset
 
+from .abstract import PostProcessing
+
 if util.find_spec("laplace"):
     from laplace import Laplace
 
@@ -12,7 +14,7 @@ else:  # coverage: ignore
     laplace_installed = False
 
 
-class LaplaceApprox(nn.Module):
+class LaplaceApprox(PostProcessing):
     def __init__(
         self,
         task: Literal["classification", "regression"],
@@ -61,18 +63,16 @@ class LaplaceApprox(nn.Module):
         self.batch_size = batch_size
 
         if model is not None:
-            self._setup_model(model)
+            self.set_model(model)
 
-    def _setup_model(self, model) -> None:
+    def set_model(self, model: nn.Module) -> None:
+        super().set_model(model)
         self.la = Laplace(
             model=model,
             likelihood=self.task,
             subset_of_weights=self.weight_subset,
             hessian_structure=self.hessian_struct,
         )
-
-    def set_model(self, model: nn.Module) -> None:
-        self._setup_model(model)
 
     def fit(self, dataset: Dataset) -> None:
         dl = DataLoader(dataset, batch_size=self.batch_size)

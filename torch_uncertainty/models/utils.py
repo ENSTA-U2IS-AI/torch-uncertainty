@@ -1,4 +1,5 @@
 from torch import Tensor, nn
+from torch.nn.modules.batchnorm import _BatchNorm
 
 
 class Backbone(nn.Module):
@@ -27,14 +28,20 @@ class Backbone(nn.Module):
         """
         feature = x
         features = []
-        for k, v in self.model._modules.items():
-            feature = v(feature)
-            if k in self.feat_names:
+        for key, layer in self.model._modules.items():
+            feature = layer(feature)
+            if key in self.feat_names:
                 features.append(feature)
         return features
 
 
 def set_bn_momentum(model: nn.Module, momentum: float) -> None:
+    """Set the momentum of all batch normalization layers in the model.
+
+    Args:
+        model (nn.Module): Model.
+        momentum (float): Momentum of the batch normalization layers.
+    """
     for m in model.modules():
-        if isinstance(m, nn.BatchNorm2d):
+        if isinstance(m, _BatchNorm):
             m.momentum = momentum

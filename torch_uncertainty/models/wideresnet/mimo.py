@@ -1,7 +1,9 @@
+from collections.abc import Callable
 from typing import Literal
 
 import torch
 from einops import rearrange
+from torch.nn.functional import relu
 
 from .std import _WideResNet
 
@@ -22,6 +24,7 @@ class _MIMOWideResNet(_WideResNet):
         dropout_rate: float,
         groups: int = 1,
         style: Literal["imagenet", "cifar"] = "imagenet",
+        activation_fn: Callable = relu,
     ) -> None:
         super().__init__(
             depth,
@@ -32,25 +35,26 @@ class _MIMOWideResNet(_WideResNet):
             dropout_rate=dropout_rate,
             groups=groups,
             style=style,
+            activation_fn=activation_fn,
         )
-
         self.num_estimators = num_estimators
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         if not self.training:
             x = x.repeat(self.num_estimators, 1, 1, 1)
         out = rearrange(x, "(m b) c h w -> b (m c) h w", m=self.num_estimators)
-        out = super().forward(out)
-        return rearrange(out, "b (m d) -> (m b) d", m=self.num_estimators)
+        return rearrange(
+            super().forward(out), "b (m d) -> (m b) d", m=self.num_estimators
+        )
 
 
 def mimo_wideresnet28x10(
     in_channels: int,
     num_classes: int,
     num_estimators: int,
-    groups: int = 1,
     conv_bias: bool = True,
     dropout_rate: float = 0.3,
+    groups: int = 1,
     style: Literal["imagenet", "cifar"] = "imagenet",
 ) -> _MIMOWideResNet:
     return _MIMOWideResNet(
