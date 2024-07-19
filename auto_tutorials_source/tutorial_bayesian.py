@@ -20,7 +20,7 @@ For more information on Bayesian Neural Networks, we refer the reader to the fol
 Training a Bayesian LeNet using TorchUncertainty models and Lightning
 ---------------------------------------------------------------------
 
-In this part, we train a bayesian LeNet, based on the model and routines already implemented in TU.
+In this part, we train a Bayesian LeNet, based on the model and routines already implemented in TU.
 
 1. Loading the utilities
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -30,12 +30,11 @@ To train a BNN using TorchUncertainty, we have to load the following modules:
 - the Trainer from Lightning
 - the model: bayesian_lenet, which lies in the torch_uncertainty.model
 - the classification training routine from torch_uncertainty.routines
-- the bayesian objective: the ELBOLoss, which lies in the torch_uncertainty.losses file
+- the Bayesian objective: the ELBOLoss, which lies in the torch_uncertainty.losses file
 - the datamodule that handles dataloaders: MNISTDataModule from torch_uncertainty.datamodules
 
-We will also need to define an optimizer using torch.optim, the
-neural network utils from torch.nn, as well as the partial util to provide
-the modified default arguments for the ELBO loss.
+We will also need to define an optimizer using torch.optim and Pytorch's
+neural network utils from torch.nn.
 """
 from pathlib import Path
 

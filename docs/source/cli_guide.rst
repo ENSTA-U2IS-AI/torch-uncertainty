@@ -89,7 +89,7 @@ This command will display the available subcommands of the CLI tool.
         fit                 Runs the full optimization routine.
         validate            Perform one evaluation epoch over the validation set.
         test                Perform one evaluation epoch over the test set.
-        predict             Run inference on your data.
+        predict             Run evaluation on your data.
 
 You can execute whichever subcommand you like and set up all your hyperparameters directly using the command line
 

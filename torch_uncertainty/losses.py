@@ -107,7 +107,7 @@ class ELBOLoss(nn.Module):
         self.num_samples = num_samples
 
     def forward(self, inputs: Tensor, targets: Tensor) -> Tensor:
-        """Gather the KL divergence from the bayesian modules and aggregate
+        """Gather the KL divergence from the Bayesian modules and aggregate
         the ELBO loss for a given network.
 
         Args:
