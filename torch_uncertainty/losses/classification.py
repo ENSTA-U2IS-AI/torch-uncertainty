@@ -185,21 +185,26 @@ class ConfidencePenaltyLoss(nn.Module):
                 Defaults to 1e-6.
 
         Reference:
-            Amini, A., Schwarting, W., Soleimany, A., & Rus, D. (2019). Deep
-            evidential regression. https://arxiv.org/abs/1910.02600.
-
-        Reference:
             Gabriel Pereyra: Regularizing neural networks by penalizing
             confident output distributions. https://arxiv.org/pdf/1701.06548.
 
         """
-        super().__init__(reduction=None)
+        super().__init__()
         if reduction is None:
             reduction = "none"
         if reduction not in ("none", "mean", "sum"):
             raise ValueError(f"{reduction} is not a valid value for reduction.")
         self.reduction = reduction
+        if eps < 0:
+            raise ValueError(
+                "The epsilon value should be non-negative, but got " f"{eps}."
+            )
         self.eps = eps
+        if reg_weight < 0:
+            raise ValueError(
+                "The regularization weight should be non-negative, but got "
+                f"{reg_weight}."
+            )
         self.reg_weight = reg_weight
 
     def forward(self, logits: Tensor, targets: Tensor) -> Tensor:
@@ -214,9 +219,9 @@ class ConfidencePenaltyLoss(nn.Module):
         """
         probs = F.softmax(logits, dim=1)
         ce_loss = F.cross_entropy(logits, targets, reduction=self.reduction)
-        reg_loss = torch.log(logits.shape[-1]) + (
-            probs * torch.log(probs + self.eps)
-        ).sum(dim=-1)
+        reg_loss = torch.log(
+            torch.tensor(logits.shape[-1], device=probs.device)
+        ) + (probs * torch.log(probs + self.eps)).sum(dim=-1)
         if self.reduction == "sum":
             return ce_loss + self.reg_weight * reg_loss.sum()
         if self.reduction == "mean":
@@ -241,13 +246,17 @@ class ConflictualLoss(nn.Module):
             Mohammed Fellaji et al. On the Calibration of Epistemic Uncertainty:
             Principles, Paradoxes and Conflictual Loss. https://arxiv.org/pdf/2407.12211
         """
-        super().__init__(reduction=None)
-
+        super().__init__()
         if reduction is None:
             reduction = "none"
         if reduction not in ("none", "mean", "sum"):
             raise ValueError(f"{reduction} is not a valid value for reduction.")
         self.reduction = reduction
+        if reg_weight < 0:
+            raise ValueError(
+                "The regularization weight should be non-negative, but got "
+                f"{reg_weight}."
+            )
         self.reg_weight = reg_weight
 
     def forward(self, logits: Tensor, targets: Tensor) -> Tensor:
