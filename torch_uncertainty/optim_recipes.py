@@ -433,6 +433,43 @@ def get_procedure(
     return procedure
 
 
+class CosineAnnealingWarmup(torch.optim.lr_scheduler.SequentialLR):
+    def __init__(
+        self,
+        optimizer: Optimizer,
+        warmup_start_factor: float,
+        warmup_epochs: int,
+        annealing_epochs: int,
+        eta_min: float = 0,
+    ) -> None:
+        """Cosine annealing scheduler with linear warmup.
+
+        Args:
+            optimizer (Optimizer): The optimizer to be used.
+            warmup_start_factor (float): The multiplicative factor to apply to
+                the learning rate at the start of the warmup.
+            warmup_epochs (int): The number of epochs to warmup the learning
+                rate.
+            annealing_epochs (int): The number of epochs to anneal the
+                learning rate.
+            eta_min (float): The minimum learning rate.
+        """
+        warmup_scheduler = optim.lr_scheduler.LinearLR(
+            optimizer,
+            start_factor=warmup_start_factor,
+            end_factor=1,
+            total_iters=warmup_epochs,
+        )
+        cosine_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+            optimizer, T_max=annealing_epochs - warmup_epochs, eta_min=eta_min
+        )
+        super().__init__(
+            optimizer=optimizer,
+            schedulers=[warmup_scheduler, cosine_scheduler],
+            milestones=[warmup_epochs],
+        )
+
+
 class FullSWALR(torch.optim.lr_scheduler.SequentialLR):
     def __init__(
         self,
