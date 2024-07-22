@@ -1,3 +1,4 @@
+import logging
 from collections.abc import Callable
 from importlib import util
 from pathlib import Path
@@ -193,7 +194,7 @@ class UCIRegression(Dataset):
     def download(self) -> None:
         """Download and extract dataset."""
         if self._check_integrity():
-            print("Files already downloaded and verified")
+            logging.info("Files already downloaded and verified")
             return
         if self.url is None:
             raise ValueError(

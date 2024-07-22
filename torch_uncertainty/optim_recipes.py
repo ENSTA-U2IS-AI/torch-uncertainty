@@ -439,7 +439,7 @@ class CosineAnnealingWarmup(torch.optim.lr_scheduler.SequentialLR):
         optimizer: Optimizer,
         warmup_start_factor: float,
         warmup_epochs: int,
-        annealing_epochs: int,
+        max_epochs: int,
         eta_min: float = 0,
     ) -> None:
         """Cosine annealing scheduler with linear warmup.
@@ -450,8 +450,7 @@ class CosineAnnealingWarmup(torch.optim.lr_scheduler.SequentialLR):
                 the learning rate at the start of the warmup.
             warmup_epochs (int): The number of epochs to warmup the learning
                 rate.
-            annealing_epochs (int): The number of epochs to anneal the
-                learning rate.
+            max_epochs (int): The total number of epochs.
             eta_min (float): The minimum learning rate.
         """
         warmup_scheduler = optim.lr_scheduler.LinearLR(
@@ -461,7 +460,7 @@ class CosineAnnealingWarmup(torch.optim.lr_scheduler.SequentialLR):
             total_iters=warmup_epochs,
         )
         cosine_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-            optimizer, T_max=annealing_epochs - warmup_epochs, eta_min=eta_min
+            optimizer, T_max=max_epochs - warmup_epochs, eta_min=eta_min
         )
         super().__init__(
             optimizer=optimizer,

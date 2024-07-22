@@ -1,3 +1,4 @@
+import logging
 from collections.abc import Callable
 from pathlib import Path
 
@@ -197,7 +198,7 @@ class CIFAR10C(VisionDataset):
     def download(self) -> None:
         """Download the dataset."""
         if self._check_integrity():
-            print("Files already downloaded and verified.")
+            logging.info("Files already downloaded and verified")
             return
         download_and_extract_archive(
             self.url, self.root, filename=self.filename, md5=self.tgz_md5

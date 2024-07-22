@@ -1,3 +1,4 @@
+import logging
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any, Literal
@@ -80,7 +81,7 @@ class NotMNIST(ImageFolder):
 
     def download(self) -> None:
         if self._check_integrity():
-            print("Files already downloaded and verified")
+            logging.info("Files already downloaded and verified")
             return
 
         download_and_extract_archive(

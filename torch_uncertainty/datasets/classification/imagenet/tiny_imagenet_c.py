@@ -1,3 +1,4 @@
+import logging
 from collections.abc import Callable
 from pathlib import Path
 
@@ -155,7 +156,7 @@ class TinyImageNetC(ImageFolder):
     def download(self) -> None:
         """Download the dataset."""
         if self._check_integrity():
-            print("Files already downloaded and verified.")
+            logging.info("Files already downloaded and verified")
             return
         for filename, md5 in list(
             zip(self.filename, self.tgz_md5, strict=True)
