@@ -1,4 +1,5 @@
 import json
+import logging
 import shutil
 from collections.abc import Callable
 from pathlib import Path
@@ -38,7 +39,7 @@ class KITTIDepth(VisionDataset):
         download: bool = False,
         remove_unused: bool = False,
     ) -> None:
-        print(
+        logging.info(
             "KITTIDepth is copyrighted by the Karlsruhe Institute of Technology "
             "(KIT) and the Toyota Technological Institute at Chicago (TTIC). "
             "By using KITTIDepth, you agree to the terms and conditions of the "
@@ -135,7 +136,7 @@ class KITTIDepth(VisionDataset):
                 md5=self.depth_md5,
             )
 
-        print("Re-structuring the depth annotations...")
+        logging.info("Re-structuring the depth annotations...")
 
         if (self.root / "train" / "leftDepth").exists():
             shutil.rmtree(self.root / "train" / "leftDepth")
@@ -143,7 +144,7 @@ class KITTIDepth(VisionDataset):
         (self.root / "train" / "leftDepth").mkdir(parents=True, exist_ok=False)
 
         depth_files = list((self.root).glob("**/tmp/train/**/image_02/*.png"))
-        print("Train files:")
+        logging.info("Train files...")
         for file in tqdm(depth_files):
             exp_code = file.parents[3].name.split("_")
             filecode = "_".join(
@@ -157,7 +158,7 @@ class KITTIDepth(VisionDataset):
         (self.root / "val" / "leftDepth").mkdir(parents=True, exist_ok=False)
 
         depth_files = list((self.root).glob("**/tmp/val/**/image_02/*.png"))
-        print("Validation files:")
+        logging.info("Validation files...")
         for file in tqdm(depth_files):
             exp_code = file.parents[3].name.split("_")
             filecode = "_".join(
@@ -179,7 +180,7 @@ class KITTIDepth(VisionDataset):
             raw_filenames = json.load(file)
 
         for filename in tqdm(raw_filenames):
-            print(self.raw_url + filename)
+            logging.info("%s", self.raw_url + filename)
             download_and_extract_archive(
                 self.raw_url + filename,
                 download_root=self.root,
@@ -187,7 +188,7 @@ class KITTIDepth(VisionDataset):
                 md5=None,
             )
 
-        print("Re-structuring the raw data...")
+        logging.info("Re-structuring the raw data...")
 
         samples_to_keep = list(
             (self.root / "train" / "leftDepth").glob("*.png")
@@ -200,7 +201,7 @@ class KITTIDepth(VisionDataset):
             parents=True, exist_ok=False
         )
 
-        print("Train files:")
+        logging.info("Train files...")
         for sample in tqdm(samples_to_keep):
             filecode = sample.name.split("_")
             first_level = "_".join([filecode[0], filecode[1], filecode[2]])
@@ -234,7 +235,7 @@ class KITTIDepth(VisionDataset):
 
         (self.root / "val" / "leftImg8bit").mkdir(parents=True, exist_ok=False)
 
-        print("Validation files:")
+        logging.info("Validation files...")
         for sample in tqdm(samples_to_keep):
             filecode = sample.name.split("_")
             first_level = "_".join([filecode[0], filecode[1], filecode[2]])

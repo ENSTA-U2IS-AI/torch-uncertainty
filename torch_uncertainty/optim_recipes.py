@@ -1,3 +1,4 @@
+import logging
 from collections.abc import Callable
 from functools import partial
 from typing import Literal
@@ -207,7 +208,9 @@ def optim_imagenet_resnet50_a3(
         dict: The optimizer and the scheduler for the training.
     """
     if effective_batch_size is None:
-        print("Setting effective batch size to 2048 for steps computations !")
+        logging.warning(
+            "Setting effective batch size to 2048 for steps computations !"
+        )
         effective_batch_size = 2048
 
     optimizer = Lamb(model.parameters(), lr=0.008, weight_decay=0.02)

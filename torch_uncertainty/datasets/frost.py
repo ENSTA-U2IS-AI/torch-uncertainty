@@ -73,7 +73,7 @@ class FrostImages(VisionDataset):  # TODO: Use ImageFolder
             filename=self.filename,
             md5=self.zip_md5,
         )
-        print(f"Downloaded {self.filename} to {self.root}")
+        logging.info("Downloaded %s to %s.", self.filename, self.root)
 
     def __getitem__(self, index: int) -> Any:
         """Get the samples of the dataset.

@@ -182,7 +182,6 @@ class RegressionRoutine(LightningModule):
                     dist_size(preds)[0] // batch_size, device=self.device
                 )
             )
-            print(ens_dist, type(ens_dist))
             mixture = MixtureSameFamily(mix, ens_dist)
             preds = mixture.mean
         else:

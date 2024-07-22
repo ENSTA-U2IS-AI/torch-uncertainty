@@ -90,7 +90,7 @@ class NotMNIST(ImageFolder):
             filename=self.filename,
             md5=self.tgz_md5,
         )
-        print(f"Downloaded {self.filename} to {self.root}")
+        logging.info("Downloaded %s to %s.", self.filename, self.root)
 
     def __getitem__(self, index: int) -> tuple[Any, Any]:
         """Get the samples and targets of the dataset.

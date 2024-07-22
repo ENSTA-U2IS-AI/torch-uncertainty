@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import shutil
 from collections.abc import Callable
@@ -73,7 +74,7 @@ class MUAD(VisionDataset):
             MUAD cannot be used for commercial purposes. Read MUAD's license
             carefully before using it and verify that you can comply.
         """
-        print(
+        logging.info(
             "MUAD is restricted to non-commercial use. By using MUAD, you "
             "agree to the terms and conditions."
         )
