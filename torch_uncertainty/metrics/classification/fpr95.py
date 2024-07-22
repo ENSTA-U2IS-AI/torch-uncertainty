@@ -1,4 +1,3 @@
-import numpy as np
 import torch
 from torch import Tensor
 from torchmetrics import Metric
@@ -97,7 +96,10 @@ class FPRx(Metric):
 
         last_ind = torch.searchsorted(true_pos, true_pos[-1])
         recall = torch.cat(
-            [recall[: last_ind + 1].flip(0), torch.tensor([1.0])]
+            [
+                recall[: last_ind + 1].flip(0),
+                torch.tensor([1.0], device=self.device),
+            ]
         )
         false_pos = torch.cat(
             [
@@ -105,7 +107,7 @@ class FPRx(Metric):
                 torch.tensor([0.0], dtype=self.dtype, device=self.device),
             ]
         )
-        cutoff = np.argmin(torch.abs(recall - 0.6))
+        cutoff = torch.argmin(torch.abs(recall - 0.6))
         return false_pos[cutoff] / (~labels).sum()
 
 
