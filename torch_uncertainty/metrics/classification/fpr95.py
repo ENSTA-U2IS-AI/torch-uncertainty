@@ -78,7 +78,9 @@ class FPRx(Metric):
         threshold_idxs = torch.cat(
             [
                 distinct_value_indices,
-                torch.LongTensor([labels.shape[0] - 1], device=self.device),
+                torch.tensor(
+                    [labels.shape[0] - 1], dtype=torch.long, device=self.device
+                ),
             ]
         )
 
