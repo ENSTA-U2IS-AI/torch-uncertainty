@@ -1,6 +1,7 @@
 import pytest
 import torch
 
+from torch_uncertainty.layers.channel_layer_norm import ChannelLayerNorm
 from torch_uncertainty.layers.filter_response_norm import (
     FilterResponseNorm1d,
     FilterResponseNorm2d,
@@ -62,3 +63,14 @@ class TestMCBatchNorm:
             layer2d(torch.randn(1, 1, 1, 1, 20))
         with pytest.raises(ValueError):
             layer3d(torch.randn(1, 1, 1, 1, 1, 20))
+
+
+class TestChannelLayerNorm:
+    """Testing the FRN2d layer."""
+
+    def test_main(self):
+        """Test initialization."""
+        cln = ChannelLayerNorm(1)
+        cln(torch.randn(1, 1, 4, 4))
+        cln = ChannelLayerNorm(18)
+        cln(torch.randn(1, 18, 2, 3))

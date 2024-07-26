@@ -52,6 +52,7 @@ class ResNetBaseline(ClassificationRoutine):
         ],
         arch: int,
         style: str = "imagenet",
+        normalization_layer: type[nn.Module] = nn.BatchNorm2d,
         num_estimators: int = 1,
         dropout_rate: float = 0.0,
         mixup_params: dict | None = None,
@@ -106,6 +107,8 @@ class ResNetBaseline(ClassificationRoutine):
 
             style (str, optional): Which ResNet style to use. Defaults to
             ``imagenet``.
+            normalization_layer (type[nn.Module], optional): Normalization layer
+                to use. Defaults to ``nn.BatchNorm2d``.
             num_estimators (int, optional): Number of estimators in the ensemble.
                 Only used if :attr:`version` is either ``"packed"``, ``"batched"``,
                 ``"masked"`` or ``"mc-dropout"`` Defaults to ``None``.
@@ -175,6 +178,7 @@ class ResNetBaseline(ClassificationRoutine):
             "in_channels": in_channels,
             "num_classes": num_classes,
             "style": style,
+            "normalization_layer": normalization_layer,
         }
 
         format_batch_fn = nn.Identity()
