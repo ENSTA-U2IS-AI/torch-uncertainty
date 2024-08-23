@@ -58,7 +58,7 @@ class TestAdaptiveCalibrationError:
         ace = AdaptiveCalibrationError(
             task="binary", num_bins=2, norm="l1", validate_args=True
         )
-        
+
         ace = AdaptiveCalibrationError(
             task="binary", num_bins=2, norm="l1", validate_args=False
         )
@@ -115,9 +115,7 @@ class TestAdaptiveCalibrationError:
         )
         assert ace.compute().item() == pytest.approx(0.8 - 0.5)
 
-        ace = AdaptiveCalibrationError(
-            task="binary", num_bins=3, norm="l2"
-        )
+        ace = AdaptiveCalibrationError(task="binary", num_bins=3, norm="l2")
         ece = CalibrationError(task="binary", num_bins=3, norm="l2")
 
         ace.update(
