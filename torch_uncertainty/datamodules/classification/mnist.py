@@ -27,6 +27,7 @@ class MNISTDataModule(TUDataModule):
         ood_ds: Literal["fashion", "notMNIST"] = "fashion",
         val_split: float | None = None,
         num_workers: int = 1,
+        basic_augment: bool = True,
         cutout: int | None = None,
         test_alt: Literal["c"] | None = None,
         pin_memory: bool = True,
@@ -45,6 +46,8 @@ class MNISTDataModule(TUDataModule):
                 to ``0.0``.
             num_workers (int): Number of workers to use for data loading. Defaults
                 to ``1``.
+            basic_augment (bool): Whether to apply base augmentations. Defaults to
+                ``True``.
             cutout (int): Size of cutout to apply to images. Defaults to ``None``.
             test_alt (str): Which test set to use. Defaults to ``None``.
             pin_memory (bool): Whether to pin memory. Defaults to ``True``.
@@ -78,13 +81,18 @@ class MNISTDataModule(TUDataModule):
                 f"`ood_ds` should be in {self.ood_datasets}. Got {ood_ds}."
             )
 
+        if basic_augment:
+            basic_transform = T.RandomCrop(28, padding=4)
+        else:
+            basic_transform = nn.Identity()
+
         main_transform = Cutout(cutout) if cutout else nn.Identity()
 
         self.train_transform = T.Compose(
             [
+                basic_transform,
                 main_transform,
                 T.ToTensor(),
-                T.RandomCrop(28, padding=4),
                 T.Normalize((0.1307,), (0.3081,)),
             ]
         )

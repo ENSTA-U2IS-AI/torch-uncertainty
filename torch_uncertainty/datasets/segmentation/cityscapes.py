@@ -5,11 +5,11 @@ from einops import rearrange
 from PIL import Image
 from torchmetrics.utilities.plot import _AX_TYPE, _PLOT_OUT_TYPE
 from torchvision import tv_tensors
-from torchvision.datasets import Cityscapes as OriginalCityscapes
+from torchvision.datasets import Cityscapes as TVCityscapes
 from torchvision.transforms.v2 import functional as F
 
 
-class Cityscapes(OriginalCityscapes):
+class Cityscapes(TVCityscapes):
     def encode_target(self, target: Image.Image) -> Image.Image:
         """Encode target image to tensor.
 

@@ -20,7 +20,7 @@ class TestMNISTDataModule:
         )
 
         assert dm.dataset == MNIST
-        assert isinstance(dm.train_transform.transforms[0], Cutout)
+        assert isinstance(dm.train_transform.transforms[1], Cutout)
 
         dm = MNISTDataModule(
             root="./data/",
@@ -29,7 +29,7 @@ class TestMNISTDataModule:
             cutout=0,
             val_split=0,
         )
-        assert isinstance(dm.train_transform.transforms[0], nn.Identity)
+        assert isinstance(dm.train_transform.transforms[1], nn.Identity)
 
         with pytest.raises(ValueError):
             MNISTDataModule(root="./data/", batch_size=128, ood_ds="other")

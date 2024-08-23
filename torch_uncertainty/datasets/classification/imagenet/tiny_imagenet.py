@@ -24,8 +24,11 @@ class TinyImageNet(Dataset):
     ) -> None:
         self.root = Path(root) / "tiny-imagenet-200"
 
+        if split not in ["train", "val", "test"]:
+            raise ValueError(f"Split {split} is not supported.")
+
         self.split = split
-        self.label_idx = 1  # from [image, id, nid, box]
+        self.label_idx = 1
         self.transform = transform
         self.target_transform = target_transform
 

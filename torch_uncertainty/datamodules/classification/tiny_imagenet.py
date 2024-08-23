@@ -30,6 +30,7 @@ class TinyImageNetDataModule(TUDataModule):
         val_split: float | None = None,
         ood_ds: str = "svhn",
         interpolation: str = "bilinear",
+        basic_augment: bool = True,
         rand_augment_opt: str | None = None,
         num_workers: int = 1,
         pin_memory: bool = True,
@@ -44,7 +45,6 @@ class TinyImageNetDataModule(TUDataModule):
             persistent_workers=persistent_workers,
         )
         # TODO: COMPUTE STATS
-
         self.eval_ood = eval_ood
         self.ood_ds = ood_ds
         self.interpolation = interpolation_modes_from_str(interpolation)
@@ -62,6 +62,16 @@ class TinyImageNetDataModule(TUDataModule):
                 f"OOD dataset {ood_ds} not supported for TinyImageNet."
             )
 
+        if basic_augment:
+            basic_transform = T.Compose(
+                [
+                    T.RandomCrop(64, padding=4),
+                    T.RandomHorizontalFlip(),
+                ]
+            )
+        else:
+            basic_transform = nn.Identity()
+
         if rand_augment_opt is not None:
             main_transform = rand_augment_transform(rand_augment_opt, {})
         else:
@@ -69,8 +79,7 @@ class TinyImageNetDataModule(TUDataModule):
 
         self.train_transform = T.Compose(
             [
-                T.RandomCrop(64, padding=4),
-                T.RandomHorizontalFlip(),
+                basic_transform,
                 main_transform,
                 T.ToTensor(),
                 T.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),

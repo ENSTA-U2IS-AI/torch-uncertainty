@@ -29,6 +29,7 @@ class CIFAR10DataModule(TUDataModule):
         eval_ood: bool = False,
         val_split: float | None = None,
         num_workers: int = 1,
+        basic_augment: bool = True,
         cutout: int | None = None,
         auto_augment: str | None = None,
         test_alt: Literal["c", "h"] | None = None,
@@ -47,6 +48,8 @@ class CIFAR10DataModule(TUDataModule):
                 to ``0.0``.
             num_workers (int): Number of workers to use for data loading. Defaults
                 to ``1``.
+            basic_augment (bool): Whether to apply base augmentations. Defaults to
+                ``True``.
             cutout (int): Size of cutout to apply to images. Defaults to ``None``.
             randaugment (bool): Whether to apply RandAugment. Defaults to
                 ``False``.
@@ -89,6 +92,16 @@ class CIFAR10DataModule(TUDataModule):
                 "GitHub issue if needed."
             )
 
+        if basic_augment:
+            basic_transform = T.Compose(
+                [
+                    T.RandomCrop(32, padding=4),
+                    T.RandomHorizontalFlip(),
+                ]
+            )
+        else:
+            basic_transform = nn.Identity()
+
         if cutout:
             main_transform = Cutout(cutout)
         elif auto_augment:
@@ -98,8 +111,7 @@ class CIFAR10DataModule(TUDataModule):
 
         self.train_transform = T.Compose(
             [
-                T.RandomCrop(32, padding=4),
-                T.RandomHorizontalFlip(),
+                basic_transform,
                 main_transform,
                 T.ToTensor(),
                 T.Normalize(
