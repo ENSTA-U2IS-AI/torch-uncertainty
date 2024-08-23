@@ -64,7 +64,7 @@ def _ace_compute(
         norm: Norm function to use when computing calibration error. Defaults
             to "l1".
         debias: Apply debiasing to L2 norm computation as in
-            `Verified Uncertainty Calibration`_. Defaults to False.
+            `Verified Uncertainty Calibration`. Defaults to False.
 
     Returns:
         Tensor: Adaptive Calibration error scalar.
