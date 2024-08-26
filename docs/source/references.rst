@@ -278,6 +278,18 @@ For the area under the risk-coverage curve, consider citing:
 * Authors: *Yonatan Geifman and Ran El-Yaniv*
 * Paper: `NeurIPS 2017 <https://arxiv.org/pdf/1705.08500.pdf>`__.
 
+
+Area Under the Generalized Risk-Coverage curve
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For the area under the generalized risk-coverage curve, consider citing:
+
+**Overcoming Common Flaws in the Evaluation of Selective Classification Systems**
+
+* Authors: *Jeremias Traub, Till J. Bungert, Carsten T. Lüth, Michael Baumgartner, Klaus H. Maier-Hein, Lena Maier-Hein, and Paul F Jaeger*
+* Paper: `ArXiv <https://arxiv.org/pdf/2407.01032.pdf>`__.
+
+
 Grouping Loss
 ^^^^^^^^^^^^^
 

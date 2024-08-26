@@ -156,8 +156,6 @@ Models
 Wrappers
 ^^^^^^^^
 
-
-
 Functions
 """""""""
 
@@ -188,8 +186,21 @@ Metrics
 
 Classification
 ^^^^^^^^^^^^^^
-
 .. currentmodule:: torch_uncertainty.metrics.classification
+
+Proper Scores
+"""""""""""""
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: class.rst
+
+    BrierScore
+    CategoricalNLL
+
+Out-of-Distribution Detection
+"""""""""""""""""""""""""""""
 
 .. autosummary::
     :toctree: generated/
@@ -197,20 +208,59 @@ Classification
     :template: class.rst
 
     AURC
-    AUSE
+    FPRx
     FPR95
-    AdaptiveCalibrationError
-    BrierScore
-    CalibrationError
-    CategoricalNLL
+
+
+Selective Classification
+""""""""""""""""""""""""
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: class.rst
+
+    AUGRC
+    RiskAtxCov
+    RiskAt80Cov
+    CovAtxRisk
     CovAt5Risk
+
+Calibration
+"""""""""""
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: class.rst
+
+    AdaptiveCalibrationError
+    CalibrationError
+
+Diversity
+"""""""""
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: class.rst
+
     Disagreement
     Entropy
-    GroupingLoss
-    MeanIntersectionOverUnion
     MutualInformation
-    RiskAt80Cov
     VariationRatio
+
+
+Others
+""""""
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: class.rst
+
+    AUSE
+    GroupingLoss
 
 Regression
 ^^^^^^^^^^
@@ -231,6 +281,18 @@ Regression
     MeanSquaredLogError
     SILog
     ThresholdAccuracy
+
+Segmentation
+^^^^^^^^^^^^
+
+.. currentmodule:: torch_uncertainty.metrics.classification
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: class.rst
+
+    MeanIntersectionOverUnion
 
 Losses
 ------

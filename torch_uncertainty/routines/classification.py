@@ -20,6 +20,7 @@ from torchmetrics.classification import (
 from torch_uncertainty.layers import Identity
 from torch_uncertainty.losses import DECLoss, ELBOLoss
 from torch_uncertainty.metrics import (
+    AUGRC,
     AURC,
     FPR95,
     BrierScore,
@@ -194,6 +195,7 @@ class ClassificationRoutine(LightningModule):
                     num_classes=self.num_classes,
                 ),
                 "sc/AURC": AURC(),
+                "sc/AUGRC": AUGRC(),
                 "sc/CovAt5Risk": CovAt5Risk(),
                 "sc/RiskAt80Cov": RiskAt80Cov(),
             },
@@ -202,7 +204,7 @@ class ClassificationRoutine(LightningModule):
                 ["cls/Brier"],
                 ["cls/NLL"],
                 ["cal/ECE", "cal/aECE"],
-                ["sc/AURC", "sc/CovAt5Risk", "sc/RiskAt80Cov"],
+                ["sc/AURC", "sc/AUGRC", "sc/CovAt5Risk", "sc/RiskAt80Cov"],
             ],
         )
 
@@ -551,6 +553,10 @@ class ClassificationRoutine(LightningModule):
             self.logger.experiment.add_figure(
                 "Risk-Coverage curve",
                 self.test_cls_metrics["sc/AURC"].plot()[0],
+            )
+            self.logger.experiment.add_figure(
+                "Generalized Risk-Coverage curve",
+                self.test_cls_metrics["sc/AUGRC"].plot()[0],
             )
 
             if self.post_processing is not None:

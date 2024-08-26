@@ -1,5 +1,6 @@
 # ruff: noqa: F401
 from .classification import (
+    AUGRC,
     AURC,
     AUSE,
     FPR95,

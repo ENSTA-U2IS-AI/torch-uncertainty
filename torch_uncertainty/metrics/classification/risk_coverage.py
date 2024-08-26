@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from torch import Tensor
-from torchmetrics.metric import Metric
+from torchmetrics import Metric
 from torchmetrics.utilities.compute import _auc_compute
 from torchmetrics.utilities.data import dim_zero_cat
 from torchmetrics.utilities.plot import _AX_TYPE
@@ -87,8 +87,8 @@ class AURC(Metric):
         num_samples = error_rates.size(0)
         if num_samples < 2:
             return torch.tensor([float("nan")], device=self.device)
-        x = torch.arange(1, num_samples + 1, device=self.device) / num_samples
-        return _auc_compute(x, error_rates) / (1 - 1 / num_samples)
+        cov = torch.arange(1, num_samples + 1, device=self.device) / num_samples
+        return _auc_compute(cov, error_rates) / (1 - 1 / num_samples)
 
     def plot(
         self,
@@ -97,7 +97,7 @@ class AURC(Metric):
         name: str | None = None,
     ) -> tuple[plt.Figure | None, plt.Axes]:
         """Plot the risk-cov. curve corresponding to the inputs passed to
-        ``update``, and the oracle risk-cov. curve.
+        ``update``.
 
         Args:
             ax (Axes | None, optional): An matplotlib axis object. If provided
@@ -111,7 +111,7 @@ class AURC(Metric):
         """
         fig, ax = plt.subplots(figsize=(6, 6)) if ax is None else (None, ax)
 
-        # Computation of AUSEC
+        # Computation of AURC
         error_rates = self.partial_compute().cpu().flip(0)
         num_samples = error_rates.size(0)
 
@@ -136,7 +136,7 @@ class AURC(Metric):
             ax.text(
                 0.02,
                 0.95,
-                f"AUSEC={aurc:.2%}",
+                f"AURC={aurc:.2%}",
                 color="black",
                 ha="left",
                 va="bottom",
@@ -163,11 +163,117 @@ def _aurc_rejection_rate_compute(
         scores (Tensor): uncertainty scores of shape :math:`(B,)`
         errors (Tensor): binary errors of shape :math:`(B,)`
     """
-    num_samples = scores.size(0)
     errors = errors[scores.argsort(descending=True)]
     return errors.cumsum(dim=-1) / torch.arange(
-        1, num_samples + 1, dtype=scores.dtype, device=scores.device
+        1, scores.size(0) + 1, dtype=scores.dtype, device=scores.device
     )
+
+
+class AUGRC(AURC):
+    """Area Under the Generalized Risk-Coverage curve.
+
+    The Area Under the Generalized Risk-Coverage curve (AUGRC) for
+    Selective Classification (SC) performance assessment. It avoids putting too much
+    weight on the most confident samples.
+
+    As input to ``forward`` and ``update`` the metric accepts the following input:
+
+    - ``preds`` (:class:`~torch.Tensor`): A float tensor of shape
+        ``(N, ...)`` containing probabilities for each observation.
+    - ``target`` (:class:`~torch.Tensor`): An int tensor of shape
+        ``(N, ...)`` containing ground-truth labels.
+
+    As output to ``forward`` and ``compute`` the metric returns the
+        following output:
+
+    - ``augrc`` (:class:`~torch.Tensor`): A scalar tensor containing the
+        area under the risk-coverage curve
+
+    Args:
+        kwargs: Additional keyword arguments.
+
+    Reference:
+        Traub et al. Overcoming Common Flaws in the Evaluation of Selective
+        Classification Systems. ArXiv.
+    """
+
+    def compute(self) -> Tensor:
+        """Compute the Area Under the Generalized Risk-Coverage curve (AUGRC).
+
+        Normalize the AUGRC as if its support was between 0 and 1. This has an
+        impact on the AUGRC when the number of samples is small.
+
+        Returns:
+            Tensor: The AUGRC.
+        """
+        error_rates = self.partial_compute()
+        num_samples = error_rates.size(0)
+        if num_samples < 2:
+            return torch.tensor([float("nan")], device=self.device)
+        cov = torch.arange(1, num_samples + 1, device=self.device) / num_samples
+        return _auc_compute(cov, error_rates * cov) / (1 - 1 / num_samples)
+
+    def plot(
+        self,
+        ax: _AX_TYPE | None = None,
+        plot_value: bool = True,
+        name: str | None = None,
+    ) -> tuple[plt.Figure | None, plt.Axes]:
+        """Plot the generalized risk-cov. curve corresponding to the inputs passed to
+        ``update``.
+
+        Args:
+            ax (Axes | None, optional): An matplotlib axis object. If provided
+                will add plot to this axis. Defaults to None.
+            plot_value (bool, optional): Whether to print the AURC value on the
+                plot. Defaults to True.
+            name (str | None, optional): Name of the model. Defaults to None.
+
+        Returns:
+            tuple[[Figure | None], Axes]: Figure object and Axes object
+        """
+        fig, ax = plt.subplots(figsize=(6, 6)) if ax is None else (None, ax)
+
+        # Computation of AUGRC
+        error_rates = self.partial_compute().cpu().flip(0)
+        num_samples = error_rates.size(0)
+        cov = torch.arange(num_samples) / num_samples
+
+        augrc = _auc_compute(cov, error_rates * cov).cpu().item()
+
+        # reduce plot size
+        plot_covs = np.arange(0.01, 100 + 0.01, 0.01)
+        covs = np.arange(start=1, stop=num_samples + 1) / num_samples
+
+        rejection_rates = np.interp(plot_covs, covs, cov * 100)
+        error_rates = np.interp(plot_covs, covs, error_rates * covs[::-1] * 100)
+
+        # plot
+        ax.plot(
+            100 - rejection_rates,
+            error_rates,
+            label="Model" if name is None else name,
+        )
+
+        if plot_value:
+            ax.text(
+                0.02,
+                0.95,
+                f"AUGRC={augrc:.2%}",
+                color="black",
+                ha="left",
+                va="bottom",
+                transform=ax.transAxes,
+            )
+        plt.grid(True, linestyle="--", alpha=0.7, zorder=0)
+        ax.set_xlabel("Coverage (%)", fontsize=16)
+        ax.set_ylabel("Generalized Risk (%)", fontsize=16)
+        ax.set_xlim(0, 100)
+        ax.set_ylim(0, 100)
+        ax.set_aspect("equal", "box")
+        ax.legend(loc="upper right")
+        fig.tight_layout()
+        return fig, ax
 
 
 class CovAtxRisk(Metric):
