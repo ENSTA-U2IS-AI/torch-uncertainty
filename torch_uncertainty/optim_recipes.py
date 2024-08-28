@@ -7,7 +7,13 @@ import torch
 from timm.optim import Lamb
 from torch import nn, optim
 from torch.optim import Optimizer
-from torch.optim.lr_scheduler import LRScheduler
+from torch.optim.lr_scheduler import (
+    CosineAnnealingLR,
+    LinearLR,
+    LRScheduler,
+    MultiStepLR,
+    SequentialLR,
+)
 
 
 def optim_abnn(
@@ -25,7 +31,7 @@ def optim_abnn(
         weight_decay=weight_decay,
         nesterov=nesterov,
     )
-    scheduler = optim.lr_scheduler.MultiStepLR(
+    scheduler = MultiStepLR(
         optimizer,
         milestones=[1, 4],
         gamma=0.1,
@@ -44,7 +50,7 @@ def optim_cifar10_resnet18(
         weight_decay=5e-4,
         nesterov=True,
     )
-    scheduler = optim.lr_scheduler.MultiStepLR(
+    scheduler = MultiStepLR(
         optimizer,
         milestones=[25, 50],
         gamma=0.1,
@@ -65,7 +71,7 @@ def optim_cifar10_resnet50(
         weight_decay=5e-4,
         nesterov=True,
     )
-    scheduler = optim.lr_scheduler.MultiStepLR(
+    scheduler = MultiStepLR(
         optimizer,
         milestones=[60, 120, 160],
         gamma=0.2,
@@ -84,7 +90,7 @@ def optim_cifar10_wideresnet(
         weight_decay=5e-4,
         nesterov=True,
     )
-    scheduler = optim.lr_scheduler.MultiStepLR(
+    scheduler = MultiStepLR(
         optimizer,
         milestones=[60, 120, 160],
         gamma=0.2,
@@ -101,7 +107,7 @@ def optim_cifar10_vgg16(
         lr=0.005,
         weight_decay=1e-6,
     )
-    scheduler = optim.lr_scheduler.MultiStepLR(
+    scheduler = MultiStepLR(
         optimizer,
         milestones=[25, 50],
         gamma=0.1,
@@ -119,7 +125,7 @@ def optim_cifar100_resnet18(
         weight_decay=5e-4,
         nesterov=True,
     )
-    scheduler = optim.lr_scheduler.MultiStepLR(
+    scheduler = MultiStepLR(
         optimizer,
         milestones=[25, 50],
         gamma=0.1,
@@ -140,7 +146,7 @@ def optim_cifar100_resnet50(
         weight_decay=5e-4,
         nesterov=True,
     )
-    scheduler = optim.lr_scheduler.MultiStepLR(
+    scheduler = MultiStepLR(
         optimizer,
         milestones=[60, 120, 160],
         gamma=0.2,
@@ -159,7 +165,7 @@ def optim_cifar100_vgg16(
         weight_decay=1e-4,
         nesterov=True,
     )
-    scheduler = optim.lr_scheduler.MultiStepLR(
+    scheduler = MultiStepLR(
         optimizer,
         milestones=[60, 120, 160],
         gamma=0.2,
@@ -183,9 +189,7 @@ def optim_imagenet_resnet50(
         weight_decay=3.0517578125e-05,
         nesterov=False,
     )
-    scheduler = optim.lr_scheduler.CosineAnnealingLR(
-        optimizer, num_epochs, eta_min=end_lr
-    )
+    scheduler = CosineAnnealingLR(optimizer, num_epochs, eta_min=end_lr)
     return {
         "optimizer": optimizer,
         "lr_scheduler": scheduler,
@@ -215,18 +219,18 @@ def optim_imagenet_resnet50_a3(
 
     optimizer = Lamb(model.parameters(), lr=0.008, weight_decay=0.02)
 
-    warmup = optim.lr_scheduler.LinearLR(
+    warmup = LinearLR(
         optimizer,
         start_factor=1e-4,
         end_factor=1,
         total_iters=5 * (1281167 // effective_batch_size + 1),
     )
-    cosine_scheduler = optim.lr_scheduler.CosineAnnealingLR(
+    cosine_scheduler = CosineAnnealingLR(
         optimizer,
         eta_min=1e-6,
         T_max=105 * (1281167 // effective_batch_size + 1),
     )
-    scheduler = optim.lr_scheduler.SequentialLR(
+    scheduler = SequentialLR(
         optimizer,
         schedulers=[warmup, cosine_scheduler],
         milestones=[5 * (1281167 // effective_batch_size + 1)],
@@ -252,7 +256,7 @@ def optim_cifar10_resnet34(
         weight_decay=1e-4,
         nesterov=True,
     )
-    scheduler = optim.lr_scheduler.MultiStepLR(
+    scheduler = MultiStepLR(
         optimizer,
         milestones=[100, 150],
         gamma=0.1,
@@ -270,7 +274,7 @@ def optim_cifar100_resnet34(
         weight_decay=1e-4,
         nesterov=True,
     )
-    scheduler = optim.lr_scheduler.MultiStepLR(
+    scheduler = MultiStepLR(
         optimizer,
         milestones=[100, 150],
         gamma=0.1,
@@ -295,7 +299,7 @@ def optim_tinyimagenet_resnet34(
         weight_decay=1e-4,
         nesterov=True,
     )
-    scheduler = optim.lr_scheduler.MultiStepLR(
+    scheduler = MultiStepLR(
         optimizer,
         milestones=[40, 60],
         gamma=0.1,
@@ -320,7 +324,7 @@ def optim_tinyimagenet_resnet50(
         weight_decay=1e-4,
         nesterov=True,
     )
-    scheduler = optim.lr_scheduler.MultiStepLR(
+    scheduler = MultiStepLR(
         optimizer,
         milestones=[40, 60],
         gamma=0.1,
@@ -436,7 +440,43 @@ def get_procedure(
     return procedure
 
 
-class CosineAnnealingWarmup(torch.optim.lr_scheduler.SequentialLR):
+class WarmupScheduler(torch.SequentialLR):
+    def __init__(
+        self,
+        optimizer: Optimizer,
+        base_scheduler: type[LRScheduler],
+        warmup_start_factor: float,
+        warmup_epochs: int,
+        scheduler_args: dict[str, float],
+    ) -> None:
+        """Scheduler with linear warmup.
+
+        Args:
+            optimizer (Optimizer): The optimizer to be used.*
+            base_scheduler (type[LRScheduler]): The base scheduler class to use after
+                the warmup.
+            warmup_start_factor (float): The multiplicative factor to apply to
+                the learning rate at the start of the warmup.
+            warmup_epochs (int): The number of epochs to warmup the learning
+                rate.
+            scheduler_args (dict[str, float]): The arguments to pass to the base
+                scheduler.
+        """
+        warmup_scheduler = LinearLR(
+            optimizer,
+            start_factor=warmup_start_factor,
+            end_factor=1,
+            total_iters=warmup_epochs,
+        )
+        base_scheduler = base_scheduler(optimizer, **scheduler_args)
+        super().__init__(
+            optimizer=optimizer,
+            schedulers=[warmup_scheduler, base_scheduler],
+            milestones=[warmup_epochs],
+        )
+
+
+class CosineAnnealingWarmup(WarmupScheduler):
     def __init__(
         self,
         optimizer: Optimizer,
@@ -453,26 +493,23 @@ class CosineAnnealingWarmup(torch.optim.lr_scheduler.SequentialLR):
                 the learning rate at the start of the warmup.
             warmup_epochs (int): The number of epochs to warmup the learning
                 rate.
-            max_epochs (int): The total number of epochs.
+            max_epochs (int): The total number of epochs including warmup.
             eta_min (float): The minimum learning rate.
         """
-        warmup_scheduler = optim.lr_scheduler.LinearLR(
-            optimizer,
-            start_factor=warmup_start_factor,
-            end_factor=1,
-            total_iters=warmup_epochs,
-        )
-        cosine_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-            optimizer, T_max=max_epochs - warmup_epochs, eta_min=eta_min
-        )
         super().__init__(
             optimizer=optimizer,
-            schedulers=[warmup_scheduler, cosine_scheduler],
+            base_scheduler=CosineAnnealingLR,
+            warmup_start_factor=warmup_start_factor,
+            warmup_epochs=warmup_epochs,
+            scheduler_args={
+                "T_max": max_epochs - warmup_epochs,
+                "eta_min": eta_min,
+            },
             milestones=[warmup_epochs],
         )
 
 
-class FullSWALR(torch.optim.lr_scheduler.SequentialLR):
+class CosineSWALR(torch.SequentialLR):
     def __init__(
         self,
         optimizer: Optimizer,
@@ -496,7 +533,7 @@ class FullSWALR(torch.optim.lr_scheduler.SequentialLR):
             optim_eta_min (float): The minimum learning rate for the first optimizer.
             anneal_strategy (Literal["cos", "linear"]): The strategy to anneal the learning rate.
         """
-        optim_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+        optim_scheduler = CosineAnnealingLR(
             optimizer=optimizer, T_max=milestone, eta_min=optim_eta_min
         )
         swa_scheduler = torch.optim.swa_utils.SWALR(

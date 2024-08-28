@@ -2,12 +2,16 @@
 import pytest
 import torch
 
-from torch_uncertainty.optim_recipes import FullSWALR, get_procedure, optim_abnn
+from torch_uncertainty.optim_recipes import (
+    CosineSWALR,
+    get_procedure,
+    optim_abnn,
+)
 
 
-class TestFullSWALR:
+class TestCosineSWALR:
     def test_full_swa_lr(self):
-        FullSWALR(
+        CosineSWALR(
             torch.optim.SGD(torch.nn.Linear(1, 1).parameters(), lr=1e-3),
             swa_lr=1,
             milestone=12,

@@ -57,7 +57,7 @@ optimizer:
   weight_decay: 5e-4
   nesterov: true
 lr_scheduler:
-  class_path: torch_uncertainty.optim_recipes.FullSWALR
+  class_path: torch_uncertainty.optim_recipes.CosineSWALR
   init_args:
     milestone: 20
     swa_lr: 0.01
