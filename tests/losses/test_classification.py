@@ -62,7 +62,7 @@ class TestConfidencePenaltyLoss:
         loss(torch.tensor([[0.0, 0.0]]), torch.tensor([0]))
         loss = ConfidencePenaltyLoss(reg_weight=1e-2)
         loss(torch.tensor([[0.0, 0.0]]), torch.tensor([0]))
-        loss = ConfidencePenaltyLoss(reg_weight=1e-2, reduction="none")
+        loss = ConfidencePenaltyLoss(reg_weight=1e-2, reduction=None)
         loss(torch.tensor([[0.0, 0.0]]), torch.tensor([0]))
 
     def test_failures(self):
@@ -92,7 +92,7 @@ class TestConflictualLoss:
         loss(torch.tensor([[0.0, 0.0]]), torch.tensor([0]))
         loss = ConflictualLoss(reg_weight=1e-2)
         loss(torch.tensor([[0.0, 0.0]]), torch.tensor([0]))
-        loss = ConflictualLoss(reg_weight=1e-2, reduction="none")
+        loss = ConflictualLoss(reg_weight=1e-2, reduction=None)
         loss(torch.tensor([[0.0, 0.0]]), torch.tensor([0]))
 
     def test_failures(self):

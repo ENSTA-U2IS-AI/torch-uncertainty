@@ -3,10 +3,22 @@ import pytest
 import torch
 
 from torch_uncertainty.optim_recipes import (
+    CosineAnnealingWarmup,
     CosineSWALR,
     get_procedure,
     optim_abnn,
 )
+
+
+class TestCosineAnnealingWarmup:
+    def test_full_cosine_annealing_warmup(self):
+        CosineAnnealingWarmup(
+            torch.optim.SGD(torch.nn.Linear(1, 1).parameters(), lr=1e-3),
+            warmup_start_factor=0.1,
+            warmup_epochs=5,
+            max_epochs=100,
+            eta_min=1e-5,
+        )
 
 
 class TestCosineSWALR:
