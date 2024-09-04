@@ -23,6 +23,8 @@ the models and metrics implemented.
 Installation
 ^^^^^^^^^^^^
 
+Make sure you have Python 3.10 or later installed, as well as Pytorch (cpu or gpu).
+
 .. parsed-literal::
    pip install torch-uncertainty
 
