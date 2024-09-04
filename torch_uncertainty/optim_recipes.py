@@ -440,7 +440,7 @@ def get_procedure(
     return procedure
 
 
-class WarmupScheduler(torch.SequentialLR):
+class WarmupScheduler(SequentialLR):
     def __init__(
         self,
         optimizer: Optimizer,
@@ -505,11 +505,10 @@ class CosineAnnealingWarmup(WarmupScheduler):
                 "T_max": max_epochs - warmup_epochs,
                 "eta_min": eta_min,
             },
-            milestones=[warmup_epochs],
         )
 
 
-class CosineSWALR(torch.SequentialLR):
+class CosineSWALR(SequentialLR):
     def __init__(
         self,
         optimizer: Optimizer,
