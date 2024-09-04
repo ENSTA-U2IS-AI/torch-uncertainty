@@ -235,7 +235,7 @@ class ConflictualLoss(nn.Module):
         reg_weight: float = 1,
         reduction: str | None = "mean",
     ) -> None:
-        """The Conflictual Loss.
+        r"""The Conflictual Loss.
 
         Args:
             reg_weight (float, optional): The weight of the regularization term.
@@ -243,8 +243,8 @@ class ConflictualLoss(nn.Module):
             output:``'none'`` | ``'mean'`` | ``'sum'``.
 
         Reference:
-            Mohammed Fellaji et al. On the Calibration of Epistemic Uncertainty:
-            Principles, Paradoxes and Conflictual Loss. https://arxiv.org/pdf/2407.12211
+            `Mohammed Fellaji et al. On the Calibration of Epistemic Uncertainty:
+            Principles, Paradoxes and Conflictual Loss <https://arxiv.org/pdf/2407.12211>`_.
         """
         super().__init__()
         if reduction is None:
