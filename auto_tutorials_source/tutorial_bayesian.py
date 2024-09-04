@@ -36,6 +36,7 @@ To train a BNN using TorchUncertainty, we have to load the following modules:
 We will also need to define an optimizer using torch.optim and Pytorch's
 neural network utils from torch.nn.
 """
+# %%
 from pathlib import Path
 
 from lightning.pytorch import Trainer
@@ -93,7 +94,7 @@ model = bayesian_lenet(datamodule.num_channels, datamodule.num_classes)
 loss = ELBOLoss(
     model=model,
     inner_loss=nn.CrossEntropyLoss(),
-    kl_weight=1 / 50000,
+    kl_weight=1 / 10000,
     num_samples=3,
 )
 

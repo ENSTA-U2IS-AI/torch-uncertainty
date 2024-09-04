@@ -24,6 +24,7 @@ To train a LeNet with the DEC loss function using TorchUncertainty, we have to l
 
 We also need to define an optimizer using torch.optim, the neural network utils within torch.nn.
 """
+# %%
 from pathlib import Path
 
 import torch

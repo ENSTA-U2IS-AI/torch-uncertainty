@@ -28,7 +28,7 @@ First, we have to load the following utilities from TorchUncertainty:
 
 We also need import the neural network utils within `torch.nn`.
 """
-
+# %%
 from pathlib import Path
 
 from torch_uncertainty.utils import TUTrainer
