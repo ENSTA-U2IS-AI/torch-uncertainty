@@ -155,7 +155,6 @@ class RegressionRoutine(LightningModule):
         self, batch: tuple[Tensor, Tensor], batch_idx: int
     ) -> STEP_OUTPUT:
         inputs, targets = self.format_batch_fn(batch)
-        print(inputs.shape, targets.shape)
 
         if self.one_dim_regression:
             targets = targets.unsqueeze(-1)
