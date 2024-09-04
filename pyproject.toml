@@ -32,7 +32,7 @@ classifiers = [
 ]
 dependencies = [
     "timm",
-    "lightning[pytorch-extra]",
+    "lightning[pytorch-extra]>=2.0",
     "torchvision>=0.16",
     "tensorboard",
     "einops",
