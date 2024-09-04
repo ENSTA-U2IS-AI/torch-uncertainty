@@ -11,6 +11,7 @@ from torch.distributions import (
 from torch.optim import Optimizer
 from torchmetrics import MeanAbsoluteError, MeanSquaredError, MetricCollection
 
+from torch_uncertainty.losses import ELBOLoss
 from torch_uncertainty.metrics import (
     DistributionNLL,
 )
@@ -154,12 +155,16 @@ class RegressionRoutine(LightningModule):
         self, batch: tuple[Tensor, Tensor], batch_idx: int
     ) -> STEP_OUTPUT:
         inputs, targets = self.format_batch_fn(batch)
-        dists = self.model(inputs)
 
         if self.one_dim_regression:
             targets = targets.unsqueeze(-1)
 
-        loss = self.loss(dists, targets)
+        if isinstance(self.loss, ELBOLoss):
+            loss = self.loss(inputs, targets)
+        else:
+            dists = self.model(inputs)
+            loss = self.loss(dists, targets)
+
         if self.needs_step_update:
             self.model.update_wrapper(self.current_epoch)
         self.log("train_loss", loss)
@@ -182,7 +187,6 @@ class RegressionRoutine(LightningModule):
                     dist_size(preds)[0] // batch_size, device=self.device
                 )
             )
-            print(ens_dist, type(ens_dist))
             mixture = MixtureSameFamily(mix, ens_dist)
             preds = mixture.mean
         else:

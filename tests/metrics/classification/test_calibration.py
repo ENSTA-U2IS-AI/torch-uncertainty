@@ -58,6 +58,7 @@ class TestAdaptiveCalibrationError:
         ace = AdaptiveCalibrationError(
             task="binary", num_bins=2, norm="l1", validate_args=True
         )
+
         ace = AdaptiveCalibrationError(
             task="binary", num_bins=2, norm="l1", validate_args=False
         )
@@ -112,7 +113,20 @@ class TestAdaptiveCalibrationError:
             ),
             torch.as_tensor([0, 0, 0, 1, 1]),
         )
-        assert ace.compute().item() ** 2 == pytest.approx((0.8 - 0.5) ** 2)
+        assert ace.compute().item() == pytest.approx(0.8 - 0.5)
+
+        ace = AdaptiveCalibrationError(task="binary", num_bins=3, norm="l2")
+        ece = CalibrationError(task="binary", num_bins=3, norm="l2")
+
+        ace.update(
+            torch.as_tensor([0.12, 0.26, 0.70, 0.71, 0.91, 0.92]),
+            torch.as_tensor([0, 1, 0, 0, 1, 1]),
+        )
+        ece.update(
+            torch.as_tensor([0.12, 0.26, 0.70, 0.71, 0.91, 0.92]),
+            torch.as_tensor([0, 1, 0, 0, 1, 1]),
+        )
+        assert ace.compute().item() > ece.compute().item()
 
     def test_errors(self) -> None:
         with pytest.raises(TypeError, match="is expected to be `int`"):

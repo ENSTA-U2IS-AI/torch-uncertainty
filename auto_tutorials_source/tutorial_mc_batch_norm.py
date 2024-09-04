@@ -22,6 +22,7 @@ First, we have to load the following utilities from TorchUncertainty:
 
 We also need import the neural network utils within `torch.nn`.
 """
+# %%
 from pathlib import Path
 
 from lightning import Trainer
@@ -98,7 +99,7 @@ routine = routine.eval()  # To avoid prints
 # 6. Testing the Model
 # ~~~~~~~~~~~~~~~~~~~~
 # Now that the model is trained, let's test it on MNIST. Don't forget to call
-# .eval() to enable Monte Carlo batch normalization at inference.
+# .eval() to enable Monte Carlo batch normalization at evaluation (sometimes called inference).
 # In this tutorial, we plot the most uncertain images, i.e. the images for which
 # the variance of the predictions is the highest.
 # Please note that we apply a reshape to the logits to determine the dimension corresponding to the ensemble

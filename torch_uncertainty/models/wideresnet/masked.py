@@ -1,7 +1,8 @@
+from collections.abc import Callable
 from typing import Literal
 
-import torch.nn.functional as F
 from torch import Tensor, nn
+from torch.nn.functional import relu
 
 from torch_uncertainty.layers import MaskedConv2d, MaskedLinear
 
@@ -21,17 +22,19 @@ class _WideBasicBlock(nn.Module):
         num_estimators: int,
         scale: float,
         groups: int,
+        activation_fn: Callable,
     ) -> None:
         super().__init__()
+        self.activation_fn = activation_fn
         self.conv1 = MaskedConv2d(
             in_planes,
             planes,
             kernel_size=3,
             num_estimators=num_estimators,
             padding=1,
-            bias=conv_bias,
             scale=scale,
             groups=groups,
+            bias=conv_bias,
         )
         self.dropout = nn.Dropout2d(p=dropout_rate)
         self.bn1 = nn.BatchNorm2d(planes)
@@ -42,10 +45,12 @@ class _WideBasicBlock(nn.Module):
             num_estimators=num_estimators,
             stride=stride,
             padding=1,
-            bias=conv_bias,
             scale=scale,
             groups=groups,
+            bias=conv_bias,
         )
+        self.bn2 = nn.BatchNorm2d(planes)
+
         self.shortcut = nn.Sequential()
         if stride != 1 or in_planes != planes:
             self.shortcut = nn.Sequential(
@@ -55,18 +60,17 @@ class _WideBasicBlock(nn.Module):
                     kernel_size=1,
                     num_estimators=num_estimators,
                     stride=stride,
-                    bias=conv_bias,
                     scale=scale,
                     groups=groups,
+                    bias=conv_bias,
                 ),
             )
-        self.bn2 = nn.BatchNorm2d(planes)
 
     def forward(self, x: Tensor) -> Tensor:
-        out = F.relu(self.bn1(self.dropout(self.conv1(x))))
+        out = self.activation_fn(self.bn1(self.dropout(self.conv1(x))))
         out = self.conv2(out)
         out += self.shortcut(x)
-        return F.relu(self.bn2(out))
+        return self.activation_fn(self.bn2(out))
 
 
 class _MaskedWideResNet(nn.Module):
@@ -82,17 +86,22 @@ class _MaskedWideResNet(nn.Module):
         scale: float = 2.0,
         groups: int = 1,
         style: Literal["imagenet", "cifar"] = "imagenet",
+        activation_fn: Callable = relu,
     ) -> None:
         super().__init__()
         self.num_estimators = num_estimators
+        self.activation_fn = activation_fn
         self.in_planes = 16
 
         if (depth - 4) % 6 != 0:
-            raise ValueError("Wide-resnet depth should be 6n+4.")
+            raise ValueError(f"Wide-resnet depth should be 6n+4. Got {depth}.")
         num_blocks = (depth - 4) // 6
-        k = widen_factor
-
-        num_stages = [16, 16 * k, 32 * k, 64 * k]
+        num_stages = [
+            16,
+            16 * widen_factor,
+            32 * widen_factor,
+            64 * widen_factor,
+        ]
 
         if style == "imagenet":
             self.conv1 = nn.Conv2d(
@@ -136,6 +145,7 @@ class _MaskedWideResNet(nn.Module):
             num_estimators=self.num_estimators,
             scale=scale,
             groups=groups,
+            activation_fn=activation_fn,
         )
         self.layer2 = self._wide_layer(
             _WideBasicBlock,
@@ -147,6 +157,7 @@ class _MaskedWideResNet(nn.Module):
             num_estimators=self.num_estimators,
             scale=scale,
             groups=groups,
+            activation_fn=activation_fn,
         )
         self.layer3 = self._wide_layer(
             _WideBasicBlock,
@@ -158,6 +169,7 @@ class _MaskedWideResNet(nn.Module):
             num_estimators=self.num_estimators,
             scale=scale,
             groups=groups,
+            activation_fn=activation_fn,
         )
 
         self.dropout = nn.Dropout(p=dropout_rate)
@@ -179,6 +191,7 @@ class _MaskedWideResNet(nn.Module):
         num_estimators: int,
         scale: float = 2.0,
         groups: int = 1,
+        activation_fn: Callable = relu,
     ) -> nn.Module:
         strides = [stride] + [1] * (int(num_blocks) - 1)
         layers = []
@@ -194,22 +207,24 @@ class _MaskedWideResNet(nn.Module):
                     dropout_rate=dropout_rate,
                     scale=scale,
                     groups=groups,
+                    activation_fn=activation_fn,
                 )
             )
             self.in_planes = planes
-
         return nn.Sequential(*layers)
 
-    def forward(self, x: Tensor) -> Tensor:
+    def feats_forward(self, x: Tensor) -> Tensor:
         out = x.repeat(self.num_estimators, 1, 1, 1)
-        out = F.relu(self.bn1(self.conv1(out)))
+        out = self.activation_fn(self.bn1(self.conv1(out)))
         out = self.optional_pool(out)
         out = self.layer1(out)
         out = self.layer2(out)
         out = self.layer3(out)
         out = self.pool(out)
-        out = self.dropout(self.flatten(out))
-        return self.linear(out)
+        return self.dropout(self.flatten(out))
+
+    def forward(self, x: Tensor) -> Tensor:
+        return self.linear(self.feats_forward(x))
 
 
 def masked_wideresnet28x10(
@@ -217,9 +232,9 @@ def masked_wideresnet28x10(
     num_classes: int,
     num_estimators: int,
     scale: float,
-    groups: int,
     conv_bias: bool = True,
     dropout_rate: float = 0.3,
+    groups: int = 1,
     style: Literal["imagenet", "cifar"] = "imagenet",
 ) -> _MaskedWideResNet:
     """Masksembles of Wide-ResNet-28x10.
@@ -229,10 +244,11 @@ def masked_wideresnet28x10(
         num_classes (int): Number of classes to predict.
         num_estimators (int): Number of estimators in the ensemble.
         scale (float): Expansion factor affecting the width of the estimators.
-        groups (int): Number of groups within each estimator.
         conv_bias (bool): Whether to use bias in convolutions. Defaults to
             ``True``.
         dropout_rate (float, optional): Dropout rate. Defaults to ``0.3``.
+        groups (int): Number of groups within each estimator. Defaults to
+            ``1``.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
 

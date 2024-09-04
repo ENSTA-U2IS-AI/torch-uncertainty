@@ -1,3 +1,4 @@
+import logging
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
@@ -63,7 +64,7 @@ class FrostImages(VisionDataset):  # TODO: Use ImageFolder
 
     def download(self) -> None:
         if self._check_integrity():
-            print("Files already downloaded and verified")
+            logging.info("Files already downloaded and verified")
             return
 
         download_and_extract_archive(
@@ -72,7 +73,7 @@ class FrostImages(VisionDataset):  # TODO: Use ImageFolder
             filename=self.filename,
             md5=self.zip_md5,
         )
-        print(f"Downloaded {self.filename} to {self.root}")
+        logging.info("Downloaded %s to %s.", self.filename, self.root)
 
     def __getitem__(self, index: int) -> Any:
         """Get the samples of the dataset.

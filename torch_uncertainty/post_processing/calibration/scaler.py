@@ -1,3 +1,4 @@
+import logging
 from typing import Literal
 
 import torch
@@ -91,7 +92,7 @@ class Scaler(PostProcessing):
     @torch.no_grad()
     def forward(self, inputs: Tensor) -> Tensor:
         if not self.trained:
-            print(
+            logging.error(
                 "TemperatureScaler has not been trained yet. Returning "
                 "manually tempered inputs."
             )

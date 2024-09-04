@@ -243,6 +243,19 @@ For Laplace Approximation, consider citing:
 * Authors: *Erik Daxberger, Agustinus Kristiadi, Alexander Immer, Runa Eschenhagen, Matthias Bauer, and Philipp Hennig*
 * Paper: `NeurIPS 2021 <https://arxiv.org/abs/2106.14806>`__.
 
+Losses
+------
+
+Conflictual Loss
+^^^^^^^^^^^^^^^^
+
+For the conflictual loss, consider citing:
+
+**On the Calibration of Epistemic Uncertainty: Principles, Paradoxes and Conflictual Loss**
+
+* Authors: *Mohammed Fellaji, Frédéric Pennerath, Brieuc Conan-Guez, and Miguel Couceiro*
+* Paper: `ArXiv 2024 <https://arxiv.org/pdf/2407.12211`__.
+
 Metrics
 -------
 
@@ -277,6 +290,18 @@ For the area under the risk-coverage curve, consider citing:
 
 * Authors: *Yonatan Geifman and Ran El-Yaniv*
 * Paper: `NeurIPS 2017 <https://arxiv.org/pdf/1705.08500.pdf>`__.
+
+
+Area Under the Generalized Risk-Coverage curve
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For the area under the generalized risk-coverage curve, consider citing:
+
+**Overcoming Common Flaws in the Evaluation of Selective Classification Systems**
+
+* Authors: *Jeremias Traub, Till J. Bungert, Carsten T. Lüth, Michael Baumgartner, Klaus H. Maier-Hein, Lena Maier-Hein, and Paul F Jaeger*
+* Paper: `ArXiv <https://arxiv.org/pdf/2407.01032.pdf>`__.
+
 
 Grouping Loss
 ^^^^^^^^^^^^^

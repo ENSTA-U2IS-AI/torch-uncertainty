@@ -1,4 +1,3 @@
-import numpy as np
 import torch
 from torch import Tensor
 from torchmetrics import Metric
@@ -23,7 +22,8 @@ class FPRx(Metric):
             kwargs: Additional arguments to pass to the metric class.
 
         Reference:
-            Inpired by https://github.com/hendrycks/anomaly-seg.
+            Improved from https://github.com/hendrycks/anomaly-seg and
+            translated to torch.
         """
         super().__init__(**kwargs)
 
@@ -47,68 +47,69 @@ class FPRx(Metric):
 
         Args:
             conf (Tensor): The confidence scores.
-            target (Tensor): The target labels.
+            target (Tensor): The target labels, 0 if ID, 1 if OOD.
         """
         self.conf.append(conf)
         self.targets.append(target)
 
     def compute(self) -> Tensor:
-        """Compute the actual False Positive Rate at x% Recall.
+        """Compute the False Positive Rate at x% Recall.
 
         Returns:
             Tensor: The value of the FPRx.
         """
-        conf = dim_zero_cat(self.conf).cpu().numpy()
-        targets = dim_zero_cat(self.targets).cpu().numpy()
+        conf = dim_zero_cat(self.conf)
+        targets = dim_zero_cat(self.targets)
 
-        # out_labels is an array of 0s and 1s - 0 if IOD 1 if OOD
-        out_labels = targets == self.pos_label
+        # map examples and labels to OOD first
+        indx = torch.argsort(targets, descending=True)
+        examples = conf[indx]
+        labels = torch.zeros_like(targets, dtype=torch.bool, device=self.device)
+        labels[: torch.count_nonzero(targets)] = True
 
-        in_scores = conf[np.logical_not(out_labels)]
-        out_scores = conf[out_labels]
+        # sort examples and labels by decreasing confidence
+        desc_scores_indx = torch.argsort(examples, descending=True)
+        examples = examples[desc_scores_indx]
+        labels = labels[desc_scores_indx]
 
-        neg = np.array(in_scores[:]).reshape((-1, 1))
-        pos = np.array(out_scores[:]).reshape((-1, 1))
-        examples = np.squeeze(np.vstack((pos, neg)))
-        labels = np.zeros(len(examples), dtype=np.int32)
-        labels[: len(pos)] += 1
-
-        # make labels a boolean vector, True if OOD
-        labels = labels == self.pos_label
-
-        # sort scores and corresponding truth values
-        desc_score_indices = np.argsort(examples, kind="mergesort")[::-1]
-        examples = examples[desc_score_indices]
-        labels = labels[desc_score_indices]
-
-        # examples typically has many tied values. Here we extract
-        # the indices associated with the distinct values. We also
-        # concatenate a value for the end of the curve.
-        distinct_value_indices = np.where(np.diff(examples))[0]
-        threshold_idxs = np.r_[distinct_value_indices, labels.shape[0] - 1]
+        # Get the indices of the distinct values
+        distinct_value_indices = torch.where(torch.diff(examples))[0]
+        threshold_idxs = torch.cat(
+            [
+                distinct_value_indices,
+                torch.tensor(
+                    [labels.shape[0] - 1], dtype=torch.long, device=self.device
+                ),
+            ]
+        )
 
         # accumulate the true positives with decreasing threshold
-        tps = np.cumsum(labels)[threshold_idxs]
-        fps = 1 + threshold_idxs - tps  # add one because of zero-based indexing
+        true_pos = torch.cumsum(labels, dim=0)[threshold_idxs]
+        false_pos = (
+            1 + threshold_idxs - true_pos
+        )  # add one because of zero-based indexing
 
-        thresholds = examples[threshold_idxs]
+        # check that there is at least one OOD example
+        if true_pos[-1] == 0:
+            return torch.tensor([torch.nan], device=self.device)
 
-        recall = tps / tps[-1]
+        recall = true_pos / true_pos[-1]
 
-        last_ind = tps.searchsorted(tps[-1])
-        sl = slice(last_ind, None, -1)  # [last_ind::-1]
-        recall, fps, tps, thresholds = (
-            np.r_[recall[sl], 1],
-            np.r_[fps[sl], 0],
-            np.r_[tps[sl], 0],
-            thresholds[sl],
+        last_ind = torch.searchsorted(true_pos, true_pos[-1])
+        recall = torch.cat(
+            [
+                recall[: last_ind + 1].flip(0),
+                torch.tensor([1.0], device=self.device),
+            ]
         )
-
-        cutoff = np.argmin(np.abs(recall - self.recall_level))
-
-        return torch.tensor(
-            fps[cutoff] / (np.sum(np.logical_not(labels))), dtype=torch.float32
+        false_pos = torch.cat(
+            [
+                false_pos[: last_ind + 1].flip(0),
+                torch.tensor([0.0], device=self.device),
+            ]
         )
+        cutoff = torch.argmin(torch.abs(recall - self.recall_level))
+        return false_pos[cutoff] / (~labels).sum()
 
 
 class FPR95(FPRx):
@@ -116,7 +117,6 @@ class FPR95(FPRx):
         """The False Positive Rate at 95% Recall metric.
 
         Args:
-            recall_level (float): The recall level at which to compute the FPR.
             pos_label (int): The positive label.
             kwargs: Additional arguments to pass to the metric class.
         """

@@ -1,4 +1,5 @@
 import json
+import logging
 import shutil
 from collections.abc import Callable
 from pathlib import Path
@@ -219,7 +220,7 @@ class CamVid(VisionDataset):
     def download(self) -> None:
         """Download the CamVid data if it doesn't exist already."""
         if self._check_integrity():
-            print("Files already downloaded and verified")
+            logging.info("Files already downloaded and verified")
             return
 
         if (Path(self.root) / self.base_folder).exists():

@@ -39,7 +39,6 @@ class _MLP(nn.Module):
         super().__init__()
         self.activation = activation
         self.dropout_rate = dropout_rate
-
         layers = nn.ModuleList()
 
         if len(hidden_dims) == 0:

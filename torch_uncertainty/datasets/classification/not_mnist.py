@@ -1,3 +1,4 @@
+import logging
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any, Literal
@@ -80,7 +81,7 @@ class NotMNIST(ImageFolder):
 
     def download(self) -> None:
         if self._check_integrity():
-            print("Files already downloaded and verified")
+            logging.info("Files already downloaded and verified")
             return
 
         download_and_extract_archive(
@@ -89,7 +90,7 @@ class NotMNIST(ImageFolder):
             filename=self.filename,
             md5=self.tgz_md5,
         )
-        print(f"Downloaded {self.filename} to {self.root}")
+        logging.info("Downloaded %s to %s.", self.filename, self.root)
 
     def __getitem__(self, index: int) -> tuple[Any, Any]:
         """Get the samples and targets of the dataset.

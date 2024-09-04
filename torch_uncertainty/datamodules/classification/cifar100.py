@@ -29,6 +29,7 @@ class CIFAR100DataModule(TUDataModule):
         batch_size: int,
         eval_ood: bool = False,
         val_split: float | None = None,
+        basic_augment: bool = True,
         cutout: int | None = None,
         randaugment: bool = False,
         auto_augment: str | None = None,
@@ -48,6 +49,8 @@ class CIFAR100DataModule(TUDataModule):
             batch_size (int): Number of samples per batch.
             val_split (float): Share of samples to use for validation. Defaults
                 to ``0.0``.
+            basic_augment (bool): Whether to apply base augmentations. Defaults to
+                ``True``.
             cutout (int): Size of cutout to apply to images. Defaults to ``None``.
             randaugment (bool): Whether to apply RandAugment. Defaults to
                 ``False``.
@@ -93,6 +96,16 @@ class CIFAR100DataModule(TUDataModule):
                 "GitHub issue if needed."
             )
 
+        if basic_augment:
+            basic_transform = T.Compose(
+                [
+                    T.RandomCrop(32, padding=4),
+                    T.RandomHorizontalFlip(),
+                ]
+            )
+        else:
+            basic_transform = nn.Identity()
+
         if cutout:
             main_transform = Cutout(cutout)
         elif randaugment:
@@ -104,8 +117,7 @@ class CIFAR100DataModule(TUDataModule):
 
         self.train_transform = T.Compose(
             [
-                T.RandomCrop(32, padding=4),
-                T.RandomHorizontalFlip(),
+                basic_transform,
                 main_transform,
                 T.ToTensor(),
                 T.ConvertImageDtype(torch.float32),

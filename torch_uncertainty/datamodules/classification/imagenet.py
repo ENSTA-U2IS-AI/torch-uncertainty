@@ -49,6 +49,7 @@ class ImageNetDataModule(TUDataModule):
         procedure: str | None = None,
         train_size: int = 224,
         interpolation: str = "bilinear",
+        basic_augment: bool = True,
         rand_augment_opt: str | None = None,
         num_workers: int = 1,
         pin_memory: bool = True,
@@ -71,6 +72,8 @@ class ImageNetDataModule(TUDataModule):
             train_size (int): Size of training images. Defaults to ``224``.
             interpolation (str): Interpolation method for the Resize Crops.
                 Defaults to ``"bilinear"``.
+            basic_augment (bool): Whether to apply base augmentations. Defaults to
+                ``True``.
             rand_augment_opt (str): Which RandAugment to use. Defaults to ``None``.
             num_workers (int): Number of workers to use for data loading. Defaults
                 to ``1``.
@@ -123,6 +126,18 @@ class ImageNetDataModule(TUDataModule):
 
         self.procedure = procedure
 
+        if basic_augment:
+            basic_transform = T.Compose(
+                [
+                    T.RandomResizedCrop(
+                        train_size, interpolation=self.interpolation
+                    ),
+                    T.RandomHorizontalFlip(),
+                ]
+            )
+        else:
+            basic_transform = nn.Identity()
+
         if self.procedure is None:
             if rand_augment_opt is not None:
                 main_transform = rand_augment_transform(rand_augment_opt, {})
@@ -144,10 +159,7 @@ class ImageNetDataModule(TUDataModule):
 
         self.train_transform = T.Compose(
             [
-                T.RandomResizedCrop(
-                    train_size, interpolation=self.interpolation
-                ),
-                T.RandomHorizontalFlip(),
+                basic_transform,
                 main_transform,
                 T.ToTensor(),
                 T.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),

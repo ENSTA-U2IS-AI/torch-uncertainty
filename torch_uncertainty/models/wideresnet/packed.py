@@ -1,8 +1,10 @@
+from collections.abc import Callable
 from typing import Literal
 
 import torch.nn.functional as F
 from einops import rearrange
 from torch import Tensor, nn
+from torch.nn.functional import relu
 
 from torch_uncertainty.layers import PackedConv2d, PackedLinear
 
@@ -88,17 +90,22 @@ class _PackedWideResNet(nn.Module):
         gamma: int = 1,
         groups: int = 1,
         style: Literal["imagenet", "cifar"] = "imagenet",
+        activation_fn: Callable = relu,
     ) -> None:
         super().__init__()
         self.num_estimators = num_estimators
+        self.activation_fn = activation_fn
         self.in_planes = 16
 
         if (depth - 4) % 6 != 0:
-            raise ValueError("Wide-resnet depth should be 6n+4.")
+            raise ValueError(f"Wide-resnet depth should be 6n+4. Got {depth}.")
         num_blocks = int((depth - 4) / 6)
-        k = widen_factor
-
-        num_stages = [16, 16 * k, 32 * k, 64 * k]
+        num_stages = [
+            16,
+            16 * widen_factor,
+            32 * widen_factor,
+            64 * widen_factor,
+        ]
 
         if style == "imagenet":
             self.conv1 = PackedConv2d(
@@ -220,11 +227,10 @@ class _PackedWideResNet(nn.Module):
                 )
             )
             self.in_planes = planes
-
         return nn.Sequential(*layers)
 
-    def forward(self, x: Tensor) -> Tensor:
-        out = F.relu(self.bn1(self.conv1(x)))
+    def feats_forward(self, x: Tensor) -> Tensor:
+        out = self.activation_fn(self.bn1(self.conv1(x)))
         out = self.optional_pool(out)
         out = self.layer1(out)
         out = self.layer2(out)
@@ -233,8 +239,10 @@ class _PackedWideResNet(nn.Module):
             out, "e (m c) h w -> (m e) c h w", m=self.num_estimators
         )
         out = self.pool(out)
-        out = self.dropout(self.flatten(out))
-        return self.linear(out)
+        return self.dropout(self.flatten(out))
+
+    def forward(self, x: Tensor) -> Tensor:
+        return self.linear(self.feats_forward(x))
 
 
 def packed_wideresnet28x10(
@@ -243,9 +251,9 @@ def packed_wideresnet28x10(
     num_estimators: int,
     alpha: int,
     gamma: int,
-    groups: int = 1,
     conv_bias: bool = True,
     dropout_rate: float = 0.3,
+    groups: int = 1,
     style: Literal["imagenet", "cifar"] = "imagenet",
 ) -> _PackedWideResNet:
     """Packed-Ensembles of Wide-ResNet-28x10.

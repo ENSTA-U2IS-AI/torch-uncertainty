@@ -1,5 +1,6 @@
 # ruff: noqa: F401
 from .classification import (
+    AUGRC,
     AURC,
     AUSE,
     FPR95,
@@ -8,6 +9,7 @@ from .classification import (
     CalibrationError,
     CategoricalNLL,
     CovAt5Risk,
+    CovAtxRisk,
     Disagreement,
     Entropy,
     GroupingLoss,

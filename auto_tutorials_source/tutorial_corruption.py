@@ -2,15 +2,16 @@
 Corrupting Images with TorchUncertainty to Benchmark Robustness
 ===============================================================
 
-This tutorial shows the impact of the different corruptions available in the
-TorchUncertainty library. These corruptions were first proposed in the paper
+This tutorial shows the impact of the different corruption transforms available in the
+TorchUncertainty library. These corruption transforms were first proposed in the paper
 Benchmarking Neural Network Robustness to Common Corruptions and Perturbations
 by Dan Hendrycks and Thomas Dietterich.
 
 For this tutorial, we will only load the corruption transforms available in 
-torch_uncertainty.transforms.corruptions. We also need to load utilities from
+torch_uncertainty.transforms.corruption. We also need to load utilities from
 torchvision and matplotlib.
 """
+# %%
 from torchvision.datasets import CIFAR10
 from torchvision.transforms import Compose, ToTensor, Resize
 
@@ -60,7 +61,7 @@ def show_images(transforms):
 # %%
 # 1. Noise Corruptions
 # ~~~~~~~~~~~~~~~~~~~~
-from torch_uncertainty.transforms.corruptions import (
+from torch_uncertainty.transforms.corruption import (
     GaussianNoise,
     ShotNoise,
     ImpulseNoise,
@@ -79,7 +80,7 @@ show_images(
 # %%
 # 2. Blur Corruptions
 # ~~~~~~~~~~~~~~~~~~~~
-from torch_uncertainty.transforms.corruptions import (
+from torch_uncertainty.transforms.corruption import (
     GaussianBlur,
     GlassBlur,
     DefocusBlur,
@@ -96,7 +97,7 @@ show_images(
 # %%
 # 3. Other Corruptions
 # ~~~~~~~~~~~~~~~~~~~~
-from torch_uncertainty.transforms.corruptions import (
+from torch_uncertainty.transforms.corruption import (
     JPEGCompression,
     Pixelate,
     Frost,

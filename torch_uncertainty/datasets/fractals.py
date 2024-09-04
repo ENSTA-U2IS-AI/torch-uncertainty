@@ -1,3 +1,4 @@
+import logging
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
@@ -56,7 +57,7 @@ class Fractals(ImageFolder):
 
     def download(self) -> None:
         if self._check_integrity():
-            print("Files already downloaded and verified")
+            logging.info("Files already downloaded and verified")
             return
 
         download_file_from_google_drive(

@@ -36,7 +36,7 @@ class CityscapesDataModule(TUDataModule):
                 of length :math:`1`, it will be interpreted as
                 :math:`(\text{size[0]},\text{size[1]})`. Defaults to ``1024``.
             eval_size (sequence or int, optional): Desired input image and
-                segmentation mask sizes during inference. If size is an int,
+                segmentation mask sizes during evaluation. If size is an int,
                 smaller edge of the images will be matched to this number, i.e.,
                 :math:`\text{height}>\text{width}`, then image will be rescaled to
                 :math:`(\text{size}\times\text{height}/\text{width},\text{size})`.

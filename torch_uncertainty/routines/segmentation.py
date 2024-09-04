@@ -9,6 +9,7 @@ from torchmetrics import Accuracy, MetricCollection
 from torchvision.transforms.v2 import functional as F
 
 from torch_uncertainty.metrics import (
+    AUGRC,
     AURC,
     BrierScore,
     CalibrationError,
@@ -108,8 +109,16 @@ class SegmentationRoutine(LightningModule):
                     num_classes=num_classes,
                 ),
                 "sc/AURC": AURC(),
+                "sc/AUGRC": AUGRC(),
             },
-            compute_groups=False,
+            compute_groups=[
+                ["seg/mAcc"],
+                ["seg/Brier"],
+                ["seg/NLL"],
+                ["seg/pixAcc"],
+                ["cal/ECE", "cal/aECE"],
+                ["sc/AURC", "sc/AUGRC"],
+            ],
         )
 
         self.val_seg_metrics = seg_metrics.clone(prefix="val/")
@@ -221,6 +230,10 @@ class SegmentationRoutine(LightningModule):
             self.logger.experiment.add_figure(
                 "Risk-Coverage curve",
                 self.test_sbsmpl_seg_metrics["sc/AURC"].plot()[0],
+            )
+            self.logger.experiment.add_figure(
+                "Generalized Risk-Coverage curve",
+                self.test_sbsmpl_seg_metrics["sc/AUGRC"].plot()[0],
             )
 
     def subsample(self, pred: Tensor, target: Tensor) -> tuple[Tensor, Tensor]:

@@ -117,7 +117,7 @@ class GroupingLoss(Metric):
                 f"{features.shape}."
             )
 
-    def compute(self) -> torch.Tensor:
+    def compute(self) -> Tensor:
         """Compute the final Brier score based on inputs passed to ``update``.
 
         Returns:

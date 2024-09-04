@@ -173,7 +173,7 @@ class _BayesConvNd(Module):
         self.frozen = False
 
     def sample(self) -> tuple[Tensor, Tensor | None]:
-        """Sample the bayesian layer's posterior."""
+        """Sample the Bayesian layer's posterior."""
         weight = self.weight_sampler.sample()
         bias = self.bias_sampler.sample() if self.bias_mu is not None else None
         return weight, bias

@@ -1,4 +1,5 @@
 import json
+import logging
 from collections.abc import Callable
 from pathlib import Path
 
@@ -85,7 +86,7 @@ class ImageNetVariation(ImageFolder):
     def download(self) -> None:
         """Download and extract dataset."""
         if self._check_integrity():
-            print("Files already downloaded and verified")
+            logging.info("Files already downloaded and verified")
             return
         if isinstance(self.filename, str):
             download_and_extract_archive(

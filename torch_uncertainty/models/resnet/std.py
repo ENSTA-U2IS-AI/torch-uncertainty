@@ -19,9 +19,9 @@ class _BasicBlock(nn.Module):
         stride: int,
         dropout_rate: float,
         groups: int,
+        conv_bias: bool,
         activation_fn: Callable,
         normalization_layer: type[nn.Module],
-        conv_bias: bool,
     ) -> None:
         super().__init__()
         self.activation_fn = activation_fn
@@ -358,7 +358,7 @@ def resnet(
     activation_fn: Callable = relu,
     normalization_layer: type[nn.Module] = nn.BatchNorm2d,
 ) -> _ResNet:
-    """ResNet-18 model.
+    """ResNet model.
 
     Args:
         in_channels (int): Number of input channels.
@@ -366,20 +366,22 @@ def resnet(
         arch (int): The architecture of the ResNet.
         conv_bias (bool): Whether to use bias in convolutions. Defaults to
             ``True``.
-        conv_bias (bool): Whether to use bias in convolutions. Defaults to
-            ``True``.
-        dropout_rate (float): Dropout rate. Defaults to 0.
-        width_multiplier (float): Width multiplier. Defaults to 1.
+        dropout_rate (float): Dropout rate. Defaults to 0.0.
+        width_multiplier (float): Width multiplier. Defaults to 1.0.
         groups (int): Number of groups in convolutions. Defaults to 1.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
-        activation_fn (Callable, optional): Activation function.
+        activation_fn (Callable, optional): Activation function. Defaults to
+            ``torch.nn.functional.relu``.
         normalization_layer (nn.Module, optional): Normalization layer.
 
     Returns:
         _ResNet: The ResNet model.
     """
-    block = _BasicBlock if arch in [18, 20, 34] else _Bottleneck
+    block = (
+        _BasicBlock if arch in [18, 20, 34, 44, 56, 110, 1202] else _Bottleneck
+    )
+    in_planes = 16 if arch in [20, 44, 56, 110, 1202] else 64
     return _ResNet(
         block=block,
         num_blocks=get_resnet_num_blocks(arch),
@@ -389,7 +391,7 @@ def resnet(
         dropout_rate=dropout_rate,
         groups=groups,
         style=style,
-        in_planes=int(64 * width_multiplier),
+        in_planes=int(in_planes * width_multiplier),
         activation_fn=activation_fn,
         normalization_layer=normalization_layer,
     )

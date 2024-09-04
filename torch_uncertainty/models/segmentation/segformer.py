@@ -1,3 +1,4 @@
+import logging
 import math
 from functools import partial
 
@@ -522,11 +523,14 @@ def resize(
             and (output_h - 1) % (input_h - 1)
             and (output_w - 1) % (input_w - 1)
         ):
-            print(
-                f"When align_corners={align_corners}, "
+            logging.info(
+                "When align_corners=%s, "
                 "the output would more aligned if "
-                f"input size {(input_h, input_w)} is `x+1` and "
-                f"out size {(output_h, output_w)} is `nx+1`",
+                "input size %s is `x+1` and "
+                "out size %s is `nx+1`",
+                align_corners,
+                (input_h, input_w),
+                (output_h, output_w),
             )
     if isinstance(size, torch.Size):
         size = tuple(int(x) for x in size)
