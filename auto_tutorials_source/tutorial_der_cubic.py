@@ -29,6 +29,7 @@ To train a MLP with the DER loss function using TorchUncertainty, we have to loa
 
 We also need to define an optimizer using torch.optim and the neural network utils within torch.nn.
 """
+# %%
 import torch
 from lightning.pytorch import Trainer
 from lightning import LightningDataModule

@@ -243,6 +243,19 @@ For Laplace Approximation, consider citing:
 * Authors: *Erik Daxberger, Agustinus Kristiadi, Alexander Immer, Runa Eschenhagen, Matthias Bauer, and Philipp Hennig*
 * Paper: `NeurIPS 2021 <https://arxiv.org/abs/2106.14806>`__.
 
+Losses
+------
+
+Conflictual Loss
+^^^^^^^^^^^^^^^^
+
+For the conflictual loss, consider citing:
+
+**On the Calibration of Epistemic Uncertainty: Principles, Paradoxes and Conflictual Loss**
+
+* Authors: *Mohammed Fellaji, Frédéric Pennerath, Brieuc Conan-Guez, and Miguel Couceiro*
+* Paper: `ArXiv 2024 <https://arxiv.org/pdf/2407.12211`__.
+
 Metrics
 -------
 

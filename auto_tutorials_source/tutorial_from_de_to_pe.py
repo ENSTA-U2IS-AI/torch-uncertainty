@@ -30,6 +30,7 @@ TorchUncertainty includes datamodules that handle the data loading and preproces
 The dataset is automatically downloaded using torchvision. We then visualize a few images to see a bit what we are working with.
 """
 # Create the transforms for the images
+# %%
 import torch
 import torchvision.transforms as T
 
@@ -241,7 +242,7 @@ ens_perf = trainer.test(ens_routine, dataloaders=[test_dl, ood_dl])
 # We have put the pre-trained models on Hugging Face that you can download with the utility function
 # "hf_hub_download" imported just below. These models are trained for 75 epochs and are therefore not
 # comparable to the all the other models trained in this notebook. The pretrained models can be seen
-# `here <https://huggingface.co/ENSTA-U2IS/tutorial-models>`_ and TorchUncertainty's are `here <https://huggingface.co/torch-uncertainty>`_.
+# on `HuggingFace <https://huggingface.co/ENSTA-U2IS/tutorial-models>`_ and TorchUncertainty's are `here <https://huggingface.co/torch-uncertainty>`_.
 
 from torch_uncertainty.utils.hub import hf_hub_download
 
@@ -297,7 +298,7 @@ ens_perf = trainer.test(ens_routine, dataloaders=[test_dl, ood_dl])
 # This modification is particularly useful when the ensemble size is large, as it is often the case in practice.
 #
 # We will need to update the model and replace the layers with their Packed equivalents. You can find the
-# documentation of the Packed-Linear layer `here <https://torch-uncertainty.github.io/generated/torch_uncertainty.layers.PackedLinear.html>`_,
+# documentation of the Packed-Linear layer using this `link <https://torch-uncertainty.github.io/generated/torch_uncertainty.layers.PackedLinear.html>`_,
 # and the Packed-Conv2D, `here <https://torch-uncertainty.github.io/generated/torch_uncertainty.layers.PackedLinear.html>`_.
 
 import torch

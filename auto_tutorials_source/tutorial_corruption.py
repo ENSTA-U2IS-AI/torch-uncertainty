@@ -11,6 +11,7 @@ For this tutorial, we will only load the corruption transforms available in
 torch_uncertainty.transforms.corruption. We also need to load utilities from
 torchvision and matplotlib.
 """
+# %%
 from torchvision.datasets import CIFAR10
 from torchvision.transforms import Compose, ToTensor, Resize
 

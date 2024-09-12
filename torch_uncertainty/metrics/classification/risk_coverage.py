@@ -285,7 +285,7 @@ class CovAtxRisk(Metric):
     errors: list[Tensor]
 
     def __init__(self, risk_threshold: float, **kwargs) -> None:
-        r"""`Coverage at x Risk`_.
+        r"""Coverage at x Risk.
 
         If there are multiple coverage values corresponding to the given risk,
         i.e., the risk(coverage) is not monotonic, the coverage at x risk is

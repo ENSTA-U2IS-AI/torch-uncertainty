@@ -89,6 +89,7 @@ class FPRx(Metric):
             1 + threshold_idxs - true_pos
         )  # add one because of zero-based indexing
 
+        # check that there is at least one OOD example
         if true_pos[-1] == 0:
             return torch.tensor([torch.nan], device=self.device)
 

@@ -13,7 +13,7 @@ folder or if you want to contribute to the project.
 From PyPI
 ---------
 
-Check that you have PyTorch (cpu or gpu) installed on your system. Then, install
+Check that you have Python 3.10 (or later) and  PyTorch (cpu or gpu) installed on your system. Then, install
 the package via pip:
 
 .. parsed-literal::

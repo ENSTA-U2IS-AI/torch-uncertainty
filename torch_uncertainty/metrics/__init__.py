@@ -9,6 +9,7 @@ from .classification import (
     CalibrationError,
     CategoricalNLL,
     CovAt5Risk,
+    CovAtxRisk,
     Disagreement,
     Entropy,
     GroupingLoss,

@@ -40,6 +40,12 @@ class TestAURC:
         value = (0 * 0.4 + 0.25 * 0.2 / 2 + 0.25 * 0.2 + 0.15 * 0.2 / 2) / 0.8
         assert metric(probs, targets).item() == pytest.approx(value)
 
+    def test_compute_nan(self) -> None:
+        probs = torch.as_tensor([[0.1, 0.9]])
+        targets = torch.as_tensor([1]).long()
+        metric = AURC()
+        assert torch.isnan(metric(probs, targets)).all()
+
     def test_plot(self) -> None:
         scores = torch.as_tensor([0.2, 0.1, 0.5, 0.3, 0.4])
         values = torch.as_tensor([0.1, 0.2, 0.3, 0.4, 0.5])
