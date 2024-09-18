@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 import torch
-from huggingface_hub.utils._errors import (
+from huggingface_hub.errors import (
     HfHubHTTPError,
     RepositoryNotFoundError,
 )

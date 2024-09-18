@@ -3,7 +3,7 @@ from pathlib import Path
 import torch
 import yaml
 from huggingface_hub import hf_hub_download
-from huggingface_hub.utils._errors import EntryNotFoundError
+from huggingface_hub.errors import EntryNotFoundError
 from safetensors.torch import load_file
 
 
