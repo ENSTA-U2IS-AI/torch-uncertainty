@@ -259,7 +259,6 @@ Others
     :nosignatures:
     :template: class.rst
 
-    AUSE
     GroupingLoss
 
 Regression
@@ -293,6 +292,18 @@ Segmentation
     :template: class.rst
 
     MeanIntersectionOverUnion
+
+Others
+^^^^^^
+
+.. currentmodule:: torch_uncertainty.metrics
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: class.rst
+
+    AUSE
 
 Losses
 ------

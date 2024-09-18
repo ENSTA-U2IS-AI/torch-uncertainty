@@ -17,5 +17,4 @@ from .risk_coverage import (
     RiskAt80Cov,
     RiskAtxCov,
 )
-from .sparsification import AUSE
 from .variation_ratio import VariationRatio

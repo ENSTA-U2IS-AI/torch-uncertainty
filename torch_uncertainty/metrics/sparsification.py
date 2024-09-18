@@ -36,7 +36,7 @@ class AUSE(Metric):
         Inputs:
             - :attr:`scores`: Uncertainty scores of shape :math:`(B,)`. A higher
               score means a higher uncertainty.
-            - :attr:`errors`: Binary errors of shape :math:`(B,)`,
+            - :attr:`errors`: Errors of shape :math:`(B,)`,
 
         where :math:`B` is the batch size.
 
@@ -52,7 +52,7 @@ class AUSE(Metric):
 
         Args:
             scores (Tensor): uncertainty scores of shape :math:`(B,)`
-            errors (Tensor): binary errors of shape :math:`(B,)`
+            errors (Tensor): errors of shape :math:`(B,)`
         """
         self.scores.append(scores)
         self.errors.append(errors)
@@ -149,7 +149,7 @@ def _ause_rejection_rate_compute(
 
     Args:
         scores (Tensor): uncertainty scores of shape :math:`(B,)`
-        errors (Tensor): binary errors of shape :math:`(B,)`
+        errors (Tensor): errors of shape :math:`(B,)`
     """
     num_samples = errors.size(0)
 
