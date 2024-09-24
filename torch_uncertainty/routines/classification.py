@@ -392,7 +392,7 @@ class ClassificationRoutine(LightningModule):
                 loss = self.loss(logits, target, self.current_epoch)
         if self.needs_step_update:
             self.model.update_wrapper(self.current_epoch)
-        self.log("train_loss", loss)
+        self.log("train_loss", loss, prog_bar=True, logger=True)
         return loss
 
     def validation_step(
@@ -501,7 +501,15 @@ class ClassificationRoutine(LightningModule):
                 self.ood_logit_storage.append(logits.detach().cpu())
 
     def on_validation_epoch_end(self) -> None:
-        self.log_dict(self.val_cls_metrics.compute(), sync_dist=True)
+        self.log_dict(
+            self.val_cls_metrics.compute(), logger=True, sync_dist=True
+        )
+        self.log(
+            "Acc%",
+            self.val_cls_metrics["cls/Acc"].compute() * 100,
+            prog_bar=True,
+            logger=False,
+        )
         self.val_cls_metrics.reset()
 
         if self.eval_grouping_loss:
