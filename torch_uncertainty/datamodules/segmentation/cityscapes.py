@@ -105,7 +105,6 @@ class CityscapesDataModule(TUDataModule):
             pin_memory=pin_memory,
             persistent_workers=persistent_workers,
         )
-
         self.dataset = Cityscapes
         self.mode = "fine"
         self.crop_size = _pair(crop_size)

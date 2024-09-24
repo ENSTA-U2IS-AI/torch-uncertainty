@@ -1,6 +1,7 @@
 from typing import Literal
 
 from torch import nn
+from torch.optim import Optimizer
 
 from torch_uncertainty.models import mc_dropout
 from torch_uncertainty.models.wideresnet import (
@@ -39,6 +40,7 @@ class WideResNetBaseline(ClassificationRoutine):
         style: str = "imagenet",
         num_estimators: int = 1,
         dropout_rate: float = 0.0,
+        optim_recipe: dict | Optimizer | None = None,
         mixup_params: dict | None = None,
         groups: int = 1,
         last_layer_dropout: bool = False,
@@ -186,6 +188,7 @@ class WideResNetBaseline(ClassificationRoutine):
             loss=loss,
             is_ensemble=version in ENSEMBLE_METHODS,
             format_batch_fn=format_batch_fn,
+            optim_recipe=optim_recipe,
             mixup_params=mixup_params,
             eval_ood=eval_ood,
             eval_grouping_loss=eval_grouping_loss,

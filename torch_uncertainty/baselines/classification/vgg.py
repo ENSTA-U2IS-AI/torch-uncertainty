@@ -1,6 +1,7 @@
 from typing import Literal
 
 from torch import nn
+from torch.optim import Optimizer
 
 from torch_uncertainty.models import mc_dropout
 from torch_uncertainty.models.vgg import (
@@ -32,6 +33,7 @@ class VGGBaseline(ClassificationRoutine):
         num_estimators: int = 1,
         dropout_rate: float = 0.0,
         last_layer_dropout: bool = False,
+        optim_recipe: dict | Optimizer | None = None,
         mixup_params: dict | None = None,
         groups: int = 1,
         alpha: int | None = None,
@@ -52,6 +54,10 @@ class VGGBaseline(ClassificationRoutine):
             num_classes (int): Number of classes to predict.
             in_channels (int): Number of input channels.
             loss (nn.Module): Training loss.
+            optim_recipe (Any): optimization recipe, corresponds to
+                what expect the `LightningModule.configure_optimizers()
+                <https://pytorch-lightning.readthedocs.io/en/stable/common/lightning_module.html#configure-optimizers>`_
+                method.
             version (str):
                 Determines which VGG version to use:
 
@@ -164,6 +170,7 @@ class VGGBaseline(ClassificationRoutine):
             loss=loss,
             is_ensemble=version in ENSEMBLE_METHODS,
             format_batch_fn=format_batch_fn,
+            optim_recipe=optim_recipe,
             mixup_params=mixup_params,
             eval_ood=eval_ood,
             ood_criterion=ood_criterion,

@@ -170,7 +170,7 @@ class SegmentationRoutine(LightningModule):
         loss = self.loss(logits[valid_mask], target[valid_mask])
         if self.needs_step_update:
             self.model.update_wrapper(self.current_epoch)
-        self.log("train_loss", loss)
+        self.log("train_loss", loss, prog_bar=True, logger=True)
         return loss
 
     def validation_step(
@@ -214,7 +214,14 @@ class SegmentationRoutine(LightningModule):
         self.test_sbsmpl_seg_metrics.update(*self.subsample(probs, targets))
 
     def on_validation_epoch_end(self) -> None:
-        self.log_dict(self.val_seg_metrics.compute(), sync_dist=True)
+        self.log_dict(
+            self.val_seg_metrics.compute(), logger=True, sync_dist=True
+        )
+        self.log(
+            "mIoU%",
+            self.val_seg_metrics["seg/mIoU"].compute() * 100,
+            prog_bar=True,
+        )
         self.log_dict(self.val_sbsmpl_seg_metrics.compute(), sync_dist=True)
         self.val_seg_metrics.reset()
         self.val_sbsmpl_seg_metrics.reset()
