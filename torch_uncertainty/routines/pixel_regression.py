@@ -191,7 +191,7 @@ class PixelRegressionRoutine(LightningModule):
 
         if self.needs_step_update:
             self.model.update_wrapper(self.current_epoch)
-        self.log("train_loss", loss)
+        self.log("train_loss", loss, prog_bar=True, logger=True)
         return loss
 
     def validation_step(

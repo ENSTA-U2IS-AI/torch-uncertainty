@@ -1,6 +1,7 @@
 from typing import Literal
 
 from torch import nn
+from torch.optim import Optimizer
 
 from torch_uncertainty.models import mc_dropout
 from torch_uncertainty.models.resnet import (
@@ -55,6 +56,7 @@ class ResNetBaseline(ClassificationRoutine):
         normalization_layer: type[nn.Module] = nn.BatchNorm2d,
         num_estimators: int = 1,
         dropout_rate: float = 0.0,
+        optim_recipe: dict | Optimizer | None = None,
         mixup_params: dict | None = None,
         last_layer_dropout: bool = False,
         width_multiplier: float = 1.0,
@@ -229,6 +231,7 @@ class ResNetBaseline(ClassificationRoutine):
             model=model,
             loss=loss,
             is_ensemble=version in ENSEMBLE_METHODS,
+            optim_recipe=optim_recipe,
             format_batch_fn=format_batch_fn,
             mixup_params=mixup_params,
             eval_ood=eval_ood,

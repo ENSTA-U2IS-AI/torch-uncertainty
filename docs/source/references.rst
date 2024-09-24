@@ -254,7 +254,7 @@ For the conflictual loss, consider citing:
 **On the Calibration of Epistemic Uncertainty: Principles, Paradoxes and Conflictual Loss**
 
 * Authors: *Mohammed Fellaji, Frédéric Pennerath, Brieuc Conan-Guez, and Miguel Couceiro*
-* Paper: `ArXiv 2024 <https://arxiv.org/pdf/2407.12211`__.
+* Paper: `ArXiv 2024 <https://arxiv.org/pdf/2407.12211>`__.
 
 Metrics
 -------

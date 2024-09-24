@@ -160,10 +160,11 @@ backbone with the following code:
 
 .. code:: python
 
-    from torch_uncertainty.models.resnet import packed_resnet18
+    from torch_uncertainty.models.resnet import packed_resnet
 
-    model = packed_resnet18(
+    model = packed_resnet(
         in_channels = 3,
+        arch=18,
         num_estimators = 4,
         alpha = 2,
         gamma = 2,

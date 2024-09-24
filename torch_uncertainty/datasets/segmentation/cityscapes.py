@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from typing import Any
 
 import torch
@@ -10,7 +11,35 @@ from torchvision.transforms.v2 import functional as F
 
 
 class Cityscapes(TVCityscapes):
-    def encode_target(self, target: Image.Image) -> Image.Image:
+    def __init__(
+        self,
+        root: str,
+        split: str = "train",
+        mode: str = "fine",
+        target_type: torch.List[str] | str = "instance",
+        transform: Callable[..., Any] | None = None,
+        target_transform: Callable[..., Any] | None = None,
+        transforms: Callable[..., Any] | None = None,
+    ) -> None:
+        super().__init__(
+            root,
+            split,
+            mode,
+            target_type,
+            transform,
+            target_transform,
+            transforms,
+        )
+        train_id_to_color = [
+            c.color
+            for c in self.classes
+            if (c.train_id != -1 and c.train_id != 255)
+        ]
+        train_id_to_color.append([0, 0, 0])
+        self.train_id_to_color = torch.tensor(train_id_to_color)
+
+    @classmethod
+    def encode_target(cls, target: Image.Image) -> Image.Image:
         """Encode target image to tensor.
 
         Args:
@@ -23,7 +52,7 @@ class Cityscapes(TVCityscapes):
         colored_target = rearrange(colored_target, "c h w -> h w c")
         target = torch.zeros_like(colored_target[..., :1])
         # convert target color to index
-        for cityscapes_class in self.classes:
+        for cityscapes_class in cls.classes:
             target[
                 (
                     colored_target
@@ -32,6 +61,18 @@ class Cityscapes(TVCityscapes):
             ] = cityscapes_class.train_id
 
         return F.to_pil_image(rearrange(target, "h w c -> c h w"))
+
+    def decode_target(self, target: torch.Tensor) -> torch.Tensor:
+        """Decode target tensor to RGB tensor.
+
+        Args:
+            target (torch.Tensor): Target RGB tensor.
+
+        Returns:
+            Image.Image: Decoded target.
+        """
+        target[target == 255] = -1
+        return self.train_id_to_color[target]
 
     def __getitem__(self, index: int) -> tuple[Any, Any]:
         """Get the sample at the given index.

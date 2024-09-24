@@ -2,7 +2,6 @@
 from .classification import (
     AUGRC,
     AURC,
-    AUSE,
     FPR95,
     AdaptiveCalibrationError,
     BrierScore,
@@ -29,3 +28,4 @@ from .regression import (
     SILog,
     ThresholdAccuracy,
 )
+from .sparsification import AUSE
