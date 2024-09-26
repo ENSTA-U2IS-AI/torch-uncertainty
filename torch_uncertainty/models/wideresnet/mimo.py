@@ -3,6 +3,7 @@ from typing import Literal
 
 import torch
 from einops import rearrange
+from torch import nn
 from torch.nn.functional import relu
 
 from .std import _WideResNet
@@ -25,6 +26,7 @@ class _MIMOWideResNet(_WideResNet):
         groups: int = 1,
         style: Literal["imagenet", "cifar"] = "imagenet",
         activation_fn: Callable = relu,
+        normalization_layer: type[nn.Module] = nn.BatchNorm2d,
     ) -> None:
         super().__init__(
             depth,
@@ -36,6 +38,7 @@ class _MIMOWideResNet(_WideResNet):
             groups=groups,
             style=style,
             activation_fn=activation_fn,
+            normalization_layer=normalization_layer,
         )
         self.num_estimators = num_estimators
 
@@ -56,6 +59,8 @@ def mimo_wideresnet28x10(
     dropout_rate: float = 0.3,
     groups: int = 1,
     style: Literal["imagenet", "cifar"] = "imagenet",
+    activation_fn: Callable = relu,
+    normalization_layer: type[nn.Module] = nn.BatchNorm2d,
 ) -> _MIMOWideResNet:
     return _MIMOWideResNet(
         depth=28,
@@ -67,4 +72,6 @@ def mimo_wideresnet28x10(
         dropout_rate=dropout_rate,
         groups=groups,
         style=style,
+        activation_fn=activation_fn,
+        normalization_layer=normalization_layer,
     )

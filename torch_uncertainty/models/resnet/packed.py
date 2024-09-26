@@ -315,7 +315,7 @@ class _PackedResNet(nn.Module):
             self.layer4 = nn.Identity()
             linear_multiplier = 4
 
-        self.dropout = nn.Dropout(p=dropout_rate)
+        self.final_dropout = nn.Dropout(p=dropout_rate)
         self.pool = nn.AdaptiveAvgPool2d(output_size=1)
         self.flatten = nn.Flatten(1)
 
@@ -374,7 +374,7 @@ class _PackedResNet(nn.Module):
         )
 
         out = self.pool(out)
-        out = self.dropout(self.flatten(out))
+        out = self.final_dropout(self.flatten(out))
         return self.linear(out)
 
     def check_config(self, config: dict[str, Any]) -> bool:
