@@ -147,9 +147,7 @@ class AURC(Metric):
         ax.set_ylabel("Risk - Error Rate (%)", fontsize=16)
         ax.set_xlim(0, 100)
         ax.set_ylim(0, min(100, np.ceil(error_rates.max() * 100)))
-        ax.set_aspect("equal", "box")
         ax.legend(loc="upper right")
-        fig.tight_layout()
         return fig, ax
 
 
@@ -270,7 +268,6 @@ class AUGRC(AURC):
         ax.set_ylabel("Generalized Risk (%)", fontsize=16)
         ax.set_xlim(0, 100)
         ax.set_ylim(0, min(100, np.ceil(error_rates.max() * 100)))
-        ax.set_aspect("equal", "box")
         ax.legend(loc="upper right")
         fig.tight_layout()
         return fig, ax
