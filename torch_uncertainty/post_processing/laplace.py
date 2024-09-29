@@ -64,6 +64,7 @@ class LaplaceApprox(PostProcessing):
         self.weight_subset = weight_subset
         self.hessian_struct = hessian_struct
         self.batch_size = batch_size
+        self.optimize_prior_precision = optimize_prior_precision
 
         if model is not None:
             self.set_model(model)
@@ -80,7 +81,8 @@ class LaplaceApprox(PostProcessing):
     def fit(self, dataset: Dataset) -> None:
         dl = DataLoader(dataset, batch_size=self.batch_size)
         self.la.fit(train_loader=dl)
-        self.la.optimize_prior_precision(method="marglik")
+        if self.optimize_prior_precision:
+            self.la.optimize_prior_precision(method="marglik")
 
     def forward(
         self,
