@@ -26,6 +26,7 @@ class LaplaceApprox(PostProcessing):
             "mc", "probit", "bridge", "bridge_norm"
         ] = "probit",
         batch_size: int = 256,
+        optimize_prior_precision: bool = True,
     ) -> None:
         """Laplace approximation for uncertainty estimation.
 
@@ -45,6 +46,8 @@ class LaplaceApprox(PostProcessing):
                 See the Laplace library for more details. Defaults to "probit".
             batch_size (int, optional): batch size for the Laplace approximation.
                 Defaults to 256.
+            optimize_prior_precision (bool, optional): whether to optimize the prior
+                precision. Defaults to True.
 
         Reference:
             Daxberger et al. Laplace Redux - Effortless Bayesian Deep Learning. In NeurIPS 2021.
@@ -77,6 +80,7 @@ class LaplaceApprox(PostProcessing):
     def fit(self, dataset: Dataset) -> None:
         dl = DataLoader(dataset, batch_size=self.batch_size)
         self.la.fit(train_loader=dl)
+        self.la.optimize_prior_precision(method="marglik")
 
     def forward(
         self,

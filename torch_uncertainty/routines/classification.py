@@ -38,7 +38,7 @@ from torch_uncertainty.models import (
     EPOCH_UPDATE_MODEL,
     STEP_UPDATE_MODEL,
 )
-from torch_uncertainty.post_processing import PostProcessing
+from torch_uncertainty.post_processing import LaplaceApprox, PostProcessing
 from torch_uncertainty.transforms import (
     Mixup,
     MixupIO,
@@ -449,11 +449,6 @@ class ClassificationRoutine(LightningModule):
         else:
             ood_scores = -confs
 
-        if self.post_processing is not None:
-            pp_logits = self.post_processing(inputs)
-            pp_probs = F.softmax(pp_logits, dim=-1)
-            self.ts_cls_metrics.update(pp_probs, targets)
-
         if dataloader_idx == 0:
             # squeeze if binary classification only for binary metrics
             self.test_cls_metrics.update(
@@ -484,6 +479,14 @@ class ClassificationRoutine(LightningModule):
 
             if self.id_logit_storage is not None:
                 self.id_logit_storage.append(logits.detach().cpu())
+
+            if self.post_processing is not None:
+                pp_logits = self.post_processing(inputs)
+                if not isinstance(self.post_processing, LaplaceApprox):
+                    pp_probs = F.softmax(pp_logits, dim=-1)
+                else:
+                    pp_probs = pp_logits
+                self.ts_cls_metrics.update(pp_probs, targets)
 
         elif self.eval_ood and dataloader_idx == 1:
             self.test_ood_metrics.update(ood_scores, torch.ones_like(targets))
