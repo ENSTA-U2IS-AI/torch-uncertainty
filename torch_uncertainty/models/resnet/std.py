@@ -293,7 +293,7 @@ class _ResNet(nn.Module):
             self.layer4 = nn.Identity()
             linear_multiplier = 4
 
-        self.dropout = nn.Dropout(p=dropout_rate)
+        self.final_dropout = nn.Dropout(p=dropout_rate)
         self.pool = nn.AdaptiveAvgPool2d(output_size=1)
         self.flatten = nn.Flatten(1)
 
@@ -340,7 +340,7 @@ class _ResNet(nn.Module):
         out = self.layer3(out)
         out = self.layer4(out)
         out = self.pool(out)
-        return self.dropout(self.flatten(out))
+        return self.final_dropout(self.flatten(out))
 
     def forward(self, x: Tensor) -> Tensor:
         return self.linear(self.feats_forward(x))
@@ -374,6 +374,7 @@ def resnet(
         activation_fn (Callable, optional): Activation function. Defaults to
             ``torch.nn.functional.relu``.
         normalization_layer (nn.Module, optional): Normalization layer.
+            Defaults to ``torch.nn.BatchNorm2d``.
 
     Returns:
         _ResNet: The ResNet model.

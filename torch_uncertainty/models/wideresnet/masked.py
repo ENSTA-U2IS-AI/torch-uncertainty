@@ -23,6 +23,7 @@ class _WideBasicBlock(nn.Module):
         scale: float,
         groups: int,
         activation_fn: Callable,
+        normalization_layer: type[nn.Module],
     ) -> None:
         super().__init__()
         self.activation_fn = activation_fn
@@ -37,7 +38,7 @@ class _WideBasicBlock(nn.Module):
             bias=conv_bias,
         )
         self.dropout = nn.Dropout2d(p=dropout_rate)
-        self.bn1 = nn.BatchNorm2d(planes)
+        self.bn1 = normalization_layer(planes)
         self.conv2 = MaskedConv2d(
             planes,
             planes,
@@ -49,7 +50,7 @@ class _WideBasicBlock(nn.Module):
             groups=groups,
             bias=conv_bias,
         )
-        self.bn2 = nn.BatchNorm2d(planes)
+        self.bn2 = normalization_layer(planes)
 
         self.shortcut = nn.Sequential()
         if stride != 1 or in_planes != planes:
@@ -87,6 +88,7 @@ class _MaskedWideResNet(nn.Module):
         groups: int = 1,
         style: Literal["imagenet", "cifar"] = "imagenet",
         activation_fn: Callable = relu,
+        normalization_layer: type[nn.Module] = nn.BatchNorm2d,
     ) -> None:
         super().__init__()
         self.num_estimators = num_estimators
@@ -126,7 +128,7 @@ class _MaskedWideResNet(nn.Module):
         else:
             raise ValueError(f"Unknown WideResNet style: {style}. ")
 
-        self.bn1 = nn.BatchNorm2d(num_stages[0])
+        self.bn1 = normalization_layer(num_stages[0])
 
         if style == "imagenet":
             self.optional_pool = nn.MaxPool2d(
@@ -146,6 +148,7 @@ class _MaskedWideResNet(nn.Module):
             scale=scale,
             groups=groups,
             activation_fn=activation_fn,
+            normalization_layer=normalization_layer,
         )
         self.layer2 = self._wide_layer(
             _WideBasicBlock,
@@ -158,6 +161,7 @@ class _MaskedWideResNet(nn.Module):
             scale=scale,
             groups=groups,
             activation_fn=activation_fn,
+            normalization_layer=normalization_layer,
         )
         self.layer3 = self._wide_layer(
             _WideBasicBlock,
@@ -170,9 +174,10 @@ class _MaskedWideResNet(nn.Module):
             scale=scale,
             groups=groups,
             activation_fn=activation_fn,
+            normalization_layer=normalization_layer,
         )
 
-        self.dropout = nn.Dropout(p=dropout_rate)
+        self.final_dropout = nn.Dropout(p=dropout_rate)
         self.pool = nn.AdaptiveAvgPool2d(output_size=1)
         self.flatten = nn.Flatten(1)
 
@@ -189,9 +194,10 @@ class _MaskedWideResNet(nn.Module):
         dropout_rate: float,
         stride: int,
         num_estimators: int,
-        scale: float = 2.0,
-        groups: int = 1,
-        activation_fn: Callable = relu,
+        scale: float,
+        groups: int,
+        activation_fn: Callable,
+        normalization_layer: type[nn.Module],
     ) -> nn.Module:
         strides = [stride] + [1] * (int(num_blocks) - 1)
         layers = []
@@ -208,6 +214,7 @@ class _MaskedWideResNet(nn.Module):
                     scale=scale,
                     groups=groups,
                     activation_fn=activation_fn,
+                    normalization_layer=normalization_layer,
                 )
             )
             self.in_planes = planes
@@ -221,7 +228,7 @@ class _MaskedWideResNet(nn.Module):
         out = self.layer2(out)
         out = self.layer3(out)
         out = self.pool(out)
-        return self.dropout(self.flatten(out))
+        return self.final_dropout(self.flatten(out))
 
     def forward(self, x: Tensor) -> Tensor:
         return self.linear(self.feats_forward(x))
@@ -236,6 +243,8 @@ def masked_wideresnet28x10(
     dropout_rate: float = 0.3,
     groups: int = 1,
     style: Literal["imagenet", "cifar"] = "imagenet",
+    activation_fn: Callable = relu,
+    normalization_layer: type[nn.Module] = nn.BatchNorm2d,
 ) -> _MaskedWideResNet:
     """Masksembles of Wide-ResNet-28x10.
 
@@ -251,6 +260,10 @@ def masked_wideresnet28x10(
             ``1``.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
+        activation_fn (Callable, optional): Activation function. Defaults to
+            ``torch.nn.functional.relu``.
+        normalization_layer (nn.Module, optional): Normalization layer.
+            Defaults to ``torch.nn.BatchNorm2d``.
 
     Returns:
         _MaskedWideResNet: A Masksembles-style Wide-ResNet-28x10.
@@ -266,4 +279,6 @@ def masked_wideresnet28x10(
         scale=scale,
         groups=groups,
         style=style,
+        activation_fn=activation_fn,
+        normalization_layer=normalization_layer,
     )

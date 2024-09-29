@@ -9,7 +9,9 @@ docs/*/auto_tutorials/
 *.ckpt
 *.out
 docs/source/sg_execution_times.rst
-test**/*.csv
+test
+**/*.csv
+pyrightconfig.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
