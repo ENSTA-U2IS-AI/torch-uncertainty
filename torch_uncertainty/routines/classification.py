@@ -196,15 +196,15 @@ class ClassificationRoutine(LightningModule):
                 ),
                 "sc/AURC": AURC(),
                 "sc/AUGRC": AUGRC(),
-                "sc/CovAt5Risk": CovAt5Risk(),
-                "sc/RiskAt80Cov": RiskAt80Cov(),
+                "sc/Cov@5Risk": CovAt5Risk(),
+                "sc/Risk@80Cov": RiskAt80Cov(),
             },
             compute_groups=[
                 ["cls/Acc"],
                 ["cls/Brier"],
                 ["cls/NLL"],
                 ["cal/ECE", "cal/aECE"],
-                ["sc/AURC", "sc/AUGRC", "sc/CovAt5Risk", "sc/RiskAt80Cov"],
+                ["sc/AURC", "sc/AUGRC", "sc/Cov@5Risk", "sc/Risk@80Cov"],
             ],
         )
 
@@ -212,7 +212,7 @@ class ClassificationRoutine(LightningModule):
         self.test_cls_metrics = cls_metrics.clone(prefix="test/")
 
         if self.post_processing is not None:
-            self.ts_cls_metrics = cls_metrics.clone(prefix="test/ts_")
+            self.post_cls_metrics = cls_metrics.clone(prefix="test/post/")
 
         self.test_id_entropy = Entropy()
 
@@ -463,7 +463,7 @@ class ClassificationRoutine(LightningModule):
             )
             self.test_id_entropy(probs)
             self.log(
-                "test/cls/entropy",
+                "test/cls/Entropy",
                 self.test_id_entropy,
                 on_epoch=True,
                 add_dataloader_idx=False,
@@ -486,7 +486,7 @@ class ClassificationRoutine(LightningModule):
                     pp_probs = F.softmax(pp_logits, dim=-1)
                 else:
                     pp_probs = pp_logits
-                self.ts_cls_metrics.update(pp_probs, targets)
+                self.post_cls_metrics.update(pp_probs, targets)
 
         elif self.eval_ood and dataloader_idx == 1:
             self.test_ood_metrics.update(ood_scores, torch.ones_like(targets))
@@ -529,7 +529,7 @@ class ClassificationRoutine(LightningModule):
         )
 
         if self.post_processing is not None:
-            tmp_metrics = self.ts_cls_metrics.compute()
+            tmp_metrics = self.post_cls_metrics.compute()
             self.log_dict(tmp_metrics, sync_dist=True)
             result_dict.update(tmp_metrics)
 
@@ -573,7 +573,7 @@ class ClassificationRoutine(LightningModule):
             if self.post_processing is not None:
                 self.logger.experiment.add_figure(
                     "Reliabity diagram after calibration",
-                    self.ts_cls_metrics["cal/ECE"].plot()[0],
+                    self.post_cls_metrics["cal/ECE"].plot()[0],
                 )
 
             # plot histograms of logits and likelihoods

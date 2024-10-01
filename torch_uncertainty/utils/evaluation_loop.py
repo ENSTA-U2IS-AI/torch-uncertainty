@@ -1,126 +1,201 @@
-import os
-import shutil
-import sys
-from typing import Any
+from collections import OrderedDict
 
-from lightning.pytorch.callbacks.progress.rich_progress import _RICH_AVAILABLE
 from lightning.pytorch.loops.evaluation_loop import _EvaluationLoop
 from lightning.pytorch.trainer.connectors.logger_connector.result import (
     _OUT_DICT,
 )
-from lightning_utilities.core.apply_func import apply_to_collection
-from torch import Tensor
+from rich import get_console
+from rich.console import Group
+from rich.table import Table
 
 
 class TUEvaluationLoop(_EvaluationLoop):
     @staticmethod
     def _print_results(results: list[_OUT_DICT], stage: str) -> None:
-        # remove the dl idx suffix
-        results = [
-            {k.split("/dataloader_idx_")[0]: v for k, v in result.items()}
-            for result in results
+        # test/cls: Classification Metrics
+        # test/cal: Calibration Metrics
+        # ood: OOD Detection Metrics
+        # test/sc: Selective Classification Metrics
+        # test/post: Post-Processing Metrics
+        # test/seg: Segmentation Metrics
+
+        # In percentage
+        percentage_metrics = [
+            "Acc",
+            "AUPR",
+            "AUROC",
+            "FPR95",
+            "Cov@5Risk",
+            "Risk@80Cov",
+            "pixAcc",
+            "mIoU",
         ]
-        metrics_paths = {
-            k
-            for keys in apply_to_collection(
-                results, dict, _EvaluationLoop._get_keys
-            )
-            for k in keys
-        }
-        if not metrics_paths:
-            return
 
-        metrics_strs = [":".join(metric) for metric in metrics_paths]
-        # sort both lists based on metrics_strs
-        metrics_strs, metrics_paths = zip(
-            *sorted(zip(metrics_strs, metrics_paths, strict=False)),
-            strict=False,
-        )
-
-        if len(results) == 2:
-            headers = ["In-Distribution", "Out-of-Distribution"]
-        else:
-            headers = [f"DataLoader {i}" for i in range(len(results))]
-
-        # fallback is useful for testing of printed output
-        term_size = shutil.get_terminal_size(fallback=(120, 30)).columns or 120
-        max_length = int(
-            min(
-                max(
-                    len(max(metrics_strs, key=len)),
-                    len(max(headers, key=len)),
-                    25,
-                ),
-                term_size / 2,
-            )
-        )
-
-        rows: list[list[Any]] = [[] for _ in metrics_paths]
-
+        metrics = {}
         for result in results:
-            for metric, row in zip(metrics_paths, rows, strict=False):
-                val = _EvaluationLoop._find_value(result, metric)
-                if val is not None:
-                    if isinstance(val, Tensor):
-                        val = val.item() if val.numel() == 1 else val.tolist()
-                    row.append(f"{val:.5f}")
+            for key, value in result.items():
+                if key.startswith("test/cls"):
+                    if "cls" not in metrics:
+                        metrics["cls"] = {}
+                    metric_name = key.split("/")[-1]
+                    metrics["cls"].update({metric_name: value})
+                elif key.startswith("test/cal"):
+                    if "cal" not in metrics:
+                        metrics["cal"] = {}
+                    metric_name = key.split("/")[-1]
+                    metrics["cal"].update({metric_name: value})
+                elif key.startswith("ood"):
+                    if "ood" not in metrics:
+                        metrics["ood"] = {}
+                    metric_name = key.split("/")[-1]
+                    metrics["ood"].update({metric_name: value})
+                elif key.startswith("test/sc"):
+                    if "sc" not in metrics:
+                        metrics["sc"] = {}
+                    metric_name = key.split("/")[-1]
+                    metrics["sc"].update({metric_name: value})
+                elif key.startswith("test/post"):
+                    if "post" not in metrics:
+                        metrics["post"] = {}
+                    metric_name = key.split("/")[-1]
+                    metrics["post"].update({metric_name: value})
+                elif key.startswith("test/seg"):
+                    if "seg" not in metrics:
+                        metrics["seg"] = {}
+                    metric_name = key.split("/")[-1]
+                    metrics["seg"].update({metric_name: value})
+                elif key.startswith("test/reg"):
+                    if "reg" not in metrics:
+                        metrics["reg"] = {}
+                    metric_name = key.split("/")[-1]
+                    metrics["reg"].update({metric_name: value})
+
+        tables = []
+
+        first_col_name = f"{stage.capitalize()} metric"
+
+        if "cls" in metrics:
+            table = Table()
+            table.add_column(
+                first_col_name, justify="center", style="cyan", width=12
+            )
+            table.add_column(
+                "Classification", justify="center", style="magenta", width=25
+            )
+            cls_metrics = OrderedDict(sorted(metrics["cls"].items()))
+            for metric, value in cls_metrics.items():
+                if metric in percentage_metrics:
+                    value = value * 100
+                    table.add_row(metric, f"{value.item():.2f}%")
                 else:
-                    row.append(" ")
+                    table.add_row(metric, f"{value.item():.5f}")
+            tables.append(table)
 
-        # keep one column with max length for metrics
-        num_cols = int((term_size - max_length) / max_length)
-
-        for i in range(0, len(headers), num_cols):
-            table_headers = headers[i : (i + num_cols)]
-            table_rows = [row[i : (i + num_cols)] for row in rows]
-
-            table_headers.insert(0, f"{stage} Metric".capitalize())
-
-            if _RICH_AVAILABLE:
-                from rich import get_console
-                from rich.table import Column, Table
-
-                columns = [
-                    Column(
-                        h, justify="center", style="magenta", width=max_length
-                    )
-                    for h in table_headers
-                ]
-                columns[0].style = "cyan"
-
-                table = Table(*columns)
-                for metric, row in zip(metrics_strs, table_rows, strict=False):
-                    row.insert(0, metric)
-                    table.add_row(*row)
-
-                console = get_console()
-                console.print(table)
-            else:  # coverage: ignore
-                row_format = f"{{:^{max_length}}}" * len(table_headers)
-                half_term_size = int(term_size / 2)
-
-                try:
-                    # some terminals do not support this character
-                    if sys.stdout.encoding is not None:
-                        "─".encode(sys.stdout.encoding)
-                except UnicodeEncodeError:
-                    bar_character = "-"
+        if "seg" in metrics:
+            table = Table()
+            table.add_column(
+                first_col_name, justify="center", style="cyan", width=12
+            )
+            table.add_column(
+                "Segmentation", justify="center", style="magenta", width=25
+            )
+            seg_metrics = OrderedDict(sorted(metrics["seg"].items()))
+            for metric, value in seg_metrics.items():
+                if metric in percentage_metrics:
+                    value = value * 100
+                    table.add_row(metric, f"{value.item():.2f}%")
                 else:
-                    bar_character = "─"
-                bar = bar_character * term_size
+                    table.add_row(metric, f"{value.item():.5f}")
+            tables.append(table)
 
-                lines = [bar, row_format.format(*table_headers).rstrip(), bar]
-                for metric, row in zip(metrics_strs, table_rows, strict=False):
-                    # deal with column overflow
-                    if len(metric) > half_term_size:
-                        while len(metric) > half_term_size:
-                            row_metric = metric[:half_term_size]
-                            metric = metric[half_term_size:]
-                            lines.append(
-                                row_format.format(row_metric, *row).rstrip()
-                            )
-                        lines.append(row_format.format(metric, " ").rstrip())
-                    else:
-                        lines.append(row_format.format(metric, *row).rstrip())
-                lines.append(bar)
-                print(os.linesep.join(lines))
+        if "reg" in metrics:
+            table = Table()
+            table.add_column(
+                first_col_name, justify="center", style="cyan", width=12
+            )
+            table.add_column(
+                "Regression", justify="center", style="magenta", width=25
+            )
+            reg_metrics = OrderedDict(sorted(metrics["reg"].items()))
+            for metric, value in reg_metrics.items():
+                if metric in percentage_metrics:
+                    value = value * 100
+                    table.add_row(metric, f"{value.item():.2f}%")
+                else:
+                    table.add_row(metric, f"{value.item():.5f}")
+            tables.append(table)
+
+        if "cal" in metrics:
+            table = Table()
+            table.add_column(
+                first_col_name, justify="center", style="cyan", width=12
+            )
+            table.add_column(
+                "Calibration", justify="center", style="magenta", width=25
+            )
+            cal_metrics = OrderedDict(sorted(metrics["cal"].items()))
+            for metric, value in cal_metrics.items():
+                if metric in percentage_metrics:
+                    value = value * 100
+                    table.add_row(metric, f"{value.item():.2f}%")
+                else:
+                    table.add_row(metric, f"{value.item():.5f}")
+            tables.append(table)
+
+        if "ood" in metrics:
+            table = Table()
+            table.add_column(
+                first_col_name, justify="center", style="cyan", width=12
+            )
+            table.add_column(
+                "OOD Detection", justify="center", style="magenta", width=25
+            )
+            ood_metrics = OrderedDict(sorted(metrics["ood"].items()))
+            for metric, value in ood_metrics.items():
+                if metric in percentage_metrics:
+                    value = value * 100
+                    table.add_row(metric, f"{value.item():.2f}%")
+                else:
+                    table.add_row(metric, f"{value.item():.5f}")
+            tables.append(table)
+
+        if "sc" in metrics:
+            table = Table()
+            table.add_column(
+                first_col_name, justify="center", style="cyan", width=12
+            )
+            table.add_column(
+                "Selective Classification",
+                justify="center",
+                style="magenta",
+                width=25,
+            )
+            sc_metrics = OrderedDict(sorted(metrics["sc"].items()))
+            for metric, value in sc_metrics.items():
+                if metric in percentage_metrics:
+                    value = value * 100
+                    table.add_row(metric, f"{value.item():.2f}%")
+                else:
+                    table.add_row(metric, f"{value.item():.5f}")
+            tables.append(table)
+
+        if "post" in metrics:
+            table = Table()
+            table.add_column(
+                first_col_name, justify="center", style="cyan", width=12
+            )
+            table.add_column(
+                "Post-Processing", justify="center", style="magenta", width=25
+            )
+            post_metrics = OrderedDict(sorted(metrics["post"].items()))
+            for metric, value in post_metrics.items():
+                if metric in percentage_metrics:
+                    value = value * 100
+                    table.add_row(metric, f"{value.item():.2f}%")
+                else:
+                    table.add_row(metric, f"{value.item():.5f}")
+            tables.append(table)
+
+        console = get_console()
+        group = Group(*tables)
+        console.print(group)
