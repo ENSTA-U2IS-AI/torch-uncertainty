@@ -44,6 +44,7 @@ dependencies = [
     "numpy<2",
     "opencv-python",
     "glest==0.0.1a0",
+    "rich>=10.2.2",
 ]
 
 [project.optional-dependencies]
