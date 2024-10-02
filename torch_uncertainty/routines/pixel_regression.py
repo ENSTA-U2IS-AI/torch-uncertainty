@@ -99,17 +99,17 @@ class PixelRegressionRoutine(LightningModule):
 
         depth_metrics = MetricCollection(
             {
-                "SILog": SILog(),
-                "log10": Log10(),
-                "ARE": MeanGTRelativeAbsoluteError(),
-                "RSRE": MeanGTRelativeSquaredError(squared=False),
-                "RMSE": MeanSquaredError(squared=False),
-                "RMSELog": MeanSquaredLogError(squared=False),
-                "iMAE": MeanAbsoluteErrorInverse(),
-                "iRMSE": MeanSquaredErrorInverse(squared=False),
-                "d1": ThresholdAccuracy(power=1),
-                "d2": ThresholdAccuracy(power=2),
-                "d3": ThresholdAccuracy(power=3),
+                "reg/SILog": SILog(),
+                "reg/log10": Log10(),
+                "reg/ARE": MeanGTRelativeAbsoluteError(),
+                "reg/RSRE": MeanGTRelativeSquaredError(squared=False),
+                "reg/RMSE": MeanSquaredError(squared=False),
+                "reg/RMSELog": MeanSquaredLogError(squared=False),
+                "reg/iMAE": MeanAbsoluteErrorInverse(),
+                "reg/iRMSE": MeanSquaredErrorInverse(squared=False),
+                "reg/d1": ThresholdAccuracy(power=1),
+                "reg/d2": ThresholdAccuracy(power=2),
+                "reg/d3": ThresholdAccuracy(power=3),
             },
             compute_groups=False,
         )
@@ -119,7 +119,7 @@ class PixelRegressionRoutine(LightningModule):
 
         if self.probabilistic:
             depth_prob_metrics = MetricCollection(
-                {"NLL": DistributionNLL(reduction="mean")}
+                {"reg/NLL": DistributionNLL(reduction="mean")}
             )
             self.val_prob_metrics = depth_prob_metrics.clone(prefix="val/")
             self.test_prob_metrics = depth_prob_metrics.clone(prefix="test/")

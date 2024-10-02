@@ -84,9 +84,9 @@ class RegressionRoutine(LightningModule):
 
         reg_metrics = MetricCollection(
             {
-                "MAE": MeanAbsoluteError(),
-                "MSE": MeanSquaredError(squared=True),
-                "RMSE": MeanSquaredError(squared=False),
+                "reg/MAE": MeanAbsoluteError(),
+                "reg/MSE": MeanSquaredError(squared=True),
+                "reg/RMSE": MeanSquaredError(squared=False),
             },
             compute_groups=True,
         )
@@ -96,7 +96,7 @@ class RegressionRoutine(LightningModule):
 
         if self.probabilistic:
             reg_prob_metrics = MetricCollection(
-                {"NLL": DistributionNLL(reduction="mean")}
+                {"reg/NLL": DistributionNLL(reduction="mean")}
             )
             self.val_prob_metrics = reg_prob_metrics.clone(prefix="val/")
             self.test_prob_metrics = reg_prob_metrics.clone(prefix="test/")
