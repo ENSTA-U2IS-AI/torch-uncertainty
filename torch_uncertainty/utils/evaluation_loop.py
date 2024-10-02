@@ -118,7 +118,7 @@ class TUEvaluationLoop(_EvaluationLoop):
             )
             reg_metrics = OrderedDict(sorted(metrics["reg"].items()))
             for metric, value in reg_metrics.items():
-                if metric in percentage_metrics:
+                if metric in percentage_metrics:  # coverage: ignore
                     value = value * 100
                     table.add_row(metric, f"{value.item():.2f}%")
                 else:
