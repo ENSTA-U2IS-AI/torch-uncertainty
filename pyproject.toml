@@ -4,7 +4,7 @@ build-backend = "flit_core.buildapi"
 
 [project]
 name = "torch_uncertainty"
-version = "0.2.2.post1"
+version = "0.2.2.post2"
 authors = [
     { name = "ENSTA U2IS", email = "olivier.laurent@ensta-paris.fr" },
     { name = "Adrien Lafage", email = "adrienlafage@outlook.com" },
@@ -18,7 +18,6 @@ keywords = [
     "ensembles",
     "neural-networks",
     "predictive-uncertainty",
-    "pytorch",
     "reliable-ai",
     "trustworthy-machine-learning",
     "uncertainty",
