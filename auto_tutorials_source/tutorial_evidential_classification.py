@@ -28,9 +28,9 @@ We also need to define an optimizer using torch.optim, the neural network utils 
 from pathlib import Path
 
 import torch
-from lightning.pytorch import Trainer
 from torch import nn, optim
 
+from torch_uncertainty.utils import TUTrainer
 from torch_uncertainty.datamodules import MNISTDataModule
 from torch_uncertainty.losses import DECLoss
 from torch_uncertainty.models.lenet import lenet
@@ -53,10 +53,9 @@ def optim_lenet(model: nn.Module) -> dict:
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 # In the following, we need to define the root of the logs, and to
-# fake-parse the arguments needed for using the PyTorch Lightning Trainer. We
-# also use the same MNIST classification example as that used in the
+# We use the same MNIST classification example as that used in the
 # original DEC paper. We only train for 3 epochs for the sake of time.
-trainer = Trainer(accelerator="cpu", max_epochs=3, enable_progress_bar=False)
+trainer = TUTrainer(accelerator="cpu", max_epochs=3, enable_progress_bar=False)
 
 # datamodule
 root = Path() / "data"

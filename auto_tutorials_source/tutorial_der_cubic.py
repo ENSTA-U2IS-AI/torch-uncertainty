@@ -21,7 +21,7 @@ In this part, we train a neural network, based on the model and routines already
 
 To train a MLP with the DER loss function using TorchUncertainty, we have to load the following modules:
 
-- the Trainer from Lightning
+- our TUTrainer 
 - the model: mlp from torch_uncertainty.models.mlp
 - the regression training routine from torch_uncertainty.routines
 - the evidential objective: the DERLoss from torch_uncertainty.losses. This loss contains the classic NLL loss and a regularization term.
@@ -31,10 +31,10 @@ We also need to define an optimizer using torch.optim and the neural network uti
 """
 # %%
 import torch
-from lightning.pytorch import Trainer
 from lightning import LightningDataModule
 from torch import nn, optim
 
+from torch_uncertainty.utils import TUTrainer
 from torch_uncertainty.models.mlp import mlp
 from torch_uncertainty.datasets.regression.toy import Cubic
 from torch_uncertainty.losses import DERLoss
@@ -67,7 +67,7 @@ def optim_regression(
 # Please note that this MLP finishes with a NormalInverseGammaLayer that interpret the outputs of the model
 # as the parameters of a Normal Inverse Gamma distribution.
 
-trainer = Trainer(accelerator="cpu", max_epochs=50) #, enable_progress_bar=False)
+trainer = TUTrainer(accelerator="cpu", max_epochs=50) #, enable_progress_bar=False)
 
 # dataset
 train_ds = Cubic(num_samples=1000)

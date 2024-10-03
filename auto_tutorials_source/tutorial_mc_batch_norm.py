@@ -13,7 +13,7 @@ In this part, we train a LeNet with batch normalization layers, based on the mod
 
 First, we have to load the following utilities from TorchUncertainty:
 
-- the Trainer from Lightning
+- the TUTrainer from the framework
 - the datamodule handling dataloaders: MNISTDataModule from torch_uncertainty.datamodules
 - the model: LeNet, which lies in torch_uncertainty.models
 - the MC Batch Normalization wrapper: mc_batch_norm, which lies in torch_uncertainty.post_processing
@@ -25,9 +25,9 @@ We also need import the neural network utils within `torch.nn`.
 # %%
 from pathlib import Path
 
-from lightning import Trainer
 from torch import nn
 
+from torch_uncertainty.utils import TUTrainer
 from torch_uncertainty.datamodules import MNISTDataModule
 from torch_uncertainty.models.lenet import lenet
 from torch_uncertainty.optim_recipes import optim_cifar10_resnet18
@@ -41,7 +41,7 @@ from torch_uncertainty.routines import ClassificationRoutine
 # logs. We also create the datamodule that handles the MNIST dataset
 # dataloaders and transforms.
 
-trainer = Trainer(accelerator="cpu", max_epochs=2, enable_progress_bar=False)
+trainer = TUTrainer(accelerator="cpu", max_epochs=2, enable_progress_bar=False)
 
 # datamodule
 root = Path("data")
