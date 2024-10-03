@@ -512,6 +512,7 @@ class ClassificationRoutine(LightningModule):
             self.val_cls_metrics["cls/Acc"].compute() * 100,
             prog_bar=True,
             logger=False,
+            sync_dist=True,
         )
         self.val_cls_metrics.reset()
 

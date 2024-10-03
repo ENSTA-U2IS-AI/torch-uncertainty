@@ -221,6 +221,7 @@ class SegmentationRoutine(LightningModule):
             "mIoU%",
             self.val_seg_metrics["seg/mIoU"].compute() * 100,
             prog_bar=True,
+            sync_dist=True,
         )
         self.log_dict(self.val_sbsmpl_seg_metrics.compute(), sync_dist=True)
         self.val_seg_metrics.reset()
