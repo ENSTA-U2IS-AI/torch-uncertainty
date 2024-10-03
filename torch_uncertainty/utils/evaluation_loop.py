@@ -29,6 +29,8 @@ class TUEvaluationLoop(_EvaluationLoop):
             "Risk@80Cov",
             "pixAcc",
             "mIoU",
+            "AURC",
+            "AUGRC",
         ]
 
         metrics = {}
