@@ -47,6 +47,7 @@ class TestPackedResnet:
                 widen_factor=20,
                 in_channels=3,
                 num_classes=10,
+                num_estimators=4,
                 conv_bias=False,
                 dropout_rate=0.0,
             )

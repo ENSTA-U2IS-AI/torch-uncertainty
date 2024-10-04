@@ -287,7 +287,15 @@ class PixelRegressionRoutine(LightningModule):
             self.test_prob_metrics.update(mixture, targets, padding_mask)
 
     def on_validation_epoch_end(self) -> None:
-        self.log_dict(self.val_metrics.compute(), sync_dist=True)
+        res_dict = self.val_metrics.compute()
+        self.log_dict(res_dict, logger=True, sync_dist=True)
+        self.log(
+            "RMSE",
+            res_dict["val/reg/RMSE"],
+            prog_bar=True,
+            logger=False,
+            sync_dist=True,
+        )
         self.val_metrics.reset()
         if self.probabilistic:
             self.log_dict(
