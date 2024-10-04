@@ -26,19 +26,38 @@ class CamVidClass(NamedTuple):
 class CamVid(VisionDataset):
     # Notes: some classes are not used here
     classes = [
-        CamVidClass("sky", 0, (128, 128, 128)),
-        CamVidClass("building", 1, (128, 0, 0)),
-        CamVidClass("pole", 2, (192, 192, 128)),
-        CamVidClass("road_marking", 3, (255, 69, 0)),
-        CamVidClass("road", 4, (128, 64, 128)),
-        CamVidClass("pavement", 5, (60, 40, 222)),
-        CamVidClass("tree", 6, (128, 128, 0)),
-        CamVidClass("sign_symbol", 7, (192, 128, 128)),
-        CamVidClass("fence", 8, (64, 64, 128)),
-        CamVidClass("car", 9, (64, 0, 128)),
-        CamVidClass("pedestrian", 10, (64, 64, 0)),
-        CamVidClass("bicyclist", 11, (0, 128, 192)),
-        CamVidClass("unlabelled", 12, (0, 0, 0)),
+        CamVidClass("animal", 0, (64, 128, 64)),
+        CamVidClass("archway", 1, (192, 0, 128)),
+        CamVidClass("bicyclist", 2, (0, 128, 192)),
+        CamVidClass("bridge", 3, (0, 128, 64)),
+        CamVidClass("building", 4, (128, 0, 0)),
+        CamVidClass("car", 5, (64, 0, 128)),
+        CamVidClass("cart_luggage_pram", 6, (64, 0, 192)),
+        CamVidClass("child", 7, (192, 128, 64)),
+        CamVidClass("column_pole", 8, (192, 192, 128)),
+        CamVidClass("fence", 9, (64, 64, 128)),
+        CamVidClass("lane_mkgs_driv", 10, (128, 0, 192)),
+        CamVidClass("lane_mkgs_non_driv", 11, (192, 0, 64)),
+        CamVidClass("misc_text", 12, (128, 128, 64)),
+        CamVidClass("motorcycle_scooter", 13, (192, 0, 192)),
+        CamVidClass("othermoving", 14, (128, 64, 64)),
+        CamVidClass("parking_block", 15, (64, 192, 128)),
+        CamVidClass("pedestrian", 16, (64, 64, 0)),
+        CamVidClass("road", 17, (128, 64, 128)),
+        CamVidClass("road_shoulder", 18, (128, 128, 192)),
+        CamVidClass("sidewalk", 19, (0, 0, 192)),
+        CamVidClass("sign_symbol", 20, (192, 128, 128)),
+        CamVidClass("sky", 21, (128, 128, 128)),
+        CamVidClass("suv_pickup_truck", 22, (64, 128, 192)),
+        CamVidClass("traffic_cone", 23, (0, 0, 64)),
+        CamVidClass("traffic_light", 24, (0, 64, 64)),
+        CamVidClass("train", 25, (192, 64, 128)),
+        CamVidClass("tree", 26, (128, 128, 0)),
+        CamVidClass("truck_bus", 27, (192, 128, 192)),
+        CamVidClass("tunnel", 28, (64, 0, 64)),
+        CamVidClass("vegetation_misc", 29, (192, 192, 0)),
+        CamVidClass("void", 30, (0, 0, 0)),
+        CamVidClass("wall", 31, (64, 192, 0)),
     ]
 
     urls = {
@@ -146,7 +165,7 @@ class CamVid(VisionDataset):
         target = torch.zeros_like(colored_target[..., :1])
         # convert target color to index
         for camvid_class in self.classes:
-            index = camvid_class.index if camvid_class.index != 12 else 255
+            index = camvid_class.index if camvid_class.index != 30 else 255
             target[
                 (
                     colored_target
