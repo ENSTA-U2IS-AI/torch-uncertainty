@@ -14,7 +14,6 @@ from torch_uncertainty.transforms import RandomRescale
 
 
 class CamVidDataModule(TUDataModule):
-    num_classes = 32
     num_channels = 3
     training_task = "segmentation"
     mean = (0.485, 0.456, 0.406)
@@ -26,6 +25,7 @@ class CamVidDataModule(TUDataModule):
         batch_size: int,
         crop_size: _size_2_t = 640,
         eval_size: _size_2_t = (720, 960),
+        group_classes: bool = True,
         basic_augment: bool = True,
         val_split: float | None = None,
         num_workers: int = 1,
@@ -49,6 +49,8 @@ class CamVidDataModule(TUDataModule):
                 :math:`\text{height}>\text{width}`, then image will be rescaled to
                 :math:`(\text{size}\times\text{height}/\text{width},\text{size})`.
                 Defaults to ``(720,960)``.
+            group_classes (bool, optional): Whether to group the 32 classes into
+                11 superclasses. Default: ``True``.
             basic_augment (bool): Whether to apply base augmentations. Defaults to
                 ``True``.
             val_split (float or None, optional): Share of training samples to use
@@ -70,7 +72,7 @@ class CamVidDataModule(TUDataModule):
 
                 v2.Compose(
                     [
-                        v2.Resize((360, 480)),
+                        v2.Resize(640),
                         v2.ToDtype(
                             dtype={
                                 tv_tensors.Image: torch.float32,
@@ -96,7 +98,12 @@ class CamVidDataModule(TUDataModule):
             pin_memory=pin_memory,
             persistent_workers=persistent_workers,
         )
+        if group_classes:
+            self.num_classes = 11
+        else:
+            self.num_classes = 32
         self.dataset = CamVid
+        self.group_classes = group_classes
         self.crop_size = _pair(crop_size)
         self.eval_size = _pair(eval_size)
 
@@ -157,12 +164,14 @@ class CamVidDataModule(TUDataModule):
             self.train = self.dataset(
                 root=self.root,
                 split="train",
+                group_classes=self.group_classes,
                 download=False,
                 transforms=self.train_transform,
             )
             self.val = self.dataset(
                 root=self.root,
                 split="val",
+                group_classes=self.group_classes,
                 download=False,
                 transforms=self.test_transform,
             )
@@ -170,6 +179,7 @@ class CamVidDataModule(TUDataModule):
             self.test = self.dataset(
                 root=self.root,
                 split="test",
+                group_classes=self.group_classes,
                 download=False,
                 transforms=self.test_transform,
             )

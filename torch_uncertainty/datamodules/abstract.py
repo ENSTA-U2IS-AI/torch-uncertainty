@@ -19,7 +19,7 @@ class TUDataModule(ABC, LightningDataModule):
         self,
         root: str | Path,
         batch_size: int,
-        val_split: float,
+        val_split: float | None,
         num_workers: int,
         pin_memory: bool,
         persistent_workers: bool,

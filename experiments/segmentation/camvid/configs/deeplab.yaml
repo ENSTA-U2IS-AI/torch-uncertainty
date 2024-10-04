@@ -1,0 +1,42 @@
+# lightning.pytorch==2.2.0
+eval_after_fit: true
+seed_everything: false
+trainer:
+  accelerator: gpu
+  devices: 1
+  precision: 16-mixed
+  max_epochs: 120
+  logger:
+    class_path: lightning.pytorch.loggers.TensorBoardLogger
+    init_args:
+      save_dir: logs/deeplab
+      name: standard
+      default_hp_metric: false
+  callbacks:
+  - class_path: lightning.pytorch.callbacks.ModelCheckpoint
+    init_args:
+      monitor: val/seg/mIoU
+      mode: max
+      save_last: true
+  - class_path: lightning.pytorch.callbacks.LearningRateMonitor
+    init_args:
+      logging_interval: step
+model:
+  num_classes: 11
+  loss: CrossEntropyLoss
+  version: std
+  arch: 50
+  style: v3+
+  output_stride: 16
+  separable: false
+data:
+  root: ./data
+  batch_size: 8
+  num_workers: 8
+optimizer:
+  lr: 0.002
+  weight_decay: 1e-4
+  momentum: 0.9
+lr_scheduler:
+  power: 1.0
+  total_iters: 120

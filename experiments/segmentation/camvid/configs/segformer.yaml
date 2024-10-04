@@ -5,7 +5,7 @@ trainer:
   accelerator: gpu
   devices: 1
 model:
-  num_classes: 12
+  num_classes: 11
   loss: CrossEntropyLoss
   version: std
   arch: 0

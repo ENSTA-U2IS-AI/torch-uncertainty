@@ -59,6 +59,33 @@ class CamVid(VisionDataset):
         CamVidClass("void", 30, (0, 0, 0)),
         CamVidClass("wall", 31, (64, 192, 0)),
     ]
+    superclasses = [
+        CamVidClass("sky", 0, (128, 128, 128)),
+        CamVidClass("building", 1, (128, 0, 0)),
+        CamVidClass("pole", 2, (192, 192, 128)),
+        CamVidClass("road", 3, (128, 64, 128)),
+        CamVidClass("pavement", 4, (0, 0, 192)),
+        CamVidClass("tree", 5, (128, 128, 0)),
+        CamVidClass("sign_symbol", 6, (192, 128, 128)),
+        CamVidClass("fence", 7, (64, 64, 128)),
+        CamVidClass("car", 8, (64, 0, 128)),
+        CamVidClass("pedestrian", 9, (64, 64, 0)),
+        CamVidClass("bicyclist", 10, (0, 128, 192)),
+        CamVidClass("void", None, (0, 0, 0)),
+    ]
+    superclasses_indices = [
+        [21],
+        [3, 4, 31, 28, 1],
+        [8, 23],
+        [17, 10, 11],
+        [19, 15, 18],
+        [26, 29],
+        [20, 12, 24],
+        [9],
+        [5, 22, 27, 25, 14],
+        [16, 7, 6, 0],
+        [2, 13],
+    ]
 
     urls = {
         "raw": "http://web4.cs.ucl.ac.uk/staff/g.brostow/MotionSegRecData/files/701_StillsRaw_full.zip",
@@ -83,6 +110,7 @@ class CamVid(VisionDataset):
     def __init__(
         self,
         root: str,
+        group_classes: bool = True,
         split: Literal["train", "val", "test"] | None = None,
         transforms: Callable | None = None,
         download: bool = False,
@@ -92,6 +120,8 @@ class CamVid(VisionDataset):
         Args:
             root (str): Root directory of dataset where ``camvid/`` exists or
                 will be saved to if download is set to ``True``.
+            group_classes (bool, optional): Whether to group the 32 classes into
+                11 superclasses. Default: ``True``.
             split (str, optional): The dataset split, supports ``train``,
                 ``val`` and ``test``. Default: ``None``.
             transforms (callable, optional): A function/transform that takes
@@ -108,6 +138,16 @@ class CamVid(VisionDataset):
             )
 
         super().__init__(root, transforms, None, None)
+        self.group_classes = group_classes
+        self.class_to_superclass = []
+        for i in range(32):
+            if i == 30:  # For void
+                self.class_to_superclass.append(None)
+
+            for j, superclass in enumerate(self.superclasses_indices):
+                if i in superclass:
+                    self.class_to_superclass.append(j)
+                    break
 
         if download:
             self.download()
@@ -163,9 +203,12 @@ class CamVid(VisionDataset):
         colored_target = F.pil_to_tensor(target)
         colored_target = rearrange(colored_target, "c h w -> h w c")
         target = torch.zeros_like(colored_target[..., :1])
+
         # convert target color to index
         for camvid_class in self.classes:
             index = camvid_class.index if camvid_class.index != 30 else 255
+            if self.group_classes and index != 255:
+                index = self.class_to_superclass[index]
             target[
                 (
                     colored_target
@@ -185,15 +228,22 @@ class CamVid(VisionDataset):
             Image.Image: Decoded target as a PIL.Image.
         """
         colored_target = repeat(target.clone(), "h w  -> h w 3", c=3)
-
-        for camvid_class in self.classes:
-            colored_target[
-                (
-                    target
-                    == torch.tensor(camvid_class.index, dtype=target.dtype)
-                ).all(dim=0)
-            ] = torch.tensor(camvid_class.color, dtype=target.dtype)
-
+        if not self.group_classes:
+            for camvid_class in self.classes:
+                colored_target[
+                    (
+                        target
+                        == torch.tensor(camvid_class.index, dtype=target.dtype)
+                    ).all(dim=0)
+                ] = torch.tensor(camvid_class.color, dtype=target.dtype)
+        else:
+            for camvid_class in self.superclasses:
+                colored_target[
+                    (
+                        target
+                        == torch.tensor(camvid_class.index, dtype=target.dtype)
+                    ).all(dim=0)
+                ] = torch.tensor(camvid_class.color, dtype=target.dtype)
         return F.to_pil_image(rearrange(colored_target, "h w c -> c h w"))
 
     def __getitem__(
