@@ -21,6 +21,8 @@ class CIFAR10DataModule(TUDataModule):
     num_channels = 3
     input_shape = (3, 32, 32)
     training_task = "classification"
+    mean = (0.4914, 0.4822, 0.4465)
+    std = (0.2023, 0.1994, 0.2010)
 
     def __init__(
         self,
@@ -115,8 +117,8 @@ class CIFAR10DataModule(TUDataModule):
                 main_transform,
                 T.ToTensor(),
                 T.Normalize(
-                    (0.4914, 0.4822, 0.4465),
-                    (0.2023, 0.1994, 0.2010),
+                    self.mean,
+                    self.std,
                 ),
             ]
         )
@@ -125,8 +127,8 @@ class CIFAR10DataModule(TUDataModule):
             [
                 T.ToTensor(),
                 T.Normalize(
-                    (0.4914, 0.4822, 0.4465),
-                    (0.2023, 0.1994, 0.2010),
+                    self.mean,
+                    self.std,
                 ),
             ]
         )

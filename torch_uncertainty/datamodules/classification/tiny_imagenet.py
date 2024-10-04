@@ -21,6 +21,8 @@ class TinyImageNetDataModule(TUDataModule):
     num_classes = 200
     num_channels = 3
     training_task = "classification"
+    mean = (0.485, 0.456, 0.406)
+    std = (0.229, 0.224, 0.225)
 
     def __init__(
         self,
@@ -82,7 +84,7 @@ class TinyImageNetDataModule(TUDataModule):
                 basic_transform,
                 main_transform,
                 T.ToTensor(),
-                T.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
+                T.Normalize(mean=self.mean, std=self.std),
             ]
         )
 
@@ -90,7 +92,7 @@ class TinyImageNetDataModule(TUDataModule):
             [
                 T.Resize(64, interpolation=self.interpolation),
                 T.ToTensor(),
-                T.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
+                T.Normalize(mean=self.mean, std=self.std),
             ]
         )
 

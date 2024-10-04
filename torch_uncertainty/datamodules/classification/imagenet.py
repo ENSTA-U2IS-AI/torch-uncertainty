@@ -35,6 +35,8 @@ class ImageNetDataModule(TUDataModule):
         "openimage-o",
     ]
     training_task = "classification"
+    mean = (0.485, 0.456, 0.406)
+    std = (0.229, 0.224, 0.225)
     train_indices = None
     val_indices = None
 
@@ -80,7 +82,6 @@ class ImageNetDataModule(TUDataModule):
             pin_memory (bool): Whether to pin memory. Defaults to ``True``.
             persistent_workers (bool): Whether to use persistent workers. Defaults
                 to ``True``.
-            kwargs: Additional arguments.
         """
         super().__init__(
             root=Path(root),
@@ -162,7 +163,7 @@ class ImageNetDataModule(TUDataModule):
                 basic_transform,
                 main_transform,
                 T.ToTensor(),
-                T.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
+                T.Normalize(mean=self.mean, std=self.std),
             ]
         )
 
@@ -171,7 +172,7 @@ class ImageNetDataModule(TUDataModule):
                 T.Resize(256, interpolation=self.interpolation),
                 T.CenterCrop(224),
                 T.ToTensor(),
-                T.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
+                T.Normalize(mean=self.mean, std=self.std),
             ]
         )
 

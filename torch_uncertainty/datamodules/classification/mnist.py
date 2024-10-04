@@ -18,6 +18,8 @@ class MNISTDataModule(TUDataModule):
     input_shape = (1, 28, 28)
     training_task = "classification"
     ood_datasets = ["fashion", "notMNIST"]
+    mean = (0.1307,)
+    std = (0.3081,)
 
     def __init__(
         self,
@@ -93,14 +95,14 @@ class MNISTDataModule(TUDataModule):
                 basic_transform,
                 main_transform,
                 T.ToTensor(),
-                T.Normalize((0.1307,), (0.3081,)),
+                T.Normalize(mean=self.mean, std=self.std),
             ]
         )
         self.test_transform = T.Compose(
             [
                 T.ToTensor(),
                 T.CenterCrop(28),
-                T.Normalize((0.1307,), (0.3081,)),
+                T.Normalize(mean=self.mean, std=self.std),
             ]
         )
         if self.eval_ood:  # NotMNIST has 3 channels
@@ -109,7 +111,7 @@ class MNISTDataModule(TUDataModule):
                     T.Grayscale(num_output_channels=1),
                     T.ToTensor(),
                     T.CenterCrop(28),
-                    T.Normalize((0.1307,), (0.3081,)),
+                    T.Normalize(mean=self.mean, std=self.std),
                 ]
             )
 

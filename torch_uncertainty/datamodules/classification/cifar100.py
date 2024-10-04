@@ -22,6 +22,8 @@ class CIFAR100DataModule(TUDataModule):
     num_channels = 3
     input_shape = (3, 32, 32)
     training_task = "classification"
+    mean = (0.5071, 0.4867, 0.4408)
+    std = (0.2675, 0.2565, 0.2761)
 
     def __init__(
         self,
@@ -121,19 +123,13 @@ class CIFAR100DataModule(TUDataModule):
                 main_transform,
                 T.ToTensor(),
                 T.ConvertImageDtype(torch.float32),
-                T.Normalize(
-                    (0.5071, 0.4867, 0.4408),
-                    (0.2675, 0.2565, 0.2761),
-                ),
+                T.Normalize(mean=self.mean, std=self.std),
             ]
         )
         self.test_transform = T.Compose(
             [
                 T.ToTensor(),
-                T.Normalize(
-                    (0.5071, 0.4867, 0.4408),
-                    (0.2675, 0.2565, 0.2761),
-                ),
+                T.Normalize(mean=self.mean, std=self.std),
             ]
         )
 

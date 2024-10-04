@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import torch
+from torch import nn
 from torch.nn.common_types import _size_2_t
 from torch.nn.modules.utils import _pair
 from torchvision import tv_tensors
@@ -13,12 +14,19 @@ from torch_uncertainty.utils.misc import create_train_val_split
 
 
 class CityscapesDataModule(TUDataModule):
+    num_classes = 19
+    num_channels = 3
+    training_task = "segmentation"
+    mean = (0.485, 0.456, 0.406)
+    std = (0.229, 0.224, 0.225)
+
     def __init__(
         self,
         root: str | Path,
         batch_size: int,
         crop_size: _size_2_t = 1024,
         eval_size: _size_2_t = (1024, 2048),
+        basic_augment: bool = True,
         val_split: float | None = None,
         num_workers: int = 1,
         pin_memory: bool = True,
@@ -41,6 +49,8 @@ class CityscapesDataModule(TUDataModule):
                 :math:`\text{height}>\text{width}`, then image will be rescaled to
                 :math:`(\text{size}\times\text{height}/\text{width},\text{size})`.
                 Defaults to ``(1024,2048)``.
+            basic_augment (bool): Whether to apply base augmentations. Defaults to
+                ``True``.
             val_split (float or None, optional): Share of training samples to use
                 for validation. Defaults to ``None``.
             num_workers (int, optional): Number of dataloaders to use. Defaults to
@@ -110,17 +120,28 @@ class CityscapesDataModule(TUDataModule):
         self.crop_size = _pair(crop_size)
         self.eval_size = _pair(eval_size)
 
+        if basic_augment:
+            basic_transform = v2.Compose(
+                [
+                    RandomRescale(min_scale=0.5, max_scale=2.0, antialias=True),
+                    v2.RandomCrop(
+                        size=self.crop_size,
+                        pad_if_needed=True,
+                        fill={tv_tensors.Image: 0, tv_tensors.Mask: 255},
+                    ),
+                    v2.ColorJitter(
+                        brightness=0.5, contrast=0.5, saturation=0.5
+                    ),
+                    v2.RandomHorizontalFlip(),
+                ]
+            )
+        else:
+            basic_transform = nn.Identity()
+
         self.train_transform = v2.Compose(
             [
                 v2.ToImage(),
-                RandomRescale(min_scale=0.5, max_scale=2.0, antialias=True),
-                v2.RandomCrop(
-                    size=self.crop_size,
-                    pad_if_needed=True,
-                    fill={tv_tensors.Image: 0, tv_tensors.Mask: 255},
-                ),
-                v2.ColorJitter(brightness=0.5, contrast=0.5, saturation=0.5),
-                v2.RandomHorizontalFlip(),
+                basic_transform,
                 v2.ToDtype(
                     dtype={
                         tv_tensors.Image: torch.float32,
@@ -129,9 +150,7 @@ class CityscapesDataModule(TUDataModule):
                     },
                     scale=True,
                 ),
-                v2.Normalize(
-                    mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
-                ),
+                v2.Normalize(mean=self.mean, std=self.std),
             ]
         )
         self.test_transform = v2.Compose(
@@ -146,9 +165,7 @@ class CityscapesDataModule(TUDataModule):
                     },
                     scale=True,
                 ),
-                v2.Normalize(
-                    mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
-                ),
+                v2.Normalize(mean=self.mean, std=self.std),
             ]
         )
 
