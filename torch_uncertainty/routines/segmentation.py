@@ -214,12 +214,11 @@ class SegmentationRoutine(LightningModule):
         self.test_sbsmpl_seg_metrics.update(*self.subsample(probs, targets))
 
     def on_validation_epoch_end(self) -> None:
-        self.log_dict(
-            self.val_seg_metrics.compute(), logger=True, sync_dist=True
-        )
+        res_dict = self.val_seg_metrics.compute()
+        self.log_dict(res_dict, logger=True, sync_dist=True)
         self.log(
             "mIoU%",
-            self.val_seg_metrics["seg/mIoU"].compute() * 100,
+            res_dict["val/seg/mIoU"] * 100,
             prog_bar=True,
             sync_dist=True,
         )

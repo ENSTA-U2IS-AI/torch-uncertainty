@@ -504,12 +504,11 @@ class ClassificationRoutine(LightningModule):
                 self.ood_logit_storage.append(logits.detach().cpu())
 
     def on_validation_epoch_end(self) -> None:
-        self.log_dict(
-            self.val_cls_metrics.compute(), logger=True, sync_dist=True
-        )
+        res_dict = self.val_cls_metrics.compute()
+        self.log_dict(res_dict, logger=True, sync_dist=True)
         self.log(
             "Acc%",
-            self.val_cls_metrics["cls/Acc"].compute() * 100,
+            res_dict["val/cls/Acc"] * 100,
             prog_bar=True,
             logger=False,
             sync_dist=True,
