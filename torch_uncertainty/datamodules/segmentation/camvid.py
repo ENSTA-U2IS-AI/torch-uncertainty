@@ -24,8 +24,8 @@ class CamVidDataModule(TUDataModule):
         self,
         root: str | Path,
         batch_size: int,
-        crop_size: _size_2_t = 722,
-        eval_size: _size_2_t = (722, 960),
+        crop_size: _size_2_t = 640,
+        eval_size: _size_2_t = (720, 960),
         basic_augment: bool = True,
         val_split: float | None = None,
         num_workers: int = 1,
@@ -42,13 +42,13 @@ class CamVidDataModule(TUDataModule):
                 int instead of sequence like :math:`(H, W)`, a square crop
                 :math:`(\text{size},\text{size})` is made. If provided a sequence
                 of length :math:`1`, it will be interpreted as
-                :math:`(\text{size[0]},\text{size[1]})`. Defaults to ``722``.
+                :math:`(\text{size[0]},\text{size[1]})`. Defaults to ``640``.
             eval_size (sequence or int, optional): Desired input image and
                 segmentation mask sizes during evaluation. If size is an int,
                 smaller edge of the images will be matched to this number, i.e.,
                 :math:`\text{height}>\text{width}`, then image will be rescaled to
                 :math:`(\text{size}\times\text{height}/\text{width},\text{size})`.
-                Defaults to ``(722,960)``.
+                Defaults to ``(720,960)``.
             basic_augment (bool): Whether to apply base augmentations. Defaults to
                 ``True``.
             val_split (float or None, optional): Share of training samples to use
