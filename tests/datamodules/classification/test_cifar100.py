@@ -13,7 +13,7 @@ class TestCIFAR100DataModule:
         dm = CIFAR100DataModule(root="./data/", batch_size=128, cutout=16)
 
         assert dm.dataset == CIFAR100
-        assert isinstance(dm.train_transform.transforms[1], Cutout)
+        assert isinstance(dm.train_transform.transforms[2], Cutout)
 
         dm.dataset = DummyClassificationDataset
         dm.ood_dataset = DummyClassificationDataset
