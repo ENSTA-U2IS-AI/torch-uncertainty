@@ -160,18 +160,18 @@ class ImageNetDataModule(TUDataModule):
 
         self.train_transform = T.Compose(
             [
+                T.ToTensor(),
                 basic_transform,
                 main_transform,
-                T.ToTensor(),
                 T.Normalize(mean=self.mean, std=self.std),
             ]
         )
 
         self.test_transform = T.Compose(
             [
+                T.ToTensor(),
                 T.Resize(256, interpolation=self.interpolation),
                 T.CenterCrop(224),
-                T.ToTensor(),
                 T.Normalize(mean=self.mean, std=self.std),
             ]
         )

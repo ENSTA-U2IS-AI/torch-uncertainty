@@ -81,17 +81,17 @@ class TinyImageNetDataModule(TUDataModule):
 
         self.train_transform = T.Compose(
             [
+                T.ToTensor(),
                 basic_transform,
                 main_transform,
-                T.ToTensor(),
                 T.Normalize(mean=self.mean, std=self.std),
             ]
         )
 
         self.test_transform = T.Compose(
             [
-                T.Resize(64, interpolation=self.interpolation),
                 T.ToTensor(),
+                T.Resize(64, interpolation=self.interpolation),
                 T.Normalize(mean=self.mean, std=self.std),
             ]
         )

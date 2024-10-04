@@ -119,9 +119,9 @@ class CIFAR100DataModule(TUDataModule):
 
         self.train_transform = T.Compose(
             [
+                T.ToTensor(),
                 basic_transform,
                 main_transform,
-                T.ToTensor(),
                 T.ConvertImageDtype(torch.float32),
                 T.Normalize(mean=self.mean, std=self.std),
             ]

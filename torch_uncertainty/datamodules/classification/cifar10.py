@@ -113,9 +113,9 @@ class CIFAR10DataModule(TUDataModule):
 
         self.train_transform = T.Compose(
             [
+                T.ToTensor(),
                 basic_transform,
                 main_transform,
-                T.ToTensor(),
                 T.Normalize(
                     self.mean,
                     self.std,

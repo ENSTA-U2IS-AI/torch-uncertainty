@@ -92,9 +92,9 @@ class MNISTDataModule(TUDataModule):
 
         self.train_transform = T.Compose(
             [
+                T.ToTensor(),
                 basic_transform,
                 main_transform,
-                T.ToTensor(),
                 T.Normalize(mean=self.mean, std=self.std),
             ]
         )
@@ -108,8 +108,8 @@ class MNISTDataModule(TUDataModule):
         if self.eval_ood:  # NotMNIST has 3 channels
             self.ood_transform = T.Compose(
                 [
-                    T.Grayscale(num_output_channels=1),
                     T.ToTensor(),
+                    T.Grayscale(num_output_channels=1),
                     T.CenterCrop(28),
                     T.Normalize(mean=self.mean, std=self.std),
                 ]
