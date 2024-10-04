@@ -246,6 +246,16 @@ For Laplace Approximation, consider citing:
 Losses
 ------
 
+Focal Loss
+^^^^^^^^^^
+
+For the focal loss, consider citing:
+
+**Focal Loss for Dense Object Detection**
+
+* Authors: *Tsung-Yi Lin, Priya Goyal, Ross Girshick, Kaiming He, and Piotr Dollár*
+* Paper: `TPAMI 2020 <https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=8417976>`__.
+
 Conflictual Loss
 ^^^^^^^^^^^^^^^^
 

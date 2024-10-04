@@ -320,6 +320,12 @@ Losses
     ELBOLoss
     BetaNLL
     DECLoss
+    DERLoss
+    FocalLoss
+    ConflictualLoss
+    ConfidencePenaltyLoss
+    KLDiv
+    ELBOLoss
 
 Post-Processing Methods
 -----------------------
