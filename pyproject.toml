@@ -42,7 +42,6 @@ dependencies = [
     "matplotlib",
     "numpy",
     "opencv-python",
-    "glest==0.0.1a0",
     "rich>=10.2.2",
 ]
 
@@ -66,7 +65,8 @@ docs = [
 ]
 all = [
     "torch_uncertainty[dev,docs,image,tabular]",
-    "laplace-torch"
+    "laplace-torch",
+    "glest==0.0.1a0",
 ]
 
 [project.urls]

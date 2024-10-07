@@ -1,5 +1,14 @@
+from importlib import util
+
 import torch
-from glest import GLEstimator as GLEstimatorBase
+
+if util.find_spec("glest"):
+    from glest import GLEstimator as GLEstimatorBase
+
+    glest_installed = True
+else:  # coverage: ignore
+    glest_installed = False
+
 from torch import Tensor
 from torchmetrics import Metric
 from torchmetrics.utilities import rank_zero_warn
@@ -55,6 +64,11 @@ class GroupingLoss(Metric):
             networks. In ICLR 2023.
         """
         super().__init__(**kwargs)
+        if not glest_installed:  # coverage: ignore
+            raise ImportError(
+                "The glest library is not installed. Please install it via `pip install glest`."
+            )
+
         self.estimator = GLEstimator(None)
 
         self.add_state("probs", default=[], dist_reduce_fx="cat")
@@ -81,7 +95,7 @@ class GroupingLoss(Metric):
                 (batch, num_estimators, num_features) or (batch, num_features)
         """
         if target.ndim == 2:
-            target = target.argmax(axis=-1)
+            target = target.argmax(dim=-1)
         elif target.ndim != 1:
             raise ValueError(
                 "Expected `target` to be of shape (batch) or (batch, num_classes) "
