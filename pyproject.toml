@@ -39,8 +39,8 @@ dependencies = [
     "scipy",
     "huggingface-hub",
     "scikit-learn",
-    "matplotlib==3.5.2",
-    "numpy<2",
+    "matplotlib",
+    "numpy",
     "opencv-python",
     "glest==0.0.1a0",
     "rich>=10.2.2",
@@ -51,7 +51,7 @@ image = ["scikit-image", "h5py"]
 tabular = ["pandas"]
 dev = [
     "torch_uncertainty[image]",
-    "ruff==0.5.2",
+    "ruff==0.6.9",
     "pytest-cov",
     "pre-commit",
     "pre-commit-hooks",
