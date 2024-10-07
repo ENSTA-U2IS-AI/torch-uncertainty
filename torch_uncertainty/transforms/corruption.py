@@ -222,7 +222,7 @@ class MotionImage(WandImage):
 class MotionBlur(TUCorruption):
     def __init__(self, severity: int) -> None:
         super().__init__(severity)
-        self.rng = self.rng.default_rng()
+        self.rng = np.random.default_rng()
 
     def forward(self, img: Tensor) -> Tensor:
         if self.severity == 0:
@@ -286,7 +286,7 @@ class Snow(TUCorruption):
             (0.55, 0.3, 4.5, 0.85, 12, 8, 0.65),
             (0.55, 0.3, 2.5, 0.85, 12, 12, 0.55),
         ][severity - 1]
-        self.rng = self.rng.default_rng()
+        self.rng = np.random.default_rng()
 
     def forward(self, img: Tensor) -> Tensor:
         if self.severity == 0:
@@ -333,7 +333,7 @@ class Snow(TUCorruption):
 class Frost(TUCorruption):
     def __init__(self, severity: int) -> None:
         super().__init__(severity)
-        self.rng = self.rng.default_rng()
+        self.rng = np.random.default_rng()
         self.mix = [(1, 0.2), (1, 0.3), (0.9, 0.4), (0.85, 0.4), (0.75, 0.45)][
             severity - 1
         ]
@@ -446,7 +446,7 @@ class Elastic(TUCorruption):
             (244 * 0.07, 244 * 0.01, 244 * 0.02),
             (244 * 0.12, 244 * 0.01, 244 * 0.02),
         ][severity - 1]
-        self.rng = self.rng.default_rng()
+        self.rng = np.random.default_rng()
 
     def forward(self, img: Tensor) -> Tensor:
         shape = img.shape
@@ -570,7 +570,7 @@ class SpeckleNoise(TUCorruption):
     def __init__(self, severity: int) -> None:
         super().__init__(severity)
         self.scale = [0.06, 0.1, 0.12, 0.16, 0.2][severity - 1]
-        self.rng = self.rng.default_rng()
+        self.rng = np.random.default_rng()
 
     def forward(self, img: Tensor) -> Tensor:
         if self.severity == 0:
