@@ -66,7 +66,9 @@ class GroupingLoss(Metric):
         super().__init__(**kwargs)
         if not glest_installed:  # coverage: ignore
             raise ImportError(
-                "The glest library is not installed. Please install it via `pip install glest`."
+                "The glest library is not installed. Please install"
+                "torch_uncertainty with the all option:"
+                """pip install -U "torch_uncertainty[all]"."""
             )
 
         self.estimator = GLEstimator(None)

@@ -3,10 +3,16 @@ import logging
 import os
 import shutil
 from collections.abc import Callable
+from importlib import util
 from pathlib import Path
 from typing import Literal
 
-import cv2
+if util.find_spec("cv2"):
+    import cv2
+
+    cv2_installed = True
+else:  # coverage: ignore
+    cv2_installed = False
 import numpy as np
 import torch
 from einops import rearrange
@@ -74,6 +80,12 @@ class MUAD(VisionDataset):
             MUAD cannot be used for commercial purposes. Read MUAD's license
             carefully before using it and verify that you can comply.
         """
+        if not cv2_installed:  # coverage: ignore
+            raise ImportError(
+                "The cv2 library is not installed. Please install"
+                "torch_uncertainty with the image option:"
+                """pip install -U "torch_uncertainty[image]"."""
+            )
         logging.info(
             "MUAD is restricted to non-commercial use. By using MUAD, you "
             "agree to the terms and conditions."

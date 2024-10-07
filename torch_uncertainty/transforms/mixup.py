@@ -1,8 +1,17 @@
+from importlib import util
+
 import numpy as np
 import scipy
 import torch
 import torch.nn.functional as F
 from torch import Tensor, nn
+
+if util.find_spec("scipy"):
+    import scipy
+
+    scipy_installed = True
+else:  # coverage: ignore
+    scipy_installed = False
 
 
 def beta_warping(x, alpha_cdf: float = 1.0, eps: float = 1e-12) -> float:
@@ -197,7 +206,13 @@ class WarpingMixup(AbstractMixup):
             "Tailoring Mixup to Data using Kernel Warping functions" (2023)
             https://arxiv.org/abs/2311.01434.
         """
-        super().__init__(alpha, mode, num_classes)
+        if not scipy_installed:  # coverage: ignore
+            raise ImportError(
+                "The scipy library is not installed. Please install"
+                "torch_uncertainty with the all option:"
+                """pip install -U "torch_uncertainty[all]"."""
+            )
+        super().__init__(alpha=alpha, mode=mode, num_classes=num_classes)
         self.apply_kernel = apply_kernel
         self.tau_max = tau_max
         self.tau_std = tau_std

@@ -36,17 +36,19 @@ dependencies = [
     "tensorboard",
     "einops",
     "torchinfo",
-    "scipy",
     "huggingface-hub",
     "scikit-learn",
     "matplotlib",
     "numpy",
-    "opencv-python",
     "rich>=10.2.2",
 ]
 
 [project.optional-dependencies]
-image = ["scikit-image", "h5py"]
+image = [
+    "scikit-image", 
+    "h5py",
+    "opencv-python",
+]
 tabular = ["pandas"]
 dev = [
     "torch_uncertainty[image]",
@@ -67,6 +69,7 @@ all = [
     "torch_uncertainty[dev,docs,image,tabular]",
     "laplace-torch",
     "glest==0.0.1a0",
+    "scipy",
 ]
 
 [project.urls]

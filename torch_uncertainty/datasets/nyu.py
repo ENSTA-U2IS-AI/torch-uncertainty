@@ -3,7 +3,6 @@ from importlib import util
 from pathlib import Path
 from typing import Literal
 
-import cv2
 import numpy as np
 from PIL import Image
 from torchvision import tv_tensors
@@ -13,6 +12,13 @@ from torchvision.datasets.utils import (
     download_and_extract_archive,
     download_url,
 )
+
+if util.find_spec("cv2"):
+    import cv2
+
+    cv2_installed = True
+else:  # coverage: ignore
+    cv2_installed = False
 
 if util.find_spec("h5py"):
     import h5py
@@ -55,12 +61,19 @@ class NYUv2(VisionDataset):
             max_depth (float): Maximum depth value. Defaults to 10.
             download (bool): Download dataset if not found. Defaults to False.
         """
+        if not cv2_installed:  # coverage: ignore
+            raise ImportError(
+                "The cv2 library is not installed. Please install"
+                "torch_uncertainty with the image option:"
+                """pip install -U "torch_uncertainty[image]"."""
+            )
         if not h5py_installed:  # coverage: ignore
             raise ImportError(
                 "The h5py library is not installed. Please install"
                 "torch_uncertainty with the image option:"
                 """pip install -U "torch_uncertainty[image]"."""
             )
+
         super().__init__(Path(root) / "NYUv2", transforms=transforms)
         self.min_depth = min_depth
         self.max_depth = max_depth
