@@ -68,8 +68,8 @@ class Rotate(nn.Module):
         random_direction: bool = True,
         interpolation: F.InterpolationMode = F.InterpolationMode.NEAREST,
         expand: bool = False,
-        center: list[int] | None = None,
-        fill: list[int] | None = None,
+        center: list[float] | None = None,
+        fill: list[float] | None = None,
     ) -> None:
         super().__init__()
         self.random_direction = random_direction
@@ -105,8 +105,8 @@ class Shear(nn.Module):
         axis: int,
         random_direction: bool = True,
         interpolation: F.InterpolationMode = F.InterpolationMode.NEAREST,
-        center: list[int] | None = None,
-        fill: list[int] | None = None,
+        center: list[float] | None = None,
+        fill: list[float] | None = None,
     ) -> None:
         super().__init__()
         if axis not in (0, 1):
@@ -124,7 +124,7 @@ class Shear(nn.Module):
             self.random_direction and torch.rand(1).item() > 0.5
         ):  # coverage: ignore
             level = -level
-        shear = [0, 0]
+        shear = [0.0, 0.0]
         shear[self.axis] = level
         return F.affine(
             img,
@@ -148,8 +148,8 @@ class Translate(nn.Module):
         axis: int,
         random_direction: bool = True,
         interpolation: F.InterpolationMode = F.InterpolationMode.NEAREST,
-        center: list[int] | None = None,
-        fill: list[int] | None = None,
+        center: list[float] | None = None,
+        fill: list[float] | None = None,
     ) -> None:
         super().__init__()
         if axis not in (0, 1):
@@ -161,13 +161,13 @@ class Translate(nn.Module):
         self.fill = fill
 
     def forward(
-        self, img: Tensor | Image.Image, level: int
+        self, img: Tensor | Image.Image, level: float
     ) -> Tensor | Image.Image:
         if (
             self.random_direction and torch.rand(1).item() > 0.5
         ):  # coverage: ignore
             level = -level
-        translate = [0, 0]
+        translate = [0.0, 0.0]
         translate[self.axis] = level
         return F.affine(
             img,
@@ -205,12 +205,23 @@ class Brightness(nn.Module):
     def __init__(self) -> None:
         super().__init__()
 
-    def forward(
-        self, img: Tensor | Image.Image, level: float
-    ) -> Tensor | Image.Image:
+    def forward(self, img: Tensor, level: float) -> Tensor:
         if level < 0:
             raise ValueError("Level must be greater than 0.")
         return F.adjust_brightness(img, level)
+
+
+class Saturation(nn.Module):
+    level_type = float
+    corruption_overlap = True
+
+    def __init__(self) -> None:
+        super().__init__()
+
+    def forward(self, img: Tensor, level: float) -> Tensor:
+        if level < 0:
+            raise ValueError("Level must be greater than 0.")
+        return F.adjust_saturation_image(img, level)
 
 
 class Sharpen(nn.Module):
@@ -243,9 +254,11 @@ class Color(nn.Module):
     ) -> Tensor | Image.Image:
         if level < 0:
             raise ValueError("Level must be greater than 0.")
+        pil_img = F.to_pil_image(img) if isinstance(img, Tensor) else img
+        pil_img = ImageEnhance.Color(pil_img).enhance(level)
         if isinstance(img, Tensor):
-            img: Image.Image = F.to_pil_image(img)
-        return ImageEnhance.Color(img).enhance(level)
+            return F.pil_to_tensor(pil_img)
+        return pil_img
 
 
 class RandomRescale(Transform):
