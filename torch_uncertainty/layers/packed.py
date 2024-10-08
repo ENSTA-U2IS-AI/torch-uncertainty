@@ -1,12 +1,15 @@
+import math
 from typing import Any
 
+import torch
 from einops import rearrange
 from torch import Tensor, nn
+from torch.nn import functional as F
 from torch.nn.common_types import _size_1_t, _size_2_t, _size_3_t
 
 
 def check_packed_parameters_consistency(
-    alpha: int, gamma: int, num_estimators: int
+    alpha: float, gamma: int, num_estimators: int
 ) -> None:
     """Check the consistency of the parameters of the Packed-Ensembles layers.
 
@@ -49,35 +52,38 @@ class PackedLinear(nn.Module):
         self,
         in_features: int,
         out_features: int,
-        alpha: int,
+        alpha: float,
         num_estimators: int,
         gamma: int = 1,
         bias: bool = True,
-        rearrange: bool = True,
         first: bool = False,
         last: bool = False,
+        implementation: str = "legacy",
+        rearrange: bool = True,
         device=None,
         dtype=None,
     ) -> None:
         r"""Packed-Ensembles-style Linear layer.
 
         This layer computes fully-connected operation for a given number of
-        estimators (:attr:`num_estimators`) using a `1x1` convolution.
+        estimators (:attr:`num_estimators`).
 
         Args:
             in_features (int): Number of input features of the linear layer.
             out_features (int): Number of channels produced by the linear layer.
-            alpha (int): The width multiplier of the linear layer.
+            alpha (float): The width multiplier of the linear layer.
             num_estimators (int): The number of estimators grouped in the layer.
             gamma (int, optional): Defaults to ``1``.
             bias (bool, optional): It ``True``, adds a learnable bias to the
                 output. Defaults to ``True``.
-            rearrange (bool, optional): Rearrange the input and outputs for
-                compatibility with previous and later layers. Defaults to ``True``.
             first (bool, optional): Whether this is the first layer of the
                 network. Defaults to ``False``.
             last (bool, optional): Whether this is the last layer of the network.
                 Defaults to ``False``.
+            implementation (str, optional): The implementation to use. Defaults
+                to ``"legacy"``.
+            rearrange (bool, optional): Rearrange the input and outputs for
+                compatibility with previous and later layers. Defaults to ``True``.
             device (torch.device, optional): The device to use for the layer's
                 parameters. Defaults to ``None``.
             dtype (torch.dtype, optional): The dtype to use for the layer's
@@ -110,6 +116,7 @@ class PackedLinear(nn.Module):
         self.first = first
         self.num_estimators = num_estimators
         self.rearrange = rearrange
+        self.implementation = implementation
 
         # Define the number of features of the underlying convolution
         extended_in_features = int(in_features * (1 if first else alpha))
@@ -130,42 +137,95 @@ class PackedLinear(nn.Module):
                 actual_groups
             )
 
-        self.conv1x1 = nn.Conv1d(
-            in_channels=extended_in_features,
-            out_channels=extended_out_features,
-            kernel_size=1,
-            stride=1,
-            padding=0,
-            dilation=1,
-            groups=actual_groups,
-            bias=bias,
-            padding_mode="zeros",
-            **factory_kwargs,
-        )
+        # FIXME: This is a temporary check
+        assert implementation in [
+            "legacy",
+            "sparse",
+            "full",
+        ], f"Unknown implementation: {implementation} for PackedLinear"
+
+        if self.implementation == "legacy":
+            self.weight = nn.Parameter(
+                torch.empty(
+                    (
+                        extended_out_features,
+                        extended_in_features // actual_groups,
+                        1,
+                    ),
+                    **factory_kwargs,
+                )
+            )
+        elif self.implementation == "sparse":
+            self.weight = nn.Parameter(
+                torch.empty(
+                    (
+                        actual_groups,
+                        extended_out_features // actual_groups,
+                        extended_in_features // actual_groups,
+                    ),
+                    **factory_kwargs,
+                ).to_sparse()
+            )
+        else:
+            self.weight = nn.Parameter(
+                torch.empty(
+                    (
+                        actual_groups,
+                        extended_out_features // actual_groups,
+                        extended_in_features // actual_groups,
+                    ),
+                    **factory_kwargs,
+                )
+            )
+
+        self.in_features = extended_in_features // actual_groups
+        self.out_features = extended_out_features // actual_groups
+        self.groups = actual_groups
+
+        if bias:
+            self.bias = nn.Parameter(
+                torch.empty(extended_out_features, **factory_kwargs)
+            )
+        else:
+            self.register_parameter("bias", None)
+
+        self.reset_parameters()
+
+    def reset_parameters(self) -> None:
+        if self.implementation == "legacy":
+            nn.init.kaiming_uniform_(self.weight, a=math.sqrt(5))
+        else:
+            for n in range(self.groups):
+                nn.init.kaiming_uniform_(self.weight[n], a=math.sqrt(5))
+        if self.bias is not None:
+            fan_in, _ = nn.init._calculate_fan_in_and_fan_out(self.weight[0])
+            bound = 1 / math.sqrt(fan_in) if fan_in > 0 else 0
+            nn.init.uniform_(self.bias, -bound, bound)
 
     def _rearrange_forward(self, x: Tensor) -> Tensor:
         x = x.unsqueeze(-1)
         if not self.first:
             x = rearrange(x, "(m e) c h -> e (m c) h", m=self.num_estimators)
-
-        x = self.conv1x1(x)
+        x = F.conv1d(x, self.weight, self.bias, 1, 0, 1, self.groups)
         x = rearrange(x, "e (m c) h -> (m e) c h", m=self.num_estimators)
         return x.squeeze(-1)
 
     def forward(self, inputs: Tensor) -> Tensor:
-        if self.rearrange:
-            return self._rearrange_forward(inputs)
-        return self.conv1x1(inputs)
-
-    @property
-    def weight(self) -> Tensor:
-        r"""The weight of the underlying convolutional layer."""
-        return self.conv1x1.weight
-
-    @property
-    def bias(self) -> Tensor | None:
-        r"""The bias of the underlying convolutional layer."""
-        return self.conv1x1.bias
+        if self.implementation == "legacy":
+            if self.rearrange:
+                return self._rearrange_forward(inputs)
+            return F.conv1d(
+                inputs, self.weight, self.bias, 1, 0, 1, self.groups
+            )
+        if self.implementation in ["full", "sparse"]:
+            return F.linear(inputs, self.weight, self.bias)
+        if self.implementation == "einsum":
+            return torch.einsum(
+                "bki,kij->bkj",
+                inputs.view(-1, self.groups, self.in_features),
+                self.weight,
+            ).flatten(start_dim=-2, end_dim=-1)
+        raise ValueError(f"Unknown implementation: {self.implementation}")
 
 
 class PackedConv1d(nn.Module):
