@@ -70,6 +70,7 @@ class ClassificationRoutine(LightningModule):
         optim_recipe: dict | Optimizer | None = None,
         mixup_params: dict | None = None,
         eval_ood: bool = False,
+        eval_shift: bool = False,
         eval_grouping_loss: bool = False,
         ood_criterion: Literal[
             "msp", "logit", "energy", "entropy", "mi", "vr"
@@ -94,10 +95,12 @@ class ClassificationRoutine(LightningModule):
                 optionally the scheduler to use. Defaults to ``None``.
             mixup_params (dict, optional): Mixup parameters. Can include mixup type,
                 mixup mode, distance similarity, kernel tau max, kernel tau std,
-                mixup alpha, and cutmix alpha. If None, no augmentations.
+                mixup alpha, and cutmix alpha. If None, no mixup augmentations.
                 Defaults to ``None``.
             eval_ood (bool, optional): Indicates whether to evaluate the OOD
-                detection performance or not. Defaults to ``False``.
+                detection performance. Defaults to ``False``.
+            eval_shift (bool, optional): Indicates whether to evaluate the Distribution
+                shift performance. Defaults to ``False``.
             eval_grouping_loss (bool, optional): Indicates whether to evaluate the
                 grouping loss or not. Defaults to ``False``.
             ood_criterion (str, optional): OOD criterion. Available options are
@@ -145,6 +148,7 @@ class ClassificationRoutine(LightningModule):
 
         self.num_classes = num_classes
         self.eval_ood = eval_ood
+        self.eval_shift = eval_shift
         self.eval_grouping_loss = eval_grouping_loss
         self.ood_criterion = ood_criterion
         self.log_plots = log_plots
@@ -228,6 +232,9 @@ class ClassificationRoutine(LightningModule):
             self.test_ood_metrics = ood_metrics.clone(prefix="ood/")
             self.test_ood_entropy = Entropy()
 
+        if self.eval_shift:
+            self.test_shift_metrics = cls_metrics.clone(prefix="shift/")
+
         # metrics for ensembles only
         if self.is_ensemble:
             ens_metrics = MetricCollection(
@@ -242,6 +249,11 @@ class ClassificationRoutine(LightningModule):
 
             if self.eval_ood:
                 self.test_ood_ens_metrics = ens_metrics.clone(prefix="ood/ens_")
+
+            if self.eval_shift:
+                self.test_ood_ens_metrics = ens_metrics.clone(
+                    prefix="shift/ens_"
+                )
 
         if self.eval_grouping_loss:
             grouping_loss = MetricCollection(
@@ -488,7 +500,7 @@ class ClassificationRoutine(LightningModule):
                     pp_probs = pp_logits
                 self.post_cls_metrics.update(pp_probs, targets)
 
-        elif self.eval_ood and dataloader_idx == 1:
+        if self.eval_ood and dataloader_idx == 1:
             self.test_ood_metrics.update(ood_scores, torch.ones_like(targets))
             self.test_ood_entropy(probs)
             self.log(
@@ -502,6 +514,9 @@ class ClassificationRoutine(LightningModule):
 
             if self.ood_logit_storage is not None:
                 self.ood_logit_storage.append(logits.detach().cpu())
+
+        if self.eval_shift and dataloader_idx == (2 if self.eval_ood else 1):
+            self.test_shift_metrics.update(probs, targets)
 
     def on_validation_epoch_end(self) -> None:
         res_dict = self.val_cls_metrics.compute()
@@ -556,6 +571,11 @@ class ClassificationRoutine(LightningModule):
                 tmp_metrics = self.test_ood_ens_metrics.compute()
                 self.log_dict(tmp_metrics, sync_dist=True)
                 result_dict.update(tmp_metrics)
+
+        if self.eval_shift:
+            tmp_metrics = self.test_shift_metrics.compute()
+            self.log_dict(tmp_metrics, sync_dist=True)
+            result_dict.update(tmp_metrics)
 
         if isinstance(self.logger, Logger) and self.log_plots:
             self.logger.experiment.add_figure(

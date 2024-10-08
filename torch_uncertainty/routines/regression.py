@@ -35,6 +35,7 @@ class RegressionRoutine(LightningModule):
         loss: nn.Module,
         is_ensemble: bool = False,
         optim_recipe: dict | Optimizer | None = None,
+        eval_shift: bool = False,
         format_batch_fn: nn.Module | None = None,
     ) -> None:
         r"""Routine for training & testing on **regression** tasks.
@@ -49,6 +50,8 @@ class RegressionRoutine(LightningModule):
                 Defaults to ``False``.
             optim_recipe (dict or torch.optim.Optimizer, optional): The optimizer and
                 optionally the scheduler to use. Defaults to ``None``.
+            eval_shift (bool, optional): Indicates whether to evaluate the Distribution
+                shift performance. Defaults to ``False``.
             format_batch_fn (torch.nn.Module, optional): The function to format the
                 batch. Defaults to ``None``.
 

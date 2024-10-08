@@ -55,6 +55,7 @@ class PixelRegressionRoutine(LightningModule):
         is_ensemble: bool = False,
         format_batch_fn: nn.Module | None = None,
         optim_recipe: dict | Optimizer | None = None,
+        eval_shift: bool = False,
         num_image_plot: int = 4,
         log_plots: bool = False,
     ) -> None:
@@ -70,6 +71,8 @@ class PixelRegressionRoutine(LightningModule):
                 Defaults to ``False``.
             optim_recipe (dict or Optimizer, optional): The optimizer and
                 optionally the scheduler to use. Defaults to ``None``.
+            eval_shift (bool, optional): Indicates whether to evaluate the Distribution
+                shift performance. Defaults to ``False``.
             format_batch_fn (nn.Module, optional): The function to format the
                 batch. Defaults to ``None``.
             num_image_plot (int, optional): Number of images to plot. Defaults to ``4``.

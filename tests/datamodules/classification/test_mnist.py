@@ -2,7 +2,6 @@ import pytest
 from torch import nn
 from torchvision.datasets import MNIST
 
-from tests._dummies.dataset import DummyClassificationDataset
 from torch_uncertainty.datamodules import MNISTDataModule
 from torch_uncertainty.transforms import Cutout
 
@@ -34,14 +33,8 @@ class TestMNISTDataModule:
         with pytest.raises(ValueError):
             MNISTDataModule(root="./data/", batch_size=128, ood_ds="other")
 
-        MNISTDataModule(root="./data/", batch_size=128, test_alt="c")
-
-        dm.dataset = DummyClassificationDataset
-        dm.ood_dataset = DummyClassificationDataset
-
-        dm.prepare_data()
-        dm.setup()
-
+        dm.setup("fit")
+        dm.setup("test")
         dm.train_dataloader()
         dm.val_dataloader()
         dm.test_dataloader()

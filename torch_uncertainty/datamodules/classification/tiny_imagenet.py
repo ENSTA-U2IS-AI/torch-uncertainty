@@ -10,7 +10,11 @@ from torch.utils.data import ConcatDataset, DataLoader
 from torchvision.datasets import DTD, SVHN
 
 from torch_uncertainty.datamodules.abstract import TUDataModule
-from torch_uncertainty.datasets.classification import ImageNetO, TinyImageNet
+from torch_uncertainty.datasets.classification import (
+    ImageNetO,
+    TinyImageNet,
+    TinyImageNetC,
+)
 from torch_uncertainty.utils import (
     create_train_val_split,
     interpolation_modes_from_str,
@@ -29,6 +33,8 @@ class TinyImageNetDataModule(TUDataModule):
         root: str | Path,
         batch_size: int,
         eval_ood: bool = False,
+        eval_shift: bool = False,
+        shift_severity: int = 1,
         val_split: float | None = None,
         ood_ds: str = "svhn",
         interpolation: str = "bilinear",
@@ -46,8 +52,10 @@ class TinyImageNetDataModule(TUDataModule):
             pin_memory=pin_memory,
             persistent_workers=persistent_workers,
         )
-        # TODO: COMPUTE STATS
         self.eval_ood = eval_ood
+        self.eval_shift = eval_shift
+        self.shift_severity = shift_severity
+
         self.ood_ds = ood_ds
         self.interpolation = interpolation_modes_from_str(interpolation)
 
@@ -63,7 +71,7 @@ class TinyImageNetDataModule(TUDataModule):
             raise ValueError(
                 f"OOD dataset {ood_ds} not supported for TinyImageNet."
             )
-
+        self.shift_dataset = TinyImageNetC
         if basic_augment:
             basic_transform = T.Compose(
                 [
@@ -135,6 +143,12 @@ class TinyImageNetDataModule(TUDataModule):
                         ),
                     ]
                 )
+            if self.eval_shift:
+                self.shift_dataset(
+                    self.root,
+                    download=True,
+                    transform=self.test_transform,
+                )
 
     def setup(self, stage: Literal["fit", "test"] | None = None) -> None:
         if stage == "fit" or stage is None:
@@ -196,6 +210,13 @@ class TinyImageNetDataModule(TUDataModule):
                     transform=self.test_transform,
                 )
 
+            if self.eval_shift:
+                self.shift = self.shift_dataset(
+                    self.root,
+                    download=False,
+                    transform=self.test_transform,
+                )
+
     def train_dataloader(self) -> DataLoader:
         r"""Get the training dataloader for TinyImageNet.
 
@@ -222,6 +243,8 @@ class TinyImageNetDataModule(TUDataModule):
         dataloader = [self._data_loader(self.test)]
         if self.eval_ood:
             dataloader.append(self._data_loader(self.ood))
+        if self.eval_shift:
+            dataloader.append(self._data_loader(self.shift))
         return dataloader
 
     def _get_train_data(self) -> ArrayLike:

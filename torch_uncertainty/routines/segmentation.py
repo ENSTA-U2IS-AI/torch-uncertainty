@@ -29,6 +29,7 @@ class SegmentationRoutine(LightningModule):
         num_classes: int,
         loss: nn.Module,
         optim_recipe: dict | Optimizer | None = None,
+        eval_shift: bool = False,
         format_batch_fn: nn.Module | None = None,
         metric_subsampling_rate: float = 1e-2,
         log_plots: bool = False,
@@ -42,6 +43,8 @@ class SegmentationRoutine(LightningModule):
             loss (torch.nn.Module): Loss function to optimize the :attr:`model`.
             optim_recipe (dict or Optimizer, optional): The optimizer and
                 optionally the scheduler to use. Defaults to ``None``.
+            eval_shift (bool, optional): Indicates whether to evaluate the Distribution
+                shift performance. Defaults to ``False``.
             format_batch_fn (torch.nn.Module, optional): The function to format the
                 batch. Defaults to ``None``.
             metric_subsampling_rate (float, optional): The rate of subsampling for the

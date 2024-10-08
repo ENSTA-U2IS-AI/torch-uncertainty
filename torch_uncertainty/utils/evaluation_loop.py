@@ -15,6 +15,7 @@ class TUEvaluationLoop(_EvaluationLoop):
         # test/cls: Classification Metrics
         # test/cal: Calibration Metrics
         # ood: OOD Detection Metrics
+        # shift: Distribution shift Metrics
         # test/sc: Selective Classification Metrics
         # test/post: Post-Processing Metrics
         # test/seg: Segmentation Metrics
@@ -51,6 +52,11 @@ class TUEvaluationLoop(_EvaluationLoop):
                         metrics["ood"] = {}
                     metric_name = key.split("/")[-1]
                     metrics["ood"].update({metric_name: value})
+                elif key.startswith("shift"):
+                    if "shift" not in metrics:
+                        metrics["shift"] = {}
+                    metric_name = key.split("/")[-1]
+                    metrics["shift"].update({metric_name: value})
                 elif key.startswith("test/sc"):
                     if "sc" not in metrics:
                         metrics["sc"] = {}
@@ -191,6 +197,26 @@ class TUEvaluationLoop(_EvaluationLoop):
             )
             post_metrics = OrderedDict(sorted(metrics["post"].items()))
             for metric, value in post_metrics.items():
+                if metric in percentage_metrics:
+                    value = value * 100
+                    table.add_row(metric, f"{value.item():.2f}%")
+                else:
+                    table.add_row(metric, f"{value.item():.5f}")
+            tables.append(table)
+
+        if "shift" in metrics:
+            table = Table()
+            table.add_column(
+                first_col_name, justify="center", style="cyan", width=12
+            )
+            table.add_column(
+                "Distribution Shift",
+                justify="center",
+                style="magenta",
+                width=25,
+            )
+            shift_metrics = OrderedDict(sorted(metrics["shift"].items()))
+            for metric, value in shift_metrics.items():
                 if metric in percentage_metrics:
                     value = value * 100
                     table.add_row(metric, f"{value.item():.2f}%")

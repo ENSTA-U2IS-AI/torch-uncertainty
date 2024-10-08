@@ -26,12 +26,12 @@ class MNISTDataModule(TUDataModule):
         root: str | Path,
         batch_size: int,
         eval_ood: bool = False,
+        eval_shift: bool = False,
         ood_ds: Literal["fashion", "notMNIST"] = "fashion",
         val_split: float | None = None,
         num_workers: int = 1,
         basic_augment: bool = True,
         cutout: int | None = None,
-        test_alt: Literal["c"] | None = None,
         pin_memory: bool = True,
         persistent_workers: bool = True,
     ) -> None:
@@ -40,6 +40,9 @@ class MNISTDataModule(TUDataModule):
         Args:
             root (str): Root directory of the datasets.
             eval_ood (bool): Whether to evaluate on out-of-distribution data.
+                Defaults to ``False``.
+            eval_shift (bool): Whether to evaluate on shifted data. Defaults to
+                ``False``.
             batch_size (int): Number of samples per batch.
             ood_ds (str): Which out-of-distribution dataset to use. Defaults to
                 ``"fashion"``; `fashion` stands for FashionMNIST and `notMNIST` for
@@ -51,11 +54,9 @@ class MNISTDataModule(TUDataModule):
             basic_augment (bool): Whether to apply base augmentations. Defaults to
                 ``True``.
             cutout (int): Size of cutout to apply to images. Defaults to ``None``.
-            test_alt (str): Which test set to use. Defaults to ``None``.
             pin_memory (bool): Whether to pin memory. Defaults to ``True``.
             persistent_workers (bool): Whether to use persistent workers. Defaults
                 to ``True``.
-            kwargs: Additional arguments.
         """
         super().__init__(
             root=root,
@@ -67,12 +68,10 @@ class MNISTDataModule(TUDataModule):
         )
 
         self.eval_ood = eval_ood
+        self.eval_shift = eval_shift
         self.batch_size = batch_size
 
-        if test_alt == "c":
-            self.dataset = MNISTC
-        else:
-            self.dataset = MNIST
+        self.dataset = MNIST
 
         if ood_ds == "fashion":
             self.ood_dataset = FashionMNIST
@@ -82,6 +81,7 @@ class MNISTDataModule(TUDataModule):
             raise ValueError(
                 f"`ood_ds` should be in {self.ood_datasets}. Got {ood_ds}."
             )
+        self.shift_dataset = MNISTC
 
         if basic_augment:
             basic_transform = T.RandomCrop(28, padding=4)
@@ -122,6 +122,8 @@ class MNISTDataModule(TUDataModule):
 
         if self.eval_ood:
             self.ood_dataset(self.root, download=True)
+        if self.eval_shift:
+            self.shift_dataset(self.root, download=True)
 
     def setup(self, stage: Literal["fit", "test"] | None = None) -> None:
         if stage == "fit" or stage is None:
@@ -160,6 +162,12 @@ class MNISTDataModule(TUDataModule):
                 self.root,
                 download=False,
                 transform=self.ood_transform,
+            )
+        if self.eval_shift:
+            self.shift = self.shift_dataset(
+                self.root,
+                download=False,
+                transform=self.test_transform,
             )
 
     def test_dataloader(self) -> list[DataLoader]:

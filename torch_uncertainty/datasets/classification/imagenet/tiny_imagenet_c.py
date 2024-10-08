@@ -21,7 +21,7 @@ class TinyImageNetC(ImageFolder):
             takes in the target and transforms it. Defaults to None.
         subset (str): The subset to use, one of ``all`` or the keys in
             ``cifarc_subsets``.
-        severity (int): The severity of the corruption, between 1 and 5.
+        shift_severity (int): The shift_severity of the corruption, between 1 and 5.
         download (bool, optional): If True, downloads the dataset from the
             internet and puts it in root directory. If dataset is already
             downloaded, it is not downloaded again. Defaults to False.
@@ -68,7 +68,7 @@ class TinyImageNetC(ImageFolder):
         transform: Callable | None = None,
         target_transform: Callable | None = None,
         subset: str = "all",
-        severity: int = 1,
+        shift_severity: int = 1,
         download: bool = False,
     ) -> None:
         self.root = Path(root)
@@ -89,28 +89,28 @@ class TinyImageNetC(ImageFolder):
                 f"The subset '{subset}' does not exist in TinyImageNet-C."
             )
         self.subset = subset
-        self.severity = severity
+        self.shift_severity = shift_severity
 
         self.transform = transform
         self.target_transform = target_transform
 
-        if severity not in list(range(1, 6)):
+        if shift_severity not in list(range(1, 6)):
             raise ValueError(
-                "Corruptions severity should be chosen between 1 and 5 included."
+                "Corruptions shift_severity should be chosen between 1 and 5 included."
             )
 
-        # Update samples given the subset and severity
-        self._make_c_dataset(self.subset, self.severity)
+        # Update samples given the subset and shift_severity
+        self._make_c_dataset(self.subset, self.shift_severity)
 
-    def _make_c_dataset(self, subset: str, severity: int) -> None:
+    def _make_c_dataset(self, subset: str, shift_severity: int) -> None:
         r"""Build the corrupted dataset according to the chosen subset and
-            severity. If the subset is 'all', gather all corruption types
+            shift_severity. If the subset is 'all', gather all corruption types
             in the dataset.
 
         Args:
             subset (str): The name of the corruption subset to be used. Choose
                 `all` for the dataset to contain all subsets.
-            severity (int): The severity of the corruption applied to the
+            shift_severity (int): The shift_severity of the corruption applied to the
                 images.
         """
         if subset == "all":
@@ -120,7 +120,7 @@ class TinyImageNetC(ImageFolder):
                     (
                         img[0]
                         .replace("brightness", subset)
-                        .replace("/1/", "/" + str(severity) + "/"),
+                        .replace("/1/", "/" + str(shift_severity) + "/"),
                         img[1],
                     )
                     for img in self.imgs
@@ -134,7 +134,7 @@ class TinyImageNetC(ImageFolder):
                 (
                     img[0]
                     .replace("brightness", subset)
-                    .replace("/1/", "/" + str(severity) + "/"),
+                    .replace("/1/", "/" + str(shift_severity) + "/"),
                     img[1],
                 )
                 for img in self.imgs

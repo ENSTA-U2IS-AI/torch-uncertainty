@@ -207,7 +207,7 @@ class CIFAR10C(VisionDataset):
 
 class CIFAR100C(CIFAR10C):
     base_folder = "CIFAR-100-C"
-    tar_md5 = "11f0ed0f1191edbf9fa23466ae6021d3"
+    tgz_md5 = "11f0ed0f1191edbf9fa23466ae6021d3"
     ctest_list = [
         ["fog.npy", "4efc7ebd5e82b028bdbe13048e3ea564"],
         ["jpeg_compression.npy", "c851b7f1324e1d2ffddeb76920576d11"],
@@ -230,5 +230,5 @@ class CIFAR100C(CIFAR10C):
         ["labels.npy", "bb4026e9ce52996b95f439544568cdb2"],
         ["pixelate.npy", "96c00c60f144539e14cffb02ddbd0640"],
     ]
-    cifarc_url = "https://zenodo.org/record/3555552/files/CIFAR-100-C.tar"
+    url = "https://zenodo.org/record/3555552/files/CIFAR-100-C.tar"
     filename = "CIFAR-100-C.tar"

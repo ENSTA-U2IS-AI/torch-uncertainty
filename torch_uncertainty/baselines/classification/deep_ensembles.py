@@ -22,6 +22,7 @@ class DeepEnsemblesBaseline(ClassificationRoutine):
         checkpoint_ids: list[int],
         backbone: Literal["resnet", "vgg", "wideresnet"],
         eval_ood: bool = False,
+        eval_shift: bool = False,
         eval_grouping_loss: bool = False,
         ood_criterion: Literal[
             "msp", "logit", "energy", "entropy", "mi", "vr"
@@ -53,6 +54,7 @@ class DeepEnsemblesBaseline(ClassificationRoutine):
             loss=None,
             is_ensemble=de.num_estimators > 1,
             eval_ood=eval_ood,
+            eval_shift=eval_shift,
             eval_grouping_loss=eval_grouping_loss,
             ood_criterion=ood_criterion,
             log_plots=log_plots,

@@ -130,3 +130,8 @@ class TULightningCLI(LightningCLI):
             default=self.eval_after_fit_default,
         )
         super().add_default_arguments_to_parser(parser)
+
+    def add_arguments_to_parser(self, parser: LightningArgumentParser) -> None:
+        super().add_arguments_to_parser(parser)
+        parser.link_arguments("data.eval_ood", "model.eval_ood")
+        parser.link_arguments("data.eval_shift", "model.eval_shift")

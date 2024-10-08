@@ -29,13 +29,14 @@ class CIFAR10DataModule(TUDataModule):
         root: str | Path,
         batch_size: int,
         eval_ood: bool = False,
+        eval_shift: bool = False,
+        shift_severity: int = 1,
         val_split: float | None = None,
         num_workers: int = 1,
         basic_augment: bool = True,
         cutout: int | None = None,
         auto_augment: str | None = None,
-        test_alt: Literal["c", "h"] | None = None,
-        corruption_severity: int = 1,
+        test_alt: Literal["h"] | None = None,
         num_dataloaders: int = 1,
         pin_memory: bool = True,
         persistent_workers: bool = True,
@@ -45,6 +46,9 @@ class CIFAR10DataModule(TUDataModule):
         Args:
             root (str): Root directory of the datasets.
             eval_ood (bool): Whether to evaluate on out-of-distribution data.
+                Defaults to ``False``.
+            eval_shift (bool): Whether to evaluate on shifted data. Defaults to
+                ``False``.
             batch_size (int): Number of samples per batch.
             val_split (float): Share of samples to use for validation. Defaults
                 to ``0.0``.
@@ -57,7 +61,7 @@ class CIFAR10DataModule(TUDataModule):
                 ``False``.
             auto_augment (str): Which auto-augment to apply. Defaults to ``None``.
             test_alt (str): Which test set to use. Defaults to ``None``.
-            corruption_severity (int): Severity of corruption to apply for
+            shift_severity (int): Severity of corruption to apply for
                 CIFAR10-C. Defaults to ``1``.
             num_dataloaders (int): Number of dataloaders to use. Defaults to ``1``.
             pin_memory (bool): Whether to pin memory. Defaults to ``True``.
@@ -76,17 +80,17 @@ class CIFAR10DataModule(TUDataModule):
         self.val_split = val_split
         self.num_dataloaders = num_dataloaders
         self.eval_ood = eval_ood
+        self.eval_shift = eval_shift
 
-        if test_alt == "c":
-            self.dataset = CIFAR10C
-        elif test_alt == "h":
+        if test_alt == "h":
             self.dataset = CIFAR10H
         else:
             self.dataset = CIFAR10
 
         self.test_alt = test_alt
-        self.corruption_severity = corruption_severity
+        self.shift_severity = shift_severity
         self.ood_dataset = SVHN
+        self.shift_dataset = CIFAR10C
 
         if (cutout is not None) + int(auto_augment is not None) > 1:
             raise ValueError(
@@ -137,12 +141,6 @@ class CIFAR10DataModule(TUDataModule):
         if self.test_alt is None:
             self.dataset(self.root, train=True, download=True)
             self.dataset(self.root, train=False, download=True)
-        elif self.test_alt == "c":
-            self.dataset(
-                self.root,
-                severity=self.corruption_severity,
-                download=True,
-            )
         else:
             self.dataset(
                 self.root,
@@ -151,6 +149,12 @@ class CIFAR10DataModule(TUDataModule):
 
         if self.eval_ood:
             self.ood_dataset(self.root, split="test", download=True)
+        if self.eval_shift:
+            self.shift_dataset(
+                self.root,
+                severity=self.shift_severity,
+                download=True,
+            )
 
     def setup(self, stage: Literal["fit", "test"] | None = None) -> None:
         if stage == "fit" or stage is None:
@@ -189,12 +193,18 @@ class CIFAR10DataModule(TUDataModule):
                 self.test = self.dataset(
                     self.root,
                     transform=self.test_transform,
-                    severity=self.corruption_severity,
+                    severity=self.shift_severity,
                 )
             if self.eval_ood:
                 self.ood = self.ood_dataset(
                     self.root,
                     split="test",
+                    download=False,
+                    transform=self.test_transform,
+                )
+            if self.eval_shift:
+                self.shift = self.shift_dataset(
+                    self.root,
                     download=False,
                     transform=self.test_transform,
                 )
@@ -224,6 +234,8 @@ class CIFAR10DataModule(TUDataModule):
         dataloader = [self._data_loader(self.test)]
         if self.eval_ood:
             dataloader.append(self._data_loader(self.ood))
+        if self.eval_shift:
+            dataloader.append(self._data_loader(self.shift))
         return dataloader
 
     def _get_train_data(self) -> ArrayLike:
