@@ -111,7 +111,7 @@ routine = ClassificationRoutine(
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 # Now that we have prepared all of this, we just have to gather everything in
-# the main function and to train the model using the Lightning Trainer.
+# the main function and to train the model using the our wrapper of Lightning Trainer.
 # Specifically, it needs the routine, that includes the model as well as the
 # training/eval logic and the datamodule
 # The dataset will be downloaded automatically in the root/data folder, and the
