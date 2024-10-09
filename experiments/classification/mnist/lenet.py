@@ -8,6 +8,7 @@ from torch_uncertainty.utils import TULightningCLI
 
 class MNISTCLI(TULightningCLI):
     def add_arguments_to_parser(self, parser: LightningArgumentParser) -> None:
+        super().add_arguments_to_parser(parser)
         parser.add_optimizer_args(torch.optim.SGD)
 
 
