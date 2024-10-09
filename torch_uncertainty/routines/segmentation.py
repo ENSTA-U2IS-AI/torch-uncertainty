@@ -68,6 +68,11 @@ class SegmentationRoutine(LightningModule):
             metric_subsampling_rate,
             num_calibration_bins,
         )
+        if eval_shift:
+            raise NotImplementedError(
+                "Distribution shift evaluation not implemented yet. Raise an issue "
+                "if needed."
+            )
 
         self.model = model
         self.num_classes = num_classes

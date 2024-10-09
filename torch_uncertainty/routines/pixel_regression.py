@@ -81,6 +81,11 @@ class PixelRegressionRoutine(LightningModule):
         """
         super().__init__()
         _depth_routine_checks(output_dim, num_image_plot, log_plots)
+        if eval_shift:
+            raise NotImplementedError(
+                "Distribution shift evaluation not implemented yet. Raise an issue "
+                "if needed."
+            )
 
         self.model = model
         self.output_dim = output_dim
