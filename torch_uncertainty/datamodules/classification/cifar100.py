@@ -146,6 +146,7 @@ class CIFAR100DataModule(TUDataModule):
                 self.root,
                 download=True,
                 transform=self.test_transform,
+                shift_severity=self.shift_severity,
             )
 
     def setup(self, stage: Literal["fit", "test"] | None = None) -> None:
@@ -188,6 +189,7 @@ class CIFAR100DataModule(TUDataModule):
                 self.shift = self.shift_dataset(
                     self.root,
                     download=False,
+                    shift_severity=self.shift_severity,
                     transform=self.test_transform,
                 )
         if stage not in ["fit", "test", None]:

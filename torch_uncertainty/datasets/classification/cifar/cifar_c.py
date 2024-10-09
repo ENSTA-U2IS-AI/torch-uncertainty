@@ -23,7 +23,7 @@ class CIFAR10C(VisionDataset):
             takes in the target and transforms it. Defaults to None.
         subset (str): The subset to use, one of ``all`` or the keys in
             ``cifarc_subsets``.
-        severity (int): The severity of the corruption, between 1 and 5.
+        shift_severity (int): The shift_severity of the corruption, between 1 and 5.
         download (bool, optional): If True, downloads the dataset from the
             internet and puts it in root directory. If dataset is already
             downloaded, it is not downloaded again. Defaults to False.
@@ -88,7 +88,7 @@ class CIFAR10C(VisionDataset):
         transform: Callable | None = None,
         target_transform: Callable | None = None,
         subset: str = "all",
-        severity: int = 1,
+        shift_severity: int = 1,
         download: bool = False,
     ) -> None:
         self.root = Path(root)
@@ -111,34 +111,34 @@ class CIFAR10C(VisionDataset):
                 f"The subset '{subset}' does not exist in CIFAR-C."
             )
         self.subset = subset
-        self.severity = severity
+        self.shift_severity = shift_severity
 
-        if severity not in list(range(1, 6)):
+        if shift_severity not in list(range(1, 6)):
             raise ValueError(
-                "Corruptions severity should be chosen between 1 and 5 "
+                "Corruptions shift_severity should be chosen between 1 and 5 "
                 "included."
             )
         samples, labels = self.make_dataset(
-            self.root, self.subset, self.severity
+            self.root, self.subset, self.shift_severity
         )
 
         self.samples = samples
         self.labels = labels.astype(np.int64)
 
     def make_dataset(
-        self, root: Path, subset: str, severity: int
+        self, root: Path, subset: str, shift_severity: int
     ) -> tuple[np.ndarray, np.ndarray]:
         r"""Make the CIFAR-C dataset.
 
         Build the corrupted dataset according to the chosen subset and
-            severity. If the subset is 'all', gather all corruption types
+            shift_severity. If the subset is 'all', gather all corruption types
             in the dataset.
 
         Args:
             root (Path):The path to the dataset.
             subset (str): The name of the corruption subset to be used. Choose
                 `all` for the dataset to contain all subsets.
-            severity (int): The severity of the corruption applied to the
+            shift_severity (int): The shift_severity of the corruption applied to the
                 images.
 
         Returns:
@@ -146,11 +146,11 @@ class CIFAR10C(VisionDataset):
         """
         if subset == "all":
             labels: np.ndarray = np.load(root / "labels.npy")[
-                (severity - 1) * 10000 : severity * 10000
+                (shift_severity - 1) * 10000 : shift_severity * 10000
             ]
             sample_arrays = [
                 np.load(root / (cifar_subset + ".npy"))[
-                    (severity - 1) * 10000 : severity * 10000
+                    (shift_severity - 1) * 10000 : shift_severity * 10000
                 ]
                 for cifar_subset in self.cifarc_subsets
             ]
@@ -159,10 +159,10 @@ class CIFAR10C(VisionDataset):
 
         else:
             samples: np.ndarray = np.load(root / (subset + ".npy"))[
-                (severity - 1) * 10000 : severity * 10000
+                (shift_severity - 1) * 10000 : shift_severity * 10000
             ]
             labels: np.ndarray = np.load(root / "labels.npy")[
-                (severity - 1) * 10000 : severity * 10000
+                (shift_severity - 1) * 10000 : shift_severity * 10000
             ]
         return samples, labels
 

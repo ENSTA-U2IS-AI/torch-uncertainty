@@ -152,7 +152,7 @@ class CIFAR10DataModule(TUDataModule):
         if self.eval_shift:
             self.shift_dataset(
                 self.root,
-                severity=self.shift_severity,
+                shift_severity=self.shift_severity,
                 download=True,
             )
 
@@ -193,7 +193,7 @@ class CIFAR10DataModule(TUDataModule):
                 self.test = self.dataset(
                     self.root,
                     transform=self.test_transform,
-                    severity=self.shift_severity,
+                    shift_severity=self.shift_severity,
                 )
             if self.eval_ood:
                 self.ood = self.ood_dataset(
