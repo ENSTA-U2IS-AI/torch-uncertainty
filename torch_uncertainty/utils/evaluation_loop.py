@@ -209,14 +209,17 @@ class TUEvaluationLoop(_EvaluationLoop):
             table.add_column(
                 first_col_name, justify="center", style="cyan", width=12
             )
+            shift_severity = int(metrics["shift"]["shift_severity"])
             table.add_column(
-                "Distribution Shift",
+                f"Distribution Shift lvl{shift_severity}",
                 justify="center",
                 style="magenta",
                 width=25,
             )
             shift_metrics = OrderedDict(sorted(metrics["shift"].items()))
             for metric, value in shift_metrics.items():
+                if metric == "shift_severity":
+                    continue
                 if metric in percentage_metrics:
                     value = value * 100
                     table.add_row(metric, f"{value.item():.2f}%")
