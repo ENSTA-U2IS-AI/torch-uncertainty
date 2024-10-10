@@ -95,7 +95,7 @@ CIFAR10 datamodule.
 
 Here it is, you have trained your first model with TorchUncertainty! As a result, you will get access to various metrics
 measuring the ability of your model to handle uncertainty. You can get other examples of training with lightning Trainers
-looking at the `Tutorials <tutorials.html#layers>`_.
+looking at the `Tutorials <auto_tutorials/index.html>`_.
 
 More metrics
 ^^^^^^^^^^^^
