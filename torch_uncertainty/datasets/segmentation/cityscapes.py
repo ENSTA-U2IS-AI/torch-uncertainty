@@ -120,3 +120,8 @@ class Cityscapes(TVCityscapes):
             The axis on which the sample was plotted.
         """
         raise NotImplementedError("This method is not implemented yet.")
+
+    @property
+    def color_palette(self) -> list[tuple[int, int, int]]:
+        """Return the color palette of the dataset."""
+        return [c.color for c in self.classes]

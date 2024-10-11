@@ -267,3 +267,7 @@ class MUAD(VisionDataset):
         download_and_extract_archive(
             split_url, self.root, md5=self.zip_md5[split]
         )
+
+    @property
+    def color_palette(self) -> np.ndarray:
+        return self.train_id_to_color.tolist()

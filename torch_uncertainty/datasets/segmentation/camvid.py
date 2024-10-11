@@ -246,6 +246,13 @@ class CamVid(VisionDataset):
                 ] = torch.tensor(camvid_class.color, dtype=target.dtype)
         return F.to_pil_image(rearrange(colored_target, "h w c -> c h w"))
 
+    @property
+    def color_palette(self) -> list[tuple[int, int, int]]:
+        """Return the color palette of the dataset."""
+        if self.group_classes:
+            return [camvid_class.color for camvid_class in self.superclasses]
+        return [camvid_class.color for camvid_class in self.classes]
+
     def __getitem__(
         self, index: int
     ) -> tuple[tv_tensors.Image, tv_tensors.Mask]:
