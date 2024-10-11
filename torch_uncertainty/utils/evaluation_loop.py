@@ -32,6 +32,7 @@ class TUEvaluationLoop(_EvaluationLoop):
             "mIoU",
             "AURC",
             "AUGRC",
+            "mAcc",
         ]
 
         metrics = {}
