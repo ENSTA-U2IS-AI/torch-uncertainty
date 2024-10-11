@@ -163,6 +163,8 @@ class DummyRegressionDataModule(TUDataModule):
 class DummySegmentationDataModule(TUDataModule):
     num_channels = 3
     training_task = "segmentation"
+    mean = [0.0, 0.0, 0.0]
+    std = [1.0, 1.0, 1.0]
 
     def __init__(
         self,
