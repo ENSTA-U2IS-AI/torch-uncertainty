@@ -7,7 +7,7 @@ from numpy.typing import ArrayLike
 from torch.utils.data import DataLoader
 from torchvision import tv_tensors
 
-from torch_uncertainty.datamodules.abstract import TUDataModule
+from torch_uncertainty.datamodules import TUDataModule
 
 from .dataset import (
     DummPixelRegressionDataset,

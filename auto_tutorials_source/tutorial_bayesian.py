@@ -41,7 +41,7 @@ from pathlib import Path
 
 from torch import nn, optim
 
-from torch_uncertainty.utils import TUTrainer
+from torch_uncertainty import TUTrainer
 from torch_uncertainty.datamodules import MNISTDataModule
 from torch_uncertainty.losses import ELBOLoss
 from torch_uncertainty.models.lenet import bayesian_lenet

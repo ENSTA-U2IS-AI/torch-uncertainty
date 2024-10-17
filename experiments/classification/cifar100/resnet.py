@@ -1,9 +1,9 @@
 import torch
 from lightning.pytorch.cli import LightningArgumentParser
 
+from torch_uncertainty import TULightningCLI
 from torch_uncertainty.baselines.classification import ResNetBaseline
 from torch_uncertainty.datamodules import CIFAR100DataModule
-from torch_uncertainty.utils import TULightningCLI
 
 
 class ResNetCLI(TULightningCLI):

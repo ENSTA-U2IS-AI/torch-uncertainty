@@ -31,7 +31,7 @@ We also need import the neural network utils within `torch.nn`.
 # %%
 from pathlib import Path
 
-from torch_uncertainty.utils import TUTrainer
+from torch_uncertainty import TUTrainer
 from torch import nn
 
 from torch_uncertainty.datamodules import MNISTDataModule

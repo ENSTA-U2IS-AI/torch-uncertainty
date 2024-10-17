@@ -1,9 +1,9 @@
 import torch
 from lightning.pytorch.cli import LightningArgumentParser
 
+from torch_uncertainty import TULightningCLI
 from torch_uncertainty.baselines.segmentation import DeepLabBaseline
 from torch_uncertainty.datamodules.segmentation import CityscapesDataModule
-from torch_uncertainty.utils import TULightningCLI
 from torch_uncertainty.utils.learning_rate import PolyLR
 
 

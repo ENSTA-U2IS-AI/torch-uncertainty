@@ -34,7 +34,7 @@ import torch
 from lightning import LightningDataModule
 from torch import nn, optim
 
-from torch_uncertainty.utils import TUTrainer
+from torch_uncertainty import TUTrainer
 from torch_uncertainty.models.mlp import mlp
 from torch_uncertainty.datasets.regression.toy import Cubic
 from torch_uncertainty.losses import DERLoss

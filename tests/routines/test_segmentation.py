@@ -7,9 +7,9 @@ from tests._dummies import (
     DummySegmentationBaseline,
     DummySegmentationDataModule,
 )
+from torch_uncertainty import TUTrainer
 from torch_uncertainty.optim_recipes import optim_cifar10_resnet18
 from torch_uncertainty.routines import SegmentationRoutine
-from torch_uncertainty.utils import TUTrainer
 
 
 class TestSegmentation:

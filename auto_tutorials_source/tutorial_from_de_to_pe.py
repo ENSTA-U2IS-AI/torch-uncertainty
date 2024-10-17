@@ -149,7 +149,7 @@ def optim_recipe(model, lr_mult: float = 1.0):
 
 
 from torch_uncertainty.routines import ClassificationRoutine
-from torch_uncertainty.utils import TUTrainer
+from torch_uncertainty import TUTrainer
 
 # Create the trainer that will handle the training
 trainer = TUTrainer(accelerator="cpu", max_epochs=max_epochs)

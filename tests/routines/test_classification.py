@@ -8,10 +8,10 @@ from tests._dummies import (
     DummyClassificationDataModule,
     dummy_model,
 )
+from torch_uncertainty import TUTrainer
 from torch_uncertainty.losses import DECLoss, ELBOLoss
 from torch_uncertainty.routines import ClassificationRoutine
 from torch_uncertainty.transforms import RepeatTarget
-from torch_uncertainty.utils import TUTrainer
 
 
 class TestClassification:

@@ -10,7 +10,7 @@ from torch import nn
 from torch.utils.data import DataLoader
 from torchvision.datasets import CIFAR100, SVHN
 
-from torch_uncertainty.datamodules.abstract import TUDataModule
+from torch_uncertainty.datamodules import TUDataModule
 from torch_uncertainty.datasets import AggregatedDataset
 from torch_uncertainty.datasets.classification import CIFAR100C
 from torch_uncertainty.transforms import Cutout

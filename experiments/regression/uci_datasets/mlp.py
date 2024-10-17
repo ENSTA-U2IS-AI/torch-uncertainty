@@ -1,9 +1,9 @@
 import torch
 from lightning.pytorch.cli import LightningArgumentParser
 
+from torch_uncertainty import TULightningCLI
 from torch_uncertainty.baselines.regression import MLPBaseline
 from torch_uncertainty.datamodules import UCIDataModule
-from torch_uncertainty.utils import TULightningCLI
 
 
 class MLPCLI(TULightningCLI):

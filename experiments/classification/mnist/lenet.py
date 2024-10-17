@@ -1,9 +1,9 @@
 import torch
 from lightning.pytorch.cli import LightningArgumentParser
 
+from torch_uncertainty import TULightningCLI
 from torch_uncertainty.datamodules import MNISTDataModule
 from torch_uncertainty.routines import ClassificationRoutine
-from torch_uncertainty.utils import TULightningCLI
 
 
 class MNISTCLI(TULightningCLI):

@@ -10,7 +10,7 @@ from torch import nn
 from torch.utils.data import DataLoader, Subset
 from torchvision.datasets import DTD, SVHN, ImageNet, INaturalist
 
-from torch_uncertainty.datamodules.abstract import TUDataModule
+from torch_uncertainty.datamodules import TUDataModule
 from torch_uncertainty.datasets.classification import (
     ImageNetA,
     ImageNetC,
@@ -47,6 +47,7 @@ class ImageNetDataModule(TUDataModule):
         batch_size: int,
         eval_ood: bool = False,
         eval_shift: bool = False,
+        shift_severity: int = 1,
         val_split: float | Path | None = None,
         ood_ds: str = "openimage-o",
         test_alt: str | None = None,
@@ -67,6 +68,7 @@ class ImageNetDataModule(TUDataModule):
                 performance. Defaults to ``False``.
             eval_shift (bool): Whether to evaluate on shifted data. Defaults to
                 ``False``.
+            shift_severity: int = 1,
             batch_size (int): Number of samples per batch.
             val_split (float or Path): Share of samples to use for validation
                 or path to a yaml file containing a list of validation images
@@ -98,6 +100,7 @@ class ImageNetDataModule(TUDataModule):
 
         self.eval_ood = eval_ood
         self.eval_shift = eval_shift
+        self.shift_severity = shift_severity
         if val_split and not isinstance(val_split, float):
             val_split = Path(val_split)
             self.train_indices, self.val_indices = read_indices(val_split)
@@ -223,6 +226,7 @@ class ImageNetDataModule(TUDataModule):
                 self.root,
                 download=True,
                 transform=self.test_transform,
+                shift_severity=self.shift_severity,
             )
 
     def setup(self, stage: Literal["fit", "test"] | None = None) -> None:
@@ -282,6 +286,7 @@ class ImageNetDataModule(TUDataModule):
                 self.root,
                 download=False,
                 transform=self.test_transform,
+                shift_severity=self.shift_severity,
             )
 
     def test_dataloader(self) -> list[DataLoader]:

@@ -4,10 +4,10 @@ import pytest
 from torch import nn
 
 from tests._dummies import DummyRegressionBaseline, DummyRegressionDataModule
+from torch_uncertainty import TUTrainer
 from torch_uncertainty.losses import DistributionNLLLoss
 from torch_uncertainty.optim_recipes import optim_cifar10_resnet18
 from torch_uncertainty.routines import RegressionRoutine
-from torch_uncertainty.utils import TUTrainer
 
 
 class TestRegression:
