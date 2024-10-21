@@ -61,6 +61,7 @@ __all__ = [
     "GaussianBlur",
     "SpeckleNoise",
     "Saturation",
+    "corruption_transforms",
 ]
 
 
@@ -651,3 +652,22 @@ class Saturation(ISaturation):
         if self.severity == 0:
             return img
         return super().forward(img, self.level)
+
+
+corruption_transforms = (
+    GaussianNoise,
+    ShotNoise,
+    ImpulseNoise,
+    DefocusBlur,
+    GlassBlur,
+    MotionBlur,
+    ZoomBlur,
+    Snow,
+    Frost,
+    Fog,
+    Brightness,
+    Contrast,
+    Elastic,
+    Pixelate,
+    JPEGCompression,
+)
