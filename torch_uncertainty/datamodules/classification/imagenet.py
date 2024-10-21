@@ -293,7 +293,7 @@ class ImageNetDataModule(TUDataModule):
         """Get the test dataloaders for ImageNet.
 
         Return:
-            List[DataLoader]: ImageNet test set (in distribution data) and
+            list[DataLoader]: ImageNet test set (in distribution data) and
             Textures test split (out-of-distribution data).
         """
         dataloader = [self._data_loader(self.test)]
@@ -311,7 +311,7 @@ def read_indices(path: Path) -> list[str]:  # coverage: ignore
         path (Path): Path to the file.
 
     Returns:
-        list[str]: List of filenames.
+        list[str]: list of filenames.
     """
     if not path.is_file():
         raise ValueError(f"{path} is not a file.")

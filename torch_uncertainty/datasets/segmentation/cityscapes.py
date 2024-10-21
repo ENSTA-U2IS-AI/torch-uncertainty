@@ -16,7 +16,7 @@ class Cityscapes(TVCityscapes):
         root: str,
         split: str = "train",
         mode: str = "fine",
-        target_type: torch.List[str] | str = "instance",
+        target_type: list[str] | str = "instance",
         transform: Callable[..., Any] | None = None,
         target_transform: Callable[..., Any] | None = None,
         transforms: Callable[..., Any] | None = None,

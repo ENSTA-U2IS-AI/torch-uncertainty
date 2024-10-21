@@ -175,7 +175,7 @@ class MNISTDataModule(TUDataModule):
         r"""Get the test dataloaders for MNIST.
 
         Return:
-            List[DataLoader]: Dataloaders of the MNIST test set (in
+            list[DataLoader]: Dataloaders of the MNIST test set (in
                 distribution data) and FashionMNIST test split
                 (out-of-distribution data).
         """

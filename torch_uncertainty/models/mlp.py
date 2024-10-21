@@ -28,7 +28,7 @@ class _MLP(nn.Module):
         Args:
             in_features (int): Number of input features.
             num_outputs (int): Number of output features.
-            hidden_dims (List[int]): Number of features for each hidden layer.
+            hidden_dims (list[int]): Number of features for each hidden layer.
             layer (nn.Module): Layer class.
             activation (Callable): Activation function.
             layer_args (Dict): Arguments for the layer class.
@@ -131,7 +131,7 @@ def mlp(
     Args:
         in_features (int): Number of input features.
         num_outputs (int): Number of output features.
-        hidden_dims (List[int]): Number of features in each hidden layer.
+        hidden_dims (list[int]): Number of features in each hidden layer.
         layer (nn.Module, optional): Layer type. Defaults to nn.Linear.
         activation (Callable, optional): Activation function. Defaults to
             F.relu.

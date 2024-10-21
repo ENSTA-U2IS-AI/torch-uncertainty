@@ -228,7 +228,7 @@ class CIFAR10DataModule(TUDataModule):
         r"""Get test dataloaders.
 
         Return:
-            List[DataLoader]: test set for in distribution data
+            list[DataLoader]: test set for in distribution data
             and out-of-distribution data.
         """
         dataloader = [self._data_loader(self.test)]

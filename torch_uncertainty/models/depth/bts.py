@@ -532,7 +532,7 @@ class BTSDecoder(nn.Module):
         """Forward pass.
 
         Args:
-            features (list[Tensor]): List of the features from the backbone.
+            features (list[Tensor]): list of the features from the backbone.
 
         Note:
             Depending of the :attr:`dist_layer` of the backbone, the output can
