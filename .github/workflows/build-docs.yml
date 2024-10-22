@@ -31,7 +31,7 @@ jobs:
         echo "PYTHON_VERSION=$(python -c "import platform; print(platform.python_version())")"
 
     - name: Cache folder for TorchUncertainty
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       id: cache-folder
       with:
         path: |
