@@ -35,6 +35,7 @@ class TestMNISTDataModule:
             MNISTDataModule(root="./data/", batch_size=128, ood_ds="other")
 
         dm.dataset = DummyClassificationDataset
+        dm.ood_dataset = DummyClassificationDataset
         dm.setup("fit")
         dm.setup("test")
         dm.train_dataloader()
