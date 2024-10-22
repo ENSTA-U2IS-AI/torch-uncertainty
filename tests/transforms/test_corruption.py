@@ -20,6 +20,7 @@ from torch_uncertainty.transforms.corruption import (
     ShotNoise,
     Snow,
     SpeckleNoise,
+    ZoomBlur,
 )
 
 
@@ -85,6 +86,13 @@ class TestCorruptions:
         transform = MotionBlur(1)
         transform(inputs)
         transform = MotionBlur(0)
+        transform(inputs)
+
+    def test_zoom_blur(self):
+        inputs = torch.rand(3, 32, 32)
+        transform = ZoomBlur(1)
+        transform(inputs)
+        transform = ZoomBlur(0)
         transform(inputs)
 
     def test_jpeg_compression(self):

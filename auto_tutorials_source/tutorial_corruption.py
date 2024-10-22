@@ -94,6 +94,7 @@ from torch_uncertainty.transforms.corruption import (
     MotionBlur,
     GlassBlur,
     DefocusBlur,
+    ZoomBlur,
 )
 
 show_images(
@@ -101,6 +102,7 @@ show_images(
         GlassBlur,
         MotionBlur,
         DefocusBlur,
+        ZoomBlur,
     ]
 )
 
@@ -117,7 +119,7 @@ show_images(
     [
         Fog,
         Frost,
-        # Snow,
+        Snow,
     ]
 )
 
@@ -138,15 +140,15 @@ show_images(
 )
 
 # %%
-# 4. Unused Corruptions
+# 5. Unused Corruptions
 # ~~~~~~~~~~~~~~~~~~~~~
 
 # The following corruptions are not used in the paper Benchmarking Neural Network Robustness to Common Corruptions and Perturbations.
 
 from torch_uncertainty.transforms.corruption import (
     GaussianBlur,
-        SpeckleNoise,
-        Saturation,
+    SpeckleNoise,
+    Saturation,
 )
 
 show_images(

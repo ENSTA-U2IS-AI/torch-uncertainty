@@ -289,12 +289,12 @@ class ZoomBlur(TUCorruption):
     def forward(self, img: Tensor) -> Tensor:
         if self.severity == 0:
             return img
-        img = img.numpy()
+        img = img.permute(1, 2, 0).numpy()
         out = np.zeros_like(img)
         for zoom_factor in self.zooms:
             out += clipped_zoom(img, zoom_factor)
         img = (img + out) / (len(self.zooms) + 1)
-        return torch.clamp(torch.as_tensor(img), 0, 1)
+        return torch.clamp(torch.as_tensor(img).permute(2, 0, 1), 0, 1)
 
 
 class Snow(TUCorruption):
