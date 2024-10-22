@@ -515,7 +515,7 @@ class JPEGCompression(TUCorruption):
 class Elastic(TUCorruption):
     def __init__(self, severity: int) -> None:
         super().__init__(severity)
-        if not cv2_installed:
+        if not cv2_installed:  # coverage: ignore
             raise ImportError(
                 "Please install torch_uncertainty with the image option:"
                 """pip install -U "torch_uncertainty[image]"."""
@@ -640,20 +640,16 @@ class GaussianBlur(TUCorruption):
         )
 
 
-class Saturation(ISaturation):
+class Saturation(ISaturation, TUCorruption):
     def __init__(self, severity: int) -> None:
-        super().__init__()
-        if not (0 <= severity <= 5):
-            raise ValueError("Severity must be between 0 and 5.")
-        if not isinstance(severity, int):
-            raise TypeError("Severity must be an integer.")
+        TUCorruption.__init__(self, severity)
         self.severity = severity
         self.level = [0.1, 0.2, 0.3, 0.4, 0.5][severity - 1]
 
     def forward(self, img: Tensor) -> Tensor:
         if self.severity == 0:
             return img
-        return super().forward(img, self.level)
+        return ISaturation.forward(self, img, self.level)
 
 
 corruption_transforms = (
