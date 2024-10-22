@@ -41,6 +41,7 @@ dependencies = [
     "matplotlib",
     "numpy",
     "rich>=10.2.2",
+    "seaborn",
 ]
 
 [project.optional-dependencies]
