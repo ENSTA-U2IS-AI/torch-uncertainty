@@ -5,7 +5,6 @@ import matplotlib.ticker as mticker
 import numpy as np
 import seaborn as sns
 import torch
-from matplotlib.figure import Figure
 from torchmetrics.classification.calibration_error import (
     BinaryCalibrationError,
     MulticlassCalibrationError,
@@ -16,6 +15,7 @@ from torchmetrics.functional.classification.calibration_error import (
 from torchmetrics.metric import Metric
 from torchmetrics.utilities.data import dim_zero_cat
 from torchmetrics.utilities.enums import ClassificationTaskNoMultilabel
+from torchmetrics.utilities.plot import _PLOT_OUT_TYPE
 
 from .adaptive_calibration_error import AdaptiveCalibrationError
 
@@ -27,7 +27,7 @@ def _reliability_diagram_subplot(
     bin_sizes: np.ndarray,
     bins: np.ndarray,
     title: str = "Reliability Diagram",
-    xlabel: str = "Confidence",
+    xlabel: str = "Top-class Confidence (%)",
     ylabel: str = "Success Rate (%)",
 ) -> None:
     widths = 1.0 / len(bin_sizes)
@@ -140,7 +140,7 @@ def reliability_chart(
     title="Reliability Diagram",
     figsize=(6, 6),
     dpi=72,
-) -> Figure:
+) -> _PLOT_OUT_TYPE:
     """Builds Reliability Diagram
     `Source <https://github.com/hollance/reliability-diagrams>`_.
     """
@@ -166,7 +166,6 @@ def reliability_chart(
         bin_sizes,
         bins,
         title=title,
-        xlabel="",
     )
 
     # confidence histogram subplot
@@ -176,10 +175,10 @@ def reliability_chart(
     ax[1].yaxis.set_major_locator(mticker.FixedLocator(new_ticks))
     ax[1].set_yticklabels(new_ticks)
 
-    return fig
+    return fig, ax
 
 
-def custom_plot(self) -> plt.Figure:
+def custom_plot(self) -> _PLOT_OUT_TYPE:
     confidences = dim_zero_cat(self.confidences)
     accuracies = dim_zero_cat(self.accuracies)
 
