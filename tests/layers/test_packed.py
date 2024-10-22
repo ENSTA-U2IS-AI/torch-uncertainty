@@ -44,7 +44,9 @@ class TestPackedLinear:
 
     # Legacy tests
     def test_linear_one_estimator_no_rearrange(self, feat_input: torch.Tensor):
-        layer = PackedLinear(6, 2, alpha=1, num_estimators=1, rearrange=False)
+        layer = PackedLinear(
+            6, 2, alpha=1, num_estimators=1, rearrange=False, bias=False
+        )
         out = layer(feat_input)
         assert out.shape == torch.Size([2, 1])
 
