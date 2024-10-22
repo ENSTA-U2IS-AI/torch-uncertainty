@@ -48,6 +48,7 @@ class TestImageNetDataModule:
             batch_size=128,
             val_split=path,
             rand_augment_opt="rand-m9-n1",
+            basic_augment=False,
         )
 
         with pytest.raises(ValueError):

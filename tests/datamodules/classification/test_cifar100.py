@@ -38,6 +38,7 @@ class TestCIFAR100DataModule:
             cutout=0,
             val_split=0.1,
             num_dataloaders=2,
+            basic_augment=False,
         )
         dm.dataset = DummyClassificationDataset
         dm.ood_dataset = DummyClassificationDataset
