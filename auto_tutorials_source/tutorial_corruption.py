@@ -125,6 +125,7 @@ show_images(
 
 # %%
 # 4. Other Corruptions
+# ~~~~~~~~~~~~~~~~~~~~
 
 from torch_uncertainty.transforms.corruption import (
     Brightness, Contrast, Elastic, JPEGCompression, Pixelate)
