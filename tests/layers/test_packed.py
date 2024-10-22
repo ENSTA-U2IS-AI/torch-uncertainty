@@ -141,6 +141,23 @@ class TestPackedLinear:
                 5, 2, alpha=1, num_estimators=1, gamma=-1, rearrange=True
             )
 
+        with pytest.raises(AssertionError):
+            _ = PackedLinear(
+                5,
+                2,
+                alpha=1,
+                num_estimators=1,
+                gamma=1,
+                implementation="invalid",
+            )
+
+        with pytest.raises(ValueError):
+            layer = PackedLinear(
+                16, 4, alpha=1, num_estimators=1, implementation="full"
+            )
+            layer.implementation = "invalid"
+            _ = layer(torch.rand((2, 16)))
+
 
 class TestPackedConv1d:
     """Testing the PackedConv1d layer class."""
