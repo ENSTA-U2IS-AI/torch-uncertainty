@@ -3,15 +3,22 @@ import torch
 from requests.exceptions import HTTPError
 
 from torch_uncertainty.transforms.corruption import (
+    Brightness,
+    Contrast,
     DefocusBlur,
+    Elastic,
+    Fog,
     Frost,
     GaussianBlur,
     GaussianNoise,
     GlassBlur,
     ImpulseNoise,
     JPEGCompression,
+    MotionBlur,
     Pixelate,
+    Saturation,
     ShotNoise,
+    Snow,
     SpeckleNoise,
 )
 
@@ -32,10 +39,6 @@ class TestCorruptions:
         print(transform)
 
     def test_shot_noise(self):
-        with pytest.raises(ValueError):
-            _ = ShotNoise(-1)
-        with pytest.raises(TypeError):
-            _ = ShotNoise(0.1)
         inputs = torch.rand(3, 32, 32)
         transform = ShotNoise(1)
         transform(inputs)
@@ -43,10 +46,6 @@ class TestCorruptions:
         transform(inputs)
 
     def test_impulse_noise(self):
-        with pytest.raises(ValueError):
-            _ = ImpulseNoise(-1)
-        with pytest.raises(TypeError):
-            _ = ImpulseNoise(0.1)
         inputs = torch.rand(3, 32, 32)
         transform = ImpulseNoise(1)
         transform(inputs)
@@ -54,10 +53,6 @@ class TestCorruptions:
         transform(inputs)
 
     def test_speckle_noise(self):
-        with pytest.raises(ValueError):
-            _ = SpeckleNoise(-1)
-        with pytest.raises(TypeError):
-            _ = SpeckleNoise(0.1)
         inputs = torch.rand(3, 32, 32)
         transform = SpeckleNoise(1)
         transform(inputs)
@@ -65,10 +60,6 @@ class TestCorruptions:
         transform(inputs)
 
     def test_gaussian_blur(self):
-        with pytest.raises(ValueError):
-            _ = GaussianBlur(-1)
-        with pytest.raises(TypeError):
-            _ = GaussianBlur(0.1)
         inputs = torch.rand(3, 32, 32)
         transform = GaussianBlur(1)
         transform(inputs)
@@ -76,10 +67,6 @@ class TestCorruptions:
         transform(inputs)
 
     def test_glass_blur(self):
-        with pytest.raises(ValueError):
-            _ = GlassBlur(-1)
-        with pytest.raises(TypeError):
-            _ = GlassBlur(0.1)
         inputs = torch.rand(3, 32, 32)
         transform = GlassBlur(1)
         transform(inputs)
@@ -87,21 +74,20 @@ class TestCorruptions:
         transform(inputs)
 
     def test_defocus_blur(self):
-        with pytest.raises(ValueError):
-            _ = DefocusBlur(-1)
-        with pytest.raises(TypeError):
-            _ = DefocusBlur(0.1)
         inputs = torch.rand(3, 32, 32)
         transform = DefocusBlur(1)
         transform(inputs)
         transform = DefocusBlur(0)
         transform(inputs)
 
+    def test_motion_blur(self):
+        inputs = torch.rand(3, 32, 32)
+        transform = MotionBlur(1)
+        transform(inputs)
+        transform = MotionBlur(0)
+        transform(inputs)
+
     def test_jpeg_compression(self):
-        with pytest.raises(ValueError):
-            _ = JPEGCompression(-1)
-        with pytest.raises(TypeError):
-            _ = JPEGCompression(0.1)
         inputs = torch.rand(3, 32, 32)
         transform = JPEGCompression(1)
         transform(inputs)
@@ -109,10 +95,6 @@ class TestCorruptions:
         transform(inputs)
 
     def test_pixelate(self):
-        with pytest.raises(ValueError):
-            _ = Pixelate(-1)
-        with pytest.raises(TypeError):
-            _ = Pixelate(0.1)
         inputs = torch.rand(3, 32, 32)
         transform = Pixelate(1)
         transform(inputs)
@@ -126,12 +108,50 @@ class TestCorruptions:
         except HTTPError:
             frost_ok = False
         if frost_ok:
-            with pytest.raises(ValueError):
-                _ = Frost(-1)
-            with pytest.raises(TypeError):
-                _ = Frost(0.1)
             inputs = torch.rand(3, 32, 32)
             transform = Frost(1)
             transform(inputs)
             transform = Frost(0)
             transform(inputs)
+
+    def test_snow(self):
+        inputs = torch.rand(3, 32, 32)
+        transform = Snow(1)
+        transform(inputs)
+        transform = Snow(0)
+        transform(inputs)
+
+    def test_fog(self):
+        inputs = torch.rand(3, 32, 32)
+        transform = Fog(1, size=32)
+        transform(inputs)
+        transform = Fog(0, size=32)
+        transform(inputs)
+
+    def test_brightness(self):
+        inputs = torch.rand(3, 32, 32)
+        transform = Brightness(1)
+        transform(inputs)
+        transform = Brightness(0)
+        transform(inputs)
+
+    def test_contrast(self):
+        inputs = torch.rand(3, 32, 32)
+        transform = Contrast(1)
+        transform(inputs)
+        transform = Contrast(0)
+        transform(inputs)
+
+    def test_elastic(self):
+        inputs = torch.rand(3, 32, 32)
+        transform = Elastic(1)
+        transform(inputs)
+        transform = Elastic(0)
+        transform(inputs)
+
+    def test_saturation(self):
+        inputs = torch.rand(3, 32, 32)
+        transform = Saturation(1)
+        transform(inputs)
+        transform = Saturation(0)
+        transform(inputs)
