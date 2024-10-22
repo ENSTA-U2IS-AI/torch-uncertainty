@@ -87,7 +87,7 @@ class CamVidDataModule(TUDataModule):
             This behavior can be modified by overriding ``self.train_transform``
             and ``self.test_transform`` after initialization.
         """
-        if val_split is not None:
+        if val_split is not None:  # coverage: ignore
             logging.warning("val_split is not used for CamVidDataModule.")
 
         super().__init__(
