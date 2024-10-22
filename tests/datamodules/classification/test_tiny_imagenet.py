@@ -21,7 +21,10 @@ class TestTinyImageNetDataModule:
         )
 
         dm = TinyImageNetDataModule(
-            root="./data/", batch_size=128, ood_ds="textures"
+            root="./data/",
+            batch_size=128,
+            ood_ds="textures",
+            basic_augment=False,
         )
 
         with pytest.raises(ValueError):

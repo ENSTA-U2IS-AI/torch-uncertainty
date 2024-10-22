@@ -10,6 +10,9 @@ class TestCamVidDataModule:
 
     def test_camvid_main(self):
         dm = CamVidDataModule(root="./data/", batch_size=128)
+        dm = CamVidDataModule(
+            root="./data/", batch_size=128, basic_augment=False
+        )
 
         assert dm.dataset == CamVid
 

@@ -41,7 +41,11 @@ class TestCIFAR10DataModule:
         dm.test_dataloader()
 
         dm = CIFAR10DataModule(
-            root="./data/", batch_size=128, cutout=16, test_alt="h"
+            root="./data/",
+            batch_size=128,
+            cutout=16,
+            test_alt="h",
+            basic_augment=False,
         )
         dm.dataset = DummyClassificationDataset
         dm.setup("test")

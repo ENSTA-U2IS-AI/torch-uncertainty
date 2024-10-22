@@ -28,6 +28,7 @@ class TestMNISTDataModule:
             ood_ds="notMNIST",
             cutout=0,
             val_split=0,
+            basic_augment=False,
         )
         assert isinstance(dm.train_transform.transforms[2], nn.Identity)
 
