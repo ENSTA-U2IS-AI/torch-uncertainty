@@ -251,7 +251,7 @@ class ClassificationRoutine(LightningModule):
                 self.test_ood_ens_metrics = ens_metrics.clone(prefix="ood/ens_")
 
             if self.eval_shift:
-                self.test_ood_ens_metrics = ens_metrics.clone(
+                self.test_shift_ens_metrics = ens_metrics.clone(
                     prefix="shift/ens_"
                 )
 
@@ -517,6 +517,8 @@ class ClassificationRoutine(LightningModule):
 
         if self.eval_shift and dataloader_idx == (2 if self.eval_ood else 1):
             self.test_shift_metrics.update(probs, targets)
+            if self.is_ensemble:
+                self.test_shift_ens_metrics.update(probs_per_est)
 
     def on_validation_epoch_end(self) -> None:
         res_dict = self.val_cls_metrics.compute()
@@ -580,6 +582,11 @@ class ClassificationRoutine(LightningModule):
             tmp_metrics["shift/shift_severity"] = shift_severity
             self.log_dict(tmp_metrics, sync_dist=True)
             result_dict.update(tmp_metrics)
+
+            if self.is_ensemble:
+                tmp_metrics = self.test_shift_ens_metrics.compute()
+                self.log_dict(tmp_metrics, sync_dist=True)
+                result_dict.update(tmp_metrics)
 
         if isinstance(self.logger, Logger) and self.log_plots:
             self.logger.experiment.add_figure(

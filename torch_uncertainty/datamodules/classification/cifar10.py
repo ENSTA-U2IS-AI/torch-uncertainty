@@ -84,8 +84,10 @@ class CIFAR10DataModule(TUDataModule):
 
         if test_alt == "h":
             self.dataset = CIFAR10H
-        else:
+        elif test_alt is None:
             self.dataset = CIFAR10
+        else:
+            raise ValueError(f"Test set {test_alt} is not supported.")
 
         self.test_alt = test_alt
         self.shift_severity = shift_severity

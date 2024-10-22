@@ -13,7 +13,7 @@ In this part, we train a LeNet with batch normalization layers, based on the mod
 
 First, we have to load the following utilities from TorchUncertainty:
 
-- the TUTrainer from the framework
+- the TUTrainer from our framework
 - the datamodule handling dataloaders: MNISTDataModule from torch_uncertainty.datamodules
 - the model: LeNet, which lies in torch_uncertainty.models
 - the MC Batch Normalization wrapper: mc_batch_norm, which lies in torch_uncertainty.post_processing

@@ -276,48 +276,47 @@ class SegmentationRoutine(LightningModule):
                 "Selective Classification/Generalized Risk-Coverage curve",
                 self.test_sbsmpl_seg_metrics["sc/AUGRC"].plot()[0],
             )
-            # Plot segmentation results.
-            for i, (img, pred, tgt) in enumerate(self.sample_buffer):
-                pred = (
-                    pred
-                    == torch.arange(self.num_classes, device=pred.device)[
-                        :, None, None
-                    ]
-                )
-                tgt = (
-                    tgt
-                    == torch.arange(self.num_classes, device=tgt.device)[
-                        :, None, None
-                    ]
-                )
+            self.log_segmentation_plots()
 
-                # Undo normalization on the image and convert to uint8.
-                mean = torch.tensor(
-                    self.trainer.datamodule.mean, device=img.device
-                )
-                std = torch.tensor(
-                    self.trainer.datamodule.std, device=img.device
-                )
-                img = img * std[:, None, None] + mean[:, None, None]
-                img = ToDtype(torch.uint8, scale=True)(img)
+    def log_segmentation_plots(self) -> None:
+        """Builds and logs examples of segmentation plots from the test set."""
+        for i, (img, pred, tgt) in enumerate(self.sample_buffer):
+            pred = (
+                pred
+                == torch.arange(self.num_classes, device=pred.device)[
+                    :, None, None
+                ]
+            )
+            tgt = (
+                tgt
+                == torch.arange(self.num_classes, device=tgt.device)[
+                    :, None, None
+                ]
+            )
 
-                dataset = self.trainer.datamodule.test
-                if hasattr(dataset, "color_palette"):
-                    color_palette = dataset.color_palette
-                else:
-                    color_palette = None
+            # Undo normalization on the image and convert to uint8.
+            mean = torch.tensor(self.trainer.datamodule.mean, device=img.device)
+            std = torch.tensor(self.trainer.datamodule.std, device=img.device)
+            img = img * std[:, None, None] + mean[:, None, None]
+            img = ToDtype(torch.uint8, scale=True)(img)
 
-                pred_mask = draw_segmentation_masks(
-                    img, pred, alpha=0.7, colors=color_palette
-                )
-                gt_mask = draw_segmentation_masks(
-                    img, tgt, alpha=0.7, colors=color_palette
-                )
+            dataset = self.trainer.datamodule.test
+            if hasattr(dataset, "color_palette"):
+                color_palette = dataset.color_palette
+            else:
+                color_palette = None
 
-                self.logger.experiment.add_figure(
-                    f"Segmentation results/{i}",
-                    show(pred_mask, gt_mask),
-                )
+            pred_mask = draw_segmentation_masks(
+                img, pred, alpha=0.7, colors=color_palette
+            )
+            gt_mask = draw_segmentation_masks(
+                img, tgt, alpha=0.7, colors=color_palette
+            )
+
+            self.logger.experiment.add_figure(
+                f"Segmentation results/{i}",
+                show(pred_mask, gt_mask),
+            )
 
     def subsample(self, pred: Tensor, target: Tensor) -> tuple[Tensor, Tensor]:
         total_size = target.size(0)

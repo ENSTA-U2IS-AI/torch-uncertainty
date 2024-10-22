@@ -68,6 +68,13 @@ class TestCIFAR10DataModule:
                 auto_augment="rand-m9-n2-mstd0.5",
             )
 
+        with pytest.raises(ValueError, match="Test set "):
+            dm = CIFAR10DataModule(
+                root="./data/",
+                batch_size=128,
+                test_alt="x",
+            )
+
         dm = CIFAR10DataModule(
             root="./data/",
             batch_size=128,
