@@ -10,9 +10,10 @@ from torch import nn
 from torch.utils.data import DataLoader, Subset
 from torchvision.datasets import DTD, SVHN, ImageNet, INaturalist
 
-from torch_uncertainty.datamodules.abstract import TUDataModule
+from torch_uncertainty.datamodules import TUDataModule
 from torch_uncertainty.datasets.classification import (
     ImageNetA,
+    ImageNetC,
     ImageNetO,
     ImageNetR,
     OpenImageO,
@@ -35,6 +36,8 @@ class ImageNetDataModule(TUDataModule):
         "openimage-o",
     ]
     training_task = "classification"
+    mean = (0.485, 0.456, 0.406)
+    std = (0.229, 0.224, 0.225)
     train_indices = None
     val_indices = None
 
@@ -43,6 +46,8 @@ class ImageNetDataModule(TUDataModule):
         root: str | Path,
         batch_size: int,
         eval_ood: bool = False,
+        eval_shift: bool = False,
+        shift_severity: int = 1,
         val_split: float | Path | None = None,
         ood_ds: str = "openimage-o",
         test_alt: str | None = None,
@@ -60,7 +65,10 @@ class ImageNetDataModule(TUDataModule):
         Args:
             root (str): Root directory of the datasets.
             eval_ood (bool): Whether to evaluate out-of-distribution
-                performance.
+                performance. Defaults to ``False``.
+            eval_shift (bool): Whether to evaluate on shifted data. Defaults to
+                ``False``.
+            shift_severity: int = 1,
             batch_size (int): Number of samples per batch.
             val_split (float or Path): Share of samples to use for validation
                 or path to a yaml file containing a list of validation images
@@ -80,7 +88,6 @@ class ImageNetDataModule(TUDataModule):
             pin_memory (bool): Whether to pin memory. Defaults to ``True``.
             persistent_workers (bool): Whether to use persistent workers. Defaults
                 to ``True``.
-            kwargs: Additional arguments.
         """
         super().__init__(
             root=Path(root),
@@ -92,6 +99,8 @@ class ImageNetDataModule(TUDataModule):
         )
 
         self.eval_ood = eval_ood
+        self.eval_shift = eval_shift
+        self.shift_severity = shift_severity
         if val_split and not isinstance(val_split, float):
             val_split = Path(val_split)
             self.train_indices, self.val_indices = read_indices(val_split)
@@ -123,6 +132,7 @@ class ImageNetDataModule(TUDataModule):
             self.ood_dataset = OpenImageO
         else:
             raise ValueError(f"The dataset {ood_ds} is not supported.")
+        self.shift_dataset = ImageNetC
 
         self.procedure = procedure
 
@@ -159,19 +169,19 @@ class ImageNetDataModule(TUDataModule):
 
         self.train_transform = T.Compose(
             [
+                T.ToTensor(),
                 basic_transform,
                 main_transform,
-                T.ToTensor(),
-                T.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
+                T.Normalize(mean=self.mean, std=self.std),
             ]
         )
 
         self.test_transform = T.Compose(
             [
+                T.ToTensor(),
                 T.Resize(256, interpolation=self.interpolation),
                 T.CenterCrop(224),
-                T.ToTensor(),
-                T.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
+                T.Normalize(mean=self.mean, std=self.std),
             ]
         )
 
@@ -211,6 +221,13 @@ class ImageNetDataModule(TUDataModule):
                     download=True,
                     transform=self.test_transform,
                 )
+        if self.eval_shift:
+            self.shift_dataset(
+                self.root,
+                download=True,
+                transform=self.test_transform,
+                shift_severity=self.shift_severity,
+            )
 
     def setup(self, stage: Literal["fit", "test"] | None = None) -> None:
         if stage == "fit" or stage is None:
@@ -264,16 +281,26 @@ class ImageNetDataModule(TUDataModule):
                     download=True,
                 )
 
+        if self.eval_shift:
+            self.shift = self.shift_dataset(
+                self.root,
+                download=False,
+                transform=self.test_transform,
+                shift_severity=self.shift_severity,
+            )
+
     def test_dataloader(self) -> list[DataLoader]:
         """Get the test dataloaders for ImageNet.
 
         Return:
-            List[DataLoader]: ImageNet test set (in distribution data) and
+            list[DataLoader]: ImageNet test set (in distribution data) and
             Textures test split (out-of-distribution data).
         """
         dataloader = [self._data_loader(self.test)]
         if self.eval_ood:
             dataloader.append(self._data_loader(self.ood))
+        if self.eval_shift:
+            dataloader.append(self._data_loader(self.shift))
         return dataloader
 
 
@@ -284,7 +311,7 @@ def read_indices(path: Path) -> list[str]:  # coverage: ignore
         path (Path): Path to the file.
 
     Returns:
-        list[str]: List of filenames.
+        list[str]: list of filenames.
     """
     if not path.is_file():
         raise ValueError(f"{path} is not a file.")

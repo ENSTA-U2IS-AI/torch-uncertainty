@@ -16,7 +16,7 @@ class Cityscapes(TVCityscapes):
         root: str,
         split: str = "train",
         mode: str = "fine",
-        target_type: torch.List[str] | str = "instance",
+        target_type: list[str] | str = "instance",
         transform: Callable[..., Any] | None = None,
         target_transform: Callable[..., Any] | None = None,
         transforms: Callable[..., Any] | None = None,
@@ -120,3 +120,8 @@ class Cityscapes(TVCityscapes):
             The axis on which the sample was plotted.
         """
         raise NotImplementedError("This method is not implemented yet.")
+
+    @property
+    def color_palette(self) -> list[tuple[int, int, int]]:
+        """Return the color palette of the dataset."""
+        return [c.color for c in self.classes]

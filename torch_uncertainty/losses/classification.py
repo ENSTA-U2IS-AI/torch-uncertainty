@@ -153,8 +153,8 @@ class DECLoss(nn.Module):
             annealing_coef = self.reg_weight
         else:
             annealing_coef = torch.min(
-                torch.tensor(1.0, dtype=evidence.dtype),
-                torch.tensor(
+                input=torch.tensor(1.0, dtype=evidence.dtype),
+                other=torch.tensor(
                     current_epoch / self.annealing_step, dtype=evidence.dtype
                 ),
             )
@@ -195,6 +195,7 @@ class ConfidencePenaltyLoss(nn.Module):
         if reduction not in ("none", "mean", "sum"):
             raise ValueError(f"{reduction} is not a valid value for reduction.")
         self.reduction = reduction
+
         if eps < 0:
             raise ValueError(
                 "The epsilon value should be non-negative, but got " f"{eps}."
@@ -279,3 +280,59 @@ class ConflictualLoss(nn.Module):
         if self.reduction == "mean":
             return ce_loss + self.reg_weight * reg_loss.mean()
         return ce_loss + self.reg_weight * reg_loss
+
+
+class FocalLoss(nn.Module):
+    def __init__(
+        self,
+        gamma: float,
+        alpha: Tensor | None = None,
+        reduction: str = "mean",
+    ) -> None:
+        """Focal-Loss for classification tasks.
+
+        Args:
+            gamma (float, optional): A constant, as described in the paper.
+            alpha (Tensor, optional): Weights for each class. Defaults to None.
+            reduction (str, optional): 'mean', 'sum' or 'none'.
+                Defaults to 'mean'.
+
+        Reference:
+            Lin, T.-Y., Goyal, P., Girshick, R., He, K., & Dollár, P. (2017).
+            Focal Loss for Dense Object Detection. TPAMI 2020.
+
+        Implementation:
+            Inspired by github.com/AdeelH/pytorch-multi-class-focal-loss.
+        """
+        if reduction not in ("none", "mean", "sum") and reduction is not None:
+            raise ValueError(f"{reduction} is not a valid value for reduction.")
+        self.reduction = reduction
+
+        if gamma < 0:
+            raise ValueError(
+                "The gamma term of the focal loss should be non-negative, but got "
+                f"{gamma}."
+            )
+        self.gamma = gamma
+
+        super().__init__()
+        self.alpha = alpha
+        self.nll_loss = nn.NLLLoss(weight=alpha, reduction="none")
+
+    def forward(self, x: Tensor, y: Tensor) -> Tensor:
+        log_p = F.log_softmax(x, dim=-1)
+        ce = self.nll_loss(log_p, y)
+
+        all_rows = torch.arange(len(x))
+        log_pt = log_p[all_rows, y]
+
+        pt = log_pt.exp()
+        focal_term = (1 - pt) ** self.gamma
+
+        loss = focal_term * ce
+
+        if self.reduction == "mean":
+            return loss.mean()
+        if self.reduction == "sum":
+            return loss.sum()
+        return loss

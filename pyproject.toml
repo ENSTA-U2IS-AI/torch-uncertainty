@@ -4,7 +4,7 @@ build-backend = "flit_core.buildapi"
 
 [project]
 name = "torch_uncertainty"
-version = "0.2.2.post2"
+version = "0.3.0"
 authors = [
     { name = "ENSTA U2IS", email = "olivier.laurent@ensta-paris.fr" },
     { name = "Adrien Lafage", email = "adrienlafage@outlook.com" },
@@ -27,6 +27,8 @@ classifiers = [
     "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3 :: Only",
 ]
 dependencies = [
@@ -36,22 +38,25 @@ dependencies = [
     "tensorboard",
     "einops",
     "torchinfo",
-    "scipy",
     "huggingface-hub",
     "scikit-learn",
-    "matplotlib==3.5.2",
-    "numpy<2",
-    "opencv-python",
-    "glest==0.0.1a0",
+    "matplotlib",
+    "numpy",
     "rich>=10.2.2",
+    "seaborn",
 ]
 
 [project.optional-dependencies]
-image = ["scikit-image", "h5py"]
+image = [
+    "scikit-image", 
+    "h5py",
+    "opencv-python",
+    "Wand",
+]
 tabular = ["pandas"]
 dev = [
     "torch_uncertainty[image]",
-    "ruff==0.5.2",
+    "ruff==0.6.9",
     "pytest-cov",
     "pre-commit",
     "pre-commit-hooks",
@@ -66,7 +71,9 @@ docs = [
 ]
 all = [
     "torch_uncertainty[dev,docs,image,tabular]",
-    "laplace-torch"
+    "laplace-torch",
+    "glest==0.0.1a1",
+    "scipy",
 ]
 
 [project.urls]

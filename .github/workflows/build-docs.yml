@@ -31,7 +31,7 @@ jobs:
         echo "PYTHON_VERSION=$(python -c "import platform; print(platform.python_version())")"
 
     - name: Cache folder for TorchUncertainty
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       id: cache-folder
       with:
         path: |
@@ -41,7 +41,7 @@ jobs:
     - name: Install dependencies
       run: |
         python3 -m pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cpu
-        python3 -m pip install .[image,dev,docs]
+        python3 -m pip install .[all]
 
     - name: Sphinx build
       if: github.event.pull_request.draft == false

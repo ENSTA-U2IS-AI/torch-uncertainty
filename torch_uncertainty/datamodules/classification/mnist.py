@@ -6,7 +6,7 @@ from torch import nn
 from torch.utils.data import DataLoader
 from torchvision.datasets import MNIST, FashionMNIST
 
-from torch_uncertainty.datamodules.abstract import TUDataModule
+from torch_uncertainty.datamodules import TUDataModule
 from torch_uncertainty.datasets.classification import MNISTC, NotMNIST
 from torch_uncertainty.transforms import Cutout
 from torch_uncertainty.utils import create_train_val_split
@@ -18,18 +18,20 @@ class MNISTDataModule(TUDataModule):
     input_shape = (1, 28, 28)
     training_task = "classification"
     ood_datasets = ["fashion", "notMNIST"]
+    mean = (0.1307,)
+    std = (0.3081,)
 
     def __init__(
         self,
         root: str | Path,
         batch_size: int,
         eval_ood: bool = False,
+        eval_shift: bool = False,
         ood_ds: Literal["fashion", "notMNIST"] = "fashion",
         val_split: float | None = None,
         num_workers: int = 1,
         basic_augment: bool = True,
         cutout: int | None = None,
-        test_alt: Literal["c"] | None = None,
         pin_memory: bool = True,
         persistent_workers: bool = True,
     ) -> None:
@@ -38,6 +40,9 @@ class MNISTDataModule(TUDataModule):
         Args:
             root (str): Root directory of the datasets.
             eval_ood (bool): Whether to evaluate on out-of-distribution data.
+                Defaults to ``False``.
+            eval_shift (bool): Whether to evaluate on shifted data. Defaults to
+                ``False``.
             batch_size (int): Number of samples per batch.
             ood_ds (str): Which out-of-distribution dataset to use. Defaults to
                 ``"fashion"``; `fashion` stands for FashionMNIST and `notMNIST` for
@@ -49,11 +54,9 @@ class MNISTDataModule(TUDataModule):
             basic_augment (bool): Whether to apply base augmentations. Defaults to
                 ``True``.
             cutout (int): Size of cutout to apply to images. Defaults to ``None``.
-            test_alt (str): Which test set to use. Defaults to ``None``.
             pin_memory (bool): Whether to pin memory. Defaults to ``True``.
             persistent_workers (bool): Whether to use persistent workers. Defaults
                 to ``True``.
-            kwargs: Additional arguments.
         """
         super().__init__(
             root=root,
@@ -65,12 +68,10 @@ class MNISTDataModule(TUDataModule):
         )
 
         self.eval_ood = eval_ood
+        self.eval_shift = eval_shift
         self.batch_size = batch_size
 
-        if test_alt == "c":
-            self.dataset = MNISTC
-        else:
-            self.dataset = MNIST
+        self.dataset = MNIST
 
         if ood_ds == "fashion":
             self.ood_dataset = FashionMNIST
@@ -80,6 +81,8 @@ class MNISTDataModule(TUDataModule):
             raise ValueError(
                 f"`ood_ds` should be in {self.ood_datasets}. Got {ood_ds}."
             )
+        self.shift_dataset = MNISTC
+        self.shift_severity = 1
 
         if basic_augment:
             basic_transform = T.RandomCrop(28, padding=4)
@@ -90,26 +93,26 @@ class MNISTDataModule(TUDataModule):
 
         self.train_transform = T.Compose(
             [
+                T.ToTensor(),
                 basic_transform,
                 main_transform,
-                T.ToTensor(),
-                T.Normalize((0.1307,), (0.3081,)),
+                T.Normalize(mean=self.mean, std=self.std),
             ]
         )
         self.test_transform = T.Compose(
             [
                 T.ToTensor(),
                 T.CenterCrop(28),
-                T.Normalize((0.1307,), (0.3081,)),
+                T.Normalize(mean=self.mean, std=self.std),
             ]
         )
         if self.eval_ood:  # NotMNIST has 3 channels
             self.ood_transform = T.Compose(
                 [
-                    T.Grayscale(num_output_channels=1),
                     T.ToTensor(),
+                    T.Grayscale(num_output_channels=1),
                     T.CenterCrop(28),
-                    T.Normalize((0.1307,), (0.3081,)),
+                    T.Normalize(mean=self.mean, std=self.std),
                 ]
             )
 
@@ -120,6 +123,8 @@ class MNISTDataModule(TUDataModule):
 
         if self.eval_ood:
             self.ood_dataset(self.root, download=True)
+        if self.eval_shift:
+            self.shift_dataset(self.root, download=True)
 
     def setup(self, stage: Literal["fit", "test"] | None = None) -> None:
         if stage == "fit" or stage is None:
@@ -159,12 +164,18 @@ class MNISTDataModule(TUDataModule):
                 download=False,
                 transform=self.ood_transform,
             )
+        if self.eval_shift:
+            self.shift = self.shift_dataset(
+                self.root,
+                download=False,
+                transform=self.test_transform,
+            )
 
     def test_dataloader(self) -> list[DataLoader]:
         r"""Get the test dataloaders for MNIST.
 
         Return:
-            List[DataLoader]: Dataloaders of the MNIST test set (in
+            list[DataLoader]: Dataloaders of the MNIST test set (in
                 distribution data) and FashionMNIST test split
                 (out-of-distribution data).
         """

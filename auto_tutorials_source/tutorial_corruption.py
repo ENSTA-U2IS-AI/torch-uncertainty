@@ -12,23 +12,35 @@ torch_uncertainty.transforms.corruption. We also need to load utilities from
 torchvision and matplotlib.
 """
 # %%
-from torchvision.datasets import CIFAR10
-from torchvision.transforms import Compose, ToTensor, Resize
+from torchvision.transforms import Compose, ToTensor, Resize, CenterCrop
 
 import matplotlib.pyplot as plt
+from PIL import Image
+from urllib import request
 
-ds = CIFAR10("./data", train=False, download=True)
+urls = [
+    "https://upload.wikimedia.org/wikipedia/commons/d/d9/Carduelis_tristis_-Michigan%2C_USA_-male-8.jpg",
+    "https://upload.wikimedia.org/wikipedia/commons/5/5d/Border_Collie_Blanca_y_Negra_Hembra_%28Belen%2C_Border_Collie_Los_Baganes%29.png",
+    "https://upload.wikimedia.org/wikipedia/commons/f/f8/Birmakatze_Seal-Point.jpg",
+    "https://upload.wikimedia.org/wikipedia/commons/a/a9/Garranos_fight.jpg",
+    "https://upload.wikimedia.org/wikipedia/commons/8/8b/Cottontail_Rabbit.jpg",
+]
+
+def download_img(url, i):
+    request.urlretrieve(url, f"tmp_{i}.png")
+    return Image.open(f"tmp_{i}.png").convert('RGB')
+
+images_ds = [download_img(url, i) for i, url in enumerate(urls)]
 
 
 def get_images(main_corruption, index: int = 0):
     """Create an image showing the 6 levels of corruption of a given transform."""
     images = []
     for severity in range(6):
-        ds_transforms = Compose(
-            [ToTensor(), main_corruption(severity), Resize(256, antialias=True)]
+        transforms = Compose(
+            [Resize(256, antialias=True), CenterCrop(256), ToTensor(), main_corruption(severity), CenterCrop(224)]
         )
-        ds = CIFAR10("./data", train=False, download=False, transform=ds_transforms)
-        images.append(ds[index][0].permute(1, 2, 0).numpy())
+        images.append(transforms(images_ds[index]).permute(1, 2, 0).numpy())
     return images
 
 
@@ -65,7 +77,6 @@ from torch_uncertainty.transforms.corruption import (
     GaussianNoise,
     ShotNoise,
     ImpulseNoise,
-    SpeckleNoise,
 )
 
 show_images(
@@ -73,7 +84,6 @@ show_images(
         GaussianNoise,
         ShotNoise,
         ImpulseNoise,
-        SpeckleNoise,
     ]
 )
 
@@ -81,33 +91,71 @@ show_images(
 # 2. Blur Corruptions
 # ~~~~~~~~~~~~~~~~~~~~
 from torch_uncertainty.transforms.corruption import (
-    GaussianBlur,
+    MotionBlur,
     GlassBlur,
     DefocusBlur,
+    ZoomBlur,
+)
+
+show_images(
+    [
+        GlassBlur,
+        MotionBlur,
+        DefocusBlur,
+        ZoomBlur,
+    ]
+)
+
+# %%
+# 3. Weather Corruptions
+# ~~~~~~~~~~~~~~~~~~~~~~
+from torch_uncertainty.transforms.corruption import (
+    Frost,
+    Snow,
+    Fog,
+)
+
+show_images(
+    [
+        Fog,
+        Frost,
+        Snow,
+    ]
+)
+
+# %%
+# 4. Other Corruptions
+
+from torch_uncertainty.transforms.corruption import (
+    Brightness, Contrast, Elastic, JPEGCompression, Pixelate)
+
+show_images(
+    [
+        Brightness,
+        Contrast,
+        JPEGCompression,
+        Pixelate,
+        Elastic,
+    ]
+)
+
+# %%
+# 5. Unused Corruptions
+# ~~~~~~~~~~~~~~~~~~~~~
+
+# The following corruptions are not used in the paper Benchmarking Neural Network Robustness to Common Corruptions and Perturbations.
+
+from torch_uncertainty.transforms.corruption import (
+    GaussianBlur,
+    SpeckleNoise,
+    Saturation,
 )
 
 show_images(
     [
         GaussianBlur,
-        GlassBlur,
-        DefocusBlur,
-    ]
-)
-
-# %%
-# 3. Other Corruptions
-# ~~~~~~~~~~~~~~~~~~~~
-from torch_uncertainty.transforms.corruption import (
-    JPEGCompression,
-    Pixelate,
-    Frost,
-)
-
-show_images(
-    [
-        JPEGCompression,
-        Pixelate,
-        Frost,
+        SpeckleNoise,
+        Saturation,
     ]
 )
 

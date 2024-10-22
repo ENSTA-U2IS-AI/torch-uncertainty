@@ -8,13 +8,13 @@ from tests._dummies import (
     DummyPixelRegressionBaseline,
     DummyPixelRegressionDataModule,
 )
+from torch_uncertainty import TUTrainer
 from torch_uncertainty.losses import DistributionNLLLoss
 from torch_uncertainty.optim_recipes import optim_cifar10_resnet18
 from torch_uncertainty.routines.pixel_regression import (
     PixelRegressionRoutine,
     colorize,
 )
-from torch_uncertainty.utils import TUTrainer
 
 
 class TestPixelRegression:

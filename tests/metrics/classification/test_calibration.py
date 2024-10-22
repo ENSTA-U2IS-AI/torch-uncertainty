@@ -15,11 +15,12 @@ class TestCalibrationError:
             torch.as_tensor([0, 0, 1, 1, 1]),
         )
         fig, ax = metric.plot()
-        metric.plot(ax=ax)
         assert isinstance(fig, plt.Figure)
-        assert isinstance(ax, plt.Axes)
-        assert ax.get_xlabel() == "Top-class Confidence (%)"
-        assert ax.get_ylabel() == "Success Rate (%)"
+        assert ax[0].get_xlabel() == "Top-class Confidence (%)"
+        assert ax[0].get_ylabel() == "Success Rate (%)"
+        assert ax[1].get_xlabel() == "Top-class Confidence (%)"
+        assert ax[1].get_ylabel() == "Density"
+
         plt.close(fig)
 
     def test_plot_multiclass(
@@ -41,9 +42,10 @@ class TestCalibrationError:
         )
         fig, ax = metric.plot()
         assert isinstance(fig, plt.Figure)
-        assert isinstance(ax, plt.Axes)
-        assert ax.get_xlabel() == "Top-class Confidence (%)"
-        assert ax.get_ylabel() == "Success Rate (%)"
+        assert ax[0].get_xlabel() == "Top-class Confidence (%)"
+        assert ax[0].get_ylabel() == "Success Rate (%)"
+        assert ax[1].get_xlabel() == "Top-class Confidence (%)"
+        assert ax[1].get_ylabel() == "Density"
         plt.close(fig)
 
     def test_errors(self) -> None:

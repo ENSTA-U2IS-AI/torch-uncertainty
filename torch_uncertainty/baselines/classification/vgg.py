@@ -45,6 +45,7 @@ class VGGBaseline(ClassificationRoutine):
         save_in_csv: bool = False,
         calibration_set: Literal["val", "test"] = "val",
         eval_ood: bool = False,
+        eval_shift: bool = False,
         eval_grouping_loss: bool = False,
     ) -> None:
         r"""VGG backbone baseline for classification providing support for
@@ -105,6 +106,8 @@ class VGGBaseline(ClassificationRoutine):
                 ``None``.
             eval_ood (bool, optional): Indicates whether to evaluate the
                 OOD detection or not. Defaults to ``False``.
+            eval_shift (bool): Whether to evaluate on shifted data. Defaults to
+                ``False``.
             eval_grouping_loss (bool, optional): Indicates whether to evaluate the
                 grouping loss or not. Defaults to ``False``.
 
@@ -173,6 +176,7 @@ class VGGBaseline(ClassificationRoutine):
             optim_recipe=optim_recipe,
             mixup_params=mixup_params,
             eval_ood=eval_ood,
+            eval_shift=eval_shift,
             ood_criterion=ood_criterion,
             log_plots=log_plots,
             save_in_csv=save_in_csv,

@@ -87,7 +87,7 @@ class _PackedWideResNet(nn.Module):
         num_classes: int,
         conv_bias: bool,
         dropout_rate: float,
-        num_estimators: int = 4,
+        num_estimators: int,
         alpha: int = 2,
         gamma: int = 1,
         groups: int = 1,

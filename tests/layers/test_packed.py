@@ -11,12 +11,17 @@ from torch_uncertainty.layers.packed import (
 
 @pytest.fixture()
 def feat_input() -> torch.Tensor:
-    return torch.rand((6, 1))
+    return torch.rand((6, 1))  # (Cin, Lin)
 
 
 @pytest.fixture()
 def feat_input_one_rearrange() -> torch.Tensor:
     return torch.rand((1 * 3, 5))
+
+
+@pytest.fixture()
+def feat_input_16_features() -> torch.Tensor:
+    return torch.rand((2, 16))
 
 
 @pytest.fixture()
@@ -37,8 +42,11 @@ def voxels_input() -> torch.Tensor:
 class TestPackedLinear:
     """Testing the PackedLinear layer class."""
 
+    # Legacy tests
     def test_linear_one_estimator_no_rearrange(self, feat_input: torch.Tensor):
-        layer = PackedLinear(6, 2, alpha=1, num_estimators=1, rearrange=False)
+        layer = PackedLinear(
+            6, 2, alpha=1, num_estimators=1, rearrange=False, bias=False
+        )
         out = layer(feat_input)
         assert out.shape == torch.Size([2, 1])
 
@@ -59,6 +67,48 @@ class TestPackedLinear:
         layer = PackedLinear(5, 1, alpha=1, num_estimators=2, rearrange=True)
         out = layer(feat)
         assert out.shape == torch.Size([6, 1])
+
+    def test_linear_full_implementation(
+        self, feat_input_16_features: torch.Tensor
+    ):
+        layer = PackedLinear(
+            16, 4, alpha=1, num_estimators=1, implementation="full"
+        )
+        out = layer(feat_input_16_features)
+        assert out.shape == torch.Size([2, 4])
+        layer = PackedLinear(
+            16, 4, alpha=1, num_estimators=2, implementation="full"
+        )
+        out = layer(feat_input_16_features)
+        assert out.shape == torch.Size([2, 4])
+
+    def test_linear_sparse_implementation(
+        self, feat_input_16_features: torch.Tensor
+    ):
+        layer = PackedLinear(
+            16, 4, alpha=1, num_estimators=1, implementation="sparse"
+        )
+        out = layer(feat_input_16_features)
+        assert out.shape == torch.Size([2, 4])
+        layer = PackedLinear(
+            16, 4, alpha=1, num_estimators=2, implementation="sparse"
+        )
+        out = layer(feat_input_16_features)
+        assert out.shape == torch.Size([2, 4])
+
+    def test_linear_einsum_implementation(
+        self, feat_input_16_features: torch.Tensor
+    ):
+        layer = PackedLinear(
+            16, 4, alpha=1, num_estimators=1, implementation="einsum"
+        )
+        out = layer(feat_input_16_features)
+        assert out.shape == torch.Size([2, 4])
+        layer = PackedLinear(
+            16, 4, alpha=1, num_estimators=2, implementation="einsum"
+        )
+        out = layer(feat_input_16_features)
+        assert out.shape == torch.Size([2, 4])
 
     def test_linear_extend(self):
         _ = PackedConv2d(
@@ -90,6 +140,23 @@ class TestPackedLinear:
             _ = PackedLinear(
                 5, 2, alpha=1, num_estimators=1, gamma=-1, rearrange=True
             )
+
+        with pytest.raises(AssertionError):
+            _ = PackedLinear(
+                5,
+                2,
+                alpha=1,
+                num_estimators=1,
+                gamma=1,
+                implementation="invalid",
+            )
+
+        with pytest.raises(ValueError):
+            layer = PackedLinear(
+                16, 4, alpha=1, num_estimators=1, implementation="full"
+            )
+            layer.implementation = "invalid"
+            _ = layer(torch.rand((2, 16)))
 
 
 class TestPackedConv1d:

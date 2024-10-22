@@ -13,10 +13,11 @@ class TestCIFAR10DataModule:
         dm = CIFAR10DataModule(root="./data/", batch_size=128, cutout=16)
 
         assert dm.dataset == CIFAR10
-        assert isinstance(dm.train_transform.transforms[1], Cutout)
+        assert isinstance(dm.train_transform.transforms[2], Cutout)
 
         dm.dataset = DummyClassificationDataset
         dm.ood_dataset = DummyClassificationDataset
+        dm.shift_dataset = DummyClassificationDataset
 
         dm.prepare_data()
         dm.setup()
@@ -34,19 +35,17 @@ class TestCIFAR10DataModule:
         dm.test_dataloader()
 
         dm.eval_ood = True
+        dm.eval_shift = True
         dm.prepare_data()
         dm.setup("test")
         dm.test_dataloader()
 
         dm = CIFAR10DataModule(
-            root="./data/", batch_size=128, cutout=16, test_alt="c"
-        )
-        dm.dataset = DummyClassificationDataset
-        with pytest.raises(ValueError):
-            dm.setup()
-
-        dm = CIFAR10DataModule(
-            root="./data/", batch_size=128, cutout=16, test_alt="h"
+            root="./data/",
+            batch_size=128,
+            cutout=16,
+            test_alt="h",
+            basic_augment=False,
         )
         dm.dataset = DummyClassificationDataset
         dm.setup("test")
@@ -71,6 +70,13 @@ class TestCIFAR10DataModule:
                 num_dataloaders=2,
                 val_split=0.1,
                 auto_augment="rand-m9-n2-mstd0.5",
+            )
+
+        with pytest.raises(ValueError, match="Test set "):
+            dm = CIFAR10DataModule(
+                root="./data/",
+                batch_size=128,
+                test_alt="x",
             )
 
         dm = CIFAR10DataModule(

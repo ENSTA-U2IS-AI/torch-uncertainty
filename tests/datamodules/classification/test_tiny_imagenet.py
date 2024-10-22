@@ -21,7 +21,10 @@ class TestTinyImageNetDataModule:
         )
 
         dm = TinyImageNetDataModule(
-            root="./data/", batch_size=128, ood_ds="textures"
+            root="./data/",
+            batch_size=128,
+            ood_ds="textures",
+            basic_augment=False,
         )
 
         with pytest.raises(ValueError):
@@ -31,6 +34,7 @@ class TestTinyImageNetDataModule:
 
         dm.dataset = DummyClassificationDataset
         dm.ood_dataset = DummyClassificationDataset
+        dm.shift_dataset = DummyClassificationDataset
 
         dm.prepare_data()
         dm.setup()
@@ -43,6 +47,7 @@ class TestTinyImageNetDataModule:
             dm.setup("other")
 
         dm.eval_ood = True
+        dm.eval_shift = True
         dm.prepare_data()
         dm.setup("test")
         dm.test_dataloader()
@@ -52,7 +57,9 @@ class TestTinyImageNetDataModule:
         )
         dm.dataset = DummyClassificationDataset
         dm.ood_dataset = DummyClassificationDataset
+        dm.shift_dataset = DummyClassificationDataset
         dm.eval_ood = True
+        dm.eval_shift = True
         dm.prepare_data()
         dm.setup("test")
 

@@ -6,13 +6,17 @@ from torch.nn.modules.utils import _pair
 from torchvision import tv_tensors
 from torchvision.transforms import v2
 
-from torch_uncertainty.datamodules.abstract import TUDataModule
+from torch_uncertainty.datamodules import TUDataModule
 from torch_uncertainty.datasets import MUAD
 from torch_uncertainty.transforms import RandomRescale
 from torch_uncertainty.utils.misc import create_train_val_split
 
 
 class MUADDataModule(TUDataModule):
+    training_task = "segmentation"
+    mean = (0.485, 0.456, 0.406)
+    std = (0.229, 0.224, 0.225)
+
     def __init__(
         self,
         root: str | Path,
@@ -128,9 +132,7 @@ class MUADDataModule(TUDataModule):
                     },
                     scale=True,
                 ),
-                v2.Normalize(
-                    mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
-                ),
+                v2.Normalize(mean=self.mean, std=self.std),
             ]
         )
         self.test_transform = v2.Compose(
@@ -144,9 +146,7 @@ class MUADDataModule(TUDataModule):
                     },
                     scale=True,
                 ),
-                v2.Normalize(
-                    mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
-                ),
+                v2.Normalize(mean=self.mean, std=self.std),
             ]
         )
 

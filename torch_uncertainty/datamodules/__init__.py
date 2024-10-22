@@ -1,4 +1,5 @@
 # ruff: noqa: F401
+from .abstract import TUDataModule
 from .classification.cifar10 import CIFAR10DataModule
 from .classification.cifar100 import CIFAR100DataModule
 from .classification.imagenet import ImageNetDataModule

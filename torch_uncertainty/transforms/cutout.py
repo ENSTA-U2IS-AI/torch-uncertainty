@@ -1,4 +1,3 @@
-import numpy as np
 import torch
 from torch import nn
 
@@ -12,31 +11,29 @@ class Cutout(nn.Module):
             value (int): Pixel value to be filled in the cutout square.
         """
         super().__init__()
-        self.rng = np.random.default_rng()
 
         if length <= 0:
-            raise ValueError("Cutout length must be positive.")
+            raise ValueError(f"Cutout length must be positive. Got {length}.")
         self.length = length
 
         if value < 0 or value > 255:
-            raise ValueError("Cutout value must be between 0 and 255.")
+            raise ValueError(
+                f"Cutout value must be between 0 and 255. Got {value}."
+            )
         self.value = value
 
     def __call__(self, img: torch.Tensor) -> torch.Tensor:
         if len(img.shape) == 2:
             img = img.unsqueeze(0)
         h, w = img.size(1), img.size(2)
-        mask = np.ones((h, w), np.float32)
-        y = self.rng.integers(low=0, high=h - 1)
-        x = self.rng.integers(low=0, high=w - 1)
+        mask = torch.ones(size=(h, w), dtype=torch.float32)
+        y = torch.randint(high=h, size=(1,))
+        x = torch.randint(high=w, size=(1,))
 
-        y1 = np.clip(y - self.length // 2, 0, h)
-        y2 = np.clip(y + self.length // 2, 0, h)
-        x1 = np.clip(x - self.length // 2, 0, w)
-        x2 = np.clip(x + self.length // 2, 0, w)
+        y1 = torch.clip(y - self.length // 2, 0, h)
+        y2 = torch.clip(y + self.length // 2, 0, h)
+        x1 = torch.clip(x - self.length // 2, 0, w)
+        x2 = torch.clip(x + self.length // 2, 0, w)
 
         mask[y1:y2, x1:x2] = self.value
-        mask = torch.from_numpy(mask)
-        mask = mask.expand_as(img)
-        img *= mask
-        return img
+        return img * mask.expand_as(img)

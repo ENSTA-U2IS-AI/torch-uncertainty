@@ -1,9 +1,9 @@
 import torch
 from lightning.pytorch.cli import LightningArgumentParser
 
+from torch_uncertainty import TULightningCLI
 from torch_uncertainty.baselines.segmentation import SegFormerBaseline
 from torch_uncertainty.datamodules.segmentation import MUADDataModule
-from torch_uncertainty.utils import TULightningCLI
 
 
 class SegFormerCLI(TULightningCLI):

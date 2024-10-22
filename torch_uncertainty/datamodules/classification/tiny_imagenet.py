@@ -9,8 +9,12 @@ from torch import nn
 from torch.utils.data import ConcatDataset, DataLoader
 from torchvision.datasets import DTD, SVHN
 
-from torch_uncertainty.datamodules.abstract import TUDataModule
-from torch_uncertainty.datasets.classification import ImageNetO, TinyImageNet
+from torch_uncertainty.datamodules import TUDataModule
+from torch_uncertainty.datasets.classification import (
+    ImageNetO,
+    TinyImageNet,
+    TinyImageNetC,
+)
 from torch_uncertainty.utils import (
     create_train_val_split,
     interpolation_modes_from_str,
@@ -21,12 +25,16 @@ class TinyImageNetDataModule(TUDataModule):
     num_classes = 200
     num_channels = 3
     training_task = "classification"
+    mean = (0.485, 0.456, 0.406)
+    std = (0.229, 0.224, 0.225)
 
     def __init__(
         self,
         root: str | Path,
         batch_size: int,
         eval_ood: bool = False,
+        eval_shift: bool = False,
+        shift_severity: int = 1,
         val_split: float | None = None,
         ood_ds: str = "svhn",
         interpolation: str = "bilinear",
@@ -44,8 +52,10 @@ class TinyImageNetDataModule(TUDataModule):
             pin_memory=pin_memory,
             persistent_workers=persistent_workers,
         )
-        # TODO: COMPUTE STATS
         self.eval_ood = eval_ood
+        self.eval_shift = eval_shift
+        self.shift_severity = shift_severity
+
         self.ood_ds = ood_ds
         self.interpolation = interpolation_modes_from_str(interpolation)
 
@@ -61,7 +71,7 @@ class TinyImageNetDataModule(TUDataModule):
             raise ValueError(
                 f"OOD dataset {ood_ds} not supported for TinyImageNet."
             )
-
+        self.shift_dataset = TinyImageNetC
         if basic_augment:
             basic_transform = T.Compose(
                 [
@@ -79,18 +89,18 @@ class TinyImageNetDataModule(TUDataModule):
 
         self.train_transform = T.Compose(
             [
+                T.ToTensor(),
                 basic_transform,
                 main_transform,
-                T.ToTensor(),
-                T.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
+                T.Normalize(mean=self.mean, std=self.std),
             ]
         )
 
         self.test_transform = T.Compose(
             [
-                T.Resize(64, interpolation=self.interpolation),
                 T.ToTensor(),
-                T.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
+                T.Resize(64, interpolation=self.interpolation),
+                T.Normalize(mean=self.mean, std=self.std),
             ]
         )
 
@@ -132,6 +142,13 @@ class TinyImageNetDataModule(TUDataModule):
                             transform=self.test_transform,
                         ),
                     ]
+                )
+            if self.eval_shift:
+                self.shift_dataset(
+                    self.root,
+                    download=True,
+                    transform=self.test_transform,
+                    shift_severity=self.shift_severity,
                 )
 
     def setup(self, stage: Literal["fit", "test"] | None = None) -> None:
@@ -194,6 +211,14 @@ class TinyImageNetDataModule(TUDataModule):
                     transform=self.test_transform,
                 )
 
+            if self.eval_shift:
+                self.shift = self.shift_dataset(
+                    self.root,
+                    download=False,
+                    shift_severity=self.shift_severity,
+                    transform=self.test_transform,
+                )
+
     def train_dataloader(self) -> DataLoader:
         r"""Get the training dataloader for TinyImageNet.
 
@@ -214,12 +239,14 @@ class TinyImageNetDataModule(TUDataModule):
         r"""Get test dataloaders for TinyImageNet.
 
         Return:
-            List[DataLoader]: test set for in distribution data
+            list[DataLoader]: test set for in distribution data
             and out-of-distribution data.
         """
         dataloader = [self._data_loader(self.test)]
         if self.eval_ood:
             dataloader.append(self._data_loader(self.ood))
+        if self.eval_shift:
+            dataloader.append(self._data_loader(self.shift))
         return dataloader
 
     def _get_train_data(self) -> ArrayLike:

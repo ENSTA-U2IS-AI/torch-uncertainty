@@ -11,7 +11,7 @@ class Backbone(nn.Module):
 
         Args:
             model (nn.Module): Base model.
-            feat_names (list[str]): List of the feature names.
+            feat_names (list[str]): list of the feature names.
         """
         super().__init__()
         self.model = model
@@ -24,7 +24,7 @@ class Backbone(nn.Module):
             x (Tensor): Input tensor.
 
         Returns:
-            list[Tensor]: List of the features.
+            list[Tensor]: list of the features.
         """
         feature = x
         features = []

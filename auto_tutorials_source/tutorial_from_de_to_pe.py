@@ -149,7 +149,7 @@ def optim_recipe(model, lr_mult: float = 1.0):
 
 
 from torch_uncertainty.routines import ClassificationRoutine
-from torch_uncertainty.utils import TUTrainer
+from torch_uncertainty import TUTrainer
 
 # Create the trainer that will handle the training
 trainer = TUTrainer(accelerator="cpu", max_epochs=max_epochs)
@@ -242,7 +242,7 @@ ens_perf = trainer.test(ens_routine, dataloaders=[test_dl, ood_dl])
 # We have put the pre-trained models on Hugging Face that you can download with the utility function
 # "hf_hub_download" imported just below. These models are trained for 75 epochs and are therefore not
 # comparable to the all the other models trained in this notebook. The pretrained models can be seen
-# on `HuggingFace <https://huggingface.co/ENSTA-U2IS/tutorial-models>`_ and TorchUncertainty's are `here <https://huggingface.co/torch-uncertainty>`_.
+# on `HuggingFace <https://huggingface.co/ENSTA-U2IS/tutorial-models>`_ and TorchUncertainty's are `there <https://huggingface.co/torch-uncertainty>`_.
 
 from torch_uncertainty.utils.hub import hf_hub_download
 

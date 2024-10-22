@@ -55,6 +55,7 @@ class PixelRegressionRoutine(LightningModule):
         is_ensemble: bool = False,
         format_batch_fn: nn.Module | None = None,
         optim_recipe: dict | Optimizer | None = None,
+        eval_shift: bool = False,
         num_image_plot: int = 4,
         log_plots: bool = False,
     ) -> None:
@@ -70,6 +71,8 @@ class PixelRegressionRoutine(LightningModule):
                 Defaults to ``False``.
             optim_recipe (dict or Optimizer, optional): The optimizer and
                 optionally the scheduler to use. Defaults to ``None``.
+            eval_shift (bool, optional): Indicates whether to evaluate the Distribution
+                shift performance. Defaults to ``False``.
             format_batch_fn (nn.Module, optional): The function to format the
                 batch. Defaults to ``None``.
             num_image_plot (int, optional): Number of images to plot. Defaults to ``4``.
@@ -78,6 +81,11 @@ class PixelRegressionRoutine(LightningModule):
         """
         super().__init__()
         _depth_routine_checks(output_dim, num_image_plot, log_plots)
+        if eval_shift:
+            raise NotImplementedError(
+                "Distribution shift evaluation not implemented yet. Raise an issue "
+                "if needed."
+            )
 
         self.model = model
         self.output_dim = output_dim
@@ -287,7 +295,15 @@ class PixelRegressionRoutine(LightningModule):
             self.test_prob_metrics.update(mixture, targets, padding_mask)
 
     def on_validation_epoch_end(self) -> None:
-        self.log_dict(self.val_metrics.compute(), sync_dist=True)
+        res_dict = self.val_metrics.compute()
+        self.log_dict(res_dict, logger=True, sync_dist=True)
+        self.log(
+            "RMSE",
+            res_dict["val/reg/RMSE"],
+            prog_bar=True,
+            logger=False,
+            sync_dist=True,
+        )
         self.val_metrics.reset()
         if self.probabilistic:
             self.log_dict(

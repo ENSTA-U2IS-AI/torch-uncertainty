@@ -6,7 +6,9 @@ from lightning.pytorch.utilities.types import STEP_OUTPUT
 from torch import Tensor, nn
 from torch.optim import Optimizer
 from torchmetrics import Accuracy, MetricCollection
+from torchvision.transforms.v2 import ToDtype
 from torchvision.transforms.v2 import functional as F
+from torchvision.utils import draw_segmentation_masks
 
 from torch_uncertainty.metrics import (
     AUGRC,
@@ -20,6 +22,7 @@ from torch_uncertainty.models import (
     EPOCH_UPDATE_MODEL,
     STEP_UPDATE_MODEL,
 )
+from torch_uncertainty.utils.plotting import show
 
 
 class SegmentationRoutine(LightningModule):
@@ -29,9 +32,11 @@ class SegmentationRoutine(LightningModule):
         num_classes: int,
         loss: nn.Module,
         optim_recipe: dict | Optimizer | None = None,
+        eval_shift: bool = False,
         format_batch_fn: nn.Module | None = None,
         metric_subsampling_rate: float = 1e-2,
         log_plots: bool = False,
+        num_samples_to_plot: int = 3,
         num_calibration_bins: int = 15,
     ) -> None:
         r"""Routine for training & testing on **segmentation** tasks.
@@ -42,12 +47,16 @@ class SegmentationRoutine(LightningModule):
             loss (torch.nn.Module): Loss function to optimize the :attr:`model`.
             optim_recipe (dict or Optimizer, optional): The optimizer and
                 optionally the scheduler to use. Defaults to ``None``.
+            eval_shift (bool, optional): Indicates whether to evaluate the Distribution
+                shift performance. Defaults to ``False``.
             format_batch_fn (torch.nn.Module, optional): The function to format the
                 batch. Defaults to ``None``.
             metric_subsampling_rate (float, optional): The rate of subsampling for the
                 memory consuming metrics. Defaults to ``1e-2``.
             log_plots (bool, optional): Indicates whether to log plots from
                 metrics. Defaults to ``False``.
+            num_samples_to_plot (int, optional): Number of samples to plot in the
+                segmentation results. Defaults to ``3``.
             num_calibration_bins (int, optional): Number of bins to compute calibration
                 metrics. Defaults to ``15``.
 
@@ -65,6 +74,11 @@ class SegmentationRoutine(LightningModule):
             metric_subsampling_rate,
             num_calibration_bins,
         )
+        if eval_shift:
+            raise NotImplementedError(
+                "Distribution shift evaluation not implemented yet. Raise an issue "
+                "if needed."
+            )
 
         self.model = model
         self.num_classes = num_classes
@@ -125,6 +139,10 @@ class SegmentationRoutine(LightningModule):
         self.val_sbsmpl_seg_metrics = sbsmpl_seg_metrics.clone(prefix="val/")
         self.test_seg_metrics = seg_metrics.clone(prefix="test/")
         self.test_sbsmpl_seg_metrics = sbsmpl_seg_metrics.clone(prefix="test/")
+
+        if log_plots:
+            self.num_samples_to_plot = num_samples_to_plot
+            self.sample_buffer = []
 
     def configure_optimizers(self) -> Optimizer | dict:
         return self.optim_recipe
@@ -202,11 +220,27 @@ class SegmentationRoutine(LightningModule):
             logits.shape[-2:],
             interpolation=F.InterpolationMode.NEAREST,
         )
+
         logits = rearrange(
-            logits, "(m b) c h w -> (b h w) m c", b=targets.size(0)
+            logits, "(m b) c h w -> b m c h w", b=targets.size(0)
         )
-        probs_per_est = logits.softmax(dim=-1)
+        probs_per_est = logits.softmax(dim=2)
         probs = probs_per_est.mean(dim=1)
+
+        if (
+            self.log_plots
+            and len(self.sample_buffer) < self.num_samples_to_plot
+        ):
+            max_count = self.num_samples_to_plot - len(self.sample_buffer)
+            for i, (_img, _prb, _tgt) in enumerate(
+                zip(img, probs, targets, strict=False)
+            ):
+                if i >= max_count:
+                    break
+                _pred = _prb.argmax(dim=0, keepdim=True)
+                self.sample_buffer.append((_img, _pred, _tgt))
+
+        probs = rearrange(probs, "b c h w -> (b h w) c")
         targets = targets.flatten()
         valid_mask = targets != 255
         probs, targets = probs[valid_mask], targets[valid_mask]
@@ -214,13 +248,13 @@ class SegmentationRoutine(LightningModule):
         self.test_sbsmpl_seg_metrics.update(*self.subsample(probs, targets))
 
     def on_validation_epoch_end(self) -> None:
-        self.log_dict(
-            self.val_seg_metrics.compute(), logger=True, sync_dist=True
-        )
+        res_dict = self.val_seg_metrics.compute()
+        self.log_dict(res_dict, logger=True, sync_dist=True)
         self.log(
             "mIoU%",
-            self.val_seg_metrics["seg/mIoU"].compute() * 100,
+            res_dict["val/seg/mIoU"] * 100,
             prog_bar=True,
+            sync_dist=True,
         )
         self.log_dict(self.val_sbsmpl_seg_metrics.compute(), sync_dist=True)
         self.val_seg_metrics.reset()
@@ -231,16 +265,57 @@ class SegmentationRoutine(LightningModule):
         self.log_dict(self.test_sbsmpl_seg_metrics.compute(), sync_dist=True)
         if isinstance(self.logger, Logger) and self.log_plots:
             self.logger.experiment.add_figure(
-                "Reliabity diagram",
+                "Calibration/Reliabity diagram",
                 self.test_sbsmpl_seg_metrics["cal/ECE"].plot()[0],
             )
             self.logger.experiment.add_figure(
-                "Risk-Coverage curve",
+                "Selective Classification/Risk-Coverage curve",
                 self.test_sbsmpl_seg_metrics["sc/AURC"].plot()[0],
             )
             self.logger.experiment.add_figure(
-                "Generalized Risk-Coverage curve",
+                "Selective Classification/Generalized Risk-Coverage curve",
                 self.test_sbsmpl_seg_metrics["sc/AUGRC"].plot()[0],
+            )
+            self.log_segmentation_plots()
+
+    def log_segmentation_plots(self) -> None:
+        """Builds and logs examples of segmentation plots from the test set."""
+        for i, (img, pred, tgt) in enumerate(self.sample_buffer):
+            pred = (
+                pred
+                == torch.arange(self.num_classes, device=pred.device)[
+                    :, None, None
+                ]
+            )
+            tgt = (
+                tgt
+                == torch.arange(self.num_classes, device=tgt.device)[
+                    :, None, None
+                ]
+            )
+
+            # Undo normalization on the image and convert to uint8.
+            mean = torch.tensor(self.trainer.datamodule.mean, device=img.device)
+            std = torch.tensor(self.trainer.datamodule.std, device=img.device)
+            img = img * std[:, None, None] + mean[:, None, None]
+            img = ToDtype(torch.uint8, scale=True)(img)
+
+            dataset = self.trainer.datamodule.test
+            if hasattr(dataset, "color_palette"):
+                color_palette = dataset.color_palette
+            else:
+                color_palette = None
+
+            pred_mask = draw_segmentation_masks(
+                img, pred, alpha=0.7, colors=color_palette
+            )
+            gt_mask = draw_segmentation_masks(
+                img, tgt, alpha=0.7, colors=color_palette
+            )
+
+            self.logger.experiment.add_figure(
+                f"Segmentation results/{i}",
+                show(pred_mask, gt_mask),
             )
 
     def subsample(self, pred: Tensor, target: Tensor) -> tuple[Tensor, Tensor]:

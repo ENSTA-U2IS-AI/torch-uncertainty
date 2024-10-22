@@ -8,10 +8,10 @@ from tests._dummies import (
     DummyClassificationDataModule,
     dummy_model,
 )
+from torch_uncertainty import TUTrainer
 from torch_uncertainty.losses import DECLoss, ELBOLoss
 from torch_uncertainty.routines import ClassificationRoutine
 from torch_uncertainty.transforms import RepeatTarget
-from torch_uncertainty.utils import TUTrainer
 
 
 class TestClassification:
@@ -72,6 +72,7 @@ class TestClassification:
             num_classes=2,
             num_images=100,
             eval_ood=True,
+            eval_shift=True,
         )
         model = DummyClassificationBaseline(
             num_classes=dm.num_classes,
@@ -80,6 +81,7 @@ class TestClassification:
             baseline_type="single",
             ood_criterion="entropy",
             eval_ood=True,
+            eval_shift=True,
             no_mixup_params=True,
         )
 

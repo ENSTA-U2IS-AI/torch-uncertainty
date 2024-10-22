@@ -16,7 +16,7 @@ In this part, we train a neural network, based on the model and routines already
 
 To train a LeNet with the DEC loss function using TorchUncertainty, we have to load the following utilities from TorchUncertainty:
 
-- the Trainer from Lightning
+- our wrapper of the Lightning Trainer
 - the model: LeNet, which lies in torch_uncertainty.models
 - the classification training routine in the torch_uncertainty.routines
 - the evidential objective: the DECLoss from torch_uncertainty.losses
@@ -28,9 +28,9 @@ We also need to define an optimizer using torch.optim, the neural network utils 
 from pathlib import Path
 
 import torch
-from lightning.pytorch import Trainer
 from torch import nn, optim
 
+from torch_uncertainty import TUTrainer
 from torch_uncertainty.datamodules import MNISTDataModule
 from torch_uncertainty.losses import DECLoss
 from torch_uncertainty.models.lenet import lenet
@@ -53,10 +53,9 @@ def optim_lenet(model: nn.Module) -> dict:
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 # In the following, we need to define the root of the logs, and to
-# fake-parse the arguments needed for using the PyTorch Lightning Trainer. We
-# also use the same MNIST classification example as that used in the
+# We use the same MNIST classification example as that used in the
 # original DEC paper. We only train for 3 epochs for the sake of time.
-trainer = Trainer(accelerator="cpu", max_epochs=3, enable_progress_bar=False)
+trainer = TUTrainer(accelerator="cpu", max_epochs=3, enable_progress_bar=False)
 
 # datamodule
 root = Path() / "data"

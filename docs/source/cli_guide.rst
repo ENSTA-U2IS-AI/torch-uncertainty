@@ -22,7 +22,7 @@ Let's see how to implement the CLI, by checking out the ``experiments/classifica
 
     from torch_uncertainty.baselines.classification import ResNetBaseline
     from torch_uncertainty.datamodules import CIFAR10DataModule
-    from torch_uncertainty.utils import TULightningCLI
+    from torch_uncertainty import TULightningCLI
 
 
     class ResNetCLI(TULightningCLI):

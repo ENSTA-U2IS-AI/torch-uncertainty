@@ -20,7 +20,7 @@ class TestMNISTDataModule:
         )
 
         assert dm.dataset == MNIST
-        assert isinstance(dm.train_transform.transforms[1], Cutout)
+        assert isinstance(dm.train_transform.transforms[2], Cutout)
 
         dm = MNISTDataModule(
             root="./data/",
@@ -28,20 +28,17 @@ class TestMNISTDataModule:
             ood_ds="notMNIST",
             cutout=0,
             val_split=0,
+            basic_augment=False,
         )
-        assert isinstance(dm.train_transform.transforms[1], nn.Identity)
+        assert isinstance(dm.train_transform.transforms[2], nn.Identity)
 
         with pytest.raises(ValueError):
             MNISTDataModule(root="./data/", batch_size=128, ood_ds="other")
 
-        MNISTDataModule(root="./data/", batch_size=128, test_alt="c")
-
         dm.dataset = DummyClassificationDataset
         dm.ood_dataset = DummyClassificationDataset
-
-        dm.prepare_data()
-        dm.setup()
-
+        dm.setup("fit")
+        dm.setup("test")
         dm.train_dataloader()
         dm.val_dataloader()
         dm.test_dataloader()

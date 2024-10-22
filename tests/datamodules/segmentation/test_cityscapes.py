@@ -10,6 +10,9 @@ class TestCityscapesDataModule:
 
     def test_camvid_main(self):
         dm = CityscapesDataModule(root="./data/", batch_size=128)
+        dm = CityscapesDataModule(
+            root="./data/", batch_size=128, basic_augment=False
+        )
 
         assert dm.dataset == Cityscapes
 

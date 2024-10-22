@@ -86,16 +86,16 @@ CIFAR10 datamodule.
 .. code:: python
 
   from torch_uncertainty.datamodules import CIFAR10DataModule
-  from lightning.pytorch import Trainer
+  from lightning.pytorch import TUTrainer
 
   dm = CIFAR10DataModule(root="data", batch_size=32)
-  trainer = Trainer(gpus=1, max_epochs=100)
+  trainer = TUTTrainer(gpus=1, max_epochs=100)
   trainer.fit(routine, dm)
   trainer.test(routine, dm)
 
 Here it is, you have trained your first model with TorchUncertainty! As a result, you will get access to various metrics
 measuring the ability of your model to handle uncertainty. You can get other examples of training with lightning Trainers
-looking at the `Tutorials <tutorials.html#layers>`_.
+looking at the `Tutorials <auto_tutorials/index.html>`_.
 
 More metrics
 ^^^^^^^^^^^^

@@ -27,7 +27,7 @@ In this part, we train a Bayesian LeNet, based on the model and routines already
 
 To train a BNN using TorchUncertainty, we have to load the following modules:
 
-- the Trainer from Lightning
+- our TUTrainer
 - the model: bayesian_lenet, which lies in the torch_uncertainty.model
 - the classification training routine from torch_uncertainty.routines
 - the Bayesian objective: the ELBOLoss, which lies in the torch_uncertainty.losses file
@@ -39,9 +39,9 @@ neural network utils from torch.nn.
 # %%
 from pathlib import Path
 
-from lightning.pytorch import Trainer
 from torch import nn, optim
 
+from torch_uncertainty import TUTrainer
 from torch_uncertainty.datamodules import MNISTDataModule
 from torch_uncertainty.losses import ELBOLoss
 from torch_uncertainty.models.lenet import bayesian_lenet
@@ -65,12 +65,12 @@ def optim_lenet(model: nn.Module):
 # 3. Creating the necessary variables
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
-# In the following, we define the Lightning trainer, the root of the datasets and the logs.
+# In the following, we instantiate our trainer, define the root of the datasets and the logs.
 # We also create the datamodule that handles the MNIST dataset, dataloaders and transforms.
 # Please note that the datamodules can also handle OOD detection by setting the eval_ood
 # parameter to True. Finally, we create the model using the blueprint from torch_uncertainty.models.
 
-trainer = Trainer(accelerator="cpu", enable_progress_bar=False, max_epochs=1)
+trainer = TUTrainer(accelerator="cpu", enable_progress_bar=False, max_epochs=1)
 
 # datamodule
 root = Path("data")
@@ -111,7 +111,7 @@ routine = ClassificationRoutine(
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 # Now that we have prepared all of this, we just have to gather everything in
-# the main function and to train the model using the Lightning Trainer.
+# the main function and to train the model using our wrapper of Lightning Trainer.
 # Specifically, it needs the routine, that includes the model as well as the
 # training/eval logic and the datamodule
 # The dataset will be downloaded automatically in the root/data folder, and the

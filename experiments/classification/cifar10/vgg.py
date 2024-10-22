@@ -1,13 +1,14 @@
 import torch
 from lightning.pytorch.cli import LightningArgumentParser
 
+from torch_uncertainty import TULightningCLI
 from torch_uncertainty.baselines.classification import VGGBaseline
 from torch_uncertainty.datamodules import CIFAR10DataModule
-from torch_uncertainty.utils import TULightningCLI
 
 
 class ResNetCLI(TULightningCLI):
     def add_arguments_to_parser(self, parser: LightningArgumentParser) -> None:
+        super().add_arguments_to_parser(parser)
         parser.add_optimizer_args(torch.optim.Adam)
         parser.add_lr_scheduler_args(torch.optim.lr_scheduler.MultiStepLR)
 

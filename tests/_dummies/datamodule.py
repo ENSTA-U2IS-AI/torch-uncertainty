@@ -7,7 +7,7 @@ from numpy.typing import ArrayLike
 from torch.utils.data import DataLoader
 from torchvision import tv_tensors
 
-from torch_uncertainty.datamodules.abstract import TUDataModule
+from torch_uncertainty.datamodules import TUDataModule
 
 from .dataset import (
     DummPixelRegressionDataset,
@@ -29,6 +29,7 @@ class DummyClassificationDataModule(TUDataModule):
         num_classes: int = 2,
         num_workers: int = 1,
         eval_ood: bool = False,
+        eval_shift: bool = False,
         pin_memory: bool = True,
         persistent_workers: bool = True,
         num_images: int = 2,
@@ -43,11 +44,13 @@ class DummyClassificationDataModule(TUDataModule):
         )
 
         self.eval_ood = eval_ood
+        self.eval_shift = eval_shift
         self.num_classes = num_classes
         self.num_images = num_images
 
         self.dataset = DummyClassificationDataset
         self.ood_dataset = DummyClassificationDataset
+        self.shift_dataset = DummyClassificationDataset
 
         self.train_transform = T.ToTensor()
         self.test_transform = T.ToTensor()
@@ -90,11 +93,22 @@ class DummyClassificationDataModule(TUDataModule):
                 transform=self.test_transform,
                 num_images=self.num_images,
             )
+            self.shift = self.shift_dataset(
+                self.root,
+                num_channels=self.num_channels,
+                num_classes=self.num_classes,
+                image_size=self.image_size,
+                transform=self.test_transform,
+                num_images=self.num_images,
+            )
+            self.shift.shift_severity = 1
 
     def test_dataloader(self) -> DataLoader | list[DataLoader]:
         dataloader = [self._data_loader(self.test)]
         if self.eval_ood:
             dataloader.append(self._data_loader(self.ood))
+        if self.eval_shift:
+            dataloader.append(self._data_loader(self.shift))
         return dataloader
 
     def _get_train_data(self) -> ArrayLike:
@@ -163,6 +177,8 @@ class DummyRegressionDataModule(TUDataModule):
 class DummySegmentationDataModule(TUDataModule):
     num_channels = 3
     training_task = "segmentation"
+    mean = [0.0, 0.0, 0.0]
+    std = [1.0, 1.0, 1.0]
 
     def __init__(
         self,

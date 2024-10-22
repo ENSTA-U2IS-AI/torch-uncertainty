@@ -1,73 +1,218 @@
 from typing import Any, Literal
 
 import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
+import numpy as np
+import seaborn as sns
 import torch
 from torchmetrics.classification.calibration_error import (
     BinaryCalibrationError,
     MulticlassCalibrationError,
 )
+from torchmetrics.functional.classification.calibration_error import (
+    _binning_bucketize,
+)
 from torchmetrics.metric import Metric
 from torchmetrics.utilities.data import dim_zero_cat
 from torchmetrics.utilities.enums import ClassificationTaskNoMultilabel
-from torchmetrics.utilities.plot import _AX_TYPE, _PLOT_OUT_TYPE
+from torchmetrics.utilities.plot import _PLOT_OUT_TYPE
 
 from .adaptive_calibration_error import AdaptiveCalibrationError
 
 
-def _ce_plot(self, ax: _AX_TYPE | None = None) -> _PLOT_OUT_TYPE:
-    fig, ax = plt.subplots(figsize=(6, 6)) if ax is None else (None, ax)
+def _reliability_diagram_subplot(
+    ax,
+    accuracies: np.ndarray,
+    confidences: np.ndarray,
+    bin_sizes: np.ndarray,
+    bins: np.ndarray,
+    title: str = "Reliability Diagram",
+    xlabel: str = "Top-class Confidence (%)",
+    ylabel: str = "Success Rate (%)",
+) -> None:
+    widths = 1.0 / len(bin_sizes)
+    positions = bins + widths / 2.0
+    alphas = 0.2 + 0.8 * bin_sizes
 
-    conf = dim_zero_cat(self.confidences)
-    acc = dim_zero_cat(self.accuracies)
-    bin_width = 1 / self.n_bins
+    colors = np.zeros((len(bin_sizes), 4))
+    colors[:, 0] = 240 / 255.0
+    colors[:, 1] = 60 / 255.0
+    colors[:, 2] = 60 / 255.0
+    colors[:, 3] = alphas
 
-    bin_ids = torch.round(
-        torch.clamp(conf * self.n_bins, 1e-5, self.n_bins - 1 - 1e-5)
-    )
-    val, inverse, counts = bin_ids.unique(
-        return_inverse=True, return_counts=True
-    )
-    counts = counts.float()
-    val_oh = torch.nn.functional.one_hot(
-        val.long(), num_classes=self.n_bins
-    ).float()
-
-    # add 1e-6 to avoid division NaNs
-    values = (
-        val_oh.T
-        @ torch.sum(
-            acc.unsqueeze(1) * torch.nn.functional.one_hot(inverse).float(),
-            0,
-        )
-        / (val_oh.T @ counts + 1e-6)
-    )
-
-    plt.rc("axes", axisbelow=True)
-    ax.hist(
-        x=[bin_width * i * 100 for i in range(self.n_bins)],
-        weights=values.cpu() * 100,
-        bins=[bin_width * i * 100 for i in range(self.n_bins + 1)],
-        alpha=0.7,
+    gap_plt = ax.bar(
+        positions,
+        np.abs(accuracies - confidences),
+        bottom=np.minimum(accuracies, confidences),
+        width=widths,
+        edgecolor=colors,
+        color=colors,
         linewidth=1,
-        edgecolor="#0d559f",
-        color="#1f77b4",
+        label="Gap",
     )
 
-    ax.plot([0, 100], [0, 100], "--", color="#0d559f")
-    plt.grid(True, linestyle="--", alpha=0.7, zorder=0)
-    ax.set_xlabel("Top-class Confidence (%)", fontsize=16)
-    ax.set_ylabel("Success Rate (%)", fontsize=16)
-    ax.set_xlim(0, 100)
-    ax.set_ylim(0, 100)
-    ax.set_aspect("equal", "box")
-    if fig is not None:
-        fig.tight_layout()
+    acc_plt = ax.bar(
+        positions,
+        0,
+        bottom=accuracies,
+        width=widths,
+        edgecolor="black",
+        color="black",
+        alpha=1.0,
+        linewidth=3,
+        label="Accuracy",
+    )
+
+    ax.set_aspect("equal")
+    ax.plot([0, 1], [0, 1], linestyle="--", color="gray")
+
+    gaps = np.abs(accuracies - confidences)
+    ece = (np.sum(gaps * bin_sizes) / np.sum(bin_sizes)) * 100
+
+    ax.text(
+        0.98,
+        0.02,
+        f"ECE={ece:.03}%",
+        color="black",
+        ha="right",
+        va="bottom",
+        transform=ax.transAxes,
+    )
+
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+
+    ax.set_title(title)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+
+    ax.legend(handles=[gap_plt, acc_plt])
+
+
+def _confidence_histogram_subplot(
+    ax,
+    accuracies: np.ndarray,
+    confidences: np.ndarray,
+    title="Examples per bin",
+    xlabel="Top-class Confidence (%)",
+    ylabel="Density",
+) -> None:
+    sns.kdeplot(
+        confidences,
+        linewidth=2,
+        ax=ax,
+        fill=True,
+        alpha=0.5,
+    )
+
+    ax.set_xlim(0, 1)
+    ax.set_title(title)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+
+    avg_acc = np.mean(accuracies)
+    avg_conf = np.mean(confidences)
+
+    acc_plt = ax.axvline(
+        x=avg_acc,
+        ls="solid",
+        lw=3,
+        c="black",
+        label="Accuracy",
+    )
+    conf_plt = ax.axvline(
+        x=avg_conf,
+        ls="dotted",
+        lw=3,
+        c="#444",
+        label="Avg. confidence",
+    )
+    ax.legend(handles=[acc_plt, conf_plt], loc="upper left")
+
+
+def reliability_chart(
+    accuracies: np.ndarray,
+    confidences: np.ndarray,
+    bin_accuracies: np.ndarray,
+    bin_confidences: np.ndarray,
+    bin_sizes: np.ndarray,
+    bins: np.ndarray,
+    title="Reliability Diagram",
+    figsize=(6, 6),
+    dpi=72,
+) -> _PLOT_OUT_TYPE:
+    """Builds Reliability Diagram
+    `Source <https://github.com/hollance/reliability-diagrams>`_.
+    """
+    figsize = (figsize[0], figsize[0] * 1.4)
+
+    fig, ax = plt.subplots(
+        nrows=2,
+        ncols=1,
+        sharex=True,
+        figsize=figsize,
+        dpi=dpi,
+        gridspec_kw={"height_ratios": [4, 1]},
+    )
+
+    plt.tight_layout()
+    plt.subplots_adjust(hspace=0)
+
+    # reliability diagram subplot
+    _reliability_diagram_subplot(
+        ax[0],
+        bin_accuracies,
+        bin_confidences,
+        bin_sizes,
+        bins,
+        title=title,
+    )
+
+    # confidence histogram subplot
+    _confidence_histogram_subplot(ax[1], accuracies, confidences, title="")
+
+    new_ticks = np.abs(ax[1].get_yticks()).astype(np.int32)
+    ax[1].yaxis.set_major_locator(mticker.FixedLocator(new_ticks))
+    ax[1].set_yticklabels(new_ticks)
+
     return fig, ax
 
 
+def custom_plot(self) -> _PLOT_OUT_TYPE:
+    confidences = dim_zero_cat(self.confidences)
+    accuracies = dim_zero_cat(self.accuracies)
+
+    bin_boundaries = torch.linspace(
+        0,
+        1,
+        self.n_bins + 1,
+        dtype=torch.float,
+        device=confidences.device,
+    )
+
+    with torch.no_grad():
+        acc_bin, conf_bin, prop_bin = _binning_bucketize(
+            confidences, accuracies, bin_boundaries
+        )
+
+    np_acc_bin = acc_bin.cpu().numpy()
+    np_conf_bin = conf_bin.cpu().numpy()
+    np_prop_bin = prop_bin.cpu().numpy()
+    np_bin_boundaries = bin_boundaries.cpu().numpy()
+
+    return reliability_chart(
+        accuracies=accuracies.cpu().numpy(),
+        confidences=confidences.cpu().numpy(),
+        bin_accuracies=np_acc_bin,
+        bin_confidences=np_conf_bin,
+        bin_sizes=np_prop_bin,
+        bins=np_bin_boundaries,
+    )
+
+
 # overwrite the plot method of the original metrics
-BinaryCalibrationError.plot = _ce_plot
-MulticlassCalibrationError.plot = _ce_plot
+BinaryCalibrationError.plot = custom_plot
+MulticlassCalibrationError.plot = custom_plot
 
 
 class CalibrationError:
