@@ -70,7 +70,7 @@ docs = [
 all = [
     "torch_uncertainty[dev,docs,image,tabular]",
     "laplace-torch",
-    "glest==0.0.1a0",
+    "glest==0.0.1a1",
     "scipy",
 ]
 
