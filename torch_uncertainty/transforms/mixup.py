@@ -1,7 +1,6 @@
 from importlib import util
 
 import numpy as np
-import scipy
 import torch
 import torch.nn.functional as F
 from torch import Tensor, nn

@@ -23,8 +23,14 @@ if util.find_spec("skimage"):
 else:  # coverage: ignore
     skimage_installed = False
 
-from scipy.ndimage import map_coordinates
-from scipy.ndimage import zoom as scizoom
+if util.find_spec("scipy"):
+    from scipy.ndimage import map_coordinates
+    from scipy.ndimage import zoom as scizoom
+
+    scipy_installed = True
+else:  # coverage: ignore
+    scipy_installed = False
+
 from torch import Tensor, nn
 from torchvision.transforms import (
     InterpolationMode,
@@ -296,6 +302,12 @@ class ZoomBlur(TUCorruption):
             np.arange(1, 1.31, 0.03),
         ][severity - 1]
 
+        if not scipy_installed:  # coverage: ignore
+            raise ImportError(
+                "Please install torch_uncertainty with the all option:"
+                """pip install -U "torch_uncertainty[all]"."""
+            )
+
     def forward(self, img: Tensor) -> Tensor:
         if self.severity == 0:
             return img
@@ -531,10 +543,10 @@ class JPEGCompression(TUCorruption):
 class Elastic(TUCorruption):
     def __init__(self, severity: int) -> None:
         super().__init__(severity)
-        if not cv2_installed:  # coverage: ignore
+        if not cv2_installed or not scipy_installed:  # coverage: ignore
             raise ImportError(
-                "Please install torch_uncertainty with the image option:"
-                """pip install -U "torch_uncertainty[image]"."""
+                "Please install torch_uncertainty with the all option:"
+                """pip install -U "torch_uncertainty[all]"."""
             )
         # The following pertubation values are based on the original repo but
         # are quite strange, notably for the severities 3 and 4
