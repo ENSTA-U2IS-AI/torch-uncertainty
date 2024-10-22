@@ -33,8 +33,25 @@ from torchvision.transforms import (
     ToPILImage,
     ToTensor,
 )
-from wand.api import library as wandlibrary
-from wand.image import Image as WandImage
+
+if util.find_spec("wand"):
+    from wand.api import library as wandlibrary
+    from wand.image import Image as WandImage
+
+    wandlibrary.MagickMotionBlurImage.argtypes = (
+        ctypes.c_void_p,  # wand
+        ctypes.c_double,  # radius
+        ctypes.c_double,  # sigma
+        ctypes.c_double,
+    )  # angle
+
+    class MotionImage(WandImage):
+        def motion_blur(self, radius=0.0, sigma=0.0, angle=0.0):
+            wandlibrary.MagickMotionBlurImage(self.wand, radius, sigma, angle)
+
+    wand_installed = True
+else:  # coverage: ignore
+    wand_installed = False
 
 from torch_uncertainty.datasets import FrostImages
 
@@ -217,19 +234,6 @@ def disk(radius: int, alias_blur: float = 0.1, dtype=np.float32):
     return cv2.GaussianBlur(aliased_disk, ksize=ksize, sigmaX=alias_blur)
 
 
-wandlibrary.MagickMotionBlurImage.argtypes = (
-    ctypes.c_void_p,  # wand
-    ctypes.c_double,  # radius
-    ctypes.c_double,  # sigma
-    ctypes.c_double,
-)  # angle
-
-
-class MotionImage(WandImage):
-    def motion_blur(self, radius=0.0, sigma=0.0, angle=0.0):
-        wandlibrary.MagickMotionBlurImage(self.wand, radius, sigma, angle)
-
-
 class MotionBlur(TUCorruption):
     def __init__(self, severity: int) -> None:
         super().__init__(severity)
@@ -238,6 +242,12 @@ class MotionBlur(TUCorruption):
         self.sigma = [3, 5, 8, 12, 15][severity - 1]
         self.to_pil_img = ToPILImage()
         self.to_tensor = ToTensor()
+
+        if not wand_installed:  # coverage: ignore
+            raise ImportError(
+                "Please install torch_uncertainty with the image option:"
+                """pip install -U "torch_uncertainty[image]"."""
+            )
 
     def forward(self, img: Tensor) -> Tensor:
         if self.severity == 0:
@@ -308,6 +318,12 @@ class Snow(TUCorruption):
             (0.55, 0.3, 2.5, 0.85, 12, 12, 0.55),
         ][severity - 1]
         self.rng = np.random.default_rng()
+
+        if not wand_installed:  # coverage: ignore
+            raise ImportError(
+                "Please install torch_uncertainty with the image option:"
+                """pip install -U "torch_uncertainty[image]"."""
+            )
 
     def forward(self, img: Tensor) -> Tensor:
         if self.severity == 0:
