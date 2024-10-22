@@ -24,6 +24,7 @@ class TestImageNetDataModule:
         dm = ImageNetDataModule(root="./data/", batch_size=128, val_split=path)
         dm.dataset = DummyClassificationDataset
         dm.ood_dataset = DummyClassificationDataset
+        dm.shift_dataset = DummyClassificationDataset
         dm.setup("fit")
         dm.setup("test")
         dm.train_dataloader()
@@ -37,6 +38,7 @@ class TestImageNetDataModule:
         dm.test_dataloader()
 
         dm.eval_ood = True
+        dm.eval_shift = True
         dm.prepare_data()
         dm.setup("test")
         dm.test_dataloader()

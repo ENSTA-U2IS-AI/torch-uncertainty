@@ -17,6 +17,7 @@ class TestCIFAR10DataModule:
 
         dm.dataset = DummyClassificationDataset
         dm.ood_dataset = DummyClassificationDataset
+        dm.shift_dataset = DummyClassificationDataset
 
         dm.prepare_data()
         dm.setup()
@@ -34,16 +35,10 @@ class TestCIFAR10DataModule:
         dm.test_dataloader()
 
         dm.eval_ood = True
+        dm.eval_shift = True
         dm.prepare_data()
         dm.setup("test")
         dm.test_dataloader()
-
-        dm = CIFAR10DataModule(
-            root="./data/", batch_size=128, cutout=16, test_alt="c"
-        )
-        dm.dataset = DummyClassificationDataset
-        with pytest.raises(ValueError):
-            dm.setup()
 
         dm = CIFAR10DataModule(
             root="./data/", batch_size=128, cutout=16, test_alt="h"
