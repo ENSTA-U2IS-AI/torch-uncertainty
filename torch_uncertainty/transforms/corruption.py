@@ -93,7 +93,7 @@ class GaussianNoise(TUCorruption):
     def forward(self, img: Tensor) -> Tensor:
         if self.severity == 0:
             return img
-        return torch.clip(torch.normal(img, self.scale), 0, 1)
+        return torch.clamp(torch.normal(img, self.scale), 0, 1)
 
 
 class ShotNoise(TUCorruption):
@@ -109,7 +109,7 @@ class ShotNoise(TUCorruption):
     def forward(self, img: Tensor):
         if self.severity == 0:
             return img
-        return torch.clip(torch.poisson(img * self.scale) / self.scale, 0, 1)
+        return torch.clamp(torch.poisson(img * self.scale) / self.scale, 0, 1)
 
 
 class ImpulseNoise(TUCorruption):
@@ -130,10 +130,10 @@ class ImpulseNoise(TUCorruption):
     def forward(self, img: Tensor) -> Tensor:
         if self.severity == 0:
             return img
-        return torch.clip(
+        return torch.clamp(
             torch.as_tensor(random_noise(img, mode="s&p", amount=self.scale)),
-            0,
-            1,
+            torch.zeros(1),
+            torch.ones(1),
         )
 
 
@@ -167,7 +167,7 @@ class DefocusBlur(TUCorruption):
             )
             for ch in range(3)
         ]
-        return torch.clip(torch.stack(channels), 0, 1)
+        return torch.clamp(torch.stack(channels), 0, 1)
 
 
 class GlassBlur(TUCorruption):  # TODO: batch
@@ -198,7 +198,7 @@ class GlassBlur(TUCorruption):  # TODO: batch
                         img[h_prime, w_prime],
                         img[h, w],
                     )
-        return torch.clip(
+        return torch.clamp(
             torch.as_tensor(gaussian(img, sigma=self.sigma)), 0, 1
         )
 
@@ -217,7 +217,6 @@ def disk(radius: int, alias_blur: float = 0.1, dtype=np.float32):
     return cv2.GaussianBlur(aliased_disk, ksize=ksize, sigmaX=alias_blur)
 
 
-# Tell Python about the C method
 wandlibrary.MagickMotionBlurImage.argtypes = (
     ctypes.c_void_p,  # wand
     ctypes.c_double,  # radius
@@ -295,7 +294,7 @@ class ZoomBlur(TUCorruption):
         for zoom_factor in self.zooms:
             out += clipped_zoom(img, zoom_factor)
         img = (img + out) / (len(self.zooms) + 1)
-        return torch.clip(torch.as_tensor(img), 0, 1)
+        return torch.clamp(torch.as_tensor(img), 0, 1)
 
 
 class Snow(TUCorruption):
@@ -348,7 +347,7 @@ class Snow(TUCorruption):
             * 1.5
             + 0.5,
         )
-        return torch.clip(
+        return torch.clamp(
             torch.as_tensor(x + snow_layer + np.rot90(snow_layer, k=2)), 0, 1
         )
 
@@ -371,7 +370,7 @@ class Frost(TUCorruption):
         frost_img = RandomResizedCrop((height, width))(
             self.frost_ds[self.rng.integers(low=0, high=4)]
         )
-        return torch.clip(self.mix[0] * img + self.mix[1] * frost_img, 0, 1)
+        return torch.clamp(self.mix[0] * img + self.mix[1] * frost_img, 0, 1)
 
 
 def plasma_fractal(height, width, wibbledecay=3):
@@ -455,7 +454,7 @@ class Fog(TUCorruption):
                 height=height, width=width, wibbledecay=self.mix[1]
             )[:height, :width]
         )
-        final = torch.clip(
+        final = torch.clamp(
             (img + fog) * max_val / (max_val + self.mix[0]), 0, 1
         )
         return Resize((height, width), InterpolationMode.BICUBIC)(final)
@@ -521,12 +520,10 @@ class Elastic(TUCorruption):
                 "Please install torch_uncertainty with the image option:"
                 """pip install -U "torch_uncertainty[image]"."""
             )
-        self.mixing = [
-            (
-                2,
-                0.7,
-                0.1,
-            ),
+        # The following pertubation values are based on the original repo but
+        # are quite strange, notably for the severities 3 and 4
+        self.mix = [
+            (2, 0.7, 0.1),
             (2, 0.08, 0.2),
             (0.05, 0.01, 0.02),
             (0.07, 0.01, 0.02),
@@ -537,11 +534,14 @@ class Elastic(TUCorruption):
     def forward(self, img: Tensor) -> Tensor:
         if self.severity == 0:
             return img
-        shape = img.shape
-        shape_size = shape[1:]
-        center_square = torch.tensor([shape_size[0] // 2, shape_size[1] // 2])
+        image = np.array(img.permute(1, 2, 0), dtype=np.float32)
+        shape = image.shape
+        shape_size = shape[:2]
+
+        # random affine
+        center_square = np.float32(shape_size) // 2
         square_size = min(shape_size) // 3
-        pts1 = np.array(
+        pts1 = np.float32(
             [
                 center_square + square_size,
                 [
@@ -549,40 +549,43 @@ class Elastic(TUCorruption):
                     center_square[1] - square_size,
                 ],
                 center_square - square_size,
-            ],
-            dtype=np.float32,
+            ]
         )
-
         pts2 = pts1 + self.rng.uniform(
-            -self.mixing[2] * shape_size[0],
-            self.mixing[2] * shape_size[0],
+            -self.mix[2] * shape_size[0],
+            self.mix[2] * shape_size[0],
             size=pts1.shape,
         ).astype(np.float32)
-        img = cv2.warpAffine(
-            img.numpy(),
-            cv2.getAffineTransform(pts1, pts2),
+        affine_transform = cv2.getAffineTransform(pts1, pts2)
+        image = cv2.warpAffine(
+            image,
+            affine_transform,
             shape_size[::-1],
             borderMode=cv2.BORDER_REFLECT_101,
         )
+
         dx = (
             gaussian(
-                self.rng.uniform(-1, 1, size=shape[1:]),
-                self.mixing[1] * shape_size[0],
+                self.rng.uniform(-1, 1, size=shape[:2]),
+                self.mix[1] * shape_size[0],
                 mode="reflect",
                 truncate=3,
             )
-            * self.mixing[0]
+            * self.mix[0]
+            * shape_size[0]
         ).astype(np.float32)
         dy = (
             gaussian(
-                self.rng.uniform(-1, 1, size=shape[1:]),
-                self.mixing[1],
+                self.rng.uniform(-1, 1, size=shape[:2]),
+                self.mix[1] * shape_size[0],
                 mode="reflect",
                 truncate=3,
             )
-            * self.mixing[0]
+            * self.mix[0]
+            * shape_size[0]
         ).astype(np.float32)
         dx, dy = dx[..., np.newaxis], dy[..., np.newaxis]
+
         x, y, z = np.meshgrid(
             np.arange(shape[1]), np.arange(shape[0]), np.arange(shape[2])
         )
@@ -591,15 +594,14 @@ class Elastic(TUCorruption):
             np.reshape(x + dx, (-1, 1)),
             np.reshape(z, (-1, 1)),
         )
-        final = np.clip(
-            map_coordinates(img, indices, order=1, mode="reflect").reshape(
+        img = np.clip(
+            map_coordinates(image, indices, order=1, mode="reflect").reshape(
                 shape
             ),
             0,
             1,
         )
-        print(final.shape)
-        return torch.as_tensor(final)
+        return torch.as_tensor(img).permute(2, 0, 1)
 
 
 class SpeckleNoise(TUCorruption):
@@ -611,7 +613,7 @@ class SpeckleNoise(TUCorruption):
     def forward(self, img: Tensor) -> Tensor:
         if self.severity == 0:
             return img
-        return torch.clip(
+        return torch.clamp(
             img + img * self.rng.normal(img, self.scale),
             0,
             1,
@@ -631,10 +633,10 @@ class GaussianBlur(TUCorruption):
     def forward(self, img: Tensor) -> Tensor:
         if self.severity == 0:
             return img
-        return torch.clip(
+        return torch.clamp(
             torch.as_tensor(gaussian(img, sigma=self.sigma)),
-            0,
-            1,
+            min=0,
+            max=1,
         )
 
 
