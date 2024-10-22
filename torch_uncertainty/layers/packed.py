@@ -142,6 +142,7 @@ class PackedLinear(nn.Module):
             "legacy",
             "sparse",
             "full",
+            "einsum",
         ], f"Unknown implementation: {implementation} for PackedLinear"
 
         if self.implementation == "legacy":
@@ -154,17 +155,6 @@ class PackedLinear(nn.Module):
                     ),
                     **factory_kwargs,
                 )
-            )
-        elif self.implementation == "sparse":
-            self.weight = nn.Parameter(
-                torch.empty(
-                    (
-                        actual_groups,
-                        extended_out_features // actual_groups,
-                        extended_in_features // actual_groups,
-                    ),
-                    **factory_kwargs,
-                ).to_sparse()
             )
         else:
             self.weight = nn.Parameter(
@@ -202,6 +192,11 @@ class PackedLinear(nn.Module):
             bound = 1 / math.sqrt(fan_in) if fan_in > 0 else 0
             nn.init.uniform_(self.bias, -bound, bound)
 
+        if self.implementation == "sparse":
+            self.weight = nn.Parameter(
+                torch.block_diag(*self.weight).to_sparse()
+            )
+
     def _rearrange_forward(self, x: Tensor) -> Tensor:
         x = x.unsqueeze(-1)
         if not self.first:
@@ -217,13 +212,16 @@ class PackedLinear(nn.Module):
             return F.conv1d(
                 inputs, self.weight, self.bias, 1, 0, 1, self.groups
             )
-        if self.implementation in ["full", "sparse"]:
-            return F.linear(inputs, self.weight, self.bias)
+        if self.implementation == "full":
+            block_diag = torch.block_diag(*self.weight)
+            return F.linear(inputs, block_diag, self.bias)
+        if self.implementation == "sparse":
+            return (inputs @ self.weight.transpose(0, 1)) + self.bias
         if self.implementation == "einsum":
             return torch.einsum(
                 "bki,kij->bkj",
                 inputs.view(-1, self.groups, self.in_features),
-                self.weight,
+                self.weight.transpose(1, 2),
             ).flatten(start_dim=-2, end_dim=-1)
         raise ValueError(f"Unknown implementation: {self.implementation}")
 
