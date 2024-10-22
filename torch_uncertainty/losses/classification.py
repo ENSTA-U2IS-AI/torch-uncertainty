@@ -288,12 +288,11 @@ class FocalLoss(nn.Module):
         gamma: float,
         alpha: Tensor | None = None,
         reduction: str = "mean",
-    ):
+    ) -> None:
         """Focal-Loss for classification tasks.
 
         Args:
             gamma (float, optional): A constant, as described in the paper.
-                Defaults to 0.
             alpha (Tensor, optional): Weights for each class. Defaults to None.
             reduction (str, optional): 'mean', 'sum' or 'none'.
                 Defaults to 'mean'.

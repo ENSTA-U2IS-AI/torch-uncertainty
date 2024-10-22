@@ -5,6 +5,7 @@ from torch_uncertainty.losses import (
     ConfidencePenaltyLoss,
     ConflictualLoss,
     DECLoss,
+    FocalLoss,
 )
 
 
@@ -106,3 +107,27 @@ class TestConflictualLoss:
             ValueError, match="is not a valid value for reduction."
         ):
             ConflictualLoss(reduction="median")
+
+
+class TestFocalLoss:
+    """Testing the FocalLoss class."""
+
+    def test_main(self):
+        loss = FocalLoss(gamma=1, reduction="sum")
+        loss(torch.tensor([[0.0, 0.0]]), torch.tensor([0]))
+        loss = FocalLoss(gamma=0.5)
+        loss(torch.tensor([[0.0, 0.0]]), torch.tensor([0]))
+        loss = FocalLoss(gamma=0.5, reduction=None)
+        loss(torch.tensor([[0.0, 0.0]]), torch.tensor([0]))
+
+    def test_failures(self):
+        with pytest.raises(
+            ValueError,
+            match="The gamma term of the focal loss should be non-negative, but got",
+        ):
+            FocalLoss(gamma=-1)
+
+        with pytest.raises(
+            ValueError, match="is not a valid value for reduction."
+        ):
+            FocalLoss(gamma=1, reduction="median")
