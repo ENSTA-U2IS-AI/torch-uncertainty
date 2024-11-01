@@ -8,6 +8,7 @@ if util.find_spec("glest"):
     glest_installed = True
 else:  # coverage: ignore
     glest_installed = False
+    GLEstimatorBase = object
 
 from torch import Tensor
 from torchmetrics import Metric
