@@ -41,10 +41,10 @@ def _reliability_diagram_subplot(
     colors[:, 3] = alphas
 
     gap_plt = ax.bar(
-        positions,
-        np.abs(accuracies - confidences),
-        bottom=np.minimum(accuracies, confidences),
-        width=widths,
+        positions * 100,
+        np.abs(accuracies - confidences) * 100,
+        bottom=np.minimum(accuracies, confidences) * 100,
+        width=widths * 100,
         edgecolor=colors,
         color=colors,
         linewidth=1,
@@ -52,40 +52,41 @@ def _reliability_diagram_subplot(
     )
 
     acc_plt = ax.bar(
-        positions,
+        positions * 100,
         0,
-        bottom=accuracies,
-        width=widths,
+        bottom=accuracies * 100,
+        width=widths * 100,
         edgecolor="black",
         color="black",
         alpha=1.0,
-        linewidth=3,
+        linewidth=2,
         label="Accuracy",
     )
 
     ax.set_aspect("equal")
-    ax.plot([0, 1], [0, 1], linestyle="--", color="gray")
+    ax.plot([0, 100], [0, 100], linestyle="--", color="gray")
 
     gaps = np.abs(accuracies - confidences)
-    ece = (np.sum(gaps * bin_sizes) / np.sum(bin_sizes)) * 100
+    ece = np.sum(gaps * bin_sizes) / np.sum(bin_sizes)
 
     ax.text(
         0.98,
         0.02,
-        f"ECE={ece:.03}%",
+        f"ECE={ece:.02%}",
         color="black",
         ha="right",
         va="bottom",
         transform=ax.transAxes,
     )
 
-    ax.set_xlim(0, 1)
-    ax.set_ylim(0, 1)
+    ax.set_xlim(0, 100)
+    ax.set_ylim(0, 100)
 
     ax.set_title(title)
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
 
+    ax.grid(True, alpha=0.3, linestyle="--", zorder=0)
     ax.legend(handles=[gap_plt, acc_plt])
 
 
@@ -95,17 +96,18 @@ def _confidence_histogram_subplot(
     confidences: np.ndarray,
     title="Examples per bin",
     xlabel="Top-class Confidence (%)",
-    ylabel="Density",
+    ylabel="Density (%)",
 ) -> None:
     sns.kdeplot(
-        confidences,
+        confidences * 100,
         linewidth=2,
         ax=ax,
         fill=True,
         alpha=0.5,
     )
 
-    ax.set_xlim(0, 1)
+    ax.set_xlim(0, 100)
+    ax.set_ylim(0, None)
     ax.set_title(title)
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
@@ -114,19 +116,20 @@ def _confidence_histogram_subplot(
     avg_conf = np.mean(confidences)
 
     acc_plt = ax.axvline(
-        x=avg_acc,
+        x=avg_acc * 100,
         ls="solid",
-        lw=3,
+        lw=2,
         c="black",
         label="Accuracy",
     )
     conf_plt = ax.axvline(
-        x=avg_conf,
+        x=avg_conf * 100,
         ls="dotted",
-        lw=3,
+        lw=2,
         c="#444",
         label="Avg. confidence",
     )
+    ax.grid(True, alpha=0.3, linestyle="--", zorder=0)
     ax.legend(handles=[acc_plt, conf_plt], loc="upper left")
 
 
@@ -139,7 +142,7 @@ def reliability_chart(
     bins: np.ndarray,
     title="Reliability Diagram",
     figsize=(6, 6),
-    dpi=72,
+    dpi=150,
 ) -> _PLOT_OUT_TYPE:
     """Builds Reliability Diagram
     `Source <https://github.com/hollance/reliability-diagrams>`_.
@@ -170,11 +173,7 @@ def reliability_chart(
 
     # confidence histogram subplot
     _confidence_histogram_subplot(ax[1], accuracies, confidences, title="")
-
-    new_ticks = np.abs(ax[1].get_yticks()).astype(np.int32)
-    ax[1].yaxis.set_major_locator(mticker.FixedLocator(new_ticks))
-    ax[1].set_yticklabels(new_ticks)
-
+    ax[1].yaxis.set_major_formatter(mticker.PercentFormatter(1.0))
     return fig, ax
 
 
@@ -240,6 +239,8 @@ class CalibrationError:
         **kwargs: Any,
     ) -> Metric:
         """Initialize task metric."""
+        if kwargs.get("n_bins") is not None:
+            raise ValueError("`n_bins` does not exist, use `num_bins`.")
         if adaptive:
             return AdaptiveCalibrationError(
                 task=task,
