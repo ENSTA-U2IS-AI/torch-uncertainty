@@ -4,14 +4,14 @@ from typing import Literal
 
 from lightning.pytorch import Trainer
 from lightning.pytorch.accelerators.accelerator import Accelerator
+from lightning.pytorch.callbacks import Callback
+from lightning.pytorch.loggers import Logger
 from lightning.pytorch.profilers import Profiler
 from lightning.pytorch.strategies.strategy import Strategy
 from lightning.pytorch.trainer.states import (
     RunningStage,
     TrainerFn,
 )
-from pytorch_lightning.callbacks import Callback
-from pytorch_lightning.loggers import Logger
 
 from torch_uncertainty.utils.evaluation_loop import TUEvaluationLoop
 
