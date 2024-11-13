@@ -336,3 +336,50 @@ class FocalLoss(nn.Module):
         if self.reduction == "sum":
             return loss.sum()
         return loss
+
+
+class BCEWithLogitsLossLS(nn.BCEWithLogitsLoss):
+    def __init__(
+        self,
+        weight: Tensor | None = None,
+        reduction: str = "mean",
+        label_smoothing: float = 0.0,
+    ) -> None:
+        """Binary Cross Entropy with Logits Loss with label smoothing.
+
+        The original PyTorch implementation of the BCEWithLogitsLoss does not
+        support label smoothing. This implementation adds label smoothing to
+        the BCEWithLogitsLoss.
+
+        Args:
+            weight (Tensor, optional): A manual rescaling weight given to the
+                loss of each batch element. If given, has to be a Tensor of size
+                "nbatch". Defaults to None.
+            reduction (str, optional): Specifies the reduction to apply to the
+                output: 'none' | 'mean' | 'sum'. 'none': no reduction will be applied,
+                'mean': the sum of the output will be divided by the number of
+                elements in the output, 'sum': the output will be summed. Defaults
+                to 'mean'.
+            label_smoothing (float, optional): The label smoothing factor. Defaults
+                to 0.0.
+        """
+        super().__init__(weight, reduction)
+        self.label_smoothing = label_smoothing
+
+    def forward(self, preds: Tensor, targets: Tensor) -> Tensor:
+        if self.label_smoothing == 0.0:
+            return super().forward(preds, targets)
+        targets = targets.float()
+        targets = (
+            targets * (1 - self.label_smoothing) + self.label_smoothing / 2
+        )
+        loss = targets * F.logsigmoid(preds) + (1 - targets) * F.logsigmoid(
+            -preds
+        )
+        if self.weight is not None:
+            loss = loss * self.weight
+        if self.reduction == "mean":
+            return -loss.mean()
+        if self.reduction == "sum":
+            return -loss.sum()
+        return -loss
