@@ -35,7 +35,6 @@ dependencies = [
     "lightning[pytorch-extra]>=2.0",
     "torchvision>=0.16",
     "einops",
-    "huggingface-hub",
     "scikit-learn",
     "matplotlib",
     "numpy",
@@ -52,6 +51,7 @@ image = [
 ]
 tabular = ["pandas"]
 dev = [
+    "huggingface-hub",
     "torch_uncertainty[image]",
     "ruff==0.6.9",
     "pytest-cov",
@@ -71,6 +71,7 @@ all = [
     "laplace-torch",
     "glest==0.0.1a1",
     "scipy",
+    "tensorboard",
 ]
 
 [project.urls]

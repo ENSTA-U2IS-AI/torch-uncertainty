@@ -1,10 +1,23 @@
+from importlib import util
 from pathlib import Path
 
 import torch
 import yaml
-from huggingface_hub import hf_hub_download
-from huggingface_hub.errors import EntryNotFoundError
-from safetensors.torch import load_file
+
+if util.find_spec("safetensors"):
+    from safetensors.torch import load_file
+
+    safetensors_installed = True
+else:  # coverage: ignore
+    safetensors_installed = False
+
+if util.find_spec("huggingface_hub"):
+    from huggingface_hub import hf_hub_download
+    from huggingface_hub.errors import EntryNotFoundError
+
+    huggingface_hub_installed = True
+else:  # coverage: ignore
+    huggingface_hub_installed = False
 
 
 def load_hf(
@@ -22,6 +35,12 @@ def load_hf(
     Note - License:
         TorchUncertainty's weights are released under the Apache 2.0 license.
     """
+    if not huggingface_hub_installed:
+        raise ImportError(
+            "Please install huggingface_hub to use this function."
+        )
+    if not safetensors_installed:
+        raise ImportError("Please install safetensors to use this function.")
     repo_id = f"torch-uncertainty/{weight_id}"
 
     # Load the weights
