@@ -1,14 +1,14 @@
 from functools import partial
 
 from tests._dummies.dataset import DummyRegressionDataset
-from torch_uncertainty.datamodules import UCIDataModule
+from torch_uncertainty.datamodules import UCIRegressionDataModule
 
 
-class TestUCIDataModule:
-    """Testing the UCIDataModule datamodule class."""
+class TestUCIRegressionDataModule:
+    """Testing the UCIRegressionDataModule datamodule class."""
 
     def test_uci_regression(self):
-        dm = UCIDataModule(
+        dm = UCIRegressionDataModule(
             dataset_name="kin8nm", root="./data/", batch_size=128
         )
 
