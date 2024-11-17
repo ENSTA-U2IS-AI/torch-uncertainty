@@ -326,7 +326,7 @@ Losses
     ConfidencePenaltyLoss
     KLDiv
     ELBOLoss
-    BCEWithLogitsLossLS
+    BCEWithLogitsLSLoss
 
 Post-Processing Methods
 -----------------------
