@@ -36,7 +36,6 @@ dependencies = [
     "torchvision>=0.16",
     "tensorboard",
     "einops",
-    "torchinfo",
     "huggingface-hub",
     "scikit-learn",
     "matplotlib",

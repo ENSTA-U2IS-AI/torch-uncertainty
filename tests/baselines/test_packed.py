@@ -1,7 +1,6 @@
 import pytest
 import torch
 from torch import nn
-from torchinfo import summary
 
 from torch_uncertainty.baselines.classification import (
     ResNetBaseline,
@@ -28,8 +27,6 @@ class TestPackedBaseline:
             groups=1,
         )
 
-        summary(net)
-
         _ = net(torch.rand(1, 3, 32, 32))
 
     def test_packed_18(self):
@@ -46,7 +43,6 @@ class TestPackedBaseline:
             groups=2,
         )
 
-        summary(net)
         _ = net(torch.rand(1, 3, 40, 40))
 
     def test_packed_exception(self):
@@ -95,7 +91,6 @@ class TestPackedWideBaseline:
             groups=1,
         )
 
-        summary(net)
         _ = net(torch.rand(1, 3, 32, 32))
 
 
@@ -114,8 +109,6 @@ class TestPackedVGGBaseline:
             gamma=1,
             groups=1,
         )
-
-        summary(net)
         _ = net(torch.rand(2, 3, 32, 32))
 
 
@@ -133,5 +126,4 @@ class TestPackedMLPBaseline:
             alpha=2,
             gamma=1,
         )
-        summary(net)
         _ = net(torch.rand(1, 3))

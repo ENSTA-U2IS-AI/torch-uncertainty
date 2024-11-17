@@ -1,7 +1,6 @@
 import pytest
 import torch
 from torch import nn
-from torchinfo import summary
 
 from torch_uncertainty.baselines.classification import (
     ResNetBaseline,
@@ -25,7 +24,6 @@ class TestMaskedBaseline:
             groups=1,
         )
 
-        summary(net)
         _ = net(torch.rand(1, 3, 32, 32))
 
     def test_masked_50(self):
@@ -41,7 +39,6 @@ class TestMaskedBaseline:
             groups=1,
         )
 
-        summary(net)
         _ = net(torch.rand(1, 3, 40, 40))
 
     def test_masked_errors(self):
@@ -87,5 +84,4 @@ class TestMaskedWideBaseline:
             groups=1,
         )
 
-        summary(net)
         _ = net(torch.rand(1, 3, 32, 32))

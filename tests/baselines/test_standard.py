@@ -1,7 +1,6 @@
 import pytest
 import torch
 from torch import nn
-from torchinfo import summary
 
 from torch_uncertainty.baselines.classification import (
     ResNetBaseline,
@@ -28,7 +27,6 @@ class TestStandardBaseline:
             style="cifar",
             groups=1,
         )
-        summary(net)
         _ = net(torch.rand(1, 3, 32, 32))
 
     def test_errors(self):
@@ -56,7 +54,6 @@ class TestStandardWideBaseline:
             style="cifar",
             groups=1,
         )
-        summary(net)
         _ = net(torch.rand(1, 3, 32, 32))
 
     def test_errors(self):
@@ -83,7 +80,6 @@ class TestStandardVGGBaseline:
             arch=11,
             groups=1,
         )
-        summary(net)
         _ = net(torch.rand(1, 3, 32, 32))
 
     def test_errors(self):
@@ -109,9 +105,7 @@ class TestStandardMLPBaseline:
             version="std",
             hidden_dims=[1],
         )
-        summary(net)
         _ = net(torch.rand(1, 3))
-
         for distribution in ["normal", "laplace", "nig"]:
             MLPBaseline(
                 in_features=3,
@@ -143,7 +137,6 @@ class TestStandardSegFormerBaseline:
             version="std",
             arch=0,
         )
-        summary(net)
         _ = net(torch.rand(1, 3, 32, 32))
 
     def test_errors(self):
@@ -169,7 +162,6 @@ class TestStandardDeepLabBaseline:
             arch=50,
             separable=True,
         ).eval()
-        summary(net)
         _ = net(torch.rand(1, 3, 32, 32))
 
     def test_errors(self):
