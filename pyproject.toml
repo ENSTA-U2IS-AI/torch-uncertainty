@@ -34,7 +34,6 @@ dependencies = [
     "timm",
     "lightning[pytorch-extra]>=2.0",
     "torchvision>=0.16",
-    "tensorboard",
     "einops",
     "huggingface-hub",
     "scikit-learn",
