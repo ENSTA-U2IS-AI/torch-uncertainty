@@ -1,11 +1,11 @@
 from pathlib import Path
 
-from torch_uncertainty.datasets.classification import Dota2Games
+from torch_uncertainty.datasets.classification import DOTA2Games
 
 from .uci_classification import UCIClassificationDataModule
 
 
-class Dota2GamesDataModule(UCIClassificationDataModule):
+class DOTA2GamesDataModule(UCIClassificationDataModule):
     def __init__(
         self,
         root: str | Path,
@@ -37,7 +37,7 @@ class Dota2GamesDataModule(UCIClassificationDataModule):
         """
         super().__init__(
             root=root,
-            dataset=Dota2Games,
+            dataset=DOTA2Games,
             batch_size=batch_size,
             val_split=val_split,
             test_split=test_split,

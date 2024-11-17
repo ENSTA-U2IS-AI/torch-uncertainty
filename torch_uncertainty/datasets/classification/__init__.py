@@ -14,7 +14,7 @@ from .openimage_o import OpenImageO
 from .uci import (
     HTRU2,
     BankMarketing,
-    Dota2Games,
+    DOTA2Games,
     OnlineShoppers,
     SpamBase,
 )

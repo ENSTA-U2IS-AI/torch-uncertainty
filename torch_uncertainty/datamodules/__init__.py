@@ -4,7 +4,7 @@ from .classification import (
     BankMarketingDataModule,
     CIFAR10DataModule,
     CIFAR100DataModule,
-    Dota2GamesDataModule,
+    DOTA2GamesDataModule,
     HTRU2DataModule,
     ImageNetDataModule,
     MNISTDataModule,

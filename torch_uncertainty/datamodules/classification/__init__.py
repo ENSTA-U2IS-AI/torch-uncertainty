@@ -6,7 +6,7 @@ from .mnist import MNISTDataModule
 from .tiny_imagenet import TinyImageNetDataModule
 from .uci import (
     BankMarketingDataModule,
-    Dota2GamesDataModule,
+    DOTA2GamesDataModule,
     HTRU2DataModule,
     OnlineShoppersDataModule,
     SpamBaseDataModule,

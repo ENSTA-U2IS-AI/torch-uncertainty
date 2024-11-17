@@ -10,8 +10,8 @@ from torchvision.datasets.utils import download_and_extract_archive
 from .uci_classification import UCIClassificationDataset
 
 
-class Dota2Games(UCIClassificationDataset):
-    """The bank Marketing UCI classification dataset.
+class DOTA2Games(UCIClassificationDataset):
+    """The DOTA 2 Games UCI classification dataset.
 
     Args:
         root (str): Root directory of the datasets.
