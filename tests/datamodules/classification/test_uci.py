@@ -1,3 +1,5 @@
+import pytest
+
 from torch_uncertainty.datamodules.classification import HTRU2DataModule
 
 
@@ -16,3 +18,11 @@ class TestHTRU2DataModule:
 
         dm.setup("test")
         dm.test_dataloader()
+
+        dm = HTRU2DataModule(root="./data/", batch_size=128, val_split=0.1)
+
+        dm.prepare_data()
+        dm.setup()
+
+        with pytest.raises(ValueError):
+            dm.setup("other")

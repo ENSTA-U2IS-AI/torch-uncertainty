@@ -138,9 +138,13 @@ class TestBCEWithLogitsLSLoss:
     """Testing the BCEWithLogitsLSLoss class."""
 
     def test_main(self):
-        loss = BCEWithLogitsLSLoss(reduction="sum", label_smoothing=0.1)
+        loss = BCEWithLogitsLSLoss(
+            reduction="sum", label_smoothing=0.1, weight=torch.Tensor([1])
+        )
         loss(torch.tensor([0.0]), torch.tensor([0]))
-        loss = BCEWithLogitsLSLoss(label_smoothing=0.6)
+        loss = BCEWithLogitsLSLoss(reduction="mean", label_smoothing=0.6)
+        loss(torch.tensor([0.0]), torch.tensor([0]))
+        loss = BCEWithLogitsLSLoss(reduction="none", label_smoothing=0.1)
         loss(torch.tensor([0.0]), torch.tensor([0]))
         loss = BCEWithLogitsLSLoss(reduction="none")
         loss(torch.tensor([0.0]), torch.tensor([0]))
