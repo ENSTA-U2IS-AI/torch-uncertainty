@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from torch_uncertainty_ls.datasets import HTRU2
+from torch_uncertainty.datasets.classification import HTRU2
 
 from .uci_classification import UCIClassificationDataModule
 

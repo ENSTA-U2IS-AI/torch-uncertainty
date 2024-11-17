@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from torch_uncertainty_ls.datasets import Dota2Games
+from torch_uncertainty.datasets.classification import Dota2Games
 
 from .uci_classification import UCIClassificationDataModule
 

@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from torch_uncertainty_ls.datasets import BankMarketing
+from torch_uncertainty.datasets.classification import BankMarketing
 
 from .uci_classification import UCIClassificationDataModule
 

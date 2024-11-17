@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 
-if util.find_spec("scikit-learn"):
+if util.find_spec("sklearn"):
     from sklearn.metrics import auc
 
     sklearn_installed = True
