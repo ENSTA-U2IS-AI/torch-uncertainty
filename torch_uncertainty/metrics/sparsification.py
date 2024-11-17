@@ -1,7 +1,16 @@
+from importlib import util
+
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-from sklearn.metrics import auc
+
+if util.find_spec("scikit-learn"):
+    from sklearn.metrics import auc
+
+    sklearn_installed = True
+else:  # coverage: ignore
+    sklearn_installed = False
+
 from torch import Tensor
 from torchmetrics.metric import Metric
 from torchmetrics.utilities.data import dim_zero_cat
@@ -46,6 +55,9 @@ class AUSE(Metric):
         super().__init__(**kwargs)
         self.add_state("scores", default=[], dist_reduce_fx="cat")
         self.add_state("errors", default=[], dist_reduce_fx="cat")
+
+        if not sklearn_installed:
+            raise ImportError("Please install scikit-learn to use AUSE.")
 
     def update(self, scores: Tensor, errors: Tensor) -> None:
         """Store the scores and their associated errors for later computation.

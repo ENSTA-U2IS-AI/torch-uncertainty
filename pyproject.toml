@@ -35,7 +35,6 @@ dependencies = [
     "lightning[pytorch-extra]>=2.0",
     "torchvision>=0.16",
     "einops",
-    "scikit-learn",
     "matplotlib",
     "numpy",
     "rich>=10.2.2",
@@ -51,6 +50,7 @@ image = [
 ]
 tabular = ["pandas"]
 dev = [
+    "scikit-learn",
     "huggingface-hub",
     "torch_uncertainty[image]",
     "ruff==0.6.9",
