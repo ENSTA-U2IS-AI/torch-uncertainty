@@ -338,7 +338,7 @@ class FocalLoss(nn.Module):
         return loss
 
 
-class BCEWithLogitsLossLS(nn.BCEWithLogitsLoss):
+class BCEWithLogitsLSLoss(nn.BCEWithLogitsLoss):
     def __init__(
         self,
         weight: Tensor | None = None,
@@ -368,7 +368,7 @@ class BCEWithLogitsLossLS(nn.BCEWithLogitsLoss):
 
     def forward(self, preds: Tensor, targets: Tensor) -> Tensor:
         if self.label_smoothing == 0.0:
-            return super().forward(preds, targets)
+            return super().forward(preds, targets.type_as(preds))
         targets = targets.float()
         targets = (
             targets * (1 - self.label_smoothing) + self.label_smoothing / 2

@@ -2,7 +2,7 @@ import pytest
 import torch
 
 from torch_uncertainty.losses import (
-    BCEWithLogitsLossLS,
+    BCEWithLogitsLSLoss,
     ConfidencePenaltyLoss,
     ConflictualLoss,
     DECLoss,
@@ -134,13 +134,13 @@ class TestFocalLoss:
             FocalLoss(gamma=1, reduction="median")
 
 
-class TestBCEWithLogitsLossLS:
-    """Testing the BCEWithLogitsLossLS class."""
+class TestBCEWithLogitsLSLoss:
+    """Testing the BCEWithLogitsLSLoss class."""
 
     def test_main(self):
-        loss = BCEWithLogitsLossLS(reduction="sum", label_smoothing=0.1)
+        loss = BCEWithLogitsLSLoss(reduction="sum", label_smoothing=0.1)
         loss(torch.tensor([0.0]), torch.tensor([0]))
-        loss = BCEWithLogitsLossLS(label_smoothing=0.6)
+        loss = BCEWithLogitsLSLoss(label_smoothing=0.6)
         loss(torch.tensor([0.0]), torch.tensor([0]))
-        loss = BCEWithLogitsLossLS(reduction="none")
+        loss = BCEWithLogitsLSLoss(reduction="none")
         loss(torch.tensor([0.0]), torch.tensor([0]))
