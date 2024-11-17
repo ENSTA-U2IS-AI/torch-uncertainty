@@ -139,8 +139,8 @@ class TestBCEWithLogitsLossLS:
 
     def test_main(self):
         loss = BCEWithLogitsLossLS(reduction="sum", label_smoothing=0.1)
-        loss(torch.tensor([[0.0, 0.0]]), torch.tensor([0]))
+        loss(torch.tensor([0.0]), torch.tensor([0]))
         loss = BCEWithLogitsLossLS(label_smoothing=0.6)
-        loss(torch.tensor([[0.0, 0.0]]), torch.tensor([0]))
+        loss(torch.tensor([0.0]), torch.tensor([0]))
         loss = BCEWithLogitsLossLS(reduction="none")
-        loss(torch.tensor([[0.0, 0.0]]), torch.tensor([0]))
+        loss(torch.tensor([0.0]), torch.tensor([0]))
