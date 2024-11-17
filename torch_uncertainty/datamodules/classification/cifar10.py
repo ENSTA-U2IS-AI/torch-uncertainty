@@ -77,7 +77,6 @@ class CIFAR10DataModule(TUDataModule):
             persistent_workers=persistent_workers,
         )
 
-        self.val_split = val_split
         self.num_dataloaders = num_dataloaders
         self.eval_ood = eval_ood
         self.eval_shift = eval_shift
@@ -174,7 +173,6 @@ class CIFAR10DataModule(TUDataModule):
                     self.val_split,
                     self.test_transform,
                 )
-
             else:
                 self.train = full
                 self.val = self.dataset(
