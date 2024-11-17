@@ -168,5 +168,5 @@ include = ["*/torch-uncertainty/*"]
 omit = ["*/tests/*", "*/datasets/*"]
 
 [tool.coverage.report]
-exclude_lines = ["coverage: ignore", "raise NotImplementedError"]
+exclude_lines = ["coverage: ignore", "raise NotImplementedError", "raise ImportError"]
 ignore_errors = true

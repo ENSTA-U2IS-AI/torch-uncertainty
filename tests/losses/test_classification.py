@@ -2,6 +2,7 @@ import pytest
 import torch
 
 from torch_uncertainty.losses import (
+    BCEWithLogitsLossLS,
     ConfidencePenaltyLoss,
     ConflictualLoss,
     DECLoss,
@@ -131,3 +132,15 @@ class TestFocalLoss:
             ValueError, match="is not a valid value for reduction."
         ):
             FocalLoss(gamma=1, reduction="median")
+
+
+class TestBCEWithLogitsLossLS:
+    """Testing the BCEWithLogitsLossLS class."""
+
+    def test_main(self):
+        loss = BCEWithLogitsLossLS(reduction="sum", label_smoothing=0.1)
+        loss(torch.tensor([[0.0, 0.0]]), torch.tensor([0]))
+        loss = BCEWithLogitsLossLS(label_smoothing=0.6)
+        loss(torch.tensor([[0.0, 0.0]]), torch.tensor([0]))
+        loss = BCEWithLogitsLossLS(reduction="none")
+        loss(torch.tensor([[0.0, 0.0]]), torch.tensor([0]))
