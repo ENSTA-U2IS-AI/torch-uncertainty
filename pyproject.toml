@@ -4,7 +4,7 @@ build-backend = "flit_core.buildapi"
 
 [project]
 name = "torch_uncertainty"
-version = "0.3.0"
+version = "0.3.1"
 authors = [
     { name = "ENSTA U2IS", email = "olivier.laurent@ensta-paris.fr" },
     { name = "Adrien Lafage", email = "adrienlafage@outlook.com" },
@@ -28,20 +28,14 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3 :: Only",
 ]
 dependencies = [
     "timm",
     "lightning[pytorch-extra]>=2.0",
     "torchvision>=0.16",
-    "tensorboard",
     "einops",
-    "torchinfo",
-    "huggingface-hub",
-    "scikit-learn",
     "matplotlib",
-    "numpy",
     "rich>=10.2.2",
     "seaborn",
 ]
@@ -55,8 +49,10 @@ image = [
 ]
 tabular = ["pandas"]
 dev = [
+    "scikit-learn",
+    "huggingface-hub",
     "torch_uncertainty[image]",
-    "ruff==0.6.9",
+    "ruff==0.7.4",
     "pytest-cov",
     "pre-commit",
     "pre-commit-hooks",
@@ -74,6 +70,7 @@ all = [
     "laplace-torch",
     "glest==0.0.1a1",
     "scipy",
+    "tensorboard",
 ]
 
 [project.urls]
@@ -89,7 +86,7 @@ line-length = 80
 target-version = "py310"
 lint.extend-select = [
     "A",
-    "ARG", 
+    "ARG",
     "B",
     "C4",
     "D",
@@ -170,5 +167,5 @@ include = ["*/torch-uncertainty/*"]
 omit = ["*/tests/*", "*/datasets/*"]
 
 [tool.coverage.report]
-exclude_lines = ["coverage: ignore", "raise NotImplementedError"]
+exclude_lines = ["coverage: ignore", "raise NotImplementedError", "raise ImportError"]
 ignore_errors = true

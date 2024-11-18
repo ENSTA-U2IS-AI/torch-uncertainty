@@ -182,36 +182,43 @@ class ClassificationRoutine(LightningModule):
     def _init_metrics(self) -> None:
         task = "binary" if self.binary_cls else "multiclass"
 
-        cls_metrics = MetricCollection(
-            {
-                "cls/Acc": Accuracy(task=task, num_classes=self.num_classes),
-                "cls/Brier": BrierScore(num_classes=self.num_classes),
-                "cls/NLL": CategoricalNLL(),
-                "cal/ECE": CalibrationError(
-                    task=task,
-                    num_bins=self.num_calibration_bins,
-                    num_classes=self.num_classes,
-                ),
-                "cal/aECE": CalibrationError(
-                    task=task,
-                    adaptive=True,
-                    num_bins=self.num_calibration_bins,
-                    num_classes=self.num_classes,
-                ),
-                "sc/AURC": AURC(),
-                "sc/AUGRC": AUGRC(),
-                "sc/Cov@5Risk": CovAt5Risk(),
-                "sc/Risk@80Cov": RiskAt80Cov(),
-            },
-            compute_groups=[
-                ["cls/Acc"],
-                ["cls/Brier"],
-                ["cls/NLL"],
-                ["cal/ECE", "cal/aECE"],
-                ["sc/AURC", "sc/AUGRC", "sc/Cov@5Risk", "sc/Risk@80Cov"],
-            ],
-        )
+        metrics_dict = {
+            "cls/Acc": Accuracy(task=task, num_classes=self.num_classes),
+            "cls/Brier": BrierScore(num_classes=self.num_classes),
+            "cls/NLL": CategoricalNLL(),
+            "cal/ECE": CalibrationError(
+                task=task,
+                num_bins=self.num_calibration_bins,
+                num_classes=self.num_classes,
+            ),
+            "cal/aECE": CalibrationError(
+                task=task,
+                adaptive=True,
+                num_bins=self.num_calibration_bins,
+                num_classes=self.num_classes,
+            ),
+            "sc/AURC": AURC(),
+            "sc/AUGRC": AUGRC(),
+            "sc/Cov@5Risk": CovAt5Risk(),
+            "sc/Risk@80Cov": RiskAt80Cov(),
+        }
+        groups = [
+            ["cls/Acc"],
+            ["cls/Brier"],
+            ["cls/NLL"],
+            ["cal/ECE", "cal/aECE"],
+            ["sc/AURC", "sc/AUGRC", "sc/Cov@5Risk", "sc/Risk@80Cov"],
+        ]
 
+        if self.binary_cls:
+            metrics_dict |= {
+                "cls/AUROC": BinaryAUROC(),
+                "cls/AUPR": BinaryAveragePrecision(),
+                "cls/FRP95": FPR95(pos_label=1),
+            }
+            groups.extend([["cls/AUROC", "cls/AUPR"], ["cls/FRP95"]])
+
+        cls_metrics = MetricCollection(metrics_dict, compute_groups=groups)
         self.val_cls_metrics = cls_metrics.clone(prefix="val/")
         self.test_cls_metrics = cls_metrics.clone(prefix="test/")
 
@@ -223,9 +230,9 @@ class ClassificationRoutine(LightningModule):
         if self.eval_ood:
             ood_metrics = MetricCollection(
                 {
-                    "FPR95": FPR95(pos_label=1),
                     "AUROC": BinaryAUROC(),
                     "AUPR": BinaryAveragePrecision(),
+                    "FPR95": FPR95(pos_label=1),
                 },
                 compute_groups=[["AUROC", "AUPR"], ["FPR95"]],
             )

@@ -9,7 +9,7 @@ class TestCalibrationError:
     """Testing the CalibrationError metric class."""
 
     def test_plot_binary(self) -> None:
-        metric = CalibrationError(task="binary", n_bins=2, norm="l1")
+        metric = CalibrationError(task="binary", num_bins=2, norm="l1")
         metric.update(
             torch.as_tensor([0.25, 0.25, 0.55, 0.75, 0.75]),
             torch.as_tensor([0, 0, 1, 1, 1]),
@@ -19,7 +19,7 @@ class TestCalibrationError:
         assert ax[0].get_xlabel() == "Top-class Confidence (%)"
         assert ax[0].get_ylabel() == "Success Rate (%)"
         assert ax[1].get_xlabel() == "Top-class Confidence (%)"
-        assert ax[1].get_ylabel() == "Density"
+        assert ax[1].get_ylabel() == "Density (%)"
 
         plt.close(fig)
 
@@ -27,7 +27,7 @@ class TestCalibrationError:
         self,
     ) -> None:
         metric = CalibrationError(
-            task="multiclass", n_bins=3, norm="l1", num_classes=3
+            task="multiclass", num_bins=3, norm="l1", num_classes=3
         )
         metric.update(
             torch.as_tensor(
@@ -45,12 +45,16 @@ class TestCalibrationError:
         assert ax[0].get_xlabel() == "Top-class Confidence (%)"
         assert ax[0].get_ylabel() == "Success Rate (%)"
         assert ax[1].get_xlabel() == "Top-class Confidence (%)"
-        assert ax[1].get_ylabel() == "Density"
+        assert ax[1].get_ylabel() == "Density (%)"
         plt.close(fig)
 
     def test_errors(self) -> None:
         with pytest.raises(TypeError, match="is expected to be `int`"):
             CalibrationError(task="multiclass", num_classes=None)
+        with pytest.raises(
+            ValueError, match="`n_bins` does not exist, use `num_bins`."
+        ):
+            CalibrationError(task="multiclass", num_classes=2, n_bins=1)
 
 
 class TestAdaptiveCalibrationError:

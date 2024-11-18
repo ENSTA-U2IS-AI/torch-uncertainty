@@ -266,6 +266,17 @@ For the conflictual loss, consider citing:
 * Authors: *Mohammed Fellaji, Frédéric Pennerath, Brieuc Conan-Guez, and Miguel Couceiro*
 * Paper: `ArXiv 2024 <https://arxiv.org/pdf/2407.12211>`__.
 
+Binary Cross-Entropy with Logits Loss with Label Smoothing
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For the binary cross-entropy with logits loss with label smoothing, consider citing:
+
+**Rethinking the Inception Architecture for Computer Vision**
+
+* Authors: *Christian Szegedy, Vincent Vanhoucke, Sergey Ioffe, Jonathon Shlens, and Zbigniew Wojna*
+* Paper: `CVPR 2016 <https://arxiv.org/pdf/1512.00567.pdf>`__.
+
+
 Metrics
 -------
 

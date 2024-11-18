@@ -89,7 +89,7 @@ CIFAR10 datamodule.
   from lightning.pytorch import TUTrainer
 
   dm = CIFAR10DataModule(root="data", batch_size=32)
-  trainer = TUTTrainer(gpus=1, max_epochs=100)
+  trainer = TUTrainer(gpus=1, max_epochs=100)
   trainer.fit(routine, dm)
   trainer.test(routine, dm)
 

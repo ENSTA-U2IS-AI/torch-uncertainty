@@ -1,6 +1,5 @@
 import torch
 from torch import nn
-from torchinfo import summary
 
 from torch_uncertainty.baselines.classification import (
     ResNetBaseline,
@@ -24,7 +23,6 @@ class TestStandardBaseline:
             style="cifar",
             groups=1,
         )
-        summary(net)
         net(torch.rand(1, 3, 32, 32))
 
 
@@ -42,7 +40,6 @@ class TestStandardWideBaseline:
             style="cifar",
             groups=1,
         )
-        summary(net)
         net(torch.rand(1, 3, 32, 32))
 
 
@@ -61,7 +58,6 @@ class TestStandardVGGBaseline:
             groups=1,
             last_layer_dropout=True,
         )
-        summary(net)
         net(torch.rand(1, 3, 32, 32))
 
         net = VGGBaseline(

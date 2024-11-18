@@ -9,7 +9,7 @@ from torch_uncertainty.datasets.regression import UCIRegression
 from .abstract import TUDataModule
 
 
-class UCIDataModule(TUDataModule):
+class UCIRegressionDataModule(TUDataModule):
     training_task = "regression"
 
     def __init__(

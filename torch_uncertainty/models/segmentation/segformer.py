@@ -42,17 +42,12 @@ class MLP(nn.Module):
     def _init_weights(self, m):
         if isinstance(m, nn.Linear):
             trunc_normal_(m.weight, std=0.02)
-            if isinstance(m, nn.Linear) and m.bias is not None:
-                nn.init.constant_(m.bias, 0)
-        elif isinstance(m, nn.LayerNorm):
             nn.init.constant_(m.bias, 0)
-            nn.init.constant_(m.weight, 1.0)
         elif isinstance(m, nn.Conv2d):
             fan_out = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
             fan_out //= m.groups
             m.weight.data.normal_(0, math.sqrt(2.0 / fan_out))
-            if m.bias is not None:
-                m.bias.data.zero_()
+            nn.init.constant_(m.bias, 0)
 
     def forward(self, x, h, w):
         x = self.fc1(x)
@@ -66,13 +61,13 @@ class MLP(nn.Module):
 class Attention(nn.Module):
     def __init__(
         self,
-        dim,
-        num_heads=8,
-        qkv_bias=False,
-        qk_scale=None,
-        attn_drop=0.0,
-        proj_drop=0.0,
-        sr_ratio=1,
+        dim: int,
+        num_heads: int = 8,
+        qkv_bias: bool = False,
+        qk_scale: float | None = None,
+        attn_drop: float = 0.0,
+        proj_drop: float = 0.0,
+        sr_ratio: int = 1,
     ):
         super().__init__()
         assert (
@@ -100,8 +95,7 @@ class Attention(nn.Module):
     def _init_weights(self, m):
         if isinstance(m, nn.Linear):
             trunc_normal_(m.weight, std=0.02)
-            if isinstance(m, nn.Linear) and m.bias is not None:
-                nn.init.constant_(m.bias, 0)
+            nn.init.constant_(m.bias, 0)
         elif isinstance(m, nn.LayerNorm):
             nn.init.constant_(m.bias, 0)
             nn.init.constant_(m.weight, 1.0)
@@ -109,10 +103,9 @@ class Attention(nn.Module):
             fan_out = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
             fan_out //= m.groups
             m.weight.data.normal_(0, math.sqrt(2.0 / fan_out))
-            if m.bias is not None:
-                m.bias.data.zero_()
+            nn.init.constant_(m.bias, 0)
 
-    def forward(self, x, h, w):
+    def forward(self, x: Tensor, h: int, w: int):
         b, n, c = x.shape
         q = (
             self.q(x)
@@ -149,17 +142,17 @@ class Attention(nn.Module):
 class Block(nn.Module):
     def __init__(
         self,
-        dim,
-        num_heads,
-        mlp_ratio=4.0,
-        qkv_bias=False,
-        qk_scale=None,
-        dropout=0.0,
-        attn_drop=0.0,
-        drop_path=0.0,
+        dim: int,
+        num_heads: int,
+        mlp_ratio: float = 4.0,
+        qkv_bias: bool = False,
+        qk_scale: None | float = None,
+        dropout: float = 0.0,
+        attn_drop: float = 0.0,
+        drop_path: float = 0.0,
         act_layer=nn.GELU,
         norm_layer=nn.LayerNorm,
-        sr_ratio=1,
+        sr_ratio: int = 1,
     ):
         super().__init__()
         self.norm1 = norm_layer(dim)
@@ -191,8 +184,7 @@ class Block(nn.Module):
     def _init_weights(self, m):
         if isinstance(m, nn.Linear):
             trunc_normal_(m.weight, std=0.02)
-            if isinstance(m, nn.Linear) and m.bias is not None:
-                nn.init.constant_(m.bias, 0)
+            nn.init.constant_(m.bias, 0)
         elif isinstance(m, nn.LayerNorm):
             nn.init.constant_(m.bias, 0)
             nn.init.constant_(m.weight, 1.0)
@@ -200,8 +192,7 @@ class Block(nn.Module):
             fan_out = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
             fan_out //= m.groups
             m.weight.data.normal_(0, math.sqrt(2.0 / fan_out))
-            if m.bias is not None:
-                m.bias.data.zero_()
+            nn.init.constant_(m.bias, 0)
 
     def forward(self, x, h, w):
         x = x + self.drop_path(self.attn(self.norm1(x), h, w))
@@ -237,19 +228,14 @@ class OverlapPatchEmbed(nn.Module):
         self.apply(self._init_weights)
 
     def _init_weights(self, m):
-        if isinstance(m, nn.Linear):
-            trunc_normal_(m.weight, std=0.02)
-            if isinstance(m, nn.Linear) and m.bias is not None:
-                nn.init.constant_(m.bias, 0)
-        elif isinstance(m, nn.LayerNorm):
+        if isinstance(m, nn.LayerNorm):
             nn.init.constant_(m.bias, 0)
             nn.init.constant_(m.weight, 1.0)
         elif isinstance(m, nn.Conv2d):
             fan_out = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
             fan_out //= m.groups
             m.weight.data.normal_(0, math.sqrt(2.0 / fan_out))
-            if m.bias is not None:
-                m.bias.data.zero_()
+            nn.init.constant_(m.bias, 0)
 
     def forward(self, x):
         x = self.proj(x)
@@ -263,20 +249,20 @@ class OverlapPatchEmbed(nn.Module):
 class MixVisionTransformer(nn.Module):
     def __init__(
         self,
-        img_size,
-        in_channels,
-        num_classes,
-        embed_dims,
-        num_heads,
-        mlp_ratios,
-        qkv_bias,
-        qk_scale,
-        drop_rate,
-        attn_drop_rate,
-        drop_path_rate,
+        img_size: int,
+        in_channels: int,
+        num_classes: int,
+        embed_dims: list[int],
+        num_heads: list[int],
+        mlp_ratios: list[int],
+        qkv_bias: bool,
+        qk_scale: float | None,
+        drop_rate: float,
+        attn_drop_rate: float,
+        drop_path_rate: float,
         norm_layer,
         depths,
-        sr_ratios,
+        sr_ratios: list[int],
     ):
         super().__init__()
         self.num_classes = num_classes
@@ -401,8 +387,7 @@ class MixVisionTransformer(nn.Module):
     def _init_weights(self, m):
         if isinstance(m, nn.Linear):
             trunc_normal_(m.weight, std=0.02)
-            if isinstance(m, nn.Linear) and m.bias is not None:
-                nn.init.constant_(m.bias, 0)
+            nn.init.constant_(m.bias, 0)
         elif isinstance(m, nn.LayerNorm):
             nn.init.constant_(m.bias, 0)
             nn.init.constant_(m.weight, 1.0)
@@ -410,8 +395,7 @@ class MixVisionTransformer(nn.Module):
             fan_out = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
             fan_out //= m.groups
             m.weight.data.normal_(0, math.sqrt(2.0 / fan_out))
-            if m.bias is not None:
-                m.bias.data.zero_()
+            nn.init.constant_(m.bias, 0)
 
     def forward_features(self, x):
         b = x.shape[0]
@@ -509,7 +493,7 @@ class MLPHead(nn.Module):
 
 def resize(
     inputs: Tensor,
-    size: tuple[int] | torch.Size | None = None,
+    size: torch.Size | None = None,
     scale_factor=None,
     mode: str = "nearest",
     align_corners: bool | None = None,
@@ -532,8 +516,6 @@ def resize(
                 (input_h, input_w),
                 (output_h, output_w),
             )
-    if isinstance(size, torch.Size):
-        size = tuple(int(x) for x in size)
     return F.interpolate(inputs, size, scale_factor, mode, align_corners)
 
 

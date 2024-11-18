@@ -326,6 +326,7 @@ Losses
     ConfidencePenaltyLoss
     KLDiv
     ELBOLoss
+    BCEWithLogitsLSLoss
 
 Post-Processing Methods
 -----------------------
@@ -379,6 +380,20 @@ Classification
     TinyImageNetDataModule
     ImageNetDataModule
 
+UCI Tabular Classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: class.rst
+
+    BankMarketingDataModule
+    DOTA2GamesDataModule
+    HTRU2DataModule
+    OnlineShoppersDataModule
+    SpamBaseDataModule
+    
 Regression
 ^^^^^^^^^^
 .. autosummary::
@@ -386,7 +401,7 @@ Regression
     :nosignatures:
     :template: class.rst
 
-    UCIDataModule
+    UCIRegressionDataModule
 
 .. currentmodule:: torch_uncertainty.datamodules.segmentation
 
@@ -431,6 +446,25 @@ Classification
     TinyImageNet
     TinyImageNetC
     OpenImageO
+
+
+UCI Tabular Classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. currentmodule:: torch_uncertainty.datasets.classification.uci
+
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: class.rst
+
+    BankMarketing
+    DOTA2Games
+    HTRU2
+    OnlineShoppers
+    SpamBase
+
 
 Regression
 ^^^^^^^^^^

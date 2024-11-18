@@ -3,7 +3,7 @@ from lightning.pytorch.cli import LightningArgumentParser
 
 from torch_uncertainty import TULightningCLI
 from torch_uncertainty.baselines.regression import MLPBaseline
-from torch_uncertainty.datamodules import UCIDataModule
+from torch_uncertainty.datamodules import UCIRegressionDataModule
 
 
 class MLPCLI(TULightningCLI):
@@ -12,7 +12,7 @@ class MLPCLI(TULightningCLI):
 
 
 def cli_main() -> MLPCLI:
-    return MLPCLI(MLPBaseline, UCIDataModule)
+    return MLPCLI(MLPBaseline, UCIRegressionDataModule)
 
 
 if __name__ == "__main__":

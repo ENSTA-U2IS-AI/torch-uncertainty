@@ -1,6 +1,5 @@
 import torch
 from torch import nn
-from torchinfo import summary
 
 from torch_uncertainty.baselines.classification import (
     ResNetBaseline,
@@ -23,7 +22,6 @@ class TestBatchedBaseline:
             groups=1,
         )
 
-        summary(net)
         _ = net(torch.rand(1, 3, 32, 32))
 
     def test_batched_50(self):
@@ -38,7 +36,6 @@ class TestBatchedBaseline:
             groups=1,
         )
 
-        summary(net)
         _ = net(torch.rand(1, 3, 40, 40))
 
 
@@ -56,5 +53,4 @@ class TestBatchedWideBaseline:
             groups=1,
         )
 
-        summary(net)
         _ = net(torch.rand(1, 3, 32, 32))
