@@ -36,7 +36,6 @@ dependencies = [
     "torchvision>=0.16",
     "einops",
     "matplotlib",
-    "numpy",
     "rich>=10.2.2",
     "seaborn",
 ]
@@ -53,7 +52,7 @@ dev = [
     "scikit-learn",
     "huggingface-hub",
     "torch_uncertainty[image]",
-    "ruff==0.6.9",
+    "ruff==0.7.4",
     "pytest-cov",
     "pre-commit",
     "pre-commit-hooks",
