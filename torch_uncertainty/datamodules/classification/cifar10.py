@@ -159,8 +159,8 @@ class CIFAR10DataModule(TUDataModule):
 
     def setup(self, stage: Literal["fit", "test"] | None = None) -> None:
         if stage == "fit" or stage is None:
-            if self.test_alt in ("c", "h"):
-                raise ValueError("CIFAR-C and H can only be used in testing.")
+            if self.test_alt == "h":
+                raise ValueError("CIFAR-H can only be used in testing.")
             full = self.dataset(
                 self.root,
                 train=True,

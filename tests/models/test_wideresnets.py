@@ -21,6 +21,9 @@ from torch_uncertainty.models.wideresnet.packed import (
 
 
 class TestStdWide:
+    def test_main(self):
+        wideresnet28x10(in_channels=1, num_classes=10, style="imagenet")
+
     def test_error(self):
         with pytest.raises(ValueError):
             wideresnet28x10(in_channels=1, num_classes=10, style="test")
