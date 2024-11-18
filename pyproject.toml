@@ -36,7 +36,6 @@ dependencies = [
     "torchvision>=0.16",
     "einops",
     "matplotlib",
-    "rich>=10.2.2",
     "seaborn",
 ]
 
