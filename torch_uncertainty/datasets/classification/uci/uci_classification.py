@@ -68,12 +68,12 @@ class UCIClassificationDataset(ABC, Dataset):
             self._standardize()
 
         if self.need_split:
-            self.gen = Generator().manual_seed(split_seed)
+            gen = Generator().manual_seed(split_seed)
 
             self.split_idx = torch.ones(len(self)).multinomial(
                 num_samples=int((1 - test_split) * len(self)),
                 replacement=False,
-                generator=self.gen,
+                generator=gen,
             )
             if not self.train:
                 self.split_idx = torch.tensor(

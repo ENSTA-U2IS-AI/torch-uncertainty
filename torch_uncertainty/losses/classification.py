@@ -363,7 +363,7 @@ class BCEWithLogitsLSLoss(nn.BCEWithLogitsLoss):
             label_smoothing (float, optional): The label smoothing factor. Defaults
                 to 0.0.
         """
-        super().__init__(weight, reduction)
+        super().__init__(weight=weight, reduction=reduction)
         self.label_smoothing = label_smoothing
 
     def forward(self, preds: Tensor, targets: Tensor) -> Tensor:
