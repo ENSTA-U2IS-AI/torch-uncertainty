@@ -35,7 +35,6 @@ dependencies = [
     "lightning[pytorch-extra]>=2.0",
     "torchvision>=0.16",
     "einops",
-    "matplotlib",
     "seaborn",
 ]
 
