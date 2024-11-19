@@ -71,9 +71,7 @@ class BrierScore(Metric):
         self.num_estimators = 1
 
         if self.reduction in ["mean", "sum"]:
-            self.add_state(
-                "values", default=torch.tensor(0.0), dist_reduce_fx="sum"
-            )
+            self.add_state("values", default=torch.tensor(0.0), dist_reduce_fx="sum")
         else:
             self.add_state("values", default=[], dist_reduce_fx="cat")
         self.add_state("total", default=torch.tensor(0), dist_reduce_fx="sum")
@@ -108,9 +106,7 @@ class BrierScore(Metric):
             target = target.gather(-1, indices.unsqueeze(-1)).squeeze(-1)
             brier_score = F.mse_loss(probs, target, reduction="none")
         else:
-            brier_score = F.mse_loss(probs, target, reduction="none").sum(
-                dim=-1
-            )
+            brier_score = F.mse_loss(probs, target, reduction="none").sum(dim=-1)
 
         if self.reduction is None or self.reduction == "none":
             self.values.append(brier_score)

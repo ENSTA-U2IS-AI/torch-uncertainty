@@ -34,9 +34,7 @@ class ImageNetVariation(ImageFolder):
     root_appendix: str
 
     wnid_to_idx_url = "https://raw.githubusercontent.com/torch-uncertainty/dataset-metadata/main/classification/imagenet/classes.json"
-    wnid_to_idx_md5 = (
-        "1bcf467b49f735dbeb745249eae6b133"  # avoid replacement attack
-    )
+    wnid_to_idx_md5 = "1bcf467b49f735dbeb745249eae6b133"  # avoid replacement attack
 
     def __init__(
         self,
@@ -54,8 +52,7 @@ class ImageNetVariation(ImageFolder):
 
         if not self._check_integrity():
             raise RuntimeError(
-                "Dataset not found or corrupted. "
-                "You can use download=True to download it."
+                "Dataset not found or corrupted. " "You can use download=True to download it."
             )
 
         super().__init__(
@@ -97,13 +94,9 @@ class ImageNetVariation(ImageFolder):
                 md5=self.tgz_md5,
             )
         elif isinstance(self.filename, list):  # ImageNet-C
-            for url, filename, md5 in zip(
-                self.url, self.filename, self.tgz_md5, strict=True
-            ):
+            for url, filename, md5 in zip(self.url, self.filename, self.tgz_md5, strict=True):
                 # Check that this particular file is not already downloaded
-                if not check_integrity(
-                    self.root / self.root_appendix / Path(filename), md5
-                ):
+                if not check_integrity(self.root / self.root_appendix / Path(filename), md5):
                     download_and_extract_archive(
                         url,
                         self.root,

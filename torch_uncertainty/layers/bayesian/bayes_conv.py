@@ -89,8 +89,7 @@ class _BayesConvNd(Module):
 
         if transposed:
             raise NotImplementedError(
-                "Bayesian transposed convolution not implemented yet. Raise an"
-                " issue if needed."
+                "Bayesian transposed convolution not implemented yet. Raise an" " issue if needed."
             )
 
         self.in_channels = in_channels
@@ -109,9 +108,7 @@ class _BayesConvNd(Module):
         self.groups = groups
         self.padding_mode = padding_mode
 
-        self._reversed_padding_repeated_twice = _reverse_repeat_tuple(
-            self.padding, 2
-        )
+        self._reversed_padding_repeated_twice = _reverse_repeat_tuple(self.padding, 2)
 
         self.weight_mu = Parameter(
             torch.empty(
@@ -127,33 +124,21 @@ class _BayesConvNd(Module):
         )
 
         if bias:
-            self.bias_mu = Parameter(
-                torch.empty(out_channels, **factory_kwargs)
-            )
-            self.bias_sigma = Parameter(
-                torch.empty(out_channels, **factory_kwargs)
-            )
+            self.bias_mu = Parameter(torch.empty(out_channels, **factory_kwargs))
+            self.bias_sigma = Parameter(torch.empty(out_channels, **factory_kwargs))
         else:
             self.register_parameter("bias_mu", None)
             self.register_parameter("bias_sigma", None)
 
-        self.weight_prior_dist = CenteredGaussianMixture(
-            prior_sigma_1, prior_sigma_2, prior_pi
-        )
+        self.weight_prior_dist = CenteredGaussianMixture(prior_sigma_1, prior_sigma_2, prior_pi)
         if bias:
-            self.bias_prior_dist = CenteredGaussianMixture(
-                prior_sigma_1, prior_sigma_2, prior_pi
-            )
+            self.bias_prior_dist = CenteredGaussianMixture(prior_sigma_1, prior_sigma_2, prior_pi)
 
         self.reset_parameters()
 
-        self.weight_sampler = TrainableDistribution(
-            self.weight_mu, self.weight_sigma
-        )
+        self.weight_sampler = TrainableDistribution(self.weight_mu, self.weight_sigma)
         if bias:
-            self.bias_sampler = TrainableDistribution(
-                self.bias_mu, self.bias_sigma
-            )
+            self.bias_sampler = TrainableDistribution(self.bias_mu, self.bias_sigma)
 
     def reset_parameters(self) -> None:
         # TODO: change init
@@ -179,10 +164,7 @@ class _BayesConvNd(Module):
         return weight, bias
 
     def extra_repr(self) -> str:  # coverage: ignore
-        s = (
-            "{in_channels}, {out_channels}, kernel_size={kernel_size}"
-            ", stride={stride}"
-        )
+        s = "{in_channels}, {out_channels}, kernel_size={kernel_size}" ", stride={stride}"
         if self.padding != (0,) * len(self.padding):
             s += ", padding={padding}"
         if self.dilation != (1,) * len(self.dilation):
@@ -253,9 +235,7 @@ class BayesConv1d(_BayesConvNd):
             **factory_kwargs,
         )
 
-    def _conv_forward(
-        self, inputs: Tensor, weight: Tensor, bias: Tensor | None
-    ) -> Tensor:
+    def _conv_forward(self, inputs: Tensor, weight: Tensor, bias: Tensor | None) -> Tensor:
         if self.padding_mode != "zeros":
             return F.conv1d(
                 F.pad(
@@ -294,9 +274,7 @@ class BayesConv1d(_BayesConvNd):
             else:
                 bias, bias_lposterior, bias_lprior = None, 0, 0
 
-            self.lvposterior = (
-                self.weight_sampler.log_posterior() + bias_lposterior
-            )
+            self.lvposterior = self.weight_sampler.log_posterior() + bias_lposterior
             self.lprior = self.weight_prior_dist.log_prob(weight) + bias_lprior
 
         return self._conv_forward(inputs, weight, bias)
@@ -350,9 +328,7 @@ class BayesConv2d(_BayesConvNd):
             **factory_kwargs,
         )
 
-    def _conv_forward(
-        self, inputs: Tensor, weight: Tensor, bias: Tensor | None
-    ) -> Tensor:
+    def _conv_forward(self, inputs: Tensor, weight: Tensor, bias: Tensor | None) -> Tensor:
         if self.padding_mode != "zeros":
             return F.conv2d(
                 F.pad(
@@ -391,9 +367,7 @@ class BayesConv2d(_BayesConvNd):
             else:
                 bias, bias_lposterior, bias_lprior = None, 0, 0
 
-            self.lvposterior = (
-                self.weight_sampler.log_posterior() + bias_lposterior
-            )
+            self.lvposterior = self.weight_sampler.log_posterior() + bias_lposterior
             self.lprior = self.weight_prior_dist.log_prob(weight) + bias_lprior
 
         return self._conv_forward(inputs, weight, bias)
@@ -447,9 +421,7 @@ class BayesConv3d(_BayesConvNd):
             **factory_kwargs,
         )
 
-    def _conv_forward(
-        self, inputs: Tensor, weight: Tensor, bias: Tensor | None
-    ) -> Tensor:
+    def _conv_forward(self, inputs: Tensor, weight: Tensor, bias: Tensor | None) -> Tensor:
         if self.padding_mode != "zeros":
             return F.conv3d(
                 F.pad(
@@ -488,9 +460,7 @@ class BayesConv3d(_BayesConvNd):
             else:
                 bias, bias_lposterior, bias_lprior = None, 0, 0
 
-            self.lvposterior = (
-                self.weight_sampler.log_posterior() + bias_lposterior
-            )
+            self.lvposterior = self.weight_sampler.log_posterior() + bias_lposterior
             self.lprior = self.weight_prior_dist.log_prob(weight) + bias_lprior
 
         return self._conv_forward(inputs, weight, bias)

@@ -9,12 +9,8 @@ class TestCamVidDataModule:
     """Testing the CamVidDataModule datamodule."""
 
     def test_camvid_main(self):
-        dm = CamVidDataModule(
-            root="./data/", batch_size=128, group_classes=False
-        )
-        dm = CamVidDataModule(
-            root="./data/", batch_size=128, basic_augment=False
-        )
+        dm = CamVidDataModule(root="./data/", batch_size=128, group_classes=False)
+        dm = CamVidDataModule(root="./data/", batch_size=128, basic_augment=False)
 
         assert dm.dataset == CamVid
 

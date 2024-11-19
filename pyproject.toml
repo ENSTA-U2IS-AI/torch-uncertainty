@@ -25,18 +25,16 @@ keywords = [
 ]
 classifiers = [
     "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3 :: Only",
 ]
 dependencies = [
     "timm",
     "lightning[pytorch-extra]>=2.0",
     "torchvision>=0.16",
     "einops",
-    "matplotlib",
-    "rich>=10.2.2",
     "seaborn",
 ]
 
@@ -82,7 +80,7 @@ repository = "https://github.com/ENSTA-U2IS-AI/torch-uncertainty.git"
 name = "torch_uncertainty"
 
 [tool.ruff]
-line-length = 80
+line-length = 100
 target-version = "py310"
 lint.extend-select = [
     "A",

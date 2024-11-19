@@ -78,16 +78,11 @@ class MNISTDataModule(TUDataModule):
         elif ood_ds == "notMNIST":
             self.ood_dataset = NotMNIST
         else:
-            raise ValueError(
-                f"`ood_ds` should be in {self.ood_datasets}. Got {ood_ds}."
-            )
+            raise ValueError(f"`ood_ds` should be in {self.ood_datasets}. Got {ood_ds}.")
         self.shift_dataset = MNISTC
         self.shift_severity = 1
 
-        if basic_augment:
-            basic_transform = T.RandomCrop(28, padding=4)
-        else:
-            basic_transform = nn.Identity()
+        basic_transform = T.RandomCrop(28, padding=4) if basic_augment else nn.Identity()
 
         main_transform = Cutout(cutout) if cutout else nn.Identity()
 

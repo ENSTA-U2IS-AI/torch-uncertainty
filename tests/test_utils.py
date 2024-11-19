@@ -53,9 +53,7 @@ class TestMisc:
     def test_csv_writer(self):
         root = Path(__file__).parent.resolve()
         csv_writer(root / "testlog" / "results.csv", {"a": 1.0, "b": 2.0})
-        csv_writer(
-            root / "testlog" / "results.csv", {"a": 1.0, "b": 2.0, "c": 3.0}
-        )
+        csv_writer(root / "testlog" / "results.csv", {"a": 1.0, "b": 2.0, "c": 3.0})
 
     def test_plot_hist(self):
         conf = [torch.rand(20), torch.rand(20)]

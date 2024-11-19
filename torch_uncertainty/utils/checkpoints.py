@@ -1,9 +1,7 @@
 from pathlib import Path
 
 
-def get_version(
-    root: str | Path, version: int, checkpoint: int | None = None
-) -> tuple[Path, Path]:
+def get_version(root: str | Path, version: int, checkpoint: int | None = None) -> tuple[Path, Path]:
     """Find the path to the checkpoint corresponding to the version.
 
     Args:
@@ -29,9 +27,7 @@ def get_version(
         else:
             ckpts = list(ckpt_folder.glob(f"epoch={checkpoint}-*.ckpt"))
     else:
-        raise FileNotFoundError(
-            f"The directory {root}/version_{version} does not exist."
-        )
+        raise FileNotFoundError(f"The directory {root}/version_{version} does not exist.")
 
     file = ckpts[0]
     return (file.resolve(), (version_folder / "hparams.yaml").resolve())

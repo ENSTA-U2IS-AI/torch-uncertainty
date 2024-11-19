@@ -84,9 +84,7 @@ class DepthDataModule(TUDataModule):
                     },
                     scale=True,
                 ),
-                v2.Normalize(
-                    mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
-                ),
+                v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
             ]
         )
         self.test_transform = v2.Compose(
@@ -99,9 +97,7 @@ class DepthDataModule(TUDataModule):
                     },
                     scale=True,
                 ),
-                v2.Normalize(
-                    mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
-                ),
+                v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
             ]
         )
 
@@ -112,9 +108,7 @@ class DepthDataModule(TUDataModule):
             max_depth=self.max_depth,
             download=True,
         )
-        self.dataset(
-            root=self.root, split="val", max_depth=self.max_depth, download=True
-        )
+        self.dataset(root=self.root, split="val", max_depth=self.max_depth, download=True)
 
     def setup(self, stage: str | None = None) -> None:
         if stage == "fit" or stage is None:

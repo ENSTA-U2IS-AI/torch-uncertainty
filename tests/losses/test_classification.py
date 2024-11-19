@@ -14,9 +14,7 @@ class TestDECLoss:
     """Testing the DECLoss class."""
 
     def test_main(self):
-        loss = DECLoss(
-            loss_type="mse", reg_weight=1e-2, annealing_step=1, reduction="sum"
-        )
+        loss = DECLoss(loss_type="mse", reg_weight=1e-2, annealing_step=1, reduction="sum")
         loss(torch.tensor([[0.0, 0.0]]), torch.tensor([0]), current_epoch=1)
         loss = DECLoss(loss_type="mse", reg_weight=1e-2, annealing_step=1)
         loss(torch.tensor([[0.0, 0.0]]), torch.tensor([0]), current_epoch=0)
@@ -32,9 +30,7 @@ class TestDECLoss:
         ):
             DECLoss(reg_weight=-1)
 
-        with pytest.raises(
-            ValueError, match="The annealing step should be positive, but got "
-        ):
+        with pytest.raises(ValueError, match="The annealing step should be positive, but got "):
             DECLoss(annealing_step=0)
 
         loss = DECLoss(annealing_step=10)
@@ -45,14 +41,10 @@ class TestDECLoss:
                 current_epoch=None,
             )
 
-        with pytest.raises(
-            ValueError, match=" is not a valid value for reduction."
-        ):
+        with pytest.raises(ValueError, match=" is not a valid value for reduction."):
             DECLoss(reduction="median")
 
-        with pytest.raises(
-            ValueError, match="is not a valid value for mse/log/digamma loss."
-        ):
+        with pytest.raises(ValueError, match="is not a valid value for mse/log/digamma loss."):
             DECLoss(loss_type="regression")
 
 
@@ -74,9 +66,7 @@ class TestConfidencePenaltyLoss:
         ):
             ConfidencePenaltyLoss(reg_weight=-1)
 
-        with pytest.raises(
-            ValueError, match="is not a valid value for reduction."
-        ):
+        with pytest.raises(ValueError, match="is not a valid value for reduction."):
             ConfidencePenaltyLoss(reduction="median")
 
         with pytest.raises(
@@ -104,9 +94,7 @@ class TestConflictualLoss:
         ):
             ConflictualLoss(reg_weight=-1)
 
-        with pytest.raises(
-            ValueError, match="is not a valid value for reduction."
-        ):
+        with pytest.raises(ValueError, match="is not a valid value for reduction."):
             ConflictualLoss(reduction="median")
 
 
@@ -128,9 +116,7 @@ class TestFocalLoss:
         ):
             FocalLoss(gamma=-1)
 
-        with pytest.raises(
-            ValueError, match="is not a valid value for reduction."
-        ):
+        with pytest.raises(ValueError, match="is not a valid value for reduction."):
             FocalLoss(gamma=1, reduction="median")
 
 
@@ -138,9 +124,7 @@ class TestBCEWithLogitsLSLoss:
     """Testing the BCEWithLogitsLSLoss class."""
 
     def test_main(self):
-        loss = BCEWithLogitsLSLoss(
-            reduction="sum", label_smoothing=0.1, weight=torch.Tensor([1])
-        )
+        loss = BCEWithLogitsLSLoss(reduction="sum", label_smoothing=0.1, weight=torch.Tensor([1]))
         loss(torch.tensor([0.0]), torch.tensor([0]))
         loss = BCEWithLogitsLSLoss(reduction="mean", label_smoothing=0.6)
         loss(torch.tensor([0.0]), torch.tensor([0]))

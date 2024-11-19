@@ -59,9 +59,7 @@ class CheckpointEnsemble(nn.Module):
         """
         if not len(self.saved_models):
             return self.core_model.forward(x)
-        preds = torch.cat(
-            [model.forward(x) for model in self.saved_models], dim=0
-        )
+        preds = torch.cat([model.forward(x) for model in self.saved_models], dim=0)
         if self.use_final_checkpoint:
             model_forward = self.core_model.forward(x)
             preds = torch.cat([model_forward, preds], dim=0)

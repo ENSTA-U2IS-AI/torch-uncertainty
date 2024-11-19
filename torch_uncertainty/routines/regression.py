@@ -72,8 +72,7 @@ class RegressionRoutine(LightningModule):
         _regression_routine_checks(output_dim)
         if eval_shift:
             raise NotImplementedError(
-                "Distribution shift evaluation not implemented yet. Raise an issue "
-                "if needed."
+                "Distribution shift evaluation not implemented yet. Raise an issue " "if needed."
             )
 
         self.model = model
@@ -103,9 +102,7 @@ class RegressionRoutine(LightningModule):
         self.test_metrics = reg_metrics.clone(prefix="test/")
 
         if self.probabilistic:
-            reg_prob_metrics = MetricCollection(
-                {"reg/NLL": DistributionNLL(reduction="mean")}
-            )
+            reg_prob_metrics = MetricCollection({"reg/NLL": DistributionNLL(reduction="mean")})
             self.val_prob_metrics = reg_prob_metrics.clone(prefix="val/")
             self.test_prob_metrics = reg_prob_metrics.clone(prefix="test/")
 
@@ -124,15 +121,11 @@ class RegressionRoutine(LightningModule):
         if self.needs_epoch_update and not self.trainer.sanity_checking:
             self.model.update_wrapper(self.current_epoch)
             if hasattr(self.model, "need_bn_update"):
-                self.model.bn_update(
-                    self.trainer.train_dataloader, device=self.device
-                )
+                self.model.bn_update(self.trainer.train_dataloader, device=self.device)
 
     def on_test_start(self) -> None:
         if hasattr(self.model, "need_bn_update"):
-            self.model.bn_update(
-                self.trainer.train_dataloader, device=self.device
-            )
+            self.model.bn_update(self.trainer.train_dataloader, device=self.device)
 
     def forward(self, inputs: Tensor) -> Tensor | Distribution:
         """Forward pass of the routine.
@@ -159,9 +152,7 @@ class RegressionRoutine(LightningModule):
                 pred = pred.squeeze(-1)
         return pred
 
-    def training_step(
-        self, batch: tuple[Tensor, Tensor], batch_idx: int
-    ) -> STEP_OUTPUT:
+    def training_step(self, batch: tuple[Tensor, Tensor], batch_idx: int) -> STEP_OUTPUT:
         inputs, targets = self.format_batch_fn(batch)
 
         if self.one_dim_regression:
@@ -178,9 +169,7 @@ class RegressionRoutine(LightningModule):
         self.log("train_loss", loss, prog_bar=True, logger=True)
         return loss
 
-    def validation_step(
-        self, batch: tuple[Tensor, Tensor], batch_idx: int
-    ) -> None:
+    def validation_step(self, batch: tuple[Tensor, Tensor], batch_idx: int) -> None:
         inputs, targets = batch
         if self.one_dim_regression:
             targets = targets.unsqueeze(-1)
@@ -190,11 +179,7 @@ class RegressionRoutine(LightningModule):
 
         if self.probabilistic:
             ens_dist = dist_rearrange(preds, "(m b) c -> (b c) m", b=batch_size)
-            mix = Categorical(
-                torch.ones(
-                    dist_size(preds)[0] // batch_size, device=self.device
-                )
-            )
+            mix = Categorical(torch.ones(dist_size(preds)[0] // batch_size, device=self.device))
             mixture = MixtureSameFamily(mix, ens_dist)
             preds = mixture.mean
         else:
@@ -213,8 +198,7 @@ class RegressionRoutine(LightningModule):
     ) -> None:
         if dataloader_idx != 0:
             raise NotImplementedError(
-                "Regression OOD detection not implemented yet. Raise an issue "
-                "if needed."
+                "Regression OOD detection not implemented yet. Raise an issue " "if needed."
             )
 
         inputs, targets = batch
@@ -226,11 +210,7 @@ class RegressionRoutine(LightningModule):
 
         if self.probabilistic:
             ens_dist = dist_rearrange(preds, "(m b) c -> (b c) m", b=batch_size)
-            mix = Categorical(
-                torch.ones(
-                    dist_size(preds)[0] // batch_size, device=self.device
-                )
-            )
+            mix = Categorical(torch.ones(dist_size(preds)[0] // batch_size, device=self.device))
             mixture = MixtureSameFamily(mix, ens_dist)
             preds = mixture.mean
         else:

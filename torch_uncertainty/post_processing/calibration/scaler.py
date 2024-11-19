@@ -62,9 +62,7 @@ class Scaler(PostProcessing):
         """
         logits_list = []
         labels_list = []
-        calibration_dl = DataLoader(
-            calibration_set, batch_size=32, shuffle=False, drop_last=False
-        )
+        calibration_dl = DataLoader(calibration_set, batch_size=32, shuffle=False, drop_last=False)
         with torch.no_grad():
             for inputs, labels in tqdm(calibration_dl, disable=not progress):
                 logits = self.model(inputs.to(self.device))
@@ -73,9 +71,7 @@ class Scaler(PostProcessing):
         all_logits = torch.cat(logits_list).detach().to(self.device)
         all_labels = torch.cat(labels_list).detach().to(self.device)
 
-        optimizer = optim.LBFGS(
-            self.temperature, lr=self.lr, max_iter=self.max_iter
-        )
+        optimizer = optim.LBFGS(self.temperature, lr=self.lr, max_iter=self.max_iter)
 
         def calib_eval() -> float:
             optimizer.zero_grad()
@@ -93,8 +89,7 @@ class Scaler(PostProcessing):
     def forward(self, inputs: Tensor) -> Tensor:
         if not self.trained:
             logging.error(
-                "TemperatureScaler has not been trained yet. Returning "
-                "manually tempered inputs."
+                "TemperatureScaler has not been trained yet. Returning " "manually tempered inputs."
             )
         return self._scale(self.model(inputs))
 

@@ -49,9 +49,7 @@ class ChannelLayerNorm(LayerNorm):
             - Output: :math:`(N, *)` (same shape as input)
 
         """
-        super().__init__(
-            normalized_shape, eps, elementwise_affine, bias, device, dtype
-        )
+        super().__init__(normalized_shape, eps, elementwise_affine, bias, device, dtype)
         self.cback = ChannelBack()
         self.cfront = ChannelFront()
 

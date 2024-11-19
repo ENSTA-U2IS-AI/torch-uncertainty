@@ -87,9 +87,7 @@ class CIFAR100DataModule(TUDataModule):
 
         self.shift_severity = shift_severity
 
-        if (cutout is not None) + randaugment + int(
-            auto_augment is not None
-        ) > 1:
+        if (cutout is not None) + randaugment + int(auto_augment is not None) > 1:
             raise ValueError(
                 "Only one data augmentation can be chosen at a time. Raise a "
                 "GitHub issue if needed."

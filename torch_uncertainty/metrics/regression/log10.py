@@ -21,9 +21,7 @@ class Log10(MeanAbsoluteError):
                 <https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metric-kwargs>`_.
         """
         super().__init__(**kwargs)
-        self.add_state(
-            "values", default=torch.tensor(0.0), dist_reduce_fx="sum"
-        )
+        self.add_state("values", default=torch.tensor(0.0), dist_reduce_fx="sum")
         self.add_state("total", default=torch.tensor(0), dist_reduce_fx="sum")
 
     def update(self, pred: Tensor, target: Tensor) -> None:

@@ -79,9 +79,7 @@ class MNISTC(VisionDataset):
             self.download()
 
         if not self._check_integrity():
-            raise RuntimeError(
-                "Dataset not found. You can use download=True to download it."
-            )
+            raise RuntimeError("Dataset not found. You can use download=True to download it.")
 
         super().__init__(
             root=self.root / self.base_folder,
@@ -89,15 +87,11 @@ class MNISTC(VisionDataset):
             target_transform=target_transform,
         )
         if subset not in ["all", *self.mnistc_subsets]:
-            raise ValueError(
-                f"The subset '{subset}' does not exist in MNIST-C."
-            )
+            raise ValueError(f"The subset '{subset}' does not exist in MNIST-C.")
         self.subset = subset
 
         if split not in ["train", "test"]:
-            raise ValueError(
-                f"The split '{split}' should be either 'train' or 'test'."
-            )
+            raise ValueError(f"The split '{split}' should be either 'train' or 'test'.")
         self.split = split
 
         samples, labels = self.make_dataset(self.root, self.subset, self.split)
@@ -171,6 +165,4 @@ class MNISTC(VisionDataset):
         if self._check_integrity():
             logging.info("Files already downloaded and verified")
             return
-        download_and_extract_archive(
-            self.url, self.root, filename=self.filename, md5=self.zip_md5
-        )
+        download_and_extract_archive(self.url, self.root, filename=self.filename, md5=self.zip_md5)

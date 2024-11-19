@@ -13,27 +13,19 @@ class RepeatTarget(nn.Module):
         super().__init__()
 
         if not isinstance(num_repeats, int):
-            raise TypeError(
-                f"num_repeats must be an integer. Got {num_repeats}."
-            )
+            raise TypeError(f"num_repeats must be an integer. Got {num_repeats}.")
         if num_repeats <= 0:
-            raise ValueError(
-                f"num_repeats must be greater than 0. Got {num_repeats}."
-            )
+            raise ValueError(f"num_repeats must be greater than 0. Got {num_repeats}.")
 
         self.num_repeats = num_repeats
 
     def forward(self, batch: tuple[Tensor, Tensor]) -> tuple[Tensor, Tensor]:
         inputs, targets = batch
-        return inputs, targets.repeat(
-            self.num_repeats, *[1] * (targets.ndim - 1)
-        )
+        return inputs, targets.repeat(self.num_repeats, *[1] * (targets.ndim - 1))
 
 
 class MIMOBatchFormat(nn.Module):
-    def __init__(
-        self, num_estimators: int, rho: float = 0.0, batch_repeat: int = 1
-    ) -> None:
+    def __init__(self, num_estimators: int, rho: float = 0.0, batch_repeat: int = 1) -> None:
         """Format the batch for MIMO training.
 
         Args:
@@ -64,9 +56,9 @@ class MIMOBatchFormat(nn.Module):
 
     def forward(self, batch: tuple[Tensor, Tensor]) -> tuple[Tensor, Tensor]:
         inputs, targets = batch
-        indexes = torch.arange(
-            0, inputs.shape[0], device=inputs.device, dtype=torch.int64
-        ).repeat(self.batch_repeat)
+        indexes = torch.arange(0, inputs.shape[0], device=inputs.device, dtype=torch.int64).repeat(
+            self.batch_repeat
+        )
         main_shuffle = self.shuffle(indexes)
         threshold_shuffle = int(main_shuffle.shape[0] * (1.0 - self.rho))
         shuffle_indices = [
@@ -80,21 +72,13 @@ class MIMOBatchFormat(nn.Module):
             for _ in range(self.num_estimators)
         ]
         inputs = torch.stack(
-            [
-                torch.index_select(inputs, dim=0, index=indices)
-                for indices in shuffle_indices
-            ],
+            [torch.index_select(inputs, dim=0, index=indices) for indices in shuffle_indices],
             dim=0,
         )
         targets = torch.stack(
-            [
-                torch.index_select(targets, dim=0, index=indices)
-                for indices in shuffle_indices
-            ],
+            [torch.index_select(targets, dim=0, index=indices) for indices in shuffle_indices],
             dim=0,
         )
-        inputs = rearrange(
-            inputs, "m b c h w -> (m b) c h w", m=self.num_estimators
-        )
+        inputs = rearrange(inputs, "m b c h w -> (m b) c h w", m=self.num_estimators)
         targets = rearrange(targets, "m b -> (m b)", m=self.num_estimators)
         return inputs, targets

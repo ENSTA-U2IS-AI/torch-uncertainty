@@ -318,9 +318,7 @@ class TestClassification:
         model = DummyClassificationBaseline(
             num_classes=dm.num_classes,
             in_channels=dm.num_channels,
-            loss=ELBOLoss(
-                None, nn.CrossEntropyLoss(), kl_weight=1.0, num_samples=4
-            ),
+            loss=ELBOLoss(None, nn.CrossEntropyLoss(), kl_weight=1.0, num_samples=4),
             baseline_type="ensemble",
             ood_criterion="vr",
             eval_ood=True,
@@ -362,9 +360,7 @@ class TestClassification:
                 mixup_params=mixup_params,
             )
 
-        with pytest.raises(
-            ValueError, match="num_calibration_bins must be at least 2, got"
-        ):
+        with pytest.raises(ValueError, match="num_calibration_bins must be at least 2, got"):
             ClassificationRoutine(
                 model=nn.Identity(),
                 num_classes=2,
@@ -391,9 +387,7 @@ class TestClassification:
 
         model = dummy_model(1, 1, 0, with_feats=False)
         with pytest.raises(ValueError):
-            ClassificationRoutine(
-                num_classes=10, model=model, loss=None, eval_grouping_loss=True
-            )
+            ClassificationRoutine(num_classes=10, model=model, loss=None, eval_grouping_loss=True)
 
         with pytest.raises(
             ValueError,

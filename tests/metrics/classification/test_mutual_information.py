@@ -32,9 +32,7 @@ class TestMutualInformation:
         res = metric.compute()
         assert res == 0.0
 
-    def test_compute_mixed(
-        self, disagreement_probas: torch.Tensor, agreement_probas: torch.Tensor
-    ):
+    def test_compute_mixed(self, disagreement_probas: torch.Tensor, agreement_probas: torch.Tensor):
         metric = MutualInformation(reduction="mean")
         metric.update(agreement_probas)
         metric.update(disagreement_probas)

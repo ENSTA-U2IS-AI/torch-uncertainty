@@ -8,9 +8,7 @@ from torch.nn import functional as F
 from torch.nn.common_types import _size_1_t, _size_2_t, _size_3_t
 
 
-def check_packed_parameters_consistency(
-    alpha: float, gamma: int, num_estimators: int
-) -> None:
+def check_packed_parameters_consistency(alpha: float, gamma: int, num_estimators: int) -> None:
     """Check the consistency of the parameters of the Packed-Ensembles layers.
 
     Args:
@@ -25,26 +23,18 @@ def check_packed_parameters_consistency(
         raise ValueError(f"Attribute `alpha` should be > 0, not {alpha}")
 
     if not isinstance(gamma, int):
-        raise TypeError(
-            f"Attribute `gamma` should be an int, not {type(gamma)}"
-        )
+        raise TypeError(f"Attribute `gamma` should be an int, not {type(gamma)}")
     if gamma <= 0:
         raise ValueError(f"Attribute `gamma` should be >= 1, not {gamma}")
 
     if num_estimators is None:
-        raise ValueError(
-            "You must specify the value of the arg. `num_estimators`"
-        )
+        raise ValueError("You must specify the value of the arg. `num_estimators`")
     if not isinstance(num_estimators, int):
         raise TypeError(
-            "Attribute `num_estimators` should be an int, not "
-            f"{type(num_estimators)}"
+            "Attribute `num_estimators` should be an int, not " f"{type(num_estimators)}"
         )
     if num_estimators <= 0:
-        raise ValueError(
-            "Attribute `num_estimators` should be >= 1, not "
-            f"{num_estimators}"
-        )
+        raise ValueError("Attribute `num_estimators` should be >= 1, not " f"{num_estimators}")
 
 
 class PackedLinear(nn.Module):
@@ -120,22 +110,16 @@ class PackedLinear(nn.Module):
 
         # Define the number of features of the underlying convolution
         extended_in_features = int(in_features * (1 if first else alpha))
-        extended_out_features = int(
-            out_features * (num_estimators if last else alpha)
-        )
+        extended_out_features = int(out_features * (num_estimators if last else alpha))
 
         # Define the number of groups of the underlying convolution
         actual_groups = num_estimators * gamma if not first else 1
 
         # fix if not divisible by groups
         if extended_in_features % actual_groups:
-            extended_in_features += num_estimators - extended_in_features % (
-                actual_groups
-            )
+            extended_in_features += num_estimators - extended_in_features % (actual_groups)
         if extended_out_features % actual_groups:
-            extended_out_features += num_estimators - extended_out_features % (
-                actual_groups
-            )
+            extended_out_features += num_estimators - extended_out_features % (actual_groups)
 
         # FIXME: This is a temporary check
         assert implementation in [
@@ -173,9 +157,7 @@ class PackedLinear(nn.Module):
         self.groups = actual_groups
 
         if bias:
-            self.bias = nn.Parameter(
-                torch.empty(extended_out_features, **factory_kwargs)
-            )
+            self.bias = nn.Parameter(torch.empty(extended_out_features, **factory_kwargs))
         else:
             self.register_parameter("bias", None)
 
@@ -193,9 +175,7 @@ class PackedLinear(nn.Module):
             nn.init.uniform_(self.bias, -bound, bound)
 
         if self.implementation == "sparse":
-            self.weight = nn.Parameter(
-                torch.block_diag(*self.weight).to_sparse()
-            )
+            self.weight = nn.Parameter(torch.block_diag(*self.weight).to_sparse())
 
     def _rearrange_forward(self, x: Tensor) -> Tensor:
         x = x.unsqueeze(-1)
@@ -209,9 +189,7 @@ class PackedLinear(nn.Module):
         if self.implementation == "legacy":
             if self.rearrange:
                 return self._rearrange_forward(inputs)
-            return F.conv1d(
-                inputs, self.weight, self.bias, 1, 0, 1, self.groups
-            )
+            return F.conv1d(inputs, self.weight, self.bias, 1, 0, 1, self.groups)
         if self.implementation == "full":
             block_diag = torch.block_diag(*self.weight)
             return F.linear(inputs, block_diag, self.bias)
@@ -302,30 +280,23 @@ class PackedConv1d(nn.Module):
 
         # Define the number of channels of the underlying convolution
         extended_in_channels = int(in_channels * (1 if first else alpha))
-        extended_out_channels = int(
-            out_channels * (num_estimators if last else alpha)
-        )
+        extended_out_channels = int(out_channels * (num_estimators if last else alpha))
 
         # Define the number of groups of the underlying convolution
         actual_groups = 1 if first else gamma * groups * num_estimators
 
         while (
             extended_in_channels % actual_groups != 0
-            or extended_in_channels // actual_groups
-            < minimum_channels_per_group
+            or extended_in_channels // actual_groups < minimum_channels_per_group
         ) and actual_groups // (groups * num_estimators) > 1:
             gamma -= 1
             actual_groups = gamma * groups * num_estimators
 
         # fix if not divisible by groups
         if extended_in_channels % actual_groups:
-            extended_in_channels += (
-                num_estimators - extended_in_channels % actual_groups
-            )
+            extended_in_channels += num_estimators - extended_in_channels % actual_groups
         if extended_out_channels % actual_groups:
-            extended_out_channels += (
-                num_estimators - extended_out_channels % actual_groups
-            )
+            extended_out_channels += num_estimators - extended_out_channels % actual_groups
 
         self.conv = nn.Conv1d(
             in_channels=extended_in_channels,
@@ -430,30 +401,23 @@ class PackedConv2d(nn.Module):
 
         # Define the number of channels of the underlying convolution
         extended_in_channels = int(in_channels * (1 if first else alpha))
-        extended_out_channels = int(
-            out_channels * (num_estimators if last else alpha)
-        )
+        extended_out_channels = int(out_channels * (num_estimators if last else alpha))
 
         # Define the number of groups of the underlying convolution
         actual_groups = 1 if first else gamma * groups * num_estimators
 
         while (
             extended_in_channels % actual_groups != 0
-            or extended_in_channels // actual_groups
-            < minimum_channels_per_group
+            or extended_in_channels // actual_groups < minimum_channels_per_group
         ) and actual_groups // (groups * num_estimators) > 1:
             gamma -= 1
             actual_groups = gamma * groups * num_estimators
 
         # fix if not divisible by groups
         if extended_in_channels % actual_groups:
-            extended_in_channels += (
-                num_estimators - extended_in_channels % actual_groups
-            )
+            extended_in_channels += num_estimators - extended_in_channels % actual_groups
         if extended_out_channels % actual_groups:
-            extended_out_channels += (
-                num_estimators - extended_out_channels % actual_groups
-            )
+            extended_out_channels += num_estimators - extended_out_channels % actual_groups
 
         self.conv = nn.Conv2d(
             in_channels=extended_in_channels,
@@ -558,30 +522,23 @@ class PackedConv3d(nn.Module):
 
         # Define the number of channels of the underlying convolution
         extended_in_channels = int(in_channels * (1 if first else alpha))
-        extended_out_channels = int(
-            out_channels * (num_estimators if last else alpha)
-        )
+        extended_out_channels = int(out_channels * (num_estimators if last else alpha))
 
         # Define the number of groups of the underlying convolution
         actual_groups = 1 if first else gamma * groups * num_estimators
 
         while (
             extended_in_channels % actual_groups != 0
-            or extended_in_channels // actual_groups
-            < minimum_channels_per_group
+            or extended_in_channels // actual_groups < minimum_channels_per_group
         ) and actual_groups // (groups * num_estimators) > 1:
             gamma -= 1
             actual_groups = gamma * groups * num_estimators
 
         # fix if not divisible by groups
         if extended_in_channels % actual_groups:
-            extended_in_channels += (
-                num_estimators - extended_in_channels % actual_groups
-            )
+            extended_in_channels += num_estimators - extended_in_channels % actual_groups
         if extended_out_channels % actual_groups:
-            extended_out_channels += (
-                num_estimators - extended_out_channels % actual_groups
-            )
+            extended_out_channels += num_estimators - extended_out_channels % actual_groups
 
         self.conv = nn.Conv3d(
             in_channels=extended_in_channels,

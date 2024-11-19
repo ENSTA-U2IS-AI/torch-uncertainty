@@ -128,18 +128,14 @@ class TestBatchedWide:
             )
 
         with pytest.raises(ValueError):
-            batched_wideresnet28x10(
-                in_channels=1, num_classes=10, num_estimators=2, style="test"
-            )
+            batched_wideresnet28x10(in_channels=1, num_classes=10, num_estimators=2, style="test")
 
 
 class TestMIMOWide:
     """Testing the WideResNet mimo class."""
 
     def test_main(self):
-        model = mimo_wideresnet28x10(
-            in_channels=1, num_classes=10, num_estimators=2, style="cifar"
-        )
+        model = mimo_wideresnet28x10(in_channels=1, num_classes=10, num_estimators=2, style="cifar")
         model(torch.rand((2, 1, 28, 28)))
 
         with pytest.raises(ValueError):
@@ -153,6 +149,4 @@ class TestMIMOWide:
                 conv_bias=False,
             )
         with pytest.raises(ValueError):
-            mimo_wideresnet28x10(
-                in_channels=1, num_classes=10, num_estimators=2, style="test"
-            )
+            mimo_wideresnet28x10(in_channels=1, num_classes=10, num_estimators=2, style="test")

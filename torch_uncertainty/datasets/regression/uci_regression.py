@@ -117,23 +117,17 @@ class UCIRegression(Dataset):
         "4e6727f462779e2d396e8f7d2ddb79a3",
     ]
     urls = [
-        "https://archive.ics.uci.edu/ml/machine-learning-databases/housing/"
-        "housing.data",
-        "https://archive.ics.uci.edu/static/public/165/concrete+compressive+"
-        "strength.zip",
+        "https://archive.ics.uci.edu/ml/machine-learning-databases/housing/" "housing.data",
+        "https://archive.ics.uci.edu/static/public/165/concrete+compressive+" "strength.zip",
         "https://archive.ics.uci.edu/static/public/242/energy+efficiency.zip",
-        "https://archive.ics.uci.edu/static/public/374/appliances+energy+"
-        "prediction.zip",
+        "https://archive.ics.uci.edu/static/public/374/appliances+energy+" "prediction.zip",
         "https://www.openml.org/data/get_csv/3626/dataset_2175_kin8nm.arff",
-        "https://raw.githubusercontent.com/luishpinto/cm-naval-propulsion-"
-        "plant/master/data.csv",
-        "https://archive.ics.uci.edu/static/public/294/combined+cycle+power+"
-        "plant.zip",
+        "https://raw.githubusercontent.com/luishpinto/cm-naval-propulsion-" "plant/master/data.csv",
+        "https://archive.ics.uci.edu/static/public/294/combined+cycle+power+" "plant.zip",
         "https://archive.ics.uci.edu/static/public/265/physicochemical+"
         "properties+of+protein+tertiary+structure.zip",
         "https://archive.ics.uci.edu/static/public/186/wine+quality.zip",
-        "https://archive.ics.uci.edu/static/public/243/yacht+"
-        "hydrodynamics.zip",
+        "https://archive.ics.uci.edu/static/public/243/yacht+" "hydrodynamics.zip",
     ]
 
     def __init__(
@@ -197,10 +191,7 @@ class UCIRegression(Dataset):
             logging.info("Files already downloaded and verified")
             return
         if self.url is None:
-            raise ValueError(
-                f"The dataset {self.dataset_name} is not available for "
-                "download."
-            )
+            raise ValueError(f"The dataset {self.dataset_name} is not available for " "download.")
         download_root = self.root / self.root_appendix / self.dataset_name
         if self.dataset_name == "boston":
             download_url(
@@ -255,9 +246,7 @@ class UCIRegression(Dataset):
         elif self.dataset_name == "kin8nm":
             array = pd.read_csv(path / "kin8nm.csv").to_numpy()
         elif self.dataset_name == "naval-propulsion-plant":
-            df = pd.read_csv(
-                path / "data.csv", header=None, sep=";", decimal=","
-            )
+            df = pd.read_csv(path / "data.csv", header=None, sep=";", decimal=",")
             # convert Ex to 10^x and remove second target
             array = df.apply(pd.to_numeric, errors="coerce").to_numpy()[:, :-1]
         elif self.dataset_name == "protein":

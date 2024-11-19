@@ -20,9 +20,7 @@ else:  # coverage: ignore
     huggingface_hub_installed = False
 
 
-def load_hf(
-    weight_id: str, version: int = 0
-) -> tuple[dict[str, torch.Tensor], dict[str, str]]:
+def load_hf(weight_id: str, version: int = 0) -> tuple[dict[str, torch.Tensor], dict[str, str]]:
     """Load a model from the HuggingFace hub.
 
     Args:
@@ -36,9 +34,7 @@ def load_hf(
         TorchUncertainty's weights are released under the Apache 2.0 license.
     """
     if not huggingface_hub_installed:
-        raise ImportError(
-            "Please install huggingface_hub to use this function."
-        )
+        raise ImportError("Please install huggingface_hub to use this function.")
     if not safetensors_installed:
         raise ImportError("Please install safetensors to use this function.")
     repo_id = f"torch-uncertainty/{weight_id}"
@@ -57,9 +53,7 @@ def load_hf(
         try:
             weight_path = hf_hub_download(repo_id=repo_id, filename=filename)
         except EntryNotFoundError:
-            raise ValueError(
-                f"Model {weight_id}_{version} not found on HuggingFace."
-            ) from not_pt
+            raise ValueError(f"Model {weight_id}_{version} not found on HuggingFace.") from not_pt
 
     if pickle:
         weight = torch.load(weight_path, map_location=torch.device("cpu"))

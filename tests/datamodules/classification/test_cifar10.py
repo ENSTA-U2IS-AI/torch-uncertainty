@@ -72,9 +72,7 @@ class TestCIFAR10DataModule:
                 auto_augment="rand-m9-n2-mstd0.5",
             )
 
-        with pytest.raises(
-            ValueError, match="CIFAR-H can only be used in testing."
-        ):
+        with pytest.raises(ValueError, match="CIFAR-H can only be used in testing."):
             dm = CIFAR10DataModule(
                 root="./data/",
                 batch_size=128,
@@ -100,25 +98,21 @@ class TestCIFAR10DataModule:
 
     def test_cifar10_cv(self):
         dm = CIFAR10DataModule(root="./data/", batch_size=128)
-        dm.dataset = (
-            lambda root, train, download, transform: DummyClassificationDataset(
-                root,
-                train=train,
-                download=download,
-                transform=transform,
-                num_images=20,
-            )
+        dm.dataset = lambda root, train, download, transform: DummyClassificationDataset(
+            root,
+            train=train,
+            download=download,
+            transform=transform,
+            num_images=20,
         )
         dm.make_cross_val_splits(2, 1)
 
         dm = CIFAR10DataModule(root="./data/", batch_size=128, val_split=0.1)
-        dm.dataset = (
-            lambda root, train, download, transform: DummyClassificationDataset(
-                root,
-                train=train,
-                download=download,
-                transform=transform,
-                num_images=20,
-            )
+        dm.dataset = lambda root, train, download, transform: DummyClassificationDataset(
+            root,
+            train=train,
+            download=download,
+            transform=transform,
+            num_images=20,
         )
         dm.make_cross_val_splits(2, 1)

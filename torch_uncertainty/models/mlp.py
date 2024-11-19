@@ -56,21 +56,15 @@ class _MLP(nn.Module):
                 layers.append(layer(in_features, num_outputs, **layer_args))
         else:
             if layer == PackedLinear:
-                layers.append(
-                    layer(in_features, hidden_dims[0], first=True, **layer_args)
-                )
+                layers.append(layer(in_features, hidden_dims[0], first=True, **layer_args))
             else:
                 layers.append(layer(in_features, hidden_dims[0], **layer_args))
 
             for i in range(1, len(hidden_dims)):
-                layers.append(
-                    layer(hidden_dims[i - 1], hidden_dims[i], **layer_args)
-                )
+                layers.append(layer(hidden_dims[i - 1], hidden_dims[i], **layer_args))
 
             if layer == PackedLinear:
-                layers.append(
-                    layer(hidden_dims[-1], num_outputs, last=True, **layer_args)
-                )
+                layers.append(layer(hidden_dims[-1], num_outputs, last=True, **layer_args))
             else:
                 layers.append(layer(hidden_dims[-1], num_outputs, **layer_args))
         self.layers = layers

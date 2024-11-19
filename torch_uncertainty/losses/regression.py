@@ -8,9 +8,7 @@ from torch_uncertainty.utils.distributions import NormalInverseGamma
 
 
 class DistributionNLLLoss(nn.Module):
-    def __init__(
-        self, reduction: Literal["mean", "sum"] | None = "mean"
-    ) -> None:
+    def __init__(self, reduction: Literal["mean", "sum"] | None = "mean") -> None:
         """Negative Log-Likelihood loss using given distributions as inputs.
 
         Args:
@@ -46,9 +44,7 @@ class DistributionNLLLoss(nn.Module):
 
 
 class DERLoss(DistributionNLLLoss):
-    def __init__(
-        self, reg_weight: float, reduction: str | None = "mean"
-    ) -> None:
+    def __init__(self, reg_weight: float, reduction: str | None = "mean") -> None:
         """The Deep Evidential Regression loss.
 
         This loss combines the negative log-likelihood loss of the normal
@@ -71,8 +67,7 @@ class DERLoss(DistributionNLLLoss):
 
         if reg_weight < 0:
             raise ValueError(
-                "The regularization weight should be non-negative, but got "
-                f"{reg_weight}."
+                "The regularization weight should be non-negative, but got " f"{reg_weight}."
             )
         self.reg_weight = reg_weight
 
@@ -98,9 +93,7 @@ class DERLoss(DistributionNLLLoss):
 
 
 class BetaNLL(nn.Module):
-    def __init__(
-        self, beta: float = 0.5, reduction: str | None = "mean"
-    ) -> None:
+    def __init__(self, beta: float = 0.5, reduction: str | None = "mean") -> None:
         """The Beta Negative Log-likelihood loss.
 
         Args:
@@ -118,22 +111,15 @@ class BetaNLL(nn.Module):
         super().__init__()
 
         if beta < 0 or beta > 1:
-            raise ValueError(
-                "The beta parameter should be in range [0, 1], but got "
-                f"{beta}."
-            )
+            raise ValueError("The beta parameter should be in range [0, 1], but got " f"{beta}.")
         self.beta = beta
         self.nll_loss = nn.GaussianNLLLoss(reduction="none")
         if reduction not in ("none", "mean", "sum"):
             raise ValueError(f"{reduction} is not a valid value for reduction.")
         self.reduction = reduction
 
-    def forward(
-        self, mean: Tensor, targets: Tensor, variance: Tensor
-    ) -> Tensor:
-        loss = self.nll_loss(mean, targets, variance) * (
-            variance.detach() ** self.beta
-        )
+    def forward(self, mean: Tensor, targets: Tensor, variance: Tensor) -> Tensor:
+        loss = self.nll_loss(mean, targets, variance) * (variance.detach() ** self.beta)
 
         if self.reduction == "mean":
             return loss.mean()

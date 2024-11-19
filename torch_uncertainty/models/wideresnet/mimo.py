@@ -46,9 +46,7 @@ class _MIMOWideResNet(_WideResNet):
         if not self.training:
             x = x.repeat(self.num_estimators, 1, 1, 1)
         out = rearrange(x, "(m b) c h w -> b (m c) h w", m=self.num_estimators)
-        return rearrange(
-            super().forward(out), "b (m d) -> (m b) d", m=self.num_estimators
-        )
+        return rearrange(super().forward(out), "b (m d) -> (m b) d", m=self.num_estimators)
 
 
 def mimo_wideresnet28x10(

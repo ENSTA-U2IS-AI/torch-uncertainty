@@ -22,8 +22,7 @@ class PolyLR(LRScheduler):
     def _get_closed_form_lr(self) -> list[float]:
         return [
             max(
-                base_lr
-                * (1 - self.last_epoch / self.total_iters) ** self.power,
+                base_lr * (1 - self.last_epoch / self.total_iters) ** self.power,
                 self.min_lr,
             )
             for base_lr in self.base_lrs

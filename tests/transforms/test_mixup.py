@@ -59,19 +59,13 @@ class TestWarpingMixup:
     """Testing WarpingMixup augmentation."""
 
     def test_batch_kernel_warpingmixup(self, batch_input):
-        mixup = WarpingMixup(
-            alpha=1.0, mode="batch", num_classes=2, apply_kernel=True
-        )
+        mixup = WarpingMixup(alpha=1.0, mode="batch", num_classes=2, apply_kernel=True)
         _ = mixup(*batch_input, batch_input[0])
 
     def test_elem_kernel_warpingmixup(self, batch_input):
-        mixup = WarpingMixup(
-            alpha=1.0, mode="elem", num_classes=2, apply_kernel=True
-        )
+        mixup = WarpingMixup(alpha=1.0, mode="elem", num_classes=2, apply_kernel=True)
         _ = mixup(*batch_input, batch_input[0])
 
     def test_elem_warpingmixup(self, batch_input):
-        mixup = WarpingMixup(
-            alpha=1.0, mode="elem", num_classes=2, apply_kernel=False
-        )
+        mixup = WarpingMixup(alpha=1.0, mode="elem", num_classes=2, apply_kernel=False)
         _ = mixup(*batch_input, batch_input[0])

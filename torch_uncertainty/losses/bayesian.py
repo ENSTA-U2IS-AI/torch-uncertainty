@@ -24,9 +24,7 @@ class KLDiv(nn.Module):
         count = 0
         for module in self.model.modules():
             if isinstance(module, bayesian_modules):
-                kl_divergence = kl_divergence.to(
-                    device=module.lvposterior.device
-                )
+                kl_divergence = kl_divergence.to(device=module.lvposterior.device)
                 kl_divergence += module.lvposterior - module.lprior
                 count += 1
         return kl_divergence / count
@@ -88,27 +86,14 @@ class ELBOLoss(nn.Module):
             self._kl_div = KLDiv(model)
 
 
-def _elbo_loss_checks(
-    inner_loss: nn.Module, kl_weight: float, num_samples: int
-) -> None:
+def _elbo_loss_checks(inner_loss: nn.Module, kl_weight: float, num_samples: int) -> None:
     if isinstance(inner_loss, type):
-        raise TypeError(
-            "The inner_loss should be an instance of a class."
-            f"Got {inner_loss}."
-        )
+        raise TypeError("The inner_loss should be an instance of a class." f"Got {inner_loss}.")
 
     if kl_weight < 0:
-        raise ValueError(
-            f"The KL weight should be non-negative. Got {kl_weight}."
-        )
+        raise ValueError(f"The KL weight should be non-negative. Got {kl_weight}.")
 
     if num_samples < 1:
-        raise ValueError(
-            "The number of samples should not be lower than 1."
-            f"Got {num_samples}."
-        )
+        raise ValueError("The number of samples should not be lower than 1." f"Got {num_samples}.")
     if not isinstance(num_samples, int):
-        raise TypeError(
-            "The number of samples should be an integer. "
-            f"Got {type(num_samples)}."
-        )
+        raise TypeError("The number of samples should be an integer. " f"Got {type(num_samples)}.")

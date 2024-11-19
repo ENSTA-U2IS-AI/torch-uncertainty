@@ -31,9 +31,7 @@ class Cityscapes(TVCityscapes):
             transforms,
         )
         train_id_to_color = [
-            c.color
-            for c in self.classes
-            if (c.train_id != -1 and c.train_id != 255)
+            c.color for c in self.classes if (c.train_id != -1 and c.train_id != 255)
         ]
         train_id_to_color.append([0, 0, 0])
         self.train_id_to_color = torch.tensor(train_id_to_color)
@@ -54,10 +52,9 @@ class Cityscapes(TVCityscapes):
         # convert target color to index
         for cityscapes_class in cls.classes:
             target[
-                (
-                    colored_target
-                    == torch.tensor(cityscapes_class.id, dtype=target.dtype)
-                ).all(dim=-1)
+                (colored_target == torch.tensor(cityscapes_class.id, dtype=target.dtype)).all(
+                    dim=-1
+                )
             ] = cityscapes_class.train_id
 
         return F.to_pil_image(rearrange(target, "h w c -> c h w"))
@@ -92,9 +89,7 @@ class Cityscapes(TVCityscapes):
             if t == "polygon":
                 target = self._load_json(self.targets[index][i])
             elif t == "semantic":
-                target = tv_tensors.Mask(
-                    self.encode_target(Image.open(self.targets[index][i]))
-                )
+                target = tv_tensors.Mask(self.encode_target(Image.open(self.targets[index][i])))
             else:
                 target = Image.open(self.targets[index][i])
 
@@ -107,9 +102,7 @@ class Cityscapes(TVCityscapes):
 
         return image, target
 
-    def plot_sample(
-        self, index: int, ax: _AX_TYPE | None = None
-    ) -> _PLOT_OUT_TYPE:
+    def plot_sample(self, index: int, ax: _AX_TYPE | None = None) -> _PLOT_OUT_TYPE:
         """Plot a sample from the dataset.
 
         Args:

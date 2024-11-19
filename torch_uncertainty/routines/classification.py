@@ -72,9 +72,7 @@ class ClassificationRoutine(LightningModule):
         eval_ood: bool = False,
         eval_shift: bool = False,
         eval_grouping_loss: bool = False,
-        ood_criterion: Literal[
-            "msp", "logit", "energy", "entropy", "mi", "vr"
-        ] = "msp",
+        ood_criterion: Literal["msp", "logit", "energy", "entropy", "mi", "vr"] = "msp",
         post_processing: PostProcessing | None = None,
         calibration_set: Literal["val", "test"] = "val",
         num_calibration_bins: int = 15,
@@ -258,14 +256,10 @@ class ClassificationRoutine(LightningModule):
                 self.test_ood_ens_metrics = ens_metrics.clone(prefix="ood/ens_")
 
             if self.eval_shift:
-                self.test_shift_ens_metrics = ens_metrics.clone(
-                    prefix="shift/ens_"
-                )
+                self.test_shift_ens_metrics = ens_metrics.clone(prefix="shift/ens_")
 
         if self.eval_grouping_loss:
-            grouping_loss = MetricCollection(
-                {"cls/grouping_loss": GroupingLoss()}
-            )
+            grouping_loss = MetricCollection({"cls/grouping_loss": GroupingLoss()})
             self.val_grouping_loss = grouping_loss.clone(prefix="val/")
             self.test_grouping_loss = grouping_loss.clone(prefix="test/")
 
@@ -317,9 +311,7 @@ class ClassificationRoutine(LightningModule):
             )
         return Identity()
 
-    def _apply_mixup(
-        self, batch: tuple[Tensor, Tensor]
-    ) -> tuple[Tensor, Tensor]:
+    def _apply_mixup(self, batch: tuple[Tensor, Tensor]) -> tuple[Tensor, Tensor]:
         if not self.is_ensemble:
             if self.mixup_params["mixtype"] == "kernel_warping":
                 if self.mixup_params["dist_sim"] == "emb":
@@ -345,9 +337,7 @@ class ClassificationRoutine(LightningModule):
         if self.needs_epoch_update and not self.trainer.sanity_checking:
             self.model.update_wrapper(self.current_epoch)
             if hasattr(self.model, "need_bn_update"):
-                self.model.bn_update(
-                    self.trainer.train_dataloader, device=self.device
-                )
+                self.model.bn_update(self.trainer.train_dataloader, device=self.device)
 
     def on_test_start(self) -> None:
         if self.post_processing is not None:
@@ -364,9 +354,7 @@ class ClassificationRoutine(LightningModule):
             self.ood_logit_storage = []
 
         if hasattr(self.model, "need_bn_update"):
-            self.model.bn_update(
-                self.trainer.train_dataloader, device=self.device
-            )
+            self.model.bn_update(self.trainer.train_dataloader, device=self.device)
 
     def forward(self, inputs: Tensor, save_feats: bool = False) -> Tensor:
         """Forward pass of the model.
@@ -390,9 +378,7 @@ class ClassificationRoutine(LightningModule):
             logits = self.model(inputs)
         return logits
 
-    def training_step(
-        self, batch: tuple[Tensor, Tensor], batch_idx: int
-    ) -> STEP_OUTPUT:
+    def training_step(self, batch: tuple[Tensor, Tensor], batch_idx: int) -> STEP_OUTPUT:
         batch = self._apply_mixup(batch)
         inputs, target = self.format_batch_fn(batch)
 
@@ -414,9 +400,7 @@ class ClassificationRoutine(LightningModule):
         self.log("train_loss", loss, prog_bar=True, logger=True)
         return loss
 
-    def validation_step(
-        self, batch: tuple[Tensor, Tensor], batch_idx: int
-    ) -> None:
+    def validation_step(self, batch: tuple[Tensor, Tensor], batch_idx: int) -> None:
         inputs, targets = batch
         logits = self.forward(inputs, save_feats=self.eval_grouping_loss)
         logits = rearrange(logits, "(m b) c -> b m c", b=targets.size(0))
@@ -441,14 +425,8 @@ class ClassificationRoutine(LightningModule):
         inputs, targets = batch
         logits = self.forward(inputs, save_feats=self.eval_grouping_loss)
         logits = rearrange(logits, "(n b) c -> b n c", b=targets.size(0))
-
-        if self.binary_cls:
-            probs_per_est = torch.sigmoid(logits)
-        else:
-            probs_per_est = F.softmax(logits, dim=-1)
-
+        probs_per_est = torch.sigmoid(logits) if self.binary_cls else F.softmax(logits, dim=-1)
         probs = probs_per_est.mean(dim=1)
-
         confs = probs.max(-1)[0]
 
         if self.ood_criterion == "logit":
@@ -456,9 +434,7 @@ class ClassificationRoutine(LightningModule):
         elif self.ood_criterion == "energy":
             ood_scores = -logits.mean(dim=1).logsumexp(dim=-1)
         elif self.ood_criterion == "entropy":
-            ood_scores = (
-                torch.special.entr(probs_per_est).sum(dim=-1).mean(dim=1)
-            )
+            ood_scores = torch.special.entr(probs_per_est).sum(dim=-1).mean(dim=1)
         elif self.ood_criterion == "mi":
             mi_metric = MutualInformation(reduction="none")
             ood_scores = mi_metric(probs_per_est)
@@ -477,9 +453,7 @@ class ClassificationRoutine(LightningModule):
             if self.eval_grouping_loss:
                 self.test_grouping_loss.update(probs, targets, self.features)
 
-            self.log_dict(
-                self.test_cls_metrics, on_epoch=True, add_dataloader_idx=False
-            )
+            self.log_dict(self.test_cls_metrics, on_epoch=True, add_dataloader_idx=False)
             self.test_id_entropy(probs)
             self.log(
                 "test/cls/Entropy",
@@ -492,9 +466,7 @@ class ClassificationRoutine(LightningModule):
                 self.test_id_ens_metrics.update(probs_per_est)
 
             if self.eval_ood:
-                self.test_ood_metrics.update(
-                    ood_scores, torch.zeros_like(targets)
-                )
+                self.test_ood_metrics.update(ood_scores, torch.zeros_like(targets))
 
             if self.id_logit_storage is not None:
                 self.id_logit_storage.append(logits.detach().cpu())
@@ -548,9 +520,7 @@ class ClassificationRoutine(LightningModule):
         result_dict = self.test_cls_metrics.compute()
 
         # already logged
-        result_dict.update(
-            {"test/Entropy": self.test_id_entropy.compute()}, sync_dist=True
-        )
+        result_dict.update({"test/Entropy": self.test_id_entropy.compute()}, sync_dist=True)
 
         if self.post_processing is not None:
             tmp_metrics = self.post_cls_metrics.compute()
@@ -639,9 +609,7 @@ class ClassificationRoutine(LightningModule):
                     "Histogram of the likelihoods",
                 )[0]
                 self.logger.experiment.add_figure("Logit Histogram", logits_fig)
-                self.logger.experiment.add_figure(
-                    "Likelihood Histogram", probs_fig
-                )
+                self.logger.experiment.add_figure("Likelihood Histogram", probs_fig)
 
         if self.save_in_csv:
             self.save_results_to_csv(result_dict)
@@ -680,8 +648,7 @@ def _classification_routine_checks(
 
     if not is_ensemble and ood_criterion in ["mi", "vr"]:
         raise ValueError(
-            "You cannot use mutual information or variation ratio with a single"
-            " model."
+            "You cannot use mutual information or variation ratio with a single" " model."
         )
 
     if is_ensemble and eval_grouping_loss:
@@ -691,14 +658,12 @@ def _classification_routine_checks(
 
     if num_classes < 1:
         raise ValueError(
-            "The number of classes must be a positive integer >= 1."
-            f"Got {num_classes}."
+            "The number of classes must be a positive integer >= 1." f"Got {num_classes}."
         )
 
     if eval_grouping_loss and not hasattr(model, "feats_forward"):
         raise ValueError(
-            "Your model must have a `feats_forward` method to compute the "
-            "grouping loss."
+            "Your model must have a `feats_forward` method to compute the " "grouping loss."
         )
 
     if eval_grouping_loss and not (
@@ -710,9 +675,7 @@ def _classification_routine_checks(
         )
 
     if num_calibration_bins < 2:
-        raise ValueError(
-            f"num_calibration_bins must be at least 2, got {num_calibration_bins}."
-        )
+        raise ValueError(f"num_calibration_bins must be at least 2, got {num_calibration_bins}.")
 
     if mixup_params is not None and isinstance(format_batch_fn, RepeatTarget):
         raise ValueError(

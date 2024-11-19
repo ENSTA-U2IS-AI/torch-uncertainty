@@ -28,9 +28,7 @@ class FPRx(Metric):
         super().__init__(**kwargs)
 
         if recall_level < 0 or recall_level > 1:
-            raise ValueError(
-                f"Recall level must be between 0 and 1. Got {recall_level}."
-            )
+            raise ValueError(f"Recall level must be between 0 and 1. Got {recall_level}.")
         self.recall_level = recall_level
         self.pos_label = pos_label
         self.add_state("conf", [], dist_reduce_fx="cat")
@@ -77,17 +75,13 @@ class FPRx(Metric):
         threshold_idxs = torch.cat(
             [
                 distinct_value_indices,
-                torch.tensor(
-                    [labels.shape[0] - 1], dtype=torch.long, device=self.device
-                ),
+                torch.tensor([labels.shape[0] - 1], dtype=torch.long, device=self.device),
             ]
         )
 
         # accumulate the true positives with decreasing threshold
         true_pos = torch.cumsum(labels, dim=0)[threshold_idxs]
-        false_pos = (
-            1 + threshold_idxs - true_pos
-        )  # add one because of zero-based indexing
+        false_pos = 1 + threshold_idxs - true_pos  # add one because of zero-based indexing
 
         # check that there is at least one OOD example
         if true_pos[-1] == 0:

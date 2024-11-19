@@ -58,9 +58,7 @@ class KITTIDepth(VisionDataset):
         self.max_depth = max_depth
 
         if split not in ["train", "val"]:
-            raise ValueError(
-                f"split must be one of ['train', 'val']. Got {split}."
-            )
+            raise ValueError(f"split must be one of ['train', 'val']. Got {split}.")
 
         self.split = split
 
@@ -86,13 +84,10 @@ class KITTIDepth(VisionDataset):
         split_path = self.root / self.split
         return (
             split_path.is_dir()
-            and len(list((split_path / folder).glob("*.png")))
-            == self._num_samples[self.split]
+            and len(list((split_path / folder).glob("*.png"))) == self._num_samples[self.split]
         )
 
-    def __getitem__(
-        self, index: int
-    ) -> tuple[tv_tensors.Image, tv_tensors.Mask]:
+    def __getitem__(self, index: int) -> tuple[tv_tensors.Image, tv_tensors.Mask]:
         """Get the sample at the given index.
 
         Args:
@@ -105,9 +100,7 @@ class KITTIDepth(VisionDataset):
         target = tv_tensors.Mask(
             F.pil_to_tensor(Image.open(self.targets[index])).squeeze(0) / 256.0
         )
-        target[(target <= self.min_depth) | (target > self.max_depth)] = float(
-            "nan"
-        )
+        target[(target <= self.min_depth) | (target > self.max_depth)] = float("nan")
 
         if self.transforms is not None:
             image, target = self.transforms(image, target)
@@ -119,12 +112,8 @@ class KITTIDepth(VisionDataset):
         return self._num_samples[self.split]
 
     def _make_dataset(self) -> None:
-        self.samples = sorted(
-            (self.root / self.split / "leftImg8bit").glob("*.png")
-        )
-        self.targets = sorted(
-            (self.root / self.split / "leftDepth").glob("*.png")
-        )
+        self.samples = sorted((self.root / self.split / "leftImg8bit").glob("*.png"))
+        self.targets = sorted((self.root / self.split / "leftDepth").glob("*.png"))
 
     def _download_depth(self) -> None:
         """Download and extract the depth annotation dataset."""
@@ -147,9 +136,7 @@ class KITTIDepth(VisionDataset):
         logging.info("Train files...")
         for file in tqdm(depth_files):
             exp_code = file.parents[3].name.split("_")
-            filecode = "_".join(
-                [exp_code[0], exp_code[1], exp_code[2], exp_code[4], file.name]
-            )
+            filecode = "_".join([exp_code[0], exp_code[1], exp_code[2], exp_code[4], file.name])
             shutil.copy(file, self.root / "train" / "leftDepth" / filecode)
 
         if (self.root / "val" / "leftDepth").exists():
@@ -161,9 +148,7 @@ class KITTIDepth(VisionDataset):
         logging.info("Validation files...")
         for file in tqdm(depth_files):
             exp_code = file.parents[3].name.split("_")
-            filecode = "_".join(
-                [exp_code[0], exp_code[1], exp_code[2], exp_code[4], file.name]
-            )
+            filecode = "_".join([exp_code[0], exp_code[1], exp_code[2], exp_code[4], file.name])
             shutil.copy(file, self.root / "val" / "leftDepth" / filecode)
 
         shutil.rmtree(self.root / "tmp")
@@ -190,16 +175,12 @@ class KITTIDepth(VisionDataset):
 
         logging.info("Re-structuring the raw data...")
 
-        samples_to_keep = list(
-            (self.root / "train" / "leftDepth").glob("*.png")
-        )
+        samples_to_keep = list((self.root / "train" / "leftDepth").glob("*.png"))
 
         if (self.root / "train" / "leftImg8bit").exists():
             shutil.rmtree(self.root / "train" / "leftImg8bit")
 
-        (self.root / "train" / "leftImg8bit").mkdir(
-            parents=True, exist_ok=False
-        )
+        (self.root / "train" / "leftImg8bit").mkdir(parents=True, exist_ok=False)
 
         logging.info("Train files...")
         for sample in tqdm(samples_to_keep):
@@ -216,17 +197,9 @@ class KITTIDepth(VisionDataset):
                 ]
             )
             raw_path = (
-                self.root
-                / "raw"
-                / first_level
-                / second_level
-                / "image_02"
-                / "data"
-                / filecode[4]
+                self.root / "raw" / first_level / second_level / "image_02" / "data" / filecode[4]
             )
-            shutil.copy(
-                raw_path, self.root / "train" / "leftImg8bit" / sample.name
-            )
+            shutil.copy(raw_path, self.root / "train" / "leftImg8bit" / sample.name)
 
         samples_to_keep = list((self.root / "val" / "leftDepth").glob("*.png"))
 
@@ -250,17 +223,9 @@ class KITTIDepth(VisionDataset):
                 ]
             )
             raw_path = (
-                self.root
-                / "raw"
-                / first_level
-                / second_level
-                / "image_02"
-                / "data"
-                / filecode[4]
+                self.root / "raw" / first_level / second_level / "image_02" / "data" / filecode[4]
             )
-            shutil.copy(
-                raw_path, self.root / "val" / "leftImg8bit" / sample.name
-            )
+            shutil.copy(raw_path, self.root / "val" / "leftImg8bit" / sample.name)
 
         if remove_unused:
             shutil.rmtree(self.root / "raw")

@@ -55,9 +55,7 @@ class Entropy(Metric):
         self.reduction = reduction
 
         if self.reduction in ["mean", "sum"]:
-            self.add_state(
-                "values", default=torch.tensor(0.0), dist_reduce_fx="sum"
-            )
+            self.add_state("values", default=torch.tensor(0.0), dist_reduce_fx="sum")
         else:
             self.add_state("values", default=[], dist_reduce_fx="cat")
         self.add_state("total", default=torch.tensor(0), dist_reduce_fx="sum")

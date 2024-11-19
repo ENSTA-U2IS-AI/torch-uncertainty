@@ -31,16 +31,12 @@ class DECLoss(nn.Module):
 
         if reg_weight is not None and (reg_weight < 0):
             raise ValueError(
-                "The regularization weight should be non-negative, but got "
-                f"{reg_weight}."
+                "The regularization weight should be non-negative, but got " f"{reg_weight}."
             )
         self.reg_weight = reg_weight
 
         if annealing_step is not None and (annealing_step <= 0):
-            raise ValueError(
-                "The annealing step should be positive, but got "
-                f"{annealing_step}."
-            )
+            raise ValueError("The annealing step should be positive, but got " f"{annealing_step}.")
         self.annealing_step = annealing_step
 
         if reduction not in ("none", "mean", "sum") and reduction is not None:
@@ -48,18 +44,14 @@ class DECLoss(nn.Module):
         self.reduction = reduction
 
         if loss_type not in ["mse", "log", "digamma"]:
-            raise ValueError(
-                f"{loss_type} is not a valid value for mse/log/digamma loss."
-            )
+            raise ValueError(f"{loss_type} is not a valid value for mse/log/digamma loss.")
         self.loss_type = loss_type
 
     def _mse_loss(self, evidence: Tensor, targets: Tensor) -> Tensor:
         evidence = torch.relu(evidence)
         alpha = evidence + 1.0
         strength = torch.sum(alpha, dim=1, keepdim=True)
-        loglikelihood_err = torch.sum(
-            (targets - (alpha / strength)) ** 2, dim=1, keepdim=True
-        )
+        loglikelihood_err = torch.sum((targets - (alpha / strength)) ** 2, dim=1, keepdim=True)
         loglikelihood_var = torch.sum(
             alpha * (strength - alpha) / (strength * strength * (strength + 1)),
             dim=1,
@@ -98,9 +90,7 @@ class DECLoss(nn.Module):
 
         kl_alpha = (alpha - 1) * (1 - targets) + 1
 
-        ones = torch.ones(
-            [1, num_classes], dtype=evidence.dtype, device=evidence.device
-        )
+        ones = torch.ones([1, num_classes], dtype=evidence.dtype, device=evidence.device)
         sum_kl_alpha = torch.sum(kl_alpha, dim=1, keepdim=True)
         first_term = (
             torch.lgamma(sum_kl_alpha)
@@ -109,8 +99,7 @@ class DECLoss(nn.Module):
             - torch.lgamma(ones.sum(dim=1, keepdim=True))
         )
         second_term = torch.sum(
-            (kl_alpha - ones)
-            * (torch.digamma(kl_alpha) - torch.digamma(sum_kl_alpha)),
+            (kl_alpha - ones) * (torch.digamma(kl_alpha) - torch.digamma(sum_kl_alpha)),
             dim=1,
             keepdim=True,
         )
@@ -122,11 +111,7 @@ class DECLoss(nn.Module):
         targets: Tensor,
         current_epoch: int | None = None,
     ) -> Tensor:
-        if (
-            self.annealing_step is not None
-            and self.annealing_step > 0
-            and current_epoch is None
-        ):
+        if self.annealing_step is not None and self.annealing_step > 0 and current_epoch is None:
             raise ValueError(
                 "The epoch num should be positive when \
                 annealing_step is settled, but got "
@@ -134,9 +119,7 @@ class DECLoss(nn.Module):
             )
 
         if targets.ndim != 1:  # if no mixup or cutmix
-            raise NotImplementedError(
-                "DECLoss does not yet support mixup/cutmix."
-            )
+            raise NotImplementedError("DECLoss does not yet support mixup/cutmix.")
         # TODO: handle binary
         targets = F.one_hot(targets, num_classes=evidence.size()[-1])
 
@@ -154,9 +137,7 @@ class DECLoss(nn.Module):
         else:
             annealing_coef = torch.min(
                 input=torch.tensor(1.0, dtype=evidence.dtype),
-                other=torch.tensor(
-                    current_epoch / self.annealing_step, dtype=evidence.dtype
-                ),
+                other=torch.tensor(current_epoch / self.annealing_step, dtype=evidence.dtype),
             )
 
         loss_reg = self._kldiv_reg(evidence, targets)
@@ -197,14 +178,11 @@ class ConfidencePenaltyLoss(nn.Module):
         self.reduction = reduction
 
         if eps < 0:
-            raise ValueError(
-                "The epsilon value should be non-negative, but got " f"{eps}."
-            )
+            raise ValueError("The epsilon value should be non-negative, but got " f"{eps}.")
         self.eps = eps
         if reg_weight < 0:
             raise ValueError(
-                "The regularization weight should be non-negative, but got "
-                f"{reg_weight}."
+                "The regularization weight should be non-negative, but got " f"{reg_weight}."
             )
         self.reg_weight = reg_weight
 
@@ -220,9 +198,9 @@ class ConfidencePenaltyLoss(nn.Module):
         """
         probs = F.softmax(logits, dim=1)
         ce_loss = F.cross_entropy(logits, targets, reduction=self.reduction)
-        reg_loss = torch.log(
-            torch.tensor(logits.shape[-1], device=probs.device)
-        ) + (probs * torch.log(probs + self.eps)).sum(dim=-1)
+        reg_loss = torch.log(torch.tensor(logits.shape[-1], device=probs.device)) + (
+            probs * torch.log(probs + self.eps)
+        ).sum(dim=-1)
         if self.reduction == "sum":
             return ce_loss + self.reg_weight * reg_loss.sum()
         if self.reduction == "mean":
@@ -255,8 +233,7 @@ class ConflictualLoss(nn.Module):
         self.reduction = reduction
         if reg_weight < 0:
             raise ValueError(
-                "The regularization weight should be non-negative, but got "
-                f"{reg_weight}."
+                "The regularization weight should be non-negative, but got " f"{reg_weight}."
             )
         self.reg_weight = reg_weight
 
@@ -310,8 +287,7 @@ class FocalLoss(nn.Module):
 
         if gamma < 0:
             raise ValueError(
-                "The gamma term of the focal loss should be non-negative, but got "
-                f"{gamma}."
+                "The gamma term of the focal loss should be non-negative, but got " f"{gamma}."
             )
         self.gamma = gamma
 
@@ -370,12 +346,8 @@ class BCEWithLogitsLSLoss(nn.BCEWithLogitsLoss):
         if self.label_smoothing == 0.0:
             return super().forward(preds, targets.type_as(preds))
         targets = targets.float()
-        targets = (
-            targets * (1 - self.label_smoothing) + self.label_smoothing / 2
-        )
-        loss = targets * F.logsigmoid(preds) + (1 - targets) * F.logsigmoid(
-            -preds
-        )
+        targets = targets * (1 - self.label_smoothing) + self.label_smoothing / 2
+        loss = targets * F.logsigmoid(preds) + (1 - targets) * F.logsigmoid(-preds)
         if self.weight is not None:
             loss = loss * self.weight
         if self.reduction == "mean":

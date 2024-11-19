@@ -139,9 +139,7 @@ class ImageNetDataModule(TUDataModule):
         if basic_augment:
             basic_transform = T.Compose(
                 [
-                    T.RandomResizedCrop(
-                        train_size, interpolation=self.interpolation
-                    ),
+                    T.RandomResizedCrop(train_size, interpolation=self.interpolation),
                     T.RandomHorizontalFlip(),
                 ]
             )
@@ -232,9 +230,7 @@ class ImageNetDataModule(TUDataModule):
     def setup(self, stage: Literal["fit", "test"] | None = None) -> None:
         if stage == "fit" or stage is None:
             if self.test_alt is not None:
-                raise ValueError(
-                    "The test_alt argument is not supported for training."
-                )
+                raise ValueError("The test_alt argument is not supported for training.")
             full = self.dataset(
                 self.root,
                 split="train",

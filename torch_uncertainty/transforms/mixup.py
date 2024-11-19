@@ -18,9 +18,7 @@ def beta_warping(x, alpha_cdf: float = 1.0, eps: float = 1e-12) -> float:
 
 
 def sim_gauss_kernel(dist, tau_max: float = 1.0, tau_std: float = 0.5) -> float:
-    dist_rate = tau_max * np.exp(
-        -(dist - 1) / (np.mean(dist) * 2 * tau_std * tau_std)
-    )
+    dist_rate = tau_max * np.exp(-(dist - 1) / (np.mean(dist) * 2 * tau_std * tau_std))
     return 1 / (dist_rate + 1e-12)
 
 
@@ -89,9 +87,7 @@ def sim_gauss_kernel(dist, tau_max: float = 1.0, tau_std: float = 0.5) -> float:
 
 # TODO: Should be a torchvision transform
 class AbstractMixup(nn.Module):
-    def __init__(
-        self, alpha: float = 1.0, mode: str = "batch", num_classes: int = 1000
-    ) -> None:
+    def __init__(self, alpha: float = 1.0, mode: str = "batch", num_classes: int = 1000) -> None:
         super().__init__()
         self.rng = np.random.default_rng()
         self.alpha = alpha

@@ -251,9 +251,7 @@ class _PackedResNet(nn.Module):
         self.bn1 = normalization_layer(block_planes * alpha)
 
         if style == "imagenet":
-            self.optional_pool = nn.MaxPool2d(
-                kernel_size=3, stride=2, padding=1
-            )
+            self.optional_pool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         else:
             self.optional_pool = nn.Identity()
 
@@ -369,9 +367,7 @@ class _PackedResNet(nn.Module):
         out = self.layer3(out)
         out = self.layer4(out)
 
-        out = rearrange(
-            out, "e (m c) h w -> (m e) c h w", m=self.num_estimators
-        )
+        out = rearrange(out, "e (m c) h w -> (m e) c h w", m=self.num_estimators)
 
         out = self.pool(out)
         out = self.final_dropout(self.flatten(out))
@@ -425,9 +421,7 @@ def packed_resnet(
     Returns:
         _PackedResNet: A Packed-Ensembles ResNet.
     """
-    block = (
-        _BasicBlock if arch in [18, 20, 34, 44, 56, 110, 1202] else _Bottleneck
-    )
+    block = _BasicBlock if arch in [18, 20, 34, 44, 56, 110, 1202] else _Bottleneck
     in_planes = 16 if arch in [20, 44, 56, 110, 1202] else 64
     net = _PackedResNet(
         block=block,
@@ -450,8 +444,6 @@ def packed_resnet(
             raise ValueError("No pretrained weights for this configuration")
         state_dict, config = load_hf(weights)
         if not net.check_config(config):
-            raise ValueError(
-                "Pretrained weights do not match current configuration."
-            )
+            raise ValueError("Pretrained weights do not match current configuration.")
         net.load_state_dict(state_dict)
     return net

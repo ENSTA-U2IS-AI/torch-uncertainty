@@ -102,16 +102,10 @@ class BatchLinear(nn.Module):
             **factory_kwargs,
         )
 
-        self.r_group = nn.Parameter(
-            torch.empty((num_estimators, in_features), **factory_kwargs)
-        )
-        self.s_group = nn.Parameter(
-            torch.empty((num_estimators, out_features), **factory_kwargs)
-        )
+        self.r_group = nn.Parameter(torch.empty((num_estimators, in_features), **factory_kwargs))
+        self.s_group = nn.Parameter(torch.empty((num_estimators, out_features), **factory_kwargs))
         if bias:
-            self.bias = nn.Parameter(
-                torch.empty((num_estimators, out_features), **factory_kwargs)
-            )
+            self.bias = nn.Parameter(torch.empty((num_estimators, out_features), **factory_kwargs))
         else:
             self.register_parameter("bias", None)
         self.reset_parameters()
@@ -120,9 +114,7 @@ class BatchLinear(nn.Module):
         nn.init.normal_(self.r_group, mean=1.0, std=0.5)
         nn.init.normal_(self.s_group, mean=1.0, std=0.5)
         if self.bias is not None:
-            fan_in, _ = nn.init._calculate_fan_in_and_fan_out(
-                self.linear.weight
-            )
+            fan_in, _ = nn.init._calculate_fan_in_and_fan_out(self.linear.weight)
             bound = 1 / math.sqrt(fan_in) if fan_in > 0 else 0
             nn.init.uniform_(self.bias, -bound, bound)
 
@@ -133,18 +125,10 @@ class BatchLinear(nn.Module):
         )
         extra = batch_size % self.num_estimators
 
-        r_group = torch.repeat_interleave(
-            self.r_group, examples_per_estimator, dim=0
-        )
-        r_group = torch.cat(
-            [r_group, r_group[:extra]], dim=0
-        )  # .unsqueeze(-1).unsqueeze(-1)
-        s_group = torch.repeat_interleave(
-            self.s_group, examples_per_estimator, dim=0
-        )
-        s_group = torch.cat(
-            [s_group, s_group[:extra]], dim=0
-        )  # .unsqueeze(-1).unsqueeze(-1)
+        r_group = torch.repeat_interleave(self.r_group, examples_per_estimator, dim=0)
+        r_group = torch.cat([r_group, r_group[:extra]], dim=0)  # .unsqueeze(-1).unsqueeze(-1)
+        s_group = torch.repeat_interleave(self.s_group, examples_per_estimator, dim=0)
+        s_group = torch.cat([s_group, s_group[:extra]], dim=0)  # .unsqueeze(-1).unsqueeze(-1)
         if self.bias is not None:
             bias = torch.repeat_interleave(
                 self.bias,
@@ -155,9 +139,7 @@ class BatchLinear(nn.Module):
         else:
             bias = None
 
-        return self.linear(inputs * r_group) * s_group + (
-            bias if bias is not None else 0
-        )
+        return self.linear(inputs * r_group) * s_group + (bias if bias is not None else 0)
 
     def extra_repr(self) -> str:
         return (
@@ -324,16 +306,10 @@ class BatchConv2d(nn.Module):
             bias=False,
             **factory_kwargs,
         )
-        self.r_group = nn.Parameter(
-            torch.empty((num_estimators, in_channels), **factory_kwargs)
-        )
-        self.s_group = nn.Parameter(
-            torch.empty((num_estimators, out_channels), **factory_kwargs)
-        )
+        self.r_group = nn.Parameter(torch.empty((num_estimators, in_channels), **factory_kwargs))
+        self.s_group = nn.Parameter(torch.empty((num_estimators, out_channels), **factory_kwargs))
         if bias:
-            self.bias = nn.Parameter(
-                torch.empty((num_estimators, out_channels), **factory_kwargs)
-            )
+            self.bias = nn.Parameter(torch.empty((num_estimators, out_channels), **factory_kwargs))
         else:
             self.register_parameter("bias", None)
 
@@ -365,9 +341,7 @@ class BatchConv2d(nn.Module):
             .unsqueeze(-1)
             .unsqueeze(-1)
         )
-        r_group = torch.cat(
-            [r_group, r_group[:extra]], dim=0
-        )  # .unsqueeze(-1).unsqueeze(-1)
+        r_group = torch.cat([r_group, r_group[:extra]], dim=0)  # .unsqueeze(-1).unsqueeze(-1)
         s_group = (
             torch.repeat_interleave(
                 self.s_group,
@@ -402,9 +376,7 @@ class BatchConv2d(nn.Module):
         else:
             bias = None
 
-        return self.conv(inputs * r_group) * s_group + (
-            bias if bias is not None else 0
-        )
+        return self.conv(inputs * r_group) * s_group + (bias if bias is not None else 0)
 
     def extra_repr(self) -> str:
         return (

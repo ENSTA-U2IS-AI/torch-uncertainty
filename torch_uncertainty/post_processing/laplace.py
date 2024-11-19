@@ -22,9 +22,7 @@ class LaplaceApprox(PostProcessing):
         weight_subset="last_layer",
         hessian_struct="kron",
         pred_type: Literal["glm", "nn"] = "glm",
-        link_approx: Literal[
-            "mc", "probit", "bridge", "bridge_norm"
-        ] = "probit",
+        link_approx: Literal["mc", "probit", "bridge", "bridge_norm"] = "probit",
         batch_size: int = 256,
         optimize_prior_precision: bool = True,
     ) -> None:
@@ -90,6 +88,4 @@ class LaplaceApprox(PostProcessing):
         self,
         x: Tensor,
     ) -> Tensor:
-        return self.la(
-            x, pred_type=self.pred_type, link_approx=self.link_approx
-        )
+        return self.la(x, pred_type=self.pred_type, link_approx=self.link_approx)

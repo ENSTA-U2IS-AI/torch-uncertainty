@@ -29,9 +29,7 @@ class TestAURC:
         assert torch.isnan(metric(torch.Tensor([0.0]), torch.Tensor([1])))
 
     def test_compute_multiclass(self) -> None:
-        probs = torch.Tensor(
-            [[0.1, 0.9], [0.2, 0.8], [0.3, 0.7], [0.4, 0.6], [0.2, 0.8]]
-        )
+        probs = torch.Tensor([[0.1, 0.9], [0.2, 0.8], [0.3, 0.7], [0.4, 0.6], [0.2, 0.8]])
         targets = torch.Tensor([1, 1, 1, 1, 1]).long()
         metric = AURC()
         assert metric(probs, targets).item() == pytest.approx(0)
@@ -78,9 +76,7 @@ class TestCovAtxRisk:
     """Testing the CovAtxRisk metric class."""
 
     def test_compute_zero(self) -> None:
-        probs = torch.Tensor(
-            [[0.9, 0.1], [0.8, 0.2], [0.7, 0.3], [0.6, 0.4], [0.8, 0.2]]
-        )
+        probs = torch.Tensor([[0.9, 0.1], [0.8, 0.2], [0.7, 0.3], [0.6, 0.4], [0.8, 0.2]])
         targets = torch.Tensor([1, 1, 1, 1, 1])
         metric = CovAtxRisk(risk_threshold=0.5)
         # no cov for given risk
@@ -105,13 +101,9 @@ class TestCovAtxRisk:
         assert metric(torch.zeros(0), torch.zeros(0)).isnan()
 
     def test_errors(self):
-        with pytest.raises(
-            TypeError, match="Expected threshold to be of type float"
-        ):
+        with pytest.raises(TypeError, match="Expected threshold to be of type float"):
             CovAtxRisk(risk_threshold="0.5")
-        with pytest.raises(
-            ValueError, match="Threshold should be in the range"
-        ):
+        with pytest.raises(ValueError, match="Threshold should be in the range"):
             CovAtxRisk(risk_threshold=-0.5)
 
 
@@ -119,9 +111,7 @@ class TestRiskAtxCov:
     """Testing the RiskAtxCov metric class."""
 
     def test_compute_zero(self) -> None:
-        probs = torch.Tensor(
-            [[0.9, 0.1], [0.8, 0.2], [0.7, 0.3], [0.6, 0.4], [0.8, 0.2]]
-        )
+        probs = torch.Tensor([[0.9, 0.1], [0.8, 0.2], [0.7, 0.3], [0.6, 0.4], [0.8, 0.2]])
         targets = torch.Tensor([1, 1, 1, 1, 1])
         metric = RiskAtxCov(cov_threshold=0.5)
         assert metric(probs, targets) == 1

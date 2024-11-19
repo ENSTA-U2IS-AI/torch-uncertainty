@@ -190,9 +190,7 @@ def custom_plot(self) -> _PLOT_OUT_TYPE:
     )
 
     with torch.no_grad():
-        acc_bin, conf_bin, prop_bin = _binning_bucketize(
-            confidences, accuracies, bin_boundaries
-        )
+        acc_bin, conf_bin, prop_bin = _binning_bucketize(confidences, accuracies, bin_boundaries)
 
     np_acc_bin = acc_bin.cpu().numpy()
     np_conf_bin = conf_bin.cpu().numpy()

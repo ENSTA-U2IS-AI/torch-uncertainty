@@ -400,10 +400,6 @@ class RiskAt80Cov(RiskAtxCov):
 
 def _risk_coverage_checks(threshold: float) -> None:
     if not isinstance(threshold, float):
-        raise TypeError(
-            f"Expected threshold to be of type float, but got {type(threshold)}"
-        )
+        raise TypeError(f"Expected threshold to be of type float, but got {type(threshold)}")
     if threshold < 0 or threshold > 1:
-        raise ValueError(
-            f"Threshold should be in the range [0, 1], but got {threshold}."
-        )
+        raise ValueError(f"Threshold should be in the range [0, 1], but got {threshold}.")

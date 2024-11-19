@@ -34,9 +34,7 @@ class DOTA2Games(UCIClassificationDataset):
     """
 
     md5_zip = "896623c082b062f56b9c49c6c1fc0bf7"
-    url = (
-        "https://archive.ics.uci.edu/static/public/367/dota2+games+results.zip"
-    )
+    url = "https://archive.ics.uci.edu/static/public/367/dota2+games+results.zip"
     dataset_name = "dota2+games+results"
     filename = "dota2Train.csv"
     num_features = 116
@@ -79,11 +77,7 @@ class DOTA2Games(UCIClassificationDataset):
 
     def _make_dataset(self) -> None:
         """Create dataset from extracted files."""
-        path = (
-            self.root
-            / "dota2_games"
-            / ("dota2Train.csv" if self.train else "dota2Test.csv")
-        )
+        path = self.root / "dota2_games" / ("dota2Train.csv" if self.train else "dota2Test.csv")
 
         data = pd.read_csv(path, sep=",", header=None)
         data[0] = np.where(data[0] == 1, 1, 0)

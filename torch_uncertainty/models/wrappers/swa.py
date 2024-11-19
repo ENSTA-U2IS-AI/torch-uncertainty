@@ -42,10 +42,7 @@ class SWA(nn.Module):
 
     @torch.no_grad()
     def update_wrapper(self, epoch: int) -> None:
-        if (
-            epoch >= self.cycle_start
-            and (epoch - self.cycle_start) % self.cycle_length == 0
-        ):
+        if epoch >= self.cycle_start and (epoch - self.cycle_start) % self.cycle_length == 0:
             if self.swa_model is None:
                 self.swa_model = copy.deepcopy(self.core_model)
                 self.num_avgd_models = torch.tensor(1)
@@ -55,9 +52,7 @@ class SWA(nn.Module):
                     self.core_model.parameters(),
                     strict=False,
                 ):
-                    swa_param.data += (param.data - swa_param.data) / (
-                        self.num_avgd_models + 1
-                    )
+                    swa_param.data += (param.data - swa_param.data) / (self.num_avgd_models + 1)
             self.num_avgd_models += 1
             self.need_bn_update = True
 
@@ -73,18 +68,12 @@ class SWA(nn.Module):
 
     def bn_update(self, loader: DataLoader, device) -> None:
         if self.need_bn_update and self.swa_model is not None:
-            torch.optim.swa_utils.update_bn(
-                loader, self.swa_model, device=device
-            )
+            torch.optim.swa_utils.update_bn(loader, self.swa_model, device=device)
             self.need_bn_update = False
 
 
 def _swa_checks(cycle_start: int, cycle_length: int) -> None:
     if cycle_start < 0:
-        raise ValueError(
-            f"`cycle_start` must be non-negative. Got {cycle_start}."
-        )
+        raise ValueError(f"`cycle_start` must be non-negative. Got {cycle_start}.")
     if cycle_length <= 0:
-        raise ValueError(
-            f"`cycle_length` must be strictly positive. Got {cycle_length}."
-        )
+        raise ValueError(f"`cycle_length` must be strictly positive. Got {cycle_length}.")

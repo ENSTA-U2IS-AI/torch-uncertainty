@@ -34,9 +34,7 @@ class TestMeanGTRelativeAbsoluteError:
         targets = torch.rand((10, 2))
         metric.update(preds[:, 0], targets[:, 0])
         metric.update(preds[:, 1], targets[:, 1])
-        assert (torch.abs(preds - targets) / targets).mean() == pytest.approx(
-            metric.compute()
-        )
+        assert (torch.abs(preds - targets) / targets).mean() == pytest.approx(metric.compute())
 
 
 class TestMeanGTRelativeSquaredError:
@@ -48,9 +46,9 @@ class TestMeanGTRelativeSquaredError:
         targets = torch.rand((10, 2))
         metric.update(preds[:, 0], targets[:, 0])
         metric.update(preds[:, 1], targets[:, 1])
-        assert torch.flatten(
-            (preds - targets) ** 2 / targets
-        ).mean() == pytest.approx(metric.compute())
+        assert torch.flatten((preds - targets) ** 2 / targets).mean() == pytest.approx(
+            metric.compute()
+        )
 
 
 class TestSILog:
@@ -62,12 +60,9 @@ class TestSILog:
         targets = torch.rand((10, 2)).double()
         metric.update(preds[:, 0], targets[:, 0])
         metric.update(preds[:, 1], targets[:, 1])
-        mean_log_dists = torch.mean(
-            targets.flatten().log() - preds.flatten().log()
-        )
+        mean_log_dists = torch.mean(targets.flatten().log() - preds.flatten().log())
         assert torch.mean(
-            (preds.flatten().log() - targets.flatten().log() + mean_log_dists)
-            ** 2
+            (preds.flatten().log() - targets.flatten().log() + mean_log_dists) ** 2
         ) == pytest.approx(metric.compute())
 
         metric = SILog(sqrt=True)
@@ -75,12 +70,9 @@ class TestSILog:
         targets = torch.rand((10, 2)).double()
         metric.update(preds[:, 0], targets[:, 0])
         metric.update(preds[:, 1], targets[:, 1])
-        mean_log_dists = torch.mean(
-            targets.flatten().log() - preds.flatten().log()
-        )
+        mean_log_dists = torch.mean(targets.flatten().log() - preds.flatten().log())
         assert torch.mean(
-            (preds.flatten().log() - targets.flatten().log() + mean_log_dists)
-            ** 2
+            (preds.flatten().log() - targets.flatten().log() + mean_log_dists) ** 2
         ) ** 0.5 == pytest.approx(metric.compute())
 
 
@@ -96,9 +88,7 @@ class TestThresholdAccuracy:
         assert metric.compute() == 0.0
 
         metric = ThresholdAccuracy(power=1, lmbda=1.25)
-        preds = torch.cat(
-            [torch.ones((10, 2)) * 1.2, torch.ones((10, 2))], dim=0
-        )
+        preds = torch.cat([torch.ones((10, 2)) * 1.2, torch.ones((10, 2))], dim=0)
         targets = torch.ones((20, 2)) * 1.3
         metric.update(preds[:, 0], targets[:, 0])
         metric.update(preds[:, 1], targets[:, 1])
@@ -120,6 +110,6 @@ class TestMeanSquaredLogError:
         targets = torch.rand((10, 2)).double()
         metric.update(preds[:, 0], targets[:, 0])
         metric.update(preds[:, 1], targets[:, 1])
-        assert torch.mean(
-            (preds.log() - targets.log()).flatten() ** 2
-        ) == pytest.approx(metric.compute())
+        assert torch.mean((preds.log() - targets.log()).flatten() ** 2) == pytest.approx(
+            metric.compute()
+        )

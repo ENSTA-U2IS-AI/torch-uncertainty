@@ -33,20 +33,14 @@ class _LeNet(nn.Module):
         if norm == nn.Identity:
             self.norm1 = norm()
             self.norm2 = norm()
-        elif norm == nn.BatchNorm2d or (
-            isinstance(norm, partial) and norm.func == MCBatchNorm2d
-        ):
+        elif norm == nn.BatchNorm2d or (isinstance(norm, partial) and norm.func == MCBatchNorm2d):
             batchnorm = True
         else:
-            raise ValueError(
-                f"norm must be nn.Identity or nn.BatchNorm2d. Got {norm}."
-            )
+            raise ValueError(f"norm must be nn.Identity or nn.BatchNorm2d. Got {norm}.")
 
         self.dropout_rate = dropout_rate
 
-        self.conv1 = conv2d_layer(
-            in_channels, 6, (5, 5), groups=groups, **layer_args
-        )
+        self.conv1 = conv2d_layer(in_channels, 6, (5, 5), groups=groups, **layer_args)
         if batchnorm:
             self.norm1 = norm(6)
         self.conv_dropout = nn.Dropout2d(p=dropout_rate)

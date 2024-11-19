@@ -88,9 +88,7 @@ class MCDropout(nn.Module):
             x = x.repeat(self.num_estimators, 1, 1, 1)
             return self.core_model(x)
         # Else, for loop
-        return torch.cat(
-            [self.core_model(x) for _ in range(self.num_estimators)], dim=0
-        )
+        return torch.cat([self.core_model(x) for _ in range(self.num_estimators)], dim=0)
 
 
 def mc_dropout(
@@ -118,9 +116,7 @@ def mc_dropout(
     )
 
 
-def _dropout_checks(
-    filtered_modules: list[nn.Module], num_estimators: int
-) -> None:
+def _dropout_checks(filtered_modules: list[nn.Module], num_estimators: int) -> None:
     if not filtered_modules:
         raise ValueError(
             "No dropout module found in the model. "
@@ -128,10 +124,6 @@ def _dropout_checks(
         )
     # Check that at least one module has > 0.0 dropout rate
     if not any(mod.p > 0.0 for mod in filtered_modules):
-        raise ValueError(
-            "At least one dropout module must have a dropout rate > 0.0."
-        )
+        raise ValueError("At least one dropout module must have a dropout rate > 0.0.")
     if num_estimators <= 0:
-        raise ValueError(
-            "`num_estimators` must be strictly positive to use MC Dropout."
-        )
+        raise ValueError("`num_estimators` must be strictly positive to use MC Dropout.")

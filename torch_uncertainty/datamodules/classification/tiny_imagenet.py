@@ -68,9 +68,7 @@ class TinyImageNetDataModule(TUDataModule):
         elif ood_ds == "textures":
             self.ood_dataset = DTD
         else:
-            raise ValueError(
-                f"OOD dataset {ood_ds} not supported for TinyImageNet."
-            )
+            raise ValueError(f"OOD dataset {ood_ds} not supported for TinyImageNet.")
         self.shift_dataset = TinyImageNetC
         if basic_augment:
             basic_transform = T.Compose(

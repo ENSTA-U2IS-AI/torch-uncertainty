@@ -24,9 +24,7 @@ class DeepEnsemblesBaseline(ClassificationRoutine):
         eval_ood: bool = False,
         eval_shift: bool = False,
         eval_grouping_loss: bool = False,
-        ood_criterion: Literal[
-            "msp", "logit", "energy", "entropy", "mi", "vr"
-        ] = "msp",
+        ood_criterion: Literal["msp", "logit", "energy", "entropy", "mi", "vr"] = "msp",
         log_plots: bool = False,
         calibration_set: Literal["val", "test"] = "val",
     ) -> None:
@@ -36,9 +34,7 @@ class DeepEnsemblesBaseline(ClassificationRoutine):
 
         models = []
         for version in checkpoint_ids:  # coverage: ignore
-            ckpt_file, hparams_file = get_version(
-                root=log_path, version=version
-            )
+            ckpt_file, hparams_file = get_version(root=log_path, version=version)
             trained_model = backbone_cls.load_from_checkpoint(
                 checkpoint_path=ckpt_file,
                 hparams_file=hparams_file,

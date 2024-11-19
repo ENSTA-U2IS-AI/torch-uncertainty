@@ -69,9 +69,7 @@ class PixMix(nn.Module):
         self.mixing_severity = mixing_severity
 
         if not all_ops:
-            allowed_augmentations = [
-                aug for aug in augmentations if not aug.corruption_overlap
-            ]
+            allowed_augmentations = [aug for aug in augmentations if not aug.corruption_overlap]
         else:
             allowed_augmentations = augmentations
 
@@ -95,9 +93,7 @@ class PixMix(nn.Module):
 
             # TODO: Fix
             mixed_op = self.rng.choice(mixings)
-            mixed = mixed_op(
-                np.array(mixed), np.array(aug_image_copy), self.mixing_severity
-            )
+            mixed = mixed_op(np.array(mixed), np.array(aug_image_copy), self.mixing_severity)
             mixed = np.clip(mixed, 0, 1)
         return mixed
 

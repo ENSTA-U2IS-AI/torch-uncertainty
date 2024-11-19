@@ -197,9 +197,7 @@ def optim_imagenet_resnet50(
     }
 
 
-def optim_imagenet_resnet50_a3(
-    model: nn.Module, effective_batch_size: int | None = None
-) -> dict:
+def optim_imagenet_resnet50_a3(model: nn.Module, effective_batch_size: int | None = None) -> dict:
     """Training procedure proposed in ResNet strikes back: An improved training
         procedure in timm.
 
@@ -212,9 +210,7 @@ def optim_imagenet_resnet50_a3(
         dict: The optimizer and the scheduler for the training.
     """
     if effective_batch_size is None:
-        logging.warning(
-            "Setting effective batch size to 2048 for steps computations !"
-        )
+        logging.warning("Setting effective batch size to 2048 for steps computations !")
         effective_batch_size = 2048
 
     optimizer = Lamb(model.parameters(), lr=0.008, weight_decay=0.02)
@@ -350,8 +346,7 @@ def batch_ensemble_wrapper(model: nn.Module, optim_recipe: Callable) -> dict:
     )
     param_core_tmp = list(
         filter(
-            lambda kv: (name_list[0] not in kv[0])
-            and (name_list[1] not in kv[0]),
+            lambda kv: (name_list[0] not in kv[0]) and (name_list[1] not in kv[0]),
             model.named_parameters(),
         )
     )

@@ -131,9 +131,7 @@ class _MaskedWideResNet(nn.Module):
         self.bn1 = normalization_layer(num_stages[0])
 
         if style == "imagenet":
-            self.optional_pool = nn.MaxPool2d(
-                kernel_size=3, stride=2, padding=1
-            )
+            self.optional_pool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         else:
             self.optional_pool = nn.Identity()
 
@@ -181,9 +179,7 @@ class _MaskedWideResNet(nn.Module):
         self.pool = nn.AdaptiveAvgPool2d(output_size=1)
         self.flatten = nn.Flatten(1)
 
-        self.linear = MaskedLinear(
-            num_stages[3], num_classes, num_estimators, scale=scale
-        )
+        self.linear = MaskedLinear(num_stages[3], num_classes, num_estimators, scale=scale)
 
     def _wide_layer(
         self,

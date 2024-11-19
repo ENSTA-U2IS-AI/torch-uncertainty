@@ -82,9 +82,7 @@ class UCIClassificationDataset(ABC, Dataset):
             self.data = self.data[self.split_idx]
             self.targets = self.targets[self.split_idx]
         if not binary:
-            self.targets = torch.nn.functional.one_hot(
-                self.targets, num_classes=2
-            )
+            self.targets = torch.nn.functional.one_hot(self.targets, num_classes=2)
 
     def __len__(self) -> int:
         """Get the length of the dataset."""

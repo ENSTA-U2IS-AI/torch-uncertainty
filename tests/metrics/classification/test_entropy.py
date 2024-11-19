@@ -42,27 +42,21 @@ class TestEntropy:
         res = metric.compute()
         assert res == math.log(2)
 
-    def test_multiple_compute_sum(
-        self, vec2d_min: torch.Tensor, vec2d_max: torch.Tensor
-    ):
+    def test_multiple_compute_sum(self, vec2d_min: torch.Tensor, vec2d_max: torch.Tensor):
         metric = Entropy(reduction="sum")
         metric.update(vec2d_min)
         metric.update(vec2d_max)
         res = metric.compute()
         assert res == math.log(2)
 
-    def test_multiple_compute_mean(
-        self, vec2d_min: torch.Tensor, vec2d_max: torch.Tensor
-    ):
+    def test_multiple_compute_mean(self, vec2d_min: torch.Tensor, vec2d_max: torch.Tensor):
         metric = Entropy(reduction="mean")
         metric.update(vec2d_min)
         metric.update(vec2d_max)
         res = metric.compute()
         assert res == math.log(2) / 2
 
-    def test_multiple_compute_none(
-        self, vec2d_min: torch.Tensor, vec2d_max: torch.Tensor
-    ):
+    def test_multiple_compute_none(self, vec2d_min: torch.Tensor, vec2d_max: torch.Tensor):
         metric = Entropy(reduction=None)
         metric.update(vec2d_min)
         metric.update(vec2d_max)

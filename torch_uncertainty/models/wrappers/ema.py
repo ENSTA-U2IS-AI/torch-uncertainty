@@ -33,9 +33,7 @@ class EMA(nn.Module):
             self.core_model.parameters(),
             strict=False,
         ):
-            ema_param.data = (
-                ema_param.data * self.momentum + param.data * self.remainder
-            )
+            ema_param.data = ema_param.data * self.momentum + param.data * self.remainder
 
     def eval_forward(self, x: Tensor) -> Tensor:
         return self.ema_model.forward(x)
@@ -48,6 +46,4 @@ class EMA(nn.Module):
 
 def _ema_checks(momentum: float) -> None:
     if momentum < 0.0 or momentum >= 1.0:
-        raise ValueError(
-            f"`momentum` must be in the range [0, 1). Got {momentum}."
-        )
+        raise ValueError(f"`momentum` must be in the range [0, 1). Got {momentum}.")

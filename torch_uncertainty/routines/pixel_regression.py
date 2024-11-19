@@ -83,8 +83,7 @@ class PixelRegressionRoutine(LightningModule):
         _depth_routine_checks(output_dim, num_image_plot, log_plots)
         if eval_shift:
             raise NotImplementedError(
-                "Distribution shift evaluation not implemented yet. Raise an issue "
-                "if needed."
+                "Distribution shift evaluation not implemented yet. Raise an issue " "if needed."
             )
 
         self.model = model
@@ -126,9 +125,7 @@ class PixelRegressionRoutine(LightningModule):
         self.test_metrics = depth_metrics.clone(prefix="test/")
 
         if self.probabilistic:
-            depth_prob_metrics = MetricCollection(
-                {"reg/NLL": DistributionNLL(reduction="mean")}
-            )
+            depth_prob_metrics = MetricCollection({"reg/NLL": DistributionNLL(reduction="mean")})
             self.val_prob_metrics = depth_prob_metrics.clone(prefix="val/")
             self.test_prob_metrics = depth_prob_metrics.clone(prefix="test/")
 
@@ -145,15 +142,11 @@ class PixelRegressionRoutine(LightningModule):
         if self.needs_epoch_update and not self.trainer.sanity_checking:
             self.model.update_wrapper(self.current_epoch)
             if hasattr(self.model, "need_bn_update"):
-                self.model.bn_update(
-                    self.trainer.train_dataloader, device=self.device
-                )
+                self.model.bn_update(self.trainer.train_dataloader, device=self.device)
 
     def on_test_start(self) -> None:
         if hasattr(self.model, "need_bn_update"):
-            self.model.bn_update(
-                self.trainer.train_dataloader, device=self.device
-            )
+            self.model.bn_update(self.trainer.train_dataloader, device=self.device)
 
     def forward(self, inputs: Tensor) -> Tensor | Distribution:
         """Forward pass of the routine.
@@ -176,21 +169,14 @@ class PixelRegressionRoutine(LightningModule):
                 pred = pred.squeeze(-1)
         return pred
 
-    def training_step(
-        self, batch: tuple[Tensor, Tensor], batch_idx: int
-    ) -> STEP_OUTPUT:
+    def training_step(self, batch: tuple[Tensor, Tensor], batch_idx: int) -> STEP_OUTPUT:
         inputs, target = self.format_batch_fn(batch)
         if self.one_dim_depth:
             target = target.unsqueeze(1)
 
         dists = self.model(inputs)
-        if self.probabilistic:
-            out_shape = dist_size(dists)[-2:]
-        else:
-            out_shape = dists.shape[-2:]
-        target = F.resize(
-            target, out_shape, interpolation=F.InterpolationMode.NEAREST
-        )
+        out_shape = dist_size(dists)[-2:] if self.probabilistic else dists.shape[-2:]
+        target = F.resize(target, out_shape, interpolation=F.InterpolationMode.NEAREST)
         padding_mask = torch.isnan(target)
         if self.probabilistic:
             loss = self.loss(dists, target, padding_mask)
@@ -202,9 +188,7 @@ class PixelRegressionRoutine(LightningModule):
         self.log("train_loss", loss, prog_bar=True, logger=True)
         return loss
 
-    def validation_step(
-        self, batch: tuple[Tensor, Tensor], batch_idx: int
-    ) -> None:
+    def validation_step(self, batch: tuple[Tensor, Tensor], batch_idx: int) -> None:
         inputs, targets = batch
         if self.one_dim_depth:
             targets = targets.unsqueeze(1)
@@ -214,16 +198,10 @@ class PixelRegressionRoutine(LightningModule):
 
         if self.probabilistic:
             ens_dist = Independent(
-                dist_rearrange(
-                    preds, "(m b) c h w -> (b c h w) m", b=batch_size
-                ),
+                dist_rearrange(preds, "(m b) c h w -> (b c h w) m", b=batch_size),
                 0,
             )
-            mix = Categorical(
-                torch.ones(
-                    (dist_size(preds)[0] // batch_size), device=self.device
-                )
-            )
+            mix = Categorical(torch.ones((dist_size(preds)[0] // batch_size), device=self.device))
             mixture = MixtureSameFamily(mix, ens_dist)
             preds = mixture.mean
         else:
@@ -251,8 +229,7 @@ class PixelRegressionRoutine(LightningModule):
     ) -> None:
         if dataloader_idx != 0:
             raise NotImplementedError(
-                "Depth OOD detection not implemented yet. Raise an issue "
-                "if needed."
+                "Depth OOD detection not implemented yet. Raise an issue " "if needed."
             )
         inputs, targets = batch
         if self.one_dim_depth:
@@ -262,14 +239,8 @@ class PixelRegressionRoutine(LightningModule):
         preds = self.model(inputs)
 
         if self.probabilistic:
-            ens_dist = dist_rearrange(
-                preds, "(m b) c h w -> (b c h w) m", b=batch_size
-            )
-            mix = Categorical(
-                torch.ones(
-                    (dist_size(preds)[0] // batch_size), device=self.device
-                )
-            )
+            ens_dist = dist_rearrange(preds, "(m b) c h w -> (b c h w) m", b=batch_size)
+            mix = Categorical(torch.ones((dist_size(preds)[0] // batch_size), device=self.device))
             mixture = MixtureSameFamily(mix, ens_dist)
             preds = mixture.mean
         else:
@@ -278,9 +249,7 @@ class PixelRegressionRoutine(LightningModule):
 
         if batch_idx == 0 and self.log_plots:
             num_images = (
-                self.num_image_plot
-                if self.num_image_plot < inputs.size(0)
-                else inputs.size(0)
+                self.num_image_plot if self.num_image_plot < inputs.size(0) else inputs.size(0)
             )
             self._plot_depth(
                 inputs[:num_images, ...],
@@ -340,12 +309,8 @@ class PixelRegressionRoutine(LightningModule):
             all_imgs = []
             for i in range(inputs.size(0)):
                 img = F.normalize(inputs[i, ...].cpu(), **self.inv_norm_params)
-                pred = colorize(
-                    preds[i, 0, ...].cpu(), vmin=0, vmax=self.model.max_depth
-                )
-                tgt = colorize(
-                    target[i, 0, ...].cpu(), vmin=0, vmax=self.model.max_depth
-                )
+                pred = colorize(preds[i, 0, ...].cpu(), vmin=0, vmax=self.model.max_depth)
+                tgt = colorize(target[i, 0, ...].cpu(), vmin=0, vmax=self.model.max_depth)
                 all_imgs.extend([img, pred, tgt])
 
             self.logger.experiment.add_image(
@@ -380,12 +345,8 @@ def colorize(
     return torch.as_tensor(img).permute(2, 0, 1).float() / 255.0
 
 
-def _depth_routine_checks(
-    output_dim: int, num_image_plot: int, log_plots: bool
-) -> None:
+def _depth_routine_checks(output_dim: int, num_image_plot: int, log_plots: bool) -> None:
     if output_dim < 1:
         raise ValueError(f"output_dim must be positive, got {output_dim}.")
     if num_image_plot < 1 and log_plots:
-        raise ValueError(
-            f"num_image_plot must be positive, got {num_image_plot}."
-        )
+        raise ValueError(f"num_image_plot must be positive, got {num_image_plot}.")
