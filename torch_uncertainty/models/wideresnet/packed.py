@@ -144,9 +144,7 @@ class _PackedWideResNet(nn.Module):
         self.bn1 = normalization_layer(num_stages[0] * alpha)
 
         if style == "imagenet":
-            self.optional_pool = nn.MaxPool2d(
-                kernel_size=3, stride=2, padding=1
-            )
+            self.optional_pool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         else:
             self.optional_pool = nn.Identity()
 
@@ -248,9 +246,7 @@ class _PackedWideResNet(nn.Module):
         out = self.layer1(out)
         out = self.layer2(out)
         out = self.layer3(out)
-        out = rearrange(
-            out, "e (m c) h w -> (m e) c h w", m=self.num_estimators
-        )
+        out = rearrange(out, "e (m c) h w -> (m e) c h w", m=self.num_estimators)
         out = self.pool(out)
         return self.final_dropout(self.flatten(out))
 

@@ -89,9 +89,7 @@ class TUDataModule(ABC, LightningDataModule):
         """
         return [self._data_loader(self.test)]
 
-    def _data_loader(
-        self, dataset: Dataset, shuffle: bool = False
-    ) -> DataLoader:
+    def _data_loader(self, dataset: Dataset, shuffle: bool = False) -> DataLoader:
         """Create a dataloader for a given dataset.
 
         Args:
@@ -121,9 +119,7 @@ class TUDataModule(ABC, LightningDataModule):
     def _get_train_targets(self) -> ArrayLike:
         raise NotImplementedError
 
-    def make_cross_val_splits(
-        self, n_splits: int = 10, train_over: int = 4
-    ) -> list:
+    def make_cross_val_splits(self, n_splits: int = 10, train_over: int = 4) -> list:
         self.setup("fit")
         skf = StratifiedKFold(n_splits)
         cv_dm = []

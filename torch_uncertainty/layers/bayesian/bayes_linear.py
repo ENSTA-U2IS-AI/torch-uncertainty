@@ -64,40 +64,24 @@ class BayesLinear(nn.Module):
         self.sigma_init = sigma_init
         self.frozen = frozen
 
-        self.weight_mu = nn.Parameter(
-            torch.empty((out_features, in_features), **factory_kwargs)
-        )
-        self.weight_sigma = nn.Parameter(
-            torch.empty((out_features, in_features), **factory_kwargs)
-        )
+        self.weight_mu = nn.Parameter(torch.empty((out_features, in_features), **factory_kwargs))
+        self.weight_sigma = nn.Parameter(torch.empty((out_features, in_features), **factory_kwargs))
 
         if bias:
-            self.bias_mu = nn.Parameter(
-                torch.empty(out_features, **factory_kwargs)
-            )
-            self.bias_sigma = nn.Parameter(
-                torch.empty(out_features, **factory_kwargs)
-            )
+            self.bias_mu = nn.Parameter(torch.empty(out_features, **factory_kwargs))
+            self.bias_sigma = nn.Parameter(torch.empty(out_features, **factory_kwargs))
         else:
             self.register_parameter("bias_mu", None)
             self.register_parameter("bias_log_sigma", None)
 
         self.reset_parameters()
-        self.weight_sampler = TrainableDistribution(
-            self.weight_mu, self.weight_sigma
-        )
+        self.weight_sampler = TrainableDistribution(self.weight_mu, self.weight_sigma)
         if bias:
-            self.bias_sampler = TrainableDistribution(
-                self.bias_mu, self.bias_sigma
-            )
+            self.bias_sampler = TrainableDistribution(self.bias_mu, self.bias_sigma)
 
-        self.weight_prior_dist = CenteredGaussianMixture(
-            prior_sigma_1, prior_sigma_2, prior_pi
-        )
+        self.weight_prior_dist = CenteredGaussianMixture(prior_sigma_1, prior_sigma_2, prior_pi)
         if bias:
-            self.bias_prior_dist = CenteredGaussianMixture(
-                prior_sigma_1, prior_sigma_2, prior_pi
-            )
+            self.bias_prior_dist = CenteredGaussianMixture(prior_sigma_1, prior_sigma_2, prior_pi)
 
     def reset_parameters(self) -> None:
         # TODO: change init

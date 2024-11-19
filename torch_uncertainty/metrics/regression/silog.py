@@ -7,9 +7,7 @@ from torchmetrics.utilities.data import dim_zero_cat
 
 
 class SILog(Metric):
-    def __init__(
-        self, sqrt: bool = False, lmbda: float = 1.0, **kwargs: Any
-    ) -> None:
+    def __init__(self, sqrt: bool = False, lmbda: float = 1.0, **kwargs: Any) -> None:
         r"""The Scale-Invariant Logarithmic Loss metric.
 
         .. math:: \text{SILog} = \frac{1}{N} \sum_{i=1}^{N} \left(\log(y_i) - \log(\hat{y_i})\right)^2 - \left(\frac{1}{N} \sum_{i=1}^{N} \log(y_i) \right)^2,
@@ -60,9 +58,7 @@ class SILog(Metric):
         """Compute the Scale-Invariant Logarithmic Loss."""
         log_dists = dim_zero_cat(self.log_dists)
         sq_log_dists = dim_zero_cat(self.sq_log_dists)
-        out = sq_log_dists / self.total - self.lmbda * log_dists**2 / (
-            self.total * self.total
-        )
+        out = sq_log_dists / self.total - self.lmbda * log_dists**2 / (self.total * self.total)
         if self.sqrt:
             return torch.sqrt(out)
         return out

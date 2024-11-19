@@ -94,9 +94,7 @@ class SWAG(SWA):
 
             if not self.diag_covariance:
                 covariance_sqrt = torch.zeros((0, param.numel()), device="cpu")
-                self.swag_stats[self.prfx + name_p + "_covariance_sqrt"] = (
-                    covariance_sqrt
-                )
+                self.swag_stats[self.prfx + name_p + "_covariance_sqrt"] = covariance_sqrt
 
     @torch.no_grad()
     def update_wrapper(self, epoch: int) -> None:
@@ -109,10 +107,7 @@ class SWAG(SWA):
         Args:
             epoch (int): Current epoch.
         """
-        if not (
-            epoch > self.cycle_start
-            and (epoch - self.cycle_start) % self.cycle_length == 0
-        ):
+        if not (epoch > self.cycle_start and (epoch - self.cycle_start) % self.cycle_length == 0):
             return
 
         for name_p, param in self.core_model.named_parameters():
@@ -120,9 +115,9 @@ class SWAG(SWA):
             squared_mean = self.swag_stats[self.prfx + name_p + "_sq_mean"]
             new_param = param.data.detach().cpu()
 
-            mean = mean * self.num_avgd_models / (
+            mean = mean * self.num_avgd_models / (self.num_avgd_models + 1) + new_param / (
                 self.num_avgd_models + 1
-            ) + new_param / (self.num_avgd_models + 1)
+            )
             squared_mean = squared_mean * self.num_avgd_models / (
                 self.num_avgd_models + 1
             ) + new_param**2 / (self.num_avgd_models + 1)
@@ -131,22 +126,17 @@ class SWAG(SWA):
             self.swag_stats[self.prfx + name_p + "_sq_mean"] = squared_mean
 
             if not self.diag_covariance:
-                covariance_sqrt = self.swag_stats[
-                    self.prfx + name_p + "_covariance_sqrt"
-                ]
+                covariance_sqrt = self.swag_stats[self.prfx + name_p + "_covariance_sqrt"]
                 dev = (new_param - mean).view(-1, 1).t()
                 covariance_sqrt = torch.cat((covariance_sqrt, dev), dim=0)
                 if self.num_avgd_models + 1 > self.max_num_models:
                     covariance_sqrt = covariance_sqrt[1:, :]
-                self.swag_stats[self.prfx + name_p + "_covariance_sqrt"] = (
-                    covariance_sqrt
-                )
+                self.swag_stats[self.prfx + name_p + "_covariance_sqrt"] = covariance_sqrt
 
         self.num_avgd_models += 1
 
         self.samples = [
-            self.sample(self.scale, self.diag_covariance)
-            for _ in range(self.num_estimators)
+            self.sample(self.scale, self.diag_covariance) for _ in range(self.num_estimators)
         ]
         self.need_bn_update = True
         self.fit = True
@@ -189,17 +179,13 @@ class SWAG(SWA):
         if diag_covariance is None:
             diag_covariance = self.diag_covariance
         if not diag_covariance and self.diag_covariance:
-            raise ValueError(
-                "Cannot sample full rank from diagonal covariance matrix."
-            )
+            raise ValueError("Cannot sample full rank from diagonal covariance matrix.")
 
         if not block:
             return self._fullrank_sample(scale, diag_covariance)
         raise NotImplementedError("Raise an issue if you need this feature.")
 
-    def _fullrank_sample(
-        self, scale: float, diagonal_covariance: bool
-    ) -> nn.Module:
+    def _fullrank_sample(self, scale: float, diagonal_covariance: bool) -> nn.Module:
         new_sample = copy.deepcopy(self.core_model)
 
         for name_p, param in new_sample.named_parameters():
@@ -207,17 +193,13 @@ class SWAG(SWA):
             sq_mean = self.swag_stats[self.prfx + name_p + "_sq_mean"]
 
             if not diagonal_covariance:
-                cov_mat_sqrt = self.swag_stats[
-                    self.prfx + name_p + "_covariance_sqrt"
-                ]
+                cov_mat_sqrt = self.swag_stats[self.prfx + name_p + "_covariance_sqrt"]
 
             var = torch.clamp(sq_mean - mean**2, self.var_clamp)
             var_sample = var.sqrt() * torch.randn_like(var, requires_grad=False)
 
             if not diagonal_covariance:
-                cov_sample = cov_mat_sqrt.t() @ torch.randn(
-                    (cov_mat_sqrt.size(0),)
-                )
+                cov_sample = cov_mat_sqrt.t() @ torch.randn((cov_mat_sqrt.size(0),))
                 cov_sample /= (self.max_num_models - 1) ** 0.5
                 var_sample += cov_sample.view_as(var_sample)
 
@@ -230,9 +212,7 @@ class SWAG(SWA):
         super()._save_to_state_dict(destination, prefix, keep_vars)
         destination |= self.swag_stats
 
-    def state_dict(
-        self, *args, destination=None, prefix="", keep_vars=False
-    ) -> Mapping:
+    def state_dict(self, *args, destination=None, prefix="", keep_vars=False) -> Mapping:
         """Add the SWAG statistics to the state dict."""
         return self.swag_stats | super().state_dict(
             *args, destination=destination, prefix=prefix, keep_vars=keep_vars
@@ -240,21 +220,16 @@ class SWAG(SWA):
 
     def _load_swag_stats(self, state_dict: Mapping):
         """Load the SWAG statistics from the state dict."""
-        self.swag_stats = {
-            k: v for k, v in state_dict.items() if k in self.swag_stats
-        }
+        self.swag_stats = {k: v for k, v in state_dict.items() if k in self.swag_stats}
         for k in self.swag_stats:
             del state_dict[k]
         self.samples = [
-            self.sample(self.scale, self.diag_covariance)
-            for _ in range(self.num_estimators)
+            self.sample(self.scale, self.diag_covariance) for _ in range(self.num_estimators)
         ]
         self.need_bn_update = True
         self.fit = True
 
-    def load_state_dict(
-        self, state_dict: Mapping, strict: bool = True, assign: bool = False
-    ):
+    def load_state_dict(self, state_dict: Mapping, strict: bool = True, assign: bool = False):
         self._load_swag_stats(state_dict)
         return super().load_state_dict(state_dict, strict, assign)
 
@@ -269,8 +244,6 @@ def _swag_checks(scale: float, max_num_models: int, var_clamp: float) -> None:
     if scale < 0:
         raise ValueError(f"`scale` must be non-negative. Got {scale}.")
     if max_num_models < 0:
-        raise ValueError(
-            f"`max_num_models` must be non-negative. Got {max_num_models}."
-        )
+        raise ValueError(f"`max_num_models` must be non-negative. Got {max_num_models}.")
     if var_clamp < 0:
         raise ValueError(f"`var_clamp` must be non-negative. Got {var_clamp}.")

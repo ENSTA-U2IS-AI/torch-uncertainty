@@ -210,20 +210,14 @@ class GlassBlur(TUCorruption):  # TODO: batch
         img = torch.as_tensor(gaussian(img, sigma=self.sigma))
         for _ in range(self.iterations):
             for h in range(img_size[0] - self.max_delta, self.max_delta, -1):
-                for w in range(
-                    img_size[1] - self.max_delta, self.max_delta, -1
-                ):
-                    dx, dy = torch.randint(
-                        -self.max_delta, self.max_delta, size=(2,)
-                    )
+                for w in range(img_size[1] - self.max_delta, self.max_delta, -1):
+                    dx, dy = torch.randint(-self.max_delta, self.max_delta, size=(2,))
                     h_prime, w_prime = h + dy, w + dx
                     img[h, w], img[h_prime, w_prime] = (
                         img[h_prime, w_prime],
                         img[h, w],
                     )
-        return torch.clamp(
-            torch.as_tensor(gaussian(img, sigma=self.sigma)), 0, 1
-        )
+        return torch.clamp(torch.as_tensor(gaussian(img, sigma=self.sigma)), 0, 1)
 
 
 def disk(radius: int, alias_blur: float = 0.1, dtype=np.float32):
@@ -267,9 +261,7 @@ class MotionBlur(TUCorruption):
             sigma=self.sigma,
             angle=self.rng.uniform(-45, 45),
         )
-        x = cv2.imdecode(
-            np.fromstring(x.make_blob(), np.uint8), cv2.IMREAD_UNCHANGED
-        )
+        x = cv2.imdecode(np.fromstring(x.make_blob(), np.uint8), cv2.IMREAD_UNCHANGED)
         x = np.clip(x[..., [2, 1, 0]], 0, 255)
         return self.to_tensor(x)
 
@@ -342,9 +334,9 @@ class Snow(TUCorruption):
             return img
         _, height, width = img.shape
         x = img.numpy()
-        snow_layer = self.rng.normal(
-            size=x.shape[1:], loc=self.mix[0], scale=self.mix[1]
-        )[..., np.newaxis]
+        snow_layer = self.rng.normal(size=x.shape[1:], loc=self.mix[0], scale=self.mix[1])[
+            ..., np.newaxis
+        ]
         snow_layer = clipped_zoom(snow_layer, self.mix[2])
         snow_layer[snow_layer < self.mix[3]] = 0
         snow_layer = Image.fromarray(
@@ -369,27 +361,18 @@ class Snow(TUCorruption):
         snow_layer = snow_layer[np.newaxis, ...]
         x = self.mix[6] * x + (1 - self.mix[6]) * np.maximum(
             x,
-            cv2.cvtColor(x.transpose([1, 2, 0]), cv2.COLOR_RGB2GRAY).reshape(
-                1, height, width
-            )
-            * 1.5
+            cv2.cvtColor(x.transpose([1, 2, 0]), cv2.COLOR_RGB2GRAY).reshape(1, height, width) * 1.5
             + 0.5,
         )
-        return torch.clamp(
-            torch.as_tensor(x + snow_layer + np.rot90(snow_layer, k=2)), 0, 1
-        )
+        return torch.clamp(torch.as_tensor(x + snow_layer + np.rot90(snow_layer, k=2)), 0, 1)
 
 
 class Frost(TUCorruption):
     def __init__(self, severity: int) -> None:
         super().__init__(severity)
         self.rng = np.random.default_rng()
-        self.mix = [(1, 0.2), (1, 0.3), (0.9, 0.4), (0.85, 0.4), (0.75, 0.45)][
-            severity - 1
-        ]
-        self.frost_ds = FrostImages(
-            "./data", download=True, transform=ToTensor()
-        )
+        self.mix = [(1, 0.2), (1, 0.3), (0.9, 0.4), (0.85, 0.4), (0.75, 0.45)][severity - 1]
+        self.frost_ds = FrostImages("./data", download=True, transform=ToTensor())
 
     def forward(self, img: Tensor) -> Tensor:
         if self.severity == 0:
@@ -436,15 +419,11 @@ def plasma_fractal(height, width, wibbledecay=3):
         ldrsum = drgrid + np.roll(drgrid, 1, axis=0)
         lulsum = ulgrid + np.roll(ulgrid, -1, axis=1)
         ltsum = ldrsum + lulsum
-        maparray[0:mapsize:stepsize, stepsize // 2 : mapsize : stepsize] = (
-            wibbledmean(ltsum)
-        )
+        maparray[0:mapsize:stepsize, stepsize // 2 : mapsize : stepsize] = wibbledmean(ltsum)
         tdrsum = drgrid + np.roll(drgrid, 1, axis=1)
         tulsum = ulgrid + np.roll(ulgrid, -1, axis=0)
         ttsum = tdrsum + tulsum
-        maparray[stepsize // 2 : mapsize : stepsize, 0:mapsize:stepsize] = (
-            wibbledmean(ttsum)
-        )
+        maparray[stepsize // 2 : mapsize : stepsize, 0:mapsize:stepsize] = wibbledmean(ttsum)
 
     while stepsize >= 2:
         fillsquares()
@@ -464,9 +443,7 @@ class Fog(TUCorruption):
             self.resize = Resize((size, size), InterpolationMode.BICUBIC)
         else:
             raise ValueError(f"Size must be a power of 2. Got {size}.")
-        self.mix = [(1.5, 2), (2, 2), (2.5, 1.7), (2.5, 1.5), (3, 1.4)][
-            severity - 1
-        ]
+        self.mix = [(1.5, 2), (2, 2), (2.5, 1.7), (2.5, 1.5), (3, 1.4)][severity - 1]
 
     def forward(self, img: Tensor) -> Tensor:
         if self.severity == 0:
@@ -478,13 +455,9 @@ class Fog(TUCorruption):
         max_val = img.max()
         fog = (
             self.mix[0]
-            * plasma_fractal(
-                height=height, width=width, wibbledecay=self.mix[1]
-            )[:height, :width]
+            * plasma_fractal(height=height, width=width, wibbledecay=self.mix[1])[:height, :width]
         )
-        final = torch.clamp(
-            (img + fog) * max_val / (max_val + self.mix[0]), 0, 1
-        )
+        final = torch.clamp((img + fog) * max_val / (max_val + self.mix[0]), 0, 1)
         return Resize((height, width), InterpolationMode.BICUBIC)(final)
 
 
@@ -614,18 +587,14 @@ class Elastic(TUCorruption):
         ).astype(np.float32)
         dx, dy = dx[..., np.newaxis], dy[..., np.newaxis]
 
-        x, y, z = np.meshgrid(
-            np.arange(shape[1]), np.arange(shape[0]), np.arange(shape[2])
-        )
+        x, y, z = np.meshgrid(np.arange(shape[1]), np.arange(shape[0]), np.arange(shape[2]))
         indices = (
             np.reshape(y + dy, (-1, 1)),
             np.reshape(x + dx, (-1, 1)),
             np.reshape(z, (-1, 1)),
         )
         img = np.clip(
-            map_coordinates(image, indices, order=1, mode="reflect").reshape(
-                shape
-            ),
+            map_coordinates(image, indices, order=1, mode="reflect").reshape(shape),
             0,
             1,
         )

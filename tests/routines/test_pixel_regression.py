@@ -27,9 +27,7 @@ class TestPixelRegression:
         )
 
         root = Path(__file__).parent.absolute().parents[0] / "data"
-        dm = DummyPixelRegressionDataModule(
-            root=root, batch_size=5, output_dim=3
-        )
+        dm = DummyPixelRegressionDataModule(root=root, batch_size=5, output_dim=3)
 
         model = DummyPixelRegressionBaseline(
             probabilistic=False,
@@ -73,9 +71,7 @@ class TestPixelRegression:
         trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
 
         root = Path(__file__).parent.absolute().parents[0] / "data"
-        dm = DummyPixelRegressionDataModule(
-            root=root, batch_size=4, output_dim=1
-        )
+        dm = DummyPixelRegressionDataModule(root=root, batch_size=4, output_dim=1)
 
         model = DummyPixelRegressionBaseline(
             probabilistic=False,

@@ -38,9 +38,7 @@ class VGGBaseline(ClassificationRoutine):
         groups: int = 1,
         alpha: int | None = None,
         gamma: int = 1,
-        ood_criterion: Literal[
-            "msp", "logit", "energy", "entropy", "mi", "vr"
-        ] = "msp",
+        ood_criterion: Literal["msp", "logit", "energy", "entropy", "mi", "vr"] = "msp",
         log_plots: bool = False,
         save_in_csv: bool = False,
         calibration_set: Literal["val", "test"] = "val",

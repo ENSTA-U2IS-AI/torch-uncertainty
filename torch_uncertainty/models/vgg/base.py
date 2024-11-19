@@ -46,9 +46,7 @@ class VGG(nn.Module):
             kernel_surface = 1
 
         if self.linear_layer == PackedLinear:
-            last_linear = linear_layer(
-                4096, num_classes, last=True, **model_kwargs
-            )
+            last_linear = linear_layer(4096, num_classes, last=True, **model_kwargs)
         else:
             last_linear = linear_layer(4096, num_classes, **model_kwargs)
 
@@ -69,9 +67,7 @@ class VGG(nn.Module):
     def _init_weights(self) -> None:
         for m in self.modules():
             if isinstance(m, nn.Conv2d | PackedConv2d):
-                nn.init.kaiming_normal_(
-                    m.weight, mode="fan_out", nonlinearity="relu"
-                )
+                nn.init.kaiming_normal_(m.weight, mode="fan_out", nonlinearity="relu")
                 if m.bias is not None:  # coverage: ignore
                     nn.init.constant_(m.bias, 0)
             elif isinstance(m, nn.BatchNorm2d):  # coverage: ignore

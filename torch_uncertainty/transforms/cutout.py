@@ -17,9 +17,7 @@ class Cutout(nn.Module):
         self.length = length
 
         if value < 0 or value > 255:
-            raise ValueError(
-                f"Cutout value must be between 0 and 255. Got {value}."
-            )
+            raise ValueError(f"Cutout value must be between 0 and 255. Got {value}.")
         self.value = value
 
     def __call__(self, img: torch.Tensor) -> torch.Tensor:

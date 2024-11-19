@@ -34,9 +34,7 @@ class WideResNetBaseline(ClassificationRoutine):
         num_classes: int,
         in_channels: int,
         loss: nn.Module,
-        version: Literal[
-            "std", "mc-dropout", "packed", "batched", "masked", "mimo"
-        ],
+        version: Literal["std", "mc-dropout", "packed", "batched", "masked", "mimo"],
         style: str = "imagenet",
         num_estimators: int = 1,
         dropout_rate: float = 0.0,
@@ -49,9 +47,7 @@ class WideResNetBaseline(ClassificationRoutine):
         gamma: int = 1,
         rho: float = 1.0,
         batch_repeat: int = 1,
-        ood_criterion: Literal[
-            "msp", "logit", "energy", "entropy", "mi", "vr"
-        ] = "msp",
+        ood_criterion: Literal["msp", "logit", "energy", "entropy", "mi", "vr"] = "msp",
         log_plots: bool = False,
         save_in_csv: bool = False,
         calibration_set: Literal["val", "test"] = "val",

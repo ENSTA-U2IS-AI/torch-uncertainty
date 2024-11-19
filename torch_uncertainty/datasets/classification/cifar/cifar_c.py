@@ -97,9 +97,7 @@ class CIFAR10C(VisionDataset):
             self.download()
 
         if not self._check_integrity():
-            raise RuntimeError(
-                "Dataset not found. You can use download=True to download it."
-            )
+            raise RuntimeError("Dataset not found. You can use download=True to download it.")
 
         super().__init__(
             root=self.root / self.base_folder,
@@ -107,20 +105,15 @@ class CIFAR10C(VisionDataset):
             target_transform=target_transform,
         )
         if subset not in ["all", *self.cifarc_subsets]:
-            raise ValueError(
-                f"The subset '{subset}' does not exist in CIFAR-C."
-            )
+            raise ValueError(f"The subset '{subset}' does not exist in CIFAR-C.")
         self.subset = subset
         self.shift_severity = shift_severity
 
         if shift_severity not in list(range(1, 6)):
             raise ValueError(
-                "Corruptions shift_severity should be chosen between 1 and 5 "
-                "included."
+                "Corruptions shift_severity should be chosen between 1 and 5 " "included."
             )
-        samples, labels = self.make_dataset(
-            self.root, self.subset, self.shift_severity
-        )
+        samples, labels = self.make_dataset(self.root, self.subset, self.shift_severity)
 
         self.samples = samples
         self.labels = labels.astype(np.int64)
@@ -200,9 +193,7 @@ class CIFAR10C(VisionDataset):
         if self._check_integrity():
             logging.info("Files already downloaded and verified")
             return
-        download_and_extract_archive(
-            self.url, self.root, filename=self.filename, md5=self.tgz_md5
-        )
+        download_and_extract_archive(self.url, self.root, filename=self.filename, md5=self.tgz_md5)
 
 
 class CIFAR100C(CIFAR10C):

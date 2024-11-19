@@ -133,8 +133,7 @@ class CamVid(VisionDataset):
         """
         if split not in ["train", "val", "test", None]:
             raise ValueError(
-                f"Unknown split '{split}'. "
-                "Supported splits are ['train', 'val', 'test', None]"
+                f"Unknown split '{split}'. " "Supported splits are ['train', 'val', 'test', None]"
             )
 
         super().__init__(root, transforms, None, None)
@@ -154,18 +153,13 @@ class CamVid(VisionDataset):
 
         if not self._check_integrity():
             raise RuntimeError(
-                "Dataset not found or corrupted. "
-                "You can use download=True to download it"
+                "Dataset not found or corrupted. " "You can use download=True to download it"
             )
 
         # get filenames for split
         if split is None:
-            self.images = sorted(
-                (Path(self.root) / "camvid" / "raw").glob("*.png")
-            )
-            self.targets = sorted(
-                (Path(self.root) / "camvid" / "label").glob("*.png")
-            )
+            self.images = sorted((Path(self.root) / "camvid" / "raw").glob("*.png"))
+            self.targets = sorted((Path(self.root) / "camvid" / "label").glob("*.png"))
         else:
             with (Path(self.root) / "camvid" / "splits.json").open() as f:
                 filenames = json.load(f)[split]
@@ -173,18 +167,14 @@ class CamVid(VisionDataset):
             self.images = sorted(
                 [
                     path
-                    for path in (Path(self.root) / "camvid" / "raw").glob(
-                        "*.png"
-                    )
+                    for path in (Path(self.root) / "camvid" / "raw").glob("*.png")
                     if path.stem in filenames
                 ]
             )
             self.targets = sorted(
                 [
                     path
-                    for path in (Path(self.root) / "camvid" / "label").glob(
-                        "*.png"
-                    )
+                    for path in (Path(self.root) / "camvid" / "label").glob("*.png")
                     if path.stem[:-2] in filenames
                 ]
             )
@@ -210,10 +200,7 @@ class CamVid(VisionDataset):
             if self.group_classes and index != 255:
                 index = self.class_to_superclass[index]
             target[
-                (
-                    colored_target
-                    == torch.tensor(camvid_class.color, dtype=target.dtype)
-                ).all(dim=-1)
+                (colored_target == torch.tensor(camvid_class.color, dtype=target.dtype)).all(dim=-1)
             ] = index
 
         return rearrange(target, "h w c -> c h w")
@@ -231,18 +218,12 @@ class CamVid(VisionDataset):
         if not self.group_classes:
             for camvid_class in self.classes:
                 colored_target[
-                    (
-                        target
-                        == torch.tensor(camvid_class.index, dtype=target.dtype)
-                    ).all(dim=0)
+                    (target == torch.tensor(camvid_class.index, dtype=target.dtype)).all(dim=0)
                 ] = torch.tensor(camvid_class.color, dtype=target.dtype)
         else:
             for camvid_class in self.superclasses:
                 colored_target[
-                    (
-                        target
-                        == torch.tensor(camvid_class.index, dtype=target.dtype)
-                    ).all(dim=0)
+                    (target == torch.tensor(camvid_class.index, dtype=target.dtype)).all(dim=0)
                 ] = torch.tensor(camvid_class.color, dtype=target.dtype)
         return F.to_pil_image(rearrange(colored_target, "h w c -> c h w"))
 
@@ -253,9 +234,7 @@ class CamVid(VisionDataset):
             return [camvid_class.color for camvid_class in self.superclasses]
         return [camvid_class.color for camvid_class in self.classes]
 
-    def __getitem__(
-        self, index: int
-    ) -> tuple[tv_tensors.Image, tv_tensors.Mask]:
+    def __getitem__(self, index: int) -> tuple[tv_tensors.Image, tv_tensors.Mask]:
         """Get the image and target at the given index.
 
         Args:
@@ -265,9 +244,7 @@ class CamVid(VisionDataset):
             tuple[tv_tensors.Image, tv_tensors.Mask]: Image and target.
         """
         image = tv_tensors.Image(Image.open(self.images[index]).convert("RGB"))
-        target = tv_tensors.Mask(
-            self.encode_target(Image.open(self.targets[index]))
-        )
+        target = tv_tensors.Mask(self.encode_target(Image.open(self.targets[index])))
 
         if self.transforms is not None:
             image, target = self.transforms(image, target)
@@ -280,10 +257,7 @@ class CamVid(VisionDataset):
 
     def _check_integrity(self) -> bool:
         """Check if the dataset exists."""
-        if (
-            len(list((Path(self.root) / "camvid" / "raw").glob("*.png")))
-            != self.num_samples["all"]
-        ):
+        if len(list((Path(self.root) / "camvid" / "raw").glob("*.png"))) != self.num_samples["all"]:
             return False
         if (
             len(list((Path(self.root) / "camvid" / "label").glob("*.png")))

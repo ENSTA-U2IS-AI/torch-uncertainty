@@ -62,9 +62,7 @@ class MeanSquaredErrorInverse(MeanSquaredError):
 
     def update(self, preds: Tensor, target: Tensor) -> None:
         """Update state with predictions and targets."""
-        super().update(
-            1 / (preds * self.unit_factor), 1 / (target * self.unit_factor)
-        )
+        super().update(1 / (preds * self.unit_factor), 1 / (target * self.unit_factor))
 
 
 class MeanAbsoluteErrorInverse(MeanAbsoluteError):
@@ -101,6 +99,4 @@ class MeanAbsoluteErrorInverse(MeanAbsoluteError):
 
     def update(self, preds: Tensor, target: Tensor) -> None:
         """Update state with predictions and targets."""
-        super().update(
-            1 / (preds * self.unit_factor), 1 / (target * self.unit_factor)
-        )
+        super().update(1 / (preds * self.unit_factor), 1 / (target * self.unit_factor))

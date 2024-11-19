@@ -58,35 +58,27 @@ class TestCIFAR100DataModule:
                 randaugment=True,
             )
 
-        dm = CIFAR100DataModule(
-            root="./data/", batch_size=128, randaugment=True
-        )
+        dm = CIFAR100DataModule(root="./data/", batch_size=128, randaugment=True)
 
-        dm = CIFAR100DataModule(
-            root="./data/", batch_size=128, auto_augment="rand-m9-n2-mstd0.5"
-        )
+        dm = CIFAR100DataModule(root="./data/", batch_size=128, auto_augment="rand-m9-n2-mstd0.5")
 
     def test_cifar100_cv(self):
         dm = CIFAR100DataModule(root="./data/", batch_size=128)
-        dm.dataset = (
-            lambda root, train, download, transform: DummyClassificationDataset(
-                root,
-                train=train,
-                download=download,
-                transform=transform,
-                num_images=20,
-            )
+        dm.dataset = lambda root, train, download, transform: DummyClassificationDataset(
+            root,
+            train=train,
+            download=download,
+            transform=transform,
+            num_images=20,
         )
         dm.make_cross_val_splits(2, 1)
 
         dm = CIFAR100DataModule(root="./data/", batch_size=128, val_split=0.1)
-        dm.dataset = (
-            lambda root, train, download, transform: DummyClassificationDataset(
-                root,
-                train=train,
-                download=download,
-                transform=transform,
-                num_images=20,
-            )
+        dm.dataset = lambda root, train, download, transform: DummyClassificationDataset(
+            root,
+            train=train,
+            download=download,
+            transform=transform,
+            num_images=20,
         )
         dm.make_cross_val_splits(2, 1)

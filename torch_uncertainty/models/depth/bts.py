@@ -62,9 +62,7 @@ class AtrousBlock2d(nn.Module):
 
         self.norm_first = norm_first
         if norm_first:
-            self.first_norm = nn.BatchNorm2d(
-                in_channels, momentum=norm_momentum, **factory_kwargs
-            )
+            self.first_norm = nn.BatchNorm2d(in_channels, momentum=norm_momentum, **factory_kwargs)
 
         self.conv1 = nn.Conv2d(
             in_channels=in_channels,
@@ -75,9 +73,7 @@ class AtrousBlock2d(nn.Module):
             padding=0,
             **factory_kwargs,
         )
-        self.norm = nn.BatchNorm2d(
-            out_channels * 2, momentum=norm_momentum, **factory_kwargs
-        )
+        self.norm = nn.BatchNorm2d(out_channels * 2, momentum=norm_momentum, **factory_kwargs)
         self.conv2 = nn.Conv2d(
             in_channels=out_channels * 2,
             out_channels=out_channels,
@@ -217,12 +213,8 @@ class Reduction1x1(nn.Module):
 class LocalPlanarGuidance(nn.Module):
     def __init__(self, up_ratio: int) -> None:
         super().__init__()
-        self.register_buffer(
-            "u", torch.arange(up_ratio).reshape([1, 1, up_ratio])
-        )
-        self.register_buffer(
-            "v", torch.arange(up_ratio).reshape([1, up_ratio, 1])
-        )
+        self.register_buffer("u", torch.arange(up_ratio).reshape([1, 1, up_ratio]))
+        self.register_buffer("v", torch.arange(up_ratio).reshape([1, up_ratio, 1]))
         self.up_ratio = up_ratio
 
     def forward(self, x: Tensor) -> Tensor:
@@ -245,9 +237,7 @@ class LocalPlanarGuidance(nn.Module):
         v = (v - (self.up_ratio - 1) * 0.5) / self.up_ratio
 
         return x_expanded[:, 3, :, :] / (
-            x_expanded[:, 0, :, :] * u
-            + x_expanded[:, 1, :, :] * v
-            + x_expanded[:, 2, :, :]
+            x_expanded[:, 0, :, :] * u + x_expanded[:, 1, :, :] * v + x_expanded[:, 2, :, :]
         )
 
 
@@ -281,15 +271,11 @@ class BTSBackbone(Backbone):
             )
         elif backbone_name == "resnext50":
             model = tv_models.resnext50_32x4d(
-                weights=ResNeXt50_32X4D_Weights.IMAGENET1K_V2
-                if pretrained
-                else None
+                weights=ResNeXt50_32X4D_Weights.IMAGENET1K_V2 if pretrained else None
             )
         else:  # backbone_name == "resnext101":
             model = tv_models.resnext101_32x8d(
-                weights=ResNeXt101_32X8D_Weights.IMAGENET1K_V2
-                if pretrained
-                else None
+                weights=ResNeXt101_32X8D_Weights.IMAGENET1K_V2 if pretrained else None
             )
         if "res" in backbone_name:  # remove classification heads from ResNets
             feat_names = resnet_feat_names
@@ -310,9 +296,7 @@ class BTSDecoder(nn.Module):
         super().__init__()
         self.max_depth = max_depth
 
-        self.upconv5 = UpConv2d(
-            in_channels=feat_out_channels[4], out_channels=num_features
-        )
+        self.upconv5 = UpConv2d(in_channels=feat_out_channels[4], out_channels=num_features)
         self.bn5 = nn.BatchNorm2d(num_features, momentum=0.01, affine=True)
 
         self.conv5 = nn.Conv2d(
@@ -323,9 +307,7 @@ class BTSDecoder(nn.Module):
             padding=1,
             bias=False,
         )
-        self.upconv4 = UpConv2d(
-            in_channels=num_features, out_channels=num_features // 2
-        )
+        self.upconv4 = UpConv2d(in_channels=num_features, out_channels=num_features // 2)
         self.bn4 = nn.BatchNorm2d(num_features // 2, momentum=0.01, affine=True)
         self.conv4 = nn.Conv2d(
             num_features // 2 + feat_out_channels[2],
@@ -335,9 +317,7 @@ class BTSDecoder(nn.Module):
             padding=1,
             bias=False,
         )
-        self.bn4_2 = nn.BatchNorm2d(
-            num_features // 2, momentum=0.01, affine=True
-        )
+        self.bn4_2 = nn.BatchNorm2d(num_features // 2, momentum=0.01, affine=True)
 
         self.daspp_3 = AtrousBlock2d(
             num_features // 2,
@@ -381,14 +361,10 @@ class BTSDecoder(nn.Module):
             ),
             nn.ELU(),
         )
-        self.reduc8x8 = Reduction1x1(
-            num_features // 4, num_features // 4, self.max_depth
-        )
+        self.reduc8x8 = Reduction1x1(num_features // 4, num_features // 4, self.max_depth)
         self.lpg8x8 = LocalPlanarGuidance(8)
 
-        self.upconv3 = UpConv2d(
-            in_channels=num_features // 4, out_channels=num_features // 4
-        )
+        self.upconv3 = UpConv2d(in_channels=num_features // 4, out_channels=num_features // 4)
         self.bn3 = nn.BatchNorm2d(num_features // 4, momentum=0.01, affine=True)
         self.conv3 = nn.Conv2d(
             num_features // 4 + feat_out_channels[1] + 1,
@@ -398,14 +374,10 @@ class BTSDecoder(nn.Module):
             padding=1,
             bias=False,
         )
-        self.reduc4x4 = Reduction1x1(
-            num_features // 4, num_features // 8, self.max_depth
-        )
+        self.reduc4x4 = Reduction1x1(num_features // 4, num_features // 8, self.max_depth)
         self.lpg4x4 = LocalPlanarGuidance(4)
 
-        self.upconv2 = UpConv2d(
-            in_channels=num_features // 4, out_channels=num_features // 8
-        )
+        self.upconv2 = UpConv2d(in_channels=num_features // 4, out_channels=num_features // 8)
         self.bn2 = nn.BatchNorm2d(num_features // 8, momentum=0.01, affine=True)
         self.conv2 = nn.Conv2d(
             num_features // 8 + feat_out_channels[0] + 1,
@@ -416,33 +388,23 @@ class BTSDecoder(nn.Module):
             bias=False,
         )
 
-        self.reduc2x2 = Reduction1x1(
-            num_features // 8, num_features // 16, self.max_depth
-        )
+        self.reduc2x2 = Reduction1x1(num_features // 8, num_features // 16, self.max_depth)
         self.lpg2x2 = LocalPlanarGuidance(2)
 
-        self.upconv1 = UpConv2d(
-            in_channels=num_features // 8, out_channels=num_features // 16
-        )
+        self.upconv1 = UpConv2d(in_channels=num_features // 8, out_channels=num_features // 16)
         self.reduc1x1 = Reduction1x1(
             num_features // 16,
             num_features // 32,
             self.max_depth,
             is_final=True,
         )
-        self.conv1 = nn.Conv2d(
-            num_features // 16 + 4, num_features // 16, 3, 1, 1, bias=False
-        )
+        self.conv1 = nn.Conv2d(num_features // 16 + 4, num_features // 16, 3, 1, 1, bias=False)
         self.output_channels = 1
         if dist_layer in (NormalLayer, LaplaceLayer):
             self.output_channels = 2
         elif dist_layer != nn.Identity:
-            raise ValueError(
-                f"Unsupported distribution layer. Got {dist_layer}."
-            )
-        self.depth = nn.Conv2d(
-            num_features // 16, self.output_channels, 3, 1, 1, bias=False
-        )
+            raise ValueError(f"Unsupported distribution layer. Got {dist_layer}.")
+        self.depth = nn.Conv2d(num_features // 16, self.output_channels, 3, 1, 1, bias=False)
         self.dist_layer = dist_layer(dim=1)
 
     def feat_forward(self, features: list[Tensor]) -> Tensor:
@@ -462,23 +424,17 @@ class BTSDecoder(nn.Module):
         concat4_4 = torch.cat([concat4_3, daspp_12], dim=1)
         daspp_18 = self.daspp_18(concat4_4)
         daspp_24 = self.daspp_24(torch.cat([concat4_4, daspp_18], dim=1))
-        concat4_daspp = torch.cat(
-            [iconv4, daspp_3, daspp_6, daspp_12, daspp_18, daspp_24], dim=1
-        )
+        concat4_daspp = torch.cat([iconv4, daspp_3, daspp_6, daspp_12, daspp_18, daspp_24], dim=1)
         daspp_feat = self.daspp_conv(concat4_daspp)
 
         reduc8x8 = self.reduc8x8(daspp_feat)
         plane_normal_8x8 = reduc8x8[:, :3, :, :]
         plane_normal_8x8 = F.normalize(plane_normal_8x8, p=2, dim=1)
         plane_dist_8x8 = reduc8x8[:, 3, :, :]
-        plane_eq_8x8 = torch.cat(
-            [plane_normal_8x8, plane_dist_8x8.unsqueeze(1)], 1
-        )
+        plane_eq_8x8 = torch.cat([plane_normal_8x8, plane_dist_8x8.unsqueeze(1)], 1)
         depth_8x8 = self.lpg8x8(plane_eq_8x8)
         depth_8x8_scaled = depth_8x8.unsqueeze(1) / self.max_depth
-        depth_8x8_scaled_ds = F.interpolate(
-            depth_8x8_scaled, scale_factor=0.25, mode="nearest"
-        )
+        depth_8x8_scaled_ds = F.interpolate(depth_8x8_scaled, scale_factor=0.25, mode="nearest")
 
         upconv3 = self.bn3(self.upconv3(daspp_feat))  # H/4
         concat3 = torch.cat([upconv3, features[1], depth_8x8_scaled_ds], dim=1)
@@ -488,29 +444,19 @@ class BTSDecoder(nn.Module):
         plane_normal_4x4 = reduc4x4[:, :3, :, :]
         plane_normal_4x4 = F.normalize(plane_normal_4x4, p=2, dim=1)
         plane_dist_4x4 = reduc4x4[:, 3, :, :]
-        plane_eq_4x4 = torch.cat(
-            [plane_normal_4x4, plane_dist_4x4.unsqueeze(1)], 1
-        )
+        plane_eq_4x4 = torch.cat([plane_normal_4x4, plane_dist_4x4.unsqueeze(1)], 1)
         depth_4x4 = self.lpg4x4(plane_eq_4x4)
         depth_4x4_scaled = depth_4x4.unsqueeze(1) / self.max_depth
-        depth_4x4_scaled_ds = F.interpolate(
-            depth_4x4_scaled, scale_factor=0.5, mode="nearest"
-        )
+        depth_4x4_scaled_ds = F.interpolate(depth_4x4_scaled, scale_factor=0.5, mode="nearest")
 
         upconv2 = self.bn2(self.upconv2(iconv3))  # H/2
-        iconv2 = F.elu(
-            self.conv2(
-                torch.cat([upconv2, features[0], depth_4x4_scaled_ds], dim=1)
-            )
-        )
+        iconv2 = F.elu(self.conv2(torch.cat([upconv2, features[0], depth_4x4_scaled_ds], dim=1)))
 
         reduc2x2 = self.reduc2x2(iconv2)
         plane_normal_2x2 = reduc2x2[:, :3, :, :]
         plane_normal_2x2 = F.normalize(plane_normal_2x2, p=2, dim=1)
         plane_dist_2x2 = reduc2x2[:, 3, :, :]
-        plane_eq_2x2 = torch.cat(
-            [plane_normal_2x2, plane_dist_2x2.unsqueeze(1)], 1
-        )
+        plane_eq_2x2 = torch.cat([plane_normal_2x2, plane_dist_2x2.unsqueeze(1)], 1)
         depth_2x2 = self.lpg2x2(plane_eq_2x2)
         depth_2x2_scaled = depth_2x2.unsqueeze(1) / self.max_depth
 
@@ -583,9 +529,7 @@ class _BTS(nn.Module):
         self.max_depth = max_depth
 
         self.backbone = BTSBackbone(backbone_name, pretrained_backbone)
-        self.decoder = BTSDecoder(
-            max_depth, self.backbone.feat_out_channels, bts_size, dist_layer
-        )
+        self.decoder = BTSDecoder(max_depth, self.backbone.feat_out_channels, bts_size, dist_layer)
 
     # TODO: Handle focal
     def forward(self, x: Tensor, focal: float | None = None) -> Tensor:
@@ -607,9 +551,7 @@ def _bts(
 ) -> _BTS:
     if backbone_name not in bts_backbones:
         raise ValueError(f"Unsupported backbone. Got {backbone_name}.")
-    return _BTS(
-        backbone_name, max_depth, bts_size, dist_layer, pretrained_backbone
-    )
+    return _BTS(backbone_name, max_depth, bts_size, dist_layer, pretrained_backbone)
 
 
 def bts_resnet50(

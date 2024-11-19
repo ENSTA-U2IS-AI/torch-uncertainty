@@ -29,9 +29,7 @@ class _DeepEnsembles(nn.Module):
                 where :math:`B` is the batch size, :math:`N` is the number of
                 estimators, and :math:`C` is the number of classes.
         """
-        return torch.cat(
-            [model.forward(x) for model in self.core_models], dim=0
-        )
+        return torch.cat([model.forward(x) for model in self.core_models], dim=0)
 
 
 class _RegDeepEnsembles(_DeepEnsembles):
@@ -54,9 +52,7 @@ class _RegDeepEnsembles(_DeepEnsembles):
             Distribution:
         """
         if self.probabilistic:
-            return cat_dist(
-                [model.forward(x) for model in self.core_models], dim=0
-            )
+            return cat_dist([model.forward(x) for model in self.core_models], dim=0)
         return super().forward(x)
 
 
@@ -98,17 +94,11 @@ def deep_ensembles(
     """
     if isinstance(models, list) and len(models) == 0:
         raise ValueError("Models must not be an empty list.")
-    if (isinstance(models, list) and len(models) == 1) or isinstance(
-        models, nn.Module
-    ):
+    if (isinstance(models, list) and len(models) == 1) or isinstance(models, nn.Module):
         if num_estimators is None:
-            raise ValueError(
-                "if models is a module, num_estimators must be specified."
-            )
+            raise ValueError("if models is a module, num_estimators must be specified.")
         if num_estimators < 2:
-            raise ValueError(
-                f"num_estimators must be at least 2. Got {num_estimators}."
-            )
+            raise ValueError(f"num_estimators must be at least 2. Got {num_estimators}.")
 
         if isinstance(models, list):
             models = models[0]
@@ -121,21 +111,13 @@ def deep_ensembles(
                     if hasattr(layer, "reset_parameters"):
                         layer.reset_parameters()
 
-    elif (
-        isinstance(models, list)
-        and len(models) > 1
-        and num_estimators is not None
-    ):
-        raise ValueError(
-            "num_estimators must be None if you provided a non-singleton list."
-        )
+    elif isinstance(models, list) and len(models) > 1 and num_estimators is not None:
+        raise ValueError("num_estimators must be None if you provided a non-singleton list.")
 
     if task in ("classification", "segmentation"):
         return _DeepEnsembles(models=models)
     if task in ("regression", "pixel_regression"):
         if probabilistic is None:
-            raise ValueError(
-                "probabilistic must be specified for regression models."
-            )
+            raise ValueError("probabilistic must be specified for regression models.")
         return _RegDeepEnsembles(probabilistic=probabilistic, models=models)
     raise ValueError(f"Unknown task: {task}.")

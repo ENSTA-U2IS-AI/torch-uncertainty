@@ -9,9 +9,7 @@ class TestDeepEnsembles:
     """Testing the Deep Ensembles baseline class."""
 
     def test_failure(self):
-        with pytest.raises(
-            ValueError, match="Models must not be an empty list."
-        ):
+        with pytest.raises(ValueError, match="Models must not be an empty list."):
             DeepEnsemblesBaseline(
                 log_path=".",
                 checkpoint_ids=[],

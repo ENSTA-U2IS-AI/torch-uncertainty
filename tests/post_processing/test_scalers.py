@@ -27,9 +27,7 @@ class TestTemperatureScaler:
 
         calibration_set = list(zip(inputs, labels, strict=True))
 
-        scaler = TemperatureScaler(
-            model=nn.Identity(), init_val=2, lr=1, max_iter=10
-        )
+        scaler = TemperatureScaler(model=nn.Identity(), init_val=2, lr=1, max_iter=10)
         assert scaler.temperature[0] == 2.0
         scaler.fit(calibration_set)
         assert scaler.temperature[0] > 10  # best is +inf

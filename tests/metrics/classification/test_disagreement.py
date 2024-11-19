@@ -34,18 +34,14 @@ class TestDisagreement:
         res = metric.compute()
         assert res == 0.0
 
-    def test_compute_mixed(
-        self, disagreement_probas: torch.Tensor, agreement_probas: torch.Tensor
-    ):
+    def test_compute_mixed(self, disagreement_probas: torch.Tensor, agreement_probas: torch.Tensor):
         metric = Disagreement()
         metric.update(agreement_probas)
         metric.update(disagreement_probas)
         res = metric.compute()
         assert res == 0.5
 
-    def test_compute_mixed_3_estimators(
-        self, disagreement_probas_3: torch.Tensor
-    ):
+    def test_compute_mixed_3_estimators(self, disagreement_probas_3: torch.Tensor):
         metric = Disagreement()
         metric.update(disagreement_probas_3)
         res = metric.compute()

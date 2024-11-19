@@ -76,8 +76,7 @@ class SegmentationRoutine(LightningModule):
         )
         if eval_shift:
             raise NotImplementedError(
-                "Distribution shift evaluation not implemented yet. Raise an issue "
-                "if needed."
+                "Distribution shift evaluation not implemented yet. Raise an issue " "if needed."
             )
 
         self.model = model
@@ -103,14 +102,10 @@ class SegmentationRoutine(LightningModule):
         )
         sbsmpl_seg_metrics = MetricCollection(
             {
-                "seg/mAcc": Accuracy(
-                    task="multiclass", average="macro", num_classes=num_classes
-                ),
+                "seg/mAcc": Accuracy(task="multiclass", average="macro", num_classes=num_classes),
                 "seg/Brier": BrierScore(num_classes=num_classes),
                 "seg/NLL": CategoricalNLL(),
-                "seg/pixAcc": Accuracy(
-                    task="multiclass", num_classes=num_classes
-                ),
+                "seg/pixAcc": Accuracy(task="multiclass", num_classes=num_classes),
                 "cal/ECE": CalibrationError(
                     task="multiclass",
                     num_classes=num_classes,
@@ -163,25 +158,17 @@ class SegmentationRoutine(LightningModule):
         if self.needs_epoch_update and not self.trainer.sanity_checking:
             self.model.update_wrapper(self.current_epoch)
             if hasattr(self.model, "need_bn_update"):
-                self.model.bn_update(
-                    self.trainer.train_dataloader, device=self.device
-                )
+                self.model.bn_update(self.trainer.train_dataloader, device=self.device)
 
     def on_test_start(self) -> None:
         if hasattr(self.model, "need_bn_update"):
-            self.model.bn_update(
-                self.trainer.train_dataloader, device=self.device
-            )
+            self.model.bn_update(self.trainer.train_dataloader, device=self.device)
 
-    def training_step(
-        self, batch: tuple[Tensor, Tensor], batch_idx: int
-    ) -> STEP_OUTPUT:
+    def training_step(self, batch: tuple[Tensor, Tensor], batch_idx: int) -> STEP_OUTPUT:
         img, target = batch
         img, target = self.format_batch_fn((img, target))
         logits = self.forward(img)
-        target = F.resize(
-            target, logits.shape[-2:], interpolation=F.InterpolationMode.NEAREST
-        )
+        target = F.resize(target, logits.shape[-2:], interpolation=F.InterpolationMode.NEAREST)
         logits = rearrange(logits, "b c h w -> (b h w) c")
         target = target.flatten()
         valid_mask = target != 255
@@ -191,9 +178,7 @@ class SegmentationRoutine(LightningModule):
         self.log("train_loss", loss, prog_bar=True, logger=True)
         return loss
 
-    def validation_step(
-        self, batch: tuple[Tensor, Tensor], batch_idx: int
-    ) -> None:
+    def validation_step(self, batch: tuple[Tensor, Tensor], batch_idx: int) -> None:
         img, targets = batch
         logits = self.forward(img)
         targets = F.resize(
@@ -201,9 +186,7 @@ class SegmentationRoutine(LightningModule):
             logits.shape[-2:],
             interpolation=F.InterpolationMode.NEAREST,
         )
-        logits = rearrange(
-            logits, "(m b) c h w -> (b h w) m c", b=targets.size(0)
-        )
+        logits = rearrange(logits, "(m b) c h w -> (b h w) m c", b=targets.size(0))
         probs_per_est = logits.softmax(dim=-1)
         probs = probs_per_est.mean(dim=1)
         targets = targets.flatten()
@@ -221,20 +204,13 @@ class SegmentationRoutine(LightningModule):
             interpolation=F.InterpolationMode.NEAREST,
         )
 
-        logits = rearrange(
-            logits, "(m b) c h w -> b m c h w", b=targets.size(0)
-        )
+        logits = rearrange(logits, "(m b) c h w -> b m c h w", b=targets.size(0))
         probs_per_est = logits.softmax(dim=2)
         probs = probs_per_est.mean(dim=1)
 
-        if (
-            self.log_plots
-            and len(self.sample_buffer) < self.num_samples_to_plot
-        ):
+        if self.log_plots and len(self.sample_buffer) < self.num_samples_to_plot:
             max_count = self.num_samples_to_plot - len(self.sample_buffer)
-            for i, (_img, _prb, _tgt) in enumerate(
-                zip(img, probs, targets, strict=False)
-            ):
+            for i, (_img, _prb, _tgt) in enumerate(zip(img, probs, targets, strict=False)):
                 if i >= max_count:
                     break
                 _pred = _prb.argmax(dim=0, keepdim=True)
@@ -281,18 +257,8 @@ class SegmentationRoutine(LightningModule):
     def log_segmentation_plots(self) -> None:
         """Builds and logs examples of segmentation plots from the test set."""
         for i, (img, pred, tgt) in enumerate(self.sample_buffer):
-            pred = (
-                pred
-                == torch.arange(self.num_classes, device=pred.device)[
-                    :, None, None
-                ]
-            )
-            tgt = (
-                tgt
-                == torch.arange(self.num_classes, device=tgt.device)[
-                    :, None, None
-                ]
-            )
+            pred = pred == torch.arange(self.num_classes, device=pred.device)[:, None, None]
+            tgt = tgt == torch.arange(self.num_classes, device=tgt.device)[:, None, None]
 
             # Undo normalization on the image and convert to uint8.
             mean = torch.tensor(self.trainer.datamodule.mean, device=img.device)
@@ -301,17 +267,10 @@ class SegmentationRoutine(LightningModule):
             img = ToDtype(torch.uint8, scale=True)(img)
 
             dataset = self.trainer.datamodule.test
-            if hasattr(dataset, "color_palette"):
-                color_palette = dataset.color_palette
-            else:
-                color_palette = None
+            color_palette = dataset.color_palette if hasattr(dataset, "color_palette") else None
 
-            pred_mask = draw_segmentation_masks(
-                img, pred, alpha=0.7, colors=color_palette
-            )
-            gt_mask = draw_segmentation_masks(
-                img, tgt, alpha=0.7, colors=color_palette
-            )
+            pred_mask = draw_segmentation_masks(img, pred, alpha=0.7, colors=color_palette)
+            gt_mask = draw_segmentation_masks(img, tgt, alpha=0.7, colors=color_palette)
 
             self.logger.experiment.add_figure(
                 f"Segmentation results/{i}",
@@ -339,6 +298,4 @@ def _segmentation_routine_checks(
         )
 
     if num_calibration_bins < 2:
-        raise ValueError(
-            f"num_calibration_bins must be at least 2, got {num_calibration_bins}."
-        )
+        raise ValueError(f"num_calibration_bins must be at least 2, got {num_calibration_bins}.")

@@ -55,9 +55,7 @@ class UCIRegressionDataModule(TUDataModule):
             persistent_workers=persistent_workers,
         )
 
-        self.dataset = partial(
-            UCIRegression, dataset_name=dataset_name, seed=split_seed
-        )
+        self.dataset = partial(UCIRegression, dataset_name=dataset_name, seed=split_seed)
         self.input_shape = input_shape
         self.gen = Generator().manual_seed(split_seed)
 

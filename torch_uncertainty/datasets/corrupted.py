@@ -21,9 +21,7 @@ class CorruptedDataset(VisionDataset):
         super().__init__()
         self.core_dataset = core_dataset
         if shift_severity <= 0:
-            raise ValueError(
-                f"Severity must be greater than 0. Got {shift_severity}."
-            )
+            raise ValueError(f"Severity must be greater than 0. Got {shift_severity}.")
         self.shift_severity = shift_severity
         self.core_length = len(core_dataset)
         self.on_the_fly = on_the_fly
@@ -50,9 +48,7 @@ class CorruptedDataset(VisionDataset):
             for corruption in tqdm(corruption_transforms):
                 corruption_name = corruption.__name__.lower()
                 (self.root / corruption_name).mkdir(parents=True)
-                self.save_corruption(
-                    self.root / corruption_name, corruption(self.shift_severity)
-                )
+                self.save_corruption(self.root / corruption_name, corruption(self.shift_severity))
 
     def save_corruption(self, root: Path, corruption: nn.Module) -> None:
         for i in range(self.core_length):

@@ -77,17 +77,13 @@ class TinyImageNetC(ImageFolder):
             self.download()
 
         if not self._check_integrity():
-            raise RuntimeError(
-                "Dataset not found. You can use download=True to download it."
-            )
+            raise RuntimeError("Dataset not found. You can use download=True to download it.")
         super().__init__(
             root=self.root / self.base_folder / "brightness/1/",
             transform=transform,
         )
         if subset not in ["all", *self.subsets]:
-            raise ValueError(
-                f"The subset '{subset}' does not exist in TinyImageNet-C."
-            )
+            raise ValueError(f"The subset '{subset}' does not exist in TinyImageNet-C.")
         self.subset = subset
         self.shift_severity = shift_severity
 
@@ -142,9 +138,7 @@ class TinyImageNetC(ImageFolder):
 
     def _check_integrity(self) -> bool:
         """Check the integrity of the dataset."""
-        for filename, md5 in list(
-            zip(self.filename, self.tgz_md5, strict=True)
-        ):
+        for filename, md5 in list(zip(self.filename, self.tgz_md5, strict=True)):
             if "extra" in filename:
                 fpath = self.root / "Tiny-ImageNet-C" / filename
             else:
@@ -158,9 +152,7 @@ class TinyImageNetC(ImageFolder):
         if self._check_integrity():
             logging.info("Files already downloaded and verified")
             return
-        for filename, md5 in list(
-            zip(self.filename, self.tgz_md5, strict=True)
-        ):
+        for filename, md5 in list(zip(self.filename, self.tgz_md5, strict=True)):
             if "extra" in filename:
                 download_and_extract_archive(
                     self.url + filename,

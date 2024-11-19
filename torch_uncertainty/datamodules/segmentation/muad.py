@@ -151,12 +151,8 @@ class MUADDataModule(TUDataModule):
         )
 
     def prepare_data(self) -> None:  # coverage: ignore
-        self.dataset(
-            root=self.root, split="train", target_type="semantic", download=True
-        )
-        self.dataset(
-            root=self.root, split="val", target_type="semantic", download=True
-        )
+        self.dataset(root=self.root, split="train", target_type="semantic", download=True)
+        self.dataset(root=self.root, split="val", target_type="semantic", download=True)
 
     def setup(self, stage: str | None = None) -> None:
         if stage == "fit" or stage is None:

@@ -64,10 +64,7 @@ class VariationRatio(Metric):
             max_classes_per_est = probs_per_est.argmax(dim=-1)
             variation_ratio = (
                 1
-                - torch.sum(
-                    max_classes_per_est == max_classes.unsqueeze(1), dim=-1
-                )
-                / n_estimators
+                - torch.sum(max_classes_per_est == max_classes.unsqueeze(1), dim=-1) / n_estimators
             )
 
         if self.reduction == "mean":

@@ -11,9 +11,7 @@ class StochasticModel(nn.Module):
         self.num_samples = num_samples
 
     def eval_forward(self, x: Tensor) -> Tensor:
-        return torch.cat(
-            [self.core_model.forward(x) for _ in range(self.num_samples)], dim=0
-        )
+        return torch.cat([self.core_model.forward(x) for _ in range(self.num_samples)], dim=0)
 
     def forward(self, x: Tensor) -> Tensor:
         if self.training:
@@ -37,8 +35,7 @@ class StochasticModel(nn.Module):
                         break
                     # TODO: fix this
                     model |= {
-                        module_name + "." + key: val
-                        for key, val in module.state_dict().items()
+                        module_name + "." + key: val for key, val in module.state_dict().items()
                     }
         return sampled_models
 

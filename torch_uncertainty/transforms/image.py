@@ -32,9 +32,7 @@ class Posterize(nn.Module):
     level_type = int
     corruption_overlap = False
 
-    def forward(
-        self, img: Tensor | Image.Image, level: int
-    ) -> Tensor | Image.Image:
+    def forward(self, img: Tensor | Image.Image, level: int) -> Tensor | Image.Image:
         if level >= self.max_level:
             raise ValueError(f"Level must be less than {self.max_level}.")
         if level < 0:
@@ -48,9 +46,7 @@ class Solarize(nn.Module):
     level_type = int
     corruption_overlap = False
 
-    def forward(
-        self, img: Tensor | Image.Image, level: float
-    ) -> Tensor | Image.Image:
+    def forward(self, img: Tensor | Image.Image, level: float) -> Tensor | Image.Image:
         if level >= self.max_level:
             raise ValueError(f"Level must be less than {self.max_level}.")
         if level < 0:
@@ -78,12 +74,8 @@ class Rotate(nn.Module):
         self.center = center
         self.fill = fill
 
-    def forward(
-        self, img: Tensor | Image.Image, level: float
-    ) -> Tensor | Image.Image:
-        if (
-            self.random_direction and torch.rand(1).item() > 0.5
-        ):  # coverage: ignore
+    def forward(self, img: Tensor | Image.Image, level: float) -> Tensor | Image.Image:
+        if self.random_direction and torch.rand(1).item() > 0.5:  # coverage: ignore
             level = -level
         return F.rotate(
             img,
@@ -117,12 +109,8 @@ class Shear(nn.Module):
         self.center = center
         self.fill = fill
 
-    def forward(
-        self, img: Tensor | Image.Image, level: int
-    ) -> Tensor | Image.Image:
-        if (
-            self.random_direction and torch.rand(1).item() > 0.5
-        ):  # coverage: ignore
+    def forward(self, img: Tensor | Image.Image, level: int) -> Tensor | Image.Image:
+        if self.random_direction and torch.rand(1).item() > 0.5:  # coverage: ignore
             level = -level
         shear = [0.0, 0.0]
         shear[self.axis] = level
@@ -160,12 +148,8 @@ class Translate(nn.Module):
         self.center = center
         self.fill = fill
 
-    def forward(
-        self, img: Tensor | Image.Image, level: float
-    ) -> Tensor | Image.Image:
-        if (
-            self.random_direction and torch.rand(1).item() > 0.5
-        ):  # coverage: ignore
+    def forward(self, img: Tensor | Image.Image, level: float) -> Tensor | Image.Image:
+        if self.random_direction and torch.rand(1).item() > 0.5:  # coverage: ignore
             level = -level
         translate = [0.0, 0.0]
         translate[self.axis] = level
@@ -189,9 +173,7 @@ class Contrast(nn.Module):
     def __init__(self) -> None:
         super().__init__()
 
-    def forward(
-        self, img: Tensor | Image.Image, level: float
-    ) -> Tensor | Image.Image:
+    def forward(self, img: Tensor | Image.Image, level: float) -> Tensor | Image.Image:
         if level < 0:
             raise ValueError("Level must be greater than 0.")
         return F.adjust_contrast(img, level)
@@ -232,9 +214,7 @@ class Sharpen(nn.Module):
     def __init__(self) -> None:
         super().__init__()
 
-    def forward(
-        self, img: Tensor | Image.Image, level: float
-    ) -> Tensor | Image.Image:
+    def forward(self, img: Tensor | Image.Image, level: float) -> Tensor | Image.Image:
         if level < 0:
             raise ValueError("Level must be greater than 0.")
         return F.adjust_sharpness(img, level)
@@ -249,9 +229,7 @@ class Color(nn.Module):
         """Color augmentation class."""
         super().__init__()
 
-    def forward(
-        self, img: Tensor | Image.Image, level: float
-    ) -> Tensor | Image.Image:
+    def forward(self, img: Tensor | Image.Image, level: float) -> Tensor | Image.Image:
         if level < 0:
             raise ValueError("Level must be greater than 0.")
         pil_img = F.to_pil_image(img) if isinstance(img, Tensor) else img

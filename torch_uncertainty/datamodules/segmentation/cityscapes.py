@@ -129,9 +129,7 @@ class CityscapesDataModule(TUDataModule):
                         pad_if_needed=True,
                         fill={tv_tensors.Image: 0, tv_tensors.Mask: 255},
                     ),
-                    v2.ColorJitter(
-                        brightness=0.5, contrast=0.5, saturation=0.5
-                    ),
+                    v2.ColorJitter(brightness=0.5, contrast=0.5, saturation=0.5),
                     v2.RandomHorizontalFlip(),
                 ]
             )

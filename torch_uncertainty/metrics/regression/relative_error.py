@@ -41,9 +41,7 @@ class MeanGTRelativeAbsoluteError(MeanAbsoluteError):
 
 
 class MeanGTRelativeSquaredError(MeanSquaredError):
-    def __init__(
-        self, squared: bool = True, num_outputs: int = 1, **kwargs
-    ) -> None:
+    def __init__(self, squared: bool = True, num_outputs: int = 1, **kwargs) -> None:
         r"""Compute mean squared error relative to the Ground Truth (MSErel or SRE).
 
         .. math:: \text{MSErel} = \frac{1}{N}\sum_i^N \frac{(y_i - \hat{y_i})^2}{y_i}

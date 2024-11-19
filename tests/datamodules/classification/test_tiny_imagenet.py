@@ -28,9 +28,7 @@ class TestTinyImageNetDataModule:
         )
 
         with pytest.raises(ValueError):
-            TinyImageNetDataModule(
-                root="./data/", batch_size=128, ood_ds="other"
-            )
+            TinyImageNetDataModule(root="./data/", batch_size=128, ood_ds="other")
 
         dm.dataset = DummyClassificationDataset
         dm.ood_dataset = DummyClassificationDataset
@@ -52,9 +50,7 @@ class TestTinyImageNetDataModule:
         dm.setup("test")
         dm.test_dataloader()
 
-        dm = TinyImageNetDataModule(
-            root="./data/", batch_size=128, ood_ds="svhn"
-        )
+        dm = TinyImageNetDataModule(root="./data/", batch_size=128, ood_ds="svhn")
         dm.dataset = DummyClassificationDataset
         dm.ood_dataset = DummyClassificationDataset
         dm.shift_dataset = DummyClassificationDataset
@@ -70,9 +66,7 @@ class TestTinyImageNetDataModule:
         )
         dm.make_cross_val_splits(2, 1)
 
-        dm = TinyImageNetDataModule(
-            root="./data/", batch_size=128, val_split=0.1
-        )
+        dm = TinyImageNetDataModule(root="./data/", batch_size=128, val_split=0.1)
         dm.dataset = lambda root, split, transform: DummyClassificationDataset(
             root, split=split, transform=transform, num_images=20
         )

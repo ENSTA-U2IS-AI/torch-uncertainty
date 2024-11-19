@@ -27,9 +27,7 @@ class TestDERLoss:
     def test_main(self):
         loss = DERLoss(reg_weight=1e-2)
         layer = NormalInverseGamma
-        inputs = layer(
-            torch.ones(1), torch.ones(1), torch.ones(1), torch.ones(1)
-        )
+        inputs = layer(torch.ones(1), torch.ones(1), torch.ones(1), torch.ones(1))
         targets = torch.tensor([[1.0]], dtype=torch.float32)
 
         assert loss(inputs, targets) == pytest.approx(2 * math.log(2))
@@ -67,9 +65,7 @@ class TestDERLoss:
         ):
             DERLoss(reg_weight=-1)
 
-        with pytest.raises(
-            ValueError, match="is not a valid value for reduction."
-        ):
+        with pytest.raises(ValueError, match="is not a valid value for reduction."):
             DERLoss(reg_weight=1.0, reduction="median")
 
 
@@ -108,12 +104,8 @@ class TestBetaNLL:
         ) == pytest.approx([0.0, 0.0])
 
     def test_failures(self):
-        with pytest.raises(
-            ValueError, match="The beta parameter should be in range "
-        ):
+        with pytest.raises(ValueError, match="The beta parameter should be in range "):
             BetaNLL(beta=-1)
 
-        with pytest.raises(
-            ValueError, match="is not a valid value for reduction."
-        ):
+        with pytest.raises(ValueError, match="is not a valid value for reduction."):
             BetaNLL(beta=1.0, reduction="median")

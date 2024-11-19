@@ -128,9 +128,7 @@ class _BatchWideResNet(nn.Module):
         self.bn1 = normalization_layer(num_stages[0])
 
         if style == "imagenet":
-            self.optional_pool = nn.MaxPool2d(
-                kernel_size=3, stride=2, padding=1
-            )
+            self.optional_pool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         else:
             self.optional_pool = nn.Identity()
 

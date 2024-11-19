@@ -70,9 +70,7 @@ class Attention(nn.Module):
         sr_ratio: int = 1,
     ):
         super().__init__()
-        assert (
-            dim % num_heads == 0
-        ), f"dim {dim} should be divided by num_heads {num_heads}."
+        assert dim % num_heads == 0, f"dim {dim} should be divided by num_heads {num_heads}."
 
         self.dim = dim
         self.num_heads = num_heads
@@ -107,11 +105,7 @@ class Attention(nn.Module):
 
     def forward(self, x: Tensor, h: int, w: int):
         b, n, c = x.shape
-        q = (
-            self.q(x)
-            .reshape(b, n, self.num_heads, c // self.num_heads)
-            .permute(0, 2, 1, 3)
-        )
+        q = self.q(x).reshape(b, n, self.num_heads, c // self.num_heads).permute(0, 2, 1, 3)
 
         if self.sr_ratio > 1:
             x_ = x.permute(0, 2, 1).reshape(b, c, h, w)
@@ -167,9 +161,7 @@ class Block(nn.Module):
         )
         # NOTE: drop path for stochastic depth, we shall see if this is better
         #   than dropout here
-        self.drop_path = (
-            DropPath(drop_path) if drop_path > 0.0 else nn.Identity()
-        )
+        self.drop_path = DropPath(drop_path) if drop_path > 0.0 else nn.Identity()
         self.norm2 = norm_layer(dim)
         mlp_hidden_dim = int(dim * mlp_ratio)
         self.mlp = MLP(
@@ -202,9 +194,7 @@ class Block(nn.Module):
 class OverlapPatchEmbed(nn.Module):
     """Image to Patch Embedding."""
 
-    def __init__(
-        self, img_size=224, patch_size=7, stride=4, in_chans=3, embed_dim=768
-    ):
+    def __init__(self, img_size=224, patch_size=7, stride=4, in_chans=3, embed_dim=768):
         super().__init__()
         img_size = to_2tuple(img_size)
         patch_size = to_2tuple(patch_size)
@@ -559,38 +549,16 @@ class SegFormerHead(nn.Module):
 
         n, _, _, _ = c4.shape
 
-        _c4 = (
-            self.linear_c4(c4)
-            .permute(0, 2, 1)
-            .reshape(n, -1, c4.shape[2], c4.shape[3])
-        )
-        _c4 = resize(
-            _c4, size=c1.size()[2:], mode="bilinear", align_corners=False
-        )
+        _c4 = self.linear_c4(c4).permute(0, 2, 1).reshape(n, -1, c4.shape[2], c4.shape[3])
+        _c4 = resize(_c4, size=c1.size()[2:], mode="bilinear", align_corners=False)
 
-        _c3 = (
-            self.linear_c3(c3)
-            .permute(0, 2, 1)
-            .reshape(n, -1, c3.shape[2], c3.shape[3])
-        )
-        _c3 = resize(
-            _c3, size=c1.size()[2:], mode="bilinear", align_corners=False
-        )
+        _c3 = self.linear_c3(c3).permute(0, 2, 1).reshape(n, -1, c3.shape[2], c3.shape[3])
+        _c3 = resize(_c3, size=c1.size()[2:], mode="bilinear", align_corners=False)
 
-        _c2 = (
-            self.linear_c2(c2)
-            .permute(0, 2, 1)
-            .reshape(n, -1, c2.shape[2], c2.shape[3])
-        )
-        _c2 = resize(
-            _c2, size=c1.size()[2:], mode="bilinear", align_corners=False
-        )
+        _c2 = self.linear_c2(c2).permute(0, 2, 1).reshape(n, -1, c2.shape[2], c2.shape[3])
+        _c2 = resize(_c2, size=c1.size()[2:], mode="bilinear", align_corners=False)
 
-        _c1 = (
-            self.linear_c1(c1)
-            .permute(0, 2, 1)
-            .reshape(n, -1, c1.shape[2], c1.shape[3])
-        )
+        _c1 = self.linear_c1(c1).permute(0, 2, 1).reshape(n, -1, c1.shape[2], c1.shape[3])
 
         _c = self.fuse(torch.cat([_c4, _c3, _c2, _c1], dim=1))
 

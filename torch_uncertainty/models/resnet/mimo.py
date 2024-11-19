@@ -62,9 +62,7 @@ def mimo_resnet(
     style: Literal["imagenet", "cifar"] = "imagenet",
     normalization_layer: type[nn.Module] = nn.BatchNorm2d,
 ) -> _MIMOResNet:
-    block = (
-        _BasicBlock if arch in [18, 20, 34, 44, 56, 110, 1202] else _Bottleneck
-    )
+    block = _BasicBlock if arch in [18, 20, 34, 44, 56, 110, 1202] else _Bottleneck
     in_planes = 16 if arch in [20, 44, 56, 110, 1202] else 64
     return _MIMOResNet(
         block=block,

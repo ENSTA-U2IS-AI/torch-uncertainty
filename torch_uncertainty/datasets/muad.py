@@ -98,9 +98,7 @@ class MUAD(VisionDataset):
         self.max_depth = max_depth
 
         if split not in ["train", "val"]:
-            raise ValueError(
-                f"split must be one of ['train', 'val']. Got {split}."
-            )
+            raise ValueError(f"split must be one of ['train', 'val']. Got {split}.")
         self.split = split
         self.target_type = target_type
 
@@ -112,10 +110,7 @@ class MUAD(VisionDataset):
                     f"MUAD {split} split not found or incomplete. Set download=True to download it."
                 )
 
-        if (
-            not self.check_split_integrity("leftLabel")
-            and target_type == "semantic"
-        ):
+        if not self.check_split_integrity("leftLabel") and target_type == "semantic":
             if download:
                 self._download(split=split)
             else:
@@ -123,10 +118,7 @@ class MUAD(VisionDataset):
                     f"MUAD {split} split not found or incomplete. Set download=True to download it."
                 )
 
-        if (
-            not self.check_split_integrity("leftDepth")
-            and target_type == "depth"
-        ):
+        if not self.check_split_integrity("leftDepth") and target_type == "depth":
             if download:
                 self._download(split=f"{split}_depth")
                 # Depth target for train are in a different folder
@@ -154,11 +146,7 @@ class MUAD(VisionDataset):
         with (self.root / "classes.json").open() as file:
             self.classes = json.load(file)
 
-        train_id_to_color = [
-            c["object_id"]
-            for c in self.classes
-            if c["train_id"] not in [-1, 255]
-        ]
+        train_id_to_color = [c["object_id"] for c in self.classes if c["train_id"] not in [-1, 255]]
         train_id_to_color.append([0, 0, 0])
         self.train_id_to_color = np.array(train_id_to_color)
 
@@ -178,11 +166,9 @@ class MUAD(VisionDataset):
         out = torch.zeros_like(target[..., :1])
         # convert target color to index
         for muad_class in self.classes:
-            out[
-                (
-                    target == torch.tensor(muad_class["id"], dtype=target.dtype)
-                ).all(dim=-1)
-            ] = muad_class["train_id"]
+            out[(target == torch.tensor(muad_class["id"], dtype=target.dtype)).all(dim=-1)] = (
+                muad_class["train_id"]
+            )
 
         return F.to_pil_image(rearrange(out, "h w c -> c h w"))
 
@@ -190,9 +176,7 @@ class MUAD(VisionDataset):
         target[target == 255] = 19
         return self.train_id_to_color[target]
 
-    def __getitem__(
-        self, index: int
-    ) -> tuple[tv_tensors.Image, tv_tensors.Mask]:
+    def __getitem__(self, index: int) -> tuple[tv_tensors.Image, tv_tensors.Mask]:
         """Get the sample at the given index.
 
         Args:
@@ -204,9 +188,7 @@ class MUAD(VisionDataset):
         """
         image = tv_tensors.Image(Image.open(self.samples[index]).convert("RGB"))
         if self.target_type == "semantic":
-            target = tv_tensors.Mask(
-                self.encode_target(Image.open(self.targets[index]))
-            )
+            target = tv_tensors.Mask(self.encode_target(Image.open(self.targets[index])))
         else:
             os.environ["OPENCV_IO_ENABLE_OPENEXR"] = "1"
             target = Image.fromarray(
@@ -219,9 +201,7 @@ class MUAD(VisionDataset):
             # tv_tensor for depth maps (e.g. tv_tensors.DepthMap)
             target = np.asarray(target, np.float32)
             target = tv_tensors.Mask(400 * (1 - target))  # convert to meters
-            target[(target <= self.min_depth) | (target > self.max_depth)] = (
-                float("nan")
-            )
+            target[(target <= self.min_depth) | (target > self.max_depth)] = float("nan")
 
         if self.transforms is not None:
             image, target = self.transforms(image, target)
@@ -232,8 +212,7 @@ class MUAD(VisionDataset):
         split_path = self.root / self.split
         return (
             split_path.is_dir()
-            and len(list((split_path / folder).glob("**/*")))
-            == self._num_samples[self.split]
+            and len(list((split_path / folder).glob("**/*"))) == self._num_samples[self.split]
         )
 
     def __len__(self) -> int:
@@ -248,8 +227,7 @@ class MUAD(VisionDataset):
         """
         if "depth" in path.name:
             raise NotImplementedError(
-                "Depth mode is not implemented yet. Raise an issue "
-                "if you need it."
+                "Depth mode is not implemented yet. Raise an issue " "if you need it."
             )
         self.samples = sorted((path / "leftImg8bit/").glob("**/*"))
         if self.target_type == "semantic":
@@ -264,9 +242,7 @@ class MUAD(VisionDataset):
     def _download(self, split: str) -> None:
         """Download and extract the chosen split of the dataset."""
         split_url = self.base_url + split + ".zip"
-        download_and_extract_archive(
-            split_url, self.root, md5=self.zip_md5[split]
-        )
+        download_and_extract_archive(split_url, self.root, md5=self.zip_md5[split])
 
     @property
     def color_palette(self) -> np.ndarray:

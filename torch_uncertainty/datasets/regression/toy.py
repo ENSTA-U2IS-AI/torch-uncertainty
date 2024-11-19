@@ -26,8 +26,6 @@ class Cubic(TensorDataset):
     ) -> None:
         noise = (noise_mean, noise_std)
 
-        samples = torch.linspace(
-            lower_bound, upper_bound, num_samples
-        ).unsqueeze(-1)
+        samples = torch.linspace(lower_bound, upper_bound, num_samples).unsqueeze(-1)
         targets = samples**3 + torch.normal(*noise, size=samples.size())
         super().__init__(samples, targets.squeeze(-1))

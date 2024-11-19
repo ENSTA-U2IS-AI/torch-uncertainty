@@ -49,9 +49,7 @@ class NotMNIST(ImageFolder):
         self.root = Path(root)
 
         if subset not in self.subsets:
-            raise ValueError(
-                f"The subset '{subset}' does not exist for notMNIST."
-            )
+            raise ValueError(f"The subset '{subset}' does not exist for notMNIST.")
         ind = self.subsets.index(subset)
         self.url = self.url_base + "/" + self.filenames[ind]
         self.filename = self.filenames[ind]
@@ -62,8 +60,7 @@ class NotMNIST(ImageFolder):
 
         if not self._check_integrity():
             raise RuntimeError(
-                "Dataset not found or corrupted. You can use download=True to "
-                "download it."
+                "Dataset not found or corrupted. You can use download=True to " "download it."
             )
 
         super().__init__(

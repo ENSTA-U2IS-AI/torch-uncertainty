@@ -79,9 +79,7 @@ class NYUv2(VisionDataset):
         self.max_depth = max_depth
 
         if split not in ["train", "val"]:
-            raise ValueError(
-                f"split must be one of ['train', 'val']. Got {split}."
-            )
+            raise ValueError(f"split must be one of ['train', 'val']. Got {split}.")
         self.split = split
 
         if not self._check_integrity():
@@ -112,9 +110,7 @@ class NYUv2(VisionDataset):
         )
         target = np.asarray(target, np.uint16)
         target = tv_tensors.Mask(target / 1e4)  # convert to meters
-        target[(target <= self.min_depth) | (target > self.max_depth)] = float(
-            "nan"
-        )
+        target[(target <= self.min_depth) | (target > self.max_depth)] = float("nan")
         if self.transforms is not None:
             image, target = self.transforms(image, target)
         return image, target
@@ -145,9 +141,7 @@ class NYUv2(VisionDataset):
             md5=self.rgb_md5[self.split],
         )
         if not check_integrity(self.root / "depth.mat", self.depth_md5):
-            download_url(
-                NYUv2.depth_url, self.root, "depth.mat", self.depth_md5
-            )
+            download_url(NYUv2.depth_url, self.root, "depth.mat", self.depth_md5)
         self._create_depth_files()
 
     def _create_depth_files(self):
@@ -162,6 +156,4 @@ class NYUv2(VisionDataset):
             img_id = i + 1
             if img_id in ids:
                 img = (depths[i] * 1e4).astype(np.uint16).T
-                Image.fromarray(img).save(
-                    path / "depth" / f"nyu_depth_{str(img_id).zfill(4)}.png"
-                )
+                Image.fromarray(img).save(path / "depth" / f"nyu_depth_{str(img_id).zfill(4)}.png")

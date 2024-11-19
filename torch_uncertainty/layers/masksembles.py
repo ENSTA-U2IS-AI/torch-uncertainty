@@ -117,9 +117,7 @@ def generation_wrapper(c: int, n: int, scale: float) -> np.ndarray:
 
 
 class Mask1d(nn.Module):
-    def __init__(
-        self, channels: int, num_masks: int, scale: float, **factory_kwargs
-    ) -> None:
+    def __init__(self, channels: int, num_masks: int, scale: float, **factory_kwargs) -> None:
         super().__init__()
         self.num_masks = num_masks
 
@@ -139,9 +137,7 @@ class Mask1d(nn.Module):
 
 
 class Mask2d(nn.Module):
-    def __init__(
-        self, channels: int, num_masks: int, scale: float, **factory_kwargs
-    ) -> None:
+    def __init__(self, channels: int, num_masks: int, scale: float, **factory_kwargs) -> None:
         super().__init__()
         self.num_masks = num_masks
 
@@ -206,9 +202,7 @@ class MaskedLinear(nn.Module):
         if scale < 1:
             raise ValueError(f"Attribute `scale` should be >= 1, not {scale}.")
 
-        self.mask = Mask1d(
-            in_features, num_masks=num_estimators, scale=scale, **factory_kwargs
-        )
+        self.mask = Mask1d(in_features, num_masks=num_estimators, scale=scale, **factory_kwargs)
         self.linear = nn.Linear(
             in_features=in_features,
             out_features=out_features,
@@ -275,9 +269,7 @@ class MaskedConv2d(nn.Module):
         if scale < 1:
             raise ValueError(f"Attribute `scale` should be >= 1, not {scale}.")
 
-        self.mask = Mask2d(
-            in_channels, num_masks=num_estimators, scale=scale, **factory_kwargs
-        )
+        self.mask = Mask2d(in_channels, num_masks=num_estimators, scale=scale, **factory_kwargs)
         self.conv = nn.Conv2d(
             in_channels=in_channels,
             out_channels=out_channels,

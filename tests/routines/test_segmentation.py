@@ -88,16 +88,10 @@ class TestSegmentation:
         model(dm.get_test_set()[0][0])
 
     def test_segmentation_errors(self):
-        with pytest.raises(
-            ValueError, match="num_classes must be at least 2, got"
-        ):
-            SegmentationRoutine(
-                model=nn.Identity(), num_classes=1, loss=nn.CrossEntropyLoss()
-            )
+        with pytest.raises(ValueError, match="num_classes must be at least 2, got"):
+            SegmentationRoutine(model=nn.Identity(), num_classes=1, loss=nn.CrossEntropyLoss())
 
-        with pytest.raises(
-            ValueError, match="metric_subsampling_rate must be in"
-        ):
+        with pytest.raises(ValueError, match="metric_subsampling_rate must be in"):
             SegmentationRoutine(
                 model=nn.Identity(),
                 num_classes=2,
@@ -105,9 +99,7 @@ class TestSegmentation:
                 metric_subsampling_rate=-1,
             )
 
-        with pytest.raises(
-            ValueError, match="num_calibration_bins must be at least 2, got"
-        ):
+        with pytest.raises(ValueError, match="num_calibration_bins must be at least 2, got"):
             SegmentationRoutine(
                 model=nn.Identity(),
                 num_classes=2,

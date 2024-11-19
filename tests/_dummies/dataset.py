@@ -65,9 +65,7 @@ class DummyClassificationDataset(Dataset):
         else:
             self.data = self.data.transpose((0, 2, 3, 1))  # convert to HWC
 
-        self.targets = torch.randint(
-            low=0, high=num_classes, size=(num_images,)
-        )
+        self.targets = torch.randint(low=0, high=num_classes, size=(num_images,))
         self.targets = torch.arange(start=0, end=num_classes).repeat(
             num_images // (num_classes) + 1
         )[:num_images]
@@ -123,10 +121,8 @@ class DummyRegressionDataset(Dataset):
         self.targets = []
 
         input_shape = (num_samples, in_features)
-        if out_features != 1:
-            output_shape = (num_samples, out_features)
-        else:
-            output_shape = (num_samples,)
+
+        output_shape = (num_samples, out_features) if out_features != 1 else (num_samples,)
 
         self.data = torch.rand(
             size=input_shape,

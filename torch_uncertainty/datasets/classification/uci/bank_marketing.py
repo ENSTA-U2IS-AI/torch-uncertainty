@@ -75,9 +75,7 @@ class BankMarketing(UCIClassificationDataset):
             filename="bank+marketing.zip",
             md5=self.md5_zip,
         )
-        extract_archive(
-            self.root / "bank-additional.zip", self.root / "bank-marketing"
-        )
+        extract_archive(self.root / "bank-additional.zip", self.root / "bank-marketing")
 
     def _make_dataset(self) -> None:
         """Create dataset from extracted files."""

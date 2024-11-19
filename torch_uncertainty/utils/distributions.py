@@ -24,8 +24,7 @@ def dist_size(distribution: Distribution) -> torch.Size:
     if isinstance(distribution, Normal | Laplace | NormalInverseGamma):
         return distribution.loc.size()
     raise NotImplementedError(
-        f"Size of {type(distribution)} distributions is not supported."
-        "Raise an issue if needed."
+        f"Size of {type(distribution)} distributions is not supported." "Raise an issue if needed."
     )
 
 
@@ -40,38 +39,21 @@ def cat_dist(distributions: list[Distribution], dim: int) -> Distribution:
         Distribution: The concatenated distributions.
     """
     dist_type = type(distributions[0])
-    if not all(
-        isinstance(distribution, dist_type) for distribution in distributions
-    ):
+    if not all(isinstance(distribution, dist_type) for distribution in distributions):
         raise ValueError("All distributions must have the same type.")
 
     if isinstance(distributions[0], Normal | Laplace):
-        locs = torch.cat(
-            [distribution.loc for distribution in distributions], dim=dim
-        )
-        scales = torch.cat(
-            [distribution.scale for distribution in distributions], dim=dim
-        )
+        locs = torch.cat([distribution.loc for distribution in distributions], dim=dim)
+        scales = torch.cat([distribution.scale for distribution in distributions], dim=dim)
         return dist_type(loc=locs, scale=scales)
     if isinstance(distributions[0], NormalInverseGamma):
-        locs = torch.cat(
-            [distribution.loc for distribution in distributions], dim=dim
-        )
-        lmbdas = torch.cat(
-            [distribution.lmbda for distribution in distributions], dim=dim
-        )
-        alphas = torch.cat(
-            [distribution.alpha for distribution in distributions], dim=dim
-        )
-        betas = torch.cat(
-            [distribution.beta for distribution in distributions], dim=dim
-        )
-        return NormalInverseGamma(
-            loc=locs, lmbda=lmbdas, alpha=alphas, beta=betas
-        )
+        locs = torch.cat([distribution.loc for distribution in distributions], dim=dim)
+        lmbdas = torch.cat([distribution.lmbda for distribution in distributions], dim=dim)
+        alphas = torch.cat([distribution.alpha for distribution in distributions], dim=dim)
+        betas = torch.cat([distribution.beta for distribution in distributions], dim=dim)
+        return NormalInverseGamma(loc=locs, lmbda=lmbdas, alpha=alphas, beta=betas)
     raise NotImplementedError(
-        f"Concatenation of {dist_type} distributions is not supported."
-        "Raise an issue if needed."
+        f"Concatenation of {dist_type} distributions is not supported." "Raise an issue if needed."
     )
 
 
@@ -97,14 +79,11 @@ def dist_squeeze(distribution: Distribution, dim: int) -> Distribution:
         beta = distribution.beta.squeeze(dim)
         return NormalInverseGamma(loc=loc, lmbda=lmbda, alpha=alpha, beta=beta)
     raise NotImplementedError(
-        f"Squeezing of {dist_type} distributions is not supported."
-        "Raise an issue if needed."
+        f"Squeezing of {dist_type} distributions is not supported." "Raise an issue if needed."
     )
 
 
-def dist_rearrange(
-    distribution: Distribution, pattern: str, **axes_lengths: int
-) -> Distribution:
+def dist_rearrange(distribution: Distribution, pattern: str, **axes_lengths: int) -> Distribution:
     dist_type = type(distribution)
     if isinstance(distribution, Normal | Laplace):
         loc = rearrange(distribution.loc, pattern=pattern, **axes_lengths)
@@ -139,9 +118,7 @@ class NormalInverseGamma(Distribution):
         beta: Number | Tensor,
         validate_args: bool | None = None,
     ) -> None:
-        self.loc, self.lmbda, self.alpha, self.beta = broadcast_all(
-            loc, lmbda, alpha, beta
-        )
+        self.loc, self.lmbda, self.alpha, self.beta = broadcast_all(loc, lmbda, alpha, beta)
         if (
             isinstance(loc, Number)
             and isinstance(lmbda, Number)
@@ -163,19 +140,13 @@ class NormalInverseGamma(Distribution):
         return self.loc
 
     def mode(self) -> None:
-        raise NotImplementedError(
-            "NormalInverseGamma distribution has no mode."
-        )
+        raise NotImplementedError("NormalInverseGamma distribution has no mode.")
 
     def stddev(self) -> None:
-        raise NotImplementedError(
-            "NormalInverseGamma distribution has no stddev."
-        )
+        raise NotImplementedError("NormalInverseGamma distribution has no stddev.")
 
     def variance(self) -> None:
-        raise NotImplementedError(
-            "NormalInverseGamma distribution has no variance."
-        )
+        raise NotImplementedError("NormalInverseGamma distribution has no variance.")
 
     @property
     def mean_loc(self) -> Tensor:
@@ -196,8 +167,7 @@ class NormalInverseGamma(Distribution):
         return (
             -0.5 * torch.log(torch.pi / self.lmbda)
             + self.alpha * gam.log()
-            - (self.alpha + 0.5)
-            * torch.log(gam + self.lmbda * (value - self.loc) ** 2)
+            - (self.alpha + 0.5) * torch.log(gam + self.lmbda * (value - self.loc) ** 2)
             - torch.lgamma(self.alpha)
             + torch.lgamma(self.alpha + 0.5)
         )

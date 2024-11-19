@@ -25,9 +25,7 @@ class TrainableDistribution(nn.Module):
 
     def log_posterior(self, weight: Tensor | None = None) -> Tensor:
         if self.weight is None or self.sigma is None:
-            raise ValueError(
-                "Sample the weights before querying the log posterior."
-            )
+            raise ValueError("Sample the weights before querying the log posterior.")
 
         if weight is None:  # coverage: ignore
             weight = self.weight

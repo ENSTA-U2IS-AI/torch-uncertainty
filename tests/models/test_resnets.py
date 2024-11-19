@@ -44,12 +44,8 @@ class TestPackedResnet:
     def test_main(self):
         model = packed_resnet(1, 10, 20, 2, 2, 1)
         model = packed_resnet(1, 10, 152, 2, 2, 1)
-        assert model.check_config(
-            {"alpha": 2, "gamma": 1, "groups": 1, "num_estimators": 2}
-        )
-        assert not model.check_config(
-            {"alpha": 1, "gamma": 1, "groups": 1, "num_estimators": 2}
-        )
+        assert model.check_config({"alpha": 2, "gamma": 1, "groups": 1, "num_estimators": 2})
+        assert not model.check_config({"alpha": 1, "gamma": 1, "groups": 1, "num_estimators": 2})
 
     def test_error(self):
         with pytest.raises(ValueError):
@@ -96,9 +92,7 @@ class TestLPBNNResnet:
     def test_error(self):
         with pytest.raises(ValueError):
             lpbnn_resnet(1, 10, 20, 2, style="test")
-        with pytest.raises(
-            ValueError, match="Unknown ResNet architecture. Got"
-        ):
+        with pytest.raises(ValueError, match="Unknown ResNet architecture. Got"):
             lpbnn_resnet(1, 10, 42, 2, style="test")
 
 

@@ -108,9 +108,7 @@ class InnerPooling(nn.Module):
         """
         super().__init__()
         self.pool = nn.AdaptiveAvgPool2d(1)
-        self.conv = nn.Conv2d(
-            in_channels, out_channels, kernel_size=1, bias=False
-        )
+        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size=1, bias=False)
         self.bn = nn.BatchNorm2d(out_channels)
 
     def forward(self, x: Tensor) -> Tensor:
@@ -147,16 +145,13 @@ class ASPP(nn.Module):
             )
         )
         modules += [
-            InnerConv(in_channels, out_channels, dilation, separable)
-            for dilation in atrous_rates
+            InnerConv(in_channels, out_channels, dilation, separable) for dilation in atrous_rates
         ]
         modules.append(InnerPooling(in_channels, out_channels))
         self.convs = nn.ModuleList(modules)
 
         self.projection = nn.Sequential(
-            nn.Conv2d(
-                5 * out_channels, out_channels, kernel_size=1, bias=False
-            ),
+            nn.Conv2d(5 * out_channels, out_channels, kernel_size=1, bias=False),
             nn.BatchNorm2d(out_channels),
             nn.ReLU(inplace=True),
             nn.Dropout(dropout_rate),
@@ -264,9 +259,7 @@ class DeepLabV3PlusDecoder(nn.Module):
             nn.BatchNorm2d(48),
             nn.ReLU(inplace=True),
         )
-        self.atrous_spatial_pyramid_pool = ASPP(
-            in_channels, aspp_dilate, separable, dropout_rate
-        )
+        self.atrous_spatial_pyramid_pool = ASPP(in_channels, aspp_dilate, separable, dropout_rate)
         if separable:
             self.conv = SeparableConv2d(304, 256, 3, padding=1, bias=False)
         else:
@@ -283,9 +276,7 @@ class DeepLabV3PlusDecoder(nn.Module):
             mode="bilinear",
             align_corners=False,
         )
-        output_features = torch.cat(
-            [low_level_features, output_features], dim=1
-        )
+        output_features = torch.cat([low_level_features, output_features], dim=1)
         out = F.relu(self.bn(self.conv(output_features)))
         return self.classifier(out)
 
@@ -328,13 +319,9 @@ class _DeepLabV3(nn.Module):
         elif output_stride == 8:
             dilations = [12, 24, 36]
         else:
-            raise ValueError(
-                f"output_stride: {output_stride} is not supported."
-            )
+            raise ValueError(f"output_stride: {output_stride} is not supported.")
 
-        self.backbone = DeepLabV3Backbone(
-            backbone_name, style, pretrained_backbone, norm_momentum
-        )
+        self.backbone = DeepLabV3Backbone(backbone_name, style, pretrained_backbone, norm_momentum)
         if style == "v3":
             self.decoder = DeepLabV3Decoder(
                 in_channels=2048,

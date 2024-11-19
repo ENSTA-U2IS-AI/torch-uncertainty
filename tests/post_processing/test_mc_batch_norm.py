@@ -17,9 +17,7 @@ class TestMCBatchNorm:
     def test_main(self):
         """Test initialization."""
         mc_model = lenet(1, 1, norm=partial(MCBatchNorm2d, num_estimators=2))
-        stoch_model = MCBatchNorm(
-            mc_model, num_estimators=2, convert=False, mc_batch_size=1
-        )
+        stoch_model = MCBatchNorm(mc_model, num_estimators=2, convert=False, mc_batch_size=1)
 
         model = lenet(1, 1, norm=nn.BatchNorm2d)
         stoch_model = MCBatchNorm(
@@ -42,9 +40,7 @@ class TestMCBatchNorm:
         stoch_model.eval()
         stoch_model(torch.randn(1, 1, 20, 20))
 
-        stoch_model = MCBatchNorm(
-            num_estimators=2, convert=False, mc_batch_size=1
-        )
+        stoch_model = MCBatchNorm(num_estimators=2, convert=False, mc_batch_size=1)
         stoch_model.set_model(mc_model)
 
     def test_errors(self):
@@ -52,18 +48,14 @@ class TestMCBatchNorm:
         model = nn.Identity()
         with pytest.raises(ValueError):
             MCBatchNorm(model, num_estimators=0, convert=True)
-        with pytest.raises(
-            ValueError, match="mc_batch_size must be a positive integer"
-        ):
+        with pytest.raises(ValueError, match="mc_batch_size must be a positive integer"):
             MCBatchNorm(model, num_estimators=1, convert=True, mc_batch_size=-1)
         with pytest.raises(ValueError):
             MCBatchNorm(model, num_estimators=1, convert=False)
         with pytest.raises(ValueError):
             MCBatchNorm(model, num_estimators=1, convert=True)
         model = lenet(1, 1, norm=nn.BatchNorm2d)
-        stoch_model = MCBatchNorm(
-            model, num_estimators=4, convert=True, mc_batch_size=1
-        )
+        stoch_model = MCBatchNorm(model, num_estimators=4, convert=True, mc_batch_size=1)
         dataset = DummyClassificationDataset(
             "./",
             num_channels=1,

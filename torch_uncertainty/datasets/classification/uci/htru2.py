@@ -60,11 +60,7 @@ class HTRU2(UCIClassificationDataset):
 
     def _make_dataset(self) -> None:
         """Create dataset from extracted files."""
-        data = pd.read_csv(
-            self.root / self.dataset_name / self.filename, sep=",", header=None
-        )
+        data = pd.read_csv(self.root / self.dataset_name / self.filename, sep=",", header=None)
         self.targets = torch.as_tensor(data[8].values, dtype=torch.long)
-        self.data = torch.as_tensor(
-            data.drop(columns=[8]).values, dtype=torch.float32
-        )
+        self.data = torch.as_tensor(data.drop(columns=[8]).values, dtype=torch.float32)
         self.num_features = self.data.shape[1]

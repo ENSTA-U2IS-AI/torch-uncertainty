@@ -70,9 +70,7 @@ def _ace_compute(
         Tensor: Adaptive Calibration error scalar.
     """
     with torch.no_grad():
-        acc_bin, conf_bin, prop_bin = _equal_binning_bucketize(
-            confidences, accuracies, num_bins
-        )
+        acc_bin, conf_bin, prop_bin = _equal_binning_bucketize(confidences, accuracies, num_bins)
 
     if norm == "l1":
         return torch.sum(torch.abs(acc_bin - conf_bin) * prop_bin)
@@ -111,9 +109,7 @@ class BinaryAdaptiveCalibrationError(Metric):
     ) -> None:
         super().__init__(**kwargs)
         if ignore_index is not None:  # coverage: ignore
-            raise ValueError(
-                "ignore_index is not supported for multiclass tasks."
-            )
+            raise ValueError("ignore_index is not supported for multiclass tasks.")
 
         if validate_args:
             _binary_calibration_error_arg_validation(n_bins, norm, ignore_index)
@@ -134,9 +130,7 @@ class BinaryAdaptiveCalibrationError(Metric):
         """Compute metric."""
         confidences = dim_zero_cat(self.confidences)
         accuracies = dim_zero_cat(self.accuracies)
-        return _ace_compute(
-            confidences, accuracies, self.n_bins, norm=self.norm
-        )
+        return _ace_compute(confidences, accuracies, self.n_bins, norm=self.norm)
 
 
 class MulticlassAdaptiveCalibrationError(Metric):
@@ -160,14 +154,10 @@ class MulticlassAdaptiveCalibrationError(Metric):
     ) -> None:
         super().__init__(**kwargs)
         if ignore_index is not None:  # coverage: ignore
-            raise ValueError(
-                "ignore_index is not supported for multiclass tasks."
-            )
+            raise ValueError("ignore_index is not supported for multiclass tasks.")
 
         if validate_args:
-            _multiclass_calibration_error_arg_validation(
-                num_classes, n_bins, norm, ignore_index
-            )
+            _multiclass_calibration_error_arg_validation(num_classes, n_bins, norm, ignore_index)
         self.n_bins = n_bins
         self.norm = norm
 
@@ -185,9 +175,7 @@ class MulticlassAdaptiveCalibrationError(Metric):
         """Compute metric."""
         confidences = dim_zero_cat(self.confidences)
         accuracies = dim_zero_cat(self.accuracies)
-        return _ace_compute(
-            confidences, accuracies, self.n_bins, norm=self.norm
-        )
+        return _ace_compute(confidences, accuracies, self.n_bins, norm=self.norm)
 
 
 class AdaptiveCalibrationError:

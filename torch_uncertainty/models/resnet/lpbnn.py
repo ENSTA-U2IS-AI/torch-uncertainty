@@ -198,9 +198,7 @@ class _LPBNNResNet(nn.Module):
         self.bn1 = normalization_layer(block_planes)
 
         if style == "imagenet":
-            self.optional_pool = nn.MaxPool2d(
-                kernel_size=3, stride=2, padding=1
-            )
+            self.optional_pool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         else:
             self.optional_pool = nn.Identity()
 
@@ -326,9 +324,7 @@ def lpbnn_resnet(
     groups: int = 1,
     style: Literal["imagenet", "cifar"] = "imagenet",
 ) -> _LPBNNResNet:
-    block = (
-        _BasicBlock if arch in [18, 20, 34, 44, 56, 110, 1202] else _Bottleneck
-    )
+    block = _BasicBlock if arch in [18, 20, 34, 44, 56, 110, 1202] else _Bottleneck
     in_planes = 16 if arch in [20, 44, 56, 110, 1202] else 64
     return _LPBNNResNet(
         block=block,

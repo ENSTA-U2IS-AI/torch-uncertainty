@@ -17,9 +17,7 @@ from torch_uncertainty.utils.trainer import TUTrainer
 
 class TUSaveConfigCallback(SaveConfigCallback):
     @override
-    def setup(
-        self, trainer: Trainer, pl_module: LightningModule, stage: str
-    ) -> None:
+    def setup(self, trainer: Trainer, pl_module: LightningModule, stage: str) -> None:
         if self.already_saved:
             return
 
@@ -31,9 +29,7 @@ class TUSaveConfigCallback(SaveConfigCallback):
 
             if not self.overwrite:
                 # check if the file exists on rank 0
-                file_exists = (
-                    fs.isfile(config_path) if trainer.is_global_zero else False
-                )
+                file_exists = fs.isfile(config_path) if trainer.is_global_zero else False
                 # broadcast whether to fail to all ranks
                 file_exists = trainer.strategy.broadcast(file_exists)
                 if file_exists:  # coverage: ignore
@@ -63,16 +59,11 @@ class TUSaveConfigCallback(SaveConfigCallback):
 class TULightningCLI(LightningCLI):
     def __init__(
         self,
-        model_class: (
-            type[LightningModule] | Callable[..., LightningModule] | None
-        ) = None,
+        model_class: (type[LightningModule] | Callable[..., LightningModule] | None) = None,
         datamodule_class: (
-            type[LightningDataModule]
-            | Callable[..., LightningDataModule]
-            | None
+            type[LightningDataModule] | Callable[..., LightningDataModule] | None
         ) = None,
-        save_config_callback: type[SaveConfigCallback]
-        | None = TUSaveConfigCallback,
+        save_config_callback: type[SaveConfigCallback] | None = TUSaveConfigCallback,
         save_config_kwargs: dict[str, Any] | None = None,
         trainer_class: type[Trainer] | Callable[..., Trainer] = TUTrainer,
         trainer_defaults: dict[str, Any] | None = None,
@@ -120,9 +111,7 @@ class TULightningCLI(LightningCLI):
             auto_configure_optimizers,
         )
 
-    def add_default_arguments_to_parser(
-        self, parser: LightningArgumentParser
-    ) -> None:
+    def add_default_arguments_to_parser(self, parser: LightningArgumentParser) -> None:
         """Adds default arguments to the parser."""
         parser.add_argument(
             "--eval_after_fit",

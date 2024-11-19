@@ -49,17 +49,13 @@ class MCBatchNorm(PostProcessing):
             self._setup_model(model)
 
     def _setup_model(self, model):
-        _mcbn_checks(
-            model, self.num_estimators, self.mc_batch_size, self.convert
-        )
+        _mcbn_checks(model, self.num_estimators, self.mc_batch_size, self.convert)
         self.model = deepcopy(model)  # Is it necessary?
         self.model = self.model.eval()
         if self.convert:
             self._convert()
             if not has_mcbn(self.model):
-                raise ValueError(
-                    "model does not contain any MCBatchNorm2d after conversion."
-                )
+                raise ValueError("model does not contain any MCBatchNorm2d after conversion.")
 
     def set_model(self, model: nn.Module) -> None:
         self.model = model
@@ -75,9 +71,7 @@ class MCBatchNorm(PostProcessing):
             This method is used to populate the MC BatchNorm layers.
             Use the training dataset.
         """
-        self.dl = DataLoader(
-            dataset, batch_size=self.mc_batch_size, shuffle=True
-        )
+        self.dl = DataLoader(dataset, batch_size=self.mc_batch_size, shuffle=True)
         self.counter = 0
         self.reset_counters()
         self.set_accumulate(True)
@@ -89,9 +83,7 @@ class MCBatchNorm(PostProcessing):
                 self.set_accumulate(False)
                 self.trained = True
                 return
-        raise ValueError(
-            "The dataset is too small to populate the MC BatchNorm statistics."
-        )
+        raise ValueError("The dataset is too small to populate the MC BatchNorm statistics.")
 
     def _est_forward(self, x: Tensor) -> Tensor:
         """Forward pass of a single estimator."""
@@ -106,13 +98,9 @@ class MCBatchNorm(PostProcessing):
         if self.training:
             return self.model(x)
         if not self.trained:
-            raise RuntimeError(
-                "MCBatchNorm has not been trained. Call .fit() first."
-            )
+            raise RuntimeError("MCBatchNorm has not been trained. Call .fit() first.")
         self.reset_counters()
-        return torch.cat(
-            [self._est_forward(x) for _ in range(self.num_estimators)], dim=0
-        )
+        return torch.cat([self._est_forward(x) for _ in range(self.num_estimators)], dim=0)
 
     def _convert(self) -> None:
         """Convert all BatchNorm2d layers to MCBatchNorm2d layers."""
@@ -176,15 +164,8 @@ def has_mcbn(model: nn.Module) -> bool:
 
 def _mcbn_checks(model, num_estimators, mc_batch_size, convert):
     if num_estimators < 1 or not isinstance(num_estimators, int):
-        raise ValueError(
-            f"num_estimators must be a positive integer, got {num_estimators}."
-        )
+        raise ValueError(f"num_estimators must be a positive integer, got {num_estimators}.")
     if mc_batch_size < 1 or not isinstance(mc_batch_size, int):
-        raise ValueError(
-            f"mc_batch_size must be a positive integer, got {mc_batch_size}."
-        )
+        raise ValueError(f"mc_batch_size must be a positive integer, got {mc_batch_size}.")
     if not convert and not has_mcbn(model):
-        raise ValueError(
-            "model does not contain any MCBatchNorm2d nor is not to be "
-            "converted."
-        )
+        raise ValueError("model does not contain any MCBatchNorm2d nor is not to be " "converted.")

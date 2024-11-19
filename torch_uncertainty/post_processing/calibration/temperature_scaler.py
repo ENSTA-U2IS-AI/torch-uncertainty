@@ -47,9 +47,7 @@ class TemperatureScaler(Scaler):
         if val <= 0:
             raise ValueError("Temperature value must be positive.")
 
-        self.temp = nn.Parameter(
-            torch.ones(1, device=self.device) * val, requires_grad=True
-        )
+        self.temp = nn.Parameter(torch.ones(1, device=self.device) * val, requires_grad=True)
 
     def _scale(self, logits: Tensor) -> Tensor:
         """Scale the prediction with the optimal temperature.

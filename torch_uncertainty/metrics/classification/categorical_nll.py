@@ -75,9 +75,7 @@ class CategoricalNLL(Metric):
             target (Tensor): Ground truth labels.
         """
         if self.reduction is None or self.reduction == "none":
-            self.values.append(
-                F.nll_loss(torch.log(probs), target, reduction="none")
-            )
+            self.values.append(F.nll_loss(torch.log(probs), target, reduction="none"))
         else:
             self.values += F.nll_loss(torch.log(probs), target, reduction="sum")
             self.total += target.size(0)

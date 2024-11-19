@@ -12,17 +12,11 @@ def check_lpbnn_parameters_consistency(
     hidden_size: int, std_factor: float, num_estimators: int
 ) -> None:
     if hidden_size < 1:
-        raise ValueError(
-            f"hidden_size must be greater than 0. Got {hidden_size}."
-        )
+        raise ValueError(f"hidden_size must be greater than 0. Got {hidden_size}.")
     if std_factor < 0:
-        raise ValueError(
-            f"std_factor must be greater than 0. Got {std_factor}."
-        )
+        raise ValueError(f"std_factor must be greater than 0. Got {std_factor}.")
     if num_estimators < 1:
-        raise ValueError(
-            f"num_estimators must be greater than 0. Got {num_estimators}."
-        )
+        raise ValueError(f"num_estimators must be greater than 0. Got {num_estimators}.")
 
 
 def _sample(mu: Tensor, logvar: Tensor, std_factor: float) -> Tensor:
@@ -72,9 +66,7 @@ class LPBNNLinear(nn.Module):
             `Encoding the latent posterior of Bayesian Neural Networks for
             uncertainty quantification <https://arxiv.org/abs/2012.02818>`_.
         """
-        check_lpbnn_parameters_consistency(
-            hidden_size, std_factor, num_estimators
-        )
+        check_lpbnn_parameters_consistency(hidden_size, std_factor, num_estimators)
         factory_kwargs = {"device": device, "dtype": dtype}
         super().__init__()
 
@@ -87,33 +79,19 @@ class LPBNNLinear(nn.Module):
         # for the KL Loss
         self.lprior = 0
 
-        self.linear = nn.Linear(
-            in_features, out_features, bias=False, **factory_kwargs
-        )
+        self.linear = nn.Linear(in_features, out_features, bias=False, **factory_kwargs)
         self.alpha = nn.Parameter(
             torch.empty((num_estimators, in_features), **factory_kwargs),
             requires_grad=False,
         )
-        self.gamma = nn.Parameter(
-            torch.empty((num_estimators, out_features), **factory_kwargs)
-        )
-        self.encoder = nn.Linear(
-            in_features, self.hidden_size, **factory_kwargs
-        )
-        self.latent_mean = nn.Linear(
-            self.hidden_size, self.hidden_size, **factory_kwargs
-        )
-        self.latent_logvar = nn.Linear(
-            self.hidden_size, self.hidden_size, **factory_kwargs
-        )
-        self.decoder = nn.Linear(
-            self.hidden_size, in_features, **factory_kwargs
-        )
+        self.gamma = nn.Parameter(torch.empty((num_estimators, out_features), **factory_kwargs))
+        self.encoder = nn.Linear(in_features, self.hidden_size, **factory_kwargs)
+        self.latent_mean = nn.Linear(self.hidden_size, self.hidden_size, **factory_kwargs)
+        self.latent_logvar = nn.Linear(self.hidden_size, self.hidden_size, **factory_kwargs)
+        self.decoder = nn.Linear(self.hidden_size, in_features, **factory_kwargs)
         self.latent_loss = torch.zeros(1, **factory_kwargs)
         if bias:
-            self.bias = nn.Parameter(
-                torch.empty((num_estimators, out_features), **factory_kwargs)
-            )
+            self.bias = nn.Parameter(torch.empty((num_estimators, out_features), **factory_kwargs))
         else:
             self.register_parameter("bias", None)
         self.reset_parameters()
@@ -127,9 +105,7 @@ class LPBNNLinear(nn.Module):
         self.latent_mean.reset_parameters()
         self.latent_logvar.reset_parameters()
         if self.bias is not None:
-            fan_in, _ = nn.init._calculate_fan_in_and_fan_out(
-                self.linear.weight
-            )
+            fan_in, _ = nn.init._calculate_fan_in_and_fan_out(self.linear.weight)
             bound = 1 / math.sqrt(fan_in) if fan_in > 0 else 0
             nn.init.uniform_(self.bias, -bound, bound)
 
@@ -148,9 +124,7 @@ class LPBNNLinear(nn.Module):
         # Compute the latent loss
         if self.training:
             mse = F.mse_loss(alpha_sample, self.alpha)
-            kld = -0.5 * torch.sum(
-                1 + latent_logvar - latent_mean**2 - torch.exp(latent_logvar)
-            )
+            kld = -0.5 * torch.sum(1 + latent_logvar - latent_mean**2 - torch.exp(latent_logvar))
             # For the KL Loss
             self.lvposterior = mse + kld
 
@@ -218,9 +192,7 @@ class LPBNNConv2d(nn.Module):
             `Encoding the latent posterior of Bayesian Neural Networks for
             uncertainty quantification <https://arxiv.org/abs/2012.02818>`_.
         """
-        check_lpbnn_parameters_consistency(
-            hidden_size, std_factor, num_estimators
-        )
+        check_lpbnn_parameters_consistency(hidden_size, std_factor, num_estimators)
         factory_kwargs = {"device": device, "dtype": dtype}
         super().__init__()
 
@@ -248,31 +220,19 @@ class LPBNNConv2d(nn.Module):
             requires_grad=False,
         )
 
-        self.encoder = nn.Linear(
-            in_channels, self.hidden_size, **factory_kwargs
-        )
-        self.decoder = nn.Linear(
-            self.hidden_size, in_channels, **factory_kwargs
-        )
-        self.latent_mean = nn.Linear(
-            self.hidden_size, self.hidden_size, **factory_kwargs
-        )
-        self.latent_logvar = nn.Linear(
-            self.hidden_size, self.hidden_size, **factory_kwargs
-        )
+        self.encoder = nn.Linear(in_channels, self.hidden_size, **factory_kwargs)
+        self.decoder = nn.Linear(self.hidden_size, in_channels, **factory_kwargs)
+        self.latent_mean = nn.Linear(self.hidden_size, self.hidden_size, **factory_kwargs)
+        self.latent_logvar = nn.Linear(self.hidden_size, self.hidden_size, **factory_kwargs)
 
         self.latent_loss = torch.zeros(1, **factory_kwargs)
         if gamma:
-            self.gamma = nn.Parameter(
-                torch.empty((num_estimators, out_channels), **factory_kwargs)
-            )
+            self.gamma = nn.Parameter(torch.empty((num_estimators, out_channels), **factory_kwargs))
         else:
             self.register_parameter("gamma", None)
 
         if bias:
-            self.bias = nn.Parameter(
-                torch.empty((num_estimators, out_channels), **factory_kwargs)
-            )
+            self.bias = nn.Parameter(torch.empty((num_estimators, out_channels), **factory_kwargs))
         else:
             self.register_parameter("bias", None)
         self.reset_parameters()
@@ -306,36 +266,22 @@ class LPBNNConv2d(nn.Module):
         # Compute the latent loss
         if self.training:
             mse = F.mse_loss(alpha_sample, self.alpha)
-            kld = -0.5 * torch.sum(
-                1 + latent_logvar - latent_mean.pow(2) - latent_logvar.exp()
-            )
+            kld = -0.5 * torch.sum(1 + latent_logvar - latent_mean.pow(2) - latent_logvar.exp())
             # for the KL Loss
             self.lvposterior = mse + kld
 
         num_examples_per_model = int(x.size(0) / self.num_estimators)
 
         # Compute the output
-        alpha = (
-            alpha_sample.repeat((num_examples_per_model, 1))
-            .unsqueeze(-1)
-            .unsqueeze(-1)
-        )
+        alpha = alpha_sample.repeat((num_examples_per_model, 1)).unsqueeze(-1).unsqueeze(-1)
         if self.gamma is not None:
-            gamma = (
-                self.gamma.repeat((num_examples_per_model, 1))
-                .unsqueeze(-1)
-                .unsqueeze(-1)
-            )
+            gamma = self.gamma.repeat((num_examples_per_model, 1)).unsqueeze(-1).unsqueeze(-1)
             out = self.conv(x * alpha) * gamma
         else:
             out = self.conv(x * alpha)
 
         if self.bias is not None:
-            bias = (
-                self.bias.repeat((num_examples_per_model, 1))
-                .unsqueeze(-1)
-                .unsqueeze(-1)
-            )
+            bias = self.bias.repeat((num_examples_per_model, 1)).unsqueeze(-1).unsqueeze(-1)
             out += bias
 
         return out

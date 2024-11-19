@@ -31,9 +31,7 @@ class TestCrossValDataModule:
         dm.train = ds
         dm.val = ds
         dm.test = ds
-        cv_dm = CrossValDataModule(
-            "root", [0], [1], dm, 128, 0.0, 4, True, True
-        )
+        cv_dm = CrossValDataModule("root", [0], [1], dm, 128, 0.0, 4, True, True)
 
         cv_dm.setup()
         cv_dm.setup("test")
@@ -54,9 +52,7 @@ class TestCrossValDataModule:
         dm.train = ds
         dm.val = ds
         dm.test = ds
-        cv_dm = CrossValDataModule(
-            "root", [0], [1], dm, 128, 0.0, 4, True, True
-        )
+        cv_dm = CrossValDataModule("root", [0], [1], dm, 128, 0.0, 4, True, True)
         with pytest.raises(NotImplementedError):
             cv_dm.setup()
             cv_dm._get_train_data()

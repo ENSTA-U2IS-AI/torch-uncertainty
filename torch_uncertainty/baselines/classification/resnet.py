@@ -66,9 +66,7 @@ class ResNetBaseline(ClassificationRoutine):
         gamma: int = 1,
         rho: float = 1.0,
         batch_repeat: int = 1,
-        ood_criterion: Literal[
-            "msp", "logit", "energy", "entropy", "mi", "vr"
-        ] = "msp",
+        ood_criterion: Literal["msp", "logit", "energy", "entropy", "mi", "vr"] = "msp",
         log_plots: bool = False,
         save_in_csv: bool = False,
         calibration_set: Literal["val", "test"] = "val",

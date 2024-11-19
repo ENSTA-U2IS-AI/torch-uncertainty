@@ -11,9 +11,7 @@ class TestGroupingLoss:
         metric = GroupingLoss()
         metric.update(
             torch.cat([torch.tensor([0, 1, 0, 1]), torch.ones(200) / 10]),
-            torch.cat(
-                [torch.tensor([0, 0, 1, 1]), torch.zeros(100), torch.ones(100)]
-            ).long(),
+            torch.cat([torch.tensor([0, 0, 1, 1]), torch.zeros(100), torch.ones(100)]).long(),
             torch.cat([torch.zeros((104, 10)), torch.ones((100, 10))]),
         )
         metric.compute()
