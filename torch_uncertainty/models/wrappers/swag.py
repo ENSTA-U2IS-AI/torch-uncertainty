@@ -39,7 +39,7 @@ class SWAG(SWA):
             model (nn.Module): PyTorch model to be trained.
             cycle_start (int): Begininning of the first SWAG averaging cycle.
             cycle_length (int): Number of epochs between SWAG updates. The
-                first update occurs at :attr:`cycle_start`+:attr:`cycle_length`.
+                first update occurs at :attr:`cycle_start` + :attr:`cycle_length`.
             scale (float, optional): Scale of the Gaussian. Defaults to 1.0.
             diag_covariance (bool, optional): Whether to use a diagonal
                 covariance. Defaults to False.
