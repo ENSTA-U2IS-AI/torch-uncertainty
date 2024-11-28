@@ -1,7 +1,9 @@
 import torch
 from torch import Tensor, nn
+from torch.distributions import Independent
 
 from torch_uncertainty.layers.bayesian import bayesian_modules
+from torch_uncertainty.utils.distributions import get_dist_class
 
 
 class KLDiv(nn.Module):
@@ -37,6 +39,7 @@ class ELBOLoss(nn.Module):
         inner_loss: nn.Module,
         kl_weight: float,
         num_samples: int,
+        dist_family: str | None = None,
     ) -> None:
         """The Evidence Lower Bound (ELBO) loss for Bayesian Neural Networks.
 
@@ -48,6 +51,8 @@ class ELBOLoss(nn.Module):
             inner_loss (nn.Module): The loss function to use during training
             kl_weight (float): The weight of the KL divergence term
             num_samples (int): The number of samples to use for the ELBO loss
+            dist_family (str, optional): The distribution family to use for the
+                output of the model. None means no distribution. Defaults to None.
 
         Note:
             Set the model to None if you use the ELBOLoss within
@@ -60,6 +65,7 @@ class ELBOLoss(nn.Module):
         self.inner_loss = inner_loss
         self.kl_weight = kl_weight
         self.num_samples = num_samples
+        self.dist_family = dist_family
 
     def forward(self, inputs: Tensor, targets: Tensor) -> Tensor:
         """Gather the KL divergence from the Bayesian modules and aggregate
@@ -74,8 +80,10 @@ class ELBOLoss(nn.Module):
         """
         aggregated_elbo = torch.zeros(1, device=inputs.device)
         for _ in range(self.num_samples):
-            logits = self.model(inputs)
-            aggregated_elbo += self.inner_loss(logits, targets)
+            out = self.model(inputs)
+            if self.dist_family is not None:
+                out = Independent(get_dist_class(self.dist_family)(**out), 1)
+            aggregated_elbo += self.inner_loss(out, targets)
             # TODO: This shouldn't be necessary
             aggregated_elbo += self.kl_weight * self._kl_div().to(inputs.device)
         return aggregated_elbo / self.num_samples

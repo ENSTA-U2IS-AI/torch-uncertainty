@@ -5,8 +5,6 @@ import torch
 from torch import nn
 from torch.distributions import Distribution
 
-from torch_uncertainty.utils.distributions import cat_dist
-
 
 class _DeepEnsembles(nn.Module):
     def __init__(
@@ -52,7 +50,11 @@ class _RegDeepEnsembles(_DeepEnsembles):
             Distribution:
         """
         if self.probabilistic:
-            return cat_dist([model.forward(x) for model in self.core_models], dim=0)
+            out = [model.forward(x) for model in self.core_models]
+            key_set = {tuple(o.keys()) for o in out}
+            if len(key_set) != 1:
+                raise ValueError("The output of the models must have the same keys.")
+            return {k: torch.cat([o[k] for o in out], dim=0) for k in key_set.pop()}
         return super().forward(x)
 
 
