@@ -4,12 +4,12 @@ import pytest
 import torch
 from torch.distributions import Normal
 
-from torch_uncertainty.layers.distributions import NormalInverseGamma
 from torch_uncertainty.losses import (
     BetaNLL,
     DERLoss,
     DistributionNLLLoss,
 )
+from torch_uncertainty.utils.distributions import NormalInverseGamma
 
 
 class TestDistributionNLL:
