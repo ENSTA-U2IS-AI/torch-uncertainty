@@ -34,9 +34,7 @@ from torch_uncertainty.models import (
     STEP_UPDATE_MODEL,
 )
 from torch_uncertainty.utils.distributions import (
-    dist_rearrange,
-    dist_size,
-    dist_squeeze,
+    get_dist_class,
 )
 
 
@@ -50,8 +48,8 @@ class PixelRegressionRoutine(LightningModule):
         self,
         model: nn.Module,
         output_dim: int,
-        probabilistic: bool,
         loss: nn.Module,
+        dist_family: str | None = None,
         is_ensemble: bool = False,
         format_batch_fn: nn.Module | None = None,
         optim_recipe: dict | Optimizer | None = None,
@@ -64,9 +62,9 @@ class PixelRegressionRoutine(LightningModule):
         Args:
             model (nn.Module): Model to train.
             output_dim (int): Number of outputs of the model.
-            probabilistic (bool): Whether the model is probabilistic, i.e.,
-                outputs a PyTorch distribution.
             loss (nn.Module): Loss function to optimize the :attr:`model`.
+            dist_family (str, optional): The distribution family to use for
+                probabilistic pixel regression. Defaults to ``None``.
             is_ensemble (bool, optional): Whether the model is an ensemble.
                 Defaults to ``False``.
             optim_recipe (dict or Optimizer, optional): The optimizer and
@@ -89,7 +87,8 @@ class PixelRegressionRoutine(LightningModule):
         self.model = model
         self.output_dim = output_dim
         self.one_dim_depth = output_dim == 1
-        self.probabilistic = probabilistic
+        self.dist_family = dist_family
+        self.probabilistic = dist_family is not None
         self.loss = loss
         self.num_image_plot = num_image_plot
         self.is_ensemble = is_ensemble
@@ -163,7 +162,7 @@ class PixelRegressionRoutine(LightningModule):
         pred = self.model(inputs)
         if self.probabilistic:
             if not self.is_ensemble:
-                pred = dist_squeeze(pred, -1)
+                pred = {k: v.squeeze(-1) for k, v in pred.items()}
         else:
             if not self.is_ensemble:
                 pred = pred.squeeze(-1)
@@ -174,39 +173,47 @@ class PixelRegressionRoutine(LightningModule):
         if self.one_dim_depth:
             target = target.unsqueeze(1)
 
-        dists = self.model(inputs)
-        out_shape = dist_size(dists)[-2:] if self.probabilistic else dists.shape[-2:]
+        out = self.model(inputs)
+        out_shape = out[next(iter(out))].shape[-2:] if self.probabilistic else out.shape[-2:]
         target = F.resize(target, out_shape, interpolation=F.InterpolationMode.NEAREST)
-        padding_mask = torch.isnan(target)
+        target = rearrange(target, "b c h w -> b h w c")
+        padding_mask = torch.isnan(target).any(dim=-1)
         if self.probabilistic:
+            dist_params = {k: rearrange(v, "b c h w -> b h w c") for k, v in out.items()}
+            dists = Independent(get_dist_class(self.dist_family)(**dist_params), 1)
             loss = self.loss(dists, target, padding_mask)
         else:
-            loss = self.loss(dists[padding_mask], target[padding_mask])
+            out = rearrange(out, "b c h w -> b h w c")
+            loss = self.loss(out[padding_mask], target[padding_mask])
 
         if self.needs_step_update:
             self.model.update_wrapper(self.current_epoch)
         self.log("train_loss", loss, prog_bar=True, logger=True)
         return loss
 
+    def evaluation_forward(self, inputs: Tensor) -> tuple[Tensor, Distribution | None]:
+        batch_size = inputs.size(0)
+        preds = self.model(inputs)
+
+        if self.probabilistic:
+            dist_params = {
+                k: rearrange(v, "(m b) c h w -> b h w m c", b=batch_size) for k, v in preds.items()
+            }
+            comp = Independent(get_dist_class(self.dist_family)(**dist_params), 1)
+            mix = Categorical(torch.ones(comp.batch_shape, device=self.device))
+            mixture = MixtureSameFamily(mix, comp)
+            preds = mixture.mean
+            return preds, mixture
+
+        preds = rearrange(preds, "(m b) c h w -> b m h w c", b=batch_size)
+        return preds.mean(dim=1), None
+
     def validation_step(self, batch: tuple[Tensor, Tensor], batch_idx: int) -> None:
         inputs, targets = batch
         if self.one_dim_depth:
             targets = targets.unsqueeze(1)
-        batch_size = targets.size(0)
-        targets = rearrange(targets, "b c h w -> (b c h w)")
-        preds = self.model(inputs)
-
-        if self.probabilistic:
-            ens_dist = Independent(
-                dist_rearrange(preds, "(m b) c h w -> (b c h w) m", b=batch_size),
-                0,
-            )
-            mix = Categorical(torch.ones((dist_size(preds)[0] // batch_size), device=self.device))
-            mixture = MixtureSameFamily(mix, ens_dist)
-            preds = mixture.mean
-        else:
-            preds = rearrange(preds, "(m b) c h w -> (b c h w) m", b=batch_size)
-            preds = preds.mean(dim=1)
+        targets = rearrange(targets, "b c h w -> b h w c")
+        preds, dist = self.evaluation_forward(inputs)
 
         if batch_idx == 0 and self.log_plots:
             self._plot_depth(
@@ -216,10 +223,10 @@ class PixelRegressionRoutine(LightningModule):
                 stage="val",
             )
 
-        padding_mask = torch.isnan(targets)
+        padding_mask = torch.isnan(targets).any(dim=-1)
         self.val_metrics.update(preds[padding_mask], targets[padding_mask])
-        if self.probabilistic:
-            self.val_prob_metrics.update(mixture, targets, padding_mask)
+        if isinstance(dist, Distribution):
+            self.val_prob_metrics.update(dist, targets, padding_mask)
 
     def test_step(
         self,
@@ -234,18 +241,8 @@ class PixelRegressionRoutine(LightningModule):
         inputs, targets = batch
         if self.one_dim_depth:
             targets = targets.unsqueeze(1)
-        batch_size = targets.size(0)
-        targets = rearrange(targets, "b c h w -> (b c h w)")
-        preds = self.model(inputs)
-
-        if self.probabilistic:
-            ens_dist = dist_rearrange(preds, "(m b) c h w -> (b c h w) m", b=batch_size)
-            mix = Categorical(torch.ones((dist_size(preds)[0] // batch_size), device=self.device))
-            mixture = MixtureSameFamily(mix, ens_dist)
-            preds = mixture.mean
-        else:
-            preds = rearrange(preds, "(m b) c h w -> (b c h w) m", b=batch_size)
-            preds = preds.mean(dim=1)
+        targets = rearrange(targets, "b c h w -> b h w c")
+        preds, dist = self.evaluation_forward(inputs)
 
         if batch_idx == 0 and self.log_plots:
             num_images = (
@@ -258,10 +255,10 @@ class PixelRegressionRoutine(LightningModule):
                 stage="test",
             )
 
-        padding_mask = torch.isnan(targets)
+        padding_mask = torch.isnan(targets).any(dim=-1)
         self.test_metrics.update(preds[padding_mask], targets[padding_mask])
-        if self.probabilistic:
-            self.test_prob_metrics.update(mixture, targets, padding_mask)
+        if isinstance(dist, Distribution):
+            self.test_prob_metrics.update(dist, targets, padding_mask)
 
     def on_validation_epoch_end(self) -> None:
         res_dict = self.val_metrics.compute()
