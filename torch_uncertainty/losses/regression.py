@@ -2,7 +2,7 @@ from typing import Literal
 
 import torch
 from torch import Tensor, nn
-from torch.distributions import Distribution
+from torch.distributions import Distribution, Independent
 
 from torch_uncertainty.utils.distributions import NormalInverseGamma
 
@@ -34,12 +34,12 @@ class DistributionNLLLoss(nn.Module):
         """
         loss = -dist.log_prob(targets)
         if padding_mask is not None:
-            loss = loss.masked_fill(padding_mask, 0.0)
+            loss = loss.masked_fill(padding_mask, float("nan"))
 
         if self.reduction == "mean":
-            loss = loss.mean()
+            loss = loss.nanmean()
         elif self.reduction == "sum":
-            loss = loss.sum()
+            loss = loss.nansum()
         return loss
 
 
@@ -71,7 +71,10 @@ class DERLoss(DistributionNLLLoss):
             )
         self.reg_weight = reg_weight
 
-    def _reg(self, dist: NormalInverseGamma, targets: Tensor) -> Tensor:
+    def _reg(self, dist: NormalInverseGamma | Independent, targets: Tensor) -> Tensor:
+        if isinstance(dist, Independent):
+            dist = dist.base_dist
+
         return torch.norm(targets - dist.loc, 1, dim=1, keepdim=True) * (
             2 * dist.lmbda + dist.alpha
         )
