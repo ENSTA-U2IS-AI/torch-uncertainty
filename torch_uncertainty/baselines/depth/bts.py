@@ -39,10 +39,10 @@ class BTSBaseline(PixelRegressionRoutine):
         model = self.versions[version][self.archs.index(arch)](**params)
         super().__init__(
             output_dim=1,
-            probabilistic=False,
             model=model,
             loss=loss,
             num_estimators=num_estimators,
             format_batch_fn=format_batch_fn,
+            dist_family=None,
         )
         self.save_hyperparameters(ignore=["loss"])

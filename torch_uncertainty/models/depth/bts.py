@@ -14,7 +14,7 @@ from torchvision.models.resnet import (
     ResNeXt101_32X8D_Weights,
 )
 
-from torch_uncertainty.layers.distributions import LaplaceLayer, NormalLayer
+from torch_uncertainty.layers.distributions import LaplaceLinear, NormalLinear
 from torch_uncertainty.models.utils import Backbone
 
 resnet_feat_out_channels = [64, 256, 512, 1024, 2048]
@@ -400,7 +400,7 @@ class BTSDecoder(nn.Module):
         )
         self.conv1 = nn.Conv2d(num_features // 16 + 4, num_features // 16, 3, 1, 1, bias=False)
         self.output_channels = 1
-        if dist_layer in (NormalLayer, LaplaceLayer):
+        if dist_layer in (NormalLinear, LaplaceLinear):
             self.output_channels = 2
         elif dist_layer != nn.Identity:
             raise ValueError(f"Unsupported distribution layer. Got {dist_layer}.")
