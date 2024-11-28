@@ -40,7 +40,7 @@ class _RegDeepEnsembles(_DeepEnsembles):
         super().__init__(models)
         self.probabilistic = probabilistic
 
-    def forward(self, x: torch.Tensor) -> Distribution:
+    def forward(self, x: torch.Tensor) -> torch.Tensor | dict[str, torch.Tensor]:
         r"""Return the logits of the ensemble.
 
         Args:
