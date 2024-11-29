@@ -34,8 +34,7 @@ class CUB(ImageFolder):
                 and transforms it. Defaults to None.
             download (bool, optional): If True, downloads the dataset from the internet and puts it
                 in root directory. If dataset is already downloaded, it is not downloaded again.
-                Defaults to False.
-
+                Defaults to
         Reference:
             Wah, C. and Branson, S. and Welinder, P. and Perona, P. and Belongie, S. Caltech-UCSD
                 Birds 200.
@@ -53,11 +52,14 @@ class CUB(ImageFolder):
         super().__init__(Path(root) / "CUB_200_2011" / "images", transform, target_transform)
 
         training_idx = self._load_train_idx()
-        # self.samples is a list[(path, target)], loop over enumerate(self.samples) to get index, (path, target)
         self.samples = [sample for i, sample in enumerate(self.samples) if training_idx[i] == train]
+        self._labels = [label for i, label in enumerate(self.targets) if training_idx[i] == train]
+        with Path(self.folder_root / "CUB_200_2011" / "classes.txt").open("r") as f:
+            self.class_names = [
+                line.split(" ")[1].split(".")[1].replace("\n", "").replace("_", " ") for line in f
+            ]
 
     def _load_train_idx(self) -> Tensor:
-        # data is like <image_id> <is_training_image> is a txt file
         is_training_img = []
         with (self.folder_root / "CUB_200_2011" / "train_test_split.txt").open("r") as f:
             is_training_img = [int(line.split(" ")[1]) for line in f]
@@ -78,10 +80,3 @@ class CUB(ImageFolder):
         download_and_extract_archive(
             url=self.url, download_root=self.folder_root, filename=self.filename, md5=self.tgz_md5
         )
-
-
-if __name__ == "__main__":
-    ds = CUB("./data", train=True, download=True)
-    print(ds[0])
-    ds = CUB("./data", train=False, download=True)
-    print(ds[0])
