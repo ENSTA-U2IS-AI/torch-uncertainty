@@ -29,7 +29,6 @@ class TestELBOLoss:
         loss = ELBOLoss(model, criterion, kl_weight=1 / 50000, num_samples=3)
 
         routine = RegressionRoutine(
-            probabilistic=False,
             output_dim=4,
             model=model,
             loss=loss,

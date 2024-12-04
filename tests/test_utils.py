@@ -6,7 +6,6 @@ from huggingface_hub.errors import (
     HfHubHTTPError,
     RepositoryNotFoundError,
 )
-from torch.distributions import Laplace, Normal
 
 from torch_uncertainty.utils import (
     csv_writer,
@@ -77,13 +76,3 @@ class TestDistributions:
             torch.tensor(1.1),
         )
         _ = dist.mean, dist.mean_loc, dist.mean_variance, dist.variance_loc
-
-    def test_errors(self):
-        with pytest.raises(ValueError):
-            distributions.cat_dist(
-                [
-                    Normal(torch.tensor([0.0]), torch.tensor([1.0])),
-                    Laplace(torch.tensor([0.0]), torch.tensor([1.0])),
-                ],
-                dim=0,
-            )

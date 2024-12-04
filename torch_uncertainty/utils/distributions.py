@@ -1,102 +1,39 @@
 from numbers import Number
 
 import torch
-from einops import rearrange
 from torch import Tensor
 from torch.distributions import (
+    Cauchy,
     Distribution,
     Laplace,
     Normal,
+    StudentT,
     constraints,
 )
 from torch.distributions.utils import broadcast_all
 
 
-def dist_size(distribution: Distribution) -> torch.Size:
-    """Get the size of the distribution.
+def get_dist_class(dist_family: str) -> type[Distribution]:
+    """Get the distribution class from a string.
 
     Args:
-        distribution (Distribution): The distribution.
+        dist_family (str): The distribution family.
 
     Returns:
-        torch.Size: The size of the distribution.
+        type[Distribution]: The distribution class.
     """
-    if isinstance(distribution, Normal | Laplace | NormalInverseGamma):
-        return distribution.loc.size()
+    if dist_family == "normal":
+        return Normal
+    if dist_family == "laplace":
+        return Laplace
+    if dist_family == "nig":
+        return NormalInverseGamma
+    if dist_family == "cauchy":
+        return Cauchy
+    if dist_family == "student":
+        return StudentT
     raise NotImplementedError(
-        f"Size of {type(distribution)} distributions is not supported." "Raise an issue if needed."
-    )
-
-
-def cat_dist(distributions: list[Distribution], dim: int) -> Distribution:
-    """Concatenate a list of distributions into a single distribution.
-
-    Args:
-        distributions (list[Distribution]): The list of distributions.
-        dim (int): The dimension to concatenate.
-
-    Returns:
-        Distribution: The concatenated distributions.
-    """
-    dist_type = type(distributions[0])
-    if not all(isinstance(distribution, dist_type) for distribution in distributions):
-        raise ValueError("All distributions must have the same type.")
-
-    if isinstance(distributions[0], Normal | Laplace):
-        locs = torch.cat([distribution.loc for distribution in distributions], dim=dim)
-        scales = torch.cat([distribution.scale for distribution in distributions], dim=dim)
-        return dist_type(loc=locs, scale=scales)
-    if isinstance(distributions[0], NormalInverseGamma):
-        locs = torch.cat([distribution.loc for distribution in distributions], dim=dim)
-        lmbdas = torch.cat([distribution.lmbda for distribution in distributions], dim=dim)
-        alphas = torch.cat([distribution.alpha for distribution in distributions], dim=dim)
-        betas = torch.cat([distribution.beta for distribution in distributions], dim=dim)
-        return NormalInverseGamma(loc=locs, lmbda=lmbdas, alpha=alphas, beta=betas)
-    raise NotImplementedError(
-        f"Concatenation of {dist_type} distributions is not supported." "Raise an issue if needed."
-    )
-
-
-def dist_squeeze(distribution: Distribution, dim: int) -> Distribution:
-    """Squeeze the distribution along a given dimension.
-
-    Args:
-        distribution (Distribution): The distribution to squeeze.
-        dim (int): The dimension to squeeze.
-
-    Returns:
-        Distribution: The squeezed distribution.
-    """
-    dist_type = type(distribution)
-    if isinstance(distribution, Normal | Laplace):
-        loc = distribution.loc.squeeze(dim)
-        scale = distribution.scale.squeeze(dim)
-        return dist_type(loc=loc, scale=scale)
-    if isinstance(distribution, NormalInverseGamma):
-        loc = distribution.loc.squeeze(dim)
-        lmbda = distribution.lmbda.squeeze(dim)
-        alpha = distribution.alpha.squeeze(dim)
-        beta = distribution.beta.squeeze(dim)
-        return NormalInverseGamma(loc=loc, lmbda=lmbda, alpha=alpha, beta=beta)
-    raise NotImplementedError(
-        f"Squeezing of {dist_type} distributions is not supported." "Raise an issue if needed."
-    )
-
-
-def dist_rearrange(distribution: Distribution, pattern: str, **axes_lengths: int) -> Distribution:
-    dist_type = type(distribution)
-    if isinstance(distribution, Normal | Laplace):
-        loc = rearrange(distribution.loc, pattern=pattern, **axes_lengths)
-        scale = rearrange(distribution.scale, pattern=pattern, **axes_lengths)
-        return dist_type(loc=loc, scale=scale)
-    if isinstance(distribution, NormalInverseGamma):
-        loc = rearrange(distribution.loc, pattern=pattern, **axes_lengths)
-        lmbda = rearrange(distribution.lmbda, pattern=pattern, **axes_lengths)
-        alpha = rearrange(distribution.alpha, pattern=pattern, **axes_lengths)
-        beta = rearrange(distribution.beta, pattern=pattern, **axes_lengths)
-        return NormalInverseGamma(loc=loc, lmbda=lmbda, alpha=alpha, beta=beta)
-    raise NotImplementedError(
-        f"Rearrange of {dist_type} is not supported. Raise an issue if needed."
+        f"{dist_family} distribution is not supported." "Raise an issue if needed."
     )
 
 

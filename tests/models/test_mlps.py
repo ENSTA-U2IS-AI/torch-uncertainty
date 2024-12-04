@@ -1,4 +1,3 @@
-from torch_uncertainty.layers.distributions import NormalLayer
 from torch_uncertainty.models.mlp import bayesian_mlp, mlp, packed_mlp
 
 
@@ -10,8 +9,7 @@ class TestMLPModel:
             1,
             1,
             hidden_dims=[1, 1, 1],
-            final_layer=NormalLayer,
-            final_layer_args={"dim": 1},
+            dist_family="normal",
         )
         mlp(1, 1, hidden_dims=[])
         packed_mlp(1, 1, hidden_dims=[])
