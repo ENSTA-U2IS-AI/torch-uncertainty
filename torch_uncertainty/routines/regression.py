@@ -190,7 +190,6 @@ class RegressionRoutine(LightningModule):
             comp = Independent(get_dist_class(self.dist_family)(**dist_params), 1)
             mix = Categorical(torch.ones(comp.batch_shape, device=self.device))
             dist = MixtureSameFamily(mix, comp)
-            print(dist.batch_shape, dist.event_shape)
             # TODO: let the user choose what dist estimate to use (mean, mode, etc.)
             return dist.mean, dist
 
@@ -203,7 +202,6 @@ class RegressionRoutine(LightningModule):
             targets = targets.unsqueeze(-1)
         preds, dist = self.evaluation_forward(inputs)
 
-        print(preds.size(), targets.size())
         self.val_metrics.update(preds, targets)
         if isinstance(dist, Distribution):
             self.val_prob_metrics.update(dist, targets)

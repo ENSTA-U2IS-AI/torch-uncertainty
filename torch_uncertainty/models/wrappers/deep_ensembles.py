@@ -3,7 +3,6 @@ from typing import Literal
 
 import torch
 from torch import nn
-from torch.distributions import Distribution
 
 
 class _DeepEnsembles(nn.Module):
@@ -41,13 +40,10 @@ class _RegDeepEnsembles(_DeepEnsembles):
         self.probabilistic = probabilistic
 
     def forward(self, x: torch.Tensor) -> torch.Tensor | dict[str, torch.Tensor]:
-        r"""Return the logits of the ensemble.
+        """Return the logits of the ensemble.
 
         Args:
             x (Tensor): The input of the model.
-
-        Returns:
-            Distribution:
         """
         if self.probabilistic:
             out = [model.forward(x) for model in self.core_models]
