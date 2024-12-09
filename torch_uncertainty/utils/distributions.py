@@ -37,6 +37,25 @@ def get_dist_class(dist_family: str) -> type[Distribution]:
     )
 
 
+def get_dist_estimate(dist: Distribution, dist_estimate: str) -> Tensor:
+    """Get the distribution estimate.
+
+    Args:
+        dist (Distribution): The distribution.
+        dist_estimate (str): The estimate to use.
+
+    Returns:
+        Tensor: The estimated value.
+    """
+    if dist_estimate == "mean":
+        return dist.mean
+    if dist_estimate == "mode":
+        return dist.mode
+    raise NotImplementedError(
+        f"{dist_estimate} estimate is not supported." "Raise an issue if needed."
+    )
+
+
 class NormalInverseGamma(Distribution):
     arg_constraints = {
         "loc": constraints.real,

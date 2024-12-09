@@ -22,6 +22,7 @@ from torch_uncertainty.models import (
 )
 from torch_uncertainty.utils.distributions import (
     get_dist_class,
+    get_dist_estimate,
 )
 
 
@@ -32,6 +33,7 @@ class RegressionRoutine(LightningModule):
         output_dim: int,
         loss: nn.Module,
         dist_family: str | None = None,
+        dist_estimate: str = "mean",
         is_ensemble: bool = False,
         optim_recipe: dict | Optimizer | None = None,
         eval_shift: bool = False,
@@ -45,6 +47,8 @@ class RegressionRoutine(LightningModule):
             loss (torch.nn.Module): Loss function to optimize the :attr:`model`.
             dist_family (str, optional): The distribution family to use for
                 probabilistic regression. Defaults to ``None``.
+            dist_estimate (str, optional): The estimate to use when computing the
+                point-wise metrics. Defaults to ``"mean"``.
             is_ensemble (bool, optional): Whether the model is an ensemble.
                 Defaults to ``False``.
             optim_recipe (dict or torch.optim.Optimizer, optional): The optimizer and
@@ -76,6 +80,7 @@ class RegressionRoutine(LightningModule):
 
         self.model = model
         self.dist_family = dist_family
+        self.dist_estimate = dist_estimate
         self.probabilistic = dist_family is not None
         self.output_dim = output_dim
         self.loss = loss
@@ -190,8 +195,8 @@ class RegressionRoutine(LightningModule):
             comp = Independent(get_dist_class(self.dist_family)(**dist_params), 1)
             mix = Categorical(torch.ones(comp.batch_shape, device=self.device))
             dist = MixtureSameFamily(mix, comp)
-            # TODO: let the user choose what dist estimate to use (mean, mode, etc.)
-            return dist.mean, dist
+            pred = get_dist_estimate(comp, self.dist_estimate).mean(1)
+            return pred, dist
 
         preds = rearrange(preds, "(m b) c -> b m c", b=batch_size)
         return preds.mean(dim=1), None
