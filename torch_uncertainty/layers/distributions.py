@@ -109,12 +109,10 @@ class NormalLinear(_LocScaleLinear):
     r"""Normal Distribution Linear Density Layer.
 
     Args:
-        in_features (int): The number of input features.
-        out_features (int): The number of event features.
-        bias (bool): If ``True``, adds a learnable bias to the output.
+        base_layer (type[nn.Module]): The base layer class.
+        event_dim (int): The number of event dimensions.
         min_scale (float): The minimal value of the scale parameter.
-        device (torch.device): The device where the layer is stored.
-        dtype (torch.dtype): The datatype of the layer.
+        **layer_args: Additional arguments for the base layer.
 
     Shape:
         - Input: :math:`(\ast, H_{in})` where :math:`\ast` means any number of dimensions including
@@ -160,12 +158,10 @@ class LaplaceLinear(_LocScaleLinear):
     r"""Laplace Distribution Linear Density Layer.
 
     Args:
-        in_features (int): The number of input features.
-        out_features (int): The number of event features.
-        bias (bool): If ``True``, adds a learnable bias to the output.
+        base_layer (type[nn.Module]): The base layer class.
+        event_dim (int): The number of event dimensions.
         min_scale (float): The minimal value of the scale parameter.
-        device (torch.device): The device where the layer is stored.
-        dtype (torch.dtype): The datatype of the layer.
+        **layer_args: Additional arguments for the base layer.
 
     Shape:
         - Input: :math:`(\ast, H_{in})` where :math:`\ast` means any number of dimensions including
@@ -211,12 +207,10 @@ class CauchyLinear(_LocScaleLinear):
     r"""Cauchy Distribution Linear Density Layer.
 
     Args:
-        in_features (int): The number of input features.
-        out_features (int): The number of event features.
-        bias (bool): If ``True``, adds a learnable bias to the output.
+        base_layer (type[nn.Module]): The base layer class.
+        event_dim (int): The number of event dimensions.
         min_scale (float): The minimal value of the scale parameter.
-        device (torch.device): The device where the layer is stored.
-        dtype (torch.dtype): The datatype of the layer.
+        **layer_args: Additional arguments for the base layer.
 
     Shape:
         - Input: :math:`(\ast, H_{in})` where :math:`\ast` means any number of dimensions including
@@ -262,15 +256,13 @@ class StudentTLinear(_ExpandOutputLinear):
     r"""Student's T-Distribution Linear Density Layer.
 
     Args:
-        in_features (int): The number of input features.
-        out_features (int): The number of event features.
-        bias (bool): If ``True``, adds a learnable bias to the output.
+        base_layer (type[nn.Module]): The base layer class.
+        event_dim (int): The number of event dimensions.
         min_scale (float): The minimal value of the scale parameter.
         min_df (float): The minimal value of the degrees of freedom parameter.
         fixed_df (float): If not None, the degrees of freedom parameter is fixed to this value.
             Otherwise, it is learned.
-        device (torch.device): The device where the layer is stored.
-        dtype (torch.dtype): The datatype of the layer.
+        **layer_args: Additional arguments for the base layer.
 
     Shape:
         - Input: :math:`(\ast, H_{in})` where :math:`\ast` means any number of dimensions including
@@ -291,7 +283,7 @@ class StudentTLinear(_ExpandOutputLinear):
         base_layer: type[nn.Module],
         event_dim: int,
         min_scale: float = 1e-6,
-        min_df: float = 1.0,
+        min_df: float = 2.0,
         fixed_df: float | None = None,
         **layer_args,
     ) -> None:
@@ -356,7 +348,7 @@ class StudentTConvNd(_ExpandOutputConvNd):
         base_layer: type[nn.Module],
         event_dim: int,
         min_scale: float = 1e-6,
-        min_df: float = 1.0,
+        min_df: float = 2.0,
         fixed_df: float | None = None,
         **layer_args,
     ) -> None:
@@ -389,14 +381,12 @@ class NormalInverseGammaLinear(_ExpandOutputLinear):
     r"""Normal-Inverse-Gamma Distribution Linear Density Layer.
 
     Args:
-        in_features (int): The number of input features.
-        out_features (int): The number of event features.
-        bias (bool): If ``True``, adds a learnable bias to the output.
+        base_layer (type[nn.Module]): The base layer class.
+        event_dim (int): The number of event dimensions.
         min_lmbda (float): The minimal value of the :math:`\lambda` parameter.
         min_alpha (float): The minimal value of the :math:`\alpha` parameter.
         min_beta (float): The minimal value of the :math:`\beta` parameter.
-        device (torch.device): The device where the layer is stored.
-        dtype (torch.dtype): The datatype of the layer.
+        **layer_args: Additional arguments for the base layer.
 
     Shape:
         - Input: :math:`(\ast, H_{in})` where :math:`\ast` means any number of dimensions including
