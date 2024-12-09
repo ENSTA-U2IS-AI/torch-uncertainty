@@ -184,3 +184,7 @@ class TestDistributionConv:
         assert out["lmbda"].shape == torch.Size([3, 2, 30, 30])
         assert out["alpha"].shape == torch.Size([3, 2, 30, 30])
         assert out["beta"].shape == torch.Size([3, 2, 30, 30])
+
+    def test_failures(self):
+        with pytest.raises(NotImplementedError):
+            get_dist_conv_layer("unknown")
