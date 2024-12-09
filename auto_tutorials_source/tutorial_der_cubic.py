@@ -39,7 +39,8 @@ from torch_uncertainty.models.mlp import mlp
 from torch_uncertainty.datasets.regression.toy import Cubic
 from torch_uncertainty.losses import DERLoss
 from torch_uncertainty.routines import RegressionRoutine
-from torch_uncertainty.layers.distributions import NormalInverseGammaLayer
+from torch_uncertainty.layers.distributions import NormalInverseGammaLinear
+from torch_uncertainty.utils.distributions import get_dist_class
 
 # %%
 # 2. The Optimization Recipe
@@ -50,12 +51,11 @@ def optim_regression(
     model: nn.Module,
     learning_rate: float = 5e-4,
 ):
-    optimizer = optim.Adam(
+    return optim.Adam(
         model.parameters(),
         lr=learning_rate,
         weight_decay=0,
     )
-    return optimizer
 
 
 # %%
@@ -64,7 +64,7 @@ def optim_regression(
 #
 # In the following, we create a trainer to train the model, the same synthetic regression 
 # datasets as in the original DER paper and the model, a simple MLP with 2 hidden layers of 64 neurons each.
-# Please note that this MLP finishes with a NormalInverseGammaLayer that interpret the outputs of the model
+# Please note that this MLP finishes with a NormalInverseGammaLinear that interpret the outputs of the model
 # as the parameters of a Normal Inverse Gamma distribution.
 
 trainer = TUTrainer(accelerator="cpu", max_epochs=50) #, enable_progress_bar=False)
@@ -82,10 +82,9 @@ datamodule.training_task = "regression"
 # model
 model = mlp(
     in_features=1,
-    num_outputs=4,
+    num_outputs=1,
     hidden_dims=[64, 64],
-    final_layer=NormalInverseGammaLayer,
-    final_layer_args={"dim": 1},
+    dist_family="nig",  # Normal Inverse Gamma
 )
 
 # %%
@@ -100,11 +99,11 @@ model = mlp(
 loss = DERLoss(reg_weight=1e-2)
 
 routine = RegressionRoutine(
-    probabilistic=True,
     output_dim=1,
     model=model,
     loss=loss,
     optim_recipe=optim_regression(model),
+    dist_family="nig",
 )
 
 # %%
@@ -127,7 +126,8 @@ import matplotlib.pyplot as plt
 with torch.no_grad():
     x = torch.linspace(-7, 7, 1000)
 
-    dists = model(x.unsqueeze(-1))
+    dist_params = model(x.unsqueeze(-1))
+    dists = get_dist_class("nig")(**dist_params)
     means = dists.loc.squeeze(1)
     variances = torch.sqrt(dists.variance_loc).squeeze(1)
 

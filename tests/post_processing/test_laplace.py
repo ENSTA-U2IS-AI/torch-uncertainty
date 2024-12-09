@@ -23,7 +23,7 @@ class TestLaplace:
         ds = TensorDataset(torch.randn(16, 1), torch.randn(16, 10))
         la = LaplaceApprox(
             task="classification",
-            model=dummy_model(1, 10, last_layer=nn.Linear(10, 10)),
+            model=dummy_model(1, 10),
         )
         la.fit(ds)
         la(torch.randn(1, 1))

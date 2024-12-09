@@ -2,11 +2,6 @@ from typing import Literal
 
 from torch import nn
 
-from torch_uncertainty.layers.distributions import (
-    LaplaceLayer,
-    NormalInverseGammaLayer,
-    NormalLayer,
-)
 from torch_uncertainty.models.mlp import mlp, packed_mlp
 from torch_uncertainty.routines.regression import (
     RegressionRoutine,
@@ -30,36 +25,18 @@ class MLPBaseline(RegressionRoutine):
         dropout_rate: float = 0.0,
         alpha: float | None = None,
         gamma: int = 1,
-        distribution: Literal["normal", "laplace", "nig"] | None = None,
+        dist_family: str | None = None,
+        dist_args: dict | None = None,
     ) -> None:
         r"""MLP baseline for regression providing support for various versions."""
-        probabilistic = True
         params = {
             "dropout_rate": dropout_rate,
             "in_features": in_features,
             "num_outputs": output_dim,
             "hidden_dims": hidden_dims,
+            "dist_family": dist_family,
+            "dist_args": dist_args,
         }
-
-        if distribution == "normal":
-            final_layer = NormalLayer
-            final_layer_args = {"dim": output_dim}
-            params["num_outputs"] *= 2
-        elif distribution == "laplace":
-            final_layer = LaplaceLayer
-            final_layer_args = {"dim": output_dim}
-            params["num_outputs"] *= 2
-        elif distribution == "nig":
-            final_layer = NormalInverseGammaLayer
-            final_layer_args = {"dim": output_dim}
-            params["num_outputs"] *= 4
-        else:  # distribution is None:
-            probabilistic = False
-            final_layer = nn.Identity
-            final_layer_args = {}
-
-        params["final_layer"] = final_layer
-        params["final_layer_args"] = final_layer_args
 
         format_batch_fn = nn.Identity()
 
@@ -76,12 +53,11 @@ class MLPBaseline(RegressionRoutine):
 
         model = self.versions[version](**params)
 
-        # version in self.versions:
         super().__init__(
-            probabilistic=probabilistic,
             output_dim=output_dim,
             model=model,
             loss=loss,
+            dist_family=dist_family,
             is_ensemble=version in ENSEMBLE_METHODS,
             format_batch_fn=format_batch_fn,
         )

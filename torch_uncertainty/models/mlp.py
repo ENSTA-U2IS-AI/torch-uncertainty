@@ -4,6 +4,7 @@ import torch.nn.functional as F
 from torch import Tensor, nn
 
 from torch_uncertainty.layers.bayesian import BayesLinear
+from torch_uncertainty.layers.distributions import get_dist_linear_layer
 from torch_uncertainty.layers.packed import PackedLinear
 from torch_uncertainty.models import StochasticModel
 
@@ -19,9 +20,9 @@ class _MLP(nn.Module):
         layer: type[nn.Module],
         activation: Callable,
         layer_args: dict,
-        final_layer: type[nn.Module],
-        final_layer_args: dict,
         dropout_rate: float,
+        dist_family: str | None,
+        dist_args: dict,
     ) -> None:
         """Multi-layer perceptron class.
 
@@ -32,9 +33,9 @@ class _MLP(nn.Module):
             layer (nn.Module): Layer class.
             activation (Callable): Activation function.
             layer_args (Dict): Arguments for the layer class.
-            final_layer (nn.Module): Final layer class for distribution regression.
-            final_layer_args (Dict): Arguments for the final layer class.
             dropout_rate (float): Dropout probability.
+            dist_family (str, optional): Distribution family. Defaults to None.
+            dist_args (Dict, optional): Arguments for the distribution layer class.
         """
         super().__init__()
         self.activation = activation
@@ -43,38 +44,49 @@ class _MLP(nn.Module):
 
         if len(hidden_dims) == 0:
             if layer == PackedLinear:
-                layers.append(
-                    layer(
-                        in_features,
-                        num_outputs,
-                        first=True,
-                        last=True,
-                        **layer_args,
-                    )
-                )
-            else:
-                layers.append(layer(in_features, num_outputs, **layer_args))
+                layer_args |= {"first": True, "last": True}
+
+            self.final_layer = layer(
+                in_features=in_features, out_features=num_outputs, **layer_args
+            )
         else:
             if layer == PackedLinear:
-                layers.append(layer(in_features, hidden_dims[0], first=True, **layer_args))
-            else:
-                layers.append(layer(in_features, hidden_dims[0], **layer_args))
+                layer_args |= {"first": True, "last": False}
 
-            for i in range(1, len(hidden_dims)):
-                layers.append(layer(hidden_dims[i - 1], hidden_dims[i], **layer_args))
+            layers.append(layer(in_features=in_features, out_features=hidden_dims[0], **layer_args))
 
             if layer == PackedLinear:
-                layers.append(layer(hidden_dims[-1], num_outputs, last=True, **layer_args))
+                layer_args |= {"first": False}
+
+            for i in range(1, len(hidden_dims)):
+                layers.append(
+                    layer(in_features=hidden_dims[i - 1], out_features=hidden_dims[i], **layer_args)
+                )
+
+            if layer == PackedLinear:
+                layer_args |= {"last": True}
+
+            if dist_family is not None:
+                dist_layer_class = get_dist_linear_layer(dist_family)
+                self.final_layer = dist_layer_class(
+                    base_layer=layer,
+                    event_dim=num_outputs,
+                    in_features=hidden_dims[-1],
+                    **layer_args,
+                    **dist_args,
+                )
             else:
-                layers.append(layer(hidden_dims[-1], num_outputs, **layer_args))
+                self.final_layer = layer(
+                    in_features=hidden_dims[-1], out_features=num_outputs, **layer_args
+                )
+
         self.layers = layers
-        self.final_layer = final_layer(**final_layer_args)
 
     def forward(self, x: Tensor) -> Tensor:
-        for layer in self.layers[:-1]:
+        for layer in self.layers:
             x = F.dropout(layer(x), p=self.dropout_rate, training=self.training)
             x = self.activation(x)
-        return self.final_layer(self.layers[-1](x))
+        return self.final_layer(x)
 
 
 def _mlp(
@@ -83,27 +95,23 @@ def _mlp(
     num_outputs: int,
     hidden_dims: list[int],
     num_samples: int = 16,
-    layer_args: dict | None = None,
     layer: type[nn.Module] = nn.Linear,
+    layer_args: dict | None = None,
     activation: Callable = F.relu,
-    final_layer: type[nn.Module] = nn.Identity,
-    final_layer_args: dict | None = None,
     dropout_rate: float = 0.0,
+    dist_family: str | None = None,
+    dist_args: dict | None = None,
 ) -> _MLP | StochasticModel:
-    if layer_args is None:
-        layer_args = {}
-    if final_layer_args is None:
-        final_layer_args = {}
     model = _MLP(
         in_features=in_features,
         num_outputs=num_outputs,
         hidden_dims=hidden_dims,
-        layer_args=layer_args,
+        layer_args=layer_args or {},
         layer=layer,
         activation=activation,
-        final_layer=final_layer,
-        final_layer_args=final_layer_args,
         dropout_rate=dropout_rate,
+        dist_family=dist_family,
+        dist_args=dist_args or {},
     )
     if stochastic:
         return StochasticModel(model, num_samples)
@@ -114,11 +122,10 @@ def mlp(
     in_features: int,
     num_outputs: int,
     hidden_dims: list[int],
-    layer: type[nn.Module] = nn.Linear,
     activation: Callable = F.relu,
-    final_layer: type[nn.Module] = nn.Identity,
-    final_layer_args: dict | None = None,
     dropout_rate: float = 0.0,
+    dist_family: str | None = None,
+    dist_args: dict | None = None,
 ) -> _MLP:
     """Multi-layer perceptron.
 
@@ -126,13 +133,12 @@ def mlp(
         in_features (int): Number of input features.
         num_outputs (int): Number of output features.
         hidden_dims (list[int]): Number of features in each hidden layer.
-        layer (nn.Module, optional): Layer type. Defaults to nn.Linear.
         activation (Callable, optional): Activation function. Defaults to
             F.relu.
-        final_layer (nn.Module, optional): Final layer class for distribution
-            regression. Defaults to nn.Identity.
-        final_layer_args (Dict, optional): Arguments for the final layer class.
         dropout_rate (float, optional): Dropout probability. Defaults to 0.0.
+        dist_family (str, optional): Distribution family. Defaults to None.
+        dist_args (Dict, optional): Arguments for the distribution layer class. Defaults
+            to None.
 
     Returns:
         _MLP: A Multi-Layer-Perceptron model.
@@ -142,11 +148,10 @@ def mlp(
         in_features=in_features,
         num_outputs=num_outputs,
         hidden_dims=hidden_dims,
-        layer=layer,
         activation=activation,
-        final_layer=final_layer,
-        final_layer_args=final_layer_args,
         dropout_rate=dropout_rate,
+        dist_family=dist_family,
+        dist_args=dist_args,
     )
 
 
@@ -158,9 +163,9 @@ def packed_mlp(
     alpha: float = 2,
     gamma: float = 1,
     activation: Callable = F.relu,
-    final_layer: type[nn.Module] = nn.Identity,
-    final_layer_args: dict | None = None,
     dropout_rate: float = 0.0,
+    dist_family: str | None = None,
+    dist_args: dict | None = None,
 ) -> _MLP:
     layer_args = {
         "num_estimators": num_estimators,
@@ -175,9 +180,9 @@ def packed_mlp(
         layer=PackedLinear,
         activation=activation,
         layer_args=layer_args,
-        final_layer=final_layer,
-        final_layer_args=final_layer_args,
         dropout_rate=dropout_rate,
+        dist_family=dist_family,
+        dist_args=dist_args,
     )
 
 
@@ -187,9 +192,9 @@ def bayesian_mlp(
     hidden_dims: list[int],
     num_samples: int = 16,
     activation: Callable = F.relu,
-    final_layer: type[nn.Module] = nn.Identity,
-    final_layer_args: dict | None = None,
     dropout_rate: float = 0.0,
+    dist_family: str | None = None,
+    dist_args: dict | None = None,
 ) -> StochasticModel:
     return _mlp(
         stochastic=True,
@@ -199,7 +204,7 @@ def bayesian_mlp(
         hidden_dims=hidden_dims,
         layer=BayesLinear,
         activation=activation,
-        final_layer=final_layer,
-        final_layer_args=final_layer_args,
         dropout_rate=dropout_rate,
+        dist_family=dist_family,
+        dist_args=dist_args,
     )
