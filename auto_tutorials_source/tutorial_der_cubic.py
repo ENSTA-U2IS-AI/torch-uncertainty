@@ -51,12 +51,11 @@ def optim_regression(
     model: nn.Module,
     learning_rate: float = 5e-4,
 ):
-    optimizer = optim.Adam(
+    return optim.Adam(
         model.parameters(),
         lr=learning_rate,
         weight_decay=0,
     )
-    return optimizer
 
 
 # %%

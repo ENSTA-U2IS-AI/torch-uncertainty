@@ -29,7 +29,6 @@ TorchUncertainty includes datamodules that handle the data loading and preproces
 
 The dataset is automatically downloaded using torchvision. We then visualize a few images to see a bit what we are working with.
 """
-# Create the transforms for the images
 # %%
 import torch
 import torchvision.transforms as T
@@ -37,6 +36,7 @@ import torchvision.transforms as T
 # We set the number of epochs to some low value for the sake of time
 max_epochs = 2
 
+# Create the transforms for the images
 train_transform = T.Compose(
     [
         T.ToTensor(),
