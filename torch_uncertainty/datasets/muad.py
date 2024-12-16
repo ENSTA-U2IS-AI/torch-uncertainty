@@ -1,13 +1,13 @@
-import json
 import logging
 import os
 import shutil
 from collections.abc import Callable
 from importlib import util
 from pathlib import Path
-from typing import Literal
+from typing import Literal, NamedTuple
 
 from huggingface_hub import hf_hub_download
+from PIL import Image
 
 if util.find_spec("cv2"):
     import cv2
@@ -16,17 +16,17 @@ if util.find_spec("cv2"):
 else:  # coverage: ignore
     cv2_installed = False
 import numpy as np
-import torch
-from einops import rearrange
-from PIL import Image
 from torchvision import tv_tensors
 from torchvision.datasets import VisionDataset
 from torchvision.datasets.utils import (
-    check_integrity,
     download_and_extract_archive,
-    download_url,
 )
-from torchvision.transforms.v2 import functional as F
+
+
+class MUADClass(NamedTuple):
+    name: str
+    id: int
+    color: tuple[int, int, int]
 
 
 class MUAD(VisionDataset):
@@ -56,6 +56,31 @@ class MUAD(VisionDataset):
             "ood": 20,
         },
     }
+
+    classes = [
+        MUADClass("road", 0, (128, 64, 128)),
+        MUADClass("sidewalk", 1, (244, 35, 232)),
+        MUADClass("building", 2, (70, 70, 70)),
+        MUADClass("wall", 3, (102, 102, 156)),
+        MUADClass("fence", 4, (190, 153, 153)),
+        MUADClass("pole", 5, (153, 153, 153)),
+        MUADClass("traffic_light", 6, (250, 170, 30)),
+        MUADClass("traffic_sign", 7, (220, 220, 0)),
+        MUADClass("vegetation", 8, (107, 142, 35)),
+        MUADClass("terrain", 9, (152, 251, 152)),
+        MUADClass("sky", 10, (70, 130, 180)),
+        MUADClass("person", 11, (220, 20, 60)),
+        MUADClass("rider", 12, (255, 0, 0)),
+        MUADClass("car", 13, (0, 0, 142)),
+        MUADClass("truck", 14, (0, 0, 70)),
+        MUADClass("bus", 15, (0, 60, 100)),
+        MUADClass("train", 16, (0, 80, 100)),
+        MUADClass("motorcycle", 17, (0, 0, 230)),
+        MUADClass("bicycle", 18, (119, 11, 32)),
+        MUADClass("bear deer cow", 19, (255, 228, 196)),
+        MUADClass("garbage_bag stand_food trash_can", 20, (128, 128, 0)),
+        MUADClass("unlabeled", 21, (0, 0, 0)),  # id 255 or 21
+    ]
 
     targets: list[Path] = []
 
@@ -155,48 +180,7 @@ class MUAD(VisionDataset):
                     f"MUAD {split} split not found or incomplete. Set download=True to download it."
                 )
 
-        # Load classes metadata
-        cls_path = self.root / "classes.json"
-        if (not check_integrity(cls_path, self.classes_md5)) and download:
-            download_url(
-                self.classes_url,
-                self.root,
-                "classes.json",
-                self.classes_md5,
-            )
-
-        with (self.root / "classes.json").open() as file:
-            self.classes = json.load(file)
-
-        train_id_to_color = [c["object_id"] for c in self.classes if c["train_id"] not in [-1, 255]]
-        train_id_to_color.append([0, 0, 0])
-        self.train_id_to_color = np.array(train_id_to_color)
-
         self._make_dataset(self.root / split)
-
-    def encode_target(self, target: Image.Image) -> Image.Image:
-        """Encode target image to tensor.
-
-        Args:
-            target (Image.Image): Target PIL image.
-
-        Returns:
-            torch.Tensor: Encoded target.
-        """
-        target = F.pil_to_tensor(target)
-        target = rearrange(target, "c h w -> h w c")
-        out = torch.zeros_like(target[..., :1])
-        # convert target color to index
-        for muad_class in self.classes:
-            out[(target == torch.tensor(muad_class["id"], dtype=target.dtype)).all(dim=-1)] = (
-                muad_class["train_id"]
-            )
-
-        return F.to_pil_image(rearrange(out, "h w c -> c h w"))
-
-    def decode_target(self, target: Image.Image) -> np.ndarray:
-        target[target == 255] = 19
-        return self.train_id_to_color[target]
 
     def __getitem__(self, index: int) -> tuple[tv_tensors.Image, tv_tensors.Mask]:
         """Get the sample at the given index.
@@ -210,7 +194,7 @@ class MUAD(VisionDataset):
         """
         image = tv_tensors.Image(Image.open(self.samples[index]).convert("RGB"))
         if self.target_type == "semantic":
-            target = tv_tensors.Mask(self.encode_target(Image.open(self.targets[index])))
+            target = tv_tensors.Mask(Image.open(self.targets[index]))
         else:
             os.environ["OPENCV_IO_ENABLE_OPENEXR"] = "1"
             target = Image.fromarray(
@@ -274,4 +258,4 @@ class MUAD(VisionDataset):
 
     @property
     def color_palette(self) -> np.ndarray:
-        return self.train_id_to_color.tolist()
+        return [c.color for c in self.classes]
