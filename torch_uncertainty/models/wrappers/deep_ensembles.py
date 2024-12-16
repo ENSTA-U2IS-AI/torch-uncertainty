@@ -107,7 +107,7 @@ def deep_ensembles(
 
         if reset_model_parameters:
             for model in models:
-                for layer in model.children():
+                for layer in model.modules():
                     if hasattr(layer, "reset_parameters"):
                         layer.reset_parameters()
 
