@@ -2,6 +2,7 @@ from pathlib import Path
 
 import pytest
 from torch import nn
+import torch
 
 from tests._dummies import DummyRegressionBaseline, DummyRegressionDataModule
 from torch_uncertainty import TUTrainer
@@ -157,3 +158,12 @@ class TestRegression:
                 model=nn.Identity(),
                 loss=nn.MSELoss(),
             )
+
+        with pytest.raises(TypeError):
+            routine = RegressionRoutine(
+                dist_family="normal",
+                output_dim=1,
+                model=nn.Identity(),
+                loss=nn.MSELoss(),
+            )
+            routine(torch.randn(1, 1))

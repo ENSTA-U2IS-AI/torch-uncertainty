@@ -2,7 +2,7 @@ import math
 
 import pytest
 import torch
-from torch.distributions import Normal
+from torch.distributions import Independent, Normal
 
 from torch_uncertainty.losses import (
     BetaNLL,
@@ -42,6 +42,8 @@ class TestDERLoss:
             torch.ones((2, 1)),
             torch.ones((2, 1)),
         )
+
+        inputs = Independent(inputs, 0)
 
         assert loss(
             inputs,

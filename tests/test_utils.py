@@ -76,3 +76,21 @@ class TestDistributions:
             torch.tensor(1.1),
         )
         _ = dist.mean, dist.mean_loc, dist.mean_variance, dist.variance_loc
+
+    def test_get_dist_class(self):
+        dist = distributions.get_dist_class("normal")
+        assert dist == torch.distributions.Normal
+        dist = distributions.get_dist_class("laplace")
+        assert dist == torch.distributions.Laplace
+        dist = distributions.get_dist_class("nig")
+        assert dist == distributions.NormalInverseGamma
+        dist = distributions.get_dist_class("cauchy")
+        assert dist == torch.distributions.Cauchy
+        dist = distributions.get_dist_class("student")
+        assert dist == torch.distributions.StudentT
+
+    def test_get_dist_estimate(self):
+        dist = torch.distributions.Normal(0.0, 1.0)
+        mean = distributions.get_dist_estimate(dist, "mean")
+        mode = distributions.get_dist_estimate(dist, "mode")
+        assert mean == mode
