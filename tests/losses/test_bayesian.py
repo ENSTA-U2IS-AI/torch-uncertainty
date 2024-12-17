@@ -25,14 +25,10 @@ class TestELBOLoss:
         loss(model(torch.randn(1, 1)), torch.randn(1, 1))
 
     def test_prob_regression_training_step(self):
-        model = NormalLinear(
-            BayesLinear,
-            event_dim=4,
-            in_features=10
-        )
+        model = NormalLinear(BayesLinear, event_dim=4, in_features=10)
         criterion = DistributionNLLLoss()
         loss = ELBOLoss(model, criterion, kl_weight=1e-5, num_samples=3, dist_family="normal")
-        
+
         routine = RegressionRoutine(
             output_dim=1,
             model=model,
@@ -47,7 +43,6 @@ class TestELBOLoss:
         inputs = torch.randn(1, 10)
         targets = torch.randn(1, 4)
         routine.training_step((inputs, targets), 0)
-
 
     def test_training_step(self):
         model = BayesLinear(10, 4)

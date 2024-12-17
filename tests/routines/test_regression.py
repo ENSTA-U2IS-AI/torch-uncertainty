@@ -1,8 +1,8 @@
 from pathlib import Path
 
 import pytest
-from torch import nn
 import torch
+from torch import nn
 
 from tests._dummies import DummyRegressionBaseline, DummyRegressionDataModule
 from torch_uncertainty import TUTrainer

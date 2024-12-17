@@ -316,19 +316,13 @@ class StudentTConvNd(_ExpandOutputConvNd):
     r"""Student's T-Distribution Convolutional Density Layer.
 
     Args:
-        in_channels (int): The number of input channels.
-        out_channels (int): The number of event channels.
-        kernel_size (int | tuple[int]): The size of the convolutional kernel.
-        stride (int | tuple[int]): The stride of the convolution.
-        padding (int | tuple[int]): The padding of the convolution.
-        dilation (int | tuple[int]): The dilation of the convolution.
-        groups (int): The number of groups in the convolution.
+        base_layer (type[nn.Module]): The base layer class.
+        event_dim (int): The number of event dimensions.
         min_scale (float): The minimal value of the scale parameter.
         min_df (float): The minimal value of the degrees of freedom parameter.
         fixed_df (float): If not None, the degrees of freedom parameter is fixed to this value.
             Otherwise, it is learned.
-        device (torch.device): The device where the layer is stored.
-        dtype (torch.dtype): The datatype of the layer.
+        **layer_args: Additional arguments for the base layer.
 
     Shape:
         - Input: :math:`(N, C_{in}, \ast)` where :math:`\ast` means any number of dimensions and
@@ -449,18 +443,12 @@ class NormalInverseGammaConvNd(_ExpandOutputConvNd):
     r"""Normal-Inverse-Gamma Distribution Convolutional Density Layer.
 
     Args:
-        in_channels (int): The number of input channels.
-        out_channels (int): The number of event channels.
-        kernel_size (int | tuple[int]): The size of the convolutional kernel.
-        stride (int | tuple[int]): The stride of the convolution.
-        padding (int | tuple[int]): The padding of the convolution.
-        dilation (int | tuple[int]): The dilation of the convolution.
-        groups (int): The number of groups in the convolution.
+        base_layer (type[nn.Module]): The base layer class.
+        event_dim (int): The number of event dimensions.
         min_lmbda (float): The minimal value of the :math:`\lambda` parameter.
         min_alpha (float): The minimal value of the :math:`\alpha` parameter.
         min_beta (float): The minimal value of the :math:`\beta` parameter.
-        device (torch.device): The device where the layer is stored.
-        dtype (torch.dtype): The datatype of the layer.
+        **layer_args: Additional arguments for the base layer.
 
     Shape:
         - Input: :math:`(N, C_{in}, \ast)` where :math:`\ast` means any number of dimensions and

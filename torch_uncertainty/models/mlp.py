@@ -82,7 +82,7 @@ class _MLP(nn.Module):
 
         self.layers = layers
 
-    def forward(self, x: Tensor) -> Tensor:
+    def forward(self, x: Tensor) -> Tensor | dict[str, Tensor]:
         for layer in self.layers:
             x = F.dropout(layer(x), p=self.dropout_rate, training=self.training)
             x = self.activation(x)

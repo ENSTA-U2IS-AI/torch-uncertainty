@@ -4,7 +4,6 @@ from typing import Literal
 import torch
 import torchvision.models as tv_models
 from torch import Tensor, nn
-from torch.distributions import Distribution
 from torch.nn import functional as F
 from torchvision.models.densenet import DenseNet121_Weights, DenseNet161_Weights
 from torchvision.models.resnet import (
@@ -14,7 +13,7 @@ from torchvision.models.resnet import (
     ResNeXt101_32X8D_Weights,
 )
 
-from torch_uncertainty.layers.distributions import LaplaceLinear, NormalLinear
+from torch_uncertainty.layers.distributions import get_dist_conv_layer
 from torch_uncertainty.models.utils import Backbone
 
 resnet_feat_out_channels = [64, 256, 512, 1024, 2048]
@@ -291,7 +290,7 @@ class BTSDecoder(nn.Module):
         max_depth: float,
         feat_out_channels: list[int],
         num_features: int,
-        dist_layer: type[nn.Module],
+        dist_family: str | None = None,
     ):
         super().__init__()
         self.max_depth = max_depth
@@ -400,12 +399,20 @@ class BTSDecoder(nn.Module):
         )
         self.conv1 = nn.Conv2d(num_features // 16 + 4, num_features // 16, 3, 1, 1, bias=False)
         self.output_channels = 1
-        if dist_layer in (NormalLinear, LaplaceLinear):
-            self.output_channels = 2
-        elif dist_layer != nn.Identity:
-            raise ValueError(f"Unsupported distribution layer. Got {dist_layer}.")
-        self.depth = nn.Conv2d(num_features // 16, self.output_channels, 3, 1, 1, bias=False)
-        self.dist_layer = dist_layer(dim=1)
+
+        if dist_family is not None:
+            dist_layer_class = get_dist_conv_layer(dist_family)
+            self.depth = dist_layer_class(
+                base_layer=nn.Conv2d,
+                event_dim=self.output_channels,
+                in_channels=num_features // 16,
+                kernel_size=3,
+                stride=1,
+                padding=1,
+                bias=False,
+            )
+        else:
+            self.depth = nn.Conv2d(num_features // 16, self.output_channels, 3, 1, 1, bias=False)
 
     def feat_forward(self, features: list[Tensor]) -> Tensor:
         dense_features = F.relu(features[4])
@@ -474,7 +481,7 @@ class BTSDecoder(nn.Module):
         )
         return F.elu(self.conv1(concat1))
 
-    def forward(self, features: list[Tensor]) -> Tensor | Distribution:
+    def forward(self, features: list[Tensor]) -> Tensor | dict[str, Tensor]:
         """Forward pass.
 
         Args:
@@ -486,10 +493,15 @@ class BTSDecoder(nn.Module):
         """
         # TODO: handle focal
         out = self.depth(self.feat_forward(features))
-        if self.output_channels != 1:
-            loc = self.max_depth * F.sigmoid(out[:, 0, :, :])
-            scale = self.max_depth * out[:, 1, :, :]
-            out = self.dist_layer(torch.stack([loc, scale], -1))
+        if isinstance(out, dict):
+            if "loc" not in out or "scale" not in out:
+                raise ValueError(
+                    "Expected 'loc' and 'scale' in the output dictionary.",
+                    "Consider raising an issue on the repository if you need support ",
+                    "for distributions that do not use location and scale.",
+                )
+            out["loc"] = self.max_depth * F.sigmoid(out["loc"])
+            out["scale"] = self.max_depth * out["scale"]
         else:
             out = self.max_depth * F.sigmoid(out)
         return out
@@ -508,7 +520,7 @@ class _BTS(nn.Module):
         ],
         max_depth: float,
         bts_size: int = 512,
-        dist_layer: type[nn.Module] = nn.Identity,
+        dist_family: str | None = None,
         pretrained_backbone: bool = True,
     ) -> None:
         """BTS model.
@@ -517,7 +529,7 @@ class _BTS(nn.Module):
             backbone_name (str): Name of the encoding backbone.
             max_depth (float): Maximum predicted depth.
             bts_size (int): BTS feature size. Defaults to 512.
-            dist_layer (nn.Module): Distribution layer for probabilistic depth
+            dist_family (str): Distribution family name. Defaults to None.
             estimation. Defaults to nn.Identity.
             pretrained_backbone (bool): Use a pretrained backbone. Defaults to True.
 
@@ -529,7 +541,7 @@ class _BTS(nn.Module):
         self.max_depth = max_depth
 
         self.backbone = BTSBackbone(backbone_name, pretrained_backbone)
-        self.decoder = BTSDecoder(max_depth, self.backbone.feat_out_channels, bts_size, dist_layer)
+        self.decoder = BTSDecoder(max_depth, self.backbone.feat_out_channels, bts_size, dist_family)
 
     # TODO: Handle focal
     def forward(self, x: Tensor, focal: float | None = None) -> Tensor:
@@ -546,18 +558,18 @@ def _bts(
     backbone_name: str,
     max_depth: float,
     bts_size: int = 512,
-    dist_layer: type[nn.Module] = nn.Identity,
+    dist_family: str | None = None,
     pretrained_backbone: bool = True,
 ) -> _BTS:
     if backbone_name not in bts_backbones:
         raise ValueError(f"Unsupported backbone. Got {backbone_name}.")
-    return _BTS(backbone_name, max_depth, bts_size, dist_layer, pretrained_backbone)
+    return _BTS(backbone_name, max_depth, bts_size, dist_family, pretrained_backbone)
 
 
 def bts_resnet50(
     max_depth: float,
     bts_size: int = 512,
-    dist_layer: type[nn.Module] = nn.Identity,
+    dist_family: str | None = None,
     pretrained_backbone: bool = True,
 ) -> _BTS:
     """BTS model with ResNet-50 backbone.
@@ -565,15 +577,14 @@ def bts_resnet50(
     Args:
         max_depth (float): Maximum predicted depth.
         bts_size (int): BTS feature size. Defaults to 512.
-        dist_layer (nn.Module): Distribution layer for probabilistic depth
-            estimation. Defaults to nn.Identity.
+        dist_family (str): Distribution family name. Defaults to None.
         pretrained_backbone (bool): Use a pretrained backbone. Defaults to True.
     """
     return _bts(
         "resnet50",
         max_depth,
         bts_size=bts_size,
-        dist_layer=dist_layer,
+        dist_family=dist_family,
         pretrained_backbone=pretrained_backbone,
     )
 
@@ -581,7 +592,7 @@ def bts_resnet50(
 def bts_resnet101(
     max_depth: float,
     bts_size: int = 512,
-    dist_layer: type[nn.Module] = nn.Identity,
+    dist_family: str | None = None,
     pretrained_backbone: bool = True,
 ) -> _BTS:
     """BTS model with ResNet-101 backbone.
@@ -589,14 +600,13 @@ def bts_resnet101(
     Args:
         max_depth (float): Maximum predicted depth.
         bts_size (int): BTS feature size. Defaults to 512.
-        dist_layer (nn.Module): Distribution layer for probabilistic depth
-            estimation. Defaults to nn.Identity.
+        dist_family (str): Distribution family name. Defaults to None.
         pretrained_backbone (bool): Use a pretrained backbone. Defaults to True.
     """
     return _bts(
         "resnet101",
         max_depth,
         bts_size=bts_size,
-        dist_layer=dist_layer,
+        dist_family=dist_family,
         pretrained_backbone=pretrained_backbone,
     )
