@@ -1,3 +1,5 @@
+import inspect
+
 import torch
 import torch.nn.functional as F
 from torch import Tensor, nn
@@ -36,7 +38,20 @@ def get_dist_conv_layer(dist_family: str) -> type[nn.Module]:
 
 
 class _ExpandOutputLinear(nn.Module):
+    """Abstract class for expanding the output of any nn.Module using an `out_features` argument.
+
+    Args:
+        base_layer (type[nn.Module]): The base layer class.
+        event_dim (int): The number of event dimensions.
+        num_params (int): The number of parameters to output. For instance, the normal distribution
+            has 2 parameters (loc and scale).
+        **layer_args: Additional arguments for the base layer.
+    """
+
     def __init__(self, base_layer: type[nn.Module], event_dim: int, num_params: int, **layer_args):
+        if "out_features" not in inspect.getfullargspec(base_layer.__init__).args:
+            raise ValueError(f"{base_layer.__name__} does not have an `out_features` argument.")
+
         super().__init__()
         self.base_layer = base_layer(out_features=num_params * event_dim, **layer_args)
         self.event_dim = event_dim
@@ -46,7 +61,20 @@ class _ExpandOutputLinear(nn.Module):
 
 
 class _ExpandOutputConvNd(nn.Module):
+    """Abstract class for expanding the output of any nn.Module using an `out_channels` argument.
+
+    Args:
+        base_layer (type[nn.Module]): The base layer class.
+        event_dim (int): The number of event dimensions.
+        num_params (int): The number of parameters to output. For instance, the normal distribution
+            has 2 parameters (loc and scale).
+        **layer_args: Additional arguments for the base layer.
+    """
+
     def __init__(self, base_layer: type[nn.Module], event_dim: int, num_params: int, **layer_args):
+        if "out_channels" not in inspect.getfullargspec(base_layer.__init__).args:
+            raise ValueError(f"{base_layer.__name__} does not have an `out_channels` argument.")
+
         super().__init__()
         self.base_layer = base_layer(out_channels=num_params * event_dim, **layer_args)
         self.event_dim = event_dim
@@ -56,6 +84,15 @@ class _ExpandOutputConvNd(nn.Module):
 
 
 class _LocScaleLinear(_ExpandOutputLinear):
+    """Base Linear layer for any distribution with loc and scale parameters.
+
+    Args:
+        base_layer (type[nn.Module]): The base layer class.
+        event_dim (int): The number of event dimensions.
+        min_scale (float): The minimal value of the scale parameter.
+        **layer_args: Additional arguments for the base layer.
+    """
+
     def __init__(
         self,
         base_layer: type[nn.Module],
@@ -81,6 +118,15 @@ class _LocScaleLinear(_ExpandOutputLinear):
 
 
 class _LocScaleConvNd(_ExpandOutputConvNd):
+    """Base Convolutional layer for any distribution with loc and scale parameters.
+
+    Args:
+        base_layer (type[nn.Module]): The base layer class.
+        event_dim (int): The number of event dimensions.
+        min_scale (float): The minimal value of the scale parameter.
+        **layer_args: Additional arguments for the base layer.
+    """
+
     def __init__(
         self,
         base_layer: type[nn.Module],

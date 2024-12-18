@@ -285,6 +285,16 @@ class BTSBackbone(Backbone):
 
 
 class BTSDecoder(nn.Module):
+    """BTS decoder.
+
+    Args:
+        max_depth (float): The maximum predicted depth.
+        feat_out_channels (list[int]): The number of output channels from the backbone.
+        num_features (int): The number of features to use in the decoder.
+        dist_family (str | None, optional): The distribution family name. ``None`` means point-wise
+            prediction. Defaults to ``None``.
+    """
+
     def __init__(
         self,
         max_depth: float,
@@ -488,8 +498,8 @@ class BTSDecoder(nn.Module):
             features (list[Tensor]): list of the features from the backbone.
 
         Note:
-            Depending of the :attr:`dist_layer` of the backbone, the output can
-            be a distribution or a single tensor.
+            Depending of the :attr:`dist_family` of the backbone, the output can
+            be a dictionnary of distribution parameters or a single tensor.
         """
         # TODO: handle focal
         out = self.depth(self.feat_forward(features))

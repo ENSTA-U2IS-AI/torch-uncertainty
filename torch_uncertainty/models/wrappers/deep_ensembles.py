@@ -40,10 +40,15 @@ class _RegDeepEnsembles(_DeepEnsembles):
         self.probabilistic = probabilistic
 
     def forward(self, x: torch.Tensor) -> torch.Tensor | dict[str, torch.Tensor]:
-        """Return the logits of the ensemble.
+        r"""Return the logits of the ensemble.
 
         Args:
             x (Tensor): The input of the model.
+
+        Returns:
+            Tensor | dict[str, Tensor]: The output of the model with shape :math:`(N \times B, *)`
+                where :math:`B` is the batch size, :math:`N` is the number of estimators, and
+                :math:`*` is any other dimension.
         """
         if self.probabilistic:
             out = [model.forward(x) for model in self.core_models]

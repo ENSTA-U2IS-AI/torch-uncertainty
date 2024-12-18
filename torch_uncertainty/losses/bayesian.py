@@ -52,7 +52,7 @@ class ELBOLoss(nn.Module):
             kl_weight (float): The weight of the KL divergence term
             num_samples (int): The number of samples to use for the ELBO loss
             dist_family (str, optional): The distribution family to use for the
-                output of the model. None means no distribution. Defaults to None.
+                output of the model. ``None`` means point-wise prediction. Defaults to ``None``.
 
         Note:
             Set the model to None if you use the ELBOLoss within
@@ -79,10 +79,11 @@ class ELBOLoss(nn.Module):
             Tensor: The aggregated ELBO loss
         """
         aggregated_elbo = torch.zeros(1, device=inputs.device)
+        dist_class = get_dist_class(self.dist_family) if self.dist_family is not None else None
         for _ in range(self.num_samples):
             out = self.model(inputs)
-            if self.dist_family is not None:
-                out = Independent(get_dist_class(self.dist_family)(**out), 1)
+            if dist_class is not None:
+                out = Independent(dist_class(**out), 1)
             aggregated_elbo += self.inner_loss(out, targets)
             # TODO: This shouldn't be necessary
             aggregated_elbo += self.kl_weight * self._kl_div().to(inputs.device)

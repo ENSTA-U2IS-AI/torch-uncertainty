@@ -38,7 +38,7 @@ def get_dist_class(dist_family: str) -> type[Distribution]:
 
 
 def get_dist_estimate(dist: Distribution, dist_estimate: str) -> Tensor:
-    """Get the distribution estimate.
+    """Get a point-wise prediction from a distribution.
 
     Args:
         dist (Distribution): The distribution.

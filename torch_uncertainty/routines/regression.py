@@ -46,7 +46,8 @@ class RegressionRoutine(LightningModule):
             output_dim (int): Number of outputs of the model.
             loss (torch.nn.Module): Loss function to optimize the :attr:`model`.
             dist_family (str, optional): The distribution family to use for
-                probabilistic regression. Defaults to ``None``.
+                probabilistic regression. If ``None`` then point-wise regression.
+                Defaults to ``None``.
             dist_estimate (str, optional): The estimate to use when computing the
                 point-wise metrics. Defaults to ``"mean"``.
             is_ensemble (bool, optional): Whether the model is an ensemble.
@@ -174,6 +175,10 @@ class RegressionRoutine(LightningModule):
         else:
             out = self.model(inputs)
             if self.probabilistic:
+                # Adding the Independent wrapper to the distribution to compute correctly the
+                # log-likelihood given a target. Here the last dimension is the event dimension.
+                # When computing the log-likelihood, the values are summed over the event
+                # dimension.
                 dists = Independent(get_dist_class(self.dist_family)(**out), 1)
                 loss = self.loss(dists, targets)
             else:
@@ -192,11 +197,13 @@ class RegressionRoutine(LightningModule):
             dist_params = {
                 k: rearrange(v, "(m b) c -> b m c", b=batch_size) for k, v in preds.items()
             }
+            # Adding the Independent wrapper to the distribution to create a MixtureSameFamily.
+            # As required by the torch.distributions API, the last dimension is the event dimension.
             comp = Independent(get_dist_class(self.dist_family)(**dist_params), 1)
             mix = Categorical(torch.ones(comp.batch_shape, device=self.device))
             dist = MixtureSameFamily(mix, comp)
-            pred = get_dist_estimate(comp, self.dist_estimate).mean(1)
-            return pred, dist
+            preds = get_dist_estimate(comp, self.dist_estimate).mean(1)
+            return preds, dist
 
         preds = rearrange(preds, "(m b) c -> b m c", b=batch_size)
         return preds.mean(dim=1), None
