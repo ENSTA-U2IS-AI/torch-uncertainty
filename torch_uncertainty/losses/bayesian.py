@@ -83,6 +83,7 @@ class ELBOLoss(nn.Module):
         for _ in range(self.num_samples):
             out = self.model(inputs)
             if dist_class is not None:
+                # Wrap the distribution in an Independent distribution for log_prob computation.
                 out = Independent(dist_class(**out), 1)
             aggregated_elbo += self.inner_loss(out, targets)
             # TODO: This shouldn't be necessary
