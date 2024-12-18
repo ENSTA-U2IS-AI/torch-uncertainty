@@ -99,6 +99,14 @@ class TestDistributionLinear:
         with pytest.raises(NotImplementedError):
             get_dist_linear_layer("unknown")
 
+        with pytest.raises(ValueError):
+            layer_class = get_dist_linear_layer("normal")
+            layer_class(
+                base_layer=torch.nn.Conv2d,
+                event_dim=2,
+                in_channels=5,
+            )
+
 
 class TestDistributionConv:
     """Testing the distribution convolutional layer classes."""
@@ -188,3 +196,11 @@ class TestDistributionConv:
     def test_failures(self):
         with pytest.raises(NotImplementedError):
             get_dist_conv_layer("unknown")
+
+        with pytest.raises(ValueError):
+            layer_class = get_dist_conv_layer("normal")
+            layer_class(
+                base_layer=torch.nn.Linear,
+                event_dim=2,
+                in_features=5,
+            )
