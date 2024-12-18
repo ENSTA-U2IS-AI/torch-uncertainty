@@ -31,6 +31,16 @@ class TestDeepEnsemblesModel:
         with pytest.raises(ValueError):
             deep_ensembles([model_1], num_estimators=1)
 
+    def test_error_prob_regression(self):
+        # The output dicts will have different keys
+        model_1 = dummy_model(1, 2, dist_family="normal")
+        model_2 = dummy_model(1, 2, dist_family="nig")
+
+        de = deep_ensembles([model_1, model_2], task="regression", probabilistic=True)
+
+        with pytest.raises(ValueError):
+            de(torch.randn(5, 1))
+
     def test_errors(self):
         model_1 = dummy_model(1, 10)
         with pytest.raises(ValueError):
