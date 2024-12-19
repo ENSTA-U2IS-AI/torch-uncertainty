@@ -22,11 +22,12 @@ class BTSBaseline(PixelRegressionRoutine):
         version: Literal["std"],
         arch: int,
         max_depth: float,
+        dist_family: str | None = None,
         num_estimators: int = 1,
         pretrained_backbone: bool = True,
     ) -> None:
         params = {
-            "dist_layer": nn.Identity,
+            "dist_family": dist_family,
             "max_depth": max_depth,
             "pretrained_backbone": pretrained_backbone,
         }
@@ -39,10 +40,10 @@ class BTSBaseline(PixelRegressionRoutine):
         model = self.versions[version][self.archs.index(arch)](**params)
         super().__init__(
             output_dim=1,
-            probabilistic=False,
             model=model,
             loss=loss,
             num_estimators=num_estimators,
             format_batch_fn=format_batch_fn,
+            dist_family=dist_family,
         )
         self.save_hyperparameters(ignore=["loss"])

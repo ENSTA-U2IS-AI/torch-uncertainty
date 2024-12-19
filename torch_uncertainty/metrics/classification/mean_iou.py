@@ -34,4 +34,4 @@ class MeanIntersectionOverUnion(MulticlassStatScores):
     def compute(self) -> Tensor:
         """Compute the Means Intersection over Union (MIoU) based on saved inputs."""
         tp, fp, _, fn = self._final_state()
-        return _safe_divide(tp, tp + fp + fn).mean()
+        return _safe_divide(tp, tp + fp + fn, zero_division=float("nan")).nanmean()

@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest
+import torch
 from torch import nn
 
 from tests._dummies import DummyRegressionBaseline, DummyRegressionDataModule
@@ -20,13 +21,13 @@ class TestRegression:
         dm = DummyRegressionDataModule(out_features=1, root=root, batch_size=4)
 
         model = DummyRegressionBaseline(
-            probabilistic=True,
             in_features=dm.in_features,
             output_dim=1,
             loss=DistributionNLLLoss(),
             optim_recipe=optim_cifar10_resnet18,
             baseline_type="single",
             ema=True,
+            dist_family="normal",
         )
 
         trainer.fit(model, dm)
@@ -36,13 +37,13 @@ class TestRegression:
 
         trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
         model = DummyRegressionBaseline(
-            probabilistic=False,
             in_features=dm.in_features,
             output_dim=1,
             loss=nn.MSELoss(),
             optim_recipe=optim_cifar10_resnet18,
             baseline_type="single",
             swa=True,
+            dist_family=None,
         )
 
         trainer.fit(model, dm)
@@ -57,13 +58,12 @@ class TestRegression:
         dm = DummyRegressionDataModule(out_features=2, root=root, batch_size=4)
 
         model = DummyRegressionBaseline(
-            probabilistic=True,
             in_features=dm.in_features,
             output_dim=2,
             loss=DistributionNLLLoss(),
             optim_recipe=optim_cifar10_resnet18,
             baseline_type="single",
-            dist_type="laplace",
+            dist_family="laplace",
         )
         trainer.fit(model, dm)
         trainer.validate(model, dm)
@@ -72,12 +72,12 @@ class TestRegression:
 
         trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
         model = DummyRegressionBaseline(
-            probabilistic=False,
             in_features=dm.in_features,
             output_dim=2,
             loss=nn.MSELoss(),
             optim_recipe=optim_cifar10_resnet18,
             baseline_type="single",
+            dist_family=None,
         )
         trainer.fit(model, dm)
         trainer.validate(model, dm)
@@ -91,13 +91,12 @@ class TestRegression:
         dm = DummyRegressionDataModule(out_features=1, root=root, batch_size=4)
 
         model = DummyRegressionBaseline(
-            probabilistic=True,
             in_features=dm.in_features,
             output_dim=1,
             loss=DistributionNLLLoss(),
             optim_recipe=optim_cifar10_resnet18,
             baseline_type="ensemble",
-            dist_type="nig",
+            dist_family="nig",
         )
         trainer.fit(model, dm)
         trainer.validate(model, dm)
@@ -106,12 +105,12 @@ class TestRegression:
 
         trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
         model = DummyRegressionBaseline(
-            probabilistic=False,
             in_features=dm.in_features,
             output_dim=1,
             loss=nn.MSELoss(),
             optim_recipe=optim_cifar10_resnet18,
             baseline_type="ensemble",
+            dist_family=None,
         )
         trainer.fit(model, dm)
         trainer.validate(model, dm)
@@ -125,12 +124,12 @@ class TestRegression:
         dm = DummyRegressionDataModule(out_features=2, root=root, batch_size=4)
 
         model = DummyRegressionBaseline(
-            probabilistic=True,
             in_features=dm.in_features,
             output_dim=2,
             loss=DistributionNLLLoss(),
             optim_recipe=optim_cifar10_resnet18,
             baseline_type="ensemble",
+            dist_family="normal",
         )
         trainer.fit(model, dm)
         trainer.validate(model, dm)
@@ -139,12 +138,12 @@ class TestRegression:
 
         trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
         model = DummyRegressionBaseline(
-            probabilistic=False,
             in_features=dm.in_features,
             output_dim=2,
             loss=nn.MSELoss(),
             optim_recipe=optim_cifar10_resnet18,
             baseline_type="ensemble",
+            dist_family=None,
         )
         trainer.fit(model, dm)
         trainer.validate(model, dm)
@@ -154,8 +153,17 @@ class TestRegression:
     def test_regression_failures(self):
         with pytest.raises(ValueError, match="output_dim must be positive"):
             RegressionRoutine(
-                probabilistic=True,
+                dist_family="normal",
                 output_dim=0,
                 model=nn.Identity(),
                 loss=nn.MSELoss(),
             )
+
+        with pytest.raises(TypeError):
+            routine = RegressionRoutine(
+                dist_family="normal",
+                output_dim=1,
+                model=nn.Identity(),
+                loss=nn.MSELoss(),
+            )
+            routine(torch.randn(1, 1))

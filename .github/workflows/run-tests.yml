@@ -76,7 +76,7 @@ jobs:
     - name: Test with pytest and compute coverage
       if: steps.changed-files-specific.outputs.only_changed != 'true'
       run: |
-        python3 -m pytest --cov --cov-report xml --durations 10
+        python3 -m pytest --cov --cov-report xml --durations 10 --junitxml=junit.xml
 
     - name: Upload coverage to Codecov
       if: steps.changed-files-specific.outputs.only_changed != 'true' && (github.event_name != 'pull_request' || github.base_ref == 'dev')
@@ -87,6 +87,15 @@ jobs:
         file: coverage.xml
         flags: cpu,pytest
         name: CPU-coverage
+        env_vars: PYTHON_VERSION
+
+    - name: Upload test results to Codecov
+      if: steps.changed-files-specific.outputs.only_changed != 'true' && (github.event_name != 'pull_request' || github.base_ref == 'dev')
+      uses: codecov/test-results-action@v1
+      continue-on-error: true
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        flags: cpu,pytest
         env_vars: PYTHON_VERSION
 
     - name: Test sphinx build without tutorials

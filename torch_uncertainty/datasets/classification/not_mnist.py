@@ -88,11 +88,3 @@ class NotMNIST(ImageFolder):
             md5=self.tgz_md5,
         )
         logging.info("Downloaded %s to %s.", self.filename, self.root)
-
-    def __getitem__(self, index: int) -> tuple[Any, Any]:
-        """Get the samples and targets of the dataset.
-
-        Args:
-            index (int): The index of the sample to get.
-        """
-        return super().__getitem__(index)

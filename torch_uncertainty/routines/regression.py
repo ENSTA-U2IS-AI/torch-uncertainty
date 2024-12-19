@@ -6,6 +6,7 @@ from torch import Tensor, nn
 from torch.distributions import (
     Categorical,
     Distribution,
+    Independent,
     MixtureSameFamily,
 )
 from torch.optim import Optimizer
@@ -20,9 +21,8 @@ from torch_uncertainty.models import (
     STEP_UPDATE_MODEL,
 )
 from torch_uncertainty.utils.distributions import (
-    dist_rearrange,
-    dist_size,
-    dist_squeeze,
+    get_dist_class,
+    get_dist_estimate,
 )
 
 
@@ -31,8 +31,9 @@ class RegressionRoutine(LightningModule):
         self,
         model: nn.Module,
         output_dim: int,
-        probabilistic: bool,
         loss: nn.Module,
+        dist_family: str | None = None,
+        dist_estimate: str = "mean",
         is_ensemble: bool = False,
         optim_recipe: dict | Optimizer | None = None,
         eval_shift: bool = False,
@@ -43,9 +44,12 @@ class RegressionRoutine(LightningModule):
         Args:
             model (torch.nn.Module): Model to train.
             output_dim (int): Number of outputs of the model.
-            probabilistic (bool): Whether the model is probabilistic, i.e.,
-                outputs a PyTorch distribution.
             loss (torch.nn.Module): Loss function to optimize the :attr:`model`.
+            dist_family (str, optional): The distribution family to use for
+                probabilistic regression. If ``None`` then point-wise regression.
+                Defaults to ``None``.
+            dist_estimate (str, optional): The estimate to use when computing the
+                point-wise metrics. Defaults to ``"mean"``.
             is_ensemble (bool, optional): Whether the model is an ensemble.
                 Defaults to ``False``.
             optim_recipe (dict or torch.optim.Optimizer, optional): The optimizer and
@@ -76,7 +80,9 @@ class RegressionRoutine(LightningModule):
             )
 
         self.model = model
-        self.probabilistic = probabilistic
+        self.dist_family = dist_family
+        self.dist_estimate = dist_estimate
+        self.probabilistic = dist_family is not None
         self.output_dim = output_dim
         self.loss = loss
         self.is_ensemble = is_ensemble
@@ -141,10 +147,16 @@ class RegressionRoutine(LightningModule):
         """
         pred = self.model(inputs)
         if self.probabilistic:
-            if self.one_dim_regression:
-                pred = dist_squeeze(pred, -1)
-            if not self.is_ensemble:
-                pred = dist_squeeze(pred, -1)
+            if isinstance(pred, dict):
+                if self.one_dim_regression:
+                    pred = {k: v.squeeze(-1) for k, v in pred.items()}
+                if not self.is_ensemble:
+                    pred = {k: v.squeeze(-1) for k, v in pred.items()}
+            else:
+                raise TypeError(
+                    "If the model is probabilistic, the output must be a dictionary ",
+                    "of PyTorch distributions.",
+                )
         else:
             if self.one_dim_regression:
                 pred = pred.squeeze(-1)
@@ -161,34 +173,50 @@ class RegressionRoutine(LightningModule):
         if isinstance(self.loss, ELBOLoss):
             loss = self.loss(inputs, targets)
         else:
-            dists = self.model(inputs)
-            loss = self.loss(dists, targets)
+            out = self.model(inputs)
+            if self.probabilistic:
+                # Adding the Independent wrapper to the distribution to compute correctly the
+                # log-likelihood given a target. Here the last dimension is the event dimension.
+                # When computing the log-likelihood, the values are summed over the event
+                # dimension.
+                dists = Independent(get_dist_class(self.dist_family)(**out), 1)
+                loss = self.loss(dists, targets)
+            else:
+                loss = self.loss(out, targets)
 
         if self.needs_step_update:
             self.model.update_wrapper(self.current_epoch)
         self.log("train_loss", loss, prog_bar=True, logger=True)
         return loss
 
+    def evaluation_forward(self, inputs: Tensor) -> tuple[Tensor, Distribution | None]:
+        batch_size = inputs.size(0)
+        preds = self.model(inputs)
+
+        if self.probabilistic:
+            dist_params = {
+                k: rearrange(v, "(m b) c -> b m c", b=batch_size) for k, v in preds.items()
+            }
+            # Adding the Independent wrapper to the distribution to create a MixtureSameFamily.
+            # As required by the torch.distributions API, the last dimension is the event dimension.
+            comp = Independent(get_dist_class(self.dist_family)(**dist_params), 1)
+            mix = Categorical(torch.ones(comp.batch_shape, device=self.device))
+            dist = MixtureSameFamily(mix, comp)
+            preds = get_dist_estimate(comp, self.dist_estimate).mean(1)
+            return preds, dist
+
+        preds = rearrange(preds, "(m b) c -> b m c", b=batch_size)
+        return preds.mean(dim=1), None
+
     def validation_step(self, batch: tuple[Tensor, Tensor], batch_idx: int) -> None:
         inputs, targets = batch
         if self.one_dim_regression:
             targets = targets.unsqueeze(-1)
-        batch_size = targets.size(0)
-        targets = rearrange(targets, "b c -> (b c)")
-        preds = self.model(inputs)
-
-        if self.probabilistic:
-            ens_dist = dist_rearrange(preds, "(m b) c -> (b c) m", b=batch_size)
-            mix = Categorical(torch.ones(dist_size(preds)[0] // batch_size, device=self.device))
-            mixture = MixtureSameFamily(mix, ens_dist)
-            preds = mixture.mean
-        else:
-            preds = rearrange(preds, "(m b) c -> (b c) m", b=batch_size)
-            preds = preds.mean(dim=1)
+        preds, dist = self.evaluation_forward(inputs)
 
         self.val_metrics.update(preds, targets)
-        if self.probabilistic:
-            self.val_prob_metrics.update(mixture, targets)
+        if isinstance(dist, Distribution):
+            self.val_prob_metrics.update(dist, targets)
 
     def test_step(
         self,
@@ -204,22 +232,11 @@ class RegressionRoutine(LightningModule):
         inputs, targets = batch
         if self.one_dim_regression:
             targets = targets.unsqueeze(-1)
-        batch_size = targets.size(0)
-        targets = rearrange(targets, "b c -> (b c)")
-        preds = self.model(inputs)
-
-        if self.probabilistic:
-            ens_dist = dist_rearrange(preds, "(m b) c -> (b c) m", b=batch_size)
-            mix = Categorical(torch.ones(dist_size(preds)[0] // batch_size, device=self.device))
-            mixture = MixtureSameFamily(mix, ens_dist)
-            preds = mixture.mean
-        else:
-            preds = rearrange(preds, "(m b) c -> (b c) m", b=batch_size)
-            preds = preds.mean(dim=1)
+        preds, dist = self.evaluation_forward(inputs)
 
         self.test_metrics.update(preds, targets)
-        if self.probabilistic:
-            self.test_prob_metrics.update(mixture, targets)
+        if isinstance(dist, Distribution):
+            self.test_prob_metrics.update(dist, targets)
 
     def on_validation_epoch_end(self) -> None:
         res_dict = self.val_metrics.compute()

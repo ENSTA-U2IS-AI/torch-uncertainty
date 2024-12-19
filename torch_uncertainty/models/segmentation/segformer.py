@@ -435,7 +435,7 @@ def _get_embed_dims(arch: int) -> list[int]:
     return [64, 128, 320, 512]
 
 
-def _get_depths(arch: int) -> list[int]:
+def _get_depths(arch: int) -> list[int]:  # coverage: ignore
     if arch == 0 or arch == 1:
         return [2, 2, 2, 2]
     if arch == 2:

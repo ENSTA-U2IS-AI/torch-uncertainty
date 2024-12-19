@@ -21,20 +21,20 @@ class DistributionNLL(CategoricalNLL):
         """
         nlog_prob = -dist.log_prob(target)
         if padding_mask is not None:
-            nlog_prob = nlog_prob.masked_fill(padding_mask, 0.0)
+            nlog_prob = nlog_prob.masked_fill(padding_mask, float("nan"))
         if self.reduction is None or self.reduction == "none":
             self.values.append(nlog_prob)
         else:
-            self.values += nlog_prob.sum()
-            self.total += target.size(0)
+            self.values += nlog_prob.nansum()
+            self.total += padding_mask.sum() if padding_mask is not None else target.numel()
 
     def compute(self) -> Tensor:
         """Computes NLL based on inputs passed in to ``update`` previously."""
         values = dim_zero_cat(self.values)
 
         if self.reduction == "sum":
-            return values.sum(dim=-1)
+            return values.nansum()
         if self.reduction == "mean":
-            return values.sum(dim=-1) / self.total
+            return values.nansum() / self.total
         # reduction is None or "none"
         return values

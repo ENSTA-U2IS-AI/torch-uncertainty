@@ -1,6 +1,8 @@
 import torch
 from torch import Tensor, nn
 
+from torch_uncertainty.layers.distributions import get_dist_conv_layer, get_dist_linear_layer
+
 __all__ = [
     "dummy_model",
 ]
@@ -12,17 +14,22 @@ class _Dummy(nn.Module):
         in_channels: int,
         num_classes: int,
         dropout_rate: float,
-        last_layer: nn.Module,
+        dist_family: str | None = None,
     ) -> None:
         super().__init__()
         self.in_channels = in_channels
         self.dropout_rate = dropout_rate
 
-        self.linear = nn.Linear(
-            1,
-            num_classes,
-        )
-        self.last_layer = last_layer
+        self.linear = nn.Linear(1, num_classes)
+
+        if dist_family is None:
+            self.last_layer = nn.Linear(num_classes, num_classes)
+        else:
+            self.last_layer = get_dist_linear_layer(dist_family)(
+                base_layer=nn.Linear,
+                event_dim=num_classes,
+                in_features=num_classes,
+            )
         self.dropout = nn.Dropout(p=dropout_rate)
 
     def forward(self, x: Tensor) -> Tensor:
@@ -53,7 +60,7 @@ class _DummySegmentation(nn.Module):
         num_classes: int,
         dropout_rate: float,
         image_size: int,
-        last_layer: nn.Module,
+        dist_family: str | None = None,
     ) -> None:
         super().__init__()
         self.dropout_rate = dropout_rate
@@ -62,7 +69,16 @@ class _DummySegmentation(nn.Module):
         self.image_size = image_size
         self.conv = nn.Conv2d(in_channels, num_classes, kernel_size=3, padding=1)
         self.dropout = nn.Dropout(p=dropout_rate)
-        self.last_layer = last_layer
+        if dist_family is None:
+            self.last_layer = nn.Identity()
+        else:
+            self.last_layer = get_dist_conv_layer(dist_family)(
+                base_layer=nn.Conv2d,
+                event_dim=num_classes,
+                in_channels=num_classes,
+                kernel_size=3,
+                padding=1,
+            )
 
     def forward(self, x: Tensor) -> Tensor:
         return self.last_layer(
@@ -87,7 +103,7 @@ def dummy_model(
     num_classes: int,
     dropout_rate: float = 0.0,
     with_feats: bool = True,
-    last_layer: nn.Module | None = None,
+    dist_family: str | None = None,
 ) -> _Dummy:
     """Dummy model for testing purposes.
 
@@ -97,25 +113,23 @@ def dummy_model(
         num_estimators (int): Number of estimators in the ensemble.
         dropout_rate (float, optional): Dropout rate. Defaults to 0.0.
         with_feats (bool, optional): Whether to include features. Defaults to True.
-        last_layer (nn.Module, optional): Last layer of the model. Defaults to None.
+        dist_family (str, optional): Distribution family. Defaults to None.
 
     Returns:
         _Dummy: Dummy model.
     """
-    if last_layer is None:
-        last_layer = nn.Identity()
     if with_feats:
         return _DummyWithFeats(
             in_channels=in_channels,
             num_classes=num_classes,
             dropout_rate=dropout_rate,
-            last_layer=last_layer,
+            dist_family=dist_family,
         )
     return _Dummy(
         in_channels=in_channels,
         num_classes=num_classes,
         dropout_rate=dropout_rate,
-        last_layer=last_layer,
+        dist_family=dist_family,
     )
 
 
@@ -124,7 +138,7 @@ def dummy_segmentation_model(
     num_classes: int,
     image_size: int,
     dropout_rate: float = 0.0,
-    last_layer: nn.Module | None = None,
+    dist_family: str | None = None,
 ) -> nn.Module:
     """Dummy segmentation model for testing purposes.
 
@@ -133,17 +147,15 @@ def dummy_segmentation_model(
         num_classes (int): Number of output classes.
         image_size (int): Size of the input image.
         dropout_rate (float, optional): Dropout rate. Defaults to 0.0.
-        last_layer (nn.Module, optional): Last layer of the model. Defaults to None.
+        dist_family (str, optional): Distribution family. Defaults to None.
 
     Returns:
         nn.Module: Dummy segmentation model.
     """
-    if last_layer is None:
-        last_layer = nn.Identity()
     return _DummySegmentation(
         in_channels=in_channels,
         num_classes=num_classes,
         dropout_rate=dropout_rate,
         image_size=image_size,
-        last_layer=last_layer,
+        dist_family=dist_family,
     )

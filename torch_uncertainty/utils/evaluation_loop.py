@@ -7,6 +7,29 @@ from lightning.pytorch.trainer.connectors.logger_connector.result import (
 from rich import get_console
 from rich.console import Group
 from rich.table import Table
+from torch import Tensor
+
+PERCENTAGE_METRICS = [
+    "Acc",
+    "AUPR",
+    "AUROC",
+    "FPR95",
+    "Cov@5Risk",
+    "Risk@80Cov",
+    "pixAcc",
+    "mIoU",
+    "AURC",
+    "AUGRC",
+    "mAcc",
+]
+
+
+def _add_row(table: Table, metric_name: str, value: Tensor) -> None:
+    if metric_name in PERCENTAGE_METRICS:
+        value = value * 100
+        table.add_row(metric_name, f"{value.item():.2f}%")
+    else:
+        table.add_row(metric_name, f"{value.item():.5f}")
 
 
 class TUEvaluationLoop(_EvaluationLoop):
@@ -19,21 +42,6 @@ class TUEvaluationLoop(_EvaluationLoop):
         # test/sc: Selective Classification Metrics
         # test/post: Post-Processing Metrics
         # test/seg: Segmentation Metrics
-
-        # In percentage
-        percentage_metrics = [
-            "Acc",
-            "AUPR",
-            "AUROC",
-            "FPR95",
-            "Cov@5Risk",
-            "Risk@80Cov",
-            "pixAcc",
-            "mIoU",
-            "AURC",
-            "AUGRC",
-            "mAcc",
-        ]
 
         metrics = {}
         for result in results:
@@ -88,12 +96,8 @@ class TUEvaluationLoop(_EvaluationLoop):
             table.add_column(first_col_name, justify="center", style="cyan", width=12)
             table.add_column("Classification", justify="center", style="magenta", width=25)
             cls_metrics = OrderedDict(sorted(metrics["cls"].items()))
-            for metric, value in cls_metrics.items():
-                if metric in percentage_metrics:
-                    value = value * 100
-                    table.add_row(metric, f"{value.item():.2f}%")
-                else:
-                    table.add_row(metric, f"{value.item():.5f}")
+            for metric_name, value in cls_metrics.items():
+                _add_row(table, metric_name, value)
             tables.append(table)
 
         if "seg" in metrics:
@@ -101,12 +105,8 @@ class TUEvaluationLoop(_EvaluationLoop):
             table.add_column(first_col_name, justify="center", style="cyan", width=12)
             table.add_column("Segmentation", justify="center", style="magenta", width=25)
             seg_metrics = OrderedDict(sorted(metrics["seg"].items()))
-            for metric, value in seg_metrics.items():
-                if metric in percentage_metrics:
-                    value = value * 100
-                    table.add_row(metric, f"{value.item():.2f}%")
-                else:
-                    table.add_row(metric, f"{value.item():.5f}")
+            for metric_name, value in seg_metrics.items():
+                _add_row(table, metric_name, value)
             tables.append(table)
 
         if "reg" in metrics:
@@ -114,12 +114,8 @@ class TUEvaluationLoop(_EvaluationLoop):
             table.add_column(first_col_name, justify="center", style="cyan", width=12)
             table.add_column("Regression", justify="center", style="magenta", width=25)
             reg_metrics = OrderedDict(sorted(metrics["reg"].items()))
-            for metric, value in reg_metrics.items():
-                if metric in percentage_metrics:  # coverage: ignore
-                    value = value * 100
-                    table.add_row(metric, f"{value.item():.2f}%")
-                else:
-                    table.add_row(metric, f"{value.item():.5f}")
+            for metric_name, value in reg_metrics.items():
+                _add_row(table, metric_name, value)
             tables.append(table)
 
         if "cal" in metrics:
@@ -127,12 +123,8 @@ class TUEvaluationLoop(_EvaluationLoop):
             table.add_column(first_col_name, justify="center", style="cyan", width=12)
             table.add_column("Calibration", justify="center", style="magenta", width=25)
             cal_metrics = OrderedDict(sorted(metrics["cal"].items()))
-            for metric, value in cal_metrics.items():
-                if metric in percentage_metrics:
-                    value = value * 100
-                    table.add_row(metric, f"{value.item():.2f}%")
-                else:
-                    table.add_row(metric, f"{value.item():.5f}")
+            for metric_name, value in cal_metrics.items():
+                _add_row(table, metric_name, value)
             tables.append(table)
 
         if "ood" in metrics:
@@ -140,12 +132,8 @@ class TUEvaluationLoop(_EvaluationLoop):
             table.add_column(first_col_name, justify="center", style="cyan", width=12)
             table.add_column("OOD Detection", justify="center", style="magenta", width=25)
             ood_metrics = OrderedDict(sorted(metrics["ood"].items()))
-            for metric, value in ood_metrics.items():
-                if metric in percentage_metrics:
-                    value = value * 100
-                    table.add_row(metric, f"{value.item():.2f}%")
-                else:
-                    table.add_row(metric, f"{value.item():.5f}")
+            for metric_name, value in ood_metrics.items():
+                _add_row(table, metric_name, value)
             tables.append(table)
 
         if "sc" in metrics:
@@ -158,12 +146,8 @@ class TUEvaluationLoop(_EvaluationLoop):
                 width=25,
             )
             sc_metrics = OrderedDict(sorted(metrics["sc"].items()))
-            for metric, value in sc_metrics.items():
-                if metric in percentage_metrics:
-                    value = value * 100
-                    table.add_row(metric, f"{value.item():.2f}%")
-                else:
-                    table.add_row(metric, f"{value.item():.5f}")
+            for metric_name, value in sc_metrics.items():
+                _add_row(table, metric_name, value)
             tables.append(table)
 
         if "post" in metrics:
@@ -171,12 +155,8 @@ class TUEvaluationLoop(_EvaluationLoop):
             table.add_column(first_col_name, justify="center", style="cyan", width=12)
             table.add_column("Post-Processing", justify="center", style="magenta", width=25)
             post_metrics = OrderedDict(sorted(metrics["post"].items()))
-            for metric, value in post_metrics.items():
-                if metric in percentage_metrics:
-                    value = value * 100
-                    table.add_row(metric, f"{value.item():.2f}%")
-                else:
-                    table.add_row(metric, f"{value.item():.5f}")
+            for metric_name, value in post_metrics.items():
+                _add_row(table, metric_name, value)
             tables.append(table)
 
         if "shift" in metrics:
@@ -190,14 +170,10 @@ class TUEvaluationLoop(_EvaluationLoop):
                 width=25,
             )
             shift_metrics = OrderedDict(sorted(metrics["shift"].items()))
-            for metric, value in shift_metrics.items():
-                if metric == "shift_severity":
+            for metric_name, value in shift_metrics.items():
+                if metric_name == "shift_severity":
                     continue
-                if metric in percentage_metrics:
-                    value = value * 100
-                    table.add_row(metric, f"{value.item():.2f}%")
-                else:
-                    table.add_row(metric, f"{value.item():.5f}")
+                _add_row(table, metric_name, value)
             tables.append(table)
 
         console = get_console()
