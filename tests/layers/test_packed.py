@@ -1,11 +1,13 @@
 import pytest
 import torch
+from einops import repeat
 
 from torch_uncertainty.layers.packed import (
     PackedConv1d,
     PackedConv2d,
     PackedConv3d,
     PackedLinear,
+    PackedMultiheadAttention,
 )
 
 
@@ -20,8 +22,13 @@ def feat_input_one_rearrange() -> torch.Tensor:
 
 
 @pytest.fixture()
+def feat_multi_dim() -> torch.Tensor:
+    return torch.rand((1, 2, 3, 4, 6))
+
+
+@pytest.fixture()
 def feat_input_16_features() -> torch.Tensor:
-    return torch.rand((2, 16))
+    return torch.rand((3, 16))
 
 
 @pytest.fixture()
@@ -37,6 +44,67 @@ def img_input() -> torch.Tensor:
 @pytest.fixture()
 def voxels_input() -> torch.Tensor:
     return torch.rand((5, 6, 3, 3, 3))
+
+
+@pytest.fixture()
+def unbatched_sequence() -> torch.Tensor:
+    return torch.rand((3, 6))  # (L, Hin)
+
+
+@pytest.fixture()
+def batched_sequence() -> torch.Tensor:
+    return torch.rand((2, 3, 6))  # (B, L, Hin)
+
+
+@pytest.fixture()
+def unbatched_sequences() -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    return torch.rand((3, 6)), torch.rand((4, 2)), torch.rand((4, 4))  # (L, Eq), (S, Ek), (S, Ev)
+
+
+@pytest.fixture()
+def batched_sequences() -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    return (
+        torch.rand((2, 3, 6)),
+        torch.rand((2, 4, 2)),
+        torch.rand((2, 4, 4)),
+    )  # (B, L, Eq), (B, S, Ek), (B, S, Ev)
+
+
+@pytest.fixture()
+def unbatched_qkv() -> torch.Tensor:
+    return torch.rand((3, 6))
+
+
+@pytest.fixture()
+def unbatched_q_kv() -> tuple[torch.Tensor, torch.Tensor]:
+    return torch.rand((3, 6)), torch.rand((4, 2))
+
+
+@pytest.fixture()
+def unbatched_q_k_v() -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    return torch.rand((3, 6)), torch.rand((4, 2)), torch.rand((4, 4))
+
+
+@pytest.fixture()
+def batched_qkv() -> torch.Tensor:
+    return torch.rand((2, 3, 6))
+
+
+@pytest.fixture()
+def batched_q_kv() -> tuple[torch.Tensor, torch.Tensor]:
+    return (
+        torch.rand((2, 3, 6)),
+        torch.rand((2, 4, 2)),
+    )
+
+
+@pytest.fixture()
+def batched_q_k_v() -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    return (
+        torch.rand((2, 3, 6)),
+        torch.rand((2, 4, 2)),
+        torch.rand((2, 4, 4)),
+    )
 
 
 class TestPackedLinear:
@@ -64,29 +132,47 @@ class TestPackedLinear:
         out = layer(feat)
         assert out.shape == torch.Size([6, 1])
 
-    def test_linear_full_implementation(self, feat_input_16_features: torch.Tensor):
+    # Full implementation tests
+    def test_linear_full_implementation(
+        self, feat_input_16_features: torch.Tensor, feat_multi_dim: torch.Tensor
+    ):
         layer = PackedLinear(16, 4, alpha=1, num_estimators=1, implementation="full")
         out = layer(feat_input_16_features)
-        assert out.shape == torch.Size([2, 4])
+        assert out.shape == torch.Size([3, 4])
         layer = PackedLinear(16, 4, alpha=1, num_estimators=2, implementation="full")
         out = layer(feat_input_16_features)
-        assert out.shape == torch.Size([2, 4])
+        assert out.shape == torch.Size([3, 4])
+        layer = PackedLinear(6, 2, alpha=1, num_estimators=1, implementation="full")
+        out = layer(feat_multi_dim)
+        assert out.shape == torch.Size([1, 2, 3, 4, 2])
 
-    def test_linear_sparse_implementation(self, feat_input_16_features: torch.Tensor):
+    # Sparse implementation tests
+    def test_linear_sparse_implementation(
+        self, feat_input_16_features: torch.Tensor, feat_multi_dim: torch.Tensor
+    ):
         layer = PackedLinear(16, 4, alpha=1, num_estimators=1, implementation="sparse")
         out = layer(feat_input_16_features)
-        assert out.shape == torch.Size([2, 4])
+        assert out.shape == torch.Size([3, 4])
         layer = PackedLinear(16, 4, alpha=1, num_estimators=2, implementation="sparse")
         out = layer(feat_input_16_features)
-        assert out.shape == torch.Size([2, 4])
+        assert out.shape == torch.Size([3, 4])
+        layer = PackedLinear(6, 2, alpha=1, num_estimators=1, implementation="sparse")
+        out = layer(feat_multi_dim)
+        assert out.shape == torch.Size([1, 2, 3, 4, 2])
 
-    def test_linear_einsum_implementation(self, feat_input_16_features: torch.Tensor):
+    # Einsum implementation tests
+    def test_linear_einsum_implementation(
+        self, feat_input_16_features: torch.Tensor, feat_multi_dim: torch.Tensor
+    ):
         layer = PackedLinear(16, 4, alpha=1, num_estimators=1, implementation="einsum")
         out = layer(feat_input_16_features)
-        assert out.shape == torch.Size([2, 4])
+        assert out.shape == torch.Size([3, 4])
         layer = PackedLinear(16, 4, alpha=1, num_estimators=2, implementation="einsum")
         out = layer(feat_input_16_features)
-        assert out.shape == torch.Size([2, 4])
+        assert out.shape == torch.Size([3, 4])
+        layer = PackedLinear(6, 2, alpha=1, num_estimators=1, implementation="einsum")
+        out = layer(feat_multi_dim)
+        assert out.shape == torch.Size([1, 2, 3, 4, 2])
 
     def test_linear_extend(self):
         _ = PackedConv2d(5, 3, kernel_size=1, alpha=1, num_estimators=2, gamma=1)
@@ -248,3 +334,127 @@ class TestPackedConv3d:
 
         with pytest.raises(ValueError):
             _ = PackedConv3d(5, 2, kernel_size=1, alpha=1, num_estimators=1, gamma=-1)
+
+
+class TestPackedGroupNorm:
+    """Testing the PackedGroupNorm layer class."""
+
+
+class TestPackedMultiheadAttention:
+    """Testing the PackedMultiheadAttention layer class."""
+
+    def test_one_estimator_qkv(self, unbatched_qkv: torch.Tensor, batched_qkv: torch.Tensor):
+        layer = PackedMultiheadAttention(
+            embed_dim=6,
+            num_heads=2,
+            alpha=1,
+            num_estimators=1,
+        )
+        out, _ = layer(
+            query=unbatched_qkv,
+            key=unbatched_qkv,
+            value=unbatched_qkv,
+        )
+        assert out.shape == torch.Size([3, 6])
+
+        unbatched_qkv = repeat(unbatched_qkv, "l h -> l b h", b=2)
+        out, _ = layer(
+            query=unbatched_qkv,
+            key=unbatched_qkv,
+            value=unbatched_qkv,
+        )
+        assert out.shape == torch.Size([3, 2, 6])
+
+        layer = PackedMultiheadAttention(
+            embed_dim=6,
+            num_heads=2,
+            alpha=1,
+            num_estimators=1,
+            batch_first=True,
+        )
+        out, _ = layer(
+            query=batched_qkv,
+            key=batched_qkv,
+            value=batched_qkv,
+        )
+        assert out.shape == torch.Size([2, 3, 6])
+
+    def test_one_estimator_q_kv(self, unbatched_q_kv: torch.Tensor, batched_q_kv: torch.Tensor):
+        layer = PackedMultiheadAttention(
+            embed_dim=6,
+            num_heads=2,
+            alpha=1,
+            num_estimators=1,
+            kdim=2,
+            vdim=2,
+        )
+        out, _ = layer(
+            query=unbatched_q_kv[0],
+            key=unbatched_q_kv[1],
+            value=unbatched_q_kv[1],
+        )
+        assert out.shape == torch.Size([3, 6])
+        unbatched_q_kv = tuple(repeat(seq, "l h -> l b h", b=2) for seq in unbatched_q_kv)
+        out, _ = layer(
+            query=unbatched_q_kv[0],
+            key=unbatched_q_kv[1],
+            value=unbatched_q_kv[1],
+        )
+        assert out.shape == torch.Size([3, 2, 6])
+
+        layer = PackedMultiheadAttention(
+            embed_dim=6,
+            num_heads=2,
+            alpha=1,
+            num_estimators=1,
+            kdim=2,
+            vdim=2,
+            batch_first=True,
+        )
+        out, _ = layer(
+            query=batched_q_kv[0],
+            key=batched_q_kv[1],
+            value=batched_q_kv[1],
+        )
+        assert out.shape == torch.Size([2, 3, 6])
+
+    def test_one_estimator_q_k_v(self, unbatched_q_k_v: torch.Tensor, batched_q_k_v: torch.Tensor):
+        layer = PackedMultiheadAttention(
+            embed_dim=6,
+            num_heads=2,
+            alpha=1,
+            num_estimators=1,
+            kdim=2,
+            vdim=4,
+        )
+        out, _ = layer(
+            query=unbatched_q_k_v[0],
+            key=unbatched_q_k_v[1],
+            value=unbatched_q_k_v[2],
+        )
+        assert out.shape == torch.Size([3, 6])
+
+        unbatched_q_k_v = tuple(repeat(seq, "l h -> l b h", b=2) for seq in unbatched_q_k_v)
+
+        out, _ = layer(
+            query=unbatched_q_k_v[0],
+            key=unbatched_q_k_v[1],
+            value=unbatched_q_k_v[2],
+        )
+        assert out.shape == torch.Size([3, 2, 6])
+
+        layer = PackedMultiheadAttention(
+            embed_dim=6,
+            num_heads=2,
+            alpha=1,
+            num_estimators=1,
+            kdim=2,
+            vdim=4,
+            batch_first=True,
+        )
+        out, _ = layer(
+            query=batched_q_k_v[0],
+            key=batched_q_k_v[1],
+            value=batched_q_k_v[2],
+        )
+        assert out.shape == torch.Size([2, 3, 6])

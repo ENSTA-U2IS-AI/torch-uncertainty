@@ -1,4 +1,5 @@
 import math
+from collections.abc import Callable
 from typing import Any
 
 import torch
@@ -6,6 +7,8 @@ from einops import rearrange
 from torch import Tensor, nn
 from torch.nn import functional as F
 from torch.nn.common_types import _size_1_t, _size_2_t, _size_3_t
+
+from .functional.packed import packed_linear, packed_multi_head_attention_forward
 
 
 def check_packed_parameters_consistency(alpha: float, gamma: int, num_estimators: int) -> None:
@@ -190,18 +193,13 @@ class PackedLinear(nn.Module):
             if self.rearrange:
                 return self._rearrange_forward(inputs)
             return F.conv1d(inputs, self.weight, self.bias, 1, 0, 1, self.groups)
-        if self.implementation == "full":
-            block_diag = torch.block_diag(*self.weight)
-            return F.linear(inputs, block_diag, self.bias)
-        if self.implementation == "sparse":
-            return (inputs @ self.weight.transpose(0, 1)) + self.bias
-        if self.implementation == "einsum":
-            return torch.einsum(
-                "bki,kij->bkj",
-                inputs.view(-1, self.groups, self.in_features),
-                self.weight.transpose(1, 2),
-            ).flatten(start_dim=-2, end_dim=-1)
-        raise ValueError(f"Unknown implementation: {self.implementation}")
+        return packed_linear(
+            inputs=inputs,
+            weight=self.weight,
+            num_groups=self.groups,
+            implementation=self.implementation,
+            bias=self.bias,
+        )
 
 
 class PackedConv1d(nn.Module):
@@ -565,3 +563,632 @@ class PackedConv3d(nn.Module):
     def bias(self) -> Tensor | None:
         r"""The bias of the underlying convolutional layer."""
         return self.conv.bias
+
+
+class PackedLayerNorm(nn.GroupNorm):
+    def forward(self, inputs: Tensor) -> Tensor:
+        b, _, _ = inputs.size()
+        x = rearrange(inputs, "b s h -> (b s) h")
+        x = F.group_norm(
+            x,
+            self.num_groups,
+            self.weight,
+            self.bias,
+            self.eps,
+        )
+        return rearrange(x, "(b s) h -> b s h", b=b)
+
+
+class PackedMultiheadAttention(nn.Module):
+    __constants__ = ["batch_first"]
+    bias_k: Tensor | None
+    bias_v: Tensor | None
+
+    def __init__(
+        self,
+        embed_dim: int,
+        num_heads: int,
+        alpha: float,
+        num_estimators: int,
+        gamma: int = 1,
+        dropout=0.0,
+        bias=True,
+        add_bias_kv=False,
+        add_zero_attn=False,
+        kdim: int | None = None,
+        vdim: int | None = None,
+        batch_first=False,
+        first=False,
+        last=False,
+        device=None,
+        dtype=None,
+    ) -> None:
+        factory_kwargs = {"device": device, "dtype": dtype}
+        super().__init__()
+
+        self.kdim = kdim if kdim is not None else embed_dim
+        self.vdim = vdim if vdim is not None else embed_dim
+        self._qkv_same_embed_dim = self.kdim == embed_dim and self.vdim == embed_dim
+
+        self.embed_dim = int(embed_dim * alpha)
+
+        augmentation = 1 if first else alpha
+        in_embed_dim = int(embed_dim * augmentation)
+        self.kdim = int(self.kdim * augmentation)
+        self.vdim = int(self.vdim * augmentation)
+
+        self.num_groups = 1 if first else num_estimators * gamma
+
+        self.num_heads = num_heads * self.num_groups
+        self.dropout = dropout
+        self.batch_first = batch_first
+        self.head_dim = self.embed_dim // self.num_heads
+        assert (
+            self.head_dim * self.num_heads == self.embed_dim
+        ), "embed_dim must be divisible by num_heads"
+
+        self.num_estimators = num_estimators
+        self.alpha = alpha
+        self.gamma = gamma
+
+        if not self._qkv_same_embed_dim:
+            self.q_proj_weight = nn.Parameter(
+                torch.empty(
+                    (
+                        self.num_groups,
+                        self.embed_dim // self.num_groups,
+                        in_embed_dim // self.num_groups,
+                    ),
+                    **factory_kwargs,
+                )
+            )
+            self.k_proj_weight = nn.Parameter(
+                torch.empty(
+                    (
+                        self.num_groups,
+                        self.embed_dim // self.num_groups,
+                        self.kdim // self.num_groups,
+                    ),
+                    **factory_kwargs,
+                )
+            )
+            self.v_proj_weight = nn.Parameter(
+                torch.empty(
+                    (
+                        self.num_groups,
+                        self.embed_dim // self.num_groups,
+                        self.vdim // self.num_groups,
+                    ),
+                    **factory_kwargs,
+                )
+            )
+            self.register_parameter("in_proj_weight", None)
+        else:
+            self.in_proj_weight = nn.Parameter(
+                torch.empty(
+                    (
+                        self.num_groups,
+                        3 * self.embed_dim // self.num_groups,
+                        in_embed_dim // self.num_groups,
+                    ),
+                    **factory_kwargs,
+                )
+            )
+            self.register_parameter("q_proj_weight", None)
+            self.register_parameter("k_proj_weight", None)
+            self.register_parameter("v_proj_weight", None)
+
+        if bias:
+            self.in_proj_bias = nn.Parameter(torch.empty(3 * self.embed_dim, **factory_kwargs))
+        else:
+            self.register_parameter("in_proj_bias", None)
+
+        self.out_proj = PackedLinear(
+            in_features=embed_dim,
+            out_features=embed_dim,
+            alpha=alpha,
+            num_estimators=num_estimators,
+            gamma=gamma,
+            implementation="einsum",
+            bias=bias,
+            first=False,
+            last=last,
+            **factory_kwargs,
+        )
+
+        self._reset_parameters()
+
+    def _reset_parameters(self):
+        if self._qkv_same_embed_dim:
+            for i in range(self.in_proj_weight.size(0)):
+                nn.init.xavier_uniform_(self.in_proj_weight[i])
+        else:
+            for i in range(self.q_proj_weight.size(0)):
+                nn.init.xavier_uniform_(self.q_proj_weight[i])
+                nn.init.xavier_uniform_(self.k_proj_weight[i])
+                nn.init.xavier_uniform_(self.v_proj_weight[i])
+
+        if self.in_proj_bias is not None:
+            nn.init.constant_(self.in_proj_bias, 0.0)
+            nn.init.constant_(self.out_proj.bias, 0.0)
+
+    def __setstate__(self, state):
+        """Support loading old MultiheadAttention checkpoints generated by
+        v1.1.0.
+
+        Args:
+            state (_type_): _description_
+        """
+        #
+        if "_qkv_same_embed_dim" not in state:
+            state["_qkv_same_embed_dim"] = True
+
+        super().__setstate__(state)
+
+    def forward(
+        self,
+        query: Tensor,
+        key: Tensor,
+        value: Tensor,
+        key_padding_mask: Tensor | None = None,
+        need_weights: bool = False,
+        attn_mask: Tensor | None = None,
+        average_attn_weights: bool = True,
+        is_causal: bool = False,
+    ) -> tuple[Tensor, Tensor | None]:
+        is_batched = query.dim() == 3
+
+        key_padding_mask = F._canonical_mask(
+            mask=key_padding_mask,
+            mask_name="key_padding_mask",
+            other_type=F._none_or_dtype(attn_mask),
+            other_name="attn_mask",
+            target_type=query.dtype,
+        )
+
+        attn_mask = F._canonical_mask(
+            mask=attn_mask,
+            mask_name="attn_mask",
+            other_type=None,
+            other_name="",
+            target_type=query.dtype,
+            check_other=False,
+        )
+
+        if self.batch_first and is_batched:
+            # make sure that the transpose op does not affect the "is" property
+            if key is value:
+                if query is key:
+                    query = key = value = query.transpose(1, 0)
+                else:
+                    query, key = (x.transpose(1, 0) for x in (query, key))
+                    value = key
+            else:
+                query, key, value = (x.transpose(1, 0) for x in (query, key, value))
+
+        if not self._qkv_same_embed_dim:
+            (
+                attn_output,
+                _,
+            ) = packed_multi_head_attention_forward(
+                query,
+                key,
+                value,
+                self.embed_dim,
+                self.num_heads,
+                self.num_groups,
+                self.in_proj_weight,
+                self.in_proj_bias,
+                None,
+                None,
+                False,
+                self.dropout,
+                self.out_proj.weight,
+                self.out_proj.bias,
+                training=self.training,
+                key_padding_mask=key_padding_mask,
+                need_weights=need_weights,
+                attn_mask=attn_mask,
+                use_separate_proj_weight=True,
+                q_proj_weight=self.q_proj_weight,
+                k_proj_weight=self.k_proj_weight,
+                v_proj_weight=self.v_proj_weight,
+                average_attn_weights=average_attn_weights,
+                is_causal=is_causal,
+            )
+        else:
+            (
+                attn_output,
+                _,
+            ) = packed_multi_head_attention_forward(
+                query,
+                key,
+                value,
+                self.embed_dim,
+                self.num_heads,
+                self.num_groups,
+                self.in_proj_weight,
+                self.in_proj_bias,
+                None,
+                None,
+                False,
+                self.dropout,
+                self.out_proj.weight,
+                self.out_proj.bias,
+                training=self.training,
+                key_padding_mask=key_padding_mask,
+                need_weights=need_weights,
+                attn_mask=attn_mask,
+                average_attn_weights=average_attn_weights,
+                is_causal=is_causal,
+            )
+        if self.batch_first and is_batched:
+            return attn_output.transpose(1, 0), None
+        return attn_output, None
+
+
+class PackedTransformerEncoderLayer(nn.Module):
+    __constants__ = ["batch_first", "norm_first"]
+
+    def __init__(
+        self,
+        d_model: int,
+        nhead: int,
+        alpha: float,
+        num_estimators: int,
+        gamma: int = 1,
+        dim_feedforward: int = 2048,
+        dropout: float = 0.1,
+        activation: str | Callable[[Tensor], Tensor] = F.relu,
+        layer_norm_eps: float = 1e-5,
+        bias: bool = True,
+        batch_first: bool = False,
+        norm_first: bool = False,
+        first: bool = False,
+        last: bool = False,
+        use_gqa: bool = False,
+        device=None,
+        dtype=None,
+    ) -> None:
+        factory_kwargs = {"device": device, "dtype": dtype}
+        super().__init__()
+
+        self.self_attn = PackedMultiheadAttention(
+            embed_dim=d_model,
+            num_heads=nhead,
+            alpha=alpha,
+            num_estimators=num_estimators,
+            bias=bias,
+            gamma=gamma,
+            dropout=dropout,
+            batch_first=batch_first,
+            first=first,
+            use_gqa=use_gqa,
+            **factory_kwargs,
+        )
+
+        self.linear1 = PackedLinear(
+            in_features=d_model,
+            out_features=dim_feedforward,
+            alpha=alpha,
+            num_estimators=num_estimators,
+            gamma=gamma,
+            implementation="einsum",
+            bias=bias,
+            **factory_kwargs,
+        )
+        self.dropout = nn.Dropout(dropout)
+        self.linear2 = PackedLinear(
+            in_features=dim_feedforward,
+            out_features=d_model,
+            alpha=alpha,
+            num_estimators=num_estimators,
+            gamma=gamma,
+            implementation="einsum",
+            last=last,
+            bias=bias,
+            **factory_kwargs,
+        )
+
+        self.norm_first = norm_first
+        if self.norm_first and first:
+            self.norm1 = nn.LayerNorm(d_model, eps=layer_norm_eps)
+        else:
+            self.norm1 = PackedLayerNorm(
+                num_estimators,
+                int(d_model * alpha),
+                eps=layer_norm_eps,
+                **factory_kwargs,
+            )
+
+        if not self.norm_first and last:
+            self.norm2 = PackedLayerNorm(
+                num_estimators,
+                int(d_model * num_estimators),
+                eps=layer_norm_eps,
+                **factory_kwargs,
+            )
+        else:
+            self.norm2 = PackedLayerNorm(
+                num_estimators,
+                int(d_model * alpha),
+                eps=layer_norm_eps,
+                **factory_kwargs,
+            )
+
+        self.dropout1 = nn.Dropout(dropout)
+        self.dropout2 = nn.Dropout(dropout)
+
+        if activation is F.relu or isinstance(activation, torch.nn.ReLU):
+            self.activation_relu_or_gelu = 1
+        elif activation is F.gelu or isinstance(activation, torch.nn.GELU):
+            self.activation_relu_or_gelu = 2
+        else:
+            self.activation_relu_or_gelu = 0
+        self.activation = activation
+
+    def forward(
+        self,
+        src: Tensor,
+        src_mask: Tensor | None = None,
+        src_key_padding_mask: Tensor | None = None,
+        is_causal: bool = False,
+    ) -> Tensor:
+        src_key_padding_mask = F._canonical_mask(
+            mask=src_key_padding_mask,
+            mask_name="src_key_padding_mask",
+            other_type=F._none_or_dtype(src_mask),
+            other_name="src_mask",
+            target_type=src.dtype,
+        )
+
+        src_mask = F._canonical_mask(
+            mask=src_mask,
+            mask_name="src_mask",
+            other_type=None,
+            other_name="",
+            target_type=src.dtype,
+            check_other=False,
+        )
+
+        x = src
+        if self.norm_first:
+            x = x + self._sa_block(
+                self.norm1(x),
+                src_mask,
+                src_key_padding_mask,
+                is_causal=is_causal,
+            )
+            x = x + self._ff_block(self.norm2(x))
+        else:
+            x = self.norm1(
+                x + self._sa_block(x, src_mask, src_key_padding_mask, is_causal=is_causal)
+            )
+            x = self.norm2(x + self._ff_block(x))
+
+        return x
+
+    # self-attention block
+    def _sa_block(
+        self,
+        x: Tensor,
+        attn_mask: Tensor | None,
+        key_padding_mask: Tensor | None,
+        is_causal: bool = False,
+    ) -> Tensor:
+        x = self.self_attn(
+            x,
+            x,
+            x,
+            attn_mask=attn_mask,
+            key_padding_mask=key_padding_mask,
+            is_causal=is_causal,
+        )[0]
+        return self.dropout1(x)
+
+    # feed-forward block
+    def _ff_block(self, x: Tensor) -> Tensor:
+        x = self.linear2(self.dropout(self.activation(self.linear1(x))))
+        return self.dropout2(x)
+
+
+class PackedTransformerDecoderLayer(nn.Module):
+    __constants__ = ["batch_first", "norm_first"]
+
+    def __init__(
+        self,
+        d_model: int,
+        nhead: int,
+        alpha: int,
+        num_estimators: int,
+        gamma: int = 1,
+        dim_feedforward: int = 2048,
+        dropout: float = 0.1,
+        activation: str | Callable[[Tensor], Tensor] = F.relu,
+        layer_norm_eps: float = 1e-5,
+        batch_first: bool = False,
+        norm_first: bool = False,
+        first: bool = False,
+        last: bool = False,
+        bias: bool = True,
+        use_gqa: bool = False,
+        device=None,
+        dtype=None,
+    ) -> None:
+        factory_kwargs = {"device": device, "dtype": dtype}
+        super().__init__()
+
+        self.self_attn = PackedMultiheadAttention(
+            embed_dim=d_model,
+            num_heads=nhead,
+            alpha=alpha,
+            num_estimators=num_estimators,
+            gamma=gamma,
+            dropout=dropout,
+            bias=bias,
+            batch_first=batch_first,
+            first=first,
+            use_gqa=use_gqa,
+            **factory_kwargs,
+        )
+
+        self.multihead_attn = PackedMultiheadAttention(
+            embed_dim=d_model,
+            num_heads=nhead,
+            alpha=alpha,
+            num_estimators=num_estimators,
+            gamma=gamma,
+            dropout=dropout,
+            bias=bias,
+            batch_first=batch_first,
+            use_gqa=use_gqa,
+            **factory_kwargs,
+        )
+
+        self.linear1 = PackedLinear(
+            in_features=d_model,
+            out_features=dim_feedforward,
+            alpha=alpha,
+            num_estimators=num_estimators,
+            gamma=gamma,
+            implementation="einsum",
+            bias=bias,
+            **factory_kwargs,
+        )
+        self.dropout = nn.Dropout(dropout)
+        self.linear2 = PackedLinear(
+            in_features=dim_feedforward,
+            out_features=d_model,
+            alpha=alpha,
+            num_estimators=num_estimators,
+            gamma=gamma,
+            implementation="einsum",
+            bias=bias,
+            last=last,
+            **factory_kwargs,
+        )
+
+        self.norm_first = norm_first
+        if self.norm_first and first:
+            self.norm1 = nn.LayerNorm(d_model, eps=layer_norm_eps)
+        else:
+            self.norm1 = PackedLayerNorm(
+                num_estimators,
+                int(d_model * alpha),
+                eps=layer_norm_eps,
+                **factory_kwargs,
+            )
+
+        self.norm2 = PackedLayerNorm(
+            num_estimators,
+            int(d_model * alpha),
+            eps=layer_norm_eps,
+            **factory_kwargs,
+        )
+
+        if not self.norm_first and last:
+            self.norm3 = PackedLayerNorm(
+                num_estimators,
+                d_model * num_estimators,
+                eps=layer_norm_eps,
+                **factory_kwargs,
+            )
+        else:
+            self.norm3 = PackedLayerNorm(
+                num_estimators,
+                int(d_model * alpha),
+                eps=layer_norm_eps,
+                **factory_kwargs,
+            )
+
+        self.dropout1 = nn.Dropout(dropout)
+        self.dropout2 = nn.Dropout(dropout)
+        self.dropout3 = nn.Dropout(dropout)
+
+        if activation is F.relu or isinstance(activation, torch.nn.ReLU):
+            self.activation_relu_or_gelu = 1
+        elif activation is F.gelu or isinstance(activation, torch.nn.GELU):
+            self.activation_relu_or_gelu = 2
+        else:
+            self.activation_relu_or_gelu = 0
+        self.activation = activation
+
+    def forward(
+        self,
+        tgt: Tensor,
+        memory: Tensor,
+        tgt_mask: Tensor | None = None,
+        memory_mask: Tensor | None = None,
+        tgt_key_padding_mask: Tensor | None = None,
+        memory_key_padding_mask: Tensor | None = None,
+        tgt_is_causal: bool = False,
+        memory_is_causal: bool = False,
+    ) -> Tensor:
+        x = tgt
+        if self.norm_first:
+            x = x + self._sa_block(self.norm1(x), tgt_mask, tgt_key_padding_mask, tgt_is_causal)
+            x = x + self._mha_block(
+                self.norm2(x),
+                memory,
+                memory_mask,
+                memory_key_padding_mask,
+                memory_is_causal,
+            )
+            x = x + self._ff_block(self.norm3(x))
+        else:
+            x = self.norm1(x + self._sa_block(x, tgt_mask, tgt_key_padding_mask, tgt_is_causal))
+            x = self.norm2(
+                x
+                + self._mha_block(
+                    x,
+                    memory,
+                    memory_mask,
+                    memory_key_padding_mask,
+                    memory_is_causal,
+                )
+            )
+            x = self.norm3(x + self._ff_block(x))
+
+        return x
+
+    # self-attention block
+    def _sa_block(
+        self,
+        x: Tensor,
+        attn_mask: Tensor | None,
+        key_padding_mask: Tensor | None,
+        is_causal: bool = False,
+    ) -> Tensor:
+        x = self.self_attn(
+            x,
+            x,
+            x,
+            attn_mask=attn_mask,
+            key_padding_mask=key_padding_mask,
+            is_causal=is_causal,
+        )[0]
+        return self.dropout1(x)
+
+    # multi-head attention block
+    def _mha_block(
+        self,
+        x: Tensor,
+        memory: Tensor,
+        attn_mask: Tensor | None,
+        key_padding_mask: Tensor | None,
+        is_causal: bool = False,
+    ) -> Tensor:
+        x = self.multihead_attn(
+            x,
+            memory,
+            memory,
+            attn_mask=attn_mask,
+            key_padding_mask=key_padding_mask,
+            is_causal=is_causal,
+        )[0]
+        return self.dropout2(x)
+
+    # feed-forward block
+    def _ff_block(self, x: Tensor) -> Tensor:
+        x = self.linear2(self.dropout(self.activation(self.linear1(x))))
+        return self.dropout3(x)
