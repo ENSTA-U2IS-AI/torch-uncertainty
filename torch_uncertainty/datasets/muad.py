@@ -41,7 +41,7 @@ class MUAD(VisionDataset):
         "val_depth": "0282030d281aeffee3335f713ba12373",
     }
 
-    small_muad_url = "fira7s/Muad2"
+    small_muad_url = "ENSTA-U2IS/miniMUAD"
 
     _num_samples = {
         "full": {
