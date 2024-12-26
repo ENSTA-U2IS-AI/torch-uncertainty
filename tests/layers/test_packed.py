@@ -6,6 +6,7 @@ from torch_uncertainty.layers.packed import (
     PackedConv1d,
     PackedConv2d,
     PackedConv3d,
+    PackedLayerNorm,
     PackedLinear,
     PackedMultiheadAttention,
 )
@@ -44,30 +45,6 @@ def img_input() -> torch.Tensor:
 @pytest.fixture()
 def voxels_input() -> torch.Tensor:
     return torch.rand((5, 6, 3, 3, 3))
-
-
-@pytest.fixture()
-def unbatched_sequence() -> torch.Tensor:
-    return torch.rand((3, 6))  # (L, Hin)
-
-
-@pytest.fixture()
-def batched_sequence() -> torch.Tensor:
-    return torch.rand((2, 3, 6))  # (B, L, Hin)
-
-
-@pytest.fixture()
-def unbatched_sequences() -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-    return torch.rand((3, 6)), torch.rand((4, 2)), torch.rand((4, 4))  # (L, Eq), (S, Ek), (S, Ev)
-
-
-@pytest.fixture()
-def batched_sequences() -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-    return (
-        torch.rand((2, 3, 6)),
-        torch.rand((2, 4, 2)),
-        torch.rand((2, 4, 4)),
-    )  # (B, L, Eq), (B, S, Ek), (B, S, Ev)
 
 
 @pytest.fixture()
@@ -336,8 +313,17 @@ class TestPackedConv3d:
             _ = PackedConv3d(5, 2, kernel_size=1, alpha=1, num_estimators=1, gamma=-1)
 
 
-class TestPackedGroupNorm:
+class TestPackedLayerNorm:
     """Testing the PackedGroupNorm layer class."""
+
+    def test_one_estimator_forward(self, batched_qkv: torch.Tensor):
+        packed_layer_norm = PackedLayerNorm(
+            embed_dim=6,
+            num_estimators=1,
+            alpha=1,
+        )
+        out = packed_layer_norm(batched_qkv)
+        assert out.shape == torch.Size([2, 3, 6])
 
 
 class TestPackedMultiheadAttention:
@@ -371,6 +357,7 @@ class TestPackedMultiheadAttention:
             alpha=1,
             num_estimators=1,
             batch_first=True,
+            bias=False,
         )
         out, _ = layer(
             query=batched_qkv,
@@ -379,7 +366,11 @@ class TestPackedMultiheadAttention:
         )
         assert out.shape == torch.Size([2, 3, 6])
 
-    def test_one_estimator_q_kv(self, unbatched_q_kv: torch.Tensor, batched_q_kv: torch.Tensor):
+    def test_one_estimator_q_kv(
+        self,
+        unbatched_q_kv: tuple[torch.Tensor, torch.Tensor],
+        batched_q_kv: tuple[torch.Tensor, torch.Tensor],
+    ):
         layer = PackedMultiheadAttention(
             embed_dim=6,
             num_heads=2,
@@ -387,6 +378,7 @@ class TestPackedMultiheadAttention:
             num_estimators=1,
             kdim=2,
             vdim=2,
+            add_zero_attn=True,
         )
         out, _ = layer(
             query=unbatched_q_kv[0],
@@ -418,7 +410,11 @@ class TestPackedMultiheadAttention:
         )
         assert out.shape == torch.Size([2, 3, 6])
 
-    def test_one_estimator_q_k_v(self, unbatched_q_k_v: torch.Tensor, batched_q_k_v: torch.Tensor):
+    def test_one_estimator_q_k_v(
+        self,
+        unbatched_q_k_v: tuple[torch.Tensor, torch.Tensor, torch.Tensor],
+        batched_q_k_v: tuple[torch.Tensor, torch.Tensor, torch.Tensor],
+    ):
         layer = PackedMultiheadAttention(
             embed_dim=6,
             num_heads=2,
@@ -426,6 +422,7 @@ class TestPackedMultiheadAttention:
             num_estimators=1,
             kdim=2,
             vdim=4,
+            add_bias_kv=True,
         )
         out, _ = layer(
             query=unbatched_q_k_v[0],
@@ -452,9 +449,26 @@ class TestPackedMultiheadAttention:
             vdim=4,
             batch_first=True,
         )
+
+        layer.eval()
+
+        attn_mask = torch.zeros(3, 4, dtype=torch.bool)
+        key_padding_mask = torch.zeros(2, 4, dtype=torch.bool)
+
         out, _ = layer(
             query=batched_q_k_v[0],
             key=batched_q_k_v[1],
             value=batched_q_k_v[2],
+            attn_mask=attn_mask,
+            key_padding_mask=key_padding_mask,
         )
         assert out.shape == torch.Size([2, 3, 6])
+        assert out.isfinite().all()
+
+
+class TestPackedTransformerEncoderLayer:
+    """Testing the PackedTransformerEncoderLayer class."""
+
+
+class TestPackedTransformerDecoderLayer:
+    """Testing the PackedTransformerDecoderLayer class."""

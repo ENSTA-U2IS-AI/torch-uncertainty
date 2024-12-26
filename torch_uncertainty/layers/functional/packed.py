@@ -34,16 +34,19 @@ def packed_linear(
         block_diag = torch.block_diag(*weight)
         return F.linear(inputs, block_diag, bias)
     if implementation == "sparse":
-        return (inputs @ weight.transpose(0, 1)) + bias
+        out = inputs @ weight.transpose(0, 1)
+        if bias is not None:
+            out += bias
+        return out
     if implementation == "einsum":
-        return (
-            torch.einsum(
-                "...ki,kij->...kj",
-                rearrange(inputs, "... (m d) -> ... m d", m=num_groups),
-                weight.transpose(1, 2),
-            ).flatten(start_dim=-2)
-            + bias
-        )
+        out = torch.einsum(
+            "...ki,kij->...kj",
+            rearrange(inputs, "... (m d) -> ... m d", m=num_groups),
+            weight.transpose(1, 2),
+        ).flatten(start_dim=-2)
+        if bias is not None:
+            out += bias
+        return out
     raise ValueError(f"Unknown implementation: {implementation}")
 
 
