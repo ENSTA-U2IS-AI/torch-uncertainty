@@ -590,12 +590,16 @@ class PackedLayerNorm(nn.GroupNorm):
         alpha: float,
         eps: float = 1e-5,
         affine: bool = True,
+        device=None,
+        dtype=None,
     ) -> None:
         super().__init__(
             num_groups=num_estimators,
             num_channels=int(embed_dim * alpha),
             eps=eps,
             affine=affine,
+            device=device,
+            dtype=dtype,
         )
 
     def forward(self, inputs: Tensor) -> Tensor:
@@ -865,14 +869,13 @@ class PackedTransformerEncoderLayer(nn.Module):
         gamma: int = 1,
         dim_feedforward: int = 2048,
         dropout: float = 0.1,
-        activation: str | Callable[[Tensor], Tensor] = F.relu,
+        activation: Callable[[Tensor], Tensor] = F.relu,
         layer_norm_eps: float = 1e-5,
         bias: bool = True,
         batch_first: bool = False,
         norm_first: bool = False,
         first: bool = False,
         last: bool = False,
-        use_gqa: bool = False,
         device=None,
         dtype=None,
     ) -> None:
@@ -889,7 +892,6 @@ class PackedTransformerEncoderLayer(nn.Module):
             dropout=dropout,
             batch_first=batch_first,
             first=first,
-            use_gqa=use_gqa,
             **factory_kwargs,
         )
 
@@ -921,23 +923,26 @@ class PackedTransformerEncoderLayer(nn.Module):
             self.norm1 = nn.LayerNorm(d_model, eps=layer_norm_eps)
         else:
             self.norm1 = PackedLayerNorm(
-                num_estimators,
-                int(d_model * alpha),
+                embed_dim=d_model,
+                num_estimators=num_estimators,
+                alpha=alpha,
                 eps=layer_norm_eps,
                 **factory_kwargs,
             )
 
         if not self.norm_first and last:
             self.norm2 = PackedLayerNorm(
-                num_estimators,
-                int(d_model * num_estimators),
+                embed_dim=d_model,
+                num_estimators=num_estimators,
+                alpha=alpha,
                 eps=layer_norm_eps,
                 **factory_kwargs,
             )
         else:
             self.norm2 = PackedLayerNorm(
-                num_estimators,
-                int(d_model * alpha),
+                embed_dim=d_model,
+                num_estimators=num_estimators,
+                alpha=alpha,
                 eps=layer_norm_eps,
                 **factory_kwargs,
             )
@@ -1030,14 +1035,13 @@ class PackedTransformerDecoderLayer(nn.Module):
         gamma: int = 1,
         dim_feedforward: int = 2048,
         dropout: float = 0.1,
-        activation: str | Callable[[Tensor], Tensor] = F.relu,
+        activation: Callable[[Tensor], Tensor] = F.relu,
         layer_norm_eps: float = 1e-5,
         batch_first: bool = False,
         norm_first: bool = False,
         first: bool = False,
         last: bool = False,
         bias: bool = True,
-        use_gqa: bool = False,
         device=None,
         dtype=None,
     ) -> None:
@@ -1054,7 +1058,6 @@ class PackedTransformerDecoderLayer(nn.Module):
             bias=bias,
             batch_first=batch_first,
             first=first,
-            use_gqa=use_gqa,
             **factory_kwargs,
         )
 
@@ -1067,7 +1070,6 @@ class PackedTransformerDecoderLayer(nn.Module):
             dropout=dropout,
             bias=bias,
             batch_first=batch_first,
-            use_gqa=use_gqa,
             **factory_kwargs,
         )
 
@@ -1099,30 +1101,34 @@ class PackedTransformerDecoderLayer(nn.Module):
             self.norm1 = nn.LayerNorm(d_model, eps=layer_norm_eps)
         else:
             self.norm1 = PackedLayerNorm(
-                num_estimators,
-                int(d_model * alpha),
+                embed_dim=d_model,
+                num_estimators=num_estimators,
+                alpha=alpha,
                 eps=layer_norm_eps,
                 **factory_kwargs,
             )
 
         self.norm2 = PackedLayerNorm(
-            num_estimators,
-            int(d_model * alpha),
+            embed_dim=d_model,
+            num_estimators=num_estimators,
+            alpha=alpha,
             eps=layer_norm_eps,
             **factory_kwargs,
         )
 
         if not self.norm_first and last:
             self.norm3 = PackedLayerNorm(
-                num_estimators,
-                d_model * num_estimators,
+                embed_dim=d_model,
+                num_estimators=num_estimators,
+                alpha=num_estimators,
                 eps=layer_norm_eps,
                 **factory_kwargs,
             )
         else:
             self.norm3 = PackedLayerNorm(
-                num_estimators,
-                int(d_model * alpha),
+                embed_dim=d_model,
+                num_estimators=num_estimators,
+                alpha=alpha,
                 eps=layer_norm_eps,
                 **factory_kwargs,
             )

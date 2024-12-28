@@ -397,10 +397,12 @@ def packed_multi_head_attention_forward(  # noqa: D417
         elif attn_mask.dim() == 3:
             correct_3d_size = (bsz * num_heads, tgt_len, src_len)
             if attn_mask.shape != correct_3d_size:
+                # unreachable code due to the check above (F._mha_shape_check, l.274)
                 raise RuntimeError(
                     f"The shape of the 3D attn_mask is {attn_mask.shape}, but should be {correct_3d_size}."
                 )
         else:
+            # unreachable code due to the check above (F._mha_shape_check, l.274)
             raise RuntimeError(f"attn_mask's dimension {attn_mask.dim()} is not supported")
 
     if bias_k is not None and bias_v is not None:
