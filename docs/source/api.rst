@@ -228,9 +228,15 @@ Proper Scores
 .. autosummary::
     :toctree: generated/
     :nosignatures:
-    :template: class.rst
+    :template: class_with_ex.rst
 
     BrierScore
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: class.rst
+
     CategoricalNLL
 
 Out-of-Distribution Detection
@@ -267,9 +273,9 @@ Calibration
     :toctree: generated/
     :nosignatures:
     :template: class.rst
-
-    AdaptiveCalibrationError
+    
     CalibrationError
+    AdaptiveCalibrationError
 
 Diversity
 """""""""

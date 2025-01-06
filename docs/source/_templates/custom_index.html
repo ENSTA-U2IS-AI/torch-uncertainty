@@ -1,0 +1,85 @@
+{% extends "layout.html" %}
+
+{% block extrahead %}
+{{ super() }}
+<!-- Load the compiled index.css only for this page -->
+<link rel="stylesheet" type="text/css" href="{{ pathto('_static/styles/index.css', 1) }}">
+{% endblock extrahead %}
+
+{% block docs_navbar %}
+{{ super() }}
+
+<!-- Gradient Banner Section -->
+<div class="gradient-banner" style="background: linear-gradient(to right, #020202, #A9BBDC, #262729); color: white; padding: 2rem 0;">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-md-6">
+        <h1 style="font-family: 'Roboto', 'Helvetica Neue', Arial, sans-serif; font-weight: 700; letter-spacing: 1px;">
+            TorchUncertainty
+          </h1>
+                  <h4 style="font-style: italic; margin-bottom: 1rem;">Scalable Uncertainty Estimation in PyTorch</h4>
+        <!-- Buttons with original style -->
+        <a class="btn btn-warning mb-2 me-2" style="font-size: 1.1rem; font-weight: 500;" href="{{ pathto('installation') }}">Getting Started</a>
+        <a class="btn btn-light mb-2" style="font-size: 1.1rem; font-weight: 500;" href="{{ pathto('api') }}">API Documentation</a>
+      </div>
+      <div class="col-md-6">
+        <ul style="list-style-type: none; padding-left: 0; font-size: 1.1rem;">
+          <li>✔ Easy-to-use PyTorch uncertainty quantification tools.</li>
+          <li>✔ Seamlessly integrates with PyTorch Lightning.</li>
+          <li>✔ Supports classification, regression, and segmentation tasks.</li>
+          <li>✔ Open-source.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock docs_navbar %}
+
+
+{% block docs_main %}
+<div class="container py-4" role="main">
+  <div class="row">
+    {% set cards = [
+      {"title": "Classification", "color": "#4185d4", "desc": "Identifying categories while quantifying uncertainty.",
+       "apps": "Risk-sensitive predictions, anomaly detection...",
+       "algos": "Deep Ensembles, Packed Ensembles, Bayesian Neural Networks.", "img": "class.png"},
+      {"title": "Regression", "color": "#4185d4", "desc": "Predicting continuous-valued outputs with uncertainty bounds.",
+       "apps": "Forecasting, scientific analysis...",
+       "algos": "Deep Evidential Regression", "img": "reg.png"},
+      {"title": "Segmentation", "color": "#4185d4", "desc": "Pixel-wise predictions with uncertainty metrics.",
+       "apps": "Image segmentation, medical imaging...",
+       "algos": "DeepLab, SegFormer", "img": "seg.png"},
+      {"title": "Model Calibration", "color": "#4185d4", "desc": "Improving model predictions with calibration methods.",
+       "apps": "Risk management, decision-making systems...",
+       "algos": "Temperature Scaling, vector scaling, matrix scaling", "img": "cali.png"},
+       {"title": "Bayesian Methods", "color": "#4185d4", 
+       "desc": "Bayesian-inspired approaches to estimate model uncertainty by treating parameters or predictions as probabilistic distributions.",
+       "apps": "Uncertainty quantification, decision-making under uncertainty, probabilistic predictions.",
+       "algos": "Monte Carlo Dropout, Variational Inference, MCBN.", 
+       "img": "bayes.png"},
+      {"title": "Ensemble Methods", "color": "#4185d4", 
+       "desc": "Combining predictions from multiple models to improve accuracy and provide reliable uncertainty estimates.",
+       "apps": "Robust predictions, anomaly detection, improved generalization.",
+       "algos": "Deep Ensembles, Packed Ensembles.", 
+       "img": "ensembles.png"}
+    ] %}
+    
+    {% for card in cards %}
+    <div class="col-md-4 mb-3 d-flex align-items-stretch">
+      <div class="card shadow-sm h-100 d-flex flex-column">
+        <div class="card-body flex-grow-1">
+          <h5 class="card-title text-start"><a href="{{ pathto('api') }}" style="color: {{ card.color }};">{{ card.title }}</a></h5>
+          <p>{{ card.desc }}</p>
+          <p><strong>Applications:</strong> {{ card.apps }}</p>
+          <p><strong>Algorithms:</strong> {{ card.algos }}</p>
+        </div>
+        <img src="{{ pathto('_static/' + card.img, 1) }}" alt="{{ card.title }}" class="card-img-bottom img-fluid">
+        <div class="mt-auto">
+          <a href="{{ pathto('auto_tutorials/index') }}" class="btn btn-primary w-100">Examples</a>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock docs_main %}
