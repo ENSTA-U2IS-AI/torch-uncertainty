@@ -12,6 +12,21 @@ __all__ = ["bayesian_mlp", "mlp", "packed_mlp"]
 
 
 class _MLP(nn.Module):
+    """Multi-layer perceptron class.
+
+    Args:
+        in_features (int): Number of input features.
+        num_outputs (int): Number of output features.
+        hidden_dims (list[int]): Number of features for each hidden layer.
+        layer (nn.Module): Layer class.
+        activation (Callable): Activation function.
+        layer_args (Dict): Arguments for the layer class.
+        dropout_rate (float): Dropout probability.
+        dist_family (str, optional): Distribution family name. ``None`` means point-wise
+            prediction. Defaults to ``None``.
+        dist_args (Dict, optional): Arguments for the distribution layer class.
+    """
+
     def __init__(
         self,
         in_features: int,
@@ -24,20 +39,6 @@ class _MLP(nn.Module):
         dist_family: str | None,
         dist_args: dict,
     ) -> None:
-        """Multi-layer perceptron class.
-
-        Args:
-            in_features (int): Number of input features.
-            num_outputs (int): Number of output features.
-            hidden_dims (list[int]): Number of features for each hidden layer.
-            layer (nn.Module): Layer class.
-            activation (Callable): Activation function.
-            layer_args (Dict): Arguments for the layer class.
-            dropout_rate (float): Dropout probability.
-            dist_family (str, optional): Distribution family name. ``None`` means point-wise
-                prediction. Defaults to ``None``.
-            dist_args (Dict, optional): Arguments for the distribution layer class.
-        """
         super().__init__()
         self.activation = activation
         self.dropout_rate = dropout_rate

@@ -29,6 +29,18 @@ else:  # coverage: ignore
 
 
 class NYUv2(VisionDataset):
+    """NYUv2 depth dataset.
+
+    Args:
+        root (Path | str): Root directory where dataset is stored.
+        split (Literal["train", "val"]): Dataset split.
+        transforms (Callable | None): Transform to apply to samples & targets.
+            Defaults to None.
+        min_depth (float): Minimum depth value. Defaults to 1e-3.
+        max_depth (float): Maximum depth value. Defaults to 10.
+        download (bool): Download dataset if not found. Defaults to False.
+    """
+
     root: Path
     rgb_urls = {
         "train": "http://www.doc.ic.ac.uk/~ahanda/nyu_train_rgb.tgz",
@@ -50,17 +62,6 @@ class NYUv2(VisionDataset):
         max_depth: float = 10.0,
         download: bool = False,
     ):
-        """NYUv2 depth dataset.
-
-        Args:
-            root (Path | str): Root directory where dataset is stored.
-            split (Literal["train", "val"]): Dataset split.
-            transforms (Callable | None): Transform to apply to samples & targets.
-                Defaults to None.
-            min_depth (float): Minimum depth value. Defaults to 1e-3.
-            max_depth (float): Maximum depth value. Defaults to 10.
-            download (bool): Download dataset if not found. Defaults to False.
-        """
         if not cv2_installed:  # coverage: ignore
             raise ImportError(
                 "The cv2 library is not installed. Please install"

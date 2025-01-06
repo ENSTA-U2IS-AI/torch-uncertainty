@@ -4,17 +4,18 @@ from torch import Tensor, nn
 
 
 class EMA(nn.Module):
+    """Exponential Moving Average.
+
+    Args:
+        model (nn.Module): The model to train and ensemble.
+        momentum (float): The momentum of the moving average.
+    """
+
     def __init__(
         self,
         model: nn.Module,
         momentum: float,
     ) -> None:
-        """Exponential Moving Average.
-
-        Args:
-            model (nn.Module): The model to train and ensemble.
-            momentum (float): The momentum of the moving average.
-        """
         super().__init__()
         _ema_checks(momentum)
         self.core_model = model

@@ -9,6 +9,40 @@ from .swa import SWA
 
 
 class SWAG(SWA):
+    """Stochastic Weight Averaging Gaussian (SWAG).
+
+    Update the SWAG posterior every `cycle_length` epochs starting at
+    `cycle_start`. Samples :attr:`num_estimators` models from the SWAG
+    posterior after each update. Uses the SWAG posterior estimation only
+    at test time. Otherwise, uses the base model for training.
+
+    Call :meth:`update_wrapper` at the end of each epoch. It will update
+    the SWAG posterior if the current epoch number minus :attr:`cycle_start`
+    is a multiple of :attr:`cycle_length`. Call :meth:`bn_update` to update
+    the batchnorm statistics of the current SWAG samples.
+
+    Args:
+        model (nn.Module): PyTorch model to be trained.
+        cycle_start (int): Begininning of the first SWAG averaging cycle.
+        cycle_length (int): Number of epochs between SWAG updates. The
+            first update occurs at :attr:`cycle_start` + :attr:`cycle_length`.
+        scale (float, optional): Scale of the Gaussian. Defaults to 1.0.
+        diag_covariance (bool, optional): Whether to use a diagonal
+            covariance. Defaults to False.
+        max_num_models (int, optional): Maximum number of models to store.
+            Defaults to 0.
+        var_clamp (float, optional): Minimum variance. Defaults to 1e-30.
+        num_estimators (int, optional): Number of posterior estimates to
+            use. Defaults to 16.
+
+    Reference:
+        Maddox, W. J. et al. A simple baseline for bayesian uncertainty in
+        deep learning. In NeurIPS 2019.
+
+    Note:
+        Originates from https://github.com/wjmaddox/swa_gaussian.
+    """
+
     swag_stats: dict[str, Tensor]
     prfx = "model.swag_stats."
 
@@ -23,39 +57,6 @@ class SWAG(SWA):
         var_clamp: float = 1e-6,
         num_estimators: int = 16,
     ) -> None:
-        """Stochastic Weight Averaging Gaussian (SWAG).
-
-        Update the SWAG posterior every `cycle_length` epochs starting at
-        `cycle_start`. Samples :attr:`num_estimators` models from the SWAG
-        posterior after each update. Uses the SWAG posterior estimation only
-        at test time. Otherwise, uses the base model for training.
-
-        Call :meth:`update_wrapper` at the end of each epoch. It will update
-        the SWAG posterior if the current epoch number minus :attr:`cycle_start`
-        is a multiple of :attr:`cycle_length`. Call :meth:`bn_update` to update
-        the batchnorm statistics of the current SWAG samples.
-
-        Args:
-            model (nn.Module): PyTorch model to be trained.
-            cycle_start (int): Begininning of the first SWAG averaging cycle.
-            cycle_length (int): Number of epochs between SWAG updates. The
-                first update occurs at :attr:`cycle_start` + :attr:`cycle_length`.
-            scale (float, optional): Scale of the Gaussian. Defaults to 1.0.
-            diag_covariance (bool, optional): Whether to use a diagonal
-                covariance. Defaults to False.
-            max_num_models (int, optional): Maximum number of models to store.
-                Defaults to 0.
-            var_clamp (float, optional): Minimum variance. Defaults to 1e-30.
-            num_estimators (int, optional): Number of posterior estimates to
-                use. Defaults to 16.
-
-        Reference:
-            Maddox, W. J. et al. A simple baseline for bayesian uncertainty in
-            deep learning. In NeurIPS 2019.
-
-        Note:
-            Originates from https://github.com/wjmaddox/swa_gaussian.
-        """
         super().__init__(model, cycle_start, cycle_length)
         _swag_checks(scale, max_num_models, var_clamp)
 

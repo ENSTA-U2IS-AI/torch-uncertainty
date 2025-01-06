@@ -14,6 +14,82 @@ from torch_uncertainty.utils.misc import create_train_val_split
 
 
 class CityscapesDataModule(TUDataModule):
+    r"""DataModule for the Cityscapes dataset.
+
+    Args:
+        root (str or Path): Root directory of the datasets.
+        batch_size (int): Number of samples per batch.
+        crop_size (sequence or int, optional): Desired input image and
+            segmentation mask sizes during training. If :attr:`crop_size` is an
+            int instead of sequence like :math:`(H, W)`, a square crop
+            :math:`(\text{size},\text{size})` is made. If provided a sequence
+            of length :math:`1`, it will be interpreted as
+            :math:`(\text{size[0]},\text{size[1]})`. Defaults to ``1024``.
+        eval_size (sequence or int, optional): Desired input image and
+            segmentation mask sizes during evaluation. If size is an int,
+            smaller edge of the images will be matched to this number, i.e.,
+            :math:`\text{height}>\text{width}`, then image will be rescaled to
+            :math:`(\text{size}\times\text{height}/\text{width},\text{size})`.
+            Defaults to ``(1024,2048)``.
+        basic_augment (bool): Whether to apply base augmentations. Defaults to
+            ``True``.
+        val_split (float or None, optional): Share of training samples to use
+            for validation. Defaults to ``None``.
+        num_workers (int, optional): Number of dataloaders to use. Defaults to
+            ``1``.
+        pin_memory (bool, optional):  Whether to pin memory. Defaults to
+            ``True``.
+        persistent_workers (bool, optional): Whether to use persistent workers.
+            Defaults to ``True``.
+
+
+    Note:
+        This datamodule injects the following transforms into the training and
+        validation/test datasets:
+
+        Training transforms:
+
+        .. code-block:: python
+
+            from torchvision.transforms import v2
+
+            v2.Compose([
+                v2.ToImage(),
+                RandomRescale(min_scale=0.5, max_scale=2.0, antialias=True),
+                v2.RandomCrop(size=crop_size, pad_if_needed=True),
+                v2.ColorJitter(brightness=0.5, contrast=0.5, saturation=0.5),
+                v2.RandomHorizontalFlip(),
+                v2.ToDtype({
+                    tv_tensors.Image: torch.float32,
+                    tv_tensors.Mask: torch.int64,
+                    "others": None
+                }, scale=True),
+                v2.Normalize(mean=[0.485, 0.456, 0.406],
+                            std=[0.229, 0.224, 0.225])
+            ])
+
+        Validation/Test transforms:
+
+        .. code-block:: python
+
+            from torchvision.transforms import v2
+
+            v2.Compose([
+                v2.ToImage(),
+                v2.Resize(size=eval_size, antialias=True),
+                v2.ToDtype({
+                    tv_tensors.Image: torch.float32,
+                    tv_tensors.Mask: torch.int64,
+                    "others": None
+                }, scale=True),
+                v2.Normalize(mean=[0.485, 0.456, 0.406],
+                            std=[0.229, 0.224, 0.225])
+            ])
+
+        This behavior can be modified by overriding ``self.train_transform``
+        and ``self.test_transform`` after initialization.
+    """
+
     num_classes = 19
     num_channels = 3
     training_task = "segmentation"
@@ -32,81 +108,6 @@ class CityscapesDataModule(TUDataModule):
         pin_memory: bool = True,
         persistent_workers: bool = True,
     ) -> None:
-        r"""DataModule for the Cityscapes dataset.
-
-        Args:
-            root (str or Path): Root directory of the datasets.
-            batch_size (int): Number of samples per batch.
-            crop_size (sequence or int, optional): Desired input image and
-                segmentation mask sizes during training. If :attr:`crop_size` is an
-                int instead of sequence like :math:`(H, W)`, a square crop
-                :math:`(\text{size},\text{size})` is made. If provided a sequence
-                of length :math:`1`, it will be interpreted as
-                :math:`(\text{size[0]},\text{size[1]})`. Defaults to ``1024``.
-            eval_size (sequence or int, optional): Desired input image and
-                segmentation mask sizes during evaluation. If size is an int,
-                smaller edge of the images will be matched to this number, i.e.,
-                :math:`\text{height}>\text{width}`, then image will be rescaled to
-                :math:`(\text{size}\times\text{height}/\text{width},\text{size})`.
-                Defaults to ``(1024,2048)``.
-            basic_augment (bool): Whether to apply base augmentations. Defaults to
-                ``True``.
-            val_split (float or None, optional): Share of training samples to use
-                for validation. Defaults to ``None``.
-            num_workers (int, optional): Number of dataloaders to use. Defaults to
-                ``1``.
-            pin_memory (bool, optional):  Whether to pin memory. Defaults to
-                ``True``.
-            persistent_workers (bool, optional): Whether to use persistent workers.
-                Defaults to ``True``.
-
-
-        Note:
-            This datamodule injects the following transforms into the training and
-            validation/test datasets:
-
-            Training transforms:
-
-            .. code-block:: python
-
-                from torchvision.transforms import v2
-
-                v2.Compose([
-                    v2.ToImage(),
-                    RandomRescale(min_scale=0.5, max_scale=2.0, antialias=True),
-                    v2.RandomCrop(size=crop_size, pad_if_needed=True),
-                    v2.ColorJitter(brightness=0.5, contrast=0.5, saturation=0.5),
-                    v2.RandomHorizontalFlip(),
-                    v2.ToDtype({
-                        tv_tensors.Image: torch.float32,
-                        tv_tensors.Mask: torch.int64,
-                        "others": None
-                    }, scale=True),
-                    v2.Normalize(mean=[0.485, 0.456, 0.406],
-                                std=[0.229, 0.224, 0.225])
-                ])
-
-            Validation/Test transforms:
-
-            .. code-block:: python
-
-                from torchvision.transforms import v2
-
-                v2.Compose([
-                    v2.ToImage(),
-                    v2.Resize(size=eval_size, antialias=True),
-                    v2.ToDtype({
-                        tv_tensors.Image: torch.float32,
-                        tv_tensors.Mask: torch.int64,
-                        "others": None
-                    }, scale=True),
-                    v2.Normalize(mean=[0.485, 0.456, 0.406],
-                                std=[0.229, 0.224, 0.225])
-                ])
-
-            This behavior can be modified by overriding ``self.train_transform``
-            and ``self.test_transform`` after initialization.
-        """
         super().__init__(
             root=root,
             batch_size=batch_size,

@@ -10,6 +10,21 @@ from torch_uncertainty.post_processing import PostProcessing
 
 
 class Scaler(PostProcessing):
+    """Virtual class for scaling post-processing for calibrated probabilities.
+
+    Args:
+        model (nn.Module): Model to calibrate.
+        lr (float, optional): Learning rate for the optimizer. Defaults to 0.1.
+        max_iter (int, optional): Maximum number of iterations for the
+            optimizer. Defaults to 100.
+        device (Optional[Literal["cpu", "cuda"]], optional): Device to use
+            for optimization. Defaults to None.
+
+    Reference:
+        Guo, C., Pleiss, G., Sun, Y., & Weinberger, K. Q. On calibration
+        of modern neural networks. In ICML 2017.
+    """
+
     criterion = nn.CrossEntropyLoss()
     trained = False
 
@@ -20,20 +35,6 @@ class Scaler(PostProcessing):
         max_iter: int = 100,
         device: Literal["cpu", "cuda"] | torch.device | None = None,
     ) -> None:
-        """Virtual class for scaling post-processing for calibrated probabilities.
-
-        Args:
-            model (nn.Module): Model to calibrate.
-            lr (float, optional): Learning rate for the optimizer. Defaults to 0.1.
-            max_iter (int, optional): Maximum number of iterations for the
-                optimizer. Defaults to 100.
-            device (Optional[Literal["cpu", "cuda"]], optional): Device to use
-                for optimization. Defaults to None.
-
-        Reference:
-            Guo, C., Pleiss, G., Sun, Y., & Weinberger, K. Q. On calibration
-            of modern neural networks. In ICML 2017.
-        """
         super().__init__(model)
         self.device = device
 

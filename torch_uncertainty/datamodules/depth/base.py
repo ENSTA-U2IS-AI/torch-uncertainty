@@ -13,6 +13,33 @@ from torch_uncertainty.utils.misc import create_train_val_split
 
 
 class DepthDataModule(TUDataModule):
+    r"""Base depth datamodule.
+
+    Args:
+        dataset (type[VisionDataset]): Dataset class to use.
+        root (str or Path): Root directory of the datasets.
+        batch_size (int): Number of samples per batch.
+        min_depth (float, optional): Minimum depth value for evaluation.
+        max_depth (float, optional): Maximum depth value for training and
+            evaluation.
+        crop_size (sequence or int, optional): Desired input image and
+            depth mask sizes during training. If :attr:`crop_size` is an
+            int instead of sequence like :math:`(H, W)`, a square crop
+            :math:`(\text{size},\text{size})` is made. If provided a sequence
+            of length :math:`1`, it will be interpreted as
+            :math:`(\text{size[0]},\text{size[1]})`.
+        eval_size (sequence or int, optional): Desired input image and
+            depth mask sizes during evaluation. If size is an int,
+            smaller edge of the images will be matched to this number, i.e.,
+            :math:`\text{height}>\text{width}`, then image will be rescaled to
+            :math:`(\text{size}\times\text{height}/\text{width},\text{size})`.
+        val_split (float or None, optional): Share of training samples to use
+            for validation.
+        num_workers (int, optional): Number of dataloaders to use.
+        pin_memory (bool, optional):  Whether to pin memory.
+        persistent_workers (bool, optional): Whether to use persistent workers.
+    """
+
     def __init__(
         self,
         dataset: type[VisionDataset],
@@ -27,32 +54,6 @@ class DepthDataModule(TUDataModule):
         pin_memory: bool = True,
         persistent_workers: bool = True,
     ) -> None:
-        r"""Base depth datamodule.
-
-        Args:
-            dataset (type[VisionDataset]): Dataset class to use.
-            root (str or Path): Root directory of the datasets.
-            batch_size (int): Number of samples per batch.
-            min_depth (float, optional): Minimum depth value for evaluation.
-            max_depth (float, optional): Maximum depth value for training and
-                evaluation.
-            crop_size (sequence or int, optional): Desired input image and
-                depth mask sizes during training. If :attr:`crop_size` is an
-                int instead of sequence like :math:`(H, W)`, a square crop
-                :math:`(\text{size},\text{size})` is made. If provided a sequence
-                of length :math:`1`, it will be interpreted as
-                :math:`(\text{size[0]},\text{size[1]})`.
-            eval_size (sequence or int, optional): Desired input image and
-                depth mask sizes during evaluation. If size is an int,
-                smaller edge of the images will be matched to this number, i.e.,
-                :math:`\text{height}>\text{width}`, then image will be rescaled to
-                :math:`(\text{size}\times\text{height}/\text{width},\text{size})`.
-            val_split (float or None, optional): Share of training samples to use
-                for validation.
-            num_workers (int, optional): Number of dataloaders to use.
-            pin_memory (bool, optional):  Whether to pin memory.
-            persistent_workers (bool, optional): Whether to use persistent workers.
-        """
         super().__init__(
             root=root,
             batch_size=batch_size,

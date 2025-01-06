@@ -10,6 +10,29 @@ from .abstract import TUDataModule
 
 
 class UCIRegressionDataModule(TUDataModule):
+    """The UCI regression datasets.
+
+    Args:
+        root (string): Root directory of the datasets.
+        batch_size (int): The batch size for training and testing.
+        dataset_name (string, optional): The name of the dataset. One of
+            "boston-housing", "concrete", "energy", "kin8nm",
+            "naval-propulsion-plant", "power-plant", "protein",
+            "wine-quality-red", and "yacht".
+        val_split (float, optional): Share of validation samples. Defaults
+            to ``0``.
+        num_workers (int, optional): How many subprocesses to use for data
+            loading. Defaults to ``1``.
+        pin_memory (bool, optional): Whether to pin memory in the GPU. Defaults
+            to ``True``.
+        persistent_workers (bool, optional): Whether to use persistent workers.
+            Defaults to ``True``.
+        input_shape (tuple, optional): The shape of the input data. Defaults to
+            ``None``.
+        split_seed (int, optional): The seed to use for splitting the dataset.
+            Defaults to ``42``.
+    """
+
     training_task = "regression"
 
     def __init__(
@@ -24,28 +47,6 @@ class UCIRegressionDataModule(TUDataModule):
         input_shape: tuple[int, ...] | None = None,
         split_seed: int = 42,
     ) -> None:
-        """The UCI regression datasets.
-
-        Args:
-            root (string): Root directory of the datasets.
-            batch_size (int): The batch size for training and testing.
-            dataset_name (string, optional): The name of the dataset. One of
-                "boston-housing", "concrete", "energy", "kin8nm",
-                "naval-propulsion-plant", "power-plant", "protein",
-                "wine-quality-red", and "yacht".
-            val_split (float, optional): Share of validation samples. Defaults
-                to ``0``.
-            num_workers (int, optional): How many subprocesses to use for data
-                loading. Defaults to ``1``.
-            pin_memory (bool, optional): Whether to pin memory in the GPU. Defaults
-                to ``True``.
-            persistent_workers (bool, optional): Whether to use persistent workers.
-                Defaults to ``True``.
-            input_shape (tuple, optional): The shape of the input data. Defaults to
-                ``None``.
-            split_seed (int, optional): The seed to use for splitting the dataset.
-                Defaults to ``42``.
-        """
         super().__init__(
             root=root,
             batch_size=batch_size,

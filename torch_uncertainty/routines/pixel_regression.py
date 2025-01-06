@@ -40,6 +40,30 @@ from torch_uncertainty.utils.distributions import (
 
 
 class PixelRegressionRoutine(LightningModule):
+    r"""Routine for training & testing on **pixel regression** tasks.
+
+    Args:
+        model (nn.Module): Model to train.
+        output_dim (int): Number of outputs of the model.
+        loss (nn.Module): Loss function to optimize the :attr:`model`.
+        dist_family (str, optional): The distribution family to use for
+            probabilistic pixel regression. If ``None`` then point-wise regression.
+            Defaults to ``None``.
+        dist_estimate (str, optional): The estimate to use when computing the
+            point-wise metrics. Defaults to ``"mean"``.
+        is_ensemble (bool, optional): Whether the model is an ensemble.
+            Defaults to ``False``.
+        optim_recipe (dict or Optimizer, optional): The optimizer and
+            optionally the scheduler to use. Defaults to ``None``.
+        eval_shift (bool, optional): Indicates whether to evaluate the Distribution
+            shift performance. Defaults to ``False``.
+        format_batch_fn (nn.Module, optional): The function to format the
+            batch. Defaults to ``None``.
+        num_image_plot (int, optional): Number of images to plot. Defaults to ``4``.
+        log_plots (bool, optional): Indicates whether to log plots from
+            metrics. Defaults to ``False``.
+    """
+
     inv_norm_params = {
         "mean": [-0.485 / 0.229, -0.456 / 0.224, -0.406 / 0.255],
         "std": [1 / 0.229, 1 / 0.224, 1 / 0.255],
@@ -59,29 +83,6 @@ class PixelRegressionRoutine(LightningModule):
         num_image_plot: int = 4,
         log_plots: bool = False,
     ) -> None:
-        r"""Routine for training & testing on **pixel regression** tasks.
-
-        Args:
-            model (nn.Module): Model to train.
-            output_dim (int): Number of outputs of the model.
-            loss (nn.Module): Loss function to optimize the :attr:`model`.
-            dist_family (str, optional): The distribution family to use for
-                probabilistic pixel regression. If ``None`` then point-wise regression.
-                Defaults to ``None``.
-            dist_estimate (str, optional): The estimate to use when computing the
-                point-wise metrics. Defaults to ``"mean"``.
-            is_ensemble (bool, optional): Whether the model is an ensemble.
-                Defaults to ``False``.
-            optim_recipe (dict or Optimizer, optional): The optimizer and
-                optionally the scheduler to use. Defaults to ``None``.
-            eval_shift (bool, optional): Indicates whether to evaluate the Distribution
-                shift performance. Defaults to ``False``.
-            format_batch_fn (nn.Module, optional): The function to format the
-                batch. Defaults to ``None``.
-            num_image_plot (int, optional): Number of images to plot. Defaults to ``4``.
-            log_plots (bool, optional): Indicates whether to log plots from
-                metrics. Defaults to ``False``.
-        """
         super().__init__()
         _depth_routine_checks(output_dim, num_image_plot, log_plots)
         if eval_shift:

@@ -3,6 +3,16 @@ from torch import Tensor, nn
 
 
 class _FilterResponseNormNd(nn.Module):
+    """N-dimensional Filter Response Normalization layer.
+
+    Args:
+        dimension (int): Dimension of the input tensor.
+        num_channels (int): Number of channels.
+        eps (float, optional): Epsilon. Defaults to 1e-6.
+        device (optional): Device. Defaults to None.
+        dtype (optional): Data type. Defaults to None.
+    """
+
     def __init__(
         self,
         dimension: int,
@@ -11,15 +21,6 @@ class _FilterResponseNormNd(nn.Module):
         device=None,
         dtype=None,
     ) -> None:
-        """N-dimensional Filter Response Normalization layer.
-
-        Args:
-            dimension (int): Dimension of the input tensor.
-            num_channels (int): Number of channels.
-            eps (float, optional): Epsilon. Defaults to 1e-6.
-            device (optional): Device. Defaults to None.
-            dtype (optional): Data type. Defaults to None.
-        """
         super().__init__()
         if dimension < 1 or not isinstance(dimension, int):
             raise ValueError(
@@ -46,15 +47,16 @@ class _FilterResponseNormNd(nn.Module):
 
 
 class FilterResponseNorm1d(_FilterResponseNormNd):
-    def __init__(self, num_channels: int, eps: float = 1e-6, device=None, dtype=None) -> None:
-        """1-dimensional Filter Response Normalization layer.
+    """1-dimensional Filter Response Normalization layer.
 
-        Args:
-            num_channels (int): Number of channels.
-            eps (float, optional): Epsilon. Defaults to 1e-6.
-            device (optional): Device. Defaults to None.
-            dtype (optional): Data type. Defaults to None.
-        """
+    Args:
+        num_channels (int): Number of channels.
+        eps (float, optional): Epsilon. Defaults to 1e-6.
+        device (optional): Device. Defaults to None.
+        dtype (optional): Data type. Defaults to None.
+    """
+
+    def __init__(self, num_channels: int, eps: float = 1e-6, device=None, dtype=None) -> None:
         super().__init__(
             dimension=1,
             num_channels=num_channels,
@@ -65,15 +67,16 @@ class FilterResponseNorm1d(_FilterResponseNormNd):
 
 
 class FilterResponseNorm2d(_FilterResponseNormNd):
-    def __init__(self, num_channels: int, eps: float = 1e-6, device=None, dtype=None) -> None:
-        """2-dimensional Filter Response Normalization layer.
+    """2-dimensional Filter Response Normalization layer.
 
-        Args:
-            num_channels (int): Number of channels.
-            eps (float, optional): Epsilon. Defaults to 1e-6.
-            device (optional): Device. Defaults to None.
-            dtype (optional): Data type. Defaults to None.
-        """
+    Args:
+        num_channels (int): Number of channels.
+        eps (float, optional): Epsilon. Defaults to 1e-6.
+        device (optional): Device. Defaults to None.
+        dtype (optional): Data type. Defaults to None.
+    """
+
+    def __init__(self, num_channels: int, eps: float = 1e-6, device=None, dtype=None) -> None:
         super().__init__(
             dimension=2,
             num_channels=num_channels,
@@ -84,15 +87,16 @@ class FilterResponseNorm2d(_FilterResponseNormNd):
 
 
 class FilterResponseNorm3d(_FilterResponseNormNd):
-    def __init__(self, num_channels: int, eps: float = 1e-6, device=None, dtype=None) -> None:
-        """3-dimensional Filter Response Normalization layer.
+    """3-dimensional Filter Response Normalization layer.
 
-        Args:
-            num_channels (int): Number of channels.
-            eps (float, optional): Epsilon. Defaults to 1e-6.
-            device (optional): Device. Defaults to None.
-            dtype (optional): Data type. Defaults to None.
-        """
+    Args:
+        num_channels (int): Number of channels.
+        eps (float, optional): Epsilon. Defaults to 1e-6.
+        device (optional): Device. Defaults to None.
+        dtype (optional): Data type. Defaults to None.
+    """
+
+    def __init__(self, num_channels: int, eps: float = 1e-6, device=None, dtype=None) -> None:
         super().__init__(
             dimension=3,
             num_channels=num_channels,

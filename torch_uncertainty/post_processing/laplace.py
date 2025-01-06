@@ -15,6 +15,31 @@ else:  # coverage: ignore
 
 
 class LaplaceApprox(PostProcessing):
+    """Laplace approximation for uncertainty estimation.
+
+    This class is a wrapper of Laplace classes from the laplace-torch library.
+
+    Args:
+        task (Literal["classification", "regression"]): task type.
+        model (nn.Module): model to be converted.
+        weight_subset (str): subset of weights to be considered. Defaults to
+            "last_layer".
+        hessian_struct (str): structure of the Hessian matrix. Defaults to
+            "kron".
+        pred_type (Literal["glm", "nn"], optional): type of posterior predictive,
+            See the Laplace library for more details. Defaults to "glm".
+        link_approx (Literal["mc", "probit", "bridge", "bridge_norm"], optional):
+            how to approximate the classification link function for the `'glm'`.
+            See the Laplace library for more details. Defaults to "probit".
+        batch_size (int, optional): batch size for the Laplace approximation.
+            Defaults to 256.
+        optimize_prior_precision (bool, optional): whether to optimize the prior
+            precision. Defaults to True.
+
+    Reference:
+        Daxberger et al. Laplace Redux - Effortless Bayesian Deep Learning. In NeurIPS 2021.
+    """
+
     def __init__(
         self,
         task: Literal["classification", "regression"],
@@ -26,30 +51,6 @@ class LaplaceApprox(PostProcessing):
         batch_size: int = 256,
         optimize_prior_precision: bool = True,
     ) -> None:
-        """Laplace approximation for uncertainty estimation.
-
-        This class is a wrapper of Laplace classes from the laplace-torch library.
-
-        Args:
-            task (Literal["classification", "regression"]): task type.
-            model (nn.Module): model to be converted.
-            weight_subset (str): subset of weights to be considered. Defaults to
-                "last_layer".
-            hessian_struct (str): structure of the Hessian matrix. Defaults to
-                "kron".
-            pred_type (Literal["glm", "nn"], optional): type of posterior predictive,
-                See the Laplace library for more details. Defaults to "glm".
-            link_approx (Literal["mc", "probit", "bridge", "bridge_norm"], optional):
-                how to approximate the classification link function for the `'glm'`.
-                See the Laplace library for more details. Defaults to "probit".
-            batch_size (int, optional): batch size for the Laplace approximation.
-                Defaults to 256.
-            optimize_prior_precision (bool, optional): whether to optimize the prior
-                precision. Defaults to True.
-
-        Reference:
-            Daxberger et al. Laplace Redux - Effortless Bayesian Deep Learning. In NeurIPS 2021.
-        """
         super().__init__()
         if not laplace_installed:  # coverage: ignore
             raise ImportError(

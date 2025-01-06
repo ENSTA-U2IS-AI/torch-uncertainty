@@ -6,6 +6,23 @@ from torch.utils.data import DataLoader
 
 
 class SWA(nn.Module):
+    """Stochastic Weight Averaging.
+
+    Update the SWA model every :attr:`cycle_length` epochs starting at
+    :attr:`cycle_start`. Uses the SWA model only at test time. Otherwise,
+    uses the base model for training.
+
+    Args:
+        model (nn.Module): PyTorch model to be trained.
+        cycle_start (int): Epoch to start SWA.
+        cycle_length (int): Number of epochs between SWA updates.
+
+    Reference:
+        Izmailov, P., Podoprikhin, D., Garipov, T., Vetrov, D., & Wilson, A. G.
+        (2018). Averaging Weights Leads to Wider Optima and Better Generalization.
+        In UAI 2018.
+    """
+
     num_avgd_models: Tensor
 
     def __init__(
@@ -14,22 +31,6 @@ class SWA(nn.Module):
         cycle_start: int,
         cycle_length: int,
     ) -> None:
-        """Stochastic Weight Averaging.
-
-        Update the SWA model every :attr:`cycle_length` epochs starting at
-        :attr:`cycle_start`. Uses the SWA model only at test time. Otherwise,
-        uses the base model for training.
-
-        Args:
-            model (nn.Module): PyTorch model to be trained.
-            cycle_start (int): Epoch to start SWA.
-            cycle_length (int): Number of epochs between SWA updates.
-
-        Reference:
-            Izmailov, P., Podoprikhin, D., Garipov, T., Vetrov, D., & Wilson, A. G.
-            (2018). Averaging Weights Leads to Wider Optima and Better Generalization.
-            In UAI 2018.
-        """
         super().__init__()
         _swa_checks(cycle_start, cycle_length)
         self.core_model = model
