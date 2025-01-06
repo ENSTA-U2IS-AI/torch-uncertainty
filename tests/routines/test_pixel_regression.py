@@ -30,7 +30,7 @@ class TestPixelRegression:
         dm = DummyPixelRegressionDataModule(root=root, batch_size=5, output_dim=3)
 
         model = DummyPixelRegressionBaseline(
-            probabilistic=False,
+            dist_family=None,
             in_channels=dm.num_channels,
             output_dim=dm.output_dim,
             image_size=dm.image_size,
@@ -52,7 +52,7 @@ class TestPixelRegression:
             enable_checkpointing=False,
         )
         model = DummyPixelRegressionBaseline(
-            probabilistic=True,
+            dist_family="normal",
             in_channels=dm.num_channels,
             output_dim=dm.output_dim,
             image_size=dm.image_size,
@@ -74,7 +74,7 @@ class TestPixelRegression:
         dm = DummyPixelRegressionDataModule(root=root, batch_size=4, output_dim=1)
 
         model = DummyPixelRegressionBaseline(
-            probabilistic=False,
+            dist_family=None,
             in_channels=dm.num_channels,
             output_dim=dm.output_dim,
             image_size=dm.image_size,
@@ -90,7 +90,7 @@ class TestPixelRegression:
 
         trainer = TUTrainer(accelerator="cpu", fast_dev_run=True, logger=None)
         model = DummyPixelRegressionBaseline(
-            probabilistic=True,
+            dist_family="normal",
             in_channels=dm.num_channels,
             output_dim=dm.output_dim,
             image_size=dm.image_size,
@@ -110,18 +110,18 @@ class TestPixelRegression:
     def test_depth_errors(self):
         with pytest.raises(ValueError, match="output_dim must be positive"):
             PixelRegressionRoutine(
-                probabilistic=False,
                 model=nn.Identity(),
                 output_dim=0,
                 loss=nn.MSELoss(),
+                dist_family=None,
             )
 
         with pytest.raises(ValueError, match="num_image_plot must be positive"):
             PixelRegressionRoutine(
-                probabilistic=False,
                 model=nn.Identity(),
                 output_dim=1,
                 loss=nn.MSELoss(),
+                dist_family=None,
                 num_image_plot=0,
                 log_plots=True,
             )

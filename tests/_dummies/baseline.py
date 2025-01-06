@@ -2,11 +2,6 @@ import copy
 
 from torch import nn
 
-from torch_uncertainty.layers.distributions import (
-    LaplaceLayer,
-    NormalInverseGammaLayer,
-    NormalLayer,
-)
 from torch_uncertainty.models import EMA, SWA, deep_ensembles
 from torch_uncertainty.optim_recipes import optim_cifar10_resnet18
 from torch_uncertainty.post_processing import TemperatureScaler
@@ -110,34 +105,19 @@ class DummyClassificationBaseline:
 class DummyRegressionBaseline:
     def __new__(
         cls,
-        probabilistic: bool,
         in_features: int,
         output_dim: int,
         loss: nn.Module,
         baseline_type: str = "single",
         optim_recipe=None,
-        dist_type: str = "normal",
+        dist_family: str | None = "normal",
         ema: bool = False,
         swa: bool = False,
     ) -> RegressionRoutine:
-        if probabilistic:
-            if dist_type == "normal":
-                last_layer = NormalLayer(output_dim)
-                num_classes = output_dim * 2
-            elif dist_type == "laplace":
-                last_layer = LaplaceLayer(output_dim)
-                num_classes = output_dim * 2
-            else:  # dist_type == "nig"
-                last_layer = NormalInverseGammaLayer(output_dim)
-                num_classes = output_dim * 4
-        else:
-            last_layer = nn.Identity()
-            num_classes = output_dim
-
         model = dummy_model(
             in_channels=in_features,
-            num_classes=num_classes,
-            last_layer=last_layer,
+            num_classes=output_dim,
+            dist_family=dist_family,
         )
         if ema:
             model = EMA(model, momentum=0.99)
@@ -146,26 +126,26 @@ class DummyRegressionBaseline:
 
         if baseline_type == "single":
             return RegressionRoutine(
-                probabilistic=probabilistic,
                 output_dim=output_dim,
                 model=model,
                 loss=loss,
                 optim_recipe=optim_recipe(model),
+                dist_family=dist_family,
             )
         # baseline_type == "ensemble":
         model = deep_ensembles(
             [model, copy.deepcopy(model)],
             task="regression",
-            probabilistic=probabilistic,
+            probabilistic=dist_family is not None,
         )
         return RegressionRoutine(
-            probabilistic=probabilistic,
             output_dim=output_dim,
             model=model,
             loss=loss,
             is_ensemble=True,
             optim_recipe=optim_recipe(model),
             format_batch_fn=RepeatTarget(2),
+            dist_family=dist_family,
         )
 
 
@@ -223,36 +203,21 @@ class DummySegmentationBaseline:
 class DummyPixelRegressionBaseline:
     def __new__(
         cls,
-        probabilistic: bool,
         in_channels: int,
         output_dim: int,
         image_size: int,
         loss: nn.Module,
-        dist_type: str = "normal",
+        dist_family: str = "normal",
         baseline_type: str = "single",
         optim_recipe=None,
         ema: bool = False,
         swa: bool = False,
     ) -> PixelRegressionRoutine:
-        if probabilistic:
-            if dist_type == "normal":
-                last_layer = NormalLayer(output_dim)
-                num_classes = output_dim * 2
-            elif dist_type == "laplace":
-                last_layer = LaplaceLayer(output_dim)
-                num_classes = output_dim * 2
-            else:  # dist_type == "nig"
-                last_layer = NormalInverseGammaLayer(output_dim)
-                num_classes = output_dim * 4
-        else:
-            last_layer = nn.Identity()
-            num_classes = output_dim
-
         model = dummy_segmentation_model(
-            num_classes=num_classes,
+            num_classes=output_dim,
             in_channels=in_channels,
             image_size=image_size,
-            last_layer=last_layer,
+            dist_family=dist_family,
         )
         if ema:
             model = EMA(model, momentum=0.99)
@@ -261,25 +226,25 @@ class DummyPixelRegressionBaseline:
 
         if baseline_type == "single":
             return PixelRegressionRoutine(
-                probabilistic=probabilistic,
                 output_dim=output_dim,
                 model=model,
                 loss=loss,
                 optim_recipe=optim_recipe(model),
+                dist_family=dist_family,
             )
 
         # baseline_type == "ensemble":
         model = deep_ensembles(
             [model, copy.deepcopy(model)],
             task="pixel_regression",
-            probabilistic=probabilistic,
+            probabilistic=dist_family is not None,
         )
         return PixelRegressionRoutine(
-            probabilistic=probabilistic,
             output_dim=output_dim,
             model=model,
             loss=loss,
             format_batch_fn=RepeatTarget(2),
             is_ensemble=True,
             optim_recipe=optim_recipe(model),
+            dist_family=dist_family,
         )

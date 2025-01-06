@@ -106,14 +106,14 @@ class TestStandardMLPBaseline:
             hidden_dims=[1],
         )
         _ = net(torch.rand(1, 3))
-        for distribution in ["normal", "laplace", "nig"]:
+        for dist_family in ["normal", "laplace", "nig"]:
             MLPBaseline(
                 in_features=3,
                 output_dim=10,
                 loss=nn.MSELoss(),
                 version="std",
                 hidden_dims=[1],
-                distribution=distribution,
+                dist_family=dist_family,
             )
 
     def test_errors(self):

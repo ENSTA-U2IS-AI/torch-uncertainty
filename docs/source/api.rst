@@ -125,6 +125,10 @@ Ensemble layers
 
     PackedLinear
     PackedConv2d
+    PackedMultiheadAttention
+    PackedLayerNorm
+    PackedTransformerEncoderLayer
+    PackedTransformerDecoderLayer
     BatchLinear
     BatchConv2d
     MaskedLinear
@@ -147,6 +151,40 @@ Bayesian layers
     BayesConv3d
     LPBNNLinear
     LPBNNConv2d
+
+
+Density layers
+^^^^^^^^^^^^^^
+
+.. currentmodule:: torch_uncertainty.layers.distributions
+
+Linear Layers
+"""""""""""""
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: class.rst
+
+    NormalLinear
+    LaplaceLinear
+    CauchyLinear
+    StudentTLinear
+    NormalInverseGammaLinear
+
+Convolution Layers
+""""""""""""""""""
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: class.rst
+
+    NormalConvNd
+    LaplaceConvNd
+    CauchyConvNd
+    StudentTConvNd
+    NormalInverseGammaConvNd
 
 Models
 ------
