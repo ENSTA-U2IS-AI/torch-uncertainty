@@ -125,6 +125,10 @@ Ensemble layers
 
     PackedLinear
     PackedConv2d
+    PackedMultiheadAttention
+    PackedLayerNorm
+    PackedTransformerEncoderLayer
+    PackedTransformerDecoderLayer
     BatchLinear
     BatchConv2d
     MaskedLinear
