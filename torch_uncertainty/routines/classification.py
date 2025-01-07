@@ -178,6 +178,7 @@ class ClassificationRoutine(LightningModule):
         self.ood_logit_storage = None
 
     def _init_metrics(self) -> None:
+        """Initialize the metrics depending on the exact task."""
         task = "binary" if self.binary_cls else "multiclass"
 
         metrics_dict = {
@@ -264,6 +265,12 @@ class ClassificationRoutine(LightningModule):
             self.test_grouping_loss = grouping_loss.clone(prefix="test/")
 
     def _init_mixup(self, mixup_params: dict | None) -> Callable:
+        """Setup the optional mixup augmentation based on the :attr:`mixup_params` dict.
+
+        Args:
+            mixup_params (dict | None): the detailed parameters of the mixup augmentation. None if
+                unused.
+        """
         if mixup_params is None:
             mixup_params = {}
         mixup_params = MIXUP_PARAMS | mixup_params
@@ -312,6 +319,14 @@ class ClassificationRoutine(LightningModule):
         return Identity()
 
     def _apply_mixup(self, batch: tuple[Tensor, Tensor]) -> tuple[Tensor, Tensor]:
+        """Apply the mixup augmentation on a :attr:`batch` of images.
+
+        Args:
+            batch (tuple[Tensor, Tensor]): the images and the corresponding targets.
+
+        Returns:
+            tuple[Tensor, Tensor]: the images and the corresponding targets transformed with mixup.
+        """
         if not self.is_ensemble:
             if self.mixup_params["mixtype"] == "kernel_warping":
                 if self.mixup_params["dist_sim"] == "emb":
@@ -328,18 +343,28 @@ class ClassificationRoutine(LightningModule):
         return self.optim_recipe
 
     def on_train_start(self) -> None:
+        """Put the hyperparameters in tensorboard."""
         if self.logger is not None:  # coverage: ignore
             self.logger.log_hyperparams(
                 self.hparams,
             )
 
     def on_validation_start(self) -> None:
+        """Prepare the validation step.
+
+        Update the model's wrapper and the batchnorms if needed.
+        """
         if self.needs_epoch_update and not self.trainer.sanity_checking:
             self.model.update_wrapper(self.current_epoch)
             if hasattr(self.model, "need_bn_update"):
                 self.model.bn_update(self.trainer.train_dataloader, device=self.device)
 
     def on_test_start(self) -> None:
+        """Prepare the test step.
+
+        Setup the post-processing dataset and fit the post-processing method if needed, prepares
+        the storage lists for logit plotting and update the batchnorms if needed.
+        """
         if self.post_processing is not None:
             calibration_dataset = (
                 self.trainer.datamodule.val_dataloader().dataset
@@ -357,11 +382,11 @@ class ClassificationRoutine(LightningModule):
             self.model.bn_update(self.trainer.train_dataloader, device=self.device)
 
     def forward(self, inputs: Tensor, save_feats: bool = False) -> Tensor:
-        """Forward pass of the model.
+        """Forward pass of the inner model.
 
         Args:
-            inputs (Tensor): Input tensor.
-            save_feats (bool, optional): Whether to store the features or
+            inputs (Tensor): input tensor.
+            save_feats (bool, optional): whether to store the features or
                 not. Defaults to ``False``.
 
         Note:
@@ -378,7 +403,15 @@ class ClassificationRoutine(LightningModule):
             logits = self.model(inputs)
         return logits
 
-    def training_step(self, batch: tuple[Tensor, Tensor], batch_idx: int) -> STEP_OUTPUT:
+    def training_step(self, batch: tuple[Tensor, Tensor]) -> STEP_OUTPUT:
+        """Perform a single training step based on the input tensors.
+
+        Args:
+            batch (tuple[Tensor, Tensor]): the training data and their corresponding targets
+
+        Returns:
+            Tensor: the loss corresponding to this training step.
+        """
         batch = self._apply_mixup(batch)
         inputs, target = self.format_batch_fn(batch)
 
@@ -400,7 +433,14 @@ class ClassificationRoutine(LightningModule):
         self.log("train_loss", loss, prog_bar=True, logger=True)
         return loss
 
-    def validation_step(self, batch: tuple[Tensor, Tensor], batch_idx: int) -> None:
+    def validation_step(self, batch: tuple[Tensor, Tensor]) -> None:
+        """Perform a single validation step based on the input tensors.
+
+        Compute the prediction of the model and the value of the metrics on the validation batch.
+
+        Args:
+            batch (tuple[Tensor, Tensor]): the validation data and their corresponding targets
+        """
         inputs, targets = batch
         logits = self.forward(inputs, save_feats=self.eval_grouping_loss)
         logits = rearrange(logits, "(m b) c -> b m c", b=targets.size(0))
@@ -422,6 +462,17 @@ class ClassificationRoutine(LightningModule):
         batch_idx: int,
         dataloader_idx: int = 0,
     ) -> None:
+        """Perform a single test step based on the input tensors.
+
+        Compute the prediction of the model and the value of the metrics on the test batch. Also
+        handle OOD and distribution-shifted images.
+
+        Args:
+            batch (tuple[Tensor, Tensor]): the test data and their corresponding targets.
+            batch_idx (int): the number of the current batch (unused).
+            dataloader_idx (int): 0 if in-distribution, 1 if out-of-distribution and 2 if
+                distribution-shifted.
+        """
         inputs, targets = batch
         logits = self.forward(inputs, save_feats=self.eval_grouping_loss)
         logits = rearrange(logits, "(n b) c -> b n c", b=targets.size(0))
@@ -500,6 +551,7 @@ class ClassificationRoutine(LightningModule):
                 self.test_shift_ens_metrics.update(probs_per_est)
 
     def on_validation_epoch_end(self) -> None:
+        """Compute and log the values of the collected metrics in `validation_step`."""
         res_dict = self.val_cls_metrics.compute()
         self.log_dict(res_dict, logger=True, sync_dist=True)
         self.log(
@@ -516,6 +568,7 @@ class ClassificationRoutine(LightningModule):
             self.val_grouping_loss.reset()
 
     def on_test_epoch_end(self) -> None:
+        """Compute, log, and plot the values of the collected metrics in `test_step`."""
         # already logged
         result_dict = self.test_cls_metrics.compute()
 
@@ -615,6 +668,11 @@ class ClassificationRoutine(LightningModule):
             self.save_results_to_csv(result_dict)
 
     def save_results_to_csv(self, results: dict[str, float]) -> None:
+        """Save the metric results in a csv.
+
+        Args:
+            results (dict[str, float]): the dictionary containing all the values of the metrics.
+        """
         if self.logger is not None:
             csv_writer(
                 Path(self.logger.log_dir) / "results.csv",
@@ -633,6 +691,19 @@ def _classification_routine_checks(
     post_processing: PostProcessing | None,
     format_batch_fn: nn.Module | None,
 ) -> None:
+    """Check the domains of the routine's parameters.
+
+    Args:
+        model (nn.Module): the model used to make classification predictions.
+        num_classes (int): the number of classes in the dataset.
+        is_ensemble (bool): whether the model is an ensemble or a single model.
+        ood_criterion (str): the criterion for the binary OOD detection task.
+        eval_grouping_loss (bool): whether to evaluate the grouping loss.
+        num_calibration_bins (int): the number of bins for the evaluation of the calibration.
+        mixup_params (dict | None): the dictionary to setup the mixup augmentation.
+        post_processing (PostProcessing | None): the post-processing module.
+        format_batch_fn (nn.Module | None): the function for formatting the batch for ensembles.
+    """
     if ood_criterion not in [
         "msp",
         "logit",

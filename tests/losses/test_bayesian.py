@@ -42,7 +42,7 @@ class TestELBOLoss:
         )
         inputs = torch.randn(1, 10)
         targets = torch.randn(1, 4)
-        routine.training_step((inputs, targets), 0)
+        routine.training_step((inputs, targets))
 
     def test_training_step(self):
         model = BayesLinear(10, 4)
@@ -62,7 +62,7 @@ class TestELBOLoss:
 
         inputs = torch.randn(1, 10)
         targets = torch.randn(1, 4)
-        routine.training_step((inputs, targets), 0)
+        routine.training_step((inputs, targets))
 
     def test_failures(self):
         model = BayesLinear(1, 1)
