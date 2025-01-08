@@ -95,7 +95,11 @@ class RegressionRoutine(LightningModule):
 
         self.optim_recipe = optim_recipe
         self.format_batch_fn = format_batch_fn
+        self.one_dim_regression = output_dim == 1
+        self._init_metrics()
 
+    def _init_metrics(self) -> None:
+        """Initialize the metrics depending on the exact task."""
         reg_metrics = MetricCollection(
             {
                 "reg/MAE": MeanAbsoluteError(),
@@ -113,28 +117,35 @@ class RegressionRoutine(LightningModule):
             self.val_prob_metrics = reg_prob_metrics.clone(prefix="val/")
             self.test_prob_metrics = reg_prob_metrics.clone(prefix="test/")
 
-        self.one_dim_regression = output_dim == 1
-
     def configure_optimizers(self) -> Optimizer | dict:
         return self.optim_recipe
 
     def on_train_start(self) -> None:
+        """Put the hyperparameters in tensorboard."""
         if self.logger is not None:  # coverage: ignore
             self.logger.log_hyperparams(
                 self.hparams,
             )
 
     def on_validation_start(self) -> None:
+        """Prepare the validation step.
+
+        Update the model's wrapper and the batchnorms if needed.
+        """
         if self.needs_epoch_update and not self.trainer.sanity_checking:
             self.model.update_wrapper(self.current_epoch)
             if hasattr(self.model, "need_bn_update"):
                 self.model.bn_update(self.trainer.train_dataloader, device=self.device)
 
     def on_test_start(self) -> None:
+        """Prepare the test step.
+
+        Update the batchnorms if needed.
+        """
         if hasattr(self.model, "need_bn_update"):
             self.model.bn_update(self.trainer.train_dataloader, device=self.device)
 
-    def forward(self, inputs: Tensor) -> Tensor | Distribution:
+    def forward(self, inputs: Tensor) -> Tensor | dict[str, Tensor]:
         """Forward pass of the routine.
 
         The forward pass automatically squeezes the output if the regression
@@ -144,7 +155,8 @@ class RegressionRoutine(LightningModule):
             inputs (Tensor): The input tensor.
 
         Returns:
-            Tensor: The output tensor.
+            Tensor | dict[str, Tensor]: The output tensor or the parameters of the output
+                distribution.
         """
         pred = self.model(inputs)
         if self.probabilistic:
@@ -165,7 +177,15 @@ class RegressionRoutine(LightningModule):
                 pred = pred.squeeze(-1)
         return pred
 
-    def training_step(self, batch: tuple[Tensor, Tensor], batch_idx: int) -> STEP_OUTPUT:
+    def training_step(self, batch: tuple[Tensor, Tensor]) -> STEP_OUTPUT:
+        """Perform a single training step based on the input tensors.
+
+        Args:
+            batch (tuple[Tensor, Tensor]): the training data and their corresponding targets
+
+        Returns:
+            Tensor: the loss corresponding to this training step.
+        """
         inputs, targets = self.format_batch_fn(batch)
 
         if self.one_dim_regression:
@@ -191,6 +211,14 @@ class RegressionRoutine(LightningModule):
         return loss
 
     def evaluation_forward(self, inputs: Tensor) -> tuple[Tensor, Distribution | None]:
+        """Get the prediction and handle predicted eventual distribution parameters.
+
+        Args:
+            inputs (Tensor): the input data.
+
+        Returns:
+            tuple[Tensor, Distribution | None]: the prediction as a Tensor and a distribution.
+        """
         batch_size = inputs.size(0)
         preds = self.model(inputs)
 
@@ -209,7 +237,14 @@ class RegressionRoutine(LightningModule):
         preds = rearrange(preds, "(m b) c -> b m c", b=batch_size)
         return preds.mean(dim=1), None
 
-    def validation_step(self, batch: tuple[Tensor, Tensor], batch_idx: int) -> None:
+    def validation_step(self, batch: tuple[Tensor, Tensor]) -> None:
+        """Perform a single validation step based on the input tensors.
+
+        Compute the prediction of the model and the value of the metrics on the validation batch.
+
+        Args:
+            batch (tuple[Tensor, Tensor]): the validation data and their corresponding targets.
+        """
         inputs, targets = batch
         if self.one_dim_regression:
             targets = targets.unsqueeze(-1)
@@ -225,6 +260,16 @@ class RegressionRoutine(LightningModule):
         batch_idx: int,
         dataloader_idx: int = 0,
     ) -> None:
+        """Perform a single test step based on the input tensors.
+
+        Compute the prediction of the model and the value of the metrics on the test batch. Also
+        handle OOD and distribution-shifted images.
+
+        Args:
+            batch (tuple[Tensor, Tensor]): the test data and their corresponding targets.
+            batch_idx (int): the number of the current batch (unused).
+            dataloader_idx (int): 0 if in-distribution, 1 if out-of-distribution.
+        """
         if dataloader_idx != 0:
             raise NotImplementedError(
                 "Regression OOD detection not implemented yet. Raise an issue " "if needed."
@@ -240,6 +285,7 @@ class RegressionRoutine(LightningModule):
             self.test_prob_metrics.update(dist, targets)
 
     def on_validation_epoch_end(self) -> None:
+        """Compute and log the values of the collected metrics in `validation_step`."""
         res_dict = self.val_metrics.compute()
         self.log_dict(res_dict, logger=True, sync_dist=True)
         self.log(
@@ -255,6 +301,7 @@ class RegressionRoutine(LightningModule):
             self.val_prob_metrics.reset()
 
     def on_test_epoch_end(self) -> None:
+        """Compute and log the values of the collected metrics in `test_step`."""
         self.log_dict(
             self.test_metrics.compute(),
         )
@@ -268,5 +315,10 @@ class RegressionRoutine(LightningModule):
 
 
 def _regression_routine_checks(output_dim: int) -> None:
+    """Check the domains of the routine's parameters.
+
+    Args:
+        output_dim (int): the dimension of the output of the regression task.
+    """
     if output_dim < 1:
         raise ValueError(f"output_dim must be positive, got {output_dim}.")

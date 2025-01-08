@@ -1,16 +1,16 @@
 import torch
 from lightning.pytorch.cli import LightningArgumentParser
+from torch.optim.lr_scheduler import PolynomialLR
 
 from torch_uncertainty import TULightningCLI
 from torch_uncertainty.baselines.segmentation import DeepLabBaseline
 from torch_uncertainty.datamodules.segmentation import CityscapesDataModule
-from torch_uncertainty.utils.learning_rate import PolyLR
 
 
 class DeepLabV3CLI(TULightningCLI):
     def add_arguments_to_parser(self, parser: LightningArgumentParser) -> None:
         parser.add_optimizer_args(torch.optim.SGD)
-        parser.add_lr_scheduler_args(PolyLR)
+        parser.add_lr_scheduler_args(PolynomialLR)
 
 
 def cli_main() -> DeepLabV3CLI:
