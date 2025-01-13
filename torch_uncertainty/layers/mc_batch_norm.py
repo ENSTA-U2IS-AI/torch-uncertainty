@@ -79,25 +79,23 @@ class _MCBatchNorm(_BatchNorm):
 
 
 class MCBatchNorm1d(_MCBatchNorm):
-    def __init__(self, **kwargs) -> None:
-        """Monte Carlo Batch Normalization over a 2D or 3D (batched) input.
+    """Monte Carlo Batch Normalization over a 2D or 3D (batched) input.
 
-        Args:
-        **kwargs: Keyword arguments passed to the parent class. These include:
-            - num_features (int): Number of features.
-            - num_estimators (int): Number of estimators.
-            - eps (float, optional): Epsilon. Defaults to 0.00001.
-            - momentum (float, optional): Momentum. Defaults to 0.1.
-            - affine (bool, optional): Whether to use learnable affine parameters. Defaults to True.
-            - track_running_stats (bool, optional): Whether to track running statistics. Defaults to True.
-            - device (optional): The device on which the layer should be placed. Defaults to None.
-            - dtype (optional): The data type of the layer. Defaults to None.
+    Args:
+        num_features (int): Number of features.
+        num_estimators (int): Number of estimators.
+        eps (float, optional): Epsilon. Defaults to 0.00001.
+        momentum (float, optional): Momentum. Defaults to 0.1.
+        affine (bool, optional): Affine. Defaults to True.
+        track_running_stats (bool, optional): Track running statistics.
+            Defaults to True.
+        device (optional): Device. Defaults to None.
+        dtype (optional): Data type. Defaults to None.
 
-        Warning:
+    Warning:
         This layer should not be used out of the corresponding wrapper.
         Check MCBatchNorm in torch_uncertainty/post_processing/.
-        """
-        super().__init__(**kwargs)
+    """
 
     def _check_input_dim(self, inputs) -> None:
         if inputs.dim() != 2 and inputs.dim() != 3:
@@ -105,25 +103,23 @@ class MCBatchNorm1d(_MCBatchNorm):
 
 
 class MCBatchNorm2d(_MCBatchNorm):
-    def __init__(self, **kwargs) -> None:
-        """Monte Carlo Batch Normalization over a 3D or 4D (batched) input.
+    """Monte Carlo Batch Normalization over a 3D or 4D (batched) input.
 
-        Args:
-        **kwargs: Keyword arguments passed to the parent class. These include:
-            - num_features (int): Number of features.
-            - num_estimators (int): Number of estimators.
-            - eps (float, optional): Epsilon. Defaults to 0.00001.
-            - momentum (float, optional): Momentum. Defaults to 0.1.
-            - affine (bool, optional): Whether to use learnable affine parameters. Defaults to True.
-            - track_running_stats (bool, optional): Whether to track running statistics. Defaults to True.
-            - device (optional): The device on which the layer should be placed. Defaults to None.
-            - dtype (optional): The data type of the layer. Defaults to None.
+    Args:
+        num_features (int): Number of features.
+        num_estimators (int): Number of estimators.
+        eps (float, optional): Epsilon. Defaults to 0.00001.
+        momentum (float, optional): Momentum. Defaults to 0.1.
+        affine (bool, optional): Affine. Defaults to True.
+        track_running_stats (bool, optional): Track running statistics.
+            Defaults to True.
+        device (optional): Device. Defaults to None.
+        dtype (optional): Data type. Defaults to None.
 
-        Warning:
+    Warning:
         This layer should not be used out of the corresponding wrapper.
         Check MCBatchNorm in torch_uncertainty/post_processing/.
-        """
-        super().__init__(**kwargs)
+    """
 
     def _check_input_dim(self, inputs) -> None:
         if inputs.dim() != 3 and inputs.dim() != 4:
@@ -131,25 +127,23 @@ class MCBatchNorm2d(_MCBatchNorm):
 
 
 class MCBatchNorm3d(_MCBatchNorm):
-    def __init__(self, **kwargs) -> None:
-        """Monte Carlo Batch Normalization over a 4D or 5D (batched) input.
+    """Monte Carlo Batch Normalization over a 4D or 5D (batched) input.
 
-        Args:
-        **kwargs: Keyword arguments passed to the parent class. These include:
-            - num_features (int): Number of features.
-            - num_estimators (int): Number of estimators.
-            - eps (float, optional): Epsilon. Defaults to 0.00001.
-            - momentum (float, optional): Momentum. Defaults to 0.1.
-            - affine (bool, optional): Whether to use learnable affine parameters. Defaults to True.
-            - track_running_stats (bool, optional): Whether to track running statistics. Defaults to True.
-            - device (optional): The device on which the layer should be placed. Defaults to None.
-            - dtype (optional): The data type of the layer. Defaults to None.
+    Args:
+        num_features (int): Number of features.
+        num_estimators (int): Number of estimators.
+        eps (float, optional): Epsilon. Defaults to 0.00001.
+        momentum (float, optional): Momentum. Defaults to 0.1.
+        affine (bool, optional): Affine. Defaults to True.
+        track_running_stats (bool, optional): Track running statistics.
+            Defaults to True.
+        device (optional): Device. Defaults to None.
+        dtype (optional): Data type. Defaults to None.
 
-        Warning:
+    Warning:
         This layer should not be used out of the corresponding wrapper.
         Check MCBatchNorm in torch_uncertainty/post_processing/.
-        """
-        super().__init__(**kwargs)
+    """
 
     def _check_input_dim(self, inputs) -> None:
         if inputs.dim() != 4 and inputs.dim() != 5:
