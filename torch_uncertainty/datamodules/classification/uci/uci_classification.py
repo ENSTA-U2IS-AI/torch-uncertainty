@@ -7,9 +7,23 @@ from torch_uncertainty.utils import create_train_val_split
 
 
 class UCIClassificationDataModule(TUDataModule):
-    """The UCI classification datamodule base class.
+    training_task = "classification"
 
-    Args:
+    def __init__(
+        self,
+        root: str | Path,
+        dataset: type[Dataset],
+        batch_size: int,
+        val_split: float = 0.0,
+        test_split: float = 0.2,
+        num_workers: int = 1,
+        pin_memory: bool = True,
+        persistent_workers: bool = True,
+        binary: bool = True,
+    ) -> None:
+        """The UCI classification datamodule base class.
+
+        Args:
         root (string): Root directory of the datasets.
         dataset (type[Dataset]): The UCI classification dataset class.
         batch_size (int): The batch size for training and testing.
@@ -25,22 +39,7 @@ class UCIClassificationDataModule(TUDataModule):
         binary (bool, optional): Whether to use binary classification. Defaults
             to ``True``.
 
-    """
-
-    training_task = "classification"
-
-    def __init__(
-        self,
-        root: str | Path,
-        dataset: type[Dataset],
-        batch_size: int,
-        val_split: float = 0.0,
-        test_split: float = 0.2,
-        num_workers: int = 1,
-        pin_memory: bool = True,
-        persistent_workers: bool = True,
-        binary: bool = True,
-    ) -> None:
+        """
         super().__init__(
             root=root,
             batch_size=batch_size,

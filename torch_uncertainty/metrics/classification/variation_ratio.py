@@ -8,13 +8,23 @@ from torchmetrics.utilities.data import dim_zero_cat
 
 
 class VariationRatio(Metric):
-    r"""Compute the Variation Ratio.
+    full_state_update: bool = False
+    is_differentiable: bool = True
+    higher_is_better: bool = False
 
-    The Variation Ratio is a measure of the uncertainty or disagreement among
-    predictions from multiple estimators. It is defined as the proportion of
-    predicted class labels that are not the chosen (most frequent) class.
+    def __init__(
+        self,
+        probabilistic: bool = True,
+        reduction: Literal["mean", "sum", "none", None] = "mean",
+        **kwargs,
+    ) -> None:
+        r"""Compute the Variation Ratio.
 
-    Args:
+        The Variation Ratio is a measure of the uncertainty or disagreement among
+        predictions from multiple estimators. It is defined as the proportion of
+        predicted class labels that are not the chosen (most frequent) class.
+
+        Args:
         probabilistic (bool, optional): Whether to use psrobabilistic predictions.
             Defaults to True.
         reduction (Literal["mean", "sum", "none", None], optional): Determines how
@@ -27,26 +37,26 @@ class VariationRatio(Metric):
         kwargs: Additional keyword arguments, see `Advanced metric settings
             <https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metric-kwargs>`_.
 
-    Inputs:
+        Inputs:
         - :attr:`probs`: :math:`(B, N, C)`
 
         where :math:`B` is the batch size, :math:`C` is the number of classes
         and :math:`N` is the number of estimators.
 
-    Note:
+        Note:
         A higher variation ratio indicates higher uncertainty or disagreement
         among the estimators.
 
-    Warning:
+        Warning:
         Metric `VariationRatio` will save all predictions in buffer. For large
         datasets this may lead to large memory footprint.
 
-    Raises:
+        Raises:
         ValueError:
             If :attr:`reduction` is not one of ``'mean'``, ``'sum'``,
             ``'none'`` or ``None``.
 
-    Example:
+        Example:
 
         .. code-block:: python
 
@@ -62,18 +72,7 @@ class VariationRatio(Metric):
             result = vr.compute()
             print(result)
             # output: tensor(0.4500)
-    """
-
-    full_state_update: bool = False
-    is_differentiable: bool = True
-    higher_is_better: bool = False
-
-    def __init__(
-        self,
-        probabilistic: bool = True,
-        reduction: Literal["mean", "sum", "none", None] = "mean",
-        **kwargs,
-    ) -> None:
+        """
         super().__init__(**kwargs)
         allowed_reduction = ("sum", "mean", "none", None)
         if reduction not in allowed_reduction:

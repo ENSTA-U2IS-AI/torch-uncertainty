@@ -15,11 +15,22 @@ else:  # coverage: ignore
 
 
 class LaplaceApprox(PostProcessing):
-    """Laplace approximation for uncertainty estimation.
+    def __init__(
+        self,
+        task: Literal["classification", "regression"],
+        model: nn.Module | None = None,
+        weight_subset="last_layer",
+        hessian_struct="kron",
+        pred_type: Literal["glm", "nn"] = "glm",
+        link_approx: Literal["mc", "probit", "bridge", "bridge_norm"] = "probit",
+        batch_size: int = 256,
+        optimize_prior_precision: bool = True,
+    ) -> None:
+        """Laplace approximation for uncertainty estimation.
 
-    This class is a wrapper of Laplace classes from the laplace-torch library.
+        This class is a wrapper of Laplace classes from the laplace-torch library.
 
-    Args:
+        Args:
         task (Literal["classification", "regression"]): task type.
         model (nn.Module): model to be converted.
         weight_subset (str): subset of weights to be considered. Defaults to
@@ -36,21 +47,11 @@ class LaplaceApprox(PostProcessing):
         optimize_prior_precision (bool, optional): whether to optimize the prior
             precision. Defaults to True.
 
-    Reference:
-        Daxberger et al. Laplace Redux - Effortless Bayesian Deep Learning. In NeurIPS 2021.
-    """
+        References:
+        [1] `Daxberger et al. Laplace Redux - Effortless Bayesian Deep Learning. In NeurIPS 2021
+        <https://arxiv.org/abs/2106.14806>`_.
 
-    def __init__(
-        self,
-        task: Literal["classification", "regression"],
-        model: nn.Module | None = None,
-        weight_subset="last_layer",
-        hessian_struct="kron",
-        pred_type: Literal["glm", "nn"] = "glm",
-        link_approx: Literal["mc", "probit", "bridge", "bridge_norm"] = "probit",
-        batch_size: int = 256,
-        optimize_prior_precision: bool = True,
-    ) -> None:
+        """
         super().__init__()
         if not laplace_installed:  # coverage: ignore
             raise ImportError(

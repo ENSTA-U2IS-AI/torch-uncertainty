@@ -10,9 +10,23 @@ from .abstract import TUDataModule
 
 
 class UCIRegressionDataModule(TUDataModule):
-    """The UCI regression datasets.
+    training_task = "regression"
 
-    Args:
+    def __init__(
+        self,
+        root: str | Path,
+        batch_size: int,
+        dataset_name: str,
+        val_split: float = 0.0,
+        num_workers: int = 1,
+        pin_memory: bool = True,
+        persistent_workers: bool = True,
+        input_shape: tuple[int, ...] | None = None,
+        split_seed: int = 42,
+    ) -> None:
+        """The UCI regression datasets.
+
+        Args:
         root (string): Root directory of the datasets.
         batch_size (int): The batch size for training and testing.
         dataset_name (string, optional): The name of the dataset. One of
@@ -31,22 +45,7 @@ class UCIRegressionDataModule(TUDataModule):
             ``None``.
         split_seed (int, optional): The seed to use for splitting the dataset.
             Defaults to ``42``.
-    """
-
-    training_task = "regression"
-
-    def __init__(
-        self,
-        root: str | Path,
-        batch_size: int,
-        dataset_name: str,
-        val_split: float = 0.0,
-        num_workers: int = 1,
-        pin_memory: bool = True,
-        persistent_workers: bool = True,
-        input_shape: tuple[int, ...] | None = None,
-        split_seed: int = 42,
-    ) -> None:
+        """
         super().__init__(
             root=root,
             batch_size=batch_size,

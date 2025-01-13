@@ -9,10 +9,23 @@ from torch_uncertainty.routines.segmentation import SegmentationRoutine
 
 
 class SegFormerBaseline(SegmentationRoutine):
-    r"""SegFormer backbone baseline for segmentation providing support for
-    various versions and architectures.
+    single = ["std"]
+    versions = {
+        "std": seg_former,
+    }
+    archs = [0, 1, 2, 3, 4, 5]
 
-    Args:
+    def __init__(
+        self,
+        num_classes: int,
+        loss: nn.Module,
+        version: Literal["std"],
+        arch: int,
+    ) -> None:
+        r"""SegFormer backbone baseline for segmentation providing support for
+        various versions and architectures.
+
+        Args:
         num_classes (int): Number of classes to predict.
         loss (type[Module]): Training loss.
         version (str):
@@ -32,21 +45,7 @@ class SegFormerBaseline(SegmentationRoutine):
 
         num_estimators (int, optional): Number of estimators in the
             ensemble. Defaults to 1 (single model).
-    """
-
-    single = ["std"]
-    versions = {
-        "std": seg_former,
-    }
-    archs = [0, 1, 2, 3, 4, 5]
-
-    def __init__(
-        self,
-        num_classes: int,
-        loss: nn.Module,
-        version: Literal["std"],
-        arch: int,
-    ) -> None:
+        """
         params = {
             "num_classes": num_classes,
             "arch": arch,

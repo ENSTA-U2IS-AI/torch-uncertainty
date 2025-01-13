@@ -8,9 +8,22 @@ from .base import DepthDataModule
 
 
 class NYUv2DataModule(DepthDataModule):
-    r"""Depth DataModule for the NYUv2 dataset.
+    def __init__(
+        self,
+        root: str | Path,
+        batch_size: int,
+        min_depth: float = 1e-3,
+        max_depth: float = 10.0,
+        crop_size: _size_2_t = (416, 544),
+        eval_size: _size_2_t = (480, 640),
+        val_split: float | None = None,
+        num_workers: int = 1,
+        pin_memory: bool = True,
+        persistent_workers: bool = True,
+    ) -> None:
+        r"""Depth DataModule for the NYUv2 dataset.
 
-    Args:
+        Args:
         root (str or Path): Root directory of the datasets.
         batch_size (int): Number of samples per batch.
         min_depth (float, optional): Minimum depth value for evaluation.
@@ -37,21 +50,7 @@ class NYUv2DataModule(DepthDataModule):
             ``True``.
         persistent_workers (bool, optional): Whether to use persistent workers.
             Defaults to ``True``.
-    """
-
-    def __init__(
-        self,
-        root: str | Path,
-        batch_size: int,
-        min_depth: float = 1e-3,
-        max_depth: float = 10.0,
-        crop_size: _size_2_t = (416, 544),
-        eval_size: _size_2_t = (480, 640),
-        val_split: float | None = None,
-        num_workers: int = 1,
-        pin_memory: bool = True,
-        persistent_workers: bool = True,
-    ) -> None:
+        """
         super().__init__(
             dataset=NYUv2,
             root=root,

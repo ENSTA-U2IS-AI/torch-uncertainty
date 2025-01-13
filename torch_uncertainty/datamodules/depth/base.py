@@ -13,9 +13,23 @@ from torch_uncertainty.utils.misc import create_train_val_split
 
 
 class DepthDataModule(TUDataModule):
-    r"""Base depth datamodule.
+    def __init__(
+        self,
+        dataset: type[VisionDataset],
+        root: str | Path,
+        batch_size: int,
+        min_depth: float,
+        max_depth: float,
+        crop_size: _size_2_t,
+        eval_size: _size_2_t,
+        val_split: float | None = None,
+        num_workers: int = 1,
+        pin_memory: bool = True,
+        persistent_workers: bool = True,
+    ) -> None:
+        r"""Base depth datamodule.
 
-    Args:
+        Args:
         dataset (type[VisionDataset]): Dataset class to use.
         root (str or Path): Root directory of the datasets.
         batch_size (int): Number of samples per batch.
@@ -38,22 +52,7 @@ class DepthDataModule(TUDataModule):
         num_workers (int, optional): Number of dataloaders to use.
         pin_memory (bool, optional):  Whether to pin memory.
         persistent_workers (bool, optional): Whether to use persistent workers.
-    """
-
-    def __init__(
-        self,
-        dataset: type[VisionDataset],
-        root: str | Path,
-        batch_size: int,
-        min_depth: float,
-        max_depth: float,
-        crop_size: _size_2_t,
-        eval_size: _size_2_t,
-        val_split: float | None = None,
-        num_workers: int = 1,
-        pin_memory: bool = True,
-        persistent_workers: bool = True,
-    ) -> None:
+        """
         super().__init__(
             root=root,
             batch_size=batch_size,

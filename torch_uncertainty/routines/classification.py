@@ -60,9 +60,28 @@ MIXUP_PARAMS = {
 
 
 class ClassificationRoutine(LightningModule):
-    r"""Routine for training & testing on **classification** tasks.
+    def __init__(
+        self,
+        model: nn.Module,
+        num_classes: int,
+        loss: nn.Module,
+        is_ensemble: bool = False,
+        format_batch_fn: nn.Module | None = None,
+        optim_recipe: dict | Optimizer | None = None,
+        mixup_params: dict | None = None,
+        eval_ood: bool = False,
+        eval_shift: bool = False,
+        eval_grouping_loss: bool = False,
+        ood_criterion: Literal["msp", "logit", "energy", "entropy", "mi", "vr"] = "msp",
+        post_processing: PostProcessing | None = None,
+        calibration_set: Literal["val", "test"] = "val",
+        num_calibration_bins: int = 15,
+        log_plots: bool = False,
+        save_in_csv: bool = False,
+    ) -> None:
+        r"""Routine for training & testing on **classification** tasks.
 
-    Args:
+        Args:
         model (torch.nn.Module): Model to train.
         num_classes (int): Number of classes.
         loss (torch.nn.Module): Loss function to optimize the :attr:`model`.
@@ -101,34 +120,14 @@ class ClassificationRoutine(LightningModule):
         save_in_csv(bool, optional): Save the results in csv. Defaults to
             ``False``.
 
-    Warning:
+        Warning:
         You must define :attr:`optim_recipe` if you do not use the Lightning CLI.
 
-    Note:
+        Note:
         :attr:`optim_recipe` can be anything that can be returned by
         :meth:`LightningModule.configure_optimizers()`. Find more details
         `here <https://lightning.ai/docs/pytorch/stable/common/lightning_module.html#configure-optimizers>`_.
-    """
-
-    def __init__(
-        self,
-        model: nn.Module,
-        num_classes: int,
-        loss: nn.Module,
-        is_ensemble: bool = False,
-        format_batch_fn: nn.Module | None = None,
-        optim_recipe: dict | Optimizer | None = None,
-        mixup_params: dict | None = None,
-        eval_ood: bool = False,
-        eval_shift: bool = False,
-        eval_grouping_loss: bool = False,
-        ood_criterion: Literal["msp", "logit", "energy", "entropy", "mi", "vr"] = "msp",
-        post_processing: PostProcessing | None = None,
-        calibration_set: Literal["val", "test"] = "val",
-        num_calibration_bins: int = 15,
-        log_plots: bool = False,
-        save_in_csv: bool = False,
-    ) -> None:
+        """
         super().__init__()
         _classification_routine_checks(
             model=model,

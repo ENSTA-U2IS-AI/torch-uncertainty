@@ -25,26 +25,6 @@ def _sample(mu: Tensor, logvar: Tensor, std_factor: float) -> Tensor:
 
 
 class LPBNNLinear(nn.Module):
-    """LPBNN-style linear layer.
-
-    Args:
-        in_features (int): Number of input features.
-        out_features (int): Number of output features.
-        num_estimators (int): Number of models to sample from.
-        hidden_size (int): Size of the hidden layer. Defaults to 32.
-        std_factor (float): Factor to multiply the standard deviation of the
-            latent noise. Defaults to 1e-2.
-        bias (bool): If ``True``, adds a learnable bias to the output.
-            Defaults to ``True``.
-        device (torch.device): Device on which the layer is stored.
-            Defaults to ``None``.
-        dtype (torch.dtype): Data type of the layer. Defaults to ``None``.
-
-    Reference:
-        `Encoding the latent posterior of Bayesian Neural Networks for
-        uncertainty quantification <https://arxiv.org/abs/2012.02818>`_.
-    """
-
     __constants__ = [
         "in_features",
         "out_features",
@@ -67,6 +47,26 @@ class LPBNNLinear(nn.Module):
         device=None,
         dtype=None,
     ) -> None:
+        """LPBNN-style linear layer.
+
+        Args:
+        in_features (int): Number of input features.
+        out_features (int): Number of output features.
+        num_estimators (int): Number of models to sample from.
+        hidden_size (int): Size of the hidden layer. Defaults to 32.
+        std_factor (float): Factor to multiply the standard deviation of the
+            latent noise. Defaults to 1e-2.
+        bias (bool): If ``True``, adds a learnable bias to the output.
+            Defaults to ``True``.
+        device (torch.device): Device on which the layer is stored.
+            Defaults to ``None``.
+        dtype (torch.dtype): Data type of the layer. Defaults to ``None``.
+
+        References:
+        [1] `Encoding the latent posterior of Bayesian Neural Networks for uncertainty quantification
+        <https://arxiv.org/abs/2012.02818>`_.
+
+        """
         check_lpbnn_parameters_consistency(hidden_size, std_factor, num_estimators)
         factory_kwargs = {"device": device, "dtype": dtype}
         super().__init__()
@@ -150,9 +150,26 @@ class LPBNNLinear(nn.Module):
 
 
 class LPBNNConv2d(nn.Module):
-    """LPBNN-style 2D convolutional layer.
+    def __init__(
+        self,
+        in_channels: int,
+        out_channels: int,
+        num_estimators: int,
+        kernel_size: _size_2_t,
+        stride: _size_2_t = 1,
+        padding: str | _size_2_t = 0,
+        groups: int = 1,
+        hidden_size: int = 32,
+        std_factor: float = 1e-2,
+        gamma: bool = True,
+        bias: bool = True,
+        padding_mode: str = "zeros",
+        device=None,
+        dtype=None,
+    ):
+        """LPBNN-style 2D convolutional layer.
 
-    Args:
+        Args:
         in_channels (int): Number of input channels.
         out_channels (int): Number of output channels.
         num_estimators (int): Number of models to sample from.
@@ -172,28 +189,11 @@ class LPBNNConv2d(nn.Module):
             Defaults to ``None``.
         dtype (torch.dtype): Data type of the layer. Defaults to ``None``.
 
-    Reference:
-        `Encoding the latent posterior of Bayesian Neural Networks for
-        uncertainty quantification <https://arxiv.org/abs/2012.02818>`_.
-    """
+        References:
+        [1] `Encoding the latent posterior of Bayesian Neural Networks for uncertainty quantification
+        <https://arxiv.org/abs/2012.02818>`_.
 
-    def __init__(
-        self,
-        in_channels: int,
-        out_channels: int,
-        num_estimators: int,
-        kernel_size: _size_2_t,
-        stride: _size_2_t = 1,
-        padding: str | _size_2_t = 0,
-        groups: int = 1,
-        hidden_size: int = 32,
-        std_factor: float = 1e-2,
-        gamma: bool = True,
-        bias: bool = True,
-        padding_mode: str = "zeros",
-        device=None,
-        dtype=None,
-    ):
+        """
         check_lpbnn_parameters_consistency(hidden_size, std_factor, num_estimators)
         factory_kwargs = {"device": device, "dtype": dtype}
         super().__init__()

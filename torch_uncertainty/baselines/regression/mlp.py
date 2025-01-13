@@ -12,8 +12,6 @@ ENSEMBLE_METHODS = ["packed"]
 
 
 class MLPBaseline(RegressionRoutine):
-    r"""MLP baseline for regression providing support for various versions."""
-
     versions = {"std": mlp, "packed": packed_mlp}
 
     def __init__(
@@ -30,6 +28,7 @@ class MLPBaseline(RegressionRoutine):
         dist_family: str | None = None,
         dist_args: dict | None = None,
     ) -> None:
+        r"""MLP baseline for regression providing support for various versions."""
         params = {
             "dropout_rate": dropout_rate,
             "in_features": in_features,

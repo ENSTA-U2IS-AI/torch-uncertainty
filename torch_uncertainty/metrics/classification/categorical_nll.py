@@ -8,20 +8,29 @@ from torchmetrics.utilities.data import dim_zero_cat
 
 
 class CategoricalNLL(Metric):
-    r"""Computes the Negative Log-Likelihood (NLL) metric for classification tasks.
+    is_differentiable = False
+    higher_is_better = False
+    full_state_update = False
 
-    This metric evaluates the performance of a probabilistic classification model by
-    calculating the negative log likelihood of the predicted probabilities. For a batch
-    of size :math:`B` with :math:`C` classes, the negative log likelihood is defined as:
+    def __init__(
+        self,
+        reduction: Literal["mean", "sum", "none", None] = "mean",
+        **kwargs: Any,
+    ) -> None:
+        r"""Computes the Negative Log-Likelihood (NLL) metric for classification tasks.
 
-    .. math::
+        This metric evaluates the performance of a probabilistic classification model by
+        calculating the negative log likelihood of the predicted probabilities. For a batch
+        of size :math:`B` with :math:`C` classes, the negative log likelihood is defined as:
+
+        .. math::
 
         \ell(p, y) = -\frac{1}{B} \sum_{i=1}^B \log(p_{i, y_i})
 
-    where :math:`p_{i, y_i}` is the predicted probability for the true class :math:`y_i`
-    of sample :math:`i`.
+        where :math:`p_{i, y_i}` is the predicted probability for the true class :math:`y_i`
+        of sample :math:`i`.
 
-    Args:
+        Args:
         reduction (str, optional): Determines how to reduce the computed loss over
             the batch dimension:
 
@@ -31,25 +40,25 @@ class CategoricalNLL(Metric):
 
         kwargs: Additional keyword arguments as described in `Advanced Metric Settings <https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metric-kwargs>`_.
 
-    Inputs:
+        Inputs:
         - :attr:`probs`: :math:`(B, C)`
             A Tensor containing the predicted probabilities for `C` classes, where each
             row corresponds to a sample in the batch.
         - :attr:`target`: :math:`(B,)`
             A Tensor containing the ground truth labels as integers in the range :math:`[0, C-1]`.
 
-    Note:
+        Note:
         Ensure that the probabilities in :attr:`probs` are normalized to sum to one:
 
         .. math::
 
             \sum_{c=1}^C p_{i, c} = 1 \quad \forall i \in [1, B].
 
-    Warning:
+        Warning:
         If `reduction` is not one of ``'mean'``, ``'sum'``, ``'none'``, or ``None``, a
         :class:`ValueError` will be raised.
 
-    Example:
+        Example:
 
         .. code-block:: python
 
@@ -62,23 +71,6 @@ class CategoricalNLL(Metric):
             # Output: tensor(0.4338)
 
 
-    """
-
-    is_differentiable = False
-    higher_is_better = False
-    full_state_update = False
-
-    def __init__(
-        self,
-        reduction: Literal["mean", "sum", "none", None] = "mean",
-        **kwargs: Any,
-    ) -> None:
-        """Args:
-            reduction (Literal["mean", "sum", "none", None]): Specifies the reduction method.
-            kwargs: Additional arguments passed to the base class.
-
-        Raises:
-            ValueError: If an unsupported `reduction` value is provided.
         """
         super().__init__(**kwargs)
 

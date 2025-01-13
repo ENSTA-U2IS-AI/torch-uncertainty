@@ -20,10 +20,45 @@ ENSEMBLE_METHODS = ["packed", "batched", "masked", "mimo", "mc-dropout"]
 
 
 class WideResNetBaseline(ClassificationRoutine):
-    r"""Wide-ResNet28x10 backbone baseline for classification providing support
-    for various versions.
+    versions = {
+        "std": [wideresnet28x10],
+        "mc-dropout": [wideresnet28x10],
+        "packed": [packed_wideresnet28x10],
+        "batched": [batched_wideresnet28x10],
+        "masked": [masked_wideresnet28x10],
+        "mimo": [mimo_wideresnet28x10],
+    }
 
-    Args:
+    def __init__(
+        self,
+        num_classes: int,
+        in_channels: int,
+        loss: nn.Module,
+        version: Literal["std", "mc-dropout", "packed", "batched", "masked", "mimo"],
+        style: str = "imagenet",
+        num_estimators: int = 1,
+        dropout_rate: float = 0.0,
+        optim_recipe: dict | Optimizer | None = None,
+        mixup_params: dict | None = None,
+        groups: int = 1,
+        last_layer_dropout: bool = False,
+        scale: float | None = None,
+        alpha: int | None = None,
+        gamma: int = 1,
+        rho: float = 1.0,
+        batch_repeat: int = 1,
+        ood_criterion: Literal["msp", "logit", "energy", "entropy", "mi", "vr"] = "msp",
+        log_plots: bool = False,
+        save_in_csv: bool = False,
+        calibration_set: Literal["val", "test"] = "val",
+        eval_ood: bool = False,
+        eval_shift: bool = False,
+        eval_grouping_loss: bool = False,
+    ) -> None:
+        r"""Wide-ResNet28x10 backbone baseline for classification providing support
+        for various versions.
+
+        Args:
         num_classes (int): Number of classes to predict.
         in_channels (int): Number of input channels.
         loss (nn.Module): Training loss.
@@ -86,50 +121,14 @@ class WideResNetBaseline(ClassificationRoutine):
         eval_grouping_loss (bool, optional): Indicates whether to evaluate the
             grouping loss or not. Defaults to ``False``.
 
-    Raises:
+        Raises:
         ValueError: If :attr:`version` is not either ``"std"``,
             ``"packed"``, ``"batched"`` or ``"masked"``.
 
-    Returns:
+        Returns:
         LightningModule: Wide-ResNet baseline ready for training and
             evaluation.
-    """
-
-    versions = {
-        "std": [wideresnet28x10],
-        "mc-dropout": [wideresnet28x10],
-        "packed": [packed_wideresnet28x10],
-        "batched": [batched_wideresnet28x10],
-        "masked": [masked_wideresnet28x10],
-        "mimo": [mimo_wideresnet28x10],
-    }
-
-    def __init__(
-        self,
-        num_classes: int,
-        in_channels: int,
-        loss: nn.Module,
-        version: Literal["std", "mc-dropout", "packed", "batched", "masked", "mimo"],
-        style: str = "imagenet",
-        num_estimators: int = 1,
-        dropout_rate: float = 0.0,
-        optim_recipe: dict | Optimizer | None = None,
-        mixup_params: dict | None = None,
-        groups: int = 1,
-        last_layer_dropout: bool = False,
-        scale: float | None = None,
-        alpha: int | None = None,
-        gamma: int = 1,
-        rho: float = 1.0,
-        batch_repeat: int = 1,
-        ood_criterion: Literal["msp", "logit", "energy", "entropy", "mi", "vr"] = "msp",
-        log_plots: bool = False,
-        save_in_csv: bool = False,
-        calibration_set: Literal["val", "test"] = "val",
-        eval_ood: bool = False,
-        eval_shift: bool = False,
-        eval_grouping_loss: bool = False,
-    ) -> None:
+        """
         params = {
             "conv_bias": False,
             "dropout_rate": dropout_rate,

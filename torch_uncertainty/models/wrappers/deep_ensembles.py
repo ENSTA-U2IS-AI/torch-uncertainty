@@ -6,12 +6,11 @@ from torch import nn
 
 
 class _DeepEnsembles(nn.Module):
-    """Create a classification deep ensembles from a list of models."""
-
     def __init__(
         self,
         models: list[nn.Module],
     ) -> None:
+        """Create a classification deep ensembles from a list of models."""
         super().__init__()
         self.core_models = nn.ModuleList(models)
         self.num_estimators = len(models)
@@ -31,13 +30,12 @@ class _DeepEnsembles(nn.Module):
 
 
 class _RegDeepEnsembles(_DeepEnsembles):
-    """Create a regression deep ensembles from a list of models."""
-
     def __init__(
         self,
         probabilistic: bool,
         models: list[nn.Module],
     ) -> None:
+        """Create a regression deep ensembles from a list of models."""
         super().__init__(models)
         self.probabilistic = probabilistic
 

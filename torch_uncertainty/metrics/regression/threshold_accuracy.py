@@ -5,21 +5,22 @@ from torchmetrics.utilities.data import dim_zero_cat
 
 
 class ThresholdAccuracy(Metric):
-    r"""Computes the Threshold Accuracy metric, also referred to as d1, d2, or d3.
+    def __init__(self, power: int, lmbda: float = 1.25, **kwargs) -> None:
+        r"""Computes the Threshold Accuracy metric, also referred to as d1, d2, or d3.
 
-    This metric evaluates the percentage of predictions that fall within a
-    specified threshold of their corresponding target values. The threshold
-    is determined based on the maximum ratio between predictions and targets
-    (or its inverse), raised to a specified power.
+        This metric evaluates the percentage of predictions that fall within a
+        specified threshold of their corresponding target values. The threshold
+        is determined based on the maximum ratio between predictions and targets
+        (or its inverse), raised to a specified power.
 
-    Args:
+        Args:
         power: The power to raise the threshold to. Often in [1, 2, 3].
         lmbda: The threshold to compare the max of ratio of predictions
             to targets and its inverse to. Defaults to 1.25.
         kwargs: Additional keyword arguments, see `Advanced metric settings
             <https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metric-kwargs>`_.
 
-    Example:
+        Example:
 
         .. code-block:: python
 
@@ -40,9 +41,7 @@ class ThresholdAccuracy(Metric):
             result = threshold_accuracy.compute()
             print(f"Threshold Accuracy: {result.item():.2f}")
             # Output: Threshold Accuracy: 0.80
-    """
-
-    def __init__(self, power: int, lmbda: float = 1.25, **kwargs) -> None:
+        """
         super().__init__(**kwargs)
         if power < 0:
             raise ValueError(f"Power must be greater than or equal to 0. Got {power}.")

@@ -26,35 +26,6 @@ class GLEstimator(GLEstimatorBase):
 
 
 class GroupingLoss(Metric):
-    r"""Metric to estimate the Top-label Grouping Loss.
-
-    Args:
-        kwargs: Additional keyword arguments, see `Advanced metric settings
-            <https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metric-kwargs>`_.
-
-    Inputs:
-        - :attr:`probs`: :math:`(B, C)` or :math:`(B, N, C)`
-        - :attr:`target`: :math:`(B)` or :math:`(B, C)`
-        - :attr:`features`: :math:`(B, F)` or :math:`(B, N, F)`
-
-        where :math:`B` is the batch size, :math:`C` is the number of classes
-        and :math:`N` is the number of estimators.
-
-    Warning:
-        Make sure that the probabilities in :attr:`probs` are normalized to sum
-        to one.
-
-    Raises:
-        ValueError:
-            If :attr:`reduction` is not one of ``'mean'``, ``'sum'``,
-            ``'none'`` or ``None``.
-
-    Reference:
-        Perez-Lebel, Alexandre, Le Morvan, Marine and Varoquaux, Gaël.
-        Beyond calibration: estimating the grouping loss of modern neural
-        networks. In ICLR 2023.
-    """
-
     is_differentiable: bool = False
     higher_is_better: bool | None = False
     full_state_update: bool = False
@@ -63,6 +34,34 @@ class GroupingLoss(Metric):
         self,
         **kwargs,
     ) -> None:
+        r"""Metric to estimate the Top-label Grouping Loss.
+
+        Args:
+        kwargs: Additional keyword arguments, see `Advanced metric settings
+            <https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metric-kwargs>`_.
+
+        Inputs:
+        - :attr:`probs`: :math:`(B, C)` or :math:`(B, N, C)`
+        - :attr:`target`: :math:`(B)` or :math:`(B, C)`
+        - :attr:`features`: :math:`(B, F)` or :math:`(B, N, F)`
+
+        where :math:`B` is the batch size, :math:`C` is the number of classes
+        and :math:`N` is the number of estimators.
+
+        Warning:
+        Make sure that the probabilities in :attr:`probs` are normalized to sum
+        to one.
+
+        Raises:
+        ValueError:
+            If :attr:`reduction` is not one of ``'mean'``, ``'sum'``,
+            ``'none'`` or ``None``.
+
+        References:
+        [1] `Beyond calibration: estimating the grouping loss of modern neural networks. In ICLR 2023
+        <https://arxiv.org/abs/2210.16315>`_.
+
+        """
         super().__init__(**kwargs)
         if not glest_installed:  # coverage: ignore
             raise ImportError(

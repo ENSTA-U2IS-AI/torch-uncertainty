@@ -5,9 +5,15 @@ from torch import nn
 
 
 class CheckpointEnsemble(nn.Module):
-    """Ensemble of models at different points in the training trajectory.
+    def __init__(
+        self,
+        model: nn.Module,
+        save_schedule: list[int] | None = None,
+        use_final_checkpoint: bool = True,
+    ) -> None:
+        """Ensemble of models at different points in the training trajectory.
 
-    Args:
+        Args:
         model (nn.Module): The model to train and ensemble.
         save_schedule (list[int]): The epochs at which to save the model.
             If save schedule is None, save the model at every epoch.
@@ -15,17 +21,10 @@ class CheckpointEnsemble(nn.Module):
         use_final_checkpoint (bool, optional): Whether to use the final
             model as a checkpoint. Defaults to True.
 
-    Reference:
+        Reference:
         Checkpoint Ensembles: Ensemble Methods from a Single Training Process.
         Hugh Chen, Scott Lundberg, Su-In Lee. In ArXiv 2018.
-    """
-
-    def __init__(
-        self,
-        model: nn.Module,
-        save_schedule: list[int] | None = None,
-        use_final_checkpoint: bool = True,
-    ) -> None:
+        """
         super().__init__()
         self.core_model = model
         self.save_schedule = save_schedule

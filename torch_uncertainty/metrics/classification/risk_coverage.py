@@ -11,31 +11,39 @@ from torchmetrics.utilities.plot import _AX_TYPE
 
 
 class AURC(Metric):
-    r"""Calculate Area Under the Risk-Coverage curve.
+    is_differentiable: bool = False
+    higher_is_better: bool = False
+    full_state_update: bool = False
 
-    The Area Under the Risk-Coverage curve (AURC) is the main metric for
-    Selective Classification (SC) performance assessment. It evaluates the
-    quality of uncertainty estimates by measuring the ability to
-    discriminate between correct and incorrect predictions based on their
-    rank (and not their values in contrast with calibration).
+    scores: list[Tensor]
+    errors: list[Tensor]
 
-    As input to ``forward`` and ``update`` the metric accepts the following input:
+    def __init__(self, **kwargs) -> None:
+        r"""Calculate Area Under the Risk-Coverage curve.
 
-    - ``preds`` (:class:`~torch.Tensor`): A float tensor of shape
+        The Area Under the Risk-Coverage curve (AURC) is the main metric for
+        Selective Classification (SC) performance assessment. It evaluates the
+        quality of uncertainty estimates by measuring the ability to
+        discriminate between correct and incorrect predictions based on their
+        rank (and not their values in contrast with calibration).
+
+        As input to ``forward`` and ``update`` the metric accepts the following input:
+
+        - ``preds`` (:class:`~torch.Tensor`): A float tensor of shape
         ``(N, ...)`` containing probabilities for each observation.
-    - ``target`` (:class:`~torch.Tensor`): An int tensor of shape
+        - ``target`` (:class:`~torch.Tensor`): An int tensor of shape
         ``(N, ...)`` containing ground-truth labels.
 
-    As output to ``forward`` and ``compute`` the metric returns the
+        As output to ``forward`` and ``compute`` the metric returns the
         following output:
 
-    - ``aurc`` (:class:`~torch.Tensor`): A scalar tensor containing the
+        - ``aurc`` (:class:`~torch.Tensor`): A scalar tensor containing the
         area under the risk-coverage curve
 
-    Args:
+        Args:
         kwargs: Additional keyword arguments.
 
-    Example:
+        Example:
         >>> from torch_uncertainty.metrics.classification import AURC
         >>> aurc = AURC()
         >>> probs = torch.tensor([[0.7, 0.3], [0.6, 0.4], [0.8, 0.2]])
@@ -45,20 +53,11 @@ class AURC(Metric):
         >>> print(result)
         tensor(0.0833)  # Example output
 
-    References:
+        References:
         [1] `Geifman & El-Yaniv.`Selective classification for deep neural networks. In NeurIPS, 2017
         <https://papers.nips.cc/paper_files/paper/2017/file/4a8423d5e91fda00bb7e46540e2b0cf1-Paper.pdf>`_.
 
-    """
-
-    is_differentiable: bool = False
-    higher_is_better: bool = False
-    full_state_update: bool = False
-
-    scores: list[Tensor]
-    errors: list[Tensor]
-
-    def __init__(self, **kwargs) -> None:
+        """
         super().__init__(**kwargs)
         self.add_state("scores", default=[], dist_reduce_fx="cat")
         self.add_state("errors", default=[], dist_reduce_fx="cat")
@@ -181,34 +180,36 @@ def _aurc_rejection_rate_compute(
 
 
 class AUGRC(AURC):
-    r"""Calculate The Area Under the Generalized Risk-Coverage curve (AUGRC).
+    def __init__(self, **kwargs) -> None:
+        r"""Calculate The Area Under the Generalized Risk-Coverage curve (AUGRC).
 
-    The Area Under the Generalized Risk-Coverage curve (AUGRC) for Selective Classification (SC) performance assessment. It avoids putting too much
-    weight on the most confident samples.
+        The Area Under the Generalized Risk-Coverage curve (AUGRC) for Selective Classification (SC) performance assessment. It avoids putting too much
+        weight on the most confident samples.
 
-    As input to ``forward`` and ``update`` the metric accepts the following input:
+        As input to ``forward`` and ``update`` the metric accepts the following input:
 
-    - ``preds`` (:class:`~torch.Tensor`): A float tensor of shape
+        - ``preds`` (:class:`~torch.Tensor`): A float tensor of shape
         ``(N, ...)`` containing probabilities for each observation.
-    - ``target`` (:class:`~torch.Tensor`): An int tensor of shape
+        - ``target`` (:class:`~torch.Tensor`): An int tensor of shape
         ``(N, ...)`` containing ground-truth labels.
 
-    As output to ``forward`` and ``compute`` the metric returns the
+        As output to ``forward`` and ``compute`` the metric returns the
         following output:
 
-    - ``augrc`` (:class:`~torch.Tensor`): A scalar tensor containing the
+        - ``augrc`` (:class:`~torch.Tensor`): A scalar tensor containing the
         area under the risk-coverage curve
 
-    Args:
+        Args:
         kwargs: Additional keyword arguments.
 
-    References:
+        References:
         [1] `Traub et al. Overcoming Common Flaws in the Evaluation of Selective Classification Systems
         <https://arxiv.org/pdf/2407.01032>`_.
 
-    .. seealso::
+        .. seealso::
         - :class:`~torch_uncertainty.metrics.classification.AURC` : Parent class, the AURC metric
-    """
+        """
+        super().__init__(**kwargs)
 
     def compute(self) -> Tensor:
         """Normalize the AUGRC as if its support was between 0 and 1. This has an
@@ -286,20 +287,28 @@ class AUGRC(AURC):
 
 
 class CovAtxRisk(Metric):
-    r"""Provides coverage at x Risk.
+    is_differentiable: bool = False
+    higher_is_better: bool = False
+    full_state_update: bool = False
 
-    If there are multiple coverage values corresponding to the given risk,
-    i.e., the risk(coverage) is not monotonic, the coverage at x risk is
-    the maximum coverage value corresponding to the given risk. If no
-    there is no coverage value corresponding to the given risk, return
-    float("nan").
+    scores: list[Tensor]
+    errors: list[Tensor]
 
-    Args:
+    def __init__(self, risk_threshold: float, **kwargs) -> None:
+        r"""Provides coverage at x Risk.
+
+        If there are multiple coverage values corresponding to the given risk,
+        i.e., the risk(coverage) is not monotonic, the coverage at x risk is
+        the maximum coverage value corresponding to the given risk. If no
+        there is no coverage value corresponding to the given risk, return
+        float("nan").
+
+        Args:
         risk_threshold (float): The risk threshold at which to compute the
             coverage.
         kwargs: Additional arguments to pass to the metric class.
 
-    Example:
+        Example:
 
         .. code-block:: python
 
@@ -323,16 +332,7 @@ class CovAtxRisk(Metric):
             print(f"Coverage at risk: {coverage_at_risk.item()}")
             # tensor(0.800000011920929)
 
-    """
-
-    is_differentiable: bool = False
-    higher_is_better: bool = False
-    full_state_update: bool = False
-
-    scores: list[Tensor]
-    errors: list[Tensor]
-
-    def __init__(self, risk_threshold: float, **kwargs) -> None:
+        """
         super().__init__(**kwargs)
         self.add_state("scores", default=[], dist_reduce_fx="cat")
         self.add_state("errors", default=[], dist_reduce_fx="cat")
@@ -374,37 +374,44 @@ class CovAtxRisk(Metric):
 
 
 class CovAt5Risk(CovAtxRisk):
-    r"""Provides coverage at 5% Risk.
-
-    If there are multiple coverage values corresponding to 5% risk, the
-    coverage at 5% risk is the maximum coverage value corresponding to 5%
-    risk. If no there is no coverage value corresponding to the given risk,
-    this metric returns float("nan").
-
-    This is a specific case of the more general CovAtxRisk metric, where the risk level is fixed at 5%.
-
-    .. seealso::
-        - :class:`CovAtxRisk` : Parent class, the CovAtxRisk metric
-    """
-
     def __init__(self, **kwargs) -> None:
+        r"""Provides coverage at 5% Risk.
+
+        If there are multiple coverage values corresponding to 5% risk, the
+        coverage at 5% risk is the maximum coverage value corresponding to 5%
+        risk. If no there is no coverage value corresponding to the given risk,
+        this metric returns float("nan").
+
+        This is a specific case of the more general CovAtxRisk metric, where the risk level is fixed at 5%.
+
+        .. seealso::
+        - :class:`CovAtxRisk` : Parent class, the CovAtxRisk metric
+        """
         super().__init__(risk_threshold=0.05, **kwargs)
 
 
 class RiskAtxCov(Metric):
-    r"""Computes the risk at a specified coverage threshold.
+    is_differentiable: bool = False
+    higher_is_better: bool = False
+    full_state_update: bool = False
 
-    This metric calculates the error rate (risk) at a given coverage level.
-    The coverage threshold determines the fraction of samples considered,
-    sorted by model confidence. The metric is useful in evaluating the
-    trade-off between coverage and risk in predictive models.
+    scores: list[Tensor]
+    errors: list[Tensor]
 
-    Args:
+    def __init__(self, cov_threshold: float, **kwargs) -> None:
+        r"""Computes the risk at a specified coverage threshold.
+
+        This metric calculates the error rate (risk) at a given coverage level.
+        The coverage threshold determines the fraction of samples considered,
+        sorted by model confidence. The metric is useful in evaluating the
+        trade-off between coverage and risk in predictive models.
+
+        Args:
         cov_threshold (float): The coverage threshold at which to compute
             the risk.
         kwargs: Additional arguments to pass to the metric class.
 
-    Example:
+        Example:
 
         .. code-block:: python
 
@@ -440,16 +447,7 @@ class RiskAtxCov(Metric):
 
             #output : Risk at coverage threshold: 0.25
 
-    """
-
-    is_differentiable: bool = False
-    higher_is_better: bool = False
-    full_state_update: bool = False
-
-    scores: list[Tensor]
-    errors: list[Tensor]
-
-    def __init__(self, cov_threshold: float, **kwargs) -> None:
+        """
         super().__init__(**kwargs)
         self.add_state("scores", default=[], dist_reduce_fx="cat")
         self.add_state("errors", default=[], dist_reduce_fx="cat")
@@ -481,16 +479,15 @@ class RiskAtxCov(Metric):
 
 
 class RiskAt80Cov(RiskAtxCov):
-    r"""Computes the risk at 80% coverage.
+    def __init__(self, **kwargs) -> None:
+        r"""Computes the risk at 80% coverage.
 
-    This is a specific case of the more general RiskAtxCov metric, where the risk level is fixed at 80%.
+        This is a specific case of the more general RiskAtxCov metric, where the risk level is fixed at 80%.
 
-    .. seealso::
+        .. seealso::
         - :class:`RiskAtxCov` : Parent class, the RiskAtxCov metric
 
-    """
-
-    def __init__(self, **kwargs) -> None:
+        """
         super().__init__(cov_threshold=0.8, **kwargs)
 
 

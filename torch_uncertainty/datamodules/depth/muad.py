@@ -9,9 +9,22 @@ from .base import DepthDataModule
 
 
 class MUADDataModule(DepthDataModule):
-    r"""Depth DataModule for the MUAD dataset.
+    def __init__(
+        self,
+        root: str | Path,
+        batch_size: int,
+        min_depth: float,
+        max_depth: float,
+        crop_size: _size_2_t = 1024,
+        eval_size: _size_2_t = (1024, 2048),
+        val_split: float | None = None,
+        num_workers: int = 1,
+        pin_memory: bool = True,
+        persistent_workers: bool = True,
+    ) -> None:
+        r"""Depth DataModule for the MUAD dataset.
 
-    Args:
+        Args:
         root (str or Path): Root directory of the datasets.
         batch_size (int): Number of samples per batch.
         min_depth (float, optional): Minimum depth value for evaluation
@@ -37,21 +50,7 @@ class MUADDataModule(DepthDataModule):
             ``True``.
         persistent_workers (bool, optional): Whether to use persistent workers.
             Defaults to ``True``.
-    """
-
-    def __init__(
-        self,
-        root: str | Path,
-        batch_size: int,
-        min_depth: float,
-        max_depth: float,
-        crop_size: _size_2_t = 1024,
-        eval_size: _size_2_t = (1024, 2048),
-        val_split: float | None = None,
-        num_workers: int = 1,
-        pin_memory: bool = True,
-        persistent_workers: bool = True,
-    ) -> None:
+        """
         super().__init__(
             dataset=MUAD,
             root=root,

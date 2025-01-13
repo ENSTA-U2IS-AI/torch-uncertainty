@@ -14,9 +14,27 @@ from torch_uncertainty.transforms import RandomRescale
 
 
 class CamVidDataModule(TUDataModule):
-    r"""DataModule for the CamVid dataset.
+    num_channels = 3
+    training_task = "segmentation"
+    mean = (0.485, 0.456, 0.406)
+    std = (0.229, 0.224, 0.225)
 
-    Args:
+    def __init__(
+        self,
+        root: str | Path,
+        batch_size: int,
+        crop_size: _size_2_t = 640,
+        eval_size: _size_2_t = (720, 960),
+        group_classes: bool = True,
+        basic_augment: bool = True,
+        val_split: float | None = None,
+        num_workers: int = 1,
+        pin_memory: bool = True,
+        persistent_workers: bool = True,
+    ) -> None:
+        r"""DataModule for the CamVid dataset.
+
+        Args:
         root (str or Path): Root directory of the datasets.
         batch_size (int): Number of samples per batch.
         crop_size (sequence or int, optional): Desired input image and
@@ -44,7 +62,7 @@ class CamVidDataModule(TUDataModule):
         persistent_workers (bool, optional): Whether to use persistent workers.
             Defaults to ``True``.
 
-    Note:
+        Note:
         This datamodule injects the following transforms into the training and
         validation/test datasets:
 
@@ -68,26 +86,7 @@ class CamVidDataModule(TUDataModule):
 
         This behavior can be modified by overriding ``self.train_transform``
         and ``self.test_transform`` after initialization.
-    """
-
-    num_channels = 3
-    training_task = "segmentation"
-    mean = (0.485, 0.456, 0.406)
-    std = (0.229, 0.224, 0.225)
-
-    def __init__(
-        self,
-        root: str | Path,
-        batch_size: int,
-        crop_size: _size_2_t = 640,
-        eval_size: _size_2_t = (720, 960),
-        group_classes: bool = True,
-        basic_augment: bool = True,
-        val_split: float | None = None,
-        num_workers: int = 1,
-        pin_memory: bool = True,
-        persistent_workers: bool = True,
-    ) -> None:
+        """
         if val_split is not None:  # coverage: ignore
             logging.warning("val_split is not used for CamVidDataModule.")
 

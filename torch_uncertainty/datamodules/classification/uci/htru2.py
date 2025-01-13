@@ -6,9 +6,20 @@ from .uci_classification import UCIClassificationDataModule
 
 
 class HTRU2DataModule(UCIClassificationDataModule):
-    """The HTRU2 UCI classification datamodule.
+    def __init__(
+        self,
+        root: str | Path,
+        batch_size: int,
+        val_split: float = 0.0,
+        test_split: float = 0.2,
+        num_workers: int = 1,
+        pin_memory: bool = True,
+        persistent_workers: bool = True,
+        binary: bool = True,
+    ) -> None:
+        """The HTRU2 UCI classification datamodule.
 
-    Args:
+        Args:
         root (string): Root directory of the datasets.
         batch_size (int): The batch size for training and testing.
         val_split (float, optional): Share of validation samples among the
@@ -23,19 +34,7 @@ class HTRU2DataModule(UCIClassificationDataModule):
         binary (bool, optional): Whether to use binary classification. Defaults
             to ``True``.
 
-    """
-
-    def __init__(
-        self,
-        root: str | Path,
-        batch_size: int,
-        val_split: float = 0.0,
-        test_split: float = 0.2,
-        num_workers: int = 1,
-        pin_memory: bool = True,
-        persistent_workers: bool = True,
-        binary: bool = True,
-    ) -> None:
+        """
         super().__init__(
             root=root,
             dataset=HTRU2,

@@ -9,24 +9,6 @@ from torchvision.datasets.utils import check_integrity, download_and_extract_arc
 
 
 class CUB(ImageFolder):
-    """The Caltech-UCSD Birds-200-2011 dataset.
-
-    Args:
-        root (str): Root directory of the dataset.
-        train (bool, optional): If True, creates dataset from training set, otherwise creates
-            from test set. Defaults to True.
-        transform (callable, optional): A function/transform that takes in an PIL image and
-            returns a transformed version. E.g, transforms.RandomCrop. Defaults to None.
-        target_transform (callable, optional): A function/transform that takes in the target
-            and transforms it. Defaults to None.
-        download (bool, optional): If True, downloads the dataset from the internet and puts it
-            in root directory. If dataset is already downloaded, it is not downloaded again.
-            Defaults to
-    Reference:
-        Wah, C. and Branson, S. and Welinder, P. and Perona, P. and Belongie, S. Caltech-UCSD
-            Birds 200.
-    """
-
     base_folder = "CUB_200_2011/images"
     url = "https://data.caltech.edu/records/65de6-vp158/files/CUB_200_2011.tgz"
     filename = "CUB_200_2011.tgz"
@@ -40,6 +22,24 @@ class CUB(ImageFolder):
         target_transform: Callable | None = None,
         download: bool = False,
     ):
+        """The Caltech-UCSD Birds-200-2011 dataset.
+
+        Args:
+        root (str): Root directory of the dataset.
+        train (bool, optional): If True, creates dataset from training set, otherwise creates
+            from test set. Defaults to True.
+        transform (callable, optional): A function/transform that takes in an PIL image and
+            returns a transformed version. E.g, transforms.RandomCrop. Defaults to None.
+        target_transform (callable, optional): A function/transform that takes in the target
+            and transforms it. Defaults to None.
+        download (bool, optional): If True, downloads the dataset from the internet and puts it
+            in root directory. If dataset is already downloaded, it is not downloaded again.
+            Defaults to
+        References:
+        [1] `Wah, C. and Branson, S. and Welinder, P. and Perona, P. and Belongie, S. Caltech-UCSD Birds 200
+        <https://www.semanticscholar.org/paper/The-Caltech-UCSD-Birds-200-2011-Dataset-Wah-Branson/c069629a51f6c1c301eb20ed77bc6b586c24ce32>`_.
+
+        """
         self.folder_root = Path(root)
         self.train = train
         if download:

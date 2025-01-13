@@ -27,9 +27,21 @@ from torch_uncertainty.utils.distributions import (
 
 
 class RegressionRoutine(LightningModule):
-    r"""Routine for training & testing on **regression** tasks.
+    def __init__(
+        self,
+        model: nn.Module,
+        output_dim: int,
+        loss: nn.Module,
+        dist_family: str | None = None,
+        dist_estimate: str = "mean",
+        is_ensemble: bool = False,
+        optim_recipe: dict | Optimizer | None = None,
+        eval_shift: bool = False,
+        format_batch_fn: nn.Module | None = None,
+    ) -> None:
+        r"""Routine for training & testing on **regression** tasks.
 
-    Args:
+        Args:
         model (torch.nn.Module): Model to train.
         output_dim (int): Number of outputs of the model.
         loss (torch.nn.Module): Loss function to optimize the :attr:`model`.
@@ -47,32 +59,19 @@ class RegressionRoutine(LightningModule):
         format_batch_fn (torch.nn.Module, optional): The function to format the
             batch. Defaults to ``None``.
 
-    Warning:
+        Warning:
         If :attr:`probabilistic` is True, the model must output a `PyTorch
         distribution <https://pytorch.org/docs/stable/distributions.html>`_.
 
-    Warning:
+        Warning:
         You must define :attr:`optim_recipe` if you do not use
         the CLI.
 
-    Note:
+        Note:
         :attr:`optim_recipe` can be anything that can be returned by
         :meth:`LightningModule.configure_optimizers()`. Find more details
         `here <https://lightning.ai/docs/pytorch/stable/common/lightning_module.html#configure-optimizers>`_.
-    """
-
-    def __init__(
-        self,
-        model: nn.Module,
-        output_dim: int,
-        loss: nn.Module,
-        dist_family: str | None = None,
-        dist_estimate: str = "mean",
-        is_ensemble: bool = False,
-        optim_recipe: dict | Optimizer | None = None,
-        eval_shift: bool = False,
-        format_batch_fn: nn.Module | None = None,
-    ) -> None:
+        """
         super().__init__()
         _regression_routine_checks(output_dim)
         if eval_shift:

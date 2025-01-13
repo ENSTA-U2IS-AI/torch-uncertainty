@@ -510,13 +510,6 @@ def resize(
 
 
 class SegFormerHead(nn.Module):
-    """Head for SegFormer.
-
-    Reference:
-        SegFormer: Simple and Efficient Design for Semantic Segmentation with
-        Transformers.
-    """
-
     def __init__(
         self,
         in_channels: list[int],
@@ -525,6 +518,12 @@ class SegFormerHead(nn.Module):
         num_classes: int,
         dropout_ratio: float = 0.1,
     ):
+        """Head for SegFormer.
+
+        Reference:
+        SegFormer: Simple and Efficient Design for Semantic Segmentation with
+        Transformers.
+        """
         super().__init__()
         self.in_channels = in_channels
         assert len(feature_strides) == len(in_channels)

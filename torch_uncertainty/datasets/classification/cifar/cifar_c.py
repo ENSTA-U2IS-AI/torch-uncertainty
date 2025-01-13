@@ -12,27 +12,6 @@ from torchvision.datasets.utils import (
 
 
 class CIFAR10C(VisionDataset):
-    """The corrupted CIFAR-10-C Dataset.
-
-    Args:
-        root (str): Root directory of the datasets.
-        transform (callable, optional): A function/transform that takes in
-            a PIL image and returns a transformed version. E.g,
-            ``transforms.RandomCrop``. Defaults to None.
-        target_transform (callable, optional): A function/transform that
-            takes in the target and transforms it. Defaults to None.
-        subset (str): The subset to use, one of ``all`` or the keys in
-            ``cifarc_subsets``.
-        shift_severity (int): The shift_severity of the corruption, between 1 and 5.
-        download (bool, optional): If True, downloads the dataset from the
-            internet and puts it in root directory. If dataset is already
-            downloaded, it is not downloaded again. Defaults to False.
-
-    References:
-        Benchmarking neural network robustness to common corruptions and
-        perturbations. Dan Hendrycks and Thomas Dietterich. In ICLR, 2019.
-    """
-
     base_folder = "CIFAR-10-C"
     tgz_md5 = "56bf5dcef84df0e2308c6dcbcbbd8499"
     cifarc_subsets = [
@@ -91,6 +70,27 @@ class CIFAR10C(VisionDataset):
         shift_severity: int = 1,
         download: bool = False,
     ) -> None:
+        """The corrupted CIFAR-10-C Dataset.
+
+        Args:
+        root (str): Root directory of the datasets.
+        transform (callable, optional): A function/transform that takes in
+            a PIL image and returns a transformed version. E.g,
+            ``transforms.RandomCrop``. Defaults to None.
+        target_transform (callable, optional): A function/transform that
+            takes in the target and transforms it. Defaults to None.
+        subset (str): The subset to use, one of ``all`` or the keys in
+            ``cifarc_subsets``.
+        shift_severity (int): The shift_severity of the corruption, between 1 and 5.
+        download (bool, optional): If True, downloads the dataset from the
+            internet and puts it in root directory. If dataset is already
+            downloaded, it is not downloaded again. Defaults to False.
+
+        References:
+        [1] `Benchmarking neural network robustness to common corruptions and perturbations. Dan Hendrycks and Thomas Dietterich. In ICLR, 2019
+        <https://arxiv.org/abs/1903.12261>`_.
+
+        """
         self.root = Path(root)
         # Download the new targets
         if download:

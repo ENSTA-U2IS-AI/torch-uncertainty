@@ -6,20 +6,28 @@ from torchmetrics.utilities.data import dim_zero_cat
 
 
 class FPRx(Metric):
-    r"""Compute the False Positive Rate at x% Recall.
+    is_differentiable: bool = False
+    higher_is_better: bool = False
+    full_state_update: bool = False
 
-    The False Positive Rate at x% Recall (FPR@x) is a metric used in tasks like anomaly detection, out-of-distribution (OOD) detection, and binary classification. It measures the proportion of false positives (normal samples misclassified as anomalies) when the model achieves a specified recall level for the positive class (e.g., anomalies or OOD samples).
+    conf: list[Tensor]
+    targets: list[Tensor]
 
-    Args:
+    def __init__(self, recall_level: float, pos_label: int, **kwargs) -> None:
+        r"""Compute the False Positive Rate at x% Recall.
+
+        The False Positive Rate at x% Recall (FPR@x) is a metric used in tasks like anomaly detection, out-of-distribution (OOD) detection, and binary classification. It measures the proportion of false positives (normal samples misclassified as anomalies) when the model achieves a specified recall level for the positive class (e.g., anomalies or OOD samples).
+
+        Args:
         recall_level (float): The recall level at which to compute the FPR.
         pos_label (int): The positive label.
         kwargs: Additional arguments to pass to the metric class.
 
-    Reference:
+        Reference:
         Improved from https://github.com/hendrycks/anomaly-seg and
         translated to torch.
 
-    Example:
+        Example:
 
         .. code-block:: python
 
@@ -38,16 +46,7 @@ class FPRx(Metric):
             result = metric.compute()
             print(f"FPR at 95% Recall: {result.item()}")
             #output : FPR at 95% Recall: 0.75
-    """
-
-    is_differentiable: bool = False
-    higher_is_better: bool = False
-    full_state_update: bool = False
-
-    conf: list[Tensor]
-    targets: list[Tensor]
-
-    def __init__(self, recall_level: float, pos_label: int, **kwargs) -> None:
+        """
         super().__init__(**kwargs)
 
         if recall_level < 0 or recall_level > 1:
@@ -130,17 +129,16 @@ class FPRx(Metric):
 
 
 class FPR95(FPRx):
-    r"""Compute the False Positive Rate at 95% Recall.
+    def __init__(self, pos_label: int, **kwargs) -> None:
+        r"""Compute the False Positive Rate at 95% Recall.
 
-    This is a specific case of the more general FPRx metric, where the recall level is fixed at 95%.
+        This is a specific case of the more general FPRx metric, where the recall level is fixed at 95%.
 
-    Args:
+        Args:
         pos_label (int): The positive label (e.g., 1 for OOD samples).
         kwargs: Additional arguments to pass to the FPRx metric class.
 
-    .. seealso::
+        .. seealso::
         - :class:`FPRx` - The base metric that allows customization of the recall level.
-    """
-
-    def __init__(self, pos_label: int, **kwargs) -> None:
+        """
         super().__init__(recall_level=0.95, pos_label=pos_label, **kwargs)

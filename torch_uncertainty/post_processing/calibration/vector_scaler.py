@@ -7,9 +7,19 @@ from .scaler import Scaler
 
 
 class VectorScaler(Scaler):
-    """Vector scaling post-processing for calibrated probabilities.
+    def __init__(
+        self,
+        num_classes: int,
+        model: nn.Module | None = None,
+        init_w: float = 1,
+        init_b: float = 0,
+        lr: float = 0.1,
+        max_iter: int = 200,
+        device: Literal["cpu", "cuda"] | torch.device | None = None,
+    ) -> None:
+        """Vector scaling post-processing for calibrated probabilities.
 
-    Args:
+        Args:
         model (nn.Module): Model to calibrate.
         num_classes (int): Number of classes.
         init_w (float, optional): Initial value for the weights.
@@ -22,22 +32,11 @@ class VectorScaler(Scaler):
         device (Optional[Literal["cpu", "cuda"]], optional): Device to use
             for optimization. Defaults to None.
 
-    Reference:
-        Guo, C., Pleiss, G., Sun, Y., & Weinberger, K. Q. On calibration
-        of modern neural networks. In ICML 2017.
+        References:
+        [1] `On calibration of modern neural networks. In ICML 2017
+        <https://arxiv.org/abs/1706.04599>`_.
 
-    """
-
-    def __init__(
-        self,
-        num_classes: int,
-        model: nn.Module | None = None,
-        init_w: float = 1,
-        init_b: float = 0,
-        lr: float = 0.1,
-        max_iter: int = 200,
-        device: Literal["cpu", "cuda"] | torch.device | None = None,
-    ) -> None:
+        """
         super().__init__(model=model, lr=lr, max_iter=max_iter, device=device)
 
         if not isinstance(num_classes, int):

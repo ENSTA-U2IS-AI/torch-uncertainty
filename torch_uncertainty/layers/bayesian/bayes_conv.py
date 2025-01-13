@@ -186,10 +186,6 @@ class _BayesConvNd(Module):
 
 
 class BayesConv1d(_BayesConvNd):
-    """Bayesian Conv1d Layer with Mixture of Normals prior and Normal
-    posterior.
-    """
-
     def __init__(
         self,
         in_channels: int,
@@ -210,6 +206,9 @@ class BayesConv1d(_BayesConvNd):
         device=None,
         dtype=None,
     ) -> None:
+        """Bayesian Conv1d Layer with Mixture of Normals prior and Normal
+        posterior.
+        """
         factory_kwargs = {"device": device, "dtype": dtype}
         kernel_size_ = _single(kernel_size)
         stride_ = _single(stride)
@@ -282,8 +281,6 @@ class BayesConv1d(_BayesConvNd):
 
 
 class BayesConv2d(_BayesConvNd):
-    """Bayesian Conv2d Layer with Gaussian Mixture prior and Normal posterior."""
-
     def __init__(
         self,
         in_channels: int,
@@ -304,6 +301,7 @@ class BayesConv2d(_BayesConvNd):
         device=None,
         dtype=None,
     ) -> None:
+        """Bayesian Conv2d Layer with Gaussian Mixture prior and Normal posterior."""
         factory_kwargs = {"device": device, "dtype": dtype}
         kernel_size_ = _pair(kernel_size)
         stride_ = _pair(stride)
@@ -376,8 +374,6 @@ class BayesConv2d(_BayesConvNd):
 
 
 class BayesConv3d(_BayesConvNd):
-    """Bayesian Conv3d Layer with Gaussian mixture prior and Normal posterior."""
-
     def __init__(
         self,
         in_channels: int,
@@ -398,6 +394,7 @@ class BayesConv3d(_BayesConvNd):
         device=None,
         dtype=None,
     ) -> None:
+        """Bayesian Conv3d Layer with Gaussian mixture prior and Normal posterior."""
         factory_kwargs = {"device": device, "dtype": dtype}
         kernel_size_ = _triple(kernel_size)
         stride_ = _triple(stride)

@@ -6,9 +6,20 @@ from .uci_classification import UCIClassificationDataModule
 
 
 class OnlineShoppersDataModule(UCIClassificationDataModule):
-    """The online shoppers intention UCI classification datamodule.
+    def __init__(
+        self,
+        root: str | Path,
+        batch_size: int,
+        val_split: float = 0.0,
+        test_split: float = 0.2,
+        num_workers: int = 1,
+        pin_memory: bool = True,
+        persistent_workers: bool = True,
+        binary: bool = True,
+    ) -> None:
+        """The online shoppers intention UCI classification datamodule.
 
-    Args:
+        Args:
         root (string): Root directory of the datasets.
         batch_size (int): The batch size for training and testing.
         val_split (float, optional): Share of validation samples among the
@@ -23,19 +34,7 @@ class OnlineShoppersDataModule(UCIClassificationDataModule):
         binary (bool, optional): Whether to use binary classification. Defaults
             to ``True``.
 
-    """
-
-    def __init__(
-        self,
-        root: str | Path,
-        batch_size: int,
-        val_split: float = 0.0,
-        test_split: float = 0.2,
-        num_workers: int = 1,
-        pin_memory: bool = True,
-        persistent_workers: bool = True,
-        binary: bool = True,
-    ) -> None:
+        """
         super().__init__(
             root=root,
             dataset=OnlineShoppers,

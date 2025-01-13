@@ -6,9 +6,18 @@ from .utils import ChannelBack, ChannelFront
 
 
 class ChannelLayerNorm(LayerNorm):
-    r"""Masksembles-style Conv2d layer.
+    def __init__(
+        self,
+        normalized_shape: int | list[int],
+        eps: float = 0.00001,
+        elementwise_affine: bool = True,
+        bias: bool = True,
+        device: torch.device | str | None = None,
+        dtype: torch.dtype | str | None = None,
+    ) -> None:
+        r"""Masksembles-style Conv2d layer.
 
-    Args:
+        Args:
         in_channels (int): Number of channels in the input image.
         out_channels (int): Number of channels produced by the convolution.
         kernel_size (int or tuple): Size of the convolving kernel.
@@ -24,29 +33,22 @@ class ChannelLayerNorm(LayerNorm):
             channels to output channels for each estimator. Defaults to ``1``.
         bias (bool, optional): If ``True``, adds a learnable bias to the
             output. Defaults to ``True``.
+        normalized_shape (int | list[int]): Shape of the input to normalize.
+        elementwise_affine (bool, optional): Defualts to ``True``.
+        eps (float): A small constant added to the denominator for numerical stability. Default is 1e-5.
         device (Any, optional): The desired device of returned tensor.
             Defaults to ``None``.
         dtype (Any, optional): The desired data type of returned tensor.
             Defaults to ``None``.
 
-    Warning:
+        Warning:
         Be sure to apply a repeat on the batch at the start of the training
         if you use `MaskedConv2d`.
 
-    Reference:
+        Reference:
         `Masksembles for Uncertainty Estimation`, Nikita Durasov, Timur
         Bagautdinov, Pierre Baque, Pascal Fua.
-    """
-
-    def __init__(
-        self,
-        normalized_shape: int | list[int],
-        eps: float = 0.00001,
-        elementwise_affine: bool = True,
-        bias: bool = True,
-        device: torch.device | str | None = None,
-        dtype: torch.dtype | str | None = None,
-    ) -> None:
+        """
         super().__init__(normalized_shape, eps, elementwise_affine, bias, device, dtype)
         self.cback = ChannelBack()
         self.cfront = ChannelFront()

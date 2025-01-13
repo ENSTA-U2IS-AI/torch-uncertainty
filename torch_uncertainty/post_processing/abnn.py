@@ -14,9 +14,24 @@ from .abstract import PostProcessing
 
 
 class ABNN(PostProcessing):
-    """ABNN post-processing.
+    def __init__(
+        self,
+        num_classes: int,
+        random_prior: float,
+        alpha: float,
+        num_models: int,
+        num_samples: int,
+        base_lr: float,
+        device: torch.device | str,
+        max_epochs: int = 5,
+        use_original_model: bool = True,
+        batch_size: int = 128,
+        precision: str = "32",
+        model: nn.Module | None = None,
+    ):
+        """ABNN post-processing.
 
-    Args:
+        Args:
         num_classes (int): Number of classes of the inner model.
         random_prior (float): Random prior specializing estimators on
             certain classes.
@@ -36,25 +51,7 @@ class ABNN(PostProcessing):
             Defaults to "32".
         model (nn.Module | None, optional): Model to use. Defaults to None.
 
-    Reference:
-
-    """
-
-    def __init__(
-        self,
-        num_classes: int,
-        random_prior: float,
-        alpha: float,
-        num_models: int,
-        num_samples: int,
-        base_lr: float,
-        device: torch.device | str,
-        max_epochs: int = 5,
-        use_original_model: bool = True,
-        batch_size: int = 128,
-        precision: str = "32",
-        model: nn.Module | None = None,
-    ):
+        """
         super().__init__(model)
         _abnn_checks(
             num_classes=num_classes,

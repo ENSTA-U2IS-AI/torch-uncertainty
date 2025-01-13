@@ -8,14 +8,25 @@ from torchmetrics.utilities.data import dim_zero_cat
 
 
 class BrierScore(Metric):
-    r"""Compute the Brier score.
+    is_differentiable: bool = True
+    higher_is_better: bool | None = False
+    full_state_update: bool = False
 
-    The Brier Score measures the mean squared difference between predicted
-    probabilities and actual target values. It is used to evaluate the
-    accuracy of probabilistic predictions, where a lower score indicates
-    better calibration and prediction quality.
+    def __init__(
+        self,
+        num_classes: int,
+        top_class: bool = False,
+        reduction: Literal["mean", "sum", "none", None] = "mean",
+        **kwargs,
+    ) -> None:
+        r"""Compute the Brier score.
 
-    Args:
+        The Brier Score measures the mean squared difference between predicted
+        probabilities and actual target values. It is used to evaluate the
+        accuracy of probabilistic predictions, where a lower score indicates
+        better calibration and prediction quality.
+
+        Args:
         num_classes (int): Number of classes.
         top_class (bool, optional): If True, computes the Brier score for the
             top predicted class only. Defaults to False.
@@ -29,7 +40,7 @@ class BrierScore(Metric):
         kwargs: Additional keyword arguments, see `Advanced metric settings
             <https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metric-kwargs>`_.
 
-    Inputs:
+        Inputs:
         - :attr:`probs`: :math:`(B, C)` or :math:`(B, N, C)`
             Predicted probabilities for each class.
         - :attr:`target`: :math:`(B)` or :math:`(B, C)`
@@ -40,20 +51,20 @@ class BrierScore(Metric):
             :math:`C` is the number of classes,
             :math:`N` is the number of estimators.
 
-    Note:
+        Note:
         If :attr:`probs` is a 3D tensor, the metric computes the mean of
         the Brier score over the estimators, as:
         :math:`t = \frac{1}{N} \sum_{i=0}^{N-1} BrierScore(probs[:,i,:], target)`.
 
-    Warning:
+        Warning:
         Ensure that the probabilities in :attr:`probs` are normalized to sum
         to one before passing them to the metric.
 
-    Raises:
+        Raises:
         ValueError: If :attr:`reduction` is not one of ``'mean'``, ``'sum'``,
             ``'none'`` or ``None``.
 
-    Examples:
+        Examples:
         >>> from torch_uncertainty.metrics.classification.brier_score import BrierScore
         # Example 1: Binary Classification
         >>> probs = torch.tensor([[0.8, 0.2], [0.3, 0.7]])
@@ -72,22 +83,10 @@ class BrierScore(Metric):
         >>> print(score)
         tensor(0.5199)
 
-    References:
+        References:
         [1] `Wikipedia entry for the Brier score
         <https://en.wikipedia.org/wiki/Brier_score>`_.
-    """
-
-    is_differentiable: bool = True
-    higher_is_better: bool | None = False
-    full_state_update: bool = False
-
-    def __init__(
-        self,
-        num_classes: int,
-        top_class: bool = False,
-        reduction: Literal["mean", "sum", "none", None] = "mean",
-        **kwargs,
-    ) -> None:
+        """
         super().__init__(**kwargs)
 
         allowed_reduction = ("sum", "mean", "none", None)

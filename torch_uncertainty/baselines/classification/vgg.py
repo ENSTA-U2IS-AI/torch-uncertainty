@@ -15,10 +15,41 @@ ENSEMBLE_METHODS = ["mc-dropout", "packed"]
 
 
 class VGGBaseline(ClassificationRoutine):
-    r"""VGG backbone baseline for classification providing support for
-    various versions and architectures.
+    versions = {
+        "std": vgg,
+        "mc-dropout": vgg,
+        "packed": packed_vgg,
+    }
+    archs = [11, 13, 16, 19]
 
-    Args:
+    def __init__(
+        self,
+        num_classes: int,
+        in_channels: int,
+        loss: nn.Module,
+        version: Literal["std", "mc-dropout", "packed"],
+        arch: int,
+        style: str = "imagenet",
+        num_estimators: int = 1,
+        dropout_rate: float = 0.0,
+        last_layer_dropout: bool = False,
+        optim_recipe: dict | Optimizer | None = None,
+        mixup_params: dict | None = None,
+        groups: int = 1,
+        alpha: int | None = None,
+        gamma: int = 1,
+        ood_criterion: Literal["msp", "logit", "energy", "entropy", "mi", "vr"] = "msp",
+        log_plots: bool = False,
+        save_in_csv: bool = False,
+        calibration_set: Literal["val", "test"] = "val",
+        eval_ood: bool = False,
+        eval_shift: bool = False,
+        eval_grouping_loss: bool = False,
+    ) -> None:
+        r"""VGG backbone baseline for classification providing support for
+        various versions and architectures.
+
+        Args:
         num_classes (int): Number of classes to predict.
         in_channels (int): Number of input channels.
         loss (nn.Module): Training loss.
@@ -78,45 +109,13 @@ class VGGBaseline(ClassificationRoutine):
         eval_grouping_loss (bool, optional): Indicates whether to evaluate the
             grouping loss or not. Defaults to ``False``.
 
-    Raises:
+        Raises:
         ValueError: If :attr:`version` is not either ``"std"``,
             ``"packed"``, ``"batched"`` or ``"masked"``.
 
-    Returns:
+        Returns:
         LightningModule: VGG baseline ready for training and evaluation.
-    """
-
-    versions = {
-        "std": vgg,
-        "mc-dropout": vgg,
-        "packed": packed_vgg,
-    }
-    archs = [11, 13, 16, 19]
-
-    def __init__(
-        self,
-        num_classes: int,
-        in_channels: int,
-        loss: nn.Module,
-        version: Literal["std", "mc-dropout", "packed"],
-        arch: int,
-        style: str = "imagenet",
-        num_estimators: int = 1,
-        dropout_rate: float = 0.0,
-        last_layer_dropout: bool = False,
-        optim_recipe: dict | Optimizer | None = None,
-        mixup_params: dict | None = None,
-        groups: int = 1,
-        alpha: int | None = None,
-        gamma: int = 1,
-        ood_criterion: Literal["msp", "logit", "energy", "entropy", "mi", "vr"] = "msp",
-        log_plots: bool = False,
-        save_in_csv: bool = False,
-        calibration_set: Literal["val", "test"] = "val",
-        eval_ood: bool = False,
-        eval_shift: bool = False,
-        eval_grouping_loss: bool = False,
-    ) -> None:
+        """
         params = {
             "dropout_rate": dropout_rate,
             "in_channels": in_channels,

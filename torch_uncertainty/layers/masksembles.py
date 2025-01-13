@@ -157,12 +157,22 @@ class Mask2d(nn.Module):
 
 
 class MaskedLinear(nn.Module):
-    r"""Masksembles-style Linear layer.
+    def __init__(
+        self,
+        in_features: int,
+        out_features: int,
+        num_estimators: int,
+        scale: float,
+        bias: bool = True,
+        device: Any | None = None,
+        dtype: Any | None = None,
+    ) -> None:
+        r"""Masksembles-style Linear layer.
 
-    This layer computes fully-connected operation for a given number of
-    estimators (:attr:`num_estimators`) with a given :attr:`scale`.
+        This layer computes fully-connected operation for a given number of
+        estimators (:attr:`num_estimators`) with a given :attr:`scale`.
 
-    Args:
+        Args:
         in_features (int): Number of input features of the linear layer.
         out_features (int): Number of channels produced by the linear layer.
         num_estimators (int): The number of estimators grouped in the layer.
@@ -176,25 +186,15 @@ class MaskedLinear(nn.Module):
         dtype (Any, optional): The desired data type of returned tensor.
             Defaults to ``None``.
 
-    Warning:
+        Warning:
         Be sure to apply a repeat on the batch at the start of the training
         if you use `MaskedLinear`.
 
-    Reference:
-        `Masksembles for Uncertainty Estimation`, Nikita Durasov, Timur
-        Bagautdinov, Pierre Baque, Pascal Fua.
-    """
+        References:
+        [1] `Masksembles for Uncertainty Estimation`, Nikita Durasov, Timur Bagautdinov, Pierre Baque, Pascal Fua.
+        <https://arxiv.org/abs/2012.08334>`_.
 
-    def __init__(
-        self,
-        in_features: int,
-        out_features: int,
-        num_estimators: int,
-        scale: float,
-        bias: bool = True,
-        device: Any | None = None,
-        dtype: Any | None = None,
-    ) -> None:
+        """
         factory_kwargs = {"device": device, "dtype": dtype}
         super().__init__()
 
@@ -216,9 +216,24 @@ class MaskedLinear(nn.Module):
 
 
 class MaskedConv2d(nn.Module):
-    r"""Masksembles-style Conv2d layer.
+    def __init__(
+        self,
+        in_channels: int,
+        out_channels: int,
+        kernel_size: _size_2_t,
+        num_estimators: int,
+        scale: float,
+        stride: _size_2_t = 1,
+        padding: str | _size_2_t = 0,
+        dilation: _size_2_t = 1,
+        groups: int = 1,
+        bias: bool = True,
+        device: Any | None = None,
+        dtype: Any | None = None,
+    ) -> None:
+        r"""Masksembles-style Conv2d layer.
 
-    Args:
+        Args:
         in_channels (int): Number of channels in the input image.
         out_channels (int): Number of channels produced by the convolution.
         kernel_size (int or tuple): Size of the convolving kernel.
@@ -239,30 +254,15 @@ class MaskedConv2d(nn.Module):
         dtype (Any, optional): The desired data type of returned tensor.
             Defaults to ``None``.
 
-    Warning:
+        Warning:
         Be sure to apply a repeat on the batch at the start of the training
         if you use `MaskedConv2d`.
 
-    Reference:
-        `Masksembles for Uncertainty Estimation`, Nikita Durasov, Timur
-        Bagautdinov, Pierre Baque, Pascal Fua.
-    """
+        References:
+        [1] `Masksembles for Uncertainty Estimation`, Nikita Durasov, Timur Bagautdinov, Pierre Baque, Pascal Fua.
+        <https://arxiv.org/abs/2012.08334>`_.
 
-    def __init__(
-        self,
-        in_channels: int,
-        out_channels: int,
-        kernel_size: _size_2_t,
-        num_estimators: int,
-        scale: float,
-        stride: _size_2_t = 1,
-        padding: str | _size_2_t = 0,
-        dilation: _size_2_t = 1,
-        groups: int = 1,
-        bias: bool = True,
-        device: Any | None = None,
-        dtype: Any | None = None,
-    ) -> None:
+        """
         factory_kwargs = {"device": device, "dtype": dtype}
         super().__init__()
 

@@ -90,8 +90,6 @@ def _ace_compute(
 
 
 class BinaryAdaptiveCalibrationError(Metric):
-    r"""Adaptive Top-label Calibration Error for binary tasks."""
-
     is_differentiable: bool = False
     higher_is_better: bool = False
     full_state_update: bool = False
@@ -107,6 +105,7 @@ class BinaryAdaptiveCalibrationError(Metric):
         validate_args: bool = True,
         **kwargs: Any,
     ) -> None:
+        r"""Adaptive Top-label Calibration Error for binary tasks."""
         super().__init__(**kwargs)
         if ignore_index is not None:  # coverage: ignore
             raise ValueError("ignore_index is not supported for multiclass tasks.")
@@ -134,8 +133,6 @@ class BinaryAdaptiveCalibrationError(Metric):
 
 
 class MulticlassAdaptiveCalibrationError(Metric):
-    r"""Adaptive Top-label Calibration Error for multiclass tasks."""
-
     is_differentiable: bool = False
     higher_is_better: bool = False
     full_state_update: bool = False
@@ -152,6 +149,7 @@ class MulticlassAdaptiveCalibrationError(Metric):
         validate_args: bool = True,
         **kwargs: Any,
     ) -> None:
+        r"""Adaptive Top-label Calibration Error for multiclass tasks."""
         super().__init__(**kwargs)
         if ignore_index is not None:  # coverage: ignore
             raise ValueError("ignore_index is not supported for multiclass tasks.")

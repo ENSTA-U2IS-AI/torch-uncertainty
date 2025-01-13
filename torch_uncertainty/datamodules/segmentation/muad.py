@@ -13,9 +13,24 @@ from torch_uncertainty.utils.misc import create_train_val_split
 
 
 class MUADDataModule(TUDataModule):
-    r"""Segmentation DataModule for the MUAD dataset.
+    training_task = "segmentation"
+    mean = (0.485, 0.456, 0.406)
+    std = (0.229, 0.224, 0.225)
 
-    Args:
+    def __init__(
+        self,
+        root: str | Path,
+        batch_size: int,
+        crop_size: _size_2_t = 1024,
+        eval_size: _size_2_t = (1024, 2048),
+        val_split: float | None = None,
+        num_workers: int = 1,
+        pin_memory: bool = True,
+        persistent_workers: bool = True,
+    ) -> None:
+        r"""Segmentation DataModule for the MUAD dataset.
+
+        Args:
         root (str or Path): Root directory of the datasets.
         batch_size (int): Number of samples per batch.
         crop_size (sequence or int, optional): Desired input image and
@@ -40,7 +55,7 @@ class MUADDataModule(TUDataModule):
             Defaults to ``True``.
 
 
-    Note:
+        Note:
         This datamodule injects the following transforms into the training and
         validation/test datasets:
 
@@ -85,23 +100,7 @@ class MUADDataModule(TUDataModule):
 
         This behavior can be modified by overriding ``self.train_transform``
         and ``self.test_transform`` after initialization.
-    """
-
-    training_task = "segmentation"
-    mean = (0.485, 0.456, 0.406)
-    std = (0.229, 0.224, 0.225)
-
-    def __init__(
-        self,
-        root: str | Path,
-        batch_size: int,
-        crop_size: _size_2_t = 1024,
-        eval_size: _size_2_t = (1024, 2048),
-        val_split: float | None = None,
-        num_workers: int = 1,
-        pin_memory: bool = True,
-        persistent_workers: bool = True,
-    ) -> None:
+        """
         super().__init__(
             root=root,
             batch_size=batch_size,

@@ -7,9 +7,17 @@ from .scaler import Scaler
 
 
 class TemperatureScaler(Scaler):
-    """Temperature scaling post-processing for calibrated probabilities.
+    def __init__(
+        self,
+        model: nn.Module | None = None,
+        init_val: float = 1,
+        lr: float = 0.1,
+        max_iter: int = 100,
+        device: Literal["cpu", "cuda"] | torch.device | None = None,
+    ) -> None:
+        """Temperature scaling post-processing for calibrated probabilities.
 
-    Args:
+        Args:
         model (nn.Module): Model to calibrate.
         init_val (float, optional): Initial value for the temperature.
             Defaults to 1.
@@ -19,19 +27,11 @@ class TemperatureScaler(Scaler):
         device (Optional[Literal["cpu", "cuda"]], optional): Device to use
             for optimization. Defaults to None.
 
-    Reference:
-        Guo, C., Pleiss, G., Sun, Y., & Weinberger, K. Q. On calibration
-        of modern neural networks. In ICML 2017.
-    """
+        References:
+        [1] `On calibration of modern neural networks. In ICML 2017
+        <https://arxiv.org/abs/1706.04599>`_.
 
-    def __init__(
-        self,
-        model: nn.Module | None = None,
-        init_val: float = 1,
-        lr: float = 0.1,
-        max_iter: int = 100,
-        device: Literal["cpu", "cuda"] | torch.device | None = None,
-    ) -> None:
+        """
         super().__init__(model=model, lr=lr, max_iter=max_iter, device=device)
 
         if init_val <= 0:

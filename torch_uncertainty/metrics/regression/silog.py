@@ -7,21 +7,22 @@ from torchmetrics.utilities.data import dim_zero_cat
 
 
 class SILog(Metric):
-    r"""Computes The Scale-Invariant Logarithmic Loss metric.
+    def __init__(self, sqrt: bool = False, lmbda: float = 1.0, **kwargs: Any) -> None:
+        r"""Computes The Scale-Invariant Logarithmic Loss metric.
 
-    The Scale-Invariant Logarithmic Loss (SILog), a metric designed for depth estimation tasks.
+        The Scale-Invariant Logarithmic Loss (SILog), a metric designed for depth estimation tasks.
 
-    .. math:: \text{SILog} = \frac{1}{N} \sum_{i=1}^{N} \left(\log(y_i) - \log(\hat{y_i})\right)^2 - \left(\frac{1}{N} \sum_{i=1}^{N} \log(y_i) \right)^2,
+        .. math:: \text{SILog} = \frac{1}{N} \sum_{i=1}^{N} \left(\log(y_i) - \log(\hat{y_i})\right)^2 - \left(\frac{1}{N} \sum_{i=1}^{N} \log(y_i) \right)^2,
 
-    where :math:`N` is the batch size, :math:`y_i` is a tensor of target
-    values and :math:`\hat{y_i}` is a tensor of prediction.
-    Return the square root of SILog by setting :attr:`sqrt` to `True`.
+        where :math:`N` is the batch size, :math:`y_i` is a tensor of target
+        values and :math:`\hat{y_i}` is a tensor of prediction.
+        Return the square root of SILog by setting :attr:`sqrt` to `True`.
 
-    This metric evaluates the scale-invariant error between predicted and target values in log-space. It accounts for
-    both the variance of the error and the mean log difference between predictions and targets. By setting the
-    :attr:`sqrt` argument to `True`, the metric computes the square root of the SILog value.
+        This metric evaluates the scale-invariant error between predicted and target values in log-space. It accounts for
+        both the variance of the error and the mean log difference between predictions and targets. By setting the
+        :attr:`sqrt` argument to `True`, the metric computes the square root of the SILog value.
 
-    Args:
+        Args:
         sqrt: If `True`, return the square root of the metric. Defaults to
             False.
         lmbda: The regularization parameter on the variance of error.
@@ -29,14 +30,14 @@ class SILog(Metric):
         kwargs: Additional keyword arguments, see `Advanced metric settings
             <https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metric-kwargs>`_.
 
-    Reference:
+        Reference:
         [1] `Depth Map Prediction from a Single Image using a Multi-Scale Deep Network, NeurIPS 2014
         <https://papers.nips.cc/paper_files/paper/2014/hash/7bccfde7714a1ebadf06c5f4cea752c1-Abstract.html>`_.
 
         [2] `From big to small: Multi-scale local planar guidance for monocular depth estimation
         <https://arxiv.org/abs/1907.10326>`_.
 
-    Example:
+        Example:
 
         .. code-block:: python
 
@@ -58,9 +59,7 @@ class SILog(Metric):
             print(f"SILog: {result.item():.4f}")
             # Output: SILog: 0.0686
 
-    """
-
-    def __init__(self, sqrt: bool = False, lmbda: float = 1.0, **kwargs: Any) -> None:
+        """
         super().__init__(**kwargs)
         self.sqrt = sqrt
         self.lmbda = lmbda

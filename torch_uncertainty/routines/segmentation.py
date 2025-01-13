@@ -26,9 +26,22 @@ from torch_uncertainty.utils.plotting import show
 
 
 class SegmentationRoutine(LightningModule):
-    r"""Routine for training & testing on **segmentation** tasks.
+    def __init__(
+        self,
+        model: nn.Module,
+        num_classes: int,
+        loss: nn.Module,
+        optim_recipe: dict | Optimizer | None = None,
+        eval_shift: bool = False,
+        format_batch_fn: nn.Module | None = None,
+        metric_subsampling_rate: float = 1e-2,
+        log_plots: bool = False,
+        num_samples_to_plot: int = 3,
+        num_calibration_bins: int = 15,
+    ) -> None:
+        r"""Routine for training & testing on **segmentation** tasks.
 
-    Args:
+        Args:
         model (torch.nn.Module): Model to train.
         num_classes (int): Number of classes in the segmentation task.
         loss (torch.nn.Module): Loss function to optimize the :attr:`model`.
@@ -47,28 +60,14 @@ class SegmentationRoutine(LightningModule):
         num_calibration_bins (int, optional): Number of bins to compute calibration
             metrics. Defaults to ``15``.
 
-    Warning:
+        Warning:
         You must define :attr:`optim_recipe` if you do not use the CLI.
 
-    Note:
+        Note:
         :attr:`optim_recipe` can be anything that can be returned by
         :meth:`LightningModule.configure_optimizers()`. Find more details
         `here <https://lightning.ai/docs/pytorch/stable/common/lightning_module.html#configure-optimizers>`_.
-    """
-
-    def __init__(
-        self,
-        model: nn.Module,
-        num_classes: int,
-        loss: nn.Module,
-        optim_recipe: dict | Optimizer | None = None,
-        eval_shift: bool = False,
-        format_batch_fn: nn.Module | None = None,
-        metric_subsampling_rate: float = 1e-2,
-        log_plots: bool = False,
-        num_samples_to_plot: int = 3,
-        num_calibration_bins: int = 15,
-    ) -> None:
+        """
         super().__init__()
         _segmentation_routine_checks(
             num_classes,

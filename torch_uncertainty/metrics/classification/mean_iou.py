@@ -6,8 +6,6 @@ from torchmetrics.utilities.compute import _safe_divide
 
 
 class MeanIntersectionOverUnion(MulticlassStatScores):
-    """Compute the MeanIntersection over Union (IoU) score."""
-
     is_differentiable: bool = False
     higher_is_better: bool = True
     full_state_update: bool = False
@@ -21,6 +19,7 @@ class MeanIntersectionOverUnion(MulticlassStatScores):
         validate_args: bool = True,
         **kwargs,
     ) -> None:
+        """Compute the MeanIntersection over Union (IoU) score."""
         super().__init__(
             num_classes,
             top_k,

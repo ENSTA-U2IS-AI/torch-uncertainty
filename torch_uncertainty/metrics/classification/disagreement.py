@@ -8,12 +8,21 @@ from torchmetrics.utilities.data import dim_zero_cat
 
 
 class Disagreement(Metric):
-    r"""Calculate the Disagreement Metric.
+    is_differentiable: bool = False
+    higher_is_better: bool | None = None
+    full_state_update: bool = False
 
-    The Disagreement Metric estimates the confidence of an ensemble of
-    estimators.
+    def __init__(
+        self,
+        reduction: Literal["mean", "sum", "none", None] = "mean",
+        **kwargs: Any,
+    ) -> None:
+        r"""Calculate the Disagreement Metric.
 
-    Args:
+        The Disagreement Metric estimates the confidence of an ensemble of
+        estimators.
+
+        Args:
         reduction (str, optional): Determines how to reduce over the
             :math:`B`/batch dimension:
 
@@ -24,25 +33,25 @@ class Disagreement(Metric):
         kwargs: Additional keyword arguments, see `Advanced metric settings
             <https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metric-kwargs>`_.
 
-    Inputs:
+        Inputs:
         - :attr:`probs`: :math:`(B, N, C)`
 
         where :math:`B` is the batch size, :math:`C` is the number of classes
         and :math:`N` is the number of estimators.
 
-    Note:
+        Note:
         A higher disagreement means a lower confidence.
 
-    Warning:
+        Warning:
         Make sure that the probabilities in :attr:`probs` are normalized to sum
         to one.
 
-    Raises:
+        Raises:
         ValueError:
             If :attr:`reduction` is not one of ``'mean'``, ``'sum'``,
             ``'none'`` or ``None``.
 
-    Example:
+        Example:
 
         .. code-block:: python
 
@@ -58,17 +67,7 @@ class Disagreement(Metric):
             result = ds.compute()
             print(result)
             #output : tensor(0.3333)
-    """
-
-    is_differentiable: bool = False
-    higher_is_better: bool | None = None
-    full_state_update: bool = False
-
-    def __init__(
-        self,
-        reduction: Literal["mean", "sum", "none", None] = "mean",
-        **kwargs: Any,
-    ) -> None:
+        """
         super().__init__(**kwargs)
 
         allowed_reduction = ("sum", "mean", "none", None)

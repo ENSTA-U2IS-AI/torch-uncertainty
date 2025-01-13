@@ -41,12 +41,27 @@ def check_packed_parameters_consistency(alpha: float, gamma: int, num_estimators
 
 
 class PackedLinear(nn.Module):
-    r"""Packed-Ensembles-style Linear layer.
+    def __init__(
+        self,
+        in_features: int,
+        out_features: int,
+        alpha: float,
+        num_estimators: int,
+        gamma: int = 1,
+        bias: bool = True,
+        first: bool = False,
+        last: bool = False,
+        implementation: str = "legacy",
+        rearrange: bool = True,
+        device=None,
+        dtype=None,
+    ) -> None:
+        r"""Packed-Ensembles-style Linear layer.
 
-    This layer computes fully-connected operation for a given number of
-    estimators (:attr:`num_estimators`).
+        This layer computes fully-connected operation for a given number of
+        estimators (:attr:`num_estimators`).
 
-    Args:
+        Args:
         in_features (int): Number of input features of the linear layer.
         out_features (int): Number of channels produced by the linear layer.
         alpha (float): The width multiplier of the linear layer.
@@ -67,13 +82,13 @@ class PackedLinear(nn.Module):
         dtype (torch.dtype, optional): The dtype to use for the layer's
             parameters. Defaults to ``None``.
 
-    Explanation Note:
+        Explanation Note:
         Increasing :attr:`alpha` will increase the number of channels of the
         ensemble, increasing its representation capacity. Increasing
         :attr:`gamma` will increase the number of groups in the network and
         therefore reduce the number of parameters.
 
-    Note:
+        Note:
         Each ensemble member will only see
         :math:`\frac{\text{in_features}}{\text{num_estimators}}` features,
         so when using :attr:`gamma` you should make sure that
@@ -82,27 +97,11 @@ class PackedLinear(nn.Module):
         number of input and output features will be changed to comply with
         this constraint.
 
-    Note:
+        Note:
         The input should be of shape (`batch_size`, :attr:`in_features`, 1,
         1). The (often) necessary rearrange operation is executed by
         default.
-    """
-
-    def __init__(
-        self,
-        in_features: int,
-        out_features: int,
-        alpha: float,
-        num_estimators: int,
-        gamma: int = 1,
-        bias: bool = True,
-        first: bool = False,
-        last: bool = False,
-        implementation: str = "legacy",
-        rearrange: bool = True,
-        device=None,
-        dtype=None,
-    ) -> None:
+        """
         check_packed_parameters_consistency(alpha, gamma, num_estimators)
         factory_kwargs = {"device": device, "dtype": dtype}
         super().__init__()
@@ -204,9 +203,29 @@ class PackedLinear(nn.Module):
 
 
 class PackedConv1d(nn.Module):
-    r"""Packed-Ensembles-style Conv1d layer.
+    def __init__(
+        self,
+        in_channels: int,
+        out_channels: int,
+        kernel_size: _size_1_t,
+        alpha: int,
+        num_estimators: int,
+        gamma: int = 1,
+        stride: _size_1_t = 1,
+        padding: str | _size_1_t = 0,
+        dilation: _size_1_t = 1,
+        groups: int = 1,
+        minimum_channels_per_group: int = 64,
+        bias: bool = True,
+        padding_mode: str = "zeros",
+        first: bool = False,
+        last: bool = False,
+        device=None,
+        dtype=None,
+    ) -> None:
+        r"""Packed-Ensembles-style Conv1d layer.
 
-    Args:
+        Args:
         in_channels (int): Number of channels in the input image.
         out_channels (int): Number of channels produced by the convolution.
         kernel_size (int or tuple): Size of the convolving kernel.
@@ -236,13 +255,13 @@ class PackedConv1d(nn.Module):
         dtype (torch.dtype, optional): The dtype to use for the layer's
             parameters. Defaults to ``None``.
 
-    Explanation Note:
+        Explanation Note:
         Increasing :attr:`alpha` will increase the number of channels of the
         ensemble, increasing its representation capacity. Increasing
         :attr:`gamma` will increase the number of groups in the network and
         therefore reduce the number of parameters.
 
-    Note:
+        Note:
         Each ensemble member will only see
         :math:`\frac{\text{in_channels}}{\text{num_estimators}}` channels,
         so when using :attr:`groups` you should make sure that
@@ -250,28 +269,7 @@ class PackedConv1d(nn.Module):
         :attr:`num_estimators` :math:`\times`:attr:`gamma` :math:`\times`
         :attr:`groups`. However, the number of input and output channels will
         be changed to comply with this constraint.
-    """
-
-    def __init__(
-        self,
-        in_channels: int,
-        out_channels: int,
-        kernel_size: _size_1_t,
-        alpha: int,
-        num_estimators: int,
-        gamma: int = 1,
-        stride: _size_1_t = 1,
-        padding: str | _size_1_t = 0,
-        dilation: _size_1_t = 1,
-        groups: int = 1,
-        minimum_channels_per_group: int = 64,
-        bias: bool = True,
-        padding_mode: str = "zeros",
-        first: bool = False,
-        last: bool = False,
-        device=None,
-        dtype=None,
-    ) -> None:
+        """
         check_packed_parameters_consistency(alpha, gamma, num_estimators)
         factory_kwargs = {"device": device, "dtype": dtype}
         super().__init__()
@@ -326,9 +324,29 @@ class PackedConv1d(nn.Module):
 
 
 class PackedConv2d(nn.Module):
-    r"""Packed-Ensembles-style Conv2d layer.
+    def __init__(
+        self,
+        in_channels: int,
+        out_channels: int,
+        kernel_size: _size_2_t,
+        alpha: int,
+        num_estimators: int,
+        gamma: int = 1,
+        stride: _size_2_t = 1,
+        padding: str | _size_2_t = 0,
+        dilation: _size_2_t = 1,
+        groups: int = 1,
+        minimum_channels_per_group: int = 64,
+        bias: bool = True,
+        padding_mode: str = "zeros",
+        first: bool = False,
+        last: bool = False,
+        device: Any | None = None,
+        dtype: Any | None = None,
+    ) -> None:
+        r"""Packed-Ensembles-style Conv2d layer.
 
-    Args:
+        Args:
         in_channels (int): Number of channels in the input image.
         out_channels (int): Number of channels produced by the convolution.
         kernel_size (int or tuple): Size of the convolving kernel.
@@ -358,13 +376,13 @@ class PackedConv2d(nn.Module):
         dtype (torch.dtype, optional): The dtype to use for the layer's
             parameters. Defaults to ``None``.
 
-    Explanation Note:
+        Explanation Note:
         Increasing :attr:`alpha` will increase the number of channels of the
         ensemble, increasing its representation capacity. Increasing
         :attr:`gamma` will increase the number of groups in the network and
         therefore reduce the number of parameters.
 
-    Note:
+        Note:
         Each ensemble member will only see
         :math:`\frac{\text{in_channels}}{\text{num_estimators}}` channels,
         so when using :attr:`groups` you should make sure that
@@ -372,28 +390,7 @@ class PackedConv2d(nn.Module):
         :attr:`num_estimators` :math:`\times`:attr:`gamma` :math:`\times`
         :attr:`groups`. However, the number of input and output channels will
         be changed to comply with this constraint.
-    """
-
-    def __init__(
-        self,
-        in_channels: int,
-        out_channels: int,
-        kernel_size: _size_2_t,
-        alpha: int,
-        num_estimators: int,
-        gamma: int = 1,
-        stride: _size_2_t = 1,
-        padding: str | _size_2_t = 0,
-        dilation: _size_2_t = 1,
-        groups: int = 1,
-        minimum_channels_per_group: int = 64,
-        bias: bool = True,
-        padding_mode: str = "zeros",
-        first: bool = False,
-        last: bool = False,
-        device: Any | None = None,
-        dtype: Any | None = None,
-    ) -> None:
+        """
         check_packed_parameters_consistency(alpha, gamma, num_estimators)
         factory_kwargs = {"device": device, "dtype": dtype}
         super().__init__()
@@ -448,9 +445,29 @@ class PackedConv2d(nn.Module):
 
 
 class PackedConv3d(nn.Module):
-    r"""Packed-Ensembles-style Conv3d layer.
+    def __init__(
+        self,
+        in_channels: int,
+        out_channels: int,
+        kernel_size: _size_3_t,
+        alpha: int,
+        num_estimators: int,
+        gamma: int = 1,
+        stride: _size_3_t = 1,
+        padding: str | _size_3_t = 0,
+        dilation: _size_3_t = 1,
+        groups: int = 1,
+        minimum_channels_per_group: int = 64,
+        bias: bool = True,
+        padding_mode: str = "zeros",
+        first: bool = False,
+        last: bool = False,
+        device: Any | None = None,
+        dtype: Any | None = None,
+    ) -> None:
+        r"""Packed-Ensembles-style Conv3d layer.
 
-    Args:
+        Args:
         in_channels (int): Number of channels in the input image.
         out_channels (int): Number of channels produced by the convolution.
         kernel_size (int or tuple): Size of the convolving kernel.
@@ -480,13 +497,13 @@ class PackedConv3d(nn.Module):
         dtype (torch.dtype, optional): The dtype to use for the layer's
             parameters. Defaults to ``None``.
 
-    Explanation Note:
+        Explanation Note:
         Increasing :attr:`alpha` will increase the number of channels of the
         ensemble, increasing its representation capacity. Increasing
         :attr:`gamma` will increase the number of groups in the network and
         therefore reduce the number of parameters.
 
-    Note:
+        Note:
         Each ensemble member will only see
         :math:`\frac{\text{in_channels}}{\text{num_estimators}}` channels,
         so when using :attr:`groups` you should make sure that
@@ -494,28 +511,7 @@ class PackedConv3d(nn.Module):
         :attr:`num_estimators` :math:`\times`:attr:`gamma` :math:`\times`
         :attr:`groups`. However, the number of input and output channels will
         be changed to comply with this constraint.
-    """
-
-    def __init__(
-        self,
-        in_channels: int,
-        out_channels: int,
-        kernel_size: _size_3_t,
-        alpha: int,
-        num_estimators: int,
-        gamma: int = 1,
-        stride: _size_3_t = 1,
-        padding: str | _size_3_t = 0,
-        dilation: _size_3_t = 1,
-        groups: int = 1,
-        minimum_channels_per_group: int = 64,
-        bias: bool = True,
-        padding_mode: str = "zeros",
-        first: bool = False,
-        last: bool = False,
-        device: Any | None = None,
-        dtype: Any | None = None,
-    ) -> None:
+        """
         factory_kwargs = {"device": device, "dtype": dtype}
         super().__init__()
         check_packed_parameters_consistency(alpha, gamma, num_estimators)
@@ -570,23 +566,6 @@ class PackedConv3d(nn.Module):
 
 
 class PackedLayerNorm(nn.GroupNorm):
-    """Packed-Ensembles-style LayerNorm layer.
-
-    Args:
-        embed_dim (int): the number of features in the input tensor.
-        num_estimators (int): the number of estimators in the ensemble.
-        alpha (float): the width multiplier of the layer.
-        eps (float, optional): a value added to the denominator for numerical stability. Defaults
-            to 1e-5.
-        affine (bool, optional): a boolean value that when set to ``True``, this module has
-            learnable per_channel affine parameters initialized to ones (for weights) and zeros
-            (for biases). Defaults to ``True``.
-
-    Shape:
-        - Input: :math:`(N, *)` where :math:`*` means any number of additional dimensions.
-        - Output: :math:`(N, *)` (same shape as input)
-    """
-
     def __init__(
         self,
         embed_dim: int,
@@ -597,6 +576,26 @@ class PackedLayerNorm(nn.GroupNorm):
         device=None,
         dtype=None,
     ) -> None:
+        """Packed-Ensembles-style LayerNorm layer.
+
+        Args:
+        embed_dim (int): the number of features in the input tensor.
+        num_estimators (int): the number of estimators in the ensemble.
+        alpha (float): the width multiplier of the layer.
+        eps (float, optional): a value added to the denominator for numerical stability. Defaults
+            to 1e-5.
+        affine (bool, optional): a boolean value that when set to ``True``, this module has
+            learnable per_channel affine parameters initialized to ones (for weights) and zeros
+            (for biases). Defaults to ``True``.
+        device (torch.device, optional): The device to use for the layer's
+            parameters. Defaults to ``None``.
+        dtype (torch.dtype, optional): The dtype to use for the layer's
+            parameters. Defaults to ``None``.
+
+        Shape:
+        - Input: :math:`(N, *)` where :math:`*` means any number of additional dimensions.
+        - Output: :math:`(N, *)` (same shape as input)
+        """
         super().__init__(
             num_groups=num_estimators,
             num_channels=int(embed_dim * alpha),

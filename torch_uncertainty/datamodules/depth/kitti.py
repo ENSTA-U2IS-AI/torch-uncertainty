@@ -8,9 +8,22 @@ from .base import DepthDataModule
 
 
 class KITTIDataModule(DepthDataModule):
-    r"""Depth DataModule for the KITTI-Depth dataset.
+    def __init__(
+        self,
+        root: str | Path,
+        batch_size: int,
+        min_depth: float = 1e-3,
+        max_depth: float = 80.0,
+        crop_size: _size_2_t = (352, 704),
+        eval_size: _size_2_t = (375, 1242),
+        val_split: float | None = None,
+        num_workers: int = 1,
+        pin_memory: bool = True,
+        persistent_workers: bool = True,
+    ) -> None:
+        r"""Depth DataModule for the KITTI-Depth dataset.
 
-    Args:
+        Args:
         root (str or Path): Root directory of the datasets.
         batch_size (int): Number of samples per batch.
         min_depth (float, optional): Minimum depth value for evaluation.
@@ -37,21 +50,7 @@ class KITTIDataModule(DepthDataModule):
             ``True``.
         persistent_workers (bool, optional): Whether to use persistent workers.
             Defaults to ``True``.
-    """
-
-    def __init__(
-        self,
-        root: str | Path,
-        batch_size: int,
-        min_depth: float = 1e-3,
-        max_depth: float = 80.0,
-        crop_size: _size_2_t = (352, 704),
-        eval_size: _size_2_t = (375, 1242),
-        val_split: float | None = None,
-        num_workers: int = 1,
-        pin_memory: bool = True,
-        persistent_workers: bool = True,
-    ) -> None:
+        """
         super().__init__(
             dataset=KITTIDepth,
             root=root,

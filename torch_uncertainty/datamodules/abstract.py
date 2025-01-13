@@ -10,21 +10,6 @@ from torch.utils.data.sampler import SubsetRandomSampler
 
 
 class TUDataModule(ABC, LightningDataModule):
-    """Abstract DataModule class.
-
-    This class implements the basic functionality of a DataModule. It includes
-    setters and getters for the datasets, dataloaders, as well as the crossval
-    logic. It also provide the basic argparse arguments for the datamodules.
-
-    Args:
-        root (str): Root directory of the datasets.
-        batch_size (int): Number of samples per batch.
-        val_split (float): Share of samples to use for validation.
-        num_workers (int): Number of workers to use for data loading.
-        pin_memory (bool): Whether to pin memory.
-        persistent_workers (bool): Whether to use persistent workers.
-    """
-
     training_task: str
     train: Dataset
     val: Dataset
@@ -39,6 +24,20 @@ class TUDataModule(ABC, LightningDataModule):
         pin_memory: bool,
         persistent_workers: bool,
     ) -> None:
+        """Abstract DataModule class.
+
+        This class implements the basic functionality of a DataModule. It includes
+        setters and getters for the datasets, dataloaders, as well as the crossval
+        logic. It also provide the basic argparse arguments for the datamodules.
+
+        Args:
+        root (str): Root directory of the datasets.
+        batch_size (int): Number of samples per batch.
+        val_split (float): Share of samples to use for validation.
+        num_workers (int): Number of workers to use for data loading.
+        pin_memory (bool): Whether to pin memory.
+        persistent_workers (bool): Whether to use persistent workers.
+        """
         super().__init__()
 
         self.root = Path(root)
