@@ -8,13 +8,14 @@ from torch_uncertainty.utils.distributions import NormalInverseGamma
 
 
 class DistributionNLLLoss(nn.Module):
-    def __init__(self, reduction: Literal["mean", "sum"] | None = "mean") -> None:
-        """Negative Log-Likelihood loss using given distributions as inputs.
+    """Negative Log-Likelihood loss using given distributions as inputs.
 
-        Args:
-            reduction (str, optional): specifies the reduction to apply to the
-            output:``'none'`` | ``'mean'`` | ``'sum'``. Defaults to "mean".
-        """
+    Args:
+        reduction (str, optional): specifies the reduction to apply to the
+        output:``'none'`` | ``'mean'`` | ``'sum'``. Defaults to "mean".
+    """
+
+    def __init__(self, reduction: Literal["mean", "sum"] | None = "mean") -> None:
         super().__init__()
         self.reduction = reduction
 
@@ -44,21 +45,22 @@ class DistributionNLLLoss(nn.Module):
 
 
 class DERLoss(DistributionNLLLoss):
+    """The Deep Evidential Regression loss.
+
+    This loss combines the negative log-likelihood loss of the normal
+    inverse gamma distribution and a weighted regularization term.
+
+    Args:
+        reg_weight (float): The weight of the regularization term.
+        reduction (str, optional): specifies the reduction to apply to the
+        output:``'none'`` | ``'mean'`` | ``'sum'``.
+
+    Reference:
+        Amini, A., Schwarting, W., Soleimany, A., & Rus, D. (2019). Deep
+        evidential regression. https://arxiv.org/abs/1910.02600.
+    """
+
     def __init__(self, reg_weight: float, reduction: str | None = "mean") -> None:
-        """The Deep Evidential Regression loss.
-
-        This loss combines the negative log-likelihood loss of the normal
-        inverse gamma distribution and a weighted regularization term.
-
-        Args:
-            reg_weight (float): The weight of the regularization term.
-            reduction (str, optional): specifies the reduction to apply to the
-            output:``'none'`` | ``'mean'`` | ``'sum'``.
-
-        Reference:
-            Amini, A., Schwarting, W., Soleimany, A., & Rus, D. (2019). Deep
-            evidential regression. https://arxiv.org/abs/1910.02600.
-        """
         super().__init__(reduction=None)
 
         if reduction not in ("none", "mean", "sum") and reduction is not None:
@@ -96,21 +98,22 @@ class DERLoss(DistributionNLLLoss):
 
 
 class BetaNLL(nn.Module):
+    """The Beta Negative Log-likelihood loss.
+
+    Args:
+        beta (float): TParameter from range [0, 1] controlling relative
+        weighting between data points, where `0` corresponds to
+        high weight on low error points and `1` to an equal weighting.
+        reduction (str, optional): specifies the reduction to apply to the
+        output:``'none'`` | ``'mean'`` | ``'sum'``.
+
+    Reference:
+        Seitzer, M., Tavakoli, A., Antic, D., & Martius, G. (2022). On the
+        pitfalls of heteroscedastic uncertainty estimation with probabilistic
+        neural networks. https://arxiv.org/abs/2203.09168.
+    """
+
     def __init__(self, beta: float = 0.5, reduction: str | None = "mean") -> None:
-        """The Beta Negative Log-likelihood loss.
-
-        Args:
-            beta (float): TParameter from range [0, 1] controlling relative
-            weighting between data points, where `0` corresponds to
-            high weight on low error points and `1` to an equal weighting.
-            reduction (str, optional): specifies the reduction to apply to the
-            output:``'none'`` | ``'mean'`` | ``'sum'``.
-
-        Reference:
-            Seitzer, M., Tavakoli, A., Antic, D., & Martius, G. (2022). On the
-            pitfalls of heteroscedastic uncertainty estimation with probabilistic
-            neural networks. https://arxiv.org/abs/2203.09168.
-        """
         super().__init__()
 
         if beta < 0 or beta > 1:

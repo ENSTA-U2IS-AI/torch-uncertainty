@@ -31,12 +31,12 @@ class TUDataModule(ABC, LightningDataModule):
         logic. It also provide the basic argparse arguments for the datamodules.
 
         Args:
-            root (str): Root directory of the datasets.
-            batch_size (int): Number of samples per batch.
-            val_split (float): Share of samples to use for validation.
-            num_workers (int): Number of workers to use for data loading.
-            pin_memory (bool): Whether to pin memory.
-            persistent_workers (bool): Whether to use persistent workers.
+        root (str): Root directory of the datasets.
+        batch_size (int): Number of samples per batch.
+        val_split (float): Share of samples to use for validation.
+        num_workers (int): Number of workers to use for data loading.
+        pin_memory (bool): Whether to pin memory.
+        persistent_workers (bool): Whether to use persistent workers.
         """
         super().__init__()
 

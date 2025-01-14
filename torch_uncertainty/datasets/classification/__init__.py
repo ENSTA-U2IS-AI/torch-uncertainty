@@ -1,6 +1,5 @@
 # ruff: noqa: F401
 from .cifar import CIFAR10C, CIFAR10H, CIFAR10N, CIFAR100C, CIFAR100N
-from .cub import CUB
 from .imagenet import (
     ImageNetA,
     ImageNetC,

@@ -9,9 +9,20 @@ from torchvision.datasets.utils import check_integrity, download_url
 
 
 class CIFAR10H(CIFAR10):
-    """`CIFAR-10H <https://github.com/jcpeterson/cifar-10h>`_ Dataset.
+    h_test_list = ["cifar-10h-probs.npy", "7b41f73eee90fdefc73bfc820ab29ba8"]
+    h_url = "https://github.com/jcpeterson/cifar-10h/raw/master/data/" "cifar10h-probs.npy"
 
-    Args:
+    def __init__(
+        self,
+        root: str | Path,
+        train: bool | None = None,
+        transform: Callable[..., Any] | None = None,
+        target_transform: Callable[..., Any] | None = None,
+        download: bool = False,
+    ) -> None:
+        """`CIFAR-10H <https://github.com/jcpeterson/cifar-10h>`_ Dataset.
+
+        Args:
         root (string): Root directory of dataset where file
             ``cifar-10h-probs.npy`` exists or will be saved to if download
             is set to True.
@@ -24,19 +35,7 @@ class CIFAR10H(CIFAR10):
         download (bool, optional): If True, downloads the dataset from the
             internet and puts it in root directory. If dataset is already
             downloaded, it is not downloaded again. Defaults to False.
-    """
-
-    h_test_list = ["cifar-10h-probs.npy", "7b41f73eee90fdefc73bfc820ab29ba8"]
-    h_url = "https://github.com/jcpeterson/cifar-10h/raw/master/data/" "cifar10h-probs.npy"
-
-    def __init__(
-        self,
-        root: str | Path,
-        train: bool | None = None,
-        transform: Callable[..., Any] | None = None,
-        target_transform: Callable[..., Any] | None = None,
-        download: bool = False,
-    ) -> None:
+        """
         if train:
             raise ValueError("CIFAR10H does not support training data.")
         print("WARNING: CIFAR10H cannot be used with Classification routines " "for now.")

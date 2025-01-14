@@ -15,43 +15,43 @@ class MutualInformation(Metric):
         reduction: Literal["mean", "sum", "none", None] = "mean",
         **kwargs: Any,
     ) -> None:
-        """The Mutual Information Metric to estimate the epistemic uncertainty of
-        an ensemble of estimators.
+        r"""Compute the Mutual Information Metric.
+
+        The Mutual Information Metric estimates the epistemic uncertainty of an ensemble of estimators.
 
         Args:
-            reduction (str, optional): Determines how to reduce over the
-                :math:`B`/batch dimension:
+        reduction (str, optional): Determines how to reduce over the
+            :math:`B`/batch dimension:
 
-                - ``'mean'`` [default]: Averages score across samples
-                - ``'sum'``: Sum score across samples
-                - ``'none'`` or ``None``: Returns score per sample
+            - ``'mean'`` [default]: Averages score across samples
+            - ``'sum'``: Sum score across samples
+            - ``'none'`` or ``None``: Returns score per sample
 
-            kwargs: Additional keyword arguments, see `Advanced metric settings
-                <https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metric-kwargs>`_.
+        kwargs: Additional keyword arguments, see `Advanced metric settings
+            <https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metric-kwargs>`_.
 
         Inputs:
-            - :attr:`probs`: the likelihoods provided by the ensemble as a Tensor
-                of shape :math:`(B, N, C)`,
+        - :attr:`probs`: :math:`(B, N, C)`
 
-                where :math:`B` is the batch size, :math:`N` is the number of
-                estimators, and :math:`C` is the number of classes.
-
-        Raises:
-            ValueError:
-                If :attr:`reduction` is not one of ``'mean'``, ``'sum'``,
-                ``'none'`` or ``None``.
+        where :math:`B` is the batch size, :math:`N` is the number of estimators,
+        and :math:`C` is the number of classes.
 
         Note:
-            A higher mutual information can be interpreted as a higher epistemic
-            uncertainty. The Mutual Information is also computationally equivalent
-            to the Generalized Jensen-Shannon Divergence (GJSD).
+        A higher mutual information can be interpreted as a higher epistemic
+        uncertainty. The Mutual Information is also computationally equivalent
+        to the Generalized Jensen-Shannon Divergence (GJSD).
 
-            The implementation of the mutual information clamps results to zero to
-            avoid negative values that could appear due to numerical instabilities
+        The implementation of the mutual information clamps results to zero to
+        avoid negative values that could appear due to numerical instabilities.
 
         Warning:
-            Make sure that the probabilities in :attr:`probs` are normalized to sum
-            to one.
+        Make sure that the probabilities in :attr:`probs` are normalized to sum
+        to one.
+
+        Raises:
+        ValueError:
+            If :attr:`reduction` is not one of ``'mean'``, ``'sum'``,
+            ``'none'`` or ``None``.
         """
         super().__init__(**kwargs)
 

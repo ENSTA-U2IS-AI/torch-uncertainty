@@ -12,8 +12,8 @@ class EMA(nn.Module):
         """Exponential Moving Average.
 
         Args:
-            model (nn.Module): The model to train and ensemble.
-            momentum (float): The momentum of the moving average.
+        model (nn.Module): The model to train and ensemble.
+        momentum (float): The momentum of the moving average.
         """
         super().__init__()
         _ema_checks(momentum)

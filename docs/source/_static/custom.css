@@ -1,0 +1,100 @@
+.gradient-banner {
+    background: linear-gradient(to right, #020202, #A9BBDC, #262729);
+    color: white;
+    padding: 2rem 0;
+}
+
+/* Ensure all cards and titles align consistently */
+.card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    border: 1px solid #e3e3e3; /* Optional subtle border */
+  }
+  
+  .card-body {
+    flex-grow: 1; /* Makes the body take all available space */
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start; /* Ensures content starts at the top */
+  }
+  
+  .card-title {
+    margin-top: 0; /* Removes any default margin */
+    font-size: 1.25rem;
+    font-weight: 600;
+  }
+  
+  .card p {
+    flex-shrink: 0; /* Prevents content from collapsing */
+    margin-bottom: 0.5rem;
+  }
+  
+  .card-img-bottom {
+    object-fit: contain; /* Ensures the entire image is visible without stretching or warping */
+    max-height: 150px; /* Restrict image height */
+    margin: auto; /* Centers the image horizontally and vertically */
+    display: block; /* Ensures the image respects the margin property */
+    width: 100%; /* Keeps the image width consistent */
+}
+
+  
+  .card .btn-primary {
+    background-color: var(--retro-blue);
+    border-color: var(--retro-blue);
+    color: white;
+    font-size: 1rem;
+    font-weight: 500;
+    padding: 0.6rem 1rem;
+    width: 100%; /* Stretch horizontally */
+}
+
+.card .btn-primary:hover {
+    background-color: var(--retro-blue-hover);
+    border-color: var(--retro-blue-hover);
+    color: white;
+}
+  
+  /* Ensure consistent card height */
+  .row .col-md-4 {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .card.shadow-sm {
+    display: flex;
+    flex: 1;
+    height: 100%;
+  }
+  
+  /* Retro blue theme for navbar buttons */
+  :root {
+    --retro-blue: #4a74a5; /* Slightly muted blue */
+    --retro-blue-hover: #3b5c84;
+  }
+  
+  /* "Getting Started" button (retro blue) */
+  .gradient-banner .btn-warning {
+    background-color: var(--retro-blue);
+    border-color: var(--retro-blue);
+    color: white;
+  }
+  
+  .gradient-banner .btn-warning:hover {
+    background-color: var(--retro-blue-hover);
+    border-color: var(--retro-blue-hover);
+  }
+  
+  /* "API Documentation" button (white with retro blue border) */
+  .gradient-banner .btn-light {
+    background-color: white;
+    border: 2px solid var(--retro-blue);
+    color: var(--retro-blue);
+  }
+  
+  .gradient-banner .btn-light:hover {
+    background-color: var(--retro-blue);
+    color: white;
+    border-color: var(--retro-blue);
+  }
+  
