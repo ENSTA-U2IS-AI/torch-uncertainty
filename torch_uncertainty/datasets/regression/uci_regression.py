@@ -117,17 +117,17 @@ class UCIRegression(Dataset):
         "4e6727f462779e2d396e8f7d2ddb79a3",
     ]
     urls = [
-        "https://archive.ics.uci.edu/ml/machine-learning-databases/housing/" "housing.data",
-        "https://archive.ics.uci.edu/static/public/165/concrete+compressive+" "strength.zip",
+        "https://archive.ics.uci.edu/ml/machine-learning-databases/housing/housing.data",
+        "https://archive.ics.uci.edu/static/public/165/concrete+compressive+strength.zip",
         "https://archive.ics.uci.edu/static/public/242/energy+efficiency.zip",
-        "https://archive.ics.uci.edu/static/public/374/appliances+energy+" "prediction.zip",
-        "https://www.openml.org/data/get_csv/3626/dataset_2175_kin8nm.arff",
-        "https://raw.githubusercontent.com/luishpinto/cm-naval-propulsion-" "plant/master/data.csv",
-        "https://archive.ics.uci.edu/static/public/294/combined+cycle+power+" "plant.zip",
+        "https://archive.ics.uci.edu/static/public/374/appliances+energy+prediction.zip",
+        "https://zenodo.org/records/14645866/files/kin8nm.csv",
+        "https://raw.githubusercontent.com/luishpinto/cm-naval-propulsion-plant/master/data.csv",
+        "https://archive.ics.uci.edu/static/public/294/combined+cycle+power+plant.zip",
         "https://archive.ics.uci.edu/static/public/265/physicochemical+"
         "properties+of+protein+tertiary+structure.zip",
         "https://archive.ics.uci.edu/static/public/186/wine+quality.zip",
-        "https://archive.ics.uci.edu/static/public/243/yacht+" "hydrodynamics.zip",
+        "https://archive.ics.uci.edu/static/public/243/yacht+hydrodynamics.zip",
     ]
 
     def __init__(
