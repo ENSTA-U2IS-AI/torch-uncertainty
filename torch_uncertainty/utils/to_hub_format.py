@@ -24,7 +24,7 @@ if not args.path.exists():
     raise ValueError("File does not exist")
 
 dtype = torch.float16 if args.fp16 else torch.float32
-model = torch.load(args.path)["state_dict"]
+model = torch.load(args.path, weights_only=True)["state_dict"]
 model = {key.replace("model.", ""): val.to(device="cpu", dtype=dtype) for key, val in model.items()}
 
 output_name = args.name

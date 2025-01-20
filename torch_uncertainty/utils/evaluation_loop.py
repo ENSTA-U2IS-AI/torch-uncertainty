@@ -27,7 +27,7 @@ PERCENTAGE_METRICS = [
 def _add_row(table: Table, metric_name: str, value: Tensor) -> None:
     if metric_name in PERCENTAGE_METRICS:
         value = value * 100
-        table.add_row(metric_name, f"{value.item():.2f}%")
+        table.add_row(metric_name, f"{value.item():.3f}%")
     else:
         table.add_row(metric_name, f"{value.item():.5f}")
 
