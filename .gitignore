@@ -6,11 +6,10 @@ lightning_logs/
 auto_tutorials_source/*.png
 docs/*/generated/
 docs/*/auto_tutorials/
-*.pth
-*.ckpt
-*.out
 docs/source/sg_execution_times.rst
-test
+**/*.pth
+**/*.ckpt
+**/*.out
 **/*.csv
 pyrightconfig.json
 

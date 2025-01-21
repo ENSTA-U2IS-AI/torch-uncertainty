@@ -70,9 +70,9 @@ class SegmentationRoutine(LightningModule):
         """
         super().__init__()
         _segmentation_routine_checks(
-            num_classes,
-            metric_subsampling_rate,
-            num_calibration_bins,
+            num_classes=num_classes,
+            metric_subsampling_rate=metric_subsampling_rate,
+            num_calibration_bins=num_calibration_bins,
         )
         if eval_shift:
             raise NotImplementedError(
@@ -81,6 +81,7 @@ class SegmentationRoutine(LightningModule):
 
         self.model = model
         self.num_classes = num_classes
+        self.num_calibration_bins = num_calibration_bins
         self.loss = loss
         self.needs_epoch_update = isinstance(model, EPOCH_UPDATE_MODEL)
         self.needs_step_update = isinstance(model, STEP_UPDATE_MODEL)
@@ -92,30 +93,38 @@ class SegmentationRoutine(LightningModule):
         self.format_batch_fn = format_batch_fn
         self.metric_subsampling_rate = metric_subsampling_rate
         self.log_plots = log_plots
+        self._init_metrics()
 
-        # metrics
+        if log_plots:
+            self.num_samples_to_plot = num_samples_to_plot
+            self.sample_buffer = []
+
+    def _init_metrics(self) -> None:
+        """Initialize the metrics depending on the exact task."""
         seg_metrics = MetricCollection(
             {
-                "seg/mIoU": MeanIntersectionOverUnion(num_classes=num_classes),
+                "seg/mIoU": MeanIntersectionOverUnion(num_classes=self.num_classes),
             },
             compute_groups=False,
         )
         sbsmpl_seg_metrics = MetricCollection(
             {
-                "seg/mAcc": Accuracy(task="multiclass", average="macro", num_classes=num_classes),
-                "seg/Brier": BrierScore(num_classes=num_classes),
+                "seg/mAcc": Accuracy(
+                    task="multiclass", average="macro", num_classes=self.num_classes
+                ),
+                "seg/Brier": BrierScore(num_classes=self.num_classes),
                 "seg/NLL": CategoricalNLL(),
-                "seg/pixAcc": Accuracy(task="multiclass", num_classes=num_classes),
+                "seg/pixAcc": Accuracy(task="multiclass", num_classes=self.num_classes),
                 "cal/ECE": CalibrationError(
                     task="multiclass",
-                    num_classes=num_classes,
-                    num_bins=num_calibration_bins,
+                    num_classes=self.num_classes,
+                    num_bins=self.num_calibration_bins,
                 ),
                 "cal/aECE": CalibrationError(
                     task="multiclass",
                     adaptive=True,
-                    num_bins=num_calibration_bins,
-                    num_classes=num_classes,
+                    num_classes=self.num_classes,
+                    num_bins=self.num_calibration_bins,
                 ),
                 "sc/AURC": AURC(),
                 "sc/AUGRC": AUGRC(),
@@ -135,10 +144,6 @@ class SegmentationRoutine(LightningModule):
         self.test_seg_metrics = seg_metrics.clone(prefix="test/")
         self.test_sbsmpl_seg_metrics = sbsmpl_seg_metrics.clone(prefix="test/")
 
-        if log_plots:
-            self.num_samples_to_plot = num_samples_to_plot
-            self.sample_buffer = []
-
     def configure_optimizers(self) -> Optimizer | dict:
         return self.optim_recipe
 
@@ -146,7 +151,10 @@ class SegmentationRoutine(LightningModule):
         """Forward pass of the model.
 
         Args:
-            inputs (torch.Tensor): Input tensor.
+            inputs (Tensor): input tensor.
+
+        Returns:
+            Tensor: the prediction of the model.
         """
         return self.model(inputs)
 
@@ -164,9 +172,16 @@ class SegmentationRoutine(LightningModule):
         if hasattr(self.model, "need_bn_update"):
             self.model.bn_update(self.trainer.train_dataloader, device=self.device)
 
-    def training_step(self, batch: tuple[Tensor, Tensor], batch_idx: int) -> STEP_OUTPUT:
-        img, target = batch
-        img, target = self.format_batch_fn((img, target))
+    def training_step(self, batch: tuple[Tensor, Tensor]) -> STEP_OUTPUT:
+        """Perform a single training step based on the input tensors.
+
+        Args:
+            batch (tuple[Tensor, Tensor]): the training images and their corresponding targets
+
+        Returns:
+            Tensor: the loss corresponding to this training step.
+        """
+        img, target = self.format_batch_fn(batch)
         logits = self.forward(img)
         target = F.resize(target, logits.shape[-2:], interpolation=F.InterpolationMode.NEAREST)
         logits = rearrange(logits, "b c h w -> (b h w) c")
@@ -178,7 +193,14 @@ class SegmentationRoutine(LightningModule):
         self.log("train_loss", loss, prog_bar=True, logger=True)
         return loss
 
-    def validation_step(self, batch: tuple[Tensor, Tensor], batch_idx: int) -> None:
+    def validation_step(self, batch: tuple[Tensor, Tensor]) -> None:
+        """Perform a single validation step based on the input tensors.
+
+        Compute the prediction of the model and the value of the metrics on the validation batch.
+
+        Args:
+            batch (tuple[Tensor, Tensor]): the validation images and their corresponding targets
+        """
         img, targets = batch
         logits = self.forward(img)
         targets = F.resize(
@@ -195,7 +217,14 @@ class SegmentationRoutine(LightningModule):
         self.val_seg_metrics.update(probs, targets)
         self.val_sbsmpl_seg_metrics.update(*self.subsample(probs, targets))
 
-    def test_step(self, batch: tuple[Tensor, Tensor], batch_idx: int) -> None:
+    def test_step(self, batch: tuple[Tensor, Tensor]) -> None:
+        """Perform a single test step based on the input tensors.
+
+        Compute the prediction of the model and the value of the metrics on the test batch.
+
+        Args:
+            batch (tuple[Tensor, Tensor]): the test images and their corresponding targets
+        """
         img, targets = batch
         logits = self.forward(img)
         targets = F.resize(
@@ -224,6 +253,7 @@ class SegmentationRoutine(LightningModule):
         self.test_sbsmpl_seg_metrics.update(*self.subsample(probs, targets))
 
     def on_validation_epoch_end(self) -> None:
+        """Compute and log the values of the collected metrics in `validation_step`."""
         res_dict = self.val_seg_metrics.compute()
         self.log_dict(res_dict, logger=True, sync_dist=True)
         self.log(
@@ -237,6 +267,7 @@ class SegmentationRoutine(LightningModule):
         self.val_sbsmpl_seg_metrics.reset()
 
     def on_test_epoch_end(self) -> None:
+        """Compute, log, and plot the values of the collected metrics in `test_step`."""
         self.log_dict(self.test_seg_metrics.compute(), sync_dist=True)
         self.log_dict(self.test_sbsmpl_seg_metrics.compute(), sync_dist=True)
         if isinstance(self.logger, Logger) and self.log_plots:
@@ -255,7 +286,7 @@ class SegmentationRoutine(LightningModule):
             self.log_segmentation_plots()
 
     def log_segmentation_plots(self) -> None:
-        """Builds and logs examples of segmentation plots from the test set."""
+        """Build and log examples of segmentation plots from the test set."""
         for i, (img, pred, tgt) in enumerate(self.sample_buffer):
             pred = pred == torch.arange(self.num_classes, device=pred.device)[:, None, None]
             tgt = tgt == torch.arange(self.num_classes, device=tgt.device)[:, None, None]
@@ -278,6 +309,15 @@ class SegmentationRoutine(LightningModule):
             )
 
     def subsample(self, pred: Tensor, target: Tensor) -> tuple[Tensor, Tensor]:
+        """Select a random sample of the data to compute the loss onto.
+
+        Args:
+            pred (Tensor): the prediction tensor.
+            target (Tensor): the target tensor.
+
+        Returns:
+            Tuple[Tensor, Tensor]: the subsampled prediction and target tensors.
+        """
         total_size = target.size(0)
         num_samples = max(1, int(total_size * self.metric_subsampling_rate))
         indices = torch.randperm(total_size, device=pred.device)[:num_samples]
@@ -289,6 +329,13 @@ def _segmentation_routine_checks(
     metric_subsampling_rate: float,
     num_calibration_bins: int,
 ) -> None:
+    """Check the domains of the routine's parameters.
+
+    Args:
+        num_classes (int): the number of classes in the dataset.
+        metric_subsampling_rate (float): the rate of subsampling to compute the metrics.
+        num_calibration_bins (int): the number of bins for the evaluation of the calibration.
+    """
     if num_classes < 2:
         raise ValueError(f"num_classes must be at least 2, got {num_classes}.")
 

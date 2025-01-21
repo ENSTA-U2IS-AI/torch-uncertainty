@@ -108,7 +108,10 @@ class PixelRegressionRoutine(LightningModule):
 
         self.optim_recipe = optim_recipe
         self.format_batch_fn = format_batch_fn
+        self._init_metrics()
 
+    def _init_metrics(self) -> None:
+        """Initialize the metrics depending on the exact task."""
         depth_metrics = MetricCollection(
             {
                 "reg/SILog": SILog(),
@@ -138,18 +141,27 @@ class PixelRegressionRoutine(LightningModule):
         return self.optim_recipe
 
     def on_train_start(self) -> None:
+        """Put the hyperparameters in tensorboard."""
         if self.logger is not None:  # coverage: ignore
             self.logger.log_hyperparams(
                 self.hparams,
             )
 
     def on_validation_start(self) -> None:
+        """Prepare the validation step.
+
+        Update the model's wrapper and the batchnorms if needed.
+        """
         if self.needs_epoch_update and not self.trainer.sanity_checking:
             self.model.update_wrapper(self.current_epoch)
             if hasattr(self.model, "need_bn_update"):
                 self.model.bn_update(self.trainer.train_dataloader, device=self.device)
 
     def on_test_start(self) -> None:
+        """Prepare the test step.
+
+        Update the batchnorms if needed.
+        """
         if hasattr(self.model, "need_bn_update"):
             self.model.bn_update(self.trainer.train_dataloader, device=self.device)
 
@@ -174,7 +186,15 @@ class PixelRegressionRoutine(LightningModule):
                 pred = pred.squeeze(-1)
         return pred
 
-    def training_step(self, batch: tuple[Tensor, Tensor], batch_idx: int) -> STEP_OUTPUT:
+    def training_step(self, batch: tuple[Tensor, Tensor]) -> STEP_OUTPUT:
+        """Perform a single training step based on the input tensors.
+
+        Args:
+            batch (tuple[Tensor, Tensor]): the training data and their corresponding targets
+
+        Returns:
+            Tensor: the loss corresponding to this training step.
+        """
         inputs, target = self.format_batch_fn(batch)
         if self.one_dim_depth:
             target = target.unsqueeze(1)
@@ -201,6 +221,14 @@ class PixelRegressionRoutine(LightningModule):
         return loss
 
     def evaluation_forward(self, inputs: Tensor) -> tuple[Tensor, Distribution | None]:
+        """Get the prediction and handle predicted eventual distribution parameters.
+
+        Args:
+            inputs (Tensor): the input data.
+
+        Returns:
+            tuple[Tensor, Distribution | None]: the prediction as a Tensor and a distribution.
+        """
         batch_size = inputs.size(0)
         preds = self.model(inputs)
 
@@ -220,6 +248,15 @@ class PixelRegressionRoutine(LightningModule):
         return preds.mean(dim=1), None
 
     def validation_step(self, batch: tuple[Tensor, Tensor], batch_idx: int) -> None:
+        """Perform a single validation step based on the input tensors.
+
+        Compute the prediction of the model and the value of the metrics on the validation batch.
+
+        Args:
+            batch (tuple[Tensor, Tensor]): the validation images and their corresponding targets.
+            batch_idx (int): the id of the batch. Optionally plot images and the predictions with
+                the first batch.
+        """
         inputs, targets = batch
         if self.one_dim_depth:
             targets = targets.unsqueeze(1)
@@ -245,6 +282,16 @@ class PixelRegressionRoutine(LightningModule):
         batch_idx: int,
         dataloader_idx: int = 0,
     ) -> None:
+        """Perform a single test step based on the input tensors.
+
+        Compute the prediction of the model and the value of the metrics on the test batch. Also
+        handle OOD and distribution-shifted images.
+
+        Args:
+            batch (tuple[Tensor, Tensor]): the test data and their corresponding targets.
+            batch_idx (int): the number of the current batch (unused).
+            dataloader_idx (int): 0 if in-distribution, 1 if out-of-distribution.
+        """
         if dataloader_idx != 0:
             raise NotImplementedError(
                 "Depth OOD detection not implemented yet. Raise an issue " "if needed."
@@ -272,6 +319,7 @@ class PixelRegressionRoutine(LightningModule):
             self.test_prob_metrics.update(dist, targets, padding_mask)
 
     def on_validation_epoch_end(self) -> None:
+        """Compute and log the values of the collected metrics in `validation_step`."""
         res_dict = self.val_metrics.compute()
         self.log_dict(res_dict, logger=True, sync_dist=True)
         self.log(
@@ -290,6 +338,7 @@ class PixelRegressionRoutine(LightningModule):
             self.val_prob_metrics.reset()
 
     def on_test_epoch_end(self) -> None:
+        """Compute and log the values of the collected metrics in `test_step`."""
         self.log_dict(
             self.test_metrics.compute(),
             sync_dist=True,
@@ -354,6 +403,13 @@ def colorize(
 
 
 def _depth_routine_checks(output_dim: int, num_image_plot: int, log_plots: bool) -> None:
+    """Check the domains of the routine's parameters.
+
+    Args:
+        output_dim (int): the dimension of the output of the regression task.
+        num_image_plot (int): the number of images to plot at evaluation time.
+        log_plots (bool): whether to plot images and predictions during evaluation.
+    """
     if output_dim < 1:
         raise ValueError(f"output_dim must be positive, got {output_dim}.")
     if num_image_plot < 1 and log_plots:
