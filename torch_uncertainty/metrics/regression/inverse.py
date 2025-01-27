@@ -47,14 +47,13 @@ class MeanSquaredErrorInverse(MeanSquaredError):
         output:
 
         - ``mean_squared_error`` (:class:`~Tensor`): A tensor with the mean
-        squared error
+          squared error
 
         Args:
-        squared: If True returns MSE value, if False returns RMSE value.
-        num_outputs: Number of outputs in multioutput setting.
-        unit: Unit for the computation of the metric. Must be one of 'mm', 'm',
-            'km'. Defauts to 'km'.
-        kwargs: Additional keyword arguments.
+            squared: If True returns MSE value, if False returns RMSE value.
+            num_outputs: Number of outputs in multioutput setting.
+            unit: Unit for the computation of the metric. Must be one of 'mm', 'm', 'km'. Defauts to 'km'.
+            kwargs: Additional keyword arguments.
         """
         super().__init__(squared, num_outputs, **kwargs)
         self.unit_factor = _unit_to_factor(unit)
@@ -68,7 +67,7 @@ class MeanAbsoluteErrorInverse(MeanAbsoluteError):
     def __init__(self, unit: str = "km", **kwargs) -> None:
         r"""Mean Absolute Error of the inverse predictions (iMAE).
 
-        .. math:: \text{iMAE} = \frac{1}{N}\sum_i^N | \frac{1}{y_i} - \frac{1}{\hat{y_i}} |
+        .. math:: \text{iMAE} = \frac{1}{N}\sum_i^N \left| \frac{1}{y_i} - \frac{1}{\hat{y_i}} \right|
 
         Where :math:`y` is a tensor of target values, and :math:`\hat{y}` is a
         tensor of predictions.
@@ -85,12 +84,11 @@ class MeanAbsoluteErrorInverse(MeanAbsoluteError):
         output:
 
         - ``mean_absolute_inverse_error`` (:class:`~Tensor`): A tensor with the
-        mean absolute error over the state
+          mean absolute error over the state
 
         Args:
-        unit: Unit for the computation of the metric. Must be one of 'mm', 'm',
-            'km'. Defauts to 'km'.
-        kwargs: Additional keyword arguments.
+            unit: Unit for the computation of the metric. Must be one of 'mm', 'm', 'km'. Defauts to 'km'.
+            kwargs: Additional keyword arguments.
         """
         super().__init__(**kwargs)
         self.unit_factor = _unit_to_factor(unit)

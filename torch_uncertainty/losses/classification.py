@@ -8,17 +8,17 @@ class DECLoss(nn.Module):
 
     Args:
         annealing_step (int): Annealing step for the weight of the
-        regularization term.
+            regularization term.
         reg_weight (float): Fixed weight of the regularization term.
         loss_type (str, optional): Specifies the loss type to apply to the
-        Dirichlet parameters: ``'mse'`` | ``'log'`` | ``'digamma'``.
+            Dirichlet parameters: ``'mse'`` | ``'log'`` | ``'digamma'``.
         reduction (str, optional): Specifies the reduction to apply to the
-        output:``'none'`` | ``'mean'`` | ``'sum'``.
+            output:``'none'`` | ``'mean'`` | ``'sum'``.
 
-    Reference:
-        Sensoy, M., Kaplan, L., & Kandemir, M. (2018). Evidential deep
-        learning to quantify classification uncertainty. NeurIPS 2018.
-        https://arxiv.org/abs/1806.01768.
+    References:
+        [1] `Sensoy, M., Kaplan, L., & Kandemir, M. (2018). Evidential deep learning to quantify classification uncertainty. NeurIPS 2018
+        <https://arxiv.org/abs/1806.01768>`_.
+
     """
 
     def __init__(
@@ -156,13 +156,13 @@ class ConfidencePenaltyLoss(nn.Module):
     Args:
         reg_weight (float, optional): The weight of the regularization term.
         reduction (str, optional): specifies the reduction to apply to the
-        output:``'none'`` | ``'mean'`` | ``'sum'``. Defaults to "mean".
+            output:``'none'`` | ``'mean'`` | ``'sum'``. Defaults to "mean".
         eps (float, optional): A small value to avoid numerical instability.
             Defaults to 1e-6.
 
-    Reference:
-        Gabriel Pereyra: Regularizing neural networks by penalizing
-        confident output distributions. https://arxiv.org/pdf/1701.06548.
+    References:
+        [1] `Gabriel Pereyra: Regularizing neural networks by penalizing confident output distributions
+        <https://arxiv.org/pdf/1701.06548>`_.
 
     """
 
@@ -216,11 +216,12 @@ class ConflictualLoss(nn.Module):
     Args:
         reg_weight (float, optional): The weight of the regularization term.
         reduction (str, optional): specifies the reduction to apply to the
-        output:``'none'`` | ``'mean'`` | ``'sum'``.
+            output:``'none'`` | ``'mean'`` | ``'sum'``.
 
-    Reference:
-        `Mohammed Fellaji et al. On the Calibration of Epistemic Uncertainty:
-        Principles, Paradoxes and Conflictual Loss <https://arxiv.org/pdf/2407.12211>`_.
+    References:
+        [1] `Mohammed Fellaji et al. On the Calibration of Epistemic Uncertainty: Principles, Paradoxes and Conflictual Loss
+        <https://arxiv.org/pdf/2407.12211>`_.
+
     """
 
     def __init__(
@@ -267,16 +268,15 @@ class FocalLoss(nn.Module):
 
     Args:
         gamma (float, optional): A constant, as described in the paper.
-        alpha (Tensor, optional): Weights for each class. Defaults to None.
-        reduction (str, optional): 'mean', 'sum' or 'none'.
-            Defaults to 'mean'.
+        alpha (Tensor, optional): Weights for each class. Defaults to ``None``.
+        reduction (str, optional): ``'mean'``, ``'sum'`` or ``'none'``. Defaults to ``'mean'``.
 
-    Reference:
-        Lin, T.-Y., Goyal, P., Girshick, R., He, K., & Dollár, P. (2017).
-        Focal Loss for Dense Object Detection. TPAMI 2020.
+    References:
+        [1] `Lin, T.-Y., Goyal, P., Girshick, R., He, K., & Dollár, P. (2017). Focal Loss for Dense Object Detection.
+        <https://openaccess.thecvf.com/content_ICCV_2017/papers/Lin_Focal_Loss_for_ICCV_2017_paper.pdf>`_.
 
-    Implementation:
-        Inspired by github.com/AdeelH/pytorch-multi-class-focal-loss.
+        [2] Inspired by https://github.com/AdeelH/pytorch-multi-class-focal-loss .
+
     """
 
     def __init__(
@@ -328,14 +328,14 @@ class BCEWithLogitsLSLoss(nn.BCEWithLogitsLoss):
     Args:
         weight (Tensor, optional): A manual rescaling weight given to the
             loss of each batch element. If given, has to be a Tensor of size
-            "nbatch". Defaults to None.
+            "nbatch". Defaults to ``None``.
         reduction (str, optional): Specifies the reduction to apply to the
-            output: 'none' | 'mean' | 'sum'. 'none': no reduction will be applied,
-            'mean': the sum of the output will be divided by the number of
-            elements in the output, 'sum': the output will be summed. Defaults
-            to 'mean'.
+            output: ``'none'`` | ``'mean'`` | ``'sum``'. ``'none'``: no reduction will be applied,
+            ``'mean'``: the sum of the output will be divided by the number of
+            elements in the output, ``'sum'``: the output will be summed. Defaults
+            to ``'mean'``.
         label_smoothing (float, optional): The label smoothing factor. Defaults
-            to 0.0.
+            to ``0.0``.
     """
 
     def __init__(

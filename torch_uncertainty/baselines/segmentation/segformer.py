@@ -26,25 +26,25 @@ class SegFormerBaseline(SegmentationRoutine):
         various versions and architectures.
 
         Args:
-        num_classes (int): Number of classes to predict.
-        loss (type[Module]): Training loss.
-        version (str):
-            Determines which SegFormer version to use. Options are:
+            num_classes (int): Number of classes to predict.
+            loss (type[Module]): Training loss.
+            version (str):
+                Determines which SegFormer version to use. Options are:
 
-            - ``"std"``: original SegFormer
+                - ``"std"``: original SegFormer
 
-        arch (int):
-            Determines which architecture to use. Options are:
+            arch (int):
+                Determines which architecture to use. Options are:
 
-            - ``0``: SegFormer-B0
-            - ``1``: SegFormer-B1
-            - ``2``: SegFormer-B2
-            - ``3``: SegFormer-B3
-            - ``4``: SegFormer-B4
-            - ``5``: SegFormer-B5
+                - ``0``: SegFormer-B0
+                - ``1``: SegFormer-B1
+                - ``2``: SegFormer-B2
+                - ``3``: SegFormer-B3
+                - ``4``: SegFormer-B4
+                - ``5``: SegFormer-B5
 
-        num_estimators (int, optional): Number of estimators in the
-            ensemble. Defaults to 1 (single model).
+            num_estimators (int, optional): Number of estimators in the
+                ensemble. Defaults to 1 (single model).
         """
         params = {
             "num_classes": num_classes,

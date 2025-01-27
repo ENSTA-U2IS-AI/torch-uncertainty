@@ -42,35 +42,35 @@ class RegressionRoutine(LightningModule):
         r"""Routine for training & testing on **regression** tasks.
 
         Args:
-        model (torch.nn.Module): Model to train.
-        output_dim (int): Number of outputs of the model.
-        loss (torch.nn.Module): Loss function to optimize the :attr:`model`.
-        dist_family (str, optional): The distribution family to use for
+            model (torch.nn.Module): Model to train.
+            output_dim (int): Number of outputs of the model.
+            loss (torch.nn.Module): Loss function to optimize the :attr:`model`.
+            dist_family (str, optional): The distribution family to use for
             probabilistic regression. If ``None`` then point-wise regression.
             Defaults to ``None``.
-        dist_estimate (str, optional): The estimate to use when computing the
+            dist_estimate (str, optional): The estimate to use when computing the
             point-wise metrics. Defaults to ``"mean"``.
-        is_ensemble (bool, optional): Whether the model is an ensemble.
+            is_ensemble (bool, optional): Whether the model is an ensemble.
             Defaults to ``False``.
-        optim_recipe (dict or torch.optim.Optimizer, optional): The optimizer and
+            optim_recipe (dict or torch.optim.Optimizer, optional): The optimizer and
             optionally the scheduler to use. Defaults to ``None``.
-        eval_shift (bool, optional): Indicates whether to evaluate the Distribution
+            eval_shift (bool, optional): Indicates whether to evaluate the Distribution
             shift performance. Defaults to ``False``.
-        format_batch_fn (torch.nn.Module, optional): The function to format the
+            format_batch_fn (torch.nn.Module, optional): The function to format the
             batch. Defaults to ``None``.
 
         Warning:
-        If :attr:`probabilistic` is True, the model must output a `PyTorch
-        distribution <https://pytorch.org/docs/stable/distributions.html>`_.
+            If :attr:`probabilistic` is True, the model must output a `PyTorch
+            distribution <https://pytorch.org/docs/stable/distributions.html>`_.
 
         Warning:
-        You must define :attr:`optim_recipe` if you do not use
-        the CLI.
+            You must define :attr:`optim_recipe` if you do not use
+            the CLI.
 
         Note:
-        :attr:`optim_recipe` can be anything that can be returned by
-        :meth:`LightningModule.configure_optimizers()`. Find more details
-        `here <https://lightning.ai/docs/pytorch/stable/common/lightning_module.html#configure-optimizers>`_.
+            :attr:`optim_recipe` can be anything that can be returned by
+            :meth:`LightningModule.configure_optimizers()`. Find more details
+            `here <https://lightning.ai/docs/pytorch/stable/common/lightning_module.html#configure-optimizers>`_.
         """
         super().__init__()
         _regression_routine_checks(output_dim)

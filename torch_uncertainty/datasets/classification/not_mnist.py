@@ -30,20 +30,20 @@ class NotMNIST(ImageFolder):
         """The notMNIST dataset.
 
         Args:
-        root (str): Root directory of the datasets.
-        subset (str): The subset to use, one of ``small`` or ``large``.
-        transform (callable, optional): A function/transform that takes in
-            a PIL image and returns a transformed version. E.g,
-            ``transforms.RandomCrop``. Defaults to None.
-        target_transform (callable, optional): A function/transform that
-            takes in the target and transforms it. Defaults to None.
-        download (bool, optional): If True, downloads the dataset from the
-            internet and puts it in root directory. If dataset is already
-            downloaded, it is not downloaded again. Defaults to False.
+            root (str): Root directory of the datasets.
+            subset (str): The subset to use, one of ``small`` or ``large``.
+            transform (callable, optional): A function/transform that takes in
+                a PIL image and returns a transformed version. E.g,
+                ``transforms.RandomCrop``. Defaults to None.
+            target_transform (callable, optional): A function/transform that
+                takes in the target and transforms it. Defaults to None.
+            download (bool, optional): If True, downloads the dataset from the
+                internet and puts it in root directory. If dataset is already
+                downloaded, it is not downloaded again. Defaults to False.
 
         Note:
-        There is no information on the license of the dataset. It may not
-        be suitable for commercial use.
+            There is no information on the license of the dataset. It may not
+            be suitable for commercial use.
         """
         self.root = Path(root)
 

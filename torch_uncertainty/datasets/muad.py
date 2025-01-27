@@ -98,29 +98,29 @@ class MUAD(VisionDataset):
         """The MUAD Dataset.
 
         Args:
-        root (str): Root directory of dataset where directory 'leftImg8bit'
+            root (str): Root directory of dataset where directory 'leftImg8bit'
             and 'leftLabel' or 'leftDepth' are located.
-        split (str, optional): The image split to use, 'train' or 'val'.
-        version (str, optional): The version of the dataset to use, 'small'
+            split (str, optional): The image split to use, 'train' or 'val'.
+            version (str, optional): The version of the dataset to use, 'small'
             or 'full'. Defaults to 'full'.
-        min_depth (float, optional): The maximum depth value to use if
+            min_depth (float, optional): The maximum depth value to use if
             target_type is 'depth'. Defaults to None.
-        max_depth (float, optional): The maximum depth value to use if
+            max_depth (float, optional): The maximum depth value to use if
             target_type is 'depth'. Defaults to None.
-        target_type (str, optional): The type of target to use, 'semantic'
+            target_type (str, optional): The type of target to use, 'semantic'
             or 'depth'.
-        transforms (callable, optional): A function/transform that takes in
+            transforms (callable, optional): A function/transform that takes in
             a tuple of PIL images and returns a transformed version.
-        download (bool, optional): If true, downloads the dataset from the
+            download (bool, optional): If true, downloads the dataset from the
             internet and puts it in root directory. If dataset is already
             downloaded, it is not downloaded again.
 
         Reference:
-        https://muad-dataset.github.io
+            https://muad-dataset.github.io
 
         Note:
-        MUAD cannot be used for commercial purposes. Read MUAD's license
-        carefully before using it and verify that you can comply.
+            MUAD cannot be used for commercial purposes. Read MUAD's license
+            carefully before using it and verify that you can comply.
         """
         if not cv2_installed:  # coverage: ignore
             raise ImportError(

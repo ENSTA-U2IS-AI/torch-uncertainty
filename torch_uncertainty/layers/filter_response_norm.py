@@ -14,11 +14,11 @@ class _FilterResponseNormNd(nn.Module):
         """N-dimensional Filter Response Normalization layer.
 
         Args:
-        dimension (int): Dimension of the input tensor.
-        num_channels (int): Number of channels.
-        eps (float, optional): Epsilon. Defaults to 1e-6.
-        device (optional): Device. Defaults to None.
-        dtype (optional): Data type. Defaults to None.
+            dimension (int): Dimension of the input tensor.
+            num_channels (int): Number of channels.
+            eps (float, optional): Epsilon. Defaults to 1e-6.
+            device (optional): Device. Defaults to None.
+            dtype (optional): Data type. Defaults to None.
         """
         super().__init__()
         if dimension < 1 or not isinstance(dimension, int):
@@ -50,10 +50,10 @@ class FilterResponseNorm1d(_FilterResponseNormNd):
         """1-dimensional Filter Response Normalization layer.
 
         Args:
-        num_channels (int): Number of channels.
-        eps (float, optional): Epsilon. Defaults to 1e-6.
-        device (optional): Device. Defaults to None.
-        dtype (optional): Data type. Defaults to None.
+            num_channels (int): Number of channels.
+            eps (float, optional): Epsilon. Defaults to 1e-6.
+            device (optional): Device. Defaults to None.
+            dtype (optional): Data type. Defaults to None.
         """
         super().__init__(
             dimension=1,
@@ -69,10 +69,10 @@ class FilterResponseNorm2d(_FilterResponseNormNd):
         """2-dimensional Filter Response Normalization layer.
 
         Args:
-        num_channels (int): Number of channels.
-        eps (float, optional): Epsilon. Defaults to 1e-6.
-        device (optional): Device. Defaults to None.
-        dtype (optional): Data type. Defaults to None.
+            num_channels (int): Number of channels.
+            eps (float, optional): Epsilon. Defaults to 1e-6.
+            device (optional): Device. Defaults to None.
+            dtype (optional): Data type. Defaults to None.
         """
         super().__init__(
             dimension=2,
@@ -88,10 +88,10 @@ class FilterResponseNorm3d(_FilterResponseNormNd):
         """3-dimensional Filter Response Normalization layer.
 
         Args:
-        num_channels (int): Number of channels.
-        eps (float, optional): Epsilon. Defaults to 1e-6.
-        device (optional): Device. Defaults to None.
-        dtype (optional): Data type. Defaults to None.
+            num_channels (int): Number of channels.
+            eps (float, optional): Epsilon. Defaults to 1e-6.
+            device (optional): Device. Defaults to None.
+            dtype (optional): Data type. Defaults to None.
         """
         super().__init__(
             dimension=3,

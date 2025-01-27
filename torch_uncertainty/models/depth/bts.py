@@ -49,13 +49,13 @@ class AtrousBlock2d(nn.Module):
         """Atrous block with 1x1 and 3x3 convolutions.
 
         Args:
-        in_channels (int): Number of input channels.
-        out_channels (int): Number of output channels.
-        dilation (int): Dilation rate for the 3x3 convolution.
-        norm_first (bool): Whether to apply normalization before the 1x1 convolution.
+            in_channels (int): Number of input channels.
+            out_channels (int): Number of output channels.
+            dilation (int): Dilation rate for the 3x3 convolution.
+            norm_first (bool): Whether to apply normalization before the 1x1 convolution.
             Defaults to True.
-        norm_momentum (float): Momentum for the normalization layer. Defaults to 0.1.
-        factory_kwargs: Additional arguments for the PyTorch layers.
+            norm_momentum (float): Momentum for the normalization layer. Defaults to 0.1.
+            factory_kwargs: Additional arguments for the PyTorch layers.
         """
         super().__init__()
 
@@ -103,10 +103,10 @@ class UpConv2d(nn.Module):
         """Upsampling convolution.
 
         Args:
-        in_channels (int): Number of input channels.
-        out_channels (int): Number of output channels.
-        ratio (int): Upsampling ratio.
-        factory_kwargs: Additional arguments for the convolution layer.
+            in_channels (int): Number of input channels.
+            out_channels (int): Number of output channels.
+            ratio (int): Upsampling ratio.
+            factory_kwargs: Additional arguments for the convolution layer.
         """
         super().__init__()
         self.conv = nn.Conv2d(
@@ -295,10 +295,10 @@ class BTSDecoder(nn.Module):
         """BTS decoder.
 
         Args:
-        max_depth (float): The maximum predicted depth.
-        feat_out_channels (list[int]): The number of output channels from the backbone.
-        num_features (int): The number of features to use in the decoder.
-        dist_family (str | None, optional): The distribution family name. ``None`` means point-wise
+            max_depth (float): The maximum predicted depth.
+            feat_out_channels (list[int]): The number of output channels from the backbone.
+            num_features (int): The number of features to use in the decoder.
+            dist_family (str | None, optional): The distribution family name. ``None`` means point-wise
             prediction. Defaults to ``None``.
         """
         super().__init__()
@@ -535,17 +535,15 @@ class _BTS(nn.Module):
         """BTS model.
 
         Args:
-        backbone_name (str): Name of the encoding backbone.
-        max_depth (float): Maximum predicted depth.
-        bts_size (int): BTS feature size. Defaults to 512.
-        dist_family (str): Distribution family name. Defaults to None.
-        estimation. Defaults to nn.Identity.
-        pretrained_backbone (bool): Use a pretrained backbone. Defaults to True.
+            backbone_name (str): Name of the encoding backbone.
+            max_depth (float): Maximum predicted depth.
+            bts_size (int): BTS feature size. Defaults to 512.
+            dist_family (str): Distribution family name. Defaults to None.
+            pretrained_backbone (bool): Use a pretrained backbone. Defaults to True.
 
         References:
-        [1] `From Big to Small: Multi-Scale Local Planar Guidance for Monocular Depth Estimation
-        <https://arxiv.org/abs/1907.10326>`_.
-
+            [1] `From Big to Small: Multi-Scale Local Planar Guidance for Monocular Depth Estimation
+            <https://arxiv.org/abs/1907.10326>`_.
         """
         super().__init__()
         self.max_depth = max_depth

@@ -26,15 +26,14 @@ class MeanGTRelativeAbsoluteError(MeanAbsoluteError):
         following output:
 
         - ``rel_mean_absolute_error`` (:class:`~torch.Tensor`): A tensor with
-        the relative mean absolute error over the state
+          the relative mean absolute error over the state
 
         Args:
-        kwargs: Additional keyword arguments, see `Advanced metric settings
-            <https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metric-kwargs>`_.
+            kwargs: Additional keyword arguments, see `Advanced metric settings <https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metric-kwargs>`_.
 
         Reference:
-        [1] `From big to small: Multi-scale local planar guidance for monocular depth estimation
-        <https://arxiv.org/abs/1907.10326>`_.
+            [1] `From big to small: Multi-scale local planar guidance for monocular depth estimation
+            <https://arxiv.org/abs/1907.10326>`_.
 
         Example:
 
@@ -57,8 +56,9 @@ class MeanGTRelativeAbsoluteError(MeanAbsoluteError):
             result = mae_rel_metric.compute()
             print(f"Relative Mean Absolute Error: {result.item()}")
             # Output: 0.1607142984867096
+
         .. seealso::
-        - :class:`MeanGTRelativeSquaredError`
+            - :class:`MeanGTRelativeSquaredError`
         """
         super().__init__(**kwargs)
 
@@ -90,18 +90,17 @@ class MeanGTRelativeSquaredError(MeanSquaredError):
         following output:
 
         - ``rel_mean_squared_error`` (:class:`~torch.Tensor`): A tensor with
-        the relative mean squared error
+          the relative mean squared error
 
         Args:
-        squared: If True returns MSErel value, if False returns RMSErel
-            value.
-        num_outputs: Number of outputs in multioutput setting
-        kwargs: Additional keyword arguments, see `Advanced metric settings
-            <https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metric-kwargs>`_.
+            squared: If True returns MSErel value, if False returns RMSErel value.
+            num_outputs: Number of outputs in multioutput setting
+            kwargs: Additional keyword arguments, see `Advanced metric settings
+              <https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metric-kwargs>`_.
 
         Reference:
-        [1] `From big to small: Multi-scale local planar guidance for monocular depth estimation
-        <https://arxiv.org/abs/1907.10326>`_.
+            [1] `From big to small: Multi-scale local planar guidance for monocular depth estimation
+            <https://arxiv.org/abs/1907.10326>`_.
 
         Example:
 
@@ -124,9 +123,9 @@ class MeanGTRelativeSquaredError(MeanSquaredError):
             result = mse_rel_metric.compute()
             print(f"Relative Mean Squared Error: {result.item()}")
             # Output: 0.09821434319019318
-        .. seealso::
-        - :class:`MeanGTRelativeAbsoluteError`
 
+        .. seealso::
+            - :class:`MeanGTRelativeAbsoluteError`
         """
         super().__init__(squared, num_outputs, **kwargs)
 

@@ -36,25 +36,21 @@ class SWAG(SWA):
         the batchnorm statistics of the current SWAG samples.
 
         Args:
-        model (nn.Module): PyTorch model to be trained.
-        cycle_start (int): Begininning of the first SWAG averaging cycle.
-        cycle_length (int): Number of epochs between SWAG updates. The
-            first update occurs at :attr:`cycle_start` + :attr:`cycle_length`.
-        scale (float, optional): Scale of the Gaussian. Defaults to 1.0.
-        diag_covariance (bool, optional): Whether to use a diagonal
-            covariance. Defaults to False.
-        max_num_models (int, optional): Maximum number of models to store.
-            Defaults to 0.
-        var_clamp (float, optional): Minimum variance. Defaults to 1e-30.
-        num_estimators (int, optional): Number of posterior estimates to
-            use. Defaults to 16.
+            model (nn.Module): PyTorch model to be trained.
+            cycle_start (int): Begininning of the first SWAG averaging cycle.
+            cycle_length (int): Number of epochs between SWAG updates. The first update occurs at :attr:`cycle_start` + :attr:`cycle_length`.
+            scale (float, optional): Scale of the Gaussian. Defaults to ``1.0``.
+            diag_covariance (bool, optional): Whether to use a diagonal covariance. Defaults to ``False``.
+            max_num_models (int, optional): Maximum number of models to store. Defaults to ``0``.
+            var_clamp (float, optional): Minimum variance. Defaults to ``1e-30``.
+            num_estimators (int, optional): Number of posterior estimates to use. Defaults to ``16``.
 
         References:
-        [1] `A simple baseline for bayesian uncertainty in deep learning. In NeurIPS 2019
-        <https://arxiv.org/abs/1902.02476>`_.
+            [1] `A simple baseline for bayesian uncertainty in deep learning. In NeurIPS 2019
+            <https://arxiv.org/abs/1902.02476>`_.
 
         Note:
-        Originates from https://github.com/wjmaddox/swa_gaussian.
+            Originates from https://github.com/wjmaddox/swa_gaussian.
         """
         super().__init__(model, cycle_start, cycle_length)
         _swag_checks(scale, max_num_models, var_clamp)

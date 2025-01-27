@@ -520,9 +520,10 @@ class SegFormerHead(nn.Module):
     ):
         """Head for SegFormer.
 
-        Reference:
-        SegFormer: Simple and Efficient Design for Semantic Segmentation with
-        Transformers.
+        References:
+            [1] `SegFormer: Simple and Efficient Design for Semantic Segmentation with Transformers
+            <https://arxiv.org/abs/2105.15203>`_.
+
         """
         super().__init__()
         self.in_channels = in_channels

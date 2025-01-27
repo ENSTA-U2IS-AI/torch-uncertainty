@@ -42,31 +42,31 @@ class SegmentationRoutine(LightningModule):
         r"""Routine for training & testing on **segmentation** tasks.
 
         Args:
-        model (torch.nn.Module): Model to train.
-        num_classes (int): Number of classes in the segmentation task.
-        loss (torch.nn.Module): Loss function to optimize the :attr:`model`.
-        optim_recipe (dict or Optimizer, optional): The optimizer and
+            model (torch.nn.Module): Model to train.
+            num_classes (int): Number of classes in the segmentation task.
+            loss (torch.nn.Module): Loss function to optimize the :attr:`model`.
+            optim_recipe (dict or Optimizer, optional): The optimizer and
             optionally the scheduler to use. Defaults to ``None``.
-        eval_shift (bool, optional): Indicates whether to evaluate the Distribution
+            eval_shift (bool, optional): Indicates whether to evaluate the Distribution
             shift performance. Defaults to ``False``.
-        format_batch_fn (torch.nn.Module, optional): The function to format the
+            format_batch_fn (torch.nn.Module, optional): The function to format the
             batch. Defaults to ``None``.
-        metric_subsampling_rate (float, optional): The rate of subsampling for the
+            metric_subsampling_rate (float, optional): The rate of subsampling for the
             memory consuming metrics. Defaults to ``1e-2``.
-        log_plots (bool, optional): Indicates whether to log plots from
+            log_plots (bool, optional): Indicates whether to log plots from
             metrics. Defaults to ``False``.
-        num_samples_to_plot (int, optional): Number of samples to plot in the
+            num_samples_to_plot (int, optional): Number of samples to plot in the
             segmentation results. Defaults to ``3``.
-        num_calibration_bins (int, optional): Number of bins to compute calibration
+            num_calibration_bins (int, optional): Number of bins to compute calibration
             metrics. Defaults to ``15``.
 
         Warning:
-        You must define :attr:`optim_recipe` if you do not use the CLI.
+            You must define :attr:`optim_recipe` if you do not use the CLI.
 
         Note:
-        :attr:`optim_recipe` can be anything that can be returned by
-        :meth:`LightningModule.configure_optimizers()`. Find more details
-        `here <https://lightning.ai/docs/pytorch/stable/common/lightning_module.html#configure-optimizers>`_.
+            :attr:`optim_recipe` can be anything that can be returned by
+            :meth:`LightningModule.configure_optimizers()`. Find more details
+            `here <https://lightning.ai/docs/pytorch/stable/common/lightning_module.html#configure-optimizers>`_.
         """
         super().__init__()
         _segmentation_routine_checks(

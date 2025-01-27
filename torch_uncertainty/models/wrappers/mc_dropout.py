@@ -14,21 +14,21 @@ class MCDropout(nn.Module):
         """MC Dropout wrapper for a model containing nn.Dropout modules.
 
         Args:
-        model (nn.Module): model to wrap
-        num_estimators (int): number of estimators to use during the
+            model (nn.Module): model to wrap
+            num_estimators (int): number of estimators to use during the
             evaluation
-        last_layer (bool): whether to apply dropout to the last layer only.
-        on_batch (bool): Perform the MC-Dropout on the batch-size.
+            last_layer (bool): whether to apply dropout to the last layer only.
+            on_batch (bool): Perform the MC-Dropout on the batch-size.
             Otherwise in a for loop. Useful when constrained in memory.
 
         Warning:
-        This module will work only if you apply dropout through modules
-        declared in the constructor (__init__).
+            This module will work only if you apply dropout through modules
+            declared in the constructor (__init__).
 
         Warning:
-        The `last-layer` option disables the lastly initialized dropout
-        during evaluation: make sure that the last dropout is either
-        functional or a module of its own.
+            The `last-layer` option disables the lastly initialized dropout
+            during evaluation: make sure that the last dropout is either
+            functional or a module of its own.
         """
         super().__init__()
         filtered_modules = list(

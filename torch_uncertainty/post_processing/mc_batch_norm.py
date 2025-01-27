@@ -25,20 +25,19 @@ class MCBatchNorm(PostProcessing):
         """Monte Carlo Batch Normalization wrapper.
 
         Args:
-        model (nn.Module): model to be converted.
-        num_estimators (int): number of estimators.
-        convert (bool): whether to convert the model.
-        mc_batch_size (int, optional): Monte Carlo batch size. Defaults to 32.
-        device (Literal["cpu", "cuda"] | torch.device | None, optional): device.
+            model (nn.Module): model to be converted.
+            num_estimators (int): number of estimators.
+            convert (bool): whether to convert the model.
+            mc_batch_size (int, optional): Monte Carlo batch size. Defaults to 32.
+            device (Literal["cpu", "cuda"] | torch.device | None, optional): device.
             Defaults to None.
 
         Note:
-        This wrapper will be stochastic in eval mode only.
+            This wrapper will be stochastic in eval mode only.
 
         References:
-        [1] `Teye M, Azizpour H, Smith K. Bayesian uncertainty estimation for batch normalized deep networks. In ICML 2018
-        <https://arxiv.org/abs/1802.06455>`_.
-
+            [1] `Teye M, Azizpour H, Smith K. Bayesian uncertainty estimation for batch normalized deep networks. In ICML 2018
+            <https://arxiv.org/abs/1802.06455>`_.
         """
         super().__init__()
         self.mc_batch_size = mc_batch_size

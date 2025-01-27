@@ -23,19 +23,16 @@ class SILog(Metric):
         :attr:`sqrt` argument to `True`, the metric computes the square root of the SILog value.
 
         Args:
-        sqrt: If `True`, return the square root of the metric. Defaults to
-            False.
-        lmbda: The regularization parameter on the variance of error.
-            Defaults to 1.0.
-        kwargs: Additional keyword arguments, see `Advanced metric settings
-            <https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metric-kwargs>`_.
+            sqrt: If `True`, return the square root of the metric. Defaults to False.
+            lmbda: The regularization parameter on the variance of error. Defaults to 1.0.
+            kwargs: Additional keyword arguments, see `Advanced metric settings <https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metric-kwargs>`_.
 
         Reference:
-        [1] `Depth Map Prediction from a Single Image using a Multi-Scale Deep Network, NeurIPS 2014
-        <https://papers.nips.cc/paper_files/paper/2014/hash/7bccfde7714a1ebadf06c5f4cea752c1-Abstract.html>`_.
+            [1] `Depth Map Prediction from a Single Image using a Multi-Scale Deep Network, NeurIPS 2014
+            <https://papers.nips.cc/paper_files/paper/2014/hash/7bccfde7714a1ebadf06c5f4cea752c1-Abstract.html>`_.
 
-        [2] `From big to small: Multi-scale local planar guidance for monocular depth estimation
-        <https://arxiv.org/abs/1907.10326>`_.
+            [2] `From big to small: Multi-scale local planar guidance for monocular depth estimation
+            <https://arxiv.org/abs/1907.10326>`_.
 
         Example:
 

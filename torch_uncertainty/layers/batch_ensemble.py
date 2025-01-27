@@ -30,64 +30,64 @@ class BatchLinear(nn.Module):
         data.
 
         .. math::
-        y=(x\circ \widehat{r_{group}})W^{T}\circ \widehat{s_{group}} + \widehat{b}
+            y=(x\circ \widehat{r_{group}})W^{T}\circ \widehat{s_{group}} + \widehat{b}
 
         Args:
-        in_features (int): Number of input features..
-        out_features (int): Number of output features.
-        num_estimators (int): number of estimators in the ensemble, referred as
-            :math:`M`.
-        bias (bool, optional): if ``True``, adds a learnable bias to the
-            output. Defaults to ``True``.
-        device (Any, optional): device to use for the parameters and
-            buffers of this module. Defaults to ``None``.
-        dtype (Any, optional): data type to use for the parameters and
-            buffers of this module. Defaults to ``None``.
+            in_features (int): Number of input features.
+            out_features (int): Number of output features.
+            num_estimators (int): Number of estimators in the ensemble, referred as
+                :math:`M`.
+            bias (bool, optional): If ``True``, adds a learnable bias to the
+                output. Defaults to ``True``.
+            device (Any, optional): Device to use for the parameters and
+                buffers of this module. Defaults to ``None``.
+            dtype (Any, optional): Data type to use for the parameters and
+                buffers of this module. Defaults to ``None``.
 
         Reference:
-        Introduced by the paper `BatchEnsemble: An Alternative Approach to
-        Efficient Ensemble and Lifelong Learning
-        <https://arxiv.org/abs/2002.06715>`_, we present here an implementation
-        of a Linear BatchEnsemble layer in `PyTorch <https://pytorch.org>`_
-        heavily inspired by its `official implementation
-        <https://github.com/google/edward2>`_ in `TensorFlow
-        <https://www.tensorflow.org>`_.
+            Introduced by the paper `BatchEnsemble: An Alternative Approach to
+            Efficient Ensemble and Lifelong Learning
+            <https://arxiv.org/abs/2002.06715>`_, we present here an implementation
+            of a Linear BatchEnsemble layer in `PyTorch <https://pytorch.org>`_
+            heavily inspired by its `official implementation
+            <https://github.com/google/edward2>`_ in `TensorFlow
+            <https://www.tensorflow.org>`_.
 
         Attributes:
-        weight: the learnable weights (:math:`W`) of shape
-            :math:`(H_{out}, H_{in})` shared between the estimators. The values
-            are initialized from :math:`\mathcal{U}(-\sqrt{k}, \sqrt{k})`,
-            where :math:`k = \frac{1}{H_{in}}`.
-        r_group: the learnable matrice of shape :math:`(M, H_{in})` where each row
-            consist of the vector :math:`r_{i}` corresponding to the
-            :math:`i^{th}` ensemble member. The values are initialized from
-            :math:`\mathcal{N}(1.0, 0.5)`.
-        s_group: the learnable matrice of shape :math:`(M, H_{out})` where each row
-            consist of the vector :math:`s_{i}` corresponding to the
-            :math:`i^{th}` ensemble member. The values are initialized from
-            :math:`\mathcal{N}(1.0, 0.5)`.
-        bias: the learnable bias (:math:`b`) of shape :math:`(M, H_{out})`
-            where each row corresponds to the bias of the :math:`i^{th}`
-            ensemble member. If :attr:`bias` is ``True``, the values are
-            initialized from :math:`\mathcal{U}(-\sqrt{k}, \sqrt{k})` where
-            :math:`k = \frac{1}{H_{in}}`.
+            weight: The learnable weights (:math:`W`) of shape
+                :math:`(H_{out}, H_{in})` shared between the estimators. The values
+                are initialized from :math:`\mathcal{U}(-\sqrt{k}, \sqrt{k})`,
+                where :math:`k = \frac{1}{H_{in}}`.
+            r_group: The learnable matrice of shape :math:`(M, H_{in})` where each row
+                consist of the vector :math:`r_{i}` corresponding to the
+                :math:`i^{th}` ensemble member. The values are initialized from
+                :math:`\mathcal{N}(1.0, 0.5)`.
+            s_group: The learnable matrice of shape :math:`(M, H_{out})` where each row
+                consist of the vector :math:`s_{i}` corresponding to the
+                :math:`i^{th}` ensemble member. The values are initialized from
+                :math:`\mathcal{N}(1.0, 0.5)`.
+            bias: The learnable bias (:math:`b`) of shape :math:`(M, H_{out})`
+                where each row corresponds to the bias of the :math:`i^{th}`
+                ensemble member. If :attr:`bias` is ``True``, the values are
+                initialized from :math:`\mathcal{U}(-\sqrt{k}, \sqrt{k})` where
+                :math:`k = \frac{1}{H_{in}}`.
 
         Shape:
-        - Input: :math:`(N, H_{in})` where :math:`N` is the batch size and
-          :math:`H_{in} = \text{in_features}`.
-        - Output: :math:`(N, H_{out})` where
-          :math:`H_{out} = \text{out_features}`.
+            - Input: :math:`(N, H_{in})` where :math:`N` is the batch size and
+              :math:`H_{in} = \text{in_features}`.
+            - Output: :math:`(N, H_{out})` where
+              :math:`H_{out} = \text{out_features}`.
 
         Warning:
-        Make sure that :attr:`num_estimators` divides :attr:`out_features` when calling :func:`forward()`.
+            Make sure that :attr:`num_estimators` divides :attr:`out_features` when calling :func:`forward()`.
 
         Examples:
-        >>> # With three estimators
-        >>> m = LinearBE(20, 30, 3)
-        >>> input = torch.randn(8, 20)
-        >>> output = m(input)
-        >>> print(output.size())
-        torch.Size([8, 30])
+            >>> # With three estimators
+            >>> m = LinearBE(20, 30, 3)
+            >>> input = torch.randn(8, 20)
+            >>> output = m(input)
+            >>> print(output.size())
+            torch.Size([8, 30])
         """
         factory_kwargs = {"device": device, "dtype": dtype}
         super().__init__()
@@ -189,7 +189,7 @@ class BatchConv2d(nn.Module):
         dtype=None,
     ) -> None:
         r"""BatchEnsemble-style Conv2d layer.
-        
+
         Applies a 2d convolution over an input signal composed of several input
         planes using BatchEnsemble method to the incoming data.
 
@@ -198,69 +198,69 @@ class BatchConv2d(nn.Module):
         :math:`(N, C_{out}, H_{out}, W_{out})` can be precisely described as:
 
         .. math::
-        \text{out}(N_i, C_{\text{out}_j})=\
-            &\widehat{b}(N_i,C_{\text{out}_j})
-        +\widehat{s_{group}}(N_{i},C_{\text{out}_j}) \\
-            &\times \sum_{k = 0}^{C_{\text{in}} - 1}
-        \text{weight}(C_{\text{out}_j}, k)\star (\text{input}(N_i, k)
-        \times \widehat{r_{group}}(N_i, k))
+            \text{out}(N_i, C_{\text{out}_j})=\
+                &\widehat{b}(N_i,C_{\text{out}_j})
+            +\widehat{s_{group}}(N_{i},C_{\text{out}_j}) \\
+                &\times \sum_{k = 0}^{C_{\text{in}} - 1}
+            \text{weight}(C_{\text{out}_j}, k)\star (\text{input}(N_i, k)
+            \times \widehat{r_{group}}(N_i, k))
 
         Reference:
-        Introduced by the paper `BatchEnsemble: An Alternative Approach to
-        Efficient Ensemble and Lifelong Learning
-        <https://arxiv.org/abs/2002.06715>`_, we present here an implementation
-        of a Conv2d BatchEnsemble layer in `PyTorch <https://pytorch.org>`_
-        heavily inspired by its `official implementation
-        <https://github.com/google/edward2>`_ in `TensorFlow
-        <https://www.tensorflow.org>`_.
+            Introduced by the paper `BatchEnsemble: An Alternative Approach to
+            Efficient Ensemble and Lifelong Learning
+            <https://arxiv.org/abs/2002.06715>`_, we present here an implementation
+            of a Conv2d BatchEnsemble layer in `PyTorch <https://pytorch.org>`_
+            heavily inspired by its `official implementation
+            <https://github.com/google/edward2>`_ in `TensorFlow
+            <https://www.tensorflow.org>`_.
 
         Args:
-        in_channels (int): number of channels in the input images.
-        out_channels (int): number of channels produced by the convolution.
-        kernel_size (int or tuple): size of the convolving kernel.
-        num_estimators (int): number of estimators in the ensemble referred as
-            :math:`M` here.
-        stride (int or tuple, optional): stride of the convolution. Defaults to
-            ``1``.
-        padding (int, tuple or str, optional): padding added to all four sides
-            of the input. Defaults to ``0``.
-        dilation (int or tuple, optional): spacing between kernel elements.
-            Defaults to ``1``.
-        groups (int, optional): number of blocked connections from input
-            channels to output channels. Defaults to ``1``.
-        bias (bool, optional): if ``True``, adds a learnable bias to the
-            output. Defaults to ``True``.
-        device (Any, optional): device to use for the parameters and
-            buffers of this module. Defaults to ``None``.
-        dtype (Any, optional): data type to use for the parameters and
-            buffers of this module. Defaults to ``None``.
+            in_channels (int): Number of channels in the input images.
+            out_channels (int): Number of channels produced by the convolution.
+            kernel_size (int or tuple): Size of the convolving kernel.
+            num_estimators (int): Number of estimators in the ensemble referred as
+                :math:`M` here.
+            stride (int or tuple, optional): Stride of the convolution. Defaults to
+                ``1``.
+            padding (int, tuple or str, optional): Padding added to all four sides
+                of the input. Defaults to ``0``.
+            dilation (int or tuple, optional): Spacing between kernel elements.
+                Defaults to ``1``.
+            groups (int, optional): Number of blocked connections from input
+                channels to output channels. Defaults to ``1``.
+            bias (bool, optional): If ``True``, adds a learnable bias to the
+                output. Defaults to ``True``.
+            device (Any, optional): Device to use for the parameters and
+                buffers of this module. Defaults to ``None``.
+            dtype (Any, optional): Data type to use for the parameters and
+                buffers of this module. Defaults to ``None``.
 
         Attributes:
-        weight: the learnable weights of the module of shape
-            :math:`(\text{out_channels}, \frac{\text{in_channels}}
-            {\text{groups}},`:math:`\text{kernel_size[0]},
-            \text{kernel_size[1]})` shared between the estimators. The values
-            of these weights are sampled from :math:`\mathcal{U}(-\sqrt{k},
-            \sqrt{k})` where :math:`k = \frac{\text{groups}}{C_\text{in} *
-            \prod_{i=0}^{1}\text{kernel_size}[i]}`.
-        r_group: the learnable matrice of shape :math:`(M, C_{in})` where each row
-            consist of the vector :math:`r_{i}` corresponding to the
-            :math:`i^{th}` ensemble member. The values are initialized from
-            :math:`\mathcal{N}(1.0, 0.5)`.
-        s_group: the learnable matrice of shape :math:`(M, C_{out})` where each row
-            consist of the vector :math:`s_{i}` corresponding to the
-            :math:`i^{th}` ensemble member. The values are initialized from
-            :math:`\mathcal{N}(1.0, 0.5)`.
-        bias: the learnable bias (:math:`b`) of shape :math:`(M, C_{out})`
-            where each row corresponds to the bias of the :math:`i^{th}`
-            ensemble member. If :attr:`bias` is ``True``, the values are
-            initialized from :math:`\mathcal{U}(-\sqrt{k}, \sqrt{k})` where
-            :math:`k=\frac{\text{groups}}{C_\text{in}*\prod_{i=0}^{1}
-            \text{kernel_size}[i]}`.
+            weight: The learnable weights of the module of shape
+                :math:`(\text{out_channels}, \frac{\text{in_channels}}
+                {\text{groups}},`:math:`\text{kernel_size[0]},
+                \text{kernel_size[1]})` shared between the estimators. The values
+                of these weights are sampled from :math:`\mathcal{U}(-\sqrt{k},
+                \sqrt{k})` where :math:`k = \frac{\text{groups}}{C_\text{in} *
+                \prod_{i=0}^{1}\text{kernel_size}[i]}`.
+            r_group: The learnable matrice of shape :math:`(M, C_{in})` where each row
+                consist of the vector :math:`r_{i}` corresponding to the
+                :math:`i^{th}` ensemble member. The values are initialized from
+                :math:`\mathcal{N}(1.0, 0.5)`.
+            s_group: The learnable matrice of shape :math:`(M, C_{out})` where each row
+                consist of the vector :math:`s_{i}` corresponding to the
+                :math:`i^{th}` ensemble member. The values are initialized from
+                :math:`\mathcal{N}(1.0, 0.5)`.
+            bias: The learnable bias (:math:`b`) of shape :math:`(M, C_{out})`
+                where each row corresponds to the bias of the :math:`i^{th}`
+                ensemble member. If :attr:`bias` is ``True``, the values are
+                initialized from :math:`\mathcal{U}(-\sqrt{k}, \sqrt{k})` where
+                :math:`k=\frac{\text{groups}}{C_\text{in}*\prod_{i=0}^{1}
+                \text{kernel_size}[i]}`.
 
         Shape:
-        - Input: :math:`(N, C_{in}, H_{in}, W_{in})`.
-        - Output: :math:`(N, C_{out}, H_{out}, W_{out})`.
+            - Input: :math:`(N, C_{in}, H_{in}, W_{in})`.
+            - Output: :math:`(N, C_{out}, H_{out}, W_{out})`.
 
         .. math::
             H_{out} = \left\lfloor\frac{H_{in} + 2 \times \text{padding}[0] -
@@ -273,16 +273,15 @@ class BatchConv2d(nn.Module):
             {\text{stride}[1]} + 1\right\rfloor
 
         Warning:
-        Make sure that :attr:`num_estimators` divides :attr:`out_channels` when calling :func:`forward()`.
-
+            Make sure that :attr:`num_estimators` divides :attr:`out_channels` when calling :func:`forward()`.
 
         Examples:
-        >>> # With square kernels, four estimators and equal stride
-        >>> m = Conv2dBE(3, 32, 3, 4, stride=1)
-        >>> input = torch.randn(8, 3, 16, 16)
-        >>> output = m(input)
-        >>> print(output.size())
-        torch.Size([8, 32, 14, 14])
+            >>> # With square kernels, four estimators and equal stride
+            >>> m = Conv2dBE(3, 32, 3, 4, stride=1)
+            >>> input = torch.randn(8, 3, 16, 16)
+            >>> output = m(input)
+            >>> print(output.size())
+            torch.Size([8, 32, 14, 14])
         """
         factory_kwargs = {"device": device, "dtype": dtype}
         super().__init__()

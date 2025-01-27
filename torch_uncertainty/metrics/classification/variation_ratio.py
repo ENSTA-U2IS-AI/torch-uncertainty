@@ -25,36 +25,33 @@ class VariationRatio(Metric):
         predicted class labels that are not the chosen (most frequent) class.
 
         Args:
-        probabilistic (bool, optional): Whether to use psrobabilistic predictions.
-            Defaults to True.
-        reduction (Literal["mean", "sum", "none", None], optional): Determines how
-            to reduce over the batch dimension:
+            probabilistic (bool, optional): Whether to use probabilistic predictions. Defaults to True.
+            reduction (Literal["mean", "sum", "none", None], optional): Determines how to reduce over the batch dimension:
 
-            - ``'mean'`` [default]: Averages score across samples
-            - ``'sum'``: Sum score across samples
-            - ``'none'`` or ``None``: Returns score per sample
+                - ``'mean'`` [default]: Averages score across samples
+                - ``'sum'``: Sum score across samples
+                - ``'none'`` or ``None``: Returns score per sample
 
-        kwargs: Additional keyword arguments, see `Advanced metric settings
-            <https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metric-kwargs>`_.
+            kwargs: Additional keyword arguments, see `Advanced metric settings <https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metric-kwargs>`_.
 
         Inputs:
-        - :attr:`probs`: :math:`(B, N, C)`
+            - :attr:`probs`: :math:`(B, N, C)`
 
-        where :math:`B` is the batch size, :math:`C` is the number of classes
-        and :math:`N` is the number of estimators.
+              where :math:`B` is the batch size, :math:`C` is the number of classes
+              and :math:`N` is the number of estimators.
 
         Note:
-        A higher variation ratio indicates higher uncertainty or disagreement
-        among the estimators.
+            A higher variation ratio indicates higher uncertainty or disagreement
+            among the estimators.
 
         Warning:
-        Metric `VariationRatio` will save all predictions in buffer. For large
-        datasets this may lead to large memory footprint.
+            Metric `VariationRatio` will save all predictions in buffer. For large
+            datasets this may lead to large memory footprint.
 
         Raises:
-        ValueError:
-            If :attr:`reduction` is not one of ``'mean'``, ``'sum'``,
-            ``'none'`` or ``None``.
+            ValueError:
+                If :attr:`reduction` is not one of ``'mean'``, ``'sum'``,
+                ``'none'`` or ``None``.
 
         Example:
 
@@ -63,8 +60,8 @@ class VariationRatio(Metric):
             from torch_uncertainty.metrics.classification import VariationRatio
 
             probs = torch.tensor([
-            [[0.7, 0.3], [0.6, 0.4], [0.8, 0.2]],  # Example 1, 3 estimators
-            [[0.4, 0.6], [0.5, 0.5], [0.3, 0.7]]   # Example 2, 3 estimators
+                [[0.7, 0.3], [0.6, 0.4], [0.8, 0.2]],  # Example 1, 3 estimators
+                [[0.4, 0.6], [0.5, 0.5], [0.3, 0.7]]   # Example 2, 3 estimators
             ])
 
             vr = VariationRatio(probabilistic=True, reduction="mean")
@@ -88,7 +85,7 @@ class VariationRatio(Metric):
 
         rank_zero_warn(
             "Metric `VariationRatio` will save all predictions in buffer. For "
-            " large datasets this may lead to large memory footprint."
+            "large datasets this may lead to large memory footprint."
         )
 
     def update(self, probs: Tensor) -> None:

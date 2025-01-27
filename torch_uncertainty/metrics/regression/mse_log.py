@@ -27,17 +27,15 @@ class MeanSquaredLogError(MeanSquaredError):
         following output:
 
         - ``mse_log`` (:class:`~torch.Tensor`): A tensor with the
-        relative mean absolute error over the state
+          relative mean absolute error over the state
 
         Args:
-        squared: If True returns MSELog value, if False returns EMSELog
-            value.
-        kwargs: Additional keyword arguments, see `Advanced metric settings
-            <https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metric-kwargs>`_.
+            squared: If True returns MSELog value, if False returns EMSELog value.
+            kwargs: Additional keyword arguments, see `Advanced metric settings <https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metric-kwargs>`_.
 
         Reference:
-        [1] `From big to small: Multi-scale local planar guidance for monocular depth estimation
-        <https://arxiv.org/abs/1907.10326>`_.
+            [1] `From big to small: Multi-scale local planar guidance for monocular depth estimation
+            <https://arxiv.org/abs/1907.10326>`_.
 
         Example:
 

@@ -24,8 +24,7 @@ class Log10(MeanAbsoluteError):
         - :attr:`target`: :math:`(N)`
 
         Args:
-        kwargs: Additional keyword arguments, see `Advanced metric settings
-            <https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metric-kwargs>`_.
+            kwargs: Additional keyword arguments, see `Advanced metric settings <https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metric-kwargs>`_.
 
         Example:
 

@@ -63,31 +63,22 @@ class ImageNetDataModule(TUDataModule):
         """DataModule for ImageNet.
 
         Args:
-        root (str): Root directory of the datasets.
-        eval_ood (bool): Whether to evaluate out-of-distribution
-            performance. Defaults to ``False``.
-        eval_shift (bool): Whether to evaluate on shifted data. Defaults to
-            ``False``.
-        shift_severity: int = 1,
-        batch_size (int): Number of samples per batch.
-        val_split (float or Path): Share of samples to use for validation
-            or path to a yaml file containing a list of validation images
-            ids. Defaults to ``0.0``.
-        ood_ds (str): Which out-of-distribution dataset to use. Defaults to
-            ``"openimage-o"``.
-        test_alt (str): Which test set to use. Defaults to ``None``.
-        procedure (str): Which procedure to use. Defaults to ``None``.
-        train_size (int): Size of training images. Defaults to ``224``.
-        interpolation (str): Interpolation method for the Resize Crops.
-            Defaults to ``"bilinear"``.
-        basic_augment (bool): Whether to apply base augmentations. Defaults to
-            ``True``.
-        rand_augment_opt (str): Which RandAugment to use. Defaults to ``None``.
-        num_workers (int): Number of workers to use for data loading. Defaults
-            to ``1``.
-        pin_memory (bool): Whether to pin memory. Defaults to ``True``.
-        persistent_workers (bool): Whether to use persistent workers. Defaults
-            to ``True``.
+            root (str): Root directory of the datasets.
+            batch_size (int): Number of samples per batch.
+            eval_ood (bool): Whether to evaluate out-of-distribution performance. Defaults to ``False``.
+            eval_shift (bool): Whether to evaluate on shifted data. Defaults to ``False``.
+            shift_severity (int): Severity of the shift. Defaults to ``1``.
+            val_split (float or Path): Share of samples to use for validation or path to a yaml file containing a list of validation images ids. Defaults to ``0.0``.
+            ood_ds (str): Which out-of-distribution dataset to use. Defaults to ``"openimage-o"``.
+            test_alt (str): Which test set to use. Defaults to ``None``.
+            procedure (str): Which procedure to use. Defaults to ``None``.
+            train_size (int): Size of training images. Defaults to ``224``.
+            interpolation (str): Interpolation method for the Resize Crops. Defaults to ``"bilinear"``.
+            basic_augment (bool): Whether to apply base augmentations. Defaults to ``True``.
+            rand_augment_opt (str): Which RandAugment to use. Defaults to ``None``.
+            num_workers (int): Number of workers to use for data loading. Defaults to ``1``.
+            pin_memory (bool): Whether to pin memory. Defaults to ``True``.
+            persistent_workers (bool): Whether to use persistent workers. Defaults to ``True``.
         """
         super().__init__(
             root=Path(root),
@@ -288,7 +279,7 @@ class ImageNetDataModule(TUDataModule):
     def test_dataloader(self) -> list[DataLoader]:
         """Get the test dataloaders for ImageNet.
 
-        Return:
+        Returns:
             list[DataLoader]: ImageNet test set (in distribution data) and
             Textures test split (out-of-distribution data).
         """

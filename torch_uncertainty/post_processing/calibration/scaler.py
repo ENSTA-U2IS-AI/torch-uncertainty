@@ -23,17 +23,14 @@ class Scaler(PostProcessing):
         """Virtual class for scaling post-processing for calibrated probabilities.
 
         Args:
-        model (nn.Module): Model to calibrate.
-        lr (float, optional): Learning rate for the optimizer. Defaults to 0.1.
-        max_iter (int, optional): Maximum number of iterations for the
-            optimizer. Defaults to 100.
-        device (Optional[Literal["cpu", "cuda"]], optional): Device to use
-            for optimization. Defaults to None.
+            model (nn.Module): Model to calibrate.
+            lr (float, optional): Learning rate for the optimizer. Defaults to ``0.1``.
+            max_iter (int, optional): Maximum number of iterations for the optimizer. Defaults to ``100``.
+            device (Optional[Literal["cpu", "cuda"]], optional): Device to use for optimization. Defaults to ``None``.
 
         References:
-        [1] `On calibration of modern neural networks. In ICML 2017
-        <https://arxiv.org/abs/1706.04599>`_.
-
+            [1] `On calibration of modern neural networks. In ICML 2017
+            <https://arxiv.org/abs/1706.04599>`_.
         """
         super().__init__(model)
         self.device = device

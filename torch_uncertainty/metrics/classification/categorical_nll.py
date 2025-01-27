@@ -25,38 +25,38 @@ class CategoricalNLL(Metric):
 
         .. math::
 
-        \ell(p, y) = -\frac{1}{B} \sum_{i=1}^B \log(p_{i, y_i})
+            \ell(p, y) = -\frac{1}{B} \sum_{i=1}^B \log(p_{i, y_i})
 
         where :math:`p_{i, y_i}` is the predicted probability for the true class :math:`y_i`
         of sample :math:`i`.
 
         Args:
-        reduction (str, optional): Determines how to reduce the computed loss over
-            the batch dimension:
+            reduction (str, optional): Determines how to reduce the computed loss over
+                the batch dimension:
 
-            - ``'mean'`` [default]: Averages the loss across samples in the batch.
-            - ``'sum'``: Sums the loss across samples in the batch.
-            - ``'none'`` or ``None``: Returns the loss for each sample without reducing.
+                - ``'mean'`` [default]: Averages the loss across samples in the batch.
+                - ``'sum'``: Sums the loss across samples in the batch.
+                - ``'none'`` or ``None``: Returns the loss for each sample without reducing.
 
-        kwargs: Additional keyword arguments as described in `Advanced Metric Settings <https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metric-kwargs>`_.
+            kwargs: Additional keyword arguments as described in `Advanced Metric Settings <https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metric-kwargs>`_.
 
         Inputs:
-        - :attr:`probs`: :math:`(B, C)`
-            A Tensor containing the predicted probabilities for `C` classes, where each
-            row corresponds to a sample in the batch.
-        - :attr:`target`: :math:`(B,)`
-            A Tensor containing the ground truth labels as integers in the range :math:`[0, C-1]`.
+            - :attr:`probs`: :math:`(B, C)`
+                A Tensor containing the predicted probabilities for `C` classes, where each
+                row corresponds to a sample in the batch.
+            - :attr:`target`: :math:`(B,)`
+                A Tensor containing the ground truth labels as integers in the range :math:`[0, C-1]`.
 
         Note:
-        Ensure that the probabilities in :attr:`probs` are normalized to sum to one:
+            Ensure that the probabilities in :attr:`probs` are normalized to sum to one:
 
-        .. math::
+            .. math::
 
-            \sum_{c=1}^C p_{i, c} = 1 \quad \forall i \in [1, B].
+                \sum_{c=1}^C p_{i, c} = 1 \quad \forall i \in [1, B].
 
         Warning:
-        If `reduction` is not one of ``'mean'``, ``'sum'``, ``'none'``, or ``None``, a
-        :class:`ValueError` will be raised.
+            If `reduction` is not one of ``'mean'``, ``'sum'``, ``'none'``, or ``None``, a
+            :class:`ValueError` will be raised.
 
         Example:
 
@@ -69,8 +69,6 @@ class CategoricalNLL(Metric):
             metric.update(probs, target)
             print(metric.compute())
             # Output: tensor(0.4338)
-
-
         """
         super().__init__(**kwargs)
 
