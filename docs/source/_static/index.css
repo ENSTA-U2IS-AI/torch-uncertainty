@@ -1,0 +1,67 @@
+:root {
+  --retro-blue: #4a74a5;
+  --retro-blue-hover: #3b5c84; }
+
+.gradient-banner {
+  background: linear-gradient(to right, #020202, #A9BBDC, #262729);
+  color: white;
+  padding: 2rem 0; }
+  .gradient-banner .btn-warning {
+    background-color: var(--retro-blue);
+    border-color: var(--retro-blue);
+    color: white; }
+    .gradient-banner .btn-warning:hover {
+      background-color: var(--retro-blue-hover);
+      border-color: var(--retro-blue-hover); }
+  .gradient-banner .btn-light {
+    background-color: white;
+    border: 2px solid var(--retro-blue);
+    color: var(--retro-blue); }
+    .gradient-banner .btn-light:hover {
+      background-color: var(--retro-blue);
+      color: white;
+      border-color: var(--retro-blue); }
+
+.card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  border: 1px solid #e3e3e3; }
+  .card .card-body {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start; }
+  .card .card-title {
+    margin-top: 0;
+    font-size: 1.25rem;
+    font-weight: 600; }
+  .card p {
+    flex-shrink: 0;
+    margin-bottom: 0.5rem; }
+  .card .card-img-bottom {
+    object-fit: contain;
+    max-height: 150px;
+    margin: auto;
+    display: block;
+    width: 100%; }
+  .card.shadow-sm {
+    display: flex;
+    flex: 1;
+    height: 100%; }
+  .card .btn-primary {
+    background-color: var(--retro-blue);
+    border-color: var(--retro-blue);
+    color: white;
+    font-size: 1rem;
+    font-weight: 500;
+    padding: 0.6rem 1rem;
+    width: 100%; }
+    .card .btn-primary:hover {
+      background-color: var(--retro-blue-hover);
+      border-color: var(--retro-blue-hover);
+      color: white; }
+
+.row .col-md-4 {
+  display: flex;
+  flex-direction: column; }

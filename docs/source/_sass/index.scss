@@ -1,0 +1,100 @@
+// index.scss
+
+:root {
+  --retro-blue: #4a74a5;       // Slightly muted blue
+  --retro-blue-hover: #3b5c84; // Hover color
+}
+
+.gradient-banner {
+  background: linear-gradient(to right, #020202, #A9BBDC, #262729);
+  color: white;
+  padding: 2rem 0;
+
+  // "Getting Started" button (retro blue)
+  .btn-warning {
+    background-color: var(--retro-blue);
+    border-color: var(--retro-blue);
+    color: white;
+
+    &:hover {
+      background-color: var(--retro-blue-hover);
+      border-color: var(--retro-blue-hover);
+    }
+  }
+
+  // "API Documentation" button (white with retro-blue border)
+  .btn-light {
+    background-color: white;
+    border: 2px solid var(--retro-blue);
+    color: var(--retro-blue);
+
+    &:hover {
+      background-color: var(--retro-blue);
+      color: white;
+      border-color: var(--retro-blue);
+    }
+  }
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  border: 1px solid #e3e3e3; // Optional subtle border
+
+  .card-body {
+    flex-grow: 1; 
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+  }
+
+  .card-title {
+    margin-top: 0; 
+    font-size: 1.25rem;
+    font-weight: 600;
+  }
+
+  p {
+    flex-shrink: 0;
+    margin-bottom: 0.5rem;
+  }
+
+  .card-img-bottom {
+    object-fit: contain;
+    max-height: 150px;
+    margin: auto; 
+    display: block;
+    width: 100%;
+  }
+
+  &.shadow-sm {
+    display: flex;
+    flex: 1;
+    height: 100%;
+  }
+
+  .btn-primary {
+    background-color: var(--retro-blue);
+    border-color: var(--retro-blue);
+    color: white;
+    font-size: 1rem;
+    font-weight: 500;
+    padding: 0.6rem 1rem;
+    width: 100%;
+
+    &:hover {
+      background-color: var(--retro-blue-hover);
+      border-color: var(--retro-blue-hover);
+      color: white;
+    }
+  }
+}
+
+// Ensure consistent card height across columns
+.row {
+  .col-md-4 {
+    display: flex;
+    flex-direction: column;
+  }
+}

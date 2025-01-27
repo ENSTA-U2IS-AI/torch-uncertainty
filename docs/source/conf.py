@@ -26,6 +26,7 @@ release = "0.4.0"
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
+    "sphinxcontrib.sass",
     # "sphinxcontrib.katex",
     "sphinx.ext.mathjax",
     "sphinx.ext.autodoc",
@@ -37,7 +38,6 @@ extensions = [
     "sphinx_codeautolink",
     "sphinx_gallery.gen_gallery",
     # "sphinx_gallery.load_style",
-    "sphinxcontrib.sass",
     "sphinx_design",
 ]
 mathjax3_config = {
@@ -46,11 +46,6 @@ mathjax3_config = {
         "displayMath": [["\\[", "\\]"], ["$$", "$$"]],
     },
 }
-
-# Sass source and output directories
-sass_src_dir = "_static/styles"
-sass_out_dir = "_static"
-
 
 subsection_order = ExplicitOrder(
     [
@@ -94,7 +89,7 @@ napoleon_use_ivar = True
 # Disable docstring inheritance
 autodoc_inherit_docstrings = False
 
-# Disable displaying type annotations, these can be very verbose
+# Disable displaying type annotations
 autodoc_typehints = "none"
 
 templates_path = ["_templates"]
@@ -110,18 +105,22 @@ nbsphinx_execute = "never"
 html_theme = "pydata_sphinx_theme"
 
 
+sass_src_dir = "_sass"
+sass_out_dir = "_static"
+sass_targets = {"index.scss": "index.css"}
+
 html_static_path = ["_static"]
-html_css_files = ["custom.css"]
+html_css_files = ["index.css"]
 
 
 html_theme_options = {
     "logo": {
-        "text": "",  # Remove the project name text
+        "text": "",
         "image_light": "_static/logo.png",  # Path to the logo for light mode
         "image_dark": "_static/logo.png",  # Path to the logo for dark mode
         "alt_text": "TorchUncertainty Logo",  # Alternative text for accessibility
     },
-    "navbar_start": ["navbar-logo"],  # Show the logo in the navbar
+    "navbar_start": ["navbar-logo"],
     "github_url": "https://github.com/ENSTA-U2IS-AI/torch-uncertainty",
 }
 
