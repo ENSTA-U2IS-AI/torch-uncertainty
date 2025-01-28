@@ -11,6 +11,29 @@ from torchvision.transforms.v2 import functional as F
 
 
 class Cityscapes(TVCityscapes):
+    color_palette = [
+        (128, 64, 128),  # 0: road
+        (244, 35, 232),  # 1: sidewalk
+        (70, 70, 70),  # 2: building
+        (102, 102, 156),  # 3: wall
+        (190, 153, 153),  # 4: fence
+        (153, 153, 153),  # 5: pole
+        (250, 170, 30),  # 6: traffic light
+        (220, 220, 0),  # 7: traffic sign
+        (107, 142, 35),  # 8: vegetation
+        (152, 251, 152),  # 9: terrain
+        (70, 130, 180),  # 10: sky
+        (220, 20, 60),  # 11: person
+        (255, 0, 0),  # 12: rider
+        (0, 0, 142),  # 13: car
+        (0, 0, 70),  # 14: truck
+        (0, 60, 100),  # 15: bus
+        (0, 80, 100),  # 16: train
+        (0, 0, 230),  # 17: motorcycle
+        (119, 11, 32),  # 18: bicycle
+        (0, 0, 0),  # 19: void
+    ]
+
     def __init__(
         self,
         root: str,
@@ -113,8 +136,3 @@ class Cityscapes(TVCityscapes):
             The axis on which the sample was plotted.
         """
         raise NotImplementedError("This method is not implemented yet.")
-
-    @property
-    def color_palette(self) -> list[tuple[int, int, int]]:
-        """Return the color palette of the dataset."""
-        return [c.color for c in self.classes]
