@@ -110,14 +110,15 @@ sass_out_dir = "_static"
 sass_targets = {"index.scss": "index.css"}
 
 html_static_path = ["_static"]
-html_css_files = ["index.css"]
+
+#html_css_files = ["index.css"]
 
 
 html_theme_options = {
     "logo": {
         "text": "",
         "image_light": "_static/logo.png",  # Path to the logo for light mode
-        "image_dark": "_static/logo.png",  # Path to the logo for dark mode
+        "image_dark": "_static/logo_dark.png",  # Path to the logo for dark mode
         "alt_text": "TorchUncertainty Logo",  # Alternative text for accessibility
     },
     "navbar_start": ["navbar-logo"],
@@ -133,5 +134,16 @@ html_sidebars = {
     "installation": [],
     "quickstart": [],
     "references": [],
+    "index" : [],
     "**": ["sidebar-nav-bs", "sidebar-ethical-ads"],
 }
+
+
+def add_custom_css(app, pagename, templatename, context, doctree):
+    if pagename == "index":
+        app.add_css_file("index.css")
+
+
+def setup(app):
+    app.connect("html-page-context", add_custom_css)
+

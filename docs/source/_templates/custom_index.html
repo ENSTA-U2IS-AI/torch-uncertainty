@@ -4,6 +4,13 @@
 {{ super() }}
 <!-- Load the compiled index.css only for this page -->
 <link rel="stylesheet" type="text/css" href="{{ pathto('_static/styles/index.css', 1) }}">
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      document.querySelector(".navbar-brand img").src = "{{ pathto('_static/logo_dark.png', 1) }}";
+    }
+  });
+</script>
 {% endblock extrahead %}
 
 {% block docs_navbar %}
@@ -24,10 +31,10 @@
       </div>
       <div class="col-md-6">
         <ul style="list-style-type: none; padding-left: 0; font-size: 1.1rem;">
-          <li>✔ Easy-to-use PyTorch uncertainty quantification tools.</li>
-          <li>✔ Seamlessly integrates with PyTorch Lightning.</li>
-          <li>✔ Supports classification, regression, and segmentation tasks.</li>
-          <li>✔ Open-source.</li>
+          <li>Easy-to-use PyTorch uncertainty quantification tools.</li>
+          <li>Seamlessly integrates with PyTorch Lightning.</li>
+          <li>Supports classification, regression, and segmentation tasks.</li>
+          <li>Open-source.</li>
         </ul>
       </div>
     </div>

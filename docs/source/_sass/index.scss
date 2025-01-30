@@ -1,8 +1,37 @@
-// index.scss
+.gradient-banner h1,
+.gradient-banner h4 {
+  color: #ffffff !important;
+}
 
+.gradient-banner ul li {
+  color: white !important;
+}
+
+.gradient-banner ul li::before {
+  content: "✔"; /* Unicode checkmark */
+  color: black !important; /* Ensure checkmark stays black */
+  font-size: 1.2rem;
+  font-weight: bold;
+  display: inline-block;
+  width: 1.5rem;
+}
+
+/* Theme-aware colors (light mode default) */
 :root {
-  --retro-blue: #4a74a5;       // Slightly muted blue
-  --retro-blue-hover: #3b5c84; // Hover color
+  --retro-blue: #4a74a5; /* Slightly muted blue */
+  --retro-blue-hover: #3b5c84; /* Hover color */
+
+  /* Light mode defaults */
+  --card-bg: #ffffff;
+  --card-border: #e3e3e3;
+  --card-text: #000000;
+}
+
+/* Dark mode overrides */
+html[data-theme="dark"] {
+  --card-bg: #1e1e1e;
+  --card-border: #2a2a2a;
+  --card-text: #ffffff;
 }
 
 .gradient-banner {
@@ -10,7 +39,6 @@
   color: white;
   padding: 2rem 0;
 
-  // "Getting Started" button (retro blue)
   .btn-warning {
     background-color: var(--retro-blue);
     border-color: var(--retro-blue);
@@ -22,7 +50,6 @@
     }
   }
 
-  // "API Documentation" button (white with retro-blue border)
   .btn-light {
     background-color: white;
     border: 2px solid var(--retro-blue);
@@ -36,21 +63,24 @@
   }
 }
 
+/* Card styling with dynamic theme colors */
 .card {
   display: flex;
   flex-direction: column;
   height: 100%;
-  border: 1px solid #e3e3e3; // Optional subtle border
+  background-color: var(--card-bg) !important;
+  border: 1px solid var(--card-border) !important;
+  color: var(--card-text) !important;
 
   .card-body {
-    flex-grow: 1; 
+    flex-grow: 1;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
   }
 
   .card-title {
-    margin-top: 0; 
+    margin-top: 0;
     font-size: 1.25rem;
     font-weight: 600;
   }
@@ -63,7 +93,7 @@
   .card-img-bottom {
     object-fit: contain;
     max-height: 150px;
-    margin: auto; 
+    margin: auto;
     display: block;
     width: 100%;
   }
@@ -91,10 +121,19 @@
   }
 }
 
-// Ensure consistent card height across columns
+/* Ensure consistent card height across columns */
 .row {
   .col-md-4 {
     display: flex;
     flex-direction: column;
+  }
+}
+
+/* Force dark mode detection in case it's not applying */
+@media (prefers-color-scheme: dark) {
+  html {
+    --card-bg: #1e1e1e;
+    --card-border: #2a2a2a;
+    --card-text: #ffffff;
   }
 }
