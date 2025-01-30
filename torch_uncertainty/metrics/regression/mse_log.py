@@ -20,13 +20,13 @@ class MeanSquaredLogError(MeanSquaredError):
         As input to ``forward`` and ``update`` the metric accepts the following
         input:
 
-        - ``preds`` (:class:`~torch.Tensor`): Predictions from model
-        - ``target`` (:class:`~torch.Tensor`): Ground truth values
+        - **preds** (:class:`~torch.Tensor`): Predictions from model
+        - **target** (:class:`~torch.Tensor`): Ground truth values
 
         As output of ``forward`` and ``compute`` the metric returns the
         following output:
 
-        - ``mse_log`` (:class:`~torch.Tensor`): A tensor with the
+        - **mse_log** (:class:`~torch.Tensor`): A tensor with the
           relative mean absolute error over the state
 
         Args:

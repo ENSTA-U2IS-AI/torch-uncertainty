@@ -29,7 +29,7 @@ class BrierScore(Metric):
         Args:
             num_classes (int): Number of classes.
             top_class (bool, optional): If True, computes the Brier score for the
-                top predicted class only. Defaults to False.
+                top predicted class only. Defaults to ``False``.
             reduction (str, optional): Determines how to reduce the score across the
                 batch dimension:
 

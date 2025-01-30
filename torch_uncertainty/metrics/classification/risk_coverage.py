@@ -29,15 +29,15 @@ class AURC(Metric):
 
         As input to ``forward`` and ``update`` the metric accepts the following input:
 
-        - ``preds`` (:class:`~torch.Tensor`): A float tensor of shape
+        - **preds** (:class:`~torch.Tensor`): A float tensor of shape
           ``(N, ...)`` containing probabilities for each observation.
-        - ``target`` (:class:`~torch.Tensor`): An int tensor of shape
+        - **target** (:class:`~torch.Tensor`): An int tensor of shape
           ``(N, ...)`` containing ground-truth labels.
 
         As output to ``forward`` and ``compute`` the metric returns the
         following output:
 
-        - ``aurc`` (:class:`~torch.Tensor`): A scalar tensor containing the
+        - **Aurc** (:class:`~torch.Tensor`): A scalar tensor containing the
           area under the risk-coverage curve
 
         Args:
@@ -187,15 +187,15 @@ class AUGRC(AURC):
 
         As input to ``forward`` and ``update`` the metric accepts the following input:
 
-        - ``preds`` (:class:`~torch.Tensor`): A float tensor of shape
+        - **preds** (:class:`~torch.Tensor`): A float tensor of shape
           ``(N, ...)`` containing probabilities for each observation.
-        - ``target`` (:class:`~torch.Tensor`): An int tensor of shape
+        - **target** (:class:`~torch.Tensor`): An int tensor of shape
           ``(N, ...)`` containing ground-truth labels.
 
         As output to ``forward`` and ``compute`` the metric returns the
         following output:
 
-        - ``augrc`` (:class:`~torch.Tensor`): A scalar tensor containing the
+        - **Augrc** (:class:`~torch.Tensor`): A scalar tensor containing the
           area under the risk-coverage curve
 
         Args:

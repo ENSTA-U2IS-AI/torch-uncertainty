@@ -28,9 +28,8 @@ class MCBatchNorm(PostProcessing):
             model (nn.Module): model to be converted.
             num_estimators (int): number of estimators.
             convert (bool): whether to convert the model.
-            mc_batch_size (int, optional): Monte Carlo batch size. Defaults to 32.
-            device (Literal["cpu", "cuda"] | torch.device | None, optional): device.
-            Defaults to None.
+            mc_batch_size (int, optional): Monte Carlo batch size. Defaults to ``32``.
+            device (Literal["cpu", "cuda"] | torch.device | None, optional): Defaults to ``None``.
 
         Note:
             This wrapper will be stochastic in eval mode only.

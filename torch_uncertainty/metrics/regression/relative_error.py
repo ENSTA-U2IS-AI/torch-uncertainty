@@ -19,13 +19,13 @@ class MeanGTRelativeAbsoluteError(MeanAbsoluteError):
         As input to ``forward`` and ``update`` the metric accepts the following
         input:
 
-        - ``preds`` (:class:`~torch.Tensor`): Predictions from model
-        - ``target`` (:class:`~torch.Tensor`): Ground truth values
+        - **preds** (:class:`~torch.Tensor`): Predictions from model
+        - **target** (:class:`~torch.Tensor`): Ground truth values
 
         As output of ``forward`` and ``compute`` the metric returns the
         following output:
 
-        - ``rel_mean_absolute_error`` (:class:`~torch.Tensor`): A tensor with
+        - **rel_mean_absolute_error** (:class:`~torch.Tensor`): A tensor with
           the relative mean absolute error over the state
 
         Args:
@@ -83,13 +83,13 @@ class MeanGTRelativeSquaredError(MeanSquaredError):
         As input to ``forward`` and ``update`` the metric accepts the following
         input:
 
-        - ``preds`` (:class:`~torch.Tensor`): Predictions from model
-        - ``target`` (:class:`~torch.Tensor`): Ground truth values
+        - **preds** (:class:`~torch.Tensor`): Predictions from model
+        - **target** (:class:`~torch.Tensor`): Ground truth values
 
         As output of ``forward`` and ``compute`` the metric returns the
         following output:
 
-        - ``rel_mean_squared_error`` (:class:`~torch.Tensor`): A tensor with
+        - **rel_mean_squared_error** (:class:`~torch.Tensor`): A tensor with
           the relative mean squared error
 
         Args:

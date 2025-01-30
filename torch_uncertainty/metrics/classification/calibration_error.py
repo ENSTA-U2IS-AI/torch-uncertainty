@@ -213,7 +213,18 @@ MulticlassCalibrationError.plot = custom_plot
 
 
 class CalibrationError:
-    r"""Computes the Calibration Error for classification tasks.
+    def __new__(  # type: ignore[misc]
+        cls,
+        task: Literal["binary", "multiclass"],
+        adaptive: bool = False,
+        num_bins: int = 10,
+        norm: Literal["l1", "l2", "max"] = "l1",
+        num_classes: int | None = None,
+        ignore_index: int | None = None,
+        validate_args: bool = True,
+        **kwargs: Any,
+    ) -> Metric:
+        r"""Computes the Calibration Error for classification tasks.
 
     This metric evaluates how well a model's predicted probabilities align with
     the actual ground truth probabilities. Calibration is crucial in assessing
@@ -294,20 +305,7 @@ class CalibrationError:
     .. seealso::
         - See `CalibrationError <https://torchmetrics.readthedocs.io/en/stable/classification/calibration_error.html>`_
           for details. Our version of the metric is a wrapper around the original metric providing a plotting functionality.
-    """
-
-    def __new__(  # type: ignore[misc]
-        cls,
-        task: Literal["binary", "multiclass"],
-        adaptive: bool = False,
-        num_bins: int = 10,
-        norm: Literal["l1", "l2", "max"] = "l1",
-        num_classes: int | None = None,
-        ignore_index: int | None = None,
-        validate_args: bool = True,
-        **kwargs: Any,
-    ) -> Metric:
-        """Initialize task metric."""
+        """
         if kwargs.get("n_bins") is not None:
             raise ValueError("`n_bins` does not exist, use `num_bins`.")
         if adaptive:

@@ -158,7 +158,7 @@ class ConfidencePenaltyLoss(nn.Module):
         reduction (str, optional): specifies the reduction to apply to the
             output:``'none'`` | ``'mean'`` | ``'sum'``. Defaults to "mean".
         eps (float, optional): A small value to avoid numerical instability.
-            Defaults to 1e-6.
+            Defaults to ``1e-6.``
 
     References:
         [1] `Gabriel Pereyra: Regularizing neural networks by penalizing confident output distributions

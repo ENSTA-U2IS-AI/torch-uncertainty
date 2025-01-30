@@ -75,17 +75,17 @@ def deep_ensembles(
         num_estimators (int | None): The number of estimators in the ensemble.
         task (Literal[``"classification"``, ``"regression"``, ``"segmentation"``, ``"pixel_regression"``]): The model task. Defaults to ``"classification"``.
         probabilistic (bool): Whether the regression model is probabilistic.
-        reset_model_parameters (bool): Whether to reset the model parameters when :attr:models is a module or a list of length ``1``.
+        reset_model_parameters (bool): Whether to reset the model parameters when :attr:`models` is a module or a list of length ``1``.
 
     Returns:
         _DeepEnsembles: The ensembled model.
 
     Raises:
-        ValueError: If :attr:num_estimators is not specified and :attr:models
+        ValueError: If :attr:`num_estimators` is not specified and :attr:`models`
             is a module (or singleton list).
-        ValueError: If :attr:num_estimators is less than 2 and :attr:models is
+        ValueError: If :attr:`num_estimators` is less than 2 and :attr:`models` is
             a module (or singleton list).
-        ValueError: If :attr:num_estimators is defined while :attr:models is
+        ValueError: If :attr:`num_estimators` is defined while :attr:`models` is
             a (non-singleton) list.
 
 

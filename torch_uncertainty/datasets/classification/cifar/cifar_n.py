@@ -39,15 +39,15 @@ class CIFAR10N(CIFAR10):
                 is set to True.
             train (bool, optional): For API consistency, not used.
             file_arg (str, optional): The type of label noise to use. One of the following:
-                "aggre_label", "worse_label", "random_label1", "random_label2", "random_label3".
+                ``"aggre_label"``, ``"worse_label"``, ``"random_label1"``, ``"random_label2"``, ``"random_label3"``.
             transform (callable, optional): A function/transform that takes in
                 a PIL image and returns a transformed version. E.g,
-                ``transforms.RandomCrop``. Defaults to None.
+                ``transforms.RandomCrop``. Defaults to ``None``.
             target_transform (callable, optional): A function/transform that
-                takes in the target and transforms it. Defaults to None.
+                takes in the target and transforms it. Defaults to ``None``.
             download (bool, optional): If True, downloads the dataset from the
                 internet and puts it in root directory. If dataset is already
-                downloaded, it is not downloaded again. Defaults to False.
+                downloaded, it is not downloaded again. Defaults to ``False``.
         """
         super().__init__(
             Path(root),
@@ -107,15 +107,15 @@ class CIFAR100N(CIFAR100):
                 is set to True.
             train (bool, optional): For API consistency, not used.
             file_arg (str, optional): The type of label noise to use. One of the following:
-                "fine_label", "coarse_label".
+                ``"fine_label"``, ``"coarse_label"``.
             transform (callable, optional): A function/transform that takes in
                 a PIL image and returns a transformed version. E.g,
-                ``transforms.RandomCrop``. Defaults to None.
+                ``transforms.RandomCrop``. Defaults to ``None``.
             target_transform (callable, optional): A function/transform that
-                takes in the target and transforms it. Defaults to None.
+                takes in the target and transforms it. Defaults to ``None``.
             download (bool, optional): If True, downloads the dataset from the
                 internet and puts it in root directory. If dataset is already
-                downloaded, it is not downloaded again. Defaults to False.
+                downloaded, it is not downloaded again. Defaults to ``False``.
         """
         super().__init__(
             root,

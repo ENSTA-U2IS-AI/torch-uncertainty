@@ -26,10 +26,10 @@ class OpenImageO(ImageFolder):
 
         Args:
             root (str): Root directory of the datasets.
-            split (str, optional): Unused, for API consistency. Defaults to None.
-            transform (callable, optional): A function/transform that takes in a PIL image and returns a transformed version. E.g, ``transforms.RandomCrop``. Defaults to None.
-            target_transform (callable, optional): A function/transform that takes in the target and transforms it. Defaults to None.
-            download (bool, optional): If True, downloads the dataset from the internet and puts it in root directory. If dataset is already downloaded, it is not downloaded again. Defaults to False.
+            split (str, optional): Unused, for API consistency. Defaults to ``None``.
+            transform (callable, optional): A function/transform that takes in a PIL image and returns a transformed version. E.g, ``transforms.RandomCrop``. Defaults to ``None``.
+            target_transform (callable, optional): A function/transform that takes in the target and transforms it. Defaults to ``None``.
+            download (bool, optional): If True, downloads the dataset from the internet and puts it in root directory. If dataset is already downloaded, it is not downloaded again. Defaults to ``False``.
 
         References:
             [1] `Original dataset: The open images dataset v4: Unified image classification, object detection, and visual relationship detection at scale. Kuznetsova, A., et al. The International Journal of Computer Vision

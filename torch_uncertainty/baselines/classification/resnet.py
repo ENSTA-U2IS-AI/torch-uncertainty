@@ -87,9 +87,8 @@ class ResNetBaseline(ClassificationRoutine):
                 what expect the `LightningModule.configure_optimizers()
                 <https://pytorch-lightning.readthedocs.io/en/stable/common/lightning_module.html#configure-optimizers>`_
                 method.
-            version (str):
-                Determines which ResNet version to use:
-
+            version (str): Determines which ResNet version to use:
+            
                 - ``"std"``: original ResNet
                 - ``"packed"``: Packed-Ensembles ResNet
                 - ``"batched"``: BatchEnsemble ResNet
@@ -97,8 +96,7 @@ class ResNetBaseline(ClassificationRoutine):
                 - ``"mimo"``: MIMO ResNet
                 - ``"mc-dropout"``: Monte-Carlo Dropout ResNet
 
-            arch (int):
-                Determines which ResNet architecture to use:
+            arch (int): Determines which ResNet architecture to use:
 
                 - ``18``: ResNet-18
                 - ``32``: ResNet-32

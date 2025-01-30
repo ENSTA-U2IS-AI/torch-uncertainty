@@ -55,11 +55,10 @@ class NYUv2(VisionDataset):
         Args:
             root (Path | str): Root directory where dataset is stored.
             split (Literal["train", "val"]): Dataset split.
-            transforms (Callable | None): Transform to apply to samples & targets.
-                Defaults to None.
-            min_depth (float): Minimum depth value. Defaults to 1e-3.
-            max_depth (float): Maximum depth value. Defaults to 10.
-            download (bool): Download dataset if not found. Defaults to False.
+            transforms (Callable | None): Transform to apply to samples & targets. Defaults to ``None``.
+            min_depth (float): Minimum depth value. Defaults to ``1e-3``.
+            max_depth (float): Maximum depth value. Defaults to ``10``.
+            download (bool): Download dataset if not found. Defaults to ``False``.
         """
         if not cv2_installed:  # coverage: ignore
             raise ImportError(

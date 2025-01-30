@@ -34,8 +34,7 @@ class Disagreement(Metric):
         Inputs:
             - :attr:`probs`: :math:`(B, N, C)`
 
-                where :math:`B` is the batch size, :math:`C` is the number of classes
-                and :math:`N` is the number of estimators.
+            where :math:`B` is the batch size, :math:`C` is the number of classes and :math:`N` is the number of estimators.
 
         Note:
             A higher disagreement means a lower confidence.

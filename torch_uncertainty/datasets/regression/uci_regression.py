@@ -124,14 +124,14 @@ class UCIRegression(Dataset):
             target_transform (callable, optional): A function/transform that takes
                 in the target and transforms it.
             dataset_name (str, optional): The name of the dataset. One of
-                "boston-housing", "concrete", "energy", "kin8nm",
-                "naval-propulsion-plant", "power-plant", "protein",
-                "wine-quality-red", and "yacht".
+                ``boston-housing``, ``concrete``, ``energy``, ``kin8nm``,
+                ``naval-propulsion-plant``, ``power-plant``, ``protein``,
+                ``wine-quality-red``, and ``yacht``.
             download (bool, optional): If true, downloads the dataset from the
                 internet and puts it in root directory. If dataset is already
                 downloaded, it is not downloaded again.
             seed (int, optional): The random seed for shuffling the dataset.
-            shuffle (bool, optional): If True, shuffles the dataset.
+            shuffle (bool, optional): If ``True``, shuffles the dataset.
 
         Note:
             You may want to avoid using the boston-housing dataset because of

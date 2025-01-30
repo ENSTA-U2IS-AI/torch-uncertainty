@@ -40,13 +40,13 @@ class MeanSquaredErrorInverse(MeanSquaredError):
         As input to ``forward`` and ``update`` the metric accepts the following
         input:
 
-        - ``preds`` (:class:`~Tensor`): Predictions from model
-        - ``target`` (:class:`~Tensor`): Ground truth values
+        - **preds** (:class:`~Tensor`): Predictions from model
+        - **target** (:class:`~Tensor`): Ground truth values
 
         As output of ``forward`` and ``compute`` the metric returns the following
         output:
 
-        - ``mean_squared_error`` (:class:`~Tensor`): A tensor with the mean
+        - **mean_squared_error** (:class:`~Tensor`): A tensor with the mean
           squared error
 
         Args:
@@ -77,13 +77,13 @@ class MeanAbsoluteErrorInverse(MeanAbsoluteError):
         As input to ``forward`` and ``update`` the metric accepts the following
         input:
 
-        - ``preds`` (:class:`~Tensor`): Predictions from model
-        - ``target`` (:class:`~Tensor`): Ground truth values
+        - **preds** (:class:`~Tensor`): Predictions from model
+        - **target** (:class:`~Tensor`): Ground truth values
 
         As output of ``forward`` and ``compute`` the metric returns the following
         output:
 
-        - ``mean_absolute_inverse_error`` (:class:`~Tensor`): A tensor with the
+        - **mean_absolute_inverse_error** (:class:`~Tensor`): A tensor with the
           mean absolute error over the state
 
         Args:

@@ -30,8 +30,8 @@ class DistributionNLLLoss(nn.Module):
         Args:
             dist (Distribution): The predicted distributions
             targets (Tensor): The target values
-            padding_mask (Tensor, optional): The padding mask. Defaults to None.
-                Sets the loss to 0 for padded values.
+            padding_mask (Tensor, optional): The padding mask. Defaults to ``None.``
+                Sets the loss to ``0`` for padded values.
         """
         loss = -dist.log_prob(targets)
         if padding_mask is not None:

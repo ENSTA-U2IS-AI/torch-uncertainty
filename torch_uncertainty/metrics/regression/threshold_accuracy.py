@@ -16,7 +16,7 @@ class ThresholdAccuracy(Metric):
         Args:
             power: The power to raise the threshold to. Often in [1, 2, 3].
             lmbda: The threshold to compare the max of ratio of predictions
-                to targets and its inverse to. Defaults to 1.25.
+                to targets and its inverse to. Defaults to ``1.25.``
             kwargs: Additional keyword arguments, see `Advanced metric settings
                 <https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metric-kwargs>`_.
 

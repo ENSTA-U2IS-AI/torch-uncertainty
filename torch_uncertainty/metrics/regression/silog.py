@@ -23,8 +23,8 @@ class SILog(Metric):
         :attr:`sqrt` argument to `True`, the metric computes the square root of the SILog value.
 
         Args:
-            sqrt: If `True`, return the square root of the metric. Defaults to False.
-            lmbda: The regularization parameter on the variance of error. Defaults to 1.0.
+            sqrt: If `True`, return the square root of the metric. Defaults to ``False.``
+            lmbda: The regularization parameter on the variance of error. Defaults to ``1.0.``
             kwargs: Additional keyword arguments, see `Advanced metric settings <https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metric-kwargs>`_.
 
         Reference:

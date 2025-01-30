@@ -66,8 +66,7 @@ class WideResNetBaseline(ClassificationRoutine):
                 what expect the `LightningModule.configure_optimizers()
                 <https://pytorch-lightning.readthedocs.io/en/stable/common/lightning_module.html#configure-optimizers>`_
                 method.
-            version (str):
-                Determines which Wide-ResNet version to use:
+            version (str): Determines which Wide-ResNet version to use:
 
                 - ``"std"``: original Wide-ResNet
                 - ``"mc-dropout"``: Monte Carlo Dropout Wide-ResNet
