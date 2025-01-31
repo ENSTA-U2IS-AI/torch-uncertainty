@@ -111,7 +111,7 @@ sass_targets = {"index.scss": "index.css"}
 
 html_static_path = ["_static"]
 
-#html_css_files = ["index.css"]
+#html_css_files = ["custom.css"]
 
 
 html_theme_options = {
@@ -123,6 +123,9 @@ html_theme_options = {
     },
     "navbar_start": ["navbar-logo"],
     "github_url": "https://github.com/ENSTA-U2IS-AI/torch-uncertainty",
+    "footer_end": [],
+    "footer_start": [],
+    "footer_center": ["copyright"],
 }
 
 
@@ -143,7 +146,5 @@ def add_custom_css(app, pagename, templatename, context, doctree):
     if pagename == "index":
         app.add_css_file("index.css")
 
-
 def setup(app):
     app.connect("html-page-context", add_custom_css)
-

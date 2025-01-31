@@ -1,4 +1,5 @@
 @charset "UTF-8";
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600&family=Lato:wght@400;700&display=swap");
 .gradient-banner h1,
 .gradient-banner h4 {
   color: #ffffff !important; }
@@ -68,8 +69,9 @@ html[data-theme="dark"] {
     justify-content: flex-start; }
   .card .card-title {
     margin-top: 0;
-    font-size: 1.25rem;
-    font-weight: 600; }
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--retro-blue); }
   .card p {
     flex-shrink: 0;
     margin-bottom: 0.5rem; }
@@ -78,7 +80,8 @@ html[data-theme="dark"] {
     max-height: 150px;
     margin: auto;
     display: block;
-    width: 100%; }
+    width: 100%;
+    margin-bottom: 1rem; }
   .card.shadow-sm {
     display: flex;
     flex: 1;

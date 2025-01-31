@@ -1,3 +1,6 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600&family=Lato:wght@400;700&display=swap');
+
+
 .gradient-banner h1,
 .gradient-banner h4 {
   color: #ffffff !important;
@@ -81,8 +84,9 @@ html[data-theme="dark"] {
 
   .card-title {
     margin-top: 0;
-    font-size: 1.25rem;
-    font-weight: 600;
+    font-size: 1.6rem;
+    font-weight: 700;  
+    color: var(--retro-blue);
   }
 
   p {
@@ -96,6 +100,7 @@ html[data-theme="dark"] {
     margin: auto;
     display: block;
     width: 100%;
+    margin-bottom: 1rem;  
   }
 
   &.shadow-sm {
@@ -137,3 +142,73 @@ html[data-theme="dark"] {
     --card-text: #ffffff;
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
