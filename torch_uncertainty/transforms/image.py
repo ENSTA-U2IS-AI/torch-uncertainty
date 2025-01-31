@@ -299,11 +299,16 @@ class RandomRescale(Transform):
         self.interpolation = interpolation
         self.antialias = antialias
 
+    # Compatibility with torchvision < 0.21
     def _get_params(self, flat_inputs: list[Any]) -> dict[str, Any]:
         height, width = query_size(flat_inputs)
         scale = torch.rand(1)
         scale = self.min_scale + scale * (self.max_scale - self.min_scale)
         return {"size": (int(height * scale), int(width * scale))}
+
+    # Compatibility with torchvision >= 0.21
+    def make_params(self, flat_inputs: list[Any]) -> dict[str, Any]:
+        return self._get_params(flat_inputs)
 
     # Compatibility with torchvision < 0.21
     def _transform(self, inpt: Any, params: dict[str, Any]) -> Any:
