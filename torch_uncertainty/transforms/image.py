@@ -305,6 +305,7 @@ class RandomRescale(Transform):
         scale = self.min_scale + scale * (self.max_scale - self.min_scale)
         return {"size": (int(height * scale), int(width * scale))}
 
+    # Compatibility with torchvision < 0.21
     def _transform(self, inpt: Any, params: dict[str, Any]) -> Any:
         return self._call_kernel(
             F.resize,
@@ -313,3 +314,7 @@ class RandomRescale(Transform):
             interpolation=self.interpolation,
             antialias=self.antialias,
         )
+
+    # Compatibility with torchvision >= 0.21
+    def transform(self, inpt: Any, params: dict[str, Any]) -> Any:
+        return self._transform(inpt, params)
