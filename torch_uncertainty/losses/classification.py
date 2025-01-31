@@ -387,7 +387,7 @@ class CrossEntropyMaxSupLoss(nn.CrossEntropyLoss):
                 weight=self.weight,
                 label_smoothing=self.label_smoothing,
             )
-            + self.max_sup * reg.mean()
+            + self.max_sup * reg
         )
         if self.weight is not None:
             loss = loss * self.weight
