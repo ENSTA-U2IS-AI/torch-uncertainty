@@ -200,6 +200,7 @@ Functions
 .. autosummary::
     :toctree: generated/
     :nosignatures:
+    :template: function.rst
 
     deep_ensembles
     mc_dropout

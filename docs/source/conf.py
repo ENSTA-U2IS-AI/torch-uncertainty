@@ -86,6 +86,7 @@ autoclass_content = "init"
 autosummary_generate = True
 napoleon_use_ivar = True
 
+
 # Disable docstring inheritance
 autodoc_inherit_docstrings = False
 
