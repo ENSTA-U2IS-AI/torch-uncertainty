@@ -92,6 +92,7 @@ Check out our tutorials at [torch-uncertainty.github.io/auto_tutorials](https://
 
 The following projects use TorchUncertainty:
 
+- *Towards Understanding Why Label Smoothing Degrades Selective Classification and How to Fix It* - [ICLR 2025](https://arxiv.org/abs/2403.14715)
 - *A Symmetry-Aware Exploration of Bayesian Neural Network Posteriors* - [ICLR 2024](https://arxiv.org/abs/2310.08287)
 
 **If you are using TorchUncertainty in your project, please let us know, we will add your project to this list!**
