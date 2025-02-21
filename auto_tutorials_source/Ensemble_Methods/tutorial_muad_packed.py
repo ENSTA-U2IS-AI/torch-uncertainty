@@ -84,7 +84,12 @@ mean = torch.tensor([0.485, 0.456, 0.406], device=img.device)
 std = torch.tensor([0.229, 0.224, 0.225], device=img.device)
 img = img * std[:, None, None] + mean[:, None, None]
 img = F.to_dtype(img, torch.uint8, scale=True)
-F.to_pil_image(img)
+img_pil = F.to_pil_image(img)
+
+plt.figure(figsize=(6,6))
+plt.imshow(img_pil)
+plt.axis("off") 
+plt.show()
 
 # %% 
 # Visualize the same image above but segmented.
@@ -94,7 +99,12 @@ from torchvision.utils import draw_segmentation_masks
 tmp_tgt = tgt.masked_fill(tgt == 255, 21)
 tgt_masks = tmp_tgt == torch.arange(22, device=tgt.device)[:, None, None]
 img_segmented = draw_segmentation_masks(img, tgt_masks, alpha=1, colors=val_set.color_palette)
-F.to_pil_image(img_segmented)
+img_pil = F.to_pil_image(img)
+
+plt.figure(figsize=(6,6))
+plt.imshow(img_pil)
+plt.axis("off") 
+plt.show()
 
 # %% 
 # Below is the complete list of classes in MUAD, presented as:
@@ -587,10 +597,10 @@ packed_routine = SegmentationRoutine(
 )
 
 # %%
-trainer.fit(packed_routine, train_loader, val_loader)
+#trainer.fit(packed_routine, train_loader, val_loader)
 
 # %%
-results = trainer.test(packed_routine, test_loader)
+#results = trainer.test(packed_routine, test_loader)
 
 # %% 
 # Load a pre-trained ensembles from huggingface to continue the tutorial
@@ -598,7 +608,7 @@ results = trainer.test(packed_routine, test_loader)
 from huggingface_hub import hf_hub_download
 
 # Download the model
-model_path = hf_hub_download(repo_id="fira7s/muad_segmentation", filename="packed_unet_tuto.pth")
+model_path = hf_hub_download(repo_id="torch-uncertainty/muad_tutorials", filename="packed_unet_tuto.pth")
 
 model = packed_model = PackedUNet(
     classes=19,
@@ -648,10 +658,13 @@ pred_masks = pred == torch.arange(22, device=pred.device)[:, None, None]
 
 pred_img = draw_segmentation_masks(img, pred_masks, alpha=1, colors=test_set.color_palette)
 
-img = F.to_pil_image(img)
-img_segmented = F.to_pil_image(img_segmented)
-confidence_img = F.to_pil_image(confidence)
-pred_img = F.to_pil_image(pred_img)
+if confidence.ndim == 2:
+    confidence = confidence.unsqueeze(0)
+
+img = F.to_pil_image(F.resize(img, 1024))
+img_segmented = F.to_pil_image(F.resize(img_segmented, 1024))
+pred_img = F.to_pil_image(F.resize(pred_img, 1024))
+confidence_img = F.to_pil_image(F.resize(confidence, 1024))
 
 fig, (ax1, ax2, ax3, ax4) = plt.subplots(1, 4, figsize=(30, 15))
 ax1.imshow(img)
@@ -700,10 +713,13 @@ pred_masks = pred == torch.arange(22, device=pred.device)[:, None, None]
 
 pred_img = draw_segmentation_masks(img, pred_masks, alpha=1, colors=test_set.color_palette)
 
-img_pil = F.to_pil_image(img)
-img_segmented = F.to_pil_image(img_segmented)
-confidence_img = F.to_pil_image(confidence)
-pred_img = F.to_pil_image(pred_img)
+if confidence.ndim == 2:
+    confidence = confidence.unsqueeze(0)
+
+img = F.to_pil_image(F.resize(img, 1024))
+img_segmented = F.to_pil_image(F.resize(img_segmented, 1024))
+pred_img = F.to_pil_image(F.resize(pred_img, 1024))
+confidence_img = F.to_pil_image(F.resize(confidence, 1024))
 
 fig, (ax1, ax2, ax3, ax4) = plt.subplots(1, 4, figsize=(30, 15))
 ax1.imshow(img_pil)
