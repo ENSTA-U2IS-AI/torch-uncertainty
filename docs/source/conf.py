@@ -112,7 +112,6 @@ sass_targets = {"index.scss": "index.css"}
 
 html_static_path = ["_static"]
 
-#html_css_files = ["custom.css"]
 
 
 html_theme_options = {
@@ -143,7 +142,7 @@ html_sidebars = {
 }
 
 
-def add_custom_css(app, pagename, templatename, context, doctree):
+def add_custom_css(app, pagename, _templatename, _context, _doctree):
     if pagename == "index":
         app.add_css_file("index.css")
 

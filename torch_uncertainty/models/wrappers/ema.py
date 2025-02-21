@@ -9,8 +9,7 @@ class EMA(nn.Module):
         model: nn.Module,
         momentum: float,
     ) -> None:
-        """
-        Exponential Moving Average (EMA).
+        """Exponential Moving Average (EMA).
 
         Args:
             model (nn.Module): The model to train and ensemble.

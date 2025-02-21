@@ -101,6 +101,7 @@ def mc_dropout(
         model (nn.Module): model to wrap
         num_estimators (int): number of estimators to use last_layer (bool, optional): whether to apply dropout to the last layer only. Defaults to ``False``.
         on_batch (bool): Increase the batch_size to perform MC-Dropout. Otherwise in a for loop to reduce memory footprint. Defaults to ``true``.
+        last_layer (bool, optional): whether to apply dropout to the last layer only. Defaults to ``False``.
     """
     return MCDropout(
         model=model,
