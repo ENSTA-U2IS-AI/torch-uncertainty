@@ -61,6 +61,7 @@ class ResNetBaseline(ClassificationRoutine):
         last_layer_dropout: bool = False,
         width_multiplier: float = 1.0,
         groups: int = 1,
+        conv_bias: bool = False,
         scale: float | None = None,
         alpha: int | None = None,
         gamma: int = 1,
@@ -125,6 +126,8 @@ class ResNetBaseline(ClassificationRoutine):
             last_layer_dropout (bool): whether to apply dropout to the last layer only.
             groups (int, optional): Number of groups in convolutions. Defaults to
                 ``1``.
+            conv_bias (bool, optional): Whether to include bias in the convolutional
+                layers. Defaults to ``False``.
             scale (float, optional): Expansion factor affecting the width of the
                 estimators. Only used if :attr:`version` is ``"masked"``. Defaults
                 to ``None``.
@@ -170,7 +173,7 @@ class ResNetBaseline(ClassificationRoutine):
         """
         params = {
             "arch": arch,
-            "conv_bias": False,
+            "conv_bias": conv_bias,
             "dropout_rate": dropout_rate,
             "groups": groups,
             "width_multiplier": width_multiplier,

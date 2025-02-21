@@ -299,12 +299,12 @@ class FocalLoss(nn.Module):
         self.alpha = alpha
         self.nll_loss = nn.NLLLoss(weight=alpha, reduction="none")
 
-    def forward(self, x: Tensor, y: Tensor) -> Tensor:
-        log_p = F.log_softmax(x, dim=-1)
-        ce = self.nll_loss(log_p, y)
+    def forward(self, inputs: Tensor, targets: Tensor) -> Tensor:
+        log_p = F.log_softmax(inputs, dim=-1)
+        ce = self.nll_loss(log_p, targets)
 
-        all_rows = torch.arange(len(x))
-        log_pt = log_p[all_rows, y]
+        all_rows = torch.arange(len(inputs))
+        log_pt = log_p[all_rows, targets]
 
         pt = log_pt.exp()
         focal_term = (1 - pt) ** self.gamma
@@ -347,12 +347,12 @@ class BCEWithLogitsLSLoss(nn.BCEWithLogitsLoss):
         super().__init__(weight=weight, reduction=reduction)
         self.label_smoothing = label_smoothing
 
-    def forward(self, preds: Tensor, targets: Tensor) -> Tensor:
+    def forward(self, inputs: Tensor, targets: Tensor) -> Tensor:
         if self.label_smoothing == 0.0:
-            return super().forward(preds, targets.type_as(preds))
+            return super().forward(inputs, targets.type_as(inputs))
         targets = targets.float()
         targets = targets * (1 - self.label_smoothing) + self.label_smoothing / 2
-        loss = targets * F.logsigmoid(preds) + (1 - targets) * F.logsigmoid(-preds)
+        loss = targets * F.logsigmoid(inputs) + (1 - targets) * F.logsigmoid(-inputs)
         if self.weight is not None:
             loss = loss * self.weight
         if self.reduction == "mean":
@@ -360,3 +360,44 @@ class BCEWithLogitsLSLoss(nn.BCEWithLogitsLoss):
         if self.reduction == "sum":
             return -loss.sum()
         return -loss
+
+
+class CrossEntropyMaxSupLoss(nn.CrossEntropyLoss):
+    def __init__(
+        self,
+        weight: Tensor | None = None,
+        size_average=None,
+        reduction: str = "mean",
+        label_smoothing: float = 0,
+        max_sup: float = 0,
+    ) -> None:
+        """Max suppression cross-entropy loss.
+
+        Note: We haven't implemented the linear loss scheduler suggested in the paper. Raise
+            an issue if needed.
+
+        Reference:
+            MaxSup: Fixing Label-smoothing for improved feature representation. Anonymous authors.
+        """
+        super().__init__(weight, size_average, reduction=reduction, label_smoothing=label_smoothing)
+        self.max_sup = max_sup
+
+    def forward(self, inputs: Tensor, targets: Tensor) -> Tensor:
+        z_top1 = inputs.topk(1, -1)[0]
+        reg = z_top1 - inputs.mean(-1, keepdim=True)
+        loss = (
+            F.cross_entropy(
+                inputs,
+                targets,
+                weight=self.weight,
+                label_smoothing=self.label_smoothing,
+            )
+            + self.max_sup * reg
+        )
+        if self.weight is not None:
+            loss = loss * self.weight
+        if self.reduction == "mean":
+            return loss.mean()
+        if self.reduction == "sum":
+            return loss.sum()
+        return loss
