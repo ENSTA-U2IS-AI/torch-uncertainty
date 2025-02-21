@@ -57,23 +57,20 @@ class VGGBaseline(ClassificationRoutine):
                 what expect the `LightningModule.configure_optimizers()
                 <https://pytorch-lightning.readthedocs.io/en/stable/common/lightning_module.html#configure-optimizers>`_
                 method.
-            version (str):
-                Determines which VGG version to use:
+            version (str): Determines which VGG version to use:
 
                 - ``"std"``: original VGG
                 - ``"mc-dropout"``: Monte Carlo Dropout VGG
                 - ``"packed"``: Packed-Ensembles VGG
 
-            arch (int):
-                Determines which VGG architecture to use:
+            arch (int): Determines which VGG architecture to use:
 
                 - ``11``: VGG-11
                 - ``13``: VGG-13
                 - ``16``: VGG-16
                 - ``19``: VGG-19
 
-            style (str, optional): Which VGG style to use. Defaults to
-            ``imagenet``.
+            style (str, optional): Which VGG style to use. Defaults to ``imagenet``.
             num_estimators (int, optional): Number of estimators in the ensemble.
                 Only used if :attr:`version` is either ``"packed"``, ``"batched"``
                 or ``"masked"`` Defaults to ``None``.

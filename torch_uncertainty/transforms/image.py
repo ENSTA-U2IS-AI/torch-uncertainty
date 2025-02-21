@@ -240,25 +240,32 @@ class Color(nn.Module):
 
 
 class RandomRescale(Transform):
-    """Randomly rescale the input.
+    def __init__(
+        self,
+        min_scale: int,
+        max_scale: int,
+        interpolation: InterpolationMode | int = InterpolationMode.BILINEAR,
+        antialias: bool | None = True,
+    ) -> None:
+        """Randomly rescale the input.
 
-    This transformation can be used together with ``RandomCrop`` as data augmentations to train
-    models on image segmentation task.
+        This transformation can be used together with ``RandomCrop`` as data augmentations to train
+        models on image segmentation task.
 
-    Output spatial size is randomly sampled from the interval ``[min_size, max_size]``:
+        Output spatial size is randomly sampled from the interval ``[min_size, max_size]``:
 
-    .. code-block:: python
+        .. code-block:: python
 
         scale = uniform_sample(min_scale, max_scale)
         output_width = input_width * scale
         output_height = input_height * scale
 
-    If the input is a :class:`torch.Tensor` or a ``TVTensor`` (e.g. :class:`~torchvision.tv_tensors.Image`,
-    :class:`~torchvision.tv_tensors.Video`, :class:`~torchvision.tv_tensors.BoundingBoxes` etc.)
-    it can have arbitrary number of leading batch dimensions. For example,
-    the image can have ``[..., C, H, W]`` shape. A bounding box can have ``[..., 4]`` shape.
+        If the input is a :class:`torch.Tensor` or a ``TVTensor`` (e.g. :class:`~torchvision.tv_tensors.Image`,
+        :class:`~torchvision.tv_tensors.Video`, :class:`~torchvision.tv_tensors.BoundingBoxes` etc.)
+        it can have arbitrary number of leading batch dimensions. For example,
+        the image can have ``[..., C, H, W]`` shape. A bounding box can have ``[..., 4]`` shape.
 
-    Args:
+        Args:
         min_scale (int): Minimum scale for random sampling
         max_scale (int): Maximum scale for random sampling
         interpolation (InterpolationMode, optional): Desired interpolation enum defined by
@@ -284,15 +291,7 @@ class RandomRescale(Transform):
 
             The default value changed from ``None`` to ``True`` in
             v0.17, for the PIL and Tensor backends to be consistent.
-    """
-
-    def __init__(
-        self,
-        min_scale: int,
-        max_scale: int,
-        interpolation: InterpolationMode | int = InterpolationMode.BILINEAR,
-        antialias: bool | None = True,
-    ) -> None:
+        """
         super().__init__()
         self.min_scale = min_scale
         self.max_scale = max_scale

@@ -3,17 +3,16 @@ from torch.utils.data import Dataset
 
 
 class AggregatedDataset(Dataset):
-    """A class to help aggregating datasets.
-
-    Virtually interlace multiple copies of a dataset to train ensembles with
-    different batch orders.
-
-    Args:
-        dataset: The dataset to be interlaced.
-        n_dataloaders: The number of dataloaders to be used for training.
-    """
-
     def __init__(self, dataset: Dataset, n_dataloaders: int) -> None:
+        """A class to help aggregating datasets.
+
+        Virtually interlace multiple copies of a dataset to train ensembles with
+        different batch orders.
+
+        Args:
+            dataset: The dataset to be interlaced.
+            n_dataloaders: The number of dataloaders to be used for training.
+        """
         super().__init__()
         self.dataset = dataset
         self.n_dataloaders = n_dataloaders

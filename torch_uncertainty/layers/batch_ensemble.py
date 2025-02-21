@@ -33,15 +33,15 @@ class BatchLinear(nn.Module):
             y=(x\circ \widehat{r_{group}})W^{T}\circ \widehat{s_{group}} + \widehat{b}
 
         Args:
-            in_features (int): Number of input features..
+            in_features (int): Number of input features.
             out_features (int): Number of output features.
-            num_estimators (int): number of estimators in the ensemble, referred as
+            num_estimators (int): Number of estimators in the ensemble, referred as
                 :math:`M`.
-            bias (bool, optional): if ``True``, adds a learnable bias to the
+            bias (bool, optional): If ``True``, adds a learnable bias to the
                 output. Defaults to ``True``.
-            device (Any, optional): device to use for the parameters and
+            device (Any, optional): Device to use for the parameters and
                 buffers of this module. Defaults to ``None``.
-            dtype (Any, optional): data type to use for the parameters and
+            dtype (Any, optional): Data type to use for the parameters and
                 buffers of this module. Defaults to ``None``.
 
         Reference:
@@ -54,19 +54,19 @@ class BatchLinear(nn.Module):
             <https://www.tensorflow.org>`_.
 
         Attributes:
-            weight: the learnable weights (:math:`W`) of shape
+            weight: The learnable weights (:math:`W`) of shape
                 :math:`(H_{out}, H_{in})` shared between the estimators. The values
                 are initialized from :math:`\mathcal{U}(-\sqrt{k}, \sqrt{k})`,
                 where :math:`k = \frac{1}{H_{in}}`.
-            r_group: the learnable matrice of shape :math:`(M, H_{in})` where each row
+            r_group: The learnable matrice of shape :math:`(M, H_{in})` where each row
                 consist of the vector :math:`r_{i}` corresponding to the
                 :math:`i^{th}` ensemble member. The values are initialized from
                 :math:`\mathcal{N}(1.0, 0.5)`.
-            s_group: the learnable matrice of shape :math:`(M, H_{out})` where each row
+            s_group: The learnable matrice of shape :math:`(M, H_{out})` where each row
                 consist of the vector :math:`s_{i}` corresponding to the
                 :math:`i^{th}` ensemble member. The values are initialized from
                 :math:`\mathcal{N}(1.0, 0.5)`.
-            bias: the learnable bias (:math:`b`) of shape :math:`(M, H_{out})`
+            bias: The learnable bias (:math:`b`) of shape :math:`(M, H_{out})`
                 where each row corresponds to the bias of the :math:`i^{th}`
                 ensemble member. If :attr:`bias` is ``True``, the values are
                 initialized from :math:`\mathcal{U}(-\sqrt{k}, \sqrt{k})` where
@@ -189,7 +189,7 @@ class BatchConv2d(nn.Module):
         dtype=None,
     ) -> None:
         r"""BatchEnsemble-style Conv2d layer.
-        
+
         Applies a 2d convolution over an input signal composed of several input
         planes using BatchEnsemble method to the incoming data.
 
@@ -199,9 +199,9 @@ class BatchConv2d(nn.Module):
 
         .. math::
             \text{out}(N_i, C_{\text{out}_j})=\
-            &\widehat{b}(N_i,C_{\text{out}_j})
+                &\widehat{b}(N_i,C_{\text{out}_j})
             +\widehat{s_{group}}(N_{i},C_{\text{out}_j}) \\
-            &\times \sum_{k = 0}^{C_{\text{in}} - 1}
+                &\times \sum_{k = 0}^{C_{\text{in}} - 1}
             \text{weight}(C_{\text{out}_j}, k)\star (\text{input}(N_i, k)
             \times \widehat{r_{group}}(N_i, k))
 
@@ -215,43 +215,43 @@ class BatchConv2d(nn.Module):
             <https://www.tensorflow.org>`_.
 
         Args:
-            in_channels (int): number of channels in the input images.
-            out_channels (int): number of channels produced by the convolution.
-            kernel_size (int or tuple): size of the convolving kernel.
-            num_estimators (int): number of estimators in the ensemble referred as
+            in_channels (int): Number of channels in the input images.
+            out_channels (int): Number of channels produced by the convolution.
+            kernel_size (int or tuple): Size of the convolving kernel.
+            num_estimators (int): Number of estimators in the ensemble referred as
                 :math:`M` here.
-            stride (int or tuple, optional): stride of the convolution. Defaults to
+            stride (int or tuple, optional): Stride of the convolution. Defaults to
                 ``1``.
-            padding (int, tuple or str, optional): padding added to all four sides
+            padding (int, tuple or str, optional): Padding added to all four sides
                 of the input. Defaults to ``0``.
-            dilation (int or tuple, optional): spacing between kernel elements.
+            dilation (int or tuple, optional): Spacing between kernel elements.
                 Defaults to ``1``.
-            groups (int, optional): number of blocked connections from input
+            groups (int, optional): Number of blocked connections from input
                 channels to output channels. Defaults to ``1``.
-            bias (bool, optional): if ``True``, adds a learnable bias to the
+            bias (bool, optional): If ``True``, adds a learnable bias to the
                 output. Defaults to ``True``.
-            device (Any, optional): device to use for the parameters and
+            device (Any, optional): Device to use for the parameters and
                 buffers of this module. Defaults to ``None``.
-            dtype (Any, optional): data type to use for the parameters and
+            dtype (Any, optional): Data type to use for the parameters and
                 buffers of this module. Defaults to ``None``.
 
         Attributes:
-            weight: the learnable weights of the module of shape
+            weight: The learnable weights of the module of shape
                 :math:`(\text{out_channels}, \frac{\text{in_channels}}
                 {\text{groups}},`:math:`\text{kernel_size[0]},
                 \text{kernel_size[1]})` shared between the estimators. The values
                 of these weights are sampled from :math:`\mathcal{U}(-\sqrt{k},
                 \sqrt{k})` where :math:`k = \frac{\text{groups}}{C_\text{in} *
                 \prod_{i=0}^{1}\text{kernel_size}[i]}`.
-            r_group: the learnable matrice of shape :math:`(M, C_{in})` where each row
+            r_group: The learnable matrice of shape :math:`(M, C_{in})` where each row
                 consist of the vector :math:`r_{i}` corresponding to the
                 :math:`i^{th}` ensemble member. The values are initialized from
                 :math:`\mathcal{N}(1.0, 0.5)`.
-            s_group: the learnable matrice of shape :math:`(M, C_{out})` where each row
+            s_group: The learnable matrice of shape :math:`(M, C_{out})` where each row
                 consist of the vector :math:`s_{i}` corresponding to the
                 :math:`i^{th}` ensemble member. The values are initialized from
                 :math:`\mathcal{N}(1.0, 0.5)`.
-            bias: the learnable bias (:math:`b`) of shape :math:`(M, C_{out})`
+            bias: The learnable bias (:math:`b`) of shape :math:`(M, C_{out})`
                 where each row corresponds to the bias of the :math:`i^{th}`
                 ensemble member. If :attr:`bias` is ``True``, the values are
                 initialized from :math:`\mathcal{U}(-\sqrt{k}, \sqrt{k})` where
@@ -262,19 +262,18 @@ class BatchConv2d(nn.Module):
             - Input: :math:`(N, C_{in}, H_{in}, W_{in})`.
             - Output: :math:`(N, C_{out}, H_{out}, W_{out})`.
 
-            .. math::
-                H_{out} = \left\lfloor\frac{H_{in} + 2 \times \text{padding}[0] -
-                \text{dilation}[0] \times (\text{kernel_size}[0] - 1) - 1}
-                {\text{stride}[0]} + 1\right\rfloor
+        .. math::
+            H_{out} = \left\lfloor\frac{H_{in} + 2 \times \text{padding}[0] -
+            \text{dilation}[0] \times (\text{kernel_size}[0] - 1) - 1}
+            {\text{stride}[0]} + 1\right\rfloor
 
-            .. math::
-                W_{out} = \left\lfloor\frac{W_{in}  + 2 \times \text{padding}[1] -
-                \text{dilation}[1] \times (\text{kernel_size}[1] - 1) - 1}
-                {\text{stride}[1]} + 1\right\rfloor
+        .. math::
+            W_{out} = \left\lfloor\frac{W_{in}  + 2 \times \text{padding}[1] -
+            \text{dilation}[1] \times (\text{kernel_size}[1] - 1) - 1}
+            {\text{stride}[1]} + 1\right\rfloor
 
         Warning:
             Make sure that :attr:`num_estimators` divides :attr:`out_channels` when calling :func:`forward()`.
-
 
         Examples:
             >>> # With square kernels, four estimators and equal stride

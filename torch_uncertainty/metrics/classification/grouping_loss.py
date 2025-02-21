@@ -57,10 +57,10 @@ class GroupingLoss(Metric):
                 If :attr:`reduction` is not one of ``'mean'``, ``'sum'``,
                 ``'none'`` or ``None``.
 
-        Reference:
-            Perez-Lebel, Alexandre, Le Morvan, Marine and Varoquaux, Gaël.
-            Beyond calibration: estimating the grouping loss of modern neural
-            networks. In ICLR 2023.
+        References:
+            [1] `Beyond calibration: estimating the grouping loss of modern neural networks. In ICLR 2023
+            <https://arxiv.org/abs/2210.16315>`_.
+
         """
         super().__init__(**kwargs)
         if not glest_installed:  # coverage: ignore

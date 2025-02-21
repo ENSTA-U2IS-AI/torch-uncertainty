@@ -35,7 +35,7 @@ class _MLP(nn.Module):
             layer_args (Dict): Arguments for the layer class.
             dropout_rate (float): Dropout probability.
             dist_family (str, optional): Distribution family name. ``None`` means point-wise
-                prediction. Defaults to ``None``.
+            prediction. Defaults to ``None``.
             dist_args (Dict, optional): Arguments for the distribution layer class.
         """
         super().__init__()

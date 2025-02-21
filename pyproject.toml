@@ -56,12 +56,14 @@ dev = [
     "pre-commit-hooks",
 ]
 docs = [
-    "sphinx<6",
-    "tu_sphinx_theme",
+    "sphinx==7.4.7",
+    "pydata-sphinx-theme",
     "sphinx-copybutton",
     "sphinx-gallery",
     "sphinx-design",
     "sphinx-codeautolink",
+    "sphinx_design",
+    "sphinxcontrib-sass",
 ]
 all = [
     "torch_uncertainty[dev,docs,image,tabular]",

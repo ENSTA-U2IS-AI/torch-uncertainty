@@ -15,39 +15,39 @@ class ChannelLayerNorm(LayerNorm):
         device: torch.device | str | None = None,
         dtype: torch.dtype | str | None = None,
     ) -> None:
-        r"""Layer normalization over the channel dimension.
+        r"""Masksembles-style Conv2d layer.
 
         Args:
-        normalized_shape (int or list or torch.Size): input shape from an expected input
-            of size
+            in_channels (int): Number of channels in the input image.
+            out_channels (int): Number of channels produced by the convolution.
+            kernel_size (int or tuple): Size of the convolving kernel.
+            num_estimators (int): Number of estimators in the ensemble.
+            scale (float): The scale parameter for the masks.
+            stride (int or tuple, optional): Stride of the convolution.
+            Defaults to ``1``.
+            padding (int, tuple or str, optional): Padding added to all four sides
+            of the input. Defaults to ``0``.
+            dilation (int or tuple, optional): Spacing between kernel elements.
+            Defaults to ``1``.
+            groups (int, optional): Number of blocked connexions from input
+            channels to output channels for each estimator. Defaults to ``1``.
+            bias (bool, optional): If ``True``, adds a learnable bias to the
+            output. Defaults to ``True``.
+            normalized_shape (int | list[int]): Shape of the input to normalize.
+            elementwise_affine (bool, optional): Defaults to ``True``.
+            eps (float): A small constant added to the denominator for numerical stability. Default is 1e-5.
+            device (Any, optional): The desired device of returned tensor.
+            Defaults to ``None``.
+            dtype (Any, optional): The desired data type of returned tensor.
+            Defaults to ``None``.
 
-            .. math::
-                [* \times \text{normalized\_shape}[0] \times \text{normalized\_shape}[1]
-                    \times \ldots \times \text{normalized\_shape}[-1]]
+        Warning:
+            Be sure to apply a repeat on the batch at the start of the training
+            if you use `MaskedConv2d`.
 
-            If a single integer is used, it is treated as a singleton list, and this module will
-            normalize over the channel dimension which is expected to be of that specific size.
-        eps (float): a value added to the denominator for numerical stability. Default: 1e-5
-        elementwise_affine (bool): a boolean value that when set to ``True``, this module
-            has learnable per-element affine parameters initialized to ones (for weights)
-            and zeros (for biases). Default: ``True``.
-        bias (bool): If set to ``False``, the layer will not learn an additive bias (only relevant if
-            :attr:`elementwise_affine` is ``True``). Default: ``True``.
-        device (torch.device or str or None): the desired device of the module.
-        dtype (torch.dtype or str or None): the desired floating point type of the module.
-
-        Attributes:
-            weight: the learnable weights of the module of shape
-                :math:`\text{normalized\_shape}` when :attr:`elementwise_affine` is set to ``True``.
-                The values are initialized to 1.
-            bias:   the learnable bias of the module of shape
-                    :math:`\text{normalized\_shape}` when :attr:`elementwise_affine` is set to ``True``.
-                    The values are initialized to 0.
-
-        Shape:
-            - Input: :math:`(N, *)`
-            - Output: :math:`(N, *)` (same shape as input)
-
+        Reference:
+            `Masksembles for Uncertainty Estimation`, Nikita Durasov, Timur
+            Bagautdinov, Pierre Baque, Pascal Fua.
         """
         super().__init__(normalized_shape, eps, elementwise_affine, bias, device, dtype)
         self.cback = ChannelBack()

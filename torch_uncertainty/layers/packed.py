@@ -67,20 +67,14 @@ class PackedLinear(nn.Module):
             alpha (float): The width multiplier of the linear layer.
             num_estimators (int): The number of estimators grouped in the layer.
             gamma (int, optional): Defaults to ``1``.
-            bias (bool, optional): It ``True``, adds a learnable bias to the
-                output. Defaults to ``True``.
-            first (bool, optional): Whether this is the first layer of the
-                network. Defaults to ``False``.
-            last (bool, optional): Whether this is the last layer of the network.
-                Defaults to ``False``.
-            implementation (str, optional): The implementation to use. Defaults
-                to ``"legacy"``.
+            bias (bool, optional): It ``True``, adds a learnable bias to the output. Defaults to ``True``.
+            first (bool, optional): Whether this is the first layer of the network. Defaults to ``False``.
+            last (bool, optional): Whether this is the last layer of the network. Defaults to ``False``.
+            implementation (str, optional): The implementation to use. Defaults to ``"legacy"``.
             rearrange (bool, optional): Rearrange the input and outputs for
-                compatibility with previous and later layers. Defaults to ``True``.
-            device (torch.device, optional): The device to use for the layer's
-                parameters. Defaults to ``None``.
-            dtype (torch.dtype, optional): The dtype to use for the layer's
-                parameters. Defaults to ``None``.
+            compatibility with previous and later layers. Defaults to ``True``.
+            device (torch.device, optional): The device to use for the layer's parameters. Defaults to ``None``.
+            dtype (torch.dtype, optional): The dtype to use for the layer's parameters. Defaults to ``None``.
 
         Explanation Note:
             Increasing :attr:`alpha` will increase the number of channels of the
@@ -232,28 +226,20 @@ class PackedConv1d(nn.Module):
             alpha (int): The channel multiplier of the convolutional layer.
             num_estimators (int): Number of estimators in the ensemble.
             gamma (int, optional): Defaults to ``1``.
-            stride (int or tuple, optional): Stride of the convolution.
-                Defaults to ``1``.
-            padding (int, tuple or str, optional): Padding added to both sides of
-                the input. Defaults to ``0``.
-            dilation (int or tuple, optional): Spacing between kernel elements.
-                Defaults to ``1``.
+            stride (int or tuple, optional): Stride of the convolution. Defaults to ``1``.
+            padding (int, tuple or str, optional): Padding added to both sides of the input. Defaults to ``0``.
+            dilation (int or tuple, optional): Spacing between kernel elements. Defaults to ``1``.
             groups (int, optional): Number of blocked connexions from input
-                channels to output channels for each estimator. Defaults to ``1``.
-            minimum_channels_per_group (int, optional): Smallest possible number of
-                channels per group.
-            bias (bool, optional): If ``True``, adds a learnable bias to the
-                output. Defaults to ``True``.
-            padding_mode (str, optional): ``'zeros'``, ``'reflect'``,
-                ``'replicate'`` or ``'circular'``. Defaults to ``'zeros'``.
-            first (bool, optional): Whether this is the first layer of the
-                network. Defaults to ``False``.
-            last (bool, optional): Whether this is the last layer of the network.
-                Defaults to ``False``.
+            channels to output channels for each estimator. Defaults to ``1``.
+            minimum_channels_per_group (int, optional): Smallest possible number of channels per group.
+            bias (bool, optional): If ``True``, adds a learnable bias to the output. Defaults to ``True``.
+            padding_mode (str, optional): ``'zeros'``, ``'reflect'``,``'replicate'`` or ``'circular'``. Defaults to ``'zeros'``.
+            first (bool, optional): Whether this is the first layer of the network. Defaults to ``False``.
+            last (bool, optional): Whether this is the last layer of the network. Defaults to ``False``.
             device (torch.device, optional): The device to use for the layer's
-                parameters. Defaults to ``None``.
+            parameters. Defaults to ``None``.
             dtype (torch.dtype, optional): The dtype to use for the layer's
-                parameters. Defaults to ``None``.
+            parameters. Defaults to ``None``.
 
         Explanation Note:
             Increasing :attr:`alpha` will increase the number of channels of the
@@ -353,28 +339,17 @@ class PackedConv2d(nn.Module):
             alpha (int): The channel multiplier of the convolutional layer.
             num_estimators (int): Number of estimators in the ensemble.
             gamma (int, optional): Defaults to ``1``.
-            stride (int or tuple, optional): Stride of the convolution.
-                Defaults to ``1``.
-            padding (int, tuple or str, optional): Padding added to all four sides
-                of the input. Defaults to ``0``.
-            dilation (int or tuple, optional): Spacing between kernel elements.
-                Defaults to ``1``.
-            groups (int, optional): Number of blocked connexions from input
-                channels to output channels for each estimator. Defaults to ``1``.
-            minimum_channels_per_group (int, optional): Smallest possible number of
-                channels per group.
-            bias (bool, optional): If ``True``, adds a learnable bias to the
-                output. Defaults to ``True``.
-            padding_mode (str, optional): ``'zeros'``, ``'reflect'``,
-                ``'replicate'`` or ``'circular'``. Defaults to ``'zeros'``.
-            first (bool, optional): Whether this is the first layer of the
-                network. Defaults to ``False``.
-            last (bool, optional): Whether this is the last layer of the network.
-                Defaults to ``False``.
-            device (torch.device, optional): The device to use for the layer's
-                parameters. Defaults to ``None``.
-            dtype (torch.dtype, optional): The dtype to use for the layer's
-                parameters. Defaults to ``None``.
+            stride (int or tuple, optional): Stride of the convolution. Defaults to ``1``.
+            padding (int, tuple or str, optional): Padding added to all four sides of the input. Defaults to ``0``.
+            dilation (int or tuple, optional): Spacing between kernel elements. Defaults to ``1``.
+            groups (int, optional): Number of blocked connexions from input channels to output channels for each estimator. Defaults to ``1``.
+            minimum_channels_per_group (int, optional): Smallest possible number of channels per group.
+            bias (bool, optional): If ``True``, adds a learnable bias to the output. Defaults to ``True``.
+            padding_mode (str, optional): ``'zeros'``, ``'reflect'``,``'replicate'`` or ``'circular'``. Defaults to ``'zeros'``.
+            first (bool, optional): Whether this is the first layer of the network. Defaults to ``False``.
+            last (bool, optional): Whether this is the last layer of the network. Defaults to ``False``.
+            device (torch.device, optional): The device to use for the layer's parameters. Defaults to ``None``.
+            dtype (torch.dtype, optional): The dtype to use for the layer's parameters. Defaults to ``None``.
 
         Explanation Note:
             Increasing :attr:`alpha` will increase the number of channels of the
@@ -474,28 +449,18 @@ class PackedConv3d(nn.Module):
             alpha (int): The channel multiplier of the convolutional layer.
             num_estimators (int): Number of estimators in the ensemble.
             gamma (int, optional): Defaults to ``1``.
-            stride (int or tuple, optional): Stride of the convolution.
-                Defaults to ``1``.
-            padding (int, tuple or str, optional): Padding added to all six sides
-                of the input. Defaults to ``0``.
-            dilation (int or tuple, optional): Spacing between kernel elements.
-                Defaults to ``1``.
+            stride (int or tuple, optional): Stride of the convolution. Defaults to ``1``.
+            padding (int, tuple or str, optional): Padding added to all six sides of the input. Defaults to ``0``.
+            dilation (int or tuple, optional): Spacing between kernel elements. Defaults to ``1``.
             groups (int, optional): Number of blocked connexions from input
-                channels to output channels for each estimator. Defaults to ``1``.
-            minimum_channels_per_group (int, optional): Smallest possible number of
-                channels per group.
-            bias (bool, optional): If ``True``, adds a learnable bias to the
-                output. Defaults to ``True``.
-            padding_mode (str, optional): ``'zeros'``, ``'reflect'``,
-                ``'replicate'`` or ``'circular'``. Defaults to ``'zeros'``.
-            first (bool, optional): Whether this is the first layer of the
-                network. Defaults to ``False``.
-            last (bool, optional): Whether this is the last layer of the network.
-                Defaults to ``False``.
-            device (torch.device, optional): The device to use for the layer's
-                parameters. Defaults to ``None``.
-            dtype (torch.dtype, optional): The dtype to use for the layer's
-                parameters. Defaults to ``None``.
+            channels to output channels for each estimator. Defaults to ``1``.
+            minimum_channels_per_group (int, optional): Smallest possible number of channels per group.
+            bias (bool, optional): If ``True``, adds a learnable bias to the output. Defaults to ``True``.
+            padding_mode (str, optional): ``'zeros'``, ``'reflect'``,``'replicate'`` or ``'circular'``. Defaults to ``'zeros'``.
+            first (bool, optional): Whether this is the first layer of the network. Defaults to ``False``.
+            last (bool, optional): Whether this is the last layer of the network. Defaults to ``False``.
+            device (torch.device, optional): The device to use for the layer's parameters. Defaults to ``None``.
+            dtype (torch.dtype, optional): The dtype to use for the layer's parameters. Defaults to ``None``.
 
         Explanation Note:
             Increasing :attr:`alpha` will increase the number of channels of the
@@ -576,25 +541,20 @@ class PackedLayerNorm(nn.GroupNorm):
         device=None,
         dtype=None,
     ) -> None:
-        r"""Packed-Ensembles-style LayerNorm layer.
+        """Packed-Ensembles-style LayerNorm layer.
 
         Args:
             embed_dim (int): the number of features in the input tensor.
             num_estimators (int): the number of estimators in the ensemble.
             alpha (float): the width multiplier of the layer.
-            eps (float, optional): a value added to the denominator for numerical stability. Defaults
-                to 1e-5.
-            affine (bool, optional): a boolean value that when set to ``True``, this module has
-                learnable per_channel affine parameters initialized to ones (for weights) and zeros
-                (for biases). Defaults to ``True``.
-            device (torch.device, optional): the device to use for the layer's parameters. Defaults
-                to ``None``.
-            dtype (torch.dtype, optional): the dtype to use for the layer's parameters. Defaults to
-                ``None``.
+            eps (float, optional): a value added to the denominator for numerical stability. Defaults to 1e-5.
+            affine (bool, optional): a boolean value that when set to ``True``, this module has learnable per_channel affine parameters initialized to ones (for weights) and zeros (for biases). Defaults to ``True``.
+            device (torch.device, optional): The device to use for the layer's parameters. Defaults to ``None``.
+            dtype (torch.dtype, optional): The dtype to use for the layer's parameters. Defaults to ``None``.
 
         Shape:
-            - Input: :math:`(B, *)` where :math:`*` means any number of additional dimensions.
-            - Output: :math:`(B, *)` (same shape as input)
+            - Input: :math:`(N, *)` where :math:`*` means any number of additional dimensions.
+            - Output: :math:`(N, *)` (same shape as input)
         """
         super().__init__(
             num_groups=num_estimators,

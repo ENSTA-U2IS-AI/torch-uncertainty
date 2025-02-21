@@ -12,6 +12,7 @@ docs/source/sg_execution_times.rst
 **/*.out
 **/*.csv
 pyrightconfig.json
+.DS_Store
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

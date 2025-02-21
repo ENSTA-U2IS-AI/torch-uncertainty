@@ -99,10 +99,11 @@ class Cityscapes(TVCityscapes):
 
         Args:
             index (int): Index
+
         Returns:
             tuple: (image, target) where target is a tuple of all target types
                 if ``target_type`` is a list with more
-            than one item. Otherwise, target is a json object if
+                than one item. Otherwise, target is a json object if
                 ``target_type="polygon"``, else the image segmentation.
         """
         image = tv_tensors.Image(Image.open(self.images[index]).convert("RGB"))
