@@ -89,7 +89,7 @@ class ResNetBaseline(ClassificationRoutine):
                 <https://pytorch-lightning.readthedocs.io/en/stable/common/lightning_module.html#configure-optimizers>`_
                 method.
             version (str): Determines which ResNet version to use:
-            
+
                 - ``"std"``: original ResNet
                 - ``"packed"``: Packed-Ensembles ResNet
                 - ``"batched"``: BatchEnsemble ResNet

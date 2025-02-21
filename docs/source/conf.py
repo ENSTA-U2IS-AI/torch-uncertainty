@@ -113,7 +113,6 @@ sass_targets = {"index.scss": "index.css"}
 html_static_path = ["_static"]
 
 
-
 html_theme_options = {
     "logo": {
         "text": "",
@@ -137,7 +136,7 @@ html_sidebars = {
     "installation": [],
     "quickstart": [],
     "references": [],
-    "index" : [],
+    "index": [],
     "**": ["sidebar-nav-bs", "sidebar-ethical-ads"],
 }
 
@@ -145,6 +144,7 @@ html_sidebars = {
 def add_custom_css(app, pagename, _templatename, _context, _doctree):
     if pagename == "index":
         app.add_css_file("index.css")
+
 
 def setup(app):
     app.connect("html-page-context", add_custom_css)
