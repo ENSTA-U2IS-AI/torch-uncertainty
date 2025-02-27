@@ -5,6 +5,7 @@ from torch_uncertainty.losses import (
     BCEWithLogitsLSLoss,
     ConfidencePenaltyLoss,
     ConflictualLoss,
+    CrossEntropyMaxSupLoss,
     DECLoss,
     FocalLoss,
 )
@@ -132,3 +133,24 @@ class TestBCEWithLogitsLSLoss:
         loss(torch.tensor([0.0]), torch.tensor([0]))
         loss = BCEWithLogitsLSLoss(reduction="none")
         loss(torch.tensor([0.0]), torch.tensor([0]))
+
+    def test_failures(self):
+        with pytest.raises(
+            ValueError,
+            match="The label smoothing term of the BCE loss should be non-negative, but got",
+        ):
+            BCEWithLogitsLSLoss(label_smoothing=-1)
+
+
+class TestCrossEntropyMaxSupLoss:
+    """Testing the CrossEntropyMaxSupLoss class."""
+
+    def test_main(self):
+        loss = CrossEntropyMaxSupLoss(max_sup=0.0, weight=torch.tensor([1, 1.2]), reduction="mean")
+        loss(torch.tensor([[0.0, 0.0]]), torch.tensor([0], dtype=torch.long))
+        loss = CrossEntropyMaxSupLoss(max_sup=0.1, reduction="sum")
+        loss(torch.tensor([[0.0, 0.0]]), torch.tensor([0], dtype=torch.long))
+        loss = CrossEntropyMaxSupLoss(max_sup=0.1)
+        loss(torch.tensor([[0.0, 0.0]]), torch.tensor([0], dtype=torch.long))
+        loss = CrossEntropyMaxSupLoss(max_sup=0.1, reduction=None)
+        loss(torch.tensor([[0.0, 0.0]]), torch.tensor([0], dtype=torch.long))

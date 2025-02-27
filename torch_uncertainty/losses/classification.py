@@ -345,6 +345,11 @@ class BCEWithLogitsLSLoss(nn.BCEWithLogitsLoss):
         label_smoothing: float = 0.0,
     ) -> None:
         super().__init__(weight=weight, reduction=reduction)
+        if label_smoothing < 0:
+            raise ValueError(
+                "The label smoothing term of the BCE loss should be non-negative, but got "
+                f"{label_smoothing}."
+            )
         self.label_smoothing = label_smoothing
 
     def forward(self, inputs: Tensor, targets: Tensor) -> Tensor:
@@ -367,7 +372,7 @@ class CrossEntropyMaxSupLoss(nn.CrossEntropyLoss):
         self,
         weight: Tensor | None = None,
         size_average=None,
-        reduction: str = "mean",
+        reduction: str | None = "mean",
         label_smoothing: float = 0,
         max_sup: float = 0,
     ) -> None:
@@ -383,13 +388,14 @@ class CrossEntropyMaxSupLoss(nn.CrossEntropyLoss):
         self.max_sup = max_sup
 
     def forward(self, inputs: Tensor, targets: Tensor) -> Tensor:
+        if self.max_sup == 0.0:
+            return super().forward(inputs, targets)
         z_top1 = inputs.topk(1, -1)[0]
         reg = z_top1 - inputs.mean(-1, keepdim=True)
         loss = (
             F.cross_entropy(
                 inputs,
                 targets,
-                weight=self.weight,
                 label_smoothing=self.label_smoothing,
             )
             + self.max_sup * reg
