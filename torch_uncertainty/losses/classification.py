@@ -382,7 +382,7 @@ class CrossEntropyMaxSupLoss(nn.CrossEntropyLoss):
             an issue if needed.
 
         Reference:
-            MaxSup: Fixing Label-smoothing for improved feature representation. Anonymous authors.
+            MaxSup: Fixing Label-smoothing for improved feature representation. Y. Zhou et al.
         """
         super().__init__(weight, size_average, reduction=reduction, label_smoothing=label_smoothing)
         self.max_sup = max_sup
