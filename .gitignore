@@ -1,5 +1,6 @@
 # Custom
 .vscode/
+.idea/
 data/
 logs/
 lightning_logs/
