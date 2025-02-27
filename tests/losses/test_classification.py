@@ -146,9 +146,9 @@ class TestCrossEntropyMaxSupLoss:
     """Testing the CrossEntropyMaxSupLoss class."""
 
     def test_main(self):
-        loss = CrossEntropyMaxSupLoss(max_sup=0.0, weight=torch.tensor([1, 1.2]), reduction="mean")
+        loss = CrossEntropyMaxSupLoss(max_sup=0.0, reduction="mean")
         loss(torch.tensor([[0.0, 0.0]]), torch.tensor([0], dtype=torch.long))
-        loss = CrossEntropyMaxSupLoss(max_sup=0.1, reduction="sum")
+        loss = CrossEntropyMaxSupLoss(max_sup=0.1, weight=torch.tensor([1, 1.2]), reduction="sum")
         loss(torch.tensor([[0.0, 0.0]]), torch.tensor([0], dtype=torch.long))
         loss = CrossEntropyMaxSupLoss(max_sup=0.1)
         loss(torch.tensor([[0.0, 0.0]]), torch.tensor([0], dtype=torch.long))
