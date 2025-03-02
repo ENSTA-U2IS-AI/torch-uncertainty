@@ -7,17 +7,22 @@ ENV DEBIAN_FRONTEND=noninteractive \
 
 RUN apt-get update && apt-get install -y \
     git \
-    curl \
-    wget \
-    vim \
     python3-pip \
-    python3-venv \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /workspace
 
+# Copy README.md and torch_uncertainy module (required by pyproject.toml, othwise flit build will fail)
+COPY README.md .
+COPY torch_uncertainty ./torch_uncertainty
+
+# Copy dependency file
 COPY pyproject.toml .
+
+# Install dependencies
 RUN pip install --no-cache-dir .
 
+# Expose port 8888 for TensorBoard and Jupyter Notebook
 EXPOSE 8888
+
 CMD [ "/bin/bash" ]
