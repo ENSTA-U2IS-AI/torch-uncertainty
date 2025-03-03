@@ -5,10 +5,11 @@ ENV DEBIAN_FRONTEND=noninteractive \
     LC_ALL=C.UTF-8 \
     LANG=C.UTF-8
 
-# Install Git and OpenSSH Server (PyTorch's base image already includes Conda and Pip)
+# Install Git, OpenSSH Server, and OpenGL (PyTorch's base image already includes Conda and Pip)
 RUN apt-get update && apt-get install -y \
     git \
     openssh-server \
+    libgl1 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /workspace
@@ -52,5 +53,14 @@ CMD ["/bin/bash", "-c", "\
     chmod 700 /root/.ssh && \
     echo \"$RUNPOD_SSH_PUBLIC_KEY\" > /root/.ssh/authorized_keys && \
     chmod 600 /root/.ssh/authorized_keys && \
+    echo \"$GITHUB_SSH_PRIVATE_KEY\" > /root/.ssh/github_rsa && \
+    chmod 600 /root/.ssh/github_rsa && \
+    echo 'Host github.com' > /root/.ssh/config && \
+    echo '  User git' >> /root/.ssh/config && \
+    echo '  IdentityFile /root/.ssh/github_rsa' >> /root/.ssh/config && \
+    chmod 600 /root/.ssh/config && \
+    eval $(ssh-agent -s) && ssh-add /root/.ssh/github_rsa && \
+    ssh-keyscan github.com >> /root/.ssh/known_hosts && \
+    git clone git@github.com:$GITHUB_USER/torch-uncertainty.git /workspace && \
     mkdir -p /run/sshd && \
     /usr/sbin/sshd -D"]
