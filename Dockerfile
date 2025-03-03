@@ -5,7 +5,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
     LC_ALL=C.UTF-8 \
     LANG=C.UTF-8
 
-# Install Git and OpenSSH Server (PyTorch's base image alraedy includes Conda and Pip)
+# Install Git and OpenSSH Server (PyTorch's base image already includes Conda and Pip)
 RUN apt-get update && apt-get install -y \
     git \
     openssh-server \
@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /workspace
 
-# Copy README.md and torch_uncertainy module (required by pyproject.toml, othwise flit build will fail)
+# Copy README.md and torch_uncertainty module (required by pyproject.toml, otherwise flit build will fail)
 COPY README.md /workspace/
 COPY torch_uncertainty /workspace/torch_uncertainty
 
@@ -26,7 +26,7 @@ RUN pip install --no-cache-dir ".[all]"
 # Always activate Conda when opening a new terminal
 RUN echo "source /opt/conda/bin/activate" >> /root/.bashrc
 
-# Customize the Bash prompt
+# Customize shell prompt
 RUN echo 'force_color_prompt=yes' >> /root/.bashrc && \
     echo 'PS1="\[\033[01;34m\]\W\[\033[00m\]\$ "' >> /root/.bashrc && \
     echo 'if [ -x /usr/bin/dircolors ]; then' >> /root/.bashrc && \
@@ -38,22 +38,19 @@ RUN echo 'force_color_prompt=yes' >> /root/.bashrc && \
     echo '    cd /workspace' >> /root/.bashrc && \
     echo 'fi' >> /root/.bashrc
 
-# Allow SSH login as root without a password (key-based authentication only)
+# Configure SSH server
 RUN echo "PermitRootLogin yes" >> /etc/ssh/sshd_config && \
     echo "PubkeyAuthentication yes" >> /etc/ssh/sshd_config && \
     echo "AuthorizedKeysFile .ssh/authorized_keys" >> /etc/ssh/sshd_config
 
-# Set default environment variable for SSH key (empty by default)
-ENV SSH_PUBLIC_KEY=""
-
 # Expose port 8888 for TensorBoard and Jupyter Notebook and port 22 for SSH
 EXPOSE 8888 22
 
-# Ensure SSH key is added when the container starts
+# Ensure public key for RunPod-Auth is added when the container starts
 CMD ["/bin/bash", "-c", "\
     mkdir -p /root/.ssh && \
     chmod 700 /root/.ssh && \
-    echo \"$SSH_PUBLIC_KEY\" > /root/.ssh/authorized_keys && \
+    echo \"$RUNPOD_SSH_PUBLIC_KEY\" > /root/.ssh/authorized_keys && \
     chmod 600 /root/.ssh/authorized_keys && \
     mkdir -p /run/sshd && \
     /usr/sbin/sshd -D"]
