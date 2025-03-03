@@ -5,37 +5,55 @@ ENV DEBIAN_FRONTEND=noninteractive \
     LC_ALL=C.UTF-8 \
     LANG=C.UTF-8
 
-# Install git and pip
+# Install Git and OpenSSH Server (PyTorch's base image alraedy includes Conda and Pip)
 RUN apt-get update && apt-get install -y \
     git \
-    python3-pip \
+    openssh-server \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /workspace
 
 # Copy README.md and torch_uncertainy module (required by pyproject.toml, othwise flit build will fail)
-COPY README.md .
-COPY torch_uncertainty ./torch_uncertainty
+COPY README.md /workspace/
+COPY torch_uncertainty /workspace/torch_uncertainty
 
 # Copy dependency file
-COPY pyproject.toml .
+COPY pyproject.toml /workspace/
 
 # Install dependencies
-RUN pip install --no-cache-dir .
+RUN pip install --no-cache-dir ".[all]"
 
-# Install OpenSSH Server
-RUN apt-get update && apt-get install -y openssh-server && rm -rf /var/lib/apt/lists/*
+# Always activate Conda when opening a new terminal
+RUN echo "source /opt/conda/bin/activate" >> /root/.bashrc
 
-# Create SSH directory & keys
-RUN mkdir -p /var/run/sshd && echo 'root:root' | chpasswd
+# Customize the Bash prompt
+RUN echo 'force_color_prompt=yes' >> /root/.bashrc && \
+    echo 'PS1="\[\033[01;34m\]\W\[\033[00m\]\$ "' >> /root/.bashrc && \
+    echo 'if [ -x /usr/bin/dircolors ]; then' >> /root/.bashrc && \
+    echo '    test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"' >> /root/.bashrc && \
+    echo '    alias ls="ls --color=auto"' >> /root/.bashrc && \
+    echo '    alias grep="grep --color=auto"' >> /root/.bashrc && \
+    echo '    alias fgrep="fgrep --color=auto"' >> /root/.bashrc && \
+    echo '    alias egrep="egrep --color=auto"' >> /root/.bashrc && \
+    echo '    cd /workspace' >> /root/.bashrc && \
+    echo 'fi' >> /root/.bashrc
 
-# Allow root login via SSH
-RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+# Allow SSH login as root without a password (key-based authentication only)
+RUN echo "PermitRootLogin yes" >> /etc/ssh/sshd_config && \
+    echo "PubkeyAuthentication yes" >> /etc/ssh/sshd_config && \
+    echo "AuthorizedKeysFile .ssh/authorized_keys" >> /etc/ssh/sshd_config
 
-# Expose port 8888 for TensorBoard and Jupyter Notebook
-EXPOSE 8888
-# Expose port 22 for SSH
-EXPOSE 22
+# Set default environment variable for SSH key (empty by default)
+ENV SSH_PUBLIC_KEY=""
 
-# Ensure the SSH server starts on container launch
-CMD ["/usr/sbin/sshd", "-D"]
+# Expose port 8888 for TensorBoard and Jupyter Notebook and port 22 for SSH
+EXPOSE 8888 22
+
+# Ensure SSH key is added when the container starts
+CMD ["/bin/bash", "-c", "\
+    mkdir -p /root/.ssh && \
+    chmod 700 /root/.ssh && \
+    echo \"$SSH_PUBLIC_KEY\" > /root/.ssh/authorized_keys && \
+    chmod 600 /root/.ssh/authorized_keys && \
+    mkdir -p /run/sshd && \
+    /usr/sbin/sshd -D"]
