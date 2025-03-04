@@ -20,8 +20,8 @@ RUN touch README.md && mkdir -p torch_uncertainty && touch torch_uncertainty/__i
 # Copy dependency file
 COPY pyproject.toml /workspace/
 
-# Install dependencies
-RUN pip install --no-cache-dir ".[all]"
+# Install dependencies (in editable mode!)
+RUN pip install --no-cache-dir "-e .[all]"
 
 # Always activate Conda when opening a new terminal
 RUN echo "source /opt/conda/bin/activate" >> /root/.bashrc
@@ -109,7 +109,6 @@ CMD ["/bin/bash", "-c", "\
         echo '    alias egrep=\"egrep --color=auto\"' >> /root/.bashrc; \
         echo 'fi' >> /root/.bashrc; \
     fi; \
-    \
     # Start SSH server \
     mkdir -p /run/sshd && chmod 755 /run/sshd; \
     /usr/sbin/sshd -D"]
