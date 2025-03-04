@@ -3,38 +3,31 @@
 {% block extrahead %}
 {{ super() }}
 <!-- Load the compiled index.css only for this page -->
-<link rel="stylesheet" type="text/css" href="{{ pathto('_static/styles/index.css', 1) }}">
-<script>
-  document.addEventListener("DOMContentLoaded", function () {
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      document.querySelector(".navbar-brand img").src = "{{ pathto('_static/logo_dark.png', 1) }}";
-    }
-  });
-</script>
+<link rel="stylesheet" type="text/css" href="{{ pathto('_static/index.css', 1) }}">
 {% endblock extrahead %}
 
 {% block docs_navbar %}
 {{ super() }}
 
 <!-- Gradient Banner Section -->
-<div class="gradient-banner" style="background: linear-gradient(to right, #020202, #A9BBDC, #262729); color: white; padding: 2rem 0;">
+<div style="padding: 3rem;">
   <div class="container">
     <div class="row align-items-center">
-      <div class="col-md-6">
-        <h1 style="font-family: 'Roboto', 'Helvetica Neue', Arial, sans-serif; font-weight: 700; letter-spacing: 1px;">
+      <div class="col-md-6" style="margin-top: 1rem";>
+        <h1 style="font-family: 'Roboto', sans-serif; font-weight: 350; letter-spacing: 1px;">
           TorchUncertainty
         </h1>
-        <h4 style="font-style: italic; margin-bottom: 1rem;">Scalable Uncertainty Estimation in PyTorch</h4>
+        <h4 style="margin-top: 0rem; margin-left: 0.20rem; font-weight: 200;">Practitioner-friendly Uncertainty</h4>
         <!-- Buttons with original style -->
         <a class="btn btn-warning mb-2 me-2" style="font-size: 1.1rem; font-weight: 500;" href="{{ pathto('installation') }}">Getting Started</a>
         <a class="btn btn-light mb-2" style="font-size: 1.1rem; font-weight: 500;" href="{{ pathto('api') }}">API Documentation</a>
       </div>
       <div class="col-md-6">
         <ul style="list-style-type: none; padding-left: 0; font-size: 1.1rem;">
-          <li>Easy-to-use PyTorch uncertainty quantification tools.</li>
-          <li>Seamlessly integrates with PyTorch Lightning.</li>
-          <li>Supports classification, regression, and segmentation tasks.</li>
-          <li>Open-source.</li>
+          <li>Easy-to-use PyTorch uncertainty quantification tools</li>
+          <li>Seamless integration with Lightning</li>
+          <li>Classification, regression, and segmentation tasks</li>
+          <li>Open-source</li>
         </ul>
       </div>
     </div>
