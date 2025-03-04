@@ -127,7 +127,6 @@ html_theme_options = {
     "footer_center": ["copyright"],
 }
 
-
 html_additional_pages = {"index": "custom_index.html"}
 
 html_sidebars = {
