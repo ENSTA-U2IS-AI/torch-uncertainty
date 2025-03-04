@@ -95,3 +95,9 @@ The following projects use TorchUncertainty:
 - *A Symmetry-Aware Exploration of Bayesian Neural Network Posteriors* - [ICLR 2024](https://arxiv.org/abs/2310.08287)
 
 **If you are using TorchUncertainty in your project, please let us know, we will add your project to this list!**
+
+## :whale: Docker image for contributors
+For contributors who want to run experiments on cloud GPU instances, we provide a pre-built Docker image that includes all necessary dependencies and configurations and the Dockerfile for building your custom Docker images. 
+This allows you to quickly launch an experiment-ready container with minimal setup.
+
+Please refer to [DOCKER.md](DOCKER.md) for further details.
