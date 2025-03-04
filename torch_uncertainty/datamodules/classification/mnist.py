@@ -171,10 +171,12 @@ class MNISTDataModule(TUDataModule):
 
         Return:
             list[DataLoader]: Dataloaders of the MNIST test set (in
-                distribution data) and FashionMNIST test split
+                distribution data), MNISTC (shifted data), and FashionMNIST test split
                 (out-of-distribution data).
         """
         dataloader = [self._data_loader(self.test)]
         if self.eval_ood:
             dataloader.append(self._data_loader(self.ood))
+        if self.eval_shift:
+            dataloader.append(self._data_loader(self.shift))
         return dataloader
