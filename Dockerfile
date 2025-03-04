@@ -14,9 +14,8 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /workspace
 
-# Copy README.md and torch_uncertainty module (required by pyproject.toml, otherwise flit build will fail)
-COPY README.md /workspace/
-COPY torch_uncertainty /workspace/torch_uncertainty
+# Create an empty README.md file and an empty torch_uncertainty module to satisfy flit
+RUN touch README.md && mkdir -p torch_uncertainty && touch torch_uncertainty/__init__.py
 
 # Copy dependency file
 COPY pyproject.toml /workspace/
@@ -26,23 +25,6 @@ RUN pip install --no-cache-dir ".[all]"
 
 # Always activate Conda when opening a new terminal
 RUN echo "source /opt/conda/bin/activate" >> /root/.bashrc
-
-# Customize shell prompt (optional)
-RUN if [ ! -z "$USE_COMPACT_SHELL_PROMPT" ] && [ "$USE_COMPACT_SHELL_PROMPT" = "true" ]; then \
-    echo 'force_color_prompt=yes' >> /root/.bashrc && \
-    # Blue working directory, no username, and no hostname, with $ at the end
-    echo 'PS1="\[\033[01;34m\]\W\[\033[00m\]\$ "' >> /root/.bashrc && \
-    # Colorize ls, grep, fgrep, and egrep
-    echo 'if [ -x /usr/bin/dircolors ]; then' >> /root/.bashrc && \
-    echo '    test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"' >> /root/.bashrc && \
-    echo '    alias ls="ls --color=auto"' >> /root/.bashrc && \
-    echo '    alias grep="grep --color=auto"' >> /root/.bashrc && \
-    echo '    alias fgrep="fgrep --color=auto"' >> /root/.bashrc && \
-    echo '    alias egrep="egrep --color=auto"' >> /root/.bashrc && \
-    # Automatically change to workspace directory when opening a new terminal
-    echo '    cd /workspace' >> /root/.bashrc && \
-    echo 'fi' >> /root/.bashrc \
-    fi;
 
 # Configure SSH server
 RUN echo "PermitRootLogin yes" >> /etc/ssh/sshd_config && \
@@ -58,14 +40,16 @@ CMD ["/bin/bash", "-c", "\
         if [ ! -d /root/.ssh ]; then \
         mkdir -p /root/.ssh && chmod 700 /root/.ssh; \
     fi; \
-    # Add public key for RunPod-Auth if not present \
-    if [ -z \"$RUNPOD_SSH_PUBLIC_KEY\" ]; then \
-        echo 'Please set the RUNPOD_SSH_PUBLIC_KEY environment variable.'; \
+    \
+    # Add public key for VM-Auth if not present \
+    if [ -z \"$VM_SSH_PUBLIC_KEY\" ]; then \
+        echo 'Please set the VM_SSH_PUBLIC_KEY environment variable.'; \
         exit 1; \
     fi; \
-    if [ ! -f /root/.ssh/authorized_keys ] || ! grep -q \"$RUNPOD_SSH_PUBLIC_KEY\" /root/.ssh/authorized_keys; then \
-        echo \"$RUNPOD_SSH_PUBLIC_KEY\" > /root/.ssh/authorized_keys && chmod 600 /root/.ssh/authorized_keys; \
+    if [ ! -f /root/.ssh/authorized_keys ] || ! grep -q \"$VM_SSH_PUBLIC_KEY\" /root/.ssh/authorized_keys; then \
+        echo \"$VM_SSH_PUBLIC_KEY\" > /root/.ssh/authorized_keys && chmod 600 /root/.ssh/authorized_keys; \
     fi; \
+    \
     # Add private key for GitHub-Auth if not present \
     if [ -z \"$GITHUB_SSH_PRIVATE_KEY\" ]; then \
         echo 'Please set the GITHUB_SSH_PRIVATE_KEY environment variable.'; \
@@ -88,6 +72,7 @@ CMD ["/bin/bash", "-c", "\
         eval $(ssh-agent -s); \
     fi; \
     ssh-add -l | grep github_rsa > /dev/null || ssh-add /root/.ssh/github_rsa; \
+    \
     # Ensure first-time setup only runs once \
     if [ ! -f /workspace/.setup_done ]; then \
         echo 'Running first-time setup...'; \
@@ -111,6 +96,20 @@ CMD ["/bin/bash", "-c", "\
     else \
         echo 'Skipping first-time setup, already done.'; \
     fi; \
+    \
+    # Apply shell prompt customization \
+    if [ ! -z \"$USE_COMPACT_SHELL_PROMPT\" ]; then \
+        echo 'force_color_prompt=yes' >> /root/.bashrc; \
+        echo 'PS1=\"\[\033[01;34m\]\W\[\033[00m\]\$ \"' >> /root/.bashrc; \
+        echo 'if [ -x /usr/bin/dircolors ]; then' >> /root/.bashrc; \
+        echo '    test -r ~/.dircolors && eval \"$(dircolors -b ~/.dircolors)\" || eval \"$(dircolors -b)\"' >> /root/.bashrc; \
+        echo '    alias ls=\"ls --color=auto\"' >> /root/.bashrc; \
+        echo '    alias grep=\"grep --color=auto\"' >> /root/.bashrc; \
+        echo '    alias fgrep=\"fgrep --color=auto\"' >> /root/.bashrc; \
+        echo '    alias egrep=\"egrep --color=auto\"' >> /root/.bashrc; \
+        echo 'fi' >> /root/.bashrc; \
+    fi; \
+    \
     # Start SSH server \
     mkdir -p /run/sshd && chmod 755 /run/sshd; \
     /usr/sbin/sshd -D"]
