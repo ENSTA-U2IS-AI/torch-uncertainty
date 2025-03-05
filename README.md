@@ -100,4 +100,4 @@ The following projects use TorchUncertainty:
 For contributors who want to run experiments on cloud GPU instances, we provide a pre-built Docker image that includes all necessary dependencies and configurations and the Dockerfile for building your custom Docker images. 
 This allows you to quickly launch an experiment-ready container with minimal setup.
 
-Please refer to [DOCKER.md](DOCKER.md) for further details.
+Please refer to [DOCKER.md](docker/DOCKER.md) for further details.
