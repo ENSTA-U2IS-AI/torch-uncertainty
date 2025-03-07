@@ -23,7 +23,6 @@ class MNISTC(VisionDataset):
             takes in the target and transforms it. Defaults to None.
         subset (str): The subset to use, one of ``all`` or the keys in
             ``mnistc_subsets``.
-        shift_severity (int): The shift_severity of the corruption, between 1 and 5.
         download (bool, optional): If True, downloads the dataset from the
             internet and puts it in root directory. If dataset is already
             downloaded, it is not downloaded again. Defaults to False.
