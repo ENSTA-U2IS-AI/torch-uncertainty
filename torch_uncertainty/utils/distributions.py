@@ -33,7 +33,7 @@ def get_dist_class(dist_family: str) -> type[Distribution]:
     if dist_family == "student":
         return StudentT
     raise NotImplementedError(
-        f"{dist_family} distribution is not supported." "Raise an issue if needed."
+        f"{dist_family} distribution is not supported. Raise an issue if needed."
     )
 
 
@@ -52,7 +52,7 @@ def get_dist_estimate(dist: Distribution, dist_estimate: str) -> Tensor:
     if dist_estimate == "mode":
         return dist.mode
     raise NotImplementedError(
-        f"{dist_estimate} estimate is not supported." "Raise an issue if needed."
+        f"{dist_estimate} estimate is not supported.Raise an issue if needed."
     )
 
 

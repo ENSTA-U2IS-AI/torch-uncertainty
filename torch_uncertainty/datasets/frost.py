@@ -44,7 +44,7 @@ class FrostImages(VisionDataset):  # TODO: Use ImageFolder
 
         if not self._check_integrity():
             raise RuntimeError(
-                "Dataset not found or corrupted. You can use download=True to " "download it."
+                "Dataset not found or corrupted. You can use download=True to download it."
             )
 
         super().__init__(

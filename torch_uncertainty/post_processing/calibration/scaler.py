@@ -94,7 +94,7 @@ class Scaler(PostProcessing):
     def forward(self, inputs: Tensor) -> Tensor:
         if not self.trained:
             logging.error(
-                "TemperatureScaler has not been trained yet. Returning " "manually tempered inputs."
+                "TemperatureScaler has not been trained yet. Returning manually tempered inputs."
             )
         return self._scale(self.model(inputs))
 

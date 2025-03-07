@@ -31,12 +31,12 @@ class DECLoss(nn.Module):
 
         if reg_weight is not None and (reg_weight < 0):
             raise ValueError(
-                "The regularization weight should be non-negative, but got " f"{reg_weight}."
+                f"The regularization weight should be non-negative, but got {reg_weight}."
             )
         self.reg_weight = reg_weight
 
         if annealing_step is not None and (annealing_step <= 0):
-            raise ValueError("The annealing step should be positive, but got " f"{annealing_step}.")
+            raise ValueError(f"The annealing step should be positive, but got {annealing_step}.")
         self.annealing_step = annealing_step
 
         if reduction not in ("none", "mean", "sum") and reduction is not None:
@@ -178,11 +178,11 @@ class ConfidencePenaltyLoss(nn.Module):
         self.reduction = reduction
 
         if eps < 0:
-            raise ValueError("The epsilon value should be non-negative, but got " f"{eps}.")
+            raise ValueError(f"The epsilon value should be non-negative, but got {eps}.")
         self.eps = eps
         if reg_weight < 0:
             raise ValueError(
-                "The regularization weight should be non-negative, but got " f"{reg_weight}."
+                f"The regularization weight should be non-negative, but got {reg_weight}."
             )
         self.reg_weight = reg_weight
 
@@ -233,7 +233,7 @@ class ConflictualLoss(nn.Module):
         self.reduction = reduction
         if reg_weight < 0:
             raise ValueError(
-                "The regularization weight should be non-negative, but got " f"{reg_weight}."
+                f"The regularization weight should be non-negative, but got {reg_weight}."
             )
         self.reg_weight = reg_weight
 
@@ -287,7 +287,7 @@ class FocalLoss(nn.Module):
 
         if gamma < 0:
             raise ValueError(
-                "The gamma term of the focal loss should be non-negative, but got " f"{gamma}."
+                f"The gamma term of the focal loss should be non-negative, but got {gamma}."
             )
         self.gamma = gamma
 

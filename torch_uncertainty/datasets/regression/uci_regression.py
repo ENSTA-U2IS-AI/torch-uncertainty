@@ -191,7 +191,7 @@ class UCIRegression(Dataset):
             logging.info("Files already downloaded and verified")
             return
         if self.url is None:
-            raise ValueError(f"The dataset {self.dataset_name} is not available for " "download.")
+            raise ValueError(f"The dataset {self.dataset_name} is not available for download.")
         download_root = self.root / self.root_appendix / self.dataset_name
         if self.dataset_name == "boston":
             download_url(

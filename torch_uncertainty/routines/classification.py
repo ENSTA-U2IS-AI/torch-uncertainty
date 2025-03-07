@@ -717,7 +717,7 @@ def _classification_routine_checks(
 
     if not is_ensemble and ood_criterion in ["mi", "vr"]:
         raise ValueError(
-            "You cannot use mutual information or variation ratio with a single" " model."
+            "You cannot use mutual information or variation ratio with a single model."
         )
 
     if is_ensemble and eval_grouping_loss:
@@ -727,12 +727,12 @@ def _classification_routine_checks(
 
     if num_classes < 1:
         raise ValueError(
-            "The number of classes must be a positive integer >= 1." f"Got {num_classes}."
+            f"The number of classes must be a positive integer >= 1. Got {num_classes}."
         )
 
     if eval_grouping_loss and not hasattr(model, "feats_forward"):
         raise ValueError(
-            "Your model must have a `feats_forward` method to compute the " "grouping loss."
+            "Your model must have a `feats_forward` method to compute the grouping loss."
         )
 
     if eval_grouping_loss and not (

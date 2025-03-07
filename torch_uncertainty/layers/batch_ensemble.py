@@ -143,7 +143,7 @@ class BatchLinear(nn.Module):
 
     def extra_repr(self) -> str:
         return (
-            f"in_features={ self.in_features},"
+            f"in_features={self.in_features},"
             f" out_features={self.out_features},"
             f" num_estimators={self.num_estimators},"
             f" bias={self.bias is not None}"

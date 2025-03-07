@@ -61,7 +61,7 @@ class CIFAR10N(CIFAR10):
 
         if not self._check_specific_integrity():
             raise RuntimeError(
-                "Dataset not found or corrupted. You can use download=True to " "download it."
+                "Dataset not found or corrupted. You can use download=True to download it."
             )
 
         self.targets = list(torch.load(self.root / self.filename)[file_arg])
@@ -112,7 +112,7 @@ class CIFAR100N(CIFAR100):
 
         if not self._check_specific_integrity():
             raise RuntimeError(
-                "Dataset not found or corrupted. You can use download=True to " "download it."
+                "Dataset not found or corrupted. You can use download=True to download it."
             )
 
         self.targets = list(torch.load(self.root / self.filename)[file_arg])

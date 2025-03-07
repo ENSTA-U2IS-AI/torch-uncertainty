@@ -35,7 +35,7 @@ class FPRx(Metric):
         self.add_state("targets", [], dist_reduce_fx="cat")
 
         rank_zero_warn(
-            f"Metric `FPR{int(recall_level*100)}` will save all targets and predictions"
+            f"Metric `FPR{int(recall_level * 100)}` will save all targets and predictions"
             " in buffer. For large datasets this may lead to large memory"
             " footprint."
         )

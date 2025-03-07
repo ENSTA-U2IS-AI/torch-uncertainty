@@ -232,7 +232,7 @@ class MUAD(VisionDataset):
         """
         if "depth" in path.name:
             raise NotImplementedError(
-                "Depth mode is not implemented yet. Raise an issue " "if you need it."
+                "Depth mode is not implemented yet. Raise an issue if you need it."
             )
         self.samples = sorted((path / "leftImg8bit/").glob("**/*"))
         if self.target_type == "semantic":

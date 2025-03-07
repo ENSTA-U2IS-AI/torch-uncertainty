@@ -133,7 +133,7 @@ class CamVid(VisionDataset):
         """
         if split not in ["train", "val", "test", None]:
             raise ValueError(
-                f"Unknown split '{split}'. " "Supported splits are ['train', 'val', 'test', None]"
+                f"Unknown split '{split}'. Supported splits are ['train', 'val', 'test', None]"
             )
 
         super().__init__(root, transforms, None, None)
@@ -153,7 +153,7 @@ class CamVid(VisionDataset):
 
         if not self._check_integrity():
             raise RuntimeError(
-                "Dataset not found or corrupted. " "You can use download=True to download it"
+                "Dataset not found or corrupted. You can use download=True to download it"
             )
 
         # get filenames for split

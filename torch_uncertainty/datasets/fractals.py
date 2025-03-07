@@ -40,7 +40,7 @@ class Fractals(ImageFolder):
 
         if not self._check_integrity():
             raise RuntimeError(
-                "Dataset not found or corrupted. You can use download=True to " "download it."
+                "Dataset not found or corrupted. You can use download=True to download it."
             )
 
         super().__init__(self.root, transform=transform, target_transform=target_transform)

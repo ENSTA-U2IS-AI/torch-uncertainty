@@ -111,7 +111,7 @@ class CIFAR10C(VisionDataset):
 
         if shift_severity not in list(range(1, 6)):
             raise ValueError(
-                "Corruptions shift_severity should be chosen between 1 and 5 " "included."
+                "Corruptions shift_severity should be chosen between 1 and 5 included."
             )
         samples, labels = self.make_dataset(self.root, self.subset, self.shift_severity)
 

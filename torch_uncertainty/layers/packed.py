@@ -33,11 +33,9 @@ def check_packed_parameters_consistency(alpha: float, gamma: int, num_estimators
     if num_estimators is None:
         raise ValueError("You must specify the value of the arg. `num_estimators`")
     if not isinstance(num_estimators, int):
-        raise TypeError(
-            "Attribute `num_estimators` should be an int, not " f"{type(num_estimators)}"
-        )
+        raise TypeError(f"Attribute `num_estimators` should be an int, not {type(num_estimators)}")
     if num_estimators <= 0:
-        raise ValueError("Attribute `num_estimators` should be >= 1, not " f"{num_estimators}")
+        raise ValueError(f"Attribute `num_estimators` should be >= 1, not {num_estimators}")
 
 
 class PackedLinear(nn.Module):
@@ -697,9 +695,9 @@ class PackedMultiheadAttention(nn.Module):
         self.dropout = dropout
         self.batch_first = batch_first
         self.head_dim = self.embed_dim // self.num_heads
-        assert (
-            self.head_dim * self.num_heads == self.embed_dim
-        ), "embed_dim must be divisible by num_heads"
+        assert self.head_dim * self.num_heads == self.embed_dim, (
+            "embed_dim must be divisible by num_heads"
+        )
 
         self.num_estimators = num_estimators
         self.alpha = alpha
