@@ -71,8 +71,12 @@ class PackedLinear(nn.Module):
                 network. Defaults to ``False``.
             last (bool, optional): Whether this is the last layer of the network.
                 Defaults to ``False``.
-            implementation (str, optional): The implementation to use. Defaults
-                to ``"legacy"``.
+            implementation (str, optional): The implementation to use. Available implementations:
+
+                - ``"legacy"`` (default): The legacy implementation of the linear layer.
+                - ``"sparse"``: The sparse implementation of the linear layer.
+                - ``"full"``: The full implementation of the linear layer.
+                - ``"einsum"``: The einsum implementation of the linear layer.
             rearrange (bool, optional): Rearrange the input and outputs for
                 compatibility with previous and later layers. Defaults to ``True``.
             device (torch.device, optional): The device to use for the layer's
@@ -101,6 +105,13 @@ class PackedLinear(nn.Module):
             default.
         """
         check_packed_parameters_consistency(alpha, gamma, num_estimators)
+
+        if implementation not in ["legacy", "sparse", "full", "einsum"]:
+            raise ValueError(
+                f"Unknown implementation: {implementation} for PackedLinear"
+                "Available implementations are: 'legacy', 'sparse', 'full', 'einsum'"
+            )
+
         factory_kwargs = {"device": device, "dtype": dtype}
         super().__init__()
 
@@ -119,16 +130,10 @@ class PackedLinear(nn.Module):
         # fix if not divisible by groups
         if extended_in_features % actual_groups:
             extended_in_features += num_estimators - extended_in_features % (actual_groups)
-        if extended_out_features % actual_groups:
-            extended_out_features += num_estimators - extended_out_features % (actual_groups)
-
-        # FIXME: This is a temporary check
-        assert implementation in [
-            "legacy",
-            "sparse",
-            "full",
-            "einsum",
-        ], f"Unknown implementation: {implementation} for PackedLinear"
+        if extended_out_features % num_estimators * gamma:
+            extended_out_features += num_estimators - extended_out_features % (
+                num_estimators * gamma
+            )
 
         if self.implementation == "legacy":
             self.weight = nn.Parameter(
@@ -695,9 +700,9 @@ class PackedMultiheadAttention(nn.Module):
         self.dropout = dropout
         self.batch_first = batch_first
         self.head_dim = self.embed_dim // self.num_heads
-        assert self.head_dim * self.num_heads == self.embed_dim, (
-            "embed_dim must be divisible by num_heads"
-        )
+        assert (
+            self.head_dim * self.num_heads == self.embed_dim
+        ), "embed_dim must be divisible by num_heads"
 
         self.num_estimators = num_estimators
         self.alpha = alpha
