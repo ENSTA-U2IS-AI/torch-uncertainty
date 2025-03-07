@@ -1,6 +1,7 @@
 import torch
 from torch import nn
 
+
 class BatchEnsemble(nn.Module):
     """Wraps a BatchEnsemble model to ensure correct batch replication.
 
