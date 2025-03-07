@@ -48,9 +48,9 @@ image = [
 ]
 tabular = ["pandas"]
 dev = [
-    "scikit-learn",
-    "huggingface-hub",
     "torch_uncertainty[image]",
+    "huggingface-hub",
+    "safetensors",
     "ruff==0.7.4",
     "pytest-cov",
     "pre-commit",

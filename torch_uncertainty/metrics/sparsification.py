@@ -57,7 +57,11 @@ class AUSE(Metric):
         self.add_state("errors", default=[], dist_reduce_fx="cat")
 
         if not sklearn_installed:
-            raise ImportError("Please install scikit-learn to use AUSE.")
+            raise ImportError(
+                "Please install torch_uncertainty with the image option"
+                "to use the AUSE:"
+                """pip install -U "torch_uncertainty[image]"."""
+            )
 
     def update(self, scores: Tensor, errors: Tensor) -> None:
         """Store the scores and their associated errors for later computation.

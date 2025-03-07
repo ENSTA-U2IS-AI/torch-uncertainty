@@ -131,7 +131,11 @@ class TUDataModule(ABC, LightningDataModule):
 
     def make_cross_val_splits(self, n_splits: int = 10, train_over: int = 4) -> list:
         if not sklearn_installed:
-            raise ImportError("Please install scikit-learn to use Cross-validation splits.")
+            raise ImportError(
+                "Please install torch_uncertainty with the image option"
+                "to use crossval:"
+                """pip install -U "torch_uncertainty[image]"."""
+            )
 
         self.setup("fit")
 
