@@ -5,10 +5,12 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
+from torch_uncertainty.layers.batch_ensemble import BatchConv2d, BatchLinear
 from torch_uncertainty.layers.bayesian import BayesConv2d, BayesLinear
 from torch_uncertainty.layers.mc_batch_norm import MCBatchNorm2d
 from torch_uncertainty.layers.packed import PackedConv2d, PackedLinear
 from torch_uncertainty.models import StochasticModel
+from torch_uncertainty.models.wrappers.batch_ensemble import BatchEnsemble
 
 __all__ = ["bayesian_lenet", "lenet", "packed_lenet"]
 
@@ -117,6 +119,32 @@ def lenet(
         groups=groups,
         dropout_rate=dropout_rate,
     )
+
+
+def batchensemble_lenet(
+    in_channels: int,
+    num_classes: int,
+    num_estimators: int = 4,
+    activation: Callable = F.relu,
+    norm: type[nn.Module] = nn.BatchNorm2d,
+    groups: int = 1,
+    dropout_rate: float = 0.0,
+) -> _LeNet:
+    model = _lenet(
+        stochastic=False,
+        in_channels=in_channels,
+        num_classes=num_classes,
+        linear_layer=BatchLinear,
+        conv2d_layer=BatchConv2d,
+        layer_args={
+            "num_estimators": num_estimators,
+        },
+        activation=activation,
+        norm=norm,
+        groups=groups,
+        dropout_rate=dropout_rate,
+    )
+    return BatchEnsemble(model, num_estimators)
 
 
 def packed_lenet(
