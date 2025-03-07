@@ -15,6 +15,8 @@ class TUDataModule(ABC, LightningDataModule):
     val: Dataset
     test: Dataset
 
+    shift_severity = 1
+
     def __init__(
         self,
         root: str | Path,
