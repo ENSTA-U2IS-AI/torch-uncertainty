@@ -71,7 +71,6 @@ class MNISTC(VisionDataset):
         target_transform: Callable | None = None,
         split: Literal["train", "test"] = "test",
         subset: str = "all",
-        shift_severity: int = 1,
         download: bool = False,
     ) -> None:
         self.root = Path(root)
@@ -91,12 +90,6 @@ class MNISTC(VisionDataset):
         if subset not in ["all", *self.mnistc_subsets]:
             raise ValueError(f"The subset '{subset}' does not exist in MNIST-C.")
         self.subset = subset
-
-        self.shift_severity = shift_severity
-        if shift_severity not in list(range(1, 6)):
-            raise ValueError(
-                "Corruptions shift_severity should be chosen between 1 and 5 " "included."
-            )
 
         if split not in ["train", "test"]:
             raise ValueError(f"The split '{split}' should be either 'train' or 'test'.")
