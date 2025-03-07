@@ -60,6 +60,11 @@ class Scaler(PostProcessing):
             progress (bool, optional): Whether to show a progress bar.
                 Defaults to True.
         """
+        if self.model is None:
+            raise ValueError(
+                "Cannot fit a Scaler method without model. Call .set_model(model) first."
+            )
+
         logits_list = []
         labels_list = []
         calibration_dl = DataLoader(calibration_set, batch_size=32, shuffle=False, drop_last=False)
