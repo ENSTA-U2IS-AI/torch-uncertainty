@@ -31,5 +31,6 @@ class BatchEnsemble(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Repeats the input batch and passes it through the model."""
-        x = x.repeat(self.num_estimators, 1, 1, 1)
+        repeat_shape = [self.num_estimators] + [1] * (x.dim() - 1)
+        x = x.repeat(repeat_shape)
         return self.model(x)
