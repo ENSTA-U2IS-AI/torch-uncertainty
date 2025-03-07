@@ -100,4 +100,3 @@ The following projects use TorchUncertainty:
 - *A Symmetry-Aware Exploration of Bayesian Neural Network Posteriors* - [ICLR 2024](https://arxiv.org/abs/2310.08287)
 
 **If you are using TorchUncertainty in your project, please let us know, and we will add your project to this list!**
-

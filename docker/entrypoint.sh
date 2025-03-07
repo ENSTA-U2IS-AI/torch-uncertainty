@@ -121,6 +121,10 @@ else
     echo "✅ torch_uncertainty is now installed in editable mode! 🚀"
 fi
 
+# Activate pre-commit hooks (if enabled)
+echo "🔗 Activating pre-commit hooks..."
+pre-commit install
+
 # Ensure SSH server is started
 echo "🔑 Starting SSH server..."
 mkdir -p /run/sshd && chmod 755 /run/sshd
