@@ -18,7 +18,7 @@ class BatchEnsemble(nn.Module):
     wrapped_model = BatchEnsembleWrapper(model, num_estimators=5)
     logits = wrapped_model(x)  # `x` is automatically repeated `num_estimators` times
     ```
-    
+
     Args:
         model (nn.Module): The BatchEnsemble model.
         num_estimators (int): Number of ensemble members.
