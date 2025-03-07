@@ -79,7 +79,13 @@ class BatchLinear(nn.Module):
               :math:`H_{out} = \text{out_features}`.
 
         Warning:
-            Make sure that :attr:`num_estimators` divides :attr:`out_features` when calling :func:`forward()`.
+            Ensure that `batch_size` is divisible by :attr:`num_estimators` when calling :func:`forward()`.
+            In a BatchEnsemble architecture, the input batch is typically **repeated** `num_estimators`
+            times along the first axis. Incorrect batch size may lead to unexpected results.
+
+            To simplify batch handling, wrap your model with `BatchEnsembleWrapper`, which automatically
+            repeats the batch before passing it through the network. See `BatchEnsembleWrapper` for details.
+
 
         Examples:
             >>> # With three estimators
@@ -273,8 +279,12 @@ class BatchConv2d(nn.Module):
                 {\text{stride}[1]} + 1\right\rfloor
 
         Warning:
-            Make sure that :attr:`num_estimators` divides :attr:`out_channels` when calling :func:`forward()`.
+            Ensure that `batch_size` is divisible by :attr:`num_estimators` when calling :func:`forward()`.
+            In a BatchEnsemble architecture, the input batch is typically **repeated** `num_estimators`
+            times along the first axis. Incorrect batch size may lead to unexpected results.
 
+            To simplify batch handling, wrap your model with `BatchEnsembleWrapper`, which automatically
+            repeats the batch before passing it through the network. See `BatchEnsembleWrapper` for details.
 
         Examples:
             >>> # With square kernels, four estimators and equal stride
