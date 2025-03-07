@@ -40,7 +40,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        python3 -m pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cpu
+        python3 -m pip install torch torchvision --extra-index-url https://download.pytorch.org/whl/cpu
         python3 -m pip install .[all]
 
     - name: Sphinx build
