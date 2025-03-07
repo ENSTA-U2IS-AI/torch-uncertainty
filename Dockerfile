@@ -21,7 +21,7 @@ RUN touch README.md && mkdir -p torch_uncertainty && touch torch_uncertainty/__i
 COPY pyproject.toml /workspace/
 
 # Install dependencies all dependencies
-RUN pip install --no-cache-dir -e ".[dev]"
+RUN pip install --no-cache-dir -e ".[all]"
 
 # Always activate Conda when opening a new terminal
 RUN echo "source /opt/conda/bin/activate" >> /root/.bashrc
