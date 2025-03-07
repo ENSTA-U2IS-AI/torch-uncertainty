@@ -606,9 +606,7 @@ class ClassificationRoutine(LightningModule):
 
         if self.eval_shift:
             tmp_metrics = self.test_shift_metrics.compute()
-            shift_severity = self.trainer.test_dataloaders[
-                2 if self.eval_ood else 1
-            ].dataset.shift_severity
+            shift_severity = self.trainer.datamodule.shift_severity
             tmp_metrics["shift/shift_severity"] = shift_severity
             self.log_dict(tmp_metrics, sync_dist=True)
             result_dict.update(tmp_metrics)

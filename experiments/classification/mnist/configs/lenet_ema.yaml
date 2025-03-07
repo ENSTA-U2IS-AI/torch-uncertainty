@@ -41,7 +41,6 @@ model:
           norm: torch.nn.Identity
           groups: 1
           dropout_rate: 0
-          last_layer_dropout: false
           layer_args: {}
       momentum: 0.99
   num_classes: 10
