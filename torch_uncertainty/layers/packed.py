@@ -700,9 +700,9 @@ class PackedMultiheadAttention(nn.Module):
         self.dropout = dropout
         self.batch_first = batch_first
         self.head_dim = self.embed_dim // self.num_heads
-        assert (
-            self.head_dim * self.num_heads == self.embed_dim
-        ), "embed_dim must be divisible by num_heads"
+        assert self.head_dim * self.num_heads == self.embed_dim, (
+            "embed_dim must be divisible by num_heads"
+        )
 
         self.num_estimators = num_estimators
         self.alpha = alpha
