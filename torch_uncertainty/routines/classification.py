@@ -124,6 +124,12 @@ class ClassificationRoutine(LightningModule):
             You must define :attr:`optim_recipe` if you do not use the Lightning CLI.
 
         Note:
+            If :attr:`eval_ood` is ``True``, we perform a binary classification and update the
+            OOD-related metrics twice:
+            - once during the test on ID values where the given binary label is 0 (for ID)
+            - once during the test on OOD values where the given binary label is 1 (for OOD)
+
+        Note:
             :attr:`optim_recipe` can be anything that can be returned by
             :meth:`LightningModule.configure_optimizers()`. Find more details
             `here <https://lightning.ai/docs/pytorch/stable/common/lightning_module.html#configure-optimizers>`_.
