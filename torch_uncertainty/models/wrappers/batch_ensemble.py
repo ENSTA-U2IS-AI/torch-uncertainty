@@ -22,6 +22,9 @@ class BatchEnsemble(nn.Module):
     Args:
         model (nn.Module): The BatchEnsemble model.
         num_estimators (int): Number of ensemble members.
+
+    Note:
+        This wrapper assumes that the model uses **BatchEnsemble layers** (see `torchensemble.layers.batch_ensemble`).
     """
 
     def __init__(self, model: nn.Module, num_estimators: int):
