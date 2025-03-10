@@ -123,6 +123,14 @@ class ClassificationRoutine(LightningModule):
         Warning:
             You must define :attr:`optim_recipe` if you do not use the Lightning CLI.
 
+        Warning:
+            When using an ensemble model, you must:
+            1. Set :attr:`is_ensemble` to ``True``.
+            2. Set :attr:`format_batch_fn` to :class:`torch_uncertainty.transforms.RepeatTarget(num_repeats=num_estimators)`.
+            3. Ensure that the model's forward pass outputs a tensor of shape :math:`(M \times B, C)`, where :math:`M` is the number of estimators, :math:`B` is the batch size, :math:`C` is the number of classes.
+
+            For automated batch handling, consider using the available model wrappers in `torch_uncertainty.models.wrappers`.
+
         Note:
             If :attr:`eval_ood` is ``True``, we perform a binary classification and update the
             OOD-related metrics twice:
@@ -481,7 +489,7 @@ class ClassificationRoutine(LightningModule):
         """
         inputs, targets = batch
         logits = self.forward(inputs, save_feats=self.eval_grouping_loss)
-        logits = rearrange(logits, "(n b) c -> b n c", b=targets.size(0))
+        logits = rearrange(logits, "(m b) c -> b m c", b=targets.size(0))
         probs_per_est = torch.sigmoid(logits) if self.binary_cls else F.softmax(logits, dim=-1)
         probs = probs_per_est.mean(dim=1)
         confs = probs.max(-1)[0]
