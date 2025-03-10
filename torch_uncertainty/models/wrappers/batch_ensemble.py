@@ -83,7 +83,9 @@ class BatchEnsemble(nn.Module):
         _batch_ensemble_checks(filtered_modules, num_estimators)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Repeats the input batch and passes it through the model."""
+        """Repeat the input if `self.training == False` or `repeat_training_inputs==True` and pass
+        it through the model.
+        """
         if not self.training or self.repeat_training_inputs:
             x = repeat(x, "b ... -> (m b) ...", m=self.num_estimators)
         return self.model(x)
