@@ -7,7 +7,6 @@ on:
       - dev
   pull_request:
     branches:
-      - main
       - dev
   schedule:
     - cron: "42 7 * * 0"
