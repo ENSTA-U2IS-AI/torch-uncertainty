@@ -225,8 +225,8 @@ class MotionBlur(TUCorruption):
         """Apply a motion blur corruption on the image.
 
         Note:
-            Originally, Hendrycks et al. used gaussian motion blur. To remove the dependency with
-            with wand we changed the transform to a simpler motion blur and kept the values of
+            Originally, Hendrycks et al. used Gaussian motion blur. To remove the dependency with
+            with `Wand` we changed the transform to a simpler motion blur and kept the values of
             sigma as the new half kernel sizes.
         """
         super().__init__(severity)
