@@ -1,4 +1,3 @@
-import pytest
 import torch
 from torch import nn
 
@@ -6,7 +5,7 @@ from torch_uncertainty.models.wrappers.batch_ensemble import BatchEnsemble
 
 
 # Define a simple model for testing wrapper functionality (disregarding the actual BatchEnsemble architecture)
-class SimpleModel(nn.Module):
+class _DummyModel(nn.Module):
     def __init__(self, in_features, out_features):
         super().__init__()
         self.fc = nn.Linear(in_features, out_features)
@@ -18,19 +17,15 @@ class SimpleModel(nn.Module):
         return self.fc(x)
 
 
-# Test the BatchEnsemble wrapper
-def test_batch_ensemble():
-    in_features = 10
-    out_features = 5
-    num_estimators = 3
-    model = SimpleModel(in_features, out_features)
-    wrapped_model = BatchEnsemble(model, num_estimators)
+class TestBatchEnsembleModel:
+    def test_forward_pass(self):
+        in_features = 10
+        out_features = 5
+        num_estimators = 3
+        model = _DummyModel(in_features, out_features)
+        wrapped_model = BatchEnsemble(model, num_estimators)
 
-    # Test forward pass
-    x = torch.randn(2, in_features)  # Batch size of 2
-    logits = wrapped_model(x)
-    assert logits.shape == (2 * num_estimators, out_features)
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])
+        # Test forward pass
+        x = torch.randn(2, in_features)  # Batch size of 2
+        logits = wrapped_model(x)
+        assert logits.shape == (2 * num_estimators, out_features)
