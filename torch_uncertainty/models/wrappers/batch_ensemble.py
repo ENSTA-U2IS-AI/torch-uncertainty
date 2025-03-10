@@ -3,7 +3,7 @@ from torch import nn
 
 
 class BatchEnsemble(nn.Module):
-    """Wraps a BatchEnsemble model to ensure correct batch replication.
+    """Wrap a BatchEnsemble model to ensure correct batch replication.
 
     In a BatchEnsemble architecture, each estimator operates on a **sub-batch**
     of the input. This means that the input batch must be **repeated**
