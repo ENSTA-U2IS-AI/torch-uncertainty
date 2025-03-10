@@ -19,21 +19,32 @@
   width: 1.5rem;
 }
 
+.btn {
+  border-radius: 0em;
+}
+
 /* Theme-aware colors (light mode default) */
 :root {
   --retro-blue: #4a74a5; /* Slightly muted blue */
   --retro-blue-hover: #3b5c84; /* Hover color */
+  --cyber-blue: #1F9AFF;
+  --cyber-pink: #E821EE;
 
   /* Light mode defaults */
-  --card-bg: #ffffff;
-  --card-border: #e3e3e3;
+  --card-bg: #fcfbf4;
+  --card-border: #fcfbf4;
   --card-text: #000000;
+
+  /* CHANGE THESE TO CUSTOMIZE THEME */
+  --example-button-bg: var(--cyber-blue);
+  --link-color: var(--cyber-blue);
+  --link-hover-color: var(--cyber-pink);
 }
 
 /* Dark mode overrides */
 html[data-theme="dark"] {
-  --card-bg: #1e1e1e;
-  --card-border: #2a2a2a;
+  --card-bg: #222832;
+  --card-border: #222832;
   --card-text: #ffffff;
 }
 
@@ -74,6 +85,7 @@ html[data-theme="dark"] {
   background-color: var(--card-bg) !important;
   border: 1px solid var(--card-border) !important;
   color: var(--card-text) !important;
+  border-radius: 0em;
 
   .card-body {
     flex-grow: 1;
@@ -110,8 +122,8 @@ html[data-theme="dark"] {
   }
 
   .btn-primary {
-    background-color: var(--retro-blue);
-    border-color: var(--retro-blue);
+    background-color: var(--example-button-bg);
+    border-color: var(--example-button-bg);
     color: white;
     font-size: 1rem;
     font-weight: 500;
@@ -119,9 +131,17 @@ html[data-theme="dark"] {
     width: 100%;
 
     &:hover {
-      background-color: var(--retro-blue-hover);
-      border-color: var(--retro-blue-hover);
+      background-color: var(--example-button-bg);
+      border-color: var(--example-button-bg);
       color: white;
+    }
+  }
+
+  a {
+    color: var(--link-color);
+
+    &:hover {
+      color: var(--link-hover-color);
     }
   }
 }
@@ -142,73 +162,3 @@ html[data-theme="dark"] {
     --card-text: #ffffff;
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
