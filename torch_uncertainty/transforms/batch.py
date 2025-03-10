@@ -1,5 +1,5 @@
 import torch
-from einops import rearrange
+from einops import rearrange, repeat
 from torch import Tensor, nn
 
 
@@ -21,7 +21,7 @@ class RepeatTarget(nn.Module):
 
     def forward(self, batch: tuple[Tensor, Tensor]) -> tuple[Tensor, Tensor]:
         inputs, targets = batch
-        return inputs, targets.repeat(self.num_repeats, *[1] * (targets.ndim - 1))
+        return inputs, repeat(targets, "b ... -> (m b) ...", m=self.num_repeats)
 
 
 class MIMOBatchFormat(nn.Module):
@@ -79,6 +79,6 @@ class MIMOBatchFormat(nn.Module):
             [torch.index_select(targets, dim=0, index=indices) for indices in shuffle_indices],
             dim=0,
         )
-        inputs = rearrange(inputs, "m b c h w -> (m b) c h w", m=self.num_estimators)
+        inputs = rearrange(inputs, "m b ... -> (m b) ...", m=self.num_estimators)
         targets = rearrange(targets, "m b -> (m b)", m=self.num_estimators)
         return inputs, targets
