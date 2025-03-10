@@ -42,9 +42,9 @@ dependencies = [
 [project.optional-dependencies]
 image = [
     "scikit-image", 
+    "kornia",
     "h5py",
     "opencv-python",
-    "Wand",
 ]
 tabular = ["pandas"]
 dev = [
