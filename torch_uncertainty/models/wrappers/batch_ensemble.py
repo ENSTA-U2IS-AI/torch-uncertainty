@@ -26,21 +26,21 @@ class BatchEnsemble(nn.Module):
             BatchEnsemble counterparts. Default is `False`.
 
     Raises:
-        ValueError: If neither `BatchLinear` nor `BatchConv2d` layers are found in the model at the
+        ValueError: If neither ``BatchLinear`` nor ``BatchConv2d`` layers are found in the model at the
             end of initialization.
-        ValueError: If `num_estimators` is less than or equal to 0.
-        ValueError: If `convert_layers=True` and neither `nn.Linear` nor `nn.Conv2d` layers are
+        ValueError: If ``num_estimators`` is less than or equal to ``0``.
+        ValueError: If ``convert_layers=True`` and neither ``nn.Linear`` nor ``nn.Conv2d`` layers are
             found in the model.
 
     Warning:
-        If `convert_layers==True`, the wrapper will attempt to convert all `nn.Linear` and `nn.Conv2d`
+        If ``convert_layers==True``, the wrapper will attempt to convert all ``nn.Linear`` and ``nn.Conv2d``
         layers in the model to their BatchEnsemble counterparts. If the model contains other types of
-        layers, the conversion won't happen for these layers. If don't have any `nn.Linear` or `nn.Conv2d`
+        layers, the conversion won't happen for these layers. If don't have any ``nn.Linear`` or ``nn.Conv2d``
         layers in the model, the wrapper will raise an error during conversion.
 
     Warning:
-        If `repeat_training_inputs==True` and you want to use one of the `torch_uncertainty.routines`
-        for training, be sure to set `format_batch_fn=RepeatTarget(num_repeats=num_estimators)` when
+        If ``repeat_training_inputs==True`` and you want to use one of the ``torch_uncertainty.routines``
+        for training, be sure to set ``format_batch_fn=RepeatTarget(num_repeats=num_estimators)`` when
         initializing the routine.
 
     Example:
@@ -83,8 +83,8 @@ class BatchEnsemble(nn.Module):
         _batch_ensemble_checks(filtered_modules, num_estimators)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Repeat the input if `self.training == False` or `repeat_training_inputs==True` and pass
-        it through the model.
+        """Repeat the input if ``self.training==False`` or ``repeat_training_inputs==True`` and
+        pass it through the model.
         """
         if not self.training or self.repeat_training_inputs:
             x = repeat(x, "b ... -> (m b) ...", m=self.num_estimators)
