@@ -1,6 +1,5 @@
 """Adapted from https://github.com/hendrycks/robustness."""
 
-import ctypes
 from importlib import util
 from io import BytesIO
 
@@ -40,24 +39,12 @@ from torchvision.transforms import (
     ToTensor,
 )
 
-if util.find_spec("wand"):
-    from wand.api import library as wandlibrary
-    from wand.image import Image as WandImage
+if util.find_spec("kornia"):
+    from kornia.filters import motion_blur
 
-    wandlibrary.MagickMotionBlurImage.argtypes = (
-        ctypes.c_void_p,  # wand
-        ctypes.c_double,  # radius
-        ctypes.c_double,  # sigma
-        ctypes.c_double,
-    )  # angle
-
-    class MotionImage(WandImage):
-        def motion_blur(self, radius=0.0, sigma=0.0, angle=0.0):
-            wandlibrary.MagickMotionBlurImage(self.wand, radius, sigma, angle)
-
-    wand_installed = True
+    kornia_installed = True
 else:  # coverage: ignore
-    wand_installed = False
+    kornia_installed = False
 
 from torch_uncertainty.datasets import FrostImages
 
@@ -143,7 +130,7 @@ class ImpulseNoise(TUCorruption):
             severity (int): Severity level of the corruption.
         """
         super().__init__(severity)
-        if not skimage_installed:  # coverage: ignore
+        if not skimage_installed:
             raise ImportError(
                 "Please install torch_uncertainty with the image option:"
                 """pip install -U "torch_uncertainty[image]"."""
@@ -168,7 +155,7 @@ class DefocusBlur(TUCorruption):
             severity (int): Severity level of the corruption.
         """
         super().__init__(severity)
-        if not cv2_installed:  # coverage: ignore
+        if not cv2_installed:
             raise ImportError(
                 "Please install torch_uncertainty with the image option:"
                 """pip install -U "torch_uncertainty[image]"."""
@@ -196,7 +183,7 @@ class DefocusBlur(TUCorruption):
 class GlassBlur(TUCorruption):  # TODO: batch
     def __init__(self, severity: int) -> None:
         super().__init__(severity)
-        if not skimage_installed or not cv2_installed:  # coverage: ignore
+        if not skimage_installed or not cv2_installed:
             raise ImportError(
                 "Please install torch_uncertainty with the image option:"
                 """pip install -U "torch_uncertainty[image]"."""
@@ -230,20 +217,23 @@ def disk(radius: int, alias_blur: float = 0.1, dtype=np.float32):
     xs, ys = np.meshgrid(size, size)
     aliased_disk = np.array((xs**2 + ys**2) <= radius**2, dtype=dtype)
     aliased_disk /= np.sum(aliased_disk)
-
     return cv2.GaussianBlur(aliased_disk, ksize=ksize, sigmaX=alias_blur)
 
 
 class MotionBlur(TUCorruption):
     def __init__(self, severity: int) -> None:
+        """Apply a motion blur corruption on the image.
+
+        Note:
+            Originally, Hendrycks et al. used gaussian motion blur. To remove the dependency with
+            with wand we changed the transform to a simpler motion blur and kept the values of
+            sigma as the new half kernel sizes.
+        """
         super().__init__(severity)
         self.rng = np.random.default_rng()
-        self.radius = [10, 15, 15, 15, 20][severity - 1]
-        self.sigma = [3, 5, 8, 12, 15][severity - 1]
-        self.to_pil_img = ToPILImage()
-        self.to_tensor = ToTensor()
+        self.radius = [3, 5, 8, 12, 15][severity - 1]
 
-        if not wand_installed:  # coverage: ignore
+        if not kornia_installed:
             raise ImportError(
                 "Please install torch_uncertainty with the image option:"
                 """pip install -U "torch_uncertainty[image]"."""
@@ -252,18 +242,16 @@ class MotionBlur(TUCorruption):
     def forward(self, img: Tensor) -> Tensor:
         if self.severity == 0:
             return img
-        output = BytesIO()
-        pil_img = self.to_pil_img(img)
-        pil_img.save(output, "PNG")
-        x = MotionImage(blob=output.getvalue())
-        x.motion_blur(
-            radius=self.radius,
-            sigma=self.sigma,
-            angle=self.rng.uniform(-45, 45),
+        no_batch = False
+        if img.ndim == 3:
+            no_batch = True
+            img = img.unsqueeze(0)
+        out = motion_blur(
+            img, kernel_size=self.radius * 2 + 1, angle=self.rng.uniform(-45, 45), direction=0
         )
-        x = cv2.imdecode(np.fromstring(x.make_blob(), np.uint8), cv2.IMREAD_UNCHANGED)
-        x = np.clip(x[..., [2, 1, 0]], 0, 255)
-        return self.to_tensor(x)
+        if no_batch:
+            out = out.squeeze(0)
+        return out
 
 
 def clipped_zoom(img, zoom_factor):
@@ -294,7 +282,7 @@ class ZoomBlur(TUCorruption):
             np.arange(1, 1.31, 0.03),
         ][severity - 1]
 
-        if not scipy_installed:  # coverage: ignore
+        if not scipy_installed:
             raise ImportError(
                 "Please install torch_uncertainty with the all option:"
                 """pip install -U "torch_uncertainty[all]"."""
@@ -313,17 +301,22 @@ class ZoomBlur(TUCorruption):
 
 class Snow(TUCorruption):
     def __init__(self, severity: int) -> None:
+        """Apply a snow effect on the image.
+
+        Note:
+            The transformation has been slightly modified, see MotionBlur for details.
+        """
         super().__init__(severity)
         self.mix = [
-            (0.1, 0.3, 3, 0.5, 10, 4, 0.8),
-            (0.2, 0.3, 2, 0.5, 12, 4, 0.7),
-            (0.55, 0.3, 4, 0.9, 12, 8, 0.7),
-            (0.55, 0.3, 4.5, 0.85, 12, 8, 0.65),
-            (0.55, 0.3, 2.5, 0.85, 12, 12, 0.55),
+            (0.1, 0.3, 3, 0.5, 4, 0.8),
+            (0.2, 0.3, 2, 0.5, 4, 0.7),
+            (0.55, 0.3, 4, 0.9, 8, 0.7),
+            (0.55, 0.3, 4.5, 0.85, 8, 0.65),
+            (0.55, 0.3, 2.5, 0.85, 12, 0.55),
         ][severity - 1]
         self.rng = np.random.default_rng()
 
-        if not wand_installed:  # coverage: ignore
+        if not kornia_installed:
             raise ImportError(
                 "Please install torch_uncertainty with the image option:"
                 """pip install -U "torch_uncertainty[image]"."""
@@ -339,27 +332,20 @@ class Snow(TUCorruption):
         ]
         snow_layer = clipped_zoom(snow_layer, self.mix[2])
         snow_layer[snow_layer < self.mix[3]] = 0
-        snow_layer = Image.fromarray(
-            (np.clip(snow_layer.squeeze(), 0, 1) * 255).astype(np.uint8),
-            mode="L",
-        )
-        output = BytesIO()
-        snow_layer.save(output, format="PNG")
-        snow_layer = MotionImage(blob=output.getvalue())
-        snow_layer.motion_blur(
-            radius=self.mix[4],
-            sigma=self.mix[5],
-            angle=self.rng.uniform(-135, -45),
-        )
+        snow_layer = np.clip(snow_layer.squeeze(), 0, 1)
+
         snow_layer = (
-            cv2.imdecode(
-                np.fromstring(snow_layer.make_blob(), np.uint8),
-                cv2.IMREAD_UNCHANGED,
+            motion_blur(
+                torch.as_tensor(snow_layer).unsqueeze(0).unsqueeze(0),
+                kernel_size=self.mix[4] * 2 + 1,
+                angle=self.rng.uniform(-135, -45),
+                direction=0,
             )
-            / 255.0
+            .squeeze(0)
+            .numpy()
         )
-        snow_layer = snow_layer[np.newaxis, ...]
-        x = self.mix[6] * x + (1 - self.mix[6]) * np.maximum(
+
+        x = self.mix[5] * x + (1 - self.mix[5]) * np.maximum(
             x,
             cv2.cvtColor(x.transpose([1, 2, 0]), cv2.COLOR_RGB2GRAY).reshape(1, height, width) * 1.5
             + 0.5,
@@ -516,7 +502,7 @@ class JPEGCompression(TUCorruption):
 class Elastic(TUCorruption):
     def __init__(self, severity: int) -> None:
         super().__init__(severity)
-        if not cv2_installed or not scipy_installed:  # coverage: ignore
+        if not cv2_installed or not scipy_installed:
             raise ImportError(
                 "Please install torch_uncertainty with the all option:"
                 """pip install -U "torch_uncertainty[all]"."""
@@ -620,7 +606,7 @@ class SpeckleNoise(TUCorruption):
 class GaussianBlur(TUCorruption):
     def __init__(self, severity: int) -> None:
         super().__init__(severity)
-        if not skimage_installed:  # coverage: ignore
+        if not skimage_installed:
             raise ImportError(
                 "Please install torch_uncertainty with the image option:"
                 """pip install -U "torch_uncertainty[image]"."""
