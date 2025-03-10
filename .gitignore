@@ -1,6 +1,6 @@
 # Custom
 .vscode/
-.itea/
+.idea/
 data/
 logs/
 lightning_logs/

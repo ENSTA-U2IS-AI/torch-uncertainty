@@ -256,9 +256,9 @@ class RandomRescale(Transform):
 
         .. code-block:: python
 
-        scale = uniform_sample(min_scale, max_scale)
-        output_width = input_width * scale
-        output_height = input_height * scale
+            scale = uniform_sample(min_scale, max_scale)
+            output_width = input_width * scale
+            output_height = input_height * scale
 
         If the input is a :class:`torch.Tensor` or a ``TVTensor`` (e.g. :class:`~torchvision.tv_tensors.Image`,
         :class:`~torchvision.tv_tensors.Video`, :class:`~torchvision.tv_tensors.BoundingBoxes` etc.)
@@ -266,31 +266,31 @@ class RandomRescale(Transform):
         the image can have ``[..., C, H, W]`` shape. A bounding box can have ``[..., 4]`` shape.
 
         Args:
-        min_scale (int): Minimum scale for random sampling
-        max_scale (int): Maximum scale for random sampling
-        interpolation (InterpolationMode, optional): Desired interpolation enum defined by
-            :class:`torchvision.transforms.InterpolationMode`. Default is ``InterpolationMode.BILINEAR``.
-            If input is Tensor, only ``InterpolationMode.NEAREST``, ``InterpolationMode.NEAREST_EXACT``,
-            ``InterpolationMode.BILINEAR`` and ``InterpolationMode.BICUBIC`` are supported.
-            The corresponding Pillow integer constants, e.g. ``PIL.Image.BILINEAR`` are accepted as well.
-        antialias (bool, optional): Whether to apply antialiasing.
-            It only affects **tensors** with bilinear or bicubic modes and it is
-            ignored otherwise: on PIL images, antialiasing is always applied on
-            bilinear or bicubic modes; on other modes (for PIL images and
-            tensors), antialiasing makes no sense and this parameter is ignored.
-            Possible values are:
+            min_scale (int): Minimum scale for random sampling
+            max_scale (int): Maximum scale for random sampling
+            interpolation (InterpolationMode, optional): Desired interpolation enum defined by
+                :class:`torchvision.transforms.InterpolationMode`. Default is ``InterpolationMode.BILINEAR``.
+                If input is Tensor, only ``InterpolationMode.NEAREST``, ``InterpolationMode.NEAREST_EXACT``,
+                ``InterpolationMode.BILINEAR`` and ``InterpolationMode.BICUBIC`` are supported.
+                The corresponding Pillow integer constants, e.g. ``PIL.Image.BILINEAR`` are accepted as well.
+            antialias (bool, optional): Whether to apply antialiasing.
+                It only affects **tensors** with bilinear or bicubic modes and it is
+                ignored otherwise: on PIL images, antialiasing is always applied on
+                bilinear or bicubic modes; on other modes (for PIL images and
+                tensors), antialiasing makes no sense and this parameter is ignored.
+                Possible values are:
 
-            - ``True`` (default): will apply antialiasing for bilinear or bicubic modes.
-              Other mode aren't affected. This is probably what you want to use.
-            - ``False``: will not apply antialiasing for tensors on any mode. PIL
-              images are still antialiased on bilinear or bicubic modes, because
-              PIL doesn't support no antialias.
-            - ``None``: equivalent to ``False`` for tensors and ``True`` for
-              PIL images. This value exists for legacy reasons and you probably
-              don't want to use it unless you really know what you are doing.
+                - ``True`` (default): will apply antialiasing for bilinear or bicubic modes.
+                Other mode aren't affected. This is probably what you want to use.
+                - ``False``: will not apply antialiasing for tensors on any mode. PIL
+                images are still antialiased on bilinear or bicubic modes, because
+                PIL doesn't support no antialias.
+                - ``None``: equivalent to ``False`` for tensors and ``True`` for
+                PIL images. This value exists for legacy reasons and you probably
+                don't want to use it unless you really know what you are doing.
 
-            The default value changed from ``None`` to ``True`` in
-            v0.17, for the PIL and Tensor backends to be consistent.
+                The default value changed from ``None`` to ``True`` in
+                v0.17, for the PIL and Tensor backends to be consistent.
         """
         super().__init__()
         self.min_scale = min_scale

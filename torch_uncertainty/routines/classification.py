@@ -127,7 +127,8 @@ class ClassificationRoutine(LightningModule):
             When using an ensemble model, you must:
             1. Set :attr:`is_ensemble` to ``True``.
             2. Set :attr:`format_batch_fn` to :class:`torch_uncertainty.transforms.RepeatTarget(num_repeats=num_estimators)`.
-            3. Ensure that the model's forward pass outputs a tensor of shape :math:`(M \times B, C)`, where :math:`M` is the number of estimators, :math:`B` is the batch size, :math:`C` is the number of classes.
+            3. Ensure that the model's forward pass outputs a tensor of shape :math:`(M \times B, C)`,
+            where :math:`M` is the number of estimators, :math:`B` is the batch size, :math:`C` is the number of classes.
 
             For automated batch handling, consider using the available model wrappers in `torch_uncertainty.models.wrappers`.
 
