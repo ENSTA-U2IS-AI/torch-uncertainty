@@ -4,7 +4,7 @@ build-backend = "flit_core.buildapi"
 
 [project]
 name = "torch_uncertainty"
-version = "0.4.1"
+version = "0.4.2"
 authors = [
     { name = "ENSTA U2IS", email = "olivier.laurent@ensta-paris.fr" },
     { name = "Adrien Lafage", email = "adrienlafage@outlook.com" },
