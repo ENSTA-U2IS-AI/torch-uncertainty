@@ -40,6 +40,11 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+experiments = [
+    "tensorboard",
+    "huggingface-hub",
+    "safetensors",
+]
 image = [
     "scikit-image", 
     "kornia",
@@ -48,16 +53,14 @@ image = [
 ]
 tabular = ["pandas"]
 dev = [
-    "torch_uncertainty[image]",
-    "huggingface-hub",
-    "safetensors",
+    "torch_uncertainty[experiments,image]",
     "ruff==0.9.9",
     "pytest-cov",
     "pre-commit",
     "pre-commit-hooks",
 ]
 docs = [
-    "sphinx<6",
+    "sphinx<8",
     "tu_sphinx_theme",
     "sphinx-copybutton",
     "sphinx-gallery",
@@ -65,11 +68,11 @@ docs = [
     "sphinx-codeautolink",
 ]
 all = [
-    "torch_uncertainty[dev,docs,image,tabular]",
+    "torch_uncertainty[dev,docs,image,tabular,experiments]",
+    "scikit-learn",
     "laplace-torch",
-    "glest==0.0.1a1",
     "scipy",
-    "tensorboard",
+    "glest==0.0.1a1",
 ]
 
 [project.urls]
