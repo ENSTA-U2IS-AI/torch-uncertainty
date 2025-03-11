@@ -69,7 +69,7 @@ class RegressionRoutine(LightningModule):
         _regression_routine_checks(output_dim)
         if eval_shift:
             raise NotImplementedError(
-                "Distribution shift evaluation not implemented yet. Raise an issue " "if needed."
+                "Distribution shift evaluation not implemented yet. Raise an issue if needed."
             )
 
         self.model = model
@@ -264,7 +264,7 @@ class RegressionRoutine(LightningModule):
         """
         if dataloader_idx != 0:
             raise NotImplementedError(
-                "Regression OOD detection not implemented yet. Raise an issue " "if needed."
+                "Regression OOD detection not implemented yet. Raise an issue if needed."
             )
 
         inputs, targets = batch

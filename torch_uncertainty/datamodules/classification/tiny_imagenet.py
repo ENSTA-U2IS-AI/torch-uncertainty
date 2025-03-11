@@ -237,8 +237,8 @@ class TinyImageNetDataModule(TUDataModule):
         r"""Get test dataloaders for TinyImageNet.
 
         Return:
-            list[DataLoader]: test set for in distribution data
-            and out-of-distribution data.
+            list[DataLoader]: test set for in distribution data, OOD data, and/or
+            TinyImageNetC data.
         """
         dataloader = [self._data_loader(self.test)]
         if self.eval_ood:

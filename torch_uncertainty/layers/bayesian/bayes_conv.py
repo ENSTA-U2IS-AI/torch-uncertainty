@@ -89,7 +89,7 @@ class _BayesConvNd(Module):
 
         if transposed:
             raise NotImplementedError(
-                "Bayesian transposed convolution not implemented yet. Raise an" " issue if needed."
+                "Bayesian transposed convolution not implemented yet. Raise an issue if needed."
             )
 
         self.in_channels = in_channels
@@ -164,7 +164,7 @@ class _BayesConvNd(Module):
         return weight, bias
 
     def extra_repr(self) -> str:  # coverage: ignore
-        s = "{in_channels}, {out_channels}, kernel_size={kernel_size}" ", stride={stride}"
+        s = "{in_channels}, {out_channels}, kernel_size={kernel_size}, stride={stride}"
         if self.padding != (0,) * len(self.padding):
             s += ", padding={padding}"
         if self.dilation != (1,) * len(self.dilation):

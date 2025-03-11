@@ -51,7 +51,7 @@ class CUB(ImageFolder):
 
         if not self._check_integrity():
             raise RuntimeError(
-                "Dataset not found or corrupted. You can use download=True to " "download it."
+                "Dataset not found or corrupted. You can use download=True to download it."
             )
 
         super().__init__(Path(root) / "CUB_200_2011" / "images", transform, target_transform)

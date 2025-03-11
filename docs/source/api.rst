@@ -202,6 +202,7 @@ Functions
     :nosignatures:
     :template: function.rst
 
+    batch_ensemble
     deep_ensembles
     mc_dropout
 
@@ -213,6 +214,7 @@ Classes
     :nosignatures:
     :template: class.rst
 
+    BatchEnsemble
     CheckpointEnsemble
     EMA
     MCDropout

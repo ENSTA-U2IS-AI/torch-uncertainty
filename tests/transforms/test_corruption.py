@@ -88,6 +88,10 @@ class TestCorruptions:
         transform = MotionBlur(0)
         transform(inputs)
 
+        inputs = torch.rand(1, 3, 32, 32)
+        transform = MotionBlur(1)
+        transform(inputs)
+
     def test_zoom_blur(self):
         inputs = torch.rand(3, 32, 32)
         transform = ZoomBlur(1)

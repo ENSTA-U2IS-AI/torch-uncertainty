@@ -1,10 +1,18 @@
 from abc import ABC, abstractmethod
+from importlib import util
 from pathlib import Path
 from typing import Literal
 
 from lightning.pytorch.core import LightningDataModule
 from numpy.typing import ArrayLike
-from sklearn.model_selection import StratifiedKFold
+
+if util.find_spec("sklearn"):
+    from sklearn.model_selection import StratifiedKFold
+
+    sklearn_installed = True
+else:  # coverage: ignore
+    sklearn_installed = False
+
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.sampler import SubsetRandomSampler
 
@@ -14,6 +22,8 @@ class TUDataModule(ABC, LightningDataModule):
     train: Dataset
     val: Dataset
     test: Dataset
+
+    shift_severity = 1
 
     def __init__(
         self,
@@ -120,7 +130,15 @@ class TUDataModule(ABC, LightningDataModule):
         raise NotImplementedError
 
     def make_cross_val_splits(self, n_splits: int = 10, train_over: int = 4) -> list:
+        if not sklearn_installed:
+            raise ImportError(
+                "Please install torch_uncertainty with the image option"
+                "to use crossval:"
+                """pip install -U "torch_uncertainty[image]"."""
+            )
+
         self.setup("fit")
+
         skf = StratifiedKFold(n_splits)
         cv_dm = []
 

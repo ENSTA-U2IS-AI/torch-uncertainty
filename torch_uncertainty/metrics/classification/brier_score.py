@@ -8,9 +8,9 @@ from torchmetrics.utilities.data import dim_zero_cat
 
 
 class BrierScore(Metric):
-    is_differentiable: bool = True
-    higher_is_better: bool | None = False
-    full_state_update: bool = False
+    is_differentiable = True
+    higher_is_better = False
+    full_state_update = False
 
     def __init__(
         self,

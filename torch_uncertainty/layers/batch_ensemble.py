@@ -1,6 +1,7 @@
 import math
 
 import torch
+from einops import repeat
 from torch import Tensor, nn
 from torch.nn.common_types import _size_2_t
 from torch.nn.modules.utils import _pair
@@ -79,11 +80,18 @@ class BatchLinear(nn.Module):
               :math:`H_{out} = \text{out_features}`.
 
         Warning:
-            Make sure that :attr:`num_estimators` divides :attr:`out_features` when calling :func:`forward()`.
+            It is advised to ensure that `batch_size` is divisible by :attr:`num_estimators` when
+            calling :func:`forward()`, so each estimator receives the same number of examples.
+            In a BatchEnsemble architecture, the input is typically **repeated** `num_estimators`
+            times along the batch dimension. Incorrect batch size may lead to unexpected results.
+
+            To simplify batch handling, wrap your model with `torch_uncertainty.wrappers.BatchEnsemble`,
+            which automatically repeats the batch before passing it through the network.
+
 
         Examples:
             >>> # With three estimators
-            >>> m = LinearBE(20, 30, 3)
+            >>> m = BatchLinear(20, 30, 3)
             >>> input = torch.randn(8, 20)
             >>> output = m(input)
             >>> print(output.size())
@@ -110,6 +118,30 @@ class BatchLinear(nn.Module):
             self.register_parameter("bias", None)
         self.reset_parameters()
 
+    @classmethod
+    def from_linear(cls, linear: nn.Linear, num_estimators: int) -> "BatchLinear":
+        r"""Create a BatchEnsemble-style Linear layer from an existing Linear layer.
+
+        Args:
+            linear (nn.Linear): The Linear layer to convert.
+            num_estimators (int): Number of ensemble members.
+
+        Returns:
+            BatchLinear: The converted BatchEnsemble-style Linear layer.
+
+        Example:
+            >>> linear = nn.Linear(20, 30)
+            >>> be_linear = BatchLinear.from_linear(linear, num_estimators=3)
+        """
+        return cls(
+            in_features=linear.in_features,
+            out_features=linear.out_features,
+            num_estimators=num_estimators,
+            bias=linear.bias is not None,
+            device=linear.weight.device,
+            dtype=linear.weight.dtype,
+        )
+
     def reset_parameters(self) -> None:
         nn.init.normal_(self.r_group, mean=1.0, std=0.5)
         nn.init.normal_(self.s_group, mean=1.0, std=0.5)
@@ -125,16 +157,12 @@ class BatchLinear(nn.Module):
         )
         extra = batch_size % self.num_estimators
 
-        r_group = torch.repeat_interleave(self.r_group, examples_per_estimator, dim=0)
-        r_group = torch.cat([r_group, r_group[:extra]], dim=0)  # .unsqueeze(-1).unsqueeze(-1)
-        s_group = torch.repeat_interleave(self.s_group, examples_per_estimator, dim=0)
-        s_group = torch.cat([s_group, s_group[:extra]], dim=0)  # .unsqueeze(-1).unsqueeze(-1)
+        r_group = repeat(self.r_group, "m h -> (m b) h", b=examples_per_estimator)
+        r_group = torch.cat([r_group, r_group[:extra]], dim=0)
+        s_group = repeat(self.s_group, "m h -> (m b) h", b=examples_per_estimator)
+        s_group = torch.cat([s_group, s_group[:extra]], dim=0)
         if self.bias is not None:
-            bias = torch.repeat_interleave(
-                self.bias,
-                examples_per_estimator,
-                dim=0,
-            )
+            bias = repeat(self.bias, "m h -> (m b) h", b=examples_per_estimator)
             bias = torch.cat([bias, bias[:extra]], dim=0)
         else:
             bias = None
@@ -143,7 +171,7 @@ class BatchLinear(nn.Module):
 
     def extra_repr(self) -> str:
         return (
-            f"in_features={ self.in_features},"
+            f"in_features={self.in_features},"
             f" out_features={self.out_features},"
             f" num_estimators={self.num_estimators},"
             f" bias={self.bias is not None}"
@@ -273,11 +301,16 @@ class BatchConv2d(nn.Module):
             {\text{stride}[1]} + 1\right\rfloor
 
         Warning:
-            Make sure that :attr:`num_estimators` divides :attr:`out_channels` when calling :func:`forward()`.
+            Ensure that `batch_size` is divisible by :attr:`num_estimators` when calling :func:`forward()`.
+            In a BatchEnsemble architecture, the input batch is typically **repeated** `num_estimators`
+            times along the first axis. Incorrect batch size may lead to unexpected results.
+
+            To simplify batch handling, wrap your model with `BatchEnsembleWrapper`, which automatically
+            repeats the batch before passing it through the network. See `BatchEnsembleWrapper` for details.
 
         Examples:
             >>> # With square kernels, four estimators and equal stride
-            >>> m = Conv2dBE(3, 32, 3, 4, stride=1)
+            >>> m = BatchConv2d(3, 32, 3, 4, stride=1)
             >>> input = torch.randn(8, 3, 16, 16)
             >>> output = m(input)
             >>> print(output.size())
@@ -314,6 +347,38 @@ class BatchConv2d(nn.Module):
 
         self.reset_parameters()
 
+    @classmethod
+    def from_conv2d(cls, conv2d: nn.Conv2d, num_estimators: int) -> "BatchConv2d":
+        r"""Create a BatchEnsemble-style Conv2d layer from an existing Conv2d layer.
+
+        Args:
+            conv2d (nn.Conv2d): The Conv2d layer to convert.
+            num_estimators (int): Number of ensemble members.
+
+        Returns:
+            BatchConv2d: The converted BatchEnsemble-style Conv2d layer.
+
+        Warning:
+            All parameters of the original Conv2d layer will be discarded.
+
+        Example:
+            >>> conv2d = nn.Conv2d(3, 32, kernel_size=3)
+            >>> be_conv2d = BatchConv2d.from_conv2d(conv2d, num_estimators=3)
+        """
+        return cls(
+            in_channels=conv2d.in_channels,
+            out_channels=conv2d.out_channels,
+            kernel_size=conv2d.kernel_size,
+            stride=conv2d.stride,
+            padding=conv2d.padding,
+            dilation=conv2d.dilation,
+            groups=conv2d.groups,
+            bias=conv2d.bias is not None,
+            num_estimators=num_estimators,
+            device=conv2d.weight.device,
+            dtype=conv2d.weight.dtype,
+        )
+
     def reset_parameters(self) -> None:
         nn.init.normal_(self.r_group, mean=1.0, std=0.5)
         nn.init.normal_(self.s_group, mean=1.0, std=0.5)
@@ -327,50 +392,13 @@ class BatchConv2d(nn.Module):
         examples_per_estimator = batch_size // self.num_estimators
         extra = batch_size % self.num_estimators
 
-        r_group = (
-            torch.repeat_interleave(
-                self.r_group,
-                torch.full(
-                    [self.num_estimators],
-                    examples_per_estimator,
-                    device=self.r_group.device,
-                ),
-                dim=0,
-            )
-            .unsqueeze(-1)
-            .unsqueeze(-1)
-        )
-        r_group = torch.cat([r_group, r_group[:extra]], dim=0)  # .unsqueeze(-1).unsqueeze(-1)
-        s_group = (
-            torch.repeat_interleave(
-                self.s_group,
-                torch.full(
-                    [self.num_estimators],
-                    examples_per_estimator,
-                    device=self.s_group.device,
-                ),
-                dim=0,
-            )
-            .unsqueeze(-1)
-            .unsqueeze(-1)
-        )
-        s_group = torch.cat([s_group, s_group[:extra]], dim=0)  #
+        r_group = repeat(self.r_group, "m h -> (m b) h 1 1", b=examples_per_estimator)
+        r_group = torch.cat([r_group, r_group[:extra]], dim=0)
+        s_group = repeat(self.s_group, "m h -> (m b) h 1 1", b=examples_per_estimator)
+        s_group = torch.cat([s_group, s_group[:extra]], dim=0)
 
         if self.bias is not None:
-            bias = (
-                torch.repeat_interleave(
-                    self.bias,
-                    torch.full(
-                        [self.num_estimators],
-                        examples_per_estimator,
-                        device=self.bias.device,
-                    ),
-                    dim=0,
-                )
-                .unsqueeze(-1)
-                .unsqueeze(-1)
-            )
-
+            bias = repeat(self.bias, "m h -> (m b) h 1 1", b=examples_per_estimator)
             bias = torch.cat([bias, bias[:extra]], dim=0)
         else:
             bias = None

@@ -26,9 +26,9 @@ class GLEstimator(GLEstimatorBase):
 
 
 class GroupingLoss(Metric):
-    is_differentiable: bool = False
-    higher_is_better: bool | None = False
-    full_state_update: bool = False
+    is_differentiable = False
+    higher_is_better = False
+    full_state_update = False
 
     def __init__(
         self,

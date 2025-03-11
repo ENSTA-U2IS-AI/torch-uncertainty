@@ -279,9 +279,9 @@ class ImageNetDataModule(TUDataModule):
     def test_dataloader(self) -> list[DataLoader]:
         """Get the test dataloaders for ImageNet.
 
-        Returns:
-            list[DataLoader]: ImageNet test set (in distribution data) and
-            Textures test split (out-of-distribution data).
+        Return:
+            list[DataLoader]: ImageNet test set (in distribution data), OOD dataset test split
+            (out-of-distribution data), and/or ImageNetC data.
         """
         dataloader = [self._data_loader(self.test)]
         if self.eval_ood:
