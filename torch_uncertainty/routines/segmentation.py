@@ -76,7 +76,7 @@ class SegmentationRoutine(LightningModule):
         )
         if eval_shift:
             raise NotImplementedError(
-                "Distribution shift evaluation not implemented yet. Raise an issue " "if needed."
+                "Distribution shift evaluation not implemented yet. Raise an issue if needed."
             )
 
         self.model = model

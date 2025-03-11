@@ -240,52 +240,6 @@ class Color(nn.Module):
 
 
 class RandomRescale(Transform):
-    """Randomly rescale the input.
-
-    This transformation can be used together with ``RandomCrop`` as data augmentations to train
-    models on image segmentation task.
-
-    Output spatial size is randomly sampled from the interval ``[min_size, max_size]``:
-
-    .. code-block:: python
-
-        scale = uniform_sample(min_scale, max_scale)
-        output_width = input_width * scale
-        output_height = input_height * scale
-
-    If the input is a :class:`torch.Tensor` or a ``TVTensor`` (e.g. :class:`~torchvision.tv_tensors.Image`,
-    :class:`~torchvision.tv_tensors.Video`, :class:`~torchvision.tv_tensors.BoundingBoxes` etc.)
-    it can have arbitrary number of leading batch dimensions. For example,
-    the image can have ``[..., C, H, W]`` shape. A bounding box can have ``[..., 4]`` shape.
-
-    Args:
-        min_scale (int): Minimum scale for random sampling
-        max_scale (int): Maximum scale for random sampling
-        interpolation (InterpolationMode, optional): Desired interpolation enum defined by
-            :class:`torchvision.transforms.InterpolationMode`. Default is ``InterpolationMode.BILINEAR``.
-            If input is Tensor, only ``InterpolationMode.NEAREST``, ``InterpolationMode.NEAREST_EXACT``,
-            ``InterpolationMode.BILINEAR`` and ``InterpolationMode.BICUBIC`` are supported.
-            The corresponding Pillow integer constants, e.g. ``PIL.Image.BILINEAR`` are accepted as well.
-        antialias (bool, optional): Whether to apply antialiasing.
-            It only affects **tensors** with bilinear or bicubic modes and it is
-            ignored otherwise: on PIL images, antialiasing is always applied on
-            bilinear or bicubic modes; on other modes (for PIL images and
-            tensors), antialiasing makes no sense and this parameter is ignored.
-            Possible values are:
-
-            - ``True`` (default): will apply antialiasing for bilinear or bicubic modes.
-              Other mode aren't affected. This is probably what you want to use.
-            - ``False``: will not apply antialiasing for tensors on any mode. PIL
-              images are still antialiased on bilinear or bicubic modes, because
-              PIL doesn't support no antialias.
-            - ``None``: equivalent to ``False`` for tensors and ``True`` for
-              PIL images. This value exists for legacy reasons and you probably
-              don't want to use it unless you really know what you are doing.
-
-            The default value changed from ``None`` to ``True`` in
-            v0.17, for the PIL and Tensor backends to be consistent.
-    """
-
     def __init__(
         self,
         min_scale: int,
@@ -293,18 +247,69 @@ class RandomRescale(Transform):
         interpolation: InterpolationMode | int = InterpolationMode.BILINEAR,
         antialias: bool | None = True,
     ) -> None:
+        """Randomly rescale the input.
+
+        This transformation can be used together with ``RandomCrop`` as data augmentations to train
+        models on image segmentation task.
+
+        Output spatial size is randomly sampled from the interval ``[min_size, max_size]``:
+
+        .. code-block:: python
+
+            scale = uniform_sample(min_scale, max_scale)
+            output_width = input_width * scale
+            output_height = input_height * scale
+
+        If the input is a :class:`torch.Tensor` or a ``TVTensor`` (e.g. :class:`~torchvision.tv_tensors.Image`,
+        :class:`~torchvision.tv_tensors.Video`, :class:`~torchvision.tv_tensors.BoundingBoxes` etc.)
+        it can have arbitrary number of leading batch dimensions. For example,
+        the image can have ``[..., C, H, W]`` shape. A bounding box can have ``[..., 4]`` shape.
+
+        Args:
+            min_scale (int): Minimum scale for random sampling
+            max_scale (int): Maximum scale for random sampling
+            interpolation (InterpolationMode, optional): Desired interpolation enum defined by
+                :class:`torchvision.transforms.InterpolationMode`. Default is ``InterpolationMode.BILINEAR``.
+                If input is Tensor, only ``InterpolationMode.NEAREST``, ``InterpolationMode.NEAREST_EXACT``,
+                ``InterpolationMode.BILINEAR`` and ``InterpolationMode.BICUBIC`` are supported.
+                The corresponding Pillow integer constants, e.g. ``PIL.Image.BILINEAR`` are accepted as well.
+            antialias (bool, optional): Whether to apply antialiasing.
+                It only affects **tensors** with bilinear or bicubic modes and it is
+                ignored otherwise: on PIL images, antialiasing is always applied on
+                bilinear or bicubic modes; on other modes (for PIL images and
+                tensors), antialiasing makes no sense and this parameter is ignored.
+                Possible values are:
+
+                - ``True`` (default): will apply antialiasing for bilinear or bicubic modes.
+                Other mode aren't affected. This is probably what you want to use.
+                - ``False``: will not apply antialiasing for tensors on any mode. PIL
+                images are still antialiased on bilinear or bicubic modes, because
+                PIL doesn't support no antialias.
+                - ``None``: equivalent to ``False`` for tensors and ``True`` for
+                PIL images. This value exists for legacy reasons and you probably
+                don't want to use it unless you really know what you are doing.
+
+                The default value changed from ``None`` to ``True`` in
+                v0.17, for the PIL and Tensor backends to be consistent.
+        """
         super().__init__()
         self.min_scale = min_scale
         self.max_scale = max_scale
         self.interpolation = interpolation
         self.antialias = antialias
 
+    # Compatibility with torchvision < 0.21
     def _get_params(self, flat_inputs: list[Any]) -> dict[str, Any]:
         height, width = query_size(flat_inputs)
         scale = torch.rand(1)
         scale = self.min_scale + scale * (self.max_scale - self.min_scale)
         return {"size": (int(height * scale), int(width * scale))}
 
+    # Compatibility with torchvision >= 0.21
+    def make_params(self, flat_inputs: list[Any]) -> dict[str, Any]:
+        return self._get_params(flat_inputs)
+
+    # Compatibility with torchvision < 0.21
     def _transform(self, inpt: Any, params: dict[str, Any]) -> Any:
         return self._call_kernel(
             F.resize,
@@ -313,3 +318,7 @@ class RandomRescale(Transform):
             interpolation=self.interpolation,
             antialias=self.antialias,
         )
+
+    # Compatibility with torchvision >= 0.21
+    def transform(self, inpt: Any, params: dict[str, Any]) -> Any:
+        return self._transform(inpt, params)

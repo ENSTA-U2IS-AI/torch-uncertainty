@@ -57,6 +57,12 @@ class TestTemperatureScaler:
         with pytest.raises(ValueError):
             scaler.set_temperature(val=-1)
 
+        scaler = TemperatureScaler(
+            model=None,
+        )
+        with pytest.raises(ValueError, match="Cannot fit a Scaler method without model."):
+            scaler.fit(None)
+
 
 class TestVectorScaler:
     """Testing the VectorScaler class."""

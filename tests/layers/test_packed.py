@@ -196,7 +196,23 @@ class TestPackedLinear:
         assert out.shape == torch.Size([1, 2, 3, 4, 2])
 
     def test_linear_extend(self):
-        _ = PackedConv2d(5, 3, kernel_size=1, alpha=1, num_estimators=2, gamma=1)
+        layer = PackedLinear(5, 3, alpha=1, num_estimators=2, gamma=1, implementation="legacy")
+        assert layer.weight.shape == torch.Size([4, 3, 1])
+        assert layer.bias.shape == torch.Size([4])
+        layer = PackedLinear(5, 3, alpha=1, num_estimators=2, gamma=1, implementation="full")
+        assert layer.weight.shape == torch.Size([2, 2, 3])
+        assert layer.bias.shape == torch.Size([4])
+        # with first=True
+        layer = PackedLinear(
+            5, 3, alpha=1, num_estimators=2, gamma=1, implementation="legacy", first=True
+        )
+        assert layer.weight.shape == torch.Size([4, 5, 1])
+        assert layer.bias.shape == torch.Size([4])
+        layer = PackedLinear(
+            5, 3, alpha=1, num_estimators=2, gamma=1, implementation="full", first=True
+        )
+        assert layer.weight.shape == torch.Size([1, 4, 5])
+        assert layer.bias.shape == torch.Size([4])
 
     def test_linear_failures(self):
         with pytest.raises(ValueError):
@@ -220,7 +236,7 @@ class TestPackedLinear:
         with pytest.raises(ValueError):
             _ = PackedLinear(5, 2, alpha=1, num_estimators=1, gamma=-1, rearrange=True)
 
-        with pytest.raises(AssertionError):
+        with pytest.raises(ValueError):
             _ = PackedLinear(
                 5,
                 2,

@@ -23,13 +23,13 @@ class _FilterResponseNormNd(nn.Module):
         super().__init__()
         if dimension < 1 or not isinstance(dimension, int):
             raise ValueError(
-                "dimension should be an integer greater or equal than 1. " f"got {dimension}."
+                f"dimension should be an integer greater or equal than 1. Got {dimension}."
             )
         self.dimension = dimension
 
         if num_channels < 1 or not isinstance(num_channels, int):
             raise ValueError(
-                "num_channels should be an integer greater or equal than 1. " f"got {num_channels}."
+                f"num_channels should be an integer greater or equal than 1. Got {num_channels}."
             )
         shape = (1, num_channels) + (1,) * dimension
         self.eps = eps

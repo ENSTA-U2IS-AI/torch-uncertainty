@@ -4,6 +4,7 @@ on:
     branches:
       - main
   pull_request:
+    types: [opened, reopened, ready_for_review, synchronize]
     branches:
       - main
   schedule:
@@ -40,7 +41,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        python3 -m pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cpu
+        python3 -m pip install torch torchvision --extra-index-url https://download.pytorch.org/whl/cpu
         python3 -m pip install .[all]
 
     - name: Sphinx build

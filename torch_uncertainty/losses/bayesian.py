@@ -98,12 +98,12 @@ class ELBOLoss(nn.Module):
 
 def _elbo_loss_checks(inner_loss: nn.Module, kl_weight: float, num_samples: int) -> None:
     if isinstance(inner_loss, type):
-        raise TypeError("The inner_loss should be an instance of a class." f"Got {inner_loss}.")
+        raise TypeError(f"The inner_loss should be an instance of a class.Got {inner_loss}.")
 
     if kl_weight < 0:
         raise ValueError(f"The KL weight should be non-negative. Got {kl_weight}.")
 
     if num_samples < 1:
-        raise ValueError("The number of samples should not be lower than 1." f"Got {num_samples}.")
+        raise ValueError(f"The number of samples should not be lower than 1. Got {num_samples}.")
     if not isinstance(num_samples, int):
-        raise TypeError("The number of samples should be an integer. " f"Got {type(num_samples)}.")
+        raise TypeError(f"The number of samples should be an integer. Got {type(num_samples)}.")

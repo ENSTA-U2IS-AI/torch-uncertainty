@@ -168,4 +168,4 @@ def _mcbn_checks(model, num_estimators, mc_batch_size, convert):
     if mc_batch_size < 1 or not isinstance(mc_batch_size, int):
         raise ValueError(f"mc_batch_size must be a positive integer, got {mc_batch_size}.")
     if not convert and not has_mcbn(model):
-        raise ValueError("model does not contain any MCBatchNorm2d nor is not to be " "converted.")
+        raise ValueError("model does not contain any MCBatchNorm2d nor is not to be converted.")

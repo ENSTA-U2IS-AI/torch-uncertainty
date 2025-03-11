@@ -210,8 +210,8 @@ class CIFAR100DataModule(TUDataModule):
         r"""Get test dataloaders.
 
         Return:
-            list[DataLoader]: test set for in distribution data
-            and out-of-distribution data.
+            list[DataLoader]: test set for in distribution data, SVHN data, and/or
+            CIFAR-100C data.
         """
         dataloader = [self._data_loader(self.test)]
         if self.eval_ood:

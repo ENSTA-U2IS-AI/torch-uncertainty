@@ -41,7 +41,6 @@ model:
           norm: torch.nn.Identity
           groups: 1
           dropout_rate: 0
-          last_layer_dropout: false
           layer_args: {}
       momentum: 0.99
   num_classes: 10
@@ -55,7 +54,9 @@ optimizer:
   weight_decay: 5e-4
   nesterov: true
 lr_scheduler:
-  milestones:
-  - 25
-  - 50
-  gamma: 0.1
+  class_path: torch.optim.lr_scheduler.MultiStepLR
+  init_args:
+    milestones:
+    - 25
+    - 50
+    gamma: 0.1

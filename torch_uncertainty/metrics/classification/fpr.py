@@ -6,9 +6,9 @@ from torchmetrics.utilities.data import dim_zero_cat
 
 
 class FPRx(Metric):
-    is_differentiable: bool = False
-    higher_is_better: bool = False
-    full_state_update: bool = False
+    is_differentiable = False
+    higher_is_better = False
+    full_state_update = False
 
     conf: list[Tensor]
     targets: list[Tensor]
@@ -35,7 +35,7 @@ class FPRx(Metric):
         self.add_state("targets", [], dist_reduce_fx="cat")
 
         rank_zero_warn(
-            f"Metric `FPR{int(recall_level*100)}` will save all targets and predictions"
+            f"Metric `FPR{int(recall_level * 100)}` will save all targets and predictions"
             " in buffer. For large datasets this may lead to large memory"
             " footprint."
         )

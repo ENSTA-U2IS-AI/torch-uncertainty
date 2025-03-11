@@ -1,5 +1,6 @@
 # Custom
 .vscode/
+.idea/
 data/
 logs/
 lightning_logs/
@@ -41,6 +42,7 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+.setup_done
 
 # PyInstaller
 #  Usually these files are written by a python script from a template

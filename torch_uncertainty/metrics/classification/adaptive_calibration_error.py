@@ -92,9 +92,9 @@ def _ace_compute(
 class BinaryAdaptiveCalibrationError(Metric):
     r"""Adaptive Top-label Calibration Error for binary tasks."""
 
-    is_differentiable: bool = False
-    higher_is_better: bool = False
-    full_state_update: bool = False
+    is_differentiable = False
+    higher_is_better = False
+    full_state_update = False
 
     confidences: list[Tensor]
     accuracies: list[Tensor]

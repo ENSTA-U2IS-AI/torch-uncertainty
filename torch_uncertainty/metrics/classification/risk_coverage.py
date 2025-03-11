@@ -11,9 +11,9 @@ from torchmetrics.utilities.plot import _AX_TYPE
 
 
 class AURC(Metric):
-    is_differentiable: bool = False
-    higher_is_better: bool = False
-    full_state_update: bool = False
+    is_differentiable = False
+    higher_is_better = False
+    full_state_update = False
 
     scores: list[Tensor]
     errors: list[Tensor]
@@ -44,8 +44,8 @@ class AURC(Metric):
             kwargs: Additional keyword arguments.
 
         Reference:
-            Geifman & El-Yaniv. "Selective classification for deep neural
-                networks." In NeurIPS, 2017.
+            Geifman & El-Yaniv. "Selective classification for deep neural networks." In NeurIPS,
+            2017.
         """
         super().__init__(**kwargs)
         self.add_state("scores", default=[], dist_reduce_fx="cat")
@@ -87,6 +87,7 @@ class AURC(Metric):
         num_samples = error_rates.size(0)
         if num_samples < 2:
             return torch.tensor([float("nan")], device=self.device)
+        # There is no error rate associated to 0 coverage: starting at 1
         cov = torch.arange(1, num_samples + 1, device=self.device) / num_samples
         return _auc_compute(cov, error_rates) / (1 - 1 / num_samples)
 
@@ -115,7 +116,7 @@ class AURC(Metric):
         error_rates = self.partial_compute().cpu().flip(0)
         num_samples = error_rates.size(0)
 
-        x = torch.arange(num_samples) / num_samples
+        x = torch.arange(1, num_samples + 1) / num_samples
         aurc = _auc_compute(x, error_rates).cpu().item()
 
         # reduce plot size
@@ -273,9 +274,9 @@ class AUGRC(AURC):
 
 
 class CovAtxRisk(Metric):
-    is_differentiable: bool = False
-    higher_is_better: bool = False
-    full_state_update: bool = False
+    is_differentiable = False
+    higher_is_better = False
+    full_state_update = False
 
     scores: list[Tensor]
     errors: list[Tensor]
@@ -347,9 +348,9 @@ class CovAt5Risk(CovAtxRisk):
 
 
 class RiskAtxCov(Metric):
-    is_differentiable: bool = False
-    higher_is_better: bool = False
-    full_state_update: bool = False
+    is_differentiable = False
+    higher_is_better = False
+    full_state_update = False
 
     scores: list[Tensor]
     errors: list[Tensor]

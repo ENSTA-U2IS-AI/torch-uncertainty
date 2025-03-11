@@ -123,6 +123,21 @@ class ClassificationRoutine(LightningModule):
         Warning:
             You must define :attr:`optim_recipe` if you do not use the Lightning CLI.
 
+        Warning:
+            When using an ensemble model, you must:
+            1. Set :attr:`is_ensemble` to ``True``.
+            2. Set :attr:`format_batch_fn` to :class:`torch_uncertainty.transforms.RepeatTarget(num_repeats=num_estimators)`.
+            3. Ensure that the model's forward pass outputs a tensor of shape :math:`(M \times B, C)`,
+            where :math:`M` is the number of estimators, :math:`B` is the batch size, :math:`C` is the number of classes.
+
+            For automated batch handling, consider using the available model wrappers in `torch_uncertainty.models.wrappers`.
+
+        Note:
+            If :attr:`eval_ood` is ``True``, we perform a binary classification and update the
+            OOD-related metrics twice:
+            - once during the test on ID values where the given binary label is 0 (for ID)
+            - once during the test on OOD values where the given binary label is 1 (for OOD)
+
         Note:
             :attr:`optim_recipe` can be anything that can be returned by
             :meth:`LightningModule.configure_optimizers()`. Find more details
@@ -475,7 +490,7 @@ class ClassificationRoutine(LightningModule):
         """
         inputs, targets = batch
         logits = self.forward(inputs, save_feats=self.eval_grouping_loss)
-        logits = rearrange(logits, "(n b) c -> b n c", b=targets.size(0))
+        logits = rearrange(logits, "(m b) c -> b m c", b=targets.size(0))
         probs_per_est = torch.sigmoid(logits) if self.binary_cls else F.softmax(logits, dim=-1)
         probs = probs_per_est.mean(dim=1)
         confs = probs.max(-1)[0]
@@ -606,9 +621,7 @@ class ClassificationRoutine(LightningModule):
 
         if self.eval_shift:
             tmp_metrics = self.test_shift_metrics.compute()
-            shift_severity = self.trainer.test_dataloaders[
-                2 if self.eval_ood else 1
-            ].dataset.shift_severity
+            shift_severity = self.trainer.datamodule.shift_severity
             tmp_metrics["shift/shift_severity"] = shift_severity
             self.log_dict(tmp_metrics, sync_dist=True)
             result_dict.update(tmp_metrics)
@@ -719,7 +732,7 @@ def _classification_routine_checks(
 
     if not is_ensemble and ood_criterion in ["mi", "vr"]:
         raise ValueError(
-            "You cannot use mutual information or variation ratio with a single" " model."
+            "You cannot use mutual information or variation ratio with a single model."
         )
 
     if is_ensemble and eval_grouping_loss:
@@ -729,12 +742,12 @@ def _classification_routine_checks(
 
     if num_classes < 1:
         raise ValueError(
-            "The number of classes must be a positive integer >= 1." f"Got {num_classes}."
+            f"The number of classes must be a positive integer >= 1. Got {num_classes}."
         )
 
     if eval_grouping_loss and not hasattr(model, "feats_forward"):
         raise ValueError(
-            "Your model must have a `feats_forward` method to compute the " "grouping loss."
+            "Your model must have a `feats_forward` method to compute the grouping loss."
         )
 
     if eval_grouping_loss and not (

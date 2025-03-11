@@ -86,7 +86,7 @@ class PixelRegressionRoutine(LightningModule):
         _depth_routine_checks(output_dim, num_image_plot, log_plots)
         if eval_shift:
             raise NotImplementedError(
-                "Distribution shift evaluation not implemented yet. Raise an issue " "if needed."
+                "Distribution shift evaluation not implemented yet. Raise an issue if needed."
             )
 
         self.model = model
@@ -294,7 +294,7 @@ class PixelRegressionRoutine(LightningModule):
         """
         if dataloader_idx != 0:
             raise NotImplementedError(
-                "Depth OOD detection not implemented yet. Raise an issue " "if needed."
+                "Depth OOD detection not implemented yet. Raise an issue if needed."
             )
         inputs, targets = batch
         if self.one_dim_depth:

@@ -7,7 +7,6 @@ on:
       - dev
   pull_request:
     branches:
-      - main
       - dev
   schedule:
     - cron: "42 7 * * 0"
@@ -64,7 +63,7 @@ jobs:
     - name: Install dependencies
       if: steps.changed-files-specific.outputs.only_changed != 'true'
       run: |
-        python3 -m pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cpu
+        python3 -m pip install torch torchvision --extra-index-url https://download.pytorch.org/whl/cpu
         python3 -m pip install .[all]
 
     - name: Check style & format

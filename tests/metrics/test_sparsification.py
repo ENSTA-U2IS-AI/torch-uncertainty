@@ -33,3 +33,9 @@ class TestAUSE:
         assert ax.get_xlabel() == "Rejection Rate (%)"
         assert ax.get_ylabel() == "Error Rate (%)"
         plt.close(fig)
+
+    def test_compute_nan(self) -> None:
+        probs = torch.Tensor([[0.1, 0.9]])
+        targets = torch.Tensor([1]).long()
+        metric = AUSE()
+        assert torch.isnan(metric(probs, targets)).all()

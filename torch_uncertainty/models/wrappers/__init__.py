@@ -1,4 +1,5 @@
 # ruff: noqa: F401
+from .batch_ensemble import BatchEnsemble, batch_ensemble
 from .checkpoint_ensemble import (
     CheckpointEnsemble,
 )

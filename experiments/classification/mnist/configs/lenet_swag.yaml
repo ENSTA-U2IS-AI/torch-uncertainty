@@ -41,7 +41,6 @@ model:
           norm: torch.nn.Identity
           groups: 1
           dropout_rate: 0
-          last_layer_dropout: false
           layer_args: {}
       cycle_start: 10
       cycle_length: 5

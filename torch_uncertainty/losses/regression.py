@@ -67,7 +67,7 @@ class DERLoss(DistributionNLLLoss):
 
         if reg_weight < 0:
             raise ValueError(
-                "The regularization weight should be non-negative, but got " f"{reg_weight}."
+                f"The regularization weight should be non-negative, but got {reg_weight}."
             )
         self.reg_weight = reg_weight
 
@@ -114,7 +114,7 @@ class BetaNLL(nn.Module):
         super().__init__()
 
         if beta < 0 or beta > 1:
-            raise ValueError("The beta parameter should be in range [0, 1], but got " f"{beta}.")
+            raise ValueError(f"The beta parameter should be in range [0, 1], but got {beta}.")
         self.beta = beta
         self.nll_loss = nn.GaussianNLLLoss(reduction="none")
         if reduction not in ("none", "mean", "sum"):

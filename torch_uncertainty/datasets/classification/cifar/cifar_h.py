@@ -27,7 +27,7 @@ class CIFAR10H(CIFAR10):
     """
 
     h_test_list = ["cifar-10h-probs.npy", "7b41f73eee90fdefc73bfc820ab29ba8"]
-    h_url = "https://github.com/jcpeterson/cifar-10h/raw/master/data/" "cifar10h-probs.npy"
+    h_url = "https://github.com/jcpeterson/cifar-10h/raw/master/data/cifar10h-probs.npy"
 
     def __init__(
         self,
@@ -39,7 +39,7 @@ class CIFAR10H(CIFAR10):
     ) -> None:
         if train:
             raise ValueError("CIFAR10H does not support training data.")
-        print("WARNING: CIFAR10H cannot be used with Classification routines " "for now.")
+        print("WARNING: CIFAR10H cannot be used within Classification routines for now.")
         super().__init__(
             Path(root),
             train=False,
@@ -53,7 +53,7 @@ class CIFAR10H(CIFAR10):
 
         if not self._check_specific_integrity():
             raise RuntimeError(
-                "Dataset not found or corrupted. You can use download=True to " "download it."
+                "Dataset not found or corrupted. You can use download=True to download it."
             )
 
         self.targets = list(torch.as_tensor(np.load(self.root / self.h_test_list[0])))

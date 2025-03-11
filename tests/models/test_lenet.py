@@ -2,7 +2,7 @@ import pytest
 import torch
 from torch import nn
 
-from torch_uncertainty.models.lenet import bayesian_lenet, lenet, packed_lenet
+from torch_uncertainty.models.lenet import batchensemble_lenet, bayesian_lenet, lenet, packed_lenet
 
 
 class TestLeNet:
@@ -18,6 +18,7 @@ class TestLeNet:
         model.eval()
         model(torch.randn(1, 1, 20, 20))
 
+        batchensemble_lenet(1, 1)
         packed_lenet(1, 1)
         bayesian_lenet(1, 1)
         bayesian_lenet(
