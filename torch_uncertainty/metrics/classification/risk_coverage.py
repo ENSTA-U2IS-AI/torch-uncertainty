@@ -11,9 +11,9 @@ from torchmetrics.utilities.plot import _AX_TYPE
 
 
 class AURC(Metric):
-    is_differentiable: bool = False
-    higher_is_better: bool = False
-    full_state_update: bool = False
+    is_differentiable = False
+    higher_is_better = False
+    full_state_update = False
 
     scores: list[Tensor]
     errors: list[Tensor]
@@ -44,8 +44,8 @@ class AURC(Metric):
             kwargs: Additional keyword arguments.
 
         Reference:
-            Geifman & El-Yaniv. "Selective classification for deep neural
-                networks." In NeurIPS, 2017.
+            Geifman & El-Yaniv. "Selective classification for deep neural networks." In NeurIPS,
+            2017.
         """
         super().__init__(**kwargs)
         self.add_state("scores", default=[], dist_reduce_fx="cat")
@@ -273,9 +273,9 @@ class AUGRC(AURC):
 
 
 class CovAtxRisk(Metric):
-    is_differentiable: bool = False
-    higher_is_better: bool = False
-    full_state_update: bool = False
+    is_differentiable = False
+    higher_is_better = False
+    full_state_update = False
 
     scores: list[Tensor]
     errors: list[Tensor]
@@ -347,9 +347,9 @@ class CovAt5Risk(CovAtxRisk):
 
 
 class RiskAtxCov(Metric):
-    is_differentiable: bool = False
-    higher_is_better: bool = False
-    full_state_update: bool = False
+    is_differentiable = False
+    higher_is_better = False
+    full_state_update = False
 
     scores: list[Tensor]
     errors: list[Tensor]

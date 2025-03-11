@@ -6,9 +6,9 @@ from torchmetrics.utilities.data import dim_zero_cat
 
 
 class Entropy(Metric):
-    is_differentiable: bool = False
-    higher_is_better: bool | None = None
-    full_state_update: bool = False
+    is_differentiable = False
+    higher_is_better = None
+    full_state_update = False
 
     def __init__(
         self,
