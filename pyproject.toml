@@ -60,7 +60,7 @@ dev = [
     "pre-commit-hooks",
 ]
 docs = [
-    "sphinx<8",
+    "sphinx<7",
     "tu_sphinx_theme",
     "sphinx-copybutton",
     "sphinx-gallery",
@@ -68,7 +68,7 @@ docs = [
     "sphinx-codeautolink",
 ]
 all = [
-    "torch_uncertainty[dev,docs,image,tabular,experiments]",
+    "torch_uncertainty[dev,docs,tabular]",
     "scikit-learn",
     "laplace-torch",
     "scipy",

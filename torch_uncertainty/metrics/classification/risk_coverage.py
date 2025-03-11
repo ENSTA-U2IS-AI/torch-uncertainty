@@ -87,6 +87,7 @@ class AURC(Metric):
         num_samples = error_rates.size(0)
         if num_samples < 2:
             return torch.tensor([float("nan")], device=self.device)
+        # There is no error rate associated to 0 coverage: starting at 1
         cov = torch.arange(1, num_samples + 1, device=self.device) / num_samples
         return _auc_compute(cov, error_rates) / (1 - 1 / num_samples)
 
@@ -115,7 +116,7 @@ class AURC(Metric):
         error_rates = self.partial_compute().cpu().flip(0)
         num_samples = error_rates.size(0)
 
-        x = torch.arange(num_samples) / num_samples
+        x = torch.arange(1, num_samples + 1) / num_samples
         aurc = _auc_compute(x, error_rates).cpu().item()
 
         # reduce plot size

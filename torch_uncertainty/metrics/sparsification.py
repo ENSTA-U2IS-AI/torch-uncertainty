@@ -59,6 +59,9 @@ class AUSE(Metric):
     def partial_compute(self) -> tuple[Tensor, Tensor]:
         scores = dim_zero_cat(self.scores)
         errors = dim_zero_cat(self.errors)
+        if scores.shape[0] < 2:
+            nan = torch.tensor([float("nan")], device=self.device)
+            return nan, nan
         error_rates = _ause_rejection_rate_compute(scores, errors)
         optimal_error_rates = _ause_rejection_rate_compute(errors, errors)
         return error_rates.cpu(), optimal_error_rates.cpu()
@@ -71,10 +74,10 @@ class AUSE(Metric):
             Tensor: The AUSE.
         """
         error_rates, optimal_error_rates = self.partial_compute()
-        num_samples = error_rates.size(0)
-        if num_samples < 2:
+        if torch.isnan(error_rates[0]).item():
             return torch.tensor([float("nan")], device=self.device)
-        x = torch.arange(1, num_samples + 1, device=self.device) / num_samples
+        num_samples = error_rates.size(0)
+        x = torch.arange(0, num_samples, device=self.device) / num_samples
         y = error_rates - optimal_error_rates
         return torch.tensor([_auc_compute(x, y)])
 
