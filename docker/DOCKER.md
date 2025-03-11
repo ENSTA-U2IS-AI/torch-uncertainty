@@ -1,4 +1,5 @@
 # :whale: Docker image for contributors
+
 ### Pre-built Docker image
 1. To pull the pre-built image from Docker Hub, simply run:
     ```bash
@@ -47,6 +48,7 @@
     If using a cloud provider, ensure your network volume is correctly attached to avoid losing data.
 
 ### Modifying and publishing custom Docker image
+
 If you want to make changes to the Dockerfile, follow these steps:
 1. Edit the Dockerfile to fit your needs.
 
