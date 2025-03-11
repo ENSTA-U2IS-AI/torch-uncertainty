@@ -3,7 +3,7 @@ import torch
 from torch import nn
 
 from torch_uncertainty.layers import BatchConv2d, BatchLinear
-from torch_uncertainty.models.wrappers.batch_ensemble import BatchEnsemble
+from torch_uncertainty.models.wrappers.batch_ensemble import BatchEnsemble, batch_ensemble
 
 
 @pytest.fixture()
@@ -43,7 +43,7 @@ class TestBatchEnsembleModel:
         num_estimators = 3
 
         model = _DummyModel(in_features, out_features)
-        wrapped_model = BatchEnsemble(model, num_estimators, convert_layers=True)
+        wrapped_model = batch_ensemble(model, num_estimators, convert_layers=True)
         assert wrapped_model.num_estimators == num_estimators
         assert isinstance(wrapped_model.model.conv, BatchConv2d)
         assert isinstance(wrapped_model.model.fc, BatchLinear)
