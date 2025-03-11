@@ -1,35 +1,25 @@
-from importlib import util
-
 import matplotlib.pyplot as plt
-import numpy as np
 import torch
-
-if util.find_spec("sklearn"):
-    from sklearn.metrics import auc
-
-    sklearn_installed = True
-else:  # coverage: ignore
-    sklearn_installed = False
-
 from torch import Tensor
 from torchmetrics.metric import Metric
+from torchmetrics.utilities.compute import _auc_compute
 from torchmetrics.utilities.data import dim_zero_cat
 from torchmetrics.utilities.plot import _AX_TYPE
 
 
 class AUSE(Metric):
-    is_differentiable: bool = False
-    higher_is_better: bool = False
-    full_state_update: bool = False
-    plot_lower_bound: float = 0.0
-    plot_upper_bound: float = 100.0
-    plot_legend_name: str = "Sparsification Curves"
+    is_differentiable = False
+    higher_is_better = False
+    full_state_update = False
+    plot_lower_bound = 0.0
+    plot_upper_bound = 100.0
+    plot_legend_name = "Sparsification Curves"
 
     scores: list[Tensor]
     errors: list[Tensor]
 
     def __init__(self, **kwargs) -> None:
-        r"""The Area Under the Sparsification Error curve (AUSE) metric to estimate
+        r"""The Area Under the Sparsification Error curve (AUSE) metric to evaluate
         the quality of the uncertainty estimates, i.e., how much they coincide with
         the true errors.
 
@@ -55,13 +45,6 @@ class AUSE(Metric):
         super().__init__(**kwargs)
         self.add_state("scores", default=[], dist_reduce_fx="cat")
         self.add_state("errors", default=[], dist_reduce_fx="cat")
-
-        if not sklearn_installed:
-            raise ImportError(
-                "Please install torch_uncertainty with the image option"
-                "to use the AUSE:"
-                """pip install -U "torch_uncertainty[image]"."""
-            )
 
     def update(self, scores: Tensor, errors: Tensor) -> None:
         """Store the scores and their associated errors for later computation.
@@ -89,9 +72,11 @@ class AUSE(Metric):
         """
         error_rates, optimal_error_rates = self.partial_compute()
         num_samples = error_rates.size(0)
-        x = np.arange(1, num_samples + 1) / num_samples
-        y = (error_rates - optimal_error_rates).numpy()
-        return torch.tensor([auc(x, y)])
+        if num_samples < 2:
+            return torch.tensor([float("nan")], device=self.device)
+        x = torch.arange(1, num_samples + 1, device=self.device) / num_samples
+        y = error_rates - optimal_error_rates
+        return torch.tensor([_auc_compute(x, y)])
 
     def plot(
         self,
@@ -118,12 +103,12 @@ class AUSE(Metric):
         # Computation of AUSEC
         error_rates, optimal_error_rates = self.partial_compute()
         num_samples = error_rates.size(0)
-        x = np.arange(num_samples) / num_samples
-        y = (error_rates - optimal_error_rates).numpy()
+        x = torch.arange(num_samples) / num_samples
+        y = error_rates - optimal_error_rates
 
-        ausec = auc(x, y)
+        ausec = _auc_compute(x, y).cpu().item()
 
-        rejection_rates = (np.arange(num_samples) / num_samples) * 100
+        rejection_rates = torch.arange(num_samples) / num_samples * 100
 
         ax.plot(
             rejection_rates,
