@@ -48,6 +48,9 @@ class Scaler(PostProcessing):
     def fit(
         self,
         calibration_set: Dataset,
+        batch_size: int = 32,
+        shuffle: bool = False,
+        drop_last: bool = False,
         save_logits: bool = False,
         progress: bool = True,
     ) -> None:
@@ -55,6 +58,9 @@ class Scaler(PostProcessing):
 
         Args:
             calibration_set (Dataset): Calibration dataset.
+            batch_size (int, optional): Batch size for the calibration dataset. Defaults to 32.
+            shuffle (bool, optional): Whether to shuffle the calibration dataset. Defaults to False.
+            drop_last (bool, optional): Whether to drop the last batch if it's smaller than batch_size. Defaults to False.
             save_logits (bool, optional): Whether to save the logits and
                 labels. Defaults to False.
             progress (bool, optional): Whether to show a progress bar.
@@ -67,7 +73,9 @@ class Scaler(PostProcessing):
 
         logits_list = []
         labels_list = []
-        calibration_dl = DataLoader(calibration_set, batch_size=32, shuffle=False, drop_last=False)
+        calibration_dl = DataLoader(
+            calibration_set, batch_size=batch_size, shuffle=shuffle, drop_last=drop_last
+        )
         with torch.no_grad():
             for inputs, labels in tqdm(calibration_dl, disable=not progress):
                 logits = self.model(inputs.to(self.device))
