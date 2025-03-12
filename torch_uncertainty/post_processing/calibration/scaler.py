@@ -71,18 +71,18 @@ class Scaler(PostProcessing):
                 "Cannot fit a Scaler method without model. Call .set_model(model) first."
             )
 
-        logits_list = []
-        labels_list = []
+        all_logits = []
+        all_labels = []
         calibration_dl = DataLoader(
             calibration_set, batch_size=batch_size, shuffle=shuffle, drop_last=drop_last
         )
         with torch.no_grad():
             for inputs, labels in tqdm(calibration_dl, disable=not progress):
                 logits = self.model(inputs.to(self.device))
-                logits_list.append(logits)
-                labels_list.append(labels)
-        all_logits = torch.cat(logits_list).detach().to(self.device)
-        all_labels = torch.cat(labels_list).detach().to(self.device)
+                all_logits.append(logits)
+                all_labels.append(labels)
+            all_logits = torch.cat(all_logits).to(self.device)
+            all_labels = torch.cat(all_labels).to(self.device)
 
         optimizer = optim.LBFGS(self.temperature, lr=self.lr, max_iter=self.max_iter)
 
@@ -95,8 +95,8 @@ class Scaler(PostProcessing):
         optimizer.step(calib_eval)
         self.trained = True
         if save_logits:
-            self.logits = logits
-            self.labels = labels
+            self.logits = all_logits
+            self.labels = all_labels
 
     @torch.no_grad()
     def forward(self, inputs: Tensor) -> Tensor:
