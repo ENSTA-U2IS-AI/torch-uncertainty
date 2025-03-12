@@ -50,7 +50,7 @@ class MCBatchNorm(PostProcessing):
 
     def _setup_model(self, model):
         _mcbn_checks(model, self.num_estimators, self.mc_batch_size, self.convert)
-        self.model = deepcopy(model)  # Is it necessary?
+        self.model = deepcopy(model)  # TODO: Is it necessary?
         self.model = self.model.eval()
         if self.convert:
             self._convert()
