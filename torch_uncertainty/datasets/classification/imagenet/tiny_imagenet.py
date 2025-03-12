@@ -11,10 +11,6 @@ from torch.utils.data import Dataset
 
 
 class TinyImageNet(Dataset):
-    """Inspired by
-    https://gist.github.com/z-a-f/b862013c0dc2b540cf96a123a6766e54.
-    """
-
     def __init__(
         self,
         root: str | Path,
@@ -22,6 +18,9 @@ class TinyImageNet(Dataset):
         transform: Callable | None = None,
         target_transform: Callable | None = None,
     ) -> None:
+        """Inspired by
+        https://gist.github.com/z-a-f/b862013c0dc2b540cf96a123a6766e54.
+        """
         self.root = Path(root) / "tiny-imagenet-200"
 
         if split not in ["train", "val", "test"]:

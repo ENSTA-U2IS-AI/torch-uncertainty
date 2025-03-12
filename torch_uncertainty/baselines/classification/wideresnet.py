@@ -66,8 +66,7 @@ class WideResNetBaseline(ClassificationRoutine):
                 what expect the `LightningModule.configure_optimizers()
                 <https://pytorch-lightning.readthedocs.io/en/stable/common/lightning_module.html#configure-optimizers>`_
                 method.
-            version (str):
-                Determines which Wide-ResNet version to use:
+            version (str): Determines which Wide-ResNet version to use:
 
                 - ``"std"``: original Wide-ResNet
                 - ``"mc-dropout"``: Monte Carlo Dropout Wide-ResNet
@@ -77,7 +76,7 @@ class WideResNetBaseline(ClassificationRoutine):
                 - ``"mimo"``: MIMO Wide-ResNet
 
             style (bool, optional): (str, optional): Which ResNet style to use.
-            Defaults to ``imagenet``.
+                Defaults to ``imagenet``.
             num_estimators (int, optional): Number of estimators in the ensemble.
                 Only used if :attr:`version` is either ``"packed"``, ``"batched"``
                 or ``"masked"`` Defaults to ``None``.
@@ -97,7 +96,7 @@ class WideResNetBaseline(ClassificationRoutine):
                 to ``None``.
             gamma (int, optional): Number of groups within each estimator. Only
                 used if :attr:`version` is ``"packed"`` and scales with
-                :attr:`groups`. Defaults to ``1s``.
+                :attr:`groups`. Defaults to ``1``.
             rho (float, optional): Probability that all estimators share the same
                 input. Only used if :attr:`version` is ``"mimo"``. Defaults to
                 ``1``.
@@ -126,8 +125,7 @@ class WideResNetBaseline(ClassificationRoutine):
                 ``"packed"``, ``"batched"`` or ``"masked"``.
 
         Returns:
-            LightningModule: Wide-ResNet baseline ready for training and
-                evaluation.
+            LightningModule: Wide-ResNet baseline ready for training and evaluation.
         """
         params = {
             "conv_bias": False,

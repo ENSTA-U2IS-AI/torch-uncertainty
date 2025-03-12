@@ -122,5 +122,5 @@ class TULightningCLI(LightningCLI):
 
     def add_arguments_to_parser(self, parser: LightningArgumentParser) -> None:
         super().add_arguments_to_parser(parser)
-        parser.link_arguments("data.eval_ood", "model.eval_ood")
-        parser.link_arguments("data.eval_shift", "model.eval_shift")
+        parser.link_arguments("model.eval_ood", "data.eval_ood")
+        parser.link_arguments("model.eval_shift", "data.eval_shift")

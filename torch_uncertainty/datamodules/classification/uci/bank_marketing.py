@@ -20,7 +20,7 @@ class BankMarketingDataModule(UCIClassificationDataModule):
         """The Bank Marketing UCI classification datamodule.
 
         Args:
-            root (string): Root directory of the datasets.
+            root (str | Path): Root directory of the datasets.
             batch_size (int): The batch size for training and testing.
             val_split (float, optional): Share of validation samples among the
                 non-test samples. Defaults to ``0``.
@@ -33,7 +33,6 @@ class BankMarketingDataModule(UCIClassificationDataModule):
                 Defaults to ``True``.
             binary (bool, optional): Whether to use binary classification. Defaults
                 to ``True``.
-
         """
         super().__init__(
             root=root,

@@ -21,35 +21,6 @@ def _unit_to_factor(unit: Literal["mm", "m", "km"]) -> float:
 
 
 class MeanSquaredErrorInverse(MeanSquaredError):
-    r"""Mean Squared Error of the inverse predictions (iMSE).
-
-    .. math:: \text{iMSE} = \frac{1}{N}\sum_i^N(\frac{1}{y_i} - \frac{1}{\hat{y_i}})^2
-
-    Where :math:`y` is a tensor of target values, and :math:`\hat{y}` is a
-        tensor of predictions.
-    Both are scaled by a factor of :attr:`unit_factor` depending on the
-        :attr:`unit` given.
-
-    As input to ``forward`` and ``update`` the metric accepts the following
-        input:
-
-    - ``preds`` (:class:`~Tensor`): Predictions from model
-    - ``target`` (:class:`~Tensor`): Ground truth values
-
-    As output of ``forward`` and ``compute`` the metric returns the following
-        output:
-
-    - ``mean_squared_error`` (:class:`~Tensor`): A tensor with the mean
-        squared error
-
-    Args:
-        squared: If True returns MSE value, if False returns RMSE value.
-        num_outputs: Number of outputs in multioutput setting.
-        unit: Unit for the computation of the metric. Must be one of 'mm', 'm',
-            'km'. Defauts to 'km'.
-        kwargs: Additional keyword arguments.
-    """
-
     def __init__(
         self,
         squared: bool = True,
@@ -57,6 +28,33 @@ class MeanSquaredErrorInverse(MeanSquaredError):
         unit: str = "km",
         **kwargs,
     ) -> None:
+        r"""Mean Squared Error of the inverse predictions (iMSE).
+
+        .. math:: \text{iMSE} = \frac{1}{N}\sum_i^N(\frac{1}{y_i} - \frac{1}{\hat{y_i}})^2
+
+        Where :math:`y` is a tensor of target values, and :math:`\hat{y}` is a
+        tensor of predictions.
+        Both are scaled by a factor of :attr:`unit_factor` depending on the
+        :attr:`unit` given.
+
+        As input to ``forward`` and ``update`` the metric accepts the following
+        input:
+
+        - **preds** (:class:`~Tensor`): Predictions from model
+        - **target** (:class:`~Tensor`): Ground truth values
+
+        As output of ``forward`` and ``compute`` the metric returns the following
+        output:
+
+        - **mean_squared_error** (:class:`~Tensor`): A tensor with the mean
+          squared error
+
+        Args:
+            squared: If True returns MSE value, if False returns RMSE value.
+            num_outputs: Number of outputs in multioutput setting.
+            unit: Unit for the computation of the metric. Must be one of 'mm', 'm', 'km'. Defauts to 'km'.
+            kwargs: Additional keyword arguments.
+        """
         super().__init__(squared, num_outputs, **kwargs)
         self.unit_factor = _unit_to_factor(unit)
 
@@ -66,34 +64,32 @@ class MeanSquaredErrorInverse(MeanSquaredError):
 
 
 class MeanAbsoluteErrorInverse(MeanAbsoluteError):
-    r"""Mean Absolute Error of the inverse predictions (iMAE).
+    def __init__(self, unit: str = "km", **kwargs) -> None:
+        r"""Mean Absolute Error of the inverse predictions (iMAE).
 
-    .. math:: \text{iMAE} = \frac{1}{N}\sum_i^N | \frac{1}{y_i} - \frac{1}{\hat{y_i}} |
+        .. math:: \text{iMAE} = \frac{1}{N}\sum_i^N \left| \frac{1}{y_i} - \frac{1}{\hat{y_i}} \right|
 
-    Where :math:`y` is a tensor of target values, and :math:`\hat{y}` is a
+        Where :math:`y` is a tensor of target values, and :math:`\hat{y}` is a
         tensor of predictions.
-    Both are scaled by a factor of :attr:`unit_factor` depending on the
+        Both are scaled by a factor of :attr:`unit_factor` depending on the
         :attr:`unit` given.
 
-    As input to ``forward`` and ``update`` the metric accepts the following
+        As input to ``forward`` and ``update`` the metric accepts the following
         input:
 
-    - ``preds`` (:class:`~Tensor`): Predictions from model
-    - ``target`` (:class:`~Tensor`): Ground truth values
+        - **preds** (:class:`~Tensor`): Predictions from model
+        - **target** (:class:`~Tensor`): Ground truth values
 
-    As output of ``forward`` and ``compute`` the metric returns the following
+        As output of ``forward`` and ``compute`` the metric returns the following
         output:
 
-    - ``mean_absolute_inverse_error`` (:class:`~Tensor`): A tensor with the
-        mean absolute error over the state
+        - **mean_absolute_inverse_error** (:class:`~Tensor`): A tensor with the
+          mean absolute error over the state
 
-    Args:
-        unit: Unit for the computation of the metric. Must be one of 'mm', 'm',
-            'km'. Defauts to 'km'.
-        kwargs: Additional keyword arguments.
-    """
-
-    def __init__(self, unit: str = "km", **kwargs) -> None:
+        Args:
+            unit: Unit for the computation of the metric. Must be one of 'mm', 'm', 'km'. Defauts to 'km'.
+            kwargs: Additional keyword arguments.
+        """
         super().__init__(**kwargs)
         self.unit_factor = _unit_to_factor(unit)
 

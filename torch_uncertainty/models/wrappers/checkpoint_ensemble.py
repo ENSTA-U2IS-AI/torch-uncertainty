@@ -15,15 +15,13 @@ class CheckpointEnsemble(nn.Module):
 
         Args:
             model (nn.Module): The model to train and ensemble.
-            save_schedule (list[int]): The epochs at which to save the model.
-                If save schedule is None, save the model at every epoch.
-                Defaults to None.
-            use_final_checkpoint (bool, optional): Whether to use the final
-                model as a checkpoint. Defaults to True.
+            save_schedule (list[int]): The epochs at which to save the model. If save schedule is None, save the model at every epoch.Defaults to ``None``.
+            use_final_checkpoint (bool, optional): Whether to use the final model as a checkpoint. Defaults to ``True``.
 
-        Reference:
-            Checkpoint Ensembles: Ensemble Methods from a Single Training Process.
-            Hugh Chen, Scott Lundberg, Su-In Lee. In ArXiv 2018.
+        References:
+            [1] `Checkpoint Ensembles: Ensemble Methods from a Single Training Process. Hugh Chen, Scott Lundberg, Su-In Lee. In ArXiv 2018
+            <https://arxiv.org/abs/1710.03282>`_.
+
         """
         super().__init__()
         self.core_model = model

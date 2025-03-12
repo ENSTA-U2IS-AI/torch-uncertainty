@@ -30,9 +30,9 @@ class UCIRegressionDataModule(TUDataModule):
             root (string): Root directory of the datasets.
             batch_size (int): The batch size for training and testing.
             dataset_name (string, optional): The name of the dataset. One of
-                "boston-housing", "concrete", "energy", "kin8nm",
-                "naval-propulsion-plant", "power-plant", "protein",
-                "wine-quality-red", and "yacht".
+                ``boston-housing``, ``concrete``, ``energy``, ``kin8nm``,
+                ``naval-propulsion-plant``, ``power-plant``, ``protein``,
+                ``wine-quality-red``, and ``yacht``.
             val_split (float, optional): Share of validation samples. Defaults
                 to ``0``.
             num_workers (int, optional): How many subprocesses to use for data
