@@ -51,7 +51,7 @@ class LaplaceApprox(PostProcessing):
             Daxberger et al. Laplace Redux - Effortless Bayesian Deep Learning. In NeurIPS 2021.
         """
         super().__init__()
-        if not laplace_installed:  # coverage: ignore
+        if not laplace_installed:
             raise ImportError(
                 "The laplace-torch library is not installed. Please install"
                 "torch_uncertainty with the all option:"
@@ -86,6 +86,6 @@ class LaplaceApprox(PostProcessing):
 
     def forward(
         self,
-        x: Tensor,
+        inputs: Tensor,
     ) -> Tensor:
-        return self.la(x, pred_type=self.pred_type, link_approx=self.link_approx)
+        return self.la(inputs, pred_type=self.pred_type, link_approx=self.link_approx)
