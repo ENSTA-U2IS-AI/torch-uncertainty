@@ -89,9 +89,9 @@ class TinyImageNetDataModule(TUDataModule):
         self.train_transform = v2.Compose(
             [
                 v2.ToImage(),
-                v2.ToDtype(torch.float32),
                 basic_transform,
                 main_transform,
+                v2.ToDtype(dtype=torch.float32, scale=True),
                 v2.Normalize(mean=self.mean, std=self.std),
             ]
         )
@@ -99,8 +99,8 @@ class TinyImageNetDataModule(TUDataModule):
         self.test_transform = v2.Compose(
             [
                 v2.ToImage(),
-                v2.ToDtype(torch.float32),
                 v2.Resize(64, interpolation=self.interpolation),
+                v2.ToDtype(dtype=torch.float32, scale=True),
                 v2.Normalize(mean=self.mean, std=self.std),
             ]
         )

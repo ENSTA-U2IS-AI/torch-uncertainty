@@ -115,16 +115,16 @@ class CIFAR100DataModule(TUDataModule):
         self.train_transform = v2.Compose(
             [
                 v2.ToImage(),
-                v2.ToDtype(torch.float32),
                 basic_transform,
                 main_transform,
+                v2.ToDtype(dtype=torch.float32, scale=True),
                 v2.Normalize(mean=self.mean, std=self.std),
             ]
         )
         self.test_transform = v2.Compose(
             [
                 v2.ToImage(),
-                v2.ToDtype(torch.float32),
+                v2.ToDtype(dtype=torch.float32, scale=True),
                 v2.Normalize(mean=self.mean, std=self.std),
             ]
         )

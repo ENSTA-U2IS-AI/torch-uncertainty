@@ -169,9 +169,9 @@ class ImageNetDataModule(TUDataModule):
         self.train_transform = v2.Compose(
             [
                 v2.ToImage(),
-                v2.ToDtype(torch.float32),
                 basic_transform,
                 main_transform,
+                v2.ToDtype(dtype=torch.float32, scale=True),
                 v2.Normalize(mean=self.mean, std=self.std),
             ]
         )
@@ -179,9 +179,9 @@ class ImageNetDataModule(TUDataModule):
         self.test_transform = v2.Compose(
             [
                 v2.ToImage(),
-                v2.ToDtype(torch.float32),
                 v2.Resize(256, interpolation=self.interpolation),
                 v2.CenterCrop(224),
+                v2.ToDtype(dtype=torch.float32, scale=True),
                 v2.Normalize(mean=self.mean, std=self.std),
             ]
         )

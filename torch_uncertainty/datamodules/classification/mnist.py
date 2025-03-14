@@ -90,17 +90,17 @@ class MNISTDataModule(TUDataModule):
         self.train_transform = v2.Compose(
             [
                 v2.ToImage(),
-                v2.ToDtype(torch.float32),
                 basic_transform,
                 main_transform,
+                v2.ToDtype(dtype=torch.float32, scale=True),
                 v2.Normalize(mean=self.mean, std=self.std),
             ]
         )
         self.test_transform = v2.Compose(
             [
                 v2.ToImage(),
-                v2.ToDtype(torch.float32),
                 v2.CenterCrop(28),
+                v2.ToDtype(dtype=torch.float32, scale=True),
                 v2.Normalize(mean=self.mean, std=self.std),
             ]
         )
@@ -108,9 +108,9 @@ class MNISTDataModule(TUDataModule):
             self.ood_transform = v2.Compose(
                 [
                     v2.ToImage(),
-                    v2.ToDtype(torch.float32),
                     v2.Grayscale(num_output_channels=1),
                     v2.CenterCrop(28),
+                    v2.ToDtype(dtype=torch.float32, scale=True),
                     v2.Normalize(mean=self.mean, std=self.std),
                 ]
             )
