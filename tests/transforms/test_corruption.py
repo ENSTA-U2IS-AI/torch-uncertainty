@@ -135,17 +135,10 @@ class TestCorruptions:
 
     def test_fog(self):
         inputs = torch.rand(3, 32, 32)
-        transform = Fog(1, size=32)
+        transform = Fog(1)
         transform(inputs)
-
-        with pytest.raises(ValueError, match="Image must be square. Got "):
-            transform(torch.rand(3, 32, 12))
-
-        transform = Fog(0, size=32)
+        transform = Fog(0)
         transform(inputs)
-
-        with pytest.raises(ValueError, match="Size must be a power of 2. Got "):
-            _ = Fog(1, size=15)
 
     def test_brightness(self):
         inputs = torch.rand(3, 32, 32)
