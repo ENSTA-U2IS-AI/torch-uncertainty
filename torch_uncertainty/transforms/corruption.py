@@ -211,7 +211,7 @@ class GlassBlur(TUCorruption):  # TODO: batch
             )
         sigma = [0.7, 0.9, 1, 1.1, 1.5][severity - 1]
         self.sigma = (sigma, sigma)
-        self.kernel_size = m.ceil(sigma * 4)
+        self.kernel_size = int(sigma * 4 // 2 * 2 + 1)
         self.iterations = [1, 1, 1, 2, 2][severity - 1]
         self.max_delta = [1, 2, 2, 3, 4][severity - 1]
 
@@ -596,6 +596,9 @@ class Elastic(TUCorruption):
 
         Args:
             severity (int): Severity level of the corruption.
+
+        Note:
+            mix[0][1] has been changed to 0.5 to avoid errors when dealing with small images.
         """
         super().__init__(severity)
         if not cv2_installed or not scipy_installed:
@@ -606,7 +609,7 @@ class Elastic(TUCorruption):
         # The following pertubation values are based on the original repo but
         # are quite strange, notably for the severities 3 and 4
         self.mix = [
-            (2, 0.7, 0.1),
+            (2, 0.5, 0.1),
             (2, 0.08, 0.2),
             (0.05, 0.01, 0.02),
             (0.07, 0.01, 0.02),
@@ -648,13 +651,18 @@ class Elastic(TUCorruption):
         )
 
         sigma = self.mix[1] * shape_size[0]
+        ks = int((sigma * 3 // 2) * 2 + 1)
         dx = (
             (
                 gaussian_blur2d(
-                    torch.as_tensor(self.rng.uniform(-1, 1, size=shape[:2])).unsqueeze(0),
-                    kernel_size=sigma * 3,
+                    torch.as_tensor(self.rng.uniform(-1, 1, size=shape[:2]))
+                    .unsqueeze(0)
+                    .unsqueeze(0),
+                    kernel_size=ks,
                     sigma=(sigma, sigma),
-                ).squeeze(0)
+                )
+                .squeeze(0)
+                .squeeze(0)
                 * self.mix[0]
                 * shape_size[0]
             )
@@ -664,10 +672,14 @@ class Elastic(TUCorruption):
         dy = (
             (
                 gaussian_blur2d(
-                    torch.as_tensor(self.rng.uniform(-1, 1, size=shape[:2])).unsqueeze(0),
-                    kernel_size=sigma * 3,
+                    torch.as_tensor(self.rng.uniform(-1, 1, size=shape[:2]))
+                    .unsqueeze(0)
+                    .unsqueeze(0),
+                    kernel_size=ks,
                     sigma=(sigma, sigma),
-                ).squeeze(0)
+                )
+                .squeeze(0)
+                .squeeze(0)
                 * self.mix[0]
                 * shape_size[0]
             )
@@ -730,16 +742,18 @@ class GaussianBlur(TUCorruption):
                 "Please install torch_uncertainty with the image option:"
                 """pip install -U "torch_uncertainty[image]"."""
             )
-        self.sigma = [0.4, 0.6, 0.7, 0.8, 1.0][severity - 1]
+        sigma = [0.4, 0.6, 0.7, 0.8, 1.0][severity - 1]
+        self.sigma = (sigma, sigma)
+        self.kernel_size = int(sigma // 2 * 2 * 4 + 1)
 
     def forward(self, img: Tensor) -> Tensor:
         if self.severity == 0:
             return img
         return torch.clamp(
-            gaussian_blur2d(img, kernel_size=self.sigma * 4, sigma=self.sigma),
+            gaussian_blur2d(img.unsqueeze(0), kernel_size=self.kernel_size, sigma=self.sigma),
             min=0,
             max=1,
-        )
+        ).squeeze(0)
 
 
 class Saturation(ISaturation, TUCorruption):
