@@ -118,11 +118,13 @@ class ShotNoise(TUCorruption):
 
 
 class ImpulseNoise(TUCorruption):
-    def __init__(self, severity: int) -> None:
+    def __init__(self, severity: int, black_white: bool = False) -> None:
         """Add impulse noise to an image.
 
         Args:
             severity (int): Severity level of the corruption.
+            black_white (bool): If black and white, set all pixel channel values to 0 or 1.
+                Defaults to ``False`` (as in the original paper).
         """
         super().__init__(severity)
         if not kornia_installed:
@@ -131,17 +133,23 @@ class ImpulseNoise(TUCorruption):
                 """pip install -U "torch_uncertainty[image]"."""
             )
         self.aug = RandomSaltAndPepperNoise(
-            amount=[0.03, 0.06, 0.09, 0.17, 0.27][severity - 1], salt_vs_pepper=0.5, p=1
+            amount=[0.03, 0.06, 0.09, 0.17, 0.27][severity - 1],
+            salt_vs_pepper=0.5,
+            p=1,
+            same_on_batch=False,
         )
+        self.black_white = black_white
 
     def forward(self, img: Tensor) -> Tensor:
         if self.severity == 0:
             return img
-        return torch.clamp(
-            input=torch.as_tensor(self.aug(img.unsqueeze(0))),
+        img = img.unsqueeze(0) if self.black_white else img.unsqueeze(1)
+        img = torch.clamp(
+            input=torch.as_tensor(self.aug(img)),
             min=torch.zeros(1),
             max=torch.ones(1),
-        ).squeeze(0)
+        )
+        return img.squeeze(0) if self.black_white else img.squeeze(1)
 
 
 class DefocusBlur(TUCorruption):
@@ -638,8 +646,8 @@ class Saturation(ISaturation, TUCorruption):
 
 
 corruption_transforms = (
-    GaussianNoise,
-    ShotNoise,
+    # GaussianNoise,
+    # ShotNoise,
     ImpulseNoise,
     DefocusBlur,
     GlassBlur,
