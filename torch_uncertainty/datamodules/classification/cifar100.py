@@ -3,12 +3,12 @@ from typing import Literal
 
 import numpy as np
 import torch
-import torchvision.transforms as T
 from numpy.typing import ArrayLike
 from timm.data.auto_augment import rand_augment_transform
 from torch import nn
 from torch.utils.data import DataLoader
 from torchvision.datasets import CIFAR100, SVHN
+from torchvision.transforms import v2
 
 from torch_uncertainty.datamodules import TUDataModule
 from torch_uncertainty.datasets import AggregatedDataset
@@ -94,10 +94,10 @@ class CIFAR100DataModule(TUDataModule):
             )
 
         if basic_augment:
-            basic_transform = T.Compose(
+            basic_transform = v2.Compose(
                 [
-                    T.RandomCrop(32, padding=4),
-                    T.RandomHorizontalFlip(),
+                    v2.RandomCrop(32, padding=4),
+                    v2.RandomHorizontalFlip(),
                 ]
             )
         else:
@@ -106,25 +106,26 @@ class CIFAR100DataModule(TUDataModule):
         if cutout:
             main_transform = Cutout(cutout)
         elif randaugment:
-            main_transform = T.RandAugment(num_ops=2, magnitude=20)
+            main_transform = v2.RandAugment(num_ops=2, magnitude=20)
         elif auto_augment:
             main_transform = rand_augment_transform(auto_augment, {})
         else:
             main_transform = nn.Identity()
 
-        self.train_transform = T.Compose(
+        self.train_transform = v2.Compose(
             [
-                T.ToTensor(),
+                v2.ToImage(),
+                v2.ToDtype(torch.float32),
                 basic_transform,
                 main_transform,
-                T.ConvertImageDtype(torch.float32),
-                T.Normalize(mean=self.mean, std=self.std),
+                v2.Normalize(mean=self.mean, std=self.std),
             ]
         )
-        self.test_transform = T.Compose(
+        self.test_transform = v2.Compose(
             [
-                T.ToTensor(),
-                T.Normalize(mean=self.mean, std=self.std),
+                v2.ToImage(),
+                v2.ToDtype(torch.float32),
+                v2.Normalize(mean=self.mean, std=self.std),
             ]
         )
 

@@ -2,12 +2,13 @@ from pathlib import Path
 from typing import Literal
 
 import numpy as np
-import torchvision.transforms as T
+import torch
 from numpy.typing import ArrayLike
 from timm.data.auto_augment import rand_augment_transform
 from torch import nn
 from torch.utils.data import DataLoader
 from torchvision.datasets import CIFAR10, SVHN
+from torchvision.transforms import v2
 
 from torch_uncertainty.datamodules.abstract import TUDataModule
 from torch_uncertainty.datasets import AggregatedDataset
@@ -100,10 +101,10 @@ class CIFAR10DataModule(TUDataModule):
             )
 
         if basic_augment:
-            basic_transform = T.Compose(
+            basic_transform = v2.Compose(
                 [
-                    T.RandomCrop(32, padding=4),
-                    T.RandomHorizontalFlip(),
+                    v2.RandomCrop(32, padding=4),
+                    v2.RandomHorizontalFlip(),
                 ]
             )
         else:
@@ -116,25 +117,21 @@ class CIFAR10DataModule(TUDataModule):
         else:
             main_transform = nn.Identity()
 
-        self.train_transform = T.Compose(
+        self.train_transform = v2.Compose(
             [
-                T.ToTensor(),
+                v2.ToImage(),
+                v2.ToDtype(torch.float32),
                 basic_transform,
                 main_transform,
-                T.Normalize(
-                    self.mean,
-                    self.std,
-                ),
+                v2.Normalize(mean=self.mean, std=self.std),
             ]
         )
 
-        self.test_transform = T.Compose(
+        self.test_transform = v2.Compose(
             [
-                T.ToTensor(),
-                T.Normalize(
-                    self.mean,
-                    self.std,
-                ),
+                v2.ToImage(),
+                v2.ToDtype(torch.float32),
+                v2.Normalize(mean=self.mean, std=self.std),
             ]
         )
 

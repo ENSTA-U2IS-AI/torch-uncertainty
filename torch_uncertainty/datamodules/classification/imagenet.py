@@ -2,13 +2,14 @@ import copy
 from pathlib import Path
 from typing import Literal
 
-import torchvision.transforms as T
+import torch
 import yaml
 from timm.data.auto_augment import rand_augment_transform
 from timm.data.mixup import Mixup
 from torch import nn
 from torch.utils.data import DataLoader, Subset
 from torchvision.datasets import DTD, SVHN, ImageNet, INaturalist
+from torchvision.transforms import v2
 
 from torch_uncertainty.datamodules import TUDataModule
 from torch_uncertainty.datasets.classification import (
@@ -137,10 +138,10 @@ class ImageNetDataModule(TUDataModule):
         self.procedure = procedure
 
         if basic_augment:
-            basic_transform = T.Compose(
+            basic_transform = v2.Compose(
                 [
-                    T.RandomResizedCrop(train_size, interpolation=self.interpolation),
-                    T.RandomHorizontalFlip(),
+                    v2.RandomResizedCrop(train_size, interpolation=self.interpolation),
+                    v2.RandomHorizontalFlip(),
                 ]
             )
         else:
@@ -153,7 +154,7 @@ class ImageNetDataModule(TUDataModule):
                 main_transform = nn.Identity()
         elif self.procedure == "ViT":
             train_size = 224
-            main_transform = T.Compose(
+            main_transform = v2.Compose(
                 [
                     Mixup(mixup_alpha=0.2, cutmix_alpha=1.0),
                     rand_augment_transform("rand-m9-n2-mstd0.5", {}),
@@ -165,21 +166,23 @@ class ImageNetDataModule(TUDataModule):
         else:
             raise ValueError("The procedure is unknown")
 
-        self.train_transform = T.Compose(
+        self.train_transform = v2.Compose(
             [
-                T.ToTensor(),
+                v2.ToImage(),
+                v2.ToDtype(torch.float32),
                 basic_transform,
                 main_transform,
-                T.Normalize(mean=self.mean, std=self.std),
+                v2.Normalize(mean=self.mean, std=self.std),
             ]
         )
 
-        self.test_transform = T.Compose(
+        self.test_transform = v2.Compose(
             [
-                T.ToTensor(),
-                T.Resize(256, interpolation=self.interpolation),
-                T.CenterCrop(224),
-                T.Normalize(mean=self.mean, std=self.std),
+                v2.ToImage(),
+                v2.ToDtype(torch.float32),
+                v2.Resize(256, interpolation=self.interpolation),
+                v2.CenterCrop(224),
+                v2.Normalize(mean=self.mean, std=self.std),
             ]
         )
 

@@ -2,12 +2,13 @@ from pathlib import Path
 from typing import Literal
 
 import numpy as np
-import torchvision.transforms as T
+import torch
 from numpy.typing import ArrayLike
 from timm.data.auto_augment import rand_augment_transform
 from torch import nn
 from torch.utils.data import ConcatDataset, DataLoader
 from torchvision.datasets import DTD, SVHN
+from torchvision.transforms import v2
 
 from torch_uncertainty.datamodules import TUDataModule
 from torch_uncertainty.datasets.classification import (
@@ -71,10 +72,10 @@ class TinyImageNetDataModule(TUDataModule):
             raise ValueError(f"OOD dataset {ood_ds} not supported for TinyImageNet.")
         self.shift_dataset = TinyImageNetC
         if basic_augment:
-            basic_transform = T.Compose(
+            basic_transform = v2.Compose(
                 [
-                    T.RandomCrop(64, padding=4),
-                    T.RandomHorizontalFlip(),
+                    v2.RandomCrop(64, padding=4),
+                    v2.RandomHorizontalFlip(),
                 ]
             )
         else:
@@ -85,20 +86,22 @@ class TinyImageNetDataModule(TUDataModule):
         else:
             main_transform = nn.Identity()
 
-        self.train_transform = T.Compose(
+        self.train_transform = v2.Compose(
             [
-                T.ToTensor(),
+                v2.ToImage(),
+                v2.ToDtype(torch.float32),
                 basic_transform,
                 main_transform,
-                T.Normalize(mean=self.mean, std=self.std),
+                v2.Normalize(mean=self.mean, std=self.std),
             ]
         )
 
-        self.test_transform = T.Compose(
+        self.test_transform = v2.Compose(
             [
-                T.ToTensor(),
-                T.Resize(64, interpolation=self.interpolation),
-                T.Normalize(mean=self.mean, std=self.std),
+                v2.ToImage(),
+                v2.ToDtype(torch.float32),
+                v2.Resize(64, interpolation=self.interpolation),
+                v2.Normalize(mean=self.mean, std=self.std),
             ]
         )
 

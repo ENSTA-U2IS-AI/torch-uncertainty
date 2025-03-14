@@ -1,10 +1,11 @@
 from pathlib import Path
 from typing import Literal
 
-import torchvision.transforms as T
+import torch
 from torch import nn
 from torch.utils.data import DataLoader
 from torchvision.datasets import MNIST, FashionMNIST
+from torchvision.transforms import v2
 
 from torch_uncertainty.datamodules import TUDataModule
 from torch_uncertainty.datasets.classification import MNISTC, NotMNIST
@@ -82,32 +83,35 @@ class MNISTDataModule(TUDataModule):
         self.shift_dataset = MNISTC
         self.shift_severity = 1
 
-        basic_transform = T.RandomCrop(28, padding=4) if basic_augment else nn.Identity()
+        basic_transform = v2.RandomCrop(28, padding=4) if basic_augment else nn.Identity()
 
         main_transform = Cutout(cutout) if cutout else nn.Identity()
 
-        self.train_transform = T.Compose(
+        self.train_transform = v2.Compose(
             [
-                T.ToTensor(),
+                v2.ToImage(),
+                v2.ToDtype(torch.float32),
                 basic_transform,
                 main_transform,
-                T.Normalize(mean=self.mean, std=self.std),
+                v2.Normalize(mean=self.mean, std=self.std),
             ]
         )
-        self.test_transform = T.Compose(
+        self.test_transform = v2.Compose(
             [
-                T.ToTensor(),
-                T.CenterCrop(28),
-                T.Normalize(mean=self.mean, std=self.std),
+                v2.ToImage(),
+                v2.ToDtype(torch.float32),
+                v2.CenterCrop(28),
+                v2.Normalize(mean=self.mean, std=self.std),
             ]
         )
         if self.eval_ood:  # NotMNIST has 3 channels
-            self.ood_transform = T.Compose(
+            self.ood_transform = v2.Compose(
                 [
-                    T.ToTensor(),
-                    T.Grayscale(num_output_channels=1),
-                    T.CenterCrop(28),
-                    T.Normalize(mean=self.mean, std=self.std),
+                    v2.ToImage(),
+                    v2.ToDtype(torch.float32),
+                    v2.Grayscale(num_output_channels=1),
+                    v2.CenterCrop(28),
+                    v2.Normalize(mean=self.mean, std=self.std),
                 ]
             )
 
