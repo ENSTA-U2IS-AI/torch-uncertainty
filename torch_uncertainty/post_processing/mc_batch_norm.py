@@ -50,7 +50,7 @@ class MCBatchNorm(PostProcessing):
 
     def _setup_model(self, model):
         _mcbn_checks(model, self.num_estimators, self.mc_batch_size, self.convert)
-        self.model = deepcopy(model)  # Is it necessary?
+        self.model = deepcopy(model)  # TODO: Is it necessary?
         self.model = self.model.eval()
         if self.convert:
             self._convert()
@@ -93,14 +93,14 @@ class MCBatchNorm(PostProcessing):
 
     def forward(
         self,
-        x: Tensor,
+        inputs: Tensor,
     ) -> Tensor:
         if self.training:
-            return self.model(x)
+            return self.model(inputs)
         if not self.trained:
             raise RuntimeError("MCBatchNorm has not been trained. Call .fit() first.")
         self.reset_counters()
-        return torch.cat([self._est_forward(x) for _ in range(self.num_estimators)], dim=0)
+        return torch.cat([self._est_forward(inputs) for _ in range(self.num_estimators)], dim=0)
 
     def _convert(self) -> None:
         """Convert all BatchNorm2d layers to MCBatchNorm2d layers."""
