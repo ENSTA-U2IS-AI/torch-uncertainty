@@ -1,11 +1,10 @@
 from copy import deepcopy
 from pathlib import Path
 
-from PIL import Image
 from torch import nn
 from torchvision.datasets import VisionDataset
 from torchvision.transforms import ToPILImage, ToTensor
-from tqdm.auto import tqdm
+from tqdm import tqdm, trange
 from tqdm.contrib.logging import logging_redirect_tqdm
 
 from torch_uncertainty.transforms.corruption import corruption_transforms
@@ -18,6 +17,7 @@ class CorruptedDataset(VisionDataset):
         shift_severity: int,
         on_the_fly: bool = False,
     ) -> None:
+        """Generate the corrupted version of any VisionDataset."""
         super().__init__()
         self.core_dataset = core_dataset
         if shift_severity <= 0:
@@ -32,29 +32,38 @@ class CorruptedDataset(VisionDataset):
 
         self.root = Path(core_dataset.root)
         dataset_name = str(type(core_dataset)).split(".")[-1][:-2].lower()
-        self.root /= dataset_name + "_corrupted"
-        self.root /= f"severity_{self.shift_severity}"
-        self.root.mkdir(parents=True)
+        self.root /= dataset_name + "-corrupted"
+        self.root /= f"severity-{self.shift_severity}"
+        self.root.mkdir(parents=True, exist_ok=True)
 
         if not on_the_fly:
             self.to_tensor = ToTensor()
             self.to_pil = ToPILImage()
             self.samples = []
-            self.targets = self.core_dataset.targets * 10
+            if hasattr(self.core_dataset, "targets"):
+                self.targets = self.core_dataset.targets
+            elif hasattr(self.core_dataset, "labels"):
+                self.targets = self.core_dataset.labels
+            elif hasattr(self.core_dataset, "_labels"):
+                self.targets = self.core_dataset._labels
+            else:
+                raise ValueError("The dataset should implement either targets, labels, or _labels.")
+
+            self.targets = self.targets * len(corruption_transforms)
             self.prepare_data()
 
     def prepare_data(self):
         with logging_redirect_tqdm():
-            for corruption in tqdm(corruption_transforms):
+            pbar = tqdm(corruption_transforms)
+            for corruption in pbar:
                 corruption_name = corruption.__name__.lower()
-                (self.root / corruption_name).mkdir(parents=True)
+                pbar.set_description(f"Processing {corruption.__name__}")
+                (self.root / corruption_name).mkdir(parents=True, exist_ok=True)
                 self.save_corruption(self.root / corruption_name, corruption(self.shift_severity))
 
     def save_corruption(self, root: Path, corruption: nn.Module) -> None:
-        for i in range(self.core_length):
+        for i in trange(self.core_length, leave=False):
             img, tgt = self.core_dataset[i]
-            if isinstance(img, str | Path):
-                img = Image.open(img).convert("RGB")
             img = corruption(self.to_tensor(img))
             self.to_pil(img).save(root / f"{i}.png")
             self.samples.append(root / f"{i}.png")
