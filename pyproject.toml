@@ -46,7 +46,6 @@ experiments = [
     "safetensors",
 ]
 image = [
-    "scikit-image", 
     "kornia",
     "h5py",
     "opencv-python",
