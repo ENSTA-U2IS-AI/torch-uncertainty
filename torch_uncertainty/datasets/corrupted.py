@@ -30,10 +30,8 @@ class CorruptedDataset(VisionDataset):
         self.core_dataset.transform = None
         self.core_dataset.target_transform = None
 
-        self.root = Path(core_dataset.root)
         dataset_name = str(type(core_dataset)).split(".")[-1][:-2].lower()
-        self.root /= dataset_name + "-corrupted"
-        self.root /= f"severity-{self.shift_severity}"
+        self.root = Path(core_dataset.root) / (dataset_name + "-C")
         self.root.mkdir(parents=True, exist_ok=True)
 
         if not on_the_fly:
@@ -56,17 +54,22 @@ class CorruptedDataset(VisionDataset):
         with logging_redirect_tqdm():
             pbar = tqdm(corruption_transforms)
             for corruption in pbar:
-                corruption_name = corruption.__name__.lower()
-                pbar.set_description(f"Processing {corruption.__name__}")
-                (self.root / corruption_name).mkdir(parents=True, exist_ok=True)
-                self.save_corruption(self.root / corruption_name, corruption(self.shift_severity))
+                corruption_name = corruption.name
+                pbar.set_description(f"Processing {corruption_name}")
+                (self.root / corruption_name / f"{self.shift_severity}").mkdir(
+                    parents=True, exist_ok=True
+                )
+                self.save_corruption(
+                    self.root / corruption_name / f"{self.shift_severity}",
+                    corruption(self.shift_severity),
+                )
 
     def save_corruption(self, root: Path, corruption: nn.Module) -> None:
         for i in trange(self.core_length, leave=False):
             img, tgt = self.core_dataset[i]
             img = corruption(self.to_tensor(img))
-            self.to_pil(img).save(root / f"{i}.png")
-            self.samples.append(root / f"{i}.png")
+            self.to_pil(img).save(root / f"{i}.jpg")
+            self.samples.append(root / f"{i}.jpg")
             self.targets.append(tgt)
 
     def __len__(self):
@@ -103,8 +106,7 @@ class CorruptedDataset(VisionDataset):
 
 
 if __name__ == "__main__":
-    from torchvision.datasets import CIFAR10
+    from torchvision.datasets import OxfordIIITPet
 
-    dataset = CIFAR10(root="data", download=True)
-    corrupted_dataset = CorruptedDataset(dataset, shift_severity=1)
-    print(len(corrupted_dataset))
+    dataset = OxfordIIITPet(root="data", split="test", download=True)
+    corrupted_dataset = CorruptedDataset(dataset, shift_severity=5)
