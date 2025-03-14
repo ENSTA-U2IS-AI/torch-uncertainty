@@ -10,17 +10,12 @@ if util.find_spec("cv2"):
 else:  # coverage: ignore
     cv2_installed = False
 
+import math as m
+
 import numpy as np
 import torch
+from kornia.augmentation import RandomSaltAndPepperNoise
 from PIL import Image
-
-if util.find_spec("skimage"):
-    from skimage.filters import gaussian
-    from skimage.util import random_noise
-
-    skimage_installed = True
-else:  # coverage: ignore
-    skimage_installed = False
 
 if util.find_spec("scipy"):
     from scipy.ndimage import map_coordinates
@@ -40,7 +35,7 @@ from torchvision.transforms import (
 )
 
 if util.find_spec("kornia"):
-    from kornia.filters import motion_blur
+    from kornia.filters import gaussian_blur2d, motion_blur
 
     kornia_installed = True
 else:  # coverage: ignore
@@ -98,7 +93,7 @@ class GaussianNoise(TUCorruption):
             severity (int): Severity level of the corruption.
         """
         super().__init__(severity)
-        self.scale = [0, 0.04, 0.06, 0.08, 0.09, 0.10][severity]
+        self.scale = [0.08, 0.12, 0.18, 0.26, 0.38][severity]
 
     def forward(self, img: Tensor) -> Tensor:
         if self.severity == 0:
@@ -114,7 +109,7 @@ class ShotNoise(TUCorruption):
             severity (int): Severity level of the corruption.
         """
         super().__init__(severity)
-        self.scale = [500, 250, 100, 75, 50][severity - 1]
+        self.scale = [60, 25, 12, 5, 3][severity - 1]
 
     def forward(self, img: Tensor):
         if self.severity == 0:
@@ -130,21 +125,23 @@ class ImpulseNoise(TUCorruption):
             severity (int): Severity level of the corruption.
         """
         super().__init__(severity)
-        if not skimage_installed:
+        if not kornia_installed:
             raise ImportError(
                 "Please install torch_uncertainty with the image option:"
                 """pip install -U "torch_uncertainty[image]"."""
             )
-        self.scale = [0, 0.01, 0.02, 0.03, 0.05, 0.07][severity]
+        self.aug = RandomSaltAndPepperNoise(
+            amount=[0.03, 0.06, 0.09, 0.17, 0.27][severity - 1], salt_vs_pepper=0.5, p=1
+        )
 
     def forward(self, img: Tensor) -> Tensor:
         if self.severity == 0:
             return img
         return torch.clamp(
-            torch.as_tensor(random_noise(img, mode="s&p", amount=self.scale)),
-            torch.zeros(1),
-            torch.ones(1),
-        )
+            input=torch.as_tensor(self.aug(img.unsqueeze(0))),
+            min=torch.zeros(1),
+            max=torch.ones(1),
+        ).squeeze(0)
 
 
 class DefocusBlur(TUCorruption):
@@ -183,18 +180,18 @@ class DefocusBlur(TUCorruption):
 class GlassBlur(TUCorruption):  # TODO: batch
     def __init__(self, severity: int) -> None:
         super().__init__(severity)
-        if not skimage_installed or not cv2_installed:
+        if not kornia_installed:
             raise ImportError(
                 "Please install torch_uncertainty with the image option:"
                 """pip install -U "torch_uncertainty[image]"."""
             )
-        self.sigma = [0.05, 0.25, 0.4, 0.25, 0.4][severity - 1]
-        self.max_delta = 1
+        self.sigma = [0.7, 0.9, 1, 1.1, 1.5][severity - 1]
         self.iterations = [1, 1, 1, 2, 2][severity - 1]
+        self.max_delta = [1, 2, 2, 3, 4][severity - 1]
 
     def forward(self, img: Tensor) -> Tensor:
         img_size = img.shape
-        img = torch.as_tensor(gaussian(img, sigma=self.sigma))
+        img = gaussian_blur2d(img, kernel_size=self.sigma * 4, sigma=self.sigma)
         for _ in range(self.iterations):
             for h in range(img_size[0] - self.max_delta, self.max_delta, -1):
                 for w in range(img_size[1] - self.max_delta, self.max_delta, -1):
@@ -204,7 +201,7 @@ class GlassBlur(TUCorruption):  # TODO: batch
                         img[h_prime, w_prime],
                         img[h, w],
                     )
-        return torch.clamp(torch.as_tensor(gaussian(img, sigma=self.sigma)), 0, 1)
+        return torch.clamp(gaussian_blur2d(img, kernel_size=self.sigma * 4, sigma=self.sigma), 0, 1)
 
 
 def disk(radius: int, alias_blur: float = 0.1, dtype=np.float32):
@@ -227,7 +224,7 @@ class MotionBlur(TUCorruption):
         Note:
             Originally, Hendrycks et al. used Gaussian motion blur. To remove the dependency with
             with `Wand` we changed the transform to a simpler motion blur and kept the values of
-            sigma as the new half kernel sizes.
+            sigma as the new kernel radius sizes.
         """
         super().__init__(severity)
         self.rng = np.random.default_rng()
@@ -255,20 +252,23 @@ class MotionBlur(TUCorruption):
 
 
 def clipped_zoom(img, zoom_factor):
-    h = img.shape[0]
+    h, w = img.shape[:2]
     # ceil crop height(= crop width)
-    ch = int(np.ceil(h / zoom_factor))
+    ceil_crop_height = int(np.ceil(h / zoom_factor))
+    left_crop_width = int(np.ceil(w / zoom_factor))
 
-    top = (h - ch) // 2
+    top = (h - ceil_crop_height) // 2
+    left = (w - left_crop_width) // 2
     img = scizoom(
-        img[top : top + ch, top : top + ch],
+        img[top : top + ceil_crop_height, left : left + left_crop_width],
         (zoom_factor, zoom_factor, 1),
         order=1,
     )
     # trim off any extra pixels
     trim_top = (img.shape[0] - h) // 2
+    trim_left = (img.shape[1] - w) // 2
 
-    return img[trim_top : trim_top + h, trim_top : trim_top + h]
+    return img[trim_top : trim_top + h, trim_left : trim_left + w]
 
 
 class ZoomBlur(TUCorruption):
@@ -357,7 +357,7 @@ class Frost(TUCorruption):
     def __init__(self, severity: int) -> None:
         super().__init__(severity)
         self.rng = np.random.default_rng()
-        self.mix = [(1, 0.2), (1, 0.3), (0.9, 0.4), (0.85, 0.4), (0.75, 0.45)][severity - 1]
+        self.mix = [(1, 0.4), (0.8, 0.6), (0.7, 0.7), (0.65, 0.7), (0.6, 0.75)][severity - 1]
         self.frost_ds = FrostImages("./data", download=True, transform=ToTensor())
 
     def forward(self, img: Tensor) -> Tensor:
@@ -365,7 +365,7 @@ class Frost(TUCorruption):
             return img
         _, height, width = img.shape
         frost_img = RandomResizedCrop((height, width))(
-            self.frost_ds[self.rng.integers(low=0, high=4)]
+            self.frost_ds[self.rng.integers(low=0, high=5)]
         )
         return torch.clamp(self.mix[0] * img + self.mix[1] * frost_img, 0, 1)
 
@@ -422,29 +422,23 @@ def plasma_fractal(height, width, wibbledecay=3):
 
 
 class Fog(TUCorruption):
-    def __init__(self, severity: int, size: int = 256) -> None:
+    def __init__(self, severity: int) -> None:
         super().__init__(severity)
-        if (size & (size - 1) == 0) and size != 0:
-            self.size = size
-            self.resize = Resize((size, size), InterpolationMode.BICUBIC)
-        else:
-            raise ValueError(f"Size must be a power of 2. Got {size}.")
         self.mix = [(1.5, 2), (2, 2), (2.5, 1.7), (2.5, 1.5), (3, 1.4)][severity - 1]
 
     def forward(self, img: Tensor) -> Tensor:
         if self.severity == 0:
             return img
         _, height, width = img.shape
-        if height != width:
-            raise ValueError(f"Image must be square. Got {height}x{width}.")
-        img = self.resize(img)
         max_val = img.max()
+        random_height_map_size = int(2 ** (m.ceil(m.log2(max(height, width) - 1))))
         fog = (
             self.mix[0]
-            * plasma_fractal(height=height, width=width, wibbledecay=self.mix[1])[:height, :width]
+            * plasma_fractal(
+                height=random_height_map_size, width=random_height_map_size, wibbledecay=self.mix[1]
+            )[:height, :width]
         )
-        final = torch.clamp((img + fog) * max_val / (max_val + self.mix[0]), 0, 1)
-        return Resize((height, width), InterpolationMode.BICUBIC)(final)
+        return torch.clamp((img + fog) * max_val / (max_val + self.mix[0]), 0, 1)
 
 
 class Brightness(IBrightness, TUCorruption):
@@ -472,24 +466,26 @@ class Contrast(IContrast, TUCorruption):
 class Pixelate(TUCorruption):
     def __init__(self, severity: int) -> None:
         super().__init__(severity)
-        self.quality = [0.95, 0.9, 0.85, 0.75, 0.65][severity - 1]
+        self.quality = [0.6, 0.5, 0.4, 0.3, 0.25][severity - 1]
+        self.to_pil = ToPILImage()
+        self.to_tensor = ToTensor()
 
     def forward(self, img: Tensor) -> Tensor:
         if self.severity == 0:
             return img
         _, height, width = img.shape
-        img = ToPILImage()(img)
+        img = self.to_pil(img)
         img = Resize(
             (int(height * self.quality), int(width * self.quality)),
             InterpolationMode.BOX,
         )(img)
-        return ToTensor()(Resize((height, width), InterpolationMode.BOX)(img))
+        return self.to_tensor(Resize((height, width), InterpolationMode.BOX)(img))
 
 
 class JPEGCompression(TUCorruption):
     def __init__(self, severity: int) -> None:
         super().__init__(severity)
-        self.quality = [80, 65, 58, 50, 40][severity - 1]
+        self.quality = [25, 18, 15, 10, 7][severity - 1]
 
     def forward(self, img: Tensor) -> Tensor:
         if self.severity == 0:
@@ -551,27 +547,33 @@ class Elastic(TUCorruption):
             borderMode=cv2.BORDER_REFLECT_101,
         )
 
+        sigma = self.mix[1] * shape_size[0]
         dx = (
-            gaussian(
-                self.rng.uniform(-1, 1, size=shape[:2]),
-                self.mix[1] * shape_size[0],
-                mode="reflect",
-                truncate=3,
+            (
+                gaussian_blur2d(
+                    torch.as_tensor(self.rng.uniform(-1, 1, size=shape[:2])),
+                    kernel_size=sigma * 3,
+                    sigma=sigma,
+                )
+                * self.mix[0]
+                * shape_size[0]
             )
-            * self.mix[0]
-            * shape_size[0]
-        ).astype(np.float32)
+            .numpy()
+            .astype(np.float32)[..., np.newaxis]
+        )
         dy = (
-            gaussian(
-                self.rng.uniform(-1, 1, size=shape[:2]),
-                self.mix[1] * shape_size[0],
-                mode="reflect",
-                truncate=3,
+            (
+                gaussian_blur2d(
+                    torch.as_tensor(self.rng.uniform(-1, 1, size=shape[:2])),
+                    kernel_size=sigma * 3,
+                    sigma=self.mix[1] * shape_size[0],
+                )
+                * self.mix[0]
+                * shape_size[0]
             )
-            * self.mix[0]
-            * shape_size[0]
-        ).astype(np.float32)
-        dx, dy = dx[..., np.newaxis], dy[..., np.newaxis]
+            .numpy()
+            .astype(np.float32)[..., np.newaxis]
+        )
 
         x, y, z = np.meshgrid(np.arange(shape[1]), np.arange(shape[0]), np.arange(shape[2]))
         indices = (
@@ -590,7 +592,7 @@ class Elastic(TUCorruption):
 class SpeckleNoise(TUCorruption):
     def __init__(self, severity: int) -> None:
         super().__init__(severity)
-        self.scale = [0.06, 0.1, 0.12, 0.16, 0.2][severity - 1]
+        self.scale = [0.15, 0.2, 0.35, 0.45, 0.6][severity - 1]
         self.rng = np.random.default_rng()
 
     def forward(self, img: Tensor) -> Tensor:
@@ -606,7 +608,7 @@ class SpeckleNoise(TUCorruption):
 class GaussianBlur(TUCorruption):
     def __init__(self, severity: int) -> None:
         super().__init__(severity)
-        if not skimage_installed:
+        if not kornia_installed:
             raise ImportError(
                 "Please install torch_uncertainty with the image option:"
                 """pip install -U "torch_uncertainty[image]"."""
@@ -617,7 +619,7 @@ class GaussianBlur(TUCorruption):
         if self.severity == 0:
             return img
         return torch.clamp(
-            torch.as_tensor(gaussian(img, sigma=self.sigma)),
+            gaussian_blur2d(img, kernel_size=self.sigma * 4, sigma=self.sigma),
             min=0,
             max=1,
         )
