@@ -1,4 +1,17 @@
-"""Adapted from https://github.com/hendrycks/robustness."""
+"""These corruptive transformations are mostly PyTorch portings of the originals provided by
+Dan Hendrycks and Thomas Dietterich in "Benchmarking neural network robustness to common
+corruptions and perturbations" published at ICLR 2019 through their GitHub repository
+https://github.com/hendrycks/robustness.
+
+However, please note that these transforms have been rewritten with more modern tools to improve
+their efficiency as well as reduce the number of dependencies. As a result, some parameters had
+to be modified to remain as close as possible to the original transforms.
+
+The authors of the library advise avoiding using the stochastic transforms to generate your dataset
+to avoid reproducibility issues. It may be preferable to first check if the corrupted dataset is
+available on TorchUncertainty's Hugging Face https://huggingface.co/torch-uncertainty. File an
+issue if you would like one specific and missing dataset to be published on this page.
+"""
 
 from importlib import util
 from io import BytesIO
@@ -202,6 +215,10 @@ class GlassBlur(TUCorruption):  # TODO: batch
 
         Args:
             severity (int): Severity level of the corruption.
+
+        Note:
+            We have changed the number of iterations that was too high given the size of the
+            images.
         """
         super().__init__(severity)
         if not kornia_installed:
@@ -515,6 +532,10 @@ class Brightness(IBrightness, TUCorruption):
 
         Args:
             severity (int): Severity level of the corruption.
+
+        Note:
+            The values have been changed to better reflect the magnitude of the original
+            transformation replaced with the more principled torchvision adjust_brightness.
         """
         TUCorruption.__init__(self, severity)
         self.level = [1.3, 1.6, 1.9, 2.2, 2.5][severity - 1]
@@ -741,7 +762,7 @@ class GaussianBlur(TUCorruption):
                 "Please install torch_uncertainty with the image option:"
                 """pip install -U "torch_uncertainty[image]"."""
             )
-        sigma = [0.4, 0.6, 0.7, 0.8, 1.0][severity - 1]
+        sigma = [1, 2, 3, 4, 6][severity - 1]
         self.sigma = (sigma, sigma)
         self.kernel_size = int(sigma // 2 * 2 * 4 + 1)
 
