@@ -359,11 +359,11 @@ class Snow(TUCorruption):
         """
         super().__init__(severity)
         self.mix = [
-            (0.1, 0.3, 3, 0.5, 4, 0.8),
-            (0.2, 0.3, 2, 0.5, 4, 0.7),
-            (0.55, 0.3, 4, 0.9, 8, 0.7),
-            (0.55, 0.3, 4.5, 0.85, 8, 0.65),
-            (0.55, 0.3, 2.5, 0.85, 12, 0.55),
+            (0.1, 3, 0.5, 4, 0.8),
+            (0.2, 2, 0.5, 4, 0.7),
+            (0.55, 4, 0.9, 8, 0.7),
+            (0.55, 4.5, 0.85, 8, 0.65),
+            (0.55, 2.5, 0.85, 12, 0.55),
         ][severity - 1]
         self.rng = np.random.default_rng()
 
@@ -377,31 +377,32 @@ class Snow(TUCorruption):
         if self.severity == 0:
             return img
         _, height, width = img.shape
-        x = img.numpy()
-        snow_layer = self.rng.normal(size=x.shape[1:], loc=self.mix[0], scale=self.mix[1])[
-            ..., np.newaxis
-        ]
-        snow_layer = clipped_zoom(snow_layer, self.mix[2])
-        snow_layer[snow_layer < self.mix[3]] = 0
+        x = img.permute(1, 2, 0).numpy()
+        snow_layer = self.rng.normal(size=x.shape[:2], loc=self.mix[0], scale=0.3)[..., np.newaxis]
+        snow_layer = clipped_zoom(snow_layer, self.mix[1])
+        snow_layer[snow_layer < self.mix[2]] = 0
         snow_layer = np.clip(snow_layer.squeeze(), 0, 1)
 
         snow_layer = (
             motion_blur(
                 torch.as_tensor(snow_layer).unsqueeze(0).unsqueeze(0),
-                kernel_size=self.mix[4] * 2 + 1,
+                kernel_size=self.mix[3] * 2 + 1,
                 angle=self.rng.uniform(-135, -45),
                 direction=0,
             )
             .squeeze(0)
+            .squeeze(0)
+            .unsqueeze(-1)
             .numpy()
         )
-
-        x = self.mix[5] * x + (1 - self.mix[5]) * np.maximum(
+        x = self.mix[4] * x + (1 - self.mix[4]) * np.maximum(
             x,
-            cv2.cvtColor(x.transpose([1, 2, 0]), cv2.COLOR_RGB2GRAY).reshape(1, height, width) * 1.5
-            + 0.5,
+            cv2.cvtColor(x, cv2.COLOR_RGB2GRAY).reshape(height, width, 1) * 1.5 + 0.5,
         )
-        return torch.clamp(torch.as_tensor(x + snow_layer + np.rot90(snow_layer, k=2)), 0, 1)
+
+        return torch.clamp(
+            torch.as_tensor(x + snow_layer + np.rot90(snow_layer, k=2)), 0, 1
+        ).permute(2, 0, 1)
 
 
 class Frost(TUCorruption):
@@ -516,7 +517,7 @@ class Brightness(IBrightness, TUCorruption):
             severity (int): Severity level of the corruption.
         """
         TUCorruption.__init__(self, severity)
-        self.level = [1.1, 1.2, 1.3, 1.4, 1.5][severity - 1]
+        self.level = [1.3, 1.6, 1.9, 2.2, 2.5][severity - 1]
 
     def forward(self, img: Tensor) -> Tensor:
         if self.severity == 0:
@@ -606,8 +607,6 @@ class Elastic(TUCorruption):
                 "Please install torch_uncertainty with the all option:"
                 """pip install -U "torch_uncertainty[all]"."""
             )
-        # The following pertubation values are based on the original repo but
-        # are quite strange, notably for the severities 3 and 4
         self.mix = [
             (2, 0.5, 0.1),
             (2, 0.08, 0.2),
@@ -651,7 +650,7 @@ class Elastic(TUCorruption):
         )
 
         sigma = self.mix[1] * shape_size[0]
-        ks = int((sigma * 3 // 2) * 2 + 1)
+        ks = min(int((sigma * 3 // 2) * 2 + 1), min(shape_size[:2]) // 2 * 2 - 1)
         dx = (
             (
                 gaussian_blur2d(
