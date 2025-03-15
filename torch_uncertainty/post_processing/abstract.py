@@ -20,6 +20,6 @@ class PostProcessing(ABC, nn.Module):
     @abstractmethod
     def forward(
         self,
-        x: Tensor,
+        inputs: Tensor,
     ) -> Tensor:
         pass
