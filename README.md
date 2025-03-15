@@ -26,9 +26,9 @@ This package provides a multi-level API, including:
 
 - easy-to-use :zap: lightning **uncertainty-aware** training & evaluation routines for **4 tasks**: classification, probabilistic and pointwise regression, and segmentation.
 - ready-to-train baselines on research datasets, such as ImageNet and CIFAR
-- [pretrained weights](https://huggingface.co/torch-uncertainty) for these baselines on ImageNet and CIFAR ( :construction: work in progress :construction: ).
 - **layers**, **models**, **metrics**, & **losses** available for use in your networks
 - scikit-learn style post-processing methods such as Temperature Scaling.
+- transformations, including corruptions resulting in additional "corrupted datasets" available on [HuggingFace](https://huggingface.co/torch-uncertainty)
 
 Have a look at the [Reference page](https://torch-uncertainty.github.io/references.html) or the [API reference](https://torch-uncertainty.github.io/api.html) for a more exhaustive list of the implemented methods, datasets, metrics, etc.
 
