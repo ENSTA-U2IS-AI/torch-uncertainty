@@ -34,84 +34,103 @@ class TestCorruptions:
             _ = GaussianNoise(0.1)
         inputs = torch.rand(3, 32, 32)
         transform = GaussianNoise(1)
-        transform(inputs)
+        assert transform(inputs).ndim == 3
         transform = GaussianNoise(0)
-        transform(inputs)
+        assert transform(inputs).ndim == 3
+
+        inputs = torch.rand(3, 3, 32, 32)
+        assert transform(inputs).ndim == 4
+
         print(transform)
 
     def test_shot_noise(self):
         inputs = torch.rand(3, 32, 32)
         transform = ShotNoise(1)
-        transform(inputs)
+        assert transform(inputs).ndim == 3
         transform = ShotNoise(0)
-        transform(inputs)
+        assert transform(inputs).ndim == 3
+
+        inputs = torch.rand(3, 3, 32, 32)
+        assert transform(inputs).ndim == 4
 
     def test_impulse_noise(self):
         inputs = torch.rand(3, 32, 32)
-        transform = ImpulseNoise(1)
-        transform(inputs)
+        transform = ImpulseNoise(1, black_white=True)
+        assert transform(inputs).ndim == 3
         transform = ImpulseNoise(0)
-        transform(inputs)
+        assert transform(inputs).ndim == 3
+
+        transform = ImpulseNoise(1, black_white=False)
+        inputs = torch.rand(3, 3, 32, 32)
+        assert transform(inputs).ndim == 4
 
     def test_speckle_noise(self):
         inputs = torch.rand(3, 32, 32)
         transform = SpeckleNoise(1)
-        transform(inputs)
+        assert transform(inputs).ndim == 3
         transform = SpeckleNoise(0)
-        transform(inputs)
+        assert transform(inputs).ndim == 3
+
+        inputs = torch.rand(3, 3, 32, 32)
+        transform = MotionBlur(1)
+        assert transform(inputs).ndim == 4
 
     def test_gaussian_blur(self):
         inputs = torch.rand(3, 32, 32)
         transform = GaussianBlur(1)
-        transform(inputs)
+        assert transform(inputs).ndim == 3
         transform = GaussianBlur(0)
-        transform(inputs)
+        assert transform(inputs).ndim == 3
 
     def test_glass_blur(self):
         inputs = torch.rand(3, 32, 32)
         transform = GlassBlur(1)
-        transform(inputs)
+        assert transform(inputs).ndim == 3
         transform = GlassBlur(0)
-        transform(inputs)
+        assert transform(inputs).ndim == 3
 
     def test_defocus_blur(self):
         inputs = torch.rand(3, 32, 32)
         transform = DefocusBlur(1)
-        transform(inputs)
+        assert transform(inputs).ndim == 3
         transform = DefocusBlur(0)
-        transform(inputs)
+        assert transform(inputs).ndim == 3
+
+        inputs = torch.rand(3, 3, 32, 32)
+        transform = DefocusBlur(1)
+        assert transform(inputs).ndim == 4
 
     def test_motion_blur(self):
         inputs = torch.rand(3, 32, 32)
         transform = MotionBlur(1)
-        transform(inputs)
+        assert transform(inputs).ndim == 3
         transform = MotionBlur(0)
-        transform(inputs)
+        assert transform(inputs).ndim == 3
 
-        inputs = torch.rand(1, 3, 32, 32)
+        inputs = torch.rand(3, 3, 32, 32)
         transform = MotionBlur(1)
-        transform(inputs)
+        assert transform(inputs).ndim == 4
 
     def test_zoom_blur(self):
         inputs = torch.rand(3, 32, 32)
         transform = ZoomBlur(1)
-        transform(inputs)
+        assert transform(inputs).ndim == 3
         transform = ZoomBlur(0)
-        transform(inputs)
+        assert transform(inputs).ndim == 3
 
     def test_jpeg_compression(self):
         inputs = torch.rand(3, 32, 32)
         transform = JPEGCompression(1)
-        transform(inputs)
+        assert transform(inputs).ndim == 3
         transform = JPEGCompression(0)
-        transform(inputs)
+        assert transform(inputs).ndim == 3
 
     def test_pixelate(self):
         inputs = torch.rand(3, 32, 32)
         transform = Pixelate(1)
-        transform(inputs)
+        assert transform(inputs).ndim == 3
         transform = Pixelate(0)
-        transform(inputs)
+        assert transform(inputs).ndim == 3
 
     def test_frost(self):
         try:
