@@ -726,22 +726,29 @@ class Elastic(TUCorruption):
 
 class SpeckleNoise(TUCorruption):
     name = "speckle_noise"
+    batched = True
 
-    def __init__(self, severity: int) -> None:
-        """Apply speckle noise to unbatched tensor images.
+    def __init__(self, severity: int, seed: int | None = None) -> None:
+        """Apply speckle noise to tensor images.
 
         Args:
             severity (int): Severity level of the corruption.
+            seed (int | None): Optional seed for the rng.
         """
         super().__init__(severity)
         self.scale = [0.15, 0.2, 0.35, 0.45, 0.6][severity - 1]
-        self.rng = np.random.default_rng()
+        self.rng = np.random.default_rng(seed)
 
     def forward(self, img: Tensor) -> Tensor:
+        """Apply speckle noise on images.
+
+        Args:
+            img (Tensor): A potentially batched image of shape (C, H, W) or (B, C, H, W).
+        """
         if self.severity == 0:
             return img
         return torch.clamp(
-            img + img * self.rng.normal(img, self.scale),
+            img * self.rng.normal(1, self.scale, size=img.shape),
             0,
             1,
         )
