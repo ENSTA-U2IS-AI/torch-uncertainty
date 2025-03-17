@@ -29,14 +29,14 @@ class CorruptedDataset(VisionDataset):
                 generate a new dataset with all the corrupted images. Defaults to ``False``.
             on_the_fly (bool): Generate the corrupted version of the dataset on the fly, without
                 saving the images on disk. This is discouraged since the experiment won't be fully
-                reproducible.
+                reproducible. Defaults to ``False``.
 
         Note:
             The corrupted dataset will use `transforms` of :attr:`core_dataset`.
         """
         super().__init__()
         self.core_dataset = core_dataset
-        if shift_severity < 0:
+        if shift_severity <= 0:
             raise ValueError(f"Severity must be strictly greater than 0. Got {shift_severity}.")
         if not generate and on_the_fly:
             raise ValueError("generate must be True if on_the_fly is True.")
@@ -79,9 +79,10 @@ class CorruptedDataset(VisionDataset):
             self.to_pil = ToPILImage()
             self.samples = []
 
-            self.prepare_data()
+            self._generate_data()
 
-    def prepare_data(self):
+    def _generate_data(self):
+        """Generate the corrupted data."""
         with logging_redirect_tqdm():
             pbar = tqdm(corruption_transforms)
             for corruption in pbar:
@@ -96,6 +97,12 @@ class CorruptedDataset(VisionDataset):
                 )
 
     def _save_corruption(self, root: Path, corruption: nn.Module) -> None:
+        """Save all images with the given corruption on the disk.
+
+        Args:
+            root (Path): The path where to save the images.
+            corruption (nn.Module): The corruption module to apply on the images.
+        """
         for i in trange(self.core_length, leave=False):
             img, tgt = self.core_dataset[i]
             img = corruption(self.to_tensor(img))
@@ -104,7 +111,7 @@ class CorruptedDataset(VisionDataset):
             self.targets.append(tgt)
 
     def __len__(self):
-        """The length of the corrupted dataset."""
+        """Get the length of the corrupted dataset."""
         return len(self.core_dataset) * len(corruption_transforms)
 
     def __getitem__(self, idx: int):
@@ -129,10 +136,3 @@ class CorruptedDataset(VisionDataset):
         if self.transforms is not None:
             img, target = self.transforms(img, target)
         return img, target
-
-
-if __name__ == "__main__":
-    from torchvision.datasets import OxfordIIITPet
-
-    dataset = OxfordIIITPet(root="data", split="test", download=True)
-    corrupted_dataset = CorruptedDataset(dataset, shift_severity=5)
