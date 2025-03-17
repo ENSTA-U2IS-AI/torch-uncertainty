@@ -662,7 +662,7 @@ class Fog(TUCorruption):
             return img
         _, height, width = img.shape
         max_val = img.max()
-        random_height_map_size = int(2 ** (m.ceil(m.log2(max(height, width) - 1))))
+        random_height_map_size = int(2 ** (m.ceil(m.log2(max(height, width)))))
         fog = (
             self.mix[0]
             * plasma_fractal(
