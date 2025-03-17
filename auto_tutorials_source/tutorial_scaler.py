@@ -84,6 +84,7 @@ cal_dataset, test_dataset, other = random_split(
     dataset, [1000, 1000, len(dataset) - 2000]
 )
 test_dataloader = DataLoader(test_dataset, batch_size=32)
+calibration_dataloader = DataLoader(cal_dataset, batch_size=32)
 
 # Initialize the ECE
 ece = CalibrationError(task="multiclass", num_classes=100)
@@ -114,7 +115,7 @@ fig.show()
 
 # Fit the scaler on the calibration dataset
 scaled_model = TemperatureScaler(model=model)
-scaled_model.fit(calibration_set=cal_dataset)
+scaled_model.fit(dataloader=calibration_dataloader)
 
 # %%
 # 6. Iterating Again to Compute the Improved ECE
