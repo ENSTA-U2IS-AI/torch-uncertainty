@@ -1,5 +1,6 @@
 # ruff: noqa: F401
 from .aggregated_dataset import AggregatedDataset
+from .corrupted import CorruptedDataset
 from .fractals import Fractals
 from .frost import FrostImages
 from .kitti import KITTIDepth

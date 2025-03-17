@@ -244,7 +244,7 @@ class MUAD(VisionDataset):
                 f"target_type must be one of ['semantic', 'depth']. Got {self.target_type}."
             )
 
-    def _download(self, split: str) -> None:
+    def _download(self, split: str) -> None:  # coverage: ignore
         """Download and extract the chosen split of the dataset."""
         if self.version == "small":
             filename = f"{split}.zip"
