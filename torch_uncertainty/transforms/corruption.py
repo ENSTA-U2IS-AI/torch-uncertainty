@@ -11,6 +11,10 @@ The authors of the library advise avoiding using the stochastic transforms to ge
 to avoid reproducibility issues. It may be preferable to first check if the corrupted dataset is
 available on TorchUncertainty's Hugging Face https://huggingface.co/torch-uncertainty. File an
 issue if you would like one specific and missing dataset to be published on this page.
+
+In most of the cases, we have chosen to follow the hyperparameters used for ImageNet-C, which
+differ from those of TinyImageNet-C, CIFAR-C or even the Inception version of ImageNet-C. However,
+this may not be entirely suitable in the case of datasets with much smaller or bigger images.
 """
 
 from importlib import util
