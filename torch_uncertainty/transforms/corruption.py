@@ -787,12 +787,13 @@ class Elastic(TUCorruption):
         if self.severity == 0:
             return img
         image = np.array(rearrange(img, "c h w -> h w c"), dtype=np.float32)
-        shape = image.shape
-        shape_size = shape[:2]
+        height, width, channels = image.shape
+        shape_size = height, width
+        min_shape_size = min(shape_size)
 
         # random affine
         center_square = np.float32(shape_size) // 2
-        square_size = min(shape_size) // 3
+        square_size = min_shape_size // 3
         pts1 = np.float32(
             [
                 center_square + square_size,
@@ -804,8 +805,8 @@ class Elastic(TUCorruption):
             ]
         )
         pts2 = pts1 + self.rng.uniform(
-            -self.mix[2] * shape_size[0],
-            self.mix[2] * shape_size[0],
+            -self.mix[2] * min_shape_size,
+            self.mix[2] * min_shape_size,
             size=pts1.shape,
         ).astype(np.float32)
         affine_transform = cv2.getAffineTransform(pts1, pts2)
@@ -816,17 +817,17 @@ class Elastic(TUCorruption):
             borderMode=cv2.BORDER_REFLECT_101,
         )
 
-        sigma = self.mix[1] * shape_size[0]
-        ks = min(int((sigma * 3 // 2) * 2 + 1), min(shape_size[:2]) // 2 * 2 - 1)
+        sigma = self.mix[1] * min_shape_size
+        ks = min(int((sigma * 3 // 2) * 2 + 1), min_shape_size // 2 * 2 - 1)
         dx = (
             (
                 gaussian_blur2d(
-                    torch.as_tensor(self.rng.uniform(-1, 1, size=(1, 1, *shape[:2]))),
+                    torch.as_tensor(self.rng.uniform(-1, 1, size=(1, 1, *shape_size))),
                     kernel_size=ks,
                     sigma=(sigma, sigma),
                 ).squeeze(0, 1)
                 * self.mix[0]
-                * shape_size[0]
+                * shape_size[1]
             )
             .numpy()
             .astype(np.float32)[..., np.newaxis]
@@ -834,7 +835,7 @@ class Elastic(TUCorruption):
         dy = (
             (
                 gaussian_blur2d(
-                    torch.as_tensor(self.rng.uniform(-1, 1, size=(1, 1, *shape[:2]))),
+                    torch.as_tensor(self.rng.uniform(-1, 1, size=(1, 1, *shape_size))),
                     kernel_size=ks,
                     sigma=(sigma, sigma),
                 ).squeeze(0, 1)
@@ -845,14 +846,16 @@ class Elastic(TUCorruption):
             .astype(np.float32)[..., np.newaxis]
         )
 
-        x, y, z = np.meshgrid(np.arange(shape[1]), np.arange(shape[0]), np.arange(shape[2]))
+        x, y, z = np.meshgrid(np.arange(width), np.arange(height), np.arange(channels))
         indices = (
             np.reshape(y + dy, (-1, 1)),
             np.reshape(x + dx, (-1, 1)),
             np.reshape(z, (-1, 1)),
         )
         img = np.clip(
-            map_coordinates(image, indices, order=1, mode="reflect").reshape(shape),
+            map_coordinates(image, indices, order=1, mode="reflect").reshape(
+                (height, width, channels)
+            ),
             0,
             1,
         )
@@ -947,19 +950,19 @@ class Saturation(ISaturation, TUCorruption):
 
 
 corruption_transforms = (
-    GaussianNoise,
-    ShotNoise,
-    ImpulseNoise,
-    DefocusBlur,
-    GlassBlur,
-    MotionBlur,
-    ZoomBlur,
-    Snow,
-    Frost,
-    Fog,
-    Brightness,
-    Contrast,
+    # GaussianNoise,
+    # ShotNoise,
+    # ImpulseNoise,
+    # DefocusBlur,
+    # GlassBlur,
+    # MotionBlur,
+    # ZoomBlur,
+    # Snow,
+    # Frost,
+    # Fog,
+    # Brightness,
+    # Contrast,
     Elastic,
-    Pixelate,
-    JPEGCompression,
+    # Pixelate,
+    # JPEGCompression,
 )
