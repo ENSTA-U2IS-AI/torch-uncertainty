@@ -918,7 +918,7 @@ class GaussianBlur(TUCorruption):
             no_batch = True
             img = img.unsqueeze(0)
         out = torch.clamp(
-            gaussian_blur2d(img.unsqueeze(0), kernel_size=self.kernel_size, sigma=self.sigma),
+            gaussian_blur2d(img, kernel_size=self.kernel_size, sigma=self.sigma),
             0,
             1,
         )
