@@ -16,7 +16,9 @@ issue if you would like one specific and missing dataset to be published on this
 from importlib import util
 from io import BytesIO
 
+import torch.nn.functional as F
 from einops import rearrange
+from torch.distributions import Categorical
 
 if util.find_spec("cv2"):
     import cv2
@@ -252,11 +254,136 @@ class DefocusBlur(TUCorruption):
         return out
 
 
+def generate_offset_distribution(max_delta, iterations):
+    """Symmetrized version of the glass blur swapping algorithm.
+
+    The original implementation is sequential and extremely long on large images. This version should
+    be statistically equivalent. The sketch of proof will be provided in TorchUncertainty's paper.
+    """
+    interval_length = 2 * max_delta + 1
+    diagram_size = 12 * max_delta  # sufficient for a proper density estimation
+    tab = torch.zeros((diagram_size, diagram_size), dtype=torch.float32)
+    tab[0, max_delta] = 1
+    for pivot, t in enumerate(range(1, diagram_size)):
+        # the pivot gets 1/interval_length of all the accessible previous densities
+        for i in range(-max_delta, max_delta + 1):
+            if 0 <= pivot + i < diagram_size:
+                tab[t, pivot] += tab[t - 1, pivot + i]
+
+        # the other values keep (interval_length-1/interval_length of their previous densities
+        # and 1/interval_length the value of the pivot
+        for i in range(-max_delta, max_delta + 1):
+            if i != 0 and 0 <= pivot + i < diagram_size:
+                tab[t, pivot + i] += (interval_length - 1) * tab[t - 1, pivot + i] + tab[
+                    t - 1, pivot
+                ]
+        tab[t, :] /= interval_length
+    density = torch.diag(tab, -max_delta - 1)
+
+    # reducing distribution dimention
+    idx = torch.clamp(density, 1e-4).argmin()
+    density = density[:idx]
+
+    padded_density = F.pad(density, (len(density) - 2 * max_delta - 1, 0))
+    sym_density = 1 / 2 * padded_density + 1 / 2 * padded_density.flip(-1)
+
+    # Convolve the density in lieu of iterating
+    sym_density = sym_density.unsqueeze(0).unsqueeze(0)
+    sym_density_iter = sym_density.clone()
+    for _ in range(iterations - 1):
+        sym_density_iter = F.conv1d(
+            sym_density_iter, torch.flip(sym_density, (-1,)), padding=sym_density.shape[-1] // 2
+        )
+    return Categorical(probs=sym_density_iter.squeeze(0, 1))
+
+
 class GlassBlur(TUCorruption):
     name = "glass_blur"
 
     def __init__(self, severity: int, seed: int | None = None) -> None:
         """Apply a glass blur corruption to unbatched tensor images.
+
+        Faster implementation using a symetrized offset distribution.
+
+        Args:
+            severity (int): Severity level of the corruption.
+            seed (int | None): Optional seed for the rng.
+
+        Note:
+            The hyperparameters have been adapted to output images calibrated with the original
+            implementation despite the fixes that increase the power of the transformation.
+        """
+        super().__init__(severity)
+        if not kornia_installed:
+            raise ImportError(
+                "Please install torch_uncertainty with the image option:"
+                """pip install -U "torch_uncertainty[image]"."""
+            )
+        sigma = [0.7, 0.9, 1, 1.1, 1.5][severity - 1]
+        self.sigma = (sigma, sigma)
+        self.kernel_size = int(sigma * 6 // 2 * 2 + 1)
+        iterations = [1, 2, 3, 2, 3][severity - 1]
+        max_delta = [1, 1, 1, 2, 3][severity - 1]
+        self.max_delta = max_delta
+
+        self.offset_dist = generate_offset_distribution(max_delta, iterations)
+
+        if seed is None:
+            self.rng = None
+        else:
+            self.rng = torch.Generator(device="cpu").manual_seed(seed)
+
+    def forward(self, img: Tensor) -> Tensor:
+        if self.severity == 0:
+            return img
+
+        img = gaussian_blur2d(
+            img.unsqueeze(0), kernel_size=self.kernel_size, sigma=self.sigma
+        ).squeeze(0)
+
+        img = img.permute(1, 2, 0)  # HWC
+        height, width, _ = img.shape
+        max_d = self.max_delta
+
+        valid_h = height - max_d
+        valid_w = width - max_d
+
+        # Generate random offsets
+        rand_offsets = (
+            self.offset_dist.sample(sample_shape=(valid_h, valid_w, 2))
+            - self.offset_dist.param_shape[0] // 2
+        )
+
+        # Create base indices
+        hs = (
+            torch.arange(max_d, height, device=img.device)[:valid_h].unsqueeze(1).repeat(1, valid_w)
+        )
+        ws = torch.arange(max_d, width, device=img.device)[:valid_w].unsqueeze(0).repeat(valid_h, 1)
+
+        dy = rand_offsets[..., 0]
+        dx = rand_offsets[..., 1]
+        hs_prime = (hs + dy).clamp(0, height - 1)
+        ws_prime = (ws + dx).clamp(0, width - 1)
+
+        flat_idx = hs.flatten(), ws.flatten()
+        flat_idx_prime = hs_prime.flatten(), ws_prime.flatten()
+
+        tmp = img[flat_idx].clone()
+        img[flat_idx] = img[flat_idx_prime]
+        img[flat_idx_prime] = tmp
+
+        img = img.permute(2, 0, 1).unsqueeze(0)  # Back to BCHW
+        img = gaussian_blur2d(img, kernel_size=self.kernel_size, sigma=self.sigma).squeeze(0)
+        return torch.clamp(img, 0, 1)
+
+
+class OriginalGlassBlur(TUCorruption):
+    name = "glass_blur"
+
+    def __init__(self, severity: int, seed: int | None = None) -> None:
+        """Apply a glass blur corruption to unbatched tensor images.
+
+        Original, likely incorrect and very slow implementation.
 
         Args:
             severity (int): Severity level of the corruption.
@@ -485,7 +612,7 @@ class Frost(TUCorruption):
         return torch.clamp(self.mix[0] * img + self.mix[1] * frost_img, 0, 1)
 
 
-def plasma_fractal(height, width, rng, wibbledecay=3):
+def plasma_fractal(height, width, rng, wibbledecay):
     """Generate a heightmap using diamond-square algorithm.
     Return square 2d array, side length 'mapsize', of floats in range 0-1.
     'mapsize' must be a power of two.
@@ -852,6 +979,7 @@ corruption_transforms = (
     ImpulseNoise,
     DefocusBlur,
     GlassBlur,
+    OriginalGlassBlur,
     MotionBlur,
     ZoomBlur,
     Snow,

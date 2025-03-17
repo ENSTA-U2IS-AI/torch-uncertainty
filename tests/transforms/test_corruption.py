@@ -15,6 +15,7 @@ from torch_uncertainty.transforms.corruption import (
     ImpulseNoise,
     JPEGCompression,
     MotionBlur,
+    OriginalGlassBlur,
     Pixelate,
     Saturation,
     ShotNoise,
@@ -87,6 +88,12 @@ class TestCorruptions:
         transform = GlassBlur(1)
         assert transform(inputs).ndim == 3
         transform = GlassBlur(0)
+        assert transform(inputs).ndim == 3
+
+        inputs = torch.rand(3, 32, 32)
+        transform = OriginalGlassBlur(1)
+        assert transform(inputs).ndim == 3
+        transform = OriginalGlassBlur(0)
         assert transform(inputs).ndim == 3
 
     def test_defocus_blur(self):
