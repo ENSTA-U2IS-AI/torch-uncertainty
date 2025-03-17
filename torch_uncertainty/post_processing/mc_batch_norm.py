@@ -3,7 +3,7 @@ from typing import Literal
 
 import torch
 from torch import Tensor, nn
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader
 
 from torch_uncertainty.layers.mc_batch_norm import MCBatchNorm2d
 from torch_uncertainty.post_processing import PostProcessing
@@ -19,7 +19,6 @@ class MCBatchNorm(PostProcessing):
         model: nn.Module | None = None,
         num_estimators: int = 16,
         convert: bool = True,
-        mc_batch_size: int = 32,
         device: Literal["cpu", "cuda"] | torch.device | None = None,
     ) -> None:
         """Monte Carlo Batch Normalization wrapper.
@@ -28,7 +27,6 @@ class MCBatchNorm(PostProcessing):
             model (nn.Module): model to be converted.
             num_estimators (int): number of estimators.
             convert (bool): whether to convert the model.
-            mc_batch_size (int, optional): Monte Carlo batch size. Defaults to 32.
             device (Literal["cpu", "cuda"] | torch.device | None, optional): device.
                 Defaults to None.
 
@@ -40,7 +38,6 @@ class MCBatchNorm(PostProcessing):
             batch normalized deep networks. In ICML 2018.
         """
         super().__init__()
-        self.mc_batch_size = mc_batch_size
         self.convert = convert
         self.num_estimators = num_estimators
         self.device = device
@@ -49,7 +46,7 @@ class MCBatchNorm(PostProcessing):
             self._setup_model(model)
 
     def _setup_model(self, model):
-        _mcbn_checks(model, self.num_estimators, self.mc_batch_size, self.convert)
+        _mcbn_checks(model, self.num_estimators, self.convert)
         self.model = deepcopy(model)  # TODO: Is it necessary?
         self.model = self.model.eval()
         if self.convert:
@@ -61,22 +58,28 @@ class MCBatchNorm(PostProcessing):
         self.model = model
         self._setup_model(model)
 
-    def fit(self, dataset: Dataset) -> None:
+    def fit(self, dataloader: DataLoader) -> None:
         """Fit the model on the dataset.
 
         Args:
-            dataset (Dataset): dataset to be used for fitting.
+            dataloader (DataLoader): DataLoader with the training dataset.
 
         Note:
             This method is used to populate the MC BatchNorm layers.
             Use the training dataset.
+
+        Warning:
+            The ``batch_size`` of the DataLoader should be carefully chosen as it
+            will have an impact on the statistics of the MC BatchNorm layers.
+
+        Raises:
+            ValueError: If there are less batches than the number of estimators.
         """
-        self.dl = DataLoader(dataset, batch_size=self.mc_batch_size, shuffle=True)
         self.counter = 0
         self.reset_counters()
         self.set_accumulate(True)
         self.eval()
-        for x, _ in self.dl:
+        for x, _ in dataloader:
             self.model(x.to(self.device))
             self.raise_counters()
             if self.counter == self.num_estimators:
@@ -162,10 +165,8 @@ def has_mcbn(model: nn.Module) -> bool:
     return any(isinstance(module, MCBatchNorm2d) for module in model.modules())
 
 
-def _mcbn_checks(model, num_estimators, mc_batch_size, convert):
+def _mcbn_checks(model, num_estimators, convert):
     if num_estimators < 1 or not isinstance(num_estimators, int):
         raise ValueError(f"num_estimators must be a positive integer, got {num_estimators}.")
-    if mc_batch_size < 1 or not isinstance(mc_batch_size, int):
-        raise ValueError(f"mc_batch_size must be a positive integer, got {mc_batch_size}.")
     if not convert and not has_mcbn(model):
         raise ValueError("model does not contain any MCBatchNorm2d nor is not to be converted.")

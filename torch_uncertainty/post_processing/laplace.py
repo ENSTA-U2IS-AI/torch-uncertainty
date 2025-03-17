@@ -2,7 +2,7 @@ from importlib import util
 from typing import Literal
 
 from torch import Tensor, nn
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader
 
 from .abstract import PostProcessing
 
@@ -23,7 +23,6 @@ class LaplaceApprox(PostProcessing):
         hessian_struct="kron",
         pred_type: Literal["glm", "nn"] = "glm",
         link_approx: Literal["mc", "probit", "bridge", "bridge_norm"] = "probit",
-        batch_size: int = 256,
         optimize_prior_precision: bool = True,
     ) -> None:
         """Laplace approximation for uncertainty estimation.
@@ -42,8 +41,6 @@ class LaplaceApprox(PostProcessing):
             link_approx (Literal["mc", "probit", "bridge", "bridge_norm"], optional):
                 how to approximate the classification link function for the `'glm'`.
                 See the Laplace library for more details. Defaults to "probit".
-            batch_size (int, optional): batch size for the Laplace approximation.
-                Defaults to 256.
             optimize_prior_precision (bool, optional): whether to optimize the prior
                 precision. Defaults to True.
 
@@ -63,7 +60,6 @@ class LaplaceApprox(PostProcessing):
         self.task = task
         self.weight_subset = weight_subset
         self.hessian_struct = hessian_struct
-        self.batch_size = batch_size
         self.optimize_prior_precision = optimize_prior_precision
 
         if model is not None:
@@ -78,9 +74,8 @@ class LaplaceApprox(PostProcessing):
             hessian_structure=self.hessian_struct,
         )
 
-    def fit(self, dataset: Dataset) -> None:
-        dl = DataLoader(dataset, batch_size=self.batch_size)
-        self.la.fit(train_loader=dl)
+    def fit(self, dataloader: DataLoader) -> None:
+        self.la.fit(train_loader=dataloader)
         if self.optimize_prior_precision:
             self.la.optimize_prior_precision(method="marglik")
 
