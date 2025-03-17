@@ -952,7 +952,6 @@ corruption_transforms = (
     ImpulseNoise,
     DefocusBlur,
     GlassBlur,
-    OriginalGlassBlur,
     MotionBlur,
     ZoomBlur,
     Snow,
