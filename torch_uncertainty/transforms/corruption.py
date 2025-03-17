@@ -17,7 +17,7 @@ from importlib import util
 from io import BytesIO
 
 import torch.nn.functional as F
-from einops import rearrange
+from einops import rearrange, repeat
 from torch.distributions import Categorical
 
 if util.find_spec("cv2"):
@@ -89,7 +89,6 @@ __all__ = [
 
 
 class TUCorruption(nn.Module):
-    name: str
     batched: bool = False
 
     def __init__(self, severity: int) -> None:
@@ -107,8 +106,7 @@ class TUCorruption(nn.Module):
 
 
 class GaussianNoise(TUCorruption):
-    name = "gaussian_noise"
-    batched = True
+    batchable = True
 
     def __init__(self, severity: int) -> None:
         """Apply a Gaussian noise corruption to tensor images.
@@ -131,8 +129,7 @@ class GaussianNoise(TUCorruption):
 
 
 class ShotNoise(TUCorruption):
-    name = "shot_noise"
-    batched = True
+    batchable = True
 
     def __init__(self, severity: int) -> None:
         """Apply a shot (Poisson) noise corruption to tensor images.
@@ -155,8 +152,7 @@ class ShotNoise(TUCorruption):
 
 
 class ImpulseNoise(TUCorruption):
-    name = "impulse_noise"
-    batched = True
+    batchable = True
 
     def __init__(self, severity: int, black_white: bool = False) -> None:
         """Apply an impulse (channel-independent Salt & Pepper) noise corruption to unbatched
@@ -222,8 +218,7 @@ def disk(radius: int, alias_blur: float = 0.1, dtype=torch.float32):
 
 
 class DefocusBlur(TUCorruption):
-    name = "defocus_blur"
-    batched = True
+    batchable = True
 
     def __init__(self, severity: int) -> None:
         """Apply a defocus blur corruption to unbatched tensor images.
@@ -298,8 +293,6 @@ def generate_offset_distribution(max_delta, iterations):
 
 
 class GlassBlur(TUCorruption):
-    name = "glass_blur"
-
     def __init__(self, severity: int, seed: int | None = None) -> None:
         """Apply a glass blur corruption to unbatched tensor images.
 
@@ -310,8 +303,10 @@ class GlassBlur(TUCorruption):
             seed (int | None): Optional seed for the rng.
 
         Note:
-            The hyperparameters have been adapted to output images calibrated with the original
-            implementation despite the fixes that increase the power of the transformation.
+            The hyperparameters have been adapted to output images qualitatively calibrated with
+            the original implementation despite the changes in implementation that increase the
+            power of the transformation. This is notably due to discarding the correlation between
+            the offsets to simplify the derivation.
         """
         super().__init__(severity)
         if not kornia_installed:
@@ -355,10 +350,8 @@ class GlassBlur(TUCorruption):
         )
 
         # Create base indices
-        hs = (
-            torch.arange(max_d, height, device=img.device)[:valid_h].unsqueeze(1).repeat(1, valid_w)
-        )
-        ws = torch.arange(max_d, width, device=img.device)[:valid_w].unsqueeze(0).repeat(valid_h, 1)
+        hs = repeat(torch.arange(max_d, height, device=img.device)[:valid_h], "h -> h w", w=valid_w)
+        ws = repeat(torch.arange(max_d, height, device=img.device)[:valid_w], "w -> h w", h=valid_h)
 
         dy = rand_offsets[..., 0]
         dx = rand_offsets[..., 1]
@@ -378,8 +371,6 @@ class GlassBlur(TUCorruption):
 
 
 class OriginalGlassBlur(TUCorruption):
-    name = "glass_blur"
-
     def __init__(self, severity: int, seed: int | None = None) -> None:
         """Apply a glass blur corruption to unbatched tensor images.
 
@@ -439,8 +430,7 @@ class OriginalGlassBlur(TUCorruption):
 
 
 class MotionBlur(TUCorruption):
-    name = "motion_blur"
-    batched = True
+    batchable = True
 
     def __init__(self, severity: int, seed: int | None = None) -> None:
         """Apply a motion blur corruption to unbatched tensor images.
@@ -500,8 +490,6 @@ def clipped_zoom(img, zoom_factor):
 
 
 class ZoomBlur(TUCorruption):
-    name = "zoom_blur"
-
     def __init__(self, severity: int) -> None:
         """Apply a zoom blur corruption to unbatched tensor images.
 
@@ -535,8 +523,6 @@ class ZoomBlur(TUCorruption):
 
 
 class Snow(TUCorruption):
-    name = "snow"
-
     def __init__(self, severity: int, seed: int | None = None) -> None:
         """Apply a snow effect on unbatched tensor images.
 
@@ -589,8 +575,6 @@ class Snow(TUCorruption):
 
 
 class Frost(TUCorruption):
-    name = "frost"
-
     def __init__(self, severity: int, seed: int | None = None) -> None:
         """Apply a frost corruption effect on unbatched tensor images.
 
@@ -663,8 +647,6 @@ def plasma_fractal(height, width, rng, wibbledecay):
 
 
 class Fog(TUCorruption):
-    name = "fog"
-
     def __init__(self, severity: int, seed: int | None = None) -> None:
         """Apply a fog corruption effect on unbatched tensor images.
 
@@ -695,8 +677,6 @@ class Fog(TUCorruption):
 
 
 class Brightness(IBrightness, TUCorruption):
-    name = "brightness"
-
     def __init__(self, severity: int) -> None:
         """Apply a brightness corruption to unbatched tensor images.
 
@@ -717,8 +697,6 @@ class Brightness(IBrightness, TUCorruption):
 
 
 class Contrast(IContrast, TUCorruption):
-    name = "contrast"
-
     def __init__(self, severity: int) -> None:
         """Apply a contrast corruption to unbatched tensor images.
 
@@ -735,8 +713,6 @@ class Contrast(IContrast, TUCorruption):
 
 
 class Pixelate(TUCorruption):
-    name = "pixelate"
-
     def __init__(self, severity: int) -> None:
         """Apply a pixelation corruption to unbatched tensor images.
 
@@ -761,8 +737,6 @@ class Pixelate(TUCorruption):
 
 
 class JPEGCompression(TUCorruption):
-    name = "jpeg_compression"
-
     def __init__(self, severity: int) -> None:
         """Apply a JPEG compression corruption to unbatched tensor images.
 
@@ -781,8 +755,6 @@ class JPEGCompression(TUCorruption):
 
 
 class Elastic(TUCorruption):
-    name = "elastic"
-
     def __init__(self, severity: int, seed: int | None = None) -> None:
         """Apply an elastic corruption to unbatched tensor images.
 
@@ -896,8 +868,7 @@ class Elastic(TUCorruption):
 
 
 class SpeckleNoise(TUCorruption):
-    name = "speckle_noise"
-    batched = True
+    batchable = True
 
     def __init__(self, severity: int, seed: int | None = None) -> None:
         """Apply speckle noise to tensor images.
@@ -926,8 +897,6 @@ class SpeckleNoise(TUCorruption):
 
 
 class GaussianBlur(TUCorruption):
-    name = "gaussian_blur"
-
     def __init__(self, severity: int) -> None:
         """Apply a Gaussian blur corruption to unbatched tensor images.
 
@@ -955,8 +924,6 @@ class GaussianBlur(TUCorruption):
 
 
 class Saturation(ISaturation, TUCorruption):
-    name = "saturation"
-
     def __init__(self, severity: int) -> None:
         """Apply a saturation corruption to unbatched tensor images.
 

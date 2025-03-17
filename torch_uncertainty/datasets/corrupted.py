@@ -54,7 +54,7 @@ class CorruptedDataset(VisionDataset):
         with logging_redirect_tqdm():
             pbar = tqdm(corruption_transforms)
             for corruption in pbar:
-                corruption_name = corruption.name
+                corruption_name = corruption.__name__
                 pbar.set_description(f"Processing {corruption_name}")
                 (self.root / corruption_name / f"{self.shift_severity}").mkdir(
                     parents=True, exist_ok=True
