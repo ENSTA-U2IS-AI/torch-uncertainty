@@ -323,11 +323,6 @@ class GlassBlur(TUCorruption):
 
         self.offset_dist = generate_offset_distribution(max_delta, iterations)
 
-        if seed is None:
-            self.rng = None
-        else:
-            self.rng = torch.Generator(device="cpu").manual_seed(seed)
-
     def forward(self, img: Tensor) -> Tensor:
         if self.severity == 0:
             return img

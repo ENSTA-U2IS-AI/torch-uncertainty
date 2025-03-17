@@ -91,7 +91,7 @@ class TestCorruptions:
         assert transform(inputs).ndim == 3
 
         inputs = torch.rand(3, 32, 32)
-        transform = OriginalGlassBlur(1)
+        transform = OriginalGlassBlur(1, seed=1)
         assert transform(inputs).ndim == 3
         transform = OriginalGlassBlur(0)
         assert transform(inputs).ndim == 3
