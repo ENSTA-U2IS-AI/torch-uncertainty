@@ -84,7 +84,7 @@ class TestCorruptions:
         assert transform(inputs).ndim == 3
 
         inputs = torch.rand(3, 3, 32, 32)
-        transform = MotionBlur(1)
+        transform = GaussianBlur(1)
         assert transform(inputs).ndim == 4
 
     def test_glass_blur(self):
