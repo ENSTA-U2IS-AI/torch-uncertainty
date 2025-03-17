@@ -677,6 +677,8 @@ class Fog(TUCorruption):
 
 
 class Brightness(IBrightness, TUCorruption):
+    batchable = True
+
     def __init__(self, severity: int) -> None:
         """Apply a brightness corruption to unbatched tensor images.
 
@@ -697,6 +699,8 @@ class Brightness(IBrightness, TUCorruption):
 
 
 class Contrast(IContrast, TUCorruption):
+    batchable = True
+
     def __init__(self, severity: int) -> None:
         """Apply a contrast corruption to unbatched tensor images.
 
@@ -889,6 +893,8 @@ class SpeckleNoise(TUCorruption):
 
 
 class GaussianBlur(TUCorruption):
+    batchable = True
+
     def __init__(self, severity: int) -> None:
         """Apply a Gaussian blur corruption to unbatched tensor images.
 
@@ -908,14 +914,23 @@ class GaussianBlur(TUCorruption):
     def forward(self, img: Tensor) -> Tensor:
         if self.severity == 0:
             return img
-        return torch.clamp(
+        no_batch = False
+        if img.ndim == 3:
+            no_batch = True
+            img = img.unsqueeze(0)
+        out = torch.clamp(
             gaussian_blur2d(img.unsqueeze(0), kernel_size=self.kernel_size, sigma=self.sigma),
-            min=0,
-            max=1,
-        ).squeeze(0)
+            0,
+            1,
+        )
+        if no_batch:
+            out = out.squeeze(0)
+        return out
 
 
 class Saturation(ISaturation, TUCorruption):
+    batchable = True
+
     def __init__(self, severity: int) -> None:
         """Apply a saturation corruption to unbatched tensor images.
 
