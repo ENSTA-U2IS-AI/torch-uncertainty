@@ -85,7 +85,7 @@ jobs:
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         file: coverage.xml
-        flags: cpu,pytest
+        flags: pytest
         name: CPU-coverage
         env_vars: PYTHON_VERSION
 
@@ -96,7 +96,7 @@ jobs:
       continue-on-error: true
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
-        flags: cpu,pytest
+        flags: pytest
         env_vars: PYTHON_VERSION
 
     - name: Test sphinx build without tutorials
