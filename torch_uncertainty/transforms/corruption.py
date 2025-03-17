@@ -17,7 +17,7 @@ from importlib import util
 from io import BytesIO
 
 import torch.nn.functional as F
-from einops import rearrange
+from einops import rearrange, repeat
 from torch.distributions import Categorical
 
 if util.find_spec("cv2"):
@@ -341,7 +341,7 @@ class GlassBlur(TUCorruption):
             img.unsqueeze(0), kernel_size=self.kernel_size, sigma=self.sigma
         ).squeeze(0)
 
-        img = img.permute(1, 2, 0)  # HWC
+        img = rearrange(img, "c h w -> h w c")
         height, width, _ = img.shape
         max_d = self.max_delta
 
@@ -355,10 +355,8 @@ class GlassBlur(TUCorruption):
         )
 
         # Create base indices
-        hs = (
-            torch.arange(max_d, height, device=img.device)[:valid_h].unsqueeze(1).repeat(1, valid_w)
-        )
-        ws = torch.arange(max_d, width, device=img.device)[:valid_w].unsqueeze(0).repeat(valid_h, 1)
+        hs = repeat(torch.arange(max_d, height, device=img.device)[:valid_h], "h -> h w", w=valid_w)
+        ws = repeat(torch.arange(max_d, width, device=img.device)[:valid_w], "w -> h w", h=valid_h)
 
         dy = rand_offsets[..., 0]
         dx = rand_offsets[..., 1]
@@ -372,7 +370,7 @@ class GlassBlur(TUCorruption):
         img[flat_idx] = img[flat_idx_prime]
         img[flat_idx_prime] = tmp
 
-        img = img.permute(2, 0, 1).unsqueeze(0)  # Back to BCHW
+        img = rearrange(img, "h w c -> 1 c h w")  # Back to BCHW
         img = gaussian_blur2d(img, kernel_size=self.kernel_size, sigma=self.sigma).squeeze(0)
         return torch.clamp(img, 0, 1)
 
@@ -410,11 +408,11 @@ class OriginalGlassBlur(TUCorruption):
         if self.severity == 0:
             return img
         img_size = img.shape
-        img = (
-            gaussian_blur2d(img.unsqueeze(0), kernel_size=self.kernel_size, sigma=self.sigma)
-            .squeeze(0)
-            .permute(1, 2, 0)
+        img = rearrange(
+            gaussian_blur2d(img.unsqueeze(0), kernel_size=self.kernel_size, sigma=self.sigma),
+            "1 c h w -> h w c",
         )
+
         rands = torch.randint(
             -self.max_delta,
             self.max_delta,
@@ -431,7 +429,7 @@ class OriginalGlassBlur(TUCorruption):
 
         return torch.clamp(
             gaussian_blur2d(
-                img.permute(2, 0, 1).unsqueeze(0), kernel_size=self.kernel_size, sigma=self.sigma
+                rearrange(img, "h w c -> 1 c h w"), kernel_size=self.kernel_size, sigma=self.sigma
             ).squeeze(0),
             0,
             1,
@@ -526,12 +524,12 @@ class ZoomBlur(TUCorruption):
     def forward(self, img: Tensor) -> Tensor:
         if self.severity == 0:
             return img
-        img = img.permute(1, 2, 0).numpy()
+        img = rearrange(img, "c h w -> h w c").numpy()
         out = np.zeros_like(img)
         for zoom_factor in self.zooms:
             out += clipped_zoom(img, zoom_factor)
         img = (img + out) / (len(self.zooms) + 1)
-        return torch.clamp(torch.as_tensor(img).permute(2, 0, 1), 0, 1)
+        return torch.clamp(rearrange(torch.as_tensor(img), "h w c -> c h w"), 0, 1)
 
 
 class Snow(TUCorruption):
@@ -811,7 +809,7 @@ class Elastic(TUCorruption):
     def forward(self, img: Tensor) -> Tensor:
         if self.severity == 0:
             return img
-        image = np.array(img.permute(1, 2, 0), dtype=np.float32)
+        image = np.array(rearrange(img, "c h w -> h w c"), dtype=np.float32)
         shape = image.shape
         shape_size = shape[:2]
 
@@ -889,7 +887,7 @@ class Elastic(TUCorruption):
             0,
             1,
         )
-        return torch.as_tensor(img).permute(2, 0, 1)
+        return rearrange(torch.as_tensor(img), "h w c -> c h w")
 
 
 # Additional corruption transforms
