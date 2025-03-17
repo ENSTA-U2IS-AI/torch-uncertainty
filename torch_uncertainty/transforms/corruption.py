@@ -838,7 +838,7 @@ class Saturation(ISaturation, TUCorruption):
         """
         TUCorruption.__init__(self, severity)
         self.severity = severity
-        self.level = [0.1, 0.2, 0.3, 0.4, 0.5][severity - 1]
+        self.level = [0.8, 0.6, 0.4, 0.2, 0.1][severity - 1]
 
     def forward(self, img: Tensor) -> Tensor:
         if self.severity == 0:
