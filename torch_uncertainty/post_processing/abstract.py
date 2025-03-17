@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 from torch import Tensor, nn
-from torch.utils.data import Dataset
+from torch.utils.data import DataLoader
 
 
 class PostProcessing(ABC, nn.Module):
@@ -14,7 +14,7 @@ class PostProcessing(ABC, nn.Module):
         self.model = model
 
     @abstractmethod
-    def fit(self, dataset: Dataset) -> None:
+    def fit(self, dataloader: DataLoader) -> None:
         pass
 
     @abstractmethod

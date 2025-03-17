@@ -3,7 +3,7 @@ from typing import Literal
 
 import torch
 from torch import Tensor, nn, optim
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from torch_uncertainty.post_processing import PostProcessing
@@ -47,20 +47,14 @@ class Scaler(PostProcessing):
 
     def fit(
         self,
-        calibration_set: Dataset,
-        batch_size: int = 32,
-        shuffle: bool = False,
-        drop_last: bool = False,
+        dataloader: DataLoader,
         save_logits: bool = False,
         progress: bool = True,
     ) -> None:
         """Fit the temperature parameters to the calibration data.
 
         Args:
-            calibration_set (Dataset): Calibration dataset.
-            batch_size (int, optional): Batch size for the calibration dataset. Defaults to 32.
-            shuffle (bool, optional): Whether to shuffle the calibration dataset. Defaults to False.
-            drop_last (bool, optional): Whether to drop the last batch if it's smaller than batch_size. Defaults to False.
+            dataloader (DataLoader): Dataloader with the calibration data.
             save_logits (bool, optional): Whether to save the logits and
                 labels. Defaults to False.
             progress (bool, optional): Whether to show a progress bar.
@@ -73,9 +67,7 @@ class Scaler(PostProcessing):
 
         all_logits = []
         all_labels = []
-        calibration_dl = DataLoader(
-            calibration_set, batch_size=batch_size, shuffle=shuffle, drop_last=drop_last
-        )
+        calibration_dl = dataloader
         with torch.no_grad():
             for inputs, labels in tqdm(calibration_dl, disable=not progress):
                 logits = self.model(inputs.to(self.device))
@@ -119,10 +111,11 @@ class Scaler(PostProcessing):
 
     def fit_predict(
         self,
-        calibration_set: Dataset,
+        # calibration_set: Dataset,
+        dataloader: DataLoader,
         progress: bool = True,
     ) -> Tensor:
-        self.fit(calibration_set, save_logits=True, progress=progress)
+        self.fit(dataloader, save_logits=True, progress=progress)
         return self(self.logits)
 
     @property

@@ -26,6 +26,7 @@ We also need import the neural network utils within `torch.nn`.
 from pathlib import Path
 
 from torch import nn
+from torch.utils.data import DataLoader
 
 from torch_uncertainty import TUTrainer
 from torch_uncertainty.datamodules import MNISTDataModule
@@ -84,15 +85,17 @@ perf = trainer.test(model=routine, datamodule=datamodule)
 # We can now wrap the model in a MCBatchNorm to add stochasticity to the
 # predictions. We specify that the BatchNorm layers are to be converted to
 # MCBatchNorm layers, and that we want to use 8 stochastic estimators.
-# The amount of stochasticity is controlled by the ``mc_batch_size`` argument.
-# The larger the ``mc_batch_size``, the more stochastic the predictions will be.
-# The authors suggest 32 as a good value for ``mc_batch_size`` but we use 4 here
+# The amount of stochasticity is controlled by the ``batch_size`` parameter.
+# of the DataLoader used to train the model.
+# The larger the ``batch_size``, the more stochastic the predictions will be.
+# The authors suggest 32 as a good value for ``batch_size`` but we use 16 here
 # to highlight the effect of stochasticity on the predictions.
 
 routine.model = MCBatchNorm(
-    routine.model, num_estimators=8, convert=True, mc_batch_size=16
+    routine.model, num_estimators=8, convert=True
 )
-routine.model.fit(datamodule.train)
+mc_batch_norm_dl = DataLoader(datamodule.train, batch_size=16, shuffle=True)
+routine.model.fit(dataloader=mc_batch_norm_dl)
 routine = routine.eval()  # To avoid prints
 
 # %%

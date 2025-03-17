@@ -381,13 +381,13 @@ class ClassificationRoutine(LightningModule):
         the storage lists for logit plotting and update the batchnorms if needed.
         """
         if self.post_processing is not None:
-            calibration_dataset = (
-                self.trainer.datamodule.val_dataloader().dataset
+            calibration_dataloader = (
+                self.trainer.datamodule.val_dataloader()
                 if self.calibration_set == "val"
-                else self.trainer.datamodule.test_dataloader()[0].dataset
+                else self.trainer.datamodule.test_dataloader()[0]
             )
             with torch.inference_mode(False):
-                self.post_processing.fit(calibration_dataset)
+                self.post_processing.fit(calibration_dataloader)
 
         if self.eval_ood and self.log_plots and isinstance(self.logger, Logger):
             self.id_logit_storage = []
