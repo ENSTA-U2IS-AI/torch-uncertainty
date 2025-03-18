@@ -61,8 +61,8 @@ dm = CIFAR100DataModule(root="./data", eval_ood=False, batch_size=32)
 dm.prepare_data()
 dm.setup("test")
 
-# Get the full test dataloader (unused in this tutorial)
-dataloader = dm.test_dataloader()[0]
+# Get the full post-processing dataloader (unused in this tutorial)
+dataloader = dm.postprocess_dataloader()
 
 # %%
 # 4. Iterating on the Dataloader and Computing the ECE

@@ -18,13 +18,11 @@ class TestMCBatchNorm:
     def test_main(self):
         """Test initialization."""
         mc_model = lenet(1, 1, norm=partial(MCBatchNorm2d, num_estimators=2))
-        stoch_model = MCBatchNorm(mc_model, num_estimators=2, convert=False)
+        stoch_model = MCBatchNorm(mc_model, num_estimators=2, convert=False, mc_batch_size=1)
 
         model = lenet(1, 1, norm=nn.BatchNorm2d)
         stoch_model = MCBatchNorm(
-            nn.Sequential(model),
-            num_estimators=2,
-            convert=True,
+            nn.Sequential(model), num_estimators=2, convert=True, mc_batch_size=1
         )
         dataset = DummyClassificationDataset(
             "./",
@@ -34,14 +32,13 @@ class TestMCBatchNorm:
             num_images=2,
             transform=T.ToTensor(),
         )
-        dl = DataLoader(dataset, batch_size=1, shuffle=True)
-        stoch_model.fit(dataloader=dl)
+        stoch_model.fit(dataloader=DataLoader(dataset, batch_size=6, shuffle=True))
         stoch_model.train()
         stoch_model(torch.randn(1, 1, 20, 20))
         stoch_model.eval()
         stoch_model(torch.randn(1, 1, 20, 20))
 
-        stoch_model = MCBatchNorm(num_estimators=2, convert=False)
+        stoch_model = MCBatchNorm(num_estimators=2, convert=False, mc_batch_size=1)
         stoch_model.set_model(mc_model)
 
     def test_errors(self):
@@ -54,7 +51,7 @@ class TestMCBatchNorm:
         with pytest.raises(ValueError):
             MCBatchNorm(model, num_estimators=1, convert=True)
         model = lenet(1, 1, norm=nn.BatchNorm2d)
-        stoch_model = MCBatchNorm(model, num_estimators=4, convert=True)
+        stoch_model = MCBatchNorm(model, num_estimators=4, convert=True, mc_batch_size=1)
         dataset = DummyClassificationDataset(
             "./",
             num_channels=1,
