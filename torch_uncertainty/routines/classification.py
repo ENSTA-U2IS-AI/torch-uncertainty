@@ -74,8 +74,7 @@ class ClassificationRoutine(LightningModule):
         eval_grouping_loss: bool = False,
         ood_criterion: Literal["msp", "logit", "energy", "entropy", "mi", "vr"] = "msp",
         post_processing: PostProcessing | None = None,
-        calibration_set: Literal["val", "test"] = "val",
-        num_calibration_bins: int = 15,
+        num_bins_cal_err: int = 15,
         log_plots: bool = False,
         save_in_csv: bool = False,
     ) -> None:
@@ -111,10 +110,8 @@ class ClassificationRoutine(LightningModule):
             post_processing (PostProcessing, optional): Post-processing method
                 to train on the calibration set. No post-processing if None.
                 Defaults to ``None``.
-            calibration_set (str, optional): The post-hoc calibration dataset to
-                use for the post-processing method. Defaults to ``val``.
-            num_calibration_bins (int, optional): Number of bins to compute calibration
-                metrics. Defaults to ``15``.
+            num_bins_cal_err (int, optional): Number of bins to compute calibration
+                error metrics. Defaults to ``15``.
             log_plots (bool, optional): Indicates whether to log plots from
                 metrics. Defaults to ``False``.
             save_in_csv(bool, optional): Save the results in csv. Defaults to
@@ -150,7 +147,7 @@ class ClassificationRoutine(LightningModule):
             is_ensemble=is_ensemble,
             ood_criterion=ood_criterion,
             eval_grouping_loss=eval_grouping_loss,
-            num_calibration_bins=num_calibration_bins,
+            num_bins_cal_err=num_bins_cal_err,
             mixup_params=mixup_params,
             post_processing=post_processing,
             format_batch_fn=format_batch_fn,
@@ -166,11 +163,10 @@ class ClassificationRoutine(LightningModule):
         self.ood_criterion = ood_criterion
         self.log_plots = log_plots
         self.save_in_csv = save_in_csv
-        self.calibration_set = calibration_set
         self.binary_cls = num_classes == 1
         self.needs_epoch_update = isinstance(model, EPOCH_UPDATE_MODEL)
         self.needs_step_update = isinstance(model, STEP_UPDATE_MODEL)
-        self.num_calibration_bins = num_calibration_bins
+        self.num_bins_cal_err = num_bins_cal_err
         self.model = model
         self.loss = loss
         self.format_batch_fn = format_batch_fn
@@ -202,13 +198,13 @@ class ClassificationRoutine(LightningModule):
             "cls/NLL": CategoricalNLL(),
             "cal/ECE": CalibrationError(
                 task=task,
-                num_bins=self.num_calibration_bins,
+                num_bins=self.num_bins_cal_err,
                 num_classes=self.num_classes,
             ),
             "cal/aECE": CalibrationError(
                 task=task,
                 adaptive=True,
-                num_bins=self.num_calibration_bins,
+                num_bins=self.num_bins_cal_err,
                 num_classes=self.num_classes,
             ),
             "sc/AURC": AURC(),
@@ -381,13 +377,8 @@ class ClassificationRoutine(LightningModule):
         the storage lists for logit plotting and update the batchnorms if needed.
         """
         if self.post_processing is not None:
-            calibration_dataloader = (
-                self.trainer.datamodule.val_dataloader()
-                if self.calibration_set == "val"
-                else self.trainer.datamodule.test_dataloader()[0]
-            )
             with torch.inference_mode(False):
-                self.post_processing.fit(calibration_dataloader)
+                self.post_processing.fit(self.trainer.datamodule.postprocess_dataloader())
 
         if self.eval_ood and self.log_plots and isinstance(self.logger, Logger):
             self.id_logit_storage = []
@@ -699,7 +690,7 @@ def _classification_routine_checks(
     is_ensemble: bool,
     ood_criterion: str,
     eval_grouping_loss: bool,
-    num_calibration_bins: int,
+    num_bins_cal_err: int,
     mixup_params: dict | None,
     post_processing: PostProcessing | None,
     format_batch_fn: nn.Module | None,
@@ -712,7 +703,7 @@ def _classification_routine_checks(
         is_ensemble (bool): whether the model is an ensemble or a single model.
         ood_criterion (str): the criterion for the binary OOD detection task.
         eval_grouping_loss (bool): whether to evaluate the grouping loss.
-        num_calibration_bins (int): the number of bins for the evaluation of the calibration.
+        num_bins_cal_err (int): the number of bins for the evaluation of the calibration.
         mixup_params (dict | None): the dictionary to setup the mixup augmentation.
         post_processing (PostProcessing | None): the post-processing module.
         format_batch_fn (nn.Module | None): the function for formatting the batch for ensembles.
@@ -758,8 +749,8 @@ def _classification_routine_checks(
             "attribute to compute the grouping loss."
         )
 
-    if num_calibration_bins < 2:
-        raise ValueError(f"num_calibration_bins must be at least 2, got {num_calibration_bins}.")
+    if num_bins_cal_err < 2:
+        raise ValueError(f"num_bins_cal_err must be at least 2, got {num_bins_cal_err}.")
 
     if mixup_params is not None and isinstance(format_batch_fn, RepeatTarget):
         raise ValueError(

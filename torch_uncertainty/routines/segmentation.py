@@ -37,7 +37,7 @@ class SegmentationRoutine(LightningModule):
         metric_subsampling_rate: float = 1e-2,
         log_plots: bool = False,
         num_samples_to_plot: int = 3,
-        num_calibration_bins: int = 15,
+        num_bins_cal_err: int = 15,
     ) -> None:
         r"""Routine for training & testing on **segmentation** tasks.
 
@@ -57,8 +57,8 @@ class SegmentationRoutine(LightningModule):
                 metrics. Defaults to ``False``.
             num_samples_to_plot (int, optional): Number of samples to plot in the
                 segmentation results. Defaults to ``3``.
-            num_calibration_bins (int, optional): Number of bins to compute calibration
-                metrics. Defaults to ``15``.
+            num_bins_cal_err (int, optional): Number of bins to compute calibration
+                error metrics. Defaults to ``15``.
 
         Warning:
             You must define :attr:`optim_recipe` if you do not use the CLI.
@@ -72,7 +72,7 @@ class SegmentationRoutine(LightningModule):
         _segmentation_routine_checks(
             num_classes=num_classes,
             metric_subsampling_rate=metric_subsampling_rate,
-            num_calibration_bins=num_calibration_bins,
+            num_bins_cal_err=num_bins_cal_err,
         )
         if eval_shift:
             raise NotImplementedError(
@@ -81,7 +81,7 @@ class SegmentationRoutine(LightningModule):
 
         self.model = model
         self.num_classes = num_classes
-        self.num_calibration_bins = num_calibration_bins
+        self.num_bins_cal_err = num_bins_cal_err
         self.loss = loss
         self.needs_epoch_update = isinstance(model, EPOCH_UPDATE_MODEL)
         self.needs_step_update = isinstance(model, STEP_UPDATE_MODEL)
@@ -118,13 +118,13 @@ class SegmentationRoutine(LightningModule):
                 "cal/ECE": CalibrationError(
                     task="multiclass",
                     num_classes=self.num_classes,
-                    num_bins=self.num_calibration_bins,
+                    num_bins=self.num_bins_cal_err,
                 ),
                 "cal/aECE": CalibrationError(
                     task="multiclass",
                     adaptive=True,
                     num_classes=self.num_classes,
-                    num_bins=self.num_calibration_bins,
+                    num_bins=self.num_bins_cal_err,
                 ),
                 "sc/AURC": AURC(),
                 "sc/AUGRC": AUGRC(),
@@ -327,14 +327,14 @@ class SegmentationRoutine(LightningModule):
 def _segmentation_routine_checks(
     num_classes: int,
     metric_subsampling_rate: float,
-    num_calibration_bins: int,
+    num_bins_cal_err: int,
 ) -> None:
     """Check the domains of the routine's parameters.
 
     Args:
         num_classes (int): the number of classes in the dataset.
         metric_subsampling_rate (float): the rate of subsampling to compute the metrics.
-        num_calibration_bins (int): the number of bins for the evaluation of the calibration.
+        num_bins_cal_err (int): the number of bins for the evaluation of the calibration.
     """
     if num_classes < 2:
         raise ValueError(f"num_classes must be at least 2, got {num_classes}.")
@@ -344,5 +344,5 @@ def _segmentation_routine_checks(
             f"metric_subsampling_rate must be in the range (0, 1], got {metric_subsampling_rate}."
         )
 
-    if num_calibration_bins < 2:
-        raise ValueError(f"num_calibration_bins must be at least 2, got {num_calibration_bins}.")
+    if num_bins_cal_err < 2:
+        raise ValueError(f"num_bins_cal_err must be at least 2, got {num_bins_cal_err}.")

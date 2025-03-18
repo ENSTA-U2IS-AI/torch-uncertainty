@@ -50,6 +50,7 @@ class ImageNetDataModule(TUDataModule):
         eval_shift: bool = False,
         shift_severity: int = 1,
         val_split: float | Path | None = None,
+        postprocess_set: Literal["val", "test"] = "val",
         ood_ds: str = "openimage-o",
         test_alt: str | None = None,
         procedure: str | None = None,
@@ -74,6 +75,8 @@ class ImageNetDataModule(TUDataModule):
             val_split (float or Path): Share of samples to use for validation
                 or path to a yaml file containing a list of validation images
                 ids. Defaults to ``0.0``.
+            postprocess_set (str, optional): The post-hoc calibration dataset to
+                use for the post-processing method. Defaults to ``val``.
             ood_ds (str): Which out-of-distribution dataset to use. Defaults to
                 ``"openimage-o"``.
             test_alt (str): Which test set to use. Defaults to ``None``.
@@ -94,6 +97,7 @@ class ImageNetDataModule(TUDataModule):
             root=Path(root),
             batch_size=batch_size,
             val_split=val_split,
+            postprocess_set=postprocess_set,
             num_workers=num_workers,
             pin_memory=pin_memory,
             persistent_workers=persistent_workers,

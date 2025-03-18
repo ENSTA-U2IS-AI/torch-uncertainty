@@ -13,6 +13,8 @@ if util.find_spec("sklearn"):
 else:  # coverage: ignore
     sklearn_installed = False
 
+import logging
+
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.sampler import SubsetRandomSampler
 
@@ -33,8 +35,9 @@ class TUDataModule(ABC, LightningDataModule):
         num_workers: int,
         pin_memory: bool,
         persistent_workers: bool,
+        postprocess_set: Literal["val", "test"] = "val",
     ) -> None:
-        """Abstract DataModule class.
+        """Abstract DataModule class for TorchUncertainty.
 
         This class implements the basic functionality of a DataModule. It includes
         setters and getters for the datasets, dataloaders, as well as the crossval
@@ -47,6 +50,8 @@ class TUDataModule(ABC, LightningDataModule):
             num_workers (int): Number of workers to use for data loading.
             pin_memory (bool): Whether to pin memory.
             persistent_workers (bool): Whether to use persistent workers.
+            postprocess_set (str): Which split to use as post-processing set to fit the
+                post-processing method.
         """
         super().__init__()
 
@@ -57,6 +62,10 @@ class TUDataModule(ABC, LightningDataModule):
 
         self.pin_memory = pin_memory
         self.persistent_workers = persistent_workers
+
+        if postprocess_set == "test":
+            logging.warning("Fitting the calibration method on the test set!")
+        self.postprocess_set = postprocess_set
 
     @abstractmethod
     def setup(self, stage: Literal["fit", "test"] | None = None) -> None:
@@ -98,6 +107,14 @@ class TUDataModule(ABC, LightningDataModule):
             and out-of-distribution data.
         """
         return [self._data_loader(self.test)]
+
+    def postprocess_dataloader(self) -> DataLoader:
+        r"""Get the calibration dataloader.
+
+        Return:
+            DataLoader: calibration dataloader.
+        """
+        return self.val_dataloader() if self.postprocess_set == "val" else self.test_dataloader()[0]
 
     def _data_loader(self, dataset: Dataset, shuffle: bool = False) -> DataLoader:
         """Create a dataloader for a given dataset.
@@ -155,6 +172,7 @@ class TUDataModule(ABC, LightningDataModule):
                 datamodule=self,
                 batch_size=self.batch_size,
                 val_split=self.val_split,
+                postprocess_set=self.postprocess_set,
                 num_workers=self.num_workers,
                 pin_memory=self.pin_memory,
                 persistent_workers=self.persistent_workers,
@@ -176,6 +194,7 @@ class CrossValDataModule(TUDataModule):
         num_workers: int,
         pin_memory: bool,
         persistent_workers: bool,
+        postprocess_set: Literal["val", "test"] = "val",
     ) -> None:
         super().__init__(
             root=root,
@@ -184,6 +203,7 @@ class CrossValDataModule(TUDataModule):
             num_workers=num_workers,
             pin_memory=pin_memory,
             persistent_workers=persistent_workers,
+            postprocess_set=postprocess_set,
         )
 
         self.train_idx = train_idx

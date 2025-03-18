@@ -33,6 +33,7 @@ class CIFAR10DataModule(TUDataModule):
         eval_shift: bool = False,
         shift_severity: int = 1,
         val_split: float | None = None,
+        postprocess_set: Literal["val", "test"] = "val",
         num_workers: int = 1,
         basic_augment: bool = True,
         cutout: int | None = None,
@@ -53,6 +54,8 @@ class CIFAR10DataModule(TUDataModule):
             batch_size (int): Number of samples per batch.
             val_split (float): Share of samples to use for validation. Defaults
                 to ``0.0``.
+            postprocess_set (str, optional): The post-hoc calibration dataset to
+                use for the post-processing method. Defaults to ``val``.
             num_workers (int): Number of workers to use for data loading. Defaults
                 to ``1``.
             basic_augment (bool): Whether to apply base augmentations. Defaults to
@@ -73,6 +76,7 @@ class CIFAR10DataModule(TUDataModule):
             root=root,
             batch_size=batch_size,
             val_split=val_split,
+            postprocess_set=postprocess_set,
             num_workers=num_workers,
             pin_memory=pin_memory,
             persistent_workers=persistent_workers,

@@ -33,6 +33,7 @@ class CIFAR100DataModule(TUDataModule):
         eval_shift: bool = False,
         shift_severity: int = 1,
         val_split: float | None = None,
+        postprocess_set: Literal["val", "test"] = "val",
         basic_augment: bool = True,
         cutout: int | None = None,
         randaugment: bool = False,
@@ -53,6 +54,8 @@ class CIFAR100DataModule(TUDataModule):
             batch_size (int): Number of samples per batch.
             val_split (float): Share of samples to use for validation. Defaults
                 to ``0.0``.
+            postprocess_set (str, optional): The post-hoc calibration dataset to
+                use for the post-processing method. Defaults to ``val``.
             basic_augment (bool): Whether to apply base augmentations. Defaults to
                 ``True``.
             cutout (int): Size of cutout to apply to images. Defaults to ``None``.
@@ -72,6 +75,7 @@ class CIFAR100DataModule(TUDataModule):
             root=root,
             batch_size=batch_size,
             val_split=val_split,
+            postprocess_set=postprocess_set,
             num_workers=num_workers,
             pin_memory=pin_memory,
             persistent_workers=persistent_workers,

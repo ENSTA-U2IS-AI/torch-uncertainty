@@ -70,11 +70,10 @@ class ResNetBaseline(ClassificationRoutine):
         ood_criterion: Literal["msp", "logit", "energy", "entropy", "mi", "vr"] = "msp",
         log_plots: bool = False,
         save_in_csv: bool = False,
-        calibration_set: Literal["val", "test"] = "val",
         eval_ood: bool = False,
         eval_shift: bool = False,
         eval_grouping_loss: bool = False,
-        num_calibration_bins: int = 15,
+        num_bins_cal_err: int = 15,
         pretrained: bool = False,
     ) -> None:
         r"""ResNet backbone baseline for classification providing support for
@@ -154,15 +153,13 @@ class ResNetBaseline(ClassificationRoutine):
                 Defaults to ``False``.
             save_in_csv (bool, optional): Indicates whether to save the results in
                 a csv file or not. Defaults to ``False``.
-            calibration_set (Callable, optional): Calibration set. Defaults to
-                ``None``.
             eval_ood (bool, optional): Indicates whether to evaluate the
                 OOD detection or not. Defaults to ``False``.
             eval_shift (bool): Whether to evaluate on shifted data. Defaults to
             ``False``.
             eval_grouping_loss (bool, optional): Indicates whether to evaluate the
                 grouping loss or not. Defaults to ``False``.
-            num_calibration_bins (int, optional): Number of calibration bins.
+            num_bins_cal_err (int, optional): Number of calibration bins.
                 Defaults to ``15``.
             pretrained (bool, optional): Indicates whether to use the pretrained
                 weights or not. Only used if :attr:`version` is ``"packed"``.
@@ -244,7 +241,6 @@ class ResNetBaseline(ClassificationRoutine):
             ood_criterion=ood_criterion,
             log_plots=log_plots,
             save_in_csv=save_in_csv,
-            calibration_set=calibration_set,
-            num_calibration_bins=num_calibration_bins,
+            num_bins_cal_err=num_bins_cal_err,
         )
         self.save_hyperparameters(ignore=["loss"])
