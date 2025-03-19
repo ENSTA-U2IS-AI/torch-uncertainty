@@ -47,12 +47,29 @@ class TestCrossValDataModule:
 
     def test_errors(self):
         TUDataModule.__abstractmethods__ = set()
-        dm = TUDataModule("root", 128, 0.0, 4, True, True)
+        dm = TUDataModule(
+            root="root",
+            batch_size=128,
+            val_split=0.0,
+            num_workers=4,
+            pin_memory=True,
+            persistent_workers=True,
+        )
         ds = DummyClassificationDataset(Path("root"))
         dm.train = ds
         dm.val = ds
         dm.test = ds
-        cv_dm = CrossValDataModule("root", [0], [1], dm, 128, 0.0, 4, True, True)
+        cv_dm = CrossValDataModule(
+            root="root",
+            train_idx=[0],
+            val_idx=[1],
+            datamodule=dm,
+            batch_size=128,
+            val_split=0.0,
+            num_workers=4,
+            pin_memory=True,
+            persistent_workers=True,
+        )
         with pytest.raises(NotImplementedError):
             cv_dm.setup()
             cv_dm._get_train_data()

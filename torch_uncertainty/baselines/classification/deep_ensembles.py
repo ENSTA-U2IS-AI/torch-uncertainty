@@ -26,7 +26,6 @@ class DeepEnsemblesBaseline(ClassificationRoutine):
         eval_grouping_loss: bool = False,
         ood_criterion: Literal["msp", "logit", "energy", "entropy", "mi", "vr"] = "msp",
         log_plots: bool = False,
-        calibration_set: Literal["val", "test"] = "val",
     ) -> None:
         log_path = Path(log_path)
 
@@ -54,6 +53,5 @@ class DeepEnsemblesBaseline(ClassificationRoutine):
             eval_grouping_loss=eval_grouping_loss,
             ood_criterion=ood_criterion,
             log_plots=log_plots,
-            calibration_set=calibration_set,
         )
         self.save_hyperparameters()  # coverage: ignore

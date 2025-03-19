@@ -35,7 +35,3 @@ class TestMUADDataModule:
         dm.setup()
         dm.train_dataloader()
         dm.val_dataloader()
-
-    def test_small_muad_accessibility(self):
-        dataset = MUAD(root="./data/", split="test", version="small", download=True)
-        assert len(dataset.samples) > 0, "Dataset is not found"

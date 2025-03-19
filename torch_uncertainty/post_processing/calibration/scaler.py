@@ -3,7 +3,7 @@ from typing import Literal
 
 import torch
 from torch import Tensor, nn, optim
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from torch_uncertainty.post_processing import PostProcessing
@@ -47,14 +47,14 @@ class Scaler(PostProcessing):
 
     def fit(
         self,
-        calibration_set: Dataset,
+        dataloader: DataLoader,
         save_logits: bool = False,
         progress: bool = True,
     ) -> None:
         """Fit the temperature parameters to the calibration data.
 
         Args:
-            calibration_set (Dataset): Calibration dataset.
+            dataloader (DataLoader): Dataloader with the calibration data.
             save_logits (bool, optional): Whether to save the logits and
                 labels. Defaults to False.
             progress (bool, optional): Whether to show a progress bar.
@@ -65,16 +65,16 @@ class Scaler(PostProcessing):
                 "Cannot fit a Scaler method without model. Call .set_model(model) first."
             )
 
-        logits_list = []
-        labels_list = []
-        calibration_dl = DataLoader(calibration_set, batch_size=32, shuffle=False, drop_last=False)
+        all_logits = []
+        all_labels = []
+        calibration_dl = dataloader
         with torch.no_grad():
             for inputs, labels in tqdm(calibration_dl, disable=not progress):
                 logits = self.model(inputs.to(self.device))
-                logits_list.append(logits)
-                labels_list.append(labels)
-        all_logits = torch.cat(logits_list).detach().to(self.device)
-        all_labels = torch.cat(labels_list).detach().to(self.device)
+                all_logits.append(logits)
+                all_labels.append(labels)
+            all_logits = torch.cat(all_logits).to(self.device)
+            all_labels = torch.cat(all_labels).to(self.device)
 
         optimizer = optim.LBFGS(self.temperature, lr=self.lr, max_iter=self.max_iter)
 
@@ -87,12 +87,12 @@ class Scaler(PostProcessing):
         optimizer.step(calib_eval)
         self.trained = True
         if save_logits:
-            self.logits = logits
-            self.labels = labels
+            self.logits = all_logits
+            self.labels = all_labels
 
     @torch.no_grad()
     def forward(self, inputs: Tensor) -> Tensor:
-        if not self.trained:
+        if self.model is None or not self.trained:
             logging.error(
                 "TemperatureScaler has not been trained yet. Returning manually tempered inputs."
             )
@@ -111,10 +111,10 @@ class Scaler(PostProcessing):
 
     def fit_predict(
         self,
-        calibration_set: Dataset,
+        dataloader: DataLoader,
         progress: bool = True,
     ) -> Tensor:
-        self.fit(calibration_set, save_logits=True, progress=progress)
+        self.fit(dataloader, save_logits=True, progress=progress)
         return self(self.logits)
 
     @property

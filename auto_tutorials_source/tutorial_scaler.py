@@ -6,8 +6,8 @@ In this tutorial, we use *TorchUncertainty* to improve the calibration
 of the top-label predictions and the reliability of the underlying neural network.
 
 This tutorial provides extensive details on how to use the TemperatureScaler
-class, however, this is done automatically in the classification routine when setting
-the `calibration_set` to val or test.
+class, however, this is done automatically in the datamodule when setting
+the `postprocess_set` to val or test.
 
 Through this tutorial, we also see how to use the datamodules outside any Lightning trainers,
 and how to use TorchUncertainty's models.
@@ -57,12 +57,12 @@ model.load_state_dict(weights)
 # element if eval_ood is True: the dataloader of in-distribution data and the dataloader
 # of out-of-distribution data. Otherwise, it is a list of 1 element.
 
-dm = CIFAR100DataModule(root="./data", eval_ood=False, batch_size=32)
+dm = CIFAR100DataModule(root="./data", eval_ood=False, batch_size=32, postprocess_set="test")
 dm.prepare_data()
 dm.setup("test")
 
-# Get the full test dataloader (unused in this tutorial)
-dataloader = dm.test_dataloader()[0]
+# Get the full post-processing dataloader (unused in this tutorial)
+dataloader = dm.postprocess_dataloader()
 
 # %%
 # 4. Iterating on the Dataloader and Computing the ECE
@@ -84,6 +84,7 @@ cal_dataset, test_dataset, other = random_split(
     dataset, [1000, 1000, len(dataset) - 2000]
 )
 test_dataloader = DataLoader(test_dataset, batch_size=32)
+calibration_dataloader = DataLoader(cal_dataset, batch_size=32)
 
 # Initialize the ECE
 ece = CalibrationError(task="multiclass", num_classes=100)
@@ -114,7 +115,7 @@ fig.show()
 
 # Fit the scaler on the calibration dataset
 scaled_model = TemperatureScaler(model=model)
-scaled_model.fit(calibration_set=cal_dataset)
+scaled_model.fit(dataloader=calibration_dataloader)
 
 # %%
 # 6. Iterating Again to Compute the Improved ECE

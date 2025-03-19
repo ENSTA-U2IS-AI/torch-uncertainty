@@ -1,10 +1,11 @@
 from pathlib import Path
 from typing import Literal
 
-import torchvision.transforms as T
+import torch
 from torch import nn
 from torch.utils.data import DataLoader
 from torchvision.datasets import MNIST, FashionMNIST
+from torchvision.transforms import v2
 
 from torch_uncertainty.datamodules import TUDataModule
 from torch_uncertainty.datasets.classification import MNISTC, NotMNIST
@@ -29,6 +30,7 @@ class MNISTDataModule(TUDataModule):
         eval_shift: bool = False,
         ood_ds: Literal["fashion", "notMNIST"] = "fashion",
         val_split: float | None = None,
+        postprocess_set: Literal["val", "test"] = "val",
         num_workers: int = 1,
         basic_augment: bool = True,
         cutout: int | None = None,
@@ -49,6 +51,8 @@ class MNISTDataModule(TUDataModule):
                 notMNIST.
             val_split (float): Share of samples to use for validation. Defaults
                 to ``0.0``.
+            postprocess_set (str, optional): The post-hoc calibration dataset to
+                use for the post-processing method. Defaults to ``val``.
             num_workers (int): Number of workers to use for data loading. Defaults
                 to ``1``.
             basic_augment (bool): Whether to apply base augmentations. Defaults to
@@ -62,6 +66,7 @@ class MNISTDataModule(TUDataModule):
             root=root,
             batch_size=batch_size,
             val_split=val_split,
+            postprocess_set=postprocess_set,
             num_workers=num_workers,
             pin_memory=pin_memory,
             persistent_workers=persistent_workers,
@@ -82,32 +87,35 @@ class MNISTDataModule(TUDataModule):
         self.shift_dataset = MNISTC
         self.shift_severity = 1
 
-        basic_transform = T.RandomCrop(28, padding=4) if basic_augment else nn.Identity()
+        basic_transform = v2.RandomCrop(28, padding=4) if basic_augment else nn.Identity()
 
         main_transform = Cutout(cutout) if cutout else nn.Identity()
 
-        self.train_transform = T.Compose(
+        self.train_transform = v2.Compose(
             [
-                T.ToTensor(),
+                v2.ToImage(),
                 basic_transform,
                 main_transform,
-                T.Normalize(mean=self.mean, std=self.std),
+                v2.ToDtype(dtype=torch.float32, scale=True),
+                v2.Normalize(mean=self.mean, std=self.std),
             ]
         )
-        self.test_transform = T.Compose(
+        self.test_transform = v2.Compose(
             [
-                T.ToTensor(),
-                T.CenterCrop(28),
-                T.Normalize(mean=self.mean, std=self.std),
+                v2.ToImage(),
+                v2.CenterCrop(28),
+                v2.ToDtype(dtype=torch.float32, scale=True),
+                v2.Normalize(mean=self.mean, std=self.std),
             ]
         )
         if self.eval_ood:  # NotMNIST has 3 channels
-            self.ood_transform = T.Compose(
+            self.ood_transform = v2.Compose(
                 [
-                    T.ToTensor(),
-                    T.Grayscale(num_output_channels=1),
-                    T.CenterCrop(28),
-                    T.Normalize(mean=self.mean, std=self.std),
+                    v2.ToImage(),
+                    v2.Grayscale(num_output_channels=1),
+                    v2.CenterCrop(28),
+                    v2.ToDtype(dtype=torch.float32, scale=True),
+                    v2.Normalize(mean=self.mean, std=self.std),
                 ]
             )
 

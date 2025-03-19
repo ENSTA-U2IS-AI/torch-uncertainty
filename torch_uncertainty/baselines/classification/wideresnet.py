@@ -50,7 +50,6 @@ class WideResNetBaseline(ClassificationRoutine):
         ood_criterion: Literal["msp", "logit", "energy", "entropy", "mi", "vr"] = "msp",
         log_plots: bool = False,
         save_in_csv: bool = False,
-        calibration_set: Literal["val", "test"] = "val",
         eval_ood: bool = False,
         eval_shift: bool = False,
         eval_grouping_loss: bool = False,
@@ -112,8 +111,6 @@ class WideResNetBaseline(ClassificationRoutine):
                 Defaults to ``False``.
             save_in_csv (bool, optional): Indicates whether to save the results in
                 a csv file or not. Defaults to ``False``.
-            calibration_set (Callable, optional): Calibration set. Defaults to
-                ``None``.
             eval_ood (bool, optional): Indicates whether to evaluate the
                 OOD detection or not. Defaults to ``False``.
             eval_shift (bool): Whether to evaluate on shifted data. Defaults to
@@ -195,6 +192,5 @@ class WideResNetBaseline(ClassificationRoutine):
             ood_criterion=ood_criterion,
             log_plots=log_plots,
             save_in_csv=save_in_csv,
-            calibration_set=calibration_set,
         )
         self.save_hyperparameters(ignore=["loss"])
