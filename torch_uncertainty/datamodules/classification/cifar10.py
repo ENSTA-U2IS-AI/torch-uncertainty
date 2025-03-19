@@ -2,12 +2,13 @@ from pathlib import Path
 from typing import Literal
 
 import numpy as np
-import torchvision.transforms as T
+import torch
 from numpy.typing import ArrayLike
 from timm.data.auto_augment import rand_augment_transform
 from torch import nn
 from torch.utils.data import DataLoader
 from torchvision.datasets import CIFAR10, SVHN
+from torchvision.transforms import v2
 
 from torch_uncertainty.datamodules.abstract import TUDataModule
 from torch_uncertainty.datasets import AggregatedDataset
@@ -32,6 +33,7 @@ class CIFAR10DataModule(TUDataModule):
         eval_shift: bool = False,
         shift_severity: int = 1,
         val_split: float | None = None,
+        postprocess_set: Literal["val", "test"] = "val",
         num_workers: int = 1,
         basic_augment: bool = True,
         cutout: int | None = None,
@@ -48,13 +50,21 @@ class CIFAR10DataModule(TUDataModule):
             batch_size (int): Number of samples per batch.
             eval_ood (bool): Whether to evaluate on out-of-distribution data. Defaults to ``False``.
             eval_shift (bool): Whether to evaluate on shifted data. Defaults to ``False``.
-            shift_severity (int): Severity of corruption to apply for CIFAR10-C. Defaults to ``1``.
-            val_split (float | None): Share of samples to use for validation. Defaults to ``None``.
-            num_workers (int): Number of workers to use for data loading. Defaults to ``1``.
-            basic_augment (bool): Whether to apply base augmentations. Defaults to ``True``.
-            cutout (int | None): Size of cutout to apply to images. Defaults to ``None``.
-            auto_augment (str | None): Which auto-augment to apply. Defaults to ``None``.
-            test_alt (Literal["h"] | None): Which test set to use. Defaults to ``None``.
+            val_split (float): Share of samples to use for validation. Defaults
+                to ``0.0``.
+            postprocess_set (str, optional): The post-hoc calibration dataset to
+                use for the post-processing method. Defaults to ``val``.
+            num_workers (int): Number of workers to use for data loading. Defaults
+                to ``1``.
+            basic_augment (bool): Whether to apply base augmentations. Defaults to
+                ``True``.
+            cutout (int): Size of cutout to apply to images. Defaults to ``None``.
+            randaugment (bool): Whether to apply RandAugment. Defaults to
+                ``False``.
+            auto_augment (str): Which auto-augment to apply. Defaults to ``None``.
+            test_alt (str): Which test set to use. Defaults to ``None``.
+            shift_severity (int): Severity of corruption to apply for
+                CIFAR10-C. Defaults to ``1``.
             num_dataloaders (int): Number of dataloaders to use. Defaults to ``1``.
             pin_memory (bool): Whether to pin memory. Defaults to ``True``.
             persistent_workers (bool): Whether to use persistent workers. Defaults to ``True``.
@@ -63,6 +73,7 @@ class CIFAR10DataModule(TUDataModule):
             root=root,
             batch_size=batch_size,
             val_split=val_split,
+            postprocess_set=postprocess_set,
             num_workers=num_workers,
             pin_memory=pin_memory,
             persistent_workers=persistent_workers,
@@ -91,10 +102,10 @@ class CIFAR10DataModule(TUDataModule):
             )
 
         if basic_augment:
-            basic_transform = T.Compose(
+            basic_transform = v2.Compose(
                 [
-                    T.RandomCrop(32, padding=4),
-                    T.RandomHorizontalFlip(),
+                    v2.RandomCrop(32, padding=4),
+                    v2.RandomHorizontalFlip(),
                 ]
             )
         else:
@@ -107,25 +118,21 @@ class CIFAR10DataModule(TUDataModule):
         else:
             main_transform = nn.Identity()
 
-        self.train_transform = T.Compose(
+        self.train_transform = v2.Compose(
             [
-                T.ToTensor(),
+                v2.ToImage(),
                 basic_transform,
                 main_transform,
-                T.Normalize(
-                    self.mean,
-                    self.std,
-                ),
+                v2.ToDtype(dtype=torch.float32, scale=True),
+                v2.Normalize(mean=self.mean, std=self.std),
             ]
         )
 
-        self.test_transform = T.Compose(
+        self.test_transform = v2.Compose(
             [
-                T.ToTensor(),
-                T.Normalize(
-                    self.mean,
-                    self.std,
-                ),
+                v2.ToImage(),
+                v2.ToDtype(dtype=torch.float32, scale=True),
+                v2.Normalize(mean=self.mean, std=self.std),
             ]
         )
 

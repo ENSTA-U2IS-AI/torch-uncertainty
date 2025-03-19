@@ -2,7 +2,7 @@ import copy
 
 import torch
 from torch import Tensor, nn
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader
 
 from torch_uncertainty.layers.bayesian.abnn import BatchNormAdapter2d
 from torch_uncertainty.models import deep_ensembles
@@ -25,7 +25,6 @@ class ABNN(PostProcessing):
         device: torch.device | str,
         max_epochs: int = 5,
         use_original_model: bool = True,
-        batch_size: int = 128,
         precision: str = "32",
         model: nn.Module | None = None,
     ):
@@ -44,9 +43,7 @@ class ABNN(PostProcessing):
             max_epochs (int, optional): Number of training epochs. Defaults
             to 5.
             use_original_model (bool, optional): Use original model during
-            evaluation. Defaults to True.
-            batch_size (int, optional): Batch size for the training of ABNN.
-            Defaults to 128.
+                evaluation. Defaults to True.
             precision (str, optional): Machine precision for training & eval.
             Defaults to "32".
             model (nn.Module | None, optional): Model to use. Defaults to None.
@@ -60,7 +57,6 @@ class ABNN(PostProcessing):
             num_models=num_models,
             num_samples=num_samples,
             base_lr=base_lr,
-            batch_size=batch_size,
         )
         self.num_classes = num_classes
         self.alpha = alpha
@@ -71,7 +67,6 @@ class ABNN(PostProcessing):
         self.use_original_model = use_original_model
         self.max_epochs = max_epochs
 
-        self.batch_size = batch_size
         self.precision = precision
         self.device = device
 
@@ -85,10 +80,9 @@ class ABNN(PostProcessing):
             weight[torch.randperm(num_classes)[:num_rp_classes]] += random_prior - 1
             self.weights.append(weight)
 
-    def fit(self, dataset: Dataset) -> None:
+    def fit(self, dataloader: DataLoader) -> None:
         if self.model is None:
             raise ValueError("Model must be set before fitting.")
-        dl = DataLoader(dataset, batch_size=self.batch_size, shuffle=True)
 
         source_model = copy.deepcopy(self.model)
         _replace_bn_layers(source_model, self.alpha)
@@ -116,7 +110,7 @@ class ABNN(PostProcessing):
                 logger=None,
                 enable_model_summary=False,
             )
-            trainer.fit(model=baseline, train_dataloaders=dl)
+            trainer.fit(model=baseline, train_dataloaders=dataloader)
 
         final_models = (
             [copy.deepcopy(source_model) for _ in range(self.num_samples)]

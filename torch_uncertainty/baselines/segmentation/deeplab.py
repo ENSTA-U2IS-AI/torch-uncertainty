@@ -30,7 +30,7 @@ class DeepLabBaseline(SegmentationRoutine):
         separable: bool,
         metric_subsampling_rate: float = 1e-2,
         log_plots: bool = False,
-        num_calibration_bins: int = 15,
+        num_bins_cal_err: int = 15,
         pretrained_backbone: bool = True,
     ) -> None:
         params = {
@@ -54,6 +54,6 @@ class DeepLabBaseline(SegmentationRoutine):
             format_batch_fn=format_batch_fn,
             metric_subsampling_rate=metric_subsampling_rate,
             log_plots=log_plots,
-            num_calibration_bins=num_calibration_bins,
+            num_bins_cal_err=num_bins_cal_err,
         )
         self.save_hyperparameters(ignore=["loss"])

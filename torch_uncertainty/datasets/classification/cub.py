@@ -55,6 +55,7 @@ class CUB(ImageFolder):
             )
 
         super().__init__(Path(root) / "CUB_200_2011" / "images", transform, target_transform)
+        self.root = Path(root)
 
         training_idx = self._load_train_idx()
         self.attributes, self.uncertainties = self._load_attributes()

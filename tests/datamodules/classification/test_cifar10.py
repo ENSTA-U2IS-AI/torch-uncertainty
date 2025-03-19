@@ -10,7 +10,7 @@ class TestCIFAR10DataModule:
     """Testing the CIFAR10DataModule datamodule class."""
 
     def test_cifar10_main(self):
-        dm = CIFAR10DataModule(root="./data/", batch_size=128, cutout=16)
+        dm = CIFAR10DataModule(root="./data/", batch_size=128, cutout=16, postprocess_set="test")
 
         assert dm.dataset == CIFAR10
         assert isinstance(dm.train_transform.transforms[2], Cutout)

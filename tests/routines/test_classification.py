@@ -360,12 +360,12 @@ class TestClassification:
                 mixup_params=mixup_params,
             )
 
-        with pytest.raises(ValueError, match="num_calibration_bins must be at least 2, got"):
+        with pytest.raises(ValueError, match="num_bins_cal_err must be at least 2, got"):
             ClassificationRoutine(
                 model=nn.Identity(),
                 num_classes=2,
                 loss=nn.CrossEntropyLoss(),
-                num_calibration_bins=0,
+                num_bins_cal_err=0,
             )
 
         with pytest.raises(ValueError):

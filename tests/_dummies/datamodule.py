@@ -2,10 +2,10 @@ from pathlib import Path
 
 import numpy as np
 import torch
-import torchvision.transforms.v2 as T
 from numpy.typing import ArrayLike
 from torch.utils.data import DataLoader
 from torchvision import tv_tensors
+from torchvision.transforms import v2
 
 from torch_uncertainty.datamodules import TUDataModule
 
@@ -52,8 +52,8 @@ class DummyClassificationDataModule(TUDataModule):
         self.ood_dataset = DummyClassificationDataset
         self.shift_dataset = DummyClassificationDataset
 
-        self.train_transform = T.ToTensor()
-        self.test_transform = T.ToTensor()
+        self.train_transform = v2.ToTensor()
+        self.test_transform = v2.ToTensor()
 
     def prepare_data(self) -> None:
         pass
@@ -207,7 +207,7 @@ class DummySegmentationDataModule(TUDataModule):
 
         self.dataset = DummySegmentationDataset
 
-        self.train_transform = T.ToDtype(
+        self.train_transform = v2.ToDtype(
             dtype={
                 tv_tensors.Image: torch.float32,
                 tv_tensors.Mask: torch.int64,
@@ -215,7 +215,7 @@ class DummySegmentationDataModule(TUDataModule):
             },
             scale=True,
         )
-        self.test_transform = T.ToDtype(
+        self.test_transform = v2.ToDtype(
             dtype={
                 tv_tensors.Image: torch.float32,
                 tv_tensors.Mask: torch.int64,
@@ -296,7 +296,7 @@ class DummyPixelRegressionDataModule(TUDataModule):
 
         self.dataset = DummPixelRegressionDataset
 
-        self.train_transform = T.ToDtype(
+        self.train_transform = v2.ToDtype(
             dtype={
                 tv_tensors.Image: torch.float32,
                 tv_tensors.Mask: torch.float32,
@@ -304,7 +304,7 @@ class DummyPixelRegressionDataModule(TUDataModule):
             },
             scale=True,
         )
-        self.test_transform = T.ToDtype(
+        self.test_transform = v2.ToDtype(
             dtype={
                 tv_tensors.Image: torch.float32,
                 tv_tensors.Mask: torch.float32,

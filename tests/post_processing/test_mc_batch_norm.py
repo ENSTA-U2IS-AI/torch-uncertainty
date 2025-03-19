@@ -4,6 +4,7 @@ import pytest
 import torch
 import torchvision.transforms as T
 from torch import nn
+from torch.utils.data import DataLoader
 
 from tests._dummies.dataset import DummyClassificationDataset
 from torch_uncertainty.layers.mc_batch_norm import MCBatchNorm2d
@@ -21,10 +22,7 @@ class TestMCBatchNorm:
 
         model = lenet(1, 1, norm=nn.BatchNorm2d)
         stoch_model = MCBatchNorm(
-            nn.Sequential(model),
-            num_estimators=2,
-            convert=True,
-            mc_batch_size=1,
+            nn.Sequential(model), num_estimators=2, convert=True, mc_batch_size=1
         )
         dataset = DummyClassificationDataset(
             "./",
@@ -34,7 +32,7 @@ class TestMCBatchNorm:
             num_images=2,
             transform=T.ToTensor(),
         )
-        stoch_model.fit(dataset=dataset)
+        stoch_model.fit(dataloader=DataLoader(dataset, batch_size=6, shuffle=True))
         stoch_model.train()
         stoch_model(torch.randn(1, 1, 20, 20))
         stoch_model.eval()
@@ -48,8 +46,6 @@ class TestMCBatchNorm:
         model = nn.Identity()
         with pytest.raises(ValueError):
             MCBatchNorm(model, num_estimators=0, convert=True)
-        with pytest.raises(ValueError, match="mc_batch_size must be a positive integer"):
-            MCBatchNorm(model, num_estimators=1, convert=True, mc_batch_size=-1)
         with pytest.raises(ValueError):
             MCBatchNorm(model, num_estimators=1, convert=False)
         with pytest.raises(ValueError):
@@ -64,9 +60,10 @@ class TestMCBatchNorm:
             num_images=2,
             transform=T.ToTensor(),
         )
+        dl = DataLoader(dataset, batch_size=2, shuffle=True)
         stoch_model.eval()
         with pytest.raises(RuntimeError):
             stoch_model(torch.randn(1, 1, 20, 20))
 
         with pytest.raises(ValueError):
-            stoch_model.fit(dataset=dataset)
+            stoch_model.fit(dataloader=dl)
