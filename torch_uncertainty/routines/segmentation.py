@@ -283,7 +283,10 @@ class SegmentationRoutine(LightningModule):
                 "Selective Classification/Generalized Risk-Coverage curve",
                 self.test_sbsmpl_seg_metrics["sc/AUGRC"].plot()[0],
             )
-            self.log_segmentation_plots()
+            if self.trainer.datamodule is not None:
+                self.log_segmentation_plots()
+            else:
+                print("No datamodule found, skipping segmentation plots.")
 
     def log_segmentation_plots(self) -> None:
         """Build and log examples of segmentation plots from the test set."""
