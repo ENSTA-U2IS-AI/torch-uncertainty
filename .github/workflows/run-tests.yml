@@ -36,23 +36,23 @@ jobs:
         echo "PYTHON_VERSION=$(python -c "import platform; print(platform.python_version())")"
         echo "PYTHON_VERSION=$(python -c "import platform; print(platform.python_version())")" >> $GITHUB_ENV
 
-    # - name: Get changed files
-    #   id: changed-files-specific
-    #   uses: tj-actions/changed-files@v42
-    #   with:
-    #     files: |
-    #       auto_tutorials_source/**
-    #       data/**
-    #       experiments/**
-    #       docs/**
-    #       *.md
-    #       *.yaml
-    #       *.yml
-    #       LICENSE
-    #       .gitignore
+    - name: Get changed files
+      id: changed-files-specific
+      uses: tj-actions/changed-files@v42
+      with:
+        files: |
+          auto_tutorials_source/**
+          data/**
+          experiments/**
+          docs/**
+          *.md
+          *.yaml
+          *.yml
+          LICENSE
+          .gitignore
 
     - name: Cache folder for TorchUncertainty
-      # if: steps.changed-files-specific.outputs.only_changed != 'true'
+      if: steps.changed-files-specific.outputs.only_changed != 'true'
       uses: actions/cache@v4
       id: cache-folder
       with:
@@ -61,25 +61,24 @@ jobs:
         key: torch-uncertainty-${{ runner.os }}
 
     - name: Install dependencies
-      # if: steps.changed-files-specific.outputs.only_changed != 'true'
+      if: steps.changed-files-specific.outputs.only_changed != 'true'
       run: |
         python3 -m pip install torch torchvision --extra-index-url https://download.pytorch.org/whl/cpu
         python3 -m pip install .[all]
 
     - name: Check style & format
-      # if: steps.changed-files-specific.outputs.only_changed != 'true'
+      if: steps.changed-files-specific.outputs.only_changed != 'true'
       run: |
         python3 -m ruff check torch_uncertainty --no-fix --statistics
         python3 -m ruff format torch_uncertainty --check
 
     - name: Test with pytest and compute coverage
-      # if: steps.changed-files-specific.outputs.only_changed != 'true'
+      if: steps.changed-files-specific.outputs.only_changed != 'true'
       run: |
         python3 -m pytest --cov --cov-report xml --durations 10 --junitxml=junit.xml
 
     - name: Upload coverage to Codecov
-      # if: steps.changed-files-specific.outputs.only_changed != 'true' && (github.event_name != 'pull_request' || github.base_ref == 'dev')
-      if: github.event_name != 'pull_request' || github.base_ref == 'dev'
+      if: steps.changed-files-specific.outputs.only_changed != 'true' && (github.event_name != 'pull_request' || github.base_ref == 'dev')
       uses: codecov/codecov-action@v4
       continue-on-error: true
       with:
@@ -90,8 +89,7 @@ jobs:
         env_vars: PYTHON_VERSION
 
     - name: Upload test results to Codecov
-      # if: steps.changed-files-specific.outputs.only_changed != 'true' && (github.event_name != 'pull_request' || github.base_ref == 'dev')
-      if: github.event_name != 'pull_request' || github.base_ref == 'dev'
+      if: steps.changed-files-specific.outputs.only_changed != 'true' && (github.event_name != 'pull_request' || github.base_ref == 'dev')
       uses: codecov/test-results-action@v1
       continue-on-error: true
       with:
@@ -100,6 +98,6 @@ jobs:
         env_vars: PYTHON_VERSION
 
     - name: Test sphinx build without tutorials
-      # if: steps.changed-files-specific.outputs.only_changed != 'true'
+      if: steps.changed-files-specific.outputs.only_changed != 'true'
       run: |
         cd docs && make clean && make html-noplot
