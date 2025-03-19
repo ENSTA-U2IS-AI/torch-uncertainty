@@ -57,7 +57,7 @@ model.load_state_dict(weights)
 # element if eval_ood is True: the dataloader of in-distribution data and the dataloader
 # of out-of-distribution data. Otherwise, it is a list of 1 element.
 
-dm = CIFAR100DataModule(root="./data", eval_ood=False, batch_size=32)
+dm = CIFAR100DataModule(root="./data", eval_ood=False, batch_size=32, postprocess_set="test")
 dm.prepare_data()
 dm.setup("test")
 
