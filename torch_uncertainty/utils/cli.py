@@ -69,6 +69,7 @@ class TULightningCLI(LightningCLI):
         trainer_defaults: dict[str, Any] | None = None,
         seed_everything_default: bool | int = True,
         parser_kwargs: dict[str, Any] | dict[str, dict[str, Any]] | None = None,
+        parser_class: type[LightningArgumentParser] = LightningArgumentParser,
         subclass_mode_model: bool = False,
         subclass_mode_data: bool = False,
         args: ArgsType = None,
@@ -87,6 +88,7 @@ class TULightningCLI(LightningCLI):
             trainer_defaults (dict[str, Any] | None, optional): _description_. Defaults to None.
             seed_everything_default (bool | int, optional): _description_. Defaults to True.
             parser_kwargs (dict[str, Any] | dict[str, dict[str, Any]] | None, optional): _description_. Defaults to None.
+            parser_class (type[LightningArgumentParser], optional): _description_. Defaults to ``LightningArgumentParser``.
             subclass_mode_model (bool, optional): _description_. Defaults to False.
             subclass_mode_data (bool, optional): _description_. Defaults to False.
             args (ArgsType, optional): _description_. Defaults to None.
@@ -96,19 +98,20 @@ class TULightningCLI(LightningCLI):
         """
         self.eval_after_fit_default = eval_after_fit_default
         super().__init__(
-            model_class,
-            datamodule_class,
-            save_config_callback,
-            save_config_kwargs,
-            trainer_class,
-            trainer_defaults,
-            seed_everything_default,
-            parser_kwargs,
-            subclass_mode_model,
-            subclass_mode_data,
-            args,
-            run,
-            auto_configure_optimizers,
+            model_class=model_class,
+            datamodule_class=datamodule_class,
+            save_config_callback=save_config_callback,
+            save_config_kwargs=save_config_kwargs,
+            trainer_class=trainer_class,
+            trainer_defaults=trainer_defaults,
+            seed_everything_default=seed_everything_default,
+            parser_kwargs=parser_kwargs,
+            parser_class=parser_class,
+            subclass_mode_model=subclass_mode_model,
+            subclass_mode_data=subclass_mode_data,
+            args=args,
+            run=run,
+            auto_configure_optimizers=auto_configure_optimizers,
         )
 
     def add_default_arguments_to_parser(self, parser: LightningArgumentParser) -> None:
