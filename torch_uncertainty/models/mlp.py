@@ -82,10 +82,13 @@ class _MLP(nn.Module):
                 )
 
         self.layers = layers
+        self.fc_dropout = nn.Dropout(p=dropout_rate)
+        self.last_fc_dropout = nn.Dropout(p=dropout_rate)
 
     def forward(self, x: Tensor) -> Tensor | dict[str, Tensor]:
-        for layer in self.layers:
-            x = F.dropout(layer(x), p=self.dropout_rate, training=self.training)
+        for i, layer in enumerate(self.layers):
+            dropout = self.fc_dropout if i < len(self.layers) - 1 else self.last_fc_dropout
+            x = dropout(layer(x), p=self.dropout_rate, training=self.training)
             x = self.activation(x)
         return self.final_layer(x)
 
