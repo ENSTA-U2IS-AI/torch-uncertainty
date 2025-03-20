@@ -61,3 +61,4 @@ jobs:
     - name: Kill SSH Agent
       run: |
         killall ssh-agent
+      continues-on-error: true
