@@ -64,7 +64,7 @@ class TUDataModule(ABC, LightningDataModule):
         self.persistent_workers = persistent_workers
 
         if postprocess_set == "test":
-            logging.warning("Fitting the calibration method on the test set!")
+            logging.warning("You might be fitting the post-processing method on the test set!")
         self.postprocess_set = postprocess_set
 
     @abstractmethod
