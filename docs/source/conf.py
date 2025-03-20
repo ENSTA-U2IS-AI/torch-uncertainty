@@ -78,6 +78,7 @@ sphinx_gallery_conf = {
     "reference_url": {
         "sphinx_gallery": None,
     },
+    "copyfile_regex": r".*\.rst",
 }
 
 # Use both the docstrings of the init and the class
