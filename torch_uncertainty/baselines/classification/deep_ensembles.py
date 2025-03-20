@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Literal
 
 from torch_uncertainty.models import deep_ensembles
+from torch_uncertainty.ood_criteria import TUOODCriterion
 from torch_uncertainty.routines.classification import ClassificationRoutine
 from torch_uncertainty.utils import get_version
 
@@ -24,7 +25,7 @@ class DeepEnsemblesBaseline(ClassificationRoutine):
         eval_ood: bool = False,
         eval_shift: bool = False,
         eval_grouping_loss: bool = False,
-        ood_criterion: Literal["msp", "logit", "energy", "entropy", "mi", "vr"] = "msp",
+        ood_criterion: type[TUOODCriterion] | None = None,
         log_plots: bool = False,
     ) -> None:
         log_path = Path(log_path)
