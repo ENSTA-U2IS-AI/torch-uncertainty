@@ -34,7 +34,7 @@ class AUSE(Metric):
             where :math:`B` is the batch size.
 
         References:
-            [1] `Uncertainty estimates and multi-hypotheses for optical flow . In ECCV, 2018
+            [1] `Uncertainty estimates and multi-hypotheses for optical flow. In ECCV, 2018
             <https://arxiv.org/abs/1802.07095>`_.
 
         Note:
