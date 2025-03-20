@@ -57,3 +57,7 @@ jobs:
         external_repository: torch-uncertainty/torch-uncertainty.github.io
         publish_branch: main
         publish_dir: docs/build/html
+
+    - name: Kill SSH Agent
+      run: |
+        killall ssh-agent
