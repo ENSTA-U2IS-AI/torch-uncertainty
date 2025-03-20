@@ -18,11 +18,11 @@ class TUOODCriterion(ABC, nn.Module):
     ensemble_only = False
 
     @abstractmethod
-    def forward(self, inputs: Tensor) -> Tensor:
+    def forward(self, inputs: Tensor) -> Tensor:  # coverage: ignore
         pass
 
 
-class LogitCriterion(TUOODCriterion):
+class MaxLogitCriterion(TUOODCriterion):
     input_type = OODCriterionInputType.LOGIT
 
     def forward(self, inputs: Tensor) -> Tensor:
@@ -72,3 +72,28 @@ class VariationRatioCriterion(TUOODCriterion):
 
     def forward(self, inputs: Tensor) -> Tensor:
         return self.vr_metric(inputs.transpose(0, 1))
+
+
+def get_ood_criterion(ood_criterion):
+    if isinstance(ood_criterion, str):
+        if ood_criterion == "logit":
+            return MaxLogitCriterion()
+        if ood_criterion == "energy":
+            return EnergyCriterion()
+        if ood_criterion == "msp":
+            return MaxSoftmaxProbabilityCriterion()
+        if ood_criterion == "entropy":
+            return EntropyCriterion()
+        if ood_criterion == "mutual_information":
+            return MutualInformationCriterion()
+        if ood_criterion == "variation_ratio":
+            return VariationRatioCriterion()
+        raise ValueError(
+            "The OOD criterion must be one of 'msp', 'logit', 'energy', 'entropy',"
+            f" 'mutual_information' or 'variation_ratio'. Got {ood_criterion}."
+        )
+    if isinstance(ood_criterion, type) and issubclass(ood_criterion, TUOODCriterion):
+        return ood_criterion()
+    raise ValueError(
+        f"The OOD criterion should be a string or a subclass of TUOODCriterion. Got {type(ood_criterion)}."
+    )

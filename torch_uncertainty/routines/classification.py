@@ -37,9 +37,9 @@ from torch_uncertainty.models import (
     STEP_UPDATE_MODEL,
 )
 from torch_uncertainty.ood_criteria import (
-    MaxSoftmaxProbabilityCriterion,
     OODCriterionInputType,
     TUOODCriterion,
+    get_ood_criterion,
 )
 from torch_uncertainty.post_processing import LaplaceApprox, PostProcessing
 from torch_uncertainty.transforms import (
@@ -75,7 +75,7 @@ class ClassificationRoutine(LightningModule):
         eval_ood: bool = False,
         eval_shift: bool = False,
         eval_grouping_loss: bool = False,
-        ood_criterion: type[TUOODCriterion] | None = None,
+        ood_criterion: type[TUOODCriterion] | str = "msp",
         post_processing: PostProcessing | None = None,
         num_bins_cal_err: int = 15,
         log_plots: bool = False,
@@ -153,14 +153,12 @@ class ClassificationRoutine(LightningModule):
 
         if format_batch_fn is None:
             format_batch_fn = nn.Identity()
-        if ood_criterion is None:
-            ood_criterion = MaxSoftmaxProbabilityCriterion
 
         self.num_classes = num_classes
         self.eval_ood = eval_ood
         self.eval_shift = eval_shift
         self.eval_grouping_loss = eval_grouping_loss
-        self.ood_criterion = ood_criterion()
+        self.ood_criterion = get_ood_criterion(ood_criterion)
         self.log_plots = log_plots
         self.save_in_csv = save_in_csv
         self.binary_cls = num_classes == 1
@@ -679,7 +677,7 @@ def _classification_routine_checks(
     model: nn.Module,
     num_classes: int,
     is_ensemble: bool,
-    ood_criterion: type[TUOODCriterion] | None,
+    ood_criterion: type[TUOODCriterion] | str,
     eval_grouping_loss: bool,
     num_bins_cal_err: int,
     mixup_params: dict | None,
@@ -699,14 +697,8 @@ def _classification_routine_checks(
         post_processing (PostProcessing | None): the post-processing module.
         format_batch_fn (nn.Module | None): the function for formatting the batch for ensembles.
     """
-    if ood_criterion is not None and (
-        not isinstance(ood_criterion, type) or not issubclass(ood_criterion, TUOODCriterion)
-    ):
-        raise ValueError(
-            f"Use `ood_criteria.TUOODCriterion` classes as OOD criteria. Got {type(ood_criterion)}."
-        )
-
-    if not is_ensemble and ood_criterion is not None and ood_criterion.ensemble_only:
+    ood_criterion_cls = get_ood_criterion(ood_criterion)
+    if not is_ensemble and ood_criterion_cls.ensemble_only:
         raise ValueError(
             "You cannot use mutual information or variation ratio with a single model."
         )

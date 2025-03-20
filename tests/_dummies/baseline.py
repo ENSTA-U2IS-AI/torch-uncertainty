@@ -26,7 +26,7 @@ class DummyClassificationBaseline:
         baseline_type: str = "single",
         optim_recipe=optim_cifar10_resnet18,
         with_feats: bool = True,
-        ood_criterion: type[TUOODCriterion] | None = None,
+        ood_criterion: type[TUOODCriterion] | str = "msp",
         eval_ood: bool = False,
         eval_shift: bool = False,
         eval_grouping_loss: bool = False,
