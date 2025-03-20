@@ -6,6 +6,8 @@ from typing import Literal
 from lightning.pytorch.core import LightningDataModule
 from numpy.typing import ArrayLike
 
+from torch_uncertainty.utils import TTADataset
+
 if util.find_spec("sklearn"):
     from sklearn.model_selection import StratifiedKFold
 
@@ -24,6 +26,8 @@ class TUDataModule(ABC, LightningDataModule):
     train: Dataset
     val: Dataset
     test: Dataset
+    ood: Dataset
+    shift: Dataset
 
     shift_severity = 1
 
@@ -35,6 +39,7 @@ class TUDataModule(ABC, LightningDataModule):
         num_workers: int,
         pin_memory: bool,
         persistent_workers: bool,
+        num_tta: int = 1,
         postprocess_set: Literal["val", "test"] = "val",
     ) -> None:
         """Abstract DataModule class for TorchUncertainty.
@@ -50,8 +55,9 @@ class TUDataModule(ABC, LightningDataModule):
             num_workers (int): Number of workers to use for data loading.
             pin_memory (bool): Whether to pin memory.
             persistent_workers (bool): Whether to use persistent workers.
+            num_tta (int): Number of test-time augmentations (TTA). Defaults to ``1`` (no TTA).
             postprocess_set (str): Which split to use as post-processing set to fit the
-                post-processing method.
+                post-processing method. Defaults to ``val``.
         """
         super().__init__()
 
@@ -63,8 +69,13 @@ class TUDataModule(ABC, LightningDataModule):
         self.pin_memory = pin_memory
         self.persistent_workers = persistent_workers
 
+        if not num_tta % batch_size:
+            raise ValueError(
+                f"The number of Test-time augmentations num_tta should divide batch_size. Got {num_tta} and {batch_size}."
+            )
+        self.num_tta = num_tta
         if postprocess_set == "test":
-            logging.warning("Fitting the calibration method on the test set!")
+            logging.warning("You might be fitting the calibration method on the test set!")
         self.postprocess_set = postprocess_set
 
     @abstractmethod
@@ -77,11 +88,27 @@ class TUDataModule(ABC, LightningDataModule):
 
     def get_val_set(self) -> Dataset:
         """Get the validation set."""
+        if self.num_tta > 1:
+            return TTADataset(self.val, self.num_tta)
         return self.val
 
     def get_test_set(self) -> Dataset:
         """Get the test set."""
+        if self.num_tta > 1:
+            return TTADataset(self.test, self.num_tta)
         return self.test
+
+    def get_ood_set(self) -> Dataset:
+        """Get the shifted set."""
+        if self.num_tta > 1:
+            return TTADataset(self.ood, self.num_tta)
+        return self.ood
+
+    def get_shift_set(self) -> Dataset:
+        """Get the shifted set."""
+        if self.num_tta > 1:
+            return TTADataset(self.shift, self.num_tta)
+        return self.shift
 
     def train_dataloader(self) -> DataLoader:
         r"""Get the training dataloader.
@@ -97,7 +124,7 @@ class TUDataModule(ABC, LightningDataModule):
         Return:
             DataLoader: validation dataloader.
         """
-        return self._data_loader(self.val)
+        return self._data_loader(self.get_val_set(), shuffle=False)
 
     def test_dataloader(self) -> list[DataLoader]:
         r"""Get test dataloaders.
@@ -106,7 +133,7 @@ class TUDataModule(ABC, LightningDataModule):
             list[DataLoader]: test set for in distribution data
             and out-of-distribution data.
         """
-        return [self._data_loader(self.test)]
+        return [self._data_loader(self.get_test_set(), shuffle=False)]
 
     def postprocess_dataloader(self) -> DataLoader:
         r"""Get the calibration dataloader.
@@ -116,13 +143,12 @@ class TUDataModule(ABC, LightningDataModule):
         """
         return self.val_dataloader() if self.postprocess_set == "val" else self.test_dataloader()[0]
 
-    def _data_loader(self, dataset: Dataset, shuffle: bool = False) -> DataLoader:
+    def _data_loader(self, dataset: Dataset, shuffle: bool) -> DataLoader:
         """Create a dataloader for a given dataset.
 
         Args:
             dataset (Dataset): Dataset to create a dataloader for.
-            shuffle (bool, optional): Whether to shuffle the dataset. Defaults
-                to False.
+            shuffle (bool): Whether to shuffle the dataset
 
         Return:
             DataLoader: Dataloader for the given dataset.

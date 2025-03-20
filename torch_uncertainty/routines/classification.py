@@ -66,6 +66,7 @@ class ClassificationRoutine(LightningModule):
         num_classes: int,
         loss: nn.Module,
         is_ensemble: bool = False,
+        num_tta: int = 1,
         format_batch_fn: nn.Module | None = None,
         optim_recipe: dict | Optimizer | None = None,
         mixup_params: dict | None = None,
@@ -86,6 +87,7 @@ class ClassificationRoutine(LightningModule):
             loss (torch.nn.Module): Loss function to optimize the :attr:`model`.
             is_ensemble (bool, optional): Indicates whether the model is an
                 ensemble at test time or not. Defaults to ``False``.
+            num_tta (int): Number of test-time augmentations (TTA). Defaults to ``1`` (no TTA).
             format_batch_fn (torch.nn.Module, optional): Function to format the batch.
                 Defaults to :class:`torch.nn.Identity()`.
             optim_recipe (dict or torch.optim.Optimizer, optional): The optimizer and
@@ -161,6 +163,7 @@ class ClassificationRoutine(LightningModule):
         self.eval_shift = eval_shift
         self.eval_grouping_loss = eval_grouping_loss
         self.ood_criterion = ood_criterion
+        self.num_tta = num_tta
         self.log_plots = log_plots
         self.save_in_csv = save_in_csv
         self.binary_cls = num_classes == 1
@@ -449,7 +452,7 @@ class ClassificationRoutine(LightningModule):
         """
         inputs, targets = batch
         logits = self.forward(inputs, save_feats=self.eval_grouping_loss)
-        logits = rearrange(logits, "(m b) c -> b m c", b=targets.size(0))
+        logits = rearrange(logits, "(m b) c -> b m c", b=targets.size(0) // self.num_tta)
 
         if self.binary_cls:
             probs_per_est = torch.sigmoid(logits).squeeze(-1)
@@ -481,7 +484,7 @@ class ClassificationRoutine(LightningModule):
         """
         inputs, targets = batch
         logits = self.forward(inputs, save_feats=self.eval_grouping_loss)
-        logits = rearrange(logits, "(m b) c -> b m c", b=targets.size(0))
+        logits = rearrange(logits, "(m b) c -> b m c", b=targets.size(0) // self.num_tta)
         probs_per_est = torch.sigmoid(logits) if self.binary_cls else F.softmax(logits, dim=-1)
         probs = probs_per_est.mean(dim=1)
         confs = probs.max(-1)[0]
