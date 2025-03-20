@@ -254,7 +254,6 @@ Out-of-Distribution Detection
     :nosignatures:
     :template: class.rst
 
-    AURC
     FPRx
     FPR95
 
@@ -268,10 +267,11 @@ Selective Classification
     :template: class.rst
 
     AUGRC
-    RiskAtxCov
-    RiskAt80Cov
+    AURC
     CovAtxRisk
     CovAt5Risk
+    RiskAtxCov
+    RiskAt80Cov
 
 Calibration
 """""""""""
@@ -281,8 +281,8 @@ Calibration
     :nosignatures:
     :template: class.rst
     
-    CalibrationError
     AdaptiveCalibrationError
+    CalibrationError
 
 Diversity
 """""""""
@@ -362,18 +362,16 @@ Losses
     :nosignatures:
     :template: class.rst
 
-    DistributionNLLLoss
-    KLDiv
-    ELBOLoss
+    BCEWithLogitsLSLoss
     BetaNLL
-    DECLoss
-    DERLoss
-    FocalLoss
     ConflictualLoss
     ConfidencePenaltyLoss
-    KLDiv
+    DECLoss
+    DERLoss
+    DistributionNLLLoss
     ELBOLoss
-    BCEWithLogitsLSLoss
+    FocalLoss
+    KLDiv
 
 Post-Processing Methods
 -----------------------
@@ -385,8 +383,8 @@ Post-Processing Methods
     :nosignatures:
     :template: class.rst
     
-    MCBatchNorm
     LaplaceApprox
+    MCBatchNorm
     
 Scaling Methods
 ^^^^^^^^^^^^^^^
@@ -396,9 +394,9 @@ Scaling Methods
     :nosignatures:
     :template: class_inherited.rst
 
+    MatrixScaler
     TemperatureScaler
     VectorScaler
-    MatrixScaler
 
 Datamodules
 -----------
@@ -423,9 +421,10 @@ Classification
 
     CIFAR10DataModule
     CIFAR100DataModule
+    ImageNetDataModule
     MNISTDataModule
     TinyImageNetDataModule
-    ImageNetDataModule
+    
 
 UCI Tabular Classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
