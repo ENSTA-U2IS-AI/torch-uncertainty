@@ -48,7 +48,7 @@ class WideResNetBaseline(ClassificationRoutine):
         gamma: int = 1,
         rho: float = 1.0,
         batch_repeat: int = 1,
-        ood_criterion: type[TUOODCriterion] | None = None,
+        ood_criterion: type[TUOODCriterion] | str = "msp",
         log_plots: bool = False,
         save_in_csv: bool = False,
         eval_ood: bool = False,

@@ -39,7 +39,7 @@ class VGGBaseline(ClassificationRoutine):
         groups: int = 1,
         alpha: int | None = None,
         gamma: int = 1,
-        ood_criterion: type[TUOODCriterion] | None = None,
+        ood_criterion: type[TUOODCriterion] | str = "msp",
         log_plots: bool = False,
         save_in_csv: bool = False,
         eval_ood: bool = False,
