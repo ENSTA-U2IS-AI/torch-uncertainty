@@ -67,7 +67,7 @@ def optim_regression(
 # Please note that this MLP finishes with a NormalInverseGammaLinear that interpret the outputs of the model
 # as the parameters of a Normal Inverse Gamma distribution.
 
-trainer = TUTrainer(accelerator="cpu", max_epochs=50) #, enable_progress_bar=False)
+trainer = TUTrainer(accelerator="gpu", max_epochs=50) #, enable_progress_bar=False)
 
 # dataset
 train_ds = Cubic(num_samples=1000)

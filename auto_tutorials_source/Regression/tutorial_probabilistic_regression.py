@@ -69,7 +69,7 @@ datamodule = UCIRegressionDataModule(
 from torch_uncertainty import TUTrainer
 
 trainer = TUTrainer(
-    accelerator="cpu",
+    accelerator="gpu",
     max_epochs=5,
     enable_progress_bar=False,
 )
@@ -152,7 +152,7 @@ for dist_family in ["normal", "laplace", "student", "cauchy"]:
     print(f">>> Training with {dist_family} distribution")
     print("#" * 50)
     trainer = TUTrainer(
-        accelerator="cpu",
+        accelerator="gpu",
         max_epochs=10,
         enable_model_summary=False,
         enable_progress_bar=False,

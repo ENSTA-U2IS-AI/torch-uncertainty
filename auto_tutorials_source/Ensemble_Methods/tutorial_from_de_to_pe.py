@@ -152,7 +152,7 @@ from torch_uncertainty.routines import ClassificationRoutine
 from torch_uncertainty import TUTrainer
 
 # Create the trainer that will handle the training
-trainer = TUTrainer(accelerator="cpu", max_epochs=max_epochs)
+trainer = TUTrainer(accelerator="gpu", max_epochs=max_epochs)
 
 # The routine is a wrapper of the model that contains the training logic with the metrics, etc
 routine = ClassificationRoutine(
@@ -213,7 +213,7 @@ ensemble = deep_ensembles(
     reset_model_parameters=True,
 )
 
-trainer = TUTrainer(accelerator="cpu", max_epochs=1)
+trainer = TUTrainer(accelerator="gpu", max_epochs=1)
 ens_routine = ClassificationRoutine(
     is_ensemble=True,
     num_classes=10,
@@ -283,7 +283,7 @@ ens_routine = ClassificationRoutine(
     eval_ood=True,  # We want to evaluate the OOD-related metrics
 )
 
-trainer = TUTrainer(accelerator="cpu", max_epochs=max_epochs)
+trainer = TUTrainer(accelerator="gpu", max_epochs=max_epochs)
 
 ens_perf = trainer.test(ens_routine, dataloaders=[test_dl, ood_dl])
 
@@ -368,7 +368,7 @@ packed_model = PackedLeNet(
 )
 
 # Create the trainer that will handle the training
-trainer = TUTrainer(accelerator="cpu", max_epochs=max_epochs)
+trainer = TUTrainer(accelerator="gpu", max_epochs=max_epochs)
 
 # The routine is a wrapper of the model that contains the training logic with the metrics, etc
 packed_routine = ClassificationRoutine(

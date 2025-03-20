@@ -51,7 +51,7 @@ from torch_uncertainty.routines import ClassificationRoutine
 # To use the mc_dropout wrapper, **make sure that you use dropout modules** and
 # not functionals. Moreover, **they have to be** instantiated in the __init__ method.
 
-trainer = TUTrainer(accelerator="cpu", max_epochs=2, enable_progress_bar=False)
+trainer = TUTrainer(accelerator="gpu", max_epochs=2, enable_progress_bar=False)
 
 # datamodule
 root = Path("data")
@@ -107,6 +107,7 @@ import torchvision
 
 def imshow(img):
     npimg = img.numpy()
+    npimg = npimg * 0.3081 + 0.1307  # unnormalize
     plt.imshow(np.transpose(npimg, (1, 2, 0)))
     plt.axis("off")
     plt.tight_layout()

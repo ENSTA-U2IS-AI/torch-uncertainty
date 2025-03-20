@@ -70,7 +70,7 @@ def optim_lenet(model: nn.Module):
 # Please note that the datamodules can also handle OOD detection by setting the eval_ood
 # parameter to True. Finally, we create the model using the blueprint from torch_uncertainty.models.
 
-trainer = TUTrainer(accelerator="cpu", enable_progress_bar=False, max_epochs=1)
+trainer = TUTrainer(accelerator="gpu", enable_progress_bar=False, max_epochs=1)
 
 # datamodule
 root = Path("data")

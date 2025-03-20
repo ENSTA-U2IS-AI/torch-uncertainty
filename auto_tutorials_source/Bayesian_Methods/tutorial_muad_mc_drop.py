@@ -337,7 +337,7 @@ lr_updater = lr_scheduler.StepLR(
 )
 
 # Initialize the trainer
-trainer = TUTrainer(accelerator="cpu", max_epochs=1, logger=False)
+trainer = TUTrainer(accelerator="gpu", max_epochs=1, logger=False)
 ens_routine = SegmentationRoutine(
     model=model,
     num_classes=19,
@@ -541,5 +541,3 @@ with torch.no_grad():
 	ax3.imshow(pred_img)
 	ax4.imshow(uncertainty_img)
 	plt.show()
-
-

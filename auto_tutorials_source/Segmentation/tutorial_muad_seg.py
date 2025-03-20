@@ -337,7 +337,7 @@ lr_updater = lr_scheduler.StepLR(
 )
 
 # Initialize the trainer
-trainer = TUTrainer(accelerator="cpu", max_epochs=1, logger=False)
+trainer = TUTrainer(accelerator="gpu", max_epochs=1, logger=False)
 ens_routine = SegmentationRoutine(
     model=model,
     num_classes=19,
@@ -482,4 +482,3 @@ for ax, im in zip(axs, images):
 plt.subplots_adjust(left=0.01, right=0.99, top=0.99, bottom=0.01, wspace=0.05)
 
 plt.show()
-

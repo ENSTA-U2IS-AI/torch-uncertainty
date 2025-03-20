@@ -41,7 +41,7 @@ from torch_uncertainty.routines import ClassificationRoutine
 # logs. We also create the datamodule that handles the MNIST dataset
 # dataloaders and transforms.
 
-trainer = TUTrainer(accelerator="cpu", max_epochs=2, enable_progress_bar=False)
+trainer = TUTrainer(accelerator="gpu", max_epochs=2, enable_progress_bar=False)
 
 # datamodule
 root = Path("data")
@@ -92,7 +92,7 @@ perf = trainer.test(model=routine, datamodule=datamodule)
 routine.model = MCBatchNorm(
     routine.model, num_estimators=8, convert=True, mc_batch_size=16
 )
-routine.model.fit(datamodule.train)
+routine.model.fit(datamodule.train_dataloader())
 routine = routine.eval()  # To avoid prints
 
 # %%
