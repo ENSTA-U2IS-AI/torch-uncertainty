@@ -75,7 +75,7 @@ class TUDataModule(ABC, LightningDataModule):
             )
         self.num_tta = num_tta
         if postprocess_set == "test":
-            logging.warning("You might be fitting the calibration method on the test set!")
+            logging.warning("You might be fitting the post-processing method on the test set!")
         self.postprocess_set = postprocess_set
 
     @abstractmethod
