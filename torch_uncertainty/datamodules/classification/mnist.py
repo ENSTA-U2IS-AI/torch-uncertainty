@@ -29,6 +29,7 @@ class MNISTDataModule(TUDataModule):
         eval_ood: bool = False,
         eval_shift: bool = False,
         ood_ds: Literal["fashion", "notMNIST"] = "fashion",
+        num_tta: int = 1,
         val_split: float | None = None,
         postprocess_set: Literal["val", "test"] = "val",
         num_workers: int = 1,
@@ -51,6 +52,7 @@ class MNISTDataModule(TUDataModule):
                 notMNIST.
             val_split (float): Share of samples to use for validation. Defaults
                 to ``0.0``.
+            num_tta (int): Number of test-time augmentations (TTA). Defaults to ``1`` (no TTA).
             postprocess_set (str, optional): The post-hoc calibration dataset to
                 use for the post-processing method. Defaults to ``val``.
             num_workers (int): Number of workers to use for data loading. Defaults
@@ -66,6 +68,7 @@ class MNISTDataModule(TUDataModule):
             root=root,
             batch_size=batch_size,
             val_split=val_split,
+            num_tta=num_tta,
             postprocess_set=postprocess_set,
             num_workers=num_workers,
             pin_memory=pin_memory,
@@ -100,24 +103,28 @@ class MNISTDataModule(TUDataModule):
                 v2.Normalize(mean=self.mean, std=self.std),
             ]
         )
-        self.test_transform = v2.Compose(
-            [
-                v2.ToImage(),
-                v2.CenterCrop(28),
-                v2.ToDtype(dtype=torch.float32, scale=True),
-                v2.Normalize(mean=self.mean, std=self.std),
-            ]
-        )
-        if self.eval_ood:  # NotMNIST has 3 channels
-            self.ood_transform = v2.Compose(
+        self.test_transform = (
+            v2.Compose(
                 [
                     v2.ToImage(),
-                    v2.Grayscale(num_output_channels=1),
                     v2.CenterCrop(28),
                     v2.ToDtype(dtype=torch.float32, scale=True),
                     v2.Normalize(mean=self.mean, std=self.std),
                 ]
             )
+            if num_tta == 1
+            else self.train_transform
+        )
+
+        self.ood_transform = v2.Compose(
+            [
+                v2.ToImage(),
+                v2.Grayscale(num_output_channels=1),
+                v2.CenterCrop(28),
+                v2.ToDtype(dtype=torch.float32, scale=True),
+                v2.Normalize(mean=self.mean, std=self.std),
+            ]
+        )
 
     def prepare_data(self) -> None:  # coverage: ignore
         """Download the datasets."""
@@ -182,9 +189,9 @@ class MNISTDataModule(TUDataModule):
                 distribution data), FashionMNIST or NotMNIST test split
                 (out-of-distribution data), and/or MNISTC (shifted data).
         """
-        dataloader = [self._data_loader(self.test)]
+        dataloader = [self._data_loader(self.get_test_set(), shuffle=False)]
         if self.eval_ood:
-            dataloader.append(self._data_loader(self.ood))
+            dataloader.append(self._data_loader(self.get_ood_set(), shuffle=False))
         if self.eval_shift:
-            dataloader.append(self._data_loader(self.shift))
+            dataloader.append(self._data_loader(self.get_shift_set(), shuffle=False))
         return dataloader

@@ -31,6 +31,7 @@ class CIFAR100DataModule(TUDataModule):
         batch_size: int,
         eval_ood: bool = False,
         eval_shift: bool = False,
+        num_tta: int = 1,
         shift_severity: int = 1,
         val_split: float | None = None,
         postprocess_set: Literal["val", "test"] = "val",
@@ -62,8 +63,8 @@ class CIFAR100DataModule(TUDataModule):
             randaugment (bool): Whether to apply RandAugment. Defaults to
                 ``False``.
             auto_augment (str): Which auto-augment to apply. Defaults to ``None``.
-            shift_severity (int): Severity of corruption to apply to
-                CIFAR100-C. Defaults to ``1``.
+            num_tta (int): Number of test-time augmentations (TTA). Defaults to ``1`` (no TTA).
+            shift_severity (int): Severity of corruption to apply to CIFAR100-C. Defaults to ``1``.
             num_dataloaders (int): Number of dataloaders to use. Defaults to ``1``.
             num_workers (int): Number of workers to use for data loading. Defaults
                 to ``1``.
@@ -75,6 +76,7 @@ class CIFAR100DataModule(TUDataModule):
             root=root,
             batch_size=batch_size,
             val_split=val_split,
+            num_tta=num_tta,
             postprocess_set=postprocess_set,
             num_workers=num_workers,
             pin_memory=pin_memory,
@@ -125,12 +127,16 @@ class CIFAR100DataModule(TUDataModule):
                 v2.Normalize(mean=self.mean, std=self.std),
             ]
         )
-        self.test_transform = v2.Compose(
-            [
-                v2.ToImage(),
-                v2.ToDtype(dtype=torch.float32, scale=True),
-                v2.Normalize(mean=self.mean, std=self.std),
-            ]
+        self.test_transform = (
+            v2.Compose(
+                [
+                    v2.ToImage(),
+                    v2.ToDtype(dtype=torch.float32, scale=True),
+                    v2.Normalize(mean=self.mean, std=self.std),
+                ]
+            )
+            if num_tta == 1
+            else self.train_transform
         )
 
     def prepare_data(self) -> None:  # coverage: ignore
@@ -218,11 +224,11 @@ class CIFAR100DataModule(TUDataModule):
             list[DataLoader]: test set for in distribution data, SVHN data, and/or
             CIFAR-100C data.
         """
-        dataloader = [self._data_loader(self.test)]
+        dataloader = [self._data_loader(self.get_test_set(), shuffle=False)]
         if self.eval_ood:
-            dataloader.append(self._data_loader(self.ood))
+            dataloader.append(self._data_loader(self.get_ood_set(), shuffle=False))
         if self.eval_shift:
-            dataloader.append(self._data_loader(self.shift))
+            dataloader.append(self._data_loader(self.get_shift_set(), shuffle=False))
         return dataloader
 
     def _get_train_data(self) -> ArrayLike:

@@ -104,11 +104,11 @@ class DummyClassificationDataModule(TUDataModule):
             self.shift.shift_severity = 1
 
     def test_dataloader(self) -> DataLoader | list[DataLoader]:
-        dataloader = [self._data_loader(self.test)]
+        dataloader = [self._data_loader(self.test, shuffle=False)]
         if self.eval_ood:
-            dataloader.append(self._data_loader(self.ood))
+            dataloader.append(self._data_loader(self.get_ood_set(), shuffle=False))
         if self.eval_shift:
-            dataloader.append(self._data_loader(self.shift))
+            dataloader.append(self._data_loader(self.get_shift_set(), shuffle=False))
         return dataloader
 
     def _get_train_data(self) -> ArrayLike:
@@ -171,7 +171,7 @@ class DummyRegressionDataModule(TUDataModule):
             )
 
     def test_dataloader(self) -> DataLoader | list[DataLoader]:
-        return [self._data_loader(self.test)]
+        return [self._data_loader(self.test, shuffle=False)]
 
 
 class DummySegmentationDataModule(TUDataModule):
@@ -256,7 +256,7 @@ class DummySegmentationDataModule(TUDataModule):
             )
 
     def test_dataloader(self) -> DataLoader | list[DataLoader]:
-        return [self._data_loader(self.test)]
+        return [self._data_loader(self.test, shuffle=False)]
 
     def _get_train_data(self) -> ArrayLike:
         return self.train.data
@@ -345,7 +345,7 @@ class DummyPixelRegressionDataModule(TUDataModule):
             )
 
     def test_dataloader(self) -> DataLoader | list[DataLoader]:
-        return [self._data_loader(self.test)]
+        return [self._data_loader(self.test, shuffle=False)]
 
     def _get_train_data(self) -> ArrayLike:
         return self.train.data
