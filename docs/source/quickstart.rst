@@ -9,7 +9,7 @@ These routines make it very easy to:
 
 - train ensembles-like methods (Deep Ensembles, Packed-Ensembles, MIMO, Masksembles, etc)
 - compute and monitor uncertainty metrics: calibration, out-of-distribution detection, proper scores, grouping loss, etc.
-- leverage calibration methods automatically during evaluation
+- leverage post-processing methods automatically during evaluation
 
 Yet, we take account that their will be as many different uses of TorchUncertainty as there are of users.
 This page provides ideas on how to benefit from TorchUncertainty at all levels: from ready-to-train lightning-based models to using only specific
