@@ -33,8 +33,8 @@ The dataset is automatically downloaded using torchvision. We then visualize a f
 import torch
 import torchvision.transforms as T
 
-# We set the number of epochs to some low value for the sake of time
-max_epochs = 2
+# We set the number of epochs to some very low value for the sake of time
+max_epochs = 3
 
 # Create the transforms for the images
 train_transform = T.Compose(
@@ -72,9 +72,9 @@ ood_data = Subset(
 # Create the corresponding dataloaders
 from torch.utils.data import DataLoader
 
-train_dl = DataLoader(train_data, batch_size=32, shuffle=True)
-test_dl = DataLoader(test_data, batch_size=32, shuffle=False)
-ood_dl = DataLoader(ood_data, batch_size=32, shuffle=False)
+train_dl = DataLoader(train_data, batch_size=512, shuffle=True, num_workers=8)
+test_dl = DataLoader(test_data, batch_size=2048, shuffle=False, num_workers=4)
+ood_dl = DataLoader(ood_data, batch_size=2048, shuffle=False, num_workers=4)
 
 # %%
 # You could replace all this cell by simply loading the MNIST datamodule from TorchUncertainty.
@@ -145,7 +145,7 @@ def optim_recipe(model, lr_mult: float = 1.0):
 #
 # **Note:** To train supervised classification models we most often use the cross-entropy loss.
 # With weight-decay, minimizing this loss amounts to finding a Maximum a posteriori (MAP) estimate of the model parameters.
-# This means that the model is trained to predict the most likely class for each input.
+# This means that the model is trained to predict the most likely class for each input given a diagonal Gaussian prior on the weights.
 
 
 from torch_uncertainty.routines import ClassificationRoutine
@@ -188,6 +188,8 @@ perf = trainer.test(routine, dataloaders=[test_dl, ood_dl])
 # **Selective Classification & Grouping Loss**
 # - We talk about these points later in the "To go further" section.
 #
+# By setting `eval_shift` to True, we could also evaluate the performance of the models on MNIST-C, a dataset close to MNIST but with perturbations.
+#
 # 3. Training an ensemble of models with TorchUncertainty
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
@@ -197,7 +199,7 @@ perf = trainer.test(routine, dataloaders=[test_dl, ood_dl])
 # In this case, we will do it sequentially. In this tutorial, you have the choice between training multiple models,
 # which will take time if you have no GPU, or downloading the pre-trained models that we have prepared for you.
 #
-# Training the ensemble
+# **Training the ensemble**
 #
 # To train the ensemble, you will have to use the "deep_ensembles" function from TorchUncertainty, which will
 # replicate and change the initialization of your networks to ensure diversity.
@@ -213,7 +215,7 @@ ensemble = deep_ensembles(
     reset_model_parameters=True,
 )
 
-trainer = TUTrainer(accelerator="gpu", devices=1, max_epochs=1)
+trainer = TUTrainer(accelerator="gpu", devices=1, max_epochs=max_epochs)
 ens_routine = ClassificationRoutine(
     is_ensemble=True,
     num_classes=10,
@@ -231,17 +233,16 @@ trainer.fit(ens_routine, train_dataloaders=train_dl, val_dataloaders=test_dl)
 ens_perf = trainer.test(ens_routine, dataloaders=[test_dl, ood_dl])
 
 # %%
-# The results are not comparable since we only trained the ensemble for one epoch to reduce GitHub's cpu usage.
 # Feel free to run the notebook on your machine for a longer duration.
 #
-# We need to multiply the learning rate by 2 to account for the fact that we have 4 models
+# We need to multiply the learning rate by 2 to account for the fact that we have 2 models
 # in the ensemble and that we average the loss over all the predictions.
 #
 # #### Downloading the pre-trained models
 #
 # We have put the pre-trained models on Hugging Face that you can download with the utility function
 # "hf_hub_download" imported just below. These models are trained for 75 epochs and are therefore not
-# comparable to the all the other models trained in this notebook. The pretrained models can be seen
+# comparable to the all the others trained in this notebook. The pretrained models can be seen
 # on `HuggingFace <https://huggingface.co/ENSTA-U2IS/tutorial-models>`_ and TorchUncertainty's are `there <https://huggingface.co/torch-uncertainty>`_.
 
 from torch_uncertainty.utils.hub import hf_hub_download
@@ -254,7 +255,7 @@ for i in range(8):
         local_dir="./models/",
     )
     model = LeNet(in_channels=1, num_classes=10)
-    state_dict = torch.load(f"./models/version_{i}.ckpt", map_location="cpu")[
+    state_dict = torch.load(f"./models/version_{i}.ckpt", map_location="cpu", weights_only=True)[
         "state_dict"
     ]
     state_dict = {k.replace("model.", ""): v for k, v in state_dict.items()}
