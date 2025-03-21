@@ -34,7 +34,7 @@ import torch
 import torchvision.transforms as T
 
 # We set the number of epochs to some very low value for the sake of time
-max_epochs = 3
+MAX_EPOCHS = 3
 
 # Create the transforms for the images
 train_transform = T.Compose(
@@ -152,7 +152,7 @@ from torch_uncertainty.routines import ClassificationRoutine
 from torch_uncertainty import TUTrainer
 
 # Create the trainer that will handle the training
-trainer = TUTrainer(accelerator="gpu", devices=1, max_epochs=max_epochs)
+trainer = TUTrainer(accelerator="gpu", devices=1, max_epochs=MAX_EPOCHS)
 
 # The routine is a wrapper of the model that contains the training logic with the metrics, etc
 routine = ClassificationRoutine(
@@ -215,7 +215,7 @@ ensemble = deep_ensembles(
     reset_model_parameters=True,
 )
 
-trainer = TUTrainer(accelerator="gpu", devices=1, max_epochs=max_epochs)
+trainer = TUTrainer(accelerator="gpu", devices=1, max_epochs=MAX_EPOCHS)
 ens_routine = ClassificationRoutine(
     is_ensemble=True,
     num_classes=10,
@@ -284,7 +284,7 @@ ens_routine = ClassificationRoutine(
     eval_ood=True,  # We want to evaluate the OOD-related metrics
 )
 
-trainer = TUTrainer(accelerator="gpu", devices=1, max_epochs=max_epochs)
+trainer = TUTrainer(accelerator="gpu", devices=1, max_epochs=MAX_EPOCHS)
 
 ens_perf = trainer.test(ens_routine, dataloaders=[test_dl, ood_dl])
 
@@ -369,7 +369,7 @@ packed_model = PackedLeNet(
 )
 
 # Create the trainer that will handle the training
-trainer = TUTrainer(accelerator="gpu", devices=1, max_epochs=max_epochs)
+trainer = TUTrainer(accelerator="gpu", devices=1, max_epochs=MAX_EPOCHS)
 
 # The routine is a wrapper of the model that contains the training logic with the metrics, etc
 packed_routine = ClassificationRoutine(
