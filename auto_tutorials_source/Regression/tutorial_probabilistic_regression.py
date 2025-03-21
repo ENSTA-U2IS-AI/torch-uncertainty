@@ -12,7 +12,7 @@ In this section we cover the building of a very simple MLP outputting Normal dis
 1. Loading the utilities
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-We disable some logging and warnings to keep the output clean.
+First, we disable some logging and warnings to keep the output clean.
 """
 # %%
 import torch
@@ -24,17 +24,21 @@ logging.getLogger("lightning.pytorch.utilities.rank_zero").setLevel(logging.WARN
 import warnings
 warnings.filterwarnings("ignore")
 
+# Here are the trainer and dataloader main hyperparameters
+MAX_EPOCHS = 10
+BATCH_SIZE = 128
+
 # %%
-# 2. Building the MLP model
-# ~~~~~~~~~~~~~~~~~~~~~~~~~
+# 2. Building the NormalMLP model
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
-# To create a MLP model estimating a Normal distribution, we use the NormalLinear layer.
-# This layer is a wrapper around the nn.Linear layer, which outputs the location and scale of a Normal distribution.
-# Note that any other distribution layer from TU can be used in the same way.
+# To create a NormalMLP model estimating a Normal distribution, we use the NormalLinear layer.
+# This layer is a wrapper around the nn.Linear layer, which outputs the location and scale of a Normal distribution in a dictionnary.
+# As you will see in the following, any other distribution layer from TU can be used in the same way.
 from torch_uncertainty.layers.distributions import NormalLinear
 
 
-class MLP(nn.Module):
+class NormalMLP(nn.Module):
     def __init__(self, in_features: int, out_features: int):
         super().__init__()
         self.fc1 = nn.Linear(in_features, 50)
@@ -58,8 +62,9 @@ from torch_uncertainty.datamodules import UCIRegressionDataModule
 # datamodule
 datamodule = UCIRegressionDataModule(
     root="data",
-    batch_size=32,
+    batch_size=BATCH_SIZE,
     dataset_name="kin8nm",
+    num_workers=4
 )
 
 # %%
@@ -70,11 +75,11 @@ from torch_uncertainty import TUTrainer
 
 trainer = TUTrainer(
     accelerator="gpu", devices=1,
-    max_epochs=5,
+    max_epochs=MAX_EPOCHS,
     enable_progress_bar=False,
 )
 
-model = MLP(in_features=8, out_features=1)
+model = NormalMLP(in_features=8, out_features=1)
 
 
 # %%
@@ -83,7 +88,7 @@ model = MLP(in_features=8, out_features=1)
 #
 # We use the DistributionNLLLoss to compute the negative log-likelihood of the Normal distribution.
 # Note that this loss can be used with any Distribution from torch.distributions.
-# For the optimizer, we use the Adam optimizer with a learning rate of 5e-3.
+# For the optimizer, we use the Adam optimizer with a learning rate of 5e-2.
 # Finally, we create a RegressionRoutine to train the model. We indicate that the output dimension is 1 and the distribution family is "normal".
 
 from torch_uncertainty.losses import DistributionNLLLoss
@@ -93,7 +98,7 @@ loss = DistributionNLLLoss()
 
 def optim_regression(
     model: nn.Module,
-    learning_rate: float = 5e-3,
+    learning_rate: float = 5e-2,
 ):
     return torch.optim.Adam(
         model.parameters(),
@@ -121,13 +126,13 @@ results = trainer.test(model=routine, datamodule=datamodule)
 # 7. Benchmarking different distributions
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
-# Our MLP model assumes a Normal distribution as the output. However, we could be interested in comparing the performance of different distributions.
+# Our NormalMLP model assumes a Normal distribution as the output. However, we could be interested in comparing the performance of different distributions.
 # TorchUncertainty provides a simple way to do this using the get_dist_linear_layer() function.
-# Let us rewrite the MLP model to use it.
+# Let us rewrite the NormalMLP model to use it.
 
 from torch_uncertainty.layers.distributions import get_dist_linear_layer
 
-class MLP(nn.Module):
+class DistMLP(nn.Module):
     def __init__(self, in_features: int, out_features: int, dist_family: str):
         super().__init__()
         self.fc1 = nn.Linear(in_features, 50)
@@ -144,20 +149,20 @@ class MLP(nn.Module):
 
 # %%
 # We can now train the model with different distributions.
-# Let us train the model with a Normal, Laplace, Student's t, and Cauchy distribution.
+# Let us train the model with a Laplace, Student's t, and Cauchy distribution.
 # Note that we use the mode as the point-wise estimate of the distribution as the mean
 # is not defined for the Cauchy distribution.
-for dist_family in ["normal", "laplace", "student", "cauchy"]:
-    print("#" * 50)
-    print(f">>> Training with {dist_family} distribution")
-    print("#" * 50)
+for dist_family in ["laplace", "student", "cauchy"]:
+    print("#" * 38)
+    print(f">>> Training with {dist_family.capitalize()} distribution")
+    print("#" * 38)
     trainer = TUTrainer(
         accelerator="gpu", devices=1,
-        max_epochs=10,
+        max_epochs=MAX_EPOCHS,
         enable_model_summary=False,
         enable_progress_bar=False,
     )
-    model = MLP(in_features=8, out_features=1, dist_family=dist_family)
+    model = DistMLP(in_features=8, out_features=1, dist_family=dist_family)
     routine = RegressionRoutine(
         output_dim=1,
         model=model,
@@ -168,3 +173,8 @@ for dist_family in ["normal", "laplace", "student", "cauchy"]:
     )
     trainer.fit(model=routine, datamodule=datamodule)
     trainer.test(model=routine, datamodule=datamodule)
+# %%
+# The Negative Log-Likelihood (NLL) is a good score to encompass the correctness of the predicted
+# distributions, evaluating both the correctness of the mode (the point prediction) and of the predicted uncertainty
+# around the mode ("represented" by the variance). Although there is a lot of variability, in this case, it seems that
+# the Normal distribution performs better.
