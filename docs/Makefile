@@ -17,6 +17,9 @@ html-noplot:
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
 
+clean: 
+	rm -r $(BUILDDIR) $(SOURCEDIR)/generated $(SOURCEDIR)/auto_tutorials
+
 .PHONY: help Makefile
 
 # Catch-all target: route all unknown targets to Sphinx using the new
