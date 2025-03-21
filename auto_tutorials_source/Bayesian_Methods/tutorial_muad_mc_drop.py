@@ -337,7 +337,7 @@ lr_updater = lr_scheduler.StepLR(
 )
 
 # Initialize the trainer
-trainer = TUTrainer(accelerator="gpu", max_epochs=1, logger=False)
+trainer = TUTrainer(accelerator="gpu", devices=1, max_epochs=1, logger=False)
 ens_routine = SegmentationRoutine(
     model=model,
     num_classes=19,

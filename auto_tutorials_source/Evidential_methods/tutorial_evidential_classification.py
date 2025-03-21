@@ -55,7 +55,7 @@ def optim_lenet(model: nn.Module) -> dict:
 # In the following, we need to define the root of the logs, and to
 # We use the same MNIST classification example as that used in the
 # original DEC paper. We only train for 3 epochs for the sake of time.
-trainer = TUTrainer(accelerator="gpu", max_epochs=3, enable_progress_bar=False)
+trainer = TUTrainer(accelerator="gpu", devices=1, max_epochs=3, enable_progress_bar=False)
 
 # datamodule
 root = Path() / "data"

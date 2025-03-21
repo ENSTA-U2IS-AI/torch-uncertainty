@@ -586,7 +586,7 @@ lr_updater = lr_scheduler.StepLR(
     optimizer, lr_decay_epochs, lr_decay
 )
 
-trainer = TUTrainer(accelerator="gpu", max_epochs=1, precision=16, logger=False)
+trainer = TUTrainer(accelerator="gpu", devices=1, max_epochs=1, precision=16, logger=False)
 
 packed_routine = SegmentationRoutine(
     model=packed_model,

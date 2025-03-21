@@ -51,7 +51,7 @@ from torch_uncertainty.routines import ClassificationRoutine
 # To use the mc_dropout wrapper, **make sure that you use dropout modules** and
 # not functionals. Moreover, **they have to be** instantiated in the __init__ method.
 
-trainer = TUTrainer(accelerator="gpu", max_epochs=2, enable_progress_bar=False)
+trainer = TUTrainer(accelerator="gpu", devices=1, max_epochs=2, enable_progress_bar=False)
 
 # datamodule
 root = Path("data")
