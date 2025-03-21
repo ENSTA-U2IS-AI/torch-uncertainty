@@ -62,7 +62,10 @@ class ImageNetDataModule(TUDataModule):
         pin_memory: bool = True,
         persistent_workers: bool = True,
     ) -> None:
-        """DataModule for ImageNet.
+        """DataModule for the ImageNet dataset.
+
+        This datamodule uses ImageNet as In-distribution dataset, OpenImage-O, INaturalist,
+        ImageNet-0, SVHN or DTD as Out-of-distribution dataset and ImageNet-C as shifted dataset.
 
         Args:
             root (str): Root directory of the datasets.

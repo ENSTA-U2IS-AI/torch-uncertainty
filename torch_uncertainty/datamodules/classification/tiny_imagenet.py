@@ -6,13 +6,14 @@ import torch
 from numpy.typing import ArrayLike
 from timm.data.auto_augment import rand_augment_transform
 from torch import nn
-from torch.utils.data import ConcatDataset, DataLoader
+from torch.utils.data import DataLoader
 from torchvision.datasets import DTD, SVHN
 from torchvision.transforms import v2
 
 from torch_uncertainty.datamodules import TUDataModule
 from torch_uncertainty.datasets.classification import (
     ImageNetO,
+    OpenImageO,
     TinyImageNet,
     TinyImageNetC,
 )
@@ -46,6 +47,34 @@ class TinyImageNetDataModule(TUDataModule):
         pin_memory: bool = True,
         persistent_workers: bool = True,
     ) -> None:
+        """DataModule for the Tiny-ImageNet dataset.
+
+        This datamodule uses Tiny-ImageNet as In-distribution dataset, OpenImage-O, ImageNet-0,
+        SVHN or DTD as Out-of-distribution dataset and Tiny-ImageNet-C as shifted dataset.
+
+        Args:
+            root (str): Root directory of the datasets.
+            batch_size (int): Number of samples per batch.
+            eval_ood (bool): Whether to evaluate out-of-distribution performance. Defaults to ``False``.
+            eval_shift (bool): Whether to evaluate on shifted data. Defaults to ``False``.
+            shift_severity (int): Severity of the shift. Defaults to ``1``.
+            val_split (float or Path): Share of samples to use for validation
+                or path to a yaml file containing a list of validation images
+                ids. Defaults to ``0.0``.
+            postprocess_set (str, optional): The post-hoc calibration dataset to
+                use for the post-processing method. Defaults to ``val``.
+            ood_ds (str): Which out-of-distribution dataset to use. Defaults to
+                ``"openimage-o"``.
+            test_alt (str): Which test set to use. Defaults to ``None``.
+            procedure (str): Which procedure to use. Defaults to ``None``.
+            train_size (int): Size of training images. Defaults to ``224``.
+            interpolation (str): Interpolation method for the Resize Crops. Defaults to ``"bilinear"``.
+            basic_augment (bool): Whether to apply base augmentations. Defaults to ``True``.
+            rand_augment_opt (str): Which RandAugment to use. Defaults to ``None``.
+            num_workers (int): Number of workers to use for data loading. Defaults to ``1``.
+            pin_memory (bool): Whether to pin memory. Defaults to ``True``.
+            persistent_workers (bool): Whether to use persistent workers. Defaults to ``True``.
+        """
         super().__init__(
             root=root,
             batch_size=batch_size,
@@ -70,6 +99,8 @@ class TinyImageNetDataModule(TUDataModule):
             self.ood_dataset = SVHN
         elif ood_ds == "textures":
             self.ood_dataset = DTD
+        elif ood_ds == "openimage-o":
+            self.ood_dataset = OpenImageO
         else:
             raise ValueError(f"OOD dataset {ood_ds} not supported for TinyImageNet.")
         self.shift_dataset = TinyImageNetC
@@ -116,43 +147,19 @@ class TinyImageNetDataModule(TUDataModule):
 
     def prepare_data(self) -> None:  # coverage: ignore
         if self.eval_ood:
-            if self.ood_ds != "textures":
-                self.ood_dataset(
-                    self.root,
-                    split="test",
-                    download=True,
-                    transform=self.test_transform,
-                )
-            else:
-                ConcatDataset(
-                    [
-                        self.ood_dataset(
-                            self.root,
-                            split="train",
-                            download=True,
-                            transform=self.test_transform,
-                        ),
-                        self.ood_dataset(
-                            self.root,
-                            split="val",
-                            download=True,
-                            transform=self.test_transform,
-                        ),
-                        self.ood_dataset(
-                            self.root,
-                            split="test",
-                            download=True,
-                            transform=self.test_transform,
-                        ),
-                    ]
-                )
-            if self.eval_shift:
-                self.shift_dataset(
-                    self.root,
-                    download=True,
-                    transform=self.test_transform,
-                    shift_severity=self.shift_severity,
-                )
+            self.ood_dataset(
+                self.root,
+                split="test",
+                download=True,
+                transform=self.test_transform,
+            )
+        if self.eval_shift:
+            self.shift_dataset(
+                self.root,
+                download=True,
+                transform=self.test_transform,
+                shift_severity=self.shift_severity,
+            )
 
     def setup(self, stage: Literal["fit", "test"] | None = None) -> None:
         if stage == "fit" or stage is None:
@@ -184,43 +191,19 @@ class TinyImageNetDataModule(TUDataModule):
             raise ValueError(f"Stage {stage} is not supported.")
 
         if self.eval_ood:
-            if self.ood_ds == "textures":
-                self.ood = ConcatDataset(
-                    [
-                        self.ood_dataset(
-                            self.root,
-                            split="train",
-                            download=True,
-                            transform=self.test_transform,
-                        ),
-                        self.ood_dataset(
-                            self.root,
-                            split="val",
-                            download=True,
-                            transform=self.test_transform,
-                        ),
-                        self.ood_dataset(
-                            self.root,
-                            split="test",
-                            download=True,
-                            transform=self.test_transform,
-                        ),
-                    ]
-                )
-            else:
-                self.ood = self.ood_dataset(
-                    self.root,
-                    split="test",
-                    transform=self.test_transform,
-                )
+            self.ood = self.ood_dataset(
+                self.root,
+                split="test",
+                transform=self.test_transform,
+            )
 
-            if self.eval_shift:
-                self.shift = self.shift_dataset(
-                    self.root,
-                    download=False,
-                    shift_severity=self.shift_severity,
-                    transform=self.test_transform,
-                )
+        if self.eval_shift:
+            self.shift = self.shift_dataset(
+                self.root,
+                download=False,
+                shift_severity=self.shift_severity,
+                transform=self.test_transform,
+            )
 
     def train_dataloader(self) -> DataLoader:
         r"""Get the training dataloader for TinyImageNet.
