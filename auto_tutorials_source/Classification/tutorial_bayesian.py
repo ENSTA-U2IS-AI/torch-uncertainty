@@ -160,7 +160,7 @@ print("Ground truth: ", " ".join(f"{labels[j]}" for j in range(4)))
 model = routine.eval()
 logits = routine(images[:4, ...])
 print("Output logit shape (Num predictions x Batch) Classes: ", logits.shape)
-logits = rearrange(logits, "(m b) c -> b m c", b=4)  # num_estimators, batch_size, num_classes
+logits = rearrange(logits, "(m b) c -> b m c", b=4)  # batch_size, num_estimators, num_classes
 
 # We apply the softmax on the classes then average over the estimators
 probs = torch.nn.functional.softmax(logits, dim=-1)

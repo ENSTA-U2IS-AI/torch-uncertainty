@@ -2,10 +2,11 @@
 Training a LeNet with Monte Carlo Batch Normalization
 =====================================================
 
-In this tutorial, we will train a LeNet classifier on the MNIST dataset using Monte-Carlo Batch Normalization (MCBN), a post-hoc Bayesian approximation method. 
+In this tutorial, we will train a LeNet classifier on the MNIST dataset using Monte-Carlo Batch Normalization (MCBN), a post-hoc Bayesian approximation method.
 
 Training a LeNet with MCBN using TorchUncertainty models and PyTorch Lightning
 ------------------------------------------------------------------------------
+
 In this part, we train a LeNet with batch normalization layers, based on the model and routines already implemented in TU.
 
 1. Loading the utilities
@@ -15,13 +16,14 @@ First, we have to load the following utilities from TorchUncertainty:
 
 - the TUTrainer from our framework
 - the datamodule handling dataloaders: MNISTDataModule from torch_uncertainty.datamodules
-- the model: LeNet, which lies in torch_uncertainty.models
-- the MC Batch Normalization wrapper: mc_batch_norm, which lies in torch_uncertainty.post_processing
+- the model: lenet, which lies in torch_uncertainty.models
+- the MC Batch Normalization wrapper: MCBatchNorm, which lies in torch_uncertainty.post_processing
 - the classification training routine in the torch_uncertainty.routines
 - an optimization recipe in the torch_uncertainty.optim_recipes module.
 
 We also need import the neural network utils within `torch.nn`.
 """
+
 # %%
 from pathlib import Path
 
@@ -34,18 +36,23 @@ from torch_uncertainty.optim_recipes import optim_cifar10_resnet18
 from torch_uncertainty.post_processing.mc_batch_norm import MCBatchNorm
 from torch_uncertainty.routines import ClassificationRoutine
 
+# Here are the trainer and dataloader main hyperparameters
+MAX_EPOCHS = 1
+BATCH_SIZE = 512
+
 # %%
 # 2. Creating the necessary variables
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
 # In the following, we define the root of the datasets and the
 # logs. We also create the datamodule that handles the MNIST dataset
 # dataloaders and transforms.
 
-trainer = TUTrainer(accelerator="gpu", devices=1, max_epochs=2, enable_progress_bar=False)
+trainer = TUTrainer(accelerator="gpu", devices=1, max_epochs=MAX_EPOCHS, enable_progress_bar=False)
 
 # datamodule
 root = Path("data")
-datamodule = MNISTDataModule(root, batch_size=128)
+datamodule = MNISTDataModule(root, batch_size=BATCH_SIZE, num_workers=8)
 
 
 model = lenet(
@@ -57,6 +64,7 @@ model = lenet(
 # %%
 # 3. The Loss and the Training Routine
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
 # This is a classification problem, and we use CrossEntropyLoss as likelihood.
 # We define the training routine using the classification training routine from
 # torch_uncertainty.training.classification. We provide the number of classes,
@@ -72,8 +80,9 @@ routine = ClassificationRoutine(
 # %%
 # 4. Gathering Everything and Training the Model
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
 # You can also save the results in a variable by saving the output of
-# `trainer.test`.
+# `trainer.test`, like here, in perf.
 
 trainer.fit(model=routine, datamodule=datamodule)
 perf = trainer.test(model=routine, datamodule=datamodule)
@@ -81,35 +90,36 @@ perf = trainer.test(model=routine, datamodule=datamodule)
 # %%
 # 5. Wrapping the Model in a MCBatchNorm
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
 # We can now wrap the model in a MCBatchNorm to add stochasticity to the
 # predictions. We specify that the BatchNorm layers are to be converted to
 # MCBatchNorm layers, and that we want to use 8 stochastic estimators.
 # The amount of stochasticity is controlled by the ``mc_batch_size`` argument.
 # The larger the ``mc_batch_size``, the more stochastic the predictions will be.
-# The authors suggest 32 as a good value for ``mc_batch_size`` but we use 16 here
-# to highlight the effect of stochasticity on the predictions.
+# The authors suggest 32 as a good value for ``mc_batch_size`` but we use 8 here
+# to highlight its effect on the stochasticity of the predictions.
 
-routine.model = MCBatchNorm(
-    routine.model, num_estimators=8, convert=True, mc_batch_size=16
-)
+routine.model = MCBatchNorm(routine.model, num_estimators=8, convert=True, mc_batch_size=8)
 routine.model.fit(dataloader=datamodule.postprocess_dataloader())
 routine = routine.eval()  # To avoid prints
 
 # %%
 # 6. Testing the Model
 # ~~~~~~~~~~~~~~~~~~~~
+#
 # Now that the model is trained, let's test it on MNIST. Don't forget to call
 # .eval() to enable Monte Carlo batch normalization at evaluation (sometimes called inference).
 # In this tutorial, we plot the most uncertain images, i.e. the images for which
 # the variance of the predictions is the highest.
 # Please note that we apply a reshape to the logits to determine the dimension corresponding to the ensemble
-# and to the batch. As for TorchUncertainty 2.0, the ensemble dimension is merged with the batch dimension
+# and to the batch. As for TorchUncertainty 0.4.3, the ensemble dimension is merged with the batch dimension
 # in this order (num_estimator x batch, classes).
 
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torchvision
+from einops import rearrange
 
 
 def imshow(img):
@@ -124,24 +134,25 @@ dataiter = iter(datamodule.val_dataloader())
 images, labels = next(dataiter)
 
 routine.eval()
-logits = routine(images).reshape(8, 128, 10)  # num_estimators, batch_size, num_classes
+logits = routine(images)
+logits = rearrange(
+    logits, "(m b) c -> b m c", b=BATCH_SIZE
+)  # batch_size, num_estimators, num_classes
 
 probs = torch.nn.functional.softmax(logits, dim=-1)
-most_uncertain = sorted(probs.var(0).sum(-1).topk(4).indices)
+most_uncertain = sorted(probs.var(1).sum(-1).topk(4).indices)
 
 # print images
 imshow(torchvision.utils.make_grid(images[most_uncertain, ...]))
-print("Ground truth: ", " ".join(f"{labels[j]}" for j in range(4)))
-
-for j in most_uncertain:
-    values, predicted = torch.max(probs[:, j], 1)
+for img_idx in most_uncertain:
+    values, predicted = torch.max(probs[img_idx, :], 1)
     print(
-        f"Predicted digits for the image {j}: ",
+        f"Img {img_idx}: GT: {labels[img_idx]} - Predictions: ",
         " ".join([str(image_id.item()) for image_id in predicted]),
     )
 
 # %%
-# The predictions are mostly erroneous, which is expected since we selected
+# The predictions are often erroneous, which is expected since we selected
 # the most uncertain images. We also see that there stochasticity in the
 # predictions, as the predictions for the same image differ depending on the
-# stochastic estimator used.
+# estimator used.
