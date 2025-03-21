@@ -12,6 +12,7 @@ from torch_uncertainty.models.resnet import (
     packed_resnet,
     resnet,
 )
+from torch_uncertainty.ood_criteria import TUOODCriterion
 from torch_uncertainty.routines.classification import ClassificationRoutine
 from torch_uncertainty.transforms import MIMOBatchFormat, RepeatTarget
 
@@ -67,7 +68,7 @@ class ResNetBaseline(ClassificationRoutine):
         gamma: int = 1,
         rho: float = 1.0,
         batch_repeat: int = 1,
-        ood_criterion: Literal["msp", "logit", "energy", "entropy", "mi", "vr"] = "msp",
+        ood_criterion: type[TUOODCriterion] | str = "msp",
         log_plots: bool = False,
         save_in_csv: bool = False,
         eval_ood: bool = False,
@@ -144,11 +145,8 @@ class ResNetBaseline(ClassificationRoutine):
                 ``1``.
             batch_repeat (int, optional): Number of times to repeat the batch. Only
                 used if :attr:`version` is ``"mimo"``. Defaults to ``1``.
-            ood_criterion (str, optional): OOD criterion. Defaults to ``"msp"``.
-                MSP is the maximum softmax probability, logit is the maximum
-                logit, entropy is the entropy of the mean prediction, mi is the
-                mutual information of the ensemble and vr is the variation ratio
-                of the ensemble.
+            ood_criterion (TUOODCriterion, optional): Criterion for the binary OOD detection task.
+                Defaults to None which amounts to the maximum softmax probability score (MSP).
             log_plots (bool, optional): Indicates whether to log the plots or not.
                 Defaults to ``False``.
             save_in_csv (bool, optional): Indicates whether to save the results in
