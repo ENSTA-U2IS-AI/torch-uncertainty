@@ -4,11 +4,11 @@ Deep Evidential Regression on a Toy Example
 
 This tutorial provides an introduction to probabilistic regression in TorchUncertainty.
 
-More specifically, we present Deep Evidential Regression (DER) using a practical example. We demonstrate an application of DER by tackling the toy-problem of fitting :math:`y=x^3` using a Multi-Layer Perceptron (MLP) neural network model. 
-The output layer of the MLP provides a NormalInverseGamma distribution which is used to optimize the model, through its negative log-likelihood. 
+More specifically, we present Deep Evidential Regression (DER) using a practical example. We demonstrate an application of DER by tackling the toy-problem of fitting :math:`y=x^3` using a Multi-Layer Perceptron (MLP) neural network model.
+The output layer of the MLP provides a NormalInverseGamma distribution which is used to optimize the model, through its negative log-likelihood.
 
-DER represents an evidential approach to quantifying epistemic and aleatoric uncertainty in neural network regression models. 
-This method involves introducing prior distributions over the parameters of the Gaussian likelihood function. 
+DER represents an evidential approach to quantifying epistemic and aleatoric uncertainty in neural network regression models.
+This method involves introducing prior distributions over the parameters of the Gaussian likelihood function.
 Then, the MLP model estimates the parameters of this evidential distribution.
 
 Training a MLP with DER using TorchUncertainty models and PyTorch Lightning
@@ -21,7 +21,7 @@ In this part, we train a neural network, based on the model and routines already
 
 To train a MLP with the DER loss function using TorchUncertainty, we have to load the following modules:
 
-- our TUTrainer 
+- our TUTrainer
 - the model: mlp from torch_uncertainty.models.mlp
 - the regression training routine from torch_uncertainty.routines
 - the evidential objective: the DERLoss from torch_uncertainty.losses. This loss contains the classic NLL loss and a regularization term.
@@ -29,6 +29,7 @@ To train a MLP with the DER loss function using TorchUncertainty, we have to loa
 
 We also need to define an optimizer using torch.optim and the neural network utils within torch.nn.
 """
+
 # %%
 import torch
 from lightning import LightningDataModule
@@ -47,6 +48,7 @@ from torch_uncertainty.utils.distributions import get_dist_class
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~
 # We use the Adam optimizer with a rate of 5e-4.
 
+
 def optim_regression(
     model: nn.Module,
     learning_rate: float = 5e-4,
@@ -62,12 +64,12 @@ def optim_regression(
 # 3. Creating the necessary variables
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
-# In the following, we create a trainer to train the model, the same synthetic regression 
+# In the following, we create a trainer to train the model, the same synthetic regression
 # datasets as in the original DER paper and the model, a simple MLP with 2 hidden layers of 64 neurons each.
 # Please note that this MLP finishes with a NormalInverseGammaLinear that interpret the outputs of the model
 # as the parameters of a Normal Inverse Gamma distribution.
 
-trainer = TUTrainer(accelerator="gpu", devices=1, max_epochs=50) #, enable_progress_bar=False)
+trainer = TUTrainer(accelerator="gpu", devices=1, max_epochs=50)  # , enable_progress_bar=False)
 
 # dataset
 train_ds = Cubic(num_samples=1000)

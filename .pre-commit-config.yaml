@@ -31,7 +31,7 @@ repos:
     types_or: [python, pyi]
     require_serial: true
     args: [--force-exclude, --fix, --exit-non-zero-on-fix, --output-format, concise]
-    exclude: ^auto_tutorials_source/
+    exclude: ^auto_tutorial_source/
   - id: ruff-format
     name: ruff-format
     entry: ruff format

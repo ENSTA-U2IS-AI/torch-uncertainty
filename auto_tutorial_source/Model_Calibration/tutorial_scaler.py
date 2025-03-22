@@ -25,6 +25,7 @@ In this tutorial, we will need:
 
 If you use the classification routine, the plots will be automatically available in the tensorboard logs if you use the `log_plots` flag.
 """
+
 # %%
 from torch_uncertainty.datamodules import CIFAR100DataModule
 from torch_uncertainty.metrics import CalibrationError
@@ -80,9 +81,7 @@ from torch.utils.data import DataLoader, random_split
 
 # Split datasets
 dataset = dm.test
-cal_dataset, test_dataset, other = random_split(
-    dataset, [1000, 1000, len(dataset) - 2000]
-)
+cal_dataset, test_dataset, other = random_split(dataset, [1000, 1000, len(dataset) - 2000])
 test_dataloader = DataLoader(test_dataset, batch_size=32)
 calibration_dataloader = DataLoader(cal_dataset, batch_size=32)
 

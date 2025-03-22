@@ -29,6 +29,7 @@ To train a LeNet with the DEC loss function using TorchUncertainty, we have to l
 
 We also need to define an optimizer using torch.optim, the neural network utils within torch.nn.
 """
+
 # %%
 from pathlib import Path
 
@@ -45,6 +46,7 @@ from torch_uncertainty.routines import ClassificationRoutine
 # We set the number of epochs to some very low value for the sake of time.
 MAX_EPOCHS = 3
 BATCH_SIZE = 512
+
 
 # %%
 # 2. Creating the Optimizer Wrapper
@@ -98,8 +100,7 @@ routine = ClassificationRoutine(
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 trainer.fit(model=routine, datamodule=datamodule)
-trainer.test(model=routine, datamodule=datamodule);
-
+trainer.test(model=routine, datamodule=datamodule)
 # %%
 # 6. Testing the Model
 # ~~~~~~~~~~~~~~~~~~~~
@@ -138,7 +139,7 @@ def rotated_mnist(angle: int) -> None:
         predicted = torch.argmax(probs[j, :])
         print(
             f"Predicted digits for the image {j}: {predicted} with strength "
-            f"{strength[j,0]:.3f} and entropy {entropy[j,0]:.3f}."
+            f"{strength[j, 0]:.3f} and entropy {entropy[j, 0]:.3f}."
         )
 
 

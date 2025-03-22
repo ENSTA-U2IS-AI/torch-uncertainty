@@ -14,14 +14,17 @@ In this section we cover the building of a very simple MLP outputting Normal dis
 
 First, we disable some logging and warnings to keep the output clean.
 """
+
 # %%
 import torch
 from torch import nn
 
 import logging
+
 logging.getLogger("lightning.pytorch.utilities.rank_zero").setLevel(logging.WARNING)
 
 import warnings
+
 warnings.filterwarnings("ignore")
 
 # Here are the trainer and dataloader main hyperparameters
@@ -52,6 +55,7 @@ class NormalMLP(nn.Module):
         x = torch.relu(self.fc1(x))
         return self.fc2(x)
 
+
 # %%
 # 3. Setting up the data
 # ~~~~~~~~~~~~~~~~~~~~~~
@@ -61,10 +65,7 @@ from torch_uncertainty.datamodules import UCIRegressionDataModule
 
 # datamodule
 datamodule = UCIRegressionDataModule(
-    root="data",
-    batch_size=BATCH_SIZE,
-    dataset_name="kin8nm",
-    num_workers=4
+    root="data", batch_size=BATCH_SIZE, dataset_name="kin8nm", num_workers=4
 )
 
 # %%
@@ -74,7 +75,8 @@ datamodule = UCIRegressionDataModule(
 from torch_uncertainty import TUTrainer
 
 trainer = TUTrainer(
-    accelerator="gpu", devices=1,
+    accelerator="gpu",
+    devices=1,
     max_epochs=MAX_EPOCHS,
     enable_progress_bar=False,
 )
@@ -96,6 +98,7 @@ from torch_uncertainty.routines import RegressionRoutine
 
 loss = DistributionNLLLoss()
 
+
 def optim_regression(
     model: nn.Module,
     learning_rate: float = 5e-2,
@@ -105,6 +108,7 @@ def optim_regression(
         lr=learning_rate,
         weight_decay=0,
     )
+
 
 routine = RegressionRoutine(
     output_dim=1,
@@ -132,6 +136,7 @@ results = trainer.test(model=routine, datamodule=datamodule)
 
 from torch_uncertainty.layers.distributions import get_dist_linear_layer
 
+
 class DistMLP(nn.Module):
     def __init__(self, in_features: int, out_features: int, dist_family: str):
         super().__init__()
@@ -147,6 +152,7 @@ class DistMLP(nn.Module):
         x = torch.relu(self.fc1(x))
         return self.fc2(x)
 
+
 # %%
 # We can now train the model with different distributions.
 # Let us train the model with a Laplace, Student's t, and Cauchy distribution.
@@ -157,7 +163,8 @@ for dist_family in ["laplace", "student", "cauchy"]:
     print(f">>> Training with {dist_family.capitalize()} distribution")
     print("#" * 38)
     trainer = TUTrainer(
-        accelerator="gpu", devices=1,
+        accelerator="gpu",
+        devices=1,
         max_epochs=MAX_EPOCHS,
         enable_model_summary=False,
         enable_progress_bar=False,
