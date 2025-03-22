@@ -28,6 +28,7 @@ First, we have to load the following utilities from TorchUncertainty:
 
 We also need import the neural network utils within `torch.nn`.
 """
+
 # %%
 from pathlib import Path
 
@@ -44,7 +45,7 @@ from torch_uncertainty.routines import ClassificationRoutine
 # 2. Defining the Model and the Trainer
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
-# In the following, we first create the trainer and instantiate 
+# In the following, we first create the trainer and instantiate
 # the datamodule that handles the MNIST dataset,
 # dataloaders and transforms. We create the model using the
 # blueprint from torch_uncertainty.models and we wrap it into an mc_dropout.
@@ -130,7 +131,7 @@ probs = torch.nn.functional.softmax(logits, dim=-1)
 for j in range(6):
     values, predicted = torch.max(probs[:, j], 1)
     print(
-        f"MC-Dropout predictions for the image {j+1}: ",
+        f"MC-Dropout predictions for the image {j + 1}: ",
         " ".join([str(image_id.item()) for image_id in predicted]),
     )
 

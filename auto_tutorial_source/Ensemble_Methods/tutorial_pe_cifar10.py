@@ -70,16 +70,12 @@ batch_size = 4
 trainset = torchvision.datasets.CIFAR10(
     root="./data", train=True, download=True, transform=transform
 )
-trainloader = DataLoader(
-    trainset, batch_size=batch_size, shuffle=True, num_workers=2
-)
+trainloader = DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=2)
 
 testset = torchvision.datasets.CIFAR10(
     root="./data", train=False, download=True, transform=transform
 )
-testloader = DataLoader(
-    testset, batch_size=batch_size, shuffle=False, num_workers=2
-)
+testloader = DataLoader(testset, batch_size=batch_size, shuffle=False, num_workers=2)
 
 classes = (
     "plane",
@@ -170,18 +166,12 @@ class PackedNet(nn.Module):
         M = 4
         alpha = 2
         gamma = 1
-        self.conv1 = PackedConv2d(
-            3, 6, 5, alpha=alpha, num_estimators=M, gamma=gamma, first=True
-        )
+        self.conv1 = PackedConv2d(3, 6, 5, alpha=alpha, num_estimators=M, gamma=gamma, first=True)
         self.pool = nn.MaxPool2d(2, 2)
         self.conv2 = PackedConv2d(6, 16, 5, alpha=alpha, num_estimators=M, gamma=gamma)
-        self.fc1 = PackedLinear(
-            16 * 5 * 5, 120, alpha=alpha, num_estimators=M, gamma=gamma
-        )
+        self.fc1 = PackedLinear(16 * 5 * 5, 120, alpha=alpha, num_estimators=M, gamma=gamma)
         self.fc2 = PackedLinear(120, 84, alpha=alpha, num_estimators=M, gamma=gamma)
-        self.fc3 = PackedLinear(
-            84, 10 * M, alpha=alpha, num_estimators=M, gamma=gamma, last=True
-        )
+        self.fc3 = PackedLinear(84, 10 * M, alpha=alpha, num_estimators=M, gamma=gamma, last=True)
 
         self.num_estimators = M
 

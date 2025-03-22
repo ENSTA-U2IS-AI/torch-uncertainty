@@ -7,10 +7,11 @@ TorchUncertainty library. These corruption transforms were first proposed in the
 Benchmarking Neural Network Robustness to Common Corruptions and Perturbations
 by Dan Hendrycks and Thomas Dietterich.
 
-For this tutorial, we will only load the corruption transforms available in 
+For this tutorial, we will only load the corruption transforms available in
 torch_uncertainty.transforms.corruption. We also need to load utilities from
 torchvision and matplotlib.
 """
+
 # %%
 from torchvision.transforms import Compose, ToTensor, Resize, CenterCrop
 
@@ -26,9 +27,11 @@ urls = [
     "https://upload.wikimedia.org/wikipedia/commons/8/8b/Cottontail_Rabbit.jpg",
 ]
 
+
 def download_img(url, i):
     request.urlretrieve(url, f"tmp_{i}.png")
-    return Image.open(f"tmp_{i}.png").convert('RGB')
+    return Image.open(f"tmp_{i}.png").convert("RGB")
+
 
 images_ds = [download_img(url, i) for i, url in enumerate(urls)]
 
@@ -38,7 +41,13 @@ def get_images(main_corruption, index: int = 0):
     images = []
     for severity in range(6):
         transforms = Compose(
-            [Resize(256, antialias=True), CenterCrop(256), ToTensor(), main_corruption(severity), CenterCrop(224)]
+            [
+                Resize(256, antialias=True),
+                CenterCrop(256),
+                ToTensor(),
+                main_corruption(severity),
+                CenterCrop(224),
+            ]
         )
         images.append(transforms(images_ds[index]).permute(1, 2, 0).numpy())
     return images
@@ -128,7 +137,12 @@ show_images(
 # ~~~~~~~~~~~~~~~~~~~~
 
 from torch_uncertainty.transforms.corruption import (
-    Brightness, Contrast, Elastic, JPEGCompression, Pixelate)
+    Brightness,
+    Contrast,
+    Elastic,
+    JPEGCompression,
+    Pixelate,
+)
 
 show_images(
     [

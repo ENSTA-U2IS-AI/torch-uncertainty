@@ -36,6 +36,7 @@ To train a BNN using TorchUncertainty, we have to load the following modules:
 We will also need to define an optimizer using torch.optim and Pytorch's
 neural network utils from torch.nn.
 """
+
 # %%
 from pathlib import Path
 
@@ -103,7 +104,7 @@ routine = ClassificationRoutine(
     num_classes=datamodule.num_classes,
     loss=loss,
     optim_recipe=optim_lenet(model),
-    is_ensemble=True
+    is_ensemble=True,
 )
 
 # %%
@@ -151,7 +152,7 @@ print("Ground truth: ", " ".join(f"{labels[j]}" for j in range(4)))
 
 # Put the model in eval mode to use several samples
 model = model.eval()
-logits = model(images).reshape(16, 128, 10) # num_estimators, batch_size, num_classes
+logits = model(images).reshape(16, 128, 10)  # num_estimators, batch_size, num_classes
 
 # We apply the softmax on the classes and average over the estimators
 probs = torch.nn.functional.softmax(logits, dim=-1)
@@ -161,7 +162,10 @@ var_probs = probs.std(dim=0)
 _, predicted = torch.max(avg_probs, 1)
 
 print("Predicted digits: ", " ".join(f"{predicted[j]}" for j in range(4)))
-print("Std. dev. of the scores over the posterior samples", " ".join(f"{var_probs[j][predicted[j]]:.3}" for j in range(4)))
+print(
+    "Std. dev. of the scores over the posterior samples",
+    " ".join(f"{var_probs[j][predicted[j]]:.3}" for j in range(4)),
+)
 # %%
 # Here, we show the variance of the top prediction. This is a non-standard but intuitive way to show the diversity of the predictions
 # of the ensemble. Ideally, the variance should be high when the average top prediction is incorrect.

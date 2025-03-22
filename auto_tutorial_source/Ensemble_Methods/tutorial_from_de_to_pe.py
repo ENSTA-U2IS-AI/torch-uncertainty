@@ -29,6 +29,7 @@ TorchUncertainty includes datamodules that handle the data loading and preproces
 
 The dataset is automatically downloaded using torchvision. We then visualize a few images to see a bit what we are working with.
 """
+
 # %%
 import torch
 import torchvision.transforms as T
@@ -59,9 +60,7 @@ test_transform = T.Compose(
 from torch.utils.data import Subset
 from torchvision.datasets import MNIST, FashionMNIST
 
-train_data = MNIST(
-    root="./data/", download=True, train=True, transform=train_transform
-)
+train_data = MNIST(root="./data/", download=True, train=True, transform=train_transform)
 test_data = MNIST(root="./data/", train=False, transform=test_transform)
 # We only take the first 10k images to have the same number of samples as the test set using torch Subsets
 ood_data = Subset(
@@ -221,9 +220,7 @@ ens_routine = ClassificationRoutine(
     num_classes=10,
     model=ensemble,
     loss=nn.CrossEntropyLoss(),  # The loss for the training
-    format_batch_fn=RepeatTarget(
-        2
-    ),  # How to handle the targets when comparing the predictions
+    format_batch_fn=RepeatTarget(2),  # How to handle the targets when comparing the predictions
     optim_recipe=optim_recipe(
         ensemble, 2.0
     ),  # The optimization scheme with the optimizer and the scheduler as a dictionnary
@@ -277,9 +274,7 @@ ens_routine = ClassificationRoutine(
     num_classes=10,
     model=ensemble,
     loss=nn.CrossEntropyLoss(),  # The loss for the training
-    format_batch_fn=RepeatTarget(
-        8
-    ),  # How to handle the targets when comparing the predictions
+    format_batch_fn=RepeatTarget(8),  # How to handle the targets when comparing the predictions
     optim_recipe=None,  # No optim recipe as the model is already trained
     eval_ood=True,  # We want to evaluate the OOD-related metrics
 )
@@ -335,12 +330,8 @@ class PackedLeNet(nn.Module):
             num_estimators=num_estimators,
         )
         self.pooling = nn.AdaptiveAvgPool2d((4, 4))
-        self.fc1 = PackedLinear(
-            256, 120, alpha=alpha, num_estimators=num_estimators
-        )
-        self.fc2 = PackedLinear(
-            120, 84, alpha=alpha, num_estimators=num_estimators
-        )
+        self.fc1 = PackedLinear(256, 120, alpha=alpha, num_estimators=num_estimators)
+        self.fc2 = PackedLinear(120, 84, alpha=alpha, num_estimators=num_estimators)
         self.fc3 = PackedLinear(
             84,
             num_classes,
@@ -354,9 +345,7 @@ class PackedLeNet(nn.Module):
         out = F.max_pool2d(out, 2)
         out = F.relu(self.conv2(out))
         out = F.max_pool2d(out, 2)
-        out = rearrange(
-            out, "e (m c) h w -> (m e) c h w", m=self.num_estimators
-        )
+        out = rearrange(out, "e (m c) h w -> (m e) c h w", m=self.num_estimators)
         out = torch.flatten(out, 1)
         out = F.relu(self.fc1(out))
         out = F.relu(self.fc2(out))
@@ -364,9 +353,7 @@ class PackedLeNet(nn.Module):
 
 
 # Instantiate the model, the images are in grayscale so the number of channels is 1
-packed_model = PackedLeNet(
-    in_channels=1, num_classes=10, alpha=2, num_estimators=4
-)
+packed_model = PackedLeNet(in_channels=1, num_classes=10, alpha=2, num_estimators=4)
 
 # Create the trainer that will handle the training
 trainer = TUTrainer(accelerator="gpu", devices=1, max_epochs=MAX_EPOCHS)
