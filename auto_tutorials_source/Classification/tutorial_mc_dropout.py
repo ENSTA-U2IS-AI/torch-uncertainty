@@ -28,15 +28,16 @@ First, we have to load the following utilities from TorchUncertainty:
 
 We also need import the neural network utils within `torch.nn`.
 """
+
 # %%
 from pathlib import Path
 
-from torch_uncertainty import TUTrainer
 from torch import nn
 
+from torch_uncertainty import TUTrainer
 from torch_uncertainty.datamodules import MNISTDataModule
-from torch_uncertainty.models.lenet import lenet
 from torch_uncertainty.models import mc_dropout
+from torch_uncertainty.models.lenet import lenet
 from torch_uncertainty.optim_recipes import optim_cifar10_resnet18
 from torch_uncertainty.routines import ClassificationRoutine
 
@@ -47,7 +48,7 @@ BATCH_SIZE = 512
 # 2. Defining the Model and the Trainer
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
-# In the following, we first create the trainer and instantiate 
+# In the following, we first create the trainer and instantiate
 # the datamodule that handles the MNIST dataset,
 # dataloaders and transforms. We create the model using the
 # blueprint from torch_uncertainty.models and we wrap it into an mc_dropout.
@@ -133,7 +134,7 @@ probs = torch.nn.functional.softmax(logits, dim=-1)
 for j in range(6):
     values, predicted = torch.max(probs[j, :], 1)
     print(
-        f"IMG {j+1} - GT: {labels[j]} - Predictions:",
+        f"IMG {j + 1} - GT: {labels[j]} - Predictions:",
         " ".join([str(image_id.item()) for image_id in predicted]),
     )
 

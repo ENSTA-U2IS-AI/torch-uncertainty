@@ -4,11 +4,11 @@ Deep Evidential Regression on a Toy Example
 
 This tutorial provides an introduction to probabilistic regression in TorchUncertainty.
 
-More specifically, we present Deep Evidential Regression (DER) using a practical example. We demonstrate an application of DER by tackling the toy-problem of fitting :math:`y=x^3` using a Multi-Layer Perceptron (MLP) neural network model. 
-The output layer of the MLP provides a NormalInverseGamma distribution which is used to optimize the model, through its negative log-likelihood. 
+More specifically, we present Deep Evidential Regression (DER) using a practical example. We demonstrate an application of DER by tackling the toy-problem of fitting :math:`y=x^3` using a Multi-Layer Perceptron (MLP) neural network model.
+The output layer of the MLP provides a NormalInverseGamma distribution which is used to optimize the model, through its negative log-likelihood.
 
-DER represents an evidential approach to quantifying epistemic and aleatoric uncertainty in neural network regression models. 
-This method involves introducing prior distributions over the parameters of the Gaussian likelihood function. 
+DER represents an evidential approach to quantifying epistemic and aleatoric uncertainty in neural network regression models.
+This method involves introducing prior distributions over the parameters of the Gaussian likelihood function.
 Then, the MLP model estimates the parameters of this evidential distribution.
 
 Training a MLP with DER using TorchUncertainty models and PyTorch Lightning
@@ -21,39 +21,44 @@ In this part, we train a neural network, based on the model and routines already
 
 To train a MLP with the DER loss function using TorchUncertainty, we have to load the following modules:
 
-- our TUTrainer 
+- our TUTrainer
 - the model: mlp from torch_uncertainty.models.mlp
-- the regression training routine from torch_uncertainty.routines
+- the regression training and evaluation routine from torch_uncertainty.routines
 - the evidential objective: the DERLoss from torch_uncertainty.losses. This loss contains the classic NLL loss and a regularization term.
 - a dataset that generates samples from a noisy cubic function: Cubic from torch_uncertainty.datasets.regression
 
 We also need to define an optimizer using torch.optim and the neural network utils within torch.nn.
 """
+
 # %%
 import torch
 from lightning import LightningDataModule
 from torch import nn, optim
 
 from torch_uncertainty import TUTrainer
-from torch_uncertainty.models.mlp import mlp
 from torch_uncertainty.datasets.regression.toy import Cubic
 from torch_uncertainty.losses import DERLoss
+from torch_uncertainty.models.mlp import mlp
 from torch_uncertainty.routines import RegressionRoutine
-from torch_uncertainty.layers.distributions import NormalInverseGammaLinear
 from torch_uncertainty.utils.distributions import get_dist_class
+
+MAX_EPOCHS = 25
+BATCH_SIZE = 64
 
 # %%
 # 2. The Optimization Recipe
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~
-# We use the Adam optimizer with a rate of 5e-4.
+#
+# We use the Adam optimizer with a rate of 4e-3. We increased the learning-rate compared to
+# The original paper to decrease the number of epochs and hence the duration of the experiment.
+
 
 def optim_regression(
     model: nn.Module,
-    learning_rate: float = 5e-4,
 ):
     return optim.Adam(
         model.parameters(),
-        lr=learning_rate,
+        lr=4e-3,
         weight_decay=0,
     )
 
@@ -62,12 +67,12 @@ def optim_regression(
 # 3. Creating the necessary variables
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
-# In the following, we create a trainer to train the model, the same synthetic regression 
+# In the following, we create a trainer to train the model, the same synthetic regression
 # datasets as in the original DER paper and the model, a simple MLP with 2 hidden layers of 64 neurons each.
 # Please note that this MLP finishes with a NormalInverseGammaLinear that interpret the outputs of the model
 # as the parameters of a Normal Inverse Gamma distribution.
 
-trainer = TUTrainer(accelerator="gpu", devices=1, max_epochs=50) #, enable_progress_bar=False)
+trainer = TUTrainer(accelerator="gpu", devices=1, max_epochs=MAX_EPOCHS, enable_progress_bar=False)
 
 # dataset
 train_ds = Cubic(num_samples=1000)
@@ -75,7 +80,7 @@ val_ds = Cubic(num_samples=300)
 
 # datamodule
 datamodule = LightningDataModule.from_datasets(
-    train_ds, val_dataset=val_ds, test_dataset=val_ds, batch_size=32
+    train_ds, val_dataset=val_ds, test_dataset=val_ds, batch_size=BATCH_SIZE, num_workers=4
 )
 datamodule.training_task = "regression"
 
@@ -114,18 +119,17 @@ routine = RegressionRoutine(
 
 trainer.fit(model=routine, datamodule=datamodule)
 trainer.test(model=routine, datamodule=datamodule)
-
 # %%
 # 6. Testing the Model
 # ~~~~~~~~~~~~~~~~~~~~
+#
 # We can now test the model by plotting the predictions and the uncertainty estimates.
-# In this specific case, we can reproduce the results of the paper.
+# In this specific case, we can approximately reproduce the figure of the original paper.
 
 import matplotlib.pyplot as plt
 
 with torch.no_grad():
     x = torch.linspace(-7, 7, 1000)
-
     dist_params = model(x.unsqueeze(-1))
     dists = get_dist_class("nig")(**dist_params)
     means = dists.loc.squeeze(1)
