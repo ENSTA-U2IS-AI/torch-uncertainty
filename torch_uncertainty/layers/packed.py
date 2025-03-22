@@ -349,10 +349,12 @@ class PackedConv2d(nn.Module):
             stride (int or tuple, optional): Stride of the convolution. Defaults to ``1``.
             padding (int, tuple or str, optional): Padding added to all four sides of the input. Defaults to ``0``.
             dilation (int or tuple, optional): Spacing between kernel elements. Defaults to ``1``.
-            groups (int, optional): Number of blocked connexions from input channels to output channels for each estimator. Defaults to ``1``.
+            groups (int, optional): Number of blocked connexions from input channels to output channels for each
+                estimator. Defaults to ``1``.
             minimum_channels_per_group (int, optional): Smallest possible number of channels per group.
             bias (bool, optional): If ``True``, adds a learnable bias to the output. Defaults to ``True``.
-            padding_mode (str, optional): ``'zeros'``, ``'reflect'``,``'replicate'`` or ``'circular'``. Defaults to ``'zeros'``.
+            padding_mode (str, optional): ``'zeros'``, ``'reflect'``,``'replicate'`` or ``'circular'``. Defaults
+                to ``'zeros'``.
             first (bool, optional): Whether this is the first layer of the network. Defaults to ``False``.
             last (bool, optional): Whether this is the last layer of the network. Defaults to ``False``.
             device (torch.device, optional): The device to use for the layer's parameters. Defaults to ``None``.
