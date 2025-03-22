@@ -46,12 +46,10 @@ class CIFAR10DataModule(TUDataModule):
         """DataModule for CIFAR10.
 
         Args:
-            root (str): Root directory of the datasets.
-            eval_ood (bool): Whether to evaluate on out-of-distribution data.
-                Defaults to ``False``.
-            eval_shift (bool): Whether to evaluate on shifted data. Defaults to
-                ``False``.
+            root (str | Path): Root directory of the datasets.
             batch_size (int): Number of samples per batch.
+            eval_ood (bool): Whether to evaluate on out-of-distribution data. Defaults to ``False``.
+            eval_shift (bool): Whether to evaluate on shifted data. Defaults to ``False``.
             val_split (float): Share of samples to use for validation. Defaults
                 to ``0.0``.
             postprocess_set (str, optional): The post-hoc calibration dataset to
@@ -69,8 +67,7 @@ class CIFAR10DataModule(TUDataModule):
                 CIFAR10-C. Defaults to ``1``.
             num_dataloaders (int): Number of dataloaders to use. Defaults to ``1``.
             pin_memory (bool): Whether to pin memory. Defaults to ``True``.
-            persistent_workers (bool): Whether to use persistent workers. Defaults
-                to ``True``.
+            persistent_workers (bool): Whether to use persistent workers. Defaults to ``True``.
         """
         super().__init__(
             root=root,

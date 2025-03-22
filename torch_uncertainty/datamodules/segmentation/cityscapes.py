@@ -55,11 +55,10 @@ class CityscapesDataModule(TUDataModule):
                 for validation. Defaults to ``None``.
             num_workers (int, optional): Number of dataloaders to use. Defaults to
                 ``1``.
-            pin_memory (bool, optional):  Whether to pin memory. Defaults to
+            pin_memory (bool, optional): Whether to pin memory. Defaults to
                 ``True``.
             persistent_workers (bool, optional): Whether to use persistent workers.
                 Defaults to ``True``.
-
 
         Note:
             This datamodule injects the following transforms into the training and

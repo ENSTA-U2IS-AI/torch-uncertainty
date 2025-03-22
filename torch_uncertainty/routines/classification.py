@@ -114,7 +114,7 @@ class ClassificationRoutine(LightningModule):
                 error metrics. Defaults to ``15``.
             log_plots (bool, optional): Indicates whether to log plots from
                 metrics. Defaults to ``False``.
-            save_in_csv(bool, optional): Save the results in csv. Defaults to
+            save_in_csv (bool, optional): Save the results in csv. Defaults to
                 ``False``.
 
         Warning:

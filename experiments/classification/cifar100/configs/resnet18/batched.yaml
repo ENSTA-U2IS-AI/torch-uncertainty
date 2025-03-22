@@ -5,7 +5,7 @@ trainer:
   accelerator: gpu
   devices: 1
   precision: 16-mixed
-  max_epochs: 75
+  max_epochs: 200
   logger:
     class_path: lightning.pytorch.loggers.TensorBoardLogger
     init_args:
@@ -38,12 +38,13 @@ data:
   root: ./data
   batch_size: 128
 optimizer:
-  lr: 0.05
+  lr: 0.1
   momentum: 0.9
   weight_decay: 1e-4
   nesterov: true
 lr_scheduler:
   milestones:
-  - 25
-  - 50
+  - 60
+  - 120
+  - 160
   gamma: 0.2

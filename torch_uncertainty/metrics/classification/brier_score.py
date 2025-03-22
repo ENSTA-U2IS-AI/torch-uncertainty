@@ -19,42 +19,73 @@ class BrierScore(Metric):
         reduction: Literal["mean", "sum", "none", None] = "mean",
         **kwargs,
     ) -> None:
-        r"""The Brier Score Metric.
+        r"""Compute the Brier score.
+
+        The Brier Score measures the mean squared difference between predicted
+        probabilities and actual target values. It is used to evaluate the
+        accuracy of probabilistic predictions, where a lower score indicates
+        better calibration and prediction quality.
 
         Args:
-            num_classes (int): Number of classes
-            top_class (bool, optional): If true, compute the Brier score for the
-                top class only. Defaults to False.
-            reduction (str, optional): Determines how to reduce over the
-                :math:`B`/batch dimension:
+            num_classes (int): Number of classes.
+            top_class (bool, optional): If True, computes the Brier score for the
+                top predicted class only. Defaults to ``False``.
+            reduction (str, optional): Determines how to reduce the score across the
+                batch dimension:
 
-                - ``'mean'`` [default]: Averages score across samples
-                - ``'sum'``: Sum score across samples
-                - ``'none'`` or ``None``: Returns score per sample
+                - ``'mean'`` [default]: Averages the score across samples.
+                - ``'sum'``: Sums the score across samples.
+                - ``'none'`` or ``None``: Returns the score for each sample.
 
             kwargs: Additional keyword arguments, see `Advanced metric settings
                 <https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metric-kwargs>`_.
 
         Inputs:
             - :attr:`probs`: :math:`(B, C)` or :math:`(B, N, C)`
+                Predicted probabilities for each class.
             - :attr:`target`: :math:`(B)` or :math:`(B, C)`
+                Ground truth class labels or one-hot encoded targets.
 
-            where :math:`B` is the batch size, :math:`C` is the number of classes
-            and :math:`N` is the number of estimators.
+            where:
+                :math:`B` is the batch size,
+                :math:`C` is the number of classes,
+                :math:`N` is the number of estimators.
 
         Note:
-            If :attr:`probs` is a 3d tensor, then the metric computes the mean of
-            the Brier score over the estimators ie. :math:`t = \frac{1}{N}
-            \sum_{i=0}^{N-1} BrierScore(probs[:,i,:], target)`.
+            If :attr:`probs` is a 3D tensor, the metric computes the mean of
+            the Brier score over the estimators, as:
+            :math:`t = \frac{1}{N} \sum_{i=0}^{N-1} BrierScore(probs[:,i,:], target)`.
 
         Warning:
-            Make sure that the probabilities in :attr:`probs` are normalized to sum
-            to one.
+            Ensure that the probabilities in :attr:`probs` are normalized to sum
+            to one before passing them to the metric.
 
         Raises:
-            ValueError:
-                If :attr:`reduction` is not one of ``'mean'``, ``'sum'``,
+            ValueError: If :attr:`reduction` is not one of ``'mean'``, ``'sum'``,
                 ``'none'`` or ``None``.
+
+        Examples:
+            >>> from torch_uncertainty.metrics.classification.brier_score import BrierScore
+            # Example 1: Binary Classification
+            >>> probs = torch.tensor([[0.8, 0.2], [0.3, 0.7]])
+            >>> target = torch.tensor([0, 1])
+            >>> metric = BrierScore(num_classes=2)
+            >>> metric.update(probs, target)
+            >>> score = metric.compute()
+            >>> print(score)
+            tensor(0.1299)
+            # Example 2: Multi-Class Classification
+            >>> probs = torch.tensor([[0.6, 0.3, 0.1], [0.2, 0.5, 0.3]])
+            >>> target = torch.tensor([0, 2])
+            >>> metric = BrierScore(num_classes=3, reduction='mean')
+            >>> metric.update(probs, target)
+            >>> score = metric.compute()
+            >>> print(score)
+            tensor(0.5199)
+
+        References:
+            [1] `Wikipedia entry for the Brier score
+            <https://en.wikipedia.org/wiki/Brier_score>`_.
         """
         super().__init__(**kwargs)
 

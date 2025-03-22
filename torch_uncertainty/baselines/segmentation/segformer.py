@@ -28,13 +28,8 @@ class SegFormerBaseline(SegmentationRoutine):
         Args:
             num_classes (int): Number of classes to predict.
             loss (type[Module]): Training loss.
-            version (str):
-                Determines which SegFormer version to use. Options are:
-
-                - ``"std"``: original SegFormer
-
-            arch (int):
-                Determines which architecture to use. Options are:
+            version (str): Determines which SegFormer version to use. Options are:``"std"``: original SegFormer
+            arch (int): Determines which architecture to use. Options are:
 
                 - ``0``: SegFormer-B0
                 - ``1``: SegFormer-B1

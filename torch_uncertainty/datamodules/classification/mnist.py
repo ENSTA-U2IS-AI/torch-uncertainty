@@ -41,10 +41,8 @@ class MNISTDataModule(TUDataModule):
 
         Args:
             root (str): Root directory of the datasets.
-            eval_ood (bool): Whether to evaluate on out-of-distribution data.
-                Defaults to ``False``.
-            eval_shift (bool): Whether to evaluate on shifted data. Defaults to
-                ``False``.
+            eval_ood (bool): Whether to evaluate on out-of-distribution data. Defaults to ``False``.
+            eval_shift (bool): Whether to evaluate on shifted data. Defaults to ``False``.
             batch_size (int): Number of samples per batch.
             ood_ds (str): Which out-of-distribution dataset to use. Defaults to
                 ``"fashion"``; `fashion` stands for FashionMNIST and `notMNIST` for
@@ -59,8 +57,7 @@ class MNISTDataModule(TUDataModule):
                 ``True``.
             cutout (int): Size of cutout to apply to images. Defaults to ``None``.
             pin_memory (bool): Whether to pin memory. Defaults to ``True``.
-            persistent_workers (bool): Whether to use persistent workers. Defaults
-                to ``True``.
+            persistent_workers (bool): Whether to use persistent workers. Defaults to ``True``.
         """
         super().__init__(
             root=root,
@@ -130,6 +127,11 @@ class MNISTDataModule(TUDataModule):
             self.shift_dataset(self.root, download=True)
 
     def setup(self, stage: Literal["fit", "test"] | None = None) -> None:
+        """Set up the datasets for training, validation, and testing.
+
+        Args:
+            stage (Literal["fit", "test"] | None): Stage of the setup process. Defaults to ``None``.
+        """
         if stage == "fit" or stage is None:
             full = self.dataset(
                 self.root,
@@ -175,7 +177,7 @@ class MNISTDataModule(TUDataModule):
             )
 
     def test_dataloader(self) -> list[DataLoader]:
-        r"""Get the test dataloaders for MNIST.
+        """Get the test dataloaders for MNIST.
 
         Return:
             list[DataLoader]: Dataloaders of the MNIST test set (in

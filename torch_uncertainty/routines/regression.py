@@ -45,19 +45,12 @@ class RegressionRoutine(LightningModule):
             model (torch.nn.Module): Model to train.
             output_dim (int): Number of outputs of the model.
             loss (torch.nn.Module): Loss function to optimize the :attr:`model`.
-            dist_family (str, optional): The distribution family to use for
-                probabilistic regression. If ``None`` then point-wise regression.
-                Defaults to ``None``.
-            dist_estimate (str, optional): The estimate to use when computing the
-                point-wise metrics. Defaults to ``"mean"``.
-            is_ensemble (bool, optional): Whether the model is an ensemble.
-                Defaults to ``False``.
-            optim_recipe (dict or torch.optim.Optimizer, optional): The optimizer and
-                optionally the scheduler to use. Defaults to ``None``.
-            eval_shift (bool, optional): Indicates whether to evaluate the Distribution
-                shift performance. Defaults to ``False``.
-            format_batch_fn (torch.nn.Module, optional): The function to format the
-                batch. Defaults to ``None``.
+            dist_family (str, optional): The distribution family to use for probabilistic regression. If ``None`` then point-wise regression. Defaults to ``None``.
+            dist_estimate (str, optional): The estimate to use when computing the point-wise metrics. Defaults to ``"mean"``.
+            is_ensemble (bool, optional): Whether the model is an ensemble. Defaults to ``False``.
+            optim_recipe (dict or torch.optim.Optimizer, optional): The optimizer and optionally the scheduler to use. Defaults to ``None``.
+            eval_shift (bool, optional): Indicates whether to evaluate the Distribution shift performance. Defaults to ``False``.
+            format_batch_fn (torch.nn.Module, optional): The function to format the batch. Defaults to ``None``.
 
         Warning:
             If :attr:`probabilistic` is True, the model must output a `PyTorch

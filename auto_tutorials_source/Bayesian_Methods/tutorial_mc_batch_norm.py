@@ -41,7 +41,7 @@ from torch_uncertainty.routines import ClassificationRoutine
 # logs. We also create the datamodule that handles the MNIST dataset
 # dataloaders and transforms.
 
-trainer = TUTrainer(accelerator="cpu", max_epochs=2, enable_progress_bar=False)
+trainer = TUTrainer(accelerator="gpu", devices=1, max_epochs=2, enable_progress_bar=False)
 
 # datamodule
 root = Path("data")
@@ -86,13 +86,13 @@ perf = trainer.test(model=routine, datamodule=datamodule)
 # MCBatchNorm layers, and that we want to use 8 stochastic estimators.
 # The amount of stochasticity is controlled by the ``mc_batch_size`` argument.
 # The larger the ``mc_batch_size``, the more stochastic the predictions will be.
-# The authors suggest 32 as a good value for ``mc_batch_size`` but we use 16 here
+# The authors suggest 32 as a good value for ``mc_batch_size`` but we use 4 here
 # to highlight the effect of stochasticity on the predictions.
 
 routine.model = MCBatchNorm(
     routine.model, num_estimators=8, convert=True, mc_batch_size=16
 )
-routine.model.fit(dataloader=datamodule.postprocess_dataloader())
+routine.model.fit(datamodule.train_dataloader())
 routine = routine.eval()  # To avoid prints
 
 # %%

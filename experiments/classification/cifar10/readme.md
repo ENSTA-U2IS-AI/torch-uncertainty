@@ -51,14 +51,3 @@ python resnet.py fit --config configs/resnet.yaml --model.arch 101 --model.versi
 |Masked-Ensembles|✅|
 |MIMO|✅|
 |MC Dropout|✅|
-
-### VGG
-
-||VGG11|VGG13|VGG16|VGG19|
-|---|---|---|---|---|
-|Standard|✅|✅|✅|✅|
-|Packed-Ensembles|✅|✅|✅|✅|
-|BatchEnsemble|||||
-|Masked-Ensembles|||||
-|MIMO|||||
-|MC Dropout|✅|✅|✅|✅|
