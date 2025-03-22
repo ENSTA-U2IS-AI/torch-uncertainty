@@ -11,22 +11,22 @@ depth estimation, and object detection.
 For details and access, visit the `MUAD Website <https://muad-dataset.github.io/>`_.
 
 """
-# %% 
+# %%
 # 1. Load Muad dataset using Torch Uncertainty
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-# %% 
+# %%
 # Let's start by defining the training parameters.
 
 batch_size = 10
-learning_rate =1e-3
-weight_decay=2e-4
-lr_decay_epochs=20
-lr_decay=0.1
-nb_epochs=50
+learning_rate = 1e-3
+weight_decay = 2e-4
+lr_decay_epochs = 20
+lr_decay = 0.1
+nb_epochs = 50
 
-# %% 
+# %%
 # In this Tutorial we are using the small version a bigger version can be specified with keyword "full" instead of small.
 
 
@@ -70,11 +70,32 @@ val_transform = v2.Compose(
     ]
 )
 
-train_set = MUAD(root="./data", target_type="semantic", version="small", split="train" , transforms=train_transform, download=True)
-val_set = MUAD(root="./data", target_type="semantic", version="small", split="val" , transforms=val_transform, download=True)
-test_set = MUAD(root="./data", target_type="semantic", version="small", split="test" , transforms=val_transform, download=True)
+train_set = MUAD(
+    root="./data",
+    target_type="semantic",
+    version="small",
+    split="train",
+    transforms=train_transform,
+    download=True,
+)
+val_set = MUAD(
+    root="./data",
+    target_type="semantic",
+    version="small",
+    split="val",
+    transforms=val_transform,
+    download=True,
+)
+test_set = MUAD(
+    root="./data",
+    target_type="semantic",
+    version="small",
+    split="test",
+    transforms=val_transform,
+    download=True,
+)
 
-# %% 
+# %%
 # Visualize a validation input sample (and RGB image)
 
 # Undo normalization on the image and convert to uint8.
@@ -86,12 +107,12 @@ img = img * std[:, None, None] + mean[:, None, None]
 img = F.to_dtype(img, torch.uint8, scale=True)
 img_pil = F.to_pil_image(img)
 
-plt.figure(figsize=(6,6))
+plt.figure(figsize=(6, 6))
 plt.imshow(img_pil)
-plt.axis("off") 
+plt.axis("off")
 plt.show()
 
-# %% 
+# %%
 # Visualize the same image above but segmented.
 
 from torchvision.utils import draw_segmentation_masks
@@ -101,14 +122,14 @@ tgt_masks = tmp_tgt == torch.arange(22, device=tgt.device)[:, None, None]
 img_segmented = draw_segmentation_masks(img, tgt_masks, alpha=1, colors=val_set.color_palette)
 img_pil = F.to_pil_image(img)
 
-plt.figure(figsize=(6,6))
+plt.figure(figsize=(6, 6))
 plt.imshow(img_pil)
-plt.axis("off") 
+plt.axis("off")
 plt.show()
 
-# %% 
+# %%
 # Below is the complete list of classes in MUAD, presented as:
-# 
+#
 # 1.   Class Name
 # 2.   Train ID
 # 3.   Segmentation Color in RGB format [R,G, B].
@@ -119,30 +140,18 @@ for muad_class in train_set.classes:
     color = muad_class.color
     print(f"Class: {class_name}, Train ID: {train_id}, Color: {color}")
 
-# %% 
+# %%
 # Let's now calculate each class weight
 
 import numpy as np
 import torch
 from torch.utils.data import DataLoader
 
-train_loader = DataLoader(
-        train_set,
-        batch_size=batch_size,
-        shuffle=True,
-        num_workers=4)
+train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True, num_workers=4)
 
-val_loader = DataLoader(
-        val_set,
-        batch_size=batch_size,
-        shuffle=False,
-        num_workers=4)
+val_loader = DataLoader(val_set, batch_size=batch_size, shuffle=False, num_workers=4)
 
-test_loader = DataLoader(
-        test_set,
-        batch_size=batch_size,
-        shuffle=False,
-        num_workers=4)
+test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=False, num_workers=4)
 
 
 def enet_weighing(dataloader, num_classes, c=1.02):
@@ -169,19 +178,20 @@ def enet_weighing(dataloader, num_classes, c=1.02):
     class_count = 0
     total = 0
     for _, label in dataloader:
-      label = label.cpu().numpy()
-      # Flatten label
-      flat_label = label.flatten()
-      flat_label = flat_label[flat_label != 255]
+        label = label.cpu().numpy()
+        # Flatten label
+        flat_label = label.flatten()
+        flat_label = flat_label[flat_label != 255]
 
-      # Sum up the number of pixels of each class and the total pixel
-      # counts for each label
-      class_count += np.bincount(flat_label, minlength=num_classes)
-      total += flat_label.size
+        # Sum up the number of pixels of each class and the total pixel
+        # counts for each label
+        class_count += np.bincount(flat_label, minlength=num_classes)
+        total += flat_label.size
 
     # Compute propensity score and then the weights for each class
     propensity_score = class_count / total
     return 1 / (np.log(c + propensity_score))
+
 
 print("\nComputing class weights...")
 print("(this can take a while depending on the dataset size)")
@@ -189,7 +199,7 @@ class_weights = enet_weighing(train_loader, 19)
 class_weights = torch.from_numpy(class_weights).float()
 print("Class weights:", class_weights)
 
-# %% 
+# %%
 # 2. Building the DNN
 # ~~~~~~~~~~~~~~~~~~~
 
@@ -208,7 +218,7 @@ class DoubleConv(nn.Module):
             nn.ReLU(inplace=True),
             nn.Conv2d(out_ch, out_ch, 3, padding=1),
             nn.BatchNorm2d(out_ch),
-            nn.ReLU(inplace=True)
+            nn.ReLU(inplace=True),
         )
 
     def forward(self, x):
@@ -227,10 +237,7 @@ class InConv(nn.Module):
 class Down(nn.Module):
     def __init__(self, in_ch, out_ch):
         super().__init__()
-        self.mpconv = nn.Sequential(
-            nn.MaxPool2d(2),
-            DoubleConv(in_ch, out_ch)
-        )
+        self.mpconv = nn.Sequential(nn.MaxPool2d(2), DoubleConv(in_ch, out_ch))
 
     def forward(self, x):
         return self.mpconv(x)
@@ -247,8 +254,11 @@ class Up(nn.Module):
 
     def forward(self, x1, x2):
         if self.bilinear:
-            x1 = F.resize(x1, size=[2*x1.size()[2],2*x1.size()[3]],
-                          interpolation=v2.InterpolationMode.BILINEAR)
+            x1 = F.resize(
+                x1,
+                size=[2 * x1.size()[2], 2 * x1.size()[3]],
+                interpolation=v2.InterpolationMode.BILINEAR,
+            )
         else:
             x1 = self.up(x1)
 
@@ -256,8 +266,7 @@ class Up(nn.Module):
         diff_y = x2.size()[2] - x1.size()[2]
         diff_x = x2.size()[3] - x1.size()[3]
 
-        x1 = F.pad(x1, [diff_x // 2, diff_x - diff_x // 2,
-                        diff_y // 2, diff_y - diff_y // 2])
+        x1 = F.pad(x1, [diff_x // 2, diff_x - diff_x // 2, diff_y // 2, diff_y - diff_y // 2])
 
         # for padding issues, see
         # https://github.com/HaiyongJiang/U-Net-Pytorch-Unstructured-Buggy/commit/0e854509c2cea854e247a9c615f175f76fbb2e3a
@@ -275,7 +284,9 @@ class OutConv(nn.Module):
     def forward(self, x):
         return self.conv(x)
 
-#please note that we have added dropout layer to be abble to use MC dropout
+
+# please note that we have added dropout layer to be abble to use MC dropout
+
 
 class UNet(nn.Module):
     def __init__(self, classes):
@@ -309,19 +320,11 @@ class UNet(nn.Module):
         return self.outc(x)
 
 
-
-
-
-
-
-
-
-
-# %% 
+# %%
 # 3. Train a Packed-Ensembles
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Using Torch Uncertainty we will easily train a `Packed-Ensembles <https://arxiv.org/pdf/2210.09184>`_ on our segmentation task.
-# 
+#
 
 # %%
 from torch import Tensor, nn
@@ -431,6 +434,7 @@ class PackedConvTranspose2d(nn.Module):
         r"""The bias of the underlying transposed convolutional layer."""
         return self.conv_transpose.bias
 
+
 # %%
 # defining the Packed-Ensembles UNet model
 
@@ -447,10 +451,17 @@ class PackedDoubleConv(nn.Module):
         super().__init__()
         self.conv = nn.Sequential(
             PackedConv2d(
-                in_ch, out_ch, 3, alpha=alpha, num_estimators=num_estimators, gamma=gamma, padding=1, first=first
+                in_ch,
+                out_ch,
+                3,
+                alpha=alpha,
+                num_estimators=num_estimators,
+                gamma=gamma,
+                padding=1,
+                first=first,
             ),
             nn.BatchNorm2d(out_ch * (num_estimators if last else alpha)),
-            nn.ReLU(inplace=True)
+            nn.ReLU(inplace=True),
         )
 
     def forward(self, x):
@@ -470,8 +481,7 @@ class PackedDown(nn.Module):
     def __init__(self, in_ch, out_ch, alpha, num_estimators, gamma):
         super().__init__()
         self.mpconv = nn.Sequential(
-            nn.MaxPool2d(2),
-            PackedDoubleConv(in_ch, out_ch, alpha, num_estimators, gamma)
+            nn.MaxPool2d(2), PackedDoubleConv(in_ch, out_ch, alpha, num_estimators, gamma)
         )
 
     def forward(self, x):
@@ -482,7 +492,13 @@ class PackedUp(nn.Module):
     def __init__(self, in_ch, out_ch, alpha, num_estimators, gamma):
         super().__init__()
         self.up = PackedConvTranspose2d(
-            in_ch//2, in_ch // 2, kernel_size=2, stride=2, alpha=alpha, num_estimators=num_estimators, gamma=gamma
+            in_ch // 2,
+            in_ch // 2,
+            kernel_size=2,
+            stride=2,
+            alpha=alpha,
+            num_estimators=num_estimators,
+            gamma=gamma,
         )
         self.conv = PackedDoubleConv(in_ch, out_ch, alpha, num_estimators, gamma)
 
@@ -499,7 +515,13 @@ class PackedOutconv(nn.Module):
     def __init__(self, in_ch, out_ch, alpha, num_estimators, gamma):
         super().__init__()
         self.conv = PackedConv2d(
-            in_ch, out_ch, kernel_size=1, alpha=alpha, num_estimators=num_estimators, gamma=gamma, last=True
+            in_ch,
+            out_ch,
+            kernel_size=1,
+            alpha=alpha,
+            num_estimators=num_estimators,
+            gamma=gamma,
+            last=True,
         )
 
     def forward(self, x):
@@ -553,7 +575,8 @@ class PackedUNet(nn.Module):
         x = self.outc(x)
         return rearrange(x, "b (m c) h w -> (m b) c h w", m=self.num_estimators)
 
-# %% 
+
+# %%
 # Train on 1 epoch for demonstration purposes
 
 from torch_uncertainty import TUTrainer
@@ -569,61 +592,59 @@ gamma = 1
 
 packed_model = PackedUNet(
     classes=19,
-	alpha=alpha,
-	num_estimators=num_estimators,
-	gamma=gamma,
+    alpha=alpha,
+    num_estimators=num_estimators,
+    gamma=gamma,
 )
 
 # We build the optimizer
 optimizer = optim.Adam(
-	packed_model.parameters(),
-	lr=learning_rate*num_estimators,
-	weight_decay=weight_decay
+    packed_model.parameters(), lr=learning_rate * num_estimators, weight_decay=weight_decay
 )
 
 # Learning rate decay scheduler
-lr_updater = lr_scheduler.StepLR(
-    optimizer, lr_decay_epochs, lr_decay
-)
+lr_updater = lr_scheduler.StepLR(optimizer, lr_decay_epochs, lr_decay)
 
 trainer = TUTrainer(accelerator="gpu", devices=1, max_epochs=1, precision=16, logger=False)
 
 packed_routine = SegmentationRoutine(
     model=packed_model,
-	num_classes=19,
-	loss=torch.nn.CrossEntropyLoss(weight=class_weights),
-	format_batch_fn=RepeatTarget(num_estimators),  # Repeat the target 4 times for the ensemble
-	optim_recipe={"optimizer": optimizer, "lr_scheduler": lr_updater},
+    num_classes=19,
+    loss=torch.nn.CrossEntropyLoss(weight=class_weights),
+    format_batch_fn=RepeatTarget(num_estimators),  # Repeat the target 4 times for the ensemble
+    optim_recipe={"optimizer": optimizer, "lr_scheduler": lr_updater},
 )
 
 # %%
-#trainer.fit(packed_routine, train_loader, val_loader)
+# trainer.fit(packed_routine, train_loader, val_loader)
 
 # %%
-#results = trainer.test(packed_routine, test_loader)
+# results = trainer.test(packed_routine, test_loader)
 
-# %% 
+# %%
 # Load a pre-trained ensembles from huggingface to continue the tutorial
 
 from huggingface_hub import hf_hub_download
 
 # Download the model
-model_path = hf_hub_download(repo_id="torch-uncertainty/muad_tutorials", filename="packed_unet_tuto.pth")
+model_path = hf_hub_download(
+    repo_id="torch-uncertainty/muad_tutorials", filename="packed_unet_tuto.pth"
+)
 
 model = packed_model = PackedUNet(
     classes=19,
-	alpha=alpha,
-	num_estimators=num_estimators,
-	gamma=gamma,
+    alpha=alpha,
+    num_estimators=num_estimators,
+    gamma=gamma,
 )
 model.load_state_dict(torch.load(model_path))
-model = model.to('cpu')
+model = model.to("cpu")
 
-# %% 
+# %%
 # 4. Uncertainty evaluations with MCP
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Here we will just use as confidence score the Maximum class probability (MCP)
-# 
+#
 
 import matplotlib.pyplot as plt
 from torchvision.transforms.v2 import functional as F
@@ -635,14 +656,14 @@ batch_img = img.unsqueeze(0)
 batch_target = target.unsqueeze(0)
 model.eval()
 with torch.no_grad():
-	# Forward propagation
-	outputs = model(batch_img)
-	outputs_proba = outputs.softmax(dim=1)
-	outputs_proba = outputs_proba.mean(dim=0)
+    # Forward propagation
+    outputs = model(batch_img)
+    outputs_proba = outputs.softmax(dim=1)
+    outputs_proba = outputs_proba.mean(dim=0)
 
-	# remove the batch dimension
-	outputs_proba = outputs_proba.squeeze(0)
-	confidence, pred = outputs_proba.max(0)
+    # remove the batch dimension
+    outputs_proba = outputs_proba.squeeze(0)
+    confidence, pred = outputs_proba.max(0)
 
 # Undo normalization on the image and convert to uint8.
 mean = torch.tensor([0.485, 0.456, 0.406], device=img.device)
@@ -673,11 +694,18 @@ ax3.imshow(pred_img)
 ax4.imshow(confidence_img)
 plt.show()
 
-# %% 
+# %%
 # Now let's load the OOD test set
 
 # %%
-test_ood_set = MUAD(root="./data", target_type="semantic", version="small", split="ood" , transforms=val_transform, download=True)
+test_ood_set = MUAD(
+    root="./data",
+    target_type="semantic",
+    version="small",
+    split="ood",
+    transforms=val_transform,
+    download=True,
+)
 
 
 # %%
@@ -690,14 +718,14 @@ batch_img = img.unsqueeze(0)
 batch_target = target.unsqueeze(0)
 model.eval()
 with torch.no_grad():
-	# Forward propagation
-	outputs = model(batch_img)
-	outputs_proba = outputs.softmax(dim=1)
-	outputs_proba = outputs_proba.mean(dim=0)
-	
-	# remove the batch dimension
-	outputs_proba = outputs_proba.squeeze(0)
-	confidence, pred = outputs_proba.max(0)
+    # Forward propagation
+    outputs = model(batch_img)
+    outputs_proba = outputs.softmax(dim=1)
+    outputs_proba = outputs_proba.mean(dim=0)
+
+    # remove the batch dimension
+    outputs_proba = outputs_proba.squeeze(0)
+    confidence, pred = outputs_proba.max(0)
 
 # Undo normalization on the image and convert to uint8.
 mean = torch.tensor([0.485, 0.456, 0.406], device=img.device)
