@@ -147,7 +147,7 @@ imshow(torchvision.utils.make_grid(images[most_uncertain, ...]))
 for img_idx in most_uncertain:
     values, predicted = torch.max(probs[img_idx, :], 1)
     print(
-        f"Img {img_idx}: GT: {labels[img_idx]} - Predictions: ",
+        f"Img {img_idx} - GT: {labels[img_idx]} - Predictions: ",
         " ".join([str(image_id.item()) for image_id in predicted]),
     )
 

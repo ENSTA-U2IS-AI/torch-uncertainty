@@ -40,6 +40,9 @@ from torch_uncertainty.models import mc_dropout
 from torch_uncertainty.optim_recipes import optim_cifar10_resnet18
 from torch_uncertainty.routines import ClassificationRoutine
 
+MAX_EPOCHS = 1
+BATCH_SIZE = 512
+
 # %%
 # 2. Defining the Model and the Trainer
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -51,17 +54,17 @@ from torch_uncertainty.routines import ClassificationRoutine
 # To use the mc_dropout wrapper, **make sure that you use dropout modules** and
 # not functionals. Moreover, **they have to be** instantiated in the __init__ method.
 
-trainer = TUTrainer(accelerator="gpu", devices=1, max_epochs=2, enable_progress_bar=False)
+trainer = TUTrainer(accelerator="gpu", devices=1, max_epochs=MAX_EPOCHS, enable_progress_bar=False)
 
 # datamodule
 root = Path("data")
-datamodule = MNISTDataModule(root=root, batch_size=128)
+datamodule = MNISTDataModule(root=root, batch_size=BATCH_SIZE, num_workers=8)
 
 
 model = lenet(
     in_channels=datamodule.num_channels,
     num_classes=datamodule.num_classes,
-    dropout_rate=0.4,
+    dropout_rate=0.5,
 )
 
 mc_model = mc_dropout(model, num_estimators=16, last_layer=False)
@@ -103,6 +106,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torchvision
+from einops import rearrange
 
 
 def imshow(img):
@@ -116,21 +120,20 @@ def imshow(img):
 
 dataiter = iter(datamodule.val_dataloader())
 images, labels = next(dataiter)
+images = images[:6]
 
 # print images
 imshow(torchvision.utils.make_grid(images[:6, ...], padding=0))
-print("Ground truth labels: ", " ".join(f"{labels[j]}" for j in range(6)))
 
 routine.eval()
-logits = routine(images).reshape(16, 128, 10)
-
+logits = rearrange(routine(images), "(m b) c -> b m c", b=6)
 probs = torch.nn.functional.softmax(logits, dim=-1)
 
 
 for j in range(6):
-    values, predicted = torch.max(probs[:, j], 1)
+    values, predicted = torch.max(probs[j, :], 1)
     print(
-        f"MC-Dropout predictions for the image {j+1}: ",
+        f"IMG {j+1} - GT: {labels[j]} - Predictions:",
         " ".join([str(image_id.item()) for image_id in predicted]),
     )
 
