@@ -17,6 +17,7 @@ class MUADDataModule(DepthDataModule):
         max_depth: float,
         crop_size: _size_2_t = 1024,
         eval_size: _size_2_t = (1024, 2048),
+        eval_batch_size: int | None = None,
         val_split: float | None = None,
         num_workers: int = 1,
         pin_memory: bool = True,
@@ -26,7 +27,9 @@ class MUADDataModule(DepthDataModule):
 
         Args:
             root (str or Path): Root directory of the datasets.
-            batch_size (int): Number of samples per batch.
+            batch_size (int): Number of samples per batch during training.
+            eval_batch_size (int | None) : Number of samples per batch during evaluation (val
+                    and test). Set to batch_size if None. Defaults to None.
             min_depth (float, optional): Minimum depth value for evaluation
             max_depth (float, optional): Maximum depth value for training and
                 evaluation.
@@ -55,6 +58,7 @@ class MUADDataModule(DepthDataModule):
             dataset=MUAD,
             root=root,
             batch_size=batch_size,
+            eval_batch_size=eval_batch_size,
             min_depth=min_depth,
             max_depth=max_depth,
             crop_size=crop_size,

@@ -10,6 +10,7 @@ class HTRU2DataModule(UCIClassificationDataModule):
         self,
         root: str | Path,
         batch_size: int,
+        eval_batch_size: int | None = None,
         val_split: float = 0.0,
         test_split: float = 0.2,
         num_workers: int = 1,
@@ -22,8 +23,9 @@ class HTRU2DataModule(UCIClassificationDataModule):
         Args:
             root (string): Root directory of the datasets.
             batch_size (int): The batch size for training and testing.
-            val_split (float, optional): Share of validation samples among the
-                non-test samples. Defaults to ``0``.
+            eval_batch_size (int | None) : Number of samples per batch during evaluation (val
+                and test). Set to batch_size if None. Defaults to None.
+            val_split (float, optional): Share of validation samples among the non-test samples. Defaults to ``0``.
             test_split (float, optional): Share of test samples. Defaults to ``0.2``.
             num_workers (int, optional): How many subprocesses to use for data
                 loading. Defaults to ``1``.

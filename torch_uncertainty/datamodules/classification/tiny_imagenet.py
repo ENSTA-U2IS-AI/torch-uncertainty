@@ -34,6 +34,7 @@ class TinyImageNetDataModule(TUDataModule):
         self,
         root: str | Path,
         batch_size: int,
+        eval_batch_size: int | None = None,
         eval_ood: bool = False,
         eval_shift: bool = False,
         shift_severity: int = 1,
@@ -54,7 +55,9 @@ class TinyImageNetDataModule(TUDataModule):
 
         Args:
             root (str): Root directory of the datasets.
-            batch_size (int): Number of samples per batch.
+            batch_size (int): Number of samples per batch during training.
+            eval_batch_size (int | None) : Number of samples per batch during evaluation (val
+                and test). Set to batch_size if None. Defaults to None.
             eval_ood (bool): Whether to evaluate out-of-distribution performance. Defaults to ``False``.
             eval_shift (bool): Whether to evaluate on shifted data. Defaults to ``False``.
             shift_severity (int): Severity of the shift. Defaults to ``1``.
@@ -78,6 +81,7 @@ class TinyImageNetDataModule(TUDataModule):
         super().__init__(
             root=root,
             batch_size=batch_size,
+            eval_batch_size=eval_batch_size,
             val_split=val_split,
             postprocess_set=postprocess_set,
             num_workers=num_workers,
@@ -211,7 +215,7 @@ class TinyImageNetDataModule(TUDataModule):
         Return:
             DataLoader: TinyImageNet training dataloader.
         """
-        return self._data_loader(self.train, shuffle=True)
+        return self._data_loader(self.train, training=True, shuffle=True)
 
     def val_dataloader(self) -> DataLoader:
         r"""Get the validation dataloader for TinyImageNet.
@@ -219,7 +223,7 @@ class TinyImageNetDataModule(TUDataModule):
         Return:
             DataLoader: TinyImageNet validation dataloader.
         """
-        return self._data_loader(self.val)
+        return self._data_loader(self.test, training=False)
 
     def test_dataloader(self) -> list[DataLoader]:
         r"""Get test dataloaders for TinyImageNet.
@@ -228,11 +232,11 @@ class TinyImageNetDataModule(TUDataModule):
             list[DataLoader]: test set for in distribution data, OOD data, and/or
             TinyImageNetC data.
         """
-        dataloader = [self._data_loader(self.test)]
+        dataloader = [self._data_loader(self.test, training=False)]
         if self.eval_ood:
-            dataloader.append(self._data_loader(self.ood))
+            dataloader.append(self._data_loader(self.ood, training=False))
         if self.eval_shift:
-            dataloader.append(self._data_loader(self.shift))
+            dataloader.append(self._data_loader(self.shift, training=False))
         return dataloader
 
     def _get_train_data(self) -> ArrayLike:

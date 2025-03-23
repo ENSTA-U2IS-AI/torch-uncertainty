@@ -21,6 +21,7 @@ class MUADDataModule(TUDataModule):
         self,
         root: str | Path,
         batch_size: int,
+        eval_batch_size: int | None = None,
         crop_size: _size_2_t = 1024,
         eval_size: _size_2_t = (1024, 2048),
         val_split: float | None = None,
@@ -32,7 +33,9 @@ class MUADDataModule(TUDataModule):
 
         Args:
             root (str or Path): Root directory of the datasets.
-            batch_size (int): Number of samples per batch.
+            batch_size (int): Number of samples per batch during training.
+            eval_batch_size (int | None) : Number of samples per batch during evaluation (val
+                and test). Set to batch_size if None. Defaults to None.
             crop_size (sequence or int, optional): Desired input image and
                 segmentation mask sizes during training. If :attr:`crop_size` is an
                 int instead of sequence like :math:`(H, W)`, a square crop
@@ -104,6 +107,7 @@ class MUADDataModule(TUDataModule):
         super().__init__(
             root=root,
             batch_size=batch_size,
+            eval_batch_size=eval_batch_size,
             val_split=val_split,
             num_workers=num_workers,
             pin_memory=pin_memory,

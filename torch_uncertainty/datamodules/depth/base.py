@@ -22,6 +22,7 @@ class DepthDataModule(TUDataModule):
         max_depth: float,
         crop_size: _size_2_t,
         eval_size: _size_2_t,
+        eval_batch_size: int | None = None,
         val_split: float | None = None,
         num_workers: int = 1,
         pin_memory: bool = True,
@@ -32,7 +33,9 @@ class DepthDataModule(TUDataModule):
         Args:
             dataset (type[VisionDataset]): Dataset class to use.
             root (str or Path): Root directory of the datasets.
-            batch_size (int): Number of samples per batch.
+            batch_size (int): Number of samples per batch during training.
+            eval_batch_size (int | None) : Number of samples per batch during evaluation (val
+                    and test). Set to batch_size if None. Defaults to None.
             min_depth (float, optional): Minimum depth value for evaluation.
             max_depth (float, optional): Maximum depth value for training and
                 evaluation.
@@ -56,6 +59,7 @@ class DepthDataModule(TUDataModule):
         super().__init__(
             root=root,
             batch_size=batch_size,
+            eval_batch_size=eval_batch_size,
             val_split=val_split,
             num_workers=num_workers,
             pin_memory=pin_memory,
