@@ -60,6 +60,7 @@ model:
 data:
   root: ./data
   batch_size: 128
+  num_workers: 8
 optimizer:
   lr: 0.05
   momentum: 0.9

@@ -51,7 +51,7 @@ model:
 data:
   root: ./data
   batch_size: 128
-  num_workers: 127
+  num_workers: 8
   eval_ood: true
   eval_shift: true
 optimizer:
