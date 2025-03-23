@@ -127,3 +127,4 @@ class TULightningCLI(LightningCLI):
         super().add_arguments_to_parser(parser)
         parser.link_arguments("data.eval_ood", "model.eval_ood")
         parser.link_arguments("data.eval_shift", "model.eval_shift")
+        parser.link_arguments("data.num_tta", "model.num_tta")

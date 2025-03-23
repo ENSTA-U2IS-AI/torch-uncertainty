@@ -9,6 +9,7 @@ from .mc_dropout import MCDropout, mc_dropout
 from .stochastic import StochasticModel
 from .swa import SWA
 from .swag import SWAG
+from .zero import Zero
 
 STEP_UPDATE_MODEL = (EMA,)
 EPOCH_UPDATE_MODEL = (SWA, SWAG, CheckpointEnsemble)

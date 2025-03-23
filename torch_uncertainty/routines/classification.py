@@ -451,8 +451,11 @@ class ClassificationRoutine(LightningModule):
             batch (tuple[Tensor, Tensor]): the validation data and their corresponding targets
         """
         inputs, targets = batch
+        # remove duplicates when doing TTA
+        targets = targets[:: self.num_tta]
+
         logits = self.forward(inputs, save_feats=self.eval_grouping_loss)
-        logits = rearrange(logits, "(m b) c -> b m c", b=targets.size(0) // self.num_tta)
+        logits = rearrange(logits, "(m b) c -> b m c", b=targets.size(0))
 
         if self.binary_cls:
             probs_per_est = torch.sigmoid(logits).squeeze(-1)
@@ -483,8 +486,11 @@ class ClassificationRoutine(LightningModule):
                 distribution-shifted.
         """
         inputs, targets = batch
+        # remove duplicates when doing TTA
+        targets = targets[:: self.num_tta]
+
         logits = self.forward(inputs, save_feats=self.eval_grouping_loss)
-        logits = rearrange(logits, "(m b) c -> b m c", b=targets.size(0) // self.num_tta)
+        logits = rearrange(logits, "(m b) c -> b m c", b=targets.size(0))
         probs_per_est = torch.sigmoid(logits) if self.binary_cls else F.softmax(logits, dim=-1)
         probs = probs_per_est.mean(dim=1)
         confs = probs.max(-1)[0]
@@ -731,7 +737,7 @@ def _classification_routine_checks(
 
     if is_ensemble and eval_grouping_loss:
         raise NotImplementedError(
-            "Groupng loss for ensembles is not yet implemented. Raise an issue if needed."
+            "Grouping loss for ensembles is not yet implemented. Raise an issue if needed."
         )
 
     if num_classes < 1:
