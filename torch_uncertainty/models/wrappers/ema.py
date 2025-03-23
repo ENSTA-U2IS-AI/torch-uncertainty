@@ -11,6 +11,9 @@ class EMA(nn.Module):
     ) -> None:
         """Exponential Moving Average.
 
+        The :attr:`model` given as argument is used to compute the gradient during the training.
+        The EMA model is regularly updated with the inner-model and used at evaluation time.
+
         Args:
             model (nn.Module): The model to train and ensemble.
             momentum (float): The momentum of the moving average.
@@ -46,4 +49,4 @@ class EMA(nn.Module):
 
 def _ema_checks(momentum: float) -> None:
     if momentum < 0.0 or momentum >= 1.0:
-        raise ValueError(f"`momentum` must be in the range [0, 1). Got {momentum}.")
+        raise ValueError(f"`momentum` must be in [0, 1). Got {momentum}.")

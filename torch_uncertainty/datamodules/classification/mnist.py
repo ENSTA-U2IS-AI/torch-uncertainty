@@ -42,27 +42,21 @@ class MNISTDataModule(TUDataModule):
 
         Args:
             root (str): Root directory of the datasets.
-            eval_ood (bool): Whether to evaluate on out-of-distribution data.
-                Defaults to ``False``.
-            eval_shift (bool): Whether to evaluate on shifted data. Defaults to
+            eval_ood (bool): Whether to evaluate on out-of-distribution data. Defaults to
                 ``False``.
+            eval_shift (bool): Whether to evaluate on shifted data. Defaults to ``False``.
             batch_size (int): Number of samples per batch.
             ood_ds (str): Which out-of-distribution dataset to use. Defaults to
-                ``"fashion"``; `fashion` stands for FashionMNIST and `notMNIST` for
-                notMNIST.
-            val_split (float): Share of samples to use for validation. Defaults
-                to ``0.0``.
+                ``"fashion"``; `fashion` stands for FashionMNIST and `notMNIST` for notMNIST.
+            val_split (float): Share of samples to use for validation. Defaults to ``0.0``.
             num_tta (int): Number of test-time augmentations (TTA). Defaults to ``1`` (no TTA).
             postprocess_set (str, optional): The post-hoc calibration dataset to
                 use for the post-processing method. Defaults to ``val``.
-            num_workers (int): Number of workers to use for data loading. Defaults
-                to ``1``.
-            basic_augment (bool): Whether to apply base augmentations. Defaults to
-                ``True``.
+            num_workers (int): Number of workers to use for data loading. Defaults to ``1``.
+            basic_augment (bool): Whether to apply base augmentations. Defaults to ``True``.
             cutout (int): Size of cutout to apply to images. Defaults to ``None``.
             pin_memory (bool): Whether to pin memory. Defaults to ``True``.
-            persistent_workers (bool): Whether to use persistent workers. Defaults
-                to ``True``.
+            persistent_workers (bool): Whether to use persistent workers. Defaults to ``True``.
         """
         super().__init__(
             root=root,
@@ -87,6 +81,7 @@ class MNISTDataModule(TUDataModule):
             self.ood_dataset = NotMNIST
         else:
             raise ValueError(f"`ood_ds` should be in {self.ood_datasets}. Got {ood_ds}.")
+
         self.shift_dataset = MNISTC
         self.shift_severity = 1
 
