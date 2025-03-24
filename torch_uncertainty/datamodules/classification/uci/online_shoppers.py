@@ -42,6 +42,7 @@ class OnlineShoppersDataModule(UCIClassificationDataModule):
             root=root,
             dataset=OnlineShoppers,
             batch_size=batch_size,
+            eval_batch_size=eval_batch_size,
             val_split=val_split,
             test_split=test_split,
             num_workers=num_workers,
