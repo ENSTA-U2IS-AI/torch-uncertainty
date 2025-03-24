@@ -66,7 +66,7 @@ def deep_ensembles(
         "classification", "regression", "segmentation", "pixel_regression"
     ] = "classification",
     probabilistic: bool | None = None,
-    reset_model_parameters: bool = False,
+    reset_model_parameters: bool = True,
 ) -> _DeepEnsembles:
     """Build a Deep Ensembles out of the original models.
 
