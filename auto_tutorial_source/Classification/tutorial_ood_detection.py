@@ -7,6 +7,7 @@ TorchUncertainty's ClassificationRoutine with a ResNet18 model trained on CIFAR-
 evaluating its performance with SVHN as the OOD dataset.
 
 We will:
+
 - Set up the CIFAR-10 datamodule.
 - Initialize and shortly train a ResNet18 model using the ClassificationRoutine.
 - Evaluate the model's performance on both in-distribution and out-of-distribution data.
@@ -30,14 +31,14 @@ from torch_uncertainty.routines.classification import ClassificationRoutine
 # from torch_uncertainty.ood_criteria import MaxSoftmaxCriterion, MaxLogitCriterion
 
 # %%
-# Data Modules Setup
-# ------------------
+# DataModule Setup
+# ----------------
 #
 # TorchUncertainty provides convenient DataModules for standard datasets like CIFAR-10.
 # DataModules handle data loading, preprocessing, and batching, simplifying the data pipeline. Each datamodule
-# also include the corresponding out-of-distribution and distribution shift datasets, which are used by the routine.
+# also include the corresponding out-of-distribution and distribution shift datasets, which are then used by the routine.
 # For CIFAR-10, the corresponding OOD-detection dataset is SVHN as used in the community.
-# To enable OOD evaluation, activate the `eval_ood` flag as below.
+# To enable OOD evaluation, activate the `eval_ood` flag as done below.
 
 datamodule = CIFAR10DataModule(root="./data", batch_size=512, num_workers=8, eval_ood=True)
 
@@ -60,7 +61,8 @@ model = resnet(arch=18, in_channels=3, num_classes=10)
 # It integrates the model, loss function, and optimizer into a cohesive routine compatible with PyTorch Lightning's Trainer.
 # This abstraction simplifies the implementation of standard training loops and evaluation protocols.
 # To come back to what matters in this tutorial, the routine also handles OOD detection. To enable it,
-# activate the `eval_ood` flag.
+# activate the `eval_ood` flag. Note that you can also evaluate
+# the distribution-shift performance of the model at the same time by also setting `eval_shift` to True.
 
 # Loss function
 criterion = nn.CrossEntropyLoss()
@@ -90,11 +92,11 @@ trainer.fit(routine, datamodule=datamodule)
 # Evaluating on In-Distribution and Out-of-distribution Data
 # ----------------------------------------------------------
 #
-# After training, it's essential to evaluate the model's performance on the in-distribution test set.
-# This assessment provides insights into the model's accuracy and reliability on data it has been trained on.
+# Now that the model is trained, we can evaluate its performance on the original in-distribution test set,
+# as well as the OOD set. Typing the next line will automatically compute the in-distribution and OOD detection metrics.
 
 # Evaluate the model on the CIFAR-10 (IID) and SVHN (OOD) test sets
-trainer.test(routine, datamodule=datamodule)
+results = trainer.test(routine, datamodule=datamodule)
 
 # %%
 # Changing the OOD Criterion
