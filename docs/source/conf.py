@@ -49,19 +49,19 @@ mathjax3_config = {
 
 subsection_order = ExplicitOrder(
     [
-        "../../auto_tutorials_source/Classification",
-        "../../auto_tutorials_source/Regression",
-        "../../auto_tutorials_source/Evidential_methods",
-        "../../auto_tutorials_source/Model_Calibration",
-        "../../auto_tutorials_source/Bayesian_Methods",
-        "../../auto_tutorials_source/Ensemble_Methods",
-        "../../auto_tutorials_source/Segmentation",
+        "../../auto_tutorial_source/Classification",
+        "../../auto_tutorial_source/Regression",
+        "../../auto_tutorial_source/Model_Calibration",
+        "../../auto_tutorial_source/Bayesian_Methods",
+        "../../auto_tutorial_source/Ensemble_Methods",
+        "../../auto_tutorial_source/Segmentation",
+        "../../auto_tutorial_source/Data_Augmentation",
     ]
 )
 
 
 sphinx_gallery_conf = {
-    "examples_dirs": ["../../auto_tutorials_source"],
+    "examples_dirs": ["../../auto_tutorial_source"],
     "gallery_dirs": "auto_tutorials",
     "filename_pattern": r"tutorial_",
     "subsection_order": subsection_order,
@@ -78,7 +78,6 @@ sphinx_gallery_conf = {
     "reference_url": {
         "sphinx_gallery": None,
     },
-    "copyfile_regex": r".*\.rst",
 }
 
 # Use both the docstrings of the init and the class
