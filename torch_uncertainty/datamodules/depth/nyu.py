@@ -12,6 +12,7 @@ class NYUv2DataModule(DepthDataModule):
         self,
         root: str | Path,
         batch_size: int,
+        eval_batch_size: int | None = None,
         min_depth: float = 1e-3,
         max_depth: float = 10.0,
         crop_size: _size_2_t = (416, 544),
@@ -25,7 +26,9 @@ class NYUv2DataModule(DepthDataModule):
 
         Args:
             root (str or Path): Root directory of the datasets.
-            batch_size (int): Number of samples per batch.
+            batch_size (int): Number of samples per batch during training.
+            eval_batch_size (int | None) : Number of samples per batch during evaluation (val
+                and test). Set to batch_size if None. Defaults to None.
             min_depth (float, optional): Minimum depth value for evaluation.
                 Defaults to ``1e-3``.
             max_depth (float, optional): Maximum depth value for training and
@@ -55,6 +58,7 @@ class NYUv2DataModule(DepthDataModule):
             dataset=NYUv2,
             root=root,
             batch_size=batch_size,
+            eval_batch_size=eval_batch_size,
             min_depth=min_depth,
             max_depth=max_depth,
             crop_size=crop_size,

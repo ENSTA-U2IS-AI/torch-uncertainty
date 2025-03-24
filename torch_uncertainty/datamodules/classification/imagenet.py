@@ -46,6 +46,7 @@ class ImageNetDataModule(TUDataModule):
         self,
         root: str | Path,
         batch_size: int,
+        eval_batch_size: int | None = None,
         eval_ood: bool = False,
         eval_shift: bool = False,
         shift_severity: int = 1,
@@ -69,12 +70,12 @@ class ImageNetDataModule(TUDataModule):
 
         Args:
             root (str): Root directory of the datasets.
-            eval_ood (bool): Whether to evaluate out-of-distribution
-                performance. Defaults to ``False``.
-            eval_shift (bool): Whether to evaluate on shifted data. Defaults to
-                ``False``.
-            shift_severity: int = 1,
-            batch_size (int): Number of samples per batch.
+            batch_size (int): Number of samples per batch during training.
+            eval_batch_size (int | None) : Number of samples per batch during evaluation (val
+                and test). Set to batch_size if None. Defaults to None.
+            eval_ood (bool): Whether to evaluate out-of-distribution performance. Defaults to ``False``.
+            eval_shift (bool): Whether to evaluate on shifted data. Defaults to ``False``.
+            shift_severity (int): Severity of the shift. Defaults to ``1``.
             val_split (float or Path): Share of samples to use for validation
                 or path to a yaml file containing a list of validation images
                 ids. Defaults to ``0.0``.
@@ -99,6 +100,7 @@ class ImageNetDataModule(TUDataModule):
         super().__init__(
             root=Path(root),
             batch_size=batch_size,
+            eval_batch_size=eval_batch_size,
             val_split=val_split,
             postprocess_set=postprocess_set,
             num_workers=num_workers,
@@ -302,11 +304,11 @@ class ImageNetDataModule(TUDataModule):
             list[DataLoader]: ImageNet test set (in distribution data), OOD dataset test split
             (out-of-distribution data), and/or ImageNetC data.
         """
-        dataloader = [self._data_loader(self.test)]
+        dataloader = [self._data_loader(self.test, training=False)]
         if self.eval_ood:
-            dataloader.append(self._data_loader(self.ood))
+            dataloader.append(self._data_loader(self.ood, training=False))
         if self.eval_shift:
-            dataloader.append(self._data_loader(self.shift))
+            dataloader.append(self._data_loader(self.shift, training=False))
         return dataloader
 
 
