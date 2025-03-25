@@ -416,3 +416,12 @@ class TestClassification:
                 is_ensemble=True,
                 post_processing=nn.Module(),
             )
+
+    def test_invalid_ood_criterion_random_string(self):
+        with pytest.raises(ValueError):
+            DummyClassificationBaseline(
+                num_classes=2,
+                in_channels=3,
+                loss=nn.CrossEntropyLoss(),
+                ood_criterion="gsgsds",
+            )
