@@ -2,7 +2,7 @@
 Training a LeNet for Image Classification with TorchUncertainty
 ===============================================================
 
-In this tutorial, we will train a LeNet classfier on the MNIST dataset using TorchUncertainty.
+In this tutorial, we will train a LeNet classifier on the MNIST dataset using TorchUncertainty.
 
 
 1. Loading the utilities
