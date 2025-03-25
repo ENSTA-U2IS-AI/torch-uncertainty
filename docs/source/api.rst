@@ -408,7 +408,7 @@ OOD Scores
     TUOODCriterion
     MaxLogitCriterion
     EnergyCriterion
-    MaxSoftmaxProbabilityCriterion
+    MaxSoftmaxCriterion
     EntropyCriterion
     MutualInformationCriterion
     VariationRatioCriterion

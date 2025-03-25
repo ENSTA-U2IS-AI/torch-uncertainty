@@ -107,7 +107,7 @@ class EnergyCriterion(TUOODCriterion):
         return -inputs.mean(dim=1).logsumexp(dim=-1)
 
 
-class MaxSoftmaxProbabilityCriterion(TUOODCriterion):
+class MaxSoftmaxCriterion(TUOODCriterion):
     input_type = OODCriterionInputType.PROB
 
     def __init__(self) -> None:
@@ -259,7 +259,7 @@ def get_ood_criterion(ood_criterion):
         if ood_criterion == "energy":
             return EnergyCriterion()
         if ood_criterion == "msp":
-            return MaxSoftmaxProbabilityCriterion()
+            return MaxSoftmaxCriterion()
         if ood_criterion == "entropy":
             return EntropyCriterion()
         if ood_criterion == "mutual_information":
