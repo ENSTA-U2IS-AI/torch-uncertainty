@@ -398,6 +398,27 @@ Scaling Methods
     TemperatureScaler
     VectorScaler
 
+
+
+OOD Scores
+-----------------------
+
+.. currentmodule:: torch_uncertainty.ood_criteria
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: class_inherited.rst
+    
+    TUOODCriterion
+    MaxLogitCriterion
+    EnergyCriterion
+    MaxSoftmaxCriterion
+    EntropyCriterion
+    MutualInformationCriterion
+    VariationRatioCriterion
+
+
 Datamodules
 -----------
 

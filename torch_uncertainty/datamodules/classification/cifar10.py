@@ -29,6 +29,7 @@ class CIFAR10DataModule(TUDataModule):
         self,
         root: str | Path,
         batch_size: int,
+        eval_batch_size: int | None = None,
         eval_ood: bool = False,
         eval_shift: bool = False,
         shift_severity: int = 1,
@@ -47,7 +48,9 @@ class CIFAR10DataModule(TUDataModule):
 
         Args:
             root (str | Path): Root directory of the datasets.
-            batch_size (int): Number of samples per batch.
+            batch_size (int): Number of samples per batch during training.
+            eval_batch_size (int | None) : Number of samples per batch during evaluation (val
+                and test). Set to batch_size if None. Defaults to None.
             eval_ood (bool): Whether to evaluate on out-of-distribution data. Defaults to ``False``.
             eval_shift (bool): Whether to evaluate on shifted data. Defaults to ``False``.
             val_split (float): Share of samples to use for validation. Defaults
@@ -72,6 +75,7 @@ class CIFAR10DataModule(TUDataModule):
         super().__init__(
             root=root,
             batch_size=batch_size,
+            eval_batch_size=eval_batch_size,
             val_split=val_split,
             postprocess_set=postprocess_set,
             num_workers=num_workers,
@@ -219,8 +223,9 @@ class CIFAR10DataModule(TUDataModule):
             return self._data_loader(
                 AggregatedDataset(self.train, self.num_dataloaders),
                 shuffle=True,
+                training=True,
             )
-        return self._data_loader(self.train, shuffle=True)
+        return self._data_loader(self.train, training=True, shuffle=True)
 
     def test_dataloader(self) -> list[DataLoader]:
         r"""Get test dataloaders.
@@ -228,11 +233,11 @@ class CIFAR10DataModule(TUDataModule):
         Return:
             list[DataLoader]: test set for in distribution data, SVHN data, and/or CIFAR-10C data.
         """
-        dataloader = [self._data_loader(self.test)]
+        dataloader = [self._data_loader(self.test, training=False)]
         if self.eval_ood:
-            dataloader.append(self._data_loader(self.ood))
+            dataloader.append(self._data_loader(self.ood, training=False))
         if self.eval_shift:
-            dataloader.append(self._data_loader(self.shift))
+            dataloader.append(self._data_loader(self.shift, training=False))
         return dataloader
 
     def _get_train_data(self) -> ArrayLike:
