@@ -4,6 +4,10 @@ Training a LeNet for Image Classification with TorchUncertainty
 ===============================================================
 
 In this tutorial, we will train a LeNet classifier on the MNIST dataset using TorchUncertainty.
+You will discover two of the core tools from TorchUncertainty, namely
+
+- the routine: a model wrapper, which handles the training and evaluation logics, here for classification
+- the datamodules: python classes, which provide the dataloaders used by the routine
 
 
 1. Loading the utilities
@@ -11,13 +15,11 @@ In this tutorial, we will train a LeNet classifier on the MNIST dataset using To
 
 First, we have to load the following utilities from TorchUncertainty:
 
-- the TUTrainer from TorchUncertainty utils
+- the TUTrainer which mostly handles the link with the hardware (accelerators, precision, etc)
+- the classification training & evaluation routine from torch_uncertainty.routines
 - the datamodule handling dataloaders: MNISTDataModule from torch_uncertainty.datamodules
 - the model: lenet from torch_uncertainty.models
-- the classification training & evaluation routine in the torch_uncertainty.routines
 - an optimization recipe in the torch_uncertainty.optim_recipes module.
-
-We also need import the neural network utils within `torch.nn`.
 """
 
 # %%
@@ -32,20 +34,23 @@ from torch_uncertainty.optim_recipes import optim_cifar10_resnet18
 from torch_uncertainty.routines import ClassificationRoutine
 
 # %%
-# 2. Defining the Model and the Trainer
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# 2. Creating the Trainer and the DataModule
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
-# In the following, we first create the trainer and instantiate
-# the datamodule that handles the MNIST dataset,
-# dataloaders and transforms. We create the model using the
-# blueprint from torch_uncertainty.models.
+# In the following, we first create the trainer and instantiate the datamodule that handles the MNIST dataset,
+# dataloaders and transforms.
 
 trainer = TUTrainer(accelerator="gpu", devices=1, max_epochs=2, enable_progress_bar=False)
 
-# datamodule
+# datamodule providing the dataloaders to the trainer
 root = Path("data")
 datamodule = MNISTDataModule(root=root, batch_size=128)
 
+# %%
+# 3. Instantiating the Model
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+# We create the model easily using the blueprint from torch_uncertainty.models.
 
 model = lenet(
     in_channels=datamodule.num_channels,
@@ -54,12 +59,13 @@ model = lenet(
 )
 
 # %%
-# 3. The Loss and the Training Routine
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# 4. The Loss and the Routine
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
 # This is a classification problem, and we use CrossEntropyLoss as the (negative-log-)likelihood.
-# We define the training routine using the classification training routine from
-# torch_uncertainty.routines. We provide the number of classes
-# the optimization recipe and tell the routine that our model is an ensemble at evaluation time.
+# We define the training routine using the classification routine from torch_uncertainty.routines.
+# We provide the number of classes, the model, the optimization recipe, the loss, and tell the routine
+# that our model is an ensemble at evaluation time with the `is_ensemble` flag.
 
 routine = ClassificationRoutine(
     num_classes=datamodule.num_classes,
@@ -70,19 +76,20 @@ routine = ClassificationRoutine(
 )
 
 # %%
-# 4. Gathering Everything and Training the Model
+# 5. Gathering Everything and Training the Model
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 # We can now train the model using the trainer. We pass the routine and the datamodule
-# to the fit and test methods of the trainer. It will automatically evaluate some uncertainty
+# to the fit and test methods of the trainer. It will automatically evaluate uncertainty
 # metrics that you will find in the table below.
 
 trainer.fit(model=routine, datamodule=datamodule)
 results = trainer.test(model=routine, datamodule=datamodule)
 
 # %%
-# 5. Evaluating the Model
+# 6. Evaluating the Model
 # ~~~~~~~~~~~~~~~~~~~~~~~
+#
 # Now that the model is trained, let's test it on MNIST.
 
 import matplotlib.pyplot as plt

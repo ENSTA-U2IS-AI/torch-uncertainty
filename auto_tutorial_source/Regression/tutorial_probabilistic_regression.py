@@ -4,13 +4,17 @@ Deep Probabilistic Regression
 =============================
 
 This tutorial aims to provide an overview of some utilities in TorchUncertainty for probabilistic regression.
+Contrary to pointwise prediction, probabilistic regression consists - in TorchUncertainty's context - in predicting
+the parameters of a predefined distribution that fit best some training dataset. The distribution's formulation
+is fixed but the parameters are different for all data points, we say that the distribution is heteroscedastic.
 
-Building a MLP for Probabilistic Regression using TorchUncertainty distribution layers
+Building a MLP for Probabilistic Regression using TorchUncertainty Distribution Layers
 --------------------------------------------------------------------------------------
 
-In this section we cover the building of a very simple MLP outputting Normal distribution parameters.
+In this section we cover the building of a very simple MLP outputting Normal distribution parameters,
+the mean and the standard deviation. These values will depend on the data point given as input.
 
-1. Loading the utilities
+1. Loading the Utilities
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 First, we disable some logging and warnings to keep the output clean.
@@ -31,12 +35,13 @@ MAX_EPOCHS = 10
 BATCH_SIZE = 128
 
 # %%
-# 2. Building the NormalMLP model
+# 2. Building the NormalMLP Model
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 # To create a NormalMLP model estimating a Normal distribution, we use the NormalLinear layer.
 # This layer is a wrapper around the nn.Linear layer, which outputs the location and scale of a Normal distribution in a dictionnary.
-# As you will see in the following, any other distribution layer from TU can be used in the same way.
+# As you will see in the following, any other distribution layer from TU can be used in the same way. Check out the regression tutorial
+# to learn how to create a NormalMLP more easily using the blueprints from torch_uncertainty.models
 from torch_uncertainty.layers.distributions import NormalLinear
 
 
@@ -56,7 +61,7 @@ class NormalMLP(nn.Module):
 
 
 # %%
-# 3. Setting up the data
+# 3. Setting up the Data
 # ~~~~~~~~~~~~~~~~~~~~~~
 #
 # We use the UCI Kin8nm dataset, which is a regression dataset with 8 features and 8192 samples.
@@ -68,7 +73,7 @@ datamodule = UCIRegressionDataModule(
 )
 
 # %%
-# 4. Setting up the model and trainer
+# 4. Setting up the Model and Trainer
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 from torch_uncertainty import TUTrainer
@@ -90,7 +95,8 @@ model = NormalMLP(in_features=8, out_features=1)
 # We use the DistributionNLLLoss to compute the negative log-likelihood of the Normal distribution.
 # Note that this loss can be used with any Distribution from torch.distributions.
 # For the optimizer, we use the Adam optimizer with a learning rate of 5e-2.
-# Finally, we create a RegressionRoutine to train the model. We indicate that the output dimension is 1 and the distribution family is "normal".
+# Finally, we create a RegressionRoutine to train the model.
+# We indicate that the output dimension is 1 and the distribution family is "normal".
 
 from torch_uncertainty.losses import DistributionNLLLoss
 from torch_uncertainty.routines import RegressionRoutine
@@ -119,14 +125,19 @@ routine = RegressionRoutine(
 
 
 # %%
-# 6. Training the model
-# ~~~~~~~~~~~~~~~~~~~~~~
+# 6. Training and Testing the Model
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+# Thanks to the RegressionRoutine, we get the values from 4 metrics, the mean absolute error,
+# the mean squared error, its square root (RMSE) and the negative-log-likelihood (NLL). For all these metrics,
+# lower is better.
+
 
 trainer.fit(model=routine, datamodule=datamodule)
 results = trainer.test(model=routine, datamodule=datamodule)
 
 # %%
-# 7. Benchmarking different distributions
+# 7. Benchmarking Different Distributions
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 # Our NormalMLP model assumes a Normal distribution as the output. However, we could be interested in comparing the performance of different distributions.
@@ -183,4 +194,4 @@ for dist_family in ["laplace", "student", "cauchy"]:
 # The Negative Log-Likelihood (NLL) is a good score to encompass the correctness of the predicted
 # distributions, evaluating both the correctness of the mode (the point prediction) and of the predicted uncertainty
 # around the mode ("represented" by the variance). Although there is a lot of variability, in this case, it seems that
-# the Normal distribution performs better.
+# the Normal distribution often performs better.
