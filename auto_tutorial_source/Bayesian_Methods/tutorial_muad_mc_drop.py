@@ -210,7 +210,7 @@ from torch import nn
 class DoubleConv(nn.Module):
     """(conv => BN => ReLU) * 2."""
 
-    def __init__(self, in_ch, out_ch):
+    def __init__(self, in_ch, out_ch) -> None:
         super().__init__()
         self.conv = nn.Sequential(
             nn.Conv2d(in_ch, out_ch, 3, padding=1),
@@ -226,7 +226,7 @@ class DoubleConv(nn.Module):
 
 
 class InConv(nn.Module):
-    def __init__(self, in_ch, out_ch):
+    def __init__(self, in_ch, out_ch) -> None:
         super().__init__()
         self.conv = DoubleConv(in_ch, out_ch)
 
@@ -235,7 +235,7 @@ class InConv(nn.Module):
 
 
 class Down(nn.Module):
-    def __init__(self, in_ch, out_ch):
+    def __init__(self, in_ch, out_ch) -> None:
         super().__init__()
         self.mpconv = nn.Sequential(nn.MaxPool2d(2), DoubleConv(in_ch, out_ch))
 
@@ -244,7 +244,7 @@ class Down(nn.Module):
 
 
 class Up(nn.Module):
-    def __init__(self, in_ch, out_ch, bilinear=True):
+    def __init__(self, in_ch, out_ch, bilinear=True) -> None:
         super().__init__()
         self.bilinear = bilinear
 
@@ -277,7 +277,7 @@ class Up(nn.Module):
 
 
 class OutConv(nn.Module):
-    def __init__(self, in_ch, out_ch):
+    def __init__(self, in_ch, out_ch) -> None:
         super().__init__()
         self.conv = nn.Conv2d(in_ch, out_ch, 1)
 
@@ -289,7 +289,7 @@ class OutConv(nn.Module):
 
 
 class UNet(nn.Module):
-    def __init__(self, classes):
+    def __init__(self, classes) -> None:
         super().__init__()
         self.inc = InConv(3, 32)
         self.down1 = Down(32, 64)

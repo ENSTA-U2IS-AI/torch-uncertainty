@@ -27,7 +27,7 @@ class MLP(nn.Module):
         out_features: int | None = None,
         act_layer: type[nn.Module] = nn.GELU,
         dropout_rate: float = 0.0,
-    ):
+    ) -> None:
         super().__init__()
         out_features = out_features or in_features
         hidden_features = hidden_features or in_features
@@ -39,7 +39,7 @@ class MLP(nn.Module):
 
         self.apply(self._init_weights)
 
-    def _init_weights(self, m):
+    def _init_weights(self, m) -> None:
         if isinstance(m, nn.Linear):
             trunc_normal_(m.weight, std=0.02)
             nn.init.constant_(m.bias, 0)
@@ -68,7 +68,7 @@ class Attention(nn.Module):
         attn_drop: float = 0.0,
         proj_drop: float = 0.0,
         sr_ratio: int = 1,
-    ):
+    ) -> None:
         super().__init__()
         assert dim % num_heads == 0, f"dim {dim} should be divided by num_heads {num_heads}."
 
@@ -90,7 +90,7 @@ class Attention(nn.Module):
 
         self.apply(self._init_weights)
 
-    def _init_weights(self, m):
+    def _init_weights(self, m) -> None:
         if isinstance(m, nn.Linear):
             trunc_normal_(m.weight, std=0.02)
             nn.init.constant_(m.bias, 0)
@@ -147,7 +147,7 @@ class Block(nn.Module):
         act_layer=nn.GELU,
         norm_layer=nn.LayerNorm,
         sr_ratio: int = 1,
-    ):
+    ) -> None:
         super().__init__()
         self.norm1 = norm_layer(dim)
         self.attn = Attention(
@@ -173,7 +173,7 @@ class Block(nn.Module):
 
         self.apply(self._init_weights)
 
-    def _init_weights(self, m):
+    def _init_weights(self, m) -> None:
         if isinstance(m, nn.Linear):
             trunc_normal_(m.weight, std=0.02)
             nn.init.constant_(m.bias, 0)
@@ -194,7 +194,7 @@ class Block(nn.Module):
 class OverlapPatchEmbed(nn.Module):
     """Image to Patch Embedding."""
 
-    def __init__(self, img_size=224, patch_size=7, stride=4, in_chans=3, embed_dim=768):
+    def __init__(self, img_size=224, patch_size=7, stride=4, in_chans=3, embed_dim=768) -> None:
         super().__init__()
         img_size = to_2tuple(img_size)
         patch_size = to_2tuple(patch_size)
@@ -217,7 +217,7 @@ class OverlapPatchEmbed(nn.Module):
 
         self.apply(self._init_weights)
 
-    def _init_weights(self, m):
+    def _init_weights(self, m) -> None:
         if isinstance(m, nn.LayerNorm):
             nn.init.constant_(m.bias, 0)
             nn.init.constant_(m.weight, 1.0)
@@ -253,7 +253,7 @@ class MixVisionTransformer(nn.Module):
         norm_layer,
         depths,
         sr_ratios: list[int],
-    ):
+    ) -> None:
         super().__init__()
         self.num_classes = num_classes
         self.depths = depths
@@ -374,7 +374,7 @@ class MixVisionTransformer(nn.Module):
 
         self.apply(self._init_weights)
 
-    def _init_weights(self, m):
+    def _init_weights(self, m) -> None:
         if isinstance(m, nn.Linear):
             trunc_normal_(m.weight, std=0.02)
             nn.init.constant_(m.bias, 0)
@@ -449,7 +449,7 @@ def _get_depths(arch: int) -> list[int]:  # coverage: ignore
 
 
 class Mit(MixVisionTransformer):
-    def __init__(self, arch: int):
+    def __init__(self, arch: int) -> None:
         embed_dims = _get_embed_dims(arch)
         depths = _get_depths(arch)
         super().__init__(
@@ -517,7 +517,7 @@ class SegFormerHead(nn.Module):
         embed_dim: int,
         num_classes: int,
         dropout_ratio: float = 0.1,
-    ):
+    ) -> None:
         """Head for SegFormer.
 
         References:
@@ -575,7 +575,7 @@ class _SegFormer(nn.Module):
         num_classes: int,
         dropout_ratio: float,
         mit: nn.Module,
-    ):
+    ) -> None:
         super().__init__()
 
         self.encoder = mit

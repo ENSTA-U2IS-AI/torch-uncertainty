@@ -11,7 +11,7 @@ from torch_uncertainty.optim_recipes import (
 
 
 class TestCosineAnnealingWarmup:
-    def test_full_cosine_annealing_warmup(self):
+    def test_full_cosine_annealing_warmup(self) -> None:
         CosineAnnealingWarmup(
             torch.optim.SGD(torch.nn.Linear(1, 1).parameters(), lr=1e-3),
             warmup_start_factor=0.1,
@@ -22,7 +22,7 @@ class TestCosineAnnealingWarmup:
 
 
 class TestCosineSWALR:
-    def test_full_swa_lr(self):
+    def test_full_swa_lr(self) -> None:
         CosineSWALR(
             torch.optim.SGD(torch.nn.Linear(1, 1).parameters(), lr=1e-3),
             swa_lr=1,
@@ -32,7 +32,7 @@ class TestCosineSWALR:
 
 
 class TestOptProcedures:
-    def test_optim_cifar10(self):
+    def test_optim_cifar10(self) -> None:
         model = torch.nn.Linear(1, 1)
         get_procedure("resnet18", "cifar10", "standard")(model)
         get_procedure("resnet34", "cifar10", "masked")(model)
@@ -41,7 +41,7 @@ class TestOptProcedures:
         get_procedure("vgg16", "cifar10", "standard")(model)
         optim_abnn(model, lr=0.1)
 
-    def test_optim_cifar100(self):
+    def test_optim_cifar100(self) -> None:
         model = torch.nn.Linear(1, 1)
         get_procedure("resnet18", "cifar100", "masked")(model)
         get_procedure("resnet34", "cifar100", "masked")(model)
@@ -49,17 +49,17 @@ class TestOptProcedures:
         get_procedure("wideresnet28x10", "cifar100")(model)
         get_procedure("vgg16", "cifar100", "standard")(model)
 
-    def test_optim_tinyimagenet(self):
+    def test_optim_tinyimagenet(self) -> None:
         model = torch.nn.Linear(1, 1)
         get_procedure("resnet34", "tiny-imagenet", "standard")(model)
         get_procedure("resnet50", "tiny-imagenet", "standard")(model)
 
-    def test_optim_imagenet_resnet50(self):
+    def test_optim_imagenet_resnet50(self) -> None:
         model = torch.nn.Linear(1, 1)
         get_procedure("resnet50", "imagenet", "standard", "A3")(model)
         get_procedure("resnet50", "imagenet", "standard")(model)
 
-    def test_optim_unknown(self):
+    def test_optim_unknown(self) -> None:
         with pytest.raises(NotImplementedError):
             _ = get_procedure("unknown", "cifar100")
         with pytest.raises(NotImplementedError):

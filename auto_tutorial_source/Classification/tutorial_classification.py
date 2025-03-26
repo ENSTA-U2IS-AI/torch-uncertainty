@@ -91,7 +91,7 @@ import torch
 import torchvision
 
 
-def imshow(img):
+def imshow(img) -> None:
     npimg = img.numpy()
     npimg = npimg * 0.3081 + 0.1307  # unnormalize
     plt.imshow(np.transpose(npimg, (1, 2, 0)))

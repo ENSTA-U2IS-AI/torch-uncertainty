@@ -45,7 +45,7 @@ class AtrousBlock2d(nn.Module):
         norm_first: bool = True,
         norm_momentum: float = 0.1,
         **factory_kwargs,
-    ):
+    ) -> None:
         """Atrous block with 1x1 and 3x3 convolutions.
 
         Args:
@@ -99,7 +99,7 @@ class UpConv2d(nn.Module):
         out_channels: int,
         ratio: int = 2,
         **factory_kwargs,
-    ):
+    ) -> None:
         """Upsampling convolution.
 
         Args:
@@ -133,7 +133,7 @@ class Reduction1x1(nn.Module):
         max_depth: float,
         is_final: bool = False,
         **factory_kwargs,
-    ):
+    ) -> None:
         super().__init__()
         self.max_depth = max_depth
         self.is_final = is_final
@@ -291,7 +291,7 @@ class BTSDecoder(nn.Module):
         feat_out_channels: list[int],
         num_features: int,
         dist_family: str | None = None,
-    ):
+    ) -> None:
         """BTS decoder.
 
         Args:

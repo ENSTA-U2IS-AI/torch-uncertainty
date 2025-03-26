@@ -41,7 +41,7 @@ from torch_uncertainty.layers.distributions import NormalLinear
 
 
 class NormalMLP(nn.Module):
-    def __init__(self, in_features: int, out_features: int):
+    def __init__(self, in_features: int, out_features: int) -> None:
         super().__init__()
         self.fc1 = nn.Linear(in_features, 50)
         self.fc2 = NormalLinear(
@@ -137,7 +137,7 @@ from torch_uncertainty.layers.distributions import get_dist_linear_layer
 
 
 class DistMLP(nn.Module):
-    def __init__(self, in_features: int, out_features: int, dist_family: str):
+    def __init__(self, in_features: int, out_features: int, dist_family: str) -> None:
         super().__init__()
         self.fc1 = nn.Linear(in_features, 50)
         dist_layer = get_dist_linear_layer(dist_family)

@@ -608,7 +608,7 @@ def plasma_fractal(height, width, rng, wibbledecay):
     def wibbledmean(array):
         return array / 4 + wibble * rng.uniform(-wibble, wibble, array.shape)
 
-    def fillsquares():
+    def fillsquares() -> None:
         """For each square of points stepsize apart, calculate middle value as mean of points + wibble."""
         cornerref = maparray[0:height:stepsize, 0:height:stepsize]
         squareaccum = cornerref + np.roll(cornerref, shift=-1, axis=0)
@@ -618,7 +618,7 @@ def plasma_fractal(height, width, rng, wibbledecay):
             stepsize // 2 : height : stepsize,
         ] = wibbledmean(squareaccum)
 
-    def filldiamonds():
+    def filldiamonds() -> None:
         """For each diamond of points stepsize apart, calculate middle value as mean of points + wibble."""
         mapsize = maparray.shape[0]
         drgrid = maparray[

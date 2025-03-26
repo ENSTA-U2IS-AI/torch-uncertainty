@@ -54,7 +54,7 @@ def get_images(main_corruption, index: int = 0):
     return images
 
 
-def show_images(transforms):
+def show_images(transforms) -> None:
     """Show the effect of all given transforms."""
     num_corruptions = len(transforms)
     _, ax = plt.subplots(num_corruptions, 6, figsize=(10, int(1.5 * num_corruptions)))

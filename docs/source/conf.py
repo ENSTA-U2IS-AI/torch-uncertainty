@@ -140,10 +140,10 @@ html_sidebars = {
 }
 
 
-def add_custom_css(app, pagename, _templatename, _context, _doctree):
+def add_custom_css(app, pagename, _templatename, _context, _doctree) -> None:
     if pagename == "index":
         app.add_css_file("index.css")
 
 
-def setup(app):
+def setup(app) -> None:
     app.connect("html-page-context", add_custom_css)

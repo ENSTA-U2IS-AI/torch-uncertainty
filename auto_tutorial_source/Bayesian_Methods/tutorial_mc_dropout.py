@@ -107,7 +107,7 @@ import torch
 import torchvision
 
 
-def imshow(img):
+def imshow(img) -> None:
     npimg = img.numpy()
     plt.imshow(np.transpose(npimg, (1, 2, 0)))
     plt.axis("off")

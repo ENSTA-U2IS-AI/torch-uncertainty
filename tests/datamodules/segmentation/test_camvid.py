@@ -8,7 +8,7 @@ from torch_uncertainty.datasets.segmentation import CamVid
 class TestCamVidDataModule:
     """Testing the CamVidDataModule datamodule."""
 
-    def test_camvid_main(self):
+    def test_camvid_main(self) -> None:
         dm = CamVidDataModule(root="./data/", batch_size=128, group_classes=False)
         dm = CamVidDataModule(root="./data/", batch_size=128, basic_augment=False)
 

@@ -211,7 +211,7 @@ from torch import nn
 class DoubleConv(nn.Module):
     """(conv => BN => ReLU) * 2."""
 
-    def __init__(self, in_ch, out_ch):
+    def __init__(self, in_ch, out_ch) -> None:
         super().__init__()
         self.conv = nn.Sequential(
             nn.Conv2d(in_ch, out_ch, 3, padding=1),
@@ -227,7 +227,7 @@ class DoubleConv(nn.Module):
 
 
 class InConv(nn.Module):
-    def __init__(self, in_ch, out_ch):
+    def __init__(self, in_ch, out_ch) -> None:
         super().__init__()
         self.conv = DoubleConv(in_ch, out_ch)
 
@@ -236,7 +236,7 @@ class InConv(nn.Module):
 
 
 class Down(nn.Module):
-    def __init__(self, in_ch, out_ch):
+    def __init__(self, in_ch, out_ch) -> None:
         super().__init__()
         self.mpconv = nn.Sequential(nn.MaxPool2d(2), DoubleConv(in_ch, out_ch))
 
@@ -245,7 +245,7 @@ class Down(nn.Module):
 
 
 class Up(nn.Module):
-    def __init__(self, in_ch, out_ch, bilinear=True):
+    def __init__(self, in_ch, out_ch, bilinear=True) -> None:
         super().__init__()
         self.bilinear = bilinear
 
@@ -278,7 +278,7 @@ class Up(nn.Module):
 
 
 class OutConv(nn.Module):
-    def __init__(self, in_ch, out_ch):
+    def __init__(self, in_ch, out_ch) -> None:
         super().__init__()
         self.conv = nn.Conv2d(in_ch, out_ch, 1)
 
@@ -290,7 +290,7 @@ class OutConv(nn.Module):
 
 
 class UNet(nn.Module):
-    def __init__(self, classes):
+    def __init__(self, classes) -> None:
         super().__init__()
         self.inc = InConv(3, 32)
         self.down1 = Down(32, 64)
@@ -448,7 +448,9 @@ from torch_uncertainty.layers.packed import PackedConv2d
 
 
 class PackedDoubleConv(nn.Module):
-    def __init__(self, in_ch, out_ch, alpha, num_estimators, gamma, first=False, last=False):
+    def __init__(
+        self, in_ch, out_ch, alpha, num_estimators, gamma, first=False, last=False
+    ) -> None:
         super().__init__()
         self.conv = nn.Sequential(
             PackedConv2d(
@@ -470,7 +472,7 @@ class PackedDoubleConv(nn.Module):
 
 
 class PackedInconv(nn.Module):
-    def __init__(self, in_ch, out_ch, alpha, num_estimators, gamma):
+    def __init__(self, in_ch, out_ch, alpha, num_estimators, gamma) -> None:
         super().__init__()
         self.conv = PackedDoubleConv(in_ch, out_ch, alpha, num_estimators, gamma, first=True)
 
@@ -479,7 +481,7 @@ class PackedInconv(nn.Module):
 
 
 class PackedDown(nn.Module):
-    def __init__(self, in_ch, out_ch, alpha, num_estimators, gamma):
+    def __init__(self, in_ch, out_ch, alpha, num_estimators, gamma) -> None:
         super().__init__()
         self.mpconv = nn.Sequential(
             nn.MaxPool2d(2), PackedDoubleConv(in_ch, out_ch, alpha, num_estimators, gamma)
@@ -490,7 +492,7 @@ class PackedDown(nn.Module):
 
 
 class PackedUp(nn.Module):
-    def __init__(self, in_ch, out_ch, alpha, num_estimators, gamma):
+    def __init__(self, in_ch, out_ch, alpha, num_estimators, gamma) -> None:
         super().__init__()
         self.up = PackedConvTranspose2d(
             in_ch // 2,
@@ -513,7 +515,7 @@ class PackedUp(nn.Module):
 
 
 class PackedOutconv(nn.Module):
-    def __init__(self, in_ch, out_ch, alpha, num_estimators, gamma):
+    def __init__(self, in_ch, out_ch, alpha, num_estimators, gamma) -> None:
         super().__init__()
         self.conv = PackedConv2d(
             in_ch,
@@ -530,7 +532,7 @@ class PackedOutconv(nn.Module):
 
 
 class PackedUNet(nn.Module):
-    def __init__(self, classes, alpha=1, num_estimators=1, gamma=1):
+    def __init__(self, classes, alpha=1, num_estimators=1, gamma=1) -> None:
         super().__init__()
         self.alpha = alpha
         self.num_estimators = num_estimators

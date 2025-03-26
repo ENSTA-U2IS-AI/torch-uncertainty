@@ -9,7 +9,7 @@ from torch_uncertainty.post_processing import LaplaceApprox, PostProcessing
 class TestPostProcessing:
     """Testing the PostProcessing class."""
 
-    def test_errors(self):
+    def test_errors(self) -> None:
         PostProcessing.__abstractmethods__ = set()
         pp = PostProcessing(nn.Identity())
         pp.fit(None)
@@ -19,7 +19,7 @@ class TestPostProcessing:
 class TestLaplace:
     """Testing the LaplaceApprox class."""
 
-    def test_training(self):
+    def test_training(self) -> None:
         dl = DataLoader(TensorDataset(torch.randn(16, 1), torch.randn(16, 10)), batch_size=5)
         la = LaplaceApprox(
             task="classification",

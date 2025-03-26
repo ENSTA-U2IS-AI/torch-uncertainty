@@ -49,7 +49,7 @@ def batch_input() -> tuple[torch.Tensor, torch.Tensor]:
 class TestAutoContrast:
     """Testing the AutoContrast transform."""
 
-    def test_pil(self, img_input):
+    def test_pil(self, img_input) -> None:
         aug = AutoContrast()
         _ = aug(img_input)
 
@@ -57,7 +57,7 @@ class TestAutoContrast:
 class TestEqualize:
     """Testing the Equalize transform."""
 
-    def test_pil(self, img_input):
+    def test_pil(self, img_input) -> None:
         aug = Equalize()
         _ = aug(img_input)
 
@@ -65,11 +65,11 @@ class TestEqualize:
 class TestPosterize:
     """Testing the Posterize transform."""
 
-    def test_pil(self, img_input):
+    def test_pil(self, img_input) -> None:
         aug = Posterize()
         _ = aug(img_input, 2)
 
-    def test_failures(self, img_input):
+    def test_failures(self, img_input) -> None:
         aug = Posterize()
         with pytest.raises(ValueError):
             _ = aug(img_input, 5)
@@ -80,11 +80,11 @@ class TestPosterize:
 class TestSolarize:
     """Testing the Solarize transform."""
 
-    def test_pil(self, img_input):
+    def test_pil(self, img_input) -> None:
         aug = Solarize()
         _ = aug(img_input, 2)
 
-    def test_failures(self, img_input):
+    def test_failures(self, img_input) -> None:
         aug = Solarize()
         with pytest.raises(ValueError):
             _ = aug(img_input, 300)
@@ -95,7 +95,7 @@ class TestSolarize:
 class TestRotate:
     """Testing the Rotate transform."""
 
-    def test_pil(self, img_input):
+    def test_pil(self, img_input) -> None:
         aug = Rotate(random_direction=True)
         _ = aug(img_input, 10)
 
@@ -103,11 +103,11 @@ class TestRotate:
 class TestShear:
     """Testing the Shear transform."""
 
-    def test_pil(self, img_input):
+    def test_pil(self, img_input) -> None:
         aug = Shear(axis=0, random_direction=True)
         _ = aug(img_input, 10)
 
-    def test_failures(self):
+    def test_failures(self) -> None:
         with pytest.raises(ValueError):
             _ = Shear(axis=2, random_direction=True)
 
@@ -115,11 +115,11 @@ class TestShear:
 class TestTranslate:
     """Testing the Translate transform."""
 
-    def test_pil(self, img_input):
+    def test_pil(self, img_input) -> None:
         aug = Translate(axis=0, random_direction=True)
         _ = aug(img_input, 10)
 
-    def test_failures(self):
+    def test_failures(self) -> None:
         with pytest.raises(ValueError):
             _ = Translate(axis=2, random_direction=True)
 
@@ -127,11 +127,11 @@ class TestTranslate:
 class TestContrast:
     """Testing the Contrast transform."""
 
-    def test_pil(self, img_input):
+    def test_pil(self, img_input) -> None:
         aug = Contrast()
         _ = aug(img_input, 2)
 
-    def test_failures(self, img_input):
+    def test_failures(self, img_input) -> None:
         aug = Contrast()
         with pytest.raises(ValueError):
             _ = aug(img_input, -1)
@@ -140,11 +140,11 @@ class TestContrast:
 class TestBrightness:
     """Testing the Brightness transform."""
 
-    def test_pil(self, img_input):
+    def test_pil(self, img_input) -> None:
         aug = Brightness()
         _ = aug(img_input, 2)
 
-    def test_failures(self, img_input):
+    def test_failures(self, img_input) -> None:
         aug = Brightness()
         with pytest.raises(ValueError):
             _ = aug(img_input, -1)
@@ -153,11 +153,11 @@ class TestBrightness:
 class TestSharpen:
     """Testing the Sharpen transform."""
 
-    def test_pil(self, img_input):
+    def test_pil(self, img_input) -> None:
         aug = Sharpen()
         _ = aug(img_input, 2)
 
-    def test_failures(self, img_input):
+    def test_failures(self, img_input) -> None:
         aug = Sharpen()
         with pytest.raises(ValueError):
             _ = aug(img_input, -1)
@@ -166,15 +166,15 @@ class TestSharpen:
 class TestColor:
     """Testing the Color transform."""
 
-    def test_pil(self, img_input):
+    def test_pil(self, img_input) -> None:
         aug = Color()
         aug(img_input, 2)
 
-    def test_tensor(self):
+    def test_tensor(self) -> None:
         aug = Color()
         aug(torch.rand(3, 28, 28), 2)
 
-    def test_failures(self, img_input):
+    def test_failures(self, img_input) -> None:
         aug = Color()
         with pytest.raises(ValueError):
             _ = aug(img_input, -1)
@@ -183,12 +183,12 @@ class TestColor:
 class TestRepeatTarget:
     """Testing the RepeatTarget transform."""
 
-    def test_batch(self, batch_input):
+    def test_batch(self, batch_input) -> None:
         fn = RepeatTarget(3)
         _, target = fn(batch_input)
         assert target.shape == (6,)
 
-    def test_failures(self):
+    def test_failures(self) -> None:
         with pytest.raises(TypeError):
             _ = RepeatTarget(1.2)
 
@@ -199,7 +199,7 @@ class TestRepeatTarget:
 class TestMIMOBatchFormat:
     """Testing the MIMOBatchFormat transform."""
 
-    def test_batch(self, batch_input):
+    def test_batch(self, batch_input) -> None:
         b, c, h, w = batch_input[0].shape
 
         fn = MIMOBatchFormat(1, 0, 1)
@@ -212,7 +212,7 @@ class TestMIMOBatchFormat:
         assert imgs.shape == (b * 4 * 2, 3, 28, 28)
         assert target.shape == (b * 4 * 2,)
 
-    def test_failures(self):
+    def test_failures(self) -> None:
         with pytest.raises(ValueError):
             _ = MIMOBatchFormat(0, 0, 1)
 
@@ -229,6 +229,6 @@ class TestMIMOBatchFormat:
 class TestRandomRescale:
     """Testing the RandomRescale transform."""
 
-    def test_tv_tensors(self, tv_tensors_input):
+    def test_tv_tensors(self, tv_tensors_input) -> None:
         aug = RandomRescale(0.5, 2.0)
         _ = aug(tv_tensors_input)

@@ -10,7 +10,7 @@ from torch_uncertainty.metrics import (
 class TestMeanAbsoluteErrorInverse:
     """Test the MeanAbsoluteErrorInverse metric."""
 
-    def test_main(self):
+    def test_main(self) -> None:
         preds = torch.tensor([1, 1 / 2, 1 / 3])
         target = torch.tensor([1, 1 / 2, 1 / 3])
         metric = MeanAbsoluteErrorInverse(unit="m")
@@ -25,7 +25,7 @@ class TestMeanAbsoluteErrorInverse:
         MeanAbsoluteErrorInverse(unit="mm")
         MeanAbsoluteErrorInverse(unit="km")
 
-    def test_error(self):
+    def test_error(self) -> None:
         with pytest.raises(ValueError, match="unit must be one of 'mm'"):
             MeanAbsoluteErrorInverse(unit="cm")
 
@@ -33,7 +33,7 @@ class TestMeanAbsoluteErrorInverse:
 class TestMeanSquaredErrorInverse:
     """Test the MeanSquaredErrorInverse metric."""
 
-    def test_main(self):
+    def test_main(self) -> None:
         preds = torch.tensor([1, 1 / 2, 1 / 3])
         target = torch.tensor([1, 1 / 2, 1 / 3])
         metric = MeanSquaredErrorInverse(unit="m")

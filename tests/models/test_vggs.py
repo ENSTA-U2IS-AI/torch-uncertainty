@@ -7,7 +7,7 @@ from torch_uncertainty.models.vgg.std import vgg
 class TestVGGs:
     """Testing the VGG std class."""
 
-    def test_main(self):
+    def test_main(self) -> None:
         vgg(in_channels=1, num_classes=10, arch=11, style="cifar")
         packed_vgg(
             in_channels=2,
@@ -18,7 +18,7 @@ class TestVGGs:
             gamma=1,
         )
 
-    def test_errors(self):
+    def test_errors(self) -> None:
         with pytest.raises(ValueError, match="Unknown VGG arch"):
             vgg(in_channels=1, num_classes=10, arch=12, style="cifar")
         with pytest.raises(ValueError, match="Unknown VGG arch"):

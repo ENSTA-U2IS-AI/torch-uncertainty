@@ -8,7 +8,7 @@ from torch_uncertainty.datasets import MUAD
 class TestMUADDataModule:
     """Testing the MUADDataModule datamodule."""
 
-    def test_camvid_main(self):
+    def test_camvid_main(self) -> None:
         dm = MUADDataModule(root="./data/", batch_size=128)
 
         assert dm.dataset == MUAD

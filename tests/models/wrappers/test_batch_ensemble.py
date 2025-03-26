@@ -13,7 +13,7 @@ def img_input() -> torch.Tensor:
 
 # Define a simple model for testing wrapper functionality (disregarding the actual BatchEnsemble architecture)
 class _DummyModel(nn.Module):
-    def __init__(self, in_features, out_features):
+    def __init__(self, in_features, out_features) -> None:
         super().__init__()
         self.conv = nn.Conv2d(in_features, out_features, 3)
         self.fc = nn.Linear(out_features, out_features)
@@ -25,7 +25,7 @@ class _DummyModel(nn.Module):
 
 
 class _DummyBEModel(nn.Module):
-    def __init__(self, in_features, out_features, num_estimators):
+    def __init__(self, in_features, out_features, num_estimators) -> None:
         super().__init__()
         self.conv = BatchConv2d(in_features, out_features, 3, num_estimators)
         self.fc = BatchLinear(out_features, out_features, num_estimators=num_estimators)
@@ -37,7 +37,7 @@ class _DummyBEModel(nn.Module):
 
 
 class TestBatchEnsembleModel:
-    def test_convert_layers(self):
+    def test_convert_layers(self) -> None:
         in_features = 6
         out_features = 4
         num_estimators = 3
@@ -48,7 +48,7 @@ class TestBatchEnsembleModel:
         assert isinstance(wrapped_model.model.conv, BatchConv2d)
         assert isinstance(wrapped_model.model.fc, BatchLinear)
 
-    def test_forward_pass(self, img_input):
+    def test_forward_pass(self, img_input) -> None:
         batch_size = img_input.size(0)
         in_features = img_input.size(1)
         out_features = 4
@@ -73,7 +73,7 @@ class TestBatchEnsembleModel:
         logits = wrapped_model(img_input)
         assert logits.shape == (batch_size * num_estimators, out_features)
 
-    def test_errors(self):
+    def test_errors(self) -> None:
         with pytest.raises(ValueError):
             BatchEnsemble(_DummyBEModel(10, 5, 1), 0)
         with pytest.raises(ValueError):

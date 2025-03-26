@@ -49,7 +49,7 @@ class NYUv2(VisionDataset):
         min_depth: float = 0.0,
         max_depth: float = 10.0,
         download: bool = False,
-    ):
+    ) -> None:
         """NYUv2 depth dataset.
 
         Args:
@@ -114,7 +114,7 @@ class NYUv2(VisionDataset):
             image, target = self.transforms(image, target)
         return image, target
 
-    def __len__(self):
+    def __len__(self) -> int:
         """Return number of samples in dataset."""
         return len(self.samples)
 
@@ -130,7 +130,7 @@ class NYUv2(VisionDataset):
             and (self.root / self.split / "depth").exists()
         )
 
-    def _download(self):
+    def _download(self) -> None:
         """Download and extract dataset."""
         download_and_extract_archive(
             self.rgb_urls[self.split],
@@ -143,7 +143,7 @@ class NYUv2(VisionDataset):
             download_url(NYUv2.depth_url, self.root, "depth.mat", self.depth_md5)
         self._create_depth_files()
 
-    def _create_depth_files(self):
+    def _create_depth_files(self) -> None:
         """Create depth images from the depth.mat file."""
         path = self.root / self.split
         (path / "depth").mkdir()

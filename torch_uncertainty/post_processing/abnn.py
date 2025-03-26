@@ -27,7 +27,7 @@ class ABNN(PostProcessing):
         use_original_model: bool = True,
         precision: str = "32",
         model: nn.Module | None = None,
-    ):
+    ) -> None:
         """ABNN post-processing.
 
         Args:

@@ -23,7 +23,7 @@ class CUB(ImageFolder):
         target_transform: Callable | None = None,
         return_attributes: bool = False,
         download: bool = False,
-    ):
+    ) -> None:
         """The Caltech-UCSD Birds-200-2011 dataset.
 
         Args:
@@ -138,7 +138,7 @@ class CUB(ImageFolder):
             self.tgz_md5,
         )
 
-    def _download(self):
+    def _download(self) -> None:
         """Download the dataset from caltec.edu."""
         if self._check_integrity():
             logging.info("Files already downloaded and verified")

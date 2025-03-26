@@ -162,7 +162,7 @@ class _LPBNNResNet(nn.Module):
         in_planes: int = 64,
         activation_fn: Callable = relu,
         normalization_layer: type[nn.Module] = nn.BatchNorm2d,
-    ):
+    ) -> None:
         super().__init__()
         self.in_planes = in_planes
         block_planes = in_planes

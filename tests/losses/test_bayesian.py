@@ -11,7 +11,7 @@ from torch_uncertainty.routines import RegressionRoutine
 class TestELBOLoss:
     """Testing the ELBOLoss class."""
 
-    def test_main(self):
+    def test_main(self) -> None:
         model = BayesLinear(1, 1)
         criterion = nn.BCEWithLogitsLoss()
         loss = ELBOLoss(model, criterion, kl_weight=1e-5, num_samples=1)
@@ -24,7 +24,7 @@ class TestELBOLoss:
         loss = ELBOLoss(model, criterion, kl_weight=1e-5, num_samples=1)
         loss(model(torch.randn(1, 1)), torch.randn(1, 1))
 
-    def test_prob_regression_training_step(self):
+    def test_prob_regression_training_step(self) -> None:
         model = NormalLinear(BayesLinear, event_dim=4, in_features=10)
         criterion = DistributionNLLLoss()
         loss = ELBOLoss(model, criterion, kl_weight=1e-5, num_samples=3, dist_family="normal")
@@ -44,7 +44,7 @@ class TestELBOLoss:
         targets = torch.randn(1, 4)
         routine.training_step((inputs, targets))
 
-    def test_training_step(self):
+    def test_training_step(self) -> None:
         model = BayesLinear(10, 4)
         criterion = nn.MSELoss()
         loss = ELBOLoss(model, criterion, kl_weight=1 / 50000, num_samples=3)
@@ -64,7 +64,7 @@ class TestELBOLoss:
         targets = torch.randn(1, 4)
         routine.training_step((inputs, targets))
 
-    def test_failures(self):
+    def test_failures(self) -> None:
         model = BayesLinear(1, 1)
         criterion = nn.BCEWithLogitsLoss()
 

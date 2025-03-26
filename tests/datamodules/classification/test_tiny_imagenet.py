@@ -8,7 +8,7 @@ from torch_uncertainty.datasets.classification import TinyImageNet
 class TestTinyImageNetDataModule:
     """Testing the TinyImageNetDataModule datamodule class."""
 
-    def test_tiny_imagenet(self):
+    def test_tiny_imagenet(self) -> None:
         dm = TinyImageNetDataModule(root="./data/", batch_size=128)
 
         assert dm.dataset == TinyImageNet
@@ -59,7 +59,7 @@ class TestTinyImageNetDataModule:
         dm.prepare_data()
         dm.setup("test")
 
-    def test_tiny_imagenet_cv(self):
+    def test_tiny_imagenet_cv(self) -> None:
         dm = TinyImageNetDataModule(root="./data/", batch_size=128)
         dm.dataset = lambda root, split, transform: DummyClassificationDataset(
             root, split=split, transform=transform, num_images=20

@@ -8,7 +8,7 @@ from torch_uncertainty.datasets.segmentation import Cityscapes
 class TestCityscapesDataModule:
     """Testing the CityscapesDataModule datamodule."""
 
-    def test_camvid_main(self):
+    def test_camvid_main(self) -> None:
         dm = CityscapesDataModule(root="./data/", batch_size=128)
         dm = CityscapesDataModule(root="./data/", batch_size=128, basic_augment=False)
 

@@ -12,7 +12,7 @@ from torch_uncertainty.datasets import MUAD, KITTIDepth, NYUv2
 class TestMUADDataModule:
     """Testing the MUADDataModule datamodule."""
 
-    def test_muad_main(self):
+    def test_muad_main(self) -> None:
         dm = MUADDataModule(root="./data/", min_depth=0, max_depth=100, batch_size=128)
 
         assert dm.dataset == MUAD
@@ -44,7 +44,7 @@ class TestMUADDataModule:
 class TestNYUDataModule:
     """Testing the MUADDataModule datamodule."""
 
-    def test_nyu_main(self):
+    def test_nyu_main(self) -> None:
         dm = NYUv2DataModule(root="./data/", max_depth=100, batch_size=128)
 
         assert dm.dataset == NYUv2
@@ -72,6 +72,6 @@ class TestNYUDataModule:
         dm.train_dataloader()
         dm.val_dataloader()
 
-    def test_kitti_main(self):
+    def test_kitti_main(self) -> None:
         dm = KITTIDataModule(root="./data/", max_depth=100, batch_size=128)
         assert dm.dataset == KITTIDepth

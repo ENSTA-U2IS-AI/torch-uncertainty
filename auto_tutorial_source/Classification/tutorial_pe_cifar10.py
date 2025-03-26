@@ -100,7 +100,7 @@ import numpy as np
 # functions to show an image
 
 
-def imshow(img):
+def imshow(img) -> None:
     img = img / 2 + 0.5  # unnormalize
     npimg = img.numpy()
     plt.figure(figsize=(10, 3))
@@ -130,7 +130,7 @@ from torch import nn
 
 
 class Net(nn.Module):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.conv1 = nn.Conv2d(3, 6, 5)
         self.pool = nn.MaxPool2d(2, 2)

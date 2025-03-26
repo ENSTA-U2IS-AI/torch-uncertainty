@@ -7,7 +7,7 @@ from torch_uncertainty.models import CheckpointEnsemble
 class TestCheckpointEnsemble:
     """Testing the CheckpointEnsemble class."""
 
-    def test_training(self):
+    def test_training(self) -> None:
         ens = CheckpointEnsemble(dummy_model(1, 10))
         ens.eval()
         ens(torch.randn(1, 1))

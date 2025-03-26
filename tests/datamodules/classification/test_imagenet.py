@@ -10,7 +10,7 @@ from torch_uncertainty.datamodules import ImageNetDataModule
 class TestImageNetDataModule:
     """Testing the ImageNetDataModule datamodule class."""
 
-    def test_imagenet(self):
+    def test_imagenet(self) -> None:
         dm = ImageNetDataModule(root="./data/", batch_size=128, val_split=0.1)
         assert dm.dataset == ImageNet
         dm.dataset = DummyClassificationDataset

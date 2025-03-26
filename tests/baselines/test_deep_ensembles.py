@@ -8,7 +8,7 @@ from torch_uncertainty.baselines.classification.deep_ensembles import (
 class TestDeepEnsembles:
     """Testing the Deep Ensembles baseline class."""
 
-    def test_failure(self):
+    def test_failure(self) -> None:
         with pytest.raises(ValueError, match="Models must not be an empty list."):
             DeepEnsemblesBaseline(
                 log_path=".",

@@ -49,7 +49,7 @@ class MCBatchNorm(PostProcessing):
         if model is not None:
             self._setup_model(model)
 
-    def _setup_model(self, model):
+    def _setup_model(self, model) -> None:
         _mcbn_checks(model, self.num_estimators, self.mc_batch_size, self.convert)
         self.model = deepcopy(model)  # TODO: Is it necessary?
         self.model = self.model.eval()
@@ -195,7 +195,7 @@ def init_dataloader(dataloader: DataLoader, batch_size: int):
     )
 
 
-def _mcbn_checks(model, num_estimators, mc_batch_size, convert):
+def _mcbn_checks(model, num_estimators, mc_batch_size, convert) -> None:
     if num_estimators < 1 or not isinstance(num_estimators, int):
         raise ValueError(f"num_estimators must be a positive integer, got {num_estimators}.")
     if mc_batch_size < 1 or not isinstance(mc_batch_size, int):

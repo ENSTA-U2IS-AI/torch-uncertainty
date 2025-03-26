@@ -8,7 +8,7 @@ from torch_uncertainty.models.lenet import batchensemble_lenet, bayesian_lenet, 
 class TestLeNet:
     """Testing the LeNet model."""
 
-    def test_main(self):
+    def test_main(self) -> None:
         """Test initialization."""
         model = lenet(1, 1, norm=nn.BatchNorm2d)
         model.eval()
@@ -32,6 +32,6 @@ class TestLeNet:
             sigma_init=1,
         )
 
-    def test_errors(self):
+    def test_errors(self) -> None:
         with pytest.raises(ValueError):
             lenet(1, 1, norm=nn.InstanceNorm2d)

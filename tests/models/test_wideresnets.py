@@ -21,10 +21,10 @@ from torch_uncertainty.models.wideresnet.packed import (
 
 
 class TestStdWide:
-    def test_main(self):
+    def test_main(self) -> None:
         wideresnet28x10(in_channels=1, num_classes=10, style="imagenet")
 
-    def test_error(self):
+    def test_error(self) -> None:
         with pytest.raises(ValueError):
             wideresnet28x10(in_channels=1, num_classes=10, style="test")
 
@@ -32,7 +32,7 @@ class TestStdWide:
 class TestPackedResnet:
     """Testing the WideResNet packed class."""
 
-    def test_main(self):
+    def test_main(self) -> None:
         packed_wideresnet28x10(
             in_channels=1,
             num_estimators=2,
@@ -70,7 +70,7 @@ class TestPackedResnet:
 class TestMaskedWide:
     """Testing the WideResNet masked class."""
 
-    def test_main(self):
+    def test_main(self) -> None:
         masked_wideresnet28x10(
             in_channels=1,
             num_classes=10,
@@ -106,7 +106,7 @@ class TestMaskedWide:
 class TestBatchedWide:
     """Testing the WideResNet batched class."""
 
-    def test_main(self):
+    def test_main(self) -> None:
         batched_wideresnet28x10(
             in_channels=1,
             num_classes=10,
@@ -134,7 +134,7 @@ class TestBatchedWide:
 class TestMIMOWide:
     """Testing the WideResNet mimo class."""
 
-    def test_main(self):
+    def test_main(self) -> None:
         model = mimo_wideresnet28x10(in_channels=1, num_classes=10, num_estimators=2, style="cifar")
         model(torch.rand((2, 1, 28, 28)))
 

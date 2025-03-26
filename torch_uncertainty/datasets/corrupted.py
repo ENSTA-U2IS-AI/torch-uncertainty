@@ -81,7 +81,7 @@ class CorruptedDataset(VisionDataset):
 
             self._generate_data()
 
-    def _generate_data(self):
+    def _generate_data(self) -> None:
         """Generate the corrupted data."""
         with logging_redirect_tqdm():
             pbar = tqdm(corruption_transforms)
@@ -110,7 +110,7 @@ class CorruptedDataset(VisionDataset):
             self.samples.append((root / f"{i}.jpg", tgt))
             self.targets.append(tgt)
 
-    def __len__(self):
+    def __len__(self) -> int:
         """Get the length of the corrupted dataset."""
         return len(self.core_dataset) * len(corruption_transforms)
 

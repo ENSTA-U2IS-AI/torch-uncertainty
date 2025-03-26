@@ -108,7 +108,7 @@ class BatchEnsemble(nn.Module):
             )
 
 
-def _batch_ensemble_checks(filtered_modules, num_estimators):
+def _batch_ensemble_checks(filtered_modules, num_estimators) -> None:
     """Check if the model contains the required number of dropout modules."""
     if len(filtered_modules) == 0:
         raise ValueError(
