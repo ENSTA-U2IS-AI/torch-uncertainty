@@ -1,3 +1,4 @@
+# ruff: noqa: E402, E703, D212, D415
 """
 Deep ensembles Segmentation Tutorial using Muad Dataset
 =======================================================
@@ -369,12 +370,7 @@ ens_routine = SegmentationRoutine(
 )
 
 # %%
-# trainer.fit(ens_routine, train_loader, val_loader)
-
-# %%
 # Test your ensemble obtained.
-
-# results = trainer.test(ens_routine, test_loader)
 
 # %%
 # Load a pre-trained ensembles from huggingface to continue the tutorial

@@ -1,3 +1,4 @@
+# ruff: noqa: E402, E703, D212, D415
 """
 Deep Evidential Classification on a Toy Example
 ===============================================
@@ -54,8 +55,7 @@ BATCH_SIZE = 512
 # We follow the official implementation in DEC, use the Adam optimizer
 # with the default learning rate of 0.001 and a step scheduler.
 def optim_lenet(model: nn.Module):
-    optimizer = optim.Adam(model.parameters(), lr=2e-2, weight_decay=0.005)
-    return optimizer
+    return optim.Adam(model.parameters(), lr=2e-2, weight_decay=0.005)
 
 
 # %%

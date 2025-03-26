@@ -1,3 +1,4 @@
+# ruff: noqa: E402, E703, D212, D415
 """
 Training a LeNet for Image Classification with TorchUncertainty
 ===============================================================

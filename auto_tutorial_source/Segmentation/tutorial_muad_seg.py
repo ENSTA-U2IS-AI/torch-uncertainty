@@ -1,3 +1,4 @@
+# ruff: noqa: E402, E703, D212, D415
 """
 Segmentation Tutorial using Muad Dataset
 ========================================
@@ -351,16 +352,8 @@ ens_routine = SegmentationRoutine(
     optim_recipe={"optimizer": optimizer, "lr_scheduler": lr_updater},
 )
 
-# %%
-# trainer.fit(ens_routine, train_loader, val_loader)
-
-
-# %%
 # 4. Evaluation
 # ~~~~~~~~~~~~~
-
-# %%
-# results = trainer.test(ens_routine, test_loader)
 
 # %%
 # Let's now load a fully trained model to continue this tutorial
@@ -443,7 +436,6 @@ test_ood_set = MUAD(
     transforms=val_transform,
     download=True,
 )
-test_ood_set
 
 # %%
 sample_idx = 0

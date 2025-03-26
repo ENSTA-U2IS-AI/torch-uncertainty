@@ -1,3 +1,4 @@
+# ruff: noqa: E402, E703, D212, D415
 """
 Deep Evidential Regression on a Toy Example
 ===========================================

@@ -1,4 +1,6 @@
-"""Corrupting Images with TorchUncertainty to Benchmark Robustness
+# ruff: noqa: E402, E703, D212, D415
+"""
+Corrupting Images with TorchUncertainty to Benchmark Robustness
 ===============================================================
 
 This tutorial shows the impact of the different corruption transforms available in the
@@ -28,7 +30,7 @@ urls = [
 
 
 def download_img(url, i):
-    request.urlretrieve(url, f"tmp_{i}.png")
+    request.urlretrieve(url, f"tmp_{i}.png")  # noqa: S310
     return Image.open(f"tmp_{i}.png").convert("RGB")
 
 

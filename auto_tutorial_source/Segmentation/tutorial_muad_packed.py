@@ -1,3 +1,4 @@
+# ruff: noqa: E402, E703, D212, D415
 """
 Packed ensembles Segmentation Tutorial using Muad Dataset
 =========================================================
@@ -614,12 +615,6 @@ packed_routine = SegmentationRoutine(
     format_batch_fn=RepeatTarget(num_estimators),  # Repeat the target 4 times for the ensemble
     optim_recipe={"optimizer": optimizer, "lr_scheduler": lr_updater},
 )
-
-# %%
-# trainer.fit(packed_routine, train_loader, val_loader)
-
-# %%
-# results = trainer.test(packed_routine, test_loader)
 
 # %%
 # Load a pre-trained ensembles from huggingface to continue the tutorial

@@ -1,3 +1,4 @@
+# ruff: noqa: E402, E703, D212, D415
 """
 From a Standard Classifier to a Packed-Ensemble
 ===============================================
@@ -130,7 +131,7 @@ from torch import nn
 
 class Net(nn.Module):
     def __init__(self):
-        super(Net, self).__init__()
+        super().__init__()
         self.conv1 = nn.Conv2d(3, 6, 5)
         self.pool = nn.MaxPool2d(2, 2)
         self.conv2 = nn.Conv2d(6, 16, 5)
@@ -144,8 +145,7 @@ class Net(nn.Module):
         x = x.flatten(1)
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
-        x = self.fc3(x)
-        return x
+        return self.fc3(x)
 
 
 net = Net()
@@ -162,17 +162,28 @@ from torch_uncertainty.layers import PackedConv2d, PackedLinear
 class PackedNet(nn.Module):
     def __init__(self) -> None:
         super().__init__()
-        M = 4
+        num_estimators = 4
         alpha = 2
         gamma = 1
-        self.conv1 = PackedConv2d(3, 6, 5, alpha=alpha, num_estimators=M, gamma=gamma, first=True)
+        self.conv1 = PackedConv2d(
+            3, 6, 5, alpha=alpha, num_estimators=num_estimators, gamma=gamma, first=True
+        )
         self.pool = nn.MaxPool2d(2, 2)
-        self.conv2 = PackedConv2d(6, 16, 5, alpha=alpha, num_estimators=M, gamma=gamma)
-        self.fc1 = PackedLinear(16 * 5 * 5, 120, alpha=alpha, num_estimators=M, gamma=gamma)
-        self.fc2 = PackedLinear(120, 84, alpha=alpha, num_estimators=M, gamma=gamma)
-        self.fc3 = PackedLinear(84, 10 * M, alpha=alpha, num_estimators=M, gamma=gamma, last=True)
+        self.conv2 = PackedConv2d(6, 16, 5, alpha=alpha, num_estimators=num_estimators, gamma=gamma)
+        self.fc1 = PackedLinear(
+            16 * 5 * 5, 120, alpha=alpha, num_estimators=num_estimators, gamma=gamma
+        )
+        self.fc2 = PackedLinear(120, 84, alpha=alpha, num_estimators=num_estimators, gamma=gamma)
+        self.fc3 = PackedLinear(
+            84,
+            10 * num_estimators,
+            alpha=alpha,
+            num_estimators=num_estimators,
+            gamma=gamma,
+            last=True,
+        )
 
-        self.num_estimators = M
+        self.num_estimators = num_estimators
 
     def forward(self, x):
         x = self.pool(F.relu(self.conv1(x)))
@@ -181,8 +192,7 @@ class PackedNet(nn.Module):
         x = x.flatten(1)
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
-        x = self.fc3(x)
-        return x
+        return self.fc3(x)
 
 
 packed_net = PackedNet()

@@ -1,3 +1,4 @@
+# ruff: noqa: E402, E703, D212, D415
 """
 Train a Bayesian Neural Network in Three Minutes
 ================================================
@@ -55,11 +56,10 @@ from torch_uncertainty.routines import ClassificationRoutine
 
 
 def optim_lenet(model: nn.Module):
-    optimizer = optim.Adam(
+    return optim.Adam(
         model.parameters(),
         lr=1e-3,
     )
-    return optimizer
 
 
 # %%
