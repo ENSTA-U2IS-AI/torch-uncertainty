@@ -147,8 +147,8 @@ def optim_recipe(model, lr_mult: float = 1.0):
 # This means that the model is trained to predict the most likely class for each input given a diagonal Gaussian prior on the weights.
 
 
-from torch_uncertainty.routines import ClassificationRoutine
 from torch_uncertainty import TUTrainer
+from torch_uncertainty.routines import ClassificationRoutine
 
 # Create the trainer that will handle the training
 trainer = TUTrainer(accelerator="gpu", devices=1, max_epochs=MAX_EPOCHS)

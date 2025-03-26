@@ -94,7 +94,6 @@ classes = (
 # Let us show some of the training images, for fun.
 
 import matplotlib.pyplot as plt
-
 import numpy as np
 
 # functions to show an image

@@ -30,6 +30,7 @@ class FPRx(Metric):
             .. code-block:: python
 
                 from torch_uncertainty.metrics.classification import FPRx
+
                 # Initialize the metric with 95% recall and positive label as 1 (e.g., OOD)
                 metric = FPRx(recall_level=0.95, pos_label=1)
 

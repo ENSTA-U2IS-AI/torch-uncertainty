@@ -77,7 +77,7 @@ class BrierScore(Metric):
             # Example 2: Multi-Class Classification
             >>> probs = torch.tensor([[0.6, 0.3, 0.1], [0.2, 0.5, 0.3]])
             >>> target = torch.tensor([0, 2])
-            >>> metric = BrierScore(num_classes=3, reduction='mean')
+            >>> metric = BrierScore(num_classes=3, reduction="mean")
             >>> metric.update(probs, target)
             >>> score = metric.compute()
             >>> print(score)

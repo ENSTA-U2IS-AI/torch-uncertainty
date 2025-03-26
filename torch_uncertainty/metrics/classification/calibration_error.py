@@ -275,7 +275,10 @@ class CalibrationError:
 
         .. code-block:: python
 
-            from torch_uncertainty.metrics.classification.calibration_error import CalibrationError
+            from torch_uncertainty.metrics.classification.calibration_error import (
+                CalibrationError,
+            )
+
             # Example for binary classification
             predicted_probs = torch.tensor([0.9, 0.8, 0.3, 0.2])
             true_labels = torch.tensor([1, 1, 0, 0])

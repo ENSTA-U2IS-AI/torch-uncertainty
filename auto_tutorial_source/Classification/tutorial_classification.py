@@ -22,9 +22,9 @@ We also need import the neural network utils within `torch.nn`.
 # %%
 from pathlib import Path
 
-from torch_uncertainty import TUTrainer
 from torch import nn
 
+from torch_uncertainty import TUTrainer
 from torch_uncertainty.datamodules import MNISTDataModule
 from torch_uncertainty.models.lenet import lenet
 from torch_uncertainty.optim_recipes import optim_cifar10_resnet18

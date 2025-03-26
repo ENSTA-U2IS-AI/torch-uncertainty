@@ -16,15 +16,13 @@ First, we disable some logging and warnings to keep the output clean.
 """
 
 # %%
+import logging
+import warnings
+
 import torch
 from torch import nn
 
-import logging
-
 logging.getLogger("lightning.pytorch.utilities.rank_zero").setLevel(logging.WARNING)
-
-import warnings
-
 warnings.filterwarnings("ignore")
 
 # Here are the trainer and dataloader main hyperparameters

@@ -49,10 +49,12 @@ class Entropy(Metric):
 
             from torch_uncertainty.metrics.classification import Entropy
 
-            probs = torch.tensor([
-                [[0.7, 0.3], [0.6, 0.4], [0.8, 0.2]],  # Example 1, 3 estimators
-                [[0.4, 0.6], [0.5, 0.5], [0.3, 0.7]]   # Example 2, 3 estimators
-            ])
+            probs = torch.tensor(
+                [
+                    [[0.7, 0.3], [0.6, 0.4], [0.8, 0.2]],  # Example 1, 3 estimators
+                    [[0.4, 0.6], [0.5, 0.5], [0.3, 0.7]],  # Example 2, 3 estimators
+                ]
+            )
             metric = Entropy(reduction="mean")
             metric.update(probs)
             result = metric.compute()
@@ -60,10 +62,12 @@ class Entropy(Metric):
             # tensor(0.6269)
 
             # Using single-estimator probabilities
-            probs = torch.tensor([
-                [0.7, 0.3],  # Example 1
-                [0.4, 0.6],  # Example 2
-            ])
+            probs = torch.tensor(
+                [
+                    [0.7, 0.3],  # Example 1
+                    [0.4, 0.6],  # Example 2
+                ]
+            )
             metric = Entropy(reduction=None)
             metric.update(probs)
             result = metric.compute()

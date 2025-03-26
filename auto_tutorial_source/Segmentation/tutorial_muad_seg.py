@@ -1,6 +1,6 @@
 """
 Segmentation Tutorial using Muad Dataset
-=========================================
+========================================
 
 This tutorial demonstrates how to train a segmentation model on the MUAD dataset using TorchUncertainty.
 MUAD is a synthetic dataset designed for evaluating autonomous driving under diverse uncertainties.
@@ -30,12 +30,12 @@ nb_epochs = 50
 # In this Tutorial we are using the small version a bigger version can be specified with keyword "full" instead of small.
 
 
+import matplotlib.pyplot as plt
 import torch
-from einops import rearrange
 from torchvision import tv_tensors
 from torchvision.transforms import v2
 from torchvision.transforms.v2 import functional as F
-import matplotlib.pyplot as plt
+
 from torch_uncertainty.datasets import MUAD
 
 train_transform = v2.Compose(
@@ -330,10 +330,11 @@ num_classes = 19
 # Intialize UNet
 model = UNet(num_classes)
 
-from torch_uncertainty import TUTrainer
-from torch_uncertainty.routines import SegmentationRoutine
 from torch import optim
 from torch.optim import lr_scheduler
+
+from torch_uncertainty import TUTrainer
+from torch_uncertainty.routines import SegmentationRoutine
 
 # We build the optimizer
 optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
@@ -421,7 +422,7 @@ confidence_img = F.to_pil_image(F.resize(confidence, 1024))
 fig, axs = plt.subplots(1, 4, figsize=(25, 7))
 images = [img, img_segmented, pred_img, confidence_img]
 
-for ax, im in zip(axs, images):
+for ax, im in zip(axs, images, strict=False):
     ax.imshow(im)
     ax.axis("off")
 
@@ -485,7 +486,7 @@ confidence_img = F.to_pil_image(F.resize(confidence, 1024))
 fig, axs = plt.subplots(1, 4, figsize=(25, 7))
 images = [img, img_segmented, pred_img, confidence_img]
 
-for ax, im in zip(axs, images):
+for ax, im in zip(axs, images, strict=False):
     ax.imshow(im)
     ax.axis("off")
 

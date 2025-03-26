@@ -20,10 +20,11 @@ By the end of this tutorial, you will understand how to use TorchUncertainty to 
 # This includes importing PyTorch, TorchUncertainty components, and TorchUncertainty's Trainer (built on top of Lightning's).
 
 from torch import nn, optim
+
+from torch_uncertainty import TUTrainer
 from torch_uncertainty.datamodules import CIFAR10DataModule
 from torch_uncertainty.models.resnet import resnet
 from torch_uncertainty.routines.classification import ClassificationRoutine
-from torch_uncertainty import TUTrainer
 
 # %%
 # DataModule Setup

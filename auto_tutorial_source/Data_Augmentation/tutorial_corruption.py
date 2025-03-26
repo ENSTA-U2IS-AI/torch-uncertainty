@@ -1,5 +1,4 @@
-"""
-Corrupting Images with TorchUncertainty to Benchmark Robustness
+"""Corrupting Images with TorchUncertainty to Benchmark Robustness
 ===============================================================
 
 This tutorial shows the impact of the different corruption transforms available in the
@@ -13,11 +12,11 @@ torchvision and matplotlib.
 """
 
 # %%
-from torchvision.transforms import Compose, ToTensor, Resize, CenterCrop
+from urllib import request
 
 import matplotlib.pyplot as plt
 from PIL import Image
-from urllib import request
+from torchvision.transforms import CenterCrop, Compose, Resize, ToTensor
 
 urls = [
     "https://upload.wikimedia.org/wikipedia/commons/d/d9/Carduelis_tristis_-Michigan%2C_USA_-male-8.jpg",
@@ -84,8 +83,8 @@ def show_images(transforms):
 # ~~~~~~~~~~~~~~~~~~~~
 from torch_uncertainty.transforms.corruption import (
     GaussianNoise,
-    ShotNoise,
     ImpulseNoise,
+    ShotNoise,
 )
 
 show_images(
@@ -100,9 +99,9 @@ show_images(
 # 2. Blur Corruptions
 # ~~~~~~~~~~~~~~~~~~~~
 from torch_uncertainty.transforms.corruption import (
-    MotionBlur,
-    GlassBlur,
     DefocusBlur,
+    GlassBlur,
+    MotionBlur,
     ZoomBlur,
 )
 
@@ -119,9 +118,9 @@ show_images(
 # 3. Weather Corruptions
 # ~~~~~~~~~~~~~~~~~~~~~~
 from torch_uncertainty.transforms.corruption import (
+    Fog,
     Frost,
     Snow,
-    Fog,
 )
 
 show_images(
@@ -162,8 +161,8 @@ show_images(
 
 from torch_uncertainty.transforms.corruption import (
     GaussianBlur,
-    SpeckleNoise,
     Saturation,
+    SpeckleNoise,
 )
 
 show_images(

@@ -73,20 +73,24 @@ class CityscapesDataModule(TUDataModule):
 
                 from torchvision.transforms import v2
 
-                v2.Compose([
-                    v2.ToImage(),
-                    RandomRescale(min_scale=0.5, max_scale=2.0, antialias=True),
-                    v2.RandomCrop(size=crop_size, pad_if_needed=True),
-                    v2.ColorJitter(brightness=0.5, contrast=0.5, saturation=0.5),
-                    v2.RandomHorizontalFlip(),
-                    v2.ToDtype({
-                        tv_tensors.Image: torch.float32,
-                        tv_tensors.Mask: torch.int64,
-                        "others": None
-                    }, scale=True),
-                    v2.Normalize(mean=[0.485, 0.456, 0.406],
-                                std=[0.229, 0.224, 0.225])
-                ])
+                v2.Compose(
+                    [
+                        v2.ToImage(),
+                        RandomRescale(min_scale=0.5, max_scale=2.0, antialias=True),
+                        v2.RandomCrop(size=crop_size, pad_if_needed=True),
+                        v2.ColorJitter(brightness=0.5, contrast=0.5, saturation=0.5),
+                        v2.RandomHorizontalFlip(),
+                        v2.ToDtype(
+                            {
+                                tv_tensors.Image: torch.float32,
+                                tv_tensors.Mask: torch.int64,
+                                "others": None,
+                            },
+                            scale=True,
+                        ),
+                        v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+                    ]
+                )
 
             Validation/Test transforms:
 
@@ -94,17 +98,21 @@ class CityscapesDataModule(TUDataModule):
 
                 from torchvision.transforms import v2
 
-                v2.Compose([
-                    v2.ToImage(),
-                    v2.Resize(size=eval_size, antialias=True),
-                    v2.ToDtype({
-                        tv_tensors.Image: torch.float32,
-                        tv_tensors.Mask: torch.int64,
-                        "others": None
-                    }, scale=True),
-                    v2.Normalize(mean=[0.485, 0.456, 0.406],
-                                std=[0.229, 0.224, 0.225])
-                ])
+                v2.Compose(
+                    [
+                        v2.ToImage(),
+                        v2.Resize(size=eval_size, antialias=True),
+                        v2.ToDtype(
+                            {
+                                tv_tensors.Image: torch.float32,
+                                tv_tensors.Mask: torch.int64,
+                                "others": None,
+                            },
+                            scale=True,
+                        ),
+                        v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+                    ]
+                )
 
             This behavior can be modified by overriding ``self.train_transform``
             and ``self.test_transform`` after initialization.

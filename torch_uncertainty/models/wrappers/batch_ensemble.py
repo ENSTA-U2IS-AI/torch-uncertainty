@@ -51,11 +51,7 @@ class BatchEnsemble(nn.Module):
             initializing the routine.
 
         Example:
-            >>> model = nn.Sequential(
-            ...     nn.Linear(10, 5),
-            ...     nn.ReLU(),
-            ...     nn.Linear(5, 2)
-            ... )
+            >>> model = nn.Sequential(nn.Linear(10, 5), nn.ReLU(), nn.Linear(5, 2))
             >>> model = BatchEnsemble(model, num_estimators=4, convert_layers=True)
             >>> model
             BatchEnsemble(

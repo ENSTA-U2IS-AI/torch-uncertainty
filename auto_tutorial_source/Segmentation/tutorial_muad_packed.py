@@ -1,6 +1,6 @@
 """
 Packed ensembles Segmentation Tutorial using Muad Dataset
-==========================================================
+=========================================================
 
 This tutorial demonstrates how to train a segmentation model on the MUAD dataset using TorchUncertainty.
 MUAD is a synthetic dataset designed for evaluating autonomous driving under diverse uncertainties.
@@ -30,12 +30,12 @@ nb_epochs = 50
 # In this Tutorial we are using the small version a bigger version can be specified with keyword "full" instead of small.
 
 
+import matplotlib.pyplot as plt
 import torch
 from einops import rearrange
 from torchvision import tv_tensors
 from torchvision.transforms import v2
 from torchvision.transforms.v2 import functional as F
-import matplotlib.pyplot as plt
 
 from torch_uncertainty.datasets import MUAD
 
@@ -579,12 +579,12 @@ class PackedUNet(nn.Module):
 # %%
 # Train on 1 epoch for demonstration purposes
 
-from torch_uncertainty import TUTrainer
-from torch_uncertainty.routines import SegmentationRoutine
 from torch import optim
 from torch.optim import lr_scheduler
-from torch_uncertainty.transforms import RepeatTarget
 
+from torch_uncertainty import TUTrainer
+from torch_uncertainty.routines import SegmentationRoutine
+from torch_uncertainty.transforms import RepeatTarget
 
 num_estimators = 4
 alpha = 2

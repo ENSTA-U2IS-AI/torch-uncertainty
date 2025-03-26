@@ -36,11 +36,10 @@ from lightning import LightningDataModule
 from torch import nn, optim
 
 from torch_uncertainty import TUTrainer
-from torch_uncertainty.models.mlp import mlp
 from torch_uncertainty.datasets.regression.toy import Cubic
 from torch_uncertainty.losses import DERLoss
+from torch_uncertainty.models.mlp import mlp
 from torch_uncertainty.routines import RegressionRoutine
-from torch_uncertainty.layers.distributions import NormalInverseGammaLinear
 from torch_uncertainty.utils.distributions import get_dist_class
 
 # %%
