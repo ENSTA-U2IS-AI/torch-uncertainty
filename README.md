@@ -90,9 +90,9 @@ To date, the following post-processing methods have been implemented:
 
 It includes the official codes of the following papers:
 
-- *LP-BNN: Encoding the latent posterior of Bayesian Neural Networks for uncertainty quantification_ - [IEEE TPAMI](https://arxiv.org/abs/2012.02818)
-- _Packed-Ensembles for Efficient Uncertainty Estimation* - [ICLR 2023](https://arxiv.org/abs/2210.09184) - [Tutorial](https://torch-uncertainty.github.io/auto_tutorials/tutorial_pe_cifar10.html)
-- *MUAD: Multiple Uncertainties for Autonomous Driving, a benchmark for multiple uncertainty types and tasks_ - [BMVC 2022](https://arxiv.org/abs/2203.01437)
+- _LP-BNN: Encoding the latent posterior of Bayesian Neural Networks for uncertainty quantification_ - [IEEE TPAMI](https://arxiv.org/abs/2012.02818)
+- _Packed-Ensembles for Efficient Uncertainty Estimation_ - [ICLR 2023](https://arxiv.org/abs/2210.09184) - [Tutorial](https://torch-uncertainty.github.io/auto_tutorials/tutorial_pe_cifar10.html)
+- _MUAD: Multiple Uncertainties for Autonomous Driving, a benchmark for multiple uncertainty types and tasks_ - [BMVC 2022](https://arxiv.org/abs/2203.01437)
 
 ## Tutorials
 
@@ -102,7 +102,7 @@ Check out our tutorials at [torch-uncertainty.github.io/auto_tutorials](https://
 
 The following projects use TorchUncertainty:
 
-- *Towards Understanding Why Label Smoothing Degrades Selective Classification and How to Fix It* - [ICLR 2025](https://arxiv.org/abs/2403.14715)
-- *A Symmetry-Aware Exploration of Bayesian Neural Network Posteriors* - [ICLR 2024](https://arxiv.org/abs/2310.08287)
+- _Towards Understanding Why Label Smoothing Degrades Selective Classification and How to Fix It_ - [ICLR 2025](https://arxiv.org/abs/2403.14715)
+- _A Symmetry-Aware Exploration of Bayesian Neural Network Posteriors_ - [ICLR 2024](https://arxiv.org/abs/2310.08287)
 
 **If you are using TorchUncertainty in your project, please let us know, and we will add your project to this list!**
