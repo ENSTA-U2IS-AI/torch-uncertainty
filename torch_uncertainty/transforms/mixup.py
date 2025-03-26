@@ -212,7 +212,9 @@ class WarpingMixup(AbstractMixup):
         self.tau_max = tau_max
         self.tau_std = tau_std
 
-    def _get_params(self, batch_size: int, device: torch.device):
+    def _get_params(
+        self, batch_size: int, device: torch.device
+    ) -> tuple[float | np.ndarray, Tensor]:
         if self.mode == "batch":
             lam = self.rng.beta(a=self.alpha, b=self.alpha)
         else:

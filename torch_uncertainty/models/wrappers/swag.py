@@ -204,12 +204,14 @@ class SWAG(SWA):
             param.data = sample.to(device="cpu", dtype=param.dtype)
         return new_sample
 
-    def _save_to_state_dict(self, destination, prefix: str, keep_vars: bool) -> None:
+    def _save_to_state_dict(self, destination: dict | None, prefix: str, keep_vars: bool) -> None:
         """Add the SWAG statistics to the destination dict."""
         super()._save_to_state_dict(destination, prefix, keep_vars)
         destination |= self.swag_stats
 
-    def state_dict(self, *args, destination=None, prefix="", keep_vars=False) -> Mapping:
+    def state_dict(
+        self, *args, destination: dict | None = None, prefix: str = "", keep_vars: bool = False
+    ) -> Mapping:
         """Add the SWAG statistics to the state dict."""
         return self.swag_stats | super().state_dict(
             *args, destination=destination, prefix=prefix, keep_vars=keep_vars
@@ -230,10 +232,10 @@ class SWAG(SWA):
         self._load_swag_stats(state_dict)
         return super().load_state_dict(state_dict, strict, assign)
 
-    def compute_logdet(self, block=False) -> NoReturn:
+    def compute_logdet(self, block: bool = False) -> NoReturn:
         raise NotImplementedError("Raise an issue if you need this feature.")
 
-    def compute_logprob(self, vec=None, block=False, diag=False) -> NoReturn:
+    def compute_logprob(self, vec=None, block: bool = False, diag: bool = False) -> NoReturn:
         raise NotImplementedError("Raise an issue if you need this feature.")
 
 

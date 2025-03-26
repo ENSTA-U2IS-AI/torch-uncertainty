@@ -94,9 +94,9 @@ def _confidence_histogram_subplot(
     ax,
     accuracies: np.ndarray,
     confidences: np.ndarray,
-    title="Examples per bin",
-    xlabel="Top-class Confidence (%)",
-    ylabel="Density (%)",
+    title: str = "Examples per bin",
+    xlabel: str = "Top-class Confidence (%)",
+    ylabel: str = "Density (%)",
 ) -> None:
     sns.kdeplot(
         confidences * 100,
@@ -140,9 +140,9 @@ def reliability_chart(
     bin_confidences: np.ndarray,
     bin_sizes: np.ndarray,
     bins: np.ndarray,
-    title="Reliability Diagram",
-    figsize=(6, 6),
-    dpi=150,
+    title: str = "Reliability Diagram",
+    figsize: tuple[int, int] = (6, 6),
+    dpi: int = 150,
 ) -> _PLOT_OUT_TYPE:
     """Builds Reliability Diagram
     `Source <https://github.com/hollance/reliability-diagrams>`_.

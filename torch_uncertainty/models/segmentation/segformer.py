@@ -49,13 +49,13 @@ class MLP(nn.Module):
             m.weight.data.normal_(0, math.sqrt(2.0 / fan_out))
             nn.init.constant_(m.bias, 0)
 
-    def forward(self, x, h, w):
-        x = self.fc1(x)
-        x = self.dwconv(x, h, w)
-        x = self.act(x)
-        x = self.dropout(x)
-        x = self.fc2(x)
-        return self.dropout(x)
+    def forward(self, inputs: Tensor, h, w) -> Tensor:
+        inputs = self.fc1(inputs)
+        inputs = self.dwconv(inputs, h, w)
+        inputs = self.act(inputs)
+        inputs = self.dropout(inputs)
+        inputs = self.fc2(inputs)
+        return self.dropout(inputs)
 
 
 class Attention(nn.Module):
@@ -103,12 +103,12 @@ class Attention(nn.Module):
             m.weight.data.normal_(0, math.sqrt(2.0 / fan_out))
             nn.init.constant_(m.bias, 0)
 
-    def forward(self, x: Tensor, h: int, w: int):
-        b, n, c = x.shape
-        q = self.q(x).reshape(b, n, self.num_heads, c // self.num_heads).permute(0, 2, 1, 3)
+    def forward(self, inputs: Tensor, h: int, w: int) -> Tensor:
+        b, n, c = inputs.shape
+        q = self.q(inputs).reshape(b, n, self.num_heads, c // self.num_heads).permute(0, 2, 1, 3)
 
         if self.sr_ratio > 1:
-            x_ = x.permute(0, 2, 1).reshape(b, c, h, w)
+            x_ = inputs.permute(0, 2, 1).reshape(b, c, h, w)
             x_ = self.sr(x_).reshape(b, c, -1).permute(0, 2, 1)
             x_ = self.norm(x_)
             kv = (
@@ -118,7 +118,7 @@ class Attention(nn.Module):
             )
         else:
             kv = (
-                self.kv(x)
+                self.kv(inputs)
                 .reshape(b, -1, 2, self.num_heads, c // self.num_heads)
                 .permute(2, 0, 3, 1, 4)
             )
@@ -128,9 +128,9 @@ class Attention(nn.Module):
         attn = attn.softmax(dim=-1)
         attn = self.attn_drop(attn)
 
-        x = (attn @ v).transpose(1, 2).reshape(b, n, c)
-        x = self.proj(x)
-        return self.proj_drop(x)
+        inputs = (attn @ v).transpose(1, 2).reshape(b, n, c)
+        inputs = self.proj(inputs)
+        return self.proj_drop(inputs)
 
 
 class Block(nn.Module):
@@ -186,9 +186,9 @@ class Block(nn.Module):
             m.weight.data.normal_(0, math.sqrt(2.0 / fan_out))
             nn.init.constant_(m.bias, 0)
 
-    def forward(self, x, h, w):
-        x = x + self.drop_path(self.attn(self.norm1(x), h, w))
-        return x + self.drop_path(self.mlp(self.norm2(x), h, w))
+    def forward(self, inputs, h, w):
+        inputs = inputs + self.drop_path(self.attn(self.norm1(inputs), h, w))
+        return inputs + self.drop_path(self.mlp(self.norm2(inputs), h, w))
 
 
 class OverlapPatchEmbed(nn.Module):
@@ -227,13 +227,13 @@ class OverlapPatchEmbed(nn.Module):
             m.weight.data.normal_(0, math.sqrt(2.0 / fan_out))
             nn.init.constant_(m.bias, 0)
 
-    def forward(self, x):
-        x = self.proj(x)
-        _, _, h, w = x.shape
-        x = x.flatten(2).transpose(1, 2)
-        x = self.norm(x)
+    def forward(self, inputs):
+        inputs = self.proj(inputs)
+        _, _, h, w = inputs.shape
+        inputs = inputs.flatten(2).transpose(1, 2)
+        inputs = self.norm(inputs)
 
-        return x, h, w
+        return inputs, h, w
 
 
 class MixVisionTransformer(nn.Module):
@@ -387,46 +387,46 @@ class MixVisionTransformer(nn.Module):
             m.weight.data.normal_(0, math.sqrt(2.0 / fan_out))
             nn.init.constant_(m.bias, 0)
 
-    def forward_features(self, x):
-        b = x.shape[0]
+    def forward_features(self, inputs: Tensor) -> Tensor:
+        b = inputs.shape[0]
         outs = []
 
         # stage 1
-        x, h, w = self.patch_embed1(x)
+        inputs, h, w = self.patch_embed1(inputs)
         for blk in self.block1:
-            x = blk(x, h, w)
-        x = self.norm1(x)
-        x = x.reshape(b, h, w, -1).permute(0, 3, 1, 2).contiguous()
-        outs.append(x)
+            inputs = blk(inputs, h, w)
+        inputs = self.norm1(inputs)
+        inputs = inputs.reshape(b, h, w, -1).permute(0, 3, 1, 2).contiguous()
+        outs.append(inputs)
 
         # stage 2
-        x, h, w = self.patch_embed2(x)
+        inputs, h, w = self.patch_embed2(inputs)
         for blk in self.block2:
-            x = blk(x, h, w)
-        x = self.norm2(x)
-        x = x.reshape(b, h, w, -1).permute(0, 3, 1, 2).contiguous()
-        outs.append(x)
+            inputs = blk(inputs, h, w)
+        inputs = self.norm2(inputs)
+        inputs = inputs.reshape(b, h, w, -1).permute(0, 3, 1, 2).contiguous()
+        outs.append(inputs)
 
         # stage 3
-        x, h, w = self.patch_embed3(x)
+        inputs, h, w = self.patch_embed3(inputs)
         for blk in self.block3:
-            x = blk(x, h, w)
-        x = self.norm3(x)
-        x = x.reshape(b, h, w, -1).permute(0, 3, 1, 2).contiguous()
-        outs.append(x)
+            inputs = blk(inputs, h, w)
+        inputs = self.norm3(inputs)
+        inputs = inputs.reshape(b, h, w, -1).permute(0, 3, 1, 2).contiguous()
+        outs.append(inputs)
 
         # stage 4
-        x, h, w = self.patch_embed4(x)
+        inputs, h, w = self.patch_embed4(inputs)
         for blk in self.block4:
-            x = blk(x, h, w)
-        x = self.norm4(x)
-        x = x.reshape(b, h, w, -1).permute(0, 3, 1, 2).contiguous()
-        outs.append(x)
+            inputs = blk(inputs, h, w)
+        inputs = self.norm4(inputs)
+        inputs = inputs.reshape(b, h, w, -1).permute(0, 3, 1, 2).contiguous()
+        outs.append(inputs)
 
         return outs
 
-    def forward(self, x):
-        return self.forward_features(x)
+    def forward(self, inputs):
+        return self.forward_features(inputs)
 
 
 def _get_embed_dims(arch: int) -> list[int]:

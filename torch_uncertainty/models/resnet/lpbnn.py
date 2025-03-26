@@ -278,7 +278,7 @@ class _LPBNNResNet(nn.Module):
         activation_fn: Callable,
         normalization_layer: type[nn.Module],
         conv_bias: bool,
-    ):
+    ) -> nn.Module:
         strides = [stride] + [1] * (num_blocks - 1)
         layers = []
         for stride in strides:
