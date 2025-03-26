@@ -6,7 +6,7 @@ from torch_uncertainty.layers import BatchConv2d, BatchLinear
 from torch_uncertainty.models.wrappers.batch_ensemble import BatchEnsemble, batch_ensemble
 
 
-@pytest.fixture()
+@pytest.fixture
 def img_input() -> torch.Tensor:
     return torch.rand((5, 6, 3, 3))
 

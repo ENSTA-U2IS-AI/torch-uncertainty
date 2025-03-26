@@ -1,3 +1,4 @@
+import logging
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
@@ -38,7 +39,7 @@ class CIFAR10H(CIFAR10):
         """
         if train:
             raise ValueError("CIFAR10H does not support training data.")
-        print("WARNING: CIFAR10H cannot be used within Classification routines for now.")
+        logging.warning("WARNING: CIFAR10H cannot be used within Classification routines for now.")
         super().__init__(
             Path(root),
             train=False,

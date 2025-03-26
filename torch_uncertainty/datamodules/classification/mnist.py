@@ -26,6 +26,7 @@ class MNISTDataModule(TUDataModule):
         self,
         root: str | Path,
         batch_size: int,
+        eval_batch_size: int | None = None,
         eval_ood: bool = False,
         eval_shift: bool = False,
         ood_ds: Literal["fashion", "notMNIST"] = "fashion",
@@ -43,7 +44,9 @@ class MNISTDataModule(TUDataModule):
             root (str): Root directory of the datasets.
             eval_ood (bool): Whether to evaluate on out-of-distribution data. Defaults to ``False``.
             eval_shift (bool): Whether to evaluate on shifted data. Defaults to ``False``.
-            batch_size (int): Number of samples per batch.
+            batch_size (int): Number of samples per batch during training.
+            eval_batch_size (int | None) : Number of samples per batch during evaluation (val
+                and test). Set to batch_size if None. Defaults to None.
             ood_ds (str): Which out-of-distribution dataset to use. Defaults to
                 ``"fashion"``; `fashion` stands for FashionMNIST and `notMNIST` for
                 notMNIST.
@@ -62,6 +65,7 @@ class MNISTDataModule(TUDataModule):
         super().__init__(
             root=root,
             batch_size=batch_size,
+            eval_batch_size=eval_batch_size,
             val_split=val_split,
             postprocess_set=postprocess_set,
             num_workers=num_workers,
@@ -184,9 +188,9 @@ class MNISTDataModule(TUDataModule):
                 distribution data), FashionMNIST or NotMNIST test split
                 (out-of-distribution data), and/or MNISTC (shifted data).
         """
-        dataloader = [self._data_loader(self.test)]
+        dataloader = [self._data_loader(self.test, training=False)]
         if self.eval_ood:
-            dataloader.append(self._data_loader(self.ood))
+            dataloader.append(self._data_loader(self.ood, training=False))
         if self.eval_shift:
-            dataloader.append(self._data_loader(self.shift))
+            dataloader.append(self._data_loader(self.shift, training=False))
         return dataloader

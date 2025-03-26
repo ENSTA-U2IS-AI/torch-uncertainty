@@ -7,7 +7,7 @@ from torch_uncertainty.layers.distributions import (
 )
 
 
-@pytest.fixture()
+@pytest.fixture
 def feat_input() -> torch.Tensor:
     return torch.rand((3, 8))  # (B, Hin)
 
@@ -99,8 +99,8 @@ class TestDistributionLinear:
         with pytest.raises(NotImplementedError):
             get_dist_linear_layer("unknown")
 
+        layer_class = get_dist_linear_layer("normal")
         with pytest.raises(ValueError):
-            layer_class = get_dist_linear_layer("normal")
             layer_class(
                 base_layer=torch.nn.Conv2d,
                 event_dim=2,
@@ -197,8 +197,8 @@ class TestDistributionConv:
         with pytest.raises(NotImplementedError):
             get_dist_conv_layer("unknown")
 
+        layer_class = get_dist_conv_layer("normal")
         with pytest.raises(ValueError):
-            layer_class = get_dist_conv_layer("normal")
             layer_class(
                 base_layer=torch.nn.Linear,
                 event_dim=2,

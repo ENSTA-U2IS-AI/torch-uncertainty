@@ -29,6 +29,7 @@ class CIFAR100DataModule(TUDataModule):
         self,
         root: str | Path,
         batch_size: int,
+        eval_batch_size: int | None = None,
         eval_ood: bool = False,
         eval_shift: bool = False,
         shift_severity: int = 1,
@@ -46,10 +47,14 @@ class CIFAR100DataModule(TUDataModule):
         """DataModule for CIFAR100.
 
         Args:
-            root (str | Path): Root directory of the datasets.
-            batch_size (int): Number of samples per batch.
-            eval_ood (bool): Whether to evaluate out-of-distribution performance. Defaults to ``False``.
-            eval_shift (bool): Whether to evaluate on shifted data. Defaults to ``False``.
+            root (str): Root directory of the datasets.
+            eval_ood (bool): Whether to evaluate out-of-distribution
+                performance.
+            eval_shift (bool): Whether to evaluate on shifted data. Defaults to
+            ``False``.
+            batch_size (int): Number of samples per batch during training.
+            eval_batch_size (int | None) : Number of samples per batch during evaluation (val
+                and test). Set to batch_size if None. Defaults to None.
             val_split (float): Share of samples to use for validation. Defaults
                 to ``0.0``.
             postprocess_set (str, optional): The post-hoc calibration dataset to
@@ -70,6 +75,7 @@ class CIFAR100DataModule(TUDataModule):
         super().__init__(
             root=root,
             batch_size=batch_size,
+            eval_batch_size=eval_batch_size,
             val_split=val_split,
             postprocess_set=postprocess_set,
             num_workers=num_workers,
@@ -202,10 +208,9 @@ class CIFAR100DataModule(TUDataModule):
         """
         if self.num_dataloaders > 1:
             return self._data_loader(
-                AggregatedDataset(self.train, self.num_dataloaders),
-                shuffle=True,
+                AggregatedDataset(self.train, self.num_dataloaders), shuffle=True, training=True
             )
-        return self._data_loader(self.train, shuffle=True)
+        return self._data_loader(self.train, training=True, shuffle=True)
 
     def test_dataloader(self) -> list[DataLoader]:
         r"""Get test dataloaders.
@@ -214,11 +219,11 @@ class CIFAR100DataModule(TUDataModule):
             list[DataLoader]: test set for in distribution data, SVHN data, and/or
             CIFAR-100C data.
         """
-        dataloader = [self._data_loader(self.test)]
+        dataloader = [self._data_loader(self.test, training=False)]
         if self.eval_ood:
-            dataloader.append(self._data_loader(self.ood))
+            dataloader.append(self._data_loader(self.ood, training=False))
         if self.eval_shift:
-            dataloader.append(self._data_loader(self.shift))
+            dataloader.append(self._data_loader(self.shift, training=False))
         return dataloader
 
     def _get_train_data(self) -> ArrayLike:

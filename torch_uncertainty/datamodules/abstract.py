@@ -31,6 +31,7 @@ class TUDataModule(ABC, LightningDataModule):
         self,
         root: str | Path,
         batch_size: int,
+        eval_batch_size: int | None,
         val_split: float | None,
         num_workers: int,
         pin_memory: bool,
@@ -45,18 +46,24 @@ class TUDataModule(ABC, LightningDataModule):
 
         Args:
             root (str): Root directory of the datasets.
-            batch_size (int): Number of samples per batch.
-            val_split (float): Share of samples to use for validation.
+            batch_size (int): Number of samples per batch during training.
+            eval_batch_size (int | None) : Number of samples per batch during evaluation (val
+                and test). Set to batch_size if None.
+            val_split (float | None): Share of samples to use for validation.
             num_workers (int): Number of workers to use for data loading.
             pin_memory (bool): Whether to pin memory.
             persistent_workers (bool): Whether to use persistent workers.
             postprocess_set (str): Which split to use as post-processing set to fit the
-                post-processing method.
+                post-processing method. Defaults to ``val``.
         """
         super().__init__()
 
         self.root = Path(root)
         self.batch_size = batch_size
+        if eval_batch_size is None:
+            self.eval_batch_size = batch_size
+        else:
+            self.eval_batch_size = eval_batch_size
         self.val_split = val_split
         self.num_workers = num_workers
 
@@ -89,7 +96,7 @@ class TUDataModule(ABC, LightningDataModule):
         Return:
             DataLoader: training dataloader.
         """
-        return self._data_loader(self.train, shuffle=True)
+        return self._data_loader(self.train, training=True, shuffle=True)
 
     def val_dataloader(self) -> DataLoader:
         r"""Get the validation dataloader.
@@ -97,7 +104,7 @@ class TUDataModule(ABC, LightningDataModule):
         Return:
             DataLoader: validation dataloader.
         """
-        return self._data_loader(self.val)
+        return self._data_loader(self.val, training=False)
 
     def test_dataloader(self) -> list[DataLoader]:
         r"""Get test dataloaders.
@@ -106,7 +113,7 @@ class TUDataModule(ABC, LightningDataModule):
             list[DataLoader]: test set for in distribution data
             and out-of-distribution data.
         """
-        return [self._data_loader(self.test)]
+        return [self._data_loader(self.test, training=False)]
 
     def postprocess_dataloader(self) -> DataLoader:
         r"""Get the calibration dataloader.
@@ -116,11 +123,12 @@ class TUDataModule(ABC, LightningDataModule):
         """
         return self.val_dataloader() if self.postprocess_set == "val" else self.test_dataloader()[0]
 
-    def _data_loader(self, dataset: Dataset, shuffle: bool = False) -> DataLoader:
+    def _data_loader(self, dataset: Dataset, training: bool, shuffle: bool = False) -> DataLoader:
         """Create a dataloader for a given dataset.
 
         Args:
             dataset (Dataset): Dataset to create a dataloader for.
+            training (bool): Whether it is a training or evaluation dataloader.
             shuffle (bool, optional): Whether to shuffle the dataset. Defaults
                 to False.
 
@@ -129,7 +137,7 @@ class TUDataModule(ABC, LightningDataModule):
         """
         return DataLoader(
             dataset,
-            batch_size=self.batch_size,
+            batch_size=self.batch_size if training else self.eval_batch_size,
             shuffle=shuffle,
             num_workers=self.num_workers,
             pin_memory=self.pin_memory,
@@ -171,6 +179,7 @@ class TUDataModule(ABC, LightningDataModule):
                 val_idx=val_idx,
                 datamodule=self,
                 batch_size=self.batch_size,
+                eval_batch_size=self.eval_batch_size,
                 val_split=self.val_split,
                 postprocess_set=self.postprocess_set,
                 num_workers=self.num_workers,
@@ -190,6 +199,7 @@ class CrossValDataModule(TUDataModule):
         val_idx: ArrayLike,
         datamodule: TUDataModule,
         batch_size: int,
+        eval_batch_size: int | None,
         val_split: float,
         num_workers: int,
         pin_memory: bool,
@@ -199,6 +209,7 @@ class CrossValDataModule(TUDataModule):
         super().__init__(
             root=root,
             batch_size=batch_size,
+            eval_batch_size=eval_batch_size,
             val_split=val_split,
             num_workers=num_workers,
             pin_memory=pin_memory,
@@ -219,12 +230,12 @@ class CrossValDataModule(TUDataModule):
         else:
             raise ValueError(f"Stage {stage} not supported.")
 
-    def _data_loader(self, dataset: Dataset, idx: ArrayLike) -> DataLoader:
+    def _data_loader(self, dataset: Dataset, idx: ArrayLike, training: bool) -> DataLoader:
         return DataLoader(
             dataset=dataset,
             sampler=SubsetRandomSampler(idx),
             shuffle=False,
-            batch_size=self.batch_size,
+            batch_size=self.batch_size if training else self.eval_batch_size,
             num_workers=self.num_workers,
             pin_memory=self.pin_memory,
             persistent_workers=self.persistent_workers,
@@ -244,12 +255,12 @@ class CrossValDataModule(TUDataModule):
 
     def train_dataloader(self) -> DataLoader:
         """Get the training dataloader for the current fold."""
-        return self._data_loader(self.dm.get_train_set(), self.train_idx)
+        return self._data_loader(self.dm.get_train_set(), training=True, idx=self.train_idx)
 
     def val_dataloader(self) -> DataLoader:
         """Get the validation dataloader for the current fold."""
-        return self._data_loader(self.dm.get_train_set(), self.val_idx)
+        return self._data_loader(self.dm.get_train_set(), training=False, idx=self.val_idx)
 
-    def test_dataloader(self) -> DataLoader:
+    def test_dataloader(self) -> list[DataLoader]:
         """Get the test dataloader for the current fold."""
-        return self._data_loader(self.dm.get_train_set(), self.val_idx)
+        return [self._data_loader(self.dm.get_train_set(), training=False, idx=self.val_idx)]
