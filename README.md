@@ -90,8 +90,8 @@ To date, the following post-processing methods have been implemented:
 
 It includes the official codes of the following papers:
 
-- _LP-BNN: Encoding the latent posterior of Bayesian Neural Networks for uncertainty quantification_ - [IEEE TPAMI](https://arxiv.org/abs/2012.02818)
 - _Packed-Ensembles for Efficient Uncertainty Estimation_ - [ICLR 2023](https://arxiv.org/abs/2210.09184) - [Tutorial](https://torch-uncertainty.github.io/auto_tutorials/tutorial_pe_cifar10.html)
+- _LP-BNN: Encoding the latent posterior of Bayesian Neural Networks for uncertainty quantification_ - [IEEE TPAMI 2023](https://arxiv.org/abs/2012.02818)
 - _MUAD: Multiple Uncertainties for Autonomous Driving, a benchmark for multiple uncertainty types and tasks_ - [BMVC 2022](https://arxiv.org/abs/2203.01437)
 
 ## Tutorials
