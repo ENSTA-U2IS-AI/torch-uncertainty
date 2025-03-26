@@ -90,12 +90,12 @@ class TestSWAG:
     def test_state_dict(self):
         mod = dummy_model(1, 10)
         swag = SWAG(mod, cycle_start=1, cycle_length=1, num_estimators=3)
-        print(swag.state_dict())
+        print(swag.state_dict())  # noqa: T201
         swag.load_state_dict(swag.state_dict())
 
     def test_failures(self):
+        swag = SWAG(nn.Module(), scale=1, cycle_start=1, cycle_length=1)
         with pytest.raises(NotImplementedError, match="Raise an issue if you need this feature"):
-            swag = SWAG(nn.Module(), scale=1, cycle_start=1, cycle_length=1)
             swag.sample(scale=1, block=True)
         with pytest.raises(ValueError, match="`scale` must be non-negative."):
             SWAG(nn.Module(), scale=-1, cycle_start=1, cycle_length=1)

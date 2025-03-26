@@ -4,18 +4,18 @@ import torch
 from torch_uncertainty.metrics import VariationRatio
 
 
-@pytest.fixture()
+@pytest.fixture
 def disagreement_probas_3est() -> torch.Tensor:
     """Return a vector with mean entropy ~ln(2) and entropy of mean =0."""
     return torch.as_tensor([[[0.2, 0.8]], [[0.7, 0.3]], [[0.6, 0.4]]])
 
 
-@pytest.fixture()
+@pytest.fixture
 def agreement_probas() -> torch.Tensor:
     return torch.as_tensor([[[0.9, 0.1]], [[0.9, 0.1]]])
 
 
-@pytest.fixture()
+@pytest.fixture
 def agreement_probas_3est() -> torch.Tensor:
     """Return a vector with mean entropy ~ln(2) and entropy of mean =0."""
     return torch.as_tensor([[[0.2, 0.8]], [[0.3, 0.7]], [[0.4, 0.6]]])
