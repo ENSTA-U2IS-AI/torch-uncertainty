@@ -51,8 +51,8 @@ class CorruptedDataset(VisionDataset):
         self.core_dataset.transforms = None
         self.core_dataset.target_transform = None
 
-        dataset_name = str(type(core_dataset)).split(".")[-1][:-2]
-        self.root = Path(core_dataset.root) / (dataset_name + "-C")
+        self.dataset_name = str(type(core_dataset)).split(".")[-1][:-2]
+        self.root = Path(core_dataset.root) / (self.dataset_name + "-C")
 
         if hasattr(self.core_dataset, "targets"):
             self.targets = self.core_dataset.targets
@@ -136,3 +136,6 @@ class CorruptedDataset(VisionDataset):
         if self.transforms is not None:
             img, target = self.transforms(img, target)
         return img, target
+
+    def extra_repr(self) -> str:
+        return f"core dataset: {self.dataset_name}\nshift severity: {self.shift_severity}"
