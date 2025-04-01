@@ -118,7 +118,8 @@ class TULightningCLI(LightningCLI):
                 set to `False`, the trainer and model classes will be instantiated only. Defaults
                 to ``True``.
             auto_configure_optimizers (bool, optional): Defaults to ``True``.
-            eval_after_fit_default (bool, optional): Indicate. Defaults to False.
+            eval_after_fit_default (bool, optional): Store whether an evaluation should be performed
+                after the training. Defaults to ``False``.
             **kwargs: Additional keyword arguments to pass to the parent class added for
                 ``lightning>2.5.0``:
 
