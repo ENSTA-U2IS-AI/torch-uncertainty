@@ -18,68 +18,68 @@ from torch_uncertainty.layers.packed import (
 )
 
 
-@pytest.fixture()
+@pytest.fixture
 def feat_input() -> torch.Tensor:
     return torch.rand((6, 1))  # (Cin, Lin)
 
 
-@pytest.fixture()
+@pytest.fixture
 def feat_input_one_rearrange() -> torch.Tensor:
     return torch.rand((1 * 3, 5))
 
 
-@pytest.fixture()
+@pytest.fixture
 def feat_multi_dim() -> torch.Tensor:
     return torch.rand((1, 2, 3, 4, 6))
 
 
-@pytest.fixture()
+@pytest.fixture
 def feat_input_16_features() -> torch.Tensor:
     return torch.rand((3, 16))
 
 
-@pytest.fixture()
+@pytest.fixture
 def seq_input() -> torch.Tensor:
     return torch.rand((5, 6, 3))
 
 
-@pytest.fixture()
+@pytest.fixture
 def img_input() -> torch.Tensor:
     return torch.rand((5, 6, 3, 3))
 
 
-@pytest.fixture()
+@pytest.fixture
 def voxels_input() -> torch.Tensor:
     return torch.rand((5, 6, 3, 3, 3))
 
 
-@pytest.fixture()
+@pytest.fixture
 def unbatched_qkv() -> torch.Tensor:
     return torch.rand((3, 6))
 
 
-@pytest.fixture()
+@pytest.fixture
 def unbatched_q_kv() -> tuple[torch.Tensor, torch.Tensor]:
     return torch.rand((3, 6)), torch.rand((4, 2))
 
 
-@pytest.fixture()
+@pytest.fixture
 def unbatched_q_k_v() -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     return torch.rand((3, 6)), torch.rand((4, 2)), torch.rand((4, 4))
 
 
-@pytest.fixture()
+@pytest.fixture
 def batched_qkv() -> torch.Tensor:
     return torch.rand((2, 3, 6))
 
 
-@pytest.fixture()
+@pytest.fixture
 def extended_batched_qkv() -> torch.Tensor:
     expansion = 2
     return torch.rand((2, 3, 6 * expansion))
 
 
-@pytest.fixture()
+@pytest.fixture
 def batched_q_kv() -> tuple[torch.Tensor, torch.Tensor]:
     return (
         torch.rand((2, 3, 6)),
@@ -87,7 +87,7 @@ def batched_q_kv() -> tuple[torch.Tensor, torch.Tensor]:
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def batched_q_k_v() -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     return (
         torch.rand((2, 3, 6)),
@@ -96,7 +96,7 @@ def batched_q_k_v() -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def extended_batched_q_k_v() -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     expansion = 2
     return (
@@ -106,12 +106,12 @@ def extended_batched_q_k_v() -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def unbatched_tgt_memory() -> tuple[torch.Tensor, torch.Tensor]:
     return torch.rand((3, 6)), torch.rand((4, 6))
 
 
-@pytest.fixture()
+@pytest.fixture
 def batched_tgt_memory() -> tuple[torch.Tensor, torch.Tensor]:
     return (
         torch.rand((2, 3, 6)),
@@ -119,7 +119,7 @@ def batched_tgt_memory() -> tuple[torch.Tensor, torch.Tensor]:
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def extended_batched_tgt_memory() -> tuple[torch.Tensor, torch.Tensor]:
     expansion = 2
     return (
@@ -246,9 +246,9 @@ class TestPackedLinear:
                 implementation="invalid",
             )
 
+        layer = PackedLinear(16, 4, alpha=1, num_estimators=1, implementation="full")
+        layer.implementation = "invalid"
         with pytest.raises(ValueError):
-            layer = PackedLinear(16, 4, alpha=1, num_estimators=1, implementation="full")
-            layer.implementation = "invalid"
             _ = layer(torch.rand((2, 16)))
 
 

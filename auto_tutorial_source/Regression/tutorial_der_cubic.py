@@ -24,7 +24,7 @@ To train a MLP with the DER loss function using TorchUncertainty, we have to loa
 
 - our TUTrainer
 - the model: mlp from torch_uncertainty.models.mlp
-- the regression training routine from torch_uncertainty.routines
+- the regression training and evaluation routine from torch_uncertainty.routines
 - the evidential objective: the DERLoss from torch_uncertainty.losses. This loss contains the classic NLL loss and a regularization term.
 - a dataset that generates samples from a noisy cubic function: Cubic from torch_uncertainty.datasets.regression
 
@@ -43,19 +43,23 @@ from torch_uncertainty.models.mlp import mlp
 from torch_uncertainty.routines import RegressionRoutine
 from torch_uncertainty.utils.distributions import get_dist_class
 
+MAX_EPOCHS = 25
+BATCH_SIZE = 64
+
 # %%
 # 2. The Optimization Recipe
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~
-# We use the Adam optimizer with a rate of 5e-4.
+#
+# We use the Adam optimizer with a rate of 4e-3. We increased the learning-rate compared to
+# The original paper to decrease the number of epochs and hence the duration of the experiment.
 
 
 def optim_regression(
     model: nn.Module,
-    learning_rate: float = 5e-4,
 ):
     return optim.Adam(
         model.parameters(),
-        lr=learning_rate,
+        lr=4e-3,
         weight_decay=0,
     )
 
@@ -69,7 +73,7 @@ def optim_regression(
 # Please note that this MLP finishes with a NormalInverseGammaLinear that interpret the outputs of the model
 # as the parameters of a Normal Inverse Gamma distribution.
 
-trainer = TUTrainer(accelerator="gpu", devices=1, max_epochs=50)  # , enable_progress_bar=False)
+trainer = TUTrainer(accelerator="gpu", devices=1, max_epochs=MAX_EPOCHS, enable_progress_bar=False)
 
 # dataset
 train_ds = Cubic(num_samples=1000)
@@ -77,7 +81,7 @@ val_ds = Cubic(num_samples=300)
 
 # datamodule
 datamodule = LightningDataModule.from_datasets(
-    train_ds, val_dataset=val_ds, test_dataset=val_ds, batch_size=32
+    train_ds, val_dataset=val_ds, test_dataset=val_ds, batch_size=BATCH_SIZE, num_workers=4
 )
 datamodule.training_task = "regression"
 
@@ -116,18 +120,17 @@ routine = RegressionRoutine(
 
 trainer.fit(model=routine, datamodule=datamodule)
 trainer.test(model=routine, datamodule=datamodule)
-
 # %%
 # 6. Testing the Model
 # ~~~~~~~~~~~~~~~~~~~~
+#
 # We can now test the model by plotting the predictions and the uncertainty estimates.
-# In this specific case, we can reproduce the results of the paper.
+# In this specific case, we can approximately reproduce the figure of the original paper.
 
 import matplotlib.pyplot as plt
 
 with torch.no_grad():
     x = torch.linspace(-7, 7, 1000)
-
     dist_params = model(x.unsqueeze(-1))
     dists = get_dist_class("nig")(**dist_params)
     means = dists.loc.squeeze(1)

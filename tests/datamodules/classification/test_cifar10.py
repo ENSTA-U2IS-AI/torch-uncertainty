@@ -72,12 +72,12 @@ class TestCIFAR10DataModule:
                 auto_augment="rand-m9-n2-mstd0.5",
             )
 
+        dm = CIFAR10DataModule(
+            root="./data/",
+            batch_size=128,
+            test_alt="h",
+        )
         with pytest.raises(ValueError, match="CIFAR-H can only be used in testing."):
-            dm = CIFAR10DataModule(
-                root="./data/",
-                batch_size=128,
-                test_alt="h",
-            )
             dm.setup("fit")
 
         with pytest.raises(ValueError, match="Test set "):

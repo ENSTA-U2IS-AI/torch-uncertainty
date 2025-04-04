@@ -69,7 +69,7 @@ class TestStochasticModel:
 
         state = model.sample()[0]
         keys = state.keys()
-        print(list(keys))
+        print(list(keys))  # noqa: T201
         assert list(keys) == [
             "layer.weight",
             "layer2.weight",

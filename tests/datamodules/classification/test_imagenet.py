@@ -88,6 +88,6 @@ class TestImageNetDataModule:
         with pytest.raises(FileNotFoundError):
             dm._verify_splits(split="test")
 
+        dm.root = Path("./tests/testlog")
         with pytest.raises(FileNotFoundError):
-            dm.root = Path("./tests/testlog")
             dm._verify_splits(split="test")

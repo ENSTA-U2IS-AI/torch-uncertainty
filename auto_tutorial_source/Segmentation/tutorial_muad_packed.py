@@ -619,6 +619,12 @@ packed_routine = SegmentationRoutine(
 )
 
 # %%
+# trainer.fit(packed_routine, train_loader, val_loader)
+
+# %%
+# results = trainer.test(packed_routine, test_loader)
+
+# %%
 # Load a pre-trained ensembles from huggingface to continue the tutorial
 
 from huggingface_hub import hf_hub_download

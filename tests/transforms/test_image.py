@@ -22,14 +22,14 @@ from torch_uncertainty.transforms import (
 )
 
 
-@pytest.fixture()
+@pytest.fixture
 def img_input() -> torch.Tensor:
     rng = np.random.default_rng()
     imarray = rng.uniform(low=0, high=255, size=(28, 28, 3))
     return Image.fromarray(imarray.astype("uint8")).convert("RGB")
 
 
-@pytest.fixture()
+@pytest.fixture
 def tv_tensors_input() -> tuple[torch.Tensor, torch.Tensor]:
     rng = np.random.default_rng()
     imarray1 = rng.uniform(low=0, high=255, size=(3, 28, 28))
@@ -40,7 +40,7 @@ def tv_tensors_input() -> tuple[torch.Tensor, torch.Tensor]:
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def batch_input() -> tuple[torch.Tensor, torch.Tensor]:
     imgs = torch.rand(2, 3, 28, 28)
     return imgs, torch.tensor([0, 1])

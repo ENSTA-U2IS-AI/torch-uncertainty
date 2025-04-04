@@ -13,7 +13,7 @@ Dataset
 -------
 
 In this tutorial we will use the CIFAR10 dataset available in the torchvision
-package. The CIFAR10 dataset consists of 60000 32x32 colour images in 10
+package. The CIFAR10 dataset consists of 60,000 32x32 colour images in 10
 classes, with 6000 images per class. There are 50000 training images and 10000
 test images.
 
@@ -48,8 +48,6 @@ import torchvision
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
 
-torch.set_num_threads(1)
-
 # %%
 # The output of torchvision datasets are PILImage images of range [0, 1].
 # We transform them to Tensors of normalized range [-1, 1].
@@ -66,17 +64,18 @@ transform = transforms.Compose(
     ]
 )
 
-batch_size = 4
+MAX_EPOCHS = 3
+BATCH_SIZE = 256
 
 trainset = torchvision.datasets.CIFAR10(
     root="./data", train=True, download=True, transform=transform
 )
-trainloader = DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=2)
+trainloader = DataLoader(trainset, batch_size=BATCH_SIZE, shuffle=True, num_workers=8)
 
 testset = torchvision.datasets.CIFAR10(
     root="./data", train=False, download=True, transform=transform
 )
-testloader = DataLoader(testset, batch_size=batch_size, shuffle=False, num_workers=2)
+testloader = DataLoader(testset, batch_size=BATCH_SIZE, shuffle=False, num_workers=8)
 
 classes = (
     "plane",
@@ -92,7 +91,7 @@ classes = (
 )
 
 # %%
-# Let us show some of the training images, for fun.
+# Let us show some of the training images.
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -114,14 +113,15 @@ dataiter = iter(trainloader)
 images, labels = next(dataiter)
 
 # show images
-imshow(torchvision.utils.make_grid(images, pad_value=1))
+imshow(torchvision.utils.make_grid(images[:4], pad_value=1))
 # print labels
-print(" ".join(f"{classes[labels[j]]:5s}" for j in range(batch_size)))
+print(" ".join(f"{classes[labels[j]]:5s}" for j in range(4)))
 
 
 # %%
 # 2. Define a Packed-Ensemble from a standard classifier
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+#
 # First we define a standard classifier for CIFAR10 for reference. We will use a
 # convolutional neural network.
 
@@ -205,14 +205,14 @@ packed_net = PackedNet()
 from torch import optim
 
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.SGD(packed_net.parameters(), lr=0.001, momentum=0.9)
+optimizer = optim.SGD(packed_net.parameters(), lr=0.2, momentum=0.9)
 
 # %%
 # 4. Train the Packed-Ensemble on the training data
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 # Let's train the Packed-Ensemble on the training data.
 
-for epoch in range(2):  # loop over the dataset multiple times
+for epoch in range(MAX_EPOCHS):  # loop over the dataset multiple times
     running_loss = 0.0
     for i, data in enumerate(trainloader, 0):
         # get the inputs; data is a list of [inputs, labels]
@@ -228,8 +228,8 @@ for epoch in range(2):  # loop over the dataset multiple times
 
         # print statistics
         running_loss += loss.item()
-        if i % 2000 == 1999:  # print every 2000 mini-batches
-            print(f"[{epoch + 1}, {i + 1:5d}] loss: {running_loss / 2000:.3f}")
+        if i % 20 == 19:  # print every 20 mini-batches
+            print(f"[{epoch + 1}, {i + 1:5d}] loss: {running_loss / 20:.3f}")
             running_loss = 0.0
 
 print("Finished Training")
@@ -249,10 +249,10 @@ dataiter = iter(testloader)
 images, labels = next(dataiter)
 
 # print images
-imshow(torchvision.utils.make_grid(images, pad_value=1))
+imshow(torchvision.utils.make_grid(images[:6], pad_value=1))
 print(
     "GroundTruth: ",
-    " ".join(f"{classes[labels[j]]:5s}" for j in range(batch_size)),
+    " ".join(f"{classes[labels[j]]:5s}" for j in range(6)),
 )
 
 # %%
@@ -260,12 +260,11 @@ print(
 # model wasn't necessary here, we only did it to illustrate how to do so):
 
 packed_net = PackedNet()
-packed_net.load_state_dict(torch.load(PATH))
-
+packed_net.load_state_dict(torch.load(PATH, weights_only=True))
 # %%
-# Let us see what the Packed-Ensemble thinks these examples above are:
+# Let us see what the Packed-Ensemble predicts these examples above are:
 
-logits = packed_net(images)
+logits = packed_net(images[:6])
 logits = rearrange(logits, "(n b) c -> b n c", n=packed_net.num_estimators)
 probs_per_est = F.softmax(logits, dim=-1)
 outputs = probs_per_est.mean(dim=1)
@@ -274,7 +273,7 @@ _, predicted = torch.max(outputs, 1)
 
 print(
     "Predicted: ",
-    " ".join(f"{classes[predicted[j]]:5s}" for j in range(batch_size)),
+    " ".join(f"{classes[predicted[j]]:5s}" for j in range(6)),
 )
 
 # %%

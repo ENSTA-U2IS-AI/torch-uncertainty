@@ -21,16 +21,16 @@ For details and access, visit the `MUAD Website <https://muad-dataset.github.io/
 # %%
 # Let's start by defining the training parameters.
 
-batch_size = 10
+BATCH_SIZE = 12
+MAX_EPOCHS = 50
 learning_rate = 1e-3
 weight_decay = 2e-4
 lr_decay_epochs = 20
 lr_decay = 0.1
-nb_epochs = 50
 
 # %%
-# In this Tutorial we are using the small version a bigger version can be specified with keyword "full" instead of small.
-
+# In this Tutorial we are using the small version of the dataset.
+# A larger version can be specified with keyword "full" instead of small.
 
 import matplotlib.pyplot as plt
 import torch
@@ -148,11 +148,11 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader
 
-train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True, num_workers=4)
+train_loader = DataLoader(train_set, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
 
-val_loader = DataLoader(val_set, batch_size=batch_size, shuffle=False, num_workers=4)
+val_loader = DataLoader(val_set, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
 
-test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=False, num_workers=4)
+test_loader = DataLoader(test_set, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
 
 
 def enet_weighing(dataloader, num_classes, c=1.02):
@@ -370,7 +370,12 @@ ens_routine = SegmentationRoutine(
 )
 
 # %%
+# trainer.fit(ens_routine, train_loader, val_loader)
+
+# %%
 # Test your ensemble obtained.
+
+# results = trainer.test(ens_routine, test_loader)
 
 # %%
 # Load a pre-trained ensembles from huggingface to continue the tutorial

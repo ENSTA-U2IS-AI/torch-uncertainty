@@ -4,12 +4,12 @@ import torch
 from torch_uncertainty.layers.batch_ensemble import BatchConv2d, BatchLinear
 
 
-@pytest.fixture()
+@pytest.fixture
 def feat_input() -> torch.Tensor:
     return torch.rand((4, 6))
 
 
-@pytest.fixture()
+@pytest.fixture
 def img_input() -> torch.Tensor:
     return torch.rand((5, 6, 3, 3))
 
@@ -19,7 +19,7 @@ class TestBatchLinear:
 
     def test_linear_one_estimator(self, feat_input: torch.Tensor) -> None:
         layer = BatchLinear(6, 2, num_estimators=1)
-        print(layer)
+        print(layer)  # noqa: T201
         out = layer(feat_input)
         assert out.shape == torch.Size([4, 2])
 
@@ -50,7 +50,7 @@ class TestBatchConv2d:
 
     def test_conv_one_estimator(self, img_input: torch.Tensor) -> None:
         layer = BatchConv2d(6, 2, num_estimators=1, kernel_size=1)
-        print(layer)
+        print(layer)  # noqa: T201
         out = layer(img_input)
         assert out.shape == torch.Size([5, 2, 3, 3])
 

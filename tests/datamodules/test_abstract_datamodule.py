@@ -15,10 +15,9 @@ class TestTUDataModule:
     def test_errors(self) -> None:
         TUDataModule.__abstractmethods__ = set()
         dm = TUDataModule("root", 128, 128, 0.0, 4, True, True)
+        dm.setup()
         with pytest.raises(NotImplementedError):
-            dm.setup()
             dm._get_train_data()
-            dm._get_train_targets()
 
 
 class TestCrossValDataModule:
@@ -72,10 +71,9 @@ class TestCrossValDataModule:
             pin_memory=True,
             persistent_workers=True,
         )
+        cv_dm.setup()
         with pytest.raises(NotImplementedError):
-            cv_dm.setup()
             cv_dm._get_train_data()
-            cv_dm._get_train_targets()
 
         with pytest.raises(ValueError):
             cv_dm.setup("other")

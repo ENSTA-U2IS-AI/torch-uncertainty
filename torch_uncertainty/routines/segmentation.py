@@ -1,3 +1,5 @@
+import logging
+
 import torch
 from einops import rearrange
 from lightning.pytorch import LightningModule
@@ -286,7 +288,7 @@ class SegmentationRoutine(LightningModule):
             if self.trainer.datamodule is not None:
                 self.log_segmentation_plots()
             else:
-                print("No datamodule found, skipping segmentation plots.")
+                logging.info("No datamodule found, skipping segmentation plots.")
 
     def log_segmentation_plots(self) -> None:
         """Build and log examples of segmentation plots from the test set."""

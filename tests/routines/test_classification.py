@@ -364,8 +364,8 @@ class TestClassification:
                 ood_criterion="other",
             )
 
+        mixup_params = {"cutmix_alpha": -1}
         with pytest.raises(ValueError):
-            mixup_params = {"cutmix_alpha": -1}
             ClassificationRoutine(
                 num_classes=10,
                 model=nn.Module(),

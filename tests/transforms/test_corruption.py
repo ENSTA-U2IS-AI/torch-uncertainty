@@ -42,7 +42,7 @@ class TestCorruptions:
         inputs = torch.rand(3, 3, 32, 32)
         assert transform(inputs).ndim == 4
 
-        print(transform)
+        print(transform)  # noqa: T201
 
     def test_shot_noise(self) -> None:
         inputs = torch.rand(3, 32, 32)
