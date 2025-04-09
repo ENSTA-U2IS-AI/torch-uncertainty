@@ -7,7 +7,7 @@ from numpy.typing import ArrayLike
 from timm.data.auto_augment import rand_augment_transform
 from torch import nn
 from torch.utils.data import DataLoader
-from torchvision.datasets import CIFAR10, SVHN
+from torchvision.datasets import CIFAR10, SVHN, CIFAR100
 from torchvision.transforms import v2
 
 from torch_uncertainty.datamodules.abstract import TUDataModule
@@ -43,6 +43,8 @@ class CIFAR10DataModule(TUDataModule):
         num_dataloaders: int = 1,
         pin_memory: bool = True,
         persistent_workers: bool = True,
+        near_ood_datasets: list = None,
+        far_ood_datasets: list = None,
     ) -> None:
         """DataModule for CIFAR10.
 
@@ -97,8 +99,10 @@ class CIFAR10DataModule(TUDataModule):
 
         self.test_alt = test_alt
         self.shift_severity = shift_severity
-        self.ood_dataset = SVHN
         self.shift_dataset = CIFAR10C
+
+        self.near_ood_datasets = near_ood_datasets or [SVHN]  # List of near OOD dataset classes
+        self.far_ood_datasets = far_ood_datasets or [CIFAR100]    # List of far OOD dataset classes
 
         if (cutout is not None) + int(auto_augment is not None) > 1:
             raise ValueError(
@@ -152,13 +156,18 @@ class CIFAR10DataModule(TUDataModule):
             )
 
         if self.eval_ood:
-            self.ood_dataset(self.root, split="test", download=True)
+            for near_ds_cls in self.near_ood_datasets:
+                near_ds_cls(self.root, split="test", download=True)
+
+            for far_ds_cls in self.far_ood_datasets:
+                far_ds_cls(self.root, train=False, download=True)
+
         if self.eval_shift:
             self.shift_dataset(
                 self.root,
                 shift_severity=self.shift_severity,
                 download=True,
-            )
+                )
 
     def setup(self, stage: Literal["fit", "test"] | None = None) -> None:
         if stage == "fit" or stage is None:
@@ -199,12 +208,24 @@ class CIFAR10DataModule(TUDataModule):
                     shift_severity=self.shift_severity,
                 )
             if self.eval_ood:
-                self.ood = self.ood_dataset(
-                    self.root,
-                    split="test",
-                    download=False,
-                    transform=self.test_transform,
-                )
+                self.near_oods = []
+                for near_ds_cls in self.near_ood_datasets:
+                    ds = near_ds_cls(
+                        self.root,
+                        download=False, 
+                        split="test",
+                        transform=self.test_transform,
+                    )
+                    self.near_oods.append(ds)
+                self.far_oods = []
+                for far_ds_cls in self.far_ood_datasets:
+                    ds = far_ds_cls(
+                        self.root,
+                        train=False,  
+                        download=False,
+                        transform=self.test_transform,
+                    )
+                    self.far_oods.append(ds)
             if self.eval_shift:
                 self.shift = self.shift_dataset(
                     self.root,
@@ -236,7 +257,10 @@ class CIFAR10DataModule(TUDataModule):
         """
         dataloader = [self._data_loader(self.test, training=False)]
         if self.eval_ood:
-            dataloader.append(self._data_loader(self.ood, training=False))
+            for ds in self.near_oods:
+                dataloader.append(self._data_loader(ds, training=False))
+            for ds in self.far_oods:
+                dataloader.append(self._data_loader(ds, training=False))
         if self.eval_shift:
             dataloader.append(self._data_loader(self.shift, training=False))
         return dataloader
@@ -250,3 +274,36 @@ class CIFAR10DataModule(TUDataModule):
         if self.val_split:
             return np.array(self.train.dataset.targets)[self.train.indices]
         return np.array(self.train.targets)
+
+
+    def get_indices(self) -> dict[str, list[int]]:
+        r"""Compute the positions (indices) of the near, far, and shift loaders
+         in the final test_dataloader list.
+
+        Returns:
+        dict[str, list[int]]: A dictionary with keys "near", "far", and "shift".
+        Each key maps to a list of indices (or a single-element list for "shift")
+        indicating the position(s) of the corresponding loader(s) within the
+        final test_dataloader list.
+         """
+    
+        indices = {}
+        offset = 1 
+    
+        if self.eval_ood:
+
+            indices["near"] = list(range(offset, offset + len(self.near_oods)))
+            offset += len(self.near_oods)
+        
+            indices["far"] = list(range(offset, offset + len(self.far_oods)))
+            offset += len(self.far_oods)
+        else:
+            indices["near"] = []
+            indices["far"] = []
+    
+        if self.eval_shift:
+            indices["shift"] = [offset] 
+        else:
+            indices["shift"] = []
+    
+        return indices

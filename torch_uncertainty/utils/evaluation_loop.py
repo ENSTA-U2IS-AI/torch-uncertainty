@@ -23,7 +23,6 @@ PERCENTAGE_METRICS = [
     "mAcc",
 ]
 
-
 def _add_row(table: Table, metric_name: str, value: Tensor) -> None:
     if metric_name in PERCENTAGE_METRICS:
         value = value * 100
@@ -59,8 +58,16 @@ class TUEvaluationLoop(_EvaluationLoop):
                 elif key.startswith("ood"):
                     if "ood" not in metrics:
                         metrics["ood"] = {}
-                    metric_name = key.split("/")[-1]
-                    metrics["ood"].update({metric_name: value})
+
+                    parts = key.split("/")
+
+                    prefix = parts[0]  
+                    prefix = prefix.removeprefix("ood_")
+
+                    metric_name = parts[-1]  
+                    final_name = f"{prefix}_{metric_name}"  
+
+                    metrics["ood"][final_name] = value
                 elif key.startswith("shift"):
                     if "shift" not in metrics:
                         metrics["shift"] = {}

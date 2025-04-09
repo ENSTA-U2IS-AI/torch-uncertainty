@@ -236,16 +236,18 @@ class ClassificationRoutine(LightningModule):
         self.test_id_entropy = Entropy()
 
         if self.eval_ood:
-            ood_metrics = MetricCollection(
-                {
-                    "AUROC": BinaryAUROC(),
-                    "AUPR": BinaryAveragePrecision(),
-                    "FPR95": FPR95(pos_label=1),
-                },
-                compute_groups=[["AUROC", "AUPR"], ["FPR95"]],
-            )
-            self.test_ood_metrics = ood_metrics.clone(prefix="ood/")
-            self.test_ood_entropy = Entropy()
+            self.ood_metrics_template = MetricCollection({
+            "AUROC": BinaryAUROC(),
+            "AUPR": BinaryAveragePrecision(),
+            "FPR95": FPR95(pos_label=1),})
+              
+        if self.is_ensemble:
+            self.test_ood_ens_metrics_near = {}  
+            self.test_ood_ens_metrics_far = {}     
+        else:
+            self.test_ood_metrics_near = {}  
+            self.test_ood_metrics_far = {}
+        
 
         if self.eval_shift:
             self.test_shift_metrics = cls_metrics.clone(prefix="shift/")
@@ -261,9 +263,6 @@ class ClassificationRoutine(LightningModule):
             )
 
             self.test_id_ens_metrics = ens_metrics.clone(prefix="test/ens_")
-
-            if self.eval_ood:
-                self.test_ood_ens_metrics = ens_metrics.clone(prefix="ood/ens_")
 
             if self.eval_shift:
                 self.test_shift_ens_metrics = ens_metrics.clone(prefix="shift/ens_")
@@ -466,23 +465,12 @@ class ClassificationRoutine(LightningModule):
         batch_idx: int,
         dataloader_idx: int = 0,
     ) -> None:
-        """Perform a single test step based on the input tensors.
-
-        Compute the prediction of the model and the value of the metrics on the test batch. Also
-        handle OOD and distribution-shifted images.
-
-        Args:
-            batch (tuple[Tensor, Tensor]): the test data and their corresponding targets.
-            batch_idx (int): the number of the current batch (unused).
-            dataloader_idx (int): 0 if in-distribution, 1 if out-of-distribution and 2 if
-                distribution-shifted.
-        """
         inputs, targets = batch
         logits = self.forward(inputs, save_feats=self.eval_grouping_loss)
         logits = rearrange(logits, "(m b) c -> b m c", b=targets.size(0))
         probs_per_est = torch.sigmoid(logits) if self.binary_cls else F.softmax(logits, dim=-1)
         probs = probs_per_est.mean(dim=1)
-
+        
         if self.ood_criterion.input_type == OODCriterionInputType.LOGIT:
             ood_scores = self.ood_criterion(logits)
         elif self.ood_criterion.input_type == OODCriterionInputType.PROB:
@@ -490,85 +478,88 @@ class ClassificationRoutine(LightningModule):
         else:
             ood_scores = self.ood_criterion(probs_per_est)
 
+        indices = self.trainer.datamodule.get_indices()
+
         if dataloader_idx == 0:
-            # squeeze if binary classification only for binary metrics
             self.test_cls_metrics.update(
                 probs.squeeze(-1) if self.binary_cls else probs,
                 targets,
             )
             if self.eval_grouping_loss:
                 self.test_grouping_loss.update(probs, targets, self.features)
-
-            self.log_dict(self.test_cls_metrics, on_epoch=True, add_dataloader_idx=False)
-            self.test_id_entropy(probs)
-            self.log(
-                "test/cls/Entropy",
-                self.test_id_entropy,
-                on_epoch=True,
-                add_dataloader_idx=False,
-            )
-
-            if self.is_ensemble:
-                self.test_id_ens_metrics.update(probs_per_est)
-
-            if self.eval_ood:
-                self.test_ood_metrics.update(ood_scores, torch.zeros_like(targets))
-
             if self.id_logit_storage is not None:
                 self.id_logit_storage.append(logits.detach().cpu())
-
             if self.post_processing is not None:
                 pp_logits = self.post_processing(inputs)
-                if not isinstance(self.post_processing, LaplaceApprox):
-                    pp_probs = F.softmax(pp_logits, dim=-1)
-                else:
-                    pp_probs = pp_logits
+                pp_probs = (F.softmax(pp_logits, dim=-1)
+                            if not isinstance(self.post_processing, LaplaceApprox)
+                            else pp_logits)
                 self.post_cls_metrics.update(pp_probs, targets)
 
-        if self.eval_ood and dataloader_idx == 1:
-            self.test_ood_metrics.update(ood_scores, torch.ones_like(targets))
-            self.test_ood_entropy(probs)
-            self.log(
-                "ood/Entropy",
-                self.test_ood_entropy,
-                on_epoch=True,
-                add_dataloader_idx=False,
-            )
-            if self.is_ensemble:
-                self.test_ood_ens_metrics.update(probs_per_est)
+            if self.eval_ood:
+                
+                if self.is_ensemble:
 
-            if self.ood_logit_storage is not None:
-                self.ood_logit_storage.append(logits.detach().cpu())
+                    for near_idx in indices.get("near", []):
+                        if near_idx not in self.test_ood_ens_metrics_near:
+                            self.test_ood_ens_metrics_near[near_idx] = self.ood_metrics_template.clone(
+                            prefix=f"ood_ens_near_{near_idx}/"
+                            )
+                        self.test_ood_ens_metrics_near[near_idx].update(ood_scores, torch.zeros_like(targets))
+                    for far_idx in indices.get("far", []):
+                        if far_idx not in self.test_ood_ens_metrics_far:
+                            self.test_ood_ens_metrics_far[far_idx] = self.ood_metrics_template.clone(
+                            prefix=f"ood_ens_far_{far_idx}/"
+                            )
+                        self.test_ood_ens_metrics_far[far_idx].update(ood_scores, torch.zeros_like(targets))
 
-        if self.eval_shift and dataloader_idx == (2 if self.eval_ood else 1):
-            self.test_shift_metrics.update(probs, targets)
-            if self.is_ensemble:
-                self.test_shift_ens_metrics.update(probs_per_est)
+                else :
+                
+                    for near_idx in indices.get("near", []):
+                        if near_idx not in self.test_ood_metrics_near:
+                            self.test_ood_metrics_near[near_idx] = self.ood_metrics_template.clone(
+                            prefix=f"ood_near_{near_idx}/"
+                            )
+                        self.test_ood_metrics_near[near_idx].update(ood_scores, torch.zeros_like(targets))
+                    for far_idx in indices.get("far", []):
+                        if far_idx not in self.test_ood_metrics_far:
+                            self.test_ood_metrics_far[far_idx] = self.ood_metrics_template.clone(
+                            prefix=f"ood_far_{far_idx}/"
+                            )
+                        self.test_ood_metrics_far[far_idx].update(ood_scores, torch.zeros_like(targets))
 
-    def on_validation_epoch_end(self) -> None:
-        """Compute and log the values of the collected metrics in `validation_step`."""
-        res_dict = self.val_cls_metrics.compute()
-        self.log_dict(res_dict, logger=True, sync_dist=True)
-        self.log(
-            "Acc%",
-            res_dict["val/cls/Acc"] * 100,
-            prog_bar=True,
-            logger=False,
-            sync_dist=True,
-        )
-        self.val_cls_metrics.reset()
+        else:
+            
+            # Near OOD dataloaders.
+            if self.eval_ood and dataloader_idx in indices.get("near", []):
+                if self.is_ensemble:
+                        self.test_ood_ens_metrics_near[dataloader_idx].update(ood_scores, torch.ones_like(targets))
+                else:
+                    self.test_ood_metrics_near[dataloader_idx].update(ood_scores, torch.ones_like(targets))
 
-        if self.eval_grouping_loss:
-            self.log_dict(self.val_grouping_loss.compute(), sync_dist=True)
-            self.val_grouping_loss.reset()
+            # Far OOD dataloaders.
+            elif self.eval_ood and dataloader_idx in indices.get("far", []):
+                if self.is_ensemble:
+                    self.test_ood_ens_metrics_far[dataloader_idx].update(ood_scores, torch.ones_like(targets))
+                else:
+                    self.test_ood_metrics_far[dataloader_idx].update(ood_scores, torch.ones_like(targets))
+   
+            # Shift evaluation.
+            elif self.eval_shift and dataloader_idx in indices.get("shift", []):
+                self.test_shift_metrics.update(probs, targets)
+                if self.is_ensemble:
+                    self.test_shift_ens_metrics.update(probs_per_est)
+
 
     def on_test_epoch_end(self) -> None:
         """Compute, log, and plot the values of the collected metrics in `test_step`."""
-        # already logged
-        result_dict = self.test_cls_metrics.compute()
 
-        # already logged
-        result_dict.update({"test/Entropy": self.test_id_entropy.compute()}, sync_dist=True)
+
+        result_dict = self.test_cls_metrics.compute()
+        id_metrics = self.test_cls_metrics.compute()
+        self.log_dict(id_metrics)
+        #self.test_cls_metrics.reset()
+
 
         if self.post_processing is not None:
             tmp_metrics = self.post_cls_metrics.compute()
@@ -586,18 +577,35 @@ class ClassificationRoutine(LightningModule):
             self.log_dict(tmp_metrics, sync_dist=True)
             result_dict.update(tmp_metrics)
 
-        if self.eval_ood:
-            tmp_metrics = self.test_ood_metrics.compute()
-            self.log_dict(tmp_metrics, sync_dist=True)
-            result_dict.update(tmp_metrics)
 
-            # already logged
-            result_dict.update({"ood/Entropy": self.test_ood_entropy.compute()})
+        if self.is_ensemble and self.eval_ood:
 
-            if self.is_ensemble:
-                tmp_metrics = self.test_ood_ens_metrics.compute()
-                self.log_dict(tmp_metrics, sync_dist=True)
-                result_dict.update(tmp_metrics)
+            for idx, near_metrics in self.test_ood_ens_metrics_near.items():
+                result_near = near_metrics.compute()
+                self.log_dict(result_near, sync_dist=True)
+                result_dict.update(result_near)
+                #near_metrics.reset()
+
+            for idx, far_metrics in self.test_ood_ens_metrics_far.items():
+                result_far = far_metrics.compute()
+                self.log_dict(result_far)
+                #far_metrics.reset() 
+
+        elif self.eval_ood:
+
+            for idx, near_metrics in self.test_ood_metrics_near.items():
+                result_near = near_metrics.compute()
+                self.log_dict(result_near, sync_dist=True)
+                result_dict.update(result_near)
+                #near_metrics.reset()
+
+            for idx, far_metrics in self.test_ood_metrics_far.items():
+                result_far = far_metrics.compute()
+                self.log_dict(result_far)
+                #far_metrics.reset()
+            
+
+
 
         if self.eval_shift:
             tmp_metrics = self.test_shift_metrics.compute()
@@ -659,6 +667,7 @@ class ClassificationRoutine(LightningModule):
 
         if self.save_in_csv:
             self.save_results_to_csv(result_dict)
+
 
     def save_results_to_csv(self, results: dict[str, float]) -> None:
         """Save the metric results in a csv.
