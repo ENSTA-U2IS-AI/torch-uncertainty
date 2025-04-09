@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Literal
 
 import torch
 from torch.nn.common_types import _size_2_t
@@ -13,6 +14,8 @@ from torch_uncertainty.utils.misc import create_train_val_split
 
 
 class MUADDataModule(TUDataModule):
+    num_classes = 19
+    num_channels = 3
     training_task = "segmentation"
     mean = (0.485, 0.456, 0.406)
     std = (0.229, 0.224, 0.225)
@@ -21,6 +24,7 @@ class MUADDataModule(TUDataModule):
         self,
         root: str | Path,
         batch_size: int,
+        version: Literal["full", "small"] = "full",
         eval_batch_size: int | None = None,
         crop_size: _size_2_t = 1024,
         eval_size: _size_2_t = (1024, 2048),
@@ -34,6 +38,8 @@ class MUADDataModule(TUDataModule):
         Args:
             root (str or Path): Root directory of the datasets.
             batch_size (int): Number of samples per batch during training.
+            version (str, optional): Version of the dataset to use. Can be either
+                ``full`` or ``small``. Defaults to ``full``.
             eval_batch_size (int | None) : Number of samples per batch during evaluation (val
                 and test). Set to batch_size if None. Defaults to None.
             crop_size (sequence or int, optional): Desired input image and
@@ -69,7 +75,6 @@ class MUADDataModule(TUDataModule):
 
                 v2.Compose(
                     [
-                        v2.ToImage(),
                         RandomRescale(min_scale=0.5, max_scale=2.0, antialias=True),
                         v2.RandomCrop(size=crop_size, pad_if_needed=True),
                         v2.ColorJitter(brightness=0.5, contrast=0.5, saturation=0.5),
@@ -94,7 +99,6 @@ class MUADDataModule(TUDataModule):
 
                 v2.Compose(
                     [
-                        v2.ToImage(),
                         v2.Resize(size=eval_size, antialias=True),
                         v2.ToDtype(
                             {
@@ -122,6 +126,7 @@ class MUADDataModule(TUDataModule):
         )
 
         self.dataset = MUAD
+        self.version = version
         self.crop_size = _pair(crop_size)
         self.eval_size = _pair(eval_size)
 
@@ -162,14 +167,23 @@ class MUADDataModule(TUDataModule):
         )
 
     def prepare_data(self) -> None:  # coverage: ignore
-        self.dataset(root=self.root, split="train", target_type="semantic", download=True)
-        self.dataset(root=self.root, split="val", target_type="semantic", download=True)
+        self.dataset(
+            root=self.root,
+            split="train",
+            version=self.version,
+            target_type="semantic",
+            download=True,
+        )
+        self.dataset(
+            root=self.root, split="val", version=self.version, target_type="semantic", download=True
+        )
 
     def setup(self, stage: str | None = None) -> None:
         if stage == "fit" or stage is None:
             full = self.dataset(
                 root=self.root,
                 split="train",
+                version=self.version,
                 target_type="semantic",
                 transforms=self.train_transform,
             )
@@ -185,6 +199,7 @@ class MUADDataModule(TUDataModule):
                 self.val = self.dataset(
                     root=self.root,
                     split="val",
+                    version=self.version,
                     target_type="semantic",
                     transforms=self.test_transform,
                 )
@@ -193,6 +208,7 @@ class MUADDataModule(TUDataModule):
             self.test = self.dataset(
                 root=self.root,
                 split="val",
+                version=self.version,
                 target_type="semantic",
                 transforms=self.test_transform,
             )

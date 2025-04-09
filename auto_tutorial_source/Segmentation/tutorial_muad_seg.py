@@ -1,4 +1,4 @@
-# ruff: noqa: E402, E703, D212, D415
+# ruff: noqa: E402, E703, D212, D415, T201
 """
 Segmentation Tutorial using Muad Dataset
 ========================================
@@ -11,21 +11,174 @@ depth estimation, and object detection.
 
 For details and access, visit the `MUAD Website <https://muad-dataset.github.io/>`_.
 
+1. Loading the utilities
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+First, we load the following utilities from TorchUncertainty:
+
+- the TUTrainer which mostly handles the link with the hardware (accelerators, precision, etc)
+- the segmentation training & evaluation routine from torch_uncertainty.routines
+- the datamodule handling dataloaders: MUADDataModule from torch_uncertainty.datamodules
 """
-# %%
-# 1. Load Muad dataset using Torch Uncertainty
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 
 # %%
-# Let's start by defining the training parameters.
+from pathlib import Path
 
-batch_size = 10
-learning_rate = 1e-3
-weight_decay = 2e-4
-lr_decay_epochs = 20
-lr_decay = 0.1
-nb_epochs = 50
+import matplotlib.pyplot as plt
+import torch
+import torchvision.transforms.v2.functional as F
+from torch import nn, optim
+from torch.optim import lr_scheduler
+from torchvision.utils import draw_segmentation_masks
+
+from torch_uncertainty import TUTrainer
+from torch_uncertainty.datamodules.segmentation import MUADDataModule
+from torch_uncertainty.models.segmentation.unet import small_unet
+from torch_uncertainty.routines import SegmentationRoutine
+
+# %%
+# 2. Creating the Trainer and the DataModule
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+trainer = TUTrainer(accelerator="gpu", devices=1, max_epochs=10, enable_progress_bar=False)
+# datamodule providing the dataloaders to the trainer
+root = Path("data")
+datamodule = MUADDataModule(
+    root=root,
+    batch_size=10,
+    version="small",
+    crop_size=(256, 512),
+    eval_size=(256, 512),
+    num_workers=4,
+)
+datamodule.setup("fit")
+
+# %%
+# Visualize a validation input sample (and RGB image)
+
+# Undo normalization on the image and convert to uint8.
+sample = datamodule.train[0]
+img, tgt = sample
+mean = torch.tensor(datamodule.mean, device=img.device)
+std = torch.tensor(datamodule.std, device=img.device)
+img = img * std[:, None, None] + mean[:, None, None]
+img = F.to_dtype(img, torch.uint8, scale=True)
+img_pil = F.to_pil_image(img)
+
+plt.figure(figsize=(6, 6))
+plt.imshow(img_pil)
+plt.axis("off")
+plt.show()
+
+# %%
+# Visualize the same image above but segmented.
+
+tmp_tgt = tgt.masked_fill(tgt == 255, 21)
+tgt_masks = tmp_tgt == torch.arange(22, device=tgt.device)[:, None, None]
+img_segmented = draw_segmentation_masks(
+    img, tgt_masks, alpha=1, colors=datamodule.train.color_palette
+)
+img_pil = F.to_pil_image(img_segmented)
+
+plt.figure(figsize=(6, 6))
+plt.imshow(img_pil)
+plt.axis("off")
+plt.show()
+
+# %%
+# 3. Instantiating the Model
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~
+# We create the model easily using the blueprint from torch_uncertainty.models.
+
+model = small_unet(
+    in_channels=datamodule.num_channels,
+    num_classes=datamodule.num_classes,
+    bilinear=True,
+)
+
+
+# %%
+# 4. Compute class weights to mitigate class inbalance
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+def enet_weighing(dataloader, num_classes, c=1.02):
+    """Computes class weights as described in the ENet paper.
+
+        w_class = 1 / (ln(c + p_class)),
+
+    where c is usually 1.02 and p_class is the propensity score of that
+    class:
+
+        propensity_score = freq_class / total_pixels.
+
+    References:
+        https://arxiv.org/abs/1606.02147
+
+    Args:
+        dataloader (``data.Dataloader``): A data loader to iterate over the
+            dataset.
+        num_classes (``int``): The number of classes.
+        c (``int``, optional): AN additional hyper-parameter which restricts
+            the interval of values for the weights. Default: 1.02.
+
+    """
+    class_count = 0
+    total = 0
+    for _, label in dataloader:
+        label = label.cpu()
+        # Flatten label
+        flat_label = label.flatten()
+        flat_label = flat_label[flat_label != 255]
+
+        # Sum up the number of pixels of each class and the total pixel
+        # counts for each label
+        class_count += torch.bincount(flat_label, minlength=num_classes)
+        total += flat_label.size(0)
+
+    # Compute propensity score and then the weights for each class
+    propensity_score = class_count / total
+    return 1 / (torch.log(c + propensity_score))
+
+
+class_weights = enet_weighing(datamodule.train_dataloader(), 19)
+print(class_weights)
+
+
+# %%
+# Let's define the training parameters.
+BATCH_SIZE = 10
+LEARNING_RATE = 1e-3
+WEIGHT_DECAY = 2e-4
+LR_DECAY_EPOCHS = 20
+LR_DECAY = 0.1
+NB_EPOCHS = 10
+
+# %%
+# 5. The Loss and the Routine
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# We build the optimizer
+optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE, weight_decay=WEIGHT_DECAY)
+
+# Learning rate decay scheduler
+lr_updater = lr_scheduler.StepLR(optimizer, step_size=LR_DECAY_EPOCHS, gamma=LR_DECAY)
+
+# Segmentation Routine
+ens_routine = SegmentationRoutine(
+    model=model,
+    num_classes=19,
+    loss=torch.nn.CrossEntropyLoss(weight=class_weights),
+    optim_recipe={"optimizer": optimizer, "lr_scheduler": lr_updater},
+)
+
+# %%
+
+trainer.fit(model=ens_routine, datamodule=datamodule)
+
+# %%
+
+trainer.test(datamodule=datamodule, ckpt_path="best")
 
 # %%
 # In this Tutorial we are using the small version a bigger version can be specified with keyword "full" instead of small.
@@ -134,11 +287,11 @@ plt.show()
 # 2.   Train ID
 # 3.   Segmentation Color in RGB format [R,G, B].
 
-for muad_class in train_set.classes:
-    class_name = muad_class.name
-    train_id = muad_class.id
-    color = muad_class.color
-    print(f"Class: {class_name}, Train ID: {train_id}, Color: {color}")
+print(
+    f"Class: {muad_class.name}, Train ID: {muad_class.id}, Color: {muad_class.color}"
+    for muad_class in train_set.classes
+)
+
 
 # %%
 # Let's now calculate each class weight
@@ -147,50 +300,11 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader
 
-train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True, num_workers=4)
+train_loader = DataLoader(train_set, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
 
-val_loader = DataLoader(val_set, batch_size=batch_size, shuffle=False, num_workers=4)
+val_loader = DataLoader(val_set, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
 
-test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=False, num_workers=4)
-
-
-def enet_weighing(dataloader, num_classes, c=1.02):
-    """Computes class weights as described in the ENet paper.
-
-        w_class = 1 / (ln(c + p_class)),
-
-    where c is usually 1.02 and p_class is the propensity score of that
-    class:
-
-        propensity_score = freq_class / total_pixels.
-
-    References:
-        https://arxiv.org/abs/1606.02147
-
-    Args:
-        dataloader (``data.Dataloader``): A data loader to iterate over the
-            dataset.
-        num_classes (``int``): The number of classes.
-        c (``int``, optional): AN additional hyper-parameter which restricts
-            the interval of values for the weights. Default: 1.02.
-
-    """
-    class_count = 0
-    total = 0
-    for _, label in dataloader:
-        label = label.cpu().numpy()
-        # Flatten label
-        flat_label = label.flatten()
-        flat_label = flat_label[flat_label != 255]
-
-        # Sum up the number of pixels of each class and the total pixel
-        # counts for each label
-        class_count += np.bincount(flat_label, minlength=num_classes)
-        total += flat_label.size
-
-    # Compute propensity score and then the weights for each class
-    propensity_score = class_count / total
-    return 1 / (np.log(c + propensity_score))
+test_loader = DataLoader(test_set, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
 
 
 print("\nComputing class weights...")
@@ -220,15 +334,6 @@ class DoubleConv(nn.Module):
             nn.BatchNorm2d(out_ch),
             nn.ReLU(inplace=True),
         )
-
-    def forward(self, x):
-        return self.conv(x)
-
-
-class InConv(nn.Module):
-    def __init__(self, in_ch, out_ch) -> None:
-        super().__init__()
-        self.conv = DoubleConv(in_ch, out_ch)
 
     def forward(self, x):
         return self.conv(x)
@@ -291,7 +396,7 @@ class OutConv(nn.Module):
 class UNet(nn.Module):
     def __init__(self, classes) -> None:
         super().__init__()
-        self.inc = InConv(3, 32)
+        self.inc = DoubleConv(3, 32)
         self.down1 = Down(32, 64)
         self.down2 = Down(64, 128)
         self.down3 = Down(128, 256)
@@ -338,10 +443,10 @@ from torch_uncertainty import TUTrainer
 from torch_uncertainty.routines import SegmentationRoutine
 
 # We build the optimizer
-optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE, weight_decay=WEIGHT_DECAY)
 
 # Learning rate decay scheduler
-lr_updater = lr_scheduler.StepLR(optimizer, lr_decay_epochs, lr_decay)
+lr_updater = lr_scheduler.StepLR(optimizer, step_size=LR_DECAY_EPOCHS, gamma=LR_DECAY)
 
 # Initialize the trainer
 trainer = TUTrainer(accelerator="gpu", devices=1, max_epochs=1, logger=False)

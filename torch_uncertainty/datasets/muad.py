@@ -48,6 +48,7 @@ class MUAD(VisionDataset):
             "train": 3420,
             "val": 492,
             "test": ...,
+            "ood": ...,
         },
         "small": {
             "train": 400,
@@ -99,7 +100,7 @@ class MUAD(VisionDataset):
 
         Args:
             root (str): Root directory of dataset where directory ``leftImg8bit`` and ``leftLabel`` or ``leftDepth`` are located.
-            split (str, optional): The image split to use, ``train`` or ``val``.
+            split (str, optional): The image split to use, ``train``, ``val``, ``test`` or ``ood``.
             version (str, optional): The version of the dataset to use, ``small`` or ``full``. Defaults to ``full``.
             min_depth (float, optional): The maximum depth value to use if target_type is ``depth``. Defaults to ``None``.
             max_depth (float, optional): The maximum depth value to use if target_type is ``depth``. Defaults to ``None``.
@@ -136,7 +137,7 @@ class MUAD(VisionDataset):
         self.max_depth = max_depth
 
         if split not in ["train", "val", "test", "ood"]:
-            raise ValueError(f"split must be one of ['train', 'val']. Got {split}.")
+            raise ValueError(f"split must be one of ['train', 'val', 'test', 'ood']. Got {split}.")
         self.split = split
         self.version = version
         self.target_type = target_type
