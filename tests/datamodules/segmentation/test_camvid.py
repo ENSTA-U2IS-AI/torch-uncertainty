@@ -19,6 +19,7 @@ class TestCamVidDataModule:
         )
         assert isinstance(dm.train_transform, nn.Identity)
         assert isinstance(dm.test_transform, nn.Identity)
+        dm = CamVidDataModule(root="./data/", batch_size=128, basic_augment=True)
         dm = CamVidDataModule(root="./data/", batch_size=128, basic_augment=False)
 
         assert dm.dataset == CamVid

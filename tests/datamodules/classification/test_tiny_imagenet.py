@@ -35,6 +35,8 @@ class TestTinyImageNetDataModule:
             basic_augment=False,
         )
 
+        dm = TinyImageNetDataModule(root="./data/", batch_size=128, ood_ds="openimage-o")
+
         with pytest.raises(ValueError):
             TinyImageNetDataModule(root="./data/", batch_size=128, ood_ds="other")
 

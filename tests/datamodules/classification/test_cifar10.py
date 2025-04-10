@@ -63,9 +63,9 @@ class TestCIFAR10DataModule:
         dm = CIFAR10DataModule(
             root="./data/",
             batch_size=128,
-            cutout=16,
             num_dataloaders=2,
             val_split=0.1,
+            randaugment=True,
         )
         dm.dataset = DummyClassificationDataset
         dm.ood_dataset = DummyClassificationDataset
