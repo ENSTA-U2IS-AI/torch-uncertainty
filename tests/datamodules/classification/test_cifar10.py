@@ -1,4 +1,5 @@
 import pytest
+from torch import nn
 from torchvision.datasets import CIFAR10
 
 from tests._dummies.dataset import DummyClassificationDataset
@@ -10,6 +11,15 @@ class TestCIFAR10DataModule:
     """Testing the CIFAR10DataModule datamodule class."""
 
     def test_cifar10_main(self):
+        dm = CIFAR10DataModule(
+            root="./data/",
+            batch_size=128,
+            train_transform=nn.Identity(),
+            test_transform=nn.Identity(),
+        )
+        assert isinstance(dm.train_transform, nn.Identity)
+        assert isinstance(dm.test_transform, nn.Identity)
+
         dm = CIFAR10DataModule(root="./data/", batch_size=128, cutout=16, postprocess_set="test")
 
         assert dm.dataset == CIFAR10

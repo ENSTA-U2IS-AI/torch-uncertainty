@@ -33,6 +33,9 @@ class MNISTDataModule(TUDataModule):
         val_split: float | None = None,
         postprocess_set: Literal["val", "test"] = "val",
         num_workers: int = 1,
+        train_transform: nn.Module | None = None,
+        test_transform: nn.Module | None = None,
+        ood_transform: nn.Module | None = None,
         basic_augment: bool = True,
         cutout: int | None = None,
         pin_memory: bool = True,
@@ -56,6 +59,13 @@ class MNISTDataModule(TUDataModule):
                 use for the post-processing method. Defaults to ``val``.
             num_workers (int): Number of workers to use for data loading. Defaults
                 to ``1``.
+            train_transform (nn.Module | None): Custom training transform. Defaults
+                to ``None``. If not provided, a default transform is used.
+            test_transform (nn.Module | None): Custom test transform. Defaults to
+                ``None``. If not provided, a default transform is used.
+            ood_transform (nn.Module | None): Custom transform for out-of-distribution
+                datasets. Defaults to ``None``. If not provided, a default transform
+                is used.
             basic_augment (bool): Whether to apply base augmentations. Defaults to
                 ``True``.
             cutout (int): Size of cutout to apply to images. Defaults to ``None``.
@@ -89,37 +99,48 @@ class MNISTDataModule(TUDataModule):
         self.shift_dataset = MNISTC
         self.shift_severity = 1
 
-        basic_transform = v2.RandomCrop(28, padding=4) if basic_augment else nn.Identity()
+        if train_transform is not None:
+            self.train_transform = train_transform
+        else:
+            basic_transform = v2.RandomCrop(28, padding=4) if basic_augment else nn.Identity()
 
-        main_transform = Cutout(cutout) if cutout else nn.Identity()
+            main_transform = Cutout(cutout) if cutout else nn.Identity()
 
-        self.train_transform = v2.Compose(
-            [
-                v2.ToImage(),
-                basic_transform,
-                main_transform,
-                v2.ToDtype(dtype=torch.float32, scale=True),
-                v2.Normalize(mean=self.mean, std=self.std),
-            ]
-        )
-        self.test_transform = v2.Compose(
-            [
-                v2.ToImage(),
-                v2.CenterCrop(28),
-                v2.ToDtype(dtype=torch.float32, scale=True),
-                v2.Normalize(mean=self.mean, std=self.std),
-            ]
-        )
-        if self.eval_ood:  # NotMNIST has 3 channels
-            self.ood_transform = v2.Compose(
+            self.train_transform = v2.Compose(
                 [
                     v2.ToImage(),
-                    v2.Grayscale(num_output_channels=1),
+                    basic_transform,
+                    main_transform,
+                    v2.ToDtype(dtype=torch.float32, scale=True),
+                    v2.Normalize(mean=self.mean, std=self.std),
+                ]
+            )
+
+        if test_transform is not None:
+            self.test_transform = test_transform
+        else:
+            self.test_transform = v2.Compose(
+                [
+                    v2.ToImage(),
                     v2.CenterCrop(28),
                     v2.ToDtype(dtype=torch.float32, scale=True),
                     v2.Normalize(mean=self.mean, std=self.std),
                 ]
             )
+        if self.eval_ood:
+            if ood_transform is not None:
+                self.ood_transform = ood_transform
+            else:
+                # NotMNIST has 3 channels
+                self.ood_transform = v2.Compose(
+                    [
+                        v2.ToImage(),
+                        v2.Grayscale(num_output_channels=1),
+                        v2.CenterCrop(28),
+                        v2.ToDtype(dtype=torch.float32, scale=True),
+                        v2.Normalize(mean=self.mean, std=self.std),
+                    ]
+                )
 
     def prepare_data(self) -> None:  # coverage: ignore
         """Download the datasets."""

@@ -116,7 +116,7 @@ class CityscapesDataModule(TUDataModule):
                                 std=[0.229, 0.224, 0.225])
                 ])
 
-            This behavior can be modified by setting ``train_transform``
+            This behavior can be modified by setting up ``train_transform``
             and ``test_transform`` at initialization.
         """
         super().__init__(
