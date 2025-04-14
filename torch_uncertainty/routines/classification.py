@@ -475,6 +475,8 @@ class ClassificationRoutine(LightningModule):
             ood_scores = self.ood_criterion(logits)
         elif self.ood_criterion.input_type == OODCriterionInputType.PROB:
             ood_scores = self.ood_criterion(probs)
+        elif self.ood_criterion.input_type == OODCriterionInputType.DATASET:
+            ood_scores = self.ood_criterion(self.model,inputs)
         else:
             ood_scores = self.ood_criterion(probs_per_est)
 

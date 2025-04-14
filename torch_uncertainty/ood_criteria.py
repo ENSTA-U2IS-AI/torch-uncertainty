@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from enum import Enum
+from typing import Any
 
 import torch
 from torch import Tensor, nn
@@ -20,6 +21,7 @@ class OODCriterionInputType(Enum):
     LOGIT = 1
     PROB = 2
     ESTIMATOR_PROB = 3
+    DATASET = 4
 
 
 class TUOODCriterion(ABC, nn.Module):
@@ -240,6 +242,104 @@ class VariationRatioCriterion(TUOODCriterion):
         return self.vr_metric(inputs.transpose(0, 1))
 
 
+
+import numpy as np
+import torch
+import torch.nn as nn
+
+
+class ScaleNet(nn.Module):
+    def __init__(self, backbone):
+        super(ScaleNet, self).__init__()
+        self.backbone = backbone
+
+    def forward(self, x, return_feature=False, return_feature_list=False):
+        try:
+            return self.backbone(x, return_feature, return_feature_list)
+        except TypeError:
+            return self.backbone(x, return_feature)
+
+    def forward_threshold(self, x, percentile):
+        _, feature = self.backbone(x, return_feature=True)
+        feature = scale(feature.view(feature.size(0), -1, 1, 1), percentile)
+        feature = feature.view(feature.size(0), -1)
+        logits_cls = self.backbone.get_fc_layer()(feature)
+        return logits_cls
+
+    def get_fc(self):
+        fc = self.backbone.fc
+        return fc.weight.cpu().detach().numpy(), fc.bias.cpu().detach().numpy()
+
+
+def scale(x, percentile=65):
+    input = x.clone()
+    assert x.dim() == 4
+    assert 0 <= percentile <= 100
+    b, c, h, w = x.shape
+
+    # calculate the sum of the input per sample
+    s1 = x.sum(dim=[1, 2, 3])
+    n = x.shape[1:].numel()
+    k = n - int(np.round(n * percentile / 100.0))
+    t = x.view((b, c * h * w))
+    v, i = torch.topk(t, k, dim=1)
+    t.zero_().scatter_(dim=1, index=i, src=v)
+
+    # calculate new sum of the input per sample after pruning
+    s2 = x.sum(dim=[1, 2, 3])
+
+    # apply sharpening
+    scale = s1 / s2
+
+    return input * torch.exp(scale[:, None, None, None])
+
+class ScaleCriterion(TUOODCriterion):
+    input_type = OODCriterionInputType.DATASET
+
+    def __init__(self) -> None:
+        """OOD criterion based on the maximum logit value.
+
+        This criterion computes the negative of the highest logit value across
+        the output dimensions. Lower maximum logits indicate greater uncertainty.
+
+        Attributes:
+            input_type (OODCriterionInputType): Expected input type is logits.
+        """
+        super().__init__()
+        self.percentile = 65
+
+    def forward(self, net: nn.Module, data: Any) -> Tensor:
+        net = ScaleNet(net)
+        output = net.forward_threshold(data, self.percentile)
+        #_, pred = torch.max(output, dim=1)
+        energyconf = torch.logsumexp(output.data, dim=1)
+        return -energyconf
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 def get_ood_criterion(ood_criterion):
     """Get an OOD criterion instance based on a string identifier or class type.
 
@@ -265,7 +365,9 @@ def get_ood_criterion(ood_criterion):
         if ood_criterion == "mutual_information":
             return MutualInformationCriterion()
         if ood_criterion == "variation_ratio":
-            return VariationRatioCriterion()
+            return VariationRatioCriterion()        
+        if ood_criterion == "scale":
+            return ScaleCriterion()
         raise ValueError(
             "The OOD criterion must be one of 'msp', 'logit', 'energy', 'entropy',"
             f" 'mutual_information' or 'variation_ratio'. Got {ood_criterion}."

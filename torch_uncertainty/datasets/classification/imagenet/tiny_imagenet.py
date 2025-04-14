@@ -21,8 +21,21 @@ class TinyImageNet(Dataset):
         split: Literal["train", "val", "test"] = "train",
         transform: Callable | None = None,
         target_transform: Callable | None = None,
+        download: bool = False  # added download attribute
     ) -> None:
         self.root = Path(root) / "tiny-imagenet-200"
+        
+        if download and not self.root.exists():
+            import urllib.request
+            import zipfile
+            url = "http://cs231n.stanford.edu/tiny-imagenet-200.zip"
+            zip_path = Path(root) / "tiny-imagenet-200.zip"
+            print("Downloading tiny-imagenet-200 dataset...")
+            urllib.request.urlretrieve(url, zip_path)
+            print("Extracting dataset...")
+            with zipfile.ZipFile(zip_path, "r") as zf:
+                zf.extractall(root)
+            os.remove(zip_path)
 
         if split not in ["train", "val", "test"]:
             raise ValueError(f"Split {split} is not supported.")
@@ -120,6 +133,6 @@ class TinyImageNet(Dataset):
                     paths.append((fname, label_id))
 
         else:  # self.split == "test":
-            test_path = self.root / "test"
-            paths = [test_path / x for x in os.listdir(test_path)]
+            test_path = self.root / "test" / "images"
+            paths = [(test_path / x, -1) for x in os.listdir(test_path)]
         return paths

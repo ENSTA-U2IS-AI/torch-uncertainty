@@ -7,7 +7,8 @@ from numpy.typing import ArrayLike
 from timm.data.auto_augment import rand_augment_transform
 from torch import nn
 from torch.utils.data import DataLoader
-from torchvision.datasets import CIFAR10, SVHN, CIFAR100
+from torchvision.datasets import CIFAR10, SVHN, CIFAR100 , MNIST, SVHN, DTD, Places365
+from torch_uncertainty.datasets.classification import TinyImageNet
 from torchvision.transforms import v2
 
 from torch_uncertainty.datamodules.abstract import TUDataModule
@@ -101,8 +102,8 @@ class CIFAR10DataModule(TUDataModule):
         self.shift_severity = shift_severity
         self.shift_dataset = CIFAR10C
 
-        self.near_ood_datasets = near_ood_datasets or [SVHN]  # List of near OOD dataset classes
-        self.far_ood_datasets = far_ood_datasets or [CIFAR100]    # List of far OOD dataset classes
+        self.near_ood_datasets = near_ood_datasets or [CIFAR100,TinyImageNet]  # List of near OOD dataset classes
+        self.far_ood_datasets = far_ood_datasets or [SVHN, MNIST,DTD]    # List of far OOD dataset classes
 
         if (cutout is not None) + int(auto_augment is not None) > 1:
             raise ValueError(
@@ -140,6 +141,8 @@ class CIFAR10DataModule(TUDataModule):
         self.test_transform = v2.Compose(
             [
                 v2.ToImage(),
+                v2.Resize(32),
+                v2.CenterCrop(32), 
                 v2.ToDtype(dtype=torch.float32, scale=True),
                 v2.Normalize(mean=self.mean, std=self.std),
             ]
@@ -157,10 +160,16 @@ class CIFAR10DataModule(TUDataModule):
 
         if self.eval_ood:
             for near_ds_cls in self.near_ood_datasets:
-                near_ds_cls(self.root, split="test", download=True)
+                 if "split" in near_ds_cls.__init__.__code__.co_varnames:
+                    near_ds_cls(self.root, split="test", download=True)
+                 else:
+                    near_ds_cls(self.root, train=False, download=True)
 
             for far_ds_cls in self.far_ood_datasets:
-                far_ds_cls(self.root, train=False, download=True)
+                if "split" in far_ds_cls.__init__.__code__.co_varnames:
+                    far_ds_cls(self.root, split="test", download=True)
+                else:
+                    far_ds_cls(self.root, train=False, download=True)
 
         if self.eval_shift:
             self.shift_dataset(
@@ -210,21 +219,33 @@ class CIFAR10DataModule(TUDataModule):
             if self.eval_ood:
                 self.near_oods = []
                 for near_ds_cls in self.near_ood_datasets:
-                    ds = near_ds_cls(
-                        self.root,
-                        download=False, 
-                        split="test",
-                        transform=self.test_transform,
-                    )
+                    if "split" in near_ds_cls.__init__.__code__.co_varnames:
+                        ds = near_ds_cls(
+                            self.root,
+                            split="test",
+                            transform=self.test_transform,
+                        )
+                    else:
+                        ds = near_ds_cls(
+                            self.root,
+                            train=False,
+                            transform=self.test_transform,
+                        )
                     self.near_oods.append(ds)
                 self.far_oods = []
                 for far_ds_cls in self.far_ood_datasets:
-                    ds = far_ds_cls(
-                        self.root,
-                        train=False,  
-                        download=False,
-                        transform=self.test_transform,
-                    )
+                    if "split" in far_ds_cls.__init__.__code__.co_varnames:
+                        ds = far_ds_cls(
+                            self.root,
+                            split="test",
+                            transform=self.test_transform,
+                        )
+                    else:
+                        ds = far_ds_cls(
+                            self.root,
+                            train=False,
+                            transform=self.test_transform,
+                        )
                     self.far_oods.append(ds)
             if self.eval_shift:
                 self.shift = self.shift_dataset(
