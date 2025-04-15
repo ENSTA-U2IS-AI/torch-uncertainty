@@ -240,6 +240,8 @@ class ClassificationRoutine(LightningModule):
             "AUROC": BinaryAUROC(),
             "AUPR": BinaryAveragePrecision(),
             "FPR95": FPR95(pos_label=1),})
+            if self.ood_criterion!="msp":
+                self.ood_id_acc= Accuracy(task=task, num_classes=self.num_classes) #not used for now
               
         if self.is_ensemble:
             self.test_ood_ens_metrics_near = {}  
@@ -481,7 +483,7 @@ class ClassificationRoutine(LightningModule):
             ood_scores = self.ood_criterion(probs_per_est)
 
         indices = self.trainer.datamodule.get_indices()
-
+      
         if dataloader_idx == 0:
             self.test_cls_metrics.update(
                 probs.squeeze(-1) if self.binary_cls else probs,
@@ -499,58 +501,76 @@ class ClassificationRoutine(LightningModule):
                 self.post_cls_metrics.update(pp_probs, targets)
 
             if self.eval_ood:
-                
-                if self.is_ensemble:
 
-                    for near_idx in indices.get("near", []):
-                        if near_idx not in self.test_ood_ens_metrics_near:
-                            self.test_ood_ens_metrics_near[near_idx] = self.ood_metrics_template.clone(
-                            prefix=f"ood_ens_near_{near_idx}/"
+                for ds in self.trainer.datamodule.near_oods:
+                    ds_name = ds.__class__.__name__.lower() 
+                    if self.is_ensemble:
+                        if ds_name not in self.test_ood_ens_metrics_near:
+                            self.test_ood_ens_metrics_near[ds_name] = self.ood_metrics_template.clone(
+                                prefix=f"ood_near_{ds_name}_"
                             )
-                        self.test_ood_ens_metrics_near[near_idx].update(ood_scores, torch.zeros_like(targets))
-                    for far_idx in indices.get("far", []):
-                        if far_idx not in self.test_ood_ens_metrics_far:
-                            self.test_ood_ens_metrics_far[far_idx] = self.ood_metrics_template.clone(
-                            prefix=f"ood_ens_far_{far_idx}/"
+                        self.test_ood_ens_metrics_near[ds_name].update(ood_scores, torch.zeros_like(targets))
+                    else:
+                        if ds_name not in self.test_ood_metrics_near:
+                            self.test_ood_metrics_near[ds_name] = self.ood_metrics_template.clone(
+                                prefix=f"ood_near_{ds_name}_"
                             )
-                        self.test_ood_ens_metrics_far[far_idx].update(ood_scores, torch.zeros_like(targets))
+                        self.test_ood_metrics_near[ds_name].update(ood_scores, torch.zeros_like(targets))
+               
 
-                else :
-                
-                    for near_idx in indices.get("near", []):
-                        if near_idx not in self.test_ood_metrics_near:
-                            self.test_ood_metrics_near[near_idx] = self.ood_metrics_template.clone(
-                            prefix=f"ood_near_{near_idx}/"
+                for ds in self.trainer.datamodule.far_oods:
+                    ds_name = ds.__class__.__name__.lower()
+                    if self.is_ensemble:
+                        if ds_name not in self.test_ood_ens_metrics_far:
+                            self.test_ood_ens_metrics_far[ds_name] = self.ood_metrics_template.clone(
+                                prefix=f"ood_far_{ds_name}_"
                             )
-                        self.test_ood_metrics_near[near_idx].update(ood_scores, torch.zeros_like(targets))
-                    for far_idx in indices.get("far", []):
-                        if far_idx not in self.test_ood_metrics_far:
-                            self.test_ood_metrics_far[far_idx] = self.ood_metrics_template.clone(
-                            prefix=f"ood_far_{far_idx}/"
+                        self.test_ood_ens_metrics_far[ds_name].update(ood_scores, torch.zeros_like(targets))
+                    else:
+                        if ds_name not in self.test_ood_metrics_far:
+                            self.test_ood_metrics_far[ds_name] = self.ood_metrics_template.clone(
+                                prefix=f"ood_far_{ds_name}_"
                             )
-                        self.test_ood_metrics_far[far_idx].update(ood_scores, torch.zeros_like(targets))
+                        self.test_ood_metrics_far[ds_name].update(ood_scores, torch.zeros_like(targets))
 
-        else:
-            
-            # Near OOD dataloaders.
-            if self.eval_ood and dataloader_idx in indices.get("near", []):
-                if self.is_ensemble:
-                        self.test_ood_ens_metrics_near[dataloader_idx].update(ood_scores, torch.ones_like(targets))
-                else:
-                    self.test_ood_metrics_near[dataloader_idx].update(ood_scores, torch.ones_like(targets))
+        elif self.eval_ood and dataloader_idx in indices.get("near", []):
+            ds_index = indices["near"].index(dataloader_idx)
+            ds_name = self.trainer.datamodule.near_oods[ds_index].__class__.__name__.lower()
+            if self.is_ensemble:
+                if ds_name not in self.test_ood_ens_metrics_near:
+                    self.test_ood_ens_metrics_near[ds_name] = self.ood_metrics_template.clone(
+                prefix=f"ood_near_{ds_name}_"
+                )
+                self.test_ood_ens_metrics_near[ds_name].update(ood_scores, torch.ones_like(targets))
+            else:
+                if ds_name not in self.test_ood_metrics_near:
+                    self.test_ood_metrics_near[ds_name] = self.ood_metrics_template.clone(
+                prefix=f"ood_near_{ds_name}_"
+                )
+                self.test_ood_metrics_near[ds_name].update(ood_scores, torch.ones_like(targets))
+       
+       
+        elif self.eval_ood and dataloader_idx in indices.get("far", []):
+            ds_index = indices["far"].index(dataloader_idx)
+            ds_name = self.trainer.datamodule.far_oods[ds_index].__class__.__name__.lower()
+            if self.is_ensemble:
+                if ds_name not in self.test_ood_ens_metrics_far:
+                    self.test_ood_ens_metrics_far[ds_name] = self.ood_metrics_template.clone(
+                prefix=f"ood_far_{ds_name}_"
+                )
+                self.test_ood_ens_metrics_far[ds_name].update(ood_scores, torch.ones_like(targets))
+            else:
+                if ds_name not in self.test_ood_metrics_far:
+                    self.test_ood_metrics_far[ds_name] = self.ood_metrics_template.clone(
+                prefix=f"ood_far_{ds_name}_"
+                )
+                self.test_ood_metrics_far[ds_name].update(ood_scores, torch.ones_like(targets))
 
-            # Far OOD dataloaders.
-            elif self.eval_ood and dataloader_idx in indices.get("far", []):
-                if self.is_ensemble:
-                    self.test_ood_ens_metrics_far[dataloader_idx].update(ood_scores, torch.ones_like(targets))
-                else:
-                    self.test_ood_metrics_far[dataloader_idx].update(ood_scores, torch.ones_like(targets))
-   
-            # Shift evaluation.
-            elif self.eval_shift and dataloader_idx in indices.get("shift", []):
-                self.test_shift_metrics.update(probs, targets)
-                if self.is_ensemble:
-                    self.test_shift_ens_metrics.update(probs_per_est)
+        
+        elif self.eval_shift and dataloader_idx in indices.get("shift", []):
+            self.test_shift_metrics.update(probs, targets)
+            if self.is_ensemble:
+                self.test_shift_ens_metrics.update(probs_per_est)
 
 
     def on_test_epoch_end(self) -> None:

@@ -7,7 +7,9 @@ from lightning.pytorch.trainer.connectors.logger_connector.result import (
 from rich import get_console
 from rich.console import Group
 from rich.table import Table
+from rich.box import HEAVY_EDGE  
 from torch import Tensor
+from collections import defaultdict
 
 PERCENTAGE_METRICS = [
     "Acc",
@@ -56,18 +58,32 @@ class TUEvaluationLoop(_EvaluationLoop):
                     metric_name = key.split("/")[-1]
                     metrics["cal"].update({metric_name: value})
                 elif key.startswith("ood"):
+
+                    # Initialize the ood dict if it isn’t already.
                     if "ood" not in metrics:
-                        metrics["ood"] = {}
+                        metrics["ood"] = {
+                            "individual": {"near": {}, "far": {}},
+                            "NearOOD": {"auroc": [], "fpr95": [], "aupr": []},
+                            "FarOOD": {"auroc": [], "fpr95": [], "aupr": []},
+                        }
+                    # Here, we expect keys of the form: "ood_{group}_{datasetName}_{metric}"
+                    parts = key.split("_")
+                    group = parts[1].lower()  # either "near" or "far"
+                    dataset_name = parts[2]
+                    metric_name = parts[-1].lower()  # e.g. "auroc", "fpr95", "aupr"
+                    
+                    # Store individual dataset results grouped by near or far.
+                    if dataset_name not in metrics["ood"]["individual"][group]:
+                        metrics["ood"]["individual"][group][dataset_name] = {}
+                    metrics["ood"]["individual"][group][dataset_name][metric_name] = value
 
-                    parts = key.split("/")
+                    # Also, add this value to the corresponding average accumulator.
+                    if group == "near":
+                        metrics["ood"]["NearOOD"][metric_name].append(value)
+                    elif group == "far":
+                        metrics["ood"]["FarOOD"][metric_name].append(value)
 
-                    prefix = parts[0]  
-                    prefix = prefix.removeprefix("ood_")
 
-                    metric_name = parts[-1]  
-                    final_name = f"{prefix}_{metric_name}"  
-
-                    metrics["ood"][final_name] = value
                 elif key.startswith("shift"):
                     if "shift" not in metrics:
                         metrics["shift"] = {}
@@ -135,12 +151,71 @@ class TUEvaluationLoop(_EvaluationLoop):
             tables.append(table)
 
         if "ood" in metrics:
-            table = Table()
-            table.add_column(first_col_name, justify="center", style="cyan", width=12)
-            table.add_column("OOD Detection", justify="center", style="magenta", width=25)
-            ood_metrics = OrderedDict(sorted(metrics["ood"].items()))
-            for metric_name, value in ood_metrics.items():
-                _add_row(table, metric_name, value)
+
+            final_ood_results = defaultdict(lambda: {"auroc": None, "fpr95": None, "aupr": None})
+
+            for key, val in metrics["ood"].items():
+                parts = key.split("_")
+
+                if len(parts) == 2:
+                    dataset_name, metric_postfix = parts[0], parts[1].lower()
+
+                    if metric_postfix in ["auroc", "fpr95", "aupr"]:
+                        final_ood_results[dataset_name][metric_postfix] = val
+
+            for key in ["NearOOD", "FarOOD"]:
+                if key in metrics["ood"]:
+                    for key2, val2 in metrics["ood"][key].items():
+                        final_ood_results[key][key2] = val2
+                
+      
+            table = Table(
+                title="[bold]OOD Results[/bold]",
+                box=HEAVY_EDGE,
+                show_header=True,
+                show_lines=False,
+            )
+            table.add_column("Dataset", justify="center", style="cyan",  width=16)
+            table.add_column("AUROC",   justify="center", style="magenta", width=12)
+            table.add_column("FPR95",   justify="center", style="magenta", width=12)
+            table.add_column("AUPR",    justify="center", style="magenta", width=12)
+
+            def format_val(val):
+                if val is None:
+                    return "N/A"
+                # If we have a list, compute the average.
+                if isinstance(val, list) and len(val) > 0:
+                    val = sum(val) / len(val)
+                return f"{val.item()*100:.3f}%" if val is not None else "N/A"
+
+            # First output the Near OOD individual rows.
+            for dataset_name, m_dict in metrics["ood"]["individual"]["near"].items():
+                row_auroc = format_val(m_dict.get("auroc"))
+                row_fpr95 = format_val(m_dict.get("fpr95"))
+                row_aupr = format_val(m_dict.get("aupr"))
+                table.add_row(f"{dataset_name}", row_auroc, row_fpr95, row_aupr)
+
+            # Then add the NearOOD average row.
+            near_avg = metrics["ood"]["NearOOD"]
+            table.add_row("NearOOD Average",
+                          format_val(near_avg.get("auroc")),
+                          format_val(near_avg.get("fpr95")),
+                          format_val(near_avg.get("aupr")))
+
+            # Next output the Far OOD individual rows.
+            for dataset_name, m_dict in metrics["ood"]["individual"]["far"].items():
+                row_auroc = format_val(m_dict.get("auroc"))
+                row_fpr95 = format_val(m_dict.get("fpr95"))
+                row_aupr = format_val(m_dict.get("aupr"))
+                table.add_row(f"{dataset_name}", row_auroc, row_fpr95, row_aupr)
+
+            # And add the FarOOD average row.
+            far_avg = metrics["ood"]["FarOOD"]
+            table.add_row("FarOOD Average",
+                          format_val(far_avg.get("auroc")),
+                          format_val(far_avg.get("fpr95")),
+                          format_val(far_avg.get("aupr")))
+
             tables.append(table)
 
         if "sc" in metrics:
