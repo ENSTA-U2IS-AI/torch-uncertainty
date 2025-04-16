@@ -17,7 +17,6 @@ class _DeepEnsembles(nn.Module):
         self.core_models = nn.ModuleList(models)
         self.num_estimators = len(models)
         self.store_on_cpu = store_on_cpu
-        self.device = None
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         r"""Return the logits of the ensemble.
@@ -31,9 +30,9 @@ class _DeepEnsembles(nn.Module):
                 estimators, and :math:`C` is the number of classes.
         """
         if self.store_on_cpu:
-            preds = torch.tensor([], device=self.device)
+            preds = torch.tensor([], device=x.device)
             for model in self.core_models:
-                model.to(self.device)
+                model.to(x.device)
                 preds = torch.cat([preds, model.forward(x)], dim=0)
                 model.to("cpu")
             return preds
@@ -41,8 +40,6 @@ class _DeepEnsembles(nn.Module):
 
     def to(self, *args, **kwargs):
         device, dtype, non_blocking, convert_to_format = torch._C._nn._parse_to(*args, **kwargs)
-
-        self.device = device
 
         if self.store_on_cpu:
             device = torch.device("cpu")
@@ -113,7 +110,7 @@ class _RegDeepEnsembles(_DeepEnsembles):
             if self.store_on_cpu:
                 out = []
                 for model in self.core_models:
-                    model.to(self.device)
+                    model.to(x.device)
                     out.append(model.forward(x))
                     model.to("cpu")
             else:
@@ -159,6 +156,10 @@ def deep_ensembles(
             a module (or singleton list).
         ValueError: If :attr:num_estimators is defined while :attr:models is
             a (non-singleton) list.
+
+    Warning:
+        The :attr:`store_on_cpu` option is not supported for training. It is
+        only supported for inference.
 
     References:
         Balaji Lakshminarayanan, Alexander Pritzel, and Charles Blundell.
