@@ -9,11 +9,13 @@ class _DeepEnsembles(nn.Module):
     def __init__(
         self,
         models: list[nn.Module],
+        store_on_cpu: bool = False,
     ) -> None:
         """Create a classification deep ensembles from a list of models."""
         super().__init__()
         self.core_models = nn.ModuleList(models)
         self.num_estimators = len(models)
+        self.store_on_cpu = store_on_cpu
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         r"""Return the logits of the ensemble.
@@ -26,7 +28,22 @@ class _DeepEnsembles(nn.Module):
                 where :math:`B` is the batch size, :math:`N` is the number of
                 estimators, and :math:`C` is the number of classes.
         """
+        if self.store_on_cpu:
+            preds = torch.tensor([], device=x.device)
+            for model in self.core_models:
+                model.to(x.device)
+                preds = torch.cat([preds, model.forward(x)], dim=0)
+                model.to("cpu")
+            return preds
         return torch.cat([model.forward(x) for model in self.core_models], dim=0)
+
+    def to(self, *args, **kwargs):
+        device, dtype, non_blocking, convert_to_format = torch._C._nn._parse_to(*args, **kwargs)
+
+        if self.store_on_cpu:
+            device = torch.device("cpu")
+
+        return super().to(device=device, dtype=dtype, non_blocking=non_blocking)
 
 
 class _RegDeepEnsembles(_DeepEnsembles):
@@ -34,9 +51,10 @@ class _RegDeepEnsembles(_DeepEnsembles):
         self,
         probabilistic: bool,
         models: list[nn.Module],
+        store_on_cpu: bool = False,
     ) -> None:
         """Create a regression deep ensembles from a list of models."""
-        super().__init__(models)
+        super().__init__(models=models, store_on_cpu=store_on_cpu)
         self.probabilistic = probabilistic
 
     def forward(self, x: torch.Tensor) -> torch.Tensor | dict[str, torch.Tensor]:
@@ -51,7 +69,14 @@ class _RegDeepEnsembles(_DeepEnsembles):
                 :math:`*` is any other dimension.
         """
         if self.probabilistic:
-            out = [model.forward(x) for model in self.core_models]
+            if self.store_on_cpu:
+                out = []
+                for model in self.core_models:
+                    model.to(x.device)
+                    out.append(model.forward(x))
+                    model.to("cpu")
+            else:
+                out = [model.forward(x) for model in self.core_models]
             key_set = {tuple(o.keys()) for o in out}
             if len(key_set) != 1:
                 raise ValueError("The output of the models must have the same keys.")
@@ -67,6 +92,7 @@ def deep_ensembles(
     ] = "classification",
     probabilistic: bool | None = None,
     reset_model_parameters: bool = True,
+    store_on_cpu: bool = False,
 ) -> _DeepEnsembles:
     """Build a Deep Ensembles out of the original models.
 
@@ -77,7 +103,10 @@ def deep_ensembles(
             Defaults to "classification".
         probabilistic (bool): Whether the regression model is probabilistic.
         reset_model_parameters (bool): Whether to reset the model parameters
-            when :attr:models is a module or a list of length 1.
+            when :attr:models is a module or a list of length 1. Defaults to ``True``.
+        store_on_cpu (bool): Whether to store the models on CPU. Defaults to ``False``.
+            This is useful for large models that do not fit in GPU memory. Only one
+            model will be stored on GPU at a time during forward. The rest will be stored on CPU.
 
     Returns:
         _DeepEnsembles: The ensembled model.
@@ -89,6 +118,10 @@ def deep_ensembles(
             a module (or singleton list).
         ValueError: If :attr:num_estimators is defined while :attr:models is
             a (non-singleton) list.
+
+    Warning:
+        The :attr:`store_on_cpu` option is not supported for training. It is
+        only supported for inference.
 
     References:
         Balaji Lakshminarayanan, Alexander Pritzel, and Charles Blundell.
@@ -118,9 +151,11 @@ def deep_ensembles(
         raise ValueError("num_estimators must be None if you provided a non-singleton list.")
 
     if task in ("classification", "segmentation"):
-        return _DeepEnsembles(models=models)
+        return _DeepEnsembles(models=models, store_on_cpu=store_on_cpu)
     if task in ("regression", "pixel_regression"):
         if probabilistic is None:
             raise ValueError("probabilistic must be specified for regression models.")
-        return _RegDeepEnsembles(probabilistic=probabilistic, models=models)
+        return _RegDeepEnsembles(
+            probabilistic=probabilistic, models=models, store_on_cpu=store_on_cpu
+        )
     raise ValueError(f"Unknown task: {task}.")

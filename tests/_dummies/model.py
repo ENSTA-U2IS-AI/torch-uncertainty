@@ -39,6 +39,7 @@ class _Dummy(nn.Module):
                     torch.ones(
                         (x.shape[0], 1),
                         dtype=torch.float32,
+                        device=x.device,
                     )
                 )
             )
@@ -50,6 +51,7 @@ class _DummyWithFeats(_Dummy):
         return torch.ones(
             (x.shape[0], 1),
             dtype=torch.float32,
+            device=x.device,
         )
 
 
@@ -92,6 +94,7 @@ class _DummySegmentation(nn.Module):
                             self.image_size,
                         ),
                         dtype=torch.float32,
+                        device=x.device,
                     )
                 )
             )
