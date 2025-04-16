@@ -47,6 +47,10 @@ class TUCheckpoint(Checkpoint):
             callback.on_validation_epoch_end(trainer=trainer, pl_module=pl_module)
 
     @override
+    def state_dict(self) -> dict[str, dict[str, Any]]:
+        return {key: callback.state_dict() for key, callback in self.callbacks.items()}
+
+    @override
     def load_state_dict(self, state_dict: dict[str, dict[str, Any]]) -> None:
         for key, callback in self.callbacks.items():
             callback.load_state_dict(state_dict=state_dict[key])
@@ -78,6 +82,29 @@ class TUClsCheckpoint(TUCheckpoint):
             ),
         }
 
-    @override
-    def state_dict(self) -> dict[str, dict[str, Any]]:
-        return {key: callback.state_dict() for key, callback in self.callbacks.items()}
+
+class TUSegCheckpoint(TUCheckpoint):
+    def __init__(self):
+        super().__init__()
+        self.callbacks = {
+            "acc": ModelCheckpoint(
+                filename="{epoch}-{step}-{val_seg_mIoU:.2f}",
+                monitor="val_seg_mIoU",
+                mode="max",
+            ),
+            "ece": ModelCheckpoint(
+                filename="{epoch}-{step}-{val_cal_ECE:.2f}",
+                monitor="val_cal_ECE",
+                mode="min",
+            ),
+            "brier": ModelCheckpoint(
+                filename="{epoch}-{step}-{val_seg_Brier:.2f}",
+                monitor="val_seg_Brier",
+                mode="min",
+            ),
+            "nll": ModelCheckpoint(
+                filename="{epoch}-{step}-{val_seg_NLL:.2f}",
+                monitor="val_seg_NLL",
+                mode="min",
+            ),
+        }
