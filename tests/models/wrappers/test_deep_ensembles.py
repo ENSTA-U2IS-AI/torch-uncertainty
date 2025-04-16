@@ -31,6 +31,22 @@ class TestDeepEnsemblesModel:
         with pytest.raises(ValueError):
             deep_ensembles([model_1], num_estimators=1)
 
+    def test_store_on_cpu(self):
+        model_1 = dummy_model(1, 10)
+        model_2 = dummy_model(1, 10)
+
+        de = deep_ensembles([model_1, model_2], store_on_cpu=True)
+        de.to("cuda")
+        assert de.store_on_cpu
+        assert de.core_models[0].linear.weight.device == torch.device("cpu")
+        assert de.core_models[1].linear.weight.device == torch.device("cpu")
+
+        inputs = torch.randn(3, 4, 1).cuda()
+        out = de(inputs)
+        assert out.device == inputs.device
+        assert de.core_models[0].linear.weight.device == torch.device("cpu")
+        assert de.core_models[1].linear.weight.device == torch.device("cpu")
+
     def test_error_prob_regression(self):
         # The output dicts will have different keys
         model_1 = dummy_model(1, 2, dist_family="normal")
