@@ -289,7 +289,7 @@ class RegressionRoutine(LightningModule):
         self.log_dict(res_dict, logger=True, sync_dist=True)
         self.log(
             "RMSE",
-            res_dict["valreg_RMSE"],
+            res_dict["val_reg_RMSE"],
             prog_bar=True,
             logger=False,
             sync_dist=True,
