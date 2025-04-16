@@ -35,56 +35,56 @@ def _add_row(table: Table, metric_name: str, value: Tensor) -> None:
 class TUEvaluationLoop(_EvaluationLoop):
     @staticmethod
     def _print_results(results: list[_OUT_DICT], stage: str) -> None:
-        # test/cls: Classification Metrics
-        # test/cal: Calibration Metrics
+        # test_cls: Classification Metrics
+        # test_cal: Calibration Metrics
         # ood: OOD Detection Metrics
         # shift: Distribution shift Metrics
-        # test/sc: Selective Classification Metrics
-        # test/post: Post-Processing Metrics
-        # test/seg: Segmentation Metrics
+        # test_sc: Selective Classification Metrics
+        # test_post: Post-Processing Metrics
+        # test_seg: Segmentation Metrics
 
         metrics = {}
         for result in results:
             for key, value in result.items():
-                if key.startswith("test/cls"):
+                if key.startswith("test_cls"):
                     if "cls" not in metrics:
                         metrics["cls"] = {}
-                    metric_name = key.split("/")[-1]
+                    metric_name = key.split("_")[-1]
                     metrics["cls"].update({metric_name: value})
-                elif key.startswith("test/cal"):
+                elif key.startswith("test_cal"):
                     if "cal" not in metrics:
                         metrics["cal"] = {}
-                    metric_name = key.split("/")[-1]
+                    metric_name = key.split("_")[-1]
                     metrics["cal"].update({metric_name: value})
                 elif key.startswith("ood"):
                     if "ood" not in metrics:
                         metrics["ood"] = {}
-                    metric_name = key.split("/")[-1]
+                    metric_name = key.split("_")[-1]
                     metrics["ood"].update({metric_name: value})
                 elif key.startswith("shift"):
                     if "shift" not in metrics:
                         metrics["shift"] = {}
-                    metric_name = key.split("/")[-1]
+                    metric_name = key.split("_")[-1]
                     metrics["shift"].update({metric_name: value})
-                elif key.startswith("test/sc"):
+                elif key.startswith("test_sc"):
                     if "sc" not in metrics:
                         metrics["sc"] = {}
-                    metric_name = key.split("/")[-1]
+                    metric_name = key.split("_")[-1]
                     metrics["sc"].update({metric_name: value})
-                elif key.startswith("test/post"):
+                elif key.startswith("test_post"):
                     if "post" not in metrics:
                         metrics["post"] = {}
-                    metric_name = key.split("/")[-1]
+                    metric_name = key.split("_")[-1]
                     metrics["post"].update({metric_name: value})
-                elif key.startswith("test/seg"):
+                elif key.startswith("test_seg"):
                     if "seg" not in metrics:
                         metrics["seg"] = {}
-                    metric_name = key.split("/")[-1]
+                    metric_name = key.split("_")[-1]
                     metrics["seg"].update({metric_name: value})
-                elif key.startswith("test/reg"):
+                elif key.startswith("test_reg"):
                     if "reg" not in metrics:
                         metrics["reg"] = {}
-                    metric_name = key.split("/")[-1]
+                    metric_name = key.split("_")[-1]
                     metrics["reg"].update({metric_name: value})
 
         tables = []

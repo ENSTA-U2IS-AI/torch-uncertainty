@@ -15,7 +15,7 @@ trainer:
   callbacks:
   - class_path: lightning.pytorch.callbacks.ModelCheckpoint
     init_args:
-      monitor: val/reg/NLL
+      monitor: val_reg_NLL
       mode: min
       save_last: true
   - class_path: lightning.pytorch.callbacks.LearningRateMonitor
@@ -23,7 +23,7 @@ trainer:
       logging_interval: step
   - class_path: lightning.pytorch.callbacks.EarlyStopping
     init_args:
-      monitor: val/reg/NLL
+      monitor: val_reg_NLL
       patience: 1000
       check_finite: true
 model:

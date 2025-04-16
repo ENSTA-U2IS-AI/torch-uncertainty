@@ -27,7 +27,7 @@ class TestCLI:
             "--data.batch_size",
             "4",
             "--trainer.callbacks+=ModelCheckpoint",
-            "--trainer.callbacks.monitor=val/cls/Acc",
+            "--trainer.callbacks.monitor=val_cls_Acc",
             "--trainer.callbacks.mode=max",
         ]
         cli = TULightningCLI(ResNetBaseline, CIFAR10DataModule, run=False)

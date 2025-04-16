@@ -101,20 +101,20 @@ class RegressionRoutine(LightningModule):
         """Initialize the metrics depending on the exact task."""
         reg_metrics = MetricCollection(
             {
-                "reg/MAE": MeanAbsoluteError(),
-                "reg/MSE": MeanSquaredError(squared=True),
-                "reg/RMSE": MeanSquaredError(squared=False),
+                "reg_MAE": MeanAbsoluteError(),
+                "reg_MSE": MeanSquaredError(squared=True),
+                "reg_RMSE": MeanSquaredError(squared=False),
             },
             compute_groups=True,
         )
 
-        self.val_metrics = reg_metrics.clone(prefix="val/")
-        self.test_metrics = reg_metrics.clone(prefix="test/")
+        self.val_metrics = reg_metrics.clone(prefix="val_")
+        self.test_metrics = reg_metrics.clone(prefix="test_")
 
         if self.probabilistic:
-            reg_prob_metrics = MetricCollection({"reg/NLL": DistributionNLL(reduction="mean")})
-            self.val_prob_metrics = reg_prob_metrics.clone(prefix="val/")
-            self.test_prob_metrics = reg_prob_metrics.clone(prefix="test/")
+            reg_prob_metrics = MetricCollection({"reg_NLL": DistributionNLL(reduction="mean")})
+            self.val_prob_metrics = reg_prob_metrics.clone(prefix="val_")
+            self.test_prob_metrics = reg_prob_metrics.clone(prefix="test_")
 
     def configure_optimizers(self) -> Optimizer | dict:
         return self.optim_recipe
@@ -289,7 +289,7 @@ class RegressionRoutine(LightningModule):
         self.log_dict(res_dict, logger=True, sync_dist=True)
         self.log(
             "RMSE",
-            res_dict["val/reg/RMSE"],
+            res_dict["valreg_RMSE"],
             prog_bar=True,
             logger=False,
             sync_dist=True,

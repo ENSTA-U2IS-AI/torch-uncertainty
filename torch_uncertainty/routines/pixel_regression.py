@@ -114,28 +114,28 @@ class PixelRegressionRoutine(LightningModule):
         """Initialize the metrics depending on the exact task."""
         depth_metrics = MetricCollection(
             {
-                "reg/SILog": SILog(),
-                "reg/log10": Log10(),
-                "reg/ARE": MeanGTRelativeAbsoluteError(),
-                "reg/RSRE": MeanGTRelativeSquaredError(squared=False),
-                "reg/RMSE": MeanSquaredError(squared=False),
-                "reg/RMSELog": MeanSquaredLogError(squared=False),
-                "reg/iMAE": MeanAbsoluteErrorInverse(),
-                "reg/iRMSE": MeanSquaredErrorInverse(squared=False),
-                "reg/d1": ThresholdAccuracy(power=1),
-                "reg/d2": ThresholdAccuracy(power=2),
-                "reg/d3": ThresholdAccuracy(power=3),
+                "reg_SILog": SILog(),
+                "reg_log10": Log10(),
+                "reg_ARE": MeanGTRelativeAbsoluteError(),
+                "reg_RSRE": MeanGTRelativeSquaredError(squared=False),
+                "reg_RMSE": MeanSquaredError(squared=False),
+                "reg_RMSELog": MeanSquaredLogError(squared=False),
+                "reg_iMAE": MeanAbsoluteErrorInverse(),
+                "reg_iRMSE": MeanSquaredErrorInverse(squared=False),
+                "reg_d1": ThresholdAccuracy(power=1),
+                "reg_d2": ThresholdAccuracy(power=2),
+                "reg_d3": ThresholdAccuracy(power=3),
             },
             compute_groups=False,
         )
 
-        self.val_metrics = depth_metrics.clone(prefix="val/")
-        self.test_metrics = depth_metrics.clone(prefix="test/")
+        self.val_metrics = depth_metrics.clone(prefix="val_")
+        self.test_metrics = depth_metrics.clone(prefix="test_")
 
         if self.probabilistic:
-            depth_prob_metrics = MetricCollection({"reg/NLL": DistributionNLL(reduction="mean")})
-            self.val_prob_metrics = depth_prob_metrics.clone(prefix="val/")
-            self.test_prob_metrics = depth_prob_metrics.clone(prefix="test/")
+            depth_prob_metrics = MetricCollection({"reg_NLL": DistributionNLL(reduction="mean")})
+            self.val_prob_metrics = depth_prob_metrics.clone(prefix="val_")
+            self.test_prob_metrics = depth_prob_metrics.clone(prefix="test_")
 
     def configure_optimizers(self) -> Optimizer | dict:
         return self.optim_recipe
@@ -322,7 +322,7 @@ class PixelRegressionRoutine(LightningModule):
         self.log_dict(res_dict, logger=True, sync_dist=True)
         self.log(
             "RMSE",
-            res_dict["val/reg/RMSE"],
+            res_dict["val_reg_RMSE"],
             prog_bar=True,
             logger=False,
             sync_dist=True,

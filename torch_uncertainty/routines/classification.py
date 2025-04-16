@@ -191,47 +191,47 @@ class ClassificationRoutine(LightningModule):
         task = "binary" if self.binary_cls else "multiclass"
 
         metrics_dict = {
-            "cls/Acc": Accuracy(task=task, num_classes=self.num_classes),
-            "cls/Brier": BrierScore(num_classes=self.num_classes),
-            "cls/NLL": CategoricalNLL(),
-            "cal/ECE": CalibrationError(
+            "cls_Acc": Accuracy(task=task, num_classes=self.num_classes),
+            "cls_Brier": BrierScore(num_classes=self.num_classes),
+            "cls_NLL": CategoricalNLL(),
+            "cal_ECE": CalibrationError(
                 task=task,
                 num_bins=self.num_bins_cal_err,
                 num_classes=self.num_classes,
             ),
-            "cal/aECE": CalibrationError(
+            "cal_aECE": CalibrationError(
                 task=task,
                 adaptive=True,
                 num_bins=self.num_bins_cal_err,
                 num_classes=self.num_classes,
             ),
-            "sc/AURC": AURC(),
-            "sc/AUGRC": AUGRC(),
-            "sc/Cov@5Risk": CovAt5Risk(),
-            "sc/Risk@80Cov": RiskAt80Cov(),
+            "sc_AURC": AURC(),
+            "sc_AUGRC": AUGRC(),
+            "sc_Cov@5Risk": CovAt5Risk(),
+            "sc_Risk@80Cov": RiskAt80Cov(),
         }
         groups = [
-            ["cls/Acc"],
-            ["cls/Brier"],
-            ["cls/NLL"],
-            ["cal/ECE", "cal/aECE"],
-            ["sc/AURC", "sc/AUGRC", "sc/Cov@5Risk", "sc/Risk@80Cov"],
+            ["cls_Acc"],
+            ["cls_Brier"],
+            ["cls_NLL"],
+            ["cal_ECE", "cal_aECE"],
+            ["sc_AURC", "sc_AUGRC", "sc_Cov@5Risk", "sc_Risk@80Cov"],
         ]
 
         if self.binary_cls:
             metrics_dict |= {
-                "cls/AUROC": BinaryAUROC(),
-                "cls/AUPR": BinaryAveragePrecision(),
-                "cls/FRP95": FPR95(pos_label=1),
+                "cls_AUROC": BinaryAUROC(),
+                "cls_AUPR": BinaryAveragePrecision(),
+                "cls_FRP95": FPR95(pos_label=1),
             }
-            groups.extend([["cls/AUROC", "cls/AUPR"], ["cls/FRP95"]])
+            groups.extend([["cls_AUROC", "cls_AUPR"], ["cls_FRP95"]])
 
         cls_metrics = MetricCollection(metrics_dict, compute_groups=groups)
-        self.val_cls_metrics = cls_metrics.clone(prefix="val/")
-        self.test_cls_metrics = cls_metrics.clone(prefix="test/")
+        self.val_cls_metrics = cls_metrics.clone(prefix="val_")
+        self.test_cls_metrics = cls_metrics.clone(prefix="test_")
 
         if self.post_processing is not None:
-            self.post_cls_metrics = cls_metrics.clone(prefix="test/post/")
+            self.post_cls_metrics = cls_metrics.clone(prefix="test_post_")
 
         self.test_id_entropy = Entropy()
 
@@ -244,11 +244,11 @@ class ClassificationRoutine(LightningModule):
                 },
                 compute_groups=[["AUROC", "AUPR"], ["FPR95"]],
             )
-            self.test_ood_metrics = ood_metrics.clone(prefix="ood/")
+            self.test_ood_metrics = ood_metrics.clone(prefix="ood_")
             self.test_ood_entropy = Entropy()
 
         if self.eval_shift:
-            self.test_shift_metrics = cls_metrics.clone(prefix="shift/")
+            self.test_shift_metrics = cls_metrics.clone(prefix="shift_")
 
         # metrics for ensembles only
         if self.is_ensemble:
@@ -260,18 +260,18 @@ class ClassificationRoutine(LightningModule):
                 }
             )
 
-            self.test_id_ens_metrics = ens_metrics.clone(prefix="test/ens_")
+            self.test_id_ens_metrics = ens_metrics.clone(prefix="test_ens_")
 
             if self.eval_ood:
-                self.test_ood_ens_metrics = ens_metrics.clone(prefix="ood/ens_")
+                self.test_ood_ens_metrics = ens_metrics.clone(prefix="ood_ens_")
 
             if self.eval_shift:
-                self.test_shift_ens_metrics = ens_metrics.clone(prefix="shift/ens_")
+                self.test_shift_ens_metrics = ens_metrics.clone(prefix="shift_ens_")
 
         if self.eval_grouping_loss:
-            grouping_loss = MetricCollection({"cls/grouping_loss": GroupingLoss()})
-            self.val_grouping_loss = grouping_loss.clone(prefix="val/")
-            self.test_grouping_loss = grouping_loss.clone(prefix="test/")
+            grouping_loss = MetricCollection({"cls_grouping_loss": GroupingLoss()})
+            self.val_grouping_loss = grouping_loss.clone(prefix="val_")
+            self.test_grouping_loss = grouping_loss.clone(prefix="test_")
 
     def _init_mixup(self, mixup_params: dict | None) -> Callable:
         """Setup the optional mixup augmentation based on the :attr:`mixup_params` dict.
@@ -502,7 +502,7 @@ class ClassificationRoutine(LightningModule):
             self.log_dict(self.test_cls_metrics, on_epoch=True, add_dataloader_idx=False)
             self.test_id_entropy(probs)
             self.log(
-                "test/cls/Entropy",
+                "test_cls_Entropy",
                 self.test_id_entropy,
                 on_epoch=True,
                 add_dataloader_idx=False,
@@ -529,7 +529,7 @@ class ClassificationRoutine(LightningModule):
             self.test_ood_metrics.update(ood_scores, torch.ones_like(targets))
             self.test_ood_entropy(probs)
             self.log(
-                "ood/Entropy",
+                "ood_Entropy",
                 self.test_ood_entropy,
                 on_epoch=True,
                 add_dataloader_idx=False,
@@ -551,7 +551,7 @@ class ClassificationRoutine(LightningModule):
         self.log_dict(res_dict, logger=True, sync_dist=True)
         self.log(
             "Acc%",
-            res_dict["val/cls/Acc"] * 100,
+            res_dict["val_cls_Acc"] * 100,
             prog_bar=True,
             logger=False,
             sync_dist=True,
@@ -568,7 +568,7 @@ class ClassificationRoutine(LightningModule):
         result_dict = self.test_cls_metrics.compute()
 
         # already logged
-        result_dict.update({"test/Entropy": self.test_id_entropy.compute()}, sync_dist=True)
+        result_dict.update({"test_Entropy": self.test_id_entropy.compute()}, sync_dist=True)
 
         if self.post_processing is not None:
             tmp_metrics = self.post_cls_metrics.compute()
@@ -592,7 +592,7 @@ class ClassificationRoutine(LightningModule):
             result_dict.update(tmp_metrics)
 
             # already logged
-            result_dict.update({"ood/Entropy": self.test_ood_entropy.compute()})
+            result_dict.update({"ood_Entropy": self.test_ood_entropy.compute()})
 
             if self.is_ensemble:
                 tmp_metrics = self.test_ood_ens_metrics.compute()
@@ -602,7 +602,7 @@ class ClassificationRoutine(LightningModule):
         if self.eval_shift:
             tmp_metrics = self.test_shift_metrics.compute()
             shift_severity = self.trainer.datamodule.shift_severity
-            tmp_metrics["shift/shift_severity"] = shift_severity
+            tmp_metrics["shift_shift_severity"] = shift_severity
             self.log_dict(tmp_metrics, sync_dist=True)
             result_dict.update(tmp_metrics)
 
@@ -613,21 +613,21 @@ class ClassificationRoutine(LightningModule):
 
         if isinstance(self.logger, Logger) and self.log_plots:
             self.logger.experiment.add_figure(
-                "Reliabity diagram", self.test_cls_metrics["cal/ECE"].plot()[0]
+                "Reliabity diagram", self.test_cls_metrics["cal_ECE"].plot()[0]
             )
             self.logger.experiment.add_figure(
                 "Risk-Coverage curve",
-                self.test_cls_metrics["sc/AURC"].plot()[0],
+                self.test_cls_metrics["sc_AURC"].plot()[0],
             )
             self.logger.experiment.add_figure(
                 "Generalized Risk-Coverage curve",
-                self.test_cls_metrics["sc/AUGRC"].plot()[0],
+                self.test_cls_metrics["sc_AUGRC"].plot()[0],
             )
 
             if self.post_processing is not None:
                 self.logger.experiment.add_figure(
                     "Reliabity diagram after calibration",
-                    self.post_cls_metrics["cal/ECE"].plot()[0],
+                    self.post_cls_metrics["cal_ECE"].plot()[0],
                 )
 
             # plot histograms of logits and likelihoods

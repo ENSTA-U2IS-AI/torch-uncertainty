@@ -105,46 +105,46 @@ class SegmentationRoutine(LightningModule):
         """Initialize the metrics depending on the exact task."""
         seg_metrics = MetricCollection(
             {
-                "seg/mIoU": MeanIntersectionOverUnion(num_classes=self.num_classes),
+                "seg_mIoU": MeanIntersectionOverUnion(num_classes=self.num_classes),
             },
             compute_groups=False,
         )
         sbsmpl_seg_metrics = MetricCollection(
             {
-                "seg/mAcc": Accuracy(
+                "seg_mAcc": Accuracy(
                     task="multiclass", average="macro", num_classes=self.num_classes
                 ),
-                "seg/Brier": BrierScore(num_classes=self.num_classes),
-                "seg/NLL": CategoricalNLL(),
-                "seg/pixAcc": Accuracy(task="multiclass", num_classes=self.num_classes),
-                "cal/ECE": CalibrationError(
+                "seg_Brier": BrierScore(num_classes=self.num_classes),
+                "seg_NLL": CategoricalNLL(),
+                "seg_pixAcc": Accuracy(task="multiclass", num_classes=self.num_classes),
+                "cal_ECE": CalibrationError(
                     task="multiclass",
                     num_classes=self.num_classes,
                     num_bins=self.num_bins_cal_err,
                 ),
-                "cal/aECE": CalibrationError(
+                "cal_aECE": CalibrationError(
                     task="multiclass",
                     adaptive=True,
                     num_classes=self.num_classes,
                     num_bins=self.num_bins_cal_err,
                 ),
-                "sc/AURC": AURC(),
-                "sc/AUGRC": AUGRC(),
+                "sc_AURC": AURC(),
+                "sc_AUGRC": AUGRC(),
             },
             compute_groups=[
-                ["seg/mAcc"],
-                ["seg/Brier"],
-                ["seg/NLL"],
-                ["seg/pixAcc"],
-                ["cal/ECE", "cal/aECE"],
-                ["sc/AURC", "sc/AUGRC"],
+                ["seg_mAcc"],
+                ["seg_Brier"],
+                ["seg_NLL"],
+                ["seg_pixAcc"],
+                ["cal_ECE", "cal_aECE"],
+                ["sc_AURC", "sc_AUGRC"],
             ],
         )
 
-        self.val_seg_metrics = seg_metrics.clone(prefix="val/")
-        self.val_sbsmpl_seg_metrics = sbsmpl_seg_metrics.clone(prefix="val/")
-        self.test_seg_metrics = seg_metrics.clone(prefix="test/")
-        self.test_sbsmpl_seg_metrics = sbsmpl_seg_metrics.clone(prefix="test/")
+        self.val_seg_metrics = seg_metrics.clone(prefix="val_")
+        self.val_sbsmpl_seg_metrics = sbsmpl_seg_metrics.clone(prefix="val_")
+        self.test_seg_metrics = seg_metrics.clone(prefix="test_")
+        self.test_sbsmpl_seg_metrics = sbsmpl_seg_metrics.clone(prefix="test_")
 
     def configure_optimizers(self) -> Optimizer | dict:
         return self.optim_recipe
@@ -260,7 +260,7 @@ class SegmentationRoutine(LightningModule):
         self.log_dict(res_dict, logger=True, sync_dist=True)
         self.log(
             "mIoU%",
-            res_dict["val/seg/mIoU"] * 100,
+            res_dict["val_seg_mIoU"] * 100,
             prog_bar=True,
             sync_dist=True,
         )
@@ -275,15 +275,15 @@ class SegmentationRoutine(LightningModule):
         if isinstance(self.logger, Logger) and self.log_plots:
             self.logger.experiment.add_figure(
                 "Calibration/Reliabity diagram",
-                self.test_sbsmpl_seg_metrics["cal/ECE"].plot()[0],
+                self.test_sbsmpl_seg_metrics["cal_ECE"].plot()[0],
             )
             self.logger.experiment.add_figure(
                 "Selective Classification/Risk-Coverage curve",
-                self.test_sbsmpl_seg_metrics["sc/AURC"].plot()[0],
+                self.test_sbsmpl_seg_metrics["sc_AURC"].plot()[0],
             )
             self.logger.experiment.add_figure(
                 "Selective Classification/Generalized Risk-Coverage curve",
-                self.test_sbsmpl_seg_metrics["sc/AUGRC"].plot()[0],
+                self.test_sbsmpl_seg_metrics["sc_AUGRC"].plot()[0],
             )
             if self.trainer.datamodule is not None:
                 self.log_segmentation_plots()
