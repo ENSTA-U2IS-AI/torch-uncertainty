@@ -41,7 +41,9 @@ class TestDeepEnsemblesModel:
         assert de.core_models[0].linear.weight.device == torch.device("cpu")
         assert de.core_models[1].linear.weight.device == torch.device("cpu")
 
-        inputs = torch.randn(3, 4, 1).cuda()
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+
+        inputs = torch.randn(3, 4, 1).to(device)
         out = de(inputs)
         assert out.device == inputs.device
         assert de.core_models[0].linear.weight.device == torch.device("cpu")
