@@ -10,7 +10,7 @@ from tests._dummies import (
 )
 from torch_uncertainty import TUTrainer
 from torch_uncertainty.losses import DECLoss, ELBOLoss
-from torch_uncertainty.ood_criteria import (
+from torch_uncertainty.ood.ood_criteria import (
     EntropyCriterion,
 )
 from torch_uncertainty.routines import ClassificationRoutine

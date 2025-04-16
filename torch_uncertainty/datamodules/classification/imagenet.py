@@ -9,6 +9,7 @@ from timm.data.mixup import Mixup
 from torch import nn
 from torch.utils.data import DataLoader, Subset
 from torchvision.datasets import DTD, SVHN, ImageNet, INaturalist
+from torch_uncertainty.datasets.ood import ninco
 from torchvision.transforms import v2
 
 from torch_uncertainty.datamodules import TUDataModule
@@ -52,7 +53,6 @@ class ImageNetDataModule(TUDataModule):
         shift_severity: int = 1,
         val_split: float | Path | None = None,
         postprocess_set: Literal["val", "test"] = "val",
-        ood_ds: str = "openimage-o",
         test_alt: str | None = None,
         procedure: str | None = None,
         train_size: int = 224,
@@ -62,6 +62,8 @@ class ImageNetDataModule(TUDataModule):
         num_workers: int = 1,
         pin_memory: bool = True,
         persistent_workers: bool = True,
+        near_ood_datasets: list = None,
+        far_ood_datasets: list = None,
     ) -> None:
         """DataModule for the ImageNet dataset.
 
@@ -115,7 +117,6 @@ class ImageNetDataModule(TUDataModule):
             val_split = Path(val_split)
             self.train_indices, self.val_indices = read_indices(val_split)
         self.val_split = val_split
-        self.ood_ds = ood_ds
         self.test_alt = test_alt
         self.interpolation = interpolation_modes_from_str(interpolation)
 
@@ -130,18 +131,10 @@ class ImageNetDataModule(TUDataModule):
         else:
             raise ValueError(f"The alternative {test_alt} is not known.")
 
-        if ood_ds == "inaturalist":
-            self.ood_dataset = INaturalist
-        elif ood_ds == "imagenet-o":
-            self.ood_dataset = ImageNetO
-        elif ood_ds == "svhn":
-            self.ood_dataset = SVHN
-        elif ood_ds == "textures":
-            self.ood_dataset = DTD
-        elif ood_ds == "openimage-o":
-            self.ood_dataset = OpenImageO
-        else:
-            raise ValueError(f"The dataset {ood_ds} is not supported.")
+
+        self.near_ood_datasets = near_ood_datasets or [DTD]  # List of near OOD dataset classes
+        self.far_ood_datasets = far_ood_datasets or [DTD]    # List of far OOD dataset classes
+
         self.shift_dataset = ImageNetC
 
         self.procedure = procedure
@@ -207,30 +200,26 @@ class ImageNetDataModule(TUDataModule):
             self.data = self.dataset(
                 self.root,
                 split="val",
-                download=True,
+                download=False,
             )
         if self.eval_ood:
-            if self.ood_ds == "inaturalist":
-                self.ood = self.ood_dataset(
-                    self.root,
-                    version="2021_valid",
-                    download=True,
-                    transform=self.test_transform,
-                )
-            elif self.ood_ds != "textures":
-                self.ood = self.ood_dataset(
-                    self.root,
-                    split="test",
-                    download=True,
-                    transform=self.test_transform,
-                )
-            else:
-                self.ood = self.ood_dataset(
-                    self.root,
-                    split="train",
-                    download=True,
-                    transform=self.test_transform,
-                )
+
+            for near_ds_cls in self.near_ood_datasets:
+                if near_ds_cls.__name__ == "INaturalist":
+                    near_ds_cls(self.root, version="2021_valid", download=True)
+                elif "split" in near_ds_cls.__init__.__code__.co_varnames:
+                    near_ds_cls(self.root, split="test", download=True)
+                else:
+                    near_ds_cls(self.root, train=False, download=True)
+
+            for far_ds_cls in self.far_ood_datasets:
+                if far_ds_cls.__name__ == "INaturalist":
+                    far_ds_cls(self.root, version="2021_train", download=True)
+                elif "split" in far_ds_cls.__init__.__code__.co_varnames:
+                    far_ds_cls(self.root, split="test", download=True)
+                else:
+                    far_ds_cls(self.root, train=False, download=True)
+
         if self.eval_shift:
             self.shift_dataset(
                 self.root,
@@ -276,18 +265,48 @@ class ImageNetDataModule(TUDataModule):
             raise ValueError(f"Stage {stage} is not supported.")
 
         if self.eval_ood:
-            if self.ood_ds == "inaturalist":
-                self.ood = self.ood_dataset(
-                    self.root,
-                    version="2021_valid",
-                    transform=self.test_transform,
-                )
-            else:
-                self.ood = self.ood_dataset(
-                    self.root,
-                    transform=self.test_transform,
-                    download=True,
-                )
+            self.near_oods = []
+            for near_ds_cls in self.near_ood_datasets:
+                if near_ds_cls.__name__ == "INaturalist":
+                    ds = near_ds_cls(
+                        self.root,
+                        version="2021_train",
+                        transform=self.test_transform,
+                    )
+                elif "split" in near_ds_cls.__init__.__code__.co_varnames:
+                    ds = near_ds_cls(
+                        self.root,
+                        split="test",
+                        transform=self.test_transform,
+                    )
+                else:
+                    ds = near_ds_cls(
+                        self.root,
+                        train=False,
+                        transform=self.test_transform,
+                    )
+                self.near_oods.append(ds)
+            self.far_oods = []
+            for far_ds_cls in self.far_ood_datasets:
+                if far_ds_cls.__name__ == "INaturalist":
+                    ds = far_ds_cls(
+                        self.root,
+                        version="2021_valid",
+                        transform=self.test_transform,
+                    )
+                elif "split" in far_ds_cls.__init__.__code__.co_varnames:
+                    ds = far_ds_cls(
+                        self.root,
+                        split="test",
+                        transform=self.test_transform,
+                    )
+                else:
+                    ds = far_ds_cls(
+                        self.root,
+                        train=False,
+                        transform=self.test_transform,
+                    )
+                self.far_oods.append(ds)
 
         if self.eval_shift:
             self.shift = self.shift_dataset(
@@ -306,10 +325,45 @@ class ImageNetDataModule(TUDataModule):
         """
         dataloader = [self._data_loader(self.test, training=False)]
         if self.eval_ood:
-            dataloader.append(self._data_loader(self.ood, training=False))
+            for ds in self.near_oods:
+                dataloader.append(self._data_loader(ds, training=False))
+            for ds in self.far_oods:
+                dataloader.append(self._data_loader(ds, training=False))
         if self.eval_shift:
             dataloader.append(self._data_loader(self.shift, training=False))
         return dataloader
+    
+    def get_indices(self) -> dict[str, list[int]]:
+        r"""Compute the positions (indices) of the near, far, and shift loaders
+         in the final test_dataloader list.
+
+        Returns:
+        dict[str, list[int]]: A dictionary with keys "near", "far", and "shift".
+        Each key maps to a list of indices (or a single-element list for "shift")
+        indicating the position(s) of the corresponding loader(s) within the
+        final test_dataloader list.
+         """
+    
+        indices = {}
+        offset = 1 
+    
+        if self.eval_ood:
+
+            indices["near"] = list(range(offset, offset + len(self.near_oods)))
+            offset += len(self.near_oods)
+        
+            indices["far"] = list(range(offset, offset + len(self.far_oods)))
+            offset += len(self.far_oods)
+        else:
+            indices["near"] = []
+            indices["far"] = []
+    
+        if self.eval_shift:
+            indices["shift"] = [offset] 
+        else:
+            indices["shift"] = []
+    
+        return indices
 
 
 def read_indices(path: Path) -> list[str]:  # coverage: ignore
@@ -326,3 +380,5 @@ def read_indices(path: Path) -> list[str]:  # coverage: ignore
     with path.open("r") as f:
         indices = yaml.safe_load(f)
         return indices["train"], indices["val"]
+
+

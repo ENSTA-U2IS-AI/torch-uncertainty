@@ -11,7 +11,7 @@ from torch_uncertainty.models.wideresnet import (
     packed_wideresnet28x10,
     wideresnet28x10,
 )
-from torch_uncertainty.ood_criteria import TUOODCriterion
+from torch_uncertainty.ood.ood_criteria import TUOODCriterion
 from torch_uncertainty.routines.classification import (
     ClassificationRoutine,
 )

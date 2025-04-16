@@ -7,7 +7,8 @@ from numpy.typing import ArrayLike
 from timm.data.auto_augment import rand_augment_transform
 from torch import nn
 from torch.utils.data import DataLoader
-from torchvision.datasets import CIFAR100, SVHN
+from torchvision.datasets import CIFAR10, SVHN, CIFAR100 , MNIST, SVHN, DTD, Places365
+from torch_uncertainty.datasets.classification import TinyImageNet
 from torchvision.transforms import v2
 
 from torch_uncertainty.datamodules import TUDataModule
@@ -43,6 +44,8 @@ class CIFAR100DataModule(TUDataModule):
         num_workers: int = 1,
         pin_memory: bool = True,
         persistent_workers: bool = True,
+        near_ood_datasets: list = None,
+        far_ood_datasets: list = None,
     ) -> None:
         """DataModule for CIFAR100.
 
@@ -95,6 +98,9 @@ class CIFAR100DataModule(TUDataModule):
 
         self.shift_severity = shift_severity
 
+        self.near_ood_datasets = near_ood_datasets or [CIFAR10,TinyImageNet]  # List of near OOD dataset classes
+        self.far_ood_datasets = far_ood_datasets or [SVHN, MNIST,DTD]    # List of far OOD dataset classes
+
         if (cutout is not None) + randaugment + int(auto_augment is not None) > 1:
             raise ValueError(
                 "Only one data augmentation can be chosen at a time. Raise a "
@@ -132,6 +138,8 @@ class CIFAR100DataModule(TUDataModule):
         self.test_transform = v2.Compose(
             [
                 v2.ToImage(),
+                v2.Resize(32),
+                v2.CenterCrop(32), 
                 v2.ToDtype(dtype=torch.float32, scale=True),
                 v2.Normalize(mean=self.mean, std=self.std),
             ]
@@ -142,12 +150,18 @@ class CIFAR100DataModule(TUDataModule):
         self.dataset(self.root, train=False, download=True)
 
         if self.eval_ood:
-            self.ood_dataset(
-                self.root,
-                split="test",
-                download=True,
-                transform=self.test_transform,
-            )
+            for near_ds_cls in self.near_ood_datasets:
+                 if "split" in near_ds_cls.__init__.__code__.co_varnames:
+                    near_ds_cls(self.root, split="test", download=True)
+                 else:
+                    near_ds_cls(self.root, train=False, download=True)
+
+            for far_ds_cls in self.far_ood_datasets:
+                if "split" in far_ds_cls.__init__.__code__.co_varnames:
+                    far_ds_cls(self.root, split="test", download=True)
+                else:
+                    far_ds_cls(self.root, train=False, download=True)
+
         if self.eval_shift:
             self.shift_dataset(
                 self.root,
@@ -186,12 +200,37 @@ class CIFAR100DataModule(TUDataModule):
                 transform=self.test_transform,
             )
             if self.eval_ood:
-                self.ood = self.ood_dataset(
-                    self.root,
-                    split="test",
-                    download=False,
-                    transform=self.test_transform,
-                )
+                self.near_oods = []
+                for near_ds_cls in self.near_ood_datasets:
+                    if "split" in near_ds_cls.__init__.__code__.co_varnames:
+                        ds = near_ds_cls(
+                            self.root,
+                            split="test",
+                            transform=self.test_transform,
+                        )
+                    else:
+                        ds = near_ds_cls(
+                            self.root,
+                            train=False,
+                            transform=self.test_transform,
+                        )
+                    self.near_oods.append(ds)
+                self.far_oods = []
+                for far_ds_cls in self.far_ood_datasets:
+                    if "split" in far_ds_cls.__init__.__code__.co_varnames:
+                        ds = far_ds_cls(
+                            self.root,
+                            split="test",
+                            transform=self.test_transform,
+                        )
+                    else:
+                        ds = far_ds_cls(
+                            self.root,
+                            train=False,
+                            transform=self.test_transform,
+                        )
+                    self.far_oods.append(ds)
+
             if self.eval_shift:
                 self.shift = self.shift_dataset(
                     self.root,
@@ -223,7 +262,10 @@ class CIFAR100DataModule(TUDataModule):
         """
         dataloader = [self._data_loader(self.test, training=False)]
         if self.eval_ood:
-            dataloader.append(self._data_loader(self.ood, training=False))
+            for ds in self.near_oods:
+                dataloader.append(self._data_loader(ds, training=False))
+            for ds in self.far_oods:
+                dataloader.append(self._data_loader(ds, training=False))
         if self.eval_shift:
             dataloader.append(self._data_loader(self.shift, training=False))
         return dataloader
@@ -237,3 +279,35 @@ class CIFAR100DataModule(TUDataModule):
         if self.val_split:
             return np.array(self.train.dataset.targets)[self.train.indices]
         return np.array(self.train.targets)
+
+    def get_indices(self) -> dict[str, list[int]]:
+        r"""Compute the positions (indices) of the near, far, and shift loaders
+         in the final test_dataloader list.
+
+        Returns:
+        dict[str, list[int]]: A dictionary with keys "near", "far", and "shift".
+        Each key maps to a list of indices (or a single-element list for "shift")
+        indicating the position(s) of the corresponding loader(s) within the
+        final test_dataloader list.
+         """
+    
+        indices = {}
+        offset = 1 
+    
+        if self.eval_ood:
+
+            indices["near"] = list(range(offset, offset + len(self.near_oods)))
+            offset += len(self.near_oods)
+        
+            indices["far"] = list(range(offset, offset + len(self.far_oods)))
+            offset += len(self.far_oods)
+        else:
+            indices["near"] = []
+            indices["far"] = []
+    
+        if self.eval_shift:
+            indices["shift"] = [offset] 
+        else:
+            indices["shift"] = []
+    
+        return indices

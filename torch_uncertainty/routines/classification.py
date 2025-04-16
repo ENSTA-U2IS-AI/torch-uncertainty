@@ -36,7 +36,7 @@ from torch_uncertainty.models import (
     EPOCH_UPDATE_MODEL,
     STEP_UPDATE_MODEL,
 )
-from torch_uncertainty.ood_criteria import (
+from torch_uncertainty.ood.ood_criteria import (
     OODCriterionInputType,
     TUOODCriterion,
     get_ood_criterion,
