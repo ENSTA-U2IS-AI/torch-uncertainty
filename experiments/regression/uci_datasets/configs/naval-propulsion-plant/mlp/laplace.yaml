@@ -13,11 +13,9 @@ trainer:
       name: standard
       default_hp_metric: false
   callbacks:
-  - class_path: lightning.pytorch.callbacks.ModelCheckpoint
+  - class_path: torch_uncertainty.callbacks.TURegCheckpoint
     init_args:
-      monitor: val_reg_NLL
-      mode: min
-      save_last: true
+      probabilistic: true
   - class_path: lightning.pytorch.callbacks.LearningRateMonitor
     init_args:
       logging_interval: step
