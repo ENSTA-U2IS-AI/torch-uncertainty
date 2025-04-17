@@ -55,6 +55,9 @@ class TUCheckpoint(Checkpoint):
         for key, callback in self.callbacks.items():
             callback.load_state_dict(state_dict=state_dict[key])
 
+    @property
+    def best_model_path(self) -> str: ...
+
 
 class TUClsCheckpoint(TUCheckpoint):
     def __init__(self):
@@ -82,12 +85,16 @@ class TUClsCheckpoint(TUCheckpoint):
             ),
         }
 
+    @property
+    def best_model_path(self) -> str:
+        return self.callbacks["acc"].best_model_path
+
 
 class TUSegCheckpoint(TUCheckpoint):
     def __init__(self):
         super().__init__()
         self.callbacks = {
-            "acc": ModelCheckpoint(
+            "miou": ModelCheckpoint(
                 filename="{epoch}-{step}-{val_seg_mIoU:.2f}",
                 monitor="val_seg_mIoU",
                 mode="max",
@@ -108,3 +115,30 @@ class TUSegCheckpoint(TUCheckpoint):
                 mode="min",
             ),
         }
+
+    @property
+    def best_model_path(self) -> str:
+        return self.callbacks["miou"].best_model_path
+
+
+class TURegCheckpoint(TUCheckpoint):
+    def __init__(self, probabilistic: bool = False):
+        super().__init__()
+        self.callbacks = {
+            "mse": ModelCheckpoint(
+                filename="{epoch}-{step}-{val_reg_MSE:.2f}",
+                monitor="val_reg_MSE",
+                mode="min",
+            ),
+        }
+
+        if probabilistic:
+            self.callbacks["nll"] = ModelCheckpoint(
+                filename="{epoch}-{step}-{val_reg_NLL:.2f}",
+                monitor="val_reg_NLL",
+                mode="min",
+            )
+
+    @property
+    def best_model_path(self) -> str:
+        return self.callbacks["mse"].best_model_path
