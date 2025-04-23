@@ -269,7 +269,7 @@ class ClassificationRoutine(LightningModule):
                 self.test_shift_ens_metrics = ens_metrics.clone(prefix="shift/ens/")
 
         if self.eval_grouping_loss:
-            grouping_loss = MetricCollection({"cls/grouping/loss": GroupingLoss()})
+            grouping_loss = MetricCollection({"cls/grouping_loss": GroupingLoss()})
             self.val_grouping_loss = grouping_loss.clone(prefix="val/")
             self.test_grouping_loss = grouping_loss.clone(prefix="test/")
 
