@@ -21,7 +21,7 @@ trainer:
       logging_interval: step
   - class_path: lightning.pytorch.callbacks.EarlyStopping
     init_args:
-      monitor: val_reg_NLL
+      monitor: val/reg/NLL
       patience: 1000
       check_finite: true
 model:

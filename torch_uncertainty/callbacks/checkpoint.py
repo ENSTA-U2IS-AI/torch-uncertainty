@@ -64,24 +64,28 @@ class TUClsCheckpoint(TUCheckpoint):
         super().__init__()
         self.callbacks = {
             "acc": ModelCheckpoint(
-                filename="{epoch}-{step}-{val_cls_Acc:.2f}",
-                monitor="val_cls_Acc",
+                filename="{epoch}-{step}-val_acc={val/cls/Acc:.2f}",
+                monitor="val/cls/Acc",
                 mode="max",
+                auto_insert_metric_name=False,
             ),
             "ece": ModelCheckpoint(
-                filename="{epoch}-{step}-{val_cal_ECE:.2f}",
-                monitor="val_cal_ECE",
+                filename="{epoch}-{step}-val_ece={val/cal/ECE:.2f}",
+                monitor="val/cal/ECE",
                 mode="min",
+                auto_insert_metric_name=False,
             ),
             "brier": ModelCheckpoint(
-                filename="{epoch}-{step}-{val_cls_Brier:.2f}",
-                monitor="val_cls_Brier",
+                filename="{epoch}-{step}-val_brier={val/cls/Brier:.2f}",
+                monitor="val/cls/Brier",
                 mode="min",
+                auto_insert_metric_name=False,
             ),
             "nll": ModelCheckpoint(
-                filename="{epoch}-{step}-{val_cls_NLL:.2f}",
-                monitor="val_cls_NLL",
+                filename="{epoch}-{step}-val_nll={val/cls/NLL:.2f}",
+                monitor="val/cls/NLL",
                 mode="min",
+                auto_insert_metric_name=False,
             ),
         }
 
@@ -95,24 +99,28 @@ class TUSegCheckpoint(TUCheckpoint):
         super().__init__()
         self.callbacks = {
             "miou": ModelCheckpoint(
-                filename="{epoch}-{step}-{val_seg_mIoU:.2f}",
-                monitor="val_seg_mIoU",
+                filename="{epoch}-{step}-val_miou={val/seg/mIoU:.2f}",
+                monitor="val/seg/mIoU",
                 mode="max",
+                auto_insert_metric_name=False,
             ),
             "ece": ModelCheckpoint(
-                filename="{epoch}-{step}-{val_cal_ECE:.2f}",
-                monitor="val_cal_ECE",
+                filename="{epoch}-{step}-val_ece={val/cal/ECE:.2f}",
+                monitor="val/cal/ECE",
                 mode="min",
+                auto_insert_metric_name=False,
             ),
             "brier": ModelCheckpoint(
-                filename="{epoch}-{step}-{val_seg_Brier:.2f}",
-                monitor="val_seg_Brier",
+                filename="{epoch}-{step}-val_brier={val/seg/Brier:.2f}",
+                monitor="val/seg/Brier",
                 mode="min",
+                auto_insert_metric_name=False,
             ),
             "nll": ModelCheckpoint(
-                filename="{epoch}-{step}-{val_seg_NLL:.2f}",
-                monitor="val_seg_NLL",
+                filename="{epoch}-{step}-val_nll={val/seg/NLL:.2f}",
+                monitor="val/seg/NLL",
                 mode="min",
+                auto_insert_metric_name=False,
             ),
         }
 
@@ -126,17 +134,19 @@ class TURegCheckpoint(TUCheckpoint):
         super().__init__()
         self.callbacks = {
             "mse": ModelCheckpoint(
-                filename="{epoch}-{step}-{val_reg_MSE:.2f}",
-                monitor="val_reg_MSE",
+                filename="{epoch}-{step}-val_mse{val/reg/MSE:.2f}",
+                monitor="val/reg/MSE",
                 mode="min",
+                auto_insert_metric_name=False,
             ),
         }
 
         if probabilistic:
             self.callbacks["nll"] = ModelCheckpoint(
-                filename="{epoch}-{step}-{val_reg_NLL:.2f}",
-                monitor="val_reg_NLL",
+                filename="{epoch}-{step}-val_nll{val/reg/NLL:.2f}",
+                monitor="val/reg/NLL",
                 mode="min",
+                auto_insert_metric_name=False,
             )
 
     @property
