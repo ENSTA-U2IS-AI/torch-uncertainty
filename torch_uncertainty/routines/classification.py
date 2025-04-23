@@ -260,13 +260,13 @@ class ClassificationRoutine(LightningModule):
                 }
             )
 
-            self.test_id_ens_metrics = ens_metrics.clone(prefix="test/ens/")
+            self.test_id_ens_metrics = ens_metrics.clone(prefix="test/ens_")
 
             if self.eval_ood:
-                self.test_ood_ens_metrics = ens_metrics.clone(prefix="ood/ens/")
+                self.test_ood_ens_metrics = ens_metrics.clone(prefix="ood/ens_")
 
             if self.eval_shift:
-                self.test_shift_ens_metrics = ens_metrics.clone(prefix="shift/ens/")
+                self.test_shift_ens_metrics = ens_metrics.clone(prefix="shift/ens_")
 
         if self.eval_grouping_loss:
             grouping_loss = MetricCollection({"cls/grouping_loss": GroupingLoss()})
