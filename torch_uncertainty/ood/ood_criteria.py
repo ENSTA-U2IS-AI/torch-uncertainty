@@ -4,9 +4,12 @@ from typing import Any
 
 import torch
 from torch import Tensor, nn
-
+import numpy as np
 from torch_uncertainty.metrics import MutualInformation, VariationRatio
 from torch_uncertainty.ood.nets import *
+from tqdm import tqdm
+from omegaconf import OmegaConf
+
 
 class OODCriterionInputType(Enum):
     """Enum representing the type of input expected by the OOD (Out-of-Distribution) criteria.
@@ -39,6 +42,11 @@ class TUOODCriterion(ABC, nn.Module):
             ensemble_only (bool): Whether the criterion requires ensemble outputs.
         """
         super().__init__()
+        self.setup_flag = False
+        self.hyperparam_search_done = False
+    
+    def setup(self, net: nn.Module, id_loader_dict, ood_loader_dict):
+        pass
 
     @abstractmethod
     def forward(self, inputs: Tensor) -> Tensor:
@@ -246,7 +254,7 @@ class VariationRatioCriterion(TUOODCriterion):
 class ScaleCriterion(TUOODCriterion):
     input_type = OODCriterionInputType.DATASET
 
-    def __init__(self) -> None:
+    def __init__(self,config) -> None:
         """OOD criterion based on the maximum logit value.
 
         This criterion computes the negative of the highest logit value across
@@ -256,7 +264,9 @@ class ScaleCriterion(TUOODCriterion):
             input_type (OODCriterionInputType): Expected input type is logits.
         """
         super().__init__()
-        self.percentile = 65
+        self.args = config.postprocessor.postprocessor_args
+        self.percentile = self.args.percentile
+        self.args_dict = config.postprocessor.postprocessor_sweep
 
     def forward(self, net: nn.Module, data: Any) -> Tensor:
         net = ScaleNet(net)
@@ -264,6 +274,473 @@ class ScaleCriterion(TUOODCriterion):
         #_, pred = torch.max(output, dim=1)
         energyconf = torch.logsumexp(output.data, dim=1)
         return -energyconf
+    
+    def set_hyperparam(self, hyperparam: list):
+        self.percentile = hyperparam[0]
+
+    def get_hyperparam(self):
+        return self.percentile
+
+
+
+
+class ASHCriterion(TUOODCriterion):
+
+    input_type = OODCriterionInputType.DATASET
+    def __init__(self,config) -> None:
+        super().__init__()
+        self.args = config.postprocessor.postprocessor_args
+        self.percentile = self.args.percentile
+        self.args_dict = config.postprocessor.postprocessor_sweep
+
+
+    @torch.no_grad()
+    def forward(self, net: nn.Module, data: Any):
+        net = ASHNet(net)
+        output = net.forward_threshold(data, self.percentile)
+        #_, pred = torch.max(output, dim=1)
+        energyconf = torch.logsumexp(output.data, dim=1)
+        return -energyconf
+
+    def set_hyperparam(self, hyperparam: list):
+        self.percentile = hyperparam[0]
+
+    def get_hyperparam(self):
+        return self.percentile
+
+
+
+
+class ReactCriterion(TUOODCriterion):
+    input_type = OODCriterionInputType.DATASET
+    def __init__(self,config) -> None:
+        super().__init__()
+        self.args = config.postprocessor.postprocessor_args
+        self.percentile = self.args.percentile
+        self.args_dict = config.postprocessor.postprocessor_sweep
+
+    def setup(self, net: nn.Module,id_loader,ood_loaders):
+        if not self.setup_flag:
+            activation_log = []
+            net = ReactNet(net)
+            net.eval()
+            with torch.no_grad():
+                for batch in tqdm(id_loader['val'],
+                                  desc='Setup: ',
+                                  position=0,
+                                  leave=True):
+                    data = batch[0].cuda().float()
+                    _, feature = net(data, return_feature=True)
+                    activation_log.append(feature.data.cpu().numpy())
+
+            self.activation_log = np.concatenate(activation_log, axis=0)
+            self.setup_flag = True
+        else:
+            pass
+
+        self.threshold = np.percentile(self.activation_log.flatten(),
+                                       self.percentile)
+
+    @torch.no_grad()
+    def forward(self, net: nn.Module, data: Any):
+        net = ReactNet(net)
+        output = net.forward_threshold(data, self.threshold)
+        energyconf = torch.logsumexp(output.data, dim=1)
+        return -energyconf
+
+    def set_hyperparam(self, hyperparam: list):
+        self.percentile = hyperparam[0]
+        self.threshold = np.percentile(self.activation_log.flatten(),
+                                       self.percentile)
+        print('Threshold at percentile {:2d} over id data is: {}'.format(
+            self.percentile, self.threshold))
+
+    def get_hyperparam(self):
+        return self.percentile
+
+
+
+
+
+from statsmodels.distributions.empirical_distribution import ECDF
+
+class AdaScaleCriterion(TUOODCriterion):
+    input_type = OODCriterionInputType.DATASET
+    def __init__(self,config) -> None:
+        super().__init__()
+        self.args = config.postprocessor.postprocessor_args
+        self.percentile = self.args.percentile
+        self.k1 = self.args.k1
+        self.k2 = self.args.k2
+        self.lmbda = self.args.lmbda
+        self.o = self.args.o
+        self.args_dict = config.postprocessor.postprocessor_sweep
+
+    def setup(self, net: nn.Module,id_loader,ood_loaders):
+        net = AdaScaleANet(net)
+        if not self.setup_flag:
+            feature_log = []
+            feature_perturbed_log = []
+            feature_shift_log = []
+            net.eval()
+            self.feature_dim = net.backbone.feature_size
+            with torch.no_grad():
+                for batch in tqdm(id_loader['val'],
+                                  desc='Setup: ',
+                                  position=0,
+                                  leave=True):
+                    data = batch[0].cuda().float()
+                    with torch.enable_grad():
+                        data.requires_grad = True
+                        output, feature = net(data, return_feature=True)
+                        labels = output.detach().argmax(dim=1)
+                        net.zero_grad()
+                        score = output[torch.arange(len(labels)), labels]
+                        score.backward(torch.ones_like(labels))
+                        grad = data.grad.data.detach()
+                    feature_log.append(feature.data.cpu())
+                    data_perturbed = self.perturb(data, grad)
+                    _, feature_perturbed = net(data_perturbed,
+                                               return_feature=True)
+                    feature_shift = abs(feature - feature_perturbed)
+                    feature_shift_log.append(feature_shift.data.cpu())
+                    feature_perturbed_log.append(feature_perturbed.data.cpu())
+            all_features = torch.cat(feature_log, axis=0)
+            all_perturbed = torch.cat(feature_perturbed_log, axis=0)
+            all_shifts = torch.cat(feature_shift_log, axis=0)
+
+            total_samples = all_features.size(0)
+            num_samples = self.args.num_samples if hasattr(
+                self.args, 'num_samples') else total_samples
+            indices = torch.randperm(total_samples)[:num_samples]
+
+            self.feature_log = all_features[indices]
+            self.feature_perturbed_log = all_perturbed[indices]
+            self.feature_shift_log = all_shifts[indices]
+            self.setup_flag = True
+        else:
+            pass
+
+    @torch.no_grad()
+    def get_percentile(self, feature, feature_perturbed, feature_shift):
+        topk_indices = torch.topk(feature, dim=1, k=self.k1_)[1]
+        topk_feature_perturbed = torch.gather(
+            torch.relu(feature_perturbed), 1,
+            topk_indices)  # correction term C_o
+        topk_indices = torch.topk(feature, dim=1, k=self.k2_)[1]
+        topk_feature_shift = torch.gather(feature_shift, 1, topk_indices)  # Q
+        topk_norm = topk_feature_perturbed.sum(
+            dim=1) + self.lmbda * topk_feature_shift.sum(dim=1)  # Q^{\prime}
+        percent = 1 - self.ecdf(topk_norm.cpu())
+        percentile = self.min_percentile + percent * (self.max_percentile -
+                                                      self.min_percentile)
+        return torch.from_numpy(percentile)
+
+    @torch.no_grad()
+    def forward(self, net: nn.Module, data):
+        net = AdaScaleANet(net)
+        with torch.enable_grad():
+            data.requires_grad = True
+            output, feature = net(data, return_feature=True)
+            labels = output.detach().argmax(dim=1)
+            net.zero_grad()
+            score = output[torch.arange(len(labels)), labels]
+            score.backward(torch.ones_like(labels))
+            grad = data.grad.data.detach()
+            data.requires_grad = False
+        data_perturbed = self.perturb(data, grad)
+        _, feature_perturbed = net(data_perturbed, return_feature=True)
+        feature_shift = abs(feature - feature_perturbed)
+        percentile = self.get_percentile(feature, feature_perturbed,
+                                         feature_shift)
+        output = net.forward_threshold(feature, percentile)
+        conf = torch.logsumexp(output, dim=1)
+        return -conf
+
+    @torch.no_grad()
+    def perturb(self, data, grad):
+        batch_size, channels, height, width = data.shape
+        n_pixels = int(channels * height * width * self.o)
+        abs_grad = abs(grad).view(batch_size, channels * height * width)
+        _, topk_indices = torch.topk(abs_grad, n_pixels, dim=1, largest=False)
+        mask = torch.zeros_like(abs_grad, dtype=torch.uint8)
+        mask.scatter_(1, topk_indices, 1)
+        mask = mask.view(batch_size, channels, height, width)
+        data_ood = data + grad.sign() * mask * 0.5
+        return data_ood
+
+    def set_hyperparam(self, hyperparam: list):
+        self.percentile = hyperparam[0]
+        self.min_percentile, self.max_percentile = self.percentile[
+            0], self.percentile[1]
+        self.k1 = hyperparam[1]
+        self.k2 = hyperparam[2]
+        self.lmbda = hyperparam[3]
+        self.o = hyperparam[4]
+        self.k1_ = int(self.feature_dim * self.k1 / 100)
+        self.k2_ = int(self.feature_dim * self.k2 / 100)
+        topk_indices = torch.topk(self.feature_log, k=self.k1_, dim=1)[1]
+        topk_feature_perturbed = torch.gather(
+            torch.relu(self.feature_perturbed_log), 1, topk_indices)
+        topk_indices = torch.topk(self.feature_log, k=self.k2_, dim=1)[1]
+        topk_feature_shift_log = torch.gather(self.feature_shift_log, 1,
+                                              topk_indices)
+        sum_log = topk_feature_perturbed.sum(
+            dim=1) + self.lmbda * topk_feature_shift_log.sum(dim=1)
+        self.ecdf = ECDF(sum_log)
+
+    def get_hyperparam(self):
+        return [self.percentile, self.k1, self.k2, self.lmbda, self.o]
+
+
+
+from numpy.linalg import norm, pinv
+from scipy.special import logsumexp
+from sklearn.covariance import EmpiricalCovariance
+
+
+class VIMCriterion(TUOODCriterion):
+    input_type = OODCriterionInputType.DATASET
+    def __init__(self,config) -> None:
+        super().__init__()
+        self.args = config.postprocessor.postprocessor_args
+        self.args_dict = config.postprocessor.postprocessor_sweep
+        self.dim = self.args.dim
+
+    def setup(self, net: nn.Module,id_loader,ood_loaders):
+        if not self.setup_flag:
+            net.eval()
+
+            with torch.no_grad():
+                self.w, self.b = net.get_fc()
+                print('Extracting id training feature')
+                feature_id_train = []
+                for batch in tqdm(id_loader['train'],
+                                  desc='Setup: ',
+                                  position=0,
+                                  leave=True):
+                    data = batch[0].cuda().float()
+                    _, feature = net(data, return_feature=True)
+                    feature_id_train.append(feature.cpu().numpy())
+                feature_id_train = np.concatenate(feature_id_train, axis=0)
+                logit_id_train = feature_id_train @ self.w.T + self.b
+
+            self.u = -np.matmul(pinv(self.w), self.b)
+            ec = EmpiricalCovariance(assume_centered=True)
+            ec.fit(feature_id_train - self.u)
+            eig_vals, eigen_vectors = np.linalg.eig(ec.covariance_)
+            self.NS = np.ascontiguousarray(
+                (eigen_vectors.T[np.argsort(eig_vals * -1)[self.dim:]]).T)
+
+            vlogit_id_train = norm(np.matmul(feature_id_train - self.u,
+                                             self.NS),
+                                   axis=-1)
+            self.alpha = logit_id_train.max(
+                axis=-1).mean() / vlogit_id_train.mean()
+            print(f'{self.alpha=:.4f}')
+
+            self.setup_flag = True
+        else:
+            pass
+
+    @torch.no_grad()
+    def forward(self, net: nn.Module, data: Any):
+        _, feature_ood = net.forward(data, return_feature=True)
+        feature_ood = feature_ood.cpu()
+        logit_ood = feature_ood @ self.w.T + self.b
+        energy_ood = logsumexp(logit_ood.numpy(), axis=-1)
+        vlogit_ood = norm(np.matmul(feature_ood.numpy() - self.u, self.NS),
+                          axis=-1) * self.alpha
+        score_ood = -vlogit_ood + energy_ood
+        return -torch.from_numpy(score_ood)
+
+    def set_hyperparam(self, hyperparam: list):
+        self.dim = hyperparam[0]
+
+    def get_hyperparam(self):
+        return self.dim
+    
+
+
+
+class ODINCriterion(TUOODCriterion):
+    input_type = OODCriterionInputType.DATASET
+    def __init__(self,config) -> None:
+        super().__init__()
+        self.args = config.postprocessor.postprocessor_args
+
+        self.temperature = 1
+        self.noise = 0.0014
+        try:
+            self.input_std = [0.2470, 0.2435, 0.2616]   # // to chnage
+        except KeyError:
+            self.input_std = [0.5, 0.5, 0.5]
+        self.args_dict = config.postprocessor.postprocessor_sweep
+
+    def forward(self, net: nn.Module, data: Any):
+        data.requires_grad = True
+        output = net(data)
+
+        # Calculating the perturbation we need to add, that is,
+        # the sign of gradient of cross entropy loss w.r.t. input
+        criterion = nn.CrossEntropyLoss()
+
+        labels = output.detach().argmax(axis=1)
+
+        # Using temperature scaling
+        output = output / self.temperature
+
+        loss = criterion(output, labels)
+        loss.backward()
+
+        # Normalizing the gradient to binary in {0, 1}
+        gradient = torch.ge(data.grad.detach(), 0)
+        gradient = (gradient.float() - 0.5) * 2
+
+        # Scaling values taken from original code
+        gradient[:, 0] = (gradient[:, 0]) / self.input_std[0]
+        gradient[:, 1] = (gradient[:, 1]) / self.input_std[1]
+        gradient[:, 2] = (gradient[:, 2]) / self.input_std[2]
+
+        # Adding small perturbations to images
+        tempInputs = torch.add(data.detach(), gradient, alpha=-self.noise)
+        output = net(tempInputs)
+        output = output / self.temperature
+
+        # Calculating the confidence after adding perturbations
+        nnOutput = output.detach()
+        nnOutput = nnOutput - nnOutput.max(dim=1, keepdims=True).values
+        nnOutput = nnOutput.exp() / nnOutput.exp().sum(dim=1, keepdims=True)
+
+        conf, _ = nnOutput.max(dim=1)
+
+        return -conf
+
+    def set_hyperparam(self, hyperparam: list):
+        self.temperature = hyperparam[0]
+        self.noise = hyperparam[1]
+
+    def get_hyperparam(self):
+        return [self.temperature, self.noise]
+
+
+
+
+
+
+import faiss
+
+normalizer = lambda x: x / np.linalg.norm(x, axis=-1, keepdims=True) + 1e-10
+
+class KNNCriterion(TUOODCriterion):
+    input_type = OODCriterionInputType.DATASET
+    def __init__(self,config) -> None:
+        super().__init__()
+        self.args = config.postprocessor.postprocessor_args
+        self.K = self.args.K
+        self.activation_log = None
+        self.args_dict = config.postprocessor.postprocessor_sweep
+
+    def setup(self, net: nn.Module, id_loader_dict, ood_loader_dict):
+        if not self.setup_flag:
+            activation_log = []
+            net.eval()
+            with torch.no_grad():
+                for batch in tqdm(id_loader_dict['train'],
+                                  desc='Setup: ',
+                                  position=0,
+                                  leave=True):
+                    data = batch[0].cuda().float()
+                    _, feature = net(data, return_feature=True)
+                    activation_log.append(
+                        normalizer(feature.data.cpu().numpy()))
+
+            self.activation_log = np.concatenate(activation_log, axis=0)
+            self.index = faiss.IndexFlatL2(feature.shape[1])
+            self.index.add(self.activation_log)
+            self.setup_flag = True
+        else:
+            pass
+
+    @torch.no_grad()
+    def forward(self, net: nn.Module, data: Any):
+        _,feature = net(data, return_feature=True)
+        feature_normed = normalizer(feature.data.cpu().numpy())
+        D, _ = self.index.search(
+            feature_normed,
+            self.K,
+        )
+        kth_dist = -D[:, -1]
+        return -torch.from_numpy(kth_dist)
+
+    def set_hyperparam(self, hyperparam: list):
+        self.K = hyperparam[0]
+
+    def get_hyperparam(self):
+        return self.K
+
+
+
+
+class GENCriterion(TUOODCriterion):
+    input_type = OODCriterionInputType.DATASET
+    def __init__(self,config) -> None:
+        super().__init__()
+        self.args = config.postprocessor.postprocessor_args
+        self.gamma = self.args.gamma
+        self.M = self.args.M
+        self.args_dict = config.postprocessor.postprocessor_sweep
+
+    @torch.no_grad()
+    def forward(self, net: nn.Module, data: Any):
+        output = net(data)
+        score = torch.softmax(output, dim=1)
+        conf = self.generalized_entropy(score, self.gamma, self.M)
+        return -conf
+
+    def set_hyperparam(self, hyperparam: list):
+        self.gamma = hyperparam[0]
+        self.M = hyperparam[1]
+
+    def get_hyperparam(self):
+        return [self.gamma, self.M]
+
+    def generalized_entropy(self, softmax_id_val, gamma=0.1, M=100):
+        probs = softmax_id_val
+        probs_sorted = torch.sort(probs, dim=1)[0][:, -M:]
+        scores = torch.sum(probs_sorted**gamma * (1 - probs_sorted)**(gamma),
+                           dim=1)
+
+        return -scores
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -303,6 +780,7 @@ def get_ood_criterion(ood_criterion):
     Raises:
         ValueError: If the input string or class type is invalid.
     """
+    config = OmegaConf.load("/home/firas/Bureau/torch-uncertainty_ood/torch_uncertainty/ood/configs/odin.yml")
     if isinstance(ood_criterion, str):
         if ood_criterion == "logit":
             return MaxLogitCriterion()
@@ -317,7 +795,25 @@ def get_ood_criterion(ood_criterion):
         if ood_criterion == "variation_ratio":
             return VariationRatioCriterion()        
         if ood_criterion == "scale":
-            return ScaleCriterion()
+            return ScaleCriterion(config)
+        if ood_criterion == "ash":
+            return ASHCriterion(config)        
+        if ood_criterion == "react":
+            return ReactCriterion(config)        
+        if ood_criterion == "adascale_a":
+            return AdaScaleCriterion(config)        
+        if ood_criterion == "vim":
+            return VIMCriterion(config)        
+        if ood_criterion == "odin":
+            return ODINCriterion(config)        
+        if ood_criterion == "knn":
+            return KNNCriterion(config)        
+        if ood_criterion == "gen":
+            return GENCriterion(config)        
+        if ood_criterion == "react":
+            return ReactCriterion()        
+        if ood_criterion == "react":
+            return ReactCriterion()
         raise ValueError(
             "The OOD criterion must be one of 'msp', 'logit', 'energy', 'entropy',"
             f" 'mutual_information' or 'variation_ratio'. Got {ood_criterion}."

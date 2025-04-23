@@ -16,6 +16,7 @@ from torch_uncertainty.datasets import AggregatedDataset
 from torch_uncertainty.datasets.classification import CIFAR10C, CIFAR10H
 from torch_uncertainty.transforms import Cutout
 from torch_uncertainty.utils import create_train_val_split
+from torch.utils.data import Subset
 
 
 class CIFAR10DataModule(TUDataModule):
@@ -271,20 +272,27 @@ class CIFAR10DataModule(TUDataModule):
         return self._data_loader(self.train, training=True, shuffle=True)
 
     def test_dataloader(self) -> list[DataLoader]:
-        r"""Get test dataloaders.
+        loaders: list[DataLoader] = []
 
-        Return:
-            list[DataLoader]: test set for in distribution data, SVHN data, and/or CIFAR-10C data.
-        """
-        dataloader = [self._data_loader(self.test, training=False)]
+        loaders.append(self._data_loader(self.test, training=False))
+
         if self.eval_ood:
-            for ds in self.near_oods:
-                dataloader.append(self._data_loader(ds, training=False))
-            for ds in self.far_oods:
-                dataloader.append(self._data_loader(ds, training=False))
+            for ds in (*self.near_oods, *self.far_oods):
+                n = len(ds)
+                val_size = int(n * 0.1)
+                test_size = n - val_size
+
+                test_ds = Subset(ds, list(range(test_size)))
+                val_ds  = Subset(ds, list(range(test_size, n)))
+
+                loaders.append(self._data_loader(test_ds, training=False))
+                loaders.append(self._data_loader(val_ds,  training=False))
+
+        # 3) shift
         if self.eval_shift:
-            dataloader.append(self._data_loader(self.shift, training=False))
-        return dataloader
+            loaders.append(self._data_loader(self.shift, training=False))
+
+        return loaders
 
     def _get_train_data(self) -> ArrayLike:
         if self.val_split:
@@ -298,33 +306,33 @@ class CIFAR10DataModule(TUDataModule):
 
 
     def get_indices(self) -> dict[str, list[int]]:
-        r"""Compute the positions (indices) of the near, far, and shift loaders
-         in the final test_dataloader list.
+        """Return the list positions of each split in the flat test_dataloader."""
+        idx = 1  # after the ID loader
+        indices: dict[str, list[int]] = {}
 
-        Returns:
-        dict[str, list[int]]: A dictionary with keys "near", "far", and "shift".
-        Each key maps to a list of indices (or a single-element list for "shift")
-        indicating the position(s) of the corresponding loader(s) within the
-        final test_dataloader list.
-         """
-    
-        indices = {}
-        offset = 1 
-    
         if self.eval_ood:
+            n_near = len(self.near_oods)
+            n_far  = len(self.far_oods)
 
-            indices["near"] = list(range(offset, offset + len(self.near_oods)))
-            offset += len(self.near_oods)
-        
-            indices["far"] = list(range(offset, offset + len(self.far_oods)))
-            offset += len(self.far_oods)
+            # each OOD yields two loaders: test then val
+            indices["near_test"] = list(range(idx, idx + n_near))
+            idx += n_near
+            indices["near_val"]  = list(range(idx, idx + n_near))
+            idx += n_near
+
+            indices["far_test"]  = list(range(idx, idx + n_far))
+            idx += n_far
+            indices["far_val"]   = list(range(idx, idx + n_far))
+            idx += n_far
         else:
-            indices["near"] = []
-            indices["far"] = []
-    
+            indices["near_test"] = []
+            indices["near_val"]  = []
+            indices["far_test"]  = []
+            indices["far_val"]   = []
+
         if self.eval_shift:
-            indices["shift"] = [offset] 
+            indices["shift"] = [idx]
         else:
             indices["shift"] = []
-    
+
         return indices
