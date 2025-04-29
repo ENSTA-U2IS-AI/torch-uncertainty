@@ -14,6 +14,18 @@ class TestMNISTDataModule:
         dm = MNISTDataModule(
             root="./data/",
             batch_size=128,
+            train_transform=nn.Identity(),
+            test_transform=nn.Identity(),
+            eval_ood=True,
+            ood_transform=nn.Identity(),
+        )
+        assert isinstance(dm.train_transform, nn.Identity)
+        assert isinstance(dm.test_transform, nn.Identity)
+        assert isinstance(dm.ood_transform, nn.Identity)
+
+        dm = MNISTDataModule(
+            root="./data/",
+            batch_size=128,
             cutout=16,
             val_split=0.1,
             eval_ood=True,

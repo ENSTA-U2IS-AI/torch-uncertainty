@@ -1,4 +1,5 @@
 import pytest
+from torch import nn
 
 from tests._dummies.dataset import DummyClassificationDataset
 from torch_uncertainty.datamodules import TinyImageNetDataModule
@@ -9,9 +10,16 @@ class TestTinyImageNetDataModule:
     """Testing the TinyImageNetDataModule datamodule class."""
 
     def test_tiny_imagenet(self) -> None:
-        dm = TinyImageNetDataModule(root="./data/", batch_size=128)
+        dm = TinyImageNetDataModule(
+            root="./data/",
+            batch_size=128,
+            train_transform=nn.Identity(),
+            test_transform=nn.Identity(),
+        )
 
         assert dm.dataset == TinyImageNet
+        assert isinstance(dm.train_transform, nn.Identity)
+        assert isinstance(dm.test_transform, nn.Identity)
 
         dm = TinyImageNetDataModule(
             root="./data/",
@@ -26,6 +34,8 @@ class TestTinyImageNetDataModule:
             ood_ds="textures",
             basic_augment=False,
         )
+
+        dm = TinyImageNetDataModule(root="./data/", batch_size=128, ood_ds="openimage-o")
 
         with pytest.raises(ValueError):
             TinyImageNetDataModule(root="./data/", batch_size=128, ood_ds="other")

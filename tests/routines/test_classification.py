@@ -285,6 +285,7 @@ class TestClassification:
             num_classes=2,
             num_images=100,
             eval_ood=True,
+            eval_shift=True,
         )
         model = DummyClassificationBaseline(
             num_classes=dm.num_classes,

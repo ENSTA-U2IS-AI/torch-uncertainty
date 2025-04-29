@@ -52,6 +52,8 @@ class ImageNetDataModule(TUDataModule):
         shift_severity: int = 1,
         val_split: float | Path | None = None,
         postprocess_set: Literal["val", "test"] = "val",
+        train_transform: nn.Module | None = None,
+        test_transform: nn.Module | None = None,
         ood_ds: str = "openimage-o",
         test_alt: str | None = None,
         procedure: str | None = None,
@@ -81,15 +83,25 @@ class ImageNetDataModule(TUDataModule):
                 ids. Defaults to ``0.0``.
             postprocess_set (str, optional): The post-hoc calibration dataset to
                 use for the post-processing method. Defaults to ``val``.
+            train_transform (nn.Module | None): Custom training transform. Defaults
+                to ``None``. If not provided, a default transform is used.
+            test_transform (nn.Module | None): Custom test transform. Defaults to
+                ``None``. If not provided, a default transform is used.
             ood_ds (str): Which out-of-distribution dataset to use. Defaults to
                 ``"openimage-o"``.
             test_alt (str): Which test set to use. Defaults to ``None``.
             procedure (str): Which procedure to use. Defaults to ``None``.
+                Only used if ``train_transform`` is not provided.
             train_size (int): Size of training images. Defaults to ``224``.
-            interpolation (str): Interpolation method for the Resize Crops. Defaults to ``"bilinear"``.
-            basic_augment (bool): Whether to apply base augmentations. Defaults to ``True``.
+            interpolation (str): Interpolation method for the Resize Crops.
+                Defaults to ``"bilinear"``. Only used if ``train_transform`` is not
+                provided.
+            basic_augment (bool): Whether to apply base augmentations. Defaults to
+                ``True``. Only used if ``train_transform`` is not provided.
             rand_augment_opt (str): Which RandAugment to use. Defaults to ``None``.
-            num_workers (int): Number of workers to use for data loading. Defaults to ``1``.
+                Only used if ``train_transform`` is not provided.
+            num_workers (int): Number of workers to use for data loading. Defaults
+                to ``1``.
             pin_memory (bool): Whether to pin memory. Defaults to ``True``.
             persistent_workers (bool): Whether to use persistent workers. Defaults to ``True``.
         """
@@ -142,54 +154,60 @@ class ImageNetDataModule(TUDataModule):
 
         self.procedure = procedure
 
-        if basic_augment:
-            basic_transform = v2.Compose(
-                [
-                    v2.RandomResizedCrop(train_size, interpolation=self.interpolation),
-                    v2.RandomHorizontalFlip(),
-                ]
-            )
+        if train_transform is not None:
+            self.train_transform = train_transform
         else:
-            basic_transform = nn.Identity()
-
-        if self.procedure is None:
-            if rand_augment_opt is not None:
-                main_transform = rand_augment_transform(rand_augment_opt, {})
+            if basic_augment:
+                basic_transform = v2.Compose(
+                    [
+                        v2.RandomResizedCrop(train_size, interpolation=self.interpolation),
+                        v2.RandomHorizontalFlip(),
+                    ]
+                )
             else:
-                main_transform = nn.Identity()
-        elif self.procedure == "ViT":
-            train_size = 224
-            main_transform = v2.Compose(
+                basic_transform = nn.Identity()
+
+            if self.procedure is None:
+                if rand_augment_opt is not None:
+                    main_transform = rand_augment_transform(rand_augment_opt, {})
+                else:
+                    main_transform = nn.Identity()
+            elif self.procedure == "ViT":
+                train_size = 224
+                main_transform = v2.Compose(
+                    [
+                        Mixup(mixup_alpha=0.2, cutmix_alpha=1.0),
+                        rand_augment_transform("rand-m9-n2-mstd0.5", {}),
+                    ]
+                )
+            elif self.procedure == "A3":
+                train_size = 160
+                main_transform = rand_augment_transform("rand-m6-mstd0.5-inc1", {})
+            else:
+                raise ValueError("The procedure is unknown")
+
+            self.train_transform = v2.Compose(
                 [
-                    Mixup(mixup_alpha=0.2, cutmix_alpha=1.0),
-                    rand_augment_transform("rand-m9-n2-mstd0.5", {}),
+                    v2.ToImage(),
+                    basic_transform,
+                    main_transform,
+                    v2.ToDtype(dtype=torch.float32, scale=True),
+                    v2.Normalize(mean=self.mean, std=self.std),
                 ]
             )
-        elif self.procedure == "A3":
-            train_size = 160
-            main_transform = rand_augment_transform("rand-m6-mstd0.5-inc1", {})
+
+        if test_transform is not None:
+            self.test_transform = test_transform
         else:
-            raise ValueError("The procedure is unknown")
-
-        self.train_transform = v2.Compose(
-            [
-                v2.ToImage(),
-                basic_transform,
-                main_transform,
-                v2.ToDtype(dtype=torch.float32, scale=True),
-                v2.Normalize(mean=self.mean, std=self.std),
-            ]
-        )
-
-        self.test_transform = v2.Compose(
-            [
-                v2.ToImage(),
-                v2.Resize(256, interpolation=self.interpolation),
-                v2.CenterCrop(224),
-                v2.ToDtype(dtype=torch.float32, scale=True),
-                v2.Normalize(mean=self.mean, std=self.std),
-            ]
-        )
+            self.test_transform = v2.Compose(
+                [
+                    v2.ToImage(),
+                    v2.Resize(256, interpolation=self.interpolation),
+                    v2.CenterCrop(224),
+                    v2.ToDtype(dtype=torch.float32, scale=True),
+                    v2.Normalize(mean=self.mean, std=self.std),
+                ]
+            )
 
     def _verify_splits(self, split: str) -> None:
         if split not in list(self.root.iterdir()):

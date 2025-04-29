@@ -69,32 +69,62 @@ class TULightningCLI(LightningCLI):
         trainer_defaults: dict[str, Any] | None = None,
         seed_everything_default: bool | int = True,
         parser_kwargs: dict[str, Any] | dict[str, dict[str, Any]] | None = None,
-        parser_class: type[LightningArgumentParser] = LightningArgumentParser,
         subclass_mode_model: bool = False,
         subclass_mode_data: bool = False,
         args: ArgsType = None,
         run: bool = True,
         auto_configure_optimizers: bool = True,
         eval_after_fit_default: bool = False,
+        **kwargs: Any,
     ) -> None:
         """Custom LightningCLI for torch-uncertainty.
 
         Args:
-            model_class (type[LightningModule] | Callable[..., LightningModule] | None, optional): _description_. Defaults to None.
-            datamodule_class (type[LightningDataModule] | Callable[..., LightningDataModule] | None, optional): _description_. Defaults to None.
-            save_config_callback (type[SaveConfigCallback] | None, optional): _description_. Defaults to TUSaveConfigCallback.
-            save_config_kwargs (dict[str, Any] | None, optional): _description_. Defaults to None.
-            trainer_class (type[Trainer] | Callable[..., Trainer], optional): _description_. Defaults to Trainer.
-            trainer_defaults (dict[str, Any] | None, optional): _description_. Defaults to None.
-            seed_everything_default (bool | int, optional): _description_. Defaults to True.
-            parser_kwargs (dict[str, Any] | dict[str, dict[str, Any]] | None, optional): _description_. Defaults to None.
-            parser_class (type[LightningArgumentParser], optional): _description_. Defaults to ``LightningArgumentParser``.
-            subclass_mode_model (bool, optional): _description_. Defaults to False.
-            subclass_mode_data (bool, optional): _description_. Defaults to False.
-            args (ArgsType, optional): _description_. Defaults to None.
-            run (bool, optional): _description_. Defaults to True.
-            auto_configure_optimizers (bool, optional): _description_. Defaults to True.
-            eval_after_fit_default (bool, optional): _description_. Defaults to False.
+            model_class (type[LightningModule] | Callable[..., LightningModule] | None, optional):
+                An optional `LightningModule` class to train or a callable which returns a
+                ``LightningModule`` instance when called. If ``None``, you can pass a registered model
+                with ``--model=MyModel``. Defaults to ``None``.
+            datamodule_class (type[LightningDataModule] | Callable[..., LightningDataModule] | None, optional):
+                An optional ``LightningDataModule`` class or a callable which returns a ``LightningDataModule``
+                instance when called. If ``None``, you can pass a registered datamodule with ``--data=MyDataModule``.
+                Defaults to ``None``.
+            save_config_callback (type[SaveConfigCallback] | None, optional): A callback class to
+                save the config. Defaults to ``TUSaveConfigCallback``.
+            save_config_kwargs (dict[str, Any] | None, optional): Parameters that will be used to
+                instantiate the save_config_callback. Defaults to ``None``.
+            trainer_class (type[Trainer] | Callable[..., Trainer], optional): An optional subclass
+                of the Trainer class or a callable which returns a ``Trainer`` instance when called.
+                Defaults to ``TUTrainer``.
+            trainer_defaults (dict[str, Any] | None, optional): Set to override Trainer defaults
+                or add persistent callbacks. The callbacks added through this argument will not
+                be configurable from a configuration file and will always be present for this
+                particular CLI. Alternatively, configurable callbacks can be added as explained
+                in the CLI docs. Defaults to ``None``.
+            seed_everything_default (bool | int, optional): Number for the ``seed_everything()``
+                seed value. Set to ``True`` to automatically choose a seed value. Setting it to ``False``
+                will avoid calling seed_everything. Defaults to ``True``.
+            parser_kwargs (dict[str, Any] | dict[str, dict[str, Any]] | None, optional): Additional
+                arguments to instantiate each ``LightningArgumentParser``. Defaults to
+                ``LightningArgumentParser``. Defaults to ``None``.
+            subclass_mode_model (bool, optional): Whether model can be any subclass of the given
+                class. Defaults to ``False``.
+            subclass_mode_data (bool, optional): Whether datamodule can be any subclass of the
+                given class. Defaults to ``False``.
+            args (ArgsType, optional): Arguments to parse. If `None` the arguments are taken from
+                ``sys.argv``. Command line style arguments can be given in a ``list``. Alternatively,
+                structured config options can be given in a ``dict`` or ``jsonargparse.Namespace``.
+                Defaults to `None`.
+            run (bool, optional): Whether subcommands should be added to run a ``Trainer`` method. If
+                set to `False`, the trainer and model classes will be instantiated only. Defaults
+                to ``True``.
+            auto_configure_optimizers (bool, optional): Defaults to ``True``.
+            eval_after_fit_default (bool, optional): Store whether an evaluation should be performed
+                after the training. Defaults to ``False``.
+            **kwargs: Additional keyword arguments to pass to the parent class added for
+                ``lightning>2.5.0``:
+
+                    - parser_class: The parser class to use. Defaults to `LightningArgumentParser`.
+                      Available in ``lightning>=2.5.1``
         """
         self.eval_after_fit_default = eval_after_fit_default
         super().__init__(
@@ -106,12 +136,12 @@ class TULightningCLI(LightningCLI):
             trainer_defaults=trainer_defaults,
             seed_everything_default=seed_everything_default,
             parser_kwargs=parser_kwargs,
-            parser_class=parser_class,
             subclass_mode_model=subclass_mode_model,
             subclass_mode_data=subclass_mode_data,
             args=args,
             run=run,
             auto_configure_optimizers=auto_configure_optimizers,
+            **kwargs,
         )
 
     def add_default_arguments_to_parser(self, parser: LightningArgumentParser) -> None:

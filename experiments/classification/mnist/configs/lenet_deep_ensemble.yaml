@@ -14,11 +14,7 @@ trainer:
       name: deep_ensemble
       default_hp_metric: false
   callbacks:
-  - class_path: lightning.pytorch.callbacks.ModelCheckpoint
-    init_args:
-      monitor: val/cls/Acc
-      mode: max
-      save_last: true
+  - class_path: torch_uncertainty.callbacks.TUClsCheckpoint
   - class_path: lightning.pytorch.callbacks.LearningRateMonitor
     init_args:
       logging_interval: step
@@ -61,7 +57,7 @@ model:
 data:
   root: ./data
   batch_size: 128
-  num_workers: 127
+  num_workers: 10
   eval_ood: true
   eval_shift: true
 optimizer:
