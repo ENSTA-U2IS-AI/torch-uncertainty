@@ -1,4 +1,5 @@
 import copy
+from pathlib import Path
 from typing import Literal
 
 import torch
@@ -93,6 +94,8 @@ def deep_ensembles(
     probabilistic: bool | None = None,
     reset_model_parameters: bool = True,
     store_on_cpu: bool = False,
+    ckpt_paths: list[str | Path] | Path | None = None,
+    use_tu_ckpt_format: bool = False,
 ) -> _DeepEnsembles:
     """Build a Deep Ensembles out of the original models.
 
@@ -107,9 +110,18 @@ def deep_ensembles(
         store_on_cpu (bool): Whether to store the models on CPU. Defaults to ``False``.
             This is useful for large models that do not fit in GPU memory. Only one
             model will be stored on GPU at a time during forward. The rest will be stored on CPU.
+        ckpt_paths (list[str | Path] | None): The paths to the checkpoints of the models.
+            If provided, the models will be loaded from the checkpoints. The number of
+            models and the number of checkpoint paths must be the same. If not provided,
+            the models will be used as is. Defaults to ``None``.
+        use_tu_ckpt_format (bool): Whether the checkpoint is from torch-uncertainty. If ``True``,
+            the checkpoint will be loaded using the torch-uncertainty loading function. If
+            ``False``, the checkpoint will be loaded using the default PyTorch loading function.
+            Note that this option is only used if :attr:ckpt_paths is provided. Defaults to
+            ``False``.
 
     Returns:
-        _DeepEnsembles: The ensembled model.
+        _DeepEnsembles | _RegDeepEnsembles: The ensembled model.
 
     Raises:
         ValueError: If :attr:num_estimators is not specified and :attr:models
@@ -149,6 +161,40 @@ def deep_ensembles(
 
     elif isinstance(models, list) and len(models) > 1 and num_estimators is not None:
         raise ValueError("num_estimators must be None if you provided a non-singleton list.")
+
+    if ckpt_paths is not None:  # coverage: ignore
+        if isinstance(ckpt_paths, str | Path):
+            ckpt_dir = Path(ckpt_paths)
+            if not ckpt_dir.is_dir():
+                raise ValueError("ckpt_paths must be a directory or a list of paths.")
+            ckpt_paths = sorted(
+                elt
+                for elt in ckpt_dir.iterdir()
+                if elt.is_file() and elt.suffix in [".pt", ".pth", ".ckpt"]
+            )
+            if len(ckpt_paths) == 0:
+                raise ValueError("No checkpoint files found in the directory.")
+
+        if len(models) != len(ckpt_paths):
+            raise ValueError(
+                "The number of models and the number of checkpoint paths must be the same."
+            )
+        for model, ckpt_path in zip(models, ckpt_paths, strict=True):
+            if isinstance(ckpt_path, str | Path):
+                loaded_data = torch.load(ckpt_path, map_location="cpu")
+                if "state_dict" in loaded_data:
+                    state_dict = loaded_data["state_dict"]
+                else:
+                    state_dict = loaded_data
+
+                if use_tu_ckpt_format:
+                    model.load_state_dict(
+                        {k[6:]: v for k, v in state_dict.items() if k.startswith("model.")}
+                    )
+                else:
+                    model.load_state_dict(state_dict)
+            else:
+                raise TypeError("Checkpoint paths must be strings or Path objects.")
 
     if task in ("classification", "segmentation"):
         return _DeepEnsembles(models=models, store_on_cpu=store_on_cpu)
