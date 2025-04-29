@@ -80,6 +80,8 @@ class ClassificationRoutine(LightningModule):
         num_bins_cal_err: int = 15,
         log_plots: bool = False,
         save_in_csv: bool = False,
+        csv_filename: str = "results.csv",
+        combine_val_metrics: str | None = None,
     ) -> None:
         r"""Routine for training & testing on **classification** tasks.
 
@@ -114,6 +116,12 @@ class ClassificationRoutine(LightningModule):
                 metrics. Defaults to ``False``.
             save_in_csv(bool, optional): Save the results in csv. Defaults to
                 ``False``.
+            csv_filename (str, optional): Name of the csv file. Defaults to
+                ``"results.csv"``. Note that this is only used if
+                :attr:`save_in_csv` is ``True``.
+            combine_val_metrics (str, optional): Combine the metrics in a single
+                metric (val/combined) given a combination function. Defaults to ``None``.
+                Example: ``"({val/cls/Acc}+(1-{val/cal/ECE}))/2"``.
 
         Warning:
             You must define :attr:`optim_recipe` if you do not use the Lightning CLI.
@@ -161,6 +169,7 @@ class ClassificationRoutine(LightningModule):
         self.ood_criterion = get_ood_criterion(ood_criterion)
         self.log_plots = log_plots
         self.save_in_csv = save_in_csv
+        self.csv_filename = csv_filename
         self.binary_cls = num_classes == 1
         self.needs_epoch_update = isinstance(model, EPOCH_UPDATE_MODEL)
         self.needs_step_update = isinstance(model, STEP_UPDATE_MODEL)
@@ -170,6 +179,7 @@ class ClassificationRoutine(LightningModule):
         self.format_batch_fn = format_batch_fn
         self.optim_recipe = optim_recipe
         self.is_ensemble = is_ensemble
+        self.combine_val_metrics = combine_val_metrics
 
         self.post_processing = post_processing
         if self.post_processing is not None:
@@ -548,7 +558,16 @@ class ClassificationRoutine(LightningModule):
     def on_validation_epoch_end(self) -> None:
         """Compute and log the values of the collected metrics in `validation_step`."""
         res_dict = self.val_cls_metrics.compute()
+        # Combine metrics if self.combine_metrics is defined
+        if isinstance(self.combine_val_metrics, str):
+            # Replace placeholders in self.combine_metrics with actual values from res_dict
+            expression = self.combine_val_metrics.format(
+                **{k: v.item() for k, v in res_dict.items()}
+            )
+            res_dict["val/combined"] = eval(expression)  # noqa: S307
+
         self.log_dict(res_dict, logger=True, sync_dist=True)
+        # Progress bar only
         self.log(
             "Acc%",
             res_dict["val/cls/Acc"] * 100,
@@ -668,7 +687,7 @@ class ClassificationRoutine(LightningModule):
         """
         if self.logger is not None:
             csv_writer(
-                Path(self.logger.log_dir) / "results.csv",
+                Path(self.logger.log_dir) / self.csv_filename,
                 results,
             )
 
