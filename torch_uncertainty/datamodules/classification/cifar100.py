@@ -35,6 +35,8 @@ class CIFAR100DataModule(TUDataModule):
         shift_severity: int = 1,
         val_split: float | None = None,
         postprocess_set: Literal["val", "test"] = "val",
+        train_transform: nn.Module | None = None,
+        test_transform: nn.Module | None = None,
         basic_augment: bool = True,
         cutout: int | None = None,
         randaugment: bool = False,
@@ -59,12 +61,18 @@ class CIFAR100DataModule(TUDataModule):
                 to ``0.0``.
             postprocess_set (str, optional): The post-hoc calibration dataset to
                 use for the post-processing method. Defaults to ``val``.
+            train_transform (nn.Module | None): Custom training transform. Defaults
+                to ``None``. If not provided, a default transform is used.
+            test_transform (nn.Module | None): Custom test transform. Defaults to
+                ``None``. If not provided, a default transform is used.
             basic_augment (bool): Whether to apply base augmentations. Defaults to
-                ``True``.
+                ``True``. Only used if train_transform is not provided.
             cutout (int): Size of cutout to apply to images. Defaults to ``None``.
+                Only used if train_transform is not provided.
             randaugment (bool): Whether to apply RandAugment. Defaults to
-                ``False``.
+                ``False``. Only used if train_transform is not provided.
             auto_augment (str): Which auto-augment to apply. Defaults to ``None``.
+                Only used if train_transform is not provided.
             shift_severity (int): Severity of corruption to apply to
                 CIFAR100-C. Defaults to ``1``.
             num_dataloaders (int): Number of dataloaders to use. Defaults to ``1``.
@@ -93,47 +101,54 @@ class CIFAR100DataModule(TUDataModule):
 
         self.shift_severity = shift_severity
 
-        if (cutout is not None) + randaugment + int(auto_augment is not None) > 1:
-            raise ValueError(
-                "Only one data augmentation can be chosen at a time. Raise a "
-                "GitHub issue if needed."
-            )
+        if train_transform is not None:
+            self.train_transform = train_transform
+        else:
+            if (cutout is not None) + randaugment + int(auto_augment is not None) > 1:
+                raise ValueError(
+                    "Only one data augmentation can be chosen at a time. Raise a "
+                    "GitHub issue if needed."
+                )
 
-        if basic_augment:
-            basic_transform = v2.Compose(
+            if basic_augment:
+                basic_transform = v2.Compose(
+                    [
+                        v2.RandomCrop(32, padding=4),
+                        v2.RandomHorizontalFlip(),
+                    ]
+                )
+            else:
+                basic_transform = nn.Identity()
+
+            if cutout:
+                main_transform = Cutout(cutout)
+            elif randaugment:
+                main_transform = v2.RandAugment(num_ops=2, magnitude=20)
+            elif auto_augment:
+                main_transform = rand_augment_transform(auto_augment, {})
+            else:
+                main_transform = nn.Identity()
+
+            self.train_transform = v2.Compose(
                 [
-                    v2.RandomCrop(32, padding=4),
-                    v2.RandomHorizontalFlip(),
+                    v2.ToImage(),
+                    basic_transform,
+                    main_transform,
+                    v2.ToDtype(dtype=torch.float32, scale=True),
+                    v2.Normalize(mean=self.mean, std=self.std),
                 ]
             )
-        else:
-            basic_transform = nn.Identity()
 
-        if cutout:
-            main_transform = Cutout(cutout)
-        elif randaugment:
-            main_transform = v2.RandAugment(num_ops=2, magnitude=20)
-        elif auto_augment:
-            main_transform = rand_augment_transform(auto_augment, {})
+        if test_transform is not None:
+            self.test_transform = test_transform
         else:
-            main_transform = nn.Identity()
-
-        self.train_transform = v2.Compose(
-            [
-                v2.ToImage(),
-                basic_transform,
-                main_transform,
-                v2.ToDtype(dtype=torch.float32, scale=True),
-                v2.Normalize(mean=self.mean, std=self.std),
-            ]
-        )
-        self.test_transform = v2.Compose(
-            [
-                v2.ToImage(),
-                v2.ToDtype(dtype=torch.float32, scale=True),
-                v2.Normalize(mean=self.mean, std=self.std),
-            ]
-        )
+            self.test_transform = v2.Compose(
+                [
+                    v2.ToImage(),
+                    v2.ToDtype(dtype=torch.float32, scale=True),
+                    v2.Normalize(mean=self.mean, std=self.std),
+                ]
+            )
 
     def prepare_data(self) -> None:  # coverage: ignore
         self.dataset(self.root, train=True, download=True)

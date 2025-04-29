@@ -40,6 +40,8 @@ class TinyImageNetDataModule(TUDataModule):
         shift_severity: int = 1,
         val_split: float | None = None,
         postprocess_set: Literal["val", "test"] = "val",
+        train_transform: nn.Module | None = None,
+        test_transform: nn.Module | None = None,
         ood_ds: str = "svhn",
         interpolation: str = "bilinear",
         basic_augment: bool = True,
@@ -66,6 +68,10 @@ class TinyImageNetDataModule(TUDataModule):
                 ids. Defaults to ``0.0``.
             postprocess_set (str, optional): The post-hoc calibration dataset to
                 use for the post-processing method. Defaults to ``val``.
+            train_transform (nn.Module | None): Custom training transform. Defaults
+                to ``None``. If not provided, a default transform is used.
+            test_transform (nn.Module | None): Custom test transform. Defaults to
+                ``None``. If not provided, a default transform is used.
             ood_ds (str): Which out-of-distribution dataset to use. Defaults to
                 ``"openimage-o"``.
             test_alt (str): Which test set to use. Defaults to ``None``.
@@ -108,39 +114,46 @@ class TinyImageNetDataModule(TUDataModule):
         else:
             raise ValueError(f"OOD dataset {ood_ds} not supported for TinyImageNet.")
         self.shift_dataset = TinyImageNetC
-        if basic_augment:
-            basic_transform = v2.Compose(
+
+        if train_transform is not None:
+            self.train_transform = train_transform
+        else:
+            if basic_augment:
+                basic_transform = v2.Compose(
+                    [
+                        v2.RandomCrop(64, padding=4),
+                        v2.RandomHorizontalFlip(),
+                    ]
+                )
+            else:
+                basic_transform = nn.Identity()
+
+            if rand_augment_opt is not None:
+                main_transform = rand_augment_transform(rand_augment_opt, {})
+            else:
+                main_transform = nn.Identity()
+
+            self.train_transform = v2.Compose(
                 [
-                    v2.RandomCrop(64, padding=4),
-                    v2.RandomHorizontalFlip(),
+                    v2.ToImage(),
+                    basic_transform,
+                    main_transform,
+                    v2.ToDtype(dtype=torch.float32, scale=True),
+                    v2.Normalize(mean=self.mean, std=self.std),
                 ]
             )
+
+        if test_transform is not None:
+            self.test_transform = test_transform
         else:
-            basic_transform = nn.Identity()
-
-        if rand_augment_opt is not None:
-            main_transform = rand_augment_transform(rand_augment_opt, {})
-        else:
-            main_transform = nn.Identity()
-
-        self.train_transform = v2.Compose(
-            [
-                v2.ToImage(),
-                basic_transform,
-                main_transform,
-                v2.ToDtype(dtype=torch.float32, scale=True),
-                v2.Normalize(mean=self.mean, std=self.std),
-            ]
-        )
-
-        self.test_transform = v2.Compose(
-            [
-                v2.ToImage(),
-                v2.Resize(64, interpolation=self.interpolation),
-                v2.ToDtype(dtype=torch.float32, scale=True),
-                v2.Normalize(mean=self.mean, std=self.std),
-            ]
-        )
+            self.test_transform = v2.Compose(
+                [
+                    v2.ToImage(),
+                    v2.Resize(64, interpolation=self.interpolation),
+                    v2.ToDtype(dtype=torch.float32, scale=True),
+                    v2.Normalize(mean=self.mean, std=self.std),
+                ]
+            )
 
     def _verify_splits(self, split: str) -> None:  # coverage: ignore
         if split not in list(self.root.iterdir()):

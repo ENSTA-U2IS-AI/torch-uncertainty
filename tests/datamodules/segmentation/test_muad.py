@@ -1,4 +1,5 @@
 import pytest
+from torch import nn
 
 from tests._dummies.dataset import DummySegmentationDataset
 from torch_uncertainty.datamodules.segmentation import MUADDataModule
@@ -8,7 +9,15 @@ from torch_uncertainty.datasets import MUAD
 class TestMUADDataModule:
     """Testing the MUADDataModule datamodule."""
 
-    def test_camvid_main(self):
+    def test_muad_main(self):
+        dm = MUADDataModule(
+            root="./data/",
+            batch_size=128,
+            train_transform=nn.Identity(),
+            test_transform=nn.Identity(),
+        )
+        assert isinstance(dm.train_transform, nn.Identity)
+        assert isinstance(dm.test_transform, nn.Identity)
         dm = MUADDataModule(root="./data/", batch_size=128)
 
         assert dm.dataset == MUAD

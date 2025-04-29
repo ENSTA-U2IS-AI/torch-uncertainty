@@ -162,7 +162,7 @@ class TUEvaluationLoop(_EvaluationLoop):
         if "shift" in metrics:
             table = Table()
             table.add_column(first_col_name, justify="center", style="cyan", width=12)
-            shift_severity = int(metrics["shift"]["shift_severity"])
+            shift_severity = int(metrics["shift"]["severity"])
             table.add_column(
                 f"Distribution Shift lvl{shift_severity}",
                 justify="center",
@@ -171,7 +171,7 @@ class TUEvaluationLoop(_EvaluationLoop):
             )
             shift_metrics = OrderedDict(sorted(metrics["shift"].items()))
             for metric_name, value in shift_metrics.items():
-                if metric_name == "shift_severity":
+                if metric_name == "severity":
                     continue
                 _add_row(table, metric_name, value)
             tables.append(table)

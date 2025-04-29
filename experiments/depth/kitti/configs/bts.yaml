@@ -15,7 +15,7 @@ trainer:
   callbacks:
   - class_path: lightning.pytorch.callbacks.ModelCheckpoint
     init_args:
-      monitor: val/SILog
+      monitor: val/reg/SILog
       mode: min
       save_last: true
   - class_path: lightning.pytorch.callbacks.LearningRateMonitor
