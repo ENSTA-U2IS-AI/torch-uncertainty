@@ -367,7 +367,7 @@ class ClassificationRoutine(LightningModule):
            #near_test = [all_dls[i] for i in idxs["near_test"]]
            #far_test  = [all_dls[i] for i in idxs["far_test"]]
            id_loader = {"train":self.trainer.datamodule.train_dataloader(),"val":self.trainer.datamodule.val_dataloader()}
-           self.ood_criterion.setup(self.model, id_loader,id_loader) #Some methods require tarin id loader fix later
+           self.ood_criterion.setup(self.model, id_loader,None) #Some methods require tarin id loader fix later
            self._hyperparam_search_ood()
     
     def _hyperparam_search_ood(self):
@@ -376,18 +376,12 @@ class ClassificationRoutine(LightningModule):
         if not hasattr(crit, "args_dict") or crit.hyperparam_search_done:
             return
 
-
         names  = list(crit.args_dict.keys())
         values = [crit.args_dict[n] for n in names]
         combos = list(itertools.product(*values))
 
-        all_val   = self.trainer.datamodule.test_dataloader()
-        idxs      = self.trainer.datamodule.get_indices()
         id_val    = self.trainer.datamodule.val_dataloader()
-
-        near_val = [all_val[i] for i in idxs["near_val"]]
-        far_val  = [all_val[i] for i in idxs["far_val"]]
-        ood_vals = near_val + far_val
+        ood_val   = self.trainer.datamodule.test_dataloader()[1]
 
         best_auc   = -float("inf")
         best_combo = None
@@ -420,23 +414,22 @@ class ClassificationRoutine(LightningModule):
                     all_labels.append(np.zeros_like(s))
 
                 # OOD‐val splits
-                for odl in ood_vals:
-                    for x, _ in odl:
-                        x = x.to(self.device)
-                        logits = self.model(x)
+                for x, _ in ood_val:
+                    x = x.to(self.device)
+                    logits = self.model(x)
 
-                        if crit.input_type == OODCriterionInputType.LOGIT:
-                            s = crit(logits).cpu().numpy()
-                        elif crit.input_type == OODCriterionInputType.PROB:
-                            probs = F.softmax(logits, dim=-1)
-                            s = crit(probs).cpu().numpy()
+                    if crit.input_type == OODCriterionInputType.LOGIT:
+                        s = crit(logits).cpu().numpy()
+                    elif crit.input_type == OODCriterionInputType.PROB:
+                        probs = F.softmax(logits, dim=-1)
+                        s = crit(probs).cpu().numpy()
                     else:  # DATASET
                         with torch.inference_mode(False), torch.enable_grad():
                             input = x.detach().clone().requires_grad_(True)
                             s = crit(self.model, input).cpu().numpy()
 
-                        all_scores.append(s)
-                        all_labels.append(np.ones_like(s))
+                    all_scores.append(s)
+                    all_labels.append(np.ones_like(s))
 
             scores = np.concatenate(all_scores).ravel()
             labels = np.concatenate(all_labels).ravel()
@@ -570,8 +563,7 @@ class ClassificationRoutine(LightningModule):
          # skip any OOD‐val loaders 
         if self.eval_ood:
             indices = self.trainer.datamodule.get_indices()
-            val_idxs = indices["near_val"] + indices["far_val"]
-            if dataloader_idx in val_idxs:
+            if dataloader_idx == indices["val_ood"]:
                 return
         
         inputs, targets = batch
@@ -613,7 +605,7 @@ class ClassificationRoutine(LightningModule):
             if self.eval_ood:
 
                 for ds in self.trainer.datamodule.near_oods:
-                    ds_name = ds.__class__.__name__.lower() 
+                    ds_name = ds.dataset_name
                     if self.is_ensemble:
                         if ds_name not in self.test_ood_ens_metrics_near:
                             self.test_ood_ens_metrics_near[ds_name] = self.ood_metrics_template.clone(
@@ -629,7 +621,7 @@ class ClassificationRoutine(LightningModule):
                
 
                 for ds in self.trainer.datamodule.far_oods:
-                    ds_name = ds.__class__.__name__.lower()
+                    ds_name = ds.dataset_name
                     if self.is_ensemble:
                         if ds_name not in self.test_ood_ens_metrics_far:
                             self.test_ood_ens_metrics_far[ds_name] = self.ood_metrics_template.clone(
@@ -643,9 +635,9 @@ class ClassificationRoutine(LightningModule):
                             )
                         self.test_ood_metrics_far[ds_name].update(ood_scores, torch.zeros_like(targets))
 
-        elif self.eval_ood and dataloader_idx in indices.get("near_test", []):
-            ds_index = indices["near_test"].index(dataloader_idx)
-            ds_name = self.trainer.datamodule.near_oods[ds_index].__class__.__name__.lower()
+        elif self.eval_ood and dataloader_idx in indices.get("near_oods", []):
+            ds_index = indices["near_oods"].index(dataloader_idx)
+            ds_name = self.trainer.datamodule.near_oods[ds_index].dataset_name
             if self.is_ensemble:
                 if ds_name not in self.test_ood_ens_metrics_near:
                     self.test_ood_ens_metrics_near[ds_name] = self.ood_metrics_template.clone(
@@ -660,9 +652,9 @@ class ClassificationRoutine(LightningModule):
                 self.test_ood_metrics_near[ds_name].update(ood_scores, torch.ones_like(targets))
        
        
-        elif self.eval_ood and dataloader_idx in indices.get("far_test", []):
-            ds_index = indices["far_test"].index(dataloader_idx)
-            ds_name = self.trainer.datamodule.far_oods[ds_index].__class__.__name__.lower()
+        elif self.eval_ood and dataloader_idx in indices.get("far_oods", []):
+            ds_index = indices["far_oods"].index(dataloader_idx)
+            ds_name = self.trainer.datamodule.far_oods[ds_index].dataset_name
             if self.is_ensemble:
                 if ds_name not in self.test_ood_ens_metrics_far:
                     self.test_ood_ens_metrics_far[ds_name] = self.ood_metrics_template.clone(

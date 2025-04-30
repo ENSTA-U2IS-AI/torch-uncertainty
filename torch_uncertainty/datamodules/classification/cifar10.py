@@ -7,8 +7,7 @@ from numpy.typing import ArrayLike
 from timm.data.auto_augment import rand_augment_transform
 from torch import nn
 from torch.utils.data import DataLoader
-from torchvision.datasets import CIFAR10, SVHN, CIFAR100 , MNIST, SVHN, DTD, Places365
-from torch_uncertainty.datasets.classification import TinyImageNet
+from torchvision.datasets import CIFAR10
 from torchvision.transforms import v2
 
 from torch_uncertainty.datamodules.abstract import TUDataModule
@@ -16,8 +15,7 @@ from torch_uncertainty.datasets import AggregatedDataset
 from torch_uncertainty.datasets.classification import CIFAR10C, CIFAR10H
 from torch_uncertainty.transforms import Cutout
 from torch_uncertainty.utils import create_train_val_split
-from torch.utils.data import Subset
-
+from torch_uncertainty.datasets.ood.utils import get_ood_datasets
 
 class CIFAR10DataModule(TUDataModule):
     num_classes = 10
@@ -103,8 +101,8 @@ class CIFAR10DataModule(TUDataModule):
         self.shift_severity = shift_severity
         self.shift_dataset = CIFAR10C
 
-        self.near_ood_datasets = near_ood_datasets or [CIFAR100,TinyImageNet]  # List of near OOD dataset classes
-        self.far_ood_datasets = far_ood_datasets or [SVHN, MNIST,DTD]    # List of far OOD dataset classes
+        self.near_ood_datasets = near_ood_datasets or []  # List of near OOD dataset classes
+        self.far_ood_datasets = far_ood_datasets or []    # List of far OOD dataset classes
 
         if (cutout is not None) + int(auto_augment is not None) > 1:
             raise ValueError(
@@ -159,19 +157,6 @@ class CIFAR10DataModule(TUDataModule):
                 download=True,
             )
 
-        if self.eval_ood:
-            for near_ds_cls in self.near_ood_datasets:
-                 if "split" in near_ds_cls.__init__.__code__.co_varnames:
-                    near_ds_cls(self.root, split="test", download=True)
-                 else:
-                    near_ds_cls(self.root, train=False, download=True)
-
-            for far_ds_cls in self.far_ood_datasets:
-                if "split" in far_ds_cls.__init__.__code__.co_varnames:
-                    far_ds_cls(self.root, split="test", download=True)
-                else:
-                    far_ds_cls(self.root, train=False, download=True)
-
         if self.eval_shift:
             self.shift_dataset(
                 self.root,
@@ -218,42 +203,19 @@ class CIFAR10DataModule(TUDataModule):
                     shift_severity=self.shift_severity,
                 )
             if self.eval_ood:
-                self.near_oods = []
-                for near_ds_cls in self.near_ood_datasets:
-                    if "split" in near_ds_cls.__init__.__code__.co_varnames:
-                        ds = near_ds_cls(
-                            self.root,
-                            split="test",
-                            transform=self.test_transform,
-                        )
-                    else:
-                        ds = near_ds_cls(
-                            self.root,
-                            train=False,
-                            transform=self.test_transform,
-                        )
-                    self.near_oods.append(ds)
-                self.far_oods = []
-                for far_ds_cls in self.far_ood_datasets:
-                    if "split" in far_ds_cls.__init__.__code__.co_varnames:
-                        ds = far_ds_cls(
-                            self.root,
-                            split="test",
-                            transform=self.test_transform,
-                        )
-                    else:
-                        ds = far_ds_cls(
-                            self.root,
-                            train=False,
-                            transform=self.test_transform,
-                        )
-                    self.far_oods.append(ds)
-            if self.eval_shift:
-                self.shift = self.shift_dataset(
-                    self.root,
-                    download=False,
+
+                self.val_ood, near_dict, far_dict = get_ood_datasets(
+                    root=self.root,
+                    dataset_id="CIFAR10",
                     transform=self.test_transform,
                 )
+
+                self.near_ood_names = list(near_dict.keys())
+                self.far_ood_names = list(far_dict.keys())
+
+                self.near_oods = list(near_dict.values())
+                self.far_oods = list(far_dict.values())
+                
         if stage not in ["fit", "test", None]:
             raise ValueError(f"Stage {stage} is not supported.")
 
@@ -271,27 +233,16 @@ class CIFAR10DataModule(TUDataModule):
             )
         return self._data_loader(self.train, training=True, shuffle=True)
 
-    def test_dataloader(self) -> list[DataLoader]:
-        loaders: list[DataLoader] = []
-
-        loaders.append(self._data_loader(self.test, training=False))
-
+    def test_dataloader(self):
+        loaders = [self._data_loader(self.test, training=False)]
         if self.eval_ood:
-            for ds in (*self.near_oods, *self.far_oods):
-                n = len(ds)
-                val_size = int(n * 0.1)
-                test_size = n - val_size
-
-                test_ds = Subset(ds, list(range(test_size)))
-                val_ds  = Subset(ds, list(range(test_size, n)))
-
-                loaders.append(self._data_loader(test_ds, training=False))
-                loaders.append(self._data_loader(val_ds,  training=False))
-
-        # 3) shift
+            loaders.append(self._data_loader(self.val_ood, training=False))
+            for ds in self.near_oods:
+                loaders.append(self._data_loader(ds, training=False))
+            for ds in self.far_oods:
+                loaders.append(self._data_loader(ds, training=False))
         if self.eval_shift:
             loaders.append(self._data_loader(self.shift, training=False))
-
         return loaders
 
     def _get_train_data(self) -> ArrayLike:
@@ -305,34 +256,25 @@ class CIFAR10DataModule(TUDataModule):
         return np.array(self.train.targets)
 
 
-    def get_indices(self) -> dict[str, list[int]]:
-        """Return the list positions of each split in the flat test_dataloader."""
-        idx = 1  # after the ID loader
-        indices: dict[str, list[int]] = {}
-
+    def get_indices(self):
+        idx = 0
+        indices = {}
+        indices["test"]    = [idx]; idx += 1
         if self.eval_ood:
+            indices["val_ood"]   = [idx]; idx += 1
             n_near = len(self.near_oods)
+            indices["near_oods"] = list(range(idx, idx + n_near))
+            idx += n_near
             n_far  = len(self.far_oods)
-
-            # each OOD yields two loaders: test then val
-            indices["near_test"] = list(range(idx, idx + n_near))
-            idx += n_near
-            indices["near_val"]  = list(range(idx, idx + n_near))
-            idx += n_near
-
-            indices["far_test"]  = list(range(idx, idx + n_far))
-            idx += n_far
-            indices["far_val"]   = list(range(idx, idx + n_far))
+            indices["far_oods"]  = list(range(idx, idx + n_far))
             idx += n_far
         else:
-            indices["near_test"] = []
-            indices["near_val"]  = []
-            indices["far_test"]  = []
-            indices["far_val"]   = []
-
+            indices["val_ood"]   = []
+            indices["near_oods"] = []
+            indices["far_oods"]  = []
         if self.eval_shift:
             indices["shift"] = [idx]
         else:
             indices["shift"] = []
-
         return indices
+

@@ -718,15 +718,85 @@ class GENCriterion(TUOODCriterion):
 
 
 
+import faiss
+from scipy.special import logsumexp
+from copy import deepcopy
+
+normalizer = lambda x: x / np.linalg.norm(x, axis=-1, keepdims=True) + 1e-10
 
 
+def knn_score(bankfeas, queryfeas, k=100, min=False):
+
+    bankfeas = deepcopy(np.array(bankfeas))
+    queryfeas = deepcopy(np.array(queryfeas))
+
+    index = faiss.IndexFlatIP(bankfeas.shape[-1])
+    index.add(bankfeas)
+    D, _ = index.search(queryfeas, k)
+    if min:
+        scores = np.array(D.min(axis=1))
+    else:
+        scores = np.array(D.mean(axis=1))
+    return scores
 
 
+class NNGuideCriterion(TUOODCriterion):
+    input_type = OODCriterionInputType.DATASET
+    def __init__(self,config) -> None:
+        super().__init__()
+        self.args = config.postprocessor.postprocessor_args
+        self.K = self.args.K
+        self.alpha = self.args.alpha
+        self.activation_log = None
+        self.args_dict = config.postprocessor.postprocessor_sweep
 
+    def setup(self, net: nn.Module, id_loader_dict, ood_loader_dict):
+        if not self.setup_flag:
+            net.eval()
+            bank_feas = []
+            bank_logits = []
+            with torch.no_grad():
+                for batch in tqdm(id_loader_dict['train'],
+                                  desc='Setup: ',
+                                  position=0,
+                                  leave=True):
+                    data = batch[0].cuda().float()
 
+                    logit, feature = net(data, return_feature=True)
+                    bank_feas.append(normalizer(feature.data.cpu().numpy()))
+                    bank_logits.append(logit.data.cpu().numpy())
+                    if len(bank_feas
+                           ) * id_loader_dict['train'].batch_size > int(
+                               len(id_loader_dict['train'].dataset) *
+                               self.alpha):
+                        break
 
+            bank_feas = np.concatenate(bank_feas, axis=0)
+            bank_confs = logsumexp(np.concatenate(bank_logits, axis=0),
+                                   axis=-1)
+            self.bank_guide = bank_feas * bank_confs[:, None]
 
+            self.setup_flag = True
+        else:
+            pass
 
+    @torch.no_grad()
+    def forward(self, net: nn.Module, data: Any):
+        logit, feature = net(data, return_feature=True)
+        feas_norm = normalizer(feature.data.cpu().numpy())
+        energy = logsumexp(logit.data.cpu().numpy(), axis=-1)
+
+        conf = knn_score(self.bank_guide, feas_norm, k=self.K)
+        score = conf * energy
+
+        return -torch.from_numpy(score)
+
+    def set_hyperparam(self, hyperparam: list):
+        self.K = hyperparam[0]
+        self.alpha = hyperparam[1]
+
+    def get_hyperparam(self):
+        return [self.K, self.alpha]
 
 
 
@@ -780,8 +850,8 @@ def get_ood_criterion(ood_criterion):
     Raises:
         ValueError: If the input string or class type is invalid.
     """
-    config = OmegaConf.load("/home/firas/Bureau/torch-uncertainty_ood/torch_uncertainty/ood/configs/odin.yml")
     if isinstance(ood_criterion, str):
+        config = OmegaConf.load(f"/home/firas/Bureau/torch-uncertainty_ood/torch_uncertainty/ood/configs/{ood_criterion}.yml")
         if ood_criterion == "logit":
             return MaxLogitCriterion()
         if ood_criterion == "energy":
@@ -810,8 +880,8 @@ def get_ood_criterion(ood_criterion):
             return KNNCriterion(config)        
         if ood_criterion == "gen":
             return GENCriterion(config)        
-        if ood_criterion == "react":
-            return ReactCriterion()        
+        if ood_criterion == "nnguide":
+            return NNGuideCriterion(config)        
         if ood_criterion == "react":
             return ReactCriterion()
         raise ValueError(
