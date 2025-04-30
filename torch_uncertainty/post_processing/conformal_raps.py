@@ -1,8 +1,11 @@
-from typing import Literal, Optional
+from typing import Literal
+
 import torch
-from torch import nn, Tensor
+from torch import Tensor, nn
 from torch.utils.data import DataLoader
+
 from .abstract import PostProcessing
+
 
 class ConformalClassificationRAPS(PostProcessing):
     def __init__(
@@ -12,10 +15,10 @@ class ConformalClassificationRAPS(PostProcessing):
         randomized: bool = True,
         penalty: float = 0.1,
         kreg: int = 1,
-        device: Optional[Literal["cpu", "cuda"]] = None,
+        device: Literal["cpu", "cuda"] | torch.device | None = None,
         alpha: float = 0.1,
     ) -> None:
-        """Conformal prediction with RAPS scores.
+        r"""Conformal prediction with RAPS scores.
 
         Args:
             model (nn.Module): Trained classification model.
@@ -23,8 +26,10 @@ class ConformalClassificationRAPS(PostProcessing):
             randomized (bool): Whether to use randomized smoothing in RAPS.
             penalty (float): Regularization weight.
             kreg (int): Rank threshold for regularization.
-            device (str, optional): 'cpu' or 'cuda'.
-            alpha (float): Allowed miscoverage level.
+            device (Literal["cpu", "cuda"] | torch.device | None, optional): device.
+                Defaults to ``None``.
+            alpha (float): The confidence level meaning we allow :math:`1-\alpha` error. Defaults
+                to ``0.1``.
         """
         super().__init__(model=model)
         self.model = model.to(device=device)
@@ -44,8 +49,7 @@ class ConformalClassificationRAPS(PostProcessing):
     def forward(self, inputs: Tensor) -> Tensor:
         """Apply the model and return transformed scores (softmax)."""
         logits = self.model(inputs)
-        probs = self.transform(logits)
-        return probs
+        return self.transform(logits)
 
     def _sort_sum(self, probs: Tensor):
         """Sort probabilities and compute cumulative sums."""
@@ -79,10 +83,7 @@ class ConformalClassificationRAPS(PostProcessing):
         indices, ordered, cumsum = self._sort_sum(probs)
         batch_size, num_classes = probs.shape
 
-        if self.randomized:
-            noise = torch.rand_like(probs)
-        else:
-            noise = torch.zeros_like(probs)
+        noise = torch.rand_like(probs) if self.randomized else torch.zeros_like(probs)
 
         ranks = torch.arange(1, num_classes + 1, device=probs.device, dtype=torch.float)
         penalty_vector = self.penalty * (ranks - self.kreg)
@@ -110,7 +111,6 @@ class ConformalClassificationRAPS(PostProcessing):
 
         raps_scores = torch.cat(raps_scores)
         self.q_hat = torch.quantile(raps_scores, 1 - self.alpha)
-        print(f"RAPS calibration threshold (q_hat): {self.q_hat:.4f}")
 
     def fit(self, dataloader: DataLoader) -> None:
         """Alias for calibrate to match other API style."""

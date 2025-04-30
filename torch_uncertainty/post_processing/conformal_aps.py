@@ -1,29 +1,31 @@
-from typing import Literal, Optional
-import torch
-from torch import nn, optim, Tensor
-from .abstract import PostProcessing
-from torch.utils.data import DataLoader
-from .calibration import TemperatureScaler
+from typing import Literal
 
+import torch
+from torch import Tensor, nn
+from torch.utils.data import DataLoader
+
+from .abstract import PostProcessing
 
 
 class ConformalclassificationAPS(PostProcessing):
     def __init__(
-            self,
-            model: nn.Module,
-            score_type: str = "softmax",
-            randomized: bool = True,
-            device: Optional[Literal["cpu", "cuda"]] = None,
-            alpha: float = 0.1,
+        self,
+        model: nn.Module,
+        score_type: str = "softmax",
+        randomized: bool = True,
+        device: Literal["cpu", "cuda"] | torch.device | None = None,
+        alpha: float = 0.1,
     ) -> None:
-        """Conformal prediction with APS scores.
+        r"""Conformal prediction with APS scores.
 
         Args:
             model (nn.Module): Trained classification model.
-            score_type (str): Type of score transformation. Only 'softmax' is supported for now.
+            score_type (str): Type of score transformation. Only ``"softmax"`` is supported for now.
             randomized (bool): Whether to use randomized smoothing in APS.
-            device (str, optional): 'cpu' or 'cuda'.
-            alpha (float): Allowed miscoverage level.
+            device (Literal["cpu", "cuda"] | torch.device | None, optional): device.
+                Defaults to ``None``.
+            alpha (float): The confidence level meaning we allow :math:`1-\alpha` error. Defaults
+                to ``0.1``.
         """
         super().__init__(model=model)
         self.model = model.to(device=device)
@@ -40,8 +42,7 @@ class ConformalclassificationAPS(PostProcessing):
     def forward(self, inputs: Tensor) -> Tensor:
         """Apply the model and return transformed scores (softmax)."""
         logits = self.model(inputs)
-        probs = self.transform(logits)
-        return probs
+        return self.transform(logits)
 
     def _sort_sum(self, probs: Tensor):
         """Sort probabilities and compute cumulative sums."""
@@ -53,9 +54,9 @@ class ConformalclassificationAPS(PostProcessing):
         """Compute APS score for the true label."""
         indices, ordered, cumsum = self._sort_sum(probs)
         if self.randomized:
-            U = torch.rand(indices.shape[0], device=probs.device)
+            u = torch.rand(indices.shape[0], device=probs.device)
         else:
-            U = torch.zeros(indices.shape[0], device=probs.device)
+            u = torch.zeros(indices.shape[0], device=probs.device)
 
         scores = torch.zeros(probs.shape[0], device=probs.device)
         for i in range(probs.shape[0]):
@@ -63,21 +64,20 @@ class ConformalclassificationAPS(PostProcessing):
             if pos.numel() == 0:
                 raise ValueError("True label not found.")
             pos = pos[0].item()
-            scores[i] = cumsum[i, pos] - U[i] * ordered[i, pos]
+            scores[i] = cumsum[i, pos] - u[i] * ordered[i, pos]
         return scores
 
     def _calculate_all_labels(self, probs: Tensor):
         """Compute APS scores for all labels."""
         indices, ordered, cumsum = self._sort_sum(probs)
         if self.randomized:
-            U = torch.rand(probs.shape, device=probs.device)
+            u = torch.rand(probs.shape, device=probs.device)
         else:
-            U = torch.zeros_like(probs)
+            u = torch.zeros_like(probs)
 
-        ordered_scores = cumsum - ordered * U
+        ordered_scores = cumsum - ordered * u
         _, sorted_indices = torch.sort(indices, descending=False, dim=-1)
-        scores = ordered_scores.gather(dim=-1, index=sorted_indices)
-        return scores
+        return ordered_scores.gather(dim=-1, index=sorted_indices)
 
     def calibrate(self, dataloader: DataLoader) -> None:
         """Calibrate the APS threshold q_hat on a calibration set."""
@@ -93,7 +93,6 @@ class ConformalclassificationAPS(PostProcessing):
 
         aps_scores = torch.cat(aps_scores)
         self.q_hat = torch.quantile(aps_scores, 1 - self.alpha)
-        print(f"APS calibration threshold (q_hat): {self.q_hat:.4f}")
 
     def fit(self, dataloader: DataLoader) -> None:
         """Alias for calibrate to match other API style."""
@@ -119,15 +118,3 @@ class ConformalclassificationAPS(PostProcessing):
         if self.q_hat is None:
             raise ValueError("Quantile q_hat is not set. Run `.fit()` first.")
         return self.q_hat.detach()
-
-
-
-
-
-
-
-
-
-
-
-
