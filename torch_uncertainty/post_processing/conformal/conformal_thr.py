@@ -4,8 +4,7 @@ import torch
 from torch import Tensor, nn
 from torch.utils.data import DataLoader
 
-from .abstract import PostProcessing
-from .calibration import TemperatureScaler
+from torch_uncertainty.post_processing import PostProcessing, TemperatureScaler
 
 
 class ConformalclassificationTHR(PostProcessing):

@@ -4,24 +4,28 @@ import torch
 from torch import Tensor, nn
 from torch.utils.data import DataLoader
 
-from .abstract import PostProcessing
+from torch_uncertainty.post_processing import PostProcessing
 
 
-class ConformalclassificationAPS(PostProcessing):
+class ConformalClassificationRAPS(PostProcessing):
     def __init__(
         self,
         model: nn.Module,
         score_type: str = "softmax",
         randomized: bool = True,
+        penalty: float = 0.1,
+        kreg: int = 1,
         device: Literal["cpu", "cuda"] | torch.device | None = None,
         alpha: float = 0.1,
     ) -> None:
-        r"""Conformal prediction with APS scores.
+        r"""Conformal prediction with RAPS scores.
 
         Args:
             model (nn.Module): Trained classification model.
-            score_type (str): Type of score transformation. Only ``"softmax"`` is supported for now.
-            randomized (bool): Whether to use randomized smoothing in APS.
+            score_type (str): Type of score transformation. Only 'softmax' is supported for now.
+            randomized (bool): Whether to use randomized smoothing in RAPS.
+            penalty (float): Regularization weight.
+            kreg (int): Rank threshold for regularization.
             device (Literal["cpu", "cuda"] | torch.device | None, optional): device.
                 Defaults to ``None``.
             alpha (float): The confidence level meaning we allow :math:`1-\alpha` error. Defaults
@@ -29,12 +33,15 @@ class ConformalclassificationAPS(PostProcessing):
         """
         super().__init__(model=model)
         self.model = model.to(device=device)
+        self.score_type = score_type
         self.randomized = randomized
-        self.alpha = alpha
+        self.penalty = penalty
+        self.kreg = kreg
         self.device = device or "cpu"
+        self.alpha = alpha
         self.q_hat = None
 
-        if score_type == "softmax":
+        if self.score_type == "softmax":
             self.transform = lambda x: torch.softmax(x, dim=-1)
         else:
             raise NotImplementedError("Only softmax is supported for now.")
@@ -50,49 +57,60 @@ class ConformalclassificationAPS(PostProcessing):
         cumsum = torch.cumsum(ordered, dim=-1)
         return indices, ordered, cumsum
 
-    def _calculate_single_label(self, probs: Tensor, labels: Tensor):
-        """Compute APS score for the true label."""
+    def _calculate_single_label(self, probs: Tensor, labels: Tensor) -> Tensor:
+        """Compute RAPS score for the true label."""
         indices, ordered, cumsum = self._sort_sum(probs)
-        if self.randomized:
-            u = torch.rand(indices.shape[0], device=probs.device)
-        else:
-            u = torch.zeros(indices.shape[0], device=probs.device)
+        batch_size = probs.shape[0]
 
-        scores = torch.zeros(probs.shape[0], device=probs.device)
-        for i in range(probs.shape[0]):
-            pos = (indices[i] == labels[i]).nonzero(as_tuple=False)
-            if pos.numel() == 0:
+        if self.randomized:
+            noise = torch.rand(batch_size, device=probs.device)
+        else:
+            noise = torch.zeros(batch_size, device=probs.device)
+
+        scores = torch.zeros(batch_size, device=probs.device)
+        for i in range(batch_size):
+            pos_tensor = (indices[i] == labels[i]).nonzero(as_tuple=False)
+            if pos_tensor.numel() == 0:
                 raise ValueError("True label not found.")
-            pos = pos[0].item()
-            scores[i] = cumsum[i, pos] - u[i] * ordered[i, pos]
+            pos = pos_tensor[0].item()
+
+            reg = max(self.penalty * ((pos + 1) - self.kreg), 0)
+            scores[i] = cumsum[i, pos] - ordered[i, pos] * noise[i] + reg
         return scores
 
-    def _calculate_all_labels(self, probs: Tensor):
-        """Compute APS scores for all labels."""
+    def _calculate_all_labels(self, probs: Tensor) -> Tensor:
+        """Compute RAPS scores for all labels."""
         indices, ordered, cumsum = self._sort_sum(probs)
-        if self.randomized:
-            u = torch.rand(probs.shape, device=probs.device)
-        else:
-            u = torch.zeros_like(probs)
+        batch_size, num_classes = probs.shape
 
-        ordered_scores = cumsum - ordered * u
-        _, sorted_indices = torch.sort(indices, descending=False, dim=-1)
-        return ordered_scores.gather(dim=-1, index=sorted_indices)
+        noise = torch.rand_like(probs) if self.randomized else torch.zeros_like(probs)
+
+        ranks = torch.arange(1, num_classes + 1, device=probs.device, dtype=torch.float)
+        penalty_vector = self.penalty * (ranks - self.kreg)
+        penalty_vector = torch.clamp(penalty_vector, min=0)
+        penalty_matrix = penalty_vector.unsqueeze(0).expand_as(ordered)
+
+        modified_scores = cumsum - ordered * noise + penalty_matrix
+
+        # Reorder scores back to original label order
+        reordered_scores = torch.empty_like(modified_scores)
+        reordered_scores.scatter_(dim=-1, index=indices, src=modified_scores)
+        return reordered_scores
 
     def calibrate(self, dataloader: DataLoader) -> None:
-        """Calibrate the APS threshold q_hat on a calibration set."""
+        """Calibrate the RAPS threshold q_hat on a calibration set."""
         self.model.eval()
-        aps_scores = []
+        raps_scores = []
 
         with torch.no_grad():
             for images, labels in dataloader:
                 images, labels = images.to(self.device), labels.to(self.device)
                 probs = self.forward(images)
                 scores = self._calculate_single_label(probs, labels)
-                aps_scores.append(scores)
+                raps_scores.append(scores)
 
-        aps_scores = torch.cat(aps_scores)
-        self.q_hat = torch.quantile(aps_scores, 1 - self.alpha)
+        raps_scores = torch.cat(raps_scores)
+        self.q_hat = torch.quantile(raps_scores, 1 - self.alpha)
 
     def fit(self, dataloader: DataLoader) -> None:
         """Alias for calibrate to match other API style."""
