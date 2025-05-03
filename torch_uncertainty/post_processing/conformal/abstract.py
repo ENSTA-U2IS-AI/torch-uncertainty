@@ -4,7 +4,7 @@ from torch import Tensor, nn
 from torch.utils.data import DataLoader
 
 
-class PostProcessing(ABC, nn.Module):
+class Conformal(ABC, nn.Module):
     def __init__(self, model: nn.Module | None = None):
         super().__init__()
         self.model = model
@@ -18,3 +18,6 @@ class PostProcessing(ABC, nn.Module):
 
     @abstractmethod
     def forward(self, inputs: Tensor) -> Tensor: ...
+
+    @abstractmethod
+    def conformal(self, inputs: Tensor) -> tuple[Tensor, Tensor]: ...

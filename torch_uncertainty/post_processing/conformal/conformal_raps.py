@@ -4,10 +4,10 @@ import torch
 from torch import Tensor, nn
 from torch.utils.data import DataLoader
 
-from torch_uncertainty.post_processing import PostProcessing
+from .abstract import Conformal
 
 
-class ConformalClassificationRAPS(PostProcessing):
+class ConformalClsRAPS(Conformal):
     def __init__(
         self,
         model: nn.Module,
@@ -30,6 +30,9 @@ class ConformalClassificationRAPS(PostProcessing):
                 Defaults to ``None``.
             alpha (float): The confidence level meaning we allow :math:`1-\alpha` error. Defaults
                 to ``0.1``.
+
+        Reference:
+            - TODO:
         """
         super().__init__(model=model)
         self.model = model.to(device=device)
@@ -97,7 +100,7 @@ class ConformalClassificationRAPS(PostProcessing):
         reordered_scores.scatter_(dim=-1, index=indices, src=modified_scores)
         return reordered_scores
 
-    def calibrate(self, dataloader: DataLoader) -> None:
+    def fit(self, dataloader: DataLoader) -> None:
         """Calibrate the RAPS threshold q_hat on a calibration set."""
         self.model.eval()
         raps_scores = []
@@ -111,10 +114,6 @@ class ConformalClassificationRAPS(PostProcessing):
 
         raps_scores = torch.cat(raps_scores)
         self.q_hat = torch.quantile(raps_scores, 1 - self.alpha)
-
-    def fit(self, dataloader: DataLoader) -> None:
-        """Alias for calibrate to match other API style."""
-        self.calibrate(dataloader)
 
     def conformal(self, inputs: Tensor) -> tuple[Tensor, Tensor]:
         """Compute the prediction set for each input."""

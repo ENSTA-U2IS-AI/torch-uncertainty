@@ -4,10 +4,12 @@ import torch
 from torch import Tensor, nn
 from torch.utils.data import DataLoader
 
-from torch_uncertainty.post_processing import PostProcessing, TemperatureScaler
+from torch_uncertainty.post_processing import TemperatureScaler
+
+from .abstract import Conformal
 
 
-class ConformalclassificationTHR(PostProcessing):
+class ConformalClsTHR(Conformal):
     def __init__(
         self,
         model: nn.Module,
@@ -30,6 +32,9 @@ class ConformalclassificationTHR(PostProcessing):
                 Defaults to ``None``.
             alpha (float): The confidence level meaning we allow :math:`1-\alpha` error. Defaults
                 to ``0.1``.
+
+        Reference:
+            - `Least ambiguous set-valued classifiers with bounded error levels, Sadinle, M. et al., (2016) <https://arxiv.org/abs/1609.00451>`_.
         """
         super().__init__(model=model)
         self.model = model.to(device=device)
@@ -46,15 +51,20 @@ class ConformalclassificationTHR(PostProcessing):
         logits = self.model(inputs)
         return logits / self.temp
 
-    def calibrate(self, dataloader: DataLoader) -> None:
+    def fit_temperature(self, dataloader: DataLoader) -> None:
         # Fit the scaler on the calibration dataset
         scaled_model = TemperatureScaler(
-            model=self.model, lr=self.lr, max_iter=self.max_iter, device=self.device
+            model=self.model,
+            init_val=self.init_val,
+            lr=self.lr,
+            max_iter=self.max_iter,
+            device=self.device,
         )
         scaled_model.fit(dataloader=dataloader)
         self.temp = scaled_model.temperature[0].item()
 
     def fit(self, dataloader: DataLoader) -> None:
+        self.fit_temperature(dataloader=dataloader)
         logits_list = []
         labels_list = []
         with torch.no_grad():
