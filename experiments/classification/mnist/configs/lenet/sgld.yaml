@@ -10,7 +10,7 @@ trainer:
     class_path: lightning.pytorch.loggers.TensorBoardLogger
     init_args:
       save_dir: logs/lenet
-      name: standard
+      name: sgld
       default_hp_metric: false
   callbacks:
   - class_path: torch_uncertainty.callbacks.TUClsCheckpoint
@@ -24,17 +24,14 @@ trainer:
       check_finite: true
 model:
   model:
-    class_path: torch_uncertainty.models.lenet._LeNet
+    class_path: torch_uncertainty.models.lenet.lenet
     init_args:
       in_channels: 1
       num_classes: 10
-      linear_layer: torch.nn.Linear
-      conv2d_layer: torch.nn.Conv2d
       activation: torch.nn.ReLU
       norm: torch.nn.Identity
       groups: 1
       dropout_rate: 0
-      layer_args: {}
   num_classes: 10
   loss: CrossEntropyLoss
 data:
@@ -42,10 +39,11 @@ data:
   batch_size: 128
   num_workers: 10
 optimizer:
-  lr: 0.05
-  momentum: 0.9
-  weight_decay: 5e-4
-  nesterov: true
+  class_path: torch_uncertainty.optim.SGLD
+  init_args:
+    dataset_size: 60000
+    lr: 1e-5
+    weight_decay: 99.999
 lr_scheduler:
   class_path: torch.optim.lr_scheduler.MultiStepLR
   init_args:

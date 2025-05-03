@@ -27,17 +27,14 @@ model:
     class_path: torch_uncertainty.models.CheckpointEnsemble
     init_args:
       model:
-        class_path: torch_uncertainty.models.lenet._LeNet
+        class_path: torch_uncertainty.models.lenet.lenet
         init_args:
           in_channels: 1
           num_classes: 10
-          linear_layer: torch.nn.Linear
-          conv2d_layer: torch.nn.Conv2d
           activation: torch.nn.ReLU
           norm: torch.nn.Identity
           groups: 1
           dropout_rate: 0
-          layer_args: {}
       save_schedule:
         - 20
         - 25
@@ -57,10 +54,12 @@ data:
   root: ./data
   batch_size: 128
 optimizer:
-  lr: 0.05
-  momentum: 0.9
-  weight_decay: 5e-4
-  nesterov: true
+  class_path: torch.optim.SGD
+  init_args:
+    lr: 0.05
+    momentum: 0.9
+    weight_decay: 5e-4
+    nesterov: true
 lr_scheduler:
   class_path: torch.optim.lr_scheduler.MultiStepLR
   init_args:

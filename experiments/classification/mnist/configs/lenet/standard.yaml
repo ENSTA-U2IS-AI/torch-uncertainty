@@ -24,36 +24,27 @@ trainer:
       check_finite: true
 model:
   model:
-    class_path: torch_uncertainty.models.StochasticModel
+    class_path: torch_uncertainty.models.lenet.lenet
     init_args:
-      model:
-        class_path: torch_uncertainty.models.lenet._LeNet
-        init_args:
-          in_channels: 1
-          num_classes: 10
-          linear_layer: torch.nn.Linear
-          conv2d_layer: torch.nn.Conv2d
-          activation: torch.nn.ReLU
-          norm: torch.nn.Identity
-          groups: 1
-          dropout_rate: 0
-          layer_args: {}
-      num_samples: 16
+      in_channels: 1
+      num_classes: 10
+      activation: torch.nn.ReLU
+      norm: torch.nn.Identity
+      groups: 1
+      dropout_rate: 0
   num_classes: 10
-  loss:
-    class_path: torch_uncertainty.losses.ELBOLoss
-    init_args:
-      kl_weight: 0.00002
-      inner_loss: torch.nn.CrossEntropyLoss
-      num_samples: 3
+  loss: CrossEntropyLoss
 data:
   root: ./data
   batch_size: 128
+  num_workers: 10
 optimizer:
-  lr: 0.05
-  momentum: 0.9
-  weight_decay: 5e-4
-  nesterov: true
+  class_path: torch.optim.SGD
+  init_args:
+    lr: 0.05
+    momentum: 0.9
+    weight_decay: 5e-4
+    nesterov: true
 lr_scheduler:
   class_path: torch.optim.lr_scheduler.MultiStepLR
   init_args:
