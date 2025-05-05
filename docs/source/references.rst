@@ -210,6 +210,16 @@ For Warping Mixup, consider citing:
 * Authors: *Quentin Bouniot, Pavlo Mozharovskyi, and Florence d'Alché-Buc*
 * Paper: `ArXiv 2023 <https://arxiv.org/abs/2311.01434>`__.
 
+Test-Time-Adaptation with ZERO
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For ZERO, consider citing:
+
+**Frustratingly Easy Test-Time Adaptation of Vision-Language Models**
+
+* Authors: *Matteo Farina, Gianni Franchi, Giovanni Iacca, Massimiliano Mancini and Elisa Ricci*
+* Paper: `NeurIPS 2024 <https://arxiv.org/abs/2405.18330>`__.
+
 Post-Processing Methods
 -----------------------
 
