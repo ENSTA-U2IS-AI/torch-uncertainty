@@ -10,7 +10,7 @@ from .abstract import Conformal
 class ConformalClsRAPS(Conformal):
     def __init__(
         self,
-        model: nn.Module,
+        model: nn.Module | None = None,
         score_type: str = "softmax",
         randomized: bool = True,
         penalty: float = 0.1,
@@ -35,7 +35,6 @@ class ConformalClsRAPS(Conformal):
             - TODO:
         """
         super().__init__(model=model)
-        self.model = model.to(device=device)
         self.score_type = score_type
         self.randomized = randomized
         self.penalty = penalty

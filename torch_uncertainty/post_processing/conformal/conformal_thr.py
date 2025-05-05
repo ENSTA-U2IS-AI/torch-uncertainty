@@ -12,7 +12,7 @@ from .abstract import Conformal
 class ConformalClsTHR(Conformal):
     def __init__(
         self,
-        model: nn.Module,
+        model: nn.Module | None = None,
         init_val: float = 1,
         lr: float = 0.1,
         max_iter: int = 100,
@@ -22,7 +22,7 @@ class ConformalClsTHR(Conformal):
         r"""Conformal prediction post-processing for calibrated models.
 
         Args:
-            model (nn.Module): Model to be calibrated.
+            model (nn.Module, optional): Model to be calibrated.
             init_val (float, optional): Initial value for the temperature.
                 Defaults to ``1``.
             lr (float, optional): Learning rate for the optimizer. Defaults to ``0.1``.
@@ -37,31 +37,28 @@ class ConformalClsTHR(Conformal):
             - `Least ambiguous set-valued classifiers with bounded error levels, Sadinle, M. et al., (2016) <https://arxiv.org/abs/1609.00451>`_.
         """
         super().__init__(model=model)
-        self.model = model.to(device=device)
-        self.init_val = init_val
-        self.lr = lr
-        self.max_iter = max_iter
         self.device = device or "cpu"
-        self.temp = None  # Will be set after calibration
+        self.temperature_scaler = TemperatureScaler(
+            model=model,
+            init_val=init_val,
+            lr=lr,
+            max_iter=max_iter,
+            device=self.device,
+        )
         self.q_hat = None  # Will be set after calibration
         self.alpha = alpha
 
+    def set_model(self, model: nn.Module) -> None:
+        self.model = model
+        self.temperature_scaler.set_model(model=model)
+
     def forward(self, inputs: Tensor) -> Tensor:
         """Apply temperature scaling."""
-        logits = self.model(inputs)
-        return logits / self.temp
+        return self.temperature_scaler(inputs)
 
     def fit_temperature(self, dataloader: DataLoader) -> None:
         # Fit the scaler on the calibration dataset
-        scaled_model = TemperatureScaler(
-            model=self.model,
-            init_val=self.init_val,
-            lr=self.lr,
-            max_iter=self.max_iter,
-            device=self.device,
-        )
-        scaled_model.fit(dataloader=dataloader)
-        self.temp = scaled_model.temperature[0].item()
+        self.temperature_scaler.fit(dataloader=dataloader)
 
     def fit(self, dataloader: DataLoader) -> None:
         self.fit_temperature(dataloader=dataloader)
@@ -70,12 +67,12 @@ class ConformalClsTHR(Conformal):
         with torch.no_grad():
             for images, labels in dataloader:
                 images, labels = images.to(self.device), labels.to(self.device)
-                scaled_logits = self.model(images) / self.temp
+                scaled_logits = self.forward(images)
                 logits_list.append(scaled_logits)
                 labels_list.append(labels)
 
             scaled_logits = torch.cat(logits_list)
-            labels = torch.cat(labels_list)
+            labels = torch.cat(labels_list).long()
             probs = torch.softmax(scaled_logits, dim=1)
             true_class_probs = probs.gather(1, labels.unsqueeze(1)).squeeze(1)
             scores = 1.0 - true_class_probs  # scores are (1 - true prob)
@@ -84,26 +81,25 @@ class ConformalClsTHR(Conformal):
 
     def conformal(self, inputs: Tensor) -> tuple[Tensor, Tensor]:
         """Perform conformal prediction on the test set."""
-        if self.q_hat is None:
-            raise ValueError("You must calibrate and estimate the qhat first by calling `.fit()`.")
-
         self.model.eval()
         with torch.no_grad():
-            scaled_logits = self.model(inputs) / self.temp
+            scaled_logits = self.forward(inputs)
             probs = torch.softmax(scaled_logits, dim=1)
-            pred_set = probs >= (1.0 - self.q_hat)
+            pred_set = probs >= (1.0 - self.quantile)
             top1 = torch.argmax(probs, dim=1, keepdim=True)
             pred_set.scatter_(1, top1, True)  # Always include top-1 class
 
             confidence_score = pred_set.sum(dim=1).float()
 
-            return (
-                pred_set,
-                confidence_score,
-            )
+            return (pred_set, confidence_score)
 
     @property
     def quantile(self) -> Tensor:
         if self.q_hat is None:
             raise ValueError("Quantile q_hat is not set. Run `.fit()` first.")
         return self.q_hat.detach()
+
+    @property
+    def temperature(self) -> Tensor:
+        """Get the temperature parameter."""
+        return self.temperature_scaler.temperature[0].detach()

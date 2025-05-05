@@ -10,7 +10,7 @@ from .abstract import Conformal
 class ConformalClsAPS(Conformal):
     def __init__(
         self,
-        model: nn.Module,
+        model: nn.Module | None = None,
         score_type: str = "softmax",
         randomized: bool = True,
         device: Literal["cpu", "cuda"] | torch.device | None = None,
@@ -31,7 +31,6 @@ class ConformalClsAPS(Conformal):
             - TODO:
         """
         super().__init__(model=model)
-        self.model = model.to(device=device)
         self.randomized = randomized
         self.alpha = alpha
         self.device = device or "cpu"

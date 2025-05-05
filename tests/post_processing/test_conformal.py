@@ -1,0 +1,82 @@
+import pytest
+import torch
+from einops import repeat
+from torch import nn
+from torch.utils.data import DataLoader
+
+from torch_uncertainty.post_processing import ConformalClsAPS, ConformalClsRAPS, ConformalClsTHR
+
+
+class TestConformalClsAPS:
+    """Testing the ConformalClsRAPS class."""
+
+    def test_fit(self):
+        inputs = repeat(torch.tensor([0.6, 0.3, 0.1]), "c -> b c", b=10)
+        labels = torch.tensor([0, 2] + [1] * 8)
+
+        calibration_set = list(zip(inputs, labels, strict=True))
+        dl = DataLoader(calibration_set, batch_size=10)
+
+        conformal = ConformalClsAPS(model=nn.Identity(), randomized=False)
+        conformal.fit(dl)
+        out = conformal.conformal(inputs)
+        assert out[0].shape == (10, 3)
+        assert (out[0] == repeat(torch.tensor([True, True, False]), "c -> b c", b=10)).all()
+        assert out[1].shape == (10,)
+        assert (out[1] == torch.tensor([2.0] * 10)).all()
+
+    def test_failures(self):
+        with pytest.raises(NotImplementedError):
+            ConformalClsAPS(score_type="test")
+
+
+class TestConformalClsRAPS:
+    """Testing the ConformalClsRAPS class."""
+
+    def test_fit(self):
+        inputs = repeat(torch.tensor([6.0, 4.0, 1.0]), "c -> b c", b=10)
+        labels = torch.tensor([0, 2] + [1] * 8)
+
+        calibration_set = list(zip(inputs, labels, strict=True))
+        dl = DataLoader(calibration_set, batch_size=10)
+
+        conformal = ConformalClsRAPS(model=nn.Identity(), randomized=False)
+        conformal.fit(dl)
+        out = conformal.conformal(inputs)
+        assert out[0].shape == (10, 3)
+        assert (out[0] == repeat(torch.tensor([True, True, False]), "c -> b c", b=10)).all()
+        assert out[1].shape == (10,)
+        assert (out[1] == torch.tensor([2.0] * 10)).all()
+
+    def test_failures(self):
+        with pytest.raises(NotImplementedError):
+            ConformalClsRAPS(score_type="test")
+
+
+class TestConformalClsTHR:
+    """Testing the ConformalClsTHR class."""
+
+    def test_main(self):
+        conformal = ConformalClsTHR(model=None, init_val=2)
+
+        assert conformal.temperature == 2.0
+
+        conformal.set_model(nn.Identity())
+
+        assert isinstance(conformal.model, nn.Identity)
+        assert isinstance(conformal.temperature_scaler.model, nn.Identity)
+
+    def test_fit(self):
+        inputs = repeat(torch.tensor([0.6, 0.3, 0.1]), "c -> b c", b=10)
+        labels = torch.tensor([0, 2] + [1] * 8)
+
+        calibration_set = list(zip(inputs, labels, strict=True))
+        dl = DataLoader(calibration_set, batch_size=10)
+
+        conformal = ConformalClsTHR(model=nn.Identity(), init_val=2, lr=1, max_iter=10)
+        conformal.fit(dl)
+        out = conformal.conformal(inputs)
+        assert out[0].shape == (10, 3)
+        assert (out[0] == repeat(torch.tensor([True, True, False]), "c -> b c", b=10)).all()
+        assert out[1].shape == (10,)
+        assert (out[1] == torch.tensor([2.0] * 10)).all()
