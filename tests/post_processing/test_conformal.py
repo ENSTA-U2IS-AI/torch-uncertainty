@@ -108,4 +108,4 @@ class TestConformalClsTHR:
 
     def test_failures(self):
         with pytest.raises(ValueError):
-            ConformalClsRAPS().quantile  # noqa: B018
+            ConformalClsTHR().quantile  # noqa: B018

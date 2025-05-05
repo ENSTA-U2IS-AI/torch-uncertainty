@@ -42,7 +42,7 @@ from torch_uncertainty.ood_criteria import (
     TUOODCriterion,
     get_ood_criterion,
 )
-from torch_uncertainty.post_processing import LaplaceApprox, PostProcessing
+from torch_uncertainty.post_processing import Conformal, LaplaceApprox, PostProcessing
 from torch_uncertainty.transforms import (
     Mixup,
     MixupIO,
@@ -496,7 +496,10 @@ class ClassificationRoutine(LightningModule):
         probs_per_est = torch.sigmoid(logits) if self.binary_cls else F.softmax(logits, dim=-1)
         probs = probs_per_est.mean(dim=1)
         if self.is_conformal:
-            pred_conformal, confs_conformal = self.model.conformal(inputs)
+            if isinstance(self.post_processing, Conformal):
+                pred_conformal, confs_conformal = self.post_processing.conformal(inputs)
+            else:
+                pred_conformal, confs_conformal = self.model.conformal(inputs)
 
         if self.ood_criterion.input_type == OODCriterionInputType.LOGIT and not self.is_conformal:
             ood_scores = self.ood_criterion(logits)
@@ -612,11 +615,6 @@ class ClassificationRoutine(LightningModule):
             self.log_dict(tmp_metrics, sync_dist=True)
             result_dict.update(tmp_metrics)
 
-        if self.is_conformal:
-            tmp_metrics = self.test_cfm_metrics.compute()
-            self.log_dict(tmp_metrics, sync_dist=True)
-            result_dict.update(tmp_metrics)
-
             # already logged
             result_dict.update({"ood/Entropy": self.test_ood_entropy.compute()})
 
@@ -624,6 +622,11 @@ class ClassificationRoutine(LightningModule):
                 tmp_metrics = self.test_ood_ens_metrics.compute()
                 self.log_dict(tmp_metrics, sync_dist=True)
                 result_dict.update(tmp_metrics)
+
+        if self.is_conformal:
+            tmp_metrics = self.test_cfm_metrics.compute()
+            self.log_dict(tmp_metrics, sync_dist=True)
+            result_dict.update(tmp_metrics)
 
         if self.eval_shift:
             tmp_metrics = self.test_shift_metrics.compute()

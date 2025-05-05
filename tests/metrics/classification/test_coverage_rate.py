@@ -27,7 +27,8 @@ class TestCoverageRate:
         labels = torch.tensor([0] * 10)
         metric.update(preds, labels)
         assert metric.compute() == pytest.approx(0.7, rel=1e-2)
-        metric.reset()
+
+        metric = CoverageRate(validate_args=False)
         labels = torch.tensor([1] * 10)
         metric.update(preds, labels)
         assert metric.compute() == pytest.approx(0.9, rel=1e-2)
