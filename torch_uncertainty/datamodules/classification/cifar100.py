@@ -13,8 +13,8 @@ from torchvision.transforms import v2
 from torch_uncertainty.datamodules import TUDataModule
 from torch_uncertainty.datasets import AggregatedDataset
 from torch_uncertainty.datasets.classification import CIFAR100C
+from torch_uncertainty.datasets.utils import create_train_val_split
 from torch_uncertainty.transforms import Cutout
-from torch_uncertainty.utils import create_train_val_split
 
 
 class CIFAR100DataModule(TUDataModule):

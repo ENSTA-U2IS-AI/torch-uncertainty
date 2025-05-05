@@ -6,7 +6,7 @@ from typing import Literal
 from lightning.pytorch.core import LightningDataModule
 from numpy.typing import ArrayLike
 
-from torch_uncertainty.utils import TTADataset
+from torch_uncertainty.datasets.utils import TTADataset
 
 if util.find_spec("sklearn"):
     from sklearn.model_selection import StratifiedKFold

@@ -3,7 +3,7 @@ from pathlib import Path
 from torch.nn.common_types import _size_2_t
 
 from torch_uncertainty.datasets import MUAD
-from torch_uncertainty.utils import create_train_val_split
+from torch_uncertainty.datasets.utils import create_train_val_split
 
 from .base import DepthDataModule
 
