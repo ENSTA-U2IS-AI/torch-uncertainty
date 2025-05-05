@@ -44,6 +44,12 @@ class TestConformalClsAPS:
         assert out[1].shape == (10,)
         assert (out[1] == torch.tensor([2.0] * 10)).all()
 
+        conformal = ConformalClsAPS(model=nn.Identity(), randomized=True)
+        conformal.fit(dl)
+        out = conformal.conformal(inputs)
+        assert out[0].shape == (10, 3)
+        assert out[1].shape == (10,)
+
     def test_failures(self):
         with pytest.raises(NotImplementedError):
             ConformalClsAPS(score_type="test")
@@ -69,6 +75,12 @@ class TestConformalClsRAPS:
         assert (out[0] == repeat(torch.tensor([True, True, False]), "c -> b c", b=10)).all()
         assert out[1].shape == (10,)
         assert (out[1] == torch.tensor([2.0] * 10)).all()
+
+        conformal = ConformalClsRAPS(model=nn.Identity(), randomized=True)
+        conformal.fit(dl)
+        out = conformal.conformal(inputs)
+        assert out[0].shape == (10, 3)
+        assert out[1].shape == (10,)
 
     def test_failures(self):
         with pytest.raises(NotImplementedError):

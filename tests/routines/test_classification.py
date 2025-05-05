@@ -358,6 +358,23 @@ class TestClassification:
         )
         trainer.test(routine, dm)
 
+        model = ConformalClsTHR(
+            model=dummy_model(
+                in_channels=dm.num_channels,
+                num_classes=dm.num_classes,
+            ),
+        )
+        model.fit(dm.postprocess_dataloader())
+
+        routine = ClassificationRoutine(
+            model=model,
+            loss=None,
+            num_classes=3,
+            is_conformal=True,
+            post_processing=None,
+        )
+        trainer.test(routine, dm)
+
     def test_classification_failures(self):
         # num_classes
         with pytest.raises(ValueError):
