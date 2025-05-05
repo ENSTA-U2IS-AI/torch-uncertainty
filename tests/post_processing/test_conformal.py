@@ -4,7 +4,26 @@ from einops import repeat
 from torch import nn
 from torch.utils.data import DataLoader
 
-from torch_uncertainty.post_processing import ConformalClsAPS, ConformalClsRAPS, ConformalClsTHR
+from torch_uncertainty.post_processing import (
+    Conformal,
+    ConformalClsAPS,
+    ConformalClsRAPS,
+    ConformalClsTHR,
+)
+
+
+class TestConformal:
+    """Testing the Conformal class."""
+
+    def test_errors(self):
+        Conformal.__abstractmethods__ = set()
+        conformal = Conformal(model=None)
+        assert conformal.model is None
+        conformal.set_model(nn.Identity())
+        assert isinstance(conformal.model, nn.Identity)
+        conformal.fit(None)
+        conformal.forward(None)
+        conformal.conformal(None)
 
 
 class TestConformalClsAPS:
@@ -29,6 +48,9 @@ class TestConformalClsAPS:
         with pytest.raises(NotImplementedError):
             ConformalClsAPS(score_type="test")
 
+        with pytest.raises(ValueError):
+            ConformalClsRAPS().quantile  # noqa: B018
+
 
 class TestConformalClsRAPS:
     """Testing the ConformalClsRAPS class."""
@@ -51,6 +73,9 @@ class TestConformalClsRAPS:
     def test_failures(self):
         with pytest.raises(NotImplementedError):
             ConformalClsRAPS(score_type="test")
+
+        with pytest.raises(ValueError):
+            ConformalClsRAPS().quantile  # noqa: B018
 
 
 class TestConformalClsTHR:
@@ -80,3 +105,7 @@ class TestConformalClsTHR:
         assert (out[0] == repeat(torch.tensor([True, True, False]), "c -> b c", b=10)).all()
         assert out[1].shape == (10,)
         assert (out[1] == torch.tensor([2.0] * 10)).all()
+
+    def test_failures(self):
+        with pytest.raises(ValueError):
+            ConformalClsRAPS().quantile  # noqa: B018

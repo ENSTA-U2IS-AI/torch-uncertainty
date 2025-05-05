@@ -116,15 +116,12 @@ class ConformalClsRAPS(Conformal):
 
     def conformal(self, inputs: Tensor) -> tuple[Tensor, Tensor]:
         """Compute the prediction set for each input."""
-        if self.q_hat is None:
-            raise ValueError("You must calibrate (fit) before calling conformal.")
-
         self.model.eval()
         with torch.no_grad():
             probs = self.forward(inputs)
             all_scores = self._calculate_all_labels(probs)
 
-            pred_set = all_scores <= self.q_hat
+            pred_set = all_scores <= self.quantile
             set_size = pred_set.sum(dim=1).float()
 
         return pred_set, set_size
