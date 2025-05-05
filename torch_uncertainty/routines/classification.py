@@ -87,7 +87,8 @@ class ClassificationRoutine(LightningModule):
             loss (torch.nn.Module): Loss function to optimize the :attr:`model`.
             is_ensemble (bool, optional): Indicates whether the model is an
                 ensemble at test time or not. Defaults to ``False``.
-            num_tta (int): Number of test-time augmentations (TTA). Defaults to ``1`` (no TTA).
+            num_tta (int): Number of test-time augmentations (TTA). If ``1``: no TTA.
+                Defaults to ``1``.
             format_batch_fn (torch.nn.Module, optional): Function to format the batch.
                 Defaults to :class:`torch.nn.Identity()`.
             optim_recipe (dict or torch.optim.Optimizer, optional): The optimizer and

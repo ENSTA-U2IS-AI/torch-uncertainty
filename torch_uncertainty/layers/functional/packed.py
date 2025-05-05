@@ -79,15 +79,15 @@ def packed_in_projection(
         emb_q // num_groups,
         emb_v // num_groups,
     ), f"expecting value weights shape of {(emb_q, emb_v)}, but got {w_v.shape}"
-    assert b_q is None or b_q.shape == (emb_q,), (
-        f"expecting query bias shape of {(emb_q,)}, but got {b_q.shape}"
-    )
-    assert b_k is None or b_k.shape == (emb_q,), (
-        f"expecting key bias shape of {(emb_k,)}, but got {b_k.shape}"
-    )
-    assert b_v is None or b_v.shape == (emb_q,), (
-        f"expecting value bias shape of {(emb_v,)}, but got {b_v.shape}"
-    )
+    assert b_q is None or b_q.shape == (
+        emb_q,
+    ), f"expecting query bias shape of {(emb_q,)}, but got {b_q.shape}"
+    assert b_k is None or b_k.shape == (
+        emb_q,
+    ), f"expecting key bias shape of {(emb_k,)}, but got {b_k.shape}"
+    assert b_v is None or b_v.shape == (
+        emb_q,
+    ), f"expecting value bias shape of {(emb_v,)}, but got {b_v.shape}"
 
     return (
         packed_linear(q, w_q, num_groups, implementation, b_q),
@@ -324,47 +324,47 @@ def packed_multi_head_attention_forward(  # noqa: D417
             # longer causal.
             is_causal = False
 
-    assert embed_dim == embed_dim_to_check, (
-        f"was expecting embedding dimension of {embed_dim_to_check}, but got {embed_dim}"
-    )
+    assert (
+        embed_dim == embed_dim_to_check
+    ), f"was expecting embedding dimension of {embed_dim_to_check}, but got {embed_dim}"
     if isinstance(embed_dim, Tensor):
         # embed_dim can be a tensor when JIT tracing
         head_dim = embed_dim.div(num_heads, rounding_mode="trunc")
     else:
         head_dim = embed_dim // num_heads
-    assert head_dim * num_heads == embed_dim, (
-        f"embed_dim {embed_dim} not divisible by num_heads {num_heads}"
-    )
+    assert (
+        head_dim * num_heads == embed_dim
+    ), f"embed_dim {embed_dim} not divisible by num_heads {num_heads}"
     if use_separate_proj_weight:
         # allow MHA to have different embedding dimensions when separate projection weights are used
-        assert key.shape[:2] == value.shape[:2], (
-            f"key's sequence and batch dims {key.shape[:2]} do not match value's {value.shape[:2]}"
-        )
+        assert (
+            key.shape[:2] == value.shape[:2]
+        ), f"key's sequence and batch dims {key.shape[:2]} do not match value's {value.shape[:2]}"
     else:
-        assert key.shape == value.shape, (
-            f"key shape {key.shape} does not match value shape {value.shape}"
-        )
+        assert (
+            key.shape == value.shape
+        ), f"key shape {key.shape} does not match value shape {value.shape}"
 
     #
     # compute in-projection
     #
     if not use_separate_proj_weight:
-        assert in_proj_weight is not None, (
-            "use_separate_proj_weight is False but in_proj_weight is None"
-        )
+        assert (
+            in_proj_weight is not None
+        ), "use_separate_proj_weight is False but in_proj_weight is None"
         q, k, v = packed_in_projection_packed(
             q=query, k=key, v=value, w=in_proj_weight, num_groups=num_groups, b=in_proj_bias
         )
     else:
-        assert q_proj_weight is not None, (
-            "use_separate_proj_weight is True but q_proj_weight is None"
-        )
-        assert k_proj_weight is not None, (
-            "use_separate_proj_weight is True but k_proj_weight is None"
-        )
-        assert v_proj_weight is not None, (
-            "use_separate_proj_weight is True but v_proj_weight is None"
-        )
+        assert (
+            q_proj_weight is not None
+        ), "use_separate_proj_weight is True but q_proj_weight is None"
+        assert (
+            k_proj_weight is not None
+        ), "use_separate_proj_weight is True but k_proj_weight is None"
+        assert (
+            v_proj_weight is not None
+        ), "use_separate_proj_weight is True but v_proj_weight is None"
         if in_proj_bias is None:
             b_q = b_k = b_v = None
         else:

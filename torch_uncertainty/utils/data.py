@@ -10,6 +10,17 @@ def create_train_val_split(
     val_split_rate: float,
     val_transforms: Callable | None = None,
 ) -> tuple[Dataset, Dataset]:
+    """Split a dataset for training and validation.
+
+    Args:
+        dataset (Dataset): The dataset to be split.
+        val_split_rate (float): The amount of the original dataset to use as validation split.
+        val_transforms (Callable | None, optional): The transformations to apply on the validation set.
+            Defaults to ``None``.
+
+    Returns:
+        tuple[Dataset, Dataset]: The training and the validation splits.
+    """
     train, val = random_split(dataset, [1 - val_split_rate, val_split_rate])
     val = copy.deepcopy(val)
     val.dataset.transform = val_transforms
@@ -18,6 +29,14 @@ def create_train_val_split(
 
 class TTADataset(Dataset):
     def __init__(self, dataset: Dataset, num_augmentations: int) -> None:
+        """Create a version of the dataset that returns the same sample multiple times.
+
+        This is useful for test-time augmentation (TTA).
+
+        Args:
+            dataset (Dataset): The dataset to be adapted for TTA.
+            num_augmentations (int): The number of augmentations to apply.
+        """
         super().__init__()
         self.dataset = dataset
         self.num_augmentations = num_augmentations
