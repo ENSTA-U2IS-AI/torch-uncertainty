@@ -49,7 +49,7 @@ class TestConformalClsAPS:
             ConformalClsAPS(score_type="test")
 
         with pytest.raises(ValueError):
-            ConformalClsRAPS().quantile  # noqa: B018
+            ConformalClsAPS().quantile  # noqa: B018
 
 
 class TestConformalClsRAPS:
