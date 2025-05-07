@@ -123,7 +123,13 @@ class CIFAR100DataModule(TUDataModule):
             elif randaugment:
                 main_transform = v2.RandAugment(num_ops=2, magnitude=20)
             elif auto_augment:
-                main_transform = rand_augment_transform(auto_augment, {})
+                main_transform = v2.Compose(
+                    [
+                        v2.ToPILImage(),
+                        rand_augment_transform(auto_augment, {}),
+                        v2.ToImage(),
+                    ]
+                )
             else:
                 main_transform = nn.Identity()
 

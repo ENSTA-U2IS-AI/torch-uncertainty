@@ -43,6 +43,7 @@ class DummyClassificationDataModule(TUDataModule):
             num_workers=num_workers,
             pin_memory=pin_memory,
             persistent_workers=persistent_workers,
+            postprocess_set="test",
         )
 
         self.eval_ood = eval_ood

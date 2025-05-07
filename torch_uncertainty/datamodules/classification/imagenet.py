@@ -169,20 +169,34 @@ class ImageNetDataModule(TUDataModule):
 
             if self.procedure is None:
                 if rand_augment_opt is not None:
-                    main_transform = rand_augment_transform(rand_augment_opt, {})
+                    main_transform = v2.Compose(
+                        [
+                            v2.ToPILImage(),
+                            rand_augment_transform(rand_augment_opt, {}),
+                            v2.ToImage(),
+                        ]
+                    )
                 else:
                     main_transform = nn.Identity()
             elif self.procedure == "ViT":
                 train_size = 224
                 main_transform = v2.Compose(
                     [
+                        v2.ToPILImage(),
                         Mixup(mixup_alpha=0.2, cutmix_alpha=1.0),
                         rand_augment_transform("rand-m9-n2-mstd0.5", {}),
+                        v2.ToImage(),
                     ]
                 )
             elif self.procedure == "A3":
                 train_size = 160
-                main_transform = rand_augment_transform("rand-m6-mstd0.5-inc1", {})
+                main_transform = v2.Compose(
+                    [
+                        v2.ToPILImage(),
+                        rand_augment_transform("rand-m6-mstd0.5-inc1", {}),
+                        v2.ToImage(),
+                    ]
+                )
             else:
                 raise ValueError("The procedure is unknown")
 

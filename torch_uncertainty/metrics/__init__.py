@@ -9,6 +9,7 @@ from .classification import (
     CategoricalNLL,
     CovAt5Risk,
     CovAtxRisk,
+    CoverageRate,
     Disagreement,
     Entropy,
     GroupingLoss,
