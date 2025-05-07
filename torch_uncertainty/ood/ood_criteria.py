@@ -2,6 +2,7 @@ import logging
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from enum import Enum
+from pathlib import Path
 from typing import Any
 
 import faiss
@@ -916,6 +917,7 @@ def get_ood_criterion(ood_criterion):
     Raises:
         ValueError: If the input string or class type is invalid.
     """
+    config_dir = Path(__file__).parent / "configs"
     if isinstance(ood_criterion, str):
         if ood_criterion not in [
             "logit",
@@ -925,9 +927,8 @@ def get_ood_criterion(ood_criterion):
             "mutual_information",
             "variation_ratio",
         ]:
-            config = load_config(
-                f"/home/firas/Bureau/torch-uncertainty_ood/torch_uncertainty/ood/configs/{ood_criterion}.yml"
-            )
+            config_path = config_dir / f"{ood_criterion}.yml"
+            config = load_config(str(config_path))
         if ood_criterion == "logit":
             return MaxLogitCriterion()
         if ood_criterion == "energy":
