@@ -129,7 +129,13 @@ class TinyImageNetDataModule(TUDataModule):
                 basic_transform = nn.Identity()
 
             if rand_augment_opt is not None:
-                main_transform = rand_augment_transform(rand_augment_opt, {})
+                main_transform = v2.Compose(
+                    [
+                        v2.ToPILImage(),
+                        rand_augment_transform(rand_augment_opt, {}),
+                        v2.ToImage(),
+                    ]
+                )
             else:
                 main_transform = nn.Identity()
 
