@@ -6,11 +6,11 @@ from .classification import (
     CIFAR100DataModule,
     DOTA2GamesDataModule,
     HTRU2DataModule,
+    ImageNet200DataModule,
     ImageNetDataModule,
     MNISTDataModule,
     OnlineShoppersDataModule,
     SpamBaseDataModule,
-    TinyImageNetDataModule,
 )
 from .segmentation import CamVidDataModule, CityscapesDataModule
 from .uci_regression import UCIRegressionDataModule

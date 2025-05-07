@@ -1,14 +1,33 @@
+import logging
 from abc import ABC, abstractmethod
+from copy import deepcopy
 from enum import Enum
 from typing import Any
 
-import torch
-from torch import Tensor, nn
+import faiss
 import numpy as np
-from torch_uncertainty.metrics import MutualInformation, VariationRatio
-from torch_uncertainty.ood.nets import *
+import torch
+from numpy.linalg import norm, pinv
+from scipy.special import logsumexp
+from sklearn.covariance import EmpiricalCovariance
+from statsmodels.distributions.empirical_distribution import ECDF
+from torch import Tensor, nn
 from tqdm import tqdm
-from omegaconf import OmegaConf
+
+from torch_uncertainty.metrics import MutualInformation, VariationRatio
+from torch_uncertainty.ood.nets import (
+    AdaScaleANet,
+    ASHNet,
+    ReactNet,
+    ScaleNet,
+)
+from torch_uncertainty.ood.utils import load_config
+
+logger = logging.getLogger(__name__)
+
+
+def normalizer(x):
+    return x / np.linalg.norm(x, axis=-1, keepdims=True) + 1e-10
 
 
 class OODCriterionInputType(Enum):
@@ -44,7 +63,7 @@ class TUOODCriterion(ABC, nn.Module):
         super().__init__()
         self.setup_flag = False
         self.hyperparam_search_done = False
-    
+
     def setup(self, net: nn.Module, id_loader_dict, ood_loader_dict):
         pass
 
@@ -250,18 +269,24 @@ class VariationRatioCriterion(TUOODCriterion):
         return self.vr_metric(inputs.transpose(0, 1))
 
 
-
 class ScaleCriterion(TUOODCriterion):
     input_type = OODCriterionInputType.DATASET
 
-    def __init__(self,config) -> None:
-        """OOD criterion based on the maximum logit value.
+    def __init__(self, config) -> None:
+        """OOD criterion based on the Scale method.
 
-        This criterion computes the negative of the highest logit value across
-        the output dimensions. Lower maximum logits indicate greater uncertainty.
+        This criterion uses a scaling-based approach to compute OOD scores.
+        It applies a thresholding mechanism to the network's output and computes
+        the energy confidence score. The lower the energy confidence, the higher
+        the uncertainty.
+
+        Heavily inspired by the OpenOOD repository:
+        https://github.com/Jingkang50/OpenOOD
 
         Attributes:
-            input_type (OODCriterionInputType): Expected input type is logits.
+            input_type (OODCriterionInputType): Expected input type is dataset.
+            percentile (float): Percentile value used for thresholding.
+            args_dict (dict): Dictionary containing hyperparameter sweep configurations.
         """
         super().__init__()
         self.args = config.postprocessor.postprocessor_args
@@ -271,10 +296,9 @@ class ScaleCriterion(TUOODCriterion):
     def forward(self, net: nn.Module, data: Any) -> Tensor:
         net = ScaleNet(net)
         output = net.forward_threshold(data, self.percentile)
-        #_, pred = torch.max(output, dim=1)
         energyconf = torch.logsumexp(output.data, dim=1)
         return -energyconf
-    
+
     def set_hyperparam(self, hyperparam: list):
         self.percentile = hyperparam[0]
 
@@ -282,23 +306,34 @@ class ScaleCriterion(TUOODCriterion):
         return self.percentile
 
 
-
-
 class ASHCriterion(TUOODCriterion):
-
     input_type = OODCriterionInputType.DATASET
-    def __init__(self,config) -> None:
+
+    def __init__(self, config) -> None:
+        """OOD criterion based on the ASH (Activation Shift) method.
+
+        This criterion uses a thresholding mechanism to compute OOD scores
+        based on the network's activations. It applies a percentile-based
+        threshold to the activations and computes the energy confidence score.
+        Lower energy confidence indicates higher uncertainty.
+
+        Heavily inspired by the OpenOOD repository:
+        https://github.com/Jingkang50/OpenOOD
+
+        Attributes:
+            input_type (OODCriterionInputType): Expected input type is dataset.
+            percentile (float): Percentile value used for thresholding.
+            args_dict (dict): Dictionary containing hyperparameter sweep configurations.
+        """
         super().__init__()
         self.args = config.postprocessor.postprocessor_args
         self.percentile = self.args.percentile
         self.args_dict = config.postprocessor.postprocessor_sweep
-
 
     @torch.no_grad()
     def forward(self, net: nn.Module, data: Any):
         net = ASHNet(net)
         output = net.forward_threshold(data, self.percentile)
-        #_, pred = torch.max(output, dim=1)
         energyconf = torch.logsumexp(output.data, dim=1)
         return -energyconf
 
@@ -309,26 +344,37 @@ class ASHCriterion(TUOODCriterion):
         return self.percentile
 
 
-
-
 class ReactCriterion(TUOODCriterion):
     input_type = OODCriterionInputType.DATASET
-    def __init__(self,config) -> None:
+
+    def __init__(self, config) -> None:
+        """OOD criterion based on the React (Rectified Activation) method.
+
+        This criterion uses a thresholding mechanism to compute OOD scores
+        based on the network's activations. It applies a percentile-based
+        threshold to the activations and computes the energy confidence score.
+        Lower energy confidence indicates higher uncertainty.
+
+        Heavily inspired by the OpenOOD repository:
+        https://github.com/Jingkang50/OpenOOD
+
+        Attributes:
+            input_type (OODCriterionInputType): Expected input type is dataset.
+            percentile (float): Percentile value used for thresholding.
+            args_dict (dict): Dictionary containing hyperparameter sweep configurations.
+        """
         super().__init__()
         self.args = config.postprocessor.postprocessor_args
         self.percentile = self.args.percentile
         self.args_dict = config.postprocessor.postprocessor_sweep
 
-    def setup(self, net: nn.Module,id_loader,ood_loaders):
+    def setup(self, net: nn.Module, id_loader, ood_loaders):
         if not self.setup_flag:
             activation_log = []
             net = ReactNet(net)
             net.eval()
             with torch.no_grad():
-                for batch in tqdm(id_loader['val'],
-                                  desc='Setup: ',
-                                  position=0,
-                                  leave=True):
+                for batch in tqdm(id_loader["val"], desc="Setup: ", position=0, leave=True):
                     data = batch[0].cuda().float()
                     _, feature = net(data, return_feature=True)
                     activation_log.append(feature.data.cpu().numpy())
@@ -338,8 +384,7 @@ class ReactCriterion(TUOODCriterion):
         else:
             pass
 
-        self.threshold = np.percentile(self.activation_log.flatten(),
-                                       self.percentile)
+        self.threshold = np.percentile(self.activation_log.flatten(), self.percentile)
 
     @torch.no_grad()
     def forward(self, net: nn.Module, data: Any):
@@ -350,23 +395,40 @@ class ReactCriterion(TUOODCriterion):
 
     def set_hyperparam(self, hyperparam: list):
         self.percentile = hyperparam[0]
-        self.threshold = np.percentile(self.activation_log.flatten(),
-                                       self.percentile)
-        print('Threshold at percentile {:2d} over id data is: {}'.format(
-            self.percentile, self.threshold))
+        self.threshold = np.percentile(self.activation_log.flatten(), self.percentile)
+        logger.info(
+            "Threshold at percentile %d over id data is: %s",
+            self.percentile,
+            self.threshold,
+        )
 
     def get_hyperparam(self):
         return self.percentile
 
 
-
-
-
-from statsmodels.distributions.empirical_distribution import ECDF
-
 class AdaScaleCriterion(TUOODCriterion):
     input_type = OODCriterionInputType.DATASET
-    def __init__(self,config) -> None:
+
+    def __init__(self, config) -> None:
+        """OOD criterion based on the AdaScale method.
+
+        This criterion uses an adaptive scaling approach to compute OOD scores.
+        It applies a percentile-based thresholding mechanism to the network's
+        features and computes the energy confidence score. Lower energy confidence
+        indicates higher uncertainty.
+
+        Heavily inspired by the OpenOOD repository:
+        https://github.com/Jingkang50/OpenOOD
+
+        Attributes:
+            input_type (OODCriterionInputType): Expected input type is dataset.
+            percentile (float): Percentile value used for thresholding.
+            k1 (int): Number of top-k features considered for correction term.
+            k2 (int): Number of top-k features considered for feature shift.
+            lmbda (float): Scaling factor for feature shift.
+            o (float): Fraction of pixels used for perturbation.
+            args_dict (dict): Dictionary containing hyperparameter sweep configurations.
+        """
         super().__init__()
         self.args = config.postprocessor.postprocessor_args
         self.percentile = self.args.percentile
@@ -376,7 +438,7 @@ class AdaScaleCriterion(TUOODCriterion):
         self.o = self.args.o
         self.args_dict = config.postprocessor.postprocessor_sweep
 
-    def setup(self, net: nn.Module,id_loader,ood_loaders):
+    def setup(self, net: nn.Module, id_loader, ood_loaders):
         net = AdaScaleANet(net)
         if not self.setup_flag:
             feature_log = []
@@ -385,10 +447,7 @@ class AdaScaleCriterion(TUOODCriterion):
             net.eval()
             self.feature_dim = net.backbone.feature_size
             with torch.no_grad():
-                for batch in tqdm(id_loader['val'],
-                                  desc='Setup: ',
-                                  position=0,
-                                  leave=True):
+                for batch in tqdm(id_loader["val"], desc="Setup: ", position=0, leave=True):
                     data = batch[0].cuda().float()
                     with torch.enable_grad():
                         data.requires_grad = True
@@ -400,8 +459,7 @@ class AdaScaleCriterion(TUOODCriterion):
                         grad = data.grad.data.detach()
                     feature_log.append(feature.data.cpu())
                     data_perturbed = self.perturb(data, grad)
-                    _, feature_perturbed = net(data_perturbed,
-                                               return_feature=True)
+                    _, feature_perturbed = net(data_perturbed, return_feature=True)
                     feature_shift = abs(feature - feature_perturbed)
                     feature_shift_log.append(feature_shift.data.cpu())
                     feature_perturbed_log.append(feature_perturbed.data.cpu())
@@ -410,8 +468,9 @@ class AdaScaleCriterion(TUOODCriterion):
             all_shifts = torch.cat(feature_shift_log, axis=0)
 
             total_samples = all_features.size(0)
-            num_samples = self.args.num_samples if hasattr(
-                self.args, 'num_samples') else total_samples
+            num_samples = (
+                self.args.num_samples if hasattr(self.args, "num_samples") else total_samples
+            )
             indices = torch.randperm(total_samples)[:num_samples]
 
             self.feature_log = all_features[indices]
@@ -425,15 +484,15 @@ class AdaScaleCriterion(TUOODCriterion):
     def get_percentile(self, feature, feature_perturbed, feature_shift):
         topk_indices = torch.topk(feature, dim=1, k=self.k1_)[1]
         topk_feature_perturbed = torch.gather(
-            torch.relu(feature_perturbed), 1,
-            topk_indices)  # correction term C_o
+            torch.relu(feature_perturbed), 1, topk_indices
+        )  # correction term C_o
         topk_indices = torch.topk(feature, dim=1, k=self.k2_)[1]
         topk_feature_shift = torch.gather(feature_shift, 1, topk_indices)  # Q
-        topk_norm = topk_feature_perturbed.sum(
-            dim=1) + self.lmbda * topk_feature_shift.sum(dim=1)  # Q^{\prime}
+        topk_norm = topk_feature_perturbed.sum(dim=1) + self.lmbda * topk_feature_shift.sum(
+            dim=1
+        )  # Q^{\prime}
         percent = 1 - self.ecdf(topk_norm.cpu())
-        percentile = self.min_percentile + percent * (self.max_percentile -
-                                                      self.min_percentile)
+        percentile = self.min_percentile + percent * (self.max_percentile - self.min_percentile)
         return torch.from_numpy(percentile)
 
     @torch.no_grad()
@@ -451,8 +510,7 @@ class AdaScaleCriterion(TUOODCriterion):
         data_perturbed = self.perturb(data, grad)
         _, feature_perturbed = net(data_perturbed, return_feature=True)
         feature_shift = abs(feature - feature_perturbed)
-        percentile = self.get_percentile(feature, feature_perturbed,
-                                         feature_shift)
+        percentile = self.get_percentile(feature, feature_perturbed, feature_shift)
         output = net.forward_threshold(feature, percentile)
         conf = torch.logsumexp(output, dim=1)
         return -conf
@@ -466,13 +524,11 @@ class AdaScaleCriterion(TUOODCriterion):
         mask = torch.zeros_like(abs_grad, dtype=torch.uint8)
         mask.scatter_(1, topk_indices, 1)
         mask = mask.view(batch_size, channels, height, width)
-        data_ood = data + grad.sign() * mask * 0.5
-        return data_ood
+        return data + grad.sign() * mask * 0.5
 
     def set_hyperparam(self, hyperparam: list):
         self.percentile = hyperparam[0]
-        self.min_percentile, self.max_percentile = self.percentile[
-            0], self.percentile[1]
+        self.min_percentile, self.max_percentile = self.percentile[0], self.percentile[1]
         self.k1 = hyperparam[1]
         self.k2 = hyperparam[2]
         self.lmbda = hyperparam[3]
@@ -481,44 +537,51 @@ class AdaScaleCriterion(TUOODCriterion):
         self.k2_ = int(self.feature_dim * self.k2 / 100)
         topk_indices = torch.topk(self.feature_log, k=self.k1_, dim=1)[1]
         topk_feature_perturbed = torch.gather(
-            torch.relu(self.feature_perturbed_log), 1, topk_indices)
+            torch.relu(self.feature_perturbed_log), 1, topk_indices
+        )
         topk_indices = torch.topk(self.feature_log, k=self.k2_, dim=1)[1]
-        topk_feature_shift_log = torch.gather(self.feature_shift_log, 1,
-                                              topk_indices)
-        sum_log = topk_feature_perturbed.sum(
-            dim=1) + self.lmbda * topk_feature_shift_log.sum(dim=1)
+        topk_feature_shift_log = torch.gather(self.feature_shift_log, 1, topk_indices)
+        sum_log = topk_feature_perturbed.sum(dim=1) + self.lmbda * topk_feature_shift_log.sum(dim=1)
         self.ecdf = ECDF(sum_log)
 
     def get_hyperparam(self):
         return [self.percentile, self.k1, self.k2, self.lmbda, self.o]
 
 
-
-from numpy.linalg import norm, pinv
-from scipy.special import logsumexp
-from sklearn.covariance import EmpiricalCovariance
-
-
 class VIMCriterion(TUOODCriterion):
     input_type = OODCriterionInputType.DATASET
-    def __init__(self,config) -> None:
+
+    def __init__(self, config) -> None:
+        """OOD criterion based on the VIM (Variance-Informed Mahalanobis) method.
+
+        This criterion uses a Mahalanobis distance-based approach to compute OOD scores.
+        It extracts features from the in-distribution training data, computes the
+        empirical covariance matrix, and projects the features onto a subspace
+        defined by the top eigenvectors. The OOD score is computed as a combination
+        of the variance-informed Mahalanobis distance and the energy score.
+
+        Heavily inspired by the OpenOOD repository:
+        https://github.com/Jingkang50/OpenOOD
+
+        Attributes:
+            input_type (OODCriterionInputType): Expected input type is dataset.
+            dim (int): Number of dimensions to retain in the subspace projection.
+            args_dict (dict): Dictionary containing hyperparameter sweep configurations.
+        """
         super().__init__()
         self.args = config.postprocessor.postprocessor_args
         self.args_dict = config.postprocessor.postprocessor_sweep
         self.dim = self.args.dim
 
-    def setup(self, net: nn.Module,id_loader,ood_loaders):
+    def setup(self, net: nn.Module, id_loader, ood_loaders):
         if not self.setup_flag:
             net.eval()
 
             with torch.no_grad():
                 self.w, self.b = net.get_fc()
-                print('Extracting id training feature')
+                logger.info("Extracting in-distribution training features")
                 feature_id_train = []
-                for batch in tqdm(id_loader['train'],
-                                  desc='Setup: ',
-                                  position=0,
-                                  leave=True):
+                for batch in tqdm(id_loader["train"], desc="Setup: ", position=0, leave=True):
                     data = batch[0].cuda().float()
                     _, feature = net(data, return_feature=True)
                     feature_id_train.append(feature.cpu().numpy())
@@ -530,14 +593,12 @@ class VIMCriterion(TUOODCriterion):
             ec.fit(feature_id_train - self.u)
             eig_vals, eigen_vectors = np.linalg.eig(ec.covariance_)
             self.NS = np.ascontiguousarray(
-                (eigen_vectors.T[np.argsort(eig_vals * -1)[self.dim:]]).T)
+                (eigen_vectors.T[np.argsort(eig_vals * -1)[self.dim :]]).T
+            )
 
-            vlogit_id_train = norm(np.matmul(feature_id_train - self.u,
-                                             self.NS),
-                                   axis=-1)
-            self.alpha = logit_id_train.max(
-                axis=-1).mean() / vlogit_id_train.mean()
-            print(f'{self.alpha=:.4f}')
+            vlogit_id_train = norm(np.matmul(feature_id_train - self.u, self.NS), axis=-1)
+            self.alpha = logit_id_train.max(axis=-1).mean() / vlogit_id_train.mean()
+            logger.info("Computed alpha: %.4f", self.alpha)
 
             self.setup_flag = True
         else:
@@ -549,8 +610,7 @@ class VIMCriterion(TUOODCriterion):
         feature_ood = feature_ood.cpu()
         logit_ood = feature_ood @ self.w.T + self.b
         energy_ood = logsumexp(logit_ood.numpy(), axis=-1)
-        vlogit_ood = norm(np.matmul(feature_ood.numpy() - self.u, self.NS),
-                          axis=-1) * self.alpha
+        vlogit_ood = norm(np.matmul(feature_ood.numpy() - self.u, self.NS), axis=-1) * self.alpha
         score_ood = -vlogit_ood + energy_ood
         return -torch.from_numpy(score_ood)
 
@@ -559,20 +619,36 @@ class VIMCriterion(TUOODCriterion):
 
     def get_hyperparam(self):
         return self.dim
-    
-
 
 
 class ODINCriterion(TUOODCriterion):
     input_type = OODCriterionInputType.DATASET
-    def __init__(self,config) -> None:
+
+    def __init__(self, config) -> None:
+        """OOD criterion based on the ODIN (Out-of-Distribution Detector for Neural Networks) method.
+
+        This criterion uses temperature scaling and input perturbations to compute OOD scores.
+        It applies a small perturbation to the input data based on the gradient of the cross-entropy
+        loss with respect to the input. The confidence score is then calculated using the perturbed
+        input and temperature-scaled logits. Lower confidence scores indicate higher uncertainty.
+
+        Heavily inspired by the OpenOOD repository:
+        https://github.com/Jingkang50/OpenOOD
+
+        Attributes:
+            input_type (OODCriterionInputType): Expected input type is dataset.
+            temperature (float): Temperature scaling factor for logits.
+            noise (float): Magnitude of the input perturbation.
+            input_std (list): Standard deviation values for input normalization.
+            args_dict (dict): Dictionary containing hyperparameter sweep configurations.
+        """
         super().__init__()
         self.args = config.postprocessor.postprocessor_args
 
         self.temperature = 1
         self.noise = 0.0014
         try:
-            self.input_std = [0.2470, 0.2435, 0.2616]   # // to chnage
+            self.input_std = [0.2470, 0.2435, 0.2616]  # // to change
         except KeyError:
             self.input_std = [0.5, 0.5, 0.5]
         self.args_dict = config.postprocessor.postprocessor_sweep
@@ -603,16 +679,16 @@ class ODINCriterion(TUOODCriterion):
         gradient[:, 2] = (gradient[:, 2]) / self.input_std[2]
 
         # Adding small perturbations to images
-        tempInputs = torch.add(data.detach(), gradient, alpha=-self.noise)
-        output = net(tempInputs)
+        temp_inputs = torch.add(data.detach(), gradient, alpha=-self.noise)
+        output = net(temp_inputs)
         output = output / self.temperature
 
         # Calculating the confidence after adding perturbations
-        nnOutput = output.detach()
-        nnOutput = nnOutput - nnOutput.max(dim=1, keepdims=True).values
-        nnOutput = nnOutput.exp() / nnOutput.exp().sum(dim=1, keepdims=True)
+        nn_output = output.detach()
+        nn_output = nn_output - nn_output.max(dim=1, keepdims=True).values
+        nn_output = nn_output.exp() / nn_output.exp().sum(dim=1, keepdims=True)
 
-        conf, _ = nnOutput.max(dim=1)
+        conf, _ = nn_output.max(dim=1)
 
         return -conf
 
@@ -624,17 +700,27 @@ class ODINCriterion(TUOODCriterion):
         return [self.temperature, self.noise]
 
 
-
-
-
-
-import faiss
-
-normalizer = lambda x: x / np.linalg.norm(x, axis=-1, keepdims=True) + 1e-10
-
 class KNNCriterion(TUOODCriterion):
+    """OOD criterion based on the K-Nearest Neighbors (KNN) method.
+
+    This criterion uses a KNN-based approach to compute OOD scores. It builds a feature
+    bank from the in-distribution training data and calculates the distance of test
+    samples to their K-th nearest neighbor in the feature space. Lower distances
+    indicate higher confidence, while higher distances indicate greater uncertainty.
+
+    Heavily inspired by the OpenOOD repository:
+    https://github.com/Jingkang50/OpenOOD
+
+    Attributes:
+        input_type (OODCriterionInputType): Expected input type is dataset.
+        K (int): Number of nearest neighbors to consider.
+        activation_log (np.ndarray): Log of activations from the in-distribution training data.
+        args_dict (dict): Dictionary containing hyperparameter sweep configurations.
+    """
+
     input_type = OODCriterionInputType.DATASET
-    def __init__(self,config) -> None:
+
+    def __init__(self, config) -> None:
         super().__init__()
         self.args = config.postprocessor.postprocessor_args
         self.K = self.args.K
@@ -646,14 +732,10 @@ class KNNCriterion(TUOODCriterion):
             activation_log = []
             net.eval()
             with torch.no_grad():
-                for batch in tqdm(id_loader_dict['train'],
-                                  desc='Setup: ',
-                                  position=0,
-                                  leave=True):
+                for batch in tqdm(id_loader_dict["train"], desc="Setup: ", position=0, leave=True):
                     data = batch[0].cuda().float()
                     _, feature = net(data, return_feature=True)
-                    activation_log.append(
-                        normalizer(feature.data.cpu().numpy()))
+                    activation_log.append(normalizer(feature.data.cpu().numpy()))
 
             self.activation_log = np.concatenate(activation_log, axis=0)
             self.index = faiss.IndexFlatL2(feature.shape[1])
@@ -664,13 +746,13 @@ class KNNCriterion(TUOODCriterion):
 
     @torch.no_grad()
     def forward(self, net: nn.Module, data: Any):
-        _,feature = net(data, return_feature=True)
+        _, feature = net(data, return_feature=True)
         feature_normed = normalizer(feature.data.cpu().numpy())
-        D, _ = self.index.search(
+        dis, _ = self.index.search(
             feature_normed,
             self.K,
         )
-        kth_dist = -D[:, -1]
+        kth_dist = -dis[:, -1]
         return -torch.from_numpy(kth_dist)
 
     def set_hyperparam(self, hyperparam: list):
@@ -680,69 +762,96 @@ class KNNCriterion(TUOODCriterion):
         return self.K
 
 
-
-
 class GENCriterion(TUOODCriterion):
     input_type = OODCriterionInputType.DATASET
-    def __init__(self,config) -> None:
+
+    def __init__(self, config) -> None:
+        """OOD criterion based on the Generalized Entropy (GEN) method.
+
+        This criterion uses a generalized entropy-based approach to compute OOD scores.
+        It applies a power transformation to the top-M softmax probabilities and computes
+        the generalized entropy score. Lower scores indicate higher uncertainty.
+
+        Heavily inspired by the OpenOOD repository:
+        https://github.com/Jingkang50/OpenOOD
+
+        Attributes:
+            input_type (OODCriterionInputType): Expected input type is dataset.
+            gamma (float): Power transformation parameter for generalized entropy.
+            m (int): Number of top-M probabilities considered for the computation.
+            args_dict (dict): Dictionary containing hyperparameter sweep configurations.
+        """
         super().__init__()
         self.args = config.postprocessor.postprocessor_args
         self.gamma = self.args.gamma
-        self.M = self.args.M
+        self.m = self.args.m
         self.args_dict = config.postprocessor.postprocessor_sweep
 
     @torch.no_grad()
     def forward(self, net: nn.Module, data: Any):
         output = net(data)
         score = torch.softmax(output, dim=1)
-        conf = self.generalized_entropy(score, self.gamma, self.M)
+        conf = self.generalized_entropy(score, self.gamma, self.m)
         return -conf
 
     def set_hyperparam(self, hyperparam: list):
         self.gamma = hyperparam[0]
-        self.M = hyperparam[1]
+        self.m = hyperparam[1]
 
     def get_hyperparam(self):
-        return [self.gamma, self.M]
+        return [self.gamma, self.m]
 
-    def generalized_entropy(self, softmax_id_val, gamma=0.1, M=100):
+    def generalized_entropy(self, softmax_id_val, gamma=0.1, m=100):
         probs = softmax_id_val
-        probs_sorted = torch.sort(probs, dim=1)[0][:, -M:]
-        scores = torch.sum(probs_sorted**gamma * (1 - probs_sorted)**(gamma),
-                           dim=1)
+        probs_sorted = torch.sort(probs, dim=1)[0][:, -m:]
+        scores = torch.sum(probs_sorted**gamma * (1 - probs_sorted) ** (gamma), dim=1)
 
         return -scores
 
 
-
-
-
-
-import faiss
-from scipy.special import logsumexp
-from copy import deepcopy
-
-normalizer = lambda x: x / np.linalg.norm(x, axis=-1, keepdims=True) + 1e-10
-
-
-def knn_score(bankfeas, queryfeas, k=100, min=False):
-
+def knn_score(bankfeas, queryfeas, k=100, use_min=False):
     bankfeas = deepcopy(np.array(bankfeas))
     queryfeas = deepcopy(np.array(queryfeas))
 
     index = faiss.IndexFlatIP(bankfeas.shape[-1])
     index.add(bankfeas)
-    D, _ = index.search(queryfeas, k)
-    if min:
-        scores = np.array(D.min(axis=1))
-    else:
-        scores = np.array(D.mean(axis=1))
-    return scores
+    dist, _ = index.search(queryfeas, k)
+    return np.array(dist.use_min(axis=1)) if use_min else np.array(dist.mean(axis=1))
 
 
 class NNGuideCriterion(TUOODCriterion):
+    """NNGuideCriterion is a criterion for out-of-distribution (OOD) detection
+    that utilizes nearest neighbor guidance based on features and logits
+    extracted from a neural network. This class is heavily inspired by the
+    OpenOOD repository: https://github.com/Jingkang50/OpenOOD.
+
+    Attributes:
+        input_type (OODCriterionInputType): Specifies the type of input for the criterion.
+        args (Namespace): Arguments related to the postprocessor configuration.
+        K (int): Number of nearest neighbors to consider for the k-NN score.
+        alpha (float): Fraction of the in-distribution training data to use for setup.
+        activation_log (Any): Placeholder for activation logs (currently unused).
+        args_dict (dict): Dictionary of postprocessor sweep arguments.
+        setup_flag (bool): Indicates whether the setup process has been completed.
+        bank_guide (np.ndarray): Precomputed guidance bank combining features and confidence scores.
+
+    Methods:
+        setup(net, id_loader_dict, ood_loader_dict):
+            Prepares the guidance bank using in-distribution training data.
+
+        forward(net, data):
+            Computes the OOD score for the given data using the guidance bank.
+
+        set_hyperparam(hyperparam):
+            Sets the hyperparameters K and alpha.
+
+        get_hyperparam():
+            Retrieves the current hyperparameters K and alpha.
+    """
+
     input_type = OODCriterionInputType.DATASET
-    def __init__(self,config) -> None:
+
+    def __init__(self, config) -> None:
         super().__init__()
         self.args = config.postprocessor.postprocessor_args
         self.K = self.args.K
@@ -756,24 +865,19 @@ class NNGuideCriterion(TUOODCriterion):
             bank_feas = []
             bank_logits = []
             with torch.no_grad():
-                for batch in tqdm(id_loader_dict['train'],
-                                  desc='Setup: ',
-                                  position=0,
-                                  leave=True):
+                for batch in tqdm(id_loader_dict["train"], desc="Setup: ", position=0, leave=True):
                     data = batch[0].cuda().float()
 
                     logit, feature = net(data, return_feature=True)
                     bank_feas.append(normalizer(feature.data.cpu().numpy()))
                     bank_logits.append(logit.data.cpu().numpy())
-                    if len(bank_feas
-                           ) * id_loader_dict['train'].batch_size > int(
-                               len(id_loader_dict['train'].dataset) *
-                               self.alpha):
+                    if len(bank_feas) * id_loader_dict["train"].batch_size > int(
+                        len(id_loader_dict["train"].dataset) * self.alpha
+                    ):
                         break
 
             bank_feas = np.concatenate(bank_feas, axis=0)
-            bank_confs = logsumexp(np.concatenate(bank_logits, axis=0),
-                                   axis=-1)
+            bank_confs = logsumexp(np.concatenate(bank_logits, axis=0), axis=-1)
             self.bank_guide = bank_feas * bank_confs[:, None]
 
             self.setup_flag = True
@@ -799,44 +903,6 @@ class NNGuideCriterion(TUOODCriterion):
         return [self.K, self.alpha]
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 def get_ood_criterion(ood_criterion):
     """Get an OOD criterion instance based on a string identifier or class type.
 
@@ -851,7 +917,17 @@ def get_ood_criterion(ood_criterion):
         ValueError: If the input string or class type is invalid.
     """
     if isinstance(ood_criterion, str):
-        config = OmegaConf.load(f"/home/firas/Bureau/torch-uncertainty_ood/torch_uncertainty/ood/configs/{ood_criterion}.yml")
+        if ood_criterion not in [
+            "logit",
+            "energy",
+            "msp",
+            "entropy",
+            "mutual_information",
+            "variation_ratio",
+        ]:
+            config = load_config(
+                f"/home/firas/Bureau/torch-uncertainty_ood/torch_uncertainty/ood/configs/{ood_criterion}.yml"
+            )
         if ood_criterion == "logit":
             return MaxLogitCriterion()
         if ood_criterion == "energy":
@@ -863,25 +939,25 @@ def get_ood_criterion(ood_criterion):
         if ood_criterion == "mutual_information":
             return MutualInformationCriterion()
         if ood_criterion == "variation_ratio":
-            return VariationRatioCriterion()        
+            return VariationRatioCriterion()
         if ood_criterion == "scale":
             return ScaleCriterion(config)
         if ood_criterion == "ash":
-            return ASHCriterion(config)        
+            return ASHCriterion(config)
         if ood_criterion == "react":
-            return ReactCriterion(config)        
+            return ReactCriterion(config)
         if ood_criterion == "adascale_a":
-            return AdaScaleCriterion(config)        
+            return AdaScaleCriterion(config)
         if ood_criterion == "vim":
-            return VIMCriterion(config)        
+            return VIMCriterion(config)
         if ood_criterion == "odin":
-            return ODINCriterion(config)        
+            return ODINCriterion(config)
         if ood_criterion == "knn":
-            return KNNCriterion(config)        
+            return KNNCriterion(config)
         if ood_criterion == "gen":
-            return GENCriterion(config)        
+            return GENCriterion(config)
         if ood_criterion == "nnguide":
-            return NNGuideCriterion(config)        
+            return NNGuideCriterion(config)
         if ood_criterion == "react":
             return ReactCriterion()
         raise ValueError(

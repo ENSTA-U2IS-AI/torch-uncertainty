@@ -35,8 +35,8 @@ logging.basicConfig(
 logging.getLogger("faiss").setLevel(logging.WARNING)
 
 
-class ImageNetDataModule(TUDataModule):
-    num_classes = 1000
+class ImageNet200DataModule(TUDataModule):
+    num_classes = 200
     num_channels = 3
     test_datasets = ["r", "o", "a"]
     training_task = "classification"
@@ -67,9 +67,9 @@ class ImageNetDataModule(TUDataModule):
         near_ood_datasets: list | None = None,
         far_ood_datasets: list | None = None,
     ) -> None:
-        """DataModule for the ImageNet dataset.
+        """DataModule for the ImageNet200 dataset.
 
-        This datamodule uses ImageNet as In-distribution dataset, OpenImage-O, INaturalist,
+        This datamodule uses ImageNet200 as In-distribution dataset, OpenImage-O, INaturalist,
         ImageNet-0, SVHN or DTD as Out-of-distribution dataset and ImageNet-C as shifted dataset.
 
         Args:
@@ -214,8 +214,8 @@ class ImageNetDataModule(TUDataModule):
 
             # To change for more flexible splits later
             self.data_dir = download_and_extract_hf_dataset("imagenet1k", self.root)
-            imagenet1k_splits = SPLITS_BASE / "imagenet1k"
-            val_txt = imagenet1k_splits / "val_imagenet.txt"
+            imagenet1k_splits = SPLITS_BASE / "imagenet200"
+            val_txt = imagenet1k_splits / "val_imagenet200.txt"
             self.val = FileListDataset(
                 root=self.data_dir,
                 list_file=val_txt,
@@ -227,8 +227,8 @@ class ImageNetDataModule(TUDataModule):
             self.data_dir = getattr(
                 self, "data_dir", download_and_extract_hf_dataset("imagenet1k", self.root)
             )
-            imagenet1k_splits = SPLITS_BASE / "imagenet1k"
-            test_txt = imagenet1k_splits / "test_imagenet.txt"
+            imagenet1k_splits = SPLITS_BASE / "imagenet200"
+            test_txt = imagenet1k_splits / "test_imagenet200.txt"
             self.test = FileListDataset(
                 root=self.data_dir,
                 list_file=test_txt,
@@ -238,7 +238,7 @@ class ImageNetDataModule(TUDataModule):
             if self.eval_ood:
                 self.val_ood, near_default, far_default = get_ood_datasets(
                     root=self.root,
-                    dataset_id="imagenet1k",
+                    dataset_id="imagenet200",
                     transform=self.test_transform,
                 )
 

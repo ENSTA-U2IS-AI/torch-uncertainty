@@ -1,12 +1,16 @@
+import itertools
+import logging
 from collections.abc import Callable
 from pathlib import Path
 
+import numpy as np
 import torch
 import torch.nn.functional as F
 from einops import rearrange
 from lightning.pytorch import LightningModule
 from lightning.pytorch.loggers import Logger
 from lightning.pytorch.utilities.types import STEP_OUTPUT
+from sklearn.metrics import roc_auc_score
 from timm.data import Mixup as timm_Mixup
 from torch import Tensor, nn
 from torch.optim import Optimizer
@@ -51,9 +55,13 @@ from torch_uncertainty.transforms import (
 )
 from torch_uncertainty.utils import csv_writer, plot_hist
 
-import itertools
-import numpy as np
-from sklearn.metrics import roc_auc_score
+logger = logging.getLogger(__name__)
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(message)s",
+)
+
 
 MIXUP_PARAMS = {
     "mixtype": "erm",
@@ -240,20 +248,24 @@ class ClassificationRoutine(LightningModule):
         self.test_id_entropy = Entropy()
 
         if self.eval_ood:
-            self.ood_metrics_template = MetricCollection({
-            "AUROC": BinaryAUROC(),
-            "AUPR": BinaryAveragePrecision(),
-            "FPR95": FPR95(pos_label=1),})
-            if self.ood_criterion!="msp":
-                self.ood_id_acc= Accuracy(task=task, num_classes=self.num_classes) #not used for now
-              
+            self.ood_metrics_template = MetricCollection(
+                {
+                    "AUROC": BinaryAUROC(),
+                    "AUPR": BinaryAveragePrecision(),
+                    "FPR95": FPR95(pos_label=1),
+                }
+            )
+            if self.ood_criterion != "msp":
+                self.ood_id_acc = Accuracy(
+                    task=task, num_classes=self.num_classes
+                )  # not used for now
+
         if self.is_ensemble:
-            self.test_ood_ens_metrics_near = {}  
-            self.test_ood_ens_metrics_far = {}     
+            self.test_ood_ens_metrics_near = {}
+            self.test_ood_ens_metrics_far = {}
         else:
-            self.test_ood_metrics_near = {}  
+            self.test_ood_metrics_near = {}
             self.test_ood_metrics_far = {}
-        
 
         if self.eval_shift:
             self.test_shift_metrics = cls_metrics.clone(prefix="shift/")
@@ -355,38 +367,48 @@ class ClassificationRoutine(LightningModule):
 
     def configure_optimizers(self) -> Optimizer | dict:
         return self.optim_recipe
-    
+
     def setup(self, stage: str) -> None:
         super().setup(stage)
-        
+
         if stage == "test" and self.eval_ood and not self.ood_criterion.setup_flag:
-           self.trainer.datamodule.setup(stage="fit")
-           #Below section is not used yet
-           #all_dls   = self.trainer.datamodule.test_dataloader()
-           #idxs      = self.trainer.datamodule.get_indices()
-           #near_test = [all_dls[i] for i in idxs["near_test"]]
-           #far_test  = [all_dls[i] for i in idxs["far_test"]]
-           id_loader = {"train":self.trainer.datamodule.train_dataloader(),"val":self.trainer.datamodule.val_dataloader()}
-           self.ood_criterion.setup(self.model, id_loader,None) #Some methods require tarin id loader fix later
-           self._hyperparam_search_ood()
-    
+            self.trainer.datamodule.setup(stage="fit")
+            dm = self.trainer.datamodule
+            id_loader = {}
+            try:
+                train_loader = dm.train_dataloader()
+            except (AttributeError, RuntimeError):
+                red = "\033[31m"
+                reset = "\033[0m"
+
+                logger.info(
+                    "%sNo train loader detected, you are probably using ImageNet and need to download the training split manually. If the OOD criteria chosen rely on the train loader the code will fail.%s",
+                    red,
+                    reset,
+                )
+            else:
+                id_loader["train"] = train_loader
+            id_loader["val"] = dm.val_dataloader()
+            self.ood_criterion.setup(self.model, id_loader, None)
+            self._hyperparam_search_ood()
+
     def _hyperparam_search_ood(self):
         crit: TUOODCriterion = self.ood_criterion
         # nothing to do if criterion has no grid or already done
         if not hasattr(crit, "args_dict") or crit.hyperparam_search_done:
             return
 
-        names  = list(crit.args_dict.keys())
+        names = list(crit.args_dict.keys())
         values = [crit.args_dict[n] for n in names]
         combos = list(itertools.product(*values))
 
-        id_val    = self.trainer.datamodule.val_dataloader()
-        ood_val   = self.trainer.datamodule.test_dataloader()[1]
+        id_val = self.trainer.datamodule.val_dataloader()
+        ood_val = self.trainer.datamodule.test_dataloader()[1]
 
-        best_auc   = -float("inf")
+        best_auc = -float("inf")
         best_combo = None
-       
-        print(f"Starting hyperparameter search for selected ood eval method...")
+
+        logger.info("Starting hyperparameter search for selected OOD eval method...")
         for combo in combos:
             crit.set_hyperparam(list(combo))
 
@@ -395,7 +417,7 @@ class ClassificationRoutine(LightningModule):
             all_labels = []
 
             with torch.no_grad():
-                # ID‐val
+                # ID val
                 for x, _ in id_val:
                     x = x.to(self.device)
                     logits = self.model(x)
@@ -407,13 +429,13 @@ class ClassificationRoutine(LightningModule):
                         s = crit(probs).cpu().numpy()
                     else:  # DATASET
                         with torch.inference_mode(False), torch.enable_grad():
-                            input = x.detach().clone().requires_grad_(True)
-                            s = crit(self.model, input).cpu().numpy()
+                            x_input = x.detach().clone().requires_grad_(True)
+                            s = crit(self.model, x_input).cpu().numpy()
 
                     all_scores.append(s)
                     all_labels.append(np.zeros_like(s))
 
-                # OOD‐val splits
+                # OODval splits
                 for x, _ in ood_val:
                     x = x.to(self.device)
                     logits = self.model(x)
@@ -425,24 +447,25 @@ class ClassificationRoutine(LightningModule):
                         s = crit(probs).cpu().numpy()
                     else:  # DATASET
                         with torch.inference_mode(False), torch.enable_grad():
-                            input = x.detach().clone().requires_grad_(True)
-                            s = crit(self.model, input).cpu().numpy()
+                            x_input = x.detach().clone().requires_grad_(True)
+                            s = crit(self.model, x_input).cpu().numpy()
 
                     all_scores.append(s)
                     all_labels.append(np.ones_like(s))
 
             scores = np.concatenate(all_scores).ravel()
             labels = np.concatenate(all_labels).ravel()
-            auc    = roc_auc_score(labels, scores)
+            auc = roc_auc_score(labels, scores)
 
-            print(f"Tried {dict(zip(names, combo))} → VAL AUROC = {auc:.4f}")
+            logger.info("Tried %s → VAL AUROC = %.4f", dict(zip(names, combo, strict=False)), auc)
             if auc > best_auc:
                 best_auc, best_combo = auc, combo
 
         crit.set_hyperparam(list(best_combo))
         crit.hyperparam_search_done = True
-        print(f"✓ Selected {dict(zip(names, best_combo))} with AUROC={best_auc:.4f}")
-
+        logger.info(
+            "✓ Selected %s with AUROC=%.4f", dict(zip(names, best_combo, strict=False)), best_auc
+        )
 
     def on_train_start(self) -> None:
         """Put the hyperparameters in tensorboard."""
@@ -559,25 +582,24 @@ class ClassificationRoutine(LightningModule):
         batch_idx: int,
         dataloader_idx: int = 0,
     ) -> None:
-        
-         # skip any OOD‐val loaders 
+        # skip any OOD val loaders
         if self.eval_ood:
             indices = self.trainer.datamodule.get_indices()
             if dataloader_idx == indices["val_ood"]:
                 return
-        
+
         inputs, targets = batch
         logits = self.forward(inputs, save_feats=self.eval_grouping_loss)
         logits = rearrange(logits, "(m b) c -> b m c", b=targets.size(0))
         probs_per_est = torch.sigmoid(logits) if self.binary_cls else F.softmax(logits, dim=-1)
         probs = probs_per_est.mean(dim=1)
-        
+
         if self.ood_criterion.input_type == OODCriterionInputType.LOGIT:
             ood_scores = self.ood_criterion(logits)
         elif self.ood_criterion.input_type == OODCriterionInputType.PROB:
             ood_scores = self.ood_criterion(probs)
         elif self.ood_criterion.input_type == OODCriterionInputType.DATASET:
-             with torch.inference_mode(False), torch.enable_grad():
+            with torch.inference_mode(False), torch.enable_grad():
                 x = inputs.detach().clone().requires_grad_(True)
                 ood_scores = self.ood_criterion(self.model, x).to(self.device)
 
@@ -585,7 +607,7 @@ class ClassificationRoutine(LightningModule):
             ood_scores = self.ood_criterion(probs_per_est)
 
         indices = self.trainer.datamodule.get_indices()
-      
+
         if dataloader_idx == 0:
             self.test_cls_metrics.update(
                 probs.squeeze(-1) if self.binary_cls else probs,
@@ -597,43 +619,51 @@ class ClassificationRoutine(LightningModule):
                 self.id_logit_storage.append(logits.detach().cpu())
             if self.post_processing is not None:
                 pp_logits = self.post_processing(inputs)
-                pp_probs = (F.softmax(pp_logits, dim=-1)
-                            if not isinstance(self.post_processing, LaplaceApprox)
-                            else pp_logits)
+                pp_probs = (
+                    F.softmax(pp_logits, dim=-1)
+                    if not isinstance(self.post_processing, LaplaceApprox)
+                    else pp_logits
+                )
                 self.post_cls_metrics.update(pp_probs, targets)
 
             if self.eval_ood:
-
                 for ds in self.trainer.datamodule.near_oods:
                     ds_name = ds.dataset_name
                     if self.is_ensemble:
                         if ds_name not in self.test_ood_ens_metrics_near:
-                            self.test_ood_ens_metrics_near[ds_name] = self.ood_metrics_template.clone(
-                                prefix=f"ood_near_{ds_name}_"
+                            self.test_ood_ens_metrics_near[ds_name] = (
+                                self.ood_metrics_template.clone(prefix=f"ood_near_{ds_name}_")
                             )
-                        self.test_ood_ens_metrics_near[ds_name].update(ood_scores, torch.zeros_like(targets))
+                        self.test_ood_ens_metrics_near[ds_name].update(
+                            ood_scores, torch.zeros_like(targets)
+                        )
                     else:
                         if ds_name not in self.test_ood_metrics_near:
                             self.test_ood_metrics_near[ds_name] = self.ood_metrics_template.clone(
                                 prefix=f"ood_near_{ds_name}_"
                             )
-                        self.test_ood_metrics_near[ds_name].update(ood_scores, torch.zeros_like(targets))
-               
+                        self.test_ood_metrics_near[ds_name].update(
+                            ood_scores, torch.zeros_like(targets)
+                        )
 
                 for ds in self.trainer.datamodule.far_oods:
                     ds_name = ds.dataset_name
                     if self.is_ensemble:
                         if ds_name not in self.test_ood_ens_metrics_far:
-                            self.test_ood_ens_metrics_far[ds_name] = self.ood_metrics_template.clone(
-                                prefix=f"ood_far_{ds_name}_"
+                            self.test_ood_ens_metrics_far[ds_name] = (
+                                self.ood_metrics_template.clone(prefix=f"ood_far_{ds_name}_")
                             )
-                        self.test_ood_ens_metrics_far[ds_name].update(ood_scores, torch.zeros_like(targets))
+                        self.test_ood_ens_metrics_far[ds_name].update(
+                            ood_scores, torch.zeros_like(targets)
+                        )
                     else:
                         if ds_name not in self.test_ood_metrics_far:
                             self.test_ood_metrics_far[ds_name] = self.ood_metrics_template.clone(
                                 prefix=f"ood_far_{ds_name}_"
                             )
-                        self.test_ood_metrics_far[ds_name].update(ood_scores, torch.zeros_like(targets))
+                        self.test_ood_metrics_far[ds_name].update(
+                            ood_scores, torch.zeros_like(targets)
+                        )
 
         elif self.eval_ood and dataloader_idx in indices.get("near_oods", []):
             ds_index = indices["near_oods"].index(dataloader_idx)
@@ -641,49 +671,42 @@ class ClassificationRoutine(LightningModule):
             if self.is_ensemble:
                 if ds_name not in self.test_ood_ens_metrics_near:
                     self.test_ood_ens_metrics_near[ds_name] = self.ood_metrics_template.clone(
-                prefix=f"ood_near_{ds_name}_"
-                )
+                        prefix=f"ood_near_{ds_name}_"
+                    )
                 self.test_ood_ens_metrics_near[ds_name].update(ood_scores, torch.ones_like(targets))
             else:
                 if ds_name not in self.test_ood_metrics_near:
                     self.test_ood_metrics_near[ds_name] = self.ood_metrics_template.clone(
-                prefix=f"ood_near_{ds_name}_"
-                )
+                        prefix=f"ood_near_{ds_name}_"
+                    )
                 self.test_ood_metrics_near[ds_name].update(ood_scores, torch.ones_like(targets))
-       
-       
+
         elif self.eval_ood and dataloader_idx in indices.get("far_oods", []):
             ds_index = indices["far_oods"].index(dataloader_idx)
             ds_name = self.trainer.datamodule.far_oods[ds_index].dataset_name
             if self.is_ensemble:
                 if ds_name not in self.test_ood_ens_metrics_far:
                     self.test_ood_ens_metrics_far[ds_name] = self.ood_metrics_template.clone(
-                prefix=f"ood_far_{ds_name}_"
-                )
+                        prefix=f"ood_far_{ds_name}_"
+                    )
                 self.test_ood_ens_metrics_far[ds_name].update(ood_scores, torch.ones_like(targets))
             else:
                 if ds_name not in self.test_ood_metrics_far:
                     self.test_ood_metrics_far[ds_name] = self.ood_metrics_template.clone(
-                prefix=f"ood_far_{ds_name}_"
-                )
+                        prefix=f"ood_far_{ds_name}_"
+                    )
                 self.test_ood_metrics_far[ds_name].update(ood_scores, torch.ones_like(targets))
 
-        
         elif self.eval_shift and dataloader_idx in indices.get("shift", []):
             self.test_shift_metrics.update(probs, targets)
             if self.is_ensemble:
                 self.test_shift_ens_metrics.update(probs_per_est)
 
-
     def on_test_epoch_end(self) -> None:
         """Compute, log, and plot the values of the collected metrics in `test_step`."""
-
-
         result_dict = self.test_cls_metrics.compute()
         id_metrics = self.test_cls_metrics.compute()
         self.log_dict(id_metrics)
-        #self.test_cls_metrics.reset()
-
 
         if self.post_processing is not None:
             tmp_metrics = self.post_cls_metrics.compute()
@@ -701,35 +724,25 @@ class ClassificationRoutine(LightningModule):
             self.log_dict(tmp_metrics, sync_dist=True)
             result_dict.update(tmp_metrics)
 
-
         if self.is_ensemble and self.eval_ood:
-
-            for idx, near_metrics in self.test_ood_ens_metrics_near.items():
+            for near_metrics in self.test_ood_ens_metrics_near.values():
                 result_near = near_metrics.compute()
                 self.log_dict(result_near, sync_dist=True)
                 result_dict.update(result_near)
-                #near_metrics.reset()
 
-            for idx, far_metrics in self.test_ood_ens_metrics_far.items():
+            for far_metrics in self.test_ood_ens_metrics_far.values():
                 result_far = far_metrics.compute()
                 self.log_dict(result_far)
-                #far_metrics.reset() 
 
         elif self.eval_ood:
-
-            for idx, near_metrics in self.test_ood_metrics_near.items():
+            for near_metrics in self.test_ood_metrics_near.values():
                 result_near = near_metrics.compute()
                 self.log_dict(result_near, sync_dist=True)
                 result_dict.update(result_near)
-                #near_metrics.reset()
 
-            for idx, far_metrics in self.test_ood_metrics_far.items():
+            for far_metrics in self.test_ood_metrics_far.values():
                 result_far = far_metrics.compute()
                 self.log_dict(result_far)
-                #far_metrics.reset()
-            
-
-
 
         if self.eval_shift:
             tmp_metrics = self.test_shift_metrics.compute()
@@ -791,7 +804,6 @@ class ClassificationRoutine(LightningModule):
 
         if self.save_in_csv:
             self.save_results_to_csv(result_dict)
-
 
     def save_results_to_csv(self, results: dict[str, float]) -> None:
         """Save the metric results in a csv.

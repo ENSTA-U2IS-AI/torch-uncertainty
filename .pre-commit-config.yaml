@@ -22,8 +22,9 @@ repos:
     language: system
   - id: check-added-large-files
     name: check-added-large-files
-    entry: check-added-large-files
+    entry: check-added-large-files 
     language: system
+    args: [--maxkb=2000]
   - id: ruff-check
     name: ruff-check 
     entry: ruff check
