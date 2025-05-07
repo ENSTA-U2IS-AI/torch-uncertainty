@@ -928,6 +928,11 @@ def get_ood_criterion(ood_criterion):
             "variation_ratio",
         ]:
             config_path = config_dir / f"{ood_criterion}.yml"
+            if not config_path.is_file():
+                raise ValueError(
+                    f"No configuration file found for OOD criterion '{ood_criterion}'. "
+                    f"Expected {config_path!r}."
+                )
             config = load_config(str(config_path))
         if ood_criterion == "logit":
             return MaxLogitCriterion()
@@ -959,8 +964,6 @@ def get_ood_criterion(ood_criterion):
             return GENCriterion(config)
         if ood_criterion == "nnguide":
             return NNGuideCriterion(config)
-        if ood_criterion == "react":
-            return ReactCriterion()
         raise ValueError(
             "The OOD criterion must be one of 'msp', 'logit', 'energy', 'entropy',"
             f" 'mutual_information' or 'variation_ratio'. Got {ood_criterion}."
