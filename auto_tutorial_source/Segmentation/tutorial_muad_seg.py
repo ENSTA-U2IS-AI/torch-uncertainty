@@ -27,8 +27,11 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import torch
 import torchvision.transforms.v2.functional as F
+from huggingface_hub import hf_hub_download
 from torch import nn, optim
 from torch.optim import lr_scheduler
+from torchvision import tv_tensors
+from torchvision.transforms import v2
 from torchvision.utils import draw_segmentation_masks
 
 from torch_uncertainty import TUTrainer
@@ -40,15 +43,52 @@ from torch_uncertainty.routines import SegmentationRoutine
 # 2. Creating the Trainer and the DataModule
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-trainer = TUTrainer(accelerator="gpu", devices=1, max_epochs=10, enable_progress_bar=False)
+trainer = TUTrainer(accelerator="gpu", devices=1, max_epochs=1, enable_progress_bar=True)
+
+# %%
+# We create the transforms for the training and validation sets.
+
+muad_mean = MUADDataModule.mean
+muad_std = MUADDataModule.std
+
+train_transform = v2.Compose(
+    [
+        v2.Resize(size=(256, 512), antialias=True),
+        v2.RandomHorizontalFlip(),
+        v2.ToDtype(
+            dtype={
+                tv_tensors.Image: torch.float32,
+                tv_tensors.Mask: torch.int64,
+                "others": None,
+            },
+            scale=True,
+        ),
+        v2.Normalize(mean=muad_mean, std=muad_std),
+    ]
+)
+
+test_transform = v2.Compose(
+    [
+        v2.Resize(size=(256, 512), antialias=True),
+        v2.ToDtype(
+            dtype={
+                tv_tensors.Image: torch.float32,
+                tv_tensors.Mask: torch.int64,
+                "others": None,
+            },
+            scale=True,
+        ),
+        v2.Normalize(mean=muad_mean, std=muad_std),
+    ]
+)
+
 # datamodule providing the dataloaders to the trainer
-root = Path("data")
 datamodule = MUADDataModule(
-    root=root,
+    root="./data",
     batch_size=10,
     version="small",
-    crop_size=(256, 512),
-    eval_size=(256, 512),
+    train_transform=train_transform,
+    test_transform=test_transform,
     num_workers=4,
 )
 datamodule.setup("fit")
@@ -59,9 +99,9 @@ datamodule.setup("fit")
 # Undo normalization on the image and convert to uint8.
 sample = datamodule.train[0]
 img, tgt = sample
-mean = torch.tensor(datamodule.mean, device=img.device)
-std = torch.tensor(datamodule.std, device=img.device)
-img = img * std[:, None, None] + mean[:, None, None]
+t_muad_mean = torch.tensor(muad_mean, device=img.device)
+t_muad_std = torch.tensor(muad_std, device=img.device)
+img = img * t_muad_std[:, None, None] + t_muad_mean[:, None, None]
 img = F.to_dtype(img, torch.uint8, scale=True)
 img_pil = F.to_pil_image(img)
 
@@ -121,6 +161,8 @@ def enet_weighing(dataloader, num_classes, c=1.02):
         num_classes (``int``): The number of classes.
         c (``int``, optional): AN additional hyper-parameter which restricts
             the interval of values for the weights. Default: 1.02.
+        ignore_indexes (``list``, optional): A list of indexes to ignore
+            when computing the weights. Default to `None`.
 
     """
     class_count = 0
@@ -130,6 +172,7 @@ def enet_weighing(dataloader, num_classes, c=1.02):
         # Flatten label
         flat_label = label.flatten()
         flat_label = flat_label[flat_label != 255]
+        flat_label = flat_label[flat_label < num_classes]
 
         # Sum up the number of pixels of each class and the total pixel
         # counts for each label
@@ -138,10 +181,11 @@ def enet_weighing(dataloader, num_classes, c=1.02):
 
     # Compute propensity score and then the weights for each class
     propensity_score = class_count / total
+
     return 1 / (torch.log(c + propensity_score))
 
 
-class_weights = enet_weighing(datamodule.train_dataloader(), 19)
+class_weights = enet_weighing(datamodule.val_dataloader(), datamodule.num_classes)
 print(class_weights)
 
 
@@ -167,7 +211,7 @@ lr_updater = lr_scheduler.StepLR(optimizer, step_size=LR_DECAY_EPOCHS, gamma=LR_
 # Segmentation Routine
 ens_routine = SegmentationRoutine(
     model=model,
-    num_classes=19,
+    num_classes=datamodule.num_classes,
     loss=torch.nn.CrossEntropyLoss(weight=class_weights),
     optim_recipe={"optimizer": optimizer, "lr_scheduler": lr_updater},
 )
@@ -178,7 +222,17 @@ trainer.fit(model=ens_routine, datamodule=datamodule)
 
 # %%
 
-trainer.test(datamodule=datamodule, ckpt_path="best")
+results = trainer.test(datamodule=datamodule, ckpt_path="best")
+
+# %%
+# Let's now load a fully trained model to continue this tutorial
+
+# Download the model
+model_path = hf_hub_download(repo_id="torch-uncertainty/muad_tutorials", filename="tuto_muad.pth")
+model.load_state_dict(torch.load(model_path))
+
+results = trainer.test(model=model, datamodule=datamodule, ckpt_path="best")
+
 
 # %%
 # In this Tutorial we are using the small version a bigger version can be specified with keyword "full" instead of small.

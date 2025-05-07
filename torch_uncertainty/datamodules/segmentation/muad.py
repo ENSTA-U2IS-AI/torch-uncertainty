@@ -15,7 +15,7 @@ from torch_uncertainty.utils.misc import create_train_val_split
 
 
 class MUADDataModule(TUDataModule):
-    num_classes = 19
+    num_classes = 15
     num_channels = 3
     training_task = "segmentation"
     mean = (0.485, 0.456, 0.406)
@@ -143,27 +143,44 @@ class MUADDataModule(TUDataModule):
         if train_transform is not None:
             self.train_transform = train_transform
         else:
-            self.train_transform = v2.Compose(
-                [
-                    RandomRescale(min_scale=0.5, max_scale=2.0, antialias=True),
-                    v2.RandomCrop(
-                        size=self.crop_size,
-                        pad_if_needed=True,
-                        fill={tv_tensors.Image: 0, tv_tensors.Mask: 255},
-                    ),
-                    v2.ColorJitter(brightness=0.5, contrast=0.5, saturation=0.5),
-                    v2.RandomHorizontalFlip(),
-                    v2.ToDtype(
-                        dtype={
-                            tv_tensors.Image: torch.float32,
-                            tv_tensors.Mask: torch.int64,
-                            "others": None,
-                        },
-                        scale=True,
-                    ),
-                    v2.Normalize(mean=self.mean, std=self.std),
-                ]
-            )
+            if version == "small":
+                self.train_transform = v2.Compose(
+                    [
+                        v2.Resize(size=self.eval_size, antialias=True),
+                        v2.RandomHorizontalFlip(),
+                        v2.ToDtype(
+                            dtype={
+                                tv_tensors.Image: torch.float32,
+                                tv_tensors.Mask: torch.int64,
+                                "others": None,
+                            },
+                            scale=True,
+                        ),
+                        v2.Normalize(mean=self.mean, std=self.std),
+                    ]
+                )
+            else:
+                self.train_transform = v2.Compose(
+                    [
+                        RandomRescale(min_scale=0.5, max_scale=2.0, antialias=True),
+                        v2.RandomCrop(
+                            size=self.crop_size,
+                            pad_if_needed=True,
+                            fill={tv_tensors.Image: 0, tv_tensors.Mask: 255},
+                        ),
+                        v2.ColorJitter(brightness=0.5, contrast=0.5, saturation=0.5),
+                        v2.RandomHorizontalFlip(),
+                        v2.ToDtype(
+                            dtype={
+                                tv_tensors.Image: torch.float32,
+                                tv_tensors.Mask: torch.int64,
+                                "others": None,
+                            },
+                            scale=True,
+                        ),
+                        v2.Normalize(mean=self.mean, std=self.std),
+                    ]
+                )
 
         if test_transform is not None:
             self.test_transform = test_transform
