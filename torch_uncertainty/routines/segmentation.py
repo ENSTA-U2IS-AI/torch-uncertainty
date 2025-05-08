@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 
 import torch
 from einops import rearrange
@@ -24,6 +25,7 @@ from torch_uncertainty.models import (
     EPOCH_UPDATE_MODEL,
     STEP_UPDATE_MODEL,
 )
+from torch_uncertainty.utils import csv_writer
 from torch_uncertainty.utils.plotting import show
 
 
@@ -40,6 +42,7 @@ class SegmentationRoutine(LightningModule):
         log_plots: bool = False,
         num_samples_to_plot: int = 3,
         num_bins_cal_err: int = 15,
+        save_in_csv: bool = False,
     ) -> None:
         r"""Routine for training & testing on **segmentation** tasks.
 
@@ -62,6 +65,8 @@ class SegmentationRoutine(LightningModule):
                 :attr:`log_plots` is set to ``True``. Defaults to ``3``.
             num_bins_cal_err (int, optional): Number of bins to compute calibration
                 error metrics. Defaults to ``15``.
+            save_in_csv (bool, optional): Save the results in csv. Defaults to
+                ``False``.
 
         Warning:
             You must define :attr:`optim_recipe` if you do not use the CLI.
@@ -96,6 +101,7 @@ class SegmentationRoutine(LightningModule):
         self.format_batch_fn = format_batch_fn
         self.metric_subsampling_rate = metric_subsampling_rate
         self.log_plots = log_plots
+        self.save_in_csv = save_in_csv
         self._init_metrics()
 
         if log_plots:
@@ -271,8 +277,10 @@ class SegmentationRoutine(LightningModule):
 
     def on_test_epoch_end(self) -> None:
         """Compute, log, and plot the values of the collected metrics in `test_step`."""
-        self.log_dict(self.test_seg_metrics.compute(), sync_dist=True)
-        self.log_dict(self.test_sbsmpl_seg_metrics.compute(), sync_dist=True)
+        result_dict = self.test_seg_metrics.compute()
+        result_dict |= self.test_sbsmpl_seg_metrics.compute()
+        self.log_dict(result_dict, logger=True, sync_dist=True)
+
         if isinstance(self.logger, Logger) and self.log_plots:
             self.logger.experiment.add_figure(
                 "Calibration/Reliabity diagram",
@@ -290,6 +298,9 @@ class SegmentationRoutine(LightningModule):
                 self.log_segmentation_plots()
             else:
                 logging.info("No datamodule found, skipping segmentation plots.")
+
+        if self.save_in_csv:
+            self.save_results_to_csv(result_dict)
 
     def log_segmentation_plots(self) -> None:
         """Build and log examples of segmentation plots from the test set."""
@@ -312,6 +323,18 @@ class SegmentationRoutine(LightningModule):
             self.logger.experiment.add_figure(
                 f"Segmentation results/{i}",
                 show(pred_mask, gt_mask),
+            )
+
+    def save_results_to_csv(self, results: dict[str, float]) -> None:
+        """Save the metric results in a csv.
+
+        Args:
+            results (dict[str, float]): the dictionary containing all the values of the metrics.
+        """
+        if self.logger is not None:
+            csv_writer(
+                Path(self.logger.log_dir) / "results.csv",
+                results,
             )
 
     def subsample(self, pred: Tensor, target: Tensor) -> tuple[Tensor, Tensor]:
