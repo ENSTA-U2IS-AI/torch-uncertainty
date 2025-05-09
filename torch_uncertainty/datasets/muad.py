@@ -19,9 +19,6 @@ else:  # coverage: ignore
 import numpy as np
 from torchvision import tv_tensors
 from torchvision.datasets import VisionDataset
-from torchvision.datasets.utils import (
-    download_and_extract_archive,
-)
 
 
 class MUADClass(NamedTuple):
@@ -34,24 +31,41 @@ class MUADClass(NamedTuple):
 
 class MUAD(VisionDataset):
     classes_url = "https://raw.githubusercontent.com/torch-uncertainty/dataset-metadata/main/segmentation/muad/classes.json"
-    classes_md5 = "1db6e6143939824792f0af11a4fe7bb1"  # avoid replacement attack
-    base_url = "https://zenodo.org/records/10619959/files/"
 
-    zip_md5 = {
-        "train": "cea6a672225b10dda1add8b2974a5982",
-        "train_depth": "934d122ac09e0471db62ae68c3456b0f",
-        "val": "957af9c1c36f0a85c33279e06b6cf8d8",
-        "val_depth": "0282030d281aeffee3335f713ba12373",
+    base_urls = {
+        "full": "ENSTA-U2IS/MUAD",
+        "small": "ENSTA-U2IS/miniMUAD",
     }
-
-    small_muad_url = "ENSTA-U2IS/miniMUAD"
+    huggingface_splits = {
+        "full": [
+            "train",
+            "val",
+            "test_id",
+            "test_ood",
+            "test_id_low_adv",
+            "test_id_high_adv",
+            "test_ood_low_adv",
+            "test_ood_high_adv",
+        ],
+        "small": [
+            "train",
+            "val",
+            "test",
+            "ood",
+        ],
+    }
 
     _num_samples = {
         "full": {
             "train": 3420,
             "val": 492,
-            "test": ...,
-            "ood": ...,
+            "test_id": 551,
+            "test_ood": 1668,
+            "test_id_no_shadow": 102,
+            "test_id_low_adv": 605,
+            "test_id_high_adv": 602,
+            "test_ood_low_adv": 1552,
+            "test_ood_high_adv": 1421,
         },
         "small": {
             "train": 400,
@@ -152,8 +166,10 @@ class MUAD(VisionDataset):
         self.min_depth = min_depth
         self.max_depth = max_depth
 
-        if split not in ["train", "val", "test", "ood"]:
-            raise ValueError(f"split must be one of ['train', 'val', 'test', 'ood']. Got {split}.")
+        if split not in self.huggingface_splits[version]:
+            raise ValueError(
+                f"split must be one of {self.huggingface_splits[version].keys()}. Got {split}."
+            )
         self.split = split
         self.version = version
         self.target_type = target_type
@@ -272,15 +288,11 @@ class MUAD(VisionDataset):
 
     def _download(self, split: str) -> None:  # coverage: ignore
         """Download and extract the chosen split of the dataset."""
-        if self.version == "small":
-            filename = f"{split}.zip"
-            downloaded_file = hf_hub_download(
-                repo_id=self.small_muad_url, filename=filename, repo_type="dataset"
-            )
-            shutil.unpack_archive(downloaded_file, extract_dir=self.root)
-        else:
-            split_url = self.base_url + split + ".zip"
-            download_and_extract_archive(split_url, self.root, md5=self.zip_md5[split])
+        repo_id = self.base_urls[self.version]
+        filename = f"{split}.zip"
+
+        downloaded_file = hf_hub_download(repo_id=repo_id, filename=filename, repo_type="dataset")
+        shutil.unpack_archive(downloaded_file, extract_dir=self.root)
 
     @property
     def color_palette(self) -> np.ndarray:

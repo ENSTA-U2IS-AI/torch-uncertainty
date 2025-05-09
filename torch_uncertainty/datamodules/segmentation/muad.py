@@ -211,13 +211,6 @@ class MUADDataModule(TUDataModule):
         self.dataset(
             root=self.root, split="val", version=self.version, target_type="semantic", download=True
         )
-        self.dataset(
-            root=self.root,
-            split="test",
-            version=self.version,
-            target_type="semantic",
-            download=True,
-        )
 
     def setup(self, stage: str | None = None) -> None:
         if stage == "fit" or stage is None:
@@ -248,7 +241,7 @@ class MUADDataModule(TUDataModule):
         if stage == "test" or stage is None:
             self.test = self.dataset(
                 root=self.root,
-                split="test",
+                split="val",
                 version=self.version,
                 target_type="semantic",
                 transforms=self.test_transform,
