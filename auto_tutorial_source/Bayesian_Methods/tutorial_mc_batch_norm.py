@@ -31,7 +31,7 @@ from torch import nn
 
 from torch_uncertainty import TUTrainer
 from torch_uncertainty.datamodules import MNISTDataModule
-from torch_uncertainty.models.lenet import lenet
+from torch_uncertainty.models.classification import lenet
 from torch_uncertainty.optim_recipes import optim_cifar10_resnet18
 from torch_uncertainty.post_processing.mc_batch_norm import MCBatchNorm
 from torch_uncertainty.routines import ClassificationRoutine

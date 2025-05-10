@@ -188,7 +188,6 @@ class PackedNet(nn.Module):
     def forward(self, x):
         x = self.pool(F.relu(self.conv1(x)))
         x = self.pool(F.relu(self.conv2(x)))
-        x = rearrange(x, "e (m c) h w -> (m e) c h w", m=self.num_estimators)
         x = x.flatten(1)
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
@@ -265,7 +264,7 @@ packed_net.load_state_dict(torch.load(PATH, weights_only=True))
 # Let us see what the Packed-Ensemble predicts these examples above are:
 
 logits = packed_net(images[:6])
-logits = rearrange(logits, "(n b) c -> b n c", n=packed_net.num_estimators)
+logits = rearrange(logits, "(m b) c -> b m c", m=packed_net.num_estimators)
 probs_per_est = F.softmax(logits, dim=-1)
 outputs = probs_per_est.mean(dim=1)
 

@@ -30,7 +30,7 @@ If you use the classification routine, the plots will be automatically available
 # %%
 from torch_uncertainty.datamodules import CIFAR100DataModule
 from torch_uncertainty.metrics import CalibrationError
-from torch_uncertainty.models.resnet import resnet
+from torch_uncertainty.models.classification import resnet
 from torch_uncertainty.post_processing import TemperatureScaler
 from torch_uncertainty.utils import load_hf
 

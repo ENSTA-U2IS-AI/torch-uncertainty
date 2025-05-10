@@ -4,7 +4,7 @@ from torch import nn
 from torch.optim import Optimizer
 
 from torch_uncertainty.models import mc_dropout
-from torch_uncertainty.models.vgg import (
+from torch_uncertainty.models.classification import (
     packed_vgg,
     vgg,
 )

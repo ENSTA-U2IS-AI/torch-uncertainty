@@ -346,7 +346,6 @@ class PackedLeNet(nn.Module):
         out = F.max_pool2d(out, 2)
         out = F.relu(self.conv2(out))
         out = F.max_pool2d(out, 2)
-        out = rearrange(out, "e (m c) h w -> (m e) c h w", m=self.num_estimators)
         out = torch.flatten(out, 1)
         out = F.relu(self.fc1(out))
         out = F.relu(self.fc2(out))

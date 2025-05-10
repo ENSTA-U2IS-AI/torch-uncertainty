@@ -1,6 +1,5 @@
 from typing import Any
 
-from einops import rearrange
 from torch import Tensor, nn
 
 from torch_uncertainty.layers.packed import PackedConv2d, PackedLinear
@@ -111,13 +110,6 @@ class VGG(nn.Module):
 
     def feats_forward(self, x: Tensor) -> Tensor:
         x = self.features(x)
-
-        if self.linear_layer == PackedLinear:
-            x = rearrange(
-                x,
-                "e (m c) h w -> (m e) c h w",
-                m=self.model_kwargs["num_estimators"],
-            )
         x = self.avgpool(x)
         return self.flatten(x)
 

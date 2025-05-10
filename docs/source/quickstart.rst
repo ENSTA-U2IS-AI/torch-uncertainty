@@ -157,7 +157,7 @@ backbone with the following code:
 
 .. code:: python
 
-    from torch_uncertainty.models.resnet import packed_resnet
+    from torch_uncertainty.models.classification import packed_resnet
 
     model = packed_resnet(
         in_channels = 3,

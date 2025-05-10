@@ -40,7 +40,7 @@ from torch import nn, optim
 from torch_uncertainty import TUTrainer
 from torch_uncertainty.datamodules import MNISTDataModule
 from torch_uncertainty.losses import DECLoss
-from torch_uncertainty.models.lenet import lenet
+from torch_uncertainty.models.classification import lenet
 from torch_uncertainty.routines import ClassificationRoutine
 
 # We also define the main hyperparameters.

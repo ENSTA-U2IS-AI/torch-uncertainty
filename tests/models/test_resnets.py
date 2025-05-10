@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from torch_uncertainty.models.resnet import (
+from torch_uncertainty.models.classification import (
     batched_resnet,
     lpbnn_resnet,
     masked_resnet,
@@ -9,7 +9,7 @@ from torch_uncertainty.models.resnet import (
     packed_resnet,
     resnet,
 )
-from torch_uncertainty.models.resnet.utils import get_resnet_num_blocks
+from torch_uncertainty.models.classification.resnet.utils import get_resnet_num_blocks
 
 
 class TestResnet:

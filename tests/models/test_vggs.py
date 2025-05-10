@@ -1,7 +1,6 @@
 import pytest
 
-from torch_uncertainty.models.vgg.packed import packed_vgg
-from torch_uncertainty.models.vgg.std import vgg
+from torch_uncertainty.models.classification import packed_vgg, vgg
 
 
 class TestVGGs:
