@@ -49,6 +49,10 @@ model:
 data:
   root: ./data
   batch_size: 10
+  crop_size: 256
+  eval_size:
+  - 256
+  - 512
   num_workers: 3
 optimizer:
   class_path: torch.optim.Adam
