@@ -1,7 +1,6 @@
 from typing import Any, Literal
 
 import torch.nn.functional as F
-from einops import rearrange
 from torch import Tensor, nn
 
 from torch_uncertainty.layers import PackedConv2d, PackedLinear
@@ -205,6 +204,7 @@ class _PackedResNet(nn.Module):
         style: Literal["imagenet", "cifar"] = "imagenet",
         in_planes: int = 64,
         normalization_layer: type[nn.Module] = nn.BatchNorm2d,
+        linear_implementation: str = "conv1d",
     ) -> None:
         super().__init__()
 
@@ -323,6 +323,7 @@ class _PackedResNet(nn.Module):
             alpha=alpha,
             num_estimators=num_estimators,
             last=True,
+            implementation=linear_implementation,
         )
 
     def _make_layer(
@@ -366,9 +367,6 @@ class _PackedResNet(nn.Module):
         out = self.layer2(out)
         out = self.layer3(out)
         out = self.layer4(out)
-
-        out = rearrange(out, "e (m c) h w -> (m e) c h w", m=self.num_estimators)
-
         out = self.pool(out)
         out = self.final_dropout(self.flatten(out))
         return self.linear(out)
@@ -390,13 +388,14 @@ def packed_resnet(
     num_estimators: int,
     alpha: int,
     gamma: int,
-    conv_bias: bool = True,
+    conv_bias: bool = False,
     width_multiplier: float = 1.0,
     groups: int = 1,
     dropout_rate: float = 0,
     style: Literal["imagenet", "cifar"] = "imagenet",
     normalization_layer: type[nn.Module] = nn.BatchNorm2d,
     pretrained: bool = False,
+    linear_implementation: str = "conv1d",
 ) -> _PackedResNet:
     """Packed-Ensembles of ResNet.
 
@@ -417,6 +416,8 @@ def packed_resnet(
         normalization_layer (nn.Module, optional): Normalization layer.
         pretrained (bool, optional): Whether to load pretrained weights.
             Defaults to ``False``.
+        linear_implementation (str, optional): Implementation of the
+            packed linear layer. Defaults to ``conv1d``.
 
     Returns:
         _PackedResNet: A Packed-Ensembles ResNet.
@@ -437,6 +438,7 @@ def packed_resnet(
         style=style,
         in_planes=int(in_planes * width_multiplier),
         normalization_layer=normalization_layer,
+        linear_implementation=linear_implementation,
     )
     if pretrained:  # coverage: ignore
         weights = weight_ids[str(num_classes)][str(arch)]
