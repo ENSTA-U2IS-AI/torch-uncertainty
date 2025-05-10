@@ -49,7 +49,7 @@ model:
 data:
   root: ./data
   batch_size: 10
-  num_workers: 10
+  num_workers: 3
 optimizer:
   class_path: torch.optim.Adam
   init_args:
