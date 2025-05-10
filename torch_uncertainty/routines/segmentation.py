@@ -302,6 +302,9 @@ class SegmentationRoutine(LightningModule):
         if self.save_in_csv:
             self.save_results_to_csv(result_dict)
 
+        self.test_seg_metrics.reset()
+        self.test_sbsmpl_seg_metrics.reset()
+
     def log_segmentation_plots(self) -> None:
         """Build and log examples of segmentation plots from the test set."""
         for i, (img, pred, tgt) in enumerate(self.sample_buffer):
