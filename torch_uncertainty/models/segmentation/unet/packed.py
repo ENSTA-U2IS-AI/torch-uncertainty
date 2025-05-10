@@ -3,6 +3,7 @@ import torch.nn.functional as F
 from einops import rearrange
 from torch import Tensor, nn
 from torch.nn.common_types import _size_2_t
+from torchvision.transforms import v2
 
 from torch_uncertainty.layers.packed import PackedConv2d, check_packed_parameters_consistency
 
@@ -212,9 +213,16 @@ class PackedDown(nn.Module):
 
 class PackedUp(nn.Module):
     def __init__(
-        self, in_channels: int, out_channels: int, alpha: float, num_estimators: int, gamma: int
+        self,
+        in_channels: int,
+        out_channels: int,
+        alpha: float,
+        num_estimators: int,
+        gamma: int,
+        bilinear: bool = True,
     ) -> None:
         super().__init__()
+        self.bilinear = bilinear
         self.num_estimators = num_estimators
         self.up = PackedConvTranspose2d(
             in_channels=in_channels // 2,
@@ -234,7 +242,15 @@ class PackedUp(nn.Module):
         )
 
     def forward(self, x1, x2):
-        x1 = self.up(x1)
+        if self.bilinear:
+            x1 = F.resize(
+                x1,
+                size=[2 * x1.size()[2], 2 * x1.size()[3]],
+                interpolation=v2.InterpolationMode.BILINEAR,
+            )
+        else:
+            x1 = self.up(x1)
+
         diff_y = x2.size(2) - x1.size(2)
         diff_x = x2.size(3) - x1.size(3)
         x1 = F.pad(x1, [diff_x // 2, diff_x - diff_x // 2, diff_y // 2, diff_y - diff_y // 2])
@@ -264,7 +280,7 @@ class PackedOutconv(nn.Module):
         return self.conv(x)
 
 
-class PackedUNet(nn.Module):
+class _PackedUNet(nn.Module):
     def __init__(
         self,
         in_channels: int,
@@ -273,31 +289,46 @@ class PackedUNet(nn.Module):
         alpha: float = 1,
         num_estimators: int = 1,
         gamma: int = 1,
+        bilinear: bool = False,
     ) -> None:
+        check_unet_parameters(in_channels, num_classes, num_blocks, bilinear)
         super().__init__()
-
+        self.in_channels = in_channels
+        self.num_classes = num_classes
+        self.num_blocks = num_blocks
         self.alpha = alpha
         self.num_estimators = num_estimators
         self.gamma = gamma
+        self.bilinear = bilinear
 
         # Downsampling
-        self.inc = PackedInconv(3, 32, alpha, num_estimators, gamma)
-        self.down1 = PackedDown(32, 64, alpha, num_estimators, gamma)
-        self.down2 = PackedDown(64, 128, alpha, num_estimators, gamma)
-        self.down3 = PackedDown(128, 256, alpha, num_estimators, gamma)
-        self.down4 = PackedDown(256, 256, alpha, num_estimators, gamma)
-
+        self.inc = PackedInconv(in_channels, num_blocks[0], alpha, num_estimators, gamma)
+        self.down1 = PackedDown(num_blocks[0], num_blocks[1], alpha, num_estimators, gamma)
+        self.down2 = PackedDown(num_blocks[1], num_blocks[2], alpha, num_estimators, gamma)
+        self.down3 = PackedDown(num_blocks[2], num_blocks[3], alpha, num_estimators, gamma)
+        factor = 2 if bilinear else 1
+        self.down4 = PackedDown(
+            num_blocks[3], num_blocks[4] // factor, alpha, num_estimators, gamma
+        )
         # Upsampling
-        self.up1 = PackedUp(512, 128, alpha, num_estimators, gamma)
-        self.up2 = PackedUp(256, 64, alpha, num_estimators, gamma)
-        self.up3 = PackedUp(128, 32, alpha, num_estimators, gamma)
-        self.up4 = PackedUp(64, 32, alpha, num_estimators, gamma)
+        self.up1 = PackedUp(
+            num_blocks[4], num_blocks[3] // factor, alpha, num_estimators, gamma, bilinear
+        )
+        self.up2 = PackedUp(
+            num_blocks[3], num_blocks[2] // factor, alpha, num_estimators, gamma, bilinear
+        )
+        self.up3 = PackedUp(
+            num_blocks[2], num_blocks[1] // factor, alpha, num_estimators, gamma, bilinear
+        )
+        self.up4 = PackedUp(
+            num_blocks[1], num_blocks[0] // factor, alpha, num_estimators, gamma, bilinear
+        )
 
         # Dropout
         self.dropout = nn.Dropout2d(0.1)
 
         # Final output
-        self.outc = PackedOutconv(32, num_classes, alpha, num_estimators, gamma)
+        self.outc = PackedOutconv(num_blocks[0], num_classes, alpha, num_estimators, gamma)
 
     def forward(self, x):
         # Downsampling
@@ -317,5 +348,106 @@ class PackedUNet(nn.Module):
         x = self.dropout(x)
 
         # Final output
-        x = self.outc(x)
-        return rearrange(x, "b (m c) h w -> (m b) c h w", m=self.num_estimators)
+        return self.outc(x)
+
+
+def _packed_unet(
+    in_channels: int,
+    num_classes: int,
+    num_blocks: list[int],
+    bilinear: bool = False,
+    alpha: float = 1,
+    num_estimators: int = 1,
+    gamma: int = 1,
+) -> _PackedUNet:
+    """_summary_.
+
+    Args:
+        in_channels (int): _description_
+        num_classes (int): _description_
+        num_blocks (list[int]): _description_
+        bilinear (bool, optional): _description_. Defaults to False.
+        alpha (float, optional): _description_. Defaults to 1.
+        num_estimators (int, optional): _description_. Defaults to 1.
+        gamma (int, optional): _description_. Defaults to 1.
+
+    Returns:
+        PackedUNet: _description_
+    """
+    return _PackedUNet(
+        in_channels=in_channels,
+        num_classes=num_classes,
+        num_blocks=num_blocks,
+        alpha=alpha,
+        num_estimators=num_estimators,
+        gamma=gamma,
+        bilinear=bilinear,
+    )
+
+
+def packed_small_unet(
+    in_channels: int,
+    num_classes: int,
+    bilinear: bool = False,
+    alpha: float = 1,
+    num_estimators: int = 1,
+    gamma: int = 1,
+) -> _PackedUNet:
+    """Create a Packed-Ensembles of small U-Net models.
+
+    Args:
+        in_channels (int): Number of input channels.
+        num_classes (int): Number of output classes.
+        bilinear (bool, optional): If ``True``, use bilinear interpolation instead of
+            transposed convolutions for upsampling. This can help to reduce the number
+            of parameters and improve the performance of the model. Defaults to ``False``.
+        alpha (float, optional): _description_. Defaults to 1.
+        num_estimators (int, optional): _description_. Defaults to 1.
+        gamma (int, optional): _description_. Defaults to 1.
+
+    Returns:
+        PackedUNet: U-Net model.
+    """
+    return _packed_unet(
+        in_channels=in_channels,
+        num_classes=num_classes,
+        num_blocks=[32, 64, 128, 256, 512],
+        bilinear=bilinear,
+        alpha=alpha,
+        num_estimators=num_estimators,
+        gamma=gamma,
+    )
+
+
+def packed_unet(
+    in_channels: int,
+    num_classes: int,
+    bilinear: bool = False,
+    alpha: float = 1,
+    num_estimators: int = 1,
+    gamma: int = 1,
+) -> _PackedUNet:
+    """Create a Packed-Ensembles of U-Net models.
+
+    Args:
+        in_channels (int): Number of input channels.
+        num_classes (int): Number of output classes.
+        bilinear (bool, optional): If ``True``, use bilinear interpolation instead
+            of transposed convolutions for upsampling. This can help to reduce the number
+            of parameters and improve the performance of the model. Defaults to ``False``.
+        alpha (float, optional): _description_. Defaults to 1.
+        num_estimators (int, optional): _description_. Defaults to 1.
+        gamma (int, optional): _description_. Defaults to 1.
+
+    Returns:
+        PackedUNet: U-Net model.
+    """
+    return _packed_unet(
+        in_channels=in_channels,
+        num_classes=num_classes,
+        num_blocks=[64, 128, 256, 512, 1024],
+        bilinear=bilinear,
+        alpha=alpha,
+        num_estimators=num_estimators,
+        gamma=gamma,
+    )

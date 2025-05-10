@@ -84,6 +84,7 @@ datamodule = MUADDataModule(
     test_transform=test_transform,
     num_workers=4,
 )
+datamodule.prepare_data()
 datamodule.setup("fit")
 
 # %%
