@@ -11,7 +11,7 @@ from torch_uncertainty.layers.packed import PackedConv2d, PackedLinear
 from torch_uncertainty.models import StochasticModel
 from torch_uncertainty.models.wrappers.batch_ensemble import BatchEnsemble
 
-__all__ = ["bayesian_lenet", "lenet", "packed_lenet"]
+__all__ = ["batchensemble_lenet", "bayesian_lenet", "lenet", "packed_lenet"]
 
 
 class _LeNet(nn.Module):
