@@ -1,20 +1,20 @@
 import pytest
 import torch
 
-from torch_uncertainty.models.wideresnet import wideresnet28x10
-from torch_uncertainty.models.wideresnet.batched import (
+from torch_uncertainty.models.classification import wideresnet28x10
+from torch_uncertainty.models.classification.wideresnet.batched import (
     _BatchWideResNet,
     batched_wideresnet28x10,
 )
-from torch_uncertainty.models.wideresnet.masked import (
+from torch_uncertainty.models.classification.wideresnet.masked import (
     _MaskedWideResNet,
     masked_wideresnet28x10,
 )
-from torch_uncertainty.models.wideresnet.mimo import (
+from torch_uncertainty.models.classification.wideresnet.mimo import (
     _MIMOWideResNet,
     mimo_wideresnet28x10,
 )
-from torch_uncertainty.models.wideresnet.packed import (
+from torch_uncertainty.models.classification.wideresnet.packed import (
     _PackedWideResNet,
     packed_wideresnet28x10,
 )

@@ -1,6 +1,5 @@
 from collections.abc import Callable
 from pathlib import Path
-from typing import Literal
 
 import torch
 import torch.nn.functional as F
@@ -27,18 +26,23 @@ from torch_uncertainty.metrics import (
     CalibrationError,
     CategoricalNLL,
     CovAt5Risk,
+    CoverageRate,
     Disagreement,
     Entropy,
     GroupingLoss,
     MutualInformation,
     RiskAt80Cov,
-    VariationRatio,
 )
 from torch_uncertainty.models import (
     EPOCH_UPDATE_MODEL,
     STEP_UPDATE_MODEL,
 )
-from torch_uncertainty.post_processing import LaplaceApprox, PostProcessing
+from torch_uncertainty.ood_criteria import (
+    OODCriterionInputType,
+    TUOODCriterion,
+    get_ood_criterion,
+)
+from torch_uncertainty.post_processing import Conformal, LaplaceApprox, PostProcessing
 from torch_uncertainty.transforms import (
     Mixup,
     MixupIO,
@@ -71,9 +75,10 @@ class ClassificationRoutine(LightningModule):
         optim_recipe: dict | Optimizer | None = None,
         mixup_params: dict | None = None,
         eval_ood: bool = False,
+        is_conformal: bool = False,
         eval_shift: bool = False,
         eval_grouping_loss: bool = False,
-        ood_criterion: Literal["msp", "logit", "energy", "entropy", "mi", "vr"] = "msp",
+        ood_criterion: type[TUOODCriterion] | str = "msp",
         post_processing: PostProcessing | None = None,
         num_bins_cal_err: int = 15,
         log_plots: bool = False,
@@ -101,15 +106,12 @@ class ClassificationRoutine(LightningModule):
                 detection performance. Defaults to ``False``.
             eval_shift (bool, optional): Indicates whether to evaluate the Distribution
                 shift performance. Defaults to ``False``.
+            is_conformal (bool, optional): Indicates whether to use conformal prediction
+                as uncertainty criterion. Defaults to ``False``.
             eval_grouping_loss (bool, optional): Indicates whether to evaluate the
                 grouping loss or not. Defaults to ``False``.
-            ood_criterion (str, optional): OOD criterion. Available options are
-                - ``"msp"`` (default): Maximum softmax probability.
-                - ``"logit"``: Maximum logit.
-                - ``"energy"``: Logsumexp of the mean logits.
-                - ``"entropy"``: Entropy of the mean prediction.
-                - ``"mi"``: Mutual information of the ensemble.
-                - ``"vr"``: Variation ratio of the ensemble.
+            ood_criterion (TUOODCriterion, optional): Criterion for the binary OOD detection task.
+                Defaults to None which amounts to the maximum softmax probability score (MSP).
             post_processing (PostProcessing, optional): Post-processing method
                 to train on the calibration set. No post-processing if None.
                 Defaults to ``None``.
@@ -161,10 +163,11 @@ class ClassificationRoutine(LightningModule):
 
         self.num_classes = num_classes
         self.eval_ood = eval_ood
+        self.is_conformal = is_conformal
         self.eval_shift = eval_shift
         self.eval_grouping_loss = eval_grouping_loss
-        self.ood_criterion = ood_criterion
         self.num_tta = num_tta
+        self.ood_criterion = get_ood_criterion(ood_criterion)
         self.log_plots = log_plots
         self.save_in_csv = save_in_csv
         self.binary_cls = num_classes == 1
@@ -234,6 +237,7 @@ class ClassificationRoutine(LightningModule):
 
         cls_metrics = MetricCollection(metrics_dict, compute_groups=groups)
         self.val_cls_metrics = cls_metrics.clone(prefix="val/")
+
         self.test_cls_metrics = cls_metrics.clone(prefix="test/")
 
         if self.post_processing is not None:
@@ -252,6 +256,13 @@ class ClassificationRoutine(LightningModule):
             )
             self.test_ood_metrics = ood_metrics.clone(prefix="ood/")
             self.test_ood_entropy = Entropy()
+        if self.is_conformal:
+            cfm_metrics = MetricCollection(
+                {
+                    "CovAcc": CoverageRate(),
+                },
+            )
+            self.test_cfm_metrics = cfm_metrics.clone(prefix="test/cls/")
 
         if self.eval_shift:
             self.test_shift_metrics = cls_metrics.clone(prefix="shift/")
@@ -494,22 +505,21 @@ class ClassificationRoutine(LightningModule):
         logits = rearrange(logits, "(m b) c -> b m c", b=targets.size(0))
         probs_per_est = torch.sigmoid(logits) if self.binary_cls else F.softmax(logits, dim=-1)
         probs = probs_per_est.mean(dim=1)
-        confs = probs.max(-1)[0]
+        if self.is_conformal:
+            if isinstance(self.post_processing, Conformal):
+                pred_conformal, confs_conformal = self.post_processing.conformal(inputs)
+            else:
+                pred_conformal, confs_conformal = self.model.conformal(inputs)
 
-        if self.ood_criterion == "logit":
-            ood_scores = -logits.mean(dim=1).max(dim=-1).values
-        elif self.ood_criterion == "energy":
-            ood_scores = -logits.mean(dim=1).logsumexp(dim=-1)
-        elif self.ood_criterion == "entropy":
-            ood_scores = torch.special.entr(probs_per_est).sum(dim=-1).mean(dim=1)
-        elif self.ood_criterion == "mi":
-            mi_metric = MutualInformation(reduction="none")
-            ood_scores = mi_metric(probs_per_est)
-        elif self.ood_criterion == "vr":
-            vr_metric = VariationRatio(reduction="none", probabilistic=False)
-            ood_scores = vr_metric(probs_per_est.transpose(0, 1))
+        if self.ood_criterion.input_type == OODCriterionInputType.LOGIT and not self.is_conformal:
+            ood_scores = self.ood_criterion(logits)
+        elif self.ood_criterion.input_type == OODCriterionInputType.PROB and not self.is_conformal:
+            ood_scores = self.ood_criterion(probs)
         else:
-            ood_scores = -confs
+            if not self.is_conformal:
+                ood_scores = self.ood_criterion(probs_per_est)
+            else:
+                ood_scores = confs_conformal
 
         if dataloader_idx == 0:
             # squeeze if binary classification only for binary metrics
@@ -534,6 +544,9 @@ class ClassificationRoutine(LightningModule):
 
             if self.eval_ood:
                 self.test_ood_metrics.update(ood_scores, torch.zeros_like(targets))
+
+            if self.is_conformal:
+                self.test_cfm_metrics.update(pred_conformal, targets)
 
             if self.id_logit_storage is not None:
                 self.id_logit_storage.append(logits.detach().cpu())
@@ -620,10 +633,15 @@ class ClassificationRoutine(LightningModule):
                 self.log_dict(tmp_metrics, sync_dist=True)
                 result_dict.update(tmp_metrics)
 
+        if self.is_conformal:
+            tmp_metrics = self.test_cfm_metrics.compute()
+            self.log_dict(tmp_metrics, sync_dist=True)
+            result_dict.update(tmp_metrics)
+
         if self.eval_shift:
             tmp_metrics = self.test_shift_metrics.compute()
             shift_severity = self.trainer.datamodule.shift_severity
-            tmp_metrics["shift/shift_severity"] = shift_severity
+            tmp_metrics["shift/severity"] = shift_severity
             self.log_dict(tmp_metrics, sync_dist=True)
             result_dict.update(tmp_metrics)
 
@@ -698,40 +716,28 @@ def _classification_routine_checks(
     model: nn.Module,
     num_classes: int,
     is_ensemble: bool,
-    ood_criterion: str,
+    ood_criterion: type[TUOODCriterion] | str,
     eval_grouping_loss: bool,
     num_bins_cal_err: int,
     mixup_params: dict | None,
     post_processing: PostProcessing | None,
     format_batch_fn: nn.Module | None,
 ) -> None:
-    """Check the domains of the routine's parameters.
+    """Check the domains of the arguments of the classification routine.
 
     Args:
         model (nn.Module): the model used to make classification predictions.
         num_classes (int): the number of classes in the dataset.
         is_ensemble (bool): whether the model is an ensemble or a single model.
-        ood_criterion (str): the criterion for the binary OOD detection task.
+        ood_criterion (TUOODCriterion, optional): OOD criterion for the binary OOD detection task.
         eval_grouping_loss (bool): whether to evaluate the grouping loss.
         num_bins_cal_err (int): the number of bins for the evaluation of the calibration.
         mixup_params (dict | None): the dictionary to setup the mixup augmentation.
         post_processing (PostProcessing | None): the post-processing module.
         format_batch_fn (nn.Module | None): the function for formatting the batch for ensembles.
     """
-    if ood_criterion not in [
-        "msp",
-        "logit",
-        "energy",
-        "entropy",
-        "mi",
-        "vr",
-    ]:
-        raise ValueError(
-            "The OOD criterion must be one of 'msp', 'logit', 'energy', 'entropy',"
-            f" 'mi' or 'vr'. Got {ood_criterion}."
-        )
-
-    if not is_ensemble and ood_criterion in ["mi", "vr"]:
+    ood_criterion_cls = get_ood_criterion(ood_criterion)
+    if not is_ensemble and ood_criterion_cls.ensemble_only:
         raise ValueError(
             "You cannot use mutual information or variation ratio with a single model."
         )

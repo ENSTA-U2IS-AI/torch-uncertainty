@@ -303,9 +303,7 @@ class PixelRegressionRoutine(LightningModule):
         preds, dist = self.evaluation_forward(inputs)
 
         if batch_idx == 0 and self.log_plots:
-            num_images = (
-                self.num_image_plot if self.num_image_plot < inputs.size(0) else inputs.size(0)
-            )
+            num_images = min(inputs.size(0), self.num_image_plot)
             self._plot_depth(
                 inputs[:num_images, ...],
                 preds[:num_images, ...],

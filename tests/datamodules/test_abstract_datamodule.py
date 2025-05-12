@@ -14,11 +14,10 @@ class TestTUDataModule:
 
     def test_errors(self):
         TUDataModule.__abstractmethods__ = set()
-        dm = TUDataModule("root", 128, 0.0, 4, True, True)
+        dm = TUDataModule("root", 128, 128, 0.0, 4, True, True)
+        dm.setup()
         with pytest.raises(NotImplementedError):
-            dm.setup()
             dm._get_train_data()
-            dm._get_train_targets()
 
 
 class TestCrossValDataModule:
@@ -26,12 +25,12 @@ class TestCrossValDataModule:
 
     def test_cv_main(self):
         TUDataModule.__abstractmethods__ = set()
-        dm = TUDataModule("root", 128, 0.0, 4, True, True)
+        dm = TUDataModule("root", 128, 128, 0.0, 4, True, True)
         ds = DummyClassificationDataset(Path("root"))
         dm.train = ds
         dm.val = ds
         dm.test = ds
-        cv_dm = CrossValDataModule("root", [0], [1], dm, 128, 0.0, 4, True, True)
+        cv_dm = CrossValDataModule("root", [0], [1], dm, 128, 128, 0.0, 4, True, True)
 
         cv_dm.setup()
         cv_dm.setup("test")
@@ -50,6 +49,7 @@ class TestCrossValDataModule:
         dm = TUDataModule(
             root="root",
             batch_size=128,
+            eval_batch_size=None,
             val_split=0.0,
             num_workers=4,
             pin_memory=True,
@@ -65,15 +65,15 @@ class TestCrossValDataModule:
             val_idx=[1],
             datamodule=dm,
             batch_size=128,
+            eval_batch_size=128,
             val_split=0.0,
             num_workers=4,
             pin_memory=True,
             persistent_workers=True,
         )
+        cv_dm.setup()
         with pytest.raises(NotImplementedError):
-            cv_dm.setup()
             cv_dm._get_train_data()
-            cv_dm._get_train_targets()
 
         with pytest.raises(ValueError):
             cv_dm.setup("other")

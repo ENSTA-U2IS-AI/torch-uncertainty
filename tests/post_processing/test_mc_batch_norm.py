@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader
 
 from tests._dummies.dataset import DummyClassificationDataset
 from torch_uncertainty.layers.mc_batch_norm import MCBatchNorm2d
-from torch_uncertainty.models.lenet import lenet
+from torch_uncertainty.models.classification import lenet
 from torch_uncertainty.post_processing import MCBatchNorm
 
 

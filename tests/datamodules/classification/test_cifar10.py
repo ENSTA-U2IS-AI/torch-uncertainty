@@ -1,4 +1,5 @@
 import pytest
+from torch import nn
 from torchvision.datasets import CIFAR10
 
 from tests._dummies.dataset import DummyClassificationDataset
@@ -10,6 +11,15 @@ class TestCIFAR10DataModule:
     """Testing the CIFAR10DataModule datamodule class."""
 
     def test_cifar10_main(self):
+        dm = CIFAR10DataModule(
+            root="./data/",
+            batch_size=128,
+            train_transform=nn.Identity(),
+            test_transform=nn.Identity(),
+        )
+        assert isinstance(dm.train_transform, nn.Identity)
+        assert isinstance(dm.test_transform, nn.Identity)
+
         dm = CIFAR10DataModule(root="./data/", batch_size=128, cutout=16, postprocess_set="test")
 
         assert dm.dataset == CIFAR10
@@ -53,9 +63,9 @@ class TestCIFAR10DataModule:
         dm = CIFAR10DataModule(
             root="./data/",
             batch_size=128,
-            cutout=16,
             num_dataloaders=2,
             val_split=0.1,
+            randaugment=True,
         )
         dm.dataset = DummyClassificationDataset
         dm.ood_dataset = DummyClassificationDataset
@@ -72,12 +82,12 @@ class TestCIFAR10DataModule:
                 auto_augment="rand-m9-n2-mstd0.5",
             )
 
+        dm = CIFAR10DataModule(
+            root="./data/",
+            batch_size=128,
+            test_alt="h",
+        )
         with pytest.raises(ValueError, match="CIFAR-H can only be used in testing."):
-            dm = CIFAR10DataModule(
-                root="./data/",
-                batch_size=128,
-                test_alt="h",
-            )
             dm.setup("fit")
 
         with pytest.raises(ValueError, match="Test set "):

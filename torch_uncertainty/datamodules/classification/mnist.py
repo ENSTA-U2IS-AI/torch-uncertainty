@@ -26,6 +26,7 @@ class MNISTDataModule(TUDataModule):
         self,
         root: str | Path,
         batch_size: int,
+        eval_batch_size: int | None = None,
         eval_ood: bool = False,
         eval_shift: bool = False,
         ood_ds: Literal["fashion", "notMNIST"] = "fashion",
@@ -33,6 +34,9 @@ class MNISTDataModule(TUDataModule):
         val_split: float | None = None,
         postprocess_set: Literal["val", "test"] = "val",
         num_workers: int = 1,
+        train_transform: nn.Module | None = None,
+        test_transform: nn.Module | None = None,
+        ood_transform: nn.Module | None = None,
         basic_augment: bool = True,
         cutout: int | None = None,
         pin_memory: bool = True,
@@ -42,18 +46,28 @@ class MNISTDataModule(TUDataModule):
 
         Args:
             root (str): Root directory of the datasets.
-            eval_ood (bool): Whether to evaluate on out-of-distribution data. Defaults to
-                ``False``.
+            eval_ood (bool): Whether to evaluate on out-of-distribution data. Defaults to ``False``.
             eval_shift (bool): Whether to evaluate on shifted data. Defaults to ``False``.
-            batch_size (int): Number of samples per batch.
+            batch_size (int): Number of samples per batch during training.
+            eval_batch_size (int | None) : Number of samples per batch during evaluation (val
+                and test). Set to batch_size if None. Defaults to None.
             ood_ds (str): Which out-of-distribution dataset to use. Defaults to
                 ``"fashion"``; `fashion` stands for FashionMNIST and `notMNIST` for notMNIST.
             val_split (float): Share of samples to use for validation. Defaults to ``0.0``.
             num_tta (int): Number of test-time augmentations (TTA). Defaults to ``1`` (no TTA).
             postprocess_set (str, optional): The post-hoc calibration dataset to
                 use for the post-processing method. Defaults to ``val``.
-            num_workers (int): Number of workers to use for data loading. Defaults to ``1``.
-            basic_augment (bool): Whether to apply base augmentations. Defaults to ``True``.
+            num_workers (int): Number of workers to use for data loading. Defaults
+                to ``1``.
+            train_transform (nn.Module | None): Custom training transform. Defaults
+                to ``None``. If not provided, a default transform is used.
+            test_transform (nn.Module | None): Custom test transform. Defaults to
+                ``None``. If not provided, a default transform is used.
+            ood_transform (nn.Module | None): Custom transform for out-of-distribution
+                datasets. Defaults to ``None``. If not provided, a default transform
+                is used.
+            basic_augment (bool): Whether to apply base augmentations. Defaults to
+                ``True``.
             cutout (int): Size of cutout to apply to images. Defaults to ``None``.
             pin_memory (bool): Whether to pin memory. Defaults to ``True``.
             persistent_workers (bool): Whether to use persistent workers. Defaults to ``True``.
@@ -61,6 +75,7 @@ class MNISTDataModule(TUDataModule):
         super().__init__(
             root=root,
             batch_size=batch_size,
+            eval_batch_size=eval_batch_size,
             val_split=val_split,
             num_tta=num_tta,
             postprocess_set=postprocess_set,
@@ -85,21 +100,29 @@ class MNISTDataModule(TUDataModule):
         self.shift_dataset = MNISTC
         self.shift_severity = 1
 
-        basic_transform = v2.RandomCrop(28, padding=4) if basic_augment else nn.Identity()
+        if train_transform is not None:
+            self.train_transform = train_transform
+        else:
+            basic_transform = v2.RandomCrop(28, padding=4) if basic_augment else nn.Identity()
 
-        main_transform = Cutout(cutout) if cutout else nn.Identity()
+            main_transform = Cutout(cutout) if cutout else nn.Identity()
 
-        self.train_transform = v2.Compose(
-            [
-                v2.ToImage(),
-                basic_transform,
-                main_transform,
-                v2.ToDtype(dtype=torch.float32, scale=True),
-                v2.Normalize(mean=self.mean, std=self.std),
-            ]
-        )
-        self.test_transform = (
-            v2.Compose(
+            self.train_transform = v2.Compose(
+                [
+                    v2.ToImage(),
+                    basic_transform,
+                    main_transform,
+                    v2.ToDtype(dtype=torch.float32, scale=True),
+                    v2.Normalize(mean=self.mean, std=self.std),
+                ]
+            )
+
+        if num_tta != 1:
+            self.test_transform = train_transform
+        elif test_transform is not None:
+            self.test_transform = test_transform
+        else:
+            self.test_transform = v2.Compose(
                 [
                     v2.ToImage(),
                     v2.CenterCrop(28),
@@ -107,19 +130,20 @@ class MNISTDataModule(TUDataModule):
                     v2.Normalize(mean=self.mean, std=self.std),
                 ]
             )
-            if num_tta == 1
-            else self.train_transform
-        )
-
-        self.ood_transform = v2.Compose(
-            [
-                v2.ToImage(),
-                v2.Grayscale(num_output_channels=1),
-                v2.CenterCrop(28),
-                v2.ToDtype(dtype=torch.float32, scale=True),
-                v2.Normalize(mean=self.mean, std=self.std),
-            ]
-        )
+        if self.eval_ood:
+            if ood_transform is not None:
+                self.ood_transform = ood_transform
+            else:
+                # NotMNIST has 3 channels
+                self.ood_transform = v2.Compose(
+                    [
+                        v2.ToImage(),
+                        v2.Grayscale(num_output_channels=1),
+                        v2.CenterCrop(28),
+                        v2.ToDtype(dtype=torch.float32, scale=True),
+                        v2.Normalize(mean=self.mean, std=self.std),
+                    ]
+                )
 
     def prepare_data(self) -> None:  # coverage: ignore
         """Download the datasets."""
@@ -184,9 +208,11 @@ class MNISTDataModule(TUDataModule):
                 distribution data), FashionMNIST or NotMNIST test split
                 (out-of-distribution data), and/or MNISTC (shifted data).
         """
-        dataloader = [self._data_loader(self.get_test_set(), shuffle=False)]
+        dataloader = [self._data_loader(self.get_test_set(), training=False, shuffle=False)]
         if self.eval_ood:
-            dataloader.append(self._data_loader(self.get_ood_set(), shuffle=False))
+            dataloader.append(self._data_loader(self.get_ood_set(), training=False, shuffle=False))
         if self.eval_shift:
-            dataloader.append(self._data_loader(self.get_shift_set(), shuffle=False))
+            dataloader.append(
+                self._data_loader(self.get_shift_set(), training=False, shuffle=False)
+            )
         return dataloader

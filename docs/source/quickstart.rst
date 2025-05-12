@@ -46,12 +46,9 @@ and its parameters.
       # ...
       eval_ood: bool = False,
       eval_grouping_loss: bool = False,
-      ood_criterion: Literal[
-        "msp", "logit", "energy", "entropy", "mi", "vr"
-      ] = "msp",
+      ood_criterion: type[TUOODCriterion] | str = "msp",
       log_plots: bool = False,
       save_in_csv: bool = False,
-      calibration_set: Literal["val", "test"] | None = None,
     ) -> None:
       ...
 
@@ -160,7 +157,7 @@ backbone with the following code:
 
 .. code:: python
 
-    from torch_uncertainty.models.resnet import packed_resnet
+    from torch_uncertainty.models.classification import packed_resnet
 
     model = packed_resnet(
         in_channels = 3,

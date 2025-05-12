@@ -10,6 +10,10 @@ from tests._dummies import (
 )
 from torch_uncertainty import TUTrainer
 from torch_uncertainty.losses import DECLoss, ELBOLoss
+from torch_uncertainty.ood_criteria import (
+    EntropyCriterion,
+)
+from torch_uncertainty.post_processing import ConformalClsTHR
 from torch_uncertainty.routines import ClassificationRoutine
 from torch_uncertainty.transforms import RepeatTarget
 
@@ -31,7 +35,6 @@ class TestClassification:
             num_classes=dm.num_classes,
             loss=nn.BCEWithLogitsLoss(),
             baseline_type="single",
-            ood_criterion="msp",
             ema=True,
         )
 
@@ -79,7 +82,7 @@ class TestClassification:
             in_channels=dm.num_channels,
             loss=nn.CrossEntropyLoss(),
             baseline_type="single",
-            ood_criterion="entropy",
+            ood_criterion=EntropyCriterion,
             eval_ood=True,
             eval_shift=True,
             no_mixup_params=True,
@@ -283,13 +286,14 @@ class TestClassification:
             num_classes=2,
             num_images=100,
             eval_ood=True,
+            eval_shift=True,
         )
         model = DummyClassificationBaseline(
             num_classes=dm.num_classes,
             in_channels=dm.num_channels,
             loss=DECLoss(1, 1e-2),
             baseline_type="ensemble",
-            ood_criterion="mi",
+            ood_criterion="mutual_information",
             eval_ood=True,
         )
 
@@ -320,7 +324,7 @@ class TestClassification:
             in_channels=dm.num_channels,
             loss=ELBOLoss(None, nn.CrossEntropyLoss(), kl_weight=1.0, num_samples=4),
             baseline_type="ensemble",
-            ood_criterion="vr",
+            ood_criterion="variation_ratio",
             eval_ood=True,
             save_in_csv=True,
         )
@@ -329,6 +333,47 @@ class TestClassification:
         trainer.validate(model, dm)
         trainer.test(model, dm)
         model(dm.get_test_set()[0][0])
+
+    def test_one_estimator_conformal(self):
+        trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
+
+        dm = DummyClassificationDataModule(
+            root=Path(),
+            batch_size=16,
+            num_classes=3,
+            num_images=100,
+            eval_ood=True,
+        )
+
+        model = dummy_model(
+            in_channels=dm.num_channels,
+            num_classes=dm.num_classes,
+        )
+        routine = ClassificationRoutine(
+            model=model,
+            loss=None,
+            num_classes=3,
+            is_conformal=True,
+            post_processing=ConformalClsTHR(),
+        )
+        trainer.test(routine, dm)
+
+        model = ConformalClsTHR(
+            model=dummy_model(
+                in_channels=dm.num_channels,
+                num_classes=dm.num_classes,
+            ),
+        )
+        model.fit(dm.postprocess_dataloader())
+
+        routine = ClassificationRoutine(
+            model=model,
+            loss=None,
+            num_classes=3,
+            is_conformal=True,
+            post_processing=None,
+        )
+        trainer.test(routine, dm)
 
     def test_classification_failures(self):
         # num_classes
@@ -341,18 +386,29 @@ class TestClassification:
                 model=nn.Module(),
                 loss=None,
                 is_ensemble=False,
-                ood_criterion="mi",
+                ood_criterion="mutual_information",
             )
+
         with pytest.raises(ValueError):
             ClassificationRoutine(
                 num_classes=10,
                 model=nn.Module(),
                 loss=None,
-                ood_criterion="other",
+                is_ensemble=False,
+                ood_criterion=32,
             )
 
         with pytest.raises(ValueError):
-            mixup_params = {"cutmix_alpha": -1}
+            ClassificationRoutine(
+                num_classes=10,
+                model=nn.Module(),
+                loss=None,
+                is_ensemble=False,
+                ood_criterion="other",
+            )
+
+        mixup_params = {"cutmix_alpha": -1}
+        with pytest.raises(ValueError):
             ClassificationRoutine(
                 num_classes=10,
                 model=nn.Module(),

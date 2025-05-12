@@ -159,11 +159,11 @@ class TestRegression:
                 loss=nn.MSELoss(),
             )
 
+        routine = RegressionRoutine(
+            dist_family="normal",
+            output_dim=1,
+            model=nn.Identity(),
+            loss=nn.MSELoss(),
+        )
         with pytest.raises(TypeError):
-            routine = RegressionRoutine(
-                dist_family="normal",
-                output_dim=1,
-                model=nn.Identity(),
-                loss=nn.MSELoss(),
-            )
             routine(torch.randn(1, 1))

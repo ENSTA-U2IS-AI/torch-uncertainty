@@ -2,22 +2,19 @@
 seed_everything: false
 eval_after_fit: true
 trainer:
+  fast_dev_run: false
   accelerator: gpu
   devices: 1
   precision: 16-mixed
-  max_epochs: 75
+  max_epochs: 10
   logger:
     class_path: lightning.pytorch.loggers.TensorBoardLogger
     init_args:
       save_dir: logs/lenet_trajectory
-      name: standard
+      name: batch_ensemble
       default_hp_metric: false
   callbacks:
-  - class_path: lightning.pytorch.callbacks.ModelCheckpoint
-    init_args:
-      monitor: val/cls/Acc
-      mode: max
-      save_last: true
+  - class_path: torch_uncertainty.callbacks.TUClsCheckpoint
   - class_path: lightning.pytorch.callbacks.LearningRateMonitor
     init_args:
       logging_interval: step
@@ -26,41 +23,33 @@ trainer:
       monitor: val/cls/Acc
       patience: 1000
       check_finite: true
-model:
-  model:
-    class_path: torch_uncertainty.models.CheckpointEnsemble
+model:  
+  # ClassificationRoutine
+  model:  
+    # BatchEnsemble
+    class_path: torch_uncertainty.models.lenet.batchensemble_lenet
     init_args:
-      model:
-        class_path: torch_uncertainty.models.lenet._LeNet
-        init_args:
-          in_channels: 1
-          num_classes: 10
-          linear_layer: torch.nn.Linear
-          conv2d_layer: torch.nn.Conv2d
-          activation: torch.nn.ReLU
-          norm: torch.nn.Identity
-          groups: 1
-          dropout_rate: 0
-          layer_args: {}
-      save_schedule:
-        - 20
-        - 25
-        - 30
-        - 35
-        - 40
-        - 45
-        - 50
-        - 55
-        - 60
-        - 65
-        - 70
+      in_channels: 1
+      num_classes: 10
+      num_estimators: 5
+      activation: torch.nn.ReLU
+      norm: torch.nn.BatchNorm2d
+      groups: 1
+      dropout_rate: 0
+      repeat_training_inputs: true
   num_classes: 10
   loss: CrossEntropyLoss
   is_ensemble: true
+  format_batch_fn:
+    class_path: torch_uncertainty.transforms.batch.RepeatTarget
+    init_args:
+      num_repeats: 5
 data:
   root: ./data
   batch_size: 128
   num_workers: 8
+  eval_ood: true
+  eval_shift: true
 optimizer:
   lr: 0.05
   momentum: 0.9

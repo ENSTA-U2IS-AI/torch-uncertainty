@@ -9,15 +9,11 @@ trainer:
   logger:
     class_path: lightning.pytorch.loggers.TensorBoardLogger
     init_args:
-      save_dir: logs/lenet_ema
+      save_dir: logs/lenet
       name: standard
       default_hp_metric: false
   callbacks:
-  - class_path: lightning.pytorch.callbacks.ModelCheckpoint
-    init_args:
-      monitor: val/cls/Acc
-      mode: max
-      save_last: true
+  - class_path: torch_uncertainty.callbacks.TUClsCheckpoint
   - class_path: lightning.pytorch.callbacks.LearningRateMonitor
     init_args:
       logging_interval: step
@@ -28,21 +24,14 @@ trainer:
       check_finite: true
 model:
   model:
-    class_path: torch_uncertainty.models.wrappers.EMA
+    class_path: torch_uncertainty.models.classification.lenet
     init_args:
-      model:
-        class_path: torch_uncertainty.models.lenet._LeNet
-        init_args:
-          in_channels: 1
-          num_classes: 10
-          linear_layer: torch.nn.Linear
-          conv2d_layer: torch.nn.Conv2d
-          activation: torch.nn.ReLU
-          norm: torch.nn.Identity
-          groups: 1
-          dropout_rate: 0
-          layer_args: {}
-      momentum: 0.99
+      in_channels: 1
+      num_classes: 10
+      activation: torch.nn.ReLU
+      norm: torch.nn.Identity
+      groups: 1
+      dropout_rate: 0
   num_classes: 10
   loss: CrossEntropyLoss
 data:

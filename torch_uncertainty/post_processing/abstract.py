@@ -14,12 +14,7 @@ class PostProcessing(ABC, nn.Module):
         self.model = model
 
     @abstractmethod
-    def fit(self, dataloader: DataLoader) -> None:
-        pass
+    def fit(self, dataloader: DataLoader) -> None: ...
 
     @abstractmethod
-    def forward(
-        self,
-        inputs: Tensor,
-    ) -> Tensor:
-        pass
+    def forward(self, inputs: Tensor) -> Tensor: ...
