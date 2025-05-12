@@ -413,3 +413,81 @@ class BatchConv2d(nn.Module):
             f" num_estimators={self.num_estimators},"
             f" stride={self.stride}"
         )
+
+
+class BatchConvTranspose2d(nn.Module):
+    def __init__(
+        self,
+        in_channels: int,
+        out_channels: int,
+        kernel_size: _size_2_t,
+        num_estimators: int,
+        stride: _size_2_t = 1,
+        padding: _size_2_t = 0,
+        output_padding: _size_2_t = 0,
+        groups: int = 1,
+        bias: bool = True,
+        dilation: _size_2_t = 1,
+        padding_mode: str = "zeros",
+        device=None,
+        dtype=None,
+    ) -> None:
+        factory_kwargs = {"device": device, "dtype": dtype}
+        super().__init__()
+
+        self.in_channels = in_channels
+        self.out_channels = out_channels
+        self.kernel_size = _pair(kernel_size)
+        self.num_estimators = num_estimators
+        self.stride = _pair(stride)
+        self.padding = padding if isinstance(padding, str) else _pair(padding)
+        self.dilation = _pair(dilation)
+
+        self.conv_transpose = nn.ConvTranspose2d(
+            in_channels=in_channels,
+            out_channels=out_channels,
+            kernel_size=kernel_size,
+            stride=stride,
+            padding=padding,
+            output_padding=output_padding,
+            groups=groups,
+            bias=False,
+            dilation=dilation,
+            padding_mode=padding_mode,
+            **factory_kwargs,
+        )
+
+        self.r_group = nn.Parameter(torch.empty((num_estimators, in_channels), **factory_kwargs))
+        self.s_group = nn.Parameter(torch.empty((num_estimators, out_channels), **factory_kwargs))
+        if bias:
+            self.bias = nn.Parameter(torch.empty((num_estimators, out_channels), **factory_kwargs))
+        else:
+            self.register_parameter("bias", None)
+
+        self.reset_parameters()
+
+    def reset_parameters(self) -> None:
+        nn.init.normal_(self.r_group, mean=1.0, std=0.5)
+        nn.init.normal_(self.s_group, mean=1.0, std=0.5)
+        if self.bias is not None:
+            fan_in, _ = nn.init._calculate_fan_in_and_fan_out(self.conv.weight)
+            bound = 1 / math.sqrt(fan_in) if fan_in > 0 else 0
+            nn.init.uniform_(self.bias, -bound, bound)
+
+    def forward(self, inputs: Tensor) -> Tensor:
+        batch_size = inputs.size(0)
+        examples_per_estimator = batch_size // self.num_estimators
+        extra = batch_size % self.num_estimators
+
+        r_group = repeat(self.r_group, "m h -> (m b) h 1 1", b=examples_per_estimator)
+        r_group = torch.cat([r_group, r_group[:extra]], dim=0)
+        s_group = repeat(self.s_group, "m h -> (m b) h 1 1", b=examples_per_estimator)
+        s_group = torch.cat([s_group, s_group[:extra]], dim=0)
+
+        if self.bias is not None:
+            bias = repeat(self.bias, "m h -> (m b) h 1 1", b=examples_per_estimator)
+            bias = torch.cat([bias, bias[:extra]], dim=0)
+        else:
+            bias = None
+
+        return self.conv(inputs * r_group) * s_group + (bias if bias is not None else 0)
