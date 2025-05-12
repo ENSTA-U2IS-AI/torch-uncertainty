@@ -67,7 +67,7 @@ class CorruptedDataset(VisionDataset):
 
         if not generate:
             paths = sorted(self.root.glob(f"**/{self.shift_severity}/*.jpg"), key=lambda x: x.stem)
-            self.samples = list(zip(paths, self.targets, strict=False))
+            self.samples = list(zip(paths, self.targets, strict=True))
             if len(paths) != 15 * self.core_length:
                 raise ValueError(
                     "The corrupted dataset is not complete. Download it from HuggingFace or set generate=True."

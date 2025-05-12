@@ -54,7 +54,7 @@ class SWAG(SWA):
             deep learning. In NeurIPS 2019.
 
         Note:
-            Originates from https://github.com/wjmaddox/swa_gaussian.
+            Modified from https://github.com/wjmaddox/swa_gaussian.
         """
         super().__init__(model, cycle_start, cycle_length)
         _swag_checks(scale, max_num_models, var_clamp)

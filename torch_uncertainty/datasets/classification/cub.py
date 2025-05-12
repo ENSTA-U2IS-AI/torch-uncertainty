@@ -76,7 +76,7 @@ class CUB(ImageFolder):
         )
 
         if return_attributes:
-            self.samples = zip(self.attributes, [sam[1] for sam in self.samples], strict=False)
+            self.samples = zip(self.attributes, [sam[1] for sam in self.samples], strict=True)
             self.loader = torch.nn.Identity()
 
     def _load_classnames(self) -> list[str]:
