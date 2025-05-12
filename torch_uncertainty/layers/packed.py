@@ -3,9 +3,9 @@ from collections.abc import Callable
 from typing import Any
 
 import torch
+import torch.nn.functional as F
 from einops import rearrange
 from torch import Tensor, nn
-from torch.nn import functional as F
 from torch.nn.common_types import _size_1_t, _size_2_t, _size_3_t
 
 from .functional.packed import packed_linear, packed_multi_head_attention_forward

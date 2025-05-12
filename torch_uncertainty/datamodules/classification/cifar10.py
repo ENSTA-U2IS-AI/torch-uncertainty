@@ -13,8 +13,8 @@ from torchvision.transforms import v2
 from torch_uncertainty.datamodules.abstract import TUDataModule
 from torch_uncertainty.datasets import AggregatedDataset
 from torch_uncertainty.datasets.classification import CIFAR10C, CIFAR10H
+from torch_uncertainty.datasets.utils import create_train_val_split
 from torch_uncertainty.transforms import Cutout
-from torch_uncertainty.utils import create_train_val_split
 
 
 class CIFAR10DataModule(TUDataModule):
@@ -32,6 +32,7 @@ class CIFAR10DataModule(TUDataModule):
         eval_batch_size: int | None = None,
         eval_ood: bool = False,
         eval_shift: bool = False,
+        num_tta: int = 1,
         shift_severity: int = 1,
         val_split: float | None = None,
         postprocess_set: Literal["val", "test"] = "val",
@@ -75,6 +76,7 @@ class CIFAR10DataModule(TUDataModule):
             auto_augment (str): Which auto-augment to apply. Defaults to ``None``.
                 Only used if ``train_transform`` is not provided.
             test_alt (str): Which test set to use. Defaults to ``None``.
+            num_tta (int): Number of test-time augmentations (TTA). Defaults to ``1`` (no TTA).
             shift_severity (int): Severity of corruption to apply for
                 CIFAR10-C. Defaults to ``1``.
             num_dataloaders (int): Number of dataloaders to use. Defaults to ``1``.
@@ -87,6 +89,7 @@ class CIFAR10DataModule(TUDataModule):
             batch_size=batch_size,
             eval_batch_size=eval_batch_size,
             val_split=val_split,
+            num_tta=num_tta,
             postprocess_set=postprocess_set,
             num_workers=num_workers,
             pin_memory=pin_memory,
@@ -153,7 +156,9 @@ class CIFAR10DataModule(TUDataModule):
                 ]
             )
 
-        if test_transform is not None:
+        if num_tta != 1:
+            self.test_transform = train_transform
+        elif test_transform is not None:
             self.test_transform = test_transform
         else:
             self.test_transform = v2.Compose(
@@ -257,11 +262,13 @@ class CIFAR10DataModule(TUDataModule):
         Return:
             list[DataLoader]: test set for in distribution data, SVHN data, and/or CIFAR-10C data.
         """
-        dataloader = [self._data_loader(self.test, training=False)]
+        dataloader = [self._data_loader(self.get_test_set(), training=False, shuffle=False)]
         if self.eval_ood:
-            dataloader.append(self._data_loader(self.ood, training=False))
+            dataloader.append(self._data_loader(self.get_ood_set(), training=False, shuffle=False))
         if self.eval_shift:
-            dataloader.append(self._data_loader(self.shift, training=False))
+            dataloader.append(
+                self._data_loader(self.get_shift_set(), training=False, shuffle=False)
+            )
         return dataloader
 
     def _get_train_data(self) -> ArrayLike:

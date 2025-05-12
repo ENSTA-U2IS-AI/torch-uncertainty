@@ -19,8 +19,8 @@ from torch_uncertainty.datasets.classification import (
     ImageNetR,
     OpenImageO,
 )
+from torch_uncertainty.datasets.utils import create_train_val_split
 from torch_uncertainty.utils import (
-    create_train_val_split,
     interpolation_modes_from_str,
 )
 
@@ -49,6 +49,7 @@ class ImageNetDataModule(TUDataModule):
         eval_batch_size: int | None = None,
         eval_ood: bool = False,
         eval_shift: bool = False,
+        num_tta: int = 1,
         shift_severity: int = 1,
         val_split: float | Path | None = None,
         postprocess_set: Literal["val", "test"] = "val",
@@ -77,6 +78,7 @@ class ImageNetDataModule(TUDataModule):
                 and test). Set to batch_size if None. Defaults to None.
             eval_ood (bool): Whether to evaluate out-of-distribution performance. Defaults to ``False``.
             eval_shift (bool): Whether to evaluate on shifted data. Defaults to ``False``.
+            num_tta (int): Number of test-time augmentations (TTA). Defaults to ``1`` (no TTA).
             shift_severity (int): Severity of the shift. Defaults to ``1``.
             val_split (float or Path): Share of samples to use for validation
                 or path to a yaml file containing a list of validation images
@@ -111,6 +113,7 @@ class ImageNetDataModule(TUDataModule):
             batch_size=batch_size,
             eval_batch_size=eval_batch_size,
             val_split=val_split,
+            num_tta=num_tta,
             postprocess_set=postprocess_set,
             num_workers=num_workers,
             pin_memory=pin_memory,
@@ -211,7 +214,9 @@ class ImageNetDataModule(TUDataModule):
                 ]
             )
 
-        if test_transform is not None:
+        if num_tta != 1:
+            self.test_transform = train_transform
+        elif test_transform is not None:
             self.test_transform = test_transform
         else:
             self.test_transform = v2.Compose(
@@ -333,11 +338,13 @@ class ImageNetDataModule(TUDataModule):
             list[DataLoader]: ImageNet test set (in distribution data), OOD dataset test split
             (out-of-distribution data), and/or ImageNetC data.
         """
-        dataloader = [self._data_loader(self.test, training=False)]
+        dataloader = [self._data_loader(self.get_test_set(), training=False, shuffle=False)]
         if self.eval_ood:
-            dataloader.append(self._data_loader(self.ood, training=False))
+            dataloader.append(self._data_loader(self.get_ood_set(), training=False, shuffle=False))
         if self.eval_shift:
-            dataloader.append(self._data_loader(self.shift, training=False))
+            dataloader.append(
+                self._data_loader(self.get_shift_set(), training=False, shuffle=False)
+            )
         return dataloader
 
 

@@ -9,8 +9,8 @@ from torchvision.transforms import v2
 
 from torch_uncertainty.datamodules import TUDataModule
 from torch_uncertainty.datasets.classification import MNISTC, NotMNIST
+from torch_uncertainty.datasets.utils import create_train_val_split
 from torch_uncertainty.transforms import Cutout
-from torch_uncertainty.utils import create_train_val_split
 
 
 class MNISTDataModule(TUDataModule):
@@ -30,6 +30,7 @@ class MNISTDataModule(TUDataModule):
         eval_ood: bool = False,
         eval_shift: bool = False,
         ood_ds: Literal["fashion", "notMNIST"] = "fashion",
+        num_tta: int = 1,
         val_split: float | None = None,
         postprocess_set: Literal["val", "test"] = "val",
         num_workers: int = 1,
@@ -51,10 +52,9 @@ class MNISTDataModule(TUDataModule):
             eval_batch_size (int | None) : Number of samples per batch during evaluation (val
                 and test). Set to batch_size if None. Defaults to None.
             ood_ds (str): Which out-of-distribution dataset to use. Defaults to
-                ``"fashion"``; `fashion` stands for FashionMNIST and `notMNIST` for
-                notMNIST.
-            val_split (float): Share of samples to use for validation. Defaults
-                to ``0.0``.
+                ``"fashion"``; `fashion` stands for FashionMNIST and `notMNIST` for notMNIST.
+            val_split (float): Share of samples to use for validation. Defaults to ``0.0``.
+            num_tta (int): Number of test-time augmentations (TTA). Defaults to ``1`` (no TTA).
             postprocess_set (str, optional): The post-hoc calibration dataset to
                 use for the post-processing method. Defaults to ``val``.
             num_workers (int): Number of workers to use for data loading. Defaults
@@ -70,14 +70,14 @@ class MNISTDataModule(TUDataModule):
                 ``True``.
             cutout (int): Size of cutout to apply to images. Defaults to ``None``.
             pin_memory (bool): Whether to pin memory. Defaults to ``True``.
-            persistent_workers (bool): Whether to use persistent workers. Defaults
-                to ``True``.
+            persistent_workers (bool): Whether to use persistent workers. Defaults to ``True``.
         """
         super().__init__(
             root=root,
             batch_size=batch_size,
             eval_batch_size=eval_batch_size,
             val_split=val_split,
+            num_tta=num_tta,
             postprocess_set=postprocess_set,
             num_workers=num_workers,
             pin_memory=pin_memory,
@@ -96,6 +96,7 @@ class MNISTDataModule(TUDataModule):
             self.ood_dataset = NotMNIST
         else:
             raise ValueError(f"`ood_ds` should be in {self.ood_datasets}. Got {ood_ds}.")
+
         self.shift_dataset = MNISTC
         self.shift_severity = 1
 
@@ -116,7 +117,9 @@ class MNISTDataModule(TUDataModule):
                 ]
             )
 
-        if test_transform is not None:
+        if num_tta != 1:
+            self.test_transform = train_transform
+        elif test_transform is not None:
             self.test_transform = test_transform
         else:
             self.test_transform = v2.Compose(
@@ -205,9 +208,11 @@ class MNISTDataModule(TUDataModule):
                 distribution data), FashionMNIST or NotMNIST test split
                 (out-of-distribution data), and/or MNISTC (shifted data).
         """
-        dataloader = [self._data_loader(self.test, training=False)]
+        dataloader = [self._data_loader(self.get_test_set(), training=False, shuffle=False)]
         if self.eval_ood:
-            dataloader.append(self._data_loader(self.ood, training=False))
+            dataloader.append(self._data_loader(self.get_ood_set(), training=False, shuffle=False))
         if self.eval_shift:
-            dataloader.append(self._data_loader(self.shift, training=False))
+            dataloader.append(
+                self._data_loader(self.get_shift_set(), training=False, shuffle=False)
+            )
         return dataloader

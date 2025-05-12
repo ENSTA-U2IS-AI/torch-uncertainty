@@ -70,6 +70,7 @@ class ClassificationRoutine(LightningModule):
         num_classes: int,
         loss: nn.Module,
         is_ensemble: bool = False,
+        num_tta: int = 1,
         format_batch_fn: nn.Module | None = None,
         optim_recipe: dict | Optimizer | None = None,
         mixup_params: dict | None = None,
@@ -91,6 +92,8 @@ class ClassificationRoutine(LightningModule):
             loss (torch.nn.Module): Loss function to optimize the :attr:`model`.
             is_ensemble (bool, optional): Indicates whether the model is an
                 ensemble at test time or not. Defaults to ``False``.
+            num_tta (int): Number of test-time augmentations (TTA). If ``1``: no TTA.
+                Defaults to ``1``.
             format_batch_fn (torch.nn.Module, optional): Function to format the batch.
                 Defaults to :class:`torch.nn.Identity()`.
             optim_recipe (dict or torch.optim.Optimizer, optional): The optimizer and
@@ -163,6 +166,7 @@ class ClassificationRoutine(LightningModule):
         self.is_conformal = is_conformal
         self.eval_shift = eval_shift
         self.eval_grouping_loss = eval_grouping_loss
+        self.num_tta = num_tta
         self.ood_criterion = get_ood_criterion(ood_criterion)
         self.log_plots = log_plots
         self.save_in_csv = save_in_csv
@@ -459,6 +463,9 @@ class ClassificationRoutine(LightningModule):
             batch (tuple[Tensor, Tensor]): the validation data and their corresponding targets
         """
         inputs, targets = batch
+        # remove duplicates when doing TTA
+        targets = targets[:: self.num_tta]
+
         logits = self.forward(inputs, save_feats=self.eval_grouping_loss)
         logits = rearrange(logits, "(m b) c -> b m c", b=targets.size(0))
 
@@ -491,6 +498,9 @@ class ClassificationRoutine(LightningModule):
                 distribution-shifted.
         """
         inputs, targets = batch
+        # remove duplicates when doing TTA
+        targets = targets[:: self.num_tta]
+
         logits = self.forward(inputs, save_feats=self.eval_grouping_loss)
         logits = rearrange(logits, "(m b) c -> b m c", b=targets.size(0))
         probs_per_est = torch.sigmoid(logits) if self.binary_cls else F.softmax(logits, dim=-1)
@@ -734,7 +744,7 @@ def _classification_routine_checks(
 
     if is_ensemble and eval_grouping_loss:
         raise NotImplementedError(
-            "Groupng loss for ensembles is not yet implemented. Raise an issue if needed."
+            "Grouping loss for ensembles is not yet implemented. Raise an issue if needed."
         )
 
     if num_classes < 1:

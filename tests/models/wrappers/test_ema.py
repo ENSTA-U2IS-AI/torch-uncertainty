@@ -17,5 +17,5 @@ class TestEMA:
         ema.update_wrapper(0)
 
     def test_failures(self):
-        with pytest.raises(ValueError, match="must be in the range"):
+        with pytest.raises(ValueError, match="must be in"):
             EMA(nn.Module(), momentum=-1)
