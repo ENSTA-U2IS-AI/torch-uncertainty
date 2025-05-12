@@ -18,7 +18,7 @@ class TestCheckpointEnsemble:
         ens.eval()
         ens(torch.randn(1, 1))
 
-        ens = CheckpointEnsemble(dummy_model(1, 10), use_final_checkpoint=False)
+        ens = CheckpointEnsemble(dummy_model(1, 10), use_final_model=False)
         ens.train()
         ens(torch.randn(1, 1))
         ens.update_wrapper(0)

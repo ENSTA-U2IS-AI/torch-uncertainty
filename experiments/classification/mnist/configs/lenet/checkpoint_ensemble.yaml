@@ -47,6 +47,8 @@ model:
         - 60
         - 65
         - 70
+      use_final_model: True
+      store_on_cpu: True
   num_classes: 10
   loss: CrossEntropyLoss
   is_ensemble: true
