@@ -35,12 +35,8 @@ model:
           norm: torch.nn.Identity
           groups: 1
           dropout_rate: 0
-      save_schedule:
-        - 5
-        - 10
-        - 12
-        - 13
-        - 14
+      cycle_start: 3
+      cycle_length: 2
       use_final_model: True
       store_on_cpu: True
   num_classes: 10
