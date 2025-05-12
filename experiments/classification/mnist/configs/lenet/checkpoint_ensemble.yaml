@@ -27,7 +27,7 @@ model:
     class_path: torch_uncertainty.models.CheckpointEnsemble
     init_args:
       model:
-        class_path: torch_uncertainty.models.lenet.lenet
+        class_path: torch_uncertainty.models.classification.lenet
         init_args:
           in_channels: 1
           num_classes: 10
@@ -53,6 +53,7 @@ model:
 data:
   root: ./data
   batch_size: 128
+  num_workers: 8
 optimizer:
   class_path: torch.optim.SGD
   init_args:

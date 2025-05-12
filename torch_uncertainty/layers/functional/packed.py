@@ -24,6 +24,7 @@ def packed_linear(
                 transformation using `torch.nn.functional.linear`.
             - "sparse": uses a sparse weight tensor directly to apply the linear transformation.
             - "einsum": uses `torch.einsum` to apply the packed linear transformation.
+            - "conv1d": uses `torch.nn.functional.conv1d` to apply the packed linear transformation.
         rearrange (bool, optional): _description_. Defaults to True.
         bias (Tensor | None, optional): _description_. Defaults to None.
 
@@ -47,6 +48,12 @@ def packed_linear(
         if bias is not None:
             out += bias
         return out
+    if implementation == "conv1d":
+        input_size = inputs.size()
+        inputs = rearrange(inputs, "... d -> (...) d 1")
+        weight = rearrange(weight, "m i j -> (m i) j 1")
+        out = F.conv1d(inputs, weight, bias, stride=1, padding=0, dilation=1, groups=num_groups)
+        return out.reshape(input_size[:-1] + (-1,))
     raise ValueError(f"Unknown implementation: {implementation}")
 
 

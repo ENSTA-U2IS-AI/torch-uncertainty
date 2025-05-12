@@ -1,3 +1,4 @@
+import contextlib
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
@@ -155,5 +156,9 @@ class TULightningCLI(LightningCLI):
 
     def add_arguments_to_parser(self, parser: LightningArgumentParser) -> None:
         super().add_arguments_to_parser(parser)
-        parser.link_arguments("data.eval_ood", "model.eval_ood")
-        parser.link_arguments("data.eval_shift", "model.eval_shift")
+        with contextlib.suppress(ValueError):
+            parser.link_arguments("data.eval_ood", "model.eval_ood")
+        with contextlib.suppress(ValueError):
+            parser.link_arguments("data.eval_shift", "model.eval_shift")
+        with contextlib.suppress(ValueError):
+            parser.link_arguments("data.num_tta", "model.num_tta")

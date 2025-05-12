@@ -1,7 +1,6 @@
 from collections.abc import Callable
 from typing import Literal
 
-from einops import rearrange
 from torch import Tensor, nn
 from torch.nn.functional import relu
 
@@ -246,7 +245,6 @@ class _PackedWideResNet(nn.Module):
         out = self.layer1(out)
         out = self.layer2(out)
         out = self.layer3(out)
-        out = rearrange(out, "e (m c) h w -> (m e) c h w", m=self.num_estimators)
         out = self.pool(out)
         return self.final_dropout(self.flatten(out))
 

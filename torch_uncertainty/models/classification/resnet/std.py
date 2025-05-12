@@ -1,41 +1,12 @@
-from typing import Any, Literal
+from collections.abc import Callable
+from typing import Literal
 
-import torch.nn.functional as F
-from einops import rearrange
 from torch import Tensor, nn
-
-from torch_uncertainty.layers import PackedConv2d, PackedLinear
-from torch_uncertainty.utils import load_hf
+from torch.nn.functional import relu
 
 from .utils import get_resnet_num_blocks
 
-__all__ = [
-    "packed_resnet",
-]
-
-weight_ids = {
-    "10": {
-        "18": "pe_resnet18_c10",
-        "32": None,
-        "50": "pe_resnet50_c10",
-        "101": None,
-        "152": None,
-    },
-    "100": {
-        "18": "pe_resnet18_c100",
-        "32": None,
-        "50": "pe_resnet50_c100",
-        "101": None,
-        "152": None,
-    },
-    "1000": {
-        "18": None,
-        "32": None,
-        "50": "pe_resnet50_in1k",
-        "101": None,
-        "152": None,
-    },
-}
+__all__ = ["resnet"]
 
 
 class _BasicBlock(nn.Module):
@@ -46,66 +17,58 @@ class _BasicBlock(nn.Module):
         in_planes: int,
         planes: int,
         stride: int,
-        alpha: int,
-        num_estimators: int,
-        gamma: int,
-        conv_bias: bool,
         dropout_rate: float,
         groups: int,
+        conv_bias: bool,
+        activation_fn: Callable,
         normalization_layer: type[nn.Module],
     ) -> None:
         super().__init__()
+        self.activation_fn = activation_fn
 
-        # No subgroups for the first layer
-        self.conv1 = PackedConv2d(
+        self.conv1 = nn.Conv2d(
             in_planes,
             planes,
             kernel_size=3,
-            alpha=alpha,
-            num_estimators=num_estimators,
-            groups=groups,
             stride=stride,
             padding=1,
+            groups=groups,
             bias=conv_bias,
         )
-        self.bn1 = normalization_layer(planes * alpha)
+        self.bn1 = normalization_layer(planes)
+
+        # As in timm
         self.dropout = nn.Dropout2d(p=dropout_rate)
-        self.conv2 = PackedConv2d(
+        self.conv2 = nn.Conv2d(
             planes,
             planes,
             kernel_size=3,
-            alpha=alpha,
-            num_estimators=num_estimators,
-            gamma=gamma,
-            groups=groups,
             stride=1,
             padding=1,
+            groups=groups,
             bias=conv_bias,
         )
-        self.bn2 = normalization_layer(planes * alpha)
+        self.bn2 = normalization_layer(planes)
 
         self.shortcut = nn.Sequential()
         if stride != 1 or in_planes != self.expansion * planes:
             self.shortcut = nn.Sequential(
-                PackedConv2d(
+                nn.Conv2d(
                     in_planes,
                     self.expansion * planes,
                     kernel_size=1,
-                    alpha=alpha,
-                    num_estimators=num_estimators,
-                    gamma=gamma,
-                    groups=groups,
                     stride=stride,
+                    groups=groups,
                     bias=conv_bias,
                 ),
-                normalization_layer(self.expansion * planes * alpha),
+                normalization_layer(self.expansion * planes),
             )
 
     def forward(self, x: Tensor) -> Tensor:
-        out = F.relu(self.dropout(self.bn1(self.conv1(x))))
+        out = self.activation_fn(self.dropout(self.bn1(self.conv1(x))))
         out = self.bn2(self.conv2(out))
         out += self.shortcut(x)
-        return F.relu(out)
+        return self.activation_fn(out)
 
 
 class _Bottleneck(nn.Module):
@@ -116,80 +79,117 @@ class _Bottleneck(nn.Module):
         in_planes: int,
         planes: int,
         stride: int,
-        alpha: int,
-        num_estimators: int,
-        gamma: int,
-        conv_bias: bool,
         dropout_rate: float,
         groups: int,
+        activation_fn: Callable,
         normalization_layer: type[nn.Module],
+        conv_bias: bool,
     ) -> None:
         super().__init__()
+        self.activation_fn = activation_fn
 
-        # No subgroups for the first layer
-        self.conv1 = PackedConv2d(
+        self.conv1 = nn.Conv2d(
             in_planes,
             planes,
             kernel_size=1,
-            alpha=alpha,
-            num_estimators=num_estimators,
-            gamma=1,  # No groups from gamma in the first layer
             groups=groups,
             bias=conv_bias,
         )
-        self.bn1 = normalization_layer(planes * alpha)
-        self.conv2 = PackedConv2d(
+        self.bn1 = normalization_layer(planes)
+        self.conv2 = nn.Conv2d(
             planes,
             planes,
             kernel_size=3,
-            alpha=alpha,
-            num_estimators=num_estimators,
-            gamma=gamma,
             stride=stride,
             padding=1,
             groups=groups,
             bias=conv_bias,
         )
-        self.bn2 = normalization_layer(planes * alpha)
+        self.bn2 = normalization_layer(planes)
         self.dropout = nn.Dropout2d(p=dropout_rate)
-        self.conv3 = PackedConv2d(
+        self.conv3 = nn.Conv2d(
             planes,
             self.expansion * planes,
             kernel_size=1,
-            alpha=alpha,
-            num_estimators=num_estimators,
-            gamma=gamma,
             groups=groups,
             bias=conv_bias,
         )
-        self.bn3 = normalization_layer(self.expansion * planes * alpha)
+        self.bn3 = normalization_layer(self.expansion * planes)
 
         self.shortcut = nn.Sequential()
         if stride != 1 or in_planes != self.expansion * planes:
             self.shortcut = nn.Sequential(
-                PackedConv2d(
+                nn.Conv2d(
                     in_planes,
                     self.expansion * planes,
                     kernel_size=1,
-                    alpha=alpha,
-                    num_estimators=num_estimators,
-                    gamma=gamma,
-                    groups=groups,
                     stride=stride,
+                    groups=groups,
                     bias=conv_bias,
                 ),
-                normalization_layer(self.expansion * planes * alpha),
+                normalization_layer(self.expansion * planes),
             )
 
     def forward(self, x: Tensor) -> Tensor:
-        out = F.relu(self.bn1(self.conv1(x)))
-        out = F.relu(self.dropout(self.bn2(self.conv2(out))))
+        out = self.activation_fn(self.bn1(self.conv1(x)))
+        out = self.activation_fn(self.dropout(self.bn2(self.conv2(out))))
         out = self.bn3(self.conv3(out))
         out += self.shortcut(x)
-        return F.relu(out)
+        return self.activation_fn(out)
 
 
-class _PackedResNet(nn.Module):
+# ruff: noqa: ERA001
+# class Robust_Bottleneck(nn.Module):
+#     """Robust _Bottleneck from "Can CNNs be more robust than transformers?"
+#     This corresponds to ResNet-Up-Inverted-DW in the paper.
+#     """
+
+#     expansion = 4
+
+#     def __init__(
+#         self,
+#         in_planes: int,
+#         planes: int,
+#         stride: int = 1,
+#         dropout_rate: float = 0,
+#         groups: int = 1,
+#     ):
+#         super().__init__()
+#         self.conv1 = nn.Conv2d(
+#             in_planes,
+#             planes,
+#             kernel_size=11,
+#             padding=5,
+#             groups=in_planes,
+#             stride=stride,
+#             bias=self.conv_bias,
+#         )
+#         self.bn1 = normalization_layer(planes)
+#         self.conv2 = nn.Conv2d(
+#             planes,
+#             self.expansion * planes,
+#             kernel_size=1,
+#             groups=groups,
+#             bias=True,
+#         )
+#         self.conv3 = nn.Conv2d(
+#             self.expansion * planes,
+#             planes,
+#             kernel_size=1,
+#             groups=groups,
+#             bias=True,
+#         )
+#         self.shortcut = nn.Sequential()
+
+#     def forward(self, x: Tensor) -> Tensor:
+#         out = self.bn1(self.conv1(x))
+#         out = relu(self.conv2(out))
+#         out = self.conv3(out)
+#         out += self.shortcut(x)
+#         return out
+
+
+class _ResNet(nn.Module):
     def __init__(
         self,
         block: type[_BasicBlock | _Bottleneck],
@@ -197,58 +197,44 @@ class _PackedResNet(nn.Module):
         in_channels: int,
         num_classes: int,
         conv_bias: bool,
-        num_estimators: int,
         dropout_rate: float,
-        alpha: int = 2,
-        gamma: int = 1,
-        groups: int = 1,
+        groups: int,
         style: Literal["imagenet", "cifar"] = "imagenet",
         in_planes: int = 64,
+        activation_fn: Callable = relu,
         normalization_layer: type[nn.Module] = nn.BatchNorm2d,
     ) -> None:
+        """ResNet from `Deep Residual Learning for Image Recognition`."""
         super().__init__()
-
-        self.in_channels = in_channels
-        self.alpha = alpha
-        self.gamma = gamma
-        self.groups = groups
-        self.num_estimators = num_estimators
-
         self.in_planes = in_planes
         block_planes = in_planes
+        self.dropout_rate = dropout_rate
+        self.activation_fn = activation_fn
 
         if style == "imagenet":
-            self.conv1 = PackedConv2d(
-                self.in_channels,
+            self.conv1 = nn.Conv2d(
+                in_channels,
                 block_planes,
                 kernel_size=7,
                 stride=2,
                 padding=3,
-                alpha=alpha,
-                num_estimators=num_estimators,
-                gamma=1,  # No groups for the first layer
-                groups=groups,
+                groups=1,  # No groups in the first layer
                 bias=conv_bias,
-                first=True,
             )
         elif style == "cifar":
-            self.conv1 = PackedConv2d(
-                self.in_channels,
+            self.conv1 = nn.Conv2d(
+                in_channels,
                 block_planes,
                 kernel_size=3,
                 stride=1,
                 padding=1,
-                alpha=alpha,
-                num_estimators=num_estimators,
-                gamma=1,  # No groups for the first layer
-                groups=groups,
+                groups=1,  # No groups in the first layer
                 bias=conv_bias,
-                first=True,
             )
         else:
             raise ValueError(f"Unknown style. Got {style}.")
 
-        self.bn1 = normalization_layer(block_planes * alpha)
+        self.bn1 = normalization_layer(block_planes)
 
         if style == "imagenet":
             self.optional_pool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
@@ -260,39 +246,33 @@ class _PackedResNet(nn.Module):
             block_planes,
             num_blocks[0],
             stride=1,
-            alpha=alpha,
-            num_estimators=num_estimators,
-            conv_bias=conv_bias,
             dropout_rate=dropout_rate,
-            gamma=gamma,
             groups=groups,
+            activation_fn=activation_fn,
             normalization_layer=normalization_layer,
+            conv_bias=conv_bias,
         )
         self.layer2 = self._make_layer(
             block,
             block_planes * 2,
             num_blocks[1],
             stride=2,
-            alpha=alpha,
-            num_estimators=num_estimators,
-            conv_bias=conv_bias,
             dropout_rate=dropout_rate,
-            gamma=gamma,
             groups=groups,
+            activation_fn=activation_fn,
             normalization_layer=normalization_layer,
+            conv_bias=conv_bias,
         )
         self.layer3 = self._make_layer(
             block,
             block_planes * 4,
             num_blocks[2],
             stride=2,
-            alpha=alpha,
-            num_estimators=num_estimators,
-            conv_bias=conv_bias,
             dropout_rate=dropout_rate,
-            gamma=gamma,
             groups=groups,
+            activation_fn=activation_fn,
             normalization_layer=normalization_layer,
+            conv_bias=conv_bias,
         )
         if len(num_blocks) == 4:
             self.layer4 = self._make_layer(
@@ -300,13 +280,11 @@ class _PackedResNet(nn.Module):
                 block_planes * 8,
                 num_blocks[3],
                 stride=2,
-                alpha=alpha,
-                num_estimators=num_estimators,
-                conv_bias=conv_bias,
                 dropout_rate=dropout_rate,
-                gamma=gamma,
                 groups=groups,
+                activation_fn=activation_fn,
                 normalization_layer=normalization_layer,
+                conv_bias=conv_bias,
             )
             linear_multiplier = 8
         else:
@@ -317,27 +295,22 @@ class _PackedResNet(nn.Module):
         self.pool = nn.AdaptiveAvgPool2d(output_size=1)
         self.flatten = nn.Flatten(1)
 
-        self.linear = PackedLinear(
+        self.linear = nn.Linear(
             block_planes * linear_multiplier * block.expansion,
             num_classes,
-            alpha=alpha,
-            num_estimators=num_estimators,
-            last=True,
         )
 
     def _make_layer(
         self,
-        block: type[_BasicBlock | _Bottleneck],
+        block: type[_BasicBlock] | type[_Bottleneck],
         planes: int,
         num_blocks: int,
         stride: int,
-        alpha: int,
-        num_estimators: int,
-        conv_bias: bool,
         dropout_rate: float,
-        gamma: int,
         groups: int,
+        activation_fn: Callable,
         normalization_layer: type[nn.Module],
+        conv_bias: bool,
     ) -> nn.Module:
         strides = [stride] + [1] * (num_blocks - 1)
         layers = []
@@ -347,103 +320,75 @@ class _PackedResNet(nn.Module):
                     in_planes=self.in_planes,
                     planes=planes,
                     stride=stride,
-                    alpha=alpha,
-                    num_estimators=num_estimators,
-                    conv_bias=conv_bias,
                     dropout_rate=dropout_rate,
-                    gamma=gamma,
                     groups=groups,
+                    activation_fn=activation_fn,
                     normalization_layer=normalization_layer,
+                    conv_bias=conv_bias,
                 )
             )
             self.in_planes = planes * block.expansion
         return nn.Sequential(*layers)
 
-    def forward(self, x: Tensor) -> Tensor:
-        out = F.relu(self.bn1(self.conv1(x)))
+    def feats_forward(self, x: Tensor) -> Tensor:
+        out = self.activation_fn(self.bn1(self.conv1(x)))
         out = self.optional_pool(out)
         out = self.layer1(out)
         out = self.layer2(out)
         out = self.layer3(out)
         out = self.layer4(out)
-
-        out = rearrange(out, "e (m c) h w -> (m e) c h w", m=self.num_estimators)
-
         out = self.pool(out)
-        out = self.final_dropout(self.flatten(out))
-        return self.linear(out)
+        return self.final_dropout(self.flatten(out))
 
-    def check_config(self, config: dict[str, Any]) -> bool:
-        """Check if the pretrained configuration matches the current model."""
-        return (
-            (config["alpha"] == self.alpha)
-            * (config["gamma"] == self.gamma)
-            * (config["groups"] == self.groups)
-            * (config["num_estimators"] == self.num_estimators)
-        )
+    def forward(self, x: Tensor) -> Tensor:
+        return self.linear(self.feats_forward(x))
 
 
-def packed_resnet(
+def resnet(
     in_channels: int,
     num_classes: int,
     arch: int,
-    num_estimators: int,
-    alpha: int,
-    gamma: int,
-    conv_bias: bool = True,
+    conv_bias: bool = False,
+    dropout_rate: float = 0.0,
     width_multiplier: float = 1.0,
     groups: int = 1,
-    dropout_rate: float = 0,
     style: Literal["imagenet", "cifar"] = "imagenet",
+    activation_fn: Callable = relu,
     normalization_layer: type[nn.Module] = nn.BatchNorm2d,
-    pretrained: bool = False,
-) -> _PackedResNet:
-    """Packed-Ensembles of ResNet.
+) -> _ResNet:
+    """ResNet model.
 
     Args:
         in_channels (int): Number of input channels.
         num_classes (int): Number of classes to predict.
         arch (int): The architecture of the ResNet.
         conv_bias (bool): Whether to use bias in convolutions. Defaults to
-            ``True``.
-        dropout_rate (float): Dropout rate. Defaults to 0.
-        num_estimators (int): Number of estimators in the ensemble.
-        alpha (int): Expansion factor affecting the width of the estimators.
-        gamma (int): Number of groups within each estimator.
-        width_multiplier (float): Width multiplier. Defaults to 1.
-        groups (int): Number of groups within each estimator.
+            ``False``.
+        dropout_rate (float): Dropout rate. Defaults to 0.0.
+        width_multiplier (float): Width multiplier. Defaults to 1.0.
+        groups (int): Number of groups in convolutions. Defaults to 1.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
+        activation_fn (Callable, optional): Activation function. Defaults to
+            ``torch.nn.functional.relu``.
         normalization_layer (nn.Module, optional): Normalization layer.
-        pretrained (bool, optional): Whether to load pretrained weights.
-            Defaults to ``False``.
+            Defaults to ``torch.nn.BatchNorm2d``.
 
     Returns:
-        _PackedResNet: A Packed-Ensembles ResNet.
+        _ResNet: The ResNet model.
     """
     block = _BasicBlock if arch in [18, 20, 34, 44, 56, 110, 1202] else _Bottleneck
     in_planes = 16 if arch in [20, 44, 56, 110, 1202] else 64
-    net = _PackedResNet(
+    return _ResNet(
         block=block,
         num_blocks=get_resnet_num_blocks(arch),
         in_channels=in_channels,
-        num_estimators=num_estimators,
-        alpha=alpha,
-        gamma=gamma,
+        num_classes=num_classes,
         conv_bias=conv_bias,
         dropout_rate=dropout_rate,
         groups=groups,
-        num_classes=num_classes,
         style=style,
         in_planes=int(in_planes * width_multiplier),
+        activation_fn=activation_fn,
         normalization_layer=normalization_layer,
     )
-    if pretrained:  # coverage: ignore
-        weights = weight_ids[str(num_classes)][str(arch)]
-        if weights is None:
-            raise ValueError("No pretrained weights for this configuration")
-        state_dict, config = load_hf(weights)
-        if not net.check_config(config):
-            raise ValueError("Pretrained weights do not match current configuration.")
-        net.load_state_dict(state_dict)
-    return net
