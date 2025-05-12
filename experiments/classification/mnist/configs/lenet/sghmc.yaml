@@ -24,17 +24,18 @@ trainer:
       check_finite: true
   gradient_clip_val: 5
 model:
-  model:
-    class_path: torch_uncertainty.models.lenet.lenet
-    init_args:
-      in_channels: 1
-      num_classes: 10
-      activation: torch.nn.ReLU
-      norm: torch.nn.Identity
-      groups: 1
-      dropout_rate: 0
-  num_classes: 10
-  loss: CrossEntropyLoss
+  
+    model:
+      class_path: torch_uncertainty.models.classification.lenet
+      init_args:
+        in_channels: 1
+        num_classes: 10
+        activation: torch.nn.ReLU
+        norm: torch.nn.Identity
+        groups: 1
+        dropout_rate: 0
+    num_classes: 10
+    loss: CrossEntropyLoss
 data:
   root: ./data
   batch_size: 128

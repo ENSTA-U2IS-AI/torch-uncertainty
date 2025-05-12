@@ -24,7 +24,7 @@ trainer:
       check_finite: true
 model:
   model:
-    class_path: torch_uncertainty.models.lenet.lenet
+    class_path: torch_uncertainty.models.classification.lenet
     init_args:
       in_channels: 1
       num_classes: 10
