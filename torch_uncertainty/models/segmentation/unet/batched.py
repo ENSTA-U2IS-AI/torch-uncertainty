@@ -1,4 +1,5 @@
 import torch
+from einops import repeat
 from torch import Tensor, nn
 from torchvision.transforms import functional as F
 from torchvision.transforms import v2
@@ -167,6 +168,7 @@ class _BatchedUNet(nn.Module):
         self.outc = _OutputConv(num_blocks[0], num_classes, num_estimators=num_estimators)
 
     def forward(self, x: Tensor) -> Tensor:
+        x = repeat(x, "b ... -> (m b) ...", m=self.num_estimators)
         x1 = self.inc(x)
         x2 = self.down1(x1)
         x3 = self.down2(x2)
