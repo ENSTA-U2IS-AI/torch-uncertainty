@@ -5,7 +5,7 @@ trainer:
   accelerator: gpu
   devices: 1
   precision: 16-mixed
-  max_epochs: 75
+  max_epochs: 10
   logger:
     class_path: lightning.pytorch.loggers.TensorBoardLogger
     init_args:
@@ -24,26 +24,31 @@ trainer:
       check_finite: true
 model:
   model:
-    class_path: torch_uncertainty.models.classification.lenet
+    class_path: torch_uncertainty.models.wrappers.CheckpointCollector
     init_args:
-      in_channels: 1
-      num_classes: 10
-      activation: torch.nn.ReLU
-      norm: torch.nn.Identity
-      groups: 1
-      dropout_rate: 0
+      model:  
+        class_path: torch_uncertainty.models.classification.lenet
+        init_args:
+          in_channels: 1
+          num_classes: 10
+          activation: torch.nn.ReLU
+          norm: torch.nn.Identity
+          groups: 1
+          dropout_rate: 0
+      cycle_start: 2
+      cycle_length: 2
   num_classes: 10
   loss: CrossEntropyLoss
 data:
   root: ./data
   batch_size: 128
-  num_workers: 10
+  num_workers: 8
 optimizer:
   class_path: torch_uncertainty.optim.SGLD
   init_args:
-    dataset_size: 60000
-    lr: 1e-5
-    weight_decay: 99.999
+    lr: 1e-2
+    noise_factor: 1e-2
+    weight_decay: 1e-5
 lr_scheduler:
   class_path: torch.optim.lr_scheduler.MultiStepLR
   init_args:
