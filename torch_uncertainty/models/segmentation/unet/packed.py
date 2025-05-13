@@ -290,6 +290,7 @@ class _PackedUNet(nn.Module):
         num_estimators: int = 1,
         gamma: int = 1,
         bilinear: bool = False,
+        dropout_rate: float = 0.0,
     ) -> None:
         check_unet_parameters(in_channels, num_classes, num_blocks, bilinear)
         super().__init__()
@@ -320,12 +321,10 @@ class _PackedUNet(nn.Module):
         self.up3 = PackedUp(
             num_blocks[2], num_blocks[1] // factor, alpha, num_estimators, gamma, bilinear
         )
-        self.up4 = PackedUp(
-            num_blocks[1], num_blocks[0] // factor, alpha, num_estimators, gamma, bilinear
-        )
+        self.up4 = PackedUp(num_blocks[1], num_blocks[0], alpha, num_estimators, gamma, bilinear)
 
         # Dropout
-        self.dropout = nn.Dropout2d(0.1)
+        self.dropout = nn.Dropout2d(dropout_rate)
 
         # Final output
         self.outc = PackedOutconv(num_blocks[0], num_classes, alpha, num_estimators, gamma)
@@ -359,6 +358,7 @@ def _packed_unet(
     alpha: float = 1,
     num_estimators: int = 1,
     gamma: int = 1,
+    dropout_rate: float = 0.0,
 ) -> _PackedUNet:
     """_summary_.
 
@@ -370,6 +370,7 @@ def _packed_unet(
         alpha (float, optional): _description_. Defaults to 1.
         num_estimators (int, optional): _description_. Defaults to 1.
         gamma (int, optional): _description_. Defaults to 1.
+        dropout_rate (float, optional): Dropout rate for the model. Defaults to 0.0.
 
     Returns:
         PackedUNet: _description_
@@ -382,6 +383,7 @@ def _packed_unet(
         num_estimators=num_estimators,
         gamma=gamma,
         bilinear=bilinear,
+        dropout_rate=dropout_rate,
     )
 
 
@@ -392,6 +394,7 @@ def packed_small_unet(
     alpha: float = 1,
     num_estimators: int = 1,
     gamma: int = 1,
+    dropout_rate: float = 0.0,
 ) -> _PackedUNet:
     """Create a Packed-Ensembles of small U-Net models.
 
@@ -404,6 +407,7 @@ def packed_small_unet(
         alpha (float, optional): _description_. Defaults to 1.
         num_estimators (int, optional): _description_. Defaults to 1.
         gamma (int, optional): _description_. Defaults to 1.
+        dropout_rate (float, optional): Dropout rate for the model. Defaults to 0.0.
 
     Returns:
         PackedUNet: U-Net model.
@@ -416,6 +420,7 @@ def packed_small_unet(
         alpha=alpha,
         num_estimators=num_estimators,
         gamma=gamma,
+        dropout_rate=dropout_rate,
     )
 
 
@@ -426,6 +431,7 @@ def packed_unet(
     alpha: float = 1,
     num_estimators: int = 1,
     gamma: int = 1,
+    dropout_rate: float = 0.0,
 ) -> _PackedUNet:
     """Create a Packed-Ensembles of U-Net models.
 
@@ -438,6 +444,7 @@ def packed_unet(
         alpha (float, optional): _description_. Defaults to 1.
         num_estimators (int, optional): _description_. Defaults to 1.
         gamma (int, optional): _description_. Defaults to 1.
+        dropout_rate (float, optional): Dropout rate for the model. Defaults to 0.0.
 
     Returns:
         PackedUNet: U-Net model.
@@ -450,4 +457,5 @@ def packed_unet(
         alpha=alpha,
         num_estimators=num_estimators,
         gamma=gamma,
+        dropout_rate=dropout_rate,
     )

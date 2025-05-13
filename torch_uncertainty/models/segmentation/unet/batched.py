@@ -122,6 +122,7 @@ class _BatchedUNet(nn.Module):
         num_blocks: list[int],
         num_estimators: int,
         bilinear: bool = False,
+        dropout_rate: float = 0.0,
     ) -> None:
         """Batched U-Net model using Batch layers for uncertainty estimation.
 
@@ -132,6 +133,8 @@ class _BatchedUNet(nn.Module):
             num_estimators (int): Number of estimators.
             bilinear (bool, optional): If ``True``, use bilinear interpolation instead of
                 transposed convolutions for upsampling. Defaults to ``False``.
+            dropout_rate (float, optional): Dropout rate. Defaults to ``0.0``.
+
         """
         check_unet_parameters(in_channels, num_classes, num_blocks, bilinear)
         super().__init__()
@@ -158,6 +161,9 @@ class _BatchedUNet(nn.Module):
         self.up4 = _Up(
             num_blocks[1], num_blocks[0], num_estimators=num_estimators, bilinear=bilinear
         )
+
+        self.dropout = nn.Dropout2d(dropout_rate)
+
         self.outc = _OutputConv(num_blocks[0], num_classes, num_estimators=num_estimators)
 
     def forward(self, x: Tensor) -> Tensor:
@@ -169,7 +175,9 @@ class _BatchedUNet(nn.Module):
         x = self.up1(x5, x4)
         x = self.up2(x, x3)
         x = self.up3(x, x2)
+        x = self.dropout(x)
         x = self.up4(x, x1)
+        x = self.dropout(x)
         return self.outc(x)
 
 
@@ -179,6 +187,7 @@ def _batched_unet(
     num_blocks: list[int],
     num_estimators: int,
     bilinear: bool = False,
+    dropout_rate: float = 0.0,
 ) -> _BatchedUNet:
     """Create a Batched U-Net model.
 
@@ -189,6 +198,7 @@ def _batched_unet(
         num_estimators (int): Number of estimators.
         bilinear (bool, optional): If ``True``, use bilinear interpolation instead of
             transposed convolutions for upsampling. Defaults to ``False``.
+        dropout_rate (float, optional): Dropout rate. Defaults to ``0.0``.
 
     Returns:
         _BatchedUNet: Batched U-Net model.
@@ -199,6 +209,7 @@ def _batched_unet(
         num_blocks=num_blocks,
         num_estimators=num_estimators,
         bilinear=bilinear,
+        dropout_rate=dropout_rate,
     )
 
 
@@ -207,6 +218,7 @@ def batched_small_unet(
     num_classes: int,
     num_estimators: int,
     bilinear: bool = False,
+    dropout_rate: float = 0.0,
 ) -> _BatchedUNet:
     """Create a Small Batched U-Net model (channels divided by 2).
 
@@ -216,6 +228,7 @@ def batched_small_unet(
         num_estimators (int): Number of estimators.
         bilinear (bool, optional): If ``True``, use bilinear interpolation instead of
             transposed convolutions for upsampling. Defaults to ``False``.
+        dropout_rate (float, optional): Dropout rate. Defaults to ``0.0``.
 
     Returns:
         _BatchedUNet: Small Batched U-Net model.
@@ -227,6 +240,7 @@ def batched_small_unet(
         num_blocks=num_blocks,
         num_estimators=num_estimators,
         bilinear=bilinear,
+        dropout_rate=dropout_rate,
     )
 
 
@@ -235,6 +249,7 @@ def batched_unet(
     num_classes: int,
     num_estimators: int,
     bilinear: bool = False,
+    dropout_rate: float = 0.0,
 ) -> _BatchedUNet:
     """Create a Batched U-Net model.
 
@@ -244,6 +259,7 @@ def batched_unet(
         num_estimators (int): Number of estimators.
         bilinear (bool, optional): If ``True``, use bilinear interpolation instead of
             transposed convolutions for upsampling. Defaults to ``False``.
+        dropout_rate (float, optional): Dropout rate. Defaults to ``0.0``.
 
     Returns:
         _BatchedUNet: Batched U-Net model.
@@ -255,4 +271,5 @@ def batched_unet(
         num_blocks=num_blocks,
         num_estimators=num_estimators,
         bilinear=bilinear,
+        dropout_rate=dropout_rate,
     )
