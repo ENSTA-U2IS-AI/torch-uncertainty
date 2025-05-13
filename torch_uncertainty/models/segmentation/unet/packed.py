@@ -1,8 +1,8 @@
 import torch
-import torch.nn.functional as F
 from einops import rearrange
 from torch import Tensor, nn
 from torch.nn.common_types import _size_2_t
+from torchvision.transforms import functional as F
 from torchvision.transforms import v2
 
 from torch_uncertainty.layers.packed import PackedConv2d, check_packed_parameters_consistency
