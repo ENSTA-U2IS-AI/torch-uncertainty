@@ -165,7 +165,7 @@ class PackedDoubleConv(nn.Module):
                 padding=1,
                 first=first,
             ),
-            nn.BatchNorm2d(num_features=out_channels * (num_estimators if last else alpha)),
+            nn.BatchNorm2d(num_features=int(out_channels * (num_estimators if last else alpha))),
             nn.ReLU(inplace=True),
         )
 
