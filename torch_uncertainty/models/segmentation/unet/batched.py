@@ -142,6 +142,7 @@ class _BatchedUNet(nn.Module):
         self.in_channels = in_channels
         self.num_classes = num_classes
         self.num_blocks = num_blocks
+        self.num_estimators = num_estimators
         self.bilinear = bilinear
 
         self.inc = _DoubleConv(in_channels, num_blocks[0], num_estimators=num_estimators)
