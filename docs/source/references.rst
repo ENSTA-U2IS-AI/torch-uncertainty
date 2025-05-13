@@ -95,9 +95,9 @@ For Stochastic Weight Averaging Gaussian, consider citing:
 
 
 CheckpointCollector
-^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^
 
-For CheckpointCollector, consider citing:
+For the SGD ensembling version of CheckpointCollector, consider citing:
 
 **Checkpoint Ensembles: Ensemble Methods from a Single Training Process**
 
