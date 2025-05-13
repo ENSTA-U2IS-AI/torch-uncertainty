@@ -16,6 +16,8 @@ class SGHMC(Optimizer):
     ) -> None:
         r"""Stochastic Gradient Hamiltonian Monte Carlo (SGHMC) optimizer.
 
+        Use torch_uncertainty.models.wrappers.CheckpointCollector to collect the samples.
+
         Args:
             params (ParamsT): Iterable of parameters or named_parameters to optimize or iterable of
                 dicts defining parameter groups. When using named_parameters, all parameters in all
