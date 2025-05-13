@@ -42,7 +42,6 @@ from torch_uncertainty.ood_criteria import (
     TUOODCriterion,
     get_ood_criterion,
 )
-from torch_uncertainty.optim import SGHMC
 from torch_uncertainty.post_processing import Conformal, LaplaceApprox, PostProcessing
 from torch_uncertainty.transforms import (
     Mixup,
@@ -84,7 +83,6 @@ class ClassificationRoutine(LightningModule):
         num_bins_cal_err: int = 15,
         log_plots: bool = False,
         save_in_csv: bool = False,
-        num_burn_in_epochs: int = 0,
     ) -> None:
         r"""Routine for training & testing on **classification** tasks.
 
@@ -123,8 +121,6 @@ class ClassificationRoutine(LightningModule):
                 metrics. Defaults to ``False``.
             save_in_csv(bool, optional): Save the results in csv. Defaults to
                 ``False``.
-            num_burn_in_epochs (int, optional): Number of burn-in epochs when using
-                the SGHMC optimizer. Defaults to ``0``.
 
         Warning:
             You must define :attr:`optim_recipe` if you do not use the Lightning CLI.
@@ -183,7 +179,6 @@ class ClassificationRoutine(LightningModule):
         self.format_batch_fn = format_batch_fn
         self.optim_recipe = optim_recipe
         self.is_ensemble = is_ensemble
-        self.num_burn_in_epochs = num_burn_in_epochs
 
         self.post_processing = post_processing
         if self.post_processing is not None:
@@ -372,32 +367,6 @@ class ClassificationRoutine(LightningModule):
 
     def configure_optimizers(self) -> Optimizer | dict:
         return self.optim_recipe
-
-    def optimizer_step(
-        self,
-        epoch: int,
-        batch_idx: int,
-        optimizer: Optimizer,
-        optimizer_closure: Callable | None = None,
-    ) -> None:
-        """Override the default optimizer step to handle the burn-in epochs."""
-        if (
-            self.num_burn_in_epochs > 0
-            and self.trainer.current_epoch + 1 <= self.num_burn_in_epochs
-        ):
-            if not isinstance(optimizer, SGHMC):
-                raise ValueError(
-                    "SGHMC optimizer must be used for burn-in epochs. "
-                    "Please set the optimizer to SGHMC."
-                )
-            optimizer.step(closure=optimizer_closure, burn_in=True)
-            return
-        super().optimizer_step(
-            epoch=epoch,
-            batch_idx=batch_idx,
-            optimizer=optimizer,
-            optimizer_closure=optimizer_closure,
-        )
 
     def on_train_start(self) -> None:
         """Put the hyperparameters in tensorboard."""
