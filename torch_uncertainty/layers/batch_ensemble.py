@@ -470,7 +470,7 @@ class BatchConvTranspose2d(nn.Module):
         nn.init.normal_(self.r_group, mean=1.0, std=0.5)
         nn.init.normal_(self.s_group, mean=1.0, std=0.5)
         if self.bias is not None:
-            fan_in, _ = nn.init._calculate_fan_in_and_fan_out(self.conv.weight)
+            fan_in, _ = nn.init._calculate_fan_in_and_fan_out(self.conv_transpose.weight)
             bound = 1 / math.sqrt(fan_in) if fan_in > 0 else 0
             nn.init.uniform_(self.bias, -bound, bound)
 
