@@ -162,6 +162,7 @@ class MUADDataModule(TUDataModule):
             else:
                 self.train_transform = v2.Compose(
                     [
+                        v2.Resize(size=self.eval_size, antialias=True),
                         RandomRescale(min_scale=0.5, max_scale=2.0, antialias=True),
                         v2.RandomCrop(
                             size=self.crop_size,
