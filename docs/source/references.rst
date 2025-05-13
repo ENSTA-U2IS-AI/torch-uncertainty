@@ -6,7 +6,7 @@ Please find an exhaustive list of the references of the models, metrics, and dat
 Uncertainty Models
 ------------------
 
-The following uncertainty models are implemented.
+The following uncertainty models are implemented:
 
 Deep Evidential Classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -94,10 +94,10 @@ For Stochastic Weight Averaging Gaussian, consider citing:
 * Paper: `NeurIPS 2019 <https://arxiv.org/pdf/1902.02476.pdf>`__.
 
 
-CheckpointEnsemble
-^^^^^^^^^^^^^^^^^^
+CheckpointCollector
+^^^^^^^^^^^^^^^^^^^
 
-For CheckpointEnsemble, consider citing:
+For the SGD ensembling version of CheckpointCollector, consider citing:
 
 **Checkpoint Ensembles: Ensemble Methods from a Single Training Process**
 
@@ -155,7 +155,6 @@ For Packed-Ensembles, consider citing:
 * Authors: *Olivier Laurent, Adrien Lafage, Enzo Tartaglione, Geoffrey Daniel, Jean-Marc Martinez, Andrei Bursuc, and Gianni Franchi*
 * Paper: `ICLR 2023 <https://arxiv.org/abs/2210.09184>`__.
 
-
 LPBNN
 ^^^^^
 
@@ -165,6 +164,33 @@ For LPBNN, consider citing:
 
 * Authors: *Gianni Franchi, Andrei Bursuc, Emanuel Aldea, Severine Dubuisson, Isabelle Bloch*
 * Paper: `IEEE TPAMI 2024 <https://arxiv.org/abs/2012.02818>`__.
+
+Stochastic Gradient Hamiltonian Monte Carlo
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For Stochastic Gradient Hamiltonian Monte Carlo (SGHMC), consider citing:
+
+**Stochastic Gradient Hamiltonian Monte Carlo**
+
+* Authors: *Tianqi Chen, Emily B. Fox, and Carlos Guestrin*
+* Paper: `ICML 2014 <https://arxiv.org/pdf/1402.4102>`__.
+
+And, for the robust version,
+
+**Bayesian Optimization with Robust Bayesian Neural Networks**
+
+* Authors: *Jost Tobias Springenberg, Aaron Klein, Stefan Falkner, and Frank Hutter*
+* Paper: `NeurIPS 2016 <https://papers.nips.cc/paper/6117-bayesian-optimization-with-robust-bayesian-neural-networks.pdf>`__.
+
+Stochastic Gradient Langevin Dynamics
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For Stochastic Gradient Langevin Dynamics (SGLD), consider citing:
+
+**Bayesian Learning via Stochastic Gradient Langevin Dynamics**
+
+* Authors: *Max Welling, and Yee Whye Teh*
+* Paper: `ICML 2011 <https://arxiv.org/pdf/1402.4102>`__.
 
 
 Data Augmentation Methods

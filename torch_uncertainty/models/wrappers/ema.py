@@ -34,7 +34,7 @@ class EMA(nn.Module):
         for ema_param, param in zip(
             self.ema_model.parameters(),
             self.core_model.parameters(),
-            strict=False,
+            strict=True,
         ):
             ema_param.data = ema_param.data * self.momentum + param.data * self.remainder
 

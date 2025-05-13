@@ -9,8 +9,8 @@ trainer:
   logger:
     class_path: lightning.pytorch.loggers.TensorBoardLogger
     init_args:
-      save_dir: logs/lenet_swag
-      name: standard
+      save_dir: logs/lenet
+      name: sgld
       default_hp_metric: false
   callbacks:
   - class_path: torch_uncertainty.callbacks.TUClsCheckpoint
@@ -24,9 +24,9 @@ trainer:
       check_finite: true
 model:
   model:
-    class_path: torch_uncertainty.models.wrappers.SWAG
+    class_path: torch_uncertainty.models.wrappers.CheckpointCollector
     init_args:
-      model:
+      model:  
         class_path: torch_uncertainty.models.classification.lenet
         init_args:
           in_channels: 1
@@ -35,25 +35,24 @@ model:
           norm: torch.nn.Identity
           groups: 1
           dropout_rate: 0
-      cycle_start: 10
-      cycle_length: 5
+      cycle_start: 15
+      cycle_length: 2
   num_classes: 10
   loss: CrossEntropyLoss
-  is_ensemble: true
 data:
   root: ./data
   batch_size: 128
   num_workers: 8
 optimizer:
-  class_path: torch.optim.SGD
+  class_path: torch_uncertainty.optim.SGLD
   init_args:
-    lr: 0.05
-    momentum: 0.9
-    weight_decay: 5e-4
-    nesterov: true
+    lr: 1e-2
+    noise_factor: 1e-2
+    weight_decay: 1e-5
 lr_scheduler:
-  class_path: torch_uncertainty.optim_recipes.CosineSWALR
+  class_path: torch.optim.lr_scheduler.MultiStepLR
   init_args:
-    milestone: 10
-    swa_lr: 0.01
-    anneal_epochs: 5
+    milestones:
+    - 25
+    - 50
+    gamma: 0.1

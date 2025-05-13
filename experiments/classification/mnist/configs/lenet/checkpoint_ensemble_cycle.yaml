@@ -5,11 +5,11 @@ trainer:
   accelerator: gpu
   devices: 1
   precision: 16-mixed
-  max_epochs: 75
+  max_epochs: 15
   logger:
     class_path: lightning.pytorch.loggers.TensorBoardLogger
     init_args:
-      save_dir: logs/lenet_swag
+      save_dir: logs/lenet_trajectory
       name: standard
       default_hp_metric: false
   callbacks:
@@ -24,7 +24,7 @@ trainer:
       check_finite: true
 model:
   model:
-    class_path: torch_uncertainty.models.wrappers.SWAG
+    class_path: torch_uncertainty.models.CheckpointCollector
     init_args:
       model:
         class_path: torch_uncertainty.models.classification.lenet
@@ -35,8 +35,10 @@ model:
           norm: torch.nn.Identity
           groups: 1
           dropout_rate: 0
-      cycle_start: 10
-      cycle_length: 5
+      cycle_start: 3
+      cycle_length: 2
+      use_final_model: True
+      store_on_cpu: True
   num_classes: 10
   loss: CrossEntropyLoss
   is_ensemble: true
@@ -52,8 +54,9 @@ optimizer:
     weight_decay: 5e-4
     nesterov: true
 lr_scheduler:
-  class_path: torch_uncertainty.optim_recipes.CosineSWALR
+  class_path: torch.optim.lr_scheduler.MultiStepLR
   init_args:
-    milestone: 10
-    swa_lr: 0.01
-    anneal_epochs: 5
+    milestones:
+    - 25
+    - 50
+    gamma: 0.1
