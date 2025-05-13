@@ -5,7 +5,7 @@ trainer:
   accelerator: gpu
   devices: 1
   precision: 16-mixed
-  max_epochs: 10
+  max_epochs: 75
   logger:
     class_path: lightning.pytorch.loggers.TensorBoardLogger
     init_args:
@@ -35,7 +35,7 @@ model:
           norm: torch.nn.Identity
           groups: 1
           dropout_rate: 0
-      cycle_start: 2
+      cycle_start: 15
       cycle_length: 2
   num_classes: 10
   loss: CrossEntropyLoss
