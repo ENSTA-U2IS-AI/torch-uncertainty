@@ -214,7 +214,7 @@ Classes
     :template: class.rst
 
     BatchEnsemble
-    CheckpointEnsemble
+    CheckpointCollector
     EMA
     MCDropout
     StochasticModel

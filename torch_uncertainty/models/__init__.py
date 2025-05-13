@@ -6,7 +6,7 @@ from .wrappers import (
     SWA,
     SWAG,
     BatchEnsemble,
-    CheckpointEnsemble,
+    CheckpointCollector,
     MCDropout,
     StochasticModel,
     batch_ensemble,

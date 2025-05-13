@@ -94,10 +94,10 @@ For Stochastic Weight Averaging Gaussian, consider citing:
 * Paper: `NeurIPS 2019 <https://arxiv.org/pdf/1902.02476.pdf>`__.
 
 
-CheckpointEnsemble
+CheckpointCollector
 ^^^^^^^^^^^^^^^^^^
 
-For CheckpointEnsemble, consider citing:
+For CheckpointCollector, consider citing:
 
 **Checkpoint Ensembles: Ensemble Methods from a Single Training Process**
 

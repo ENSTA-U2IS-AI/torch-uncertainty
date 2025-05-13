@@ -1,14 +1,14 @@
 import torch
 
 from tests._dummies.model import dummy_model
-from torch_uncertainty.models import CheckpointEnsemble
+from torch_uncertainty.models import CheckpointCollector
 
 
-class TestCheckpointEnsemble:
-    """Testing the CheckpointEnsemble class."""
+class TestCheckpointCollector:
+    """Testing the CheckpointCollector class."""
 
     def test_training(self):
-        ens = CheckpointEnsemble(dummy_model(1, 10))
+        ens = CheckpointCollector(dummy_model(1, 10))
         ens.eval()
         ens(torch.randn(1, 1))
 
@@ -18,7 +18,7 @@ class TestCheckpointEnsemble:
         ens.eval()
         ens(torch.randn(1, 1))
 
-        ens = CheckpointEnsemble(dummy_model(1, 10), use_final_model=False)
+        ens = CheckpointCollector(dummy_model(1, 10), use_final_model=False)
         ens.train()
         ens(torch.randn(1, 1))
         ens.update_wrapper(0)

@@ -4,7 +4,7 @@ import torch
 from torch import Tensor, nn
 
 
-class CheckpointEnsemble(nn.Module):
+class CheckpointCollector(nn.Module):
     def __init__(
         self,
         model: nn.Module,
@@ -15,6 +15,10 @@ class CheckpointEnsemble(nn.Module):
         store_on_cpu: bool = False,
     ) -> None:
         """Ensemble of models at different points in the training trajectory.
+
+        CheckpointCollector can be used to collect samples of the posterior distribution,
+        either using classical stochastic gradient optimization methods, or SGLD and SGHMC
+        as implemented in TorchUncertainty
 
         Args:
             model (nn.Module): The model to train and ensemble.
@@ -61,11 +65,18 @@ class CheckpointEnsemble(nn.Module):
     def _load_from_state_dict(
         self, state_dict, prefix, local_metadata, strict, missing_keys, unexpected_keys, error_msgs
     ):
+        self.saved_models = nn.ModuleList()
         for _ in range(state_dict["model.num_estimators"] - 1):
             self.saved_models.append(copy.deepcopy(self.core_model))
         return super()._load_from_state_dict(
             state_dict, prefix, local_metadata, strict, missing_keys, unexpected_keys, error_msgs
         )
+
+    def load_state_dict(self, state_dict, strict: bool = True, assign: bool = False):
+        self.saved_models = nn.ModuleList()
+        for _ in range(state_dict["model.num_estimators"] - 1):
+            self.saved_models.append(copy.deepcopy(self.core_model))
+        return super().load_state_dict(state_dict, strict, assign)
 
     @torch.no_grad()
     def update_wrapper(self, epoch: int) -> None:
