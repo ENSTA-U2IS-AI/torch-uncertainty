@@ -19,7 +19,7 @@ trainer:
       mode: max
       compound_metric_dict:
         val/cls/Acc: 1.0
-        val/cal/ECE: 1.0
+        val/cal/ECE: -1.0
   - class_path: lightning.pytorch.callbacks.LearningRateMonitor
     init_args:
       logging_interval: step
