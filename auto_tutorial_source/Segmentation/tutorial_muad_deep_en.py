@@ -11,34 +11,39 @@ depth estimation, and object detection.
 
 For details and access, visit the `MUAD Website <https://muad-dataset.github.io/>`_.
 
+1. Loading the utilities
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+First, we load the following utilities from TorchUncertainty:
+
+- the TUTrainer which mostly handles the link with the hardware (accelerators, precision, etc)
+- the segmentation training & evaluation routine from torch_uncertainty.routines
+- the datamodule handling dataloaders: MUADDataModule from torch_uncertainty.datamodules
 """
 
 # %%
-# 1. Load Muad dataset using Torch Uncertainty
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
-# %%
-# Let's start by defining the training parameters.
-
-BATCH_SIZE = 12
-MAX_EPOCHS = 50
-learning_rate = 1e-3
-weight_decay = 2e-4
-lr_decay_epochs = 20
-lr_decay = 0.1
-
-# %%
-# In this Tutorial we are using the small version of the dataset.
-# A larger version can be specified with keyword "full" instead of small.
-
 import matplotlib.pyplot as plt
 import torch
+import torchvision.transforms.v2.functional as F
+from torch import optim
+from torch.optim import lr_scheduler
 from torchvision import tv_tensors
 from torchvision.transforms import v2
-from torchvision.transforms.v2 import functional as F
+from torchvision.utils import draw_segmentation_masks
 
-from torch_uncertainty.datasets import MUAD
+from torch_uncertainty import TUTrainer
+from torch_uncertainty.datamodules.segmentation import MUADDataModule
+from torch_uncertainty.models import deep_ensembles
+from torch_uncertainty.models.segmentation.unet import small_unet
+from torch_uncertainty.routines import SegmentationRoutine
+from torch_uncertainty.transforms import RepeatTarget
+
+# %%
+# 2. Initializing the DataModule
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+muad_mean = MUADDataModule.mean
+muad_std = MUADDataModule.std
 
 train_transform = v2.Compose(
     [
@@ -52,11 +57,11 @@ train_transform = v2.Compose(
             },
             scale=True,
         ),
-        v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        v2.Normalize(mean=muad_mean, std=muad_std),
     ]
 )
 
-val_transform = v2.Compose(
+test_transform = v2.Compose(
     [
         v2.Resize(size=(256, 512), antialias=True),
         v2.ToDtype(
@@ -67,44 +72,31 @@ val_transform = v2.Compose(
             },
             scale=True,
         ),
-        v2.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
+        v2.Normalize(mean=muad_mean, std=muad_std),
     ]
 )
 
-train_set = MUAD(
+# datamodule providing the dataloaders to the trainer
+datamodule = MUADDataModule(
     root="./data",
-    target_type="semantic",
+    batch_size=10,
     version="small",
-    split="train",
-    transforms=train_transform,
-    download=True,
+    train_transform=train_transform,
+    test_transform=test_transform,
+    num_workers=4,
 )
-val_set = MUAD(
-    root="./data",
-    target_type="semantic",
-    version="small",
-    split="val",
-    transforms=val_transform,
-    download=True,
-)
-test_set = MUAD(
-    root="./data",
-    target_type="semantic",
-    version="small",
-    split="test",
-    transforms=val_transform,
-    download=True,
-)
+datamodule.prepare_data()
+datamodule.setup("fit")
 
 # %%
 # Visualize a validation input sample (and RGB image)
 
 # Undo normalization on the image and convert to uint8.
-sample = train_set[0]
+sample = datamodule.train[0]
 img, tgt = sample
-mean = torch.tensor([0.485, 0.456, 0.406], device=img.device)
-std = torch.tensor([0.229, 0.224, 0.225], device=img.device)
-img = img * std[:, None, None] + mean[:, None, None]
+t_muad_mean = torch.tensor(muad_mean, device=img.device)
+t_muad_std = torch.tensor(muad_std, device=img.device)
+img = img * t_muad_std[:, None, None] + t_muad_mean[:, None, None]
 img = F.to_dtype(img, torch.uint8, scale=True)
 img_pil = F.to_pil_image(img)
 
@@ -116,43 +108,40 @@ plt.show()
 # %%
 # Visualize the same image above but segmented.
 
-from torchvision.utils import draw_segmentation_masks
-
 tmp_tgt = tgt.masked_fill(tgt == 255, 21)
 tgt_masks = tmp_tgt == torch.arange(22, device=tgt.device)[:, None, None]
-img_segmented = draw_segmentation_masks(img, tgt_masks, alpha=1, colors=val_set.color_palette)
-img_pil = F.to_pil_image(img)
+img_segmented = draw_segmentation_masks(
+    img, tgt_masks, alpha=1, colors=datamodule.train.color_palette
+)
+img_pil = F.to_pil_image(img_segmented)
 
 plt.figure(figsize=(6, 6))
 plt.imshow(img_pil)
 plt.axis("off")
 plt.show()
 
-# %%
-# Below is the complete list of classes in MUAD, presented as:
-#
-# 1.   Class Name
-# 2.   Train ID
-# 3.   Segmentation Color in RGB format [R,G, B].
-
-for muad_class in train_set.classes:
-    class_name = muad_class.name
-    train_id = muad_class.id
-    color = muad_class.color
-    print(f"Class: {class_name}, Train ID: {train_id}, Color: {color}")
 
 # %%
-# Let's now calculate each class weight
+# 3. Instantiating the Model
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~
+# We create the model easily using the blueprint from torch_uncertainty.models.
 
-import numpy as np
-import torch
-from torch.utils.data import DataLoader
+model = small_unet(
+    in_channels=datamodule.num_channels,
+    num_classes=datamodule.num_classes,
+    bilinear=True,
+)
 
-train_loader = DataLoader(train_set, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
+ensemble = deep_ensembles(
+    model,
+    num_estimators=4,
+    task="segmentation",
+    reset_model_parameters=True,
+)
 
-val_loader = DataLoader(val_set, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
-
-test_loader = DataLoader(test_set, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
+# %%
+# 4. Compute class weights to mitigate class inbalance
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 def enet_weighing(dataloader, num_classes, c=1.02):
@@ -174,248 +163,93 @@ def enet_weighing(dataloader, num_classes, c=1.02):
         num_classes (``int``): The number of classes.
         c (``int``, optional): AN additional hyper-parameter which restricts
             the interval of values for the weights. Default: 1.02.
+        ignore_indexes (``list``, optional): A list of indexes to ignore
+            when computing the weights. Default to `None`.
 
     """
     class_count = 0
     total = 0
     for _, label in dataloader:
-        label = label.cpu().numpy()
+        label = label.cpu()
         # Flatten label
         flat_label = label.flatten()
         flat_label = flat_label[flat_label != 255]
+        flat_label = flat_label[flat_label < num_classes]
 
         # Sum up the number of pixels of each class and the total pixel
         # counts for each label
-        class_count += np.bincount(flat_label, minlength=num_classes)
-        total += flat_label.size
+        class_count += torch.bincount(flat_label, minlength=num_classes)
+        total += flat_label.size(0)
 
     # Compute propensity score and then the weights for each class
     propensity_score = class_count / total
-    return 1 / (np.log(c + propensity_score))
+
+    return 1 / (torch.log(c + propensity_score))
 
 
-print("\nComputing class weights...")
-print("(this can take a while depending on the dataset size)")
-class_weights = enet_weighing(train_loader, 19)
-class_weights = torch.from_numpy(class_weights).float()
-print("Class weights:", class_weights)
+class_weights = enet_weighing(datamodule.val_dataloader(), datamodule.num_classes)
+print(class_weights)
 
 # %%
-# 2. Building the DNN
-# ~~~~~~~~~~~~~~~~~~~
+# Let's define the training parameters.
+BATCH_SIZE = 10
+LEARNING_RATE = 1e-3
+WEIGHT_DECAY = 2e-4
+LR_DECAY_EPOCHS = 20
+LR_DECAY = 0.1
+NB_EPOCHS = 1
+NUM_ESTIMATORS = 4
 
 # %%
-from torch import nn
-
-
-class DoubleConv(nn.Module):
-    """(conv => BN => ReLU) * 2."""
-
-    def __init__(self, in_ch, out_ch) -> None:
-        super().__init__()
-        self.conv = nn.Sequential(
-            nn.Conv2d(in_ch, out_ch, 3, padding=1),
-            nn.BatchNorm2d(out_ch),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(out_ch, out_ch, 3, padding=1),
-            nn.BatchNorm2d(out_ch),
-            nn.ReLU(inplace=True),
-        )
-
-    def forward(self, x):
-        return self.conv(x)
-
-
-class InConv(nn.Module):
-    def __init__(self, in_ch, out_ch) -> None:
-        super().__init__()
-        self.conv = DoubleConv(in_ch, out_ch)
-
-    def forward(self, x):
-        return self.conv(x)
-
-
-class Down(nn.Module):
-    def __init__(self, in_ch, out_ch) -> None:
-        super().__init__()
-        self.mpconv = nn.Sequential(nn.MaxPool2d(2), DoubleConv(in_ch, out_ch))
-
-    def forward(self, x):
-        return self.mpconv(x)
-
-
-class Up(nn.Module):
-    def __init__(self, in_ch, out_ch, bilinear=True) -> None:
-        super().__init__()
-        self.bilinear = bilinear
-
-        self.up = nn.ConvTranspose2d(in_ch // 2, in_ch // 2, 2, stride=2)
-
-        self.conv = DoubleConv(in_ch, out_ch)
-
-    def forward(self, x1, x2):
-        if self.bilinear:
-            x1 = F.resize(
-                x1,
-                size=[2 * x1.size()[2], 2 * x1.size()[3]],
-                interpolation=v2.InterpolationMode.BILINEAR,
-            )
-        else:
-            x1 = self.up(x1)
-
-        # input is CHW
-        diff_y = x2.size()[2] - x1.size()[2]
-        diff_x = x2.size()[3] - x1.size()[3]
-
-        x1 = F.pad(x1, [diff_x // 2, diff_x - diff_x // 2, diff_y // 2, diff_y - diff_y // 2])
-
-        # for padding issues, see
-        # https://github.com/HaiyongJiang/U-Net-Pytorch-Unstructured-Buggy/commit/0e854509c2cea854e247a9c615f175f76fbb2e3a
-        # https://github.com/xiaopeng-liao/Pytorch-UNet/commit/8ebac70e633bac59fc22bb5195e513d5832fb3bd
-
-        x = torch.cat([x2, x1], dim=1)
-        return self.conv(x)
-
-
-class OutConv(nn.Module):
-    def __init__(self, in_ch, out_ch) -> None:
-        super().__init__()
-        self.conv = nn.Conv2d(in_ch, out_ch, 1)
-
-    def forward(self, x):
-        return self.conv(x)
-
-
-# please note that we have added dropout layer to be abble to use MC dropout
-
-
-class UNet(nn.Module):
-    def __init__(self, classes) -> None:
-        super().__init__()
-        self.inc = InConv(3, 32)
-        self.down1 = Down(32, 64)
-        self.down2 = Down(64, 128)
-        self.down3 = Down(128, 256)
-        self.down4 = Down(256, 256)
-        self.up1 = Up(512, 128)
-        self.up2 = Up(256, 64)
-        self.up3 = Up(128, 32)
-        self.up4 = Up(64, 32)
-        self.dropout = nn.Dropout2d(0.1)
-        self.outc = OutConv(32, classes)
-
-    def forward(self, x):
-        x1 = self.inc(x)
-        x2 = self.down1(x1)
-        x3 = self.down2(x2)
-        x4 = self.down3(x3)
-        x5 = self.down4(x4)
-        x = self.up1(x5, x4)
-        x = self.dropout(x)
-        x = self.up2(x, x3)
-        x = self.dropout(x)
-        x = self.up3(x, x2)
-        x = self.dropout(x)
-        x = self.up4(x, x1)
-        x = self.dropout(x)
-        return self.outc(x)
-
-
-# %%
-# 3. Training
-# ~~~~~~~~~~~
-# In this part we will train a `Deep Ensembles <https://papers.nips.cc/paper/2017/file/9ef2ed4b7fd2c810847ffa5fa85bce38-Paper.pdf>`_ easily using TorchUncertainty.
-#
-
-# %%
-# Define the model
-from torch_uncertainty.models import deep_ensembles
-from torch_uncertainty.transforms import RepeatTarget
-
-num_estimators = 3
-
-ensemble = deep_ensembles(
-    UNet(classes=19),
-    num_estimators=num_estimators,
-    task="segmentation",
-    reset_model_parameters=True,
-)
-
-
-# %%
-# Train on 1 epoch for demonstration purposes
-
-from torch import optim
-from torch.optim import lr_scheduler
-
-from torch_uncertainty import TUTrainer
-from torch_uncertainty.routines import SegmentationRoutine
+# 5. The Loss, the Routine, and the Trainer
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # We build the optimizer
 optimizer = optim.Adam(
-    ensemble.parameters(), lr=learning_rate * num_estimators, weight_decay=weight_decay
+    ensemble.parameters(), lr=LEARNING_RATE * NUM_ESTIMATORS, weight_decay=WEIGHT_DECAY
 )
 
 # Learning rate decay scheduler
-lr_updater = lr_scheduler.StepLR(optimizer, lr_decay_epochs, lr_decay)
+lr_updater = lr_scheduler.StepLR(optimizer, LR_DECAY_EPOCHS, LR_DECAY)
 
-# Initialize the trainer
-trainer = TUTrainer(accelerator="gpu", devices=1, max_epochs=1, precision=16, logger=False)
 ens_routine = SegmentationRoutine(
     model=ensemble,
-    num_classes=19,
+    num_classes=datamodule.num_classes,
     loss=torch.nn.CrossEntropyLoss(weight=class_weights),
-    format_batch_fn=RepeatTarget(num_estimators),  # Repeat the target 3 times for the ensemble
+    format_batch_fn=RepeatTarget(NUM_ESTIMATORS),  # Repeat the target 4 times for the ensemble
     optim_recipe={"optimizer": optimizer, "lr_scheduler": lr_updater},
 )
 
-# %%
-# trainer.fit(ens_routine, train_loader, val_loader)
-
-# %%
-# Test your ensemble obtained.
-
-# results = trainer.test(ens_routine, test_loader)
-
-# %%
-# Load a pre-trained ensembles from huggingface to continue the tutorial
-
-from huggingface_hub import hf_hub_download
-
-# Download the model
-model_path = hf_hub_download(
-    repo_id="torch-uncertainty/muad_tutorials", filename="ensemble_tuto.pth"
+trainer = TUTrainer(
+    accelerator="gpu", devices=1, max_epochs=NB_EPOCHS, enable_progress_bar=True, precision=16
 )
 
-model = deep_ensembles(
-    UNet(classes=19),
-    num_estimators=num_estimators,
-    task="segmentation",
-)
-model.load_state_dict(torch.load(model_path))
-model = model.to("cpu")
+# %%
+# 6. Training the model
+# ~~~~~~~~~~~~~~~~~~~~~
+trainer.fit(model=ens_routine, datamodule=datamodule)
+# %%
+# 7. Testing the model
+# ~~~~~~~~~~~~~~~~~~~~
+results = trainer.test(datamodule=datamodule, ckpt_path="best")
 
 # %%
-# 4. Uncertainty evaluations with MCP
+# 8. Uncertainty evaluations with MCP
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Here we will just use as confidence score the Maximum class probability (MCP)
-#
-
-# %%
-import matplotlib.pyplot as plt
 
 sample_idx = 0
-img, target = test_set[sample_idx]
+img, target = datamodule.test[sample_idx]
 
 batch_img = img.unsqueeze(0)
 batch_target = target.unsqueeze(0)
-model.eval()
+ensemble.eval()
 with torch.no_grad():
     # Forward propagation
-    outputs = model(batch_img)
+    outputs = ensemble(batch_img)
     outputs_proba = outputs.softmax(dim=1)
+    # average the outputs over the estimators
     outputs_proba = outputs_proba.mean(dim=0)
-
     # remove the batch dimension
     outputs_proba = outputs_proba.squeeze(0)
     confidence, pred = outputs_proba.max(0)
@@ -428,72 +262,14 @@ img = F.to_dtype(img, torch.uint8, scale=True)
 
 tmp_target = target.masked_fill(target == 255, 21)
 target_masks = tmp_target == torch.arange(22, device=target.device)[:, None, None]
-img_segmented = draw_segmentation_masks(img, target_masks, alpha=1, colors=test_set.color_palette)
-
-pred_masks = pred == torch.arange(22, device=pred.device)[:, None, None]
-
-pred_img = draw_segmentation_masks(img, pred_masks, alpha=1, colors=test_set.color_palette)
-
-if confidence.ndim == 2:
-    confidence = confidence.unsqueeze(0)
-
-img = F.to_pil_image(img)
-img_segmented = F.to_pil_image(img_segmented)
-confidence_img = F.to_pil_image(confidence)
-pred_img = F.to_pil_image(pred_img)
-
-fig, (ax1, ax2, ax3, ax4) = plt.subplots(1, 4, figsize=(30, 15))
-ax1.imshow(img)
-ax2.imshow(img_segmented)
-ax3.imshow(pred_img)
-ax4.imshow(confidence_img)
-plt.show()
-
-# %%
-# Now let's load the OOD test set
-
-# %%
-test_ood_set = MUAD(
-    root="./data",
-    target_type="semantic",
-    version="small",
-    split="ood",
-    transforms=val_transform,
-    download=True,
+img_segmented = draw_segmentation_masks(
+    img, target_masks, alpha=1, colors=datamodule.test.color_palette
 )
 
-# %%
-# Testing on the ood set
-
-sample_idx = 0
-img, target = test_ood_set[sample_idx]
-
-batch_img = img.unsqueeze(0)
-batch_target = target.unsqueeze(0)
-model.eval()
-with torch.no_grad():
-    # Forward propagation
-    outputs = model(batch_img)
-    outputs_proba = outputs.softmax(dim=1)
-    outputs_proba = outputs_proba.mean(dim=0)
-
-    # remove the batch dimension
-    outputs_proba = outputs_proba.squeeze(0)
-    confidence, pred = outputs_proba.max(0)
-
-# Undo normalization on the image and convert to uint8.
-mean = torch.tensor([0.485, 0.456, 0.406], device=img.device)
-std = torch.tensor([0.229, 0.224, 0.225], device=img.device)
-img = img * std[:, None, None] + mean[:, None, None]
-img = F.to_dtype(img, torch.uint8, scale=True)
-
-tmp_target = target.masked_fill(target == 255, 21)
-target_masks = tmp_target == torch.arange(22, device=target.device)[:, None, None]
-img_segmented = draw_segmentation_masks(img, target_masks, alpha=1, colors=test_set.color_palette)
-
 pred_masks = pred == torch.arange(22, device=pred.device)[:, None, None]
 
-pred_img = draw_segmentation_masks(img, pred_masks, alpha=1, colors=test_set.color_palette)
+pred_img = draw_segmentation_masks(img, pred_masks, alpha=1, colors=datamodule.test.color_palette)
+
 
 if confidence.ndim == 2:
     confidence = confidence.unsqueeze(0)
@@ -503,9 +279,14 @@ img_segmented = F.to_pil_image(F.resize(img_segmented, 1024))
 pred_img = F.to_pil_image(F.resize(pred_img, 1024))
 confidence_img = F.to_pil_image(F.resize(confidence, 1024))
 
-fig, (ax1, ax2, ax3, ax4) = plt.subplots(1, 4, figsize=(30, 15))
-ax1.imshow(img_pil)
-ax2.imshow(img_segmented)
-ax3.imshow(pred_img)
-ax4.imshow(confidence_img)
+
+fig, axs = plt.subplots(1, 4, figsize=(25, 7))
+images = [img, img_segmented, pred_img, confidence_img]
+
+for ax, im in zip(axs, images, strict=False):
+    ax.imshow(im)
+    ax.axis("off")
+
+plt.subplots_adjust(left=0.01, right=0.99, top=0.99, bottom=0.01, wspace=0.05)
+
 plt.show()

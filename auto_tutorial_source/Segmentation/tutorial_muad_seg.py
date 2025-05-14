@@ -203,7 +203,7 @@ optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE, weight_decay=WEIGHT
 lr_updater = lr_scheduler.StepLR(optimizer, step_size=LR_DECAY_EPOCHS, gamma=LR_DECAY)
 
 # Segmentation Routine
-ens_routine = SegmentationRoutine(
+seg_routine = SegmentationRoutine(
     model=model,
     num_classes=datamodule.num_classes,
     loss=torch.nn.CrossEntropyLoss(weight=class_weights),
@@ -214,7 +214,7 @@ trainer = TUTrainer(accelerator="gpu", devices=1, max_epochs=NB_EPOCHS, enable_p
 # %%
 # 6. Training the model
 # ~~~~~~~~~~~~~~~~~~~~~
-trainer.fit(model=ens_routine, datamodule=datamodule)
+trainer.fit(model=seg_routine, datamodule=datamodule)
 # %%
 # 7. Testing the model
 # ~~~~~~~~~~~~~~~~~~~~
@@ -226,11 +226,12 @@ results = trainer.test(datamodule=datamodule, ckpt_path="best")
 model_path = hf_hub_download(repo_id="torch-uncertainty/muad_tutorials", filename="small_unet.pth")
 model.load_state_dict(torch.load(model_path))
 # Replace the model in the routine
-ens_routine.model = model
+seg_routine.model = model
 # Test the model
-results = trainer.test(model=ens_routine, datamodule=datamodule)
+results = trainer.test(model=seg_routine, datamodule=datamodule)
+
 # %%
-# 5. Uncertainty evaluations with MCP
+# 9. Uncertainty evaluations with MCP
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Here we will just use as confidence score the Maximum class probability (MCP)
 
