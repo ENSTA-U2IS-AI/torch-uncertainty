@@ -28,7 +28,7 @@ class CompoundCheckpoint(ModelCheckpoint):
         self.compound_metric_dict = compound_metric_dict
         super().__init__(
             dirpath=dirpath,
-            filename="epoch={epoch}-step={step}-compound={compound_metric:.2f}",
+            filename="epoch={epoch}-step={step}-compound={compound_metric:.3f}",
             monitor="compound_metric",
             verbose=verbose,
             save_last=save_last,
