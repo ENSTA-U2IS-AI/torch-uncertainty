@@ -1,0 +1,56 @@
+# lightning.pytorch==2.1.3
+seed_everything: false
+eval_after_fit: true
+trainer:
+  accelerator: gpu
+  devices: 1
+  precision: 32
+  max_epochs: 75
+  logger:
+    class_path: lightning.pytorch.loggers.TensorBoardLogger
+    init_args:
+      save_dir: logs/mlp
+      name: sgld
+      default_hp_metric: false
+  callbacks:
+  - class_path: torch_uncertainty.callbacks.TUClsCheckpoint
+  - class_path: lightning.pytorch.callbacks.LearningRateMonitor
+    init_args:
+      logging_interval: step
+  - class_path: lightning.pytorch.callbacks.EarlyStopping
+    init_args:
+      monitor: val/cls/Acc
+      patience: 1000
+      check_finite: true
+model:
+  model:
+    class_path: torch_uncertainty.models.mlp.mlp
+    init_args:
+      in_features: 784
+      num_outputs: 10
+      hidden_dims:
+      - 400
+      - 400
+      activation: torch.nn.ReLU
+      dropout_rate: 0
+      flatten_start_dim: 1
+  num_classes: 10
+  loss: CrossEntropyLoss
+data:
+  root: ./data
+  batch_size: 128
+  num_workers: 10
+  basic_augment: false
+optimizer:
+  class_path: torch_uncertainty.optim.SGLD
+  init_args:
+    dataset_size: 60000
+    lr: 1e-5
+    weight_decay: 99.999
+lr_scheduler:
+  class_path: torch.optim.lr_scheduler.MultiStepLR
+  init_args:
+    milestones:
+    - 25
+    - 50
+    gamma: 0.1

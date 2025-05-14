@@ -9,8 +9,8 @@ from torchvision.transforms import v2
 
 from torch_uncertainty.datamodules import TUDataModule
 from torch_uncertainty.datasets import MUAD
+from torch_uncertainty.datasets.utils import create_train_val_split
 from torch_uncertainty.transforms import RandomRescale
-from torch_uncertainty.utils.misc import create_train_val_split
 
 
 class MUADDataModule(TUDataModule):

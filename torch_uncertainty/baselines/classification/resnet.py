@@ -4,7 +4,7 @@ from torch import nn
 from torch.optim import Optimizer
 
 from torch_uncertainty.models import mc_dropout
-from torch_uncertainty.models.resnet import (
+from torch_uncertainty.models.classification import (
     batched_resnet,
     lpbnn_resnet,
     masked_resnet,

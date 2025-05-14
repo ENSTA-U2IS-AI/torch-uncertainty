@@ -43,6 +43,7 @@ class DummyClassificationDataModule(TUDataModule):
             num_workers=num_workers,
             pin_memory=pin_memory,
             persistent_workers=persistent_workers,
+            postprocess_set="test",
         )
 
         self.eval_ood = eval_ood
@@ -106,11 +107,13 @@ class DummyClassificationDataModule(TUDataModule):
             self.shift.shift_severity = 1
 
     def test_dataloader(self) -> DataLoader | list[DataLoader]:
-        dataloader = [self._data_loader(self.test, training=False)]
+        dataloader = [self._data_loader(self.test, training=False, shuffle=False)]
         if self.eval_ood:
-            dataloader.append(self._data_loader(self.ood, training=False))
+            dataloader.append(self._data_loader(self.get_ood_set(), training=False, shuffle=False))
         if self.eval_shift:
-            dataloader.append(self._data_loader(self.shift, training=False))
+            dataloader.append(
+                self._data_loader(self.get_shift_set(), training=False, shuffle=False)
+            )
         return dataloader
 
     def _get_train_data(self) -> ArrayLike:
@@ -175,7 +178,7 @@ class DummyRegressionDataModule(TUDataModule):
             )
 
     def test_dataloader(self) -> DataLoader | list[DataLoader]:
-        return [self._data_loader(self.test, training=False)]
+        return [self._data_loader(self.test, training=False, shuffle=False)]
 
 
 class DummySegmentationDataModule(TUDataModule):
@@ -262,7 +265,7 @@ class DummySegmentationDataModule(TUDataModule):
             )
 
     def test_dataloader(self) -> DataLoader | list[DataLoader]:
-        return [self._data_loader(self.test, training=False)]
+        return [self._data_loader(self.test, training=False, shuffle=False)]
 
     def _get_train_data(self) -> ArrayLike:
         return self.train.data
@@ -353,7 +356,7 @@ class DummyPixelRegressionDataModule(TUDataModule):
             )
 
     def test_dataloader(self) -> DataLoader | list[DataLoader]:
-        return [self._data_loader(self.test, training=False)]
+        return [self._data_loader(self.test, training=False, shuffle=False)]
 
     def _get_train_data(self) -> ArrayLike:
         return self.train.data

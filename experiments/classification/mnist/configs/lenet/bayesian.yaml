@@ -9,8 +9,8 @@ trainer:
   logger:
     class_path: lightning.pytorch.loggers.TensorBoardLogger
     init_args:
-      save_dir: logs/lenet_ema
-      name: standard
+      save_dir: logs/lenet
+      name: bayesian
       default_hp_metric: false
   callbacks:
   - class_path: torch_uncertainty.callbacks.TUClsCheckpoint
@@ -24,26 +24,32 @@ trainer:
       check_finite: true
 model:
   model:
-    class_path: torch_uncertainty.models.wrappers.EMA
+    class_path: torch_uncertainty.models.classification.bayesian_lenet
     init_args:
-      model:
-        class_path: torch_uncertainty.models.lenet._LeNet
-        init_args:
-          in_channels: 1
-          num_classes: 10
-          linear_layer: torch.nn.Linear
-          conv2d_layer: torch.nn.Conv2d
-          activation: torch.nn.ReLU
-          norm: torch.nn.Identity
-          groups: 1
-          dropout_rate: 0
-          layer_args: {}
-      momentum: 0.99
+      in_channels: 1
+      num_classes: 10
+      num_samples: 16
+      prior_sigma_1: null
+      prior_sigma_2: null
+      prior_pi: null
+      mu_init: null
+      sigma_init: null
+      activation: torch.nn.ReLU
+      norm: torch.nn.Identity
+      groups: 1
+      dropout_rate: 0.0
+  loss:
+    class_path: torch_uncertainty.losses.ELBOLoss
+    init_args:
+      kl_weight: 0.00002
+      inner_loss: torch.nn.CrossEntropyLoss
+      num_samples: 3
   num_classes: 10
-  loss: CrossEntropyLoss
+  is_ensemble: true
 data:
   root: ./data
   batch_size: 128
+  num_workers: 8
 optimizer:
   lr: 0.05
   momentum: 0.9

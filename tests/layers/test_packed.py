@@ -131,35 +131,29 @@ def extended_batched_tgt_memory() -> tuple[torch.Tensor, torch.Tensor]:
 class TestPackedLinear:
     """Testing the PackedLinear layer class."""
 
-    # Legacy tests
-    def test_linear_one_estimator_no_rearrange(self, feat_input: torch.Tensor):
-        layer = PackedLinear(6, 2, alpha=1, num_estimators=1, rearrange=False, bias=False)
-        out = layer(feat_input)
-        assert out.shape == torch.Size([2, 1])
-
-    def test_linear_two_estimators_no_rearrange(self, feat_input: torch.Tensor):
-        layer = PackedLinear(6, 2, alpha=1, num_estimators=2, rearrange=False)
-        out = layer(feat_input)
-        assert out.shape == torch.Size([2, 1])
-
-    def test_linear_one_estimator_rearrange(self, feat_input_one_rearrange: torch.Tensor):
-        layer = PackedLinear(5, 2, alpha=1, num_estimators=1, rearrange=True)
-        out = layer(feat_input_one_rearrange)
-        assert out.shape == torch.Size([3, 2])
-
-    def test_linear_two_estimator_rearrange_not_divisible(self):
-        feat = torch.rand((2 * 3, 3))
-        layer = PackedLinear(5, 1, alpha=1, num_estimators=2, rearrange=True)
-        out = layer(feat)
-        assert out.shape == torch.Size([6, 1])
+    # Conv1d implementation tests
+    def test_linear_conv1d_implementation(
+        self, feat_input_16_features: torch.Tensor, feat_multi_dim: torch.Tensor
+    ):
+        layer = PackedLinear(16, 4, alpha=2, num_estimators=1, implementation="conv1d", first=True)
+        out = layer(feat_input_16_features)
+        assert out.shape == torch.Size([3, 8])
+        layer = PackedLinear(16, 4, alpha=1, num_estimators=2, implementation="conv1d")
+        out = layer(feat_input_16_features)
+        assert out.shape == torch.Size([3, 4])
+        layer = PackedLinear(6, 2, alpha=1, num_estimators=1, implementation="conv1d")
+        out = layer(feat_multi_dim)
+        assert out.shape == torch.Size([1, 2, 3, 4, 2])
 
     # Full implementation tests
     def test_linear_full_implementation(
         self, feat_input_16_features: torch.Tensor, feat_multi_dim: torch.Tensor
     ):
-        layer = PackedLinear(16, 4, alpha=1, num_estimators=1, implementation="full", bias=False)
+        layer = PackedLinear(
+            16, 4, alpha=2, num_estimators=1, implementation="full", bias=False, first=True
+        )
         out = layer(feat_input_16_features)
-        assert out.shape == torch.Size([3, 4])
+        assert out.shape == torch.Size([3, 8])
         layer = PackedLinear(16, 4, alpha=1, num_estimators=2, implementation="full")
         out = layer(feat_input_16_features)
         assert out.shape == torch.Size([3, 4])
@@ -171,9 +165,9 @@ class TestPackedLinear:
     def test_linear_sparse_implementation(
         self, feat_input_16_features: torch.Tensor, feat_multi_dim: torch.Tensor
     ):
-        layer = PackedLinear(16, 4, alpha=1, num_estimators=1, implementation="sparse")
+        layer = PackedLinear(16, 4, alpha=2, num_estimators=1, implementation="sparse", first=True)
         out = layer(feat_input_16_features)
-        assert out.shape == torch.Size([3, 4])
+        assert out.shape == torch.Size([3, 8])
         layer = PackedLinear(16, 4, alpha=1, num_estimators=2, implementation="sparse")
         out = layer(feat_input_16_features)
         assert out.shape == torch.Size([3, 4])
@@ -185,9 +179,9 @@ class TestPackedLinear:
     def test_linear_einsum_implementation(
         self, feat_input_16_features: torch.Tensor, feat_multi_dim: torch.Tensor
     ):
-        layer = PackedLinear(16, 4, alpha=1, num_estimators=1, implementation="einsum")
+        layer = PackedLinear(16, 4, alpha=2, num_estimators=1, implementation="einsum", first=True)
         out = layer(feat_input_16_features)
-        assert out.shape == torch.Size([3, 4])
+        assert out.shape == torch.Size([3, 8])
         layer = PackedLinear(16, 4, alpha=1, num_estimators=2, implementation="einsum")
         out = layer(feat_input_16_features)
         assert out.shape == torch.Size([3, 4])
@@ -195,19 +189,28 @@ class TestPackedLinear:
         out = layer(feat_multi_dim)
         assert out.shape == torch.Size([1, 2, 3, 4, 2])
 
+    # Conv1d implementation tests
+    def test_linear_last_parameter(
+        self, feat_input_16_features: torch.Tensor, feat_multi_dim: torch.Tensor
+    ):
+        layer = PackedLinear(16, 4, alpha=1, num_estimators=1, implementation="conv1d", last=True)
+        out = layer(feat_input_16_features)
+        assert out.shape == torch.Size([3, 4])
+        layer = PackedLinear(16, 4, alpha=1, num_estimators=2, implementation="full", last=True)
+        out = layer(feat_input_16_features)
+        assert out.shape == torch.Size([6, 4])
+        layer = PackedLinear(6, 2, alpha=1, num_estimators=1, implementation="sparse", last=True)
+        out = layer(feat_multi_dim)
+        assert out.shape == torch.Size([1, 2, 3, 4, 2])
+        layer = PackedLinear(6, 2, alpha=1, num_estimators=2, implementation="einsum", last=True)
+        out = layer(feat_multi_dim)
+        assert out.shape == torch.Size([2, 2, 3, 4, 2])
+
     def test_linear_extend(self):
-        layer = PackedLinear(5, 3, alpha=1, num_estimators=2, gamma=1, implementation="legacy")
-        assert layer.weight.shape == torch.Size([4, 3, 1])
-        assert layer.bias.shape == torch.Size([4])
         layer = PackedLinear(5, 3, alpha=1, num_estimators=2, gamma=1, implementation="full")
         assert layer.weight.shape == torch.Size([2, 2, 3])
         assert layer.bias.shape == torch.Size([4])
         # with first=True
-        layer = PackedLinear(
-            5, 3, alpha=1, num_estimators=2, gamma=1, implementation="legacy", first=True
-        )
-        assert layer.weight.shape == torch.Size([4, 5, 1])
-        assert layer.bias.shape == torch.Size([4])
         layer = PackedLinear(
             5, 3, alpha=1, num_estimators=2, gamma=1, implementation="full", first=True
         )
@@ -216,25 +219,25 @@ class TestPackedLinear:
 
     def test_linear_failures(self):
         with pytest.raises(ValueError):
-            _ = PackedLinear(5, 2, alpha=None, num_estimators=1, rearrange=True)
+            _ = PackedLinear(5, 2, alpha=None, num_estimators=1)
 
         with pytest.raises(ValueError):
-            _ = PackedLinear(5, 2, alpha=-1, num_estimators=1, rearrange=True)
+            _ = PackedLinear(5, 2, alpha=-1, num_estimators=1)
 
         with pytest.raises(ValueError):
-            _ = PackedLinear(5, 2, alpha=1, num_estimators=None, rearrange=True)
+            _ = PackedLinear(5, 2, alpha=1, num_estimators=None)
 
         with pytest.raises(TypeError):
-            _ = PackedLinear(5, 2, alpha=1, num_estimators=1.5, rearrange=True)
+            _ = PackedLinear(5, 2, alpha=1, num_estimators=1.5)
 
         with pytest.raises(ValueError):
-            _ = PackedLinear(5, 2, alpha=1, num_estimators=-1, rearrange=True)
+            _ = PackedLinear(5, 2, alpha=1, num_estimators=-1)
 
         with pytest.raises(TypeError):
-            _ = PackedLinear(5, 2, alpha=1, num_estimators=1, gamma=0.5, rearrange=True)
+            _ = PackedLinear(5, 2, alpha=1, num_estimators=1, gamma=0.5)
 
         with pytest.raises(ValueError):
-            _ = PackedLinear(5, 2, alpha=1, num_estimators=1, gamma=-1, rearrange=True)
+            _ = PackedLinear(5, 2, alpha=1, num_estimators=1, gamma=-1)
 
         with pytest.raises(ValueError):
             _ = PackedLinear(
