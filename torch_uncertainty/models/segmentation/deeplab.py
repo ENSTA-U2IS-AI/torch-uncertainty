@@ -1,9 +1,9 @@
 from typing import Literal
 
 import torch
+import torch.nn.functional as F
 import torchvision.models as tv_models
 from torch import Tensor, nn
-from torch.nn import functional as F
 from torch.nn.common_types import _size_2_t
 from torchvision.models.resnet import ResNet50_Weights, ResNet101_Weights
 

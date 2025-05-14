@@ -15,8 +15,8 @@ from torch_uncertainty.datamodules import TUDataModule
 from torch_uncertainty.datasets import AggregatedDataset
 from torch_uncertainty.datasets.classification import CIFAR100C
 from torch_uncertainty.datasets.ood.utils import get_ood_datasets
+
 from torch_uncertainty.transforms import Cutout
-from torch_uncertainty.utils import create_train_val_split
 
 logging.basicConfig(
     level=logging.INFO,
@@ -40,9 +40,12 @@ class CIFAR100DataModule(TUDataModule):
         eval_batch_size: int | None = None,
         eval_ood: bool = False,
         eval_shift: bool = False,
+        num_tta: int = 1,
         shift_severity: int = 1,
         val_split: float | None = None,
         postprocess_set: Literal["val", "test"] = "val",
+        train_transform: nn.Module | None = None,
+        test_transform: nn.Module | None = None,
         basic_augment: bool = True,
         cutout: int | None = None,
         randaugment: bool = False,
@@ -71,14 +74,19 @@ class CIFAR100DataModule(TUDataModule):
                 to ``0.0``.
             postprocess_set (str, optional): The post-hoc calibration dataset to
                 use for the post-processing method. Defaults to ``val``.
+            train_transform (nn.Module | None): Custom training transform. Defaults
+                to ``None``. If not provided, a default transform is used.
+            test_transform (nn.Module | None): Custom test transform. Defaults to
+                ``None``. If not provided, a default transform is used.
             basic_augment (bool): Whether to apply base augmentations. Defaults to
-                ``True``.
+                ``True``. Only used if train_transform is not provided.
             cutout (int): Size of cutout to apply to images. Defaults to ``None``.
+                Only used if train_transform is not provided.
             randaugment (bool): Whether to apply RandAugment. Defaults to
-                ``False``.
+                ``False``. Only used if train_transform is not provided.
             auto_augment (str): Which auto-augment to apply. Defaults to ``None``.
-            shift_severity (int): Severity of corruption to apply to
-                CIFAR100-C. Defaults to ``1``.
+            num_tta (int): Number of test-time augmentations (TTA). Defaults to ``1`` (no TTA).
+            shift_severity (int): Severity of corruption to apply to CIFAR100-C. Defaults to ``1``.
             num_dataloaders (int): Number of dataloaders to use. Defaults to ``1``.
             num_workers (int): Number of workers to use for data loading. Defaults
                 to ``1``.
@@ -91,6 +99,7 @@ class CIFAR100DataModule(TUDataModule):
             batch_size=batch_size,
             eval_batch_size=eval_batch_size,
             val_split=val_split,
+            num_tta=num_tta,
             postprocess_set=postprocess_set,
             num_workers=num_workers,
             pin_memory=pin_memory,
@@ -106,43 +115,58 @@ class CIFAR100DataModule(TUDataModule):
 
         self.shift_severity = shift_severity
 
+
         self.near_ood_datasets = near_ood_datasets or []  # List of near OOD dataset classes
         self.far_ood_datasets = far_ood_datasets or []  # List of far OOD dataset classes
+        if train_transform is not None:
+            self.train_transform = train_transform
+        else:
+            if (cutout is not None) + randaugment + int(auto_augment is not None) > 1:
+                raise ValueError(
+                    "Only one data augmentation can be chosen at a time. Raise a "
+                    "GitHub issue if needed."
+                )
 
-        if (cutout is not None) + randaugment + int(auto_augment is not None) > 1:
-            raise ValueError(
-                "Only one data augmentation can be chosen at a time. Raise a "
-                "GitHub issue if needed."
-            )
+            if basic_augment:
+                basic_transform = v2.Compose(
+                    [
+                        v2.RandomCrop(32, padding=4),
+                        v2.RandomHorizontalFlip(),
+                    ]
+                )
+            else:
+                basic_transform = nn.Identity()
 
-        if basic_augment:
-            basic_transform = v2.Compose(
+            if cutout:
+                main_transform = Cutout(cutout)
+            elif randaugment:
+                main_transform = v2.RandAugment(num_ops=2, magnitude=20)
+            elif auto_augment:
+                main_transform = v2.Compose(
+                    [
+                        v2.ToPILImage(),
+                        rand_augment_transform(auto_augment, {}),
+                        v2.ToImage(),
+                    ]
+                )
+            else:
+                main_transform = nn.Identity()
+
+            self.train_transform = v2.Compose(
                 [
-                    v2.RandomCrop(32, padding=4),
-                    v2.RandomHorizontalFlip(),
+                    v2.ToImage(),
+                    basic_transform,
+                    main_transform,
+                    v2.ToDtype(dtype=torch.float32, scale=True),
+                    v2.Normalize(mean=self.mean, std=self.std),
                 ]
             )
-        else:
-            basic_transform = nn.Identity()
 
-        if cutout:
-            main_transform = Cutout(cutout)
-        elif randaugment:
-            main_transform = v2.RandAugment(num_ops=2, magnitude=20)
-        elif auto_augment:
-            main_transform = rand_augment_transform(auto_augment, {})
+        if num_tta != 1:
+            self.test_transform = train_transform
+        elif test_transform is not None:
+            self.test_transform = test_transform
         else:
-            main_transform = nn.Identity()
-
-        self.train_transform = v2.Compose(
-            [
-                v2.ToImage(),
-                basic_transform,
-                main_transform,
-                v2.ToDtype(dtype=torch.float32, scale=True),
-                v2.Normalize(mean=self.mean, std=self.std),
-            ]
-        )
         self.test_transform = v2.Compose(
             [
                 v2.ToImage(),
@@ -257,6 +281,7 @@ class CIFAR100DataModule(TUDataModule):
         if self.eval_shift:
             loaders.append(self._data_loader(self.shift, training=False))
         return loaders
+
 
     def _get_train_data(self) -> ArrayLike:
         if self.val_split:

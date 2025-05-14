@@ -241,7 +241,7 @@ class SegmentationRoutine(LightningModule):
 
         if self.log_plots and len(self.sample_buffer) < self.num_samples_to_plot:
             max_count = self.num_samples_to_plot - len(self.sample_buffer)
-            for i, (_img, _prb, _tgt) in enumerate(zip(img, probs, targets, strict=False)):
+            for i, (_img, _prb, _tgt) in enumerate(zip(img, probs, targets, strict=True)):
                 if i >= max_count:
                     break
                 _pred = _prb.argmax(dim=0, keepdim=True)

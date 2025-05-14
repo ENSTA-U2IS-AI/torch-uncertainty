@@ -45,6 +45,7 @@ class DummyClassificationDataModule(TUDataModule):
             num_workers=num_workers,
             pin_memory=pin_memory,
             persistent_workers=persistent_workers,
+            postprocess_set="test",
         )
 
         self.eval_ood = eval_ood
@@ -184,12 +185,13 @@ class DummyClassificationDataModule(TUDataModule):
     def test_dataloader(self) -> list[DataLoader]:
         loaders = [self._data_loader(self.test, training=False)]
         if self.eval_ood:
-            loaders.append(self._data_loader(self.val_ood, training=False))
-            loaders.extend(self._data_loader(ds, training=False) for ds in self.near_oods)
-            loaders.extend(self._data_loader(ds, training=False) for ds in self.far_oods)
+            loaders.append(self._data_loader(self.val_ood, training=False, shuffle=False)))
+            loaders.extend(self._data_loader(ds, training=False, shuffle=False)) for ds in self.near_oods)
+            loaders.extend(self._data_loader(ds, training=False, shuffle=False)) for ds in self.far_oods)
         if self.eval_shift:
-            loaders.append(self._data_loader(self.shift, training=False))
+            loaders.append(self._data_loader(self.shift, training=False, shuffle=False)))
         return loaders
+
 
     def _get_train_data(self) -> ArrayLike:
         return self.train.data
@@ -280,7 +282,7 @@ class DummyRegressionDataModule(TUDataModule):
             )
 
     def test_dataloader(self) -> DataLoader | list[DataLoader]:
-        return [self._data_loader(self.test, training=False)]
+        return [self._data_loader(self.test, training=False, shuffle=False)]
 
 
 class DummySegmentationDataModule(TUDataModule):
@@ -367,7 +369,7 @@ class DummySegmentationDataModule(TUDataModule):
             )
 
     def test_dataloader(self) -> DataLoader | list[DataLoader]:
-        return [self._data_loader(self.test, training=False)]
+        return [self._data_loader(self.test, training=False, shuffle=False)]
 
     def _get_train_data(self) -> ArrayLike:
         return self.train.data
@@ -458,7 +460,7 @@ class DummyPixelRegressionDataModule(TUDataModule):
             )
 
     def test_dataloader(self) -> DataLoader | list[DataLoader]:
-        return [self._data_loader(self.test, training=False)]
+        return [self._data_loader(self.test, training=False, shuffle=False)]
 
     def _get_train_data(self) -> ArrayLike:
         return self.train.data

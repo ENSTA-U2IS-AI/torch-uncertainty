@@ -13,6 +13,7 @@ from torch_uncertainty.losses import DECLoss, ELBOLoss
 from torch_uncertainty.ood.ood_criteria import (
     EntropyCriterion,
 )
+from torch_uncertainty.post_processing import ConformalClsTHR
 from torch_uncertainty.routines import ClassificationRoutine
 from torch_uncertainty.transforms import RepeatTarget
 
@@ -285,6 +286,7 @@ class TestClassification:
             num_classes=2,
             num_images=100,
             eval_ood=True,
+            eval_shift=True,
         )
         model = DummyClassificationBaseline(
             num_classes=dm.num_classes,
@@ -331,6 +333,47 @@ class TestClassification:
         trainer.validate(model, dm)
         trainer.test(model, dm)
         model(dm.get_test_set()[0][0])
+
+    def test_one_estimator_conformal(self):
+        trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
+
+        dm = DummyClassificationDataModule(
+            root=Path(),
+            batch_size=16,
+            num_classes=3,
+            num_images=100,
+            eval_ood=True,
+        )
+
+        model = dummy_model(
+            in_channels=dm.num_channels,
+            num_classes=dm.num_classes,
+        )
+        routine = ClassificationRoutine(
+            model=model,
+            loss=None,
+            num_classes=3,
+            is_conformal=True,
+            post_processing=ConformalClsTHR(),
+        )
+        trainer.test(routine, dm)
+
+        model = ConformalClsTHR(
+            model=dummy_model(
+                in_channels=dm.num_channels,
+                num_classes=dm.num_classes,
+            ),
+        )
+        model.fit(dm.postprocess_dataloader())
+
+        routine = ClassificationRoutine(
+            model=model,
+            loss=None,
+            num_classes=3,
+            is_conformal=True,
+            post_processing=None,
+        )
+        trainer.test(routine, dm)
 
     def test_classification_failures(self):
         # num_classes

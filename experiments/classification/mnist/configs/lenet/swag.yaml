@@ -9,15 +9,11 @@ trainer:
   logger:
     class_path: lightning.pytorch.loggers.TensorBoardLogger
     init_args:
-      save_dir: logs/lenet
+      save_dir: logs/lenet_swag
       name: standard
       default_hp_metric: false
   callbacks:
-  - class_path: lightning.pytorch.callbacks.ModelCheckpoint
-    init_args:
-      monitor: val/cls/Acc
-      mode: max
-      save_last: true
+  - class_path: torch_uncertainty.callbacks.TUClsCheckpoint
   - class_path: lightning.pytorch.callbacks.LearningRateMonitor
     init_args:
       logging_interval: step
@@ -28,40 +24,36 @@ trainer:
       check_finite: true
 model:
   model:
-    class_path: torch_uncertainty.models.StochasticModel
+    class_path: torch_uncertainty.models.wrappers.SWAG
     init_args:
       model:
-        class_path: torch_uncertainty.models.lenet._LeNet
+        class_path: torch_uncertainty.models.classification.lenet
         init_args:
           in_channels: 1
           num_classes: 10
-          linear_layer: torch.nn.Linear
-          conv2d_layer: torch.nn.Conv2d
           activation: torch.nn.ReLU
           norm: torch.nn.Identity
           groups: 1
           dropout_rate: 0
-          layer_args: {}
-      num_samples: 16
+      cycle_start: 10
+      cycle_length: 5
   num_classes: 10
-  loss:
-    class_path: torch_uncertainty.losses.ELBOLoss
-    init_args:
-      kl_weight: 0.00002
-      inner_loss: torch.nn.CrossEntropyLoss
-      num_samples: 3
+  loss: CrossEntropyLoss
+  is_ensemble: true
 data:
   root: ./data
   batch_size: 128
+  num_workers: 8
 optimizer:
-  lr: 0.05
-  momentum: 0.9
-  weight_decay: 5e-4
-  nesterov: true
-lr_scheduler:
-  class_path: torch.optim.lr_scheduler.MultiStepLR
+  class_path: torch.optim.SGD
   init_args:
-    milestones:
-    - 25
-    - 50
-    gamma: 0.1
+    lr: 0.05
+    momentum: 0.9
+    weight_decay: 5e-4
+    nesterov: true
+lr_scheduler:
+  class_path: torch_uncertainty.optim_recipes.CosineSWALR
+  init_args:
+    milestone: 10
+    swa_lr: 0.01
+    anneal_epochs: 5

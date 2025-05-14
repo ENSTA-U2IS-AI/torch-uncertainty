@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import torch
+from torch import nn
 from torch.nn.common_types import _size_2_t
 from torch.nn.modules.utils import _pair
 from torchvision import tv_tensors
@@ -8,8 +9,8 @@ from torchvision.datasets import VisionDataset
 from torchvision.transforms import v2
 
 from torch_uncertainty.datamodules import TUDataModule
+from torch_uncertainty.datasets.utils import create_train_val_split
 from torch_uncertainty.transforms import RandomRescale
-from torch_uncertainty.utils.misc import create_train_val_split
 
 
 class DepthDataModule(TUDataModule):
@@ -20,8 +21,10 @@ class DepthDataModule(TUDataModule):
         batch_size: int,
         min_depth: float,
         max_depth: float,
-        crop_size: _size_2_t,
-        eval_size: _size_2_t,
+        crop_size: _size_2_t | None = None,
+        eval_size: _size_2_t | None = None,
+        train_transform: nn.Module | None = None,
+        test_transform: nn.Module | None = None,
         eval_batch_size: int | None = None,
         val_split: float | None = None,
         num_workers: int = 1,
@@ -44,12 +47,20 @@ class DepthDataModule(TUDataModule):
                 int instead of sequence like :math:`(H, W)`, a square crop
                 :math:`(\text{size},\text{size})` is made. If provided a sequence
                 of length :math:`1`, it will be interpreted as
-                :math:`(\text{size[0]},\text{size[1]})`.
+                :math:`(\text{size[0]},\text{size[1]})`. Has to be provided if
+                :attr:`train_transform` is not provided. Otherwise has no effect.
+                Defaults to ``None``.
             eval_size (sequence or int, optional): Desired input image and
                 depth mask sizes during evaluation. If size is an int,
                 smaller edge of the images will be matched to this number, i.e.,
                 :math:`\text{height}>\text{width}`, then image will be rescaled to
                 :math:`(\text{size}\times\text{height}/\text{width},\text{size})`.
+                Has to be provided if :attr:`test_transform` is not provided. Otherwise
+                has no effect. Defaults to ``None``.
+            train_transform (nn.Module | None): Custom training transform. Defaults
+                to ``None``. If not provided, a default transform is used.
+            test_transform (nn.Module | None): Custom test transform. Defaults to
+                ``None``. If not provided, a default transform is used.
             val_split (float or None, optional): Share of training samples to use
                 for validation.
             num_workers (int, optional): Number of dataloaders to use.
@@ -69,41 +80,63 @@ class DepthDataModule(TUDataModule):
         self.dataset = dataset
         self.min_depth = min_depth
         self.max_depth = max_depth
-        self.crop_size = _pair(crop_size)
-        self.eval_size = _pair(eval_size)
 
-        self.train_transform = v2.Compose(
-            [
-                RandomRescale(min_scale=0.5, max_scale=2.0),
-                v2.RandomCrop(
-                    size=self.crop_size,
-                    pad_if_needed=True,
-                    fill={tv_tensors.Image: 0, tv_tensors.Mask: float("nan")},
-                ),
-                v2.RandomHorizontalFlip(),
-                v2.ToDtype(
-                    dtype={
-                        tv_tensors.Image: torch.float32,
-                        "others": None,
-                    },
-                    scale=True,
-                ),
-                v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-            ]
-        )
-        self.test_transform = v2.Compose(
-            [
-                v2.Resize(size=self.eval_size),
-                v2.ToDtype(
-                    dtype={
-                        tv_tensors.Image: torch.float32,
-                        "others": None,
-                    },
-                    scale=True,
-                ),
-                v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-            ]
-        )
+        if train_transform is not None:
+            self.crop_size = None
+            self.train_transform = train_transform
+        else:
+            if crop_size is None:
+                raise ValueError(
+                    "crop_size must be provided if train_transform is not provided."
+                    " Please provide a valid crop_size."
+                )
+
+            self.crop_size = _pair(crop_size)
+
+            self.train_transform = v2.Compose(
+                [
+                    RandomRescale(min_scale=0.5, max_scale=2.0),
+                    v2.RandomCrop(
+                        size=self.crop_size,
+                        pad_if_needed=True,
+                        fill={tv_tensors.Image: 0, tv_tensors.Mask: float("nan")},
+                    ),
+                    v2.RandomHorizontalFlip(),
+                    v2.ToDtype(
+                        dtype={
+                            tv_tensors.Image: torch.float32,
+                            "others": None,
+                        },
+                        scale=True,
+                    ),
+                    v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+                ]
+            )
+
+        if test_transform is not None:
+            self.eval_size = None
+            self.test_transform = test_transform
+        else:
+            if eval_size is None:
+                raise ValueError(
+                    "eval_size must be provided if test_transform is not provided."
+                    " Please provide a valid eval_size."
+                )
+
+            self.eval_size = _pair(eval_size)
+            self.test_transform = v2.Compose(
+                [
+                    v2.Resize(size=self.eval_size),
+                    v2.ToDtype(
+                        dtype={
+                            tv_tensors.Image: torch.float32,
+                            "others": None,
+                        },
+                        scale=True,
+                    ),
+                    v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+                ]
+            )
 
     def prepare_data(self) -> None:  # coverage: ignore
         self.dataset(

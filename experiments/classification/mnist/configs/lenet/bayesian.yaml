@@ -9,15 +9,11 @@ trainer:
   logger:
     class_path: lightning.pytorch.loggers.TensorBoardLogger
     init_args:
-      save_dir: logs/lenet_trajectory
-      name: standard
+      save_dir: logs/lenet
+      name: bayesian
       default_hp_metric: false
   callbacks:
-  - class_path: lightning.pytorch.callbacks.ModelCheckpoint
-    init_args:
-      monitor: val/cls/Acc
-      mode: max
-      save_last: true
+  - class_path: torch_uncertainty.callbacks.TUClsCheckpoint
   - class_path: lightning.pytorch.callbacks.LearningRateMonitor
     init_args:
       logging_interval: step
@@ -28,38 +24,32 @@ trainer:
       check_finite: true
 model:
   model:
-    class_path: torch_uncertainty.models.CheckpointEnsemble
+    class_path: torch_uncertainty.models.classification.bayesian_lenet
     init_args:
-      model:
-        class_path: torch_uncertainty.models.lenet._LeNet
-        init_args:
-          in_channels: 1
-          num_classes: 10
-          linear_layer: torch.nn.Linear
-          conv2d_layer: torch.nn.Conv2d
-          activation: torch.nn.ReLU
-          norm: torch.nn.Identity
-          groups: 1
-          dropout_rate: 0
-          layer_args: {}
-      save_schedule:
-        - 20
-        - 25
-        - 30
-        - 35
-        - 40
-        - 45
-        - 50
-        - 55
-        - 60
-        - 65
-        - 70
+      in_channels: 1
+      num_classes: 10
+      num_samples: 16
+      prior_sigma_1: null
+      prior_sigma_2: null
+      prior_pi: null
+      mu_init: null
+      sigma_init: null
+      activation: torch.nn.ReLU
+      norm: torch.nn.Identity
+      groups: 1
+      dropout_rate: 0.0
+  loss:
+    class_path: torch_uncertainty.losses.ELBOLoss
+    init_args:
+      kl_weight: 0.00002
+      inner_loss: torch.nn.CrossEntropyLoss
+      num_samples: 3
   num_classes: 10
-  loss: CrossEntropyLoss
   is_ensemble: true
 data:
   root: ./data
   batch_size: 128
+  num_workers: 8
 optimizer:
   lr: 0.05
   momentum: 0.9

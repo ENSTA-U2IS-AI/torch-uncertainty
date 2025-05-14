@@ -1,4 +1,3 @@
-import os
 from collections import defaultdict
 from collections.abc import Callable
 from pathlib import Path
@@ -112,8 +111,7 @@ class TinyImageNet(Dataset):
 
         if self.split == "train":
             train_path = self.root / "train"
-            train_nids = os.listdir(train_path)
-            for nid in train_nids:
+            for nid in Path(train_path).iterdir():
                 anno_path = train_path / nid / (nid + "_boxes.txt")
                 imgs_path = train_path / nid / "images"
                 label_id = self.ids.index(nid)
@@ -135,4 +133,5 @@ class TinyImageNet(Dataset):
         else:  # self.split == "test":
             test_path = self.root / "test" / "images"
             paths = [(test_path / x, -1) for x in os.listdir(test_path)]
+
         return paths

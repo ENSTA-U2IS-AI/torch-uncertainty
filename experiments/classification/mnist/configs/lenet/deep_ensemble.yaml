@@ -14,11 +14,7 @@ trainer:
       name: deep_ensemble
       default_hp_metric: false
   callbacks:
-  - class_path: lightning.pytorch.callbacks.ModelCheckpoint
-    init_args:
-      monitor: val/cls/Acc
-      mode: max
-      save_last: true
+  - class_path: torch_uncertainty.callbacks.TUClsCheckpoint
   - class_path: lightning.pytorch.callbacks.LearningRateMonitor
     init_args:
       logging_interval: step
@@ -35,18 +31,14 @@ model:
     init_args:
       models:  
         # LeNet
-        class_path: torch_uncertainty.models.lenet._LeNet
+        class_path: torch_uncertainty.models.classification.lenet
         init_args:
           in_channels: 1
           num_classes: 10
-          linear_layer: torch.nn.Linear
-          conv2d_layer: torch.nn.Conv2d
           activation: torch.nn.ReLU
           norm: torch.nn.Identity
           groups: 1
           dropout_rate: 0
-          # last_layer_dropout: false
-          layer_args: {}
       num_estimators: 5
       task: classification
       probabilistic: false
@@ -61,14 +53,16 @@ model:
 data:
   root: ./data
   batch_size: 128
-  num_workers: 127
+  num_workers: 8
   eval_ood: true
   eval_shift: true
 optimizer:
-  lr: 0.05
-  momentum: 0.9
-  weight_decay: 5e-4
-  nesterov: true
+  class_path: torch.optim.SGD
+  init_args:
+    lr: 0.05
+    momentum: 0.9
+    weight_decay: 5e-4
+    nesterov: true
 lr_scheduler:
   class_path: torch.optim.lr_scheduler.MultiStepLR
   init_args:

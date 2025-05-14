@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import pytest
-
 from tests._dummies.dataset import DummyClassificationDataset
 from torch_uncertainty.datamodules import ImageNetDataModule
 
@@ -10,7 +9,17 @@ class TestImageNetDataModule:
     """Testing the ImageNetDataModule datamodule class."""
 
     def test_imagenet(self):
-        dm = ImageNetDataModule(root="./data/", batch_size=128, val_split=0.1)
+        dm = ImageNetDataModule(
+            root="./data/",
+            batch_size=128,
+            val_split=0.1,
+            train_transform=nn.Identity(),
+            test_transform=nn.Identity(),
+        )
+        assert isinstance(dm.train_transform, nn.Identity)
+        assert isinstance(dm.test_transform, nn.Identity)
+        dm.dataset = DummyClassificationDataset
+
         dm.prepare_data()
         dm.setup()
 

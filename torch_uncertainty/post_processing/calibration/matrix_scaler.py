@@ -40,9 +40,9 @@ class MatrixScaler(Scaler):
         super().__init__(model=model, lr=lr, max_iter=max_iter, device=device)
 
         if not isinstance(num_classes, int):
-            raise TypeError("num_classes must be an integer.")
+            raise TypeError(f"num_classes must be an integer. Got {num_classes}.")
         if num_classes <= 0:
-            raise ValueError("The number of classes must be positive.")
+            raise ValueError(f"The number of classes must be positive. Got {num_classes}.")
         self.num_classes = num_classes
 
         self.set_temperature(init_w, init_b)

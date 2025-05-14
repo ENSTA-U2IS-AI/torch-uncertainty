@@ -30,6 +30,7 @@ from torch_uncertainty.metrics import (
     CalibrationError,
     CategoricalNLL,
     CovAt5Risk,
+    CoverageRate,
     Disagreement,
     Entropy,
     GroupingLoss,
@@ -45,7 +46,7 @@ from torch_uncertainty.ood.ood_criteria import (
     TUOODCriterion,
     get_ood_criterion,
 )
-from torch_uncertainty.post_processing import LaplaceApprox, PostProcessing
+from torch_uncertainty.post_processing import Conformal, LaplaceApprox, PostProcessing
 from torch_uncertainty.transforms import (
     Mixup,
     MixupIO,
@@ -81,10 +82,12 @@ class ClassificationRoutine(LightningModule):
         num_classes: int,
         loss: nn.Module,
         is_ensemble: bool = False,
+        num_tta: int = 1,
         format_batch_fn: nn.Module | None = None,
         optim_recipe: dict | Optimizer | None = None,
         mixup_params: dict | None = None,
         eval_ood: bool = False,
+        is_conformal: bool = False,
         eval_shift: bool = False,
         eval_grouping_loss: bool = False,
         ood_criterion: type[TUOODCriterion] | str = "msp",
@@ -92,6 +95,7 @@ class ClassificationRoutine(LightningModule):
         num_bins_cal_err: int = 15,
         log_plots: bool = False,
         save_in_csv: bool = False,
+        csv_filename: str = "results.csv",
     ) -> None:
         r"""Routine for training & testing on **classification** tasks.
 
@@ -101,6 +105,8 @@ class ClassificationRoutine(LightningModule):
             loss (torch.nn.Module): Loss function to optimize the :attr:`model`.
             is_ensemble (bool, optional): Indicates whether the model is an
                 ensemble at test time or not. Defaults to ``False``.
+            num_tta (int): Number of test-time augmentations (TTA). If ``1``: no TTA.
+                Defaults to ``1``.
             format_batch_fn (torch.nn.Module, optional): Function to format the batch.
                 Defaults to :class:`torch.nn.Identity()`.
             optim_recipe (dict or torch.optim.Optimizer, optional): The optimizer and
@@ -113,6 +119,8 @@ class ClassificationRoutine(LightningModule):
                 detection performance. Defaults to ``False``.
             eval_shift (bool, optional): Indicates whether to evaluate the Distribution
                 shift performance. Defaults to ``False``.
+            is_conformal (bool, optional): Indicates whether to use conformal prediction
+                as uncertainty criterion. Defaults to ``False``.
             eval_grouping_loss (bool, optional): Indicates whether to evaluate the
                 grouping loss or not. Defaults to ``False``.
             ood_criterion (TUOODCriterion, optional): Criterion for the binary OOD detection task.
@@ -126,6 +134,9 @@ class ClassificationRoutine(LightningModule):
                 metrics. Defaults to ``False``.
             save_in_csv(bool, optional): Save the results in csv. Defaults to
                 ``False``.
+            csv_filename (str, optional): Name of the csv file. Defaults to
+                ``"results.csv"``. Note that this is only used if
+                :attr:`save_in_csv` is ``True``.
 
         Warning:
             You must define :attr:`optim_recipe` if you do not use the Lightning CLI.
@@ -168,11 +179,14 @@ class ClassificationRoutine(LightningModule):
 
         self.num_classes = num_classes
         self.eval_ood = eval_ood
+        self.is_conformal = is_conformal
         self.eval_shift = eval_shift
         self.eval_grouping_loss = eval_grouping_loss
+        self.num_tta = num_tta
         self.ood_criterion = get_ood_criterion(ood_criterion)
         self.log_plots = log_plots
         self.save_in_csv = save_in_csv
+        self.csv_filename = csv_filename
         self.binary_cls = num_classes == 1
         self.needs_epoch_update = isinstance(model, EPOCH_UPDATE_MODEL)
         self.needs_step_update = isinstance(model, STEP_UPDATE_MODEL)
@@ -240,6 +254,7 @@ class ClassificationRoutine(LightningModule):
 
         cls_metrics = MetricCollection(metrics_dict, compute_groups=groups)
         self.val_cls_metrics = cls_metrics.clone(prefix="val/")
+
         self.test_cls_metrics = cls_metrics.clone(prefix="test/")
 
         if self.post_processing is not None:
@@ -255,10 +270,6 @@ class ClassificationRoutine(LightningModule):
                     "FPR95": FPR95(pos_label=1),
                 }
             )
-            if self.ood_criterion != "msp":
-                self.ood_id_acc = Accuracy(
-                    task=task, num_classes=self.num_classes
-                )  # not used for now
 
         if self.is_ensemble:
             self.test_ood_ens_metrics_near = {}
@@ -266,6 +277,14 @@ class ClassificationRoutine(LightningModule):
         else:
             self.test_ood_metrics_near = {}
             self.test_ood_metrics_far = {}
+
+        if self.is_conformal:
+            cfm_metrics = MetricCollection(
+                {
+                    "CovAcc": CoverageRate(),
+                },
+            )
+            self.test_cfm_metrics = cfm_metrics.clone(prefix="test/cls/")
 
         if self.eval_shift:
             self.test_shift_metrics = cls_metrics.clone(prefix="shift/")
@@ -503,6 +522,14 @@ class ClassificationRoutine(LightningModule):
                 )
             }
 
+        if (
+            self.eval_ood
+            and self.log_plots
+            and isinstance(self.logger, Logger)
+            and self.is_conformal
+        ):
+            self.id_conformal_storage = []
+            self.ood_conformal_storage = []
         if hasattr(self.model, "need_bn_update"):
             self.model.bn_update(self.trainer.train_dataloader, device=self.device)
 
@@ -567,6 +594,8 @@ class ClassificationRoutine(LightningModule):
             batch (tuple[Tensor, Tensor]): the validation data and their corresponding targets
         """
         inputs, targets = batch
+        # remove duplicates when doing TTA
+        targets = targets[:: self.num_tta]
         logits = self.forward(inputs, save_feats=self.eval_grouping_loss)
         logits = rearrange(logits, "(m b) c -> b m c", b=targets.size(0))
 
@@ -594,22 +623,33 @@ class ClassificationRoutine(LightningModule):
                 return
 
         inputs, targets = batch
+        # remove duplicates when doing TTA
+        targets = targets[:: self.num_tta]
+
         logits = self.forward(inputs, save_feats=self.eval_grouping_loss)
         logits = rearrange(logits, "(m b) c -> b m c", b=targets.size(0))
         probs_per_est = torch.sigmoid(logits) if self.binary_cls else F.softmax(logits, dim=-1)
         probs = probs_per_est.mean(dim=1)
+        if self.is_conformal:
+            if isinstance(self.post_processing, Conformal):
+                pred_conformal, confs_conformal = self.post_processing.conformal(inputs)
+            else:
+                pred_conformal, confs_conformal = self.model.conformal(inputs)
 
-        if self.ood_criterion.input_type == OODCriterionInputType.LOGIT:
+                
+        if self.ood_criterion.input_type == OODCriterionInputType.LOGIT and not self.is_conformal:
             ood_scores = self.ood_criterion(logits)
-        elif self.ood_criterion.input_type == OODCriterionInputType.PROB:
+        elif self.ood_criterion.input_type == OODCriterionInputType.PROB and not self.is_conformal:
             ood_scores = self.ood_criterion(probs)
-        elif self.ood_criterion.input_type == OODCriterionInputType.DATASET:
+        elif self.ood_criterion.input_type == OODCriterionInputType.DATASET and not self.is_conformal:
             with torch.inference_mode(False), torch.enable_grad():
                 x = inputs.detach().clone().requires_grad_(True)
                 ood_scores = self.ood_criterion(self.model, x).to(self.device)
-
         else:
-            ood_scores = self.ood_criterion(probs_per_est)
+            if not self.is_conformal:
+                ood_scores = self.ood_criterion(probs_per_est)
+            else:
+                ood_scores = confs_conformal
 
         indices = self.trainer.datamodule.get_indices()
 
@@ -620,8 +660,26 @@ class ClassificationRoutine(LightningModule):
             )
             if self.eval_grouping_loss:
                 self.test_grouping_loss.update(probs, targets, self.features)
+
             if self.id_score_storage is not None:
                 self.id_score_storage.append(-ood_scores.detach().cpu())
+
+            self.log_dict(self.test_cls_metrics, on_epoch=True, add_dataloader_idx=False)
+            self.test_id_entropy(probs)
+            self.log(
+                "test/cls/Entropy",
+                self.test_id_entropy,
+                on_epoch=True,
+                add_dataloader_idx=False,
+            )
+
+            if self.is_ensemble:
+                self.test_id_ens_metrics.update(probs_per_est)
+
+            if self.is_conformal:
+                self.test_cfm_metrics.update(pred_conformal, targets)
+
+
             if self.post_processing is not None:
                 pp_logits = self.post_processing(inputs)
                 pp_probs = (
@@ -715,6 +773,25 @@ class ClassificationRoutine(LightningModule):
             if self.is_ensemble:
                 self.test_shift_ens_metrics.update(probs_per_est)
 
+
+    def on_validation_epoch_end(self) -> None:
+        """Compute and log the values of the collected metrics in `validation_step`."""
+        res_dict = self.val_cls_metrics.compute()
+        self.log_dict(res_dict, logger=True, sync_dist=True)
+        # Progress bar only
+        self.log(
+            "Acc%",
+            res_dict["val/cls/Acc"] * 100,
+            prog_bar=True,
+            logger=False,
+            sync_dist=True,
+        )
+        self.val_cls_metrics.reset()
+
+        if self.eval_grouping_loss:
+            self.log_dict(self.val_grouping_loss.compute(), sync_dist=True)
+            self.val_grouping_loss.reset()
+
     def on_test_epoch_end(self) -> None:
         """Compute, log, and plot the values of the collected metrics in `test_step`."""
         result_dict = self.test_cls_metrics.compute()
@@ -757,10 +834,15 @@ class ClassificationRoutine(LightningModule):
                 result_far = far_metrics.compute()
                 self.log_dict(result_far)
 
+        if self.is_conformal:
+            tmp_metrics = self.test_cfm_metrics.compute()
+            self.log_dict(tmp_metrics, sync_dist=True)
+            result_dict.update(tmp_metrics)
+
         if self.eval_shift:
             tmp_metrics = self.test_shift_metrics.compute()
             shift_severity = self.trainer.datamodule.shift_severity
-            tmp_metrics["shift/shift_severity"] = shift_severity
+            tmp_metrics["shift/severity"] = shift_severity
             self.log_dict(tmp_metrics, sync_dist=True)
             result_dict.update(tmp_metrics)
 
@@ -810,7 +892,7 @@ class ClassificationRoutine(LightningModule):
         """
         if self.logger is not None:
             csv_writer(
-                Path(self.logger.log_dir) / "results.csv",
+                Path(self.logger.log_dir) / self.csv_filename,
                 results,
             )
 
@@ -847,7 +929,7 @@ def _classification_routine_checks(
 
     if is_ensemble and eval_grouping_loss:
         raise NotImplementedError(
-            "Groupng loss for ensembles is not yet implemented. Raise an issue if needed."
+            "Grouping loss for ensembles is not yet implemented. Raise an issue if needed."
         )
 
     if num_classes < 1:

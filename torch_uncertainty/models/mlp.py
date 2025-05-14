@@ -23,6 +23,7 @@ class _MLP(nn.Module):
         dropout_rate: float,
         dist_family: str | None,
         dist_args: dict,
+        flatten_start_dim: int,
     ) -> None:
         """Multi-layer perceptron class.
 
@@ -35,12 +36,14 @@ class _MLP(nn.Module):
             layer_args (Dict): Arguments for the layer class.
             dropout_rate (float): Dropout probability.
             dist_family (str, optional): Distribution family name. ``None`` means point-wise
-                prediction. Defaults to ``None``.
+                prediction.
             dist_args (Dict, optional): Arguments for the distribution layer class.
+            flatten_start_dim (int, optional): Dimension to start flattening the input.
         """
         super().__init__()
         self.activation = activation
         self.dropout_rate = dropout_rate
+        self.flatten_start_dim = flatten_start_dim
         layers = nn.ModuleList()
 
         if len(hidden_dims) == 0:
@@ -86,6 +89,7 @@ class _MLP(nn.Module):
         self.last_fc_dropout = nn.Dropout(p=dropout_rate)
 
     def forward(self, x: Tensor) -> Tensor | dict[str, Tensor]:
+        x = x.flatten(self.flatten_start_dim)
         for i, layer in enumerate(self.layers):
             dropout = self.fc_dropout if i < len(self.layers) - 1 else self.last_fc_dropout
             x = dropout(layer(x))
@@ -105,6 +109,7 @@ def _mlp(
     dropout_rate: float = 0.0,
     dist_family: str | None = None,
     dist_args: dict | None = None,
+    flatten_start_dim: int = -1,
 ) -> _MLP | StochasticModel:
     model = _MLP(
         in_features=in_features,
@@ -116,6 +121,7 @@ def _mlp(
         dropout_rate=dropout_rate,
         dist_family=dist_family,
         dist_args=dist_args or {},
+        flatten_start_dim=flatten_start_dim,
     )
     if stochastic:
         return StochasticModel(model, num_samples)
@@ -130,6 +136,7 @@ def mlp(
     dropout_rate: float = 0.0,
     dist_family: str | None = None,
     dist_args: dict | None = None,
+    flatten_start_dim: int = -1,
 ) -> _MLP:
     """Multi-layer perceptron.
 
@@ -138,11 +145,13 @@ def mlp(
         num_outputs (int): Number of output features.
         hidden_dims (list[int]): Number of features in each hidden layer.
         activation (Callable, optional): Activation function. Defaults to
-            F.relu.
-        dropout_rate (float, optional): Dropout probability. Defaults to 0.0.
-        dist_family (str, optional): Distribution family. Defaults to None.
+            ``F.relu``.
+        dropout_rate (float, optional): Dropout probability. Defaults to ``0.0``.
+        dist_family (str, optional): Distribution family. Defaults to ``None``.
         dist_args (Dict, optional): Arguments for the distribution layer class. Defaults
-            to None.
+            to ``None``.
+        flatten_start_dim (int, optional): Dimension to start flattening the input.
+            Defaults to ``-1``.
 
     Returns:
         _MLP: A Multi-Layer-Perceptron model.
@@ -156,6 +165,7 @@ def mlp(
         dropout_rate=dropout_rate,
         dist_family=dist_family,
         dist_args=dist_args,
+        flatten_start_dim=flatten_start_dim,
     )
 
 
@@ -170,6 +180,7 @@ def packed_mlp(
     dropout_rate: float = 0.0,
     dist_family: str | None = None,
     dist_args: dict | None = None,
+    flatten_start_dim: int = -1,
 ) -> _MLP:
     layer_args = {
         "num_estimators": num_estimators,
@@ -187,6 +198,7 @@ def packed_mlp(
         dropout_rate=dropout_rate,
         dist_family=dist_family,
         dist_args=dist_args,
+        flatten_start_dim=flatten_start_dim,
     )
 
 
@@ -199,6 +211,7 @@ def bayesian_mlp(
     dropout_rate: float = 0.0,
     dist_family: str | None = None,
     dist_args: dict | None = None,
+    flatten_start_dim: int = -1,
 ) -> StochasticModel:
     return _mlp(
         stochastic=True,
@@ -211,4 +224,5 @@ def bayesian_mlp(
         dropout_rate=dropout_rate,
         dist_family=dist_family,
         dist_args=dist_args,
+        flatten_start_dim=flatten_start_dim,
     )
