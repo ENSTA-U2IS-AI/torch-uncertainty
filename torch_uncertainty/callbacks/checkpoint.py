@@ -137,7 +137,7 @@ class TURegCheckpoint(TUCheckpoint):
         super().__init__()
         self.callbacks = {
             "mse": ModelCheckpoint(
-                filename="epoch={epoch}-step={step}-val_mse{val/reg/MSE:.3f}",
+                filename="epoch={epoch}-step={step}-val_mse={val/reg/MSE:.3f}",
                 monitor="val/reg/MSE",
                 mode="min",
                 auto_insert_metric_name=False,
@@ -146,7 +146,7 @@ class TURegCheckpoint(TUCheckpoint):
 
         if probabilistic:
             self.callbacks["nll"] = ModelCheckpoint(
-                filename="epoch={epoch}-step={step}-val_nll{val/reg/NLL:.3f}",
+                filename="epoch={epoch}-step={step}-val_nll={val/reg/NLL:.3f}",
                 monitor="val/reg/NLL",
                 mode="min",
                 auto_insert_metric_name=False,
