@@ -18,7 +18,7 @@ from torch_uncertainty.routines.pixel_regression import (
 
 
 class TestPixelRegression:
-    def test_one_estimator_two_classes(self):
+    def test_one_estimator_two_classes(self) -> None:
         trainer = TUTrainer(
             accelerator="cpu",
             max_epochs=1,
@@ -67,7 +67,7 @@ class TestPixelRegression:
         trainer.test(model, dm)
         model(dm.get_test_set()[0][0])
 
-    def test_two_estimators_one_class(self):
+    def test_two_estimators_one_class(self) -> None:
         trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
 
         root = Path(__file__).parent.absolute().parents[0] / "data"
@@ -107,7 +107,7 @@ class TestPixelRegression:
         colorize(torch.ones((10, 10)), 0, 1)
         colorize(torch.ones((10, 10)), 0, 0)
 
-    def test_depth_errors(self):
+    def test_depth_errors(self) -> None:
         with pytest.raises(ValueError, match="output_dim must be positive"):
             PixelRegressionRoutine(
                 model=nn.Identity(),

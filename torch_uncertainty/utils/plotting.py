@@ -1,10 +1,11 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import torchvision.transforms.functional as F
+from matplotlib.figure import Figure
 from torch import Tensor
 
 
-def show(prediction: Tensor, target: Tensor):
+def show(prediction: Tensor, target: Tensor) -> Figure:
     imgs = [prediction, target]
     fig, axs = plt.subplots(ncols=len(imgs), figsize=(12, 6))
     for i, img in enumerate(imgs):

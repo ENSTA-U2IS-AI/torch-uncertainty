@@ -10,7 +10,7 @@ from torch_uncertainty.baselines.classification import (
 class TestMIMOBaseline:
     """Testing the MIMOResNet baseline class."""
 
-    def test_mimo_50(self):
+    def test_mimo_50(self) -> None:
         net = ResNetBaseline(
             num_classes=10,
             in_channels=3,
@@ -26,7 +26,7 @@ class TestMIMOBaseline:
 
         _ = net(torch.rand(1, 3, 32, 32))
 
-    def test_mimo_18(self):
+    def test_mimo_18(self) -> None:
         net = ResNetBaseline(
             num_classes=10,
             in_channels=3,
@@ -46,7 +46,7 @@ class TestMIMOBaseline:
 class TestMIMOWideBaseline:
     """Testing the PackedWideResNet baseline class."""
 
-    def test_mimo(self):
+    def test_mimo(self) -> None:
         net = WideResNetBaseline(
             num_classes=10,
             in_channels=3,

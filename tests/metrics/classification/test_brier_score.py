@@ -72,7 +72,7 @@ def vec3d_target1d() -> torch.Tensor:
 class TestBrierScore:
     """Testing the BrierScore metric class."""
 
-    def test_compute(self, vec2d_min: torch.Tensor, vec2d_min_target: torch.Tensor):
+    def test_compute(self, vec2d_min: torch.Tensor, vec2d_min_target: torch.Tensor) -> None:
         metric = BrierScore(num_classes=2)
         metric.update(vec2d_min, vec2d_min_target)
         assert metric.compute() == 0
@@ -81,12 +81,14 @@ class TestBrierScore:
         metric.update(vec2d_min, vec2d_min_target)
         assert metric.compute() == 0
 
-    def test_compute_max(self, vec2d_max: torch.Tensor, vec2d_max_target: torch.Tensor):
+    def test_compute_max(self, vec2d_max: torch.Tensor, vec2d_max_target: torch.Tensor) -> None:
         metric = BrierScore(num_classes=2, reduction="sum")
         metric.update(vec2d_max, vec2d_max_target)
         assert metric.compute() == 0.5
 
-    def test_compute_max_target1d(self, vec2d_max: torch.Tensor, vec2d_max_target1d: torch.Tensor):
+    def test_compute_max_target1d(
+        self, vec2d_max: torch.Tensor, vec2d_max_target1d: torch.Tensor
+    ) -> None:
         metric = BrierScore(num_classes=2, reduction="sum")
         metric.update(vec2d_max, vec2d_max_target1d)
         assert metric.compute() == 0.5
@@ -96,7 +98,7 @@ class TestBrierScore:
         vec2d_5classes: torch.Tensor,
         vec2d_5classes_target: torch.Tensor,
         vec2d_5classes_target1d: torch.Tensor,
-    ):
+    ) -> None:
         metric = BrierScore(num_classes=5, reduction="sum")
         metric.update(vec2d_5classes, vec2d_5classes_target)
         metric.update(vec2d_5classes, vec2d_5classes_target1d)
@@ -115,7 +117,7 @@ class TestBrierScore:
         vec2d_max: torch.Tensor,
         vec2d_min_target: torch.Tensor,
         vec2d_max_target: torch.Tensor,
-    ):
+    ) -> None:
         metric = BrierScore(num_classes=2, reduction="sum")
         metric.update(vec2d_min, vec2d_min_target)
         metric.update(vec2d_max, vec2d_max_target)
@@ -127,7 +129,7 @@ class TestBrierScore:
         vec2d_max: torch.Tensor,
         vec2d_min_target: torch.Tensor,
         vec2d_max_target: torch.Tensor,
-    ):
+    ) -> None:
         metric = BrierScore(num_classes=2, reduction="mean")
         metric.update(vec2d_min, vec2d_min_target)
         metric.update(vec2d_max, vec2d_max_target)
@@ -139,13 +141,13 @@ class TestBrierScore:
         vec2d_max: torch.Tensor,
         vec2d_min_target: torch.Tensor,
         vec2d_max_target: torch.Tensor,
-    ):
+    ) -> None:
         metric = BrierScore(num_classes=2, reduction=None)
         metric.update(vec2d_min, vec2d_min_target)
         metric.update(vec2d_max, vec2d_max_target)
         assert all(metric.compute() == torch.as_tensor([0, 0.5]))
 
-    def test_compute_3d_mean(self, vec3d: torch.Tensor, vec3d_target: torch.Tensor):
+    def test_compute_3d_mean(self, vec3d: torch.Tensor, vec3d_target: torch.Tensor) -> None:
         """Test that the metric returns the mean of the BrierScore over
         the estimators.
         """
@@ -153,17 +155,19 @@ class TestBrierScore:
         metric.update(vec3d, vec3d_target)
         assert metric.compute() == 1
 
-    def test_compute_3d_sum(self, vec3d: torch.Tensor, vec3d_target: torch.Tensor):
+    def test_compute_3d_sum(self, vec3d: torch.Tensor, vec3d_target: torch.Tensor) -> None:
         metric = BrierScore(num_classes=2, reduction="sum")
         metric.update(vec3d, vec3d_target)
         assert metric.compute() == 1
 
-    def test_compute_3d_sum_target1d(self, vec3d: torch.Tensor, vec3d_target1d: torch.Tensor):
+    def test_compute_3d_sum_target1d(
+        self, vec3d: torch.Tensor, vec3d_target1d: torch.Tensor
+    ) -> None:
         metric = BrierScore(num_classes=2, reduction="sum")
         metric.update(vec3d, vec3d_target1d)
         assert metric.compute() == 1
 
-    def test_compute_3d_to_2d(self, vec3d: torch.Tensor, vec3d_target: torch.Tensor):
+    def test_compute_3d_to_2d(self, vec3d: torch.Tensor, vec3d_target: torch.Tensor) -> None:
         metric = BrierScore(num_classes=2, reduction="mean")
         vec3d = vec3d.mean(1)
         metric.update(vec3d, vec3d_target)
@@ -174,6 +178,6 @@ class TestBrierScore:
         with pytest.raises(ValueError):
             metric.update(torch.ones(2, 2, 2, 2), torch.ones(2, 2, 2, 2))
 
-    def test_bad_argument(self):
+    def test_bad_argument(self) -> None:
         with pytest.raises(ValueError, match="Expected argument `reduction` to be one of"):
             _ = BrierScore(num_classes=2, reduction="geometric_mean")

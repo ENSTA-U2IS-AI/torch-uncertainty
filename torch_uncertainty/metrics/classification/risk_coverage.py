@@ -314,13 +314,15 @@ class CovAtxRisk(Metric):
             from torch_uncertainty.metrics.classification import CovAtxRisk
 
             # Define a more diverse dataset with probabilities and targets
-            probs = torch.tensor([
-            [0.9, 0.1],  # Correct prediction (confidence 0.9)
-            [0.6, 0.4],  # Incorrect prediction (confidence 0.6)
-            [0.8, 0.2],  # Correct prediction (confidence 0.8)
-            [0.5, 0.5],  # Incorrect prediction (confidence 0.5)
-            [0.7, 0.3]   # Correct prediction (confidence 0.7)
-            ])
+            probs = torch.tensor(
+                [
+                    [0.9, 0.1],  # Correct prediction (confidence 0.9)
+                    [0.6, 0.4],  # Incorrect prediction (confidence 0.6)
+                    [0.8, 0.2],  # Correct prediction (confidence 0.8)
+                    [0.5, 0.5],  # Incorrect prediction (confidence 0.5)
+                    [0.7, 0.3],  # Correct prediction (confidence 0.7)
+                ]
+            )
             targets = torch.tensor([0, 1, 0, 1, 0])  # Ground truth labels
 
             # Instantiate the CovAtxRisk metric with a risk threshold
@@ -414,20 +416,23 @@ class RiskAtxCov(Metric):
         .. code-block:: python
 
             from torch_uncertainty.metrics.classification import RiskAtxCov
+
             # Initialize the metric with a coverage threshold of 0.5 (50%)
             metric = RiskAtxCov(cov_threshold=0.5)
 
             # Simulated predicted probabilities (N samples, C classes)
-            predicted_probs = torch.tensor([
-            [0.9, 0.1],  # Correct (class 0)
-            [0.7, 0.3],  # Incorrect (class 1)
-            [0.95, 0.05], # Correct (class 0)
-            [0.8, 0.2],  # Incorrect (class 1)
-            [0.6, 0.4],  # Correct (class 0)
-            [0.3, 0.7],  # Correct (class 1)
-            [0.85, 0.15], # Incorrect (class 1)
-            [0.2, 0.8],  # Correct (class 1)
-            ])
+            predicted_probs = torch.tensor(
+                [
+                    [0.9, 0.1],  # Correct (class 0)
+                    [0.7, 0.3],  # Incorrect (class 1)
+                    [0.95, 0.05],  # Correct (class 0)
+                    [0.8, 0.2],  # Incorrect (class 1)
+                    [0.6, 0.4],  # Correct (class 0)
+                    [0.3, 0.7],  # Correct (class 1)
+                    [0.85, 0.15],  # Incorrect (class 1)
+                    [0.2, 0.8],  # Correct (class 1)
+                ]
+            )
 
             # Simulated ground truth labels
             ground_truth = torch.tensor([0, 1, 0, 1, 0, 1, 0, 1])

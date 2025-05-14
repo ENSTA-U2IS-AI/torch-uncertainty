@@ -8,7 +8,7 @@ from torch_uncertainty.utils.cli import TULightningCLI, TUSaveConfigCallback
 class TestCLI:
     """Testing torch-uncertainty CLI."""
 
-    def test_cli_init(self):
+    def test_cli_init(self) -> None:
         """Test CLI initialization."""
         sys.argv = [
             "file.py",

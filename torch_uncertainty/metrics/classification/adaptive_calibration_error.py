@@ -199,16 +199,19 @@ class AdaptiveCalibrationError:
 
         .. code-block:: python
 
-            from torch_uncertainty.metrics.classification.adaptive_calibration_error import AdaptiveCalibrationError
+            from torch_uncertainty.metrics.classification.adaptive_calibration_error import (
+                AdaptiveCalibrationError,
+            )
+
             # Binary classification example
             predicted_probs = torch.tensor([0.95, 0.85, 0.15, 0.05])
             true_labels = torch.tensor([1, 1, 0, 0])
 
             metric = CalibrationError(
-              task="binary",
-              num_bins=5,
-              norm="l1",
-                )
+                task="binary",
+                num_bins=5,
+                norm="l1",
+            )
 
             calibration_error = metric(predicted_probs, true_labels)
             print(f"Calibration Error (Binary): {calibration_error}")

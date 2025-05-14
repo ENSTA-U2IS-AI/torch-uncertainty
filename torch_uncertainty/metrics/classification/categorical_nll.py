@@ -62,7 +62,10 @@ class CategoricalNLL(Metric):
 
         .. code-block:: python
 
-            from torch_uncertainty.metrics.classification.categorical_nll import CategoricalNLL
+            from torch_uncertainty.metrics.classification.categorical_nll import (
+                CategoricalNLL,
+            )
+
             metric = CategoricalNLL(reduction="mean")
             probs = torch.tensor([[0.7, 0.3], [0.4, 0.6]])
             target = torch.tensor([0, 1])

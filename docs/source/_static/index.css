@@ -32,6 +32,7 @@
   --card-bg: #fcfbf4;
   --card-border: #fcfbf4;
   --card-text: #000000;
+  /* CHANGE THESE TO CUSTOMIZE THEME */
   --example-button-bg: var(--cyber-blue);
   --link-color: var(--cyber-blue);
   --link-hover-color: var(--cyber-pink); }

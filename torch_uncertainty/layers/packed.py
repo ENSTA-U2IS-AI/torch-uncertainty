@@ -796,7 +796,7 @@ class PackedMultiheadAttention(nn.Module):
 
         self._reset_parameters()
 
-    def _reset_parameters(self):
+    def _reset_parameters(self) -> None:
         if self._qkv_same_embed_dim:
             for i in range(self.in_proj_weight.size(0)):
                 nn.init.xavier_uniform_(self.in_proj_weight[i])

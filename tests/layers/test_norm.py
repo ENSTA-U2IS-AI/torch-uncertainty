@@ -18,14 +18,14 @@ from torch_uncertainty.layers.mc_batch_norm import (
 class TestFilterResponseNorm:
     """Testing the FRN2d layer."""
 
-    def test_main(self):
+    def test_main(self) -> None:
         """Test initialization."""
         frn = FilterResponseNorm2d(1)
         frn(torch.randn(1, 1, 20, 20))
         FilterResponseNorm1d(1)
         FilterResponseNorm3d(1)
 
-    def test_errors(self):
+    def test_errors(self) -> None:
         """Test errors."""
         with pytest.raises(ValueError):
             _FilterResponseNormNd(-1, 1)
@@ -38,7 +38,7 @@ class TestFilterResponseNorm:
 class TestMCBatchNorm:
     """Testing the MCBatchNorm layers."""
 
-    def test_main(self):
+    def test_main(self) -> None:
         """Test initialization."""
         bn = MCBatchNorm1d(1, 1)
         bn(torch.randn(1, 1, 2))
@@ -47,7 +47,7 @@ class TestMCBatchNorm:
         bn = MCBatchNorm3d(1, 1)
         bn(torch.randn(1, 1, 1, 1, 2))
 
-    def test_errors(self):
+    def test_errors(self) -> None:
         """Test errors."""
         with pytest.raises(ValueError):
             MCBatchNorm2d(1, 0)
@@ -68,7 +68,7 @@ class TestMCBatchNorm:
 class TestChannelLayerNorm:
     """Testing the FRN2d layer."""
 
-    def test_main(self):
+    def test_main(self) -> None:
         """Test initialization."""
         cln = ChannelLayerNorm(1)
         cln(torch.randn(1, 1, 4, 4))

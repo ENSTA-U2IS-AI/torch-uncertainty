@@ -93,7 +93,7 @@ class LPBNNLinear(nn.Module):
             self.register_parameter("bias", None)
         self.reset_parameters()
 
-    def reset_parameters(self):
+    def reset_parameters(self) -> None:
         nn.init.normal_(self.alpha, mean=1.0, std=0.1)
         nn.init.normal_(self.gamma, mean=1.0, std=0.1)
         self.linear.reset_parameters()
@@ -162,7 +162,7 @@ class LPBNNConv2d(nn.Module):
         padding_mode: str = "zeros",
         device=None,
         dtype=None,
-    ):
+    ) -> None:
         """LPBNN-style 2D convolutional layer.
 
         Args:
@@ -230,7 +230,7 @@ class LPBNNConv2d(nn.Module):
             self.register_parameter("bias", None)
         self.reset_parameters()
 
-    def reset_parameters(self):
+    def reset_parameters(self) -> None:
         nn.init.normal_(self.alpha, mean=1.0, std=0.1)
         if self.gamma is not None:
             nn.init.normal_(self.gamma, mean=1.0, std=0.1)

@@ -4,7 +4,7 @@ from torch_uncertainty.models.mlp import bayesian_mlp, mlp, packed_mlp
 class TestMLPModel:
     """Testing the mlp models."""
 
-    def test_mlps(self):
+    def test_mlps(self) -> None:
         mlp(
             1,
             1,

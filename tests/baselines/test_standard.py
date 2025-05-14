@@ -17,7 +17,7 @@ from torch_uncertainty.baselines.segmentation import (
 class TestStandardBaseline:
     """Testing the ResNetBaseline baseline class."""
 
-    def test_standard(self):
+    def test_standard(self) -> None:
         net = ResNetBaseline(
             num_classes=10,
             in_channels=3,
@@ -29,7 +29,7 @@ class TestStandardBaseline:
         )
         _ = net(torch.rand(1, 3, 32, 32))
 
-    def test_errors(self):
+    def test_errors(self) -> None:
         with pytest.raises(ValueError):
             ResNetBaseline(
                 num_classes=10,
@@ -45,7 +45,7 @@ class TestStandardBaseline:
 class TestStandardWideBaseline:
     """Testing the WideResNetBaseline baseline class."""
 
-    def test_standard(self):
+    def test_standard(self) -> None:
         net = WideResNetBaseline(
             num_classes=10,
             in_channels=3,
@@ -56,7 +56,7 @@ class TestStandardWideBaseline:
         )
         _ = net(torch.rand(1, 3, 32, 32))
 
-    def test_errors(self):
+    def test_errors(self) -> None:
         with pytest.raises(ValueError):
             WideResNetBaseline(
                 num_classes=10,
@@ -71,7 +71,7 @@ class TestStandardWideBaseline:
 class TestStandardVGGBaseline:
     """Testing the VGGBaseline baseline class."""
 
-    def test_standard(self):
+    def test_standard(self) -> None:
         net = VGGBaseline(
             num_classes=10,
             in_channels=3,
@@ -82,7 +82,7 @@ class TestStandardVGGBaseline:
         )
         _ = net(torch.rand(1, 3, 32, 32))
 
-    def test_errors(self):
+    def test_errors(self) -> None:
         with pytest.raises(ValueError):
             VGGBaseline(
                 num_classes=10,
@@ -97,7 +97,7 @@ class TestStandardVGGBaseline:
 class TestStandardMLPBaseline:
     """Testing the MLP baseline class."""
 
-    def test_standard(self):
+    def test_standard(self) -> None:
         net = MLPBaseline(
             in_features=3,
             output_dim=10,
@@ -116,7 +116,7 @@ class TestStandardMLPBaseline:
                 dist_family=dist_family,
             )
 
-    def test_errors(self):
+    def test_errors(self) -> None:
         with pytest.raises(ValueError):
             MLPBaseline(
                 in_features=3,
@@ -130,7 +130,7 @@ class TestStandardMLPBaseline:
 class TestStandardSegFormerBaseline:
     """Testing the SegFormer baseline class."""
 
-    def test_standard(self):
+    def test_standard(self) -> None:
         net = SegFormerBaseline(
             num_classes=10,
             loss=nn.CrossEntropyLoss(),
@@ -139,7 +139,7 @@ class TestStandardSegFormerBaseline:
         )
         _ = net(torch.rand(1, 3, 32, 32))
 
-    def test_errors(self):
+    def test_errors(self) -> None:
         with pytest.raises(ValueError):
             SegFormerBaseline(
                 num_classes=10,
@@ -152,7 +152,7 @@ class TestStandardSegFormerBaseline:
 class TestStandardDeepLabBaseline:
     """Testing the DeepLab baseline class."""
 
-    def test_standard(self):
+    def test_standard(self) -> None:
         net = DeepLabBaseline(
             num_classes=10,
             loss=nn.CrossEntropyLoss(),
@@ -164,7 +164,7 @@ class TestStandardDeepLabBaseline:
         ).eval()
         _ = net(torch.rand(1, 3, 32, 32))
 
-    def test_errors(self):
+    def test_errors(self) -> None:
         with pytest.raises(ValueError):
             DeepLabBaseline(
                 num_classes=10,

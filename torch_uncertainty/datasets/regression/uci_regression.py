@@ -117,8 +117,6 @@ class UCIRegression(Dataset):
 
         Args:
             root (str): Root directory of the datasets.
-            train (bool, optional): If True, creates dataset from training set,
-                otherwise creates from test set.
             transform (callable, optional): A function/transform that takes in a
                 numpy array and returns a transformed version.
             target_transform (callable, optional): A function/transform that takes
@@ -232,7 +230,7 @@ class UCIRegression(Dataset):
                 path / "housing.data",
                 names=boston_column_names,
                 header=None,
-                delim_whitespace=True,
+                sep="\s+",
             )
         elif self.dataset_name == "concrete":
             array = pd.read_excel(path / "Concrete_Data.xls").to_numpy()
@@ -260,7 +258,7 @@ class UCIRegression(Dataset):
         elif self.dataset_name == "yacht":
             array = pd.read_csv(
                 path / "yacht_hydrodynamics.data",
-                delim_whitespace=True,
+                sep="\s+",
                 header=None,
             ).to_numpy()
         else:
@@ -301,3 +299,22 @@ class UCIRegression(Dataset):
         if self.target_transform is not None:
             target = self.target_transform(target)
         return data, target
+
+    def __repr__(self) -> str:
+        """Dataset representation."""
+        head = f"Dataset {self.__class__.__name__}: {self.dataset_name}"
+        body = [f"Number of datapoints: {self.__len__()}"]
+        if self.root is not None:
+            body.append(f"Root location: {self.root}")
+        body += self.extra_repr().splitlines()
+        if hasattr(self, "transforms") and self.transforms is not None:
+            body += [repr(self.transforms)]
+        lines = [head] + [" " * 4 + line for line in body]
+        return "\n".join(lines)
+
+    def _format_transform_repr(self, transform: Callable, head: str) -> list[str]:
+        lines = transform.__repr__().splitlines()
+        return [f"{head}{lines[0]}"] + ["{}{}".format(" " * len(head), line) for line in lines[1:]]
+
+    def extra_repr(self) -> str:
+        return f"number of features: {self.data.shape[1]}\nnumber of outputs: {self.targets.shape[1] if self.targets.ndim > 1 else 1}"

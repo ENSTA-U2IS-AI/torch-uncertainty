@@ -54,10 +54,12 @@ class Disagreement(Metric):
 
             from torch_uncertainty.metrics.classification import Disagreement
 
-            probs = torch.tensor([
-                [[0.7, 0.3], [0.6, 0.4], [0.8, 0.2]],  # Example 1, 3 estimators
-                [[0.4, 0.6], [0.5, 0.5], [0.3, 0.7]]   # Example 2, 3 estimators
-            ])
+            probs = torch.tensor(
+                [
+                    [[0.7, 0.3], [0.6, 0.4], [0.8, 0.2]],  # Example 1, 3 estimators
+                    [[0.4, 0.6], [0.5, 0.5], [0.3, 0.7]],  # Example 2, 3 estimators
+                ]
+            )
 
             ds = Disagreement(reduction="mean")
             ds.update(probs)

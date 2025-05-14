@@ -28,3 +28,14 @@ class Cubic(TensorDataset):
         samples = torch.linspace(lower_bound, upper_bound, num_samples).unsqueeze(-1)
         targets = samples**3 + torch.normal(*noise, size=samples.size())
         super().__init__(samples, targets.squeeze(-1))
+
+    def __repr__(self) -> str:
+        """Dataset representation."""
+        head = f"Dataset {self.__class__.__name__}"
+        body = [f"Number of datapoints: {self.__len__()}"]
+        body += self.extra_repr().splitlines()
+        lines = [head] + [" " * 4 + line for line in body]
+        return "\n".join(lines)
+
+    def extra_repr(self) -> str:
+        return ""

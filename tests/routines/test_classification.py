@@ -21,7 +21,7 @@ from torch_uncertainty.transforms import RepeatTarget
 class TestClassification:
     """Testing the classification routine."""
 
-    def test_one_estimator_binary(self):
+    def test_one_estimator_binary(self) -> None:
         trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
 
         dm = DummyClassificationDataModule(
@@ -43,7 +43,7 @@ class TestClassification:
         trainer.test(model, dm)
         model(dm.get_test_set()[0][0])
 
-    def test_two_estimators_binary(self):
+    def test_two_estimators_binary(self) -> None:
         trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
 
         dm = DummyClassificationDataModule(
@@ -66,7 +66,7 @@ class TestClassification:
         trainer.test(model, dm)
         model(dm.get_test_set()[0][0])
 
-    def test_one_estimator_two_classes(self):
+    def test_one_estimator_two_classes(self) -> None:
         trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
 
         dm = DummyClassificationDataModule(
@@ -93,7 +93,7 @@ class TestClassification:
         trainer.test(model, dm)
         model(dm.get_test_set()[0][0])
 
-    def test_one_estimator_two_classes_timm(self):
+    def test_one_estimator_two_classes_timm(self) -> None:
         trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
 
         dm = DummyClassificationDataModule(
@@ -120,7 +120,7 @@ class TestClassification:
         trainer.test(model, dm)
         model(dm.get_test_set()[0][0])
 
-    def test_one_estimator_two_classes_mixup(self):
+    def test_one_estimator_two_classes_mixup(self) -> None:
         trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
 
         dm = DummyClassificationDataModule(
@@ -146,7 +146,7 @@ class TestClassification:
         trainer.test(model, dm)
         model(dm.get_test_set()[0][0])
 
-    def test_one_estimator_two_classes_mixup_io(self):
+    def test_one_estimator_two_classes_mixup_io(self) -> None:
         trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
 
         dm = DummyClassificationDataModule(
@@ -172,7 +172,7 @@ class TestClassification:
         trainer.test(model, dm)
         model(dm.get_test_set()[0][0])
 
-    def test_one_estimator_two_classes_regmixup(self):
+    def test_one_estimator_two_classes_regmixup(self) -> None:
         trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
 
         dm = DummyClassificationDataModule(
@@ -198,7 +198,7 @@ class TestClassification:
         trainer.test(model, dm)
         model(dm.get_test_set()[0][0])
 
-    def test_one_estimator_two_classes_kernel_warping_emb(self):
+    def test_one_estimator_two_classes_kernel_warping_emb(self) -> None:
         trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
 
         dm = DummyClassificationDataModule(
@@ -224,7 +224,7 @@ class TestClassification:
         trainer.test(model, dm)
         model(dm.get_test_set()[0][0])
 
-    def test_one_estimator_two_classes_kernel_warping_inp(self):
+    def test_one_estimator_two_classes_kernel_warping_inp(self) -> None:
         trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
 
         dm = DummyClassificationDataModule(
@@ -251,7 +251,7 @@ class TestClassification:
         trainer.test(model, dm)
         model(dm.get_test_set()[0][0])
 
-    def test_one_estimator_two_classes_calibrated_with_ood(self):
+    def test_one_estimator_two_classes_calibrated_with_ood(self) -> None:
         trainer = TUTrainer(accelerator="cpu", fast_dev_run=True, logger=True)
 
         dm = DummyClassificationDataModule(
@@ -277,7 +277,7 @@ class TestClassification:
         trainer.test(model, dm)
         model(dm.get_test_set()[0][0])
 
-    def test_two_estimators_two_classes_mi(self):
+    def test_two_estimators_two_classes_mi(self) -> None:
         trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
 
         dm = DummyClassificationDataModule(
@@ -302,7 +302,7 @@ class TestClassification:
         trainer.test(model, dm)
         model(dm.get_test_set()[0][0])
 
-    def test_two_estimator_two_classes_elbo_vr_logs(self):
+    def test_two_estimator_two_classes_elbo_vr_logs(self) -> None:
         trainer = TUTrainer(
             accelerator="cpu",
             max_epochs=1,

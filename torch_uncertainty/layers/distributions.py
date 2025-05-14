@@ -48,7 +48,9 @@ class _ExpandOutputLinear(nn.Module):
         **layer_args: Additional arguments for the base layer.
     """
 
-    def __init__(self, base_layer: type[nn.Module], event_dim: int, num_params: int, **layer_args):
+    def __init__(
+        self, base_layer: type[nn.Module], event_dim: int, num_params: int, **layer_args
+    ) -> None:
         if "out_features" not in inspect.getfullargspec(base_layer.__init__).args:
             raise ValueError(f"{base_layer.__name__} does not have an `out_features` argument.")
 
@@ -71,7 +73,9 @@ class _ExpandOutputConvNd(nn.Module):
         **layer_args: Additional arguments for the base layer.
     """
 
-    def __init__(self, base_layer: type[nn.Module], event_dim: int, num_params: int, **layer_args):
+    def __init__(
+        self, base_layer: type[nn.Module], event_dim: int, num_params: int, **layer_args
+    ) -> None:
         if "out_channels" not in inspect.getfullargspec(base_layer.__init__).args:
             raise ValueError(f"{base_layer.__name__} does not have an `out_channels` argument.")
 
