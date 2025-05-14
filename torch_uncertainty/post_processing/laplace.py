@@ -51,8 +51,7 @@ class LaplaceApprox(PostProcessing):
         if not laplace_installed:
             raise ImportError(
                 "The laplace-torch library is not installed. Please install"
-                "torch_uncertainty with the all option:"
-                """pip install -U "torch_uncertainty[all]"."""
+                "torch_uncertainty with the all option: pip install -U torch_uncertainty[all]"
             )
 
         self.pred_type = pred_type
