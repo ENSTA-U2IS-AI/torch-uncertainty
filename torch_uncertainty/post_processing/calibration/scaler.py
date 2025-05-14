@@ -83,6 +83,7 @@ class Scaler(PostProcessing):
             all_logits = all_logits.squeeze(1)
         if all_logits.dim() == 1:
             confidence = torch.log(all_logits.sigmoid())
+            all_labels = all_labels.to(dtype=torch.float32)
             all_logits = torch.stack([torch.log(1 - confidence), torch.log(confidence)], dim=1)
 
         optimizer = LBFGS(self.temperature, lr=self.lr, max_iter=self.max_iter)
