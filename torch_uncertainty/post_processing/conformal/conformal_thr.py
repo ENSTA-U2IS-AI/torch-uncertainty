@@ -15,6 +15,7 @@ class ConformalClsTHR(Conformal):
         model: nn.Module | None = None,
         init_val: float = 1,
         lr: float = 0.1,
+        numclass: int = 10,
         max_iter: int = 100,
         device: Literal["cpu", "cuda"] | torch.device | None = None,
         alpha: float = 0.1,
@@ -26,6 +27,8 @@ class ConformalClsTHR(Conformal):
             init_val (float, optional): Initial value for the temperature.
                 Defaults to ``1``.
             lr (float, optional): Learning rate for the optimizer. Defaults to ``0.1``.
+            numclass (int):  the number of class of the model. We need it to divide conformal set size by
+            the number of classes to have an uncertainty criterion bounded by one.
             max_iter (int, optional): Maximum number of iterations for the
                 optimizer. Defaults to ``100``.
             device (Literal["cpu", "cuda"] | torch.device | None, optional): device.
@@ -38,6 +41,7 @@ class ConformalClsTHR(Conformal):
         """
         super().__init__(model=model)
         self.device = device or "cpu"
+        self.numclass = numclass
         self.temperature_scaler = TemperatureScaler(
             model=model,
             init_val=init_val,
@@ -83,15 +87,29 @@ class ConformalClsTHR(Conformal):
     def conformal(self, inputs: Tensor) -> tuple[Tensor, Tensor]:
         """Perform conformal prediction on the test set."""
         self.model.eval()
+        inputs = inputs.to(self.device)
         scaled_logits = self.forward(inputs)
         probs = torch.softmax(scaled_logits, dim=1)
         pred_set = probs >= (1.0 - self.quantile)
         top1 = torch.argmax(probs, dim=1, keepdim=True)
         pred_set.scatter_(1, top1, True)  # Always include top-1 class
 
-        confidence_score = pred_set.sum(dim=1).float()
+        confidence_score = pred_set.sum(dim=1).float() / float(self.numclass)
 
         return (pred_set, confidence_score)
+
+    def conformal_visu(self, inputs: Tensor) -> tuple[Tensor, Tensor]:
+        """Perform conformal prediction on the test set and return the classical
+        confidence for visualiation.
+        """
+        self.model.eval()
+        with torch.no_grad():
+            inputs = inputs.to(self.device)
+            scaled_logits = self.forward(inputs)
+            probs = torch.softmax(scaled_logits, dim=1)
+            pred_set = probs >= (1.0 - self.quantile)
+
+            return (pred_set, probs)
 
     @property
     def quantile(self) -> Tensor:

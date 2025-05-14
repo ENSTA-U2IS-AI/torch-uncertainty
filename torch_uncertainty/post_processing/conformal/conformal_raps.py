@@ -14,6 +14,7 @@ class ConformalClsRAPS(Conformal):
         model: nn.Module | None = None,
         score_type: str = "softmax",
         randomized: bool = True,
+        numclass: int = 10,
         penalty: float = 0.1,
         kreg: int = 1,
         device: Literal["cpu", "cuda"] | torch.device | None = None,
@@ -25,6 +26,8 @@ class ConformalClsRAPS(Conformal):
             model (nn.Module): Trained classification model.
             score_type (str): Type of score transformation. Only 'softmax' is supported for now.
             randomized (bool): Whether to use randomized smoothing in RAPS.
+            numclass (int):  the number of class of the model. We need it to divide conformal set size by
+            the number of classes to have an uncertainty criterion bounded by one.
             penalty (float): Regularization weight.
             kreg (int): Rank threshold for regularization.
             device (Literal["cpu", "cuda"] | torch.device | None, optional): device.
@@ -39,6 +42,7 @@ class ConformalClsRAPS(Conformal):
         self.score_type = score_type
         self.randomized = randomized
         self.penalty = penalty
+        self.numclass = numclass
         self.kreg = kreg
         self.device = device or "cpu"
         self.alpha = alpha
@@ -124,13 +128,27 @@ class ConformalClsRAPS(Conformal):
     def conformal(self, inputs: Tensor) -> tuple[Tensor, Tensor]:
         """Compute the prediction set for each input."""
         self.model.eval()
+        inputs = inputs.to(self.device)
         probs = self.forward(inputs)
         all_scores = self._calculate_all_labels(probs)
 
         pred_set = all_scores <= self.quantile
-        set_size = pred_set.sum(dim=1).float()
+        set_size = pred_set.sum(dim=1).float() / float(self.numclass)
 
         return pred_set, set_size
+
+    def conformal_visu(self, inputs: Tensor) -> tuple[Tensor, Tensor]:
+        """Perform conformal prediction on the test set and return the classical
+        confidence for visualiation.
+        """
+        self.model.eval()
+        with torch.no_grad():
+            inputs = inputs.to(self.device)
+            probs = self.forward(inputs)
+            all_scores = 1 - self._calculate_all_labels(probs)
+            pred_set = all_scores <= self.quantile
+
+            return (pred_set, all_scores)
 
     @property
     def quantile(self) -> Tensor:
