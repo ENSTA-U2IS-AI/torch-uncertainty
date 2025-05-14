@@ -268,7 +268,7 @@ class CIFAR10DataModule(TUDataModule):
             loaders.extend(self._data_loader(ds, training=False) for ds in self.far_oods)
 
         if self.eval_shift:
-            loaders.append(self._data_loader(self.shift, training=False))
+            loaders.append(self._data_loader(self.shift_dataset, training=False))
         return loaders
 
     def _get_train_data(self) -> ArrayLike:

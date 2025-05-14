@@ -195,8 +195,8 @@ class ClassificationRoutine(LightningModule):
             self.loss.set_model(self.model)
         self.is_dec = isinstance(self.loss, DECLoss)
 
-        self.id_logit_storage = None
-        self.ood_logit_storage = None
+        self.id_score_storage = None
+        self.ood_score_storage = None
 
     def _init_metrics(self) -> None:
         """Initialize the metrics depending on the exact task."""
@@ -495,8 +495,13 @@ class ClassificationRoutine(LightningModule):
                 self.post_processing.fit(self.trainer.datamodule.postprocess_dataloader())
 
         if self.eval_ood and self.log_plots and isinstance(self.logger, Logger):
-            self.id_logit_storage = []
-            self.ood_logit_storage = []
+            self.id_score_storage = []
+            self.ood_score_storage = {
+                ds.dataset_name: []
+                for ds in itertools.chain(
+                    self.trainer.datamodule.near_oods, self.trainer.datamodule.far_oods
+                )
+            }
 
         if hasattr(self.model, "need_bn_update"):
             self.model.bn_update(self.trainer.train_dataloader, device=self.device)
@@ -615,8 +620,8 @@ class ClassificationRoutine(LightningModule):
             )
             if self.eval_grouping_loss:
                 self.test_grouping_loss.update(probs, targets, self.features)
-            if self.id_logit_storage is not None:
-                self.id_logit_storage.append(logits.detach().cpu())
+            if self.id_score_storage is not None:
+                self.id_score_storage.append(-ood_scores.detach().cpu())
             if self.post_processing is not None:
                 pp_logits = self.post_processing(inputs)
                 pp_probs = (
@@ -674,12 +679,16 @@ class ClassificationRoutine(LightningModule):
                         prefix=f"ood_near_{ds_name}_"
                     )
                 self.test_ood_ens_metrics_near[ds_name].update(ood_scores, torch.ones_like(targets))
+                if self.log_plots:
+                    self.ood_score_storage[ds_name].append(-ood_scores.detach().cpu())
             else:
                 if ds_name not in self.test_ood_metrics_near:
                     self.test_ood_metrics_near[ds_name] = self.ood_metrics_template.clone(
                         prefix=f"ood_near_{ds_name}_"
                     )
                 self.test_ood_metrics_near[ds_name].update(ood_scores, torch.ones_like(targets))
+                if self.log_plots:
+                    self.ood_score_storage[ds_name].append(-ood_scores.detach().cpu())
 
         elif self.eval_ood and dataloader_idx in indices.get("far_oods", []):
             ds_index = indices["far_oods"].index(dataloader_idx)
@@ -690,12 +699,16 @@ class ClassificationRoutine(LightningModule):
                         prefix=f"ood_far_{ds_name}_"
                     )
                 self.test_ood_ens_metrics_far[ds_name].update(ood_scores, torch.ones_like(targets))
+                if self.log_plots:
+                    self.ood_score_storage[ds_name].append(-ood_scores.detach().cpu())
             else:
                 if ds_name not in self.test_ood_metrics_far:
                     self.test_ood_metrics_far[ds_name] = self.ood_metrics_template.clone(
                         prefix=f"ood_far_{ds_name}_"
                     )
                 self.test_ood_metrics_far[ds_name].update(ood_scores, torch.ones_like(targets))
+            if self.log_plots:
+                self.ood_score_storage[ds_name].append(-ood_scores.detach().cpu())
 
         elif self.eval_shift and dataloader_idx in indices.get("shift", []):
             self.test_shift_metrics.update(probs, targets)
@@ -775,32 +788,16 @@ class ClassificationRoutine(LightningModule):
                     self.post_cls_metrics["cal/ECE"].plot()[0],
                 )
 
-            # plot histograms of logits and likelihoods
-            if self.eval_ood:
-                id_logits = torch.cat(self.id_logit_storage, dim=0)
-                ood_logits = torch.cat(self.ood_logit_storage, dim=0)
+            # plot histograms of ood scores
+            if isinstance(self.logger, Logger) and self.log_plots and self.eval_ood:
+                id_scores = torch.cat(self.id_score_storage, dim=0).numpy()
+                for name, batches in self.ood_score_storage.items():
+                    ood_scores = torch.cat(batches, dim=0).numpy()
 
-                id_probs = F.softmax(id_logits, dim=-1)
-                ood_probs = F.softmax(ood_logits, dim=-1)
-
-                logits_fig = plot_hist(
-                    [
-                        id_logits.mean(1).max(-1).values,
-                        ood_logits.mean(1).max(-1).values,
-                    ],
-                    20,
-                    "Histogram of the logits",
-                )[0]
-                probs_fig = plot_hist(
-                    [
-                        id_probs.mean(1).max(-1).values,
-                        ood_probs.mean(1).max(-1).values,
-                    ],
-                    20,
-                    "Histogram of the likelihoods",
-                )[0]
-                self.logger.experiment.add_figure("Logit Histogram", logits_fig)
-                self.logger.experiment.add_figure("Likelihood Histogram", probs_fig)
+                    fig_score = plot_hist(
+                        [id_scores, ood_scores], 20, f"OOD Score Histogram ({name})"
+                    )[0]
+                    self.logger.experiment.add_figure(f"OOD Score/{name}", fig_score)
 
         if self.save_in_csv:
             self.save_results_to_csv(result_dict)

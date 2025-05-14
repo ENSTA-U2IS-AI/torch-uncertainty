@@ -124,6 +124,9 @@ class ImageNet200DataModule(TUDataModule):
         self.test_alt = test_alt
         self.interpolation = interpolation_modes_from_str(interpolation)
 
+        if self.test_alt is not None and eval_ood:
+            raise ValueError("For now test_alt argument is not supported when ood_eval=True.")
+
         if test_alt is None:
             self.dataset = None
         elif test_alt == "r":
@@ -199,6 +202,12 @@ class ImageNet200DataModule(TUDataModule):
             )
 
     def prepare_data(self) -> None:  # coverage: ignore
+        if self.test_alt is not None:
+            self.test = self.dataset(
+                self.root,
+                split="val",
+                download=True,
+            )
         if self.eval_shift:
             self.shift_dataset(
                 self.root,
@@ -208,7 +217,10 @@ class ImageNet200DataModule(TUDataModule):
             )
 
     def setup(self, stage: Literal["fit", "test"] | None = None) -> None:
-        if stage == "fit" or stage is None:
+        if stage not in (None, "fit", "test"):
+            raise ValueError(f"Stage {stage} is not supported.")
+
+        if stage == "fit":
             if self.test_alt is not None:
                 raise ValueError("The test_alt argument is not supported for training.")
 
@@ -223,17 +235,25 @@ class ImageNet200DataModule(TUDataModule):
             )
             self.train = None
 
-        if stage == "test" or stage is None:
-            self.data_dir = getattr(
-                self, "data_dir", download_and_extract_hf_dataset("imagenet1k", self.root)
-            )
-            imagenet1k_splits = SPLITS_BASE / "imagenet200"
-            test_txt = imagenet1k_splits / "test_imagenet200.txt"
-            self.test = FileListDataset(
-                root=self.data_dir,
-                list_file=test_txt,
-                transform=self.test_transform,
-            )
+        if stage == "test":
+            if self.test_alt is not None:
+                self.test = self.dataset(
+                    self.root,
+                    split="val",
+                    transform=self.test_transform,
+                    download=False,
+                )
+            else:
+                self.data_dir = getattr(
+                    self, "data_dir", download_and_extract_hf_dataset("imagenet1k", self.root)
+                )
+                imagenet1k_splits = SPLITS_BASE / "imagenet200"
+                test_txt = imagenet1k_splits / "test_imagenet200.txt"
+                self.test = FileListDataset(
+                    root=self.data_dir,
+                    list_file=test_txt,
+                    transform=self.test_transform,
+                )
 
             if self.eval_ood:
                 self.val_ood, near_default, far_default = get_ood_datasets(

@@ -44,11 +44,11 @@ class ImageNetVariation(ImageFolder):
         target_transform: Callable | None = None,
         download: bool = False,
     ) -> None:
-        if download:
-            self.download()
-
         self.root = Path(root)
         self.split = split
+
+        if download:
+            self.download()
 
         if not self._check_integrity():
             raise RuntimeError(

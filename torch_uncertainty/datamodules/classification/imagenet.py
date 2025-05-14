@@ -124,6 +124,9 @@ class ImageNetDataModule(TUDataModule):
         self.test_alt = test_alt
         self.interpolation = interpolation_modes_from_str(interpolation)
 
+        if self.test_alt is not None and eval_ood:
+            raise ValueError("For now test_alt argument is not supported when ood_eval=True.")
+
         if test_alt is None:
             self.dataset = None
         elif test_alt == "r":
@@ -192,13 +195,17 @@ class ImageNetDataModule(TUDataModule):
         )
 
     def _verify_splits(self, split: str) -> None:
-        if split not in list(self.root.iterdir()):
-            raise FileNotFoundError(
-                f"a {split} Imagenet split was not found in {self.root},"
-                f" make sure the folder contains a subfolder named {split}"
-            )
+        split_dir = self.root / split
+        if not split_dir.is_dir():
+            raise FileNotFoundError(f"a {split} Imagenet split was not found in {split_dir}")
 
     def prepare_data(self) -> None:  # coverage: ignore
+        if self.test_alt is not None:
+            self.test = self.dataset(
+                self.root,
+                split="val",
+                download=True,
+            )
         if self.eval_shift:
             self.shift_dataset(
                 self.root,
@@ -208,7 +215,10 @@ class ImageNetDataModule(TUDataModule):
             )
 
     def setup(self, stage: Literal["fit", "test"] | None = None) -> None:
-        if stage == "fit" or stage is None:
+        if stage not in (None, "fit", "test"):
+            raise ValueError(f"Stage {stage} is not supported.")
+
+        if stage == "fit":
             if self.test_alt is not None:
                 raise ValueError("The test_alt argument is not supported for training.")
 
@@ -223,17 +233,25 @@ class ImageNetDataModule(TUDataModule):
             )
             self.train = None
 
-        if stage == "test" or stage is None:
-            self.data_dir = getattr(
-                self, "data_dir", download_and_extract_hf_dataset("imagenet1k", self.root)
-            )
-            imagenet1k_splits = SPLITS_BASE / "imagenet1k"
-            test_txt = imagenet1k_splits / "test_imagenet.txt"
-            self.test = FileListDataset(
-                root=self.data_dir,
-                list_file=test_txt,
-                transform=self.test_transform,
-            )
+        if stage == "test":
+            if self.test_alt is not None:
+                self.test = self.dataset(
+                    self.root,
+                    split="val",
+                    transform=self.test_transform,
+                    download=False,
+                )
+            else:
+                self.data_dir = getattr(
+                    self, "data_dir", download_and_extract_hf_dataset("imagenet1k", self.root)
+                )
+                imagenet1k_splits = SPLITS_BASE / "imagenet1k"
+                test_txt = imagenet1k_splits / "test_imagenet.txt"
+                self.test = FileListDataset(
+                    root=self.data_dir,
+                    list_file=test_txt,
+                    transform=self.test_transform,
+                )
 
             if self.eval_ood:
                 self.val_ood, near_default, far_default = get_ood_datasets(
@@ -262,9 +280,6 @@ class ImageNetDataModule(TUDataModule):
 
                 self.near_ood_names = [ds.dataset_name for ds in self.near_oods]
                 self.far_ood_names = [ds.dataset_name for ds in self.far_oods]
-
-        if stage not in ["fit", "test", None]:
-            raise ValueError(f"Stage {stage} is not supported.")
 
         if self.eval_shift:
             self.shift = self.shift_dataset(

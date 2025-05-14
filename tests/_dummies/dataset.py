@@ -44,6 +44,7 @@ class DummyClassificationDataset(Dataset):
         self.train = train  # training set or test set
         self.transform = transform
         self.target_transform = target_transform
+        self.dataset_name = "dummy"
 
         self.data: Any = []
         self.targets = []
