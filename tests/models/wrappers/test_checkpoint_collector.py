@@ -15,13 +15,13 @@ class TestCheckpointCollector:
         assert ens.mode == "all"
         ens.to(device)
         ens.eval()
-        ens(torch.randn(1, 1))
+        ens(torch.randn(1, 1, device=device))
 
         ens.train()
-        ens(torch.randn(1, 1))
+        ens(torch.randn(1, 1, device=device))
         ens.update_wrapper(0)
         ens.eval()
-        ens(torch.randn(1, 1))
+        ens(torch.randn(1, 1, device=device))
 
         ens = CheckpointCollector(dummy_model(1, 10), use_final_model=False)
         ens.train()
@@ -42,10 +42,10 @@ class TestCheckpointCollector:
         assert ens.mode == "schedule"
         ens.to(device)
         ens.train()
-        ens(torch.randn(1, 1))
+        ens(torch.randn(1, 1, device=device))
         ens.update_wrapper(0)
         ens.eval()
-        ens(torch.randn(1, 1))
+        ens(torch.randn(1, 1, device=device))
 
     def test_failures(self):
         with pytest.raises(ValueError):

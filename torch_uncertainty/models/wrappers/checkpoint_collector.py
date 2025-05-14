@@ -112,6 +112,11 @@ class CheckpointCollector(nn.Module):
         """
         preds: list[Tensor] = []
         if not len(self.saved_models):
+            if self.store_on_cpu:
+                self.core_model.to(x.device)
+                preds = self.core_model.forward(x)
+                self.core_model.cpu()
+                return preds
             return self.core_model.forward(x)
         if self.store_on_cpu:
             for model in self.saved_models:
@@ -138,6 +143,11 @@ class CheckpointCollector(nn.Module):
             Tensor: The model or ensemble output.
         """
         if self.training:
+            if self.store_on_cpu:
+                self.core_model.to(x.device)
+                preds = self.core_model.forward(x)
+                self.core_model.cpu()
+                return preds
             return self.core_model.forward(x)
         return self.eval_forward(x)
 
