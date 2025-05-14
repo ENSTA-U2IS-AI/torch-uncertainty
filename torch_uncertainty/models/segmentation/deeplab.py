@@ -352,17 +352,19 @@ class _DeepLabV3(nn.Module):
         )
 
 
-def deep_lab_v3_resnet50(
+def deep_lab_v3_resnet(
     num_classes: int,
+    arch: int,
     style: Literal["v3", "v3+"],
     output_stride: int = 16,
     separable: bool = False,
     pretrained_backbone: bool = True,
 ) -> _DeepLabV3:
-    """DeepLab V3(+) model with ResNet-50 backbone.
+    """DeepLab V3(+) model with ResNet-50/101 backbone.
 
     Args:
         num_classes (int): Number of classes.
+        arch (int): Number of layers of the underlying ResNet model: 50 or 101.
         style (Literal["v3", "v3+"]): Whether to use a DeepLab V3 or V3+ model.
         output_stride (int, optional): Output stride. Defaults to 16.
         separable (bool, optional): Use separable convolutions. Defaults to
@@ -372,33 +374,7 @@ def deep_lab_v3_resnet50(
     """
     return _DeepLabV3(
         num_classes,
-        "resnet50",
-        style,
-        output_stride=output_stride,
-        separable=separable,
-        pretrained_backbone=pretrained_backbone,
-    )
-
-
-def deep_lab_v3_resnet101(
-    num_classes: int,
-    style: Literal["v3", "v3+"],
-    output_stride: int = 16,
-    separable: bool = False,
-    pretrained_backbone: bool = True,
-) -> _DeepLabV3:
-    """DeepLab V3(+) model with ResNet-50 backbone.
-
-    Args:
-        num_classes (int): Number of classes.
-        style (Literal["v3", "v3+"]): Whether to use a DeepLab V3 or V3+ model.
-        output_stride (int, optional): Output stride. Defaults to 16.
-        separable (bool, optional): Use separable convolutions. Defaults to False.
-        pretrained_backbone (bool, optional): Use pretrained backbone. Defaults to True.
-    """
-    return _DeepLabV3(
-        num_classes,
-        "resnet101",
+        f"resnet{arch}",
         style,
         output_stride=output_stride,
         separable=separable,
