@@ -57,7 +57,7 @@ class ConformalClsTHR(Conformal):
         return self.temperature_scaler(inputs)
 
     def fit_temperature(self, dataloader: DataLoader) -> None:
-        # Fit the scaler on the calibration dataset
+        """Fit the scaler on the calibration dataset."""
         self.temperature_scaler.fit(dataloader=dataloader)
 
     def fit(self, dataloader: DataLoader) -> None:
@@ -79,19 +79,19 @@ class ConformalClsTHR(Conformal):
             # Quantile
             self.q_hat = torch.quantile(scores, 1.0 - self.alpha)
 
+    @torch.no_grad()
     def conformal(self, inputs: Tensor) -> tuple[Tensor, Tensor]:
         """Perform conformal prediction on the test set."""
         self.model.eval()
-        with torch.no_grad():
-            scaled_logits = self.forward(inputs)
-            probs = torch.softmax(scaled_logits, dim=1)
-            pred_set = probs >= (1.0 - self.quantile)
-            top1 = torch.argmax(probs, dim=1, keepdim=True)
-            pred_set.scatter_(1, top1, True)  # Always include top-1 class
+        scaled_logits = self.forward(inputs)
+        probs = torch.softmax(scaled_logits, dim=1)
+        pred_set = probs >= (1.0 - self.quantile)
+        top1 = torch.argmax(probs, dim=1, keepdim=True)
+        pred_set.scatter_(1, top1, True)  # Always include top-1 class
 
-            confidence_score = pred_set.sum(dim=1).float()
+        confidence_score = pred_set.sum(dim=1).float()
 
-            return (pred_set, confidence_score)
+        return (pred_set, confidence_score)
 
     @property
     def quantile(self) -> Tensor:

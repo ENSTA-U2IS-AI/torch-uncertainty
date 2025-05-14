@@ -1,3 +1,4 @@
+import logging
 from typing import Literal
 
 import torch
@@ -43,6 +44,11 @@ class ConformalClsAPS(Conformal):
 
     def forward(self, inputs: Tensor) -> Tensor:
         """Apply the model and return transformed scores (softmax)."""
+        if self.model is None or isinstance(self.model, nn.Identity):
+            logging.warning(
+                "model is None. Fitting the temperature scaling on the x of the dataloader."
+            )
+            self.model = nn.Identity()
         logits = self.model(inputs)
         return self.transform(logits)
 
@@ -78,33 +84,33 @@ class ConformalClsAPS(Conformal):
             u = torch.zeros_like(probs)
 
         ordered_scores = cumsum - ordered * u
-        _, sorted_indices = torch.sort(indices, descending=False, dim=-1)
+        sorted_indices = torch.sort(indices, descending=False, dim=-1).indices
         return ordered_scores.gather(dim=-1, index=sorted_indices)
 
+    @torch.no_grad()
     def fit(self, dataloader: DataLoader) -> None:
         """Calibrate the APS threshold q_hat on a calibration set."""
         self.model.eval()
         aps_scores = []
 
-        with torch.no_grad():
-            for images, labels in dataloader:
-                images, labels = images.to(self.device), labels.to(self.device)
-                probs = self.forward(images)
-                scores = self._calculate_single_label(probs, labels)
-                aps_scores.append(scores)
+        for images, labels in dataloader:
+            images, labels = images.to(self.device), labels.to(self.device)
+            probs = self.forward(images)
+            scores = self._calculate_single_label(probs, labels)
+            aps_scores.append(scores)
 
         aps_scores = torch.cat(aps_scores)
         self.q_hat = torch.quantile(aps_scores, 1 - self.alpha)
 
+    @torch.no_grad()
     def conformal(self, inputs: Tensor) -> tuple[Tensor, Tensor]:
         """Compute the prediction set for each input."""
         self.model.eval()
-        with torch.no_grad():
-            probs = self.forward(inputs)
-            all_scores = self._calculate_all_labels(probs)
+        probs = self.forward(inputs)
+        all_scores = self._calculate_all_labels(probs)
 
-            pred_set = all_scores <= self.quantile
-            set_size = pred_set.sum(dim=1).float()
+        pred_set = all_scores <= self.quantile
+        set_size = pred_set.sum(dim=1).float()
 
         return pred_set, set_size
 

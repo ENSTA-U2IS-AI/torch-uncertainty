@@ -60,10 +60,11 @@ class Scaler(PostProcessing):
             progress (bool, optional): Whether to show a progress bar.
                 Defaults to True.
         """
-        if self.model is None:
-            raise ValueError(
-                "Cannot fit a Scaler method without model. Call .set_model(model) first."
+        if self.model is None or isinstance(self.model, nn.Identity):
+            logging.warning(
+                "model is None. Fitting the temperature scaling on the x of the dataloader."
             )
+            self.model = nn.Identity()
 
         all_logits = []
         all_labels = []
