@@ -79,6 +79,12 @@ class Scaler(PostProcessing):
             all_logits = torch.cat(all_logits).to(self.device)
             all_labels = torch.cat(all_labels).to(self.device)
 
+        if all_logits.dim() == 2 and all_logits.shape[1] == 1:
+            all_logits = all_logits.squeeze(1)
+        if all_logits.dim() == 1:
+            confidence = torch.log(all_logits.sigmoid())
+            all_logits = torch.cat([torch.log(1 - confidence), torch.log(confidence)])
+
         optimizer = LBFGS(self.temperature, lr=self.lr, max_iter=self.max_iter)
 
         def calib_eval() -> float:
