@@ -1,4 +1,4 @@
-# ruff: noqa: F401, F403
+# ruff: noqa: F401
 from .batched import batched_resnet
 from .lpbnn import lpbnn_resnet
 from .masked import masked_resnet
