@@ -66,14 +66,6 @@ class MatrixScaler(Scaler):
         )
 
     def _scale(self, logits: Tensor) -> Tensor:
-        """Scale the predictions with the optimal temperature.
-
-        Args:
-            logits (Tensor): logits to be scaled.
-
-        Returns:
-            Tensor: Scaled logits.
-        """
         return self.temp_w @ logits + self.temp_b
 
     @property

@@ -1,8 +1,10 @@
 import logging
+from abc import abstractmethod
 from typing import Literal
 
 import torch
-from torch import Tensor, nn, optim
+from torch import Tensor, nn
+from torch.optim import LBFGS
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
@@ -56,7 +58,7 @@ class Scaler(PostProcessing):
         Args:
             dataloader (DataLoader): Dataloader with the calibration data.
             save_logits (bool, optional): Whether to save the logits and
-                labels. Defaults to False.
+                labels in memory. Defaults to False.
             progress (bool, optional): Whether to show a progress bar.
                 Defaults to True.
         """
@@ -77,7 +79,7 @@ class Scaler(PostProcessing):
             all_logits = torch.cat(all_logits).to(self.device)
             all_labels = torch.cat(all_labels).to(self.device)
 
-        optimizer = optim.LBFGS(self.temperature, lr=self.lr, max_iter=self.max_iter)
+        optimizer = LBFGS(self.temperature, lr=self.lr, max_iter=self.max_iter)
 
         def calib_eval() -> float:
             optimizer.zero_grad()
@@ -99,6 +101,7 @@ class Scaler(PostProcessing):
             )
         return self._scale(self.model(inputs))
 
+    @abstractmethod
     def _scale(self, logits: Tensor) -> Tensor:
         """Scale the logits with the optimal temperature.
 
@@ -108,7 +111,7 @@ class Scaler(PostProcessing):
         Returns:
             Tensor: Scaled logits.
         """
-        raise NotImplementedError
+        ...
 
     def fit_predict(
         self,
@@ -119,5 +122,5 @@ class Scaler(PostProcessing):
         return self(self.logits)
 
     @property
-    def temperature(self) -> list:
-        raise NotImplementedError
+    @abstractmethod
+    def temperature(self) -> list: ...
