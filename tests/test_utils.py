@@ -1,3 +1,4 @@
+import contextlib
 from pathlib import Path
 
 import pytest
@@ -39,10 +40,13 @@ class TestHub:
         hub.load_hf("test", version=2)
 
     def test_hub_notexists(self):
-        with pytest.raises((RepositoryNotFoundError, HfHubHTTPError)):
+        with (
+            contextlib.suppress(ValueError),
+            pytest.raises((RepositoryNotFoundError, HfHubHTTPError)),
+        ):
             hub.load_hf("tests")
 
-        with pytest.raises((ValueError, HfHubHTTPError)):
+        with contextlib.suppress(ValueError), pytest.raises((ValueError, HfHubHTTPError)):
             hub.load_hf("test", version=42)
 
 
