@@ -61,28 +61,29 @@ class TUCheckpoint(Checkpoint):
 
 class TUClsCheckpoint(TUCheckpoint):
     def __init__(self):
+        """Keep multiple checkpoints corresponding to the best classification metric values."""
         super().__init__()
         self.callbacks = {
             "acc": ModelCheckpoint(
-                filename="epoch={epoch}-step={step}-val_acc={val/cls/Acc:.2f}",
+                filename="epoch={epoch}-step={step}-val_acc={val/cls/Acc:.3f}",
                 monitor="val/cls/Acc",
                 mode="max",
                 auto_insert_metric_name=False,
             ),
             "ece": ModelCheckpoint(
-                filename="epoch={epoch}-step={step}-val_ece={val/cal/ECE:.2f}",
+                filename="epoch={epoch}-step={step}-val_ece={val/cal/ECE:.3f}",
                 monitor="val/cal/ECE",
                 mode="min",
                 auto_insert_metric_name=False,
             ),
             "brier": ModelCheckpoint(
-                filename="epoch={epoch}-step={step}-val_brier={val/cls/Brier:.2f}",
+                filename="epoch={epoch}-step={step}-val_brier={val/cls/Brier:.3f}",
                 monitor="val/cls/Brier",
                 mode="min",
                 auto_insert_metric_name=False,
             ),
             "nll": ModelCheckpoint(
-                filename="epoch={epoch}-step={step}-val_nll={val/cls/NLL:.2f}",
+                filename="epoch={epoch}-step={step}-val_nll={val/cls/NLL:.3f}",
                 monitor="val/cls/NLL",
                 mode="min",
                 auto_insert_metric_name=False,
@@ -96,28 +97,29 @@ class TUClsCheckpoint(TUCheckpoint):
 
 class TUSegCheckpoint(TUCheckpoint):
     def __init__(self):
+        """Keep multiple checkpoints corresponding to the best segmentation metric values."""
         super().__init__()
         self.callbacks = {
             "miou": ModelCheckpoint(
-                filename="epoch={epoch}-step={step}-val_miou={val/seg/mIoU:.2f}",
+                filename="epoch={epoch}-step={step}-val_miou={val/seg/mIoU:.3f}",
                 monitor="val/seg/mIoU",
                 mode="max",
                 auto_insert_metric_name=False,
             ),
             "ece": ModelCheckpoint(
-                filename="epoch={epoch}-step={step}-val_ece={val/cal/ECE:.2f}",
+                filename="epoch={epoch}-step={step}-val_ece={val/cal/ECE:.3f}",
                 monitor="val/cal/ECE",
                 mode="min",
                 auto_insert_metric_name=False,
             ),
             "brier": ModelCheckpoint(
-                filename="epoch={epoch}-step={step}-val_brier={val/seg/Brier:.2f}",
+                filename="epoch={epoch}-step={step}-val_brier={val/seg/Brier:.3f}",
                 monitor="val/seg/Brier",
                 mode="min",
                 auto_insert_metric_name=False,
             ),
             "nll": ModelCheckpoint(
-                filename="epoch={epoch}-step={step}-val_nll={val/seg/NLL:.2f}",
+                filename="epoch={epoch}-step={step}-val_nll={val/seg/NLL:.3f}",
                 monitor="val/seg/NLL",
                 mode="min",
                 auto_insert_metric_name=False,
@@ -131,10 +133,11 @@ class TUSegCheckpoint(TUCheckpoint):
 
 class TURegCheckpoint(TUCheckpoint):
     def __init__(self, probabilistic: bool = False):
+        """Keep multiple checkpoints corresponding to the best regression metric values."""
         super().__init__()
         self.callbacks = {
             "mse": ModelCheckpoint(
-                filename="epoch={epoch}-step={step}-val_mse{val/reg/MSE:.2f}",
+                filename="epoch={epoch}-step={step}-val_mse={val/reg/MSE:.3f}",
                 monitor="val/reg/MSE",
                 mode="min",
                 auto_insert_metric_name=False,
@@ -143,7 +146,7 @@ class TURegCheckpoint(TUCheckpoint):
 
         if probabilistic:
             self.callbacks["nll"] = ModelCheckpoint(
-                filename="epoch={epoch}-step={step}-val_nll{val/reg/NLL:.2f}",
+                filename="epoch={epoch}-step={step}-val_nll={val/reg/NLL:.3f}",
                 monitor="val/reg/NLL",
                 mode="min",
                 auto_insert_metric_name=False,

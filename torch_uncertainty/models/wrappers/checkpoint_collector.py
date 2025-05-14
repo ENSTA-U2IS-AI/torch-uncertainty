@@ -41,11 +41,11 @@ class CheckpointCollector(nn.Module):
         """
         super().__init__()
         self.mode = None
-        if (cycle_start is None) and (cycle_length is None) and (save_schedule is None):
+        if cycle_start is None and cycle_length is None and save_schedule is None:
             self.mode = "all"
-        elif (cycle_start is not None) and (cycle_length is not None) and save_schedule is None:
+        elif cycle_start is not None and cycle_length is not None and save_schedule is None:
             self.mode = "cycle"
-        elif save_schedule is not None and (cycle_start is None) and (cycle_length is None):
+        elif save_schedule is not None and cycle_start is None and cycle_length is None:
             self.mode = "schedule"
         else:
             raise ValueError(
