@@ -84,7 +84,6 @@ class ClassificationRoutine(LightningModule):
         log_plots: bool = False,
         save_in_csv: bool = False,
         csv_filename: str = "results.csv",
-        combine_val_metrics: str | None = None,
     ) -> None:
         r"""Routine for training & testing on **classification** tasks.
 
@@ -126,9 +125,6 @@ class ClassificationRoutine(LightningModule):
             csv_filename (str, optional): Name of the csv file. Defaults to
                 ``"results.csv"``. Note that this is only used if
                 :attr:`save_in_csv` is ``True``.
-            combine_val_metrics (str, optional): Combine the metrics in a single
-                metric (val/combined) given a combination function. Defaults to ``None``.
-                Example: ``"({val/cls/Acc}+(1-{val/cal/ECE}))/2"``.
 
         Warning:
             You must define :attr:`optim_recipe` if you do not use the Lightning CLI.
@@ -188,7 +184,6 @@ class ClassificationRoutine(LightningModule):
         self.format_batch_fn = format_batch_fn
         self.optim_recipe = optim_recipe
         self.is_ensemble = is_ensemble
-        self.combine_val_metrics = combine_val_metrics
 
         self.post_processing = post_processing
         if self.post_processing is not None:
@@ -592,14 +587,6 @@ class ClassificationRoutine(LightningModule):
     def on_validation_epoch_end(self) -> None:
         """Compute and log the values of the collected metrics in `validation_step`."""
         res_dict = self.val_cls_metrics.compute()
-        # Combine metrics if self.combine_metrics is defined
-        if isinstance(self.combine_val_metrics, str):
-            # Replace placeholders in self.combine_metrics with actual values from res_dict
-            expression = self.combine_val_metrics.format(
-                **{k: v.item() for k, v in res_dict.items()}
-            )
-            res_dict["val/combined"] = eval(expression)  # noqa: S307
-
         self.log_dict(res_dict, logger=True, sync_dist=True)
         # Progress bar only
         self.log(
