@@ -14,6 +14,12 @@ trainer:
       default_hp_metric: false
   callbacks:
   - class_path: torch_uncertainty.callbacks.TUClsCheckpoint
+  - class_path: torch_uncertainty.callbacks.CompoundCheckpoint
+    init_args:
+      mode: max
+      compound_metric_dict:
+        val/cls/Acc: 1.0
+        val/cal/ECE: 1.0
   - class_path: lightning.pytorch.callbacks.LearningRateMonitor
     init_args:
       logging_interval: step
