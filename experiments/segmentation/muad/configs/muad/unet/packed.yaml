@@ -23,8 +23,8 @@ model:
       in_channels: 3
       num_classes: 15
       bilinear: true
-      alpha: 2
-      num_estimators: 4
+      alpha: 1
+      num_estimators: 1
       gamma: 1
   num_classes: 15
   loss:
@@ -52,7 +52,7 @@ model:
   format_batch_fn:
     class_path: torch_uncertainty.transforms.RepeatTarget
     init_args:
-      num_repeats: 4
+      num_repeats: 1
 data:
   root: ./data
   batch_size: 32
