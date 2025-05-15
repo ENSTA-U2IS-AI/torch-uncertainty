@@ -2,21 +2,11 @@ from typing import Literal
 
 from torch import nn
 
-from torch_uncertainty.models.segmentation.deeplab import (
-    deep_lab_v3_resnet50,
-    deep_lab_v3_resnet101,
-)
+from torch_uncertainty.models.segmentation import deep_lab_v3_resnet
 from torch_uncertainty.routines.segmentation import SegmentationRoutine
 
 
 class DeepLabBaseline(SegmentationRoutine):
-    single = ["std"]
-    versions = {
-        "std": [
-            deep_lab_v3_resnet50,
-            deep_lab_v3_resnet101,
-        ]
-    }
     archs = [50, 101]
 
     def __init__(
@@ -35,6 +25,7 @@ class DeepLabBaseline(SegmentationRoutine):
     ) -> None:
         params = {
             "num_classes": num_classes,
+            "arch": arch,
             "style": style,
             "output_stride": output_stride,
             "separable": separable,
@@ -43,10 +34,7 @@ class DeepLabBaseline(SegmentationRoutine):
 
         format_batch_fn = nn.Identity()
 
-        if version not in self.versions:
-            raise ValueError(f"Unknown version {version}")
-
-        model = self.versions[version][self.archs.index(arch)](**params)
+        model = deep_lab_v3_resnet(**params)
         super().__init__(
             num_classes=num_classes,
             model=model,
