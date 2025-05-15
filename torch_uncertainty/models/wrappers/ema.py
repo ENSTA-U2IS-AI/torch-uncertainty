@@ -14,6 +14,9 @@ class EMA(nn.Module):
         The :attr:`model` given as argument is used to compute the gradient during the training.
         The EMA model is regularly updated with the inner-model and used at evaluation time.
 
+        The :attr:`model` given as argument is used to compute the gradient during the training.
+        The EMA model is regularly updated with the inner-model and used at evaluation time.
+
         Args:
             model (nn.Module): The model to train and ensemble.
             momentum (float): The momentum of the moving average.

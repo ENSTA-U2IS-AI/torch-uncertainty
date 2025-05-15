@@ -1,6 +1,6 @@
 # ruff: noqa: E402, E703, D212, D415
 """
-Conformal Prediction on CIFAR-10 with TorchUncertainty.
+Conformal Prediction on CIFAR-10 with TorchUncertainty
 ======================================================
 
 *This notebook follows the TorchUncertainty tutorial style and demonstrates how to calibrate a pretrained ResNet model using Conformal Prediction on CIFAR-10.*
