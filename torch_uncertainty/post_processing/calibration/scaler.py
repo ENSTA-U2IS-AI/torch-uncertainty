@@ -4,6 +4,7 @@ from typing import Literal
 
 import torch
 from torch import Tensor, nn
+from torch.nn import functional as F
 from torch.optim import LBFGS
 from torch.utils.data import DataLoader
 from tqdm import tqdm
@@ -82,9 +83,8 @@ class Scaler(PostProcessing):
         if all_logits.dim() == 2 and all_logits.shape[1] == 1:
             all_logits = all_logits.squeeze(1)
         if all_logits.dim() == 1:
-            confidence = torch.log(all_logits.sigmoid())
-            all_labels = all_labels.to(dtype=torch.float32)
-            all_logits = torch.stack([torch.log(1 - confidence), torch.log(confidence)], dim=1)
+            all_labels = all_labels.to(dtype=torch.long)
+            all_logits = torch.stack([F.logsigmoid(-all_logits), F.logsigmoid(all_logits)], dim=1)
 
         optimizer = LBFGS(self.temperature, lr=self.lr, max_iter=self.max_iter)
 
