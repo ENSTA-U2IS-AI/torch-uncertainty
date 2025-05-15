@@ -31,7 +31,7 @@ class TemperatureScaler(Scaler):
         super().__init__(model=model, lr=lr, max_iter=max_iter, device=device)
 
         if init_val <= 0:
-            raise ValueError("Initial temperature value must be positive.")
+            raise ValueError(f"Initial temperature value must be positive. Got {init_val}")
 
         self.set_temperature(init_val)
 
@@ -42,7 +42,7 @@ class TemperatureScaler(Scaler):
             val (float): Temperature value.
         """
         if val <= 0:
-            raise ValueError("Temperature value must be positive.")
+            raise ValueError(f"Temperature value must be positive. Got {val}")
 
         self.temp = nn.Parameter(torch.ones(1, device=self.device) * val, requires_grad=True)
 

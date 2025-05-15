@@ -49,7 +49,7 @@ class SWA(nn.Module):
                 for swa_param, param in zip(
                     self.swa_model.parameters(),
                     self.core_model.parameters(),
-                    strict=False,
+                    strict=True,
                 ):
                     swa_param.data += (param.data - swa_param.data) / (self.num_avgd_models + 1)
             self.num_avgd_models += 1

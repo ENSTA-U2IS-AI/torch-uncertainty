@@ -41,11 +41,14 @@ model:
 data:
   root: ./data
   batch_size: 128
+  num_workers: 8
 optimizer:
-  lr: 0.05
-  momentum: 0.9
-  weight_decay: 5e-4
-  nesterov: true
+  class_path: torch.optim.SGD
+  init_args:
+    lr: 0.05
+    momentum: 0.9
+    weight_decay: 5e-4
+    nesterov: true
 lr_scheduler:
   class_path: torch.optim.lr_scheduler.MultiStepLR
   init_args:

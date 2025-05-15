@@ -160,3 +160,5 @@ class TULightningCLI(LightningCLI):
             parser.link_arguments("data.eval_ood", "model.eval_ood")
         with contextlib.suppress(ValueError):
             parser.link_arguments("data.eval_shift", "model.eval_shift")
+        with contextlib.suppress(ValueError):
+            parser.link_arguments("data.num_tta", "model.num_tta")

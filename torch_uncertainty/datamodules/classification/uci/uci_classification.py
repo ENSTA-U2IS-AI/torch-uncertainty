@@ -3,7 +3,7 @@ from pathlib import Path
 from torch.utils.data import Dataset
 
 from torch_uncertainty.datamodules.abstract import TUDataModule
-from torch_uncertainty.utils import create_train_val_split
+from torch_uncertainty.datasets.utils import create_train_val_split
 
 
 class UCIClassificationDataModule(TUDataModule):

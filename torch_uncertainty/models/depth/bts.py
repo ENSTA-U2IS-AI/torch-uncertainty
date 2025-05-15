@@ -2,9 +2,9 @@ import math
 from typing import Literal
 
 import torch
+import torch.nn.functional as F
 import torchvision.models as tv_models
 from torch import Tensor, nn
-from torch.nn import functional as F
 from torchvision.models.densenet import DenseNet121_Weights, DenseNet161_Weights
 from torchvision.models.resnet import (
     ResNet50_Weights,

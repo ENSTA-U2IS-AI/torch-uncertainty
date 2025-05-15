@@ -42,7 +42,7 @@ dependencies = [
 [project.optional-dependencies]
 experiments = [
     "tensorboard",
-    "huggingface-hub",
+    "huggingface-hub>=0.31",
     "safetensors",
 ]
 image = [

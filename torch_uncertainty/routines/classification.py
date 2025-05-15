@@ -70,6 +70,7 @@ class ClassificationRoutine(LightningModule):
         num_classes: int,
         loss: nn.Module,
         is_ensemble: bool = False,
+        num_tta: int = 1,
         format_batch_fn: nn.Module | None = None,
         optim_recipe: dict | Optimizer | None = None,
         mixup_params: dict | None = None,
@@ -82,6 +83,7 @@ class ClassificationRoutine(LightningModule):
         num_bins_cal_err: int = 15,
         log_plots: bool = False,
         save_in_csv: bool = False,
+        csv_filename: str = "results.csv",
     ) -> None:
         r"""Routine for training & testing on **classification** tasks.
 
@@ -91,6 +93,8 @@ class ClassificationRoutine(LightningModule):
             loss (torch.nn.Module): Loss function to optimize the :attr:`model`.
             is_ensemble (bool, optional): Indicates whether the model is an
                 ensemble at test time or not. Defaults to ``False``.
+            num_tta (int): Number of test-time augmentations (TTA). If ``1``: no TTA.
+                Defaults to ``1``.
             format_batch_fn (torch.nn.Module, optional): Function to format the batch.
                 Defaults to :class:`torch.nn.Identity()`.
             optim_recipe (dict or torch.optim.Optimizer, optional): The optimizer and
@@ -118,6 +122,9 @@ class ClassificationRoutine(LightningModule):
                 metrics. Defaults to ``False``.
             save_in_csv (bool, optional): Save the results in csv. Defaults to
                 ``False``.
+            csv_filename (str, optional): Name of the csv file. Defaults to
+                ``"results.csv"``. Note that this is only used if
+                :attr:`save_in_csv` is ``True``.
 
         Warning:
             You must define :attr:`optim_recipe` if you do not use the Lightning CLI.
@@ -163,9 +170,11 @@ class ClassificationRoutine(LightningModule):
         self.is_conformal = is_conformal
         self.eval_shift = eval_shift
         self.eval_grouping_loss = eval_grouping_loss
+        self.num_tta = num_tta
         self.ood_criterion = get_ood_criterion(ood_criterion)
         self.log_plots = log_plots
         self.save_in_csv = save_in_csv
+        self.csv_filename = csv_filename
         self.binary_cls = num_classes == 1
         self.needs_epoch_update = isinstance(model, EPOCH_UPDATE_MODEL)
         self.needs_step_update = isinstance(model, STEP_UPDATE_MODEL)
@@ -190,6 +199,9 @@ class ClassificationRoutine(LightningModule):
 
         self.id_logit_storage = None
         self.ood_logit_storage = None
+
+        self.id_conformal_storage = None
+        self.ood_conformal_storage = None
 
     def _init_metrics(self) -> None:
         """Initialize the metrics depending on the exact task."""
@@ -395,6 +407,14 @@ class ClassificationRoutine(LightningModule):
             self.id_logit_storage = []
             self.ood_logit_storage = []
 
+        if (
+            self.eval_ood
+            and self.log_plots
+            and isinstance(self.logger, Logger)
+            and self.is_conformal
+        ):
+            self.id_conformal_storage = []
+            self.ood_conformal_storage = []
         if hasattr(self.model, "need_bn_update"):
             self.model.bn_update(self.trainer.train_dataloader, device=self.device)
 
@@ -459,6 +479,8 @@ class ClassificationRoutine(LightningModule):
             batch (tuple[Tensor, Tensor]): the validation data and their corresponding targets
         """
         inputs, targets = batch
+        # remove duplicates when doing TTA
+        targets = targets[:: self.num_tta]
         logits = self.forward(inputs, save_feats=self.eval_grouping_loss)
         logits = rearrange(logits, "(m b) c -> b m c", b=targets.size(0))
 
@@ -491,6 +513,9 @@ class ClassificationRoutine(LightningModule):
                 distribution-shifted.
         """
         inputs, targets = batch
+        # remove duplicates when doing TTA
+        targets = targets[:: self.num_tta]
+
         logits = self.forward(inputs, save_feats=self.eval_grouping_loss)
         logits = rearrange(logits, "(m b) c -> b m c", b=targets.size(0))
         probs_per_est = torch.sigmoid(logits) if self.binary_cls else F.softmax(logits, dim=-1)
@@ -541,6 +566,9 @@ class ClassificationRoutine(LightningModule):
             if self.id_logit_storage is not None:
                 self.id_logit_storage.append(logits.detach().cpu())
 
+            if self.id_conformal_storage is not None:
+                self.id_conformal_storage.append(confs_conformal.detach().cpu())
+
             if self.post_processing is not None:
                 pp_logits = self.post_processing(inputs)
                 if not isinstance(self.post_processing, LaplaceApprox):
@@ -564,6 +592,9 @@ class ClassificationRoutine(LightningModule):
             if self.ood_logit_storage is not None:
                 self.ood_logit_storage.append(logits.detach().cpu())
 
+            if self.ood_conformal_storage is not None:
+                self.ood_conformal_storage.append(confs_conformal.detach().cpu())
+
         if self.eval_shift and dataloader_idx == (2 if self.eval_ood else 1):
             self.test_shift_metrics.update(probs, targets)
             if self.is_ensemble:
@@ -573,6 +604,7 @@ class ClassificationRoutine(LightningModule):
         """Compute and log the values of the collected metrics in `validation_step`."""
         res_dict = self.val_cls_metrics.compute()
         self.log_dict(res_dict, logger=True, sync_dist=True)
+        # Progress bar only
         self.log(
             "Acc%",
             res_dict["val/cls/Acc"] * 100,
@@ -664,6 +696,10 @@ class ClassificationRoutine(LightningModule):
                 id_logits = torch.cat(self.id_logit_storage, dim=0)
                 ood_logits = torch.cat(self.ood_logit_storage, dim=0)
 
+                if self.is_conformal:
+                    id_conformals = torch.cat(self.id_conformal_storage, dim=0)
+                    ood_conformals = torch.cat(self.ood_conformal_storage, dim=0)
+
                 id_probs = F.softmax(id_logits, dim=-1)
                 ood_probs = F.softmax(ood_logits, dim=-1)
 
@@ -675,6 +711,15 @@ class ClassificationRoutine(LightningModule):
                     20,
                     "Histogram of the logits",
                 )[0]
+                if self.is_conformal:
+                    conf_fig = plot_hist(
+                        [
+                            id_conformals,
+                            ood_conformals,
+                        ],
+                        20,
+                        "Histogram of the confidence set of conformal",
+                    )[0]
                 probs_fig = plot_hist(
                     [
                         id_probs.mean(1).max(-1).values,
@@ -685,6 +730,8 @@ class ClassificationRoutine(LightningModule):
                 )[0]
                 self.logger.experiment.add_figure("Logit Histogram", logits_fig)
                 self.logger.experiment.add_figure("Likelihood Histogram", probs_fig)
+                if self.is_conformal:
+                    self.logger.experiment.add_figure("Conformal Histogram", conf_fig)
 
         if self.save_in_csv:
             self.save_results_to_csv(result_dict)
@@ -697,7 +744,7 @@ class ClassificationRoutine(LightningModule):
         """
         if self.logger is not None:
             csv_writer(
-                Path(self.logger.log_dir) / "results.csv",
+                Path(self.logger.log_dir) / self.csv_filename,
                 results,
             )
 
@@ -734,7 +781,7 @@ def _classification_routine_checks(
 
     if is_ensemble and eval_grouping_loss:
         raise NotImplementedError(
-            "Groupng loss for ensembles is not yet implemented. Raise an issue if needed."
+            "Grouping loss for ensembles is not yet implemented. Raise an issue if needed."
         )
 
     if num_classes < 1:

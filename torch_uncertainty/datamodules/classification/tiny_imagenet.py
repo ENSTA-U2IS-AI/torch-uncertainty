@@ -17,8 +17,8 @@ from torch_uncertainty.datasets.classification import (
     TinyImageNet,
     TinyImageNetC,
 )
+from torch_uncertainty.datasets.utils import create_train_val_split
 from torch_uncertainty.utils import (
-    create_train_val_split,
     interpolation_modes_from_str,
 )
 
@@ -39,6 +39,7 @@ class TinyImageNetDataModule(TUDataModule):
         eval_shift: bool = False,
         shift_severity: int = 1,
         val_split: float | None = None,
+        num_tta: int = 1,
         postprocess_set: Literal["val", "test"] = "val",
         train_transform: nn.Module | None = None,
         test_transform: nn.Module | None = None,
@@ -62,6 +63,7 @@ class TinyImageNetDataModule(TUDataModule):
                 and test). Set to batch_size if None. Defaults to None.
             eval_ood (bool): Whether to evaluate out-of-distribution performance. Defaults to ``False``.
             eval_shift (bool): Whether to evaluate on shifted data. Defaults to ``False``.
+            num_tta (int): Number of test-time augmentations (TTA). Defaults to ``1`` (no TTA).
             shift_severity (int): Severity of the shift. Defaults to ``1``.
             val_split (float or Path): Share of samples to use for validation
                 or path to a yaml file containing a list of validation images
@@ -89,6 +91,7 @@ class TinyImageNetDataModule(TUDataModule):
             batch_size=batch_size,
             eval_batch_size=eval_batch_size,
             val_split=val_split,
+            num_tta=num_tta,
             postprocess_set=postprocess_set,
             num_workers=num_workers,
             pin_memory=pin_memory,
@@ -149,7 +152,9 @@ class TinyImageNetDataModule(TUDataModule):
                 ]
             )
 
-        if test_transform is not None:
+        if num_tta != 1:
+            self.test_transform = train_transform
+        elif test_transform is not None:
             self.test_transform = test_transform
         else:
             self.test_transform = v2.Compose(
@@ -228,22 +233,6 @@ class TinyImageNetDataModule(TUDataModule):
                 transform=self.test_transform,
             )
 
-    def train_dataloader(self) -> DataLoader:
-        r"""Get the training dataloader for TinyImageNet.
-
-        Return:
-            DataLoader: TinyImageNet training dataloader.
-        """
-        return self._data_loader(self.train, training=True, shuffle=True)
-
-    def val_dataloader(self) -> DataLoader:
-        r"""Get the validation dataloader for TinyImageNet.
-
-        Return:
-            DataLoader: TinyImageNet validation dataloader.
-        """
-        return self._data_loader(self.test, training=False)
-
     def test_dataloader(self) -> list[DataLoader]:
         r"""Get test dataloaders for TinyImageNet.
 
@@ -251,11 +240,13 @@ class TinyImageNetDataModule(TUDataModule):
             list[DataLoader]: test set for in distribution data, OOD data, and/or
             TinyImageNetC data.
         """
-        dataloader = [self._data_loader(self.test, training=False)]
+        dataloader = [self._data_loader(self.get_test_set(), training=False, shuffle=False)]
         if self.eval_ood:
-            dataloader.append(self._data_loader(self.ood, training=False))
+            dataloader.append(self._data_loader(self.get_ood_set(), training=False, shuffle=False))
         if self.eval_shift:
-            dataloader.append(self._data_loader(self.shift, training=False))
+            dataloader.append(
+                self._data_loader(self.get_shift_set(), training=False, shuffle=False)
+            )
         return dataloader
 
     def _get_train_data(self) -> ArrayLike:

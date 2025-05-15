@@ -97,8 +97,7 @@ class TinyImageNet(Dataset):
 
         if self.split == "train":
             train_path = self.root / "train"
-            train_nids = train_path.iterdir()
-            for nid in train_nids:
+            for nid in Path(train_path).iterdir():
                 anno_path = train_path / nid / (nid + "_boxes.txt")
                 imgs_path = train_path / nid / "images"
                 label_id = self.ids.index(nid)
@@ -118,6 +117,6 @@ class TinyImageNet(Dataset):
                     paths.append((fname, label_id))
 
         else:  # self.split == "test":
-            test_path = self.root / "test"
+            test_path = Path(self.root / "test")
             paths = [test_path / x for x in test_path.iterdir()]
         return paths

@@ -10,7 +10,7 @@ trainer:
     class_path: lightning.pytorch.loggers.TensorBoardLogger
     init_args:
       save_dir: logs/lenet
-      name: bayesian
+      name: sgld
       default_hp_metric: false
   callbacks:
   - class_path: torch_uncertainty.callbacks.TUClsCheckpoint
@@ -24,37 +24,31 @@ trainer:
       check_finite: true
 model:
   model:
-    class_path: torch_uncertainty.models.classification.bayesian_lenet
+    class_path: torch_uncertainty.models.wrappers.CheckpointCollector
     init_args:
-      in_channels: 1
-      num_classes: 10
-      num_samples: 16
-      prior_sigma_1: null
-      prior_sigma_2: null
-      prior_pi: null
-      mu_init: null
-      sigma_init: null
-      activation: torch.nn.ReLU
-      norm: torch.nn.Identity
-      groups: 1
-      dropout_rate: 0.0
-  loss:
-    class_path: torch_uncertainty.losses.ELBOLoss
-    init_args:
-      kl_weight: 0.00002
-      inner_loss: torch.nn.CrossEntropyLoss
-      num_samples: 3
+      model:  
+        class_path: torch_uncertainty.models.classification.lenet
+        init_args:
+          in_channels: 1
+          num_classes: 10
+          activation: torch.nn.ReLU
+          norm: torch.nn.Identity
+          groups: 1
+          dropout_rate: 0
+      cycle_start: 15
+      cycle_length: 2
   num_classes: 10
-  is_ensemble: true
+  loss: CrossEntropyLoss
 data:
   root: ./data
   batch_size: 128
   num_workers: 8
 optimizer:
-  lr: 0.05
-  momentum: 0.9
-  weight_decay: 5e-4
-  nesterov: true
+  class_path: torch_uncertainty.optim.SGLD
+  init_args:
+    lr: 1e-2
+    noise_factor: 1e-2
+    weight_decay: 1e-5
 lr_scheduler:
   class_path: torch.optim.lr_scheduler.MultiStepLR
   init_args:

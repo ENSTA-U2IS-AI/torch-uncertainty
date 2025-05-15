@@ -51,7 +51,7 @@ class SWAG(SWA):
             <https://arxiv.org/abs/1902.02476>`_.
 
         Note:
-            Originates from https://github.com/wjmaddox/swa_gaussian.
+            Modified from https://github.com/wjmaddox/swa_gaussian.
         """
         super().__init__(model, cycle_start, cycle_length)
         _swag_checks(scale, max_num_models, var_clamp)

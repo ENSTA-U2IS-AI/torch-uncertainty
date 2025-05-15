@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Literal
 
 import torch
-from torch import nn
+from torch import Tensor, nn
 
 
 class _DeepEnsembles(nn.Module):
@@ -18,7 +18,7 @@ class _DeepEnsembles(nn.Module):
         self.num_estimators = len(models)
         self.store_on_cpu = store_on_cpu
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: Tensor) -> Tensor:
         r"""Return the logits of the ensemble.
 
         Args:
@@ -29,17 +29,18 @@ class _DeepEnsembles(nn.Module):
                 where :math:`B` is the batch size, :math:`N` is the number of
                 estimators, and :math:`C` is the number of classes.
         """
+        preds: list[Tensor] = []
         if self.store_on_cpu:
-            preds = torch.tensor([], device=x.device)
             for model in self.core_models:
                 model.to(x.device)
-                preds = torch.cat([preds, model.forward(x)], dim=0)
-                model.to("cpu")
-            return preds
-        return torch.cat([model.forward(x) for model in self.core_models], dim=0)
+                preds.append(model.forward(x))
+                model.cpu()
+        else:
+            preds = [model.forward(x) for model in self.core_models]
+        return torch.cat(preds, dim=0)
 
     def to(self, *args, **kwargs):
-        device, dtype, non_blocking, convert_to_format = torch._C._nn._parse_to(*args, **kwargs)
+        device, dtype, non_blocking = torch._C._nn._parse_to(*args, **kwargs)[:3]
 
         if self.store_on_cpu:
             device = torch.device("cpu")
@@ -58,7 +59,7 @@ class _RegDeepEnsembles(_DeepEnsembles):
         super().__init__(models=models, store_on_cpu=store_on_cpu)
         self.probabilistic = probabilistic
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor | dict[str, torch.Tensor]:
+    def forward(self, x: Tensor) -> Tensor | dict[str, Tensor]:
         r"""Return the logits of the ensemble.
 
         Args:
@@ -195,12 +196,14 @@ def deep_ensembles(
             else:
                 raise TypeError("Checkpoint paths must be strings or Path objects.")
 
-    if task in ("classification", "segmentation"):
-        return _DeepEnsembles(models=models, store_on_cpu=store_on_cpu)
-    if task in ("regression", "pixel_regression"):
-        if probabilistic is None:
-            raise ValueError("probabilistic must be specified for regression models.")
-        return _RegDeepEnsembles(
-            probabilistic=probabilistic, models=models, store_on_cpu=store_on_cpu
-        )
-    raise ValueError(f"Unknown task: {task}.")
+    match task:
+        case "classification" | "segmentation":
+            return _DeepEnsembles(models=models, store_on_cpu=store_on_cpu)
+        case "regression" | "pixel_regression":
+            if probabilistic is None:
+                raise ValueError("probabilistic must be specified for regression models.")
+            return _RegDeepEnsembles(
+                probabilistic=probabilistic, models=models, store_on_cpu=store_on_cpu
+            )
+        case _:
+            raise ValueError(f"Unknown task: {task}.")
