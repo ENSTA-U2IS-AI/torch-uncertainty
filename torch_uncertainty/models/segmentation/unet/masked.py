@@ -160,9 +160,15 @@ class _MaskedUNet(nn.Module):
         self.num_estimators = num_estimators
         self.bilinear = bilinear
 
-        self.inc = _DoubleConv(
-            in_channels, num_blocks[0], num_estimators=num_estimators, scale=scale
+        self.inc = self.conv_block = nn.Sequential(
+            nn.Conv2d(in_channels, num_blocks[0], 3, padding=1),
+            nn.BatchNorm2d(num_blocks[0]),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(num_blocks[0], num_blocks[0], 3, padding=1),
+            nn.BatchNorm2d(num_blocks[0]),
+            nn.ReLU(inplace=True),
         )
+
         self.down1 = _Down(num_blocks[0], num_blocks[1], num_estimators=num_estimators, scale=scale)
         self.down2 = _Down(num_blocks[1], num_blocks[2], num_estimators=num_estimators, scale=scale)
         self.down3 = _Down(num_blocks[2], num_blocks[3], num_estimators=num_estimators, scale=scale)
