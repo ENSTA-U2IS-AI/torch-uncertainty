@@ -167,6 +167,17 @@ class PackedDoubleConv(nn.Module):
             ),
             nn.BatchNorm2d(num_features=int(out_channels * (num_estimators if last else alpha))),
             nn.ReLU(inplace=True),
+            PackedConv2d(
+                in_channels=out_channels,
+                out_channels=out_channels,
+                kernel_size=3,
+                alpha=alpha,
+                num_estimators=num_estimators,
+                gamma=gamma,
+                padding=1,
+            ),
+            nn.BatchNorm2d(num_features=int(out_channels * (num_estimators if last else alpha))),
+            nn.ReLU(inplace=True),
         )
 
     def forward(self, x):
@@ -245,7 +256,7 @@ class PackedUp(nn.Module):
         if self.bilinear:
             x1 = F.resize(
                 x1,
-                size=[2 * x1.size()[2], 2 * x1.size()[3]],
+                size=[2 * x1.size(2), 2 * x1.size(3)],
                 interpolation=v2.InterpolationMode.BILINEAR,
             )
         else:
