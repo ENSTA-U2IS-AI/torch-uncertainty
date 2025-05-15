@@ -50,6 +50,7 @@ data:
   root: ./data
   batch_size: 10
   version: small
+  eval_ood: true
   eval_size:
   - 256
   - 512

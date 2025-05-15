@@ -29,4 +29,9 @@ from .regression import (
     SILog,
     ThresholdAccuracy,
 )
+from .segmentation import (
+    SegmentationBinaryAUROC,
+    SegmentationBinaryAveragePrecision,
+    SegmentationFPR95,
+)
 from .sparsification import AUSE

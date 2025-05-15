@@ -61,7 +61,6 @@ class MUAD(VisionDataset):
             "val": 492,
             "test_id": 551,
             "test_ood": 1668,
-            "test_id_no_shadow": 102,
             "test_id_low_adv": 605,
             "test_id_high_adv": 602,
             "test_ood_low_adv": 1552,
