@@ -1,16 +1,14 @@
-# lightning.pytorch==2.1.3
 seed_everything: false
 eval_after_fit: true
 trainer:
   accelerator: gpu
   precision: bf16-mixed
   max_epochs: 100
-  accumulate_grad_batches: 2
   logger:
     class_path: lightning.pytorch.loggers.TensorBoardLogger
     init_args:
       save_dir: logs/muad/unet
-      name: batch_ensemble
+      name: masksemble
       default_hp_metric: false
   callbacks:
   - class_path: torch_uncertainty.callbacks.TUSegCheckpoint
@@ -19,11 +17,12 @@ trainer:
       logging_interval: step
 model:
   model:
-    class_path: torch_uncertainty.models.segmentation.batched_unet
+    class_path: torch_uncertainty.models.segmentation.masked_unet
     init_args:
       in_channels: 3
       num_classes: 15
       num_estimators: 4
+      scale: 2
       bilinear: true
   num_classes: 15
   loss:
@@ -54,7 +53,7 @@ model:
       num_repeats: 4
 data:
   root: ./data
-  batch_size: 16
+  batch_size: 32
   crop_size: 256
   eval_size:
   - 512
