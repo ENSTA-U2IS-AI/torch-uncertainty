@@ -28,7 +28,7 @@ model:
           bilinear: true
       num_estimators: 4
       task: segmentation
-      ckpt_path: ./logs/muad/unet/deep_ensembles/version_0/checkpoints
+      ckpt_paths: ./logs/muad/unet/deep_ensembles/version_0/checkpoints
   num_classes: 15
   loss:
     class_path: torch.nn.CrossEntropyLoss
