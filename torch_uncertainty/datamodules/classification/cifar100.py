@@ -167,7 +167,7 @@ class CIFAR100DataModule(TUDataModule):
         elif test_transform is not None:
             self.test_transform = test_transform
         else:
-        self.test_transform = v2.Compose(
+            self.test_transform = v2.Compose(
             [
                 v2.ToImage(),
                 v2.Resize(32),
