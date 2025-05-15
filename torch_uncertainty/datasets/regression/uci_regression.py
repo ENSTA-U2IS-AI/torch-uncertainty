@@ -230,7 +230,7 @@ class UCIRegression(Dataset):
                 path / "housing.data",
                 names=boston_column_names,
                 header=None,
-                sep="\s+",
+                sep=r"\s+",
             )
         elif self.dataset_name == "concrete":
             array = pd.read_excel(path / "Concrete_Data.xls").to_numpy()
@@ -258,7 +258,7 @@ class UCIRegression(Dataset):
         elif self.dataset_name == "yacht":
             array = pd.read_csv(
                 path / "yacht_hydrodynamics.data",
-                sep="\s+",
+                sep=r"\s+",
                 header=None,
             ).to_numpy()
         else:
