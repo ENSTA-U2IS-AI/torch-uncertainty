@@ -51,7 +51,7 @@ class Scaler(PostProcessing):
 
         if eps <= 0:
             raise ValueError(f"Eps must be strictly positive. Got {eps}.")
-        self.eps = int(eps)
+        self.eps = eps
 
     def fit(
         self,

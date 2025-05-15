@@ -13,6 +13,7 @@ class TemperatureScaler(Scaler):
         init_val: float = 1,
         lr: float = 0.1,
         max_iter: int = 100,
+        eps: float = 1e-8,
         device: Literal["cpu", "cuda"] | torch.device | None = None,
     ) -> None:
         """Temperature scaling post-processing for calibrated probabilities.
@@ -24,6 +25,7 @@ class TemperatureScaler(Scaler):
             lr (float, optional): Learning rate for the optimizer. Defaults to 0.1.
             max_iter (int, optional): Maximum number of iterations for the
                 optimizer. Defaults to 100.
+            eps (float): Small value for stability. Defaults to ``1e-8``.
             device (Optional[Literal["cpu", "cuda"]], optional): Device to use
                 for optimization. Defaults to None.
 
@@ -31,7 +33,7 @@ class TemperatureScaler(Scaler):
             Guo, C., Pleiss, G., Sun, Y., & Weinberger, K. Q. On calibration
             of modern neural networks. In ICML 2017.
         """
-        super().__init__(model=model, lr=lr, max_iter=max_iter, device=device)
+        super().__init__(model=model, lr=lr, max_iter=max_iter, eps=eps, device=device)
 
         if init_val <= 0:
             raise ValueError(f"Initial temperature value must be positive. Got {init_val}")
