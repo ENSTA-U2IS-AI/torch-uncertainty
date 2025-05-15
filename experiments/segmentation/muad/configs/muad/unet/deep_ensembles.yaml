@@ -9,7 +9,7 @@ trainer:
     class_path: lightning.pytorch.loggers.TensorBoardLogger
     init_args:
       save_dir: logs/muad/unet
-      name: packed
+      name: deep_ensembles
       default_hp_metric: false
   callbacks:
   - class_path: torch_uncertainty.callbacks.TUSegCheckpoint
@@ -18,14 +18,17 @@ trainer:
       logging_interval: step
 model:
   model:
-    class_path: torch_uncertainty.models.segmentation.packed_unet
+    class_path: torch_uncertainty.models.deep_ensembles
     init_args:
-      in_channels: 3
-      num_classes: 15
-      bilinear: true
-      alpha: 2
+      models:
+        class_path: torch_uncertainty.models.segmentation.unet
+        init_args:
+          in_channels: 3
+          num_classes: 15
+          bilinear: true
       num_estimators: 4
-      gamma: 1
+      task: segmentation
+      ckpt_path: ./logs/muad/unet/deep_ensembles/version_0/checkpoints
   num_classes: 15
   loss:
     class_path: torch.nn.CrossEntropyLoss
