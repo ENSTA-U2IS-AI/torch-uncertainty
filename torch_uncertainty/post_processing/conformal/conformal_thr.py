@@ -36,31 +36,27 @@ class ConformalClsTHR(Conformal):
             - `Least ambiguous set-valued classifiers with bounded error levels, Sadinle, M. et al., (2016) <https://arxiv.org/abs/1609.00451>`_.
         """
         super().__init__(model=model)
-        self.device = device or "cpu"
+        self.alpha = alpha
         self.temperature_scaler = TemperatureScaler(
             model=model,
             init_val=init_val,
             lr=lr,
             max_iter=max_iter,
-            device=self.device,
+            device=device,
         )
+        self.device = device or "cpu"
         self.q_hat = None  # Will be set after calibration
-        self.alpha = alpha
 
     def set_model(self, model: nn.Module) -> None:
-        self.model = model
+        self.model = model.eval()
         self.temperature_scaler.set_model(model=model)
 
     def model_forward(self, inputs: Tensor) -> Tensor:
         """Apply temperature scaling."""
-        return self.temperature_scaler(inputs)
-
-    def fit_temperature(self, dataloader: DataLoader) -> None:
-        """Fit the scaler on the calibration dataset."""
-        self.temperature_scaler.fit(dataloader=dataloader)
+        return self.temperature_scaler(inputs.to(self.device))
 
     def fit(self, dataloader: DataLoader) -> None:
-        self.fit_temperature(dataloader=dataloader)
+        self.temperature_scaler.fit(dataloader=dataloader)
         logits_list = []
         labels_list = []
         with torch.no_grad():
@@ -75,21 +71,19 @@ class ConformalClsTHR(Conformal):
             probs = torch.softmax(scaled_logits, dim=1)
             true_class_probs = probs.gather(1, labels.unsqueeze(1)).squeeze(1)
             scores = 1.0 - true_class_probs  # scores are (1 - true prob)
-            # Quantile
+
             self.q_hat = torch.quantile(scores, 1.0 - self.alpha)
 
     @torch.no_grad()
-    def conformal(self, inputs: Tensor) -> tuple[Tensor, Tensor]:
+    def conformal(self, inputs: Tensor) -> Tensor:
         """Perform conformal prediction on the test set."""
         self.model.eval()
-        inputs = inputs.to(self.device)
-        scaled_logits = self.model_forward(inputs)
-        probs = torch.softmax(scaled_logits, dim=1)
-        pred_set = probs >= (1.0 - self.quantile)
+        probs = self.model_forward(inputs.to(self.device)).softmax(-1)
+        pred_set = probs >= 1.0 - self.quantile
         top1 = torch.argmax(probs, dim=1, keepdim=True)
         pred_set.scatter_(1, top1, True)  # Always include top-1 class
-        confidence_score = pred_set.sum(dim=1).float() / probs.shape[1]
-        return (pred_set, confidence_score)
+        confidence_score = pred_set.sum(dim=1, keepdim=True).float() / probs.shape[1]
+        return pred_set.float() * confidence_score
 
     @torch.no_grad()
     def conformal_visu(self, inputs: Tensor) -> tuple[Tensor, Tensor]:
@@ -107,7 +101,7 @@ class ConformalClsTHR(Conformal):
     def quantile(self) -> Tensor:
         if self.q_hat is None:
             raise ValueError("Quantile q_hat is not set. Run `.fit()` first.")
-        return self.q_hat.detach()
+        return self.q_hat
 
     @property
     def temperature(self) -> Tensor:

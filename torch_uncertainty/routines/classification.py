@@ -248,7 +248,13 @@ class ClassificationRoutine(LightningModule):
 
         self.test_cls_metrics = cls_metrics.clone(prefix="test/")
 
-        if self.post_processing is not None:
+        if self.post_processing is not None and isinstance(self.post_processing, Conformal):
+            self.post_cls_metrics = MetricCollection(
+                {
+                    "test/cls/CoverageRate": CoverageRate(),
+                },
+            )
+        elif self.post_processing is not None:
             self.post_cls_metrics = cls_metrics.clone(prefix="test/post/")
 
         self.test_id_entropy = Entropy()
@@ -264,13 +270,6 @@ class ClassificationRoutine(LightningModule):
             )
             self.test_ood_metrics = ood_metrics.clone(prefix="ood/")
             self.test_ood_entropy = Entropy()
-        if self.is_conformal:
-            cfm_metrics = MetricCollection(
-                {
-                    "CovAcc": CoverageRate(),
-                },
-            )
-            self.test_cfm_metrics = cfm_metrics.clone(prefix="test/cls/")
 
         if self.eval_shift:
             self.test_shift_metrics = cls_metrics.clone(prefix="shift/")
@@ -520,21 +519,12 @@ class ClassificationRoutine(LightningModule):
         logits = rearrange(logits, "(m b) c -> b m c", b=targets.size(0))
         probs_per_est = torch.sigmoid(logits) if self.binary_cls else F.softmax(logits, dim=-1)
         probs = probs_per_est.mean(dim=1)
-        if self.is_conformal:
-            if isinstance(self.post_processing, Conformal):
-                pred_conformal, confs_conformal = self.post_processing.conformal(inputs)
-            else:
-                pred_conformal, confs_conformal = self.model.conformal(inputs)
-
-        if self.ood_criterion.input_type == OODCriterionInputType.LOGIT and not self.is_conformal:
+        if self.ood_criterion.input_type == OODCriterionInputType.LOGIT:
             ood_scores = self.ood_criterion(logits)
-        elif self.ood_criterion.input_type == OODCriterionInputType.PROB and not self.is_conformal:
+        elif self.ood_criterion.input_type == OODCriterionInputType.PROB:
             ood_scores = self.ood_criterion(probs)
-        else:
-            if not self.is_conformal:
-                ood_scores = self.ood_criterion(probs_per_est)
-            else:
-                ood_scores = confs_conformal
+        elif self.ood_criterion.input_type == OODCriterionInputType.ESTIMATOR_PROB:
+            ood_scores = self.ood_criterion(probs_per_est)
 
         if dataloader_idx == 0:
             # squeeze if binary classification only for binary metrics
@@ -560,18 +550,12 @@ class ClassificationRoutine(LightningModule):
             if self.eval_ood:
                 self.test_ood_metrics.update(ood_scores, torch.zeros_like(targets))
 
-            if self.is_conformal:
-                self.test_cfm_metrics.update(pred_conformal, targets)
-
             if self.id_logit_storage is not None:
                 self.id_logit_storage.append(logits.detach().cpu())
 
-            if self.id_conformal_storage is not None:
-                self.id_conformal_storage.append(confs_conformal.detach().cpu())
-
             if self.post_processing is not None:
                 pp_logits = self.post_processing(inputs)
-                if not isinstance(self.post_processing, LaplaceApprox):
+                if not isinstance(self.post_processing, LaplaceApprox | Conformal):
                     pp_probs = F.softmax(pp_logits, dim=-1)
                 else:
                     pp_probs = pp_logits
@@ -591,9 +575,6 @@ class ClassificationRoutine(LightningModule):
 
             if self.ood_logit_storage is not None:
                 self.ood_logit_storage.append(logits.detach().cpu())
-
-            if self.ood_conformal_storage is not None:
-                self.ood_conformal_storage.append(confs_conformal.detach().cpu())
 
         if self.eval_shift and dataloader_idx == (2 if self.eval_ood else 1):
             self.test_shift_metrics.update(probs, targets)
@@ -654,11 +635,6 @@ class ClassificationRoutine(LightningModule):
                 tmp_metrics = self.test_ood_ens_metrics.compute()
                 self.log_dict(tmp_metrics, sync_dist=True)
                 result_dict.update(tmp_metrics)
-
-        if self.is_conformal:
-            tmp_metrics = self.test_cfm_metrics.compute()
-            self.log_dict(tmp_metrics, sync_dist=True)
-            result_dict.update(tmp_metrics)
 
         if self.eval_shift:
             tmp_metrics = self.test_shift_metrics.compute()

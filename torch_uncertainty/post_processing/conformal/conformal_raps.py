@@ -1,4 +1,5 @@
 import logging
+from functools import partial
 from typing import Literal
 
 import torch
@@ -36,16 +37,16 @@ class ConformalClsRAPS(Conformal):
             - TODO:
         """
         super().__init__(model=model)
+        self.alpha = alpha
         self.score_type = score_type
         self.randomized = randomized
         self.penalty = penalty
         self.k_reg = k_reg
-        self.device = device or "cpu"
-        self.alpha = alpha
         self.q_hat = None
+        self.device = device or "cpu"
 
         if self.score_type == "softmax":
-            self.transform = lambda x: torch.softmax(x, dim=-1)
+            self.transform = partial(torch.softmax, dim=-1)
         else:
             raise NotImplementedError("Only softmax is supported for now.")
 
@@ -118,20 +119,19 @@ class ConformalClsRAPS(Conformal):
         self.q_hat = torch.quantile(raps_scores, 1 - self.alpha)
 
     @torch.no_grad()
-    def conformal(self, inputs: Tensor) -> tuple[Tensor, Tensor]:
+    def conformal(self, inputs: Tensor) -> Tensor:
         """Compute the prediction set for each input."""
         self.model.eval()
-        inputs = inputs.to(self.device)
-        probs = self.model_forward(inputs)
+        probs = self.model_forward(inputs.to(self.device))
         all_scores = self._calculate_all_labels(probs)
         pred_set = all_scores <= self.quantile
-        set_size = pred_set.sum(dim=1).float() / probs.shape[1]
-        return pred_set, set_size
+        confidence_score = pred_set.sum(dim=1, keepdim=True).float() / probs.shape[1]
+        return pred_set.float() * confidence_score
 
     @torch.no_grad()
     def conformal_visu(self, inputs: Tensor) -> tuple[Tensor, Tensor]:
         """Perform conformal prediction on the test set and return the classical
-        confidence for visualiation.
+        confidence for visualisation.
         """
         self.model.eval()
         inputs = inputs.to(self.device)

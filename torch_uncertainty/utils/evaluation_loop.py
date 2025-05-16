@@ -21,6 +21,7 @@ PERCENTAGE_METRICS = [
     "AURC",
     "AUGRC",
     "mAcc",
+    "ECE",
 ]
 
 

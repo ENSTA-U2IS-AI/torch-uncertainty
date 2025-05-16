@@ -75,7 +75,7 @@ class CoverageRate(Metric):
         covered = preds[torch.arange(batch_size), target]  # (B,)
 
         if self.average == "micro":
-            self.correct += covered.sum()
+            self.correct += covered.bool().sum()
             self.total += batch_size
 
         else:
