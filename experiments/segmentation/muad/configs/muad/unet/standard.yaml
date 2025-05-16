@@ -50,6 +50,7 @@ data:
   root: ./data
   batch_size: 32
   crop_size: 256
+  eval_ood: true
   eval_size:
   - 512
   - 1024
