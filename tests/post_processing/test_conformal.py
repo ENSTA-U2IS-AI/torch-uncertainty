@@ -39,16 +39,15 @@ class TestConformalClsAPS:
         conformal = ConformalClsAPS(alpha=0.1, model=nn.Identity(), randomized=False)
         conformal.fit(dl)
         out = conformal.conformal(inputs)
-        assert out[0].shape == (10, 3)
-        assert (out[0] == repeat(torch.tensor([True, True, False]), "c -> b c", b=10)).all()
-        assert out[1].shape == (10,)
-        assert (out[1] == torch.tensor([2.0] * 10) / 3).all()
+        assert out.shape == (10, 3)
+        assert (
+            out == repeat(torch.tensor([True, True, False]), "c -> b c", b=10).float() * 2 / 3
+        ).all()
 
         conformal = ConformalClsAPS(alpha=0.1, model=nn.Identity(), randomized=True)
         conformal.fit(dl)
         out = conformal.conformal(inputs)
-        assert out[0].shape == (10, 3)
-        assert out[1].shape == (10,)
+        assert out.shape == (10, 3)
 
     def test_failures(self):
         with pytest.raises(NotImplementedError):
@@ -73,16 +72,15 @@ class TestConformalClsRAPS:
         conformal = ConformalClsRAPS(alpha=0.1, model=nn.Identity(), randomized=False)
         conformal.fit(dl)
         out = conformal.conformal(inputs)
-        assert out[0].shape == (10, 3)
-        assert (out[0] == repeat(torch.tensor([True, True, False]), "c -> b c", b=10)).all()
-        assert out[1].shape == (10,)
-        assert (out[1] == torch.tensor([2.0] * 10) / 3).all()
+        assert out.shape == (10, 3)
+        assert (
+            out == repeat(torch.tensor([True, True, False]), "c -> b c", b=10).float() * 2 / 3
+        ).all()
 
         conformal = ConformalClsRAPS(alpha=0.1, model=nn.Identity(), randomized=True)
         conformal.fit(dl)
         out = conformal.conformal(inputs)
-        assert out[0].shape == (10, 3)
-        assert out[1].shape == (10,)
+        assert out.shape == (10, 3)
 
     def test_failures(self):
         with pytest.raises(NotImplementedError):
@@ -115,10 +113,10 @@ class TestConformalClsTHR:
         conformal = ConformalClsTHR(alpha=0.1, model=nn.Identity(), init_val=2, lr=1, max_iter=10)
         conformal.fit(dl)
         out = conformal.conformal(inputs)
-        assert out[0].shape == (10, 3)
-        assert (out[0] == repeat(torch.tensor([True, True, False]), "c -> b c", b=10)).all()
-        assert out[1].shape == (10,)
-        assert (out[1] == torch.tensor([2.0] * 10) / 3).all()
+        assert out.shape == (10, 3)
+        assert (
+            out == repeat(torch.tensor([True, True, False]), "c -> b c", b=10).float() * 2 / 3
+        ).all()
 
     def test_failures(self):
         with pytest.raises(ValueError):

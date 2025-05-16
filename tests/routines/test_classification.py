@@ -354,11 +354,12 @@ class TestClassification:
             loss=None,
             num_classes=3,
             is_conformal=True,
-            post_processing=ConformalClsTHR(),
+            post_processing=ConformalClsTHR(alpha=0.1),
         )
         trainer.test(routine, dm)
 
         model = ConformalClsTHR(
+            alpha=0.1,
             model=dummy_model(
                 in_channels=dm.num_channels,
                 num_classes=dm.num_classes,

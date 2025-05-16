@@ -1,4 +1,5 @@
 import logging
+from functools import partial
 from typing import Literal
 
 import torch
@@ -38,7 +39,7 @@ class ConformalClsAPS(Conformal):
         self.q_hat = None
 
         if score_type == "softmax":
-            self.transform = lambda x: torch.softmax(x, dim=-1)
+            self.transform = partial(torch.softmax, dim=-1)
         else:
             raise NotImplementedError("Only softmax is supported for now.")
 
@@ -49,7 +50,7 @@ class ConformalClsAPS(Conformal):
                 "model is None. Fitting post_processing method on the dataloader's data directly."
             )
             self.model = nn.Identity()
-        logits = self.model(inputs)
+        logits = self.model(inputs.to(self.device))
         return self.transform(logits)
 
     def _sort_sum(self, probs: Tensor):
@@ -102,15 +103,14 @@ class ConformalClsAPS(Conformal):
         self.q_hat = torch.quantile(aps_scores, 1 - self.alpha)
 
     @torch.no_grad()
-    def conformal(self, inputs: Tensor) -> tuple[Tensor, Tensor]:
+    def conformal(self, inputs: Tensor) -> Tensor:
         """Compute the prediction set for each input."""
         self.model.eval()
-        inputs = inputs.to(self.device)
-        probs = self.model_forward(inputs)
+        probs = self.model_forward(inputs.to(self.device))
         all_scores = self._calculate_all_labels(probs)
         pred_set = all_scores <= self.quantile
-        set_size = pred_set.sum(dim=1).float() / probs.shape[-1]
-        return pred_set, set_size
+        confidence_score = pred_set.sum(dim=1, keepdim=True).float() / probs.shape[1]
+        return pred_set.float() * confidence_score
 
     @torch.no_grad()
     def conformal_visu(self, inputs: Tensor) -> tuple[Tensor, Tensor]:
