@@ -4,6 +4,8 @@ from typing import Literal
 import torch
 from torch import Tensor, nn
 from torch.utils.data import DataLoader
+from einops import rearrange
+import torch.nn.functional as F
 
 from .abstract import Conformal
 
@@ -61,7 +63,10 @@ class ConformalClsRAPS(Conformal):
             )
             self.model = nn.Identity()
         logits = self.model(inputs)
-        return self.transform(logits)
+        logits = rearrange(logits, "(m b) c -> b m c", b=inputs.size(0))
+        probs_per_est = F.softmax(logits, dim=-1)
+        probs = probs_per_est.mean(dim=1)
+        return probs
 
     def _sort_sum(self, probs: Tensor):
         """Sort probabilities and compute cumulative sums."""
