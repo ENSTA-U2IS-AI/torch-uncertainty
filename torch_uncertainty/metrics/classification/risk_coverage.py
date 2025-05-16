@@ -275,7 +275,7 @@ class AUGRC(AURC):
 
 class CovAtxRisk(Metric):
     is_differentiable = False
-    higher_is_better = False
+    higher_is_better = True
     full_state_update = False
 
     scores: list[Tensor]
