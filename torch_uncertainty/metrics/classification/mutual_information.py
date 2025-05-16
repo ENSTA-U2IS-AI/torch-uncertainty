@@ -61,7 +61,6 @@ class MutualInformation(Metric):
                 "Expected argument `reduction` to be one of ",
                 f"{allowed_reduction} but got {reduction}",
             )
-
         self.reduction = reduction
 
         if self.reduction in ["mean", "sum"]:
