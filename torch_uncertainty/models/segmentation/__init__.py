@@ -1,5 +1,5 @@
 # ruff: noqa: F401
-from .deeplab import deep_lab_v3_resnet50, deep_lab_v3_resnet101
+from .deeplab import deep_lab_v3_resnet
 from .unet import (
     batched_small_unet,
     batched_unet,

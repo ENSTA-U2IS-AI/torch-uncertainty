@@ -1,5 +1,23 @@
 # ruff: noqa: F401
 from .batch import MIMOBatchFormat, RepeatTarget
+from .corruption import Brightness as BrightnessCorruption
+from .corruption import Contrast as ContrastCorruption
+from .corruption import (
+    DefocusBlur,
+    Elastic,
+    Fog,
+    Frost,
+    GaussianNoise,
+    GlassBlur,
+    ImpulseNoise,
+    JPEGCompression,
+    MotionBlur,
+    Pixelate,
+    ShotNoise,
+    Snow,
+    ZoomBlur,
+    corruption_transforms,
+)
 from .cutout import Cutout
 from .image import (
     AutoContrast,

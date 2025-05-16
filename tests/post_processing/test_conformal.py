@@ -36,15 +36,15 @@ class TestConformalClsAPS:
         calibration_set = list(zip(inputs, labels, strict=True))
         dl = DataLoader(calibration_set, batch_size=10)
 
-        conformal = ConformalClsAPS(model=nn.Identity(), randomized=False)
+        conformal = ConformalClsAPS(alpha=0.1, model=nn.Identity(), randomized=False)
         conformal.fit(dl)
         out = conformal.conformal(inputs)
         assert out[0].shape == (10, 3)
         assert (out[0] == repeat(torch.tensor([True, True, False]), "c -> b c", b=10)).all()
         assert out[1].shape == (10,)
-        assert (out[1] == torch.tensor([2.0] * 10)).all()
+        assert (out[1] == torch.tensor([2.0] * 10) / 3).all()
 
-        conformal = ConformalClsAPS(model=nn.Identity(), randomized=True)
+        conformal = ConformalClsAPS(alpha=0.1, model=nn.Identity(), randomized=True)
         conformal.fit(dl)
         out = conformal.conformal(inputs)
         assert out[0].shape == (10, 3)
@@ -52,10 +52,12 @@ class TestConformalClsAPS:
 
     def test_failures(self):
         with pytest.raises(NotImplementedError):
-            ConformalClsAPS(score_type="test")
+            _ = ConformalClsAPS(alpha=0.1, score_type="test")
 
         with pytest.raises(ValueError):
-            ConformalClsAPS().quantile  # noqa: B018
+            _ = ConformalClsAPS(
+                alpha=0.1,
+            ).quantile
 
 
 class TestConformalClsRAPS:
@@ -68,15 +70,15 @@ class TestConformalClsRAPS:
         calibration_set = list(zip(inputs, labels, strict=True))
         dl = DataLoader(calibration_set, batch_size=10)
 
-        conformal = ConformalClsRAPS(model=nn.Identity(), randomized=False)
+        conformal = ConformalClsRAPS(alpha=0.1, model=nn.Identity(), randomized=False)
         conformal.fit(dl)
         out = conformal.conformal(inputs)
         assert out[0].shape == (10, 3)
         assert (out[0] == repeat(torch.tensor([True, True, False]), "c -> b c", b=10)).all()
         assert out[1].shape == (10,)
-        assert (out[1] == torch.tensor([2.0] * 10)).all()
+        assert (out[1] == torch.tensor([2.0] * 10) / 3).all()
 
-        conformal = ConformalClsRAPS(model=nn.Identity(), randomized=True)
+        conformal = ConformalClsRAPS(alpha=0.1, model=nn.Identity(), randomized=True)
         conformal.fit(dl)
         out = conformal.conformal(inputs)
         assert out[0].shape == (10, 3)
@@ -84,17 +86,17 @@ class TestConformalClsRAPS:
 
     def test_failures(self):
         with pytest.raises(NotImplementedError):
-            ConformalClsRAPS(score_type="test")
+            ConformalClsRAPS(alpha=0.1, score_type="test")
 
         with pytest.raises(ValueError):
-            ConformalClsRAPS().quantile  # noqa: B018
+            ConformalClsRAPS(alpha=0.1).quantile  # noqa: B018
 
 
 class TestConformalClsTHR:
     """Testing the ConformalClsTHR class."""
 
     def test_main(self):
-        conformal = ConformalClsTHR(model=None, init_val=2)
+        conformal = ConformalClsTHR(alpha=0.1, model=None, init_val=2)
 
         assert conformal.temperature == 2.0
 
@@ -110,14 +112,16 @@ class TestConformalClsTHR:
         calibration_set = list(zip(inputs, labels, strict=True))
         dl = DataLoader(calibration_set, batch_size=10)
 
-        conformal = ConformalClsTHR(model=nn.Identity(), init_val=2, lr=1, max_iter=10)
+        conformal = ConformalClsTHR(alpha=0.1, model=nn.Identity(), init_val=2, lr=1, max_iter=10)
         conformal.fit(dl)
         out = conformal.conformal(inputs)
         assert out[0].shape == (10, 3)
         assert (out[0] == repeat(torch.tensor([True, True, False]), "c -> b c", b=10)).all()
         assert out[1].shape == (10,)
-        assert (out[1] == torch.tensor([2.0] * 10)).all()
+        assert (out[1] == torch.tensor([2.0] * 10) / 3).all()
 
     def test_failures(self):
         with pytest.raises(ValueError):
-            ConformalClsTHR().quantile  # noqa: B018
+            _ = ConformalClsTHR(
+                alpha=0.1,
+            ).quantile

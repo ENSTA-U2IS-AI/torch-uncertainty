@@ -163,15 +163,3 @@ class TestStandardDeepLabBaseline:
             separable=True,
         ).eval()
         _ = net(torch.rand(1, 3, 32, 32))
-
-    def test_errors(self) -> None:
-        with pytest.raises(ValueError):
-            DeepLabBaseline(
-                num_classes=10,
-                loss=nn.CrossEntropyLoss(),
-                version="test",
-                style="v3",
-                output_stride=16,
-                arch=50,
-                separable=True,
-            )

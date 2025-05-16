@@ -12,36 +12,31 @@ from .abstract import Conformal
 class ConformalClsTHR(Conformal):
     def __init__(
         self,
+        alpha: float,
         model: nn.Module | None = None,
         init_val: float = 1,
         lr: float = 0.1,
-        numclass: int = 10,
         max_iter: int = 100,
         device: Literal["cpu", "cuda"] | torch.device | None = None,
-        alpha: float = 0.1,
     ) -> None:
         r"""Conformal prediction post-processing for calibrated models.
 
         Args:
+            alpha (float): The confidence level, meaning we allow :math:`1-\alpha` error.
             model (nn.Module, optional): Model to be calibrated.
             init_val (float, optional): Initial value for the temperature.
                 Defaults to ``1``.
             lr (float, optional): Learning rate for the optimizer. Defaults to ``0.1``.
-            numclass (int):  the number of class of the model. We need it to divide conformal set size by
-            the number of classes to have an uncertainty criterion bounded by one.
             max_iter (int, optional): Maximum number of iterations for the
                 optimizer. Defaults to ``100``.
             device (Literal["cpu", "cuda"] | torch.device | None, optional): device.
                 Defaults to ``None``.
-            alpha (float): The confidence level meaning we allow :math:`1-\alpha` error. Defaults
-                to ``0.1``.
 
         Reference:
             - `Least ambiguous set-valued classifiers with bounded error levels, Sadinle, M. et al., (2016) <https://arxiv.org/abs/1609.00451>`_.
         """
         super().__init__(model=model)
         self.device = device or "cpu"
-        self.numclass = numclass
         self.temperature_scaler = TemperatureScaler(
             model=model,
             init_val=init_val,
@@ -56,7 +51,7 @@ class ConformalClsTHR(Conformal):
         self.model = model
         self.temperature_scaler.set_model(model=model)
 
-    def forward(self, inputs: Tensor) -> Tensor:
+    def model_forward(self, inputs: Tensor) -> Tensor:
         """Apply temperature scaling."""
         return self.temperature_scaler(inputs)
 
@@ -71,7 +66,7 @@ class ConformalClsTHR(Conformal):
         with torch.no_grad():
             for images, labels in dataloader:
                 images, labels = images.to(self.device), labels.to(self.device)
-                scaled_logits = self.forward(images)
+                scaled_logits = self.model_forward(images)
                 logits_list.append(scaled_logits)
                 labels_list.append(labels)
 
@@ -88,28 +83,25 @@ class ConformalClsTHR(Conformal):
         """Perform conformal prediction on the test set."""
         self.model.eval()
         inputs = inputs.to(self.device)
-        scaled_logits = self.forward(inputs)
+        scaled_logits = self.model_forward(inputs)
         probs = torch.softmax(scaled_logits, dim=1)
         pred_set = probs >= (1.0 - self.quantile)
         top1 = torch.argmax(probs, dim=1, keepdim=True)
         pred_set.scatter_(1, top1, True)  # Always include top-1 class
-
-        confidence_score = pred_set.sum(dim=1).float() / float(self.numclass)
-
+        confidence_score = pred_set.sum(dim=1).float() / probs.shape[1]
         return (pred_set, confidence_score)
 
+    @torch.no_grad()
     def conformal_visu(self, inputs: Tensor) -> tuple[Tensor, Tensor]:
         """Perform conformal prediction on the test set and return the classical
         confidence for visualiation.
         """
         self.model.eval()
-        with torch.no_grad():
-            inputs = inputs.to(self.device)
-            scaled_logits = self.forward(inputs)
-            probs = torch.softmax(scaled_logits, dim=1)
-            pred_set = probs >= (1.0 - self.quantile)
-
-            return (pred_set, probs)
+        inputs = inputs.to(self.device)
+        scaled_logits = self.model_forward(inputs)
+        probs = torch.softmax(scaled_logits, dim=1)
+        pred_set = probs >= (1.0 - self.quantile)
+        return (pred_set, probs)
 
     @property
     def quantile(self) -> Tensor:

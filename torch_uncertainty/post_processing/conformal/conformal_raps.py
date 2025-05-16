@@ -11,29 +11,26 @@ from .abstract import Conformal
 class ConformalClsRAPS(Conformal):
     def __init__(
         self,
+        alpha: float,
         model: nn.Module | None = None,
         score_type: str = "softmax",
         randomized: bool = True,
-        numclass: int = 10,
         penalty: float = 0.1,
-        kreg: int = 1,
+        k_reg: int = 1,
         device: Literal["cpu", "cuda"] | torch.device | None = None,
-        alpha: float = 0.1,
     ) -> None:
         r"""Conformal prediction with RAPS scores.
 
         Args:
-            model (nn.Module): Trained classification model.
-            score_type (str): Type of score transformation. Only 'softmax' is supported for now.
-            randomized (bool): Whether to use randomized smoothing in RAPS.
-            numclass (int):  the number of class of the model. We need it to divide conformal set size by
-            the number of classes to have an uncertainty criterion bounded by one.
-            penalty (float): Regularization weight.
-            kreg (int): Rank threshold for regularization.
+            alpha (float): The confidence level meaning we allow :math:`1-\alpha` error.
+            model (nn.Module): Trained classification model. Defaults to ``None``.
+            score_type (str): Type of score transformation. Only ``"softmax"`` is supported for now.
+                Defaults to ``"softmax"``.
+            randomized (bool): Whether to use randomized smoothing in RAPS. Defaults to ``True``.
+            penalty (float): Regularization weight. Defaults to ``0.1``.
+            k_reg (int): Rank threshold for regularization. Defaults to ``1``.
             device (Literal["cpu", "cuda"] | torch.device | None, optional): device.
                 Defaults to ``None``.
-            alpha (float): The confidence level meaning we allow :math:`1-\alpha` error. Defaults
-                to ``0.1``.
 
         Reference:
             - TODO:
@@ -42,8 +39,7 @@ class ConformalClsRAPS(Conformal):
         self.score_type = score_type
         self.randomized = randomized
         self.penalty = penalty
-        self.numclass = numclass
-        self.kreg = kreg
+        self.k_reg = k_reg
         self.device = device or "cpu"
         self.alpha = alpha
         self.q_hat = None
@@ -53,11 +49,11 @@ class ConformalClsRAPS(Conformal):
         else:
             raise NotImplementedError("Only softmax is supported for now.")
 
-    def forward(self, inputs: Tensor) -> Tensor:
+    def model_forward(self, inputs: Tensor) -> Tensor:
         """Apply the model and return transformed scores (softmax)."""
         if self.model is None or isinstance(self.model, nn.Identity):
             logging.warning(
-                "model is None. Fitting the temperature scaling on the x of the dataloader."
+                "model is None. Fitting post_processing method on the dataloader's data directly."
             )
             self.model = nn.Identity()
         logits = self.model(inputs)
@@ -86,7 +82,7 @@ class ConformalClsRAPS(Conformal):
                 raise ValueError("True label not found.")
             pos = pos_tensor[0].item()
 
-            reg = max(self.penalty * ((pos + 1) - self.kreg), 0)
+            reg = max(self.penalty * ((pos + 1) - self.k_reg), 0)
             scores[i] = cumsum[i, pos] - ordered[i, pos] * noise[i] + reg
         return scores
 
@@ -94,14 +90,11 @@ class ConformalClsRAPS(Conformal):
         """Compute RAPS scores for all labels."""
         indices, ordered, cumsum = self._sort_sum(probs)
         num_classes = probs.shape[1]
-
         noise = torch.rand_like(probs) if self.randomized else torch.zeros_like(probs)
-
         ranks = torch.arange(1, num_classes + 1, device=probs.device, dtype=torch.float)
-        penalty_vector = self.penalty * (ranks - self.kreg)
+        penalty_vector = self.penalty * (ranks - self.k_reg)
         penalty_vector = torch.clamp(penalty_vector, min=0)
         penalty_matrix = penalty_vector.unsqueeze(0).expand_as(ordered)
-
         modified_scores = cumsum - ordered * noise + penalty_matrix
 
         # Reorder scores back to original label order
@@ -117,7 +110,7 @@ class ConformalClsRAPS(Conformal):
 
         for images, labels in dataloader:
             images, labels = images.to(self.device), labels.to(self.device)
-            probs = self.forward(images)
+            probs = self.model_forward(images)
             scores = self._calculate_single_label(probs, labels)
             raps_scores.append(scores)
 
@@ -129,26 +122,23 @@ class ConformalClsRAPS(Conformal):
         """Compute the prediction set for each input."""
         self.model.eval()
         inputs = inputs.to(self.device)
-        probs = self.forward(inputs)
+        probs = self.model_forward(inputs)
         all_scores = self._calculate_all_labels(probs)
-
         pred_set = all_scores <= self.quantile
-        set_size = pred_set.sum(dim=1).float() / float(self.numclass)
-
+        set_size = pred_set.sum(dim=1).float() / probs.shape[1]
         return pred_set, set_size
 
+    @torch.no_grad()
     def conformal_visu(self, inputs: Tensor) -> tuple[Tensor, Tensor]:
         """Perform conformal prediction on the test set and return the classical
         confidence for visualiation.
         """
         self.model.eval()
-        with torch.no_grad():
-            inputs = inputs.to(self.device)
-            probs = self.forward(inputs)
-            all_scores = 1 - self._calculate_all_labels(probs)
-            pred_set = all_scores <= self.quantile
-
-            return (pred_set, all_scores)
+        inputs = inputs.to(self.device)
+        probs = self.model_forward(inputs)
+        all_scores = 1 - self._calculate_all_labels(probs)
+        pred_set = all_scores <= self.quantile
+        return (pred_set, all_scores)
 
     @property
     def quantile(self) -> Tensor:

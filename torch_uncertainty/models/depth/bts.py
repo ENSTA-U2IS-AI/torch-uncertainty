@@ -574,7 +574,8 @@ def _bts(
     return _BTS(backbone_name, max_depth, bts_size, dist_family, pretrained_backbone)
 
 
-def bts_resnet50(
+def bts_resnet(
+    arch: int,
     max_depth: float,
     bts_size: int = 512,
     dist_family: str | None = None,
@@ -583,36 +584,14 @@ def bts_resnet50(
     """BTS model with ResNet-50 backbone.
 
     Args:
+        arch (int): The number of layers of the underlying ResNet model: 50 or 101.
         max_depth (float): Maximum predicted depth.
         bts_size (int): BTS feature size. Defaults to 512.
         dist_family (str): Distribution family name. Defaults to None.
         pretrained_backbone (bool): Use a pretrained backbone. Defaults to True.
     """
     return _bts(
-        "resnet50",
-        max_depth,
-        bts_size=bts_size,
-        dist_family=dist_family,
-        pretrained_backbone=pretrained_backbone,
-    )
-
-
-def bts_resnet101(
-    max_depth: float,
-    bts_size: int = 512,
-    dist_family: str | None = None,
-    pretrained_backbone: bool = True,
-) -> _BTS:
-    """BTS model with ResNet-101 backbone.
-
-    Args:
-        max_depth (float): Maximum predicted depth.
-        bts_size (int): BTS feature size. Defaults to 512.
-        dist_family (str): Distribution family name. Defaults to None.
-        pretrained_backbone (bool): Use a pretrained backbone. Defaults to True.
-    """
-    return _bts(
-        "resnet101",
+        f"resnet{arch}",
         max_depth,
         bts_size=bts_size,
         dist_family=dist_family,
