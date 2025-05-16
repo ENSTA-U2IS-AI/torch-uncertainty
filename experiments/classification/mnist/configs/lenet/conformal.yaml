@@ -10,7 +10,7 @@ trainer:
     class_path: lightning.pytorch.loggers.TensorBoardLogger
     init_args:
       save_dir: logs/lenet
-      name: standard
+      name: conformal
       default_hp_metric: false
   callbacks:
     - class_path: torch_uncertainty.callbacks.TUClsCheckpoint
