@@ -147,7 +147,7 @@ class MUADDataModule(TUDataModule):
 
         # FIXME: should be the same split names (update huggingface dataset)
         self.test_split = "test" if version == "small" else "test_id"
-        self.ood_split = "ood" if version == "small" else "ood_id"
+        self.ood_split = "ood" if version == "small" else "test_ood"
 
         if train_transform is not None:
             self.train_transform = train_transform
