@@ -1,4 +1,5 @@
 import torch
+from einops import repeat
 from torch import Tensor, nn
 from torch.nn.modules.dropout import _DropoutNd
 
@@ -83,7 +84,7 @@ class MCDropout(nn.Module):
         if self.training:
             return self.core_model(x)
         if self.on_batch:
-            x = x.repeat(self.num_estimators, 1, 1, 1)
+            x = repeat(x, "b ... -> (m b) ...", m=self.num_estimators)
             return self.core_model(x)
         # Else, for loop
         return torch.cat([self.core_model(x) for _ in range(self.num_estimators)], dim=0)
