@@ -4,7 +4,7 @@ trainer:
   accelerator: gpu
   precision: bf16-mixed
   max_epochs: 100
-  accumulate_grad_batches: 2
+  accumulate_grad_batches: 4
   logger:
     class_path: lightning.pytorch.loggers.TensorBoardLogger
     init_args:
@@ -54,8 +54,9 @@ model:
       num_repeats: 4
 data:
   root: ./data
-  batch_size: 16
+  batch_size: 8
   crop_size: 256
+  eval_ood: true
   eval_size:
   - 512
   - 1024

@@ -9,7 +9,7 @@ trainer:
     class_path: lightning.pytorch.loggers.TensorBoardLogger
     init_args:
       save_dir: logs/muad/unet
-      name: standard
+      name: mc_dropout
       default_hp_metric: false
   callbacks:
   - class_path: torch_uncertainty.callbacks.TUSegCheckpoint
@@ -26,8 +26,9 @@ model:
           in_channels: 3
           num_classes: 15
           bilinear: true
-          dropout_rate: 0.5
-      num_estimators: 20
+          dropout_rate: 0.1
+      num_estimators: 10
+      on_batch: false
   num_classes: 15
   loss:
     class_path: torch.nn.CrossEntropyLoss

@@ -23,6 +23,7 @@ model:
       in_channels: 3
       num_classes: 15
       bilinear: true
+      dropout_rate: 0.5
   num_classes: 15
   loss:
     class_path: torch.nn.CrossEntropyLoss
