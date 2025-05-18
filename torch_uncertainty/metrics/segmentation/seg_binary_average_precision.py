@@ -18,6 +18,9 @@ class SegmentationBinaryAveragePrecision(Metric):
         validate_args: bool = True,
         **kwargs: Any,
     ):
+        """SegmentationBinaryAveragePrecision computes the Average Precision (AP) for binary segmentation tasks.
+        It aggregates the mean AP across batches and computes the average AP over all batches processed.
+        """
         super().__init__(**kwargs)
         self.aupr_metric = BinaryAveragePrecision(
             thresholds=thresholds, ignore_index=ignore_index, validate_args=validate_args, **kwargs

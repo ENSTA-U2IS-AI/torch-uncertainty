@@ -75,7 +75,7 @@ class SegmentationRoutine(LightningModule):
             eval_ood (bool, optional): Indicates whether to evaluate the OOD
                 performance. Defaults to ``False``.
             ood_criterion (TUOODCriterion, optional): Criterion for the binary OOD detection task.
-                Defaults to None which amounts to the maximum softmax probability score (MSP).
+                Defaults to ``"msp"`` which amounts to the maximum softmax probability score (MSP).
             post_processing (PostProcessing, optional): The post-processing
                 technique to use. Defaults to ``None``. Warning: There is no
                 post-processing technique implemented yet for segmentation tasks.
@@ -327,8 +327,12 @@ class SegmentationRoutine(LightningModule):
         if self.eval_ood and dataloader_idx == 1:
             if self.ood_criterion.input_type == OODCriterionInputType.PROB:
                 ood_scores = self.ood_criterion(probs)
-            else:
+            elif self.ood_criterion.input_type == OODCriterionInputType.ESTIMATOR_PROB:
                 ood_scores = self.ood_criterion(probs_per_est)
+            else:
+                raise ValueError(
+                    f"Unsupported input type for OOD criterion: {self.ood_criterion.input_type}"
+                )
 
             labels = torch.zeros_like(targets)
             labels[id_mask] = 0  # ID examples

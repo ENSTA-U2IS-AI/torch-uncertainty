@@ -19,6 +19,10 @@ class SegmentationBinaryAUROC(Metric):
         validate_args: bool = True,
         **kwargs: Any,
     ):
+        """SegmentationBinaryAUROC computes the Area Under the Receiver Operating Characteristic Curve (AUROC)
+        for binary segmentation tasks. It aggregates the AUROC across batches and computes the average AUROC
+        over all batches processed.
+        """
         super().__init__(**kwargs)
         self.auroc_metric = BinaryAUROC(
             max_fpr=max_fpr,

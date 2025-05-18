@@ -10,7 +10,14 @@ class SegmentationFPR95(Metric):
     higher_is_better = False
     full_state_update = False
 
-    def __init__(self, pos_label, **kwargs):
+    def __init__(self, pos_label: int, **kwargs):
+        """FPR95 metric for segmentation tasks.
+        Compute the mean FPR95 per batch across all batches.
+
+        Args:
+            pos_label (int): The positive label in the segmentation OOD detection task.
+            **kwargs: Additional keyword arguments for the FPR95 metric.
+        """
         super().__init__(**kwargs)
         self.fpr95_metric = FPR95(pos_label, **kwargs)
         self.add_state("fpr95", default=torch.tensor(0.0), dist_reduce_fx="sum")
