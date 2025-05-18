@@ -4,6 +4,23 @@ from torch import Tensor, nn
 
 
 class DECLoss(nn.Module):
+    """The deep evidential classification loss.
+
+    Args:
+        annealing_step (int): Annealing step for the weight of the
+            regularization term.
+        reg_weight (float): Fixed weight of the regularization term.
+        loss_type (str, optional): Specifies the loss type to apply to the
+            Dirichlet parameters: ``'mse'`` | ``'log'`` | ``'digamma'``.
+        reduction (str, optional): Specifies the reduction to apply to the
+            output:``'none'`` | ``'mean'`` | ``'sum'``.
+
+    References:
+        [1] `Sensoy, M., Kaplan, L., & Kandemir, M. (2018). Evidential deep learning to quantify classification uncertainty. NeurIPS 2018
+        <https://arxiv.org/abs/1806.01768>`_.
+
+    """
+
     def __init__(
         self,
         annealing_step: int | None = None,
@@ -11,22 +28,6 @@ class DECLoss(nn.Module):
         loss_type: str = "log",
         reduction: str | None = "mean",
     ) -> None:
-        """The deep evidential classification loss.
-
-        Args:
-            annealing_step (int): Annealing step for the weight of the
-            regularization term.
-            reg_weight (float): Fixed weight of the regularization term.
-            loss_type (str, optional): Specifies the loss type to apply to the
-            Dirichlet parameters: ``'mse'`` | ``'log'`` | ``'digamma'``.
-            reduction (str, optional): Specifies the reduction to apply to the
-            output:``'none'`` | ``'mean'`` | ``'sum'``.
-
-        Reference:
-            Sensoy, M., Kaplan, L., & Kandemir, M. (2018). Evidential deep
-            learning to quantify classification uncertainty. NeurIPS 2018.
-            https://arxiv.org/abs/1806.01768.
-        """
         super().__init__()
 
         if reg_weight is not None and (reg_weight < 0):
@@ -150,26 +151,27 @@ class DECLoss(nn.Module):
 
 
 class ConfidencePenaltyLoss(nn.Module):
+    """The Confidence Penalty Loss.
+
+    Args:
+        reg_weight (float, optional): The weight of the regularization term.
+        reduction (str, optional): specifies the reduction to apply to the
+            output:``'none'`` | ``'mean'`` | ``'sum'``. Defaults to "mean".
+        eps (float, optional): A small value to avoid numerical instability.
+            Defaults to ``1e-6.``
+
+    References:
+        [1] `Gabriel Pereyra: Regularizing neural networks by penalizing confident output distributions
+        <https://arxiv.org/pdf/1701.06548>`_.
+
+    """
+
     def __init__(
         self,
         reg_weight: float = 1,
         reduction: str | None = "mean",
         eps: float = 1e-6,
     ) -> None:
-        """The Confidence Penalty Loss.
-
-        Args:
-            reg_weight (float, optional): The weight of the regularization term.
-            reduction (str, optional): specifies the reduction to apply to the
-            output:``'none'`` | ``'mean'`` | ``'sum'``. Defaults to "mean".
-            eps (float, optional): A small value to avoid numerical instability.
-                Defaults to 1e-6.
-
-        Reference:
-            Gabriel Pereyra: Regularizing neural networks by penalizing
-            confident output distributions. https://arxiv.org/pdf/1701.06548.
-
-        """
         super().__init__()
         if reduction is None:
             reduction = "none"
@@ -209,22 +211,24 @@ class ConfidencePenaltyLoss(nn.Module):
 
 
 class ConflictualLoss(nn.Module):
+    r"""The Conflictual Loss.
+
+    Args:
+        reg_weight (float, optional): The weight of the regularization term.
+        reduction (str, optional): specifies the reduction to apply to the
+            output:``'none'`` | ``'mean'`` | ``'sum'``.
+
+    References:
+        [1] `Mohammed Fellaji et al. On the Calibration of Epistemic Uncertainty: Principles, Paradoxes and Conflictual Loss
+        <https://arxiv.org/pdf/2407.12211>`_.
+
+    """
+
     def __init__(
         self,
         reg_weight: float = 1,
         reduction: str | None = "mean",
     ) -> None:
-        r"""The Conflictual Loss.
-
-        Args:
-            reg_weight (float, optional): The weight of the regularization term.
-            reduction (str, optional): specifies the reduction to apply to the
-            output:``'none'`` | ``'mean'`` | ``'sum'``.
-
-        Reference:
-            `Mohammed Fellaji et al. On the Calibration of Epistemic Uncertainty:
-            Principles, Paradoxes and Conflictual Loss <https://arxiv.org/pdf/2407.12211>`_.
-        """
         super().__init__()
         if reduction is None:
             reduction = "none"
@@ -260,27 +264,27 @@ class ConflictualLoss(nn.Module):
 
 
 class FocalLoss(nn.Module):
+    """Focal-Loss for classification tasks.
+
+    Args:
+        gamma (float, optional): A constant, as described in the paper.
+        alpha (Tensor, optional): Weights for each class. Defaults to ``None``.
+        reduction (str, optional): ``'mean'``, ``'sum'`` or ``'none'``. Defaults to ``'mean'``.
+
+    References:
+        [1] `Lin, T.-Y., Goyal, P., Girshick, R., He, K., & Dollár, P. (2017). Focal Loss for Dense Object Detection.
+        <https://openaccess.thecvf.com/content_ICCV_2017/papers/Lin_Focal_Loss_for_ICCV_2017_paper.pdf>`_.
+
+        [2] Inspired by https://github.com/AdeelH/pytorch-multi-class-focal-loss .
+
+    """
+
     def __init__(
         self,
         gamma: float,
         alpha: Tensor | None = None,
         reduction: str = "mean",
     ) -> None:
-        """Focal-Loss for classification tasks.
-
-        Args:
-            gamma (float, optional): A constant, as described in the paper.
-            alpha (Tensor, optional): Weights for each class. Defaults to None.
-            reduction (str, optional): 'mean', 'sum' or 'none'.
-                Defaults to 'mean'.
-
-        Reference:
-            Lin, T.-Y., Goyal, P., Girshick, R., He, K., & Dollár, P. (2017).
-            Focal Loss for Dense Object Detection. TPAMI 2020.
-
-        Implementation:
-            Inspired by github.com/AdeelH/pytorch-multi-class-focal-loss.
-        """
         if reduction not in ("none", "mean", "sum") and reduction is not None:
             raise ValueError(f"{reduction} is not a valid value for reduction.")
         self.reduction = reduction
@@ -295,12 +299,12 @@ class FocalLoss(nn.Module):
         self.alpha = alpha
         self.nll_loss = nn.NLLLoss(weight=alpha, reduction="none")
 
-    def forward(self, x: Tensor, y: Tensor) -> Tensor:
-        log_p = F.log_softmax(x, dim=-1)
-        ce = self.nll_loss(log_p, y)
+    def forward(self, inputs: Tensor, targets: Tensor) -> Tensor:
+        log_p = F.log_softmax(inputs, dim=-1)
+        ce = self.nll_loss(log_p, targets)
 
-        all_rows = torch.arange(len(x))
-        log_pt = log_p[all_rows, y]
+        all_rows = torch.arange(len(inputs))
+        log_pt = log_p[all_rows, targets]
 
         pt = log_pt.exp()
         focal_term = (1 - pt) ** self.gamma
@@ -315,39 +319,45 @@ class FocalLoss(nn.Module):
 
 
 class BCEWithLogitsLSLoss(nn.BCEWithLogitsLoss):
+    """Binary Cross Entropy with Logits Loss with label smoothing.
+
+    The original PyTorch implementation of the BCEWithLogitsLoss does not
+    support label smoothing. This implementation adds label smoothing to
+    the BCEWithLogitsLoss.
+
+    Args:
+        weight (Tensor, optional): A manual rescaling weight given to the
+            loss of each batch element. If given, has to be a Tensor of size
+            "nbatch". Defaults to ``None``.
+        reduction (str, optional): Specifies the reduction to apply to the
+            output: ``'none'`` | ``'mean'`` | ``'sum``'. ``'none'``: no reduction will be applied,
+            ``'mean'``: the sum of the output will be divided by the number of
+            elements in the output, ``'sum'``: the output will be summed. Defaults
+            to ``'mean'``.
+        label_smoothing (float, optional): The label smoothing factor. Defaults
+            to ``0.0``.
+    """
+
     def __init__(
         self,
         weight: Tensor | None = None,
         reduction: str = "mean",
         label_smoothing: float = 0.0,
     ) -> None:
-        """Binary Cross Entropy with Logits Loss with label smoothing.
-
-        The original PyTorch implementation of the BCEWithLogitsLoss does not
-        support label smoothing. This implementation adds label smoothing to
-        the BCEWithLogitsLoss.
-
-        Args:
-            weight (Tensor, optional): A manual rescaling weight given to the
-                loss of each batch element. If given, has to be a Tensor of size
-                "nbatch". Defaults to None.
-            reduction (str, optional): Specifies the reduction to apply to the
-                output: 'none' | 'mean' | 'sum'. 'none': no reduction will be applied,
-                'mean': the sum of the output will be divided by the number of
-                elements in the output, 'sum': the output will be summed. Defaults
-                to 'mean'.
-            label_smoothing (float, optional): The label smoothing factor. Defaults
-                to 0.0.
-        """
         super().__init__(weight=weight, reduction=reduction)
+        if label_smoothing < 0:
+            raise ValueError(
+                "The label smoothing term of the BCE loss should be non-negative, but got "
+                f"{label_smoothing}."
+            )
         self.label_smoothing = label_smoothing
 
-    def forward(self, preds: Tensor, targets: Tensor) -> Tensor:
+    def forward(self, inputs: Tensor, targets: Tensor) -> Tensor:
         if self.label_smoothing == 0.0:
-            return super().forward(preds, targets.type_as(preds))
+            return super().forward(inputs, targets.type_as(inputs))
         targets = targets.float()
         targets = targets * (1 - self.label_smoothing) + self.label_smoothing / 2
-        loss = targets * F.logsigmoid(preds) + (1 - targets) * F.logsigmoid(-preds)
+        loss = targets * F.logsigmoid(inputs) + (1 - targets) * F.logsigmoid(-inputs)
         if self.weight is not None:
             loss = loss * self.weight
         if self.reduction == "mean":
@@ -355,3 +365,45 @@ class BCEWithLogitsLSLoss(nn.BCEWithLogitsLoss):
         if self.reduction == "sum":
             return -loss.sum()
         return -loss
+
+
+class CrossEntropyMaxSupLoss(nn.CrossEntropyLoss):
+    def __init__(
+        self,
+        weight: Tensor | None = None,
+        size_average=None,
+        reduction: str | None = "mean",
+        label_smoothing: float = 0,
+        max_sup: float = 0,
+    ) -> None:
+        """Max suppression cross-entropy loss.
+
+        Note: We haven't implemented the linear loss scheduler suggested in the paper. Raise
+            an issue if needed.
+
+        Reference:
+            MaxSup: Fixing Label-smoothing for improved feature representation. Y. Zhou et al.
+        """
+        super().__init__(weight, size_average, reduction=reduction, label_smoothing=label_smoothing)
+        self.max_sup = max_sup
+
+    def forward(self, inputs: Tensor, targets: Tensor) -> Tensor:
+        if self.max_sup == 0.0:
+            return super().forward(inputs, targets)
+        z_top1 = inputs.topk(1, -1)[0]
+        reg = z_top1 - inputs.mean(-1, keepdim=True)
+        loss = (
+            F.cross_entropy(
+                inputs,
+                targets,
+                label_smoothing=self.label_smoothing,
+            )
+            + self.max_sup * reg
+        )
+        if self.weight is not None:
+            loss = loss * self.weight
+        if self.reduction == "mean":
+            return loss.mean()
+        if self.reduction == "sum":
+            return loss.sum()
+        return loss

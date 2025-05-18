@@ -312,6 +312,15 @@ For the binary cross-entropy with logits loss with label smoothing, consider cit
 * Authors: *Christian Szegedy, Vincent Vanhoucke, Sergey Ioffe, Jonathon Shlens, and Zbigniew Wojna*
 * Paper: `CVPR 2016 <https://arxiv.org/pdf/1512.00567.pdf>`__.
 
+MaxSup: Fixing Label Smoothing for Improved Feature Representation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For the cross-entropy with maximum suppression loss, consider citing:
+
+**MaxSup: Fixing Label Smoothing for Improved Feature Representation**
+
+* Authors: *Yuxuan Zhou, Heng Li, Zhi-Qi Cheng, Xudong Yan, Mario Fritz, and Margret Keuper* 
+* Paper: `ArXiv 2024 <https://openreview.net/pdf?id=zVtwIWyX4S>`__.
 
 Metrics
 -------

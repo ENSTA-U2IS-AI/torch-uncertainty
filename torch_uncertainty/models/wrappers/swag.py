@@ -1,5 +1,6 @@
 import copy
 from collections.abc import Mapping
+from typing import NoReturn
 
 import torch
 from torch import Tensor, nn
@@ -38,20 +39,16 @@ class SWAG(SWA):
         Args:
             model (nn.Module): PyTorch model to be trained.
             cycle_start (int): Begininning of the first SWAG averaging cycle.
-            cycle_length (int): Number of epochs between SWAG updates. The
-                first update occurs at :attr:`cycle_start` + :attr:`cycle_length`.
-            scale (float, optional): Scale of the Gaussian. Defaults to 1.0.
-            diag_covariance (bool, optional): Whether to use a diagonal
-                covariance. Defaults to False.
-            max_num_models (int, optional): Maximum number of models to store.
-                Defaults to 0.
-            var_clamp (float, optional): Minimum variance. Defaults to 1e-30.
-            num_estimators (int, optional): Number of posterior estimates to
-                use. Defaults to 16.
+            cycle_length (int): Number of epochs between SWAG updates. The first update occurs at :attr:`cycle_start` + :attr:`cycle_length`.
+            scale (float, optional): Scale of the Gaussian. Defaults to ``1.0``.
+            diag_covariance (bool, optional): Whether to use a diagonal covariance. Defaults to ``False``.
+            max_num_models (int, optional): Maximum number of models to store. Defaults to ``0``.
+            var_clamp (float, optional): Minimum variance. Defaults to ``1e-30``.
+            num_estimators (int, optional): Number of posterior estimates to use. Defaults to ``16``.
 
-        Reference:
-            Maddox, W. J. et al. A simple baseline for bayesian uncertainty in
-            deep learning. In NeurIPS 2019.
+        References:
+            [1] `A simple baseline for bayesian uncertainty in deep learning. In NeurIPS 2019
+            <https://arxiv.org/abs/1902.02476>`_.
 
         Note:
             Modified from https://github.com/wjmaddox/swa_gaussian.
@@ -207,18 +204,20 @@ class SWAG(SWA):
             param.data = sample.to(device="cpu", dtype=param.dtype)
         return new_sample
 
-    def _save_to_state_dict(self, destination, prefix: str, keep_vars: bool):
+    def _save_to_state_dict(self, destination: dict | None, prefix: str, keep_vars: bool) -> None:
         """Add the SWAG statistics to the destination dict."""
         super()._save_to_state_dict(destination, prefix, keep_vars)
         destination |= self.swag_stats
 
-    def state_dict(self, *args, destination=None, prefix="", keep_vars=False) -> Mapping:
+    def state_dict(
+        self, *args, destination: dict | None = None, prefix: str = "", keep_vars: bool = False
+    ) -> Mapping:
         """Add the SWAG statistics to the state dict."""
         return self.swag_stats | super().state_dict(
             *args, destination=destination, prefix=prefix, keep_vars=keep_vars
         )
 
-    def _load_swag_stats(self, state_dict: Mapping):
+    def _load_swag_stats(self, state_dict: Mapping) -> None:
         """Load the SWAG statistics from the state dict."""
         self.swag_stats = {k: v for k, v in state_dict.items() if k in self.swag_stats}
         for k in self.swag_stats:
@@ -233,10 +232,10 @@ class SWAG(SWA):
         self._load_swag_stats(state_dict)
         return super().load_state_dict(state_dict, strict, assign)
 
-    def compute_logdet(self, block=False):
+    def compute_logdet(self, block: bool = False) -> NoReturn:
         raise NotImplementedError("Raise an issue if you need this feature.")
 
-    def compute_logprob(self, vec=None, block=False, diag=False):
+    def compute_logprob(self, vec=None, block: bool = False, diag: bool = False) -> NoReturn:
         raise NotImplementedError("Raise an issue if you need this feature.")
 
 

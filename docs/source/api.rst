@@ -200,6 +200,7 @@ Functions
 .. autosummary::
     :toctree: generated/
     :nosignatures:
+    :template: function.rst
 
     batch_ensemble
     deep_ensembles
@@ -234,9 +235,15 @@ Proper Scores
 .. autosummary::
     :toctree: generated/
     :nosignatures:
-    :template: class.rst
+    :template: class_with_ex.rst
 
     BrierScore
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: class.rst
+
     CategoricalNLL
 
 Out-of-Distribution Detection
@@ -247,7 +254,6 @@ Out-of-Distribution Detection
     :nosignatures:
     :template: class.rst
 
-    AURC
     FPRx
     FPR95
 
@@ -261,10 +267,11 @@ Selective Classification
     :template: class.rst
 
     AUGRC
-    RiskAtxCov
-    RiskAt80Cov
+    AURC
     CovAtxRisk
     CovAt5Risk
+    RiskAtxCov
+    RiskAt80Cov
 
 Calibration
 """""""""""
@@ -273,7 +280,7 @@ Calibration
     :toctree: generated/
     :nosignatures:
     :template: class.rst
-
+    
     AdaptiveCalibrationError
     CalibrationError
 
@@ -355,18 +362,16 @@ Losses
     :nosignatures:
     :template: class.rst
 
-    DistributionNLLLoss
-    KLDiv
-    ELBOLoss
+    BCEWithLogitsLSLoss
     BetaNLL
-    DECLoss
-    DERLoss
-    FocalLoss
     ConflictualLoss
     ConfidencePenaltyLoss
-    KLDiv
+    DECLoss
+    DERLoss
+    DistributionNLLLoss
     ELBOLoss
-    BCEWithLogitsLSLoss
+    FocalLoss
+    KLDiv
 
 Post-Processing Methods
 -----------------------
@@ -378,8 +383,8 @@ Post-Processing Methods
     :nosignatures:
     :template: class.rst
     
-    MCBatchNorm
     LaplaceApprox
+    MCBatchNorm
     
 Scaling Methods
 ^^^^^^^^^^^^^^^
@@ -389,9 +394,9 @@ Scaling Methods
     :nosignatures:
     :template: class_inherited.rst
 
+    MatrixScaler
     TemperatureScaler
     VectorScaler
-    MatrixScaler
 
 
 
@@ -437,9 +442,10 @@ Classification
 
     CIFAR10DataModule
     CIFAR100DataModule
+    ImageNetDataModule
     MNISTDataModule
     TinyImageNetDataModule
-    ImageNetDataModule
+    
 
 UCI Tabular Classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^

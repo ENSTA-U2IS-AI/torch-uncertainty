@@ -156,6 +156,11 @@ class MNISTDataModule(TUDataModule):
             self.shift_dataset(self.root, download=True)
 
     def setup(self, stage: Literal["fit", "test"] | None = None) -> None:
+        """Set up the datasets for training, validation, and testing.
+
+        Args:
+            stage (Literal["fit", "test"] | None): Stage of the setup process. Defaults to ``None``.
+        """
         if stage == "fit" or stage is None:
             full = self.dataset(
                 self.root,
@@ -201,7 +206,7 @@ class MNISTDataModule(TUDataModule):
             )
 
     def test_dataloader(self) -> list[DataLoader]:
-        r"""Get the test dataloaders for MNIST.
+        """Get the test dataloaders for MNIST.
 
         Return:
             list[DataLoader]: Dataloaders of the MNIST test set (in

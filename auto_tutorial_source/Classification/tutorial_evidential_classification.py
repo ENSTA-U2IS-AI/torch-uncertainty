@@ -1,10 +1,16 @@
+# ruff: noqa: E402, E703, D212, D415
 """
 Deep Evidential Classification on a Toy Example
 ===============================================
 
-This tutorial aims to provide an introductory overview of Deep Evidential Classification (DEC) using a practical example. We demonstrate an application of DEC by tackling the toy-problem of fitting the MNIST dataset using a Multi-Layer Perceptron (MLP) neural network model. The output of the MLP is modeled as a Dirichlet distribution. The MLP is trained by minimizing the DEC loss function, composed of a Bayesian risk square error loss and a regularization term based on KL Divergence.
+This tutorial aims to provide an introductory overview of Deep Evidential Classification (DEC) using a practical example.
+We demonstrate an application of DEC by tackling the toy-problem of fitting the MNIST dataset using a Multi-Layer Perceptron (MLP)
+neural network model. The output of the MLP is modeled as a Dirichlet distribution. The MLP is trained by minimizing the DEC loss
+function, composed of a Bayesian risk square error loss and a regularization term based on KL Divergence.
 
-DEC represents an evidential approach to quantifying uncertainty in neural network classification models. This method involves introducing prior distributions over the parameters of the Categorical likelihood function. Then, the MLP model estimates the parameters of the evidential distribution.
+DEC represents an evidential approach to quantifying uncertainty in neural network classification models. This method involves
+introducing prior distributions over the parameters of the Categorical likelihood function. Then, the MLP model estimates the
+parameters of the evidential distribution.
 
 Training a LeNet with DEC using TorchUncertainty models
 -------------------------------------------------------
@@ -17,13 +23,14 @@ In this part, we train a neural network, based on the model and routines already
 To train a LeNet with the DEC loss function using TorchUncertainty, we have to load the following utilities from TorchUncertainty:
 
 - our wrapper of the Lightning Trainer
-- the model: LeNet, which lies in torch_uncertainty.models
+- the model: lenet, which lies in torch_uncertainty.models.classification.lenet
 - the classification training routine in the torch_uncertainty.routines
 - the evidential objective: the DECLoss from torch_uncertainty.losses
 - the datamodule that handles dataloaders & transforms: MNISTDataModule from torch_uncertainty.datamodules
 
 We also need to define an optimizer using torch.optim, the neural network utils within torch.nn.
 """
+
 # %%
 from pathlib import Path
 
@@ -36,16 +43,19 @@ from torch_uncertainty.losses import DECLoss
 from torch_uncertainty.models.classification import lenet
 from torch_uncertainty.routines import ClassificationRoutine
 
+# We also define the main hyperparameters.
+# We set the number of epochs to some very low value for the sake of time.
+MAX_EPOCHS = 3
+BATCH_SIZE = 512
+
 
 # %%
 # 2. Creating the Optimizer Wrapper
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # We follow the official implementation in DEC, use the Adam optimizer
 # with the default learning rate of 0.001 and a step scheduler.
-def optim_lenet(model: nn.Module) -> dict:
-    optimizer = optim.Adam(model.parameters(), lr=1e-3, weight_decay=0.005)
-    exp_lr_scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
-    return {"optimizer": optimizer, "lr_scheduler": exp_lr_scheduler}
+def optim_lenet(model: nn.Module):
+    return optim.Adam(model.parameters(), lr=2e-2, weight_decay=0.005)
 
 
 # %%
@@ -54,12 +64,12 @@ def optim_lenet(model: nn.Module) -> dict:
 #
 # In the following, we need to define the root of the logs, and to
 # We use the same MNIST classification example as that used in the
-# original DEC paper. We only train for 3 epochs for the sake of time.
-trainer = TUTrainer(accelerator="cpu", max_epochs=3, enable_progress_bar=False)
+# original DEC paper.
+trainer = TUTrainer(accelerator="gpu", devices=1, max_epochs=MAX_EPOCHS, enable_progress_bar=False)
 
 # datamodule
 root = Path() / "data"
-datamodule = MNISTDataModule(root=root, batch_size=128)
+datamodule = MNISTDataModule(root=root, batch_size=BATCH_SIZE, num_workers=8)
 
 model = lenet(
     in_channels=datamodule.num_channels,
@@ -91,7 +101,6 @@ routine = ClassificationRoutine(
 
 trainer.fit(model=routine, datamodule=datamodule)
 trainer.test(model=routine, datamodule=datamodule)
-
 # %%
 # 6. Testing the Model
 # ~~~~~~~~~~~~~~~~~~~~
@@ -118,7 +127,7 @@ def rotated_mnist(angle: int) -> None:
     rotated_images = F.rotate(images, angle)
     # print rotated images
     plt.axis("off")
-    imshow(torchvision.utils.make_grid(rotated_images[:4, ...]))
+    imshow(torchvision.utils.make_grid(rotated_images[:4, ...], padding=0))
     print("Ground truth: ", " ".join(f"{labels[j]}" for j in range(4)))
 
     evidence = routine(rotated_images)
@@ -130,7 +139,7 @@ def rotated_mnist(angle: int) -> None:
         predicted = torch.argmax(probs[j, :])
         print(
             f"Predicted digits for the image {j}: {predicted} with strength "
-            f"{strength[j,0]:.3} and entropy {entropy[j,0]:.3}."
+            f"{strength[j, 0]:.3f} and entropy {entropy[j, 0]:.3f}."
         )
 
 

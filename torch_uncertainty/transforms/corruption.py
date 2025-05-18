@@ -144,7 +144,7 @@ class ShotNoise(TUCorruption):
         super().__init__(severity)
         self.scale = [60, 25, 12, 5, 3][severity - 1]
 
-    def forward(self, img: Tensor):
+    def forward(self, img: Tensor) -> Tensor:
         """Apply Poisson noise on an input image.
 
         Args:
@@ -253,7 +253,7 @@ class DefocusBlur(TUCorruption):
         return out
 
 
-def generate_offset_distribution(max_delta, iterations):
+def generate_offset_distribution(max_delta: int, iterations: int) -> Categorical:
     """Symmetrized version of the glass blur swapping algorithm.
 
     The original implementation is sequential and extremely long on large images. This version should
@@ -595,7 +595,7 @@ class Frost(TUCorruption):
         return torch.clamp(self.mix[0] * img + self.mix[1] * frost_img, 0, 1)
 
 
-def plasma_fractal(height, width, rng, wibbledecay):
+def plasma_fractal(height: int, width: int, rng, wibbledecay: float):
     """Generate a heightmap using diamond-square algorithm.
     Return square 2d array, side length 'mapsize', of floats in range 0-1.
     'mapsize' must be a power of two.
@@ -605,10 +605,10 @@ def plasma_fractal(height, width, rng, wibbledecay):
     stepsize = height
     wibble = 100
 
-    def wibbledmean(array):
+    def wibbledmean(array: np.ndarray):
         return array / 4 + wibble * rng.uniform(-wibble, wibble, array.shape)
 
-    def fillsquares():
+    def fillsquares() -> None:
         """For each square of points stepsize apart, calculate middle value as mean of points + wibble."""
         cornerref = maparray[0:height:stepsize, 0:height:stepsize]
         squareaccum = cornerref + np.roll(cornerref, shift=-1, axis=0)
@@ -618,7 +618,7 @@ def plasma_fractal(height, width, rng, wibbledecay):
             stepsize // 2 : height : stepsize,
         ] = wibbledmean(squareaccum)
 
-    def filldiamonds():
+    def filldiamonds() -> None:
         """For each diamond of points stepsize apart, calculate middle value as mean of points + wibble."""
         mapsize = maparray.shape[0]
         drgrid = maparray[

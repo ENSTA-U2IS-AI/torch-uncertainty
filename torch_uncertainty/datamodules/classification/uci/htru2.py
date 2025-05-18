@@ -27,15 +27,10 @@ class HTRU2DataModule(UCIClassificationDataModule):
                 and test). Set to batch_size if None. Defaults to None.
             val_split (float, optional): Share of validation samples among the non-test samples. Defaults to ``0``.
             test_split (float, optional): Share of test samples. Defaults to ``0.2``.
-            num_workers (int, optional): How many subprocesses to use for data
-                loading. Defaults to ``1``.
-            pin_memory (bool, optional): Whether to pin memory in the GPU. Defaults
-                to ``True``.
-            persistent_workers (bool, optional): Whether to use persistent workers.
-                Defaults to ``True``.
-            binary (bool, optional): Whether to use binary classification. Defaults
-                to ``True``.
-
+            num_workers (int, optional): How many subprocesses to use for data loading. Defaults to ``1``.
+            pin_memory (bool, optional): Whether to pin memory in the GPU. Defaults to ``True``.
+            persistent_workers (bool, optional): Whether to use persistent workers. Defaults to ``True``.
+            binary (bool, optional): Whether to use binary classification. Defaults to ``True``.
         """
         super().__init__(
             root=root,

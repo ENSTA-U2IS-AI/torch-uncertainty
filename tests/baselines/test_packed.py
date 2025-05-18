@@ -13,7 +13,7 @@ from torch_uncertainty.baselines.regression import MLPBaseline
 class TestPackedBaseline:
     """Testing the PackedResNet baseline class."""
 
-    def test_packed_50(self):
+    def test_packed_50(self) -> None:
         net = ResNetBaseline(
             num_classes=10,
             in_channels=3,
@@ -29,7 +29,7 @@ class TestPackedBaseline:
 
         _ = net(torch.rand(1, 3, 32, 32))
 
-    def test_packed_18(self):
+    def test_packed_18(self) -> None:
         net = ResNetBaseline(
             num_classes=10,
             in_channels=3,
@@ -45,7 +45,7 @@ class TestPackedBaseline:
 
         _ = net(torch.rand(1, 3, 40, 40))
 
-    def test_packed_exception(self):
+    def test_packed_exception(self) -> None:
         with pytest.raises(ValueError):
             _ = ResNetBaseline(
                 num_classes=10,
@@ -78,7 +78,7 @@ class TestPackedBaseline:
 class TestPackedWideBaseline:
     """Testing the PackedWideResNet baseline class."""
 
-    def test_packed(self):
+    def test_packed(self) -> None:
         net = WideResNetBaseline(
             num_classes=10,
             in_channels=3,
@@ -97,7 +97,7 @@ class TestPackedWideBaseline:
 class TestPackedVGGBaseline:
     """Testing the PackedWideResNet baseline class."""
 
-    def test_packed(self):
+    def test_packed(self) -> None:
         net = VGGBaseline(
             num_classes=10,
             in_channels=3,
@@ -115,7 +115,7 @@ class TestPackedVGGBaseline:
 class TestPackedMLPBaseline:
     """Testing the Packed MLP baseline class."""
 
-    def test_packed(self):
+    def test_packed(self) -> None:
         net = MLPBaseline(
             in_features=3,
             output_dim=10,

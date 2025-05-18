@@ -1,0 +1,126 @@
+@charset "UTF-8";
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600&family=Lato:wght@400;700&display=swap");
+.gradient-banner h1,
+.gradient-banner h4 {
+  color: #ffffff !important; }
+
+.gradient-banner ul li {
+  color: white !important; }
+
+.gradient-banner ul li::before {
+  content: "✔";
+  /* Unicode checkmark */
+  color: black !important;
+  /* Ensure checkmark stays black */
+  font-size: 1.2rem;
+  font-weight: bold;
+  display: inline-block;
+  width: 1.5rem; }
+
+.btn {
+  border-radius: 0em; }
+
+/* Theme-aware colors (light mode default) */
+:root {
+  --retro-blue: #4a74a5;
+  /* Slightly muted blue */
+  --retro-blue-hover: #3b5c84;
+  /* Hover color */
+  --cyber-blue: #1F9AFF;
+  --cyber-pink: #E821EE;
+  /* Light mode defaults */
+  --card-bg: #fcfbf4;
+  --card-border: #fcfbf4;
+  --card-text: #000000;
+  /* CHANGE THESE TO CUSTOMIZE THEME */
+  --example-button-bg: var(--cyber-blue);
+  --link-color: var(--cyber-blue);
+  --link-hover-color: var(--cyber-pink); }
+
+/* Dark mode overrides */
+html[data-theme="dark"] {
+  --card-bg: #222832;
+  --card-border: #222832;
+  --card-text: #ffffff; }
+
+.gradient-banner {
+  background: linear-gradient(to right, #020202, #A9BBDC, #262729);
+  color: white;
+  padding: 2rem 0; }
+  .gradient-banner .btn-warning {
+    background-color: var(--retro-blue);
+    border-color: var(--retro-blue);
+    color: white; }
+    .gradient-banner .btn-warning:hover {
+      background-color: var(--retro-blue-hover);
+      border-color: var(--retro-blue-hover); }
+  .gradient-banner .btn-light {
+    background-color: white;
+    border: 2px solid var(--retro-blue);
+    color: var(--retro-blue); }
+    .gradient-banner .btn-light:hover {
+      background-color: var(--retro-blue);
+      color: white;
+      border-color: var(--retro-blue); }
+
+/* Card styling with dynamic theme colors */
+.card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: var(--card-bg) !important;
+  border: 1px solid var(--card-border) !important;
+  color: var(--card-text) !important;
+  border-radius: 0em; }
+  .card .card-body {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start; }
+  .card .card-title {
+    margin-top: 0;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--retro-blue); }
+  .card p {
+    flex-shrink: 0;
+    margin-bottom: 0.5rem; }
+  .card .card-img-bottom {
+    object-fit: contain;
+    max-height: 150px;
+    margin: auto;
+    display: block;
+    width: 100%;
+    margin-bottom: 1rem; }
+  .card.shadow-sm {
+    display: flex;
+    flex: 1;
+    height: 100%; }
+  .card .btn-primary {
+    background-color: var(--example-button-bg);
+    border-color: var(--example-button-bg);
+    color: white;
+    font-size: 1rem;
+    font-weight: 500;
+    padding: 0.6rem 1rem;
+    width: 100%; }
+    .card .btn-primary:hover {
+      background-color: var(--example-button-bg);
+      border-color: var(--example-button-bg);
+      color: white; }
+  .card a {
+    color: var(--link-color); }
+    .card a:hover {
+      color: var(--link-hover-color); }
+
+/* Ensure consistent card height across columns */
+.row .col-md-4 {
+  display: flex;
+  flex-direction: column; }
+
+/* Force dark mode detection in case it's not applying */
+@media (prefers-color-scheme: dark) {
+  html {
+    --card-bg: #1e1e1e;
+    --card-border: #2a2a2a;
+    --card-text: #ffffff; } }

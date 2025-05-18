@@ -41,7 +41,7 @@ class TestConformalClsAPS:
         out = conformal.conformal(inputs)
         assert out.shape == (10, 3)
         assert (
-            out == repeat(torch.tensor([True, True, False]), "c -> b c", b=10).float() * 2 / 3
+            out == repeat(torch.tensor([True, True, False]), "c -> b c", b=10).float() / 2
         ).all()
 
         conformal = ConformalClsAPS(alpha=0.1, model=nn.Identity(), randomized=True)
@@ -74,7 +74,7 @@ class TestConformalClsRAPS:
         out = conformal.conformal(inputs)
         assert out.shape == (10, 3)
         assert (
-            out == repeat(torch.tensor([True, True, False]), "c -> b c", b=10).float() * 2 / 3
+            out == repeat(torch.tensor([True, True, False]), "c -> b c", b=10).float() / 2
         ).all()
 
         conformal = ConformalClsRAPS(alpha=0.1, model=nn.Identity(), randomized=True)
@@ -115,7 +115,7 @@ class TestConformalClsTHR:
         out = conformal.conformal(inputs)
         assert out.shape == (10, 3)
         assert (
-            out == repeat(torch.tensor([True, True, False]), "c -> b c", b=10).float() * 2 / 3
+            out == repeat(torch.tensor([True, True, False]), "c -> b c", b=10).float() / 2
         ).all()
 
     def test_failures(self):

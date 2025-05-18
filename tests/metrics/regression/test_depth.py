@@ -14,7 +14,7 @@ from torch_uncertainty.metrics import (
 class TestLog10:
     """Testing the Log10 metric."""
 
-    def test_main(self):
+    def test_main(self) -> None:
         metric = Log10()
         preds = torch.rand((10, 2)).double() + 0.01
         targets = torch.rand((10, 2)).double() + 0.01
@@ -28,7 +28,7 @@ class TestLog10:
 class TestMeanGTRelativeAbsoluteError:
     """Testing the MeanGTRelativeAbsoluteError metric."""
 
-    def test_main(self):
+    def test_main(self) -> None:
         metric = MeanGTRelativeAbsoluteError()
         preds = torch.rand((10, 2))
         targets = torch.rand((10, 2))
@@ -40,7 +40,7 @@ class TestMeanGTRelativeAbsoluteError:
 class TestMeanGTRelativeSquaredError:
     """Testing the MeanGTRelativeSquaredError metric."""
 
-    def test_main(self):
+    def test_main(self) -> None:
         metric = MeanGTRelativeSquaredError()
         preds = torch.rand((10, 2))
         targets = torch.rand((10, 2))
@@ -54,7 +54,7 @@ class TestMeanGTRelativeSquaredError:
 class TestSILog:
     """Testing the SILog metric."""
 
-    def test_main(self):
+    def test_main(self) -> None:
         metric = SILog()
         preds = torch.rand((10, 2)).double()
         targets = torch.rand((10, 2)).double()
@@ -79,7 +79,7 @@ class TestSILog:
 class TestThresholdAccuracy:
     """Testing the ThresholdAccuracy metric."""
 
-    def test_main(self):
+    def test_main(self) -> None:
         metric = ThresholdAccuracy(power=1, lmbda=1.25)
         preds = torch.ones((10, 2))
         targets = torch.ones((10, 2)) * 1.3
@@ -94,7 +94,7 @@ class TestThresholdAccuracy:
         metric.update(preds[:, 1], targets[:, 1])
         assert metric.compute() == 0.5
 
-    def test_error(self):
+    def test_error(self) -> None:
         with pytest.raises(ValueError, match="Power must be"):
             ThresholdAccuracy(power=-1)
         with pytest.raises(ValueError, match="Lambda must be"):
@@ -104,7 +104,7 @@ class TestThresholdAccuracy:
 class TestMeanSquaredLogError:
     """Testing the MeanSquaredLogError metric."""
 
-    def test_main(self):
+    def test_main(self) -> None:
         metric = MeanSquaredLogError()
         preds = torch.rand((10, 2)).double()
         targets = torch.rand((10, 2)).double()

@@ -21,7 +21,7 @@ class OnlineShoppersDataModule(UCIClassificationDataModule):
         """The online shoppers intention UCI classification datamodule.
 
         Args:
-            root (string): Root directory of the datasets.
+            root (str | Path): Root directory of the datasets.
             batch_size (int): The batch size for training and testing.
             eval_batch_size (int | None) : Number of samples per batch during evaluation (val
                 and test). Set to batch_size if None. Defaults to None.

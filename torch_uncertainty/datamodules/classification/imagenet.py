@@ -105,8 +105,7 @@ class ImageNetDataModule(TUDataModule):
             num_workers (int): Number of workers to use for data loading. Defaults
                 to ``1``.
             pin_memory (bool): Whether to pin memory. Defaults to ``True``.
-            persistent_workers (bool): Whether to use persistent workers. Defaults
-                to ``True``.
+            persistent_workers (bool): Whether to use persistent workers. Defaults to ``True``.
         """
         super().__init__(
             root=Path(root),

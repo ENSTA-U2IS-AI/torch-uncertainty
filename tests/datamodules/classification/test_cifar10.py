@@ -10,7 +10,7 @@ from torch_uncertainty.transforms import Cutout
 class TestCIFAR10DataModule:
     """Testing the CIFAR10DataModule datamodule class."""
 
-    def test_cifar10_main(self):
+    def test_cifar10_main(self) -> None:
         dm = CIFAR10DataModule(
             root="./data/",
             batch_size=128,
@@ -19,7 +19,6 @@ class TestCIFAR10DataModule:
         )
         assert isinstance(dm.train_transform, nn.Identity)
         assert isinstance(dm.test_transform, nn.Identity)
-
         dm = CIFAR10DataModule(root="./data/", batch_size=128, cutout=16, postprocess_set="test")
 
         assert dm.dataset == CIFAR10
@@ -106,7 +105,7 @@ class TestCIFAR10DataModule:
             auto_augment="rand-m9-n2-mstd0.5",
         )
 
-    def test_cifar10_cv(self):
+    def test_cifar10_cv(self) -> None:
         dm = CIFAR10DataModule(root="./data/", batch_size=128)
         dm.dataset = lambda root, train, download, transform: DummyClassificationDataset(
             root,

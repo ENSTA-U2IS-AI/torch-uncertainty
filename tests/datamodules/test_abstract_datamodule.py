@@ -12,7 +12,7 @@ from torch_uncertainty.datamodules.abstract import (
 class TestTUDataModule:
     """Testing the TUDataModule class."""
 
-    def test_errors(self):
+    def test_errors(self) -> None:
         TUDataModule.__abstractmethods__ = set()
         dm = TUDataModule("root", 128, 128, 0.0, 4, True, True)
         dm.setup()
@@ -23,7 +23,7 @@ class TestTUDataModule:
 class TestCrossValDataModule:
     """Testing the CrossValDataModule class."""
 
-    def test_cv_main(self):
+    def test_cv_main(self) -> None:
         TUDataModule.__abstractmethods__ = set()
         dm = TUDataModule("root", 128, 128, 0.0, 4, True, True)
         ds = DummyClassificationDataset(Path("root"))
@@ -44,7 +44,7 @@ class TestCrossValDataModule:
         cv_dm.val_dataloader()
         cv_dm.test_dataloader()
 
-    def test_errors(self):
+    def test_errors(self) -> None:
         TUDataModule.__abstractmethods__ = set()
         dm = TUDataModule(
             root="root",

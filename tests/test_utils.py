@@ -20,13 +20,13 @@ from torch_uncertainty.utils import (
 class TestUtils:
     """Testing utils methods."""
 
-    def test_get_version_log_success(self):
+    def test_get_version_log_success(self) -> None:
         get_version("tests/testlog", version=42)
         get_version(Path("tests/testlog"), version=42)
 
         get_version("tests/testlog", version=42, checkpoint=45)
 
-    def test_getversion_log_failure(self):
+    def test_getversion_log_failure(self) -> None:
         with pytest.raises(FileNotFoundError):
             get_version("tests/testlog", version=52)
 
@@ -34,7 +34,7 @@ class TestUtils:
 class TestHub:
     """Testing hub methods."""
 
-    def test_hub_exists(self):
+    def test_hub_exists(self) -> None:
         hub.load_hf("test")
         hub.load_hf("test", version=1)
         hub.load_hf("test", version=2)
@@ -53,12 +53,12 @@ class TestHub:
 class TestMisc:
     """Testing misc methods."""
 
-    def test_csv_writer(self):
+    def test_csv_writer(self) -> None:
         root = Path(__file__).parent.resolve()
         csv_writer(root / "testlog" / "results.csv", {"a": 1.0, "b": 2.0})
         csv_writer(root / "testlog" / "results.csv", {"a": 1.0, "b": 2.0, "c": 3.0})
 
-    def test_plot_hist(self):
+    def test_plot_hist(self) -> None:
         conf = [torch.rand(20), torch.rand(20)]
         plot_hist(conf, bins=10, title="test")
 
@@ -66,7 +66,7 @@ class TestMisc:
 class TestDistributions:
     """Testing distributions methods."""
 
-    def test_nig(self):
+    def test_nig(self) -> None:
         dist = distributions.NormalInverseGamma(
             0.0,
             1.1,
@@ -81,7 +81,7 @@ class TestDistributions:
         )
         _ = dist.mean, dist.mean_loc, dist.mean_variance, dist.variance_loc
 
-    def test_get_dist_class(self):
+    def test_get_dist_class(self) -> None:
         dist = distributions.get_dist_class("normal")
         assert dist == torch.distributions.Normal
         dist = distributions.get_dist_class("laplace")
@@ -93,7 +93,7 @@ class TestDistributions:
         dist = distributions.get_dist_class("student")
         assert dist == torch.distributions.StudentT
 
-    def test_get_dist_estimate(self):
+    def test_get_dist_estimate(self) -> None:
         dist = torch.distributions.Normal(0.0, 1.0)
         mean = distributions.get_dist_estimate(dist, "mean")
         mode = distributions.get_dist_estimate(dist, "mode")

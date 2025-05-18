@@ -11,7 +11,7 @@ from torch_uncertainty.baselines.classification import (
 class TestMaskedBaseline:
     """Testing the MaskedResNet baseline class."""
 
-    def test_masked_18(self):
+    def test_masked_18(self) -> None:
         net = ResNetBaseline(
             num_classes=10,
             in_channels=3,
@@ -26,7 +26,7 @@ class TestMaskedBaseline:
 
         _ = net(torch.rand(1, 3, 32, 32))
 
-    def test_masked_50(self):
+    def test_masked_50(self) -> None:
         net = ResNetBaseline(
             num_classes=10,
             in_channels=3,
@@ -41,7 +41,7 @@ class TestMaskedBaseline:
 
         _ = net(torch.rand(1, 3, 40, 40))
 
-    def test_masked_errors(self):
+    def test_masked_errors(self) -> None:
         with pytest.raises(ValueError):
             _ = ResNetBaseline(
                 num_classes=10,
@@ -72,7 +72,7 @@ class TestMaskedBaseline:
 class TestMaskedWideBaseline:
     """Testing the MaskedWideResNet baseline class."""
 
-    def test_masked(self):
+    def test_masked(self) -> None:
         net = WideResNetBaseline(
             num_classes=10,
             in_channels=3,

@@ -17,25 +17,24 @@ class Disagreement(Metric):
         reduction: Literal["mean", "sum", "none", None] = "mean",
         **kwargs: Any,
     ) -> None:
-        """The Disagreement Metric to estimate the confidence of an ensemble of
+        r"""Calculate the Disagreement Metric.
+
+        The Disagreement Metric estimates the confidence of an ensemble of
         estimators.
 
         Args:
-            reduction (str, optional): Determines how to reduce over the
-                :math:`B`/batch dimension:
+            reduction (str, optional): Determines how to reduce over the :math:`B`/batch dimension:
 
                 - ``'mean'`` [default]: Averages score across samples
                 - ``'sum'``: Sum score across samples
                 - ``'none'`` or ``None``: Returns score per sample
 
-            kwargs: Additional keyword arguments, see `Advanced metric settings
-                <https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metric-kwargs>`_.
+            kwargs: Additional keyword arguments, see `Advanced metric settings <https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metric-kwargs>`_.
 
         Inputs:
             - :attr:`probs`: :math:`(B, N, C)`
 
-            where :math:`B` is the batch size, :math:`C` is the number of classes
-            and :math:`N` is the number of estimators.
+            where :math:`B` is the batch size, :math:`C` is the number of classes and :math:`N` is the number of estimators.
 
         Note:
             A higher disagreement means a lower confidence.
@@ -48,6 +47,25 @@ class Disagreement(Metric):
             ValueError:
                 If :attr:`reduction` is not one of ``'mean'``, ``'sum'``,
                 ``'none'`` or ``None``.
+
+        Example:
+
+        .. code-block:: python
+
+            from torch_uncertainty.metrics.classification import Disagreement
+
+            probs = torch.tensor(
+                [
+                    [[0.7, 0.3], [0.6, 0.4], [0.8, 0.2]],  # Example 1, 3 estimators
+                    [[0.4, 0.6], [0.5, 0.5], [0.3, 0.7]],  # Example 2, 3 estimators
+                ]
+            )
+
+            ds = Disagreement(reduction="mean")
+            ds.update(probs)
+            result = ds.compute()
+            print(result)
+            # output: tensor(0.3333)
         """
         super().__init__(**kwargs)
 

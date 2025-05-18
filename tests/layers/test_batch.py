@@ -17,23 +17,23 @@ def img_input() -> torch.Tensor:
 class TestBatchLinear:
     """Testing the BatchLinear layer class."""
 
-    def test_linear_one_estimator(self, feat_input: torch.Tensor):
+    def test_linear_one_estimator(self, feat_input: torch.Tensor) -> None:
         layer = BatchLinear(6, 2, num_estimators=1)
         print(layer)  # noqa: T201
         out = layer(feat_input)
         assert out.shape == torch.Size([4, 2])
 
-    def test_linear_two_estimators(self, feat_input: torch.Tensor):
+    def test_linear_two_estimators(self, feat_input: torch.Tensor) -> None:
         layer = BatchLinear(6, 2, num_estimators=2)
         out = layer(feat_input)
         assert out.shape == torch.Size([4, 2])
 
-    def test_linear_one_estimator_no_bias(self, feat_input: torch.Tensor):
+    def test_linear_one_estimator_no_bias(self, feat_input: torch.Tensor) -> None:
         layer = BatchLinear(6, 2, num_estimators=1, bias=False)
         out = layer(feat_input)
         assert out.shape == torch.Size([4, 2])
 
-    def test_convert_from_linear(self, feat_input: torch.Tensor):
+    def test_convert_from_linear(self, feat_input: torch.Tensor) -> None:
         linear = torch.nn.Linear(6, 3)
         layer = BatchLinear.from_linear(linear, num_estimators=2)
         assert layer.linear.weight.shape == torch.Size([3, 6])
@@ -48,18 +48,18 @@ class TestBatchLinear:
 class TestBatchConv2d:
     """Testing the BatchConv2d layer class."""
 
-    def test_conv_one_estimator(self, img_input: torch.Tensor):
+    def test_conv_one_estimator(self, img_input: torch.Tensor) -> None:
         layer = BatchConv2d(6, 2, num_estimators=1, kernel_size=1)
         print(layer)  # noqa: T201
         out = layer(img_input)
         assert out.shape == torch.Size([5, 2, 3, 3])
 
-    def test_conv_two_estimators(self, img_input: torch.Tensor):
+    def test_conv_two_estimators(self, img_input: torch.Tensor) -> None:
         layer = BatchConv2d(6, 2, num_estimators=2, kernel_size=1)
         out = layer(img_input)
         assert out.shape == torch.Size([5, 2, 3, 3])
 
-    def test_convert_from_conv2d(self, img_input: torch.Tensor):
+    def test_convert_from_conv2d(self, img_input: torch.Tensor) -> None:
         conv = torch.nn.Conv2d(6, 3, 1)
         layer = BatchConv2d.from_conv2d(conv, num_estimators=2)
         assert layer.conv.weight.shape == torch.Size([3, 6, 1, 1])

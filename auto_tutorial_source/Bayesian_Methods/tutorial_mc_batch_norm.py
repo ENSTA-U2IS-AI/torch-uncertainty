@@ -1,8 +1,9 @@
+# ruff: noqa: E402, E703, D212, D415
 """
 Training a LeNet with Monte Carlo Batch Normalization
 =====================================================
 
-In this tutorial, we will train a LeNet classifier on the MNIST dataset using Monte-Carlo Batch Normalization (MCBN), a post-hoc Bayesian approximation method. 
+In this tutorial, we will train a LeNet classifier on the MNIST dataset using Monte-Carlo Batch Normalization (MCBN), a post-hoc Bayesian approximation method.
 
 Training a LeNet with MCBN using TorchUncertainty models and PyTorch Lightning
 ------------------------------------------------------------------------------
@@ -22,6 +23,7 @@ First, we have to load the following utilities from TorchUncertainty:
 
 We also need import the neural network utils within `torch.nn`.
 """
+
 # %%
 from pathlib import Path
 
@@ -41,7 +43,7 @@ from torch_uncertainty.routines import ClassificationRoutine
 # logs. We also create the datamodule that handles the MNIST dataset
 # dataloaders and transforms.
 
-trainer = TUTrainer(accelerator="cpu", max_epochs=2, enable_progress_bar=False)
+trainer = TUTrainer(accelerator="gpu", devices=1, max_epochs=2, enable_progress_bar=False)
 
 # datamodule
 root = Path("data")
@@ -86,13 +88,11 @@ perf = trainer.test(model=routine, datamodule=datamodule)
 # MCBatchNorm layers, and that we want to use 8 stochastic estimators.
 # The amount of stochasticity is controlled by the ``mc_batch_size`` argument.
 # The larger the ``mc_batch_size``, the more stochastic the predictions will be.
-# The authors suggest 32 as a good value for ``mc_batch_size`` but we use 16 here
+# The authors suggest 32 as a good value for ``mc_batch_size`` but we use 4 here
 # to highlight the effect of stochasticity on the predictions.
 
-routine.model = MCBatchNorm(
-    routine.model, num_estimators=8, convert=True, mc_batch_size=16
-)
-routine.model.fit(dataloader=datamodule.postprocess_dataloader())
+routine.model = MCBatchNorm(routine.model, num_estimators=8, convert=True, mc_batch_size=16)
+routine.model.fit(datamodule.train_dataloader())
 routine = routine.eval()  # To avoid prints
 
 # %%
@@ -112,7 +112,7 @@ import torch
 import torchvision
 
 
-def imshow(img):
+def imshow(img) -> None:
     npimg = img.numpy()
     plt.imshow(np.transpose(npimg, (1, 2, 0)))
     plt.axis("off")

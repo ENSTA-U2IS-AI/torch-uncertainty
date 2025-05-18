@@ -23,7 +23,7 @@ class CUB(ImageFolder):
         target_transform: Callable | None = None,
         return_attributes: bool = False,
         download: bool = False,
-    ):
+    ) -> None:
         """The Caltech-UCSD Birds-200-2011 dataset.
 
         Args:
@@ -38,11 +38,11 @@ class CUB(ImageFolder):
                 Defaults to False.
             download (bool, optional): If True, downloads the dataset from the internet and puts it
                 in root directory. If dataset is already downloaded, it is not downloaded again.
-                Defaults to False.
 
-        Reference:
-            Wah, C. and Branson, S. and Welinder, P. and Perona, P. and Belongie, S. Caltech-UCSD
-                Birds 200.
+        References:
+        [1] `Wah, C. and Branson, S. and Welinder, P. and Perona, P. and Belongie, S. Caltech-UCSD Birds 200
+        <https://www.semanticscholar.org/paper/The-Caltech-UCSD-Birds-200-2011-Dataset-Wah-Branson/c069629a51f6c1c301eb20ed77bc6b586c24ce32>`_.
+
         """
         self.folder_root = Path(root)
         self.train = train
@@ -138,7 +138,7 @@ class CUB(ImageFolder):
             self.tgz_md5,
         )
 
-    def _download(self):
+    def _download(self) -> None:
         """Download the dataset from caltec.edu."""
         if self._check_integrity():
             logging.info("Files already downloaded and verified")

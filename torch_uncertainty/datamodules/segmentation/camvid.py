@@ -141,6 +141,7 @@ class CamVidDataModule(TUDataModule):
 
             self.train_transform = v2.Compose(
                 [
+                    v2.Resize(size=self.eval_size, antialias=True),
                     basic_transform,
                     v2.ToDtype(
                         dtype={

@@ -1,3 +1,4 @@
+# ruff: noqa: E402, E703, D212, D415
 """
 Corrupting Images with TorchUncertainty to Benchmark Robustness
 ===============================================================
@@ -7,16 +8,17 @@ TorchUncertainty library. These corruption transforms were first proposed in the
 Benchmarking Neural Network Robustness to Common Corruptions and Perturbations
 by Dan Hendrycks and Thomas Dietterich.
 
-For this tutorial, we will only load the corruption transforms available in 
+For this tutorial, we will only load the corruption transforms available in
 torch_uncertainty.transforms.corruption. We also need to load utilities from
 torchvision and matplotlib.
 """
+
 # %%
-from torchvision.transforms import Compose, ToTensor, Resize, CenterCrop
+from urllib import request
 
 import matplotlib.pyplot as plt
 from PIL import Image
-from urllib import request
+from torchvision.transforms import CenterCrop, Compose, Resize, ToTensor
 
 urls = [
     "https://upload.wikimedia.org/wikipedia/commons/d/d9/Carduelis_tristis_-Michigan%2C_USA_-male-8.jpg",
@@ -26,9 +28,11 @@ urls = [
     "https://upload.wikimedia.org/wikipedia/commons/8/8b/Cottontail_Rabbit.jpg",
 ]
 
+
 def download_img(url, i):
-    request.urlretrieve(url, f"tmp_{i}.png")
-    return Image.open(f"tmp_{i}.png").convert('RGB')
+    request.urlretrieve(url, f"tmp_{i}.png")  # noqa: S310
+    return Image.open(f"tmp_{i}.png").convert("RGB")
+
 
 images_ds = [download_img(url, i) for i, url in enumerate(urls)]
 
@@ -38,13 +42,19 @@ def get_images(main_corruption, index: int = 0):
     images = []
     for severity in range(6):
         transforms = Compose(
-            [Resize(256, antialias=True), CenterCrop(256), ToTensor(), main_corruption(severity), CenterCrop(224)]
+            [
+                Resize(256, antialias=True),
+                CenterCrop(256),
+                ToTensor(),
+                main_corruption(severity),
+                CenterCrop(224),
+            ]
         )
         images.append(transforms(images_ds[index]).permute(1, 2, 0).numpy())
     return images
 
 
-def show_images(transforms):
+def show_images(transforms) -> None:
     """Show the effect of all given transforms."""
     num_corruptions = len(transforms)
     _, ax = plt.subplots(num_corruptions, 6, figsize=(10, int(1.5 * num_corruptions)))
@@ -75,8 +85,8 @@ def show_images(transforms):
 # ~~~~~~~~~~~~~~~~~~~~
 from torch_uncertainty.transforms.corruption import (
     GaussianNoise,
-    ShotNoise,
     ImpulseNoise,
+    ShotNoise,
 )
 
 show_images(
@@ -91,9 +101,9 @@ show_images(
 # 2. Blur Corruptions
 # ~~~~~~~~~~~~~~~~~~~~
 from torch_uncertainty.transforms.corruption import (
-    MotionBlur,
-    GlassBlur,
     DefocusBlur,
+    GlassBlur,
+    MotionBlur,
     ZoomBlur,
 )
 
@@ -110,9 +120,9 @@ show_images(
 # 3. Weather Corruptions
 # ~~~~~~~~~~~~~~~~~~~~~~
 from torch_uncertainty.transforms.corruption import (
+    Fog,
     Frost,
     Snow,
-    Fog,
 )
 
 show_images(
@@ -128,7 +138,12 @@ show_images(
 # ~~~~~~~~~~~~~~~~~~~~
 
 from torch_uncertainty.transforms.corruption import (
-    Brightness, Contrast, Elastic, JPEGCompression, Pixelate)
+    Brightness,
+    Contrast,
+    Elastic,
+    JPEGCompression,
+    Pixelate,
+)
 
 show_images(
     [
@@ -148,8 +163,8 @@ show_images(
 
 from torch_uncertainty.transforms.corruption import (
     GaussianBlur,
-    SpeckleNoise,
     Saturation,
+    SpeckleNoise,
 )
 
 show_images(

@@ -13,7 +13,7 @@ from torch_uncertainty.routines import SegmentationRoutine
 
 
 class TestSegmentation:
-    def test_one_estimator_two_classes(self):
+    def test_one_estimator_two_classes(self) -> None:
         trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
 
         root = Path(__file__).parent.absolute().parents[0] / "data"
@@ -61,7 +61,7 @@ class TestSegmentation:
         trainer.test(model, dm)
         model(dm.get_test_set()[0][0])
 
-    def test_two_estimators_two_classes(self):
+    def test_two_estimators_two_classes(self) -> None:
         trainer = TUTrainer(
             accelerator="cpu",
             max_epochs=2,
@@ -87,7 +87,7 @@ class TestSegmentation:
         trainer.test(model, dm)
         model(dm.get_test_set()[0][0])
 
-    def test_segmentation_errors(self):
+    def test_segmentation_errors(self) -> None:
         with pytest.raises(ValueError, match="num_classes must be at least 2, got"):
             SegmentationRoutine(model=nn.Identity(), num_classes=1, loss=nn.CrossEntropyLoss())
 

@@ -119,7 +119,7 @@ class ClassificationRoutine(LightningModule):
                 error metrics. Defaults to ``15``.
             log_plots (bool, optional): Indicates whether to log plots from
                 metrics. Defaults to ``False``.
-            save_in_csv(bool, optional): Save the results in csv. Defaults to
+            save_in_csv (bool, optional): Save the results in csv. Defaults to
                 ``False``.
             csv_filename (str, optional): Name of the csv file. Defaults to
                 ``"results.csv"``. Note that this is only used if
@@ -195,8 +195,8 @@ class ClassificationRoutine(LightningModule):
             self.loss.set_model(self.model)
         self.is_dec = isinstance(self.loss, DECLoss)
 
-        self.id_logit_storage = None
-        self.ood_logit_storage = None
+        self.id_score_storage = None
+        self.ood_score_storage = None
 
     def _init_metrics(self) -> None:
         """Initialize the metrics depending on the exact task."""
@@ -399,8 +399,8 @@ class ClassificationRoutine(LightningModule):
                 self.post_processing.fit(self.trainer.datamodule.postprocess_dataloader())
 
         if self.eval_ood and self.log_plots and isinstance(self.logger, Logger):
-            self.id_logit_storage = []
-            self.ood_logit_storage = []
+            self.id_score_storage = []
+            self.ood_score_storage = []
 
         if hasattr(self.model, "need_bn_update"):
             self.model.bn_update(self.trainer.train_dataloader, device=self.device)
@@ -542,8 +542,8 @@ class ClassificationRoutine(LightningModule):
                 self.test_ood_entropy.update(probs)
                 self.test_ood_metrics.update(ood_scores, torch.zeros_like(targets))
 
-            if self.id_logit_storage is not None:
-                self.id_logit_storage.append(logits.detach().cpu())
+            if self.id_score_storage is not None:
+                self.id_score_storage.append(ood_scores.detach().cpu())
 
             if self.post_processing is not None:
                 self.post_cls_metrics.update(pp_probs, targets)
@@ -554,8 +554,8 @@ class ClassificationRoutine(LightningModule):
             if self.is_ensemble:
                 self.test_ood_ens_metrics.update(probs_per_est)
 
-            if self.ood_logit_storage is not None:
-                self.ood_logit_storage.append(logits.detach().cpu())
+            if self.ood_score_storage is not None:
+                self.ood_score_storage.append(ood_scores.detach().cpu())
 
         if self.eval_shift and dataloader_idx == (2 if self.eval_ood else 1):
             self.test_shift_metrics.update(probs, targets)
@@ -633,30 +633,15 @@ class ClassificationRoutine(LightningModule):
 
             # plot histograms of logits and likelihoods
             if self.eval_ood:
-                id_logits = torch.cat(self.id_logit_storage, dim=0)
-                ood_logits = torch.cat(self.ood_logit_storage, dim=0)
+                id_scores = torch.cat(self.id_score_storage, dim=0)
+                ood_scores = torch.cat(self.ood_score_storage, dim=0)
 
-                id_probs = F.softmax(id_logits, dim=-1)
-                ood_probs = F.softmax(ood_logits, dim=-1)
-
-                logits_fig = plot_hist(
-                    [
-                        id_logits.mean(1).max(-1).values,
-                        ood_logits.mean(1).max(-1).values,
-                    ],
+                score_fig = plot_hist(
+                    [id_scores, ood_scores],
                     20,
-                    "Histogram of the logits",
+                    "Histogram of the OOD scores",
                 )[0]
-                probs_fig = plot_hist(
-                    [
-                        id_probs.mean(1).max(-1).values,
-                        ood_probs.mean(1).max(-1).values,
-                    ],
-                    20,
-                    "Histogram of the likelihoods",
-                )[0]
-                self.logger.experiment.add_figure("Logit Histogram", logits_fig)
-                self.logger.experiment.add_figure("Likelihood Histogram", probs_fig)
+                self.logger.experiment.add_figure("OOD Score Histogram", score_fig)
 
         if self.save_in_csv:
             self.save_results_to_csv(result_dict)

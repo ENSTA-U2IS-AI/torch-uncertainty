@@ -15,7 +15,7 @@ class ChannelLayerNorm(LayerNorm):
         device: torch.device | str | None = None,
         dtype: torch.dtype | str | None = None,
     ) -> None:
-        r"""Layer normalization over the channel dimension.
+        r"""Masksembles-style Conv2d layer.
 
         Args:
             normalized_shape (int or list or torch.Size): input shape from an expected input
@@ -48,6 +48,9 @@ class ChannelLayerNorm(LayerNorm):
             - Input: :math:`(N, *)`
             - Output: :math:`(N, *)` (same shape as input)
 
+        Reference:
+            `Masksembles for Uncertainty Estimation`, Nikita Durasov, Timur
+            Bagautdinov, Pierre Baque, Pascal Fua.
         """
         super().__init__(normalized_shape, eps, elementwise_affine, bias, device, dtype)
         self.cback = ChannelBack()

@@ -9,7 +9,7 @@ from torch_uncertainty.datasets import MUAD
 class TestMUADDataModule:
     """Testing the MUADDataModule datamodule."""
 
-    def test_muad_main(self):
+    def test_muad_main(self) -> None:
         dm = MUADDataModule(
             root="./data/",
             batch_size=128,
