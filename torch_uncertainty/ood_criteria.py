@@ -11,19 +11,24 @@ class OODCriterionInputType(Enum):
     """Enum representing the type of input expected by the OOD (Out-of-Distribution) criteria.
 
     Attributes:
-        LOGIT (int): Represents that the input is in the form of logits (pre-softmax values).
-        PROB (int): Represents that the input is in the form of probabilities (post-softmax values).
-        ESTIMATOR_PROB (int): Represents that the input is in the form of estimated probabilities
-            from an ensemble or other probabilistic model.
+        LOGIT (int): The input of the OOD Criterion is in the form of logits (pre-softmax values).
+        PROB (int): The input is in the form of probabilities (post-softmax values), also called
+            likelihoods.
+        ESTIMATOR_PROB (int): The input is in the form of estimated probabilities from an ensemble
+            or another probabilistic model.
+        POST_PROCESSING (int): The input is the prediction score given by the post-processing
+            method.
     """
 
     LOGIT = 1
     PROB = 2
     ESTIMATOR_PROB = 3
+    POST_PROCESSING = 4
 
 
 class TUOODCriterion(ABC, nn.Module):
     input_type: OODCriterionInputType
+    single_only = False
     ensemble_only = False
 
     def __init__(self) -> None:
@@ -51,6 +56,7 @@ class TUOODCriterion(ABC, nn.Module):
 
 
 class MaxLogitCriterion(TUOODCriterion):
+    single_only = True
     input_type = OODCriterionInputType.LOGIT
 
     def __init__(self) -> None:
@@ -77,6 +83,7 @@ class MaxLogitCriterion(TUOODCriterion):
 
 
 class EnergyCriterion(TUOODCriterion):
+    single_only = True
     input_type = OODCriterionInputType.LOGIT
 
     def __init__(self) -> None:
@@ -114,7 +121,8 @@ class MaxSoftmaxCriterion(TUOODCriterion):
         r"""OOD criterion based on maximum softmax probability.
 
         This criterion computes the negative of the highest softmax probability.
-        Lower maximum probabilities indicate greater uncertainty.
+        Lower maximum probabilities indicate greater uncertainty. Probabilities are also called*
+        likelihoods in a more formal context.
 
         .. math::
             \text{score} = -\max_{i}(p_i)
@@ -136,6 +144,10 @@ class MaxSoftmaxCriterion(TUOODCriterion):
             Tensor: Negative of the highest softmax probability for each sample.
         """
         return -inputs.max(-1)[0]
+
+
+class PostProcessingCriterion(MaxSoftmaxCriterion):
+    input_type = OODCriterionInputType.POST_PROCESSING
 
 
 class EntropyCriterion(TUOODCriterion):
@@ -260,6 +272,8 @@ def get_ood_criterion(ood_criterion: type[TUOODCriterion] | str) -> TUOODCriteri
             return EnergyCriterion()
         if ood_criterion == "msp":
             return MaxSoftmaxCriterion()
+        if ood_criterion == "post_processing":
+            return PostProcessingCriterion()
         if ood_criterion == "entropy":
             return EntropyCriterion()
         if ood_criterion == "mutual_information":
@@ -270,8 +284,10 @@ def get_ood_criterion(ood_criterion: type[TUOODCriterion] | str) -> TUOODCriteri
             "The OOD criterion must be one of 'msp', 'logit', 'energy', 'entropy',"
             f" 'mutual_information' or 'variation_ratio'. Got {ood_criterion}."
         )
-    if isinstance(ood_criterion, type) and issubclass(ood_criterion, TUOODCriterion):
+    if isinstance(ood_criterion, type):
         return ood_criterion()
+    if isinstance(ood_criterion, TUOODCriterion):
+        return ood_criterion
     raise ValueError(
-        f"The OOD criterion should be a string or a subclass of TUOODCriterion. Got {type(ood_criterion)}."
+        f"The OOD criterion should be a string or a subclass of TUOODCriterion. Got {ood_criterion}."
     )

@@ -109,20 +109,8 @@ class ConformalClsAPS(Conformal):
         probs = self.model_forward(inputs.to(self.device))
         all_scores = self._calculate_all_labels(probs)
         pred_set = all_scores <= self.quantile
-        confidence_score = pred_set.sum(dim=1, keepdim=True).float() / probs.shape[1]
+        confidence_score = 1 / pred_set.sum(dim=1, keepdim=True)
         return pred_set.float() * confidence_score
-
-    @torch.no_grad()
-    def conformal_visu(self, inputs: Tensor) -> tuple[Tensor, Tensor]:
-        """Perform conformal prediction on the test set and return the classical
-        confidence for visualisation.
-        """
-        self.model.eval()
-        inputs = inputs.to(self.device)
-        probs = self.model_forward(inputs)
-        all_scores = 1 - self._calculate_all_labels(probs)
-        pred_set = all_scores <= self.quantile
-        return (pred_set, all_scores)
 
     @property
     def quantile(self) -> Tensor:

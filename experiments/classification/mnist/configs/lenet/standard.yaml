@@ -5,7 +5,7 @@ trainer:
   accelerator: gpu
   devices: 1
   precision: 16-mixed
-  max_epochs: 75
+  max_epochs: 10
   logger:
     class_path: lightning.pytorch.loggers.TensorBoardLogger
     init_args:
@@ -13,21 +13,21 @@ trainer:
       name: standard
       default_hp_metric: false
   callbacks:
-  - class_path: torch_uncertainty.callbacks.TUClsCheckpoint
-  - class_path: torch_uncertainty.callbacks.CompoundCheckpoint
-    init_args:
-      mode: max
-      compound_metric_dict:
-        val/cls/Acc: 1.0
-        val/cal/ECE: -1.0
-  - class_path: lightning.pytorch.callbacks.LearningRateMonitor
-    init_args:
-      logging_interval: step
-  - class_path: lightning.pytorch.callbacks.EarlyStopping
-    init_args:
-      monitor: val/cls/Acc
-      patience: 1000
-      check_finite: true
+    - class_path: torch_uncertainty.callbacks.TUClsCheckpoint
+    - class_path: torch_uncertainty.callbacks.CompoundCheckpoint
+      init_args:
+        mode: max
+        compound_metric_dict:
+          val/cls/Acc: 1.0
+          val/cal/ECE: -1.0
+    - class_path: lightning.pytorch.callbacks.LearningRateMonitor
+      init_args:
+        logging_interval: step
+    - class_path: lightning.pytorch.callbacks.EarlyStopping
+      init_args:
+        monitor: val/cls/Acc
+        patience: 1000
+        check_finite: true
 model:
   model:
     class_path: torch_uncertainty.models.classification.lenet
@@ -40,21 +40,16 @@ model:
       dropout_rate: 0
   num_classes: 10
   loss: CrossEntropyLoss
+  ood_criterion: torch_uncertainty.ood_criteria.EnergyCriterion
 data:
   root: ./data
   batch_size: 128
   num_workers: 8
+  eval_ood: true
+  eval_shift: true
 optimizer:
   class_path: torch.optim.SGD
   init_args:
     lr: 0.05
     momentum: 0.9
     weight_decay: 5e-4
-    nesterov: true
-lr_scheduler:
-  class_path: torch.optim.lr_scheduler.MultiStepLR
-  init_args:
-    milestones:
-    - 25
-    - 50
-    gamma: 0.1

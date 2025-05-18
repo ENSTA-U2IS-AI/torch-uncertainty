@@ -1,8 +1,10 @@
 import logging
+from abc import abstractmethod
 from typing import Literal
 
 import torch
-from torch import Tensor, nn, optim
+from torch import Tensor, nn
+from torch.optim import LBFGS
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
@@ -12,12 +14,15 @@ from torch_uncertainty.post_processing import PostProcessing
 class Scaler(PostProcessing):
     criterion = nn.CrossEntropyLoss()
     trained = False
+    logits: Tensor | None = None
+    labels: Tensor | None = None
 
     def __init__(
         self,
         model: nn.Module | None = None,
         lr: float = 0.1,
         max_iter: int = 100,
+        eps: float = 1e-8,
         device: Literal["cpu", "cuda"] | torch.device | None = None,
     ) -> None:
         """Virtual class for scaling post-processing for calibrated probabilities.
@@ -26,6 +31,7 @@ class Scaler(PostProcessing):
             model (nn.Module): Model to calibrate.
             lr (float, optional): Learning rate for the optimizer. Defaults to ``0.1``.
             max_iter (int, optional): Maximum number of iterations for the optimizer. Defaults to ``100``.
+            eps (float): Small value for stability. Defaults to ``1e-8``.
             device (Optional[Literal["cpu", "cuda"]], optional): Device to use for optimization. Defaults to ``None``.
 
         References:
@@ -36,12 +42,16 @@ class Scaler(PostProcessing):
         self.device = device
 
         if lr <= 0:
-            raise ValueError("Learning rate must be positive.")
+            raise ValueError(f"Learning rate must be strictly positive. Got {lr}.")
         self.lr = lr
 
         if max_iter <= 0:
-            raise ValueError("Max iterations must be positive.")
+            raise ValueError(f"Max iterations must be strictly positive. Got {max_iter}.")
         self.max_iter = int(max_iter)
+
+        if eps <= 0:
+            raise ValueError(f"Eps must be strictly positive. Got {eps}.")
+        self.eps = eps
 
     def fit(
         self,
@@ -52,11 +62,12 @@ class Scaler(PostProcessing):
         """Fit the temperature parameters to the calibration data.
 
         Args:
-            dataloader (DataLoader): Dataloader with the calibration data.
+            dataloader (DataLoader): Dataloader with the calibration data. If there is no model,
+                the dataloader should include the confidence score directly and not the logits.
             save_logits (bool, optional): Whether to save the logits and
-                labels. Defaults to False.
+                labels in memory. Defaults to ``False``.
             progress (bool, optional): Whether to show a progress bar.
-                Defaults to True.
+                Defaults to ``True``.
         """
         if self.model is None or isinstance(self.model, nn.Identity):
             logging.warning(
@@ -66,16 +77,29 @@ class Scaler(PostProcessing):
 
         all_logits = []
         all_labels = []
-        calibration_dl = dataloader
         with torch.no_grad():
-            for inputs, labels in tqdm(calibration_dl, disable=not progress):
+            for inputs, labels in tqdm(dataloader, disable=not progress):
                 logits = self.model(inputs.to(self.device))
                 all_logits.append(logits)
                 all_labels.append(labels)
             all_logits = torch.cat(all_logits).to(self.device)
             all_labels = torch.cat(all_labels).to(self.device)
 
-        optimizer = optim.LBFGS(self.temperature, lr=self.lr, max_iter=self.max_iter)
+        # Stabilize optimization
+        all_logits = all_logits.clamp(self.eps, 1 - self.eps)
+
+        # Handle binary classification case
+        if all_logits.dim() == 2 and all_logits.shape[1] == 1:
+            all_logits = all_logits.squeeze(1)
+        if all_logits.dim() == 1:
+            # allow labels as probabilities
+            if all_labels.unique() != torch.tensor([0, 1]):
+                all_labels = torch.stack([1 - all_labels, all_labels], dim=1)
+            all_logits = torch.stack([torch.log(1 - all_logits), torch.log(all_logits)], dim=1)
+
+        if all_labels.ndim == 1:
+            all_labels = all_labels.long()
+        optimizer = LBFGS(self.temperature, lr=self.lr, max_iter=self.max_iter)
 
         def calib_eval() -> float:
             optimizer.zero_grad()
@@ -97,6 +121,7 @@ class Scaler(PostProcessing):
             )
         return self._scale(self.model(inputs))
 
+    @abstractmethod
     def _scale(self, logits: Tensor) -> Tensor:
         """Scale the logits with the optimal temperature.
 
@@ -106,7 +131,7 @@ class Scaler(PostProcessing):
         Returns:
             Tensor: Scaled logits.
         """
-        raise NotImplementedError
+        ...
 
     def fit_predict(
         self,
@@ -117,5 +142,5 @@ class Scaler(PostProcessing):
         return self(self.logits)
 
     @property
-    def temperature(self) -> list:
-        raise NotImplementedError
+    @abstractmethod
+    def temperature(self) -> list: ...

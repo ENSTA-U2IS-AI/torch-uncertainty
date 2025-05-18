@@ -353,7 +353,6 @@ class TestClassification:
             model=model,
             loss=None,
             num_classes=3,
-            is_conformal=True,
             post_processing=ConformalClsTHR(alpha=0.1),
         )
         trainer.test(routine, dm)
@@ -371,7 +370,6 @@ class TestClassification:
             model=model,
             loss=None,
             num_classes=3,
-            is_conformal=True,
             post_processing=None,
         )
         trainer.test(routine, dm)

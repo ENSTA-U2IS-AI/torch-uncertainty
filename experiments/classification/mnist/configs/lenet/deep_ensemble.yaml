@@ -14,22 +14,22 @@ trainer:
       name: deep_ensemble
       default_hp_metric: false
   callbacks:
-  - class_path: torch_uncertainty.callbacks.TUClsCheckpoint
-  - class_path: lightning.pytorch.callbacks.LearningRateMonitor
-    init_args:
-      logging_interval: step
-  - class_path: lightning.pytorch.callbacks.EarlyStopping
-    init_args:
-      monitor: val/cls/Acc
-      patience: 1000
-      check_finite: true
-model:  
+    - class_path: torch_uncertainty.callbacks.TUClsCheckpoint
+    - class_path: lightning.pytorch.callbacks.LearningRateMonitor
+      init_args:
+        logging_interval: step
+    - class_path: lightning.pytorch.callbacks.EarlyStopping
+      init_args:
+        monitor: val/cls/Acc
+        patience: 1000
+        check_finite: true
+model:
   # ClassificationRoutine
-  model:  
+  model:
     # DeepEnsemble
     class_path: torch_uncertainty.models.wrappers.deep_ensembles.deep_ensembles
     init_args:
-      models:  
+      models:
         # LeNet
         class_path: torch_uncertainty.models.classification.lenet
         init_args:
@@ -67,6 +67,6 @@ lr_scheduler:
   class_path: torch.optim.lr_scheduler.MultiStepLR
   init_args:
     milestones:
-    - 25
-    - 50
+      - 25
+      - 50
     gamma: 0.1

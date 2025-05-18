@@ -13,15 +13,15 @@ trainer:
       name: packed
       default_hp_metric: false
   callbacks:
-  - class_path: torch_uncertainty.callbacks.TUClsCheckpoint
-  - class_path: lightning.pytorch.callbacks.LearningRateMonitor
-    init_args:
-      logging_interval: step
-  - class_path: lightning.pytorch.callbacks.EarlyStopping
-    init_args:
-      monitor: val/cls/Acc
-      patience: 1000
-      check_finite: true
+    - class_path: torch_uncertainty.callbacks.TUClsCheckpoint
+    - class_path: lightning.pytorch.callbacks.LearningRateMonitor
+      init_args:
+        logging_interval: step
+    - class_path: lightning.pytorch.callbacks.EarlyStopping
+      init_args:
+        monitor: val/cls/Acc
+        patience: 1000
+        check_finite: true
 model:
   num_classes: 10
   in_channels: 3
@@ -41,7 +41,7 @@ optimizer:
   nesterov: true
 lr_scheduler:
   milestones:
-  - 60
-  - 120
-  - 160
+    - 60
+    - 120
+    - 160
   gamma: 0.2
