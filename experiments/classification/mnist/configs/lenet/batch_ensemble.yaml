@@ -27,7 +27,7 @@ model:
   # ClassificationRoutine
   model:
     # BatchEnsemble
-    class_path: torch_uncertainty.models.lenet.batchensemble_lenet
+    class_path: torch_uncertainty.models.classification.lenet.batchensemble_lenet
     init_args:
       in_channels: 1
       num_classes: 10
