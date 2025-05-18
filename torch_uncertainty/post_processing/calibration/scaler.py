@@ -14,6 +14,8 @@ from torch_uncertainty.post_processing import PostProcessing
 class Scaler(PostProcessing):
     criterion = nn.CrossEntropyLoss()
     trained = False
+    logits: Tensor | None = None
+    labels: Tensor | None = None
 
     def __init__(
         self,
@@ -77,21 +79,28 @@ class Scaler(PostProcessing):
 
         all_logits = []
         all_labels = []
-        calibration_dl = dataloader
         with torch.no_grad():
-            for inputs, labels in tqdm(calibration_dl, disable=not progress):
+            for inputs, labels in tqdm(dataloader, disable=not progress):
                 logits = self.model(inputs.to(self.device))
                 all_logits.append(logits)
                 all_labels.append(labels)
             all_logits = torch.cat(all_logits).to(self.device)
-            all_labels = torch.cat(all_labels).to(dtype=torch.long).to(self.device)
+            all_labels = torch.cat(all_labels).to(self.device)
 
+        # Stabilize optimization
         all_logits = all_logits.clamp(self.eps, 1 - self.eps)
+
+        # Handle binary classification case
         if all_logits.dim() == 2 and all_logits.shape[1] == 1:
             all_logits = all_logits.squeeze(1)
         if all_logits.dim() == 1:
+            # allow labels as probabilities
+            if all_labels.unique() != torch.tensor([0, 1]):
+                all_labels = torch.stack([1 - all_labels, all_labels], dim=1)
             all_logits = torch.stack([torch.log(1 - all_logits), torch.log(all_logits)], dim=1)
 
+        if all_labels.ndim == 1:
+            all_labels = all_labels.long()
         optimizer = LBFGS(self.temperature, lr=self.lr, max_iter=self.max_iter)
 
         def calib_eval() -> float:
