@@ -12,10 +12,10 @@ trainer:
       name: standard
       default_hp_metric: false
   callbacks:
-  - class_path: torch_uncertainty.callbacks.TUSegCheckpoint
-  - class_path: lightning.pytorch.callbacks.LearningRateMonitor
-    init_args:
-      logging_interval: step
+    - class_path: torch_uncertainty.callbacks.TUSegCheckpoint
+    - class_path: lightning.pytorch.callbacks.LearningRateMonitor
+      init_args:
+        logging_interval: step
 model:
   model:
     class_path: torch_uncertainty.models.segmentation.small_unet
@@ -31,29 +31,29 @@ model:
         class_path: torch.Tensor
         dict_kwargs:
           data:
-          - 4.3817
-          - 19.7927
-          - 3.3011
-          - 48.8031
-          - 36.2141
-          - 33.0049
-          - 47.5130
-          - 48.8560
-          - 12.4401
-          - 48.0600
-          - 14.4807
-          - 30.8762
-          - 4.7467
-          - 19.3913
-          - 50.4984
+            - 4.3817
+            - 19.7927
+            - 3.3011
+            - 48.8031
+            - 36.2141
+            - 33.0049
+            - 47.5130
+            - 48.8560
+            - 12.4401
+            - 48.0600
+            - 14.4807
+            - 30.8762
+            - 4.7467
+            - 19.3913
+            - 50.4984
 data:
   root: ./data
   batch_size: 10
   version: small
   eval_ood: true
   eval_size:
-  - 256
-  - 512
+    - 256
+    - 512
   num_workers: 10
 optimizer:
   class_path: torch.optim.Adam

@@ -3,29 +3,37 @@
 This Docker image is designed for users and contributors who want to run experiments with `torch-uncertainty` on remote virtual machines with GPU support. It is particularly useful for those who do not have access to a local GPU and need a pre-configured environment for development and experimentation.
 
 ---
+
 ## How to Use The Docker Image
+
 ### Step 1: Fork the Repository
 
 Before proceeding, ensure you have forked the `torch-uncertainty` repository to your own GitHub account. You can do this by visiting the [torch-uncertainty GitHub repository](https://github.com/ENSTA-U2IS-AI/torch-uncertainty) and clicking the **Fork** button in the top-right corner.
 
 Once forked, clone your forked repository to your local machine:
+
 ```bash
 git clone git@github.com:<your-username>/torch-uncertainty.git
 cd torch-uncertainty
 ```
 
 > ### ⚠️ IMPORTANT NOTE: Keep Your Fork Synced
-> 
+>
 > **To ensure that you are working with the latest stable version and bug fixes, you must manually sync your fork with the upstream repository before building the Docker image. Failure to sync your fork may result in outdated dependencies or missing bug fixes in the Docker image.**
 
 ### Step 2: Build the Docker image locally
+
 Build the modified image locally and push it to a Docker registry:
-```
+
+```bash
 docker build -t my-torch-uncertainty-docker:version .
 docker push my-dockerhub-user/my-torch-uncertainty-image:version
 ```
+
 ### Step 3: Set environment variables on your VM
+
 Connect to you VM and set the following environment variables:
+
 ```bash
 export VM_SSH_PUBLIC_KEY="$(cat ~/.ssh/id_rsa.pub)"
 export GITHUB_SSH_PRIVATE_KEY="$(cat ~/.ssh/id_rsa)"
@@ -36,6 +44,7 @@ export USE_COMPACT_SHELL_PROMPT=true
 ```
 
 Here is a brief explanation of the environment variables used in the Docker setup:
+
 - **`VM_SSH_PUBLIC_KEY`**: The public SSH key used to authenticate with the container via SSH.
 - **`GITHUB_SSH_PRIVATE_KEY`**: The private SSH key used to authenticate with GitHub for cloning and pushing repositories.
 - **`GITHUB_USER`**: The GitHub username used to clone the repository during the first-time setup.
@@ -44,8 +53,10 @@ Here is a brief explanation of the environment variables used in the Docker setu
 - **`USE_COMPACT_SHELL_PROMPT`** (optional): Enables a compact and colorized shell prompt inside the container if set to `"true"`.
 
 ### Step 4: Run the Docker container
+
 First, authenticate with your Docker registry if you use a private registry.
 Then run the following command to run the Docker image from your docker registriy
+
 ```bash
 docker run --rm -it --gpus all -p 8888:8888 -p 22:22 \
     -e VM_SSH_PUBLIC_KEY \
@@ -58,10 +69,13 @@ docker run --rm -it --gpus all -p 8888:8888 -p 22:22 \
 ```
 
 ### Step 5: Connect to your container
+
 Once the container is up and running, you can connect to it via SSH:  
+
 ```bash
 ssh -i /path/to/private_key root@<VM_HOST> -p <VM_PORT>
 ```
+
 Replace `<VM_HOST>` and `<VM_PORT>` with the host and port of your VM,  
 and `/path/to/private_key` with the private key that corresponds to `VM_SSH_PUBLIC_KEY`.
 
@@ -74,7 +88,7 @@ If using a cloud provider, ensure your network volume is correctly attached to a
 ## Remote Development
 
 This Docker setup also allows for remote development on the VM, since GitHub SSH access is set up and the whole repo is cloned to the VM from your GitHub fork.
-For example, you can seamlessly connect your VS Code editor to your remote VM and run experiments, as if on your local machine but with the GPU acceleration of your VM. 
+For example, you can seamlessly connect your VS Code editor to your remote VM and run experiments, as if on your local machine but with the GPU acceleration of your VM.
 See [VS Code Remote Development](https://code.visualstudio.com/docs/remote/remote-overview) for further details.
 
 ## Streamline setup with your Cloud provider of choice
