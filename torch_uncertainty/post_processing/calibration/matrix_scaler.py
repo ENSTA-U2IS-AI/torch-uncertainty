@@ -15,6 +15,7 @@ class MatrixScaler(Scaler):
         init_b: float = 0,
         lr: float = 0.1,
         max_iter: int = 200,
+        eps: float = 1e-8,
         device: Literal["cpu", "cuda"] | device | None = None,
     ) -> None:
         """Matrix scaling post-processing for calibrated probabilities.
@@ -29,6 +30,7 @@ class MatrixScaler(Scaler):
             lr (float, optional): Learning rate for the optimizer. Defaults to 0.1.
             max_iter (int, optional): Maximum number of iterations for the
                 optimizer. Defaults to 100.
+            eps (float): Small value for stability. Defaults to ``1e-8``.
             device (Optional[Literal["cpu", "cuda"]], optional): Device to use
                 for optimization. Defaults to None.
 
@@ -37,7 +39,7 @@ class MatrixScaler(Scaler):
             of modern neural networks. In ICML 2017.
 
         """
-        super().__init__(model=model, lr=lr, max_iter=max_iter, device=device)
+        super().__init__(model=model, lr=lr, max_iter=max_iter, eps=eps, device=device)
 
         if not isinstance(num_classes, int):
             raise TypeError(f"num_classes must be an integer. Got {num_classes}.")
@@ -66,14 +68,6 @@ class MatrixScaler(Scaler):
         )
 
     def _scale(self, logits: Tensor) -> Tensor:
-        """Scale the predictions with the optimal temperature.
-
-        Args:
-            logits (Tensor): logits to be scaled.
-
-        Returns:
-            Tensor: Scaled logits.
-        """
         return self.temp_w @ logits + self.temp_b
 
     @property
