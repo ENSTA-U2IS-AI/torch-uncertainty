@@ -32,6 +32,7 @@ from torch_uncertainty.metrics import (
     GroupingLoss,
     MutualInformation,
     RiskAt80Cov,
+    SetSize,
 )
 from torch_uncertainty.models import (
     EPOCH_UPDATE_MODEL,
@@ -251,7 +252,8 @@ class ClassificationRoutine(LightningModule):
         if self.post_processing is not None and isinstance(self.post_processing, Conformal):
             self.post_cls_metrics = MetricCollection(
                 {
-                    "test/cls/CoverageRate": CoverageRate(),
+                    "test/post/CoverageRate": CoverageRate(),
+                    "test/post/SetSize": SetSize(),
                 },
             )
         elif self.post_processing is not None:

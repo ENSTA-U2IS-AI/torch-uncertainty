@@ -18,4 +18,5 @@ from .risk_coverage import (
     RiskAt80Cov,
     RiskAtxCov,
 )
+from .set_size import SetSize
 from .variation_ratio import VariationRatio
