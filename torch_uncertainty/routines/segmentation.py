@@ -141,17 +141,17 @@ class SegmentationRoutine(LightningModule):
         seg_metrics = MetricCollection(
             {
                 "seg/mIoU": MeanIntersectionOverUnion(num_classes=self.num_classes),
-            },
-            compute_groups=False,
-        )
-        sbsmpl_seg_metrics = MetricCollection(
-            {
                 "seg/mAcc": Accuracy(
                     task="multiclass", average="macro", num_classes=self.num_classes
                 ),
+                "seg/pixAcc": Accuracy(task="multiclass", num_classes=self.num_classes),
+            },
+            compute_groups=[["seg/mIoU", "seg/mAcc", "seg/pixAcc"]],
+        )
+        sbsmpl_seg_metrics = MetricCollection(
+            {
                 "seg/Brier": BrierScore(num_classes=self.num_classes),
                 "seg/NLL": CategoricalNLL(),
-                "seg/pixAcc": Accuracy(task="multiclass", num_classes=self.num_classes),
                 "cal/ECE": CalibrationError(
                     task="multiclass",
                     num_classes=self.num_classes,
@@ -169,10 +169,8 @@ class SegmentationRoutine(LightningModule):
                 "sc/Risk@80Cov": RiskAt80Cov(),
             },
             compute_groups=[
-                ["seg/mAcc"],
                 ["seg/Brier"],
                 ["seg/NLL"],
-                ["seg/pixAcc"],
                 ["cal/ECE", "cal/aECE"],
                 ["sc/AURC", "sc/AUGRC", "sc/Cov@5Risk", "sc/Risk@80Cov"],
             ],

@@ -12,10 +12,10 @@ trainer:
       name: deep_ensembles
       default_hp_metric: false
   callbacks:
-  - class_path: torch_uncertainty.callbacks.TUSegCheckpoint
-  - class_path: lightning.pytorch.callbacks.LearningRateMonitor
-    init_args:
-      logging_interval: step
+    - class_path: torch_uncertainty.callbacks.TUSegCheckpoint
+    - class_path: lightning.pytorch.callbacks.LearningRateMonitor
+      init_args:
+        logging_interval: step
 model:
   model:
     class_path: torch_uncertainty.models.deep_ensembles
@@ -28,8 +28,6 @@ model:
           bilinear: true
       num_estimators: 4
       task: segmentation
-      ckpt_paths: ./logs/muad/unet/deep_ensembles/version_2/checkpoints
-      use_tu_ckpt_format: true
   num_classes: 15
   loss:
     class_path: torch.nn.CrossEntropyLoss
@@ -38,21 +36,21 @@ model:
         class_path: torch.Tensor
         dict_kwargs:
           data:
-          - 4.1712
-          - 19.4603
-          - 3.2345
-          - 49.2588
-          - 36.2490
-          - 34.0272
-          - 47.0651
-          - 49.7145
-          - 12.4178
-          - 48.3962
-          - 14.3876
-          - 32.8862
-          - 5.2729
-          - 17.8703
-          - 50.4984
+            - 4.1712
+            - 19.4603
+            - 3.2345
+            - 49.2588
+            - 36.2490
+            - 34.0272
+            - 47.0651
+            - 49.7145
+            - 12.4178
+            - 48.3962
+            - 14.3876
+            - 32.8862
+            - 5.2729
+            - 17.8703
+            - 50.4984
   format_batch_fn:
     class_path: torch_uncertainty.transforms.RepeatTarget
     init_args:
@@ -63,8 +61,8 @@ data:
   crop_size: 256
   eval_ood: true
   eval_size:
-  - 512
-  - 1024
+    - 512
+    - 1024
 optimizer:
   class_path: torch.optim.Adam
   init_args:
@@ -74,8 +72,8 @@ lr_scheduler:
   class_path: torch.optim.lr_scheduler.MultiStepLR
   init_args:
     milestones:
-    - 20
-    - 40
-    - 60
-    - 80
+      - 20
+      - 40
+      - 60
+      - 80
     gamma: 0.5
