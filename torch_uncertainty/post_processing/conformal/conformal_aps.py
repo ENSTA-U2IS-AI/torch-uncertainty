@@ -109,7 +109,7 @@ class ConformalClsAPS(Conformal):
         probs = self.model_forward(inputs.to(self.device))
         all_scores = self._calculate_all_labels(probs)
         pred_set = all_scores <= self.quantile
-        confidence_score = pred_set.sum(dim=1, keepdim=True).float() / probs.shape[1]
+        confidence_score = 1 / pred_set.sum(dim=1, keepdim=True)
         return pred_set.float() * confidence_score
 
     @torch.no_grad()

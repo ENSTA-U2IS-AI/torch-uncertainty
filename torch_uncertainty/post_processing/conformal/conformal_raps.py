@@ -120,12 +120,15 @@ class ConformalClsRAPS(Conformal):
 
     @torch.no_grad()
     def conformal(self, inputs: Tensor) -> Tensor:
-        """Compute the prediction set for each input."""
+        """Compute the prediction set for each input.
+
+        Returns:
+            Tensor: Uniform prediction over the predicted set size (B, C).
+        """
         self.model.eval()
         probs = self.model_forward(inputs.to(self.device))
-        all_scores = self._calculate_all_labels(probs)
-        pred_set = all_scores <= self.quantile
-        confidence_score = pred_set.sum(dim=1, keepdim=True).float() / probs.shape[1]
+        pred_set = self._calculate_all_labels(probs) <= self.quantile
+        confidence_score = 1 / pred_set.sum(dim=1, keepdim=True)
         return pred_set.float() * confidence_score
 
     @torch.no_grad()

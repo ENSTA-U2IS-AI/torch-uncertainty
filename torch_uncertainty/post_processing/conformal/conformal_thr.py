@@ -66,13 +66,11 @@ class ConformalClsTHR(Conformal):
                 logits_list.append(scaled_logits)
                 labels_list.append(labels)
 
-            scaled_logits = torch.cat(logits_list)
-            labels = torch.cat(labels_list).long()
-            probs = torch.softmax(scaled_logits, dim=1)
-            true_class_probs = probs.gather(1, labels.unsqueeze(1)).squeeze(1)
-            scores = 1.0 - true_class_probs  # scores are (1 - true prob)
-
-            self.q_hat = torch.quantile(scores, 1.0 - self.alpha)
+        probs = torch.cat(logits_list).softmax(-1)
+        labels = torch.cat(labels_list).long()
+        true_class_probs = probs.gather(1, labels.unsqueeze(1)).squeeze(1)
+        scores = 1.0 - true_class_probs  # scores are (1 - true prob)
+        self.q_hat = torch.quantile(scores, 1.0 - self.alpha)
 
     @torch.no_grad()
     def conformal(self, inputs: Tensor) -> Tensor:
@@ -82,7 +80,7 @@ class ConformalClsTHR(Conformal):
         pred_set = probs >= 1.0 - self.quantile
         top1 = torch.argmax(probs, dim=1, keepdim=True)
         pred_set.scatter_(1, top1, True)  # Always include top-1 class
-        confidence_score = pred_set.sum(dim=1, keepdim=True).float() / probs.shape[1]
+        confidence_score = 1 / pred_set.sum(dim=1, keepdim=True)
         return pred_set.float() * confidence_score
 
     @torch.no_grad()
