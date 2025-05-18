@@ -633,30 +633,18 @@ class ClassificationRoutine(LightningModule):
 
             # plot histograms of logits and likelihoods
             if self.eval_ood:
-                id_logits = torch.cat(self.id_score_storage, dim=0)
-                ood_logits = torch.cat(self.ood_score_storage, dim=0)
+                id_scores = torch.cat(self.id_score_storage, dim=0)
+                ood_scores = torch.cat(self.ood_score_storage, dim=0)
 
-                id_probs = F.softmax(id_logits, dim=-1)
-                ood_probs = F.softmax(ood_logits, dim=-1)
-
-                logits_fig = plot_hist(
+                score_fig = plot_hist(
                     [
-                        id_logits.mean(1).max(-1).values,
-                        ood_logits.mean(1).max(-1).values,
+                        id_scores.values,
+                        ood_scores.values,
                     ],
                     20,
                     "Histogram of the OOD scores",
                 )[0]
-                probs_fig = plot_hist(
-                    [
-                        id_probs.mean(1).max(-1).values,
-                        ood_probs.mean(1).max(-1).values,
-                    ],
-                    20,
-                    "Histogram of the likelihoods",
-                )[0]
-                self.logger.experiment.add_figure("Logit Histogram", logits_fig)
-                self.logger.experiment.add_figure("Likelihood Histogram", probs_fig)
+                self.logger.experiment.add_figure("OOD Score Histogram", score_fig)
 
         if self.save_in_csv:
             self.save_results_to_csv(result_dict)
