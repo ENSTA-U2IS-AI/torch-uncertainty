@@ -45,6 +45,7 @@ model:
     init_args:
       alpha: 0.001
       device: "cuda"
+  log_plots: true
 data:
   root: ./data
   batch_size: 128

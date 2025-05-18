@@ -76,7 +76,6 @@ class ClassificationRoutine(LightningModule):
         optim_recipe: dict | Optimizer | None = None,
         mixup_params: dict | None = None,
         eval_ood: bool = False,
-        is_conformal: bool = False,
         eval_shift: bool = False,
         eval_grouping_loss: bool = False,
         ood_criterion: type[TUOODCriterion] | str = "msp",
@@ -108,8 +107,6 @@ class ClassificationRoutine(LightningModule):
                 detection performance. Defaults to ``False``.
             eval_shift (bool, optional): Indicates whether to evaluate the Distribution
                 shift performance. Defaults to ``False``.
-            is_conformal (bool, optional): Indicates whether to use conformal prediction
-                as uncertainty criterion. Defaults to ``False``.
             eval_grouping_loss (bool, optional): Indicates whether to evaluate the
                 grouping loss or not. Defaults to ``False``.
             ood_criterion (TUOODCriterion, optional): Criterion for the binary OOD detection task.
@@ -168,7 +165,6 @@ class ClassificationRoutine(LightningModule):
 
         self.num_classes = num_classes
         self.eval_ood = eval_ood
-        self.is_conformal = is_conformal
         self.eval_shift = eval_shift
         self.eval_grouping_loss = eval_grouping_loss
         self.num_tta = num_tta
@@ -200,9 +196,6 @@ class ClassificationRoutine(LightningModule):
 
         self.id_logit_storage = None
         self.ood_logit_storage = None
-
-        self.id_conformal_storage = None
-        self.ood_conformal_storage = None
 
     def _init_metrics(self) -> None:
         """Initialize the metrics depending on the exact task."""
@@ -408,14 +401,6 @@ class ClassificationRoutine(LightningModule):
             self.id_logit_storage = []
             self.ood_logit_storage = []
 
-        if (
-            self.eval_ood
-            and self.log_plots
-            and isinstance(self.logger, Logger)
-            and self.is_conformal
-        ):
-            self.id_conformal_storage = []
-            self.ood_conformal_storage = []
         if hasattr(self.model, "need_bn_update"):
             self.model.bn_update(self.trainer.train_dataloader, device=self.device)
 
@@ -663,7 +648,7 @@ class ClassificationRoutine(LightningModule):
                 self.test_cls_metrics["sc/AUGRC"].plot()[0],
             )
 
-            if self.post_processing is not None:
+            if self.post_processing is not None and not isinstance(self.post_processing, Conformal):
                 self.logger.experiment.add_figure(
                     "Reliabity diagram after calibration",
                     self.post_cls_metrics["cal/ECE"].plot()[0],
@@ -673,10 +658,6 @@ class ClassificationRoutine(LightningModule):
             if self.eval_ood:
                 id_logits = torch.cat(self.id_logit_storage, dim=0)
                 ood_logits = torch.cat(self.ood_logit_storage, dim=0)
-
-                if self.is_conformal:
-                    id_conformals = torch.cat(self.id_conformal_storage, dim=0)
-                    ood_conformals = torch.cat(self.ood_conformal_storage, dim=0)
 
                 id_probs = F.softmax(id_logits, dim=-1)
                 ood_probs = F.softmax(ood_logits, dim=-1)
@@ -689,15 +670,6 @@ class ClassificationRoutine(LightningModule):
                     20,
                     "Histogram of the logits",
                 )[0]
-                if self.is_conformal:
-                    conf_fig = plot_hist(
-                        [
-                            id_conformals,
-                            ood_conformals,
-                        ],
-                        20,
-                        "Histogram of the confidence set of conformal",
-                    )[0]
                 probs_fig = plot_hist(
                     [
                         id_probs.mean(1).max(-1).values,
@@ -708,8 +680,6 @@ class ClassificationRoutine(LightningModule):
                 )[0]
                 self.logger.experiment.add_figure("Logit Histogram", logits_fig)
                 self.logger.experiment.add_figure("Likelihood Histogram", probs_fig)
-                if self.is_conformal:
-                    self.logger.experiment.add_figure("Conformal Histogram", conf_fig)
 
         if self.save_in_csv:
             self.save_results_to_csv(result_dict)
