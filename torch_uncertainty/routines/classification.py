@@ -637,10 +637,7 @@ class ClassificationRoutine(LightningModule):
                 ood_scores = torch.cat(self.ood_score_storage, dim=0)
 
                 score_fig = plot_hist(
-                    [
-                        id_scores.values,
-                        ood_scores.values,
-                    ],
+                    [id_scores, ood_scores],
                     20,
                     "Histogram of the OOD scores",
                 )[0]
