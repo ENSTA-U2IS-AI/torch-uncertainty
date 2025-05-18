@@ -61,7 +61,6 @@ class MUAD(VisionDataset):
             "val": 492,
             "test_id": 551,
             "test_ood": 1668,
-            "test_id_no_shadow": 102,
             "test_id_low_adv": 605,
             "test_id_high_adv": 602,
             "test_ood_low_adv": 1552,
@@ -168,7 +167,7 @@ class MUAD(VisionDataset):
 
         if split not in self.huggingface_splits[version]:
             raise ValueError(
-                f"split must be one of {self.huggingface_splits[version].keys()}. Got {split}."
+                f"split must be one of {self.huggingface_splits[version]}. Got {split}."
             )
         self.split = split
         self.version = version

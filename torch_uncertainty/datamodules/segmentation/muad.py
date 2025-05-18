@@ -27,6 +27,7 @@ class MUADDataModule(TUDataModule):
         batch_size: int,
         version: Literal["full", "small"] = "full",
         eval_batch_size: int | None = None,
+        eval_ood: bool = False,
         crop_size: _size_2_t = 1024,
         eval_size: _size_2_t = (1024, 2048),
         train_transform: nn.Module | None = None,
@@ -45,6 +46,9 @@ class MUADDataModule(TUDataModule):
                 ``full`` or ``small``. Defaults to ``full``.
             eval_batch_size (int | None) : Number of samples per batch during evaluation (val
                 and test). Set to batch_size if None. Defaults to None.
+            eval_ood (bool): Whether to evaluate on the OOD dataset. Defaults to
+                ``False``. If set to ``True``, the OOD dataset will be used for
+                evaluation in addition of the test dataset.
             crop_size (sequence or int, optional): Desired input image and
                 segmentation mask sizes during training. If :attr:`crop_size` is an
                 int instead of sequence like :math:`(H, W)`, a square crop
@@ -137,8 +141,13 @@ class MUADDataModule(TUDataModule):
 
         self.dataset = MUAD
         self.version = version
+        self.eval_ood = eval_ood
         self.crop_size = _pair(crop_size)
         self.eval_size = _pair(eval_size)
+
+        # FIXME: should be the same split names (update huggingface dataset)
+        self.test_split = "test" if version == "small" else "test_id"
+        self.ood_split = "ood" if version == "small" else "test_ood"
 
         if train_transform is not None:
             self.train_transform = train_transform
@@ -212,6 +221,22 @@ class MUADDataModule(TUDataModule):
         self.dataset(
             root=self.root, split="val", version=self.version, target_type="semantic", download=True
         )
+        self.dataset(
+            root=self.root,
+            split=self.test_split,
+            version=self.version,
+            target_type="semantic",
+            download=True,
+        )
+
+        if self.eval_ood:
+            self.dataset(
+                root=self.root,
+                split=self.ood_split,
+                version=self.version,
+                target_type="semantic",
+                download=True,
+            )
 
     def setup(self, stage: str | None = None) -> None:
         if stage == "fit" or stage is None:
@@ -242,11 +267,26 @@ class MUADDataModule(TUDataModule):
         if stage == "test" or stage is None:
             self.test = self.dataset(
                 root=self.root,
-                split="val",
+                split=self.test_split,
                 version=self.version,
                 target_type="semantic",
                 transforms=self.test_transform,
             )
+            if self.eval_ood:
+                self.ood = self.dataset(
+                    root=self.root,
+                    split=self.ood_split,
+                    version=self.version,
+                    target_type="semantic",
+                    transforms=self.test_transform,
+                )
 
         if stage not in ["fit", "test", None]:
             raise ValueError(f"Stage {stage} is not supported.")
+
+    def test_dataloader(self) -> torch.utils.data.DataLoader:
+        """Returns the test dataloader."""
+        dataloader = [self._data_loader(self.get_test_set(), training=False, shuffle=False)]
+        if self.eval_ood:
+            dataloader.append(self._data_loader(self.get_ood_set(), training=False, shuffle=False))
+        return dataloader

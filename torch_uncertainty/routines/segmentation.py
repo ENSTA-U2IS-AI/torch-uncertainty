@@ -19,12 +19,23 @@ from torch_uncertainty.metrics import (
     BrierScore,
     CalibrationError,
     CategoricalNLL,
+    CovAt5Risk,
     MeanIntersectionOverUnion,
+    RiskAt80Cov,
+    SegmentationBinaryAUROC,
+    SegmentationBinaryAveragePrecision,
+    SegmentationFPR95,
 )
 from torch_uncertainty.models import (
     EPOCH_UPDATE_MODEL,
     STEP_UPDATE_MODEL,
 )
+from torch_uncertainty.ood_criteria import (
+    OODCriterionInputType,
+    TUOODCriterion,
+    get_ood_criterion,
+)
+from torch_uncertainty.post_processing import PostProcessing
 from torch_uncertainty.utils import csv_writer
 from torch_uncertainty.utils.plotting import show
 
@@ -39,6 +50,9 @@ class SegmentationRoutine(LightningModule):
         eval_shift: bool = False,
         format_batch_fn: nn.Module | None = None,
         metric_subsampling_rate: float = 1e-2,
+        eval_ood: bool = False,
+        ood_criterion: type[TUOODCriterion] | str = "msp",
+        post_processing: PostProcessing | None = None,
         log_plots: bool = False,
         num_samples_to_plot: int = 3,
         num_bins_cal_err: int = 15,
@@ -58,6 +72,13 @@ class SegmentationRoutine(LightningModule):
                 batch. Defaults to ``None``.
             metric_subsampling_rate (float, optional): The rate of subsampling for the
                 memory consuming metrics. Defaults to ``1e-2``.
+            eval_ood (bool, optional): Indicates whether to evaluate the OOD
+                performance. Defaults to ``False``.
+            ood_criterion (TUOODCriterion, optional): Criterion for the binary OOD detection task.
+                Defaults to ``"msp"`` which amounts to the maximum softmax probability score (MSP).
+            post_processing (PostProcessing, optional): The post-processing
+                technique to use. Defaults to ``None``. Warning: There is no
+                post-processing technique implemented yet for segmentation tasks.
             log_plots (bool, optional): Indicates whether to log figures in the logger.
                 Defaults to ``False``.
             num_samples_to_plot (int, optional): Number of segmentation prediction and
@@ -102,6 +123,13 @@ class SegmentationRoutine(LightningModule):
         self.metric_subsampling_rate = metric_subsampling_rate
         self.log_plots = log_plots
         self.save_in_csv = save_in_csv
+        self.ood_criterion = get_ood_criterion(ood_criterion)
+        self.eval_ood = eval_ood
+
+        self.post_processing = post_processing
+        if self.post_processing is not None:
+            self.post_processing.set_model(self.model)
+
         self._init_metrics()
 
         if log_plots:
@@ -113,17 +141,17 @@ class SegmentationRoutine(LightningModule):
         seg_metrics = MetricCollection(
             {
                 "seg/mIoU": MeanIntersectionOverUnion(num_classes=self.num_classes),
-            },
-            compute_groups=False,
-        )
-        sbsmpl_seg_metrics = MetricCollection(
-            {
                 "seg/mAcc": Accuracy(
                     task="multiclass", average="macro", num_classes=self.num_classes
                 ),
+                "seg/pixAcc": Accuracy(task="multiclass", num_classes=self.num_classes),
+            },
+            compute_groups=[["seg/mIoU", "seg/mAcc", "seg/pixAcc"]],
+        )
+        sbsmpl_seg_metrics = MetricCollection(
+            {
                 "seg/Brier": BrierScore(num_classes=self.num_classes),
                 "seg/NLL": CategoricalNLL(),
-                "seg/pixAcc": Accuracy(task="multiclass", num_classes=self.num_classes),
                 "cal/ECE": CalibrationError(
                     task="multiclass",
                     num_classes=self.num_classes,
@@ -137,14 +165,14 @@ class SegmentationRoutine(LightningModule):
                 ),
                 "sc/AURC": AURC(),
                 "sc/AUGRC": AUGRC(),
+                "sc/Cov@5Risk": CovAt5Risk(),
+                "sc/Risk@80Cov": RiskAt80Cov(),
             },
             compute_groups=[
-                ["seg/mAcc"],
                 ["seg/Brier"],
                 ["seg/NLL"],
-                ["seg/pixAcc"],
                 ["cal/ECE", "cal/aECE"],
-                ["sc/AURC", "sc/AUGRC"],
+                ["sc/AURC", "sc/AUGRC", "sc/Cov@5Risk", "sc/Risk@80Cov"],
             ],
         )
 
@@ -152,6 +180,16 @@ class SegmentationRoutine(LightningModule):
         self.val_sbsmpl_seg_metrics = sbsmpl_seg_metrics.clone(prefix="val/")
         self.test_seg_metrics = seg_metrics.clone(prefix="test/")
         self.test_sbsmpl_seg_metrics = sbsmpl_seg_metrics.clone(prefix="test/")
+
+        if self.eval_ood:
+            ood_metrics = MetricCollection(
+                {
+                    "AUROC": SegmentationBinaryAUROC(),
+                    "AUPR": SegmentationBinaryAveragePrecision(),
+                    "FPR95": SegmentationFPR95(pos_label=1),
+                }
+            )
+            self.test_ood_metrics = ood_metrics.clone(prefix="ood/")
 
     def configure_optimizers(self) -> Optimizer | dict:
         return self.optim_recipe
@@ -178,6 +216,14 @@ class SegmentationRoutine(LightningModule):
                 self.model.bn_update(self.trainer.train_dataloader, device=self.device)
 
     def on_test_start(self) -> None:
+        if self.post_processing is not None:
+            with torch.inference_mode(False):
+                self.post_processing.fit(self.trainer.datamodule.postprocess_dataloader())
+
+        if self.eval_ood and self.log_plots and isinstance(self.logger, Logger):
+            self.id_logit_storage = []
+            self.ood_logit_storage = []
+
         if hasattr(self.model, "need_bn_update"):
             self.model.bn_update(self.trainer.train_dataloader, device=self.device)
 
@@ -226,13 +272,20 @@ class SegmentationRoutine(LightningModule):
         self.val_seg_metrics.update(probs, targets)
         self.val_sbsmpl_seg_metrics.update(*self.subsample(probs, targets))
 
-    def test_step(self, batch: tuple[Tensor, Tensor]) -> None:
+    def test_step(
+        self,
+        batch: tuple[Tensor, Tensor],
+        batch_idx: int,
+        dataloader_idx: int = 0,
+    ) -> None:
         """Perform a single test step based on the input tensors.
 
         Compute the prediction of the model and the value of the metrics on the test batch.
 
         Args:
             batch (tuple[Tensor, Tensor]): the test images and their corresponding targets
+            batch_idx (int): the index of the batch in the test dataloader.
+            dataloader_idx (int, optional): the index of the dataloader. Defaults to ``0``.
         """
         img, targets = batch
         logits = self.forward(img)
@@ -254,12 +307,38 @@ class SegmentationRoutine(LightningModule):
                 _pred = _prb.argmax(dim=0, keepdim=True)
                 self.sample_buffer.append((_img, _pred, _tgt))
 
+        probs_per_est = rearrange(probs_per_est, "b m c h w -> (b h w) m c")
         probs = rearrange(probs, "b c h w -> (b h w) c")
         targets = targets.flatten()
-        valid_mask = (targets != 255) * (targets < self.num_classes)
-        probs, targets = probs[valid_mask], targets[valid_mask]
-        self.test_seg_metrics.update(probs, targets)
-        self.test_sbsmpl_seg_metrics.update(*self.subsample(probs, targets))
+        valid_mask = targets != 255
+        probs, probs_per_est, targets = (
+            probs[valid_mask],
+            probs_per_est[valid_mask],
+            targets[valid_mask],
+        )
+        id_mask = targets < self.num_classes
+        ood_mask = targets >= self.num_classes
+
+        if dataloader_idx == 0:
+            id_probs, _, id_targets = probs[id_mask], probs_per_est[id_mask], targets[id_mask]
+            self.test_seg_metrics.update(id_probs, id_targets)
+            self.test_sbsmpl_seg_metrics.update(*self.subsample(id_probs, id_targets))
+
+        if self.eval_ood and dataloader_idx == 1:
+            if self.ood_criterion.input_type == OODCriterionInputType.PROB:
+                ood_scores = self.ood_criterion(probs)
+            elif self.ood_criterion.input_type == OODCriterionInputType.ESTIMATOR_PROB:
+                ood_scores = self.ood_criterion(probs_per_est)
+            else:
+                raise ValueError(
+                    f"Unsupported input type for OOD criterion: {self.ood_criterion.input_type}"
+                )
+
+            labels = torch.zeros_like(targets)
+            labels[id_mask] = 0  # ID examples
+            labels[ood_mask] = 1  # OOD examples
+
+            self.test_ood_metrics.update(ood_scores, labels)
 
     def on_validation_epoch_end(self) -> None:
         """Compute and log the values of the collected metrics in `validation_step`."""
@@ -279,6 +358,9 @@ class SegmentationRoutine(LightningModule):
         """Compute, log, and plot the values of the collected metrics in `test_step`."""
         result_dict = self.test_seg_metrics.compute()
         result_dict |= self.test_sbsmpl_seg_metrics.compute()
+        if self.eval_ood:
+            result_dict |= self.test_ood_metrics.compute()
+
         self.log_dict(result_dict, logger=True, sync_dist=True)
 
         if isinstance(self.logger, Logger) and self.log_plots:
@@ -304,6 +386,8 @@ class SegmentationRoutine(LightningModule):
 
         self.test_seg_metrics.reset()
         self.test_sbsmpl_seg_metrics.reset()
+        if self.eval_ood:
+            self.test_ood_metrics.reset()
 
     def log_segmentation_plots(self) -> None:
         """Build and log examples of segmentation plots from the test set."""

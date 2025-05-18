@@ -9,7 +9,7 @@ trainer:
     class_path: lightning.pytorch.loggers.TensorBoardLogger
     init_args:
       save_dir: logs/muad/unet
-      name: mimo
+      name: mc_dropout
       default_hp_metric: false
   callbacks:
     - class_path: torch_uncertainty.callbacks.TUSegCheckpoint
@@ -18,12 +18,17 @@ trainer:
         logging_interval: step
 model:
   model:
-    class_path: torch_uncertainty.models.segmentation.mimo_unet
+    class_path: torch_uncertainty.models.mc_dropout
     init_args:
-      in_channels: 3
-      num_classes: 15
-      num_estimators: 4
-      bilinear: true
+      model:
+        class_path: torch_uncertainty.models.segmentation.unet
+        init_args:
+          in_channels: 3
+          num_classes: 15
+          bilinear: true
+          dropout_rate: 0.1
+      num_estimators: 10
+      on_batch: false
   num_classes: 15
   loss:
     class_path: torch.nn.CrossEntropyLoss
@@ -47,12 +52,6 @@ model:
             - 5.2729
             - 17.8703
             - 50.4984
-  format_batch_fn:
-    class_path: torch_uncertainty.transforms.MIMOBatchFormat
-    init_args:
-      num_estimators: 4
-      rho: 0.5
-      batch_repeat: 4
 data:
   root: ./data
   batch_size: 32
