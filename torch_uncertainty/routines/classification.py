@@ -523,10 +523,9 @@ class ClassificationRoutine(LightningModule):
                 self.test_grouping_loss.update(probs, targets, self.features)
 
             self.log_dict(self.test_cls_metrics, on_epoch=True, add_dataloader_idx=False)
-            self.test_id_entropy(probs)
             self.log(
                 "test/cls/Entropy",
-                self.test_id_entropy,
+                self.test_id_entropy(probs),
                 on_epoch=True,
                 add_dataloader_idx=False,
             )
@@ -550,10 +549,9 @@ class ClassificationRoutine(LightningModule):
 
         if self.eval_ood and dataloader_idx == 1:
             self.test_ood_metrics.update(ood_scores, torch.ones_like(targets))
-            self.test_ood_entropy(probs)
             self.log(
                 "ood/Entropy",
-                self.test_ood_entropy,
+                self.test_ood_entropy(probs),
                 on_epoch=True,
                 add_dataloader_idx=False,
             )
@@ -725,6 +723,11 @@ def _classification_routine_checks(
     if not is_ensemble and ood_criterion_cls.ensemble_only:
         raise ValueError(
             "You cannot use mutual information or variation ratio with a single model."
+        )
+
+    if is_ensemble and ood_criterion_cls.single_only:
+        raise NotImplementedError(
+            "Logit-based criteria are not implemented for ensembles. Raise an issue if needed."
         )
 
     if is_ensemble and eval_grouping_loss:

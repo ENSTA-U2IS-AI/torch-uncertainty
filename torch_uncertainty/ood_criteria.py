@@ -24,6 +24,7 @@ class OODCriterionInputType(Enum):
 
 class TUOODCriterion(ABC, nn.Module):
     input_type: OODCriterionInputType
+    single_only = False
     ensemble_only = False
 
     def __init__(self) -> None:
@@ -51,6 +52,7 @@ class TUOODCriterion(ABC, nn.Module):
 
 
 class MaxLogitCriterion(TUOODCriterion):
+    single_only = True
     input_type = OODCriterionInputType.LOGIT
 
     def __init__(self) -> None:
@@ -77,6 +79,7 @@ class MaxLogitCriterion(TUOODCriterion):
 
 
 class EnergyCriterion(TUOODCriterion):
+    single_only = True
     input_type = OODCriterionInputType.LOGIT
 
     def __init__(self) -> None:
