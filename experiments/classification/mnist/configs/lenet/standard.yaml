@@ -40,14 +40,16 @@ model:
       dropout_rate: 0
   num_classes: 10
   loss: CrossEntropyLoss
+  ood_criterion: torch_uncertainty.ood_criteria.EnergyCriterion
 data:
   root: ./data
   batch_size: 128
   num_workers: 8
+  eval_ood: true
+  eval_shift: true
 optimizer:
   class_path: torch.optim.SGD
   init_args:
     lr: 0.05
     momentum: 0.9
     weight_decay: 5e-4
-    nesterov: true
