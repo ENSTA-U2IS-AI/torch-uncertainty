@@ -51,7 +51,7 @@ subsection_order = ExplicitOrder(
     [
         "../../auto_tutorial_source/Classification",
         "../../auto_tutorial_source/Regression",
-        "../../auto_tutorial_source/Model_Calibration",
+        "../../auto_tutorial_source/Post_Hoc_Methods",
         "../../auto_tutorial_source/Bayesian_Methods",
         "../../auto_tutorial_source/Ensemble_Methods",
         "../../auto_tutorial_source/Segmentation",
@@ -65,7 +65,7 @@ sphinx_gallery_conf = {
     "gallery_dirs": "auto_tutorials",
     "filename_pattern": r"tutorial_",
     "subsection_order": subsection_order,
-    "within_subsection_order": FileNameSortKey,
+    "within_subsection_order": FileNameSortKey("./source"),
     "plot_gallery": "True",
     "promote_jupyter_magic": True,
     "backreferences_dir": "generated/backreferences",

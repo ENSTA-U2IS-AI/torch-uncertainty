@@ -47,7 +47,7 @@ from torch import nn, optim
 from torch_uncertainty import TUTrainer
 from torch_uncertainty.datamodules import MNISTDataModule
 from torch_uncertainty.losses import ELBOLoss
-from torch_uncertainty.models.lenet import bayesian_lenet
+from torch_uncertainty.models.classification.lenet import bayesian_lenet
 from torch_uncertainty.routines import ClassificationRoutine
 
 # We also define the main hyperparameters, with just one epoch for the sake of time

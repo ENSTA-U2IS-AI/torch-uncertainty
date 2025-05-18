@@ -93,13 +93,11 @@
             <a href="{{ pathto("api") }}#routines">Segmentation</a>
           </h5>
           <p>Pixel-wise predictions with uncertainty metrics.</p>
-          <p><strong>Applications:</strong> Image segmentation, medical imaging...</p>
+          <p><strong>Applications:</strong> Image segmentation.</p>
           <p>
-            <strong>Algorithms:</strong> 
-            <a href="{{ pathto("generated/torch_uncertainty.baselines.segmentation.DeepLabBaseline") }}#torch_uncertainty.baselines.segmentation.DeepLabBaseline">DeepLab</a>, 
+            <strong>Algorithms:</strong>
             <a href="{{ pathto("generated/torch_uncertainty.models.deep_ensembles") }}#torch_uncertainty.models.deep_ensembles">Deep Ensembles</a>, 
-            <a href="{{ pathto("api") }}#layers">Packed Ensembles</a>, 
-            <a href="{{ pathto("generated/torch_uncertainty.baselines.segmentation.SegFormerBaseline") }}#torch_uncertainty.baselines.segmentation.SegFormerBaseline">SegFormer</a>
+            <a href="{{ pathto("api") }}#layers">Packed Ensembles</a>,
           </p>
         </div>
         <img src="{{ pathto('_static/seg.png', 1) }}" alt="Segmentation" class="card-img-bottom img-fluid">
@@ -109,23 +107,22 @@
       </div>
     </div>
 
-    <!-- Card 4: Model Calibration -->
+    <!-- Card 4: Post-hoc Methods -->
     <div class="col-md-4 mb-3 d-flex align-items-stretch">
       <div class="card shadow-sm h-100 d-flex flex-column">
         <div class="card-body flex-grow-1">
           <h5 class="card-title text-start">
-            <a href="{{ pathto("api") }}#post-processing-methods">Model Calibration</a>
+            <a href="{{ pathto("api") }}#post-processing-methods">Post-hoc Methods</a>
           </h5>
-          <p>Improving model predictions with calibration methods.</p>
+          <p>Improving model predictions with post-hoc methods.</p>
           <p><strong>Applications:</strong> Risk management, decision-making systems...</p>
           <p>
             <strong>Algorithms:</strong> 
-            <a href="{{ pathto("generated/torch_uncertainty.post_processing.TemperatureScaler") }}#torch_uncertainty.post_processing.TemperatureScaler">Temperature Scaling</a>, 
-            <a href="{{ pathto("generated/torch_uncertainty.post_processing.VectorScaler") }}#torch_uncertainty.post_processing.VectorScaler">Vector Scaling</a>, 
-            <a href="{{ pathto("generated/torch_uncertainty.post_processing.MatrixScaler") }}#torch_uncertainty.post_processing.MatrixScaler">Matrix Scaling</a>
+            <a href="{{ pathto("generated/torch_uncertainty.post_processing.TemperatureScaler") }}#torch_uncertainty.post_processing.TemperatureScaler">Temperature Scaling</a>,
+            <a href="{{ pathto("generated/torch_uncertainty.post_processing.ConformalRAPS") }}#torch_uncertainty.post_processing.ConformalRAPS">Conformal RAPS</a>
           </p>
         </div>
-        <img src="{{ pathto('_static/cali.png', 1) }}" alt="Model Calibration" class="card-img-bottom img-fluid">
+        <img src="{{ pathto('_static/cali.png', 1) }}" alt="Post-hoc Methods" class="card-img-bottom img-fluid">
         <div class="mt-auto">
           <a href="{{ pathto('auto_tutorials/index') }}#model-calibration" class="btn btn-primary w-100">Examples</a>
         </div>

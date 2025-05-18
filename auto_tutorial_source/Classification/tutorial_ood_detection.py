@@ -26,7 +26,7 @@ from torch import nn, optim
 
 from torch_uncertainty import TUTrainer
 from torch_uncertainty.datamodules import CIFAR10DataModule
-from torch_uncertainty.models.resnet import resnet
+from torch_uncertainty.models.classification.resnet import resnet
 from torch_uncertainty.ood_criteria import MaxLogitCriterion, MaxSoftmaxCriterion
 from torch_uncertainty.routines.classification import ClassificationRoutine
 

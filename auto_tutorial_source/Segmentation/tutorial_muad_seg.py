@@ -19,6 +19,7 @@ First, we load the following utilities from TorchUncertainty:
 - the TUTrainer which mostly handles the link with the hardware (accelerators, precision, etc)
 - the segmentation training & evaluation routine from torch_uncertainty.routines
 - the datamodule handling dataloaders: MUADDataModule from torch_uncertainty.datamodules
+- the model: small_unet from torch_uncertainty.models.segmentation.unet
 """
 
 # %%

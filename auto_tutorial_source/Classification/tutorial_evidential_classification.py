@@ -23,7 +23,7 @@ In this part, we train a neural network, based on the model and routines already
 To train a LeNet with the DEC loss function using TorchUncertainty, we have to load the following utilities from TorchUncertainty:
 
 - our wrapper of the Lightning Trainer
-- the model: lenet, which lies in torch_uncertainty.models.lenet
+- the model: lenet, which lies in torch_uncertainty.models.classification.lenet
 - the classification training routine in the torch_uncertainty.routines
 - the evidential objective: the DECLoss from torch_uncertainty.losses
 - the datamodule that handles dataloaders & transforms: MNISTDataModule from torch_uncertainty.datamodules
