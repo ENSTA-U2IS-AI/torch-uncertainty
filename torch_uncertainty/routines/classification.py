@@ -522,14 +522,6 @@ class ClassificationRoutine(LightningModule):
             if self.eval_grouping_loss:
                 self.test_grouping_loss.update(probs, targets, self.features)
 
-            self.log_dict(self.test_cls_metrics, on_epoch=True, add_dataloader_idx=False)
-            self.log(
-                "test/cls/Entropy",
-                self.test_id_entropy(probs),
-                on_epoch=True,
-                add_dataloader_idx=False,
-            )
-
             if self.is_ensemble:
                 self.test_id_ens_metrics.update(probs_per_est)
 
@@ -549,12 +541,7 @@ class ClassificationRoutine(LightningModule):
 
         if self.eval_ood and dataloader_idx == 1:
             self.test_ood_metrics.update(ood_scores, torch.ones_like(targets))
-            self.log(
-                "ood/Entropy",
-                self.test_ood_entropy(probs),
-                on_epoch=True,
-                add_dataloader_idx=False,
-            )
+
             if self.is_ensemble:
                 self.test_ood_ens_metrics.update(probs_per_est)
 
@@ -572,7 +559,7 @@ class ClassificationRoutine(LightningModule):
         self.log_dict(res_dict, logger=True, sync_dist=True)
         # Progress bar only
         self.log(
-            "Acc%",
+            "Acc",
             res_dict["val/cls/Acc"] * 100,
             prog_bar=True,
             logger=False,
@@ -586,52 +573,35 @@ class ClassificationRoutine(LightningModule):
 
     def on_test_epoch_end(self) -> None:
         """Compute, log, and plot the values of the collected metrics in `test_step`."""
-        # already logged
-        result_dict = self.test_cls_metrics.compute()
-
-        # already logged
-        result_dict.update({"test/Entropy": self.test_id_entropy.compute()}, sync_dist=True)
+        result_dict = self.test_cls_metrics.compute() | {
+            "test/Entropy": self.test_id_entropy.compute()
+        }
 
         if self.post_processing is not None:
-            tmp_metrics = self.post_cls_metrics.compute()
-            self.log_dict(tmp_metrics, sync_dist=True)
-            result_dict.update(tmp_metrics)
+            result_dict |= self.post_cls_metrics.compute()
 
         if self.eval_grouping_loss:
-            self.log_dict(
-                self.test_grouping_loss.compute(),
-                sync_dist=True,
-            )
+            result_dict |= self.test_grouping_loss.compute()
 
         if self.is_ensemble:
-            tmp_metrics = self.test_id_ens_metrics.compute()
-            self.log_dict(tmp_metrics, sync_dist=True)
-            result_dict.update(tmp_metrics)
+            result_dict |= self.test_id_ens_metrics.compute()
 
         if self.eval_ood:
-            tmp_metrics = self.test_ood_metrics.compute()
-            self.log_dict(tmp_metrics, sync_dist=True)
-            result_dict.update(tmp_metrics)
-
-            # already logged
-            result_dict.update({"ood/Entropy": self.test_ood_entropy.compute()})
-
+            result_dict |= self.test_ood_metrics.compute() | {
+                "ood/Entropy": self.test_ood_entropy.compute()
+            }
             if self.is_ensemble:
-                tmp_metrics = self.test_ood_ens_metrics.compute()
-                self.log_dict(tmp_metrics, sync_dist=True)
-                result_dict.update(tmp_metrics)
+                result_dict |= self.test_ood_ens_metrics.compute()
 
         if self.eval_shift:
-            tmp_metrics = self.test_shift_metrics.compute()
-            shift_severity = self.trainer.datamodule.shift_severity
-            tmp_metrics["shift/severity"] = shift_severity
-            self.log_dict(tmp_metrics, sync_dist=True)
-            result_dict.update(tmp_metrics)
+            result_dict |= self.test_shift_metrics.compute() | {
+                "shift/severity": self.trainer.datamodule.shift_severity,
+            }
 
             if self.is_ensemble:
-                tmp_metrics = self.test_shift_ens_metrics.compute()
-                self.log_dict(tmp_metrics, sync_dist=True)
-                result_dict.update(tmp_metrics)
+                result_dict |= self.test_shift_ens_metrics.compute()
+
+        self.log_dict(result_dict, sync_dist=True)
 
         if isinstance(self.logger, Logger) and self.log_plots:
             self.logger.experiment.add_figure(
