@@ -40,6 +40,7 @@ from torch_uncertainty.models import (
 )
 from torch_uncertainty.ood_criteria import (
     OODCriterionInputType,
+    PostProcessingCriterion,
     TUOODCriterion,
     get_ood_criterion,
 )
@@ -78,7 +79,7 @@ class ClassificationRoutine(LightningModule):
         eval_ood: bool = False,
         eval_shift: bool = False,
         eval_grouping_loss: bool = False,
-        ood_criterion: type[TUOODCriterion] | str = "msp",
+        ood_criterion: TUOODCriterion | str = "msp",
         post_processing: PostProcessing | None = None,
         num_bins_cal_err: int = 15,
         log_plots: bool = False,
@@ -96,7 +97,7 @@ class ClassificationRoutine(LightningModule):
             num_tta (int): Number of test-time augmentations (TTA). If ``1``: no TTA.
                 Defaults to ``1``.
             format_batch_fn (torch.nn.Module, optional): Function to format the batch.
-                Defaults to :class:`torch.nn.Identity()`.
+                Defaults to ``None``.
             optim_recipe (dict or torch.optim.Optimizer, optional): The optimizer and
                 optionally the scheduler to use. Defaults to ``None``.
             mixup_params (dict, optional): Mixup parameters. Can include mixup type,
@@ -109,8 +110,8 @@ class ClassificationRoutine(LightningModule):
                 shift performance. Defaults to ``False``.
             eval_grouping_loss (bool, optional): Indicates whether to evaluate the
                 grouping loss or not. Defaults to ``False``.
-            ood_criterion (TUOODCriterion, optional): Criterion for the binary OOD detection task.
-                Defaults to None which amounts to the maximum softmax probability score (MSP).
+            ood_criterion (TUOODCriterion | str, optional): Criterion for the binary OOD detection
+                task. Defaults to ``msp``, the Maximum Softmax Probability score.
             post_processing (PostProcessing, optional): Post-processing method
                 to train on the calibration set. No post-processing if None.
                 Defaults to ``None``.
@@ -506,12 +507,22 @@ class ClassificationRoutine(LightningModule):
         logits = rearrange(logits, "(m b) c -> b m c", b=targets.size(0))
         probs_per_est = torch.sigmoid(logits) if self.binary_cls else F.softmax(logits, dim=-1)
         probs = probs_per_est.mean(dim=1)
+
+        if self.post_processing is not None:
+            pp_logits = self.post_processing(inputs)
+            if isinstance(self.post_processing, LaplaceApprox | Conformal):
+                pp_probs = pp_logits
+            else:
+                pp_probs = F.softmax(pp_logits, dim=-1)
+
         if self.ood_criterion.input_type == OODCriterionInputType.LOGIT:
             ood_scores = self.ood_criterion(logits)
         elif self.ood_criterion.input_type == OODCriterionInputType.PROB:
             ood_scores = self.ood_criterion(probs)
         elif self.ood_criterion.input_type == OODCriterionInputType.ESTIMATOR_PROB:
             ood_scores = self.ood_criterion(probs_per_est)
+        elif self.ood_criterion.input_type == OODCriterionInputType.POST_PROCESSING:
+            ood_scores = self.ood_criterion(pp_probs)
 
         if dataloader_idx == 0:
             # squeeze if binary classification only for binary metrics
@@ -535,11 +546,6 @@ class ClassificationRoutine(LightningModule):
                 self.id_logit_storage.append(logits.detach().cpu())
 
             if self.post_processing is not None:
-                pp_logits = self.post_processing(inputs)
-                if not isinstance(self.post_processing, LaplaceApprox | Conformal):
-                    pp_probs = F.softmax(pp_logits, dim=-1)
-                else:
-                    pp_probs = pp_logits
                 self.post_cls_metrics.update(pp_probs, targets)
 
         if self.eval_ood and dataloader_idx == 1:
@@ -577,7 +583,7 @@ class ClassificationRoutine(LightningModule):
     def on_test_epoch_end(self) -> None:
         """Compute, log, and plot the values of the collected metrics in `test_step`."""
         result_dict = self.test_cls_metrics.compute() | {
-            "test/Entropy": self.test_id_entropy.compute()
+            "test/cls/Entropy": self.test_id_entropy.compute()
         }
 
         if self.post_processing is not None:
@@ -692,15 +698,20 @@ def _classification_routine_checks(
         post_processing (PostProcessing | None): the post-processing module.
         format_batch_fn (nn.Module | None): the function for formatting the batch for ensembles.
     """
-    ood_criterion_cls = get_ood_criterion(ood_criterion)
-    if not is_ensemble and ood_criterion_cls.ensemble_only:
+    ood_criterion = get_ood_criterion(ood_criterion)
+    if not is_ensemble and ood_criterion.ensemble_only:
         raise ValueError(
             "You cannot use mutual information or variation ratio with a single model."
         )
 
-    if is_ensemble and ood_criterion_cls.single_only:
+    if is_ensemble and ood_criterion.single_only:
         raise NotImplementedError(
             "Logit-based criteria are not implemented for ensembles. Raise an issue if needed."
+        )
+
+    if isinstance(ood_criterion, PostProcessingCriterion) and post_processing is None:
+        raise ValueError(
+            "You cannot set ood_criterion=PostProcessingCriterion when post_processing is None."
         )
 
     if is_ensemble and eval_grouping_loss:
