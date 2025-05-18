@@ -83,18 +83,6 @@ class ConformalClsTHR(Conformal):
         confidence_score = 1 / pred_set.sum(dim=1, keepdim=True)
         return pred_set.float() * confidence_score
 
-    @torch.no_grad()
-    def conformal_visu(self, inputs: Tensor) -> tuple[Tensor, Tensor]:
-        """Perform conformal prediction on the test set and return the classical
-        confidence for visualiation.
-        """
-        self.model.eval()
-        inputs = inputs.to(self.device)
-        scaled_logits = self.model_forward(inputs)
-        probs = torch.softmax(scaled_logits, dim=1)
-        pred_set = probs >= (1.0 - self.quantile)
-        return (pred_set, probs)
-
     @property
     def quantile(self) -> Tensor:
         if self.q_hat is None:
