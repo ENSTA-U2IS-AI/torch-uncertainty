@@ -195,8 +195,8 @@ class ClassificationRoutine(LightningModule):
             self.loss.set_model(self.model)
         self.is_dec = isinstance(self.loss, DECLoss)
 
-        self.id_logit_storage = None
-        self.ood_logit_storage = None
+        self.id_score_storage = None
+        self.ood_score_storage = None
 
     def _init_metrics(self) -> None:
         """Initialize the metrics depending on the exact task."""
@@ -399,8 +399,8 @@ class ClassificationRoutine(LightningModule):
                 self.post_processing.fit(self.trainer.datamodule.postprocess_dataloader())
 
         if self.eval_ood and self.log_plots and isinstance(self.logger, Logger):
-            self.id_logit_storage = []
-            self.ood_logit_storage = []
+            self.id_score_storage = []
+            self.ood_score_storage = []
 
         if hasattr(self.model, "need_bn_update"):
             self.model.bn_update(self.trainer.train_dataloader, device=self.device)
@@ -542,8 +542,8 @@ class ClassificationRoutine(LightningModule):
                 self.test_ood_entropy.update(probs)
                 self.test_ood_metrics.update(ood_scores, torch.zeros_like(targets))
 
-            if self.id_logit_storage is not None:
-                self.id_logit_storage.append(logits.detach().cpu())
+            if self.id_score_storage is not None:
+                self.id_score_storage.append(ood_scores.detach().cpu())
 
             if self.post_processing is not None:
                 self.post_cls_metrics.update(pp_probs, targets)
@@ -554,8 +554,8 @@ class ClassificationRoutine(LightningModule):
             if self.is_ensemble:
                 self.test_ood_ens_metrics.update(probs_per_est)
 
-            if self.ood_logit_storage is not None:
-                self.ood_logit_storage.append(logits.detach().cpu())
+            if self.ood_score_storage is not None:
+                self.ood_score_storage.append(ood_scores.detach().cpu())
 
         if self.eval_shift and dataloader_idx == (2 if self.eval_ood else 1):
             self.test_shift_metrics.update(probs, targets)
@@ -633,8 +633,8 @@ class ClassificationRoutine(LightningModule):
 
             # plot histograms of logits and likelihoods
             if self.eval_ood:
-                id_logits = torch.cat(self.id_logit_storage, dim=0)
-                ood_logits = torch.cat(self.ood_logit_storage, dim=0)
+                id_logits = torch.cat(self.id_score_storage, dim=0)
+                ood_logits = torch.cat(self.ood_score_storage, dim=0)
 
                 id_probs = F.softmax(id_logits, dim=-1)
                 ood_probs = F.softmax(ood_logits, dim=-1)
@@ -645,7 +645,7 @@ class ClassificationRoutine(LightningModule):
                         ood_logits.mean(1).max(-1).values,
                     ],
                     20,
-                    "Histogram of the logits",
+                    "Histogram of the OOD scores",
                 )[0]
                 probs_fig = plot_hist(
                     [
