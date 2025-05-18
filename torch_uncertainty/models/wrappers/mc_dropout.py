@@ -101,8 +101,11 @@ def mc_dropout(
     Args:
         model (nn.Module): model to wrap
         num_estimators (int): number of estimators to use last_layer (bool, optional): whether to apply dropout to the last layer only. Defaults to ``False``.
-        on_batch (bool): Increase the batch_size to perform MC-Dropout. Otherwise in a for loop to reduce memory footprint. Defaults to ``true``.
+        on_batch (bool): Increase the batch_size to perform MC-Dropout. Otherwise in a for loop to reduce memory footprint. Defaults to ``True``.
         last_layer (bool, optional): whether to apply dropout to the last layer only. Defaults to ``False``.
+
+    Warning:
+        Beware that :attr:`on_batch==True` can raise weird errors if the not enough memory is available.
     """
     return MCDropout(
         model=model,
