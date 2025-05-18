@@ -519,6 +519,8 @@ class ClassificationRoutine(LightningModule):
                 probs.squeeze(-1) if self.binary_cls else probs,
                 targets,
             )
+            self.test_id_entropy.update(probs)
+
             if self.eval_grouping_loss:
                 self.test_grouping_loss.update(probs, targets, self.features)
 
@@ -526,6 +528,7 @@ class ClassificationRoutine(LightningModule):
                 self.test_id_ens_metrics.update(probs_per_est)
 
             if self.eval_ood:
+                self.test_ood_entropy.update(probs)
                 self.test_ood_metrics.update(ood_scores, torch.zeros_like(targets))
 
             if self.id_logit_storage is not None:
