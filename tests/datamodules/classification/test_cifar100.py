@@ -36,6 +36,7 @@ class TestCIFAR100DataModule:
         dm.val_dataloader()
         dm.test_dataloader()
 
+        dm.num_tta = 2
         dm.eval_ood = True
         dm.eval_shift = True
         dm.prepare_data()

@@ -45,6 +45,7 @@ class TestCIFAR10DataModule:
 
         dm.eval_ood = True
         dm.eval_shift = True
+        dm.num_tta = 2
         dm.prepare_data()
         dm.setup("test")
         dm.test_dataloader()

@@ -59,6 +59,7 @@ class TestMNISTDataModule:
         with pytest.raises(ValueError):
             dm.setup("other")
 
+        dm.num_tta = 2
         dm.eval_ood = True
         dm.eval_shift = True
         dm.ood_transform = dm.test_transform
