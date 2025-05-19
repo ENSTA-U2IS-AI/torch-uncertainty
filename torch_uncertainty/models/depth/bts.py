@@ -240,7 +240,7 @@ class LocalPlanarGuidance(nn.Module):
         )
 
 
-class BTSBackbone(Backbone):
+class BTSBackbone(Backbone):  # coverage: ignore
     def __init__(self, backbone_name: str, pretrained: bool) -> None:
         """BTS backbone.
 

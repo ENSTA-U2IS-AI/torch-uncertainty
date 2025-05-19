@@ -12,6 +12,7 @@ from torch_uncertainty import TUTrainer
 from torch_uncertainty.losses import DECLoss, ELBOLoss
 from torch_uncertainty.ood_criteria import (
     EntropyCriterion,
+    PostProcessingCriterion,
 )
 from torch_uncertainty.post_processing import ConformalClsTHR
 from torch_uncertainty.routines import ClassificationRoutine
@@ -354,6 +355,8 @@ class TestClassification:
             loss=None,
             num_classes=3,
             post_processing=ConformalClsTHR(alpha=0.1),
+            ood_criterion=PostProcessingCriterion(),
+            eval_ood=True,
         )
         trainer.test(routine, dm)
 
@@ -466,4 +469,16 @@ class TestClassification:
                 loss=None,
                 is_ensemble=True,
                 post_processing=nn.Module(),
+            )
+
+        with pytest.raises(
+            ValueError,
+            match="You cannot set ood_criterion=PostProcessingCriterion when post_processing is None.",
+        ):
+            ClassificationRoutine(
+                num_classes=10,
+                model=nn.Module(),
+                loss=None,
+                post_processing=None,
+                ood_criterion=PostProcessingCriterion(),
             )

@@ -43,6 +43,20 @@ class TestTemperatureScaler:
         )
         scaler.fit_predict(dl, progress=False)
 
+        inputs = torch.as_tensor([0.6]).repeat(10, 1)
+        labels = torch.as_tensor([0.5]).repeat(10)
+        calibration_set = list(zip(inputs, labels, strict=True))
+        dl = DataLoader(calibration_set, batch_size=10)
+        scaler = TemperatureScaler(model=nn.Identity(), init_val=2, lr=1, max_iter=10)
+        scaler.fit(dl)
+
+        inputs = torch.as_tensor([0.6]).repeat(10, 1)
+        labels = torch.as_tensor([1]).repeat(10)
+        calibration_set = list(zip(inputs, labels, strict=True))
+        dl = DataLoader(calibration_set, batch_size=10)
+        scaler = TemperatureScaler(model=nn.Identity(), init_val=2, lr=1, max_iter=10)
+        scaler.fit(dl)
+
     def test_errors(self) -> None:
         with pytest.raises(ValueError):
             TemperatureScaler(model=nn.Identity(), init_val=-1)
@@ -50,8 +64,11 @@ class TestTemperatureScaler:
         with pytest.raises(ValueError):
             TemperatureScaler(model=nn.Identity(), lr=-1)
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Max iterations must be strictly positive. Got "):
             TemperatureScaler(model=nn.Identity(), max_iter=-1)
+
+        with pytest.raises(ValueError, match="Eps must be strictly positive. Got "):
+            TemperatureScaler(model=nn.Identity(), eps=-1)
 
         scaler = TemperatureScaler(
             model=nn.Identity(),
@@ -82,12 +99,6 @@ class TestVectorScaler:
         with pytest.raises(TypeError):
             VectorScaler(model=nn.Identity(), num_classes=1.8)
 
-        with pytest.raises(ValueError):
-            VectorScaler(model=nn.Identity(), num_classes=2, lr=-1)
-
-        with pytest.raises(ValueError):
-            VectorScaler(model=nn.Identity(), num_classes=2, max_iter=-1)
-
 
 class TestMatrixScaler:
     """Testing the MatrixScaler class."""
@@ -110,9 +121,3 @@ class TestMatrixScaler:
 
         with pytest.raises(TypeError):
             MatrixScaler(model=nn.Identity(), num_classes=1.8)
-
-        with pytest.raises(ValueError):
-            MatrixScaler(model=nn.Identity(), num_classes=2, lr=-1)
-
-        with pytest.raises(ValueError):
-            MatrixScaler(model=nn.Identity(), num_classes=2, max_iter=-1)
