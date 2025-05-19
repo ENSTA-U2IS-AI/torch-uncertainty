@@ -79,7 +79,7 @@ class TUDataModule(ABC, LightningDataModule):
         self.pin_memory = pin_memory
         self.persistent_workers = persistent_workers
 
-        if not num_tta % batch_size:
+        if batch_size % num_tta:
             raise ValueError(
                 f"The number of Test-time augmentations num_tta should divide batch_size. Got {num_tta} and {batch_size}."
             )
