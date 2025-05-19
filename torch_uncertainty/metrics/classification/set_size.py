@@ -4,6 +4,7 @@ import torch
 from torch import Tensor
 from torchmetrics import Metric
 from torchmetrics.utilities.compute import _safe_divide
+from torchmetrics.utilities.data import dim_zero_cat
 
 
 class SetSize(Metric):
@@ -55,7 +56,6 @@ class SetSize(Metric):
         """
         batch_size = preds.size(0)
         pred_sizes = preds.bool().sum(-1)
-        self.total += batch_size
 
         if self.reduction is None or self.reduction == "none":
             self.sizes.append(pred_sizes)
@@ -69,4 +69,9 @@ class SetSize(Metric):
         Returns:
             Tensor: The coverage rate.
         """
-        return _safe_divide(self.sizes, self.total).mean()
+        values = dim_zero_cat(self.sizes)
+        if self.reduction == "sum":
+            return values
+        if self.reduction == "mean":
+            return _safe_divide(values, self.total)
+        return values
