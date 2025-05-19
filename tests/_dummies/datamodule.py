@@ -185,13 +185,16 @@ class DummyClassificationDataModule(TUDataModule):
     def test_dataloader(self) -> list[DataLoader]:
         loaders = [self._data_loader(self.test, training=False)]
         if self.eval_ood:
-            loaders.append(self._data_loader(self.val_ood, training=False, shuffle=False)))
-            loaders.extend(self._data_loader(ds, training=False, shuffle=False)) for ds in self.near_oods)
-            loaders.extend(self._data_loader(ds, training=False, shuffle=False)) for ds in self.far_oods)
+            loaders.append(self._data_loader(self.val_ood, training=False, shuffle=False))
+            loaders.extend(
+                self._data_loader(ds, training=False, shuffle=False) for ds in self.near_oods
+            )
+            loaders.extend(
+                self._data_loader(ds, training=False, shuffle=False) for ds in self.far_oods
+            )
         if self.eval_shift:
-            loaders.append(self._data_loader(self.shift, training=False, shuffle=False)))
+            loaders.append(self._data_loader(self.shift, training=False, shuffle=False))
         return loaders
-
 
     def _get_train_data(self) -> ArrayLike:
         return self.train.data

@@ -15,6 +15,7 @@ from torch_uncertainty.datamodules import TUDataModule
 from torch_uncertainty.datasets import AggregatedDataset
 from torch_uncertainty.datasets.classification import CIFAR100C
 from torch_uncertainty.datasets.ood.utils import get_ood_datasets
+from torch_uncertainty.datasets.utils import create_train_val_split
 from torch_uncertainty.transforms import Cutout
 
 logging.basicConfig(

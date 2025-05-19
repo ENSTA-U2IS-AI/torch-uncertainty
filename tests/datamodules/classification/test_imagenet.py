@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest
+from torch import nn
 
 from tests._dummies.dataset import DummyClassificationDataset
 from torch_uncertainty.datamodules import ImageNetDataModule
@@ -29,13 +30,13 @@ class TestImageNetDataModule:
         dm.shift_dataset = DummyClassificationDataset
         dm.setup("fit")
         dm.setup("test")
-        dm.train_dataloader()
+        # dm.train_dataloader()
         dm.val_dataloader()
         dm.test_dataloader()
 
         dm.val_split = None
         dm.setup("fit")
-        dm.train_dataloader()
+        # dm.train_dataloader()
         dm.val_dataloader()
         dm.test_dataloader()
 

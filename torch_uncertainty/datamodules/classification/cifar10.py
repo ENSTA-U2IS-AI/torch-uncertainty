@@ -15,6 +15,7 @@ from torch_uncertainty.datamodules.abstract import TUDataModule
 from torch_uncertainty.datasets import AggregatedDataset
 from torch_uncertainty.datasets.classification import CIFAR10C, CIFAR10H
 from torch_uncertainty.datasets.ood.utils import get_ood_datasets
+from torch_uncertainty.datasets.utils import create_train_val_split
 from torch_uncertainty.transforms import Cutout
 
 logging.basicConfig(
@@ -170,31 +171,17 @@ class CIFAR10DataModule(TUDataModule):
             )
 
         if num_tta != 1:
-            self.test_transform = self.train_transform
+            self.test_transform = train_transform
         elif test_transform is not None:
             self.test_transform = test_transform
         else:
-            main_transform = nn.Identity()
-
-        self.train_transform = v2.Compose(
-            [
-                v2.ToImage(),
-                basic_transform,
-                main_transform,
-                v2.ToDtype(dtype=torch.float32, scale=True),
-                v2.Normalize(mean=self.mean, std=self.std),
-            ]
-        )
-
-        self.test_transform = v2.Compose(
-            [
-                v2.ToImage(),
-                v2.Resize(32),
-                v2.CenterCrop(32),
-                v2.ToDtype(dtype=torch.float32, scale=True),
-                v2.Normalize(mean=self.mean, std=self.std),
-            ]
-        )
+            self.test_transform = v2.Compose(
+                [
+                    v2.ToImage(),
+                    v2.ToDtype(dtype=torch.float32, scale=True),
+                    v2.Normalize(mean=self.mean, std=self.std),
+                ]
+            )
 
     def prepare_data(self) -> None:  # coverage: ignore
         if self.test_alt is None:
@@ -279,6 +266,13 @@ class CIFAR10DataModule(TUDataModule):
 
                 self.near_ood_names = [ds.dataset_name for ds in self.near_oods]
                 self.far_ood_names = [ds.dataset_name for ds in self.far_oods]
+
+            if self.eval_shift:
+                self.shift = self.shift_dataset(
+                    self.root,
+                    download=False,
+                    transform=self.test_transform,
+                )
 
         if stage not in ["fit", "test", None]:
             raise ValueError(f"Stage {stage} is not supported.")
