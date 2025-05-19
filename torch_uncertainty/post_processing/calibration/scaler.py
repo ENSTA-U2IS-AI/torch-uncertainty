@@ -93,7 +93,7 @@ class Scaler(PostProcessing):
             all_logits = all_logits.squeeze(1)
         if all_logits.dim() == 1:
             # allow labels as probabilities
-            if all_labels.unique() != torch.tensor([0, 1]):
+            if ((all_labels != 0) * (all_labels != 1)).sum(dtype=torch.int) != 0:
                 all_labels = torch.stack([1 - all_labels, all_labels], dim=1)
             all_logits = torch.stack([torch.log(1 - all_logits), torch.log(all_logits)], dim=1)
 
