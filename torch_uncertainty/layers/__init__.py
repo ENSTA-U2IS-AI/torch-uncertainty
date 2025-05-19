@@ -21,6 +21,7 @@ from .packed import (
     PackedConv1d,
     PackedConv2d,
     PackedConv3d,
+    PackedConvTranspose2d,
     PackedLayerNorm,
     PackedLinear,
     PackedMultiheadAttention,

@@ -10,6 +10,7 @@ from torch_uncertainty.layers.packed import (
     PackedConv1d,
     PackedConv2d,
     PackedConv3d,
+    PackedConvTranspose2d,
     PackedLayerNorm,
     PackedLinear,
     PackedMultiheadAttention,
@@ -374,6 +375,45 @@ class TestPackedConv3d:
 
         with pytest.raises(ValueError):
             _ = PackedConv3d(5, 2, kernel_size=1, alpha=1, num_estimators=1, gamma=-1)
+
+
+class TestPackedConvTranspose2d:
+    """Testing the PackedConvTranspose2d layer class."""
+
+    def test_conv_one_estimator(self, img_input: torch.Tensor) -> None:
+        layer = PackedConvTranspose2d(6, 2, alpha=1, num_estimators=1, kernel_size=1)
+        out = layer(img_input)
+        assert out.shape == torch.Size([5, 2, 3, 3])
+
+    def test_conv_two_estimators(self, img_input: torch.Tensor) -> None:
+        layer = PackedConvTranspose2d(6, 2, alpha=1, num_estimators=2, kernel_size=1)
+        out = layer(img_input)
+        assert out.shape == torch.Size([5, 2, 3, 3])
+
+    def test_conv_one_estimator_gamma2(self, img_input: torch.Tensor) -> None:
+        layer = PackedConvTranspose2d(6, 2, alpha=1, num_estimators=1, kernel_size=1, gamma=2)
+        out = layer(img_input)
+        assert out.shape == torch.Size([5, 2, 3, 3])
+        assert layer.conv_transpose.groups == 1  # and not 2
+
+    def test_conv_two_estimators_gamma2(self, img_input: torch.Tensor) -> None:
+        layer = PackedConvTranspose2d(6, 2, alpha=1, num_estimators=2, kernel_size=1, gamma=2)
+        out = layer(img_input)
+        assert out.shape == torch.Size([5, 2, 3, 3])
+        assert layer.conv_transpose.groups == 2  # and not 4
+
+    def test_conv_extend(self) -> None:
+        _ = PackedConvTranspose2d(5, 3, kernel_size=1, alpha=1, num_estimators=2, gamma=1)
+
+    def test_conv2_failures(self) -> None:
+        with pytest.raises(ValueError):
+            _ = PackedConvTranspose2d(5, 2, kernel_size=1, alpha=-1, num_estimators=1)
+
+        with pytest.raises(TypeError):
+            _ = PackedConvTranspose2d(5, 2, kernel_size=1, alpha=1, num_estimators=1, gamma=0.5)
+
+        with pytest.raises(ValueError):
+            _ = PackedConvTranspose2d(5, 2, kernel_size=1, alpha=1, num_estimators=1, gamma=-1)
 
 
 class TestPackedLayerNorm:

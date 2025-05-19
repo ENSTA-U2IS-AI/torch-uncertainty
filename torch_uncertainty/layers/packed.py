@@ -580,6 +580,108 @@ class PackedConv3d(nn.Module):
         return self.conv.bias
 
 
+class PackedConvTranspose2d(nn.Module):
+    def __init__(
+        self,
+        in_channels: int,
+        out_channels: int,
+        kernel_size: _size_2_t,
+        alpha: int,
+        num_estimators: int,
+        gamma: int = 1,
+        stride: _size_2_t = 1,
+        padding: _size_2_t = 0,
+        output_padding: _size_2_t = 0,
+        dilation: _size_2_t = 1,
+        groups: int = 1,
+        minimum_channels_per_group: int = 64,
+        bias: bool = True,
+        first: bool = False,
+        last: bool = False,
+        device=None,
+        dtype=None,
+    ) -> None:
+        r"""Packed-Ensembles-style ConvTranspose2d layer with debug flags.
+
+        Args:
+            in_channels (int): Number of channels in the input.
+            out_channels (int): Number of channels produced by the transposed convolution.
+            kernel_size (int or tuple): Size of the convolving kernel.
+            alpha (int): The channel multiplier for the layer.
+            num_estimators (int): Number of estimators in the ensemble.
+            gamma (int, optional): Defaults to ``1``.
+            stride (int or tuple, optional): Stride of the convolution. Defaults to ``1``.
+            padding (int or tuple, optional): Zero-padding added to both sides of the input. Defaults to ``0``.
+            output_padding (int or tuple, optional): Additional size added to one side of the output shape. Defaults to ``0``.
+            dilation (int or tuple, optional): Spacing between kernel elements. Defaults to ``1``.
+            groups (int, optional): Number of blocked connections from input channels to output channels. Defaults to ``1``.
+            minimum_channels_per_group (int, optional): Smallest possible number of channels per group.
+            bias (bool, optional): If ``True``, adds a learnable bias to the output. Defaults to ``True``.
+            first (bool, optional): Whether this is the first layer of the network. Defaults to ``False``.
+            last (bool, optional): Whether this is the last layer of the network. Defaults to ``False``.
+            device (torch.device, optional): The device to use for the layer's parameters. Defaults to ``None``.
+            dtype (torch.dtype, optional): The dtype to use for the layer's parameters. Defaults to ``None``.
+        """
+        check_packed_parameters_consistency(alpha, gamma, num_estimators)
+        factory_kwargs = {"device": device, "dtype": dtype}
+        super().__init__()
+
+        self.num_estimators = num_estimators
+        self.first = first
+        self.last = last
+
+        # Define the number of channels for the underlying convolution
+        self.extended_in_channels = int(in_channels * (1 if first else alpha))
+        self.extended_out_channels = int(out_channels * (num_estimators if last else alpha))
+
+        # Define the number of groups of the underlying convolution
+        self.actual_groups = 1 if first else gamma * groups * num_estimators
+
+        while (
+            self.extended_in_channels % self.actual_groups != 0
+            or self.extended_in_channels // self.actual_groups < minimum_channels_per_group
+        ) and self.actual_groups // (groups * num_estimators) > 1:
+            gamma -= 1
+            self.actual_groups = gamma * groups * num_estimators
+
+        # Fix dimensions to be divisible by groups
+        if self.extended_in_channels % self.actual_groups:
+            self.extended_in_channels += (
+                num_estimators - self.extended_in_channels % self.actual_groups
+            )
+        if self.extended_out_channels % self.actual_groups:
+            self.extended_out_channels += (
+                num_estimators - self.extended_out_channels % self.actual_groups
+            )
+
+        # Initialize the transposed convolutional layer
+        self.conv_transpose = nn.ConvTranspose2d(
+            in_channels=self.extended_in_channels,
+            out_channels=self.extended_out_channels,
+            kernel_size=kernel_size,
+            stride=stride,
+            padding=padding,
+            output_padding=output_padding,
+            dilation=dilation,
+            groups=self.actual_groups,
+            bias=bias,
+            **factory_kwargs,
+        )
+
+    def forward(self, inputs: Tensor) -> Tensor:
+        return self.conv_transpose(inputs)
+
+    @property
+    def weight(self) -> Tensor:
+        r"""The weight of the underlying transposed convolutional layer."""
+        return self.conv_transpose.weight
+
+    @property
+    def bias(self) -> Tensor | None:
+        r"""The bias of the underlying transposed convolutional layer."""
+        return self.conv_transpose.bias
+
+
 class PackedLayerNorm(nn.GroupNorm):
     def __init__(
         self,
