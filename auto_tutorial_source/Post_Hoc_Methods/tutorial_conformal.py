@@ -12,8 +12,8 @@ We use the pretrained ResNet models provided on Hugging Face.
 
 # %%
 import matplotlib.pyplot as plt
+import numpy as np
 import torch
-import torchvision.transforms.v2 as v2
 from huggingface_hub import hf_hub_download
 
 from torch_uncertainty import TUTrainer
@@ -49,23 +49,26 @@ datamodule = CIFAR10DataModule(
     eval_ood=True,
     val_split=0.1,
 )
+datamodule.prepare_data()
 datamodule.setup()
 
 
 # %%
-# 3. Define Lightning Trainer
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# 3. Define the Lightning Trainer
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 trainer = TUTrainer(accelerator="gpu", devices=1, max_epochs=5)
 
 
 # %%
-# 4. Define a function to visualize prediction sets
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# 4. Define a function to visualize the prediction sets
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def visualize_prediction_sets(inputs, labels, confidence_scores, classes, num_examples=5):
     _, axs = plt.subplots(2, num_examples, figsize=(15, 5))
     for i in range(num_examples):
         ax = axs[0, i]
-        img = inputs[i].permute(1, 2, 0).cpu().numpy() * 0.5 + 0.5  # unnormalize
+        img = np.clip(
+            inputs[i].permute(1, 2, 0).cpu().numpy() * datamodule.std + datamodule.mean, 0, 1
+        )
         ax.imshow(img)
         ax.set_title(f"True: {classes[labels[i]]}")
         ax.axis("off")
