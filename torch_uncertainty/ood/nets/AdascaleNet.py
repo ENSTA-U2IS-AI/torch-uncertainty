@@ -18,7 +18,7 @@ class AdaScaleANet(nn.Module):
         scale = ada_scale(torch.relu(feature), percentiles)
         if self.logit_scaling:
             logits_cls = self.backbone.get_fc_layer()(feature)
-            logits_cls *= (scale**2.0)
+            logits_cls *= scale**2.0
         else:
             feature *= torch.exp(scale)
             logits_cls = self.backbone.get_fc_layer()(feature)
@@ -34,8 +34,8 @@ class AdaScaleLNet(AdaScaleANet):
 def ada_scale(x, percentiles):
     assert x.dim() == 2
     b, c = x.shape
-    assert percentiles.shape == (b, )
-    assert torch.all(0 < percentiles) and torch.all(percentiles < 100)
+    assert percentiles.shape == (b,)
+    assert torch.all(percentiles > 0) and torch.all(percentiles < 100)
     n = x.shape[1:].numel()
     ks = n - torch.round(n * percentiles.cuda() / 100.0).to(torch.int)
     max_k = ks.max()

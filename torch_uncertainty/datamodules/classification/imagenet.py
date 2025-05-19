@@ -24,7 +24,6 @@ from torch_uncertainty.datasets.ood.utils import (
     download_and_extract_hf_dataset,
     get_ood_datasets,
 )
-from torch_uncertainty.datasets.utils import create_train_val_split
 from torch_uncertainty.utils import (
     interpolation_modes_from_str,
 )
@@ -342,7 +341,6 @@ class ImageNetDataModule(TUDataModule):
         return self._data_loader(self.val, training=False)
 
     def test_dataloader(self):
-
         loaders = [self._data_loader(self.get_test_set(), training=False)]
         if self.eval_ood:
             loaders.append(self._data_loader(self.get_val_ood_set(), training=False))
@@ -377,7 +375,6 @@ class ImageNetDataModule(TUDataModule):
         else:
             indices["shift"] = []
         return indices
-
 
 
 def read_indices(path: Path) -> list[str]:  # coverage: ignore

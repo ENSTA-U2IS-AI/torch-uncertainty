@@ -126,7 +126,6 @@ class CIFAR10DataModule(TUDataModule):
         self.far_ood_datasets = far_ood_datasets or []  # List of far OOD dataset classes
 
         if (cutout is not None) + randaugment + int(auto_augment is not None) > 1:
-
             raise ValueError(
                 "Only one data augmentation can be chosen at a time. Raise a "
                 "GitHub issue if needed."
@@ -196,7 +195,6 @@ class CIFAR10DataModule(TUDataModule):
                 v2.Normalize(mean=self.mean, std=self.std),
             ]
         )
-
 
     def prepare_data(self) -> None:  # coverage: ignore
         if self.test_alt is None:

@@ -78,9 +78,9 @@ class TUDataModule(ABC, LightningDataModule):
 
         if batch_size % num_tta != 0:
             raise ValueError(
-        f"The number of Test-time augmentations num_tta should divide batch_size. "
-        f"Got num_tta={num_tta} and batch_size={batch_size}."
-    )
+                f"The number of Test-time augmentations num_tta should divide batch_size. "
+                f"Got num_tta={num_tta} and batch_size={batch_size}."
+            )
         self.num_tta = num_tta
         if postprocess_set == "test":
             logging.warning("You might be fitting the post-processing method on the test set!")
@@ -111,7 +111,6 @@ class TUDataModule(ABC, LightningDataModule):
         if self.num_tta > 1:
             return TTADataset(self.val_ood, self.num_tta)
         return self.val_ood
-
 
     def get_near_ood_set(self) -> Dataset:
         """Get the near_ood sets."""
@@ -164,7 +163,9 @@ class TUDataModule(ABC, LightningDataModule):
         """
         return self.val_dataloader() if self.postprocess_set == "val" else self.test_dataloader()[0]
 
-    def _data_loader(self, dataset: Dataset, training: bool, shuffle: bool = False,drop_last=False) -> DataLoader:
+    def _data_loader(
+        self, dataset: Dataset, training: bool, shuffle: bool = False, drop_last=False
+    ) -> DataLoader:
         """Create a dataloader for a given dataset.
 
         Args:
@@ -183,7 +184,7 @@ class TUDataModule(ABC, LightningDataModule):
             num_workers=self.num_workers,
             pin_memory=self.pin_memory,
             persistent_workers=self.persistent_workers,
-            drop_last=drop_last
+            drop_last=drop_last,
         )
 
     # These two functions have to be defined in each datamodule

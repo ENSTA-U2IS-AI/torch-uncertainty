@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest
+
 from tests._dummies.dataset import DummyClassificationDataset
 from torch_uncertainty.datamodules import ImageNetDataModule
 

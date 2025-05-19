@@ -20,13 +20,14 @@ class TinyImageNet(Dataset):
         split: Literal["train", "val", "test"] = "train",
         transform: Callable | None = None,
         target_transform: Callable | None = None,
-        download: bool = False  # added download attribute
+        download: bool = False,  # added download attribute
     ) -> None:
         self.root = Path(root) / "tiny-imagenet-200"
-        
+
         if download and not self.root.exists():
             import urllib.request
             import zipfile
+
             url = "http://cs231n.stanford.edu/tiny-imagenet-200.zip"
             zip_path = Path(root) / "tiny-imagenet-200.zip"
             print("Downloading tiny-imagenet-200 dataset...")

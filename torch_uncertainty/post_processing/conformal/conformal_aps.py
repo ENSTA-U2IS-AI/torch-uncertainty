@@ -2,10 +2,11 @@ import logging
 from typing import Literal
 
 import torch
+import torch.nn.functional as F
+from einops import rearrange
 from torch import Tensor, nn
 from torch.utils.data import DataLoader
-from einops import rearrange
-import torch.nn.functional as F
+
 from .abstract import Conformal
 
 

@@ -636,12 +636,13 @@ class ClassificationRoutine(LightningModule):
             else:
                 pred_conformal, confs_conformal = self.model.conformal(inputs)
 
-                
         if self.ood_criterion.input_type == OODCriterionInputType.LOGIT and not self.is_conformal:
             ood_scores = self.ood_criterion(logits)
         elif self.ood_criterion.input_type == OODCriterionInputType.PROB and not self.is_conformal:
             ood_scores = self.ood_criterion(probs)
-        elif self.ood_criterion.input_type == OODCriterionInputType.DATASET and not self.is_conformal:
+        elif (
+            self.ood_criterion.input_type == OODCriterionInputType.DATASET and not self.is_conformal
+        ):
             with torch.inference_mode(False), torch.enable_grad():
                 x = inputs.detach().clone().requires_grad_(True)
                 ood_scores = self.ood_criterion(self.model, x).to(self.device)
@@ -678,7 +679,6 @@ class ClassificationRoutine(LightningModule):
 
             if self.is_conformal:
                 self.test_cfm_metrics.update(pred_conformal, targets)
-
 
             if self.post_processing is not None:
                 pp_logits = self.post_processing(inputs)
@@ -772,7 +772,6 @@ class ClassificationRoutine(LightningModule):
             self.test_shift_metrics.update(probs, targets)
             if self.is_ensemble:
                 self.test_shift_ens_metrics.update(probs_per_est)
-
 
     def on_validation_epoch_end(self) -> None:
         """Compute and log the values of the collected metrics in `validation_step`."""

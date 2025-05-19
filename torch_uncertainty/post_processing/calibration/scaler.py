@@ -2,11 +2,12 @@ import logging
 from typing import Literal
 
 import torch
+import torch.nn.functional as F
+from einops import rearrange
 from torch import Tensor, nn, optim
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-from einops import rearrange
-import torch.nn.functional as F
+
 from torch_uncertainty.post_processing import PostProcessing
 
 
@@ -101,12 +102,10 @@ class Scaler(PostProcessing):
         return self._scale(self.model(inputs))
 
     def _ensemble_probs(self, logits: Tensor, batch_size: int) -> Tensor:
-
         logits = rearrange(logits, "(m b) c -> b m c", b=batch_size)
         return F.softmax(logits, dim=-1).mean(dim=1)
 
     def _ensemble_log_probs(self, logits: Tensor, batch_size: int) -> Tensor:
-
         probs = self._ensemble_probs(logits, batch_size)
         return torch.log(probs)
 
@@ -132,9 +131,3 @@ class Scaler(PostProcessing):
     @property
     def temperature(self) -> list:
         raise NotImplementedError
-
-
-
-
-  
-  

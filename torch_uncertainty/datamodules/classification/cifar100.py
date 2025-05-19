@@ -15,7 +15,6 @@ from torch_uncertainty.datamodules import TUDataModule
 from torch_uncertainty.datasets import AggregatedDataset
 from torch_uncertainty.datasets.classification import CIFAR100C
 from torch_uncertainty.datasets.ood.utils import get_ood_datasets
-
 from torch_uncertainty.transforms import Cutout
 
 logging.basicConfig(
@@ -115,7 +114,6 @@ class CIFAR100DataModule(TUDataModule):
 
         self.shift_severity = shift_severity
 
-
         self.near_ood_datasets = near_ood_datasets or []  # List of near OOD dataset classes
         self.far_ood_datasets = far_ood_datasets or []  # List of far OOD dataset classes
         if train_transform is not None:
@@ -168,14 +166,14 @@ class CIFAR100DataModule(TUDataModule):
             self.test_transform = test_transform
         else:
             self.test_transform = v2.Compose(
-            [
-                v2.ToImage(),
-                v2.Resize(32),
-                v2.CenterCrop(32),
-                v2.ToDtype(dtype=torch.float32, scale=True),
-                v2.Normalize(mean=self.mean, std=self.std),
-            ]
-        )
+                [
+                    v2.ToImage(),
+                    v2.Resize(32),
+                    v2.CenterCrop(32),
+                    v2.ToDtype(dtype=torch.float32, scale=True),
+                    v2.Normalize(mean=self.mean, std=self.std),
+                ]
+            )
 
     def prepare_data(self) -> None:  # coverage: ignore
         self.dataset(self.root, train=True, download=True)
@@ -281,7 +279,6 @@ class CIFAR100DataModule(TUDataModule):
         if self.eval_shift:
             loaders.append(self._data_loader(self.get_shift_set(), training=False))
         return loaders
-
 
     def _get_train_data(self) -> ArrayLike:
         if self.val_split:
