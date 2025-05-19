@@ -17,6 +17,12 @@ class TestTinyImageNetDataModule:
             test_transform=nn.Identity(),
             num_tta=2,
         )
+        dm = TinyImageNetDataModule(
+            root="./data/",
+            batch_size=128,
+            train_transform=nn.Identity(),
+            test_transform=nn.Identity(),
+        )
 
         assert dm.dataset == TinyImageNet
         assert isinstance(dm.train_transform, nn.Identity)

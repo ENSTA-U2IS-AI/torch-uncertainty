@@ -20,6 +20,13 @@ class TestImageNetDataModule:
             test_transform=nn.Identity(),
             num_tta=2,
         )
+        dm = ImageNetDataModule(
+            root="./data/",
+            batch_size=128,
+            val_split=0.1,
+            train_transform=nn.Identity(),
+            test_transform=nn.Identity(),
+        )
         assert isinstance(dm.train_transform, nn.Identity)
         assert isinstance(dm.test_transform, nn.Identity)
         assert dm.dataset == ImageNet

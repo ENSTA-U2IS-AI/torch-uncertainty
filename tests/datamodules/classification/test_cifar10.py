@@ -18,6 +18,12 @@ class TestCIFAR10DataModule:
             test_transform=nn.Identity(),
             num_tta=2,
         )
+        dm = CIFAR10DataModule(
+            root="./data/",
+            batch_size=128,
+            train_transform=nn.Identity(),
+            test_transform=nn.Identity(),
+        )
         assert isinstance(dm.train_transform, nn.Identity)
         assert isinstance(dm.test_transform, nn.Identity)
         dm = CIFAR10DataModule(root="./data/", batch_size=128, cutout=16, postprocess_set="test")
