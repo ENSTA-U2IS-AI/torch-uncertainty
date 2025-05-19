@@ -1,4 +1,4 @@
-# ruff: noqa: E402, E703, D212, D415
+# ruff: noqa: E402, E703, D212, D415, T201
 """
 Conformal Prediction on CIFAR-10 with TorchUncertainty
 ======================================================
@@ -13,7 +13,6 @@ We use the pretrained ResNet models provided on Hugging Face.
 # %%
 import matplotlib.pyplot as plt
 import torch
-import torch.nn as nn
 import torchvision.transforms.v2 as v2
 from huggingface_hub import hf_hub_download
 

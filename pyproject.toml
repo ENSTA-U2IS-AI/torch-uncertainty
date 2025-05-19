@@ -40,16 +40,8 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-experiments = [
-    "tensorboard",
-    "huggingface-hub>=0.31",
-    "safetensors",
-]
-image = [
-    "kornia",
-    "h5py",
-    "opencv-python",
-]
+experiments = ["tensorboard", "huggingface-hub>=0.31", "safetensors"]
+image = ["kornia", "h5py", "opencv-python"]
 tabular = ["pandas"]
 dev = [
     "torch_uncertainty[experiments,image]",
@@ -180,5 +172,9 @@ include = ["*/torch-uncertainty/*"]
 omit = ["*/tests/*", "*/datasets/*"]
 
 [tool.coverage.report]
-exclude_lines = ["coverage: ignore", "raise NotImplementedError", "raise ImportError"]
+exclude_lines = [
+    "coverage: ignore",
+    "raise NotImplementedError",
+    "raise ImportError",
+]
 ignore_errors = true

@@ -1,4 +1,4 @@
-# ruff: noqa: E402, E703, D212, D415
+# ruff: noqa: E402, E703, D212, D415, T201
 """
 Improved Ensemble parameter-efficiency with Packed-Ensembles
 ============================================================
@@ -300,7 +300,6 @@ ens_perf = trainer.test(ens_routine, dataloaders=[test_dl, ood_dl])
 
 import torch
 import torch.nn as nn
-from einops import rearrange
 
 from torch_uncertainty.layers import PackedConv2d, PackedLinear
 
