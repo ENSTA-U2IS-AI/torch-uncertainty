@@ -15,6 +15,7 @@ class TestTinyImageNetDataModule:
             batch_size=128,
             train_transform=nn.Identity(),
             test_transform=nn.Identity(),
+            num_tta=2,
         )
 
         assert dm.dataset == TinyImageNet
@@ -54,7 +55,6 @@ class TestTinyImageNetDataModule:
         with pytest.raises(ValueError):
             dm.setup("other")
 
-        dm.num_tta = 2
         dm.eval_ood = True
         dm.eval_shift = True
         dm.prepare_data()

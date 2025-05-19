@@ -16,6 +16,7 @@ class TestCIFAR10DataModule:
             batch_size=128,
             train_transform=nn.Identity(),
             test_transform=nn.Identity(),
+            num_tta=2,
         )
         assert isinstance(dm.train_transform, nn.Identity)
         assert isinstance(dm.test_transform, nn.Identity)
@@ -45,7 +46,6 @@ class TestCIFAR10DataModule:
 
         dm.eval_ood = True
         dm.eval_shift = True
-        dm.num_tta = 2
         dm.prepare_data()
         dm.setup("test")
         dm.test_dataloader()
