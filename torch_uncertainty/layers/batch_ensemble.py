@@ -466,6 +466,44 @@ class BatchConvTranspose2d(nn.Module):
 
         self.reset_parameters()
 
+    @classmethod
+    def from_conv_transpose2d(
+        cls, conv_transpose2d: nn.ConvTranspose2d, num_estimators: int
+    ) -> "BatchConvTranspose2d":
+        r"""Create a BatchEnsemble-style ConvTranspose2d layer from an existing ConvTranspose2d layer.
+
+        Args:
+            conv_transpose2d (nn.ConvTranspose2d): The ConvTranspose2d layer to convert.
+            num_estimators (int): Number of ensemble members.
+
+        Returns:
+            BatchConvTranspose2d: The converted BatchEnsemble-style ConvTranspose2d layer.
+
+        Warning:
+            All parameters of the original ConvTranspose2d layer will be discarded.
+
+        Example:
+            >>> conv_transpose2d = nn.ConvTranspose2d(3, 32, kernel_size=3)
+            >>> be_conv_transpose2d = BatchConvTranspose2d.from_conv_transpose2d(
+            ...     conv_transpose2d, num_estimators=3
+            ... )
+        """
+        return cls(
+            in_channels=conv_transpose2d.in_channels,
+            out_channels=conv_transpose2d.out_channels,
+            kernel_size=conv_transpose2d.kernel_size,
+            num_estimators=num_estimators,
+            stride=conv_transpose2d.stride,
+            padding=conv_transpose2d.padding,
+            output_padding=conv_transpose2d.output_padding,
+            groups=conv_transpose2d.groups,
+            bias=conv_transpose2d.bias is not None,
+            dilation=conv_transpose2d.dilation,
+            padding_mode=conv_transpose2d.padding_mode,
+            device=conv_transpose2d.weight.device,
+            dtype=conv_transpose2d.weight.dtype,
+        )
+
     def reset_parameters(self) -> None:
         nn.init.normal_(self.r_group, mean=1.0, std=0.5)
         nn.init.normal_(self.s_group, mean=1.0, std=0.5)
@@ -490,4 +528,4 @@ class BatchConvTranspose2d(nn.Module):
         else:
             bias = None
 
-        return self.conv(inputs * r_group) * s_group + (bias if bias is not None else 0)
+        return self.conv_transpose(inputs * r_group) * s_group + (bias if bias is not None else 0)
