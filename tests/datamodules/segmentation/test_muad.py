@@ -15,10 +15,11 @@ class TestMUADDataModule:
             batch_size=128,
             train_transform=nn.Identity(),
             test_transform=nn.Identity(),
+            version="small",
         )
         assert isinstance(dm.train_transform, nn.Identity)
         assert isinstance(dm.test_transform, nn.Identity)
-        dm = MUADDataModule(root="./data/", batch_size=128)
+        dm = MUADDataModule(root="./data/", batch_size=128, eval_ood=True)
 
         assert dm.dataset == MUAD
 
@@ -39,6 +40,7 @@ class TestMUADDataModule:
         dm.val_dataloader()
         dm.test_dataloader()
 
+        dm.eval_ood = False
         dm.val_split = 0.1
         dm.prepare_data()
         dm.setup()

@@ -19,6 +19,18 @@ class TestTUDataModule:
         with pytest.raises(NotImplementedError):
             dm._get_train_data()
 
+        with pytest.raises(ValueError, match="The number of Test-time augmentations"):
+            dm = TUDataModule(
+                root="root",
+                batch_size=128,
+                eval_batch_size=128,
+                val_split=0.0,
+                num_workers=4,
+                pin_memory=True,
+                persistent_workers=True,
+                num_tta=75,
+            )
+
 
 class TestCrossValDataModule:
     """Testing the CrossValDataModule class."""

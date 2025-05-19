@@ -71,6 +71,24 @@ class TestCIFAR10DataModule:
         dm.setup()
         dm.train_dataloader()
 
+        dm = CIFAR10DataModule(
+            root="./data/",
+            batch_size=128,
+            num_dataloaders=1,
+            val_split=0.1,
+            num_tta=64,
+            eval_ood=True,
+            eval_shift=True,
+        )
+        dm.dataset = DummyClassificationDataset
+        dm.ood_dataset = DummyClassificationDataset
+        dm.shift_dataset = DummyClassificationDataset
+        dm.setup()
+        dm.get_val_set()
+        dm.get_test_set()
+        dm.get_ood_set()
+        dm.get_shift_set()
+
         with pytest.raises(ValueError):
             dm = CIFAR10DataModule(
                 root="./data/",
@@ -99,10 +117,10 @@ class TestCIFAR10DataModule:
         dm = CIFAR10DataModule(
             root="./data/",
             batch_size=128,
-            cutout=None,
             num_dataloaders=2,
             val_split=0.1,
             auto_augment="rand-m9-n2-mstd0.5",
+            num_tta=4,
         )
 
     def test_cifar10_cv(self) -> None:
