@@ -43,7 +43,7 @@ datamodule = CIFAR10DataModule(
     batch_size=512,
     num_workers=8,
     eval_shift=True,
-    shift_severity=5,  # Set severity level of the corruption (1 to 5)
+    shift_severity=5,  # Set severity level of the corruption (1 to 5): max-strength!
 )
 
 # %%
@@ -52,7 +52,9 @@ datamodule = CIFAR10DataModule(
 #
 # CIFAR-10C is a transformed version of CIFAR-10 test set. Dan Hendrycks and Thomas Dietterich applied computer vision
 # transforms, known as corruptions to degrade the quality of the image and test deep learning models in adverse conditions.
-# There are 15 (+4 optional) corruptions in total, including noise, blur, weather effects, etc. We refer to [1] for more details.
+# There are 15 (+4 optional) corruptions in total, including noise, blur, weather effects, etc. Each corruption has 5 different
+# levels of severity ranging from small corruptions to very strong effects on the image. You can set the desired corruption level with
+# the shift-severity argument. We refer to [1] for more details.
 # You can get a more detailed overview and examples of the corruptions on the corresponding tutorial.
 
 # These lines are usually not necessary (they are called by the Trainer),

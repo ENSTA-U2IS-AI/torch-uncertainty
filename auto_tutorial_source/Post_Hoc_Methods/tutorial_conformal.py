@@ -36,22 +36,18 @@ model = model.cuda().eval()
 # %%
 # 2. Load CIFAR-10 dataset & define dataloaders
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+# We set eval_ood to True to evaluate the performance of Conformal scores for detecting out-of-distribution
+# samples. We also use a validation split taken from the training set with 10% of the training images to fit
+# the conformal methods.
 BATCH_SIZE = 128
-transform = v2.Compose(
-    [
-        v2.ToImage(),
-        v2.ToDtype(dtype=torch.float32, scale=True),
-        v2.Normalize(mean=(0.4914, 0.4822, 0.4465), std=(0.2023, 0.1994, 0.2010)),
-    ]
-)
-
 
 datamodule = CIFAR10DataModule(
     root="./data",
     batch_size=BATCH_SIZE,
     num_workers=8,
     eval_ood=True,
-    val_split=0.2,
+    val_split=0.1,
 )
 datamodule.setup()
 

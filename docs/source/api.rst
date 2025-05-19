@@ -284,6 +284,17 @@ Calibration
     AdaptiveCalibrationError
     CalibrationError
 
+Conformal Predictions
+"""""""""""""""""""""
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: class.rst
+    
+    CoverageRate
+    SetSize
+
 Diversity
 """""""""
 

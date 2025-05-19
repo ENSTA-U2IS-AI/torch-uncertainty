@@ -502,7 +502,6 @@ class ClassificationRoutine(LightningModule):
         inputs, targets = batch
         # remove duplicates when doing TTA
         targets = targets[:: self.num_tta]
-
         logits = self.forward(inputs, save_feats=self.eval_grouping_loss)
         logits = rearrange(logits, "(m b) c -> b m c", b=targets.size(0))
         probs_per_est = torch.sigmoid(logits) if self.binary_cls else F.softmax(logits, dim=-1)
