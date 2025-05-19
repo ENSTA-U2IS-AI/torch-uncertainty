@@ -16,7 +16,7 @@ class SetSize(Metric):
         reduction: Literal["mean", "sum", "none", None] = "mean",
         **kwargs,
     ):
-        """Set size to measure the efficiency of conformal prediction methods.
+        """Set size to compute the efficiency of conformal prediction methods.
 
         Args:
             reduction (str, optional): Determines how to reduce over the
@@ -64,7 +64,7 @@ class SetSize(Metric):
             self.total += batch_size
 
     def compute(self) -> Tensor:
-        """Compute the coverage rate.
+        """Compute the mean set size.
 
         Returns:
             Tensor: The coverage rate.

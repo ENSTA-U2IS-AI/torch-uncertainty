@@ -46,7 +46,7 @@ datamodule = CIFAR10DataModule(root="./data", batch_size=512, num_workers=8, eva
 # Model Initialization
 # --------------------
 #
-# We will use the ResNet18 architecture, a widely adopted convolutional neural network known for its deep residual learning capabilities.
+# We use the ResNet18 architecture, a widely adopted convolutional neural network known for its deep residual learning capabilities.
 # The model is initialized with 10 output classes corresponding to the CIFAR-10 dataset categories. When training on CIFAR, do not forget to
 # set the style of the resnet to CIFAR, otherwise it will lose more information in the first convolution.
 
@@ -128,7 +128,7 @@ results = trainer.test(routine, datamodule=datamodule)
 # --------------------------
 #
 # The previous metrics for Out-of-distribution detection have been computed using the maximum softmax probability score [1],
-# which corresponds to the confidence of the prediction. We could use other scores such as the maximum logit [2]. To do this,
+# which corresponds to the likelihood of the prediction. We could use other scores such as the maximum logit [2]. To do this,
 # just change the routine's `ood_criterion` and perform a second test.
 routine.ood_criterion = MaxLogitCriterion()
 

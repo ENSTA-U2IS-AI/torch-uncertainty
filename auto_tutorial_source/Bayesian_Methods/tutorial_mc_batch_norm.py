@@ -3,7 +3,7 @@
 Training a LeNet with Monte Carlo Batch Normalization
 =====================================================
 
-In this tutorial, we will train a LeNet classifier on the MNIST dataset using Monte-Carlo Batch Normalization (MCBN), a post-hoc Bayesian approximation method.
+In this tutorial, we train a LeNet classifier on the MNIST dataset using Monte-Carlo Batch Normalization (MCBN), a post-hoc Bayesian approximation method.
 
 Training a LeNet with MCBN using TorchUncertainty models and PyTorch Lightning
 ------------------------------------------------------------------------------
@@ -87,7 +87,7 @@ perf = trainer.test(model=routine, datamodule=datamodule)
 # predictions. We specify that the BatchNorm layers are to be converted to
 # MCBatchNorm layers, and that we want to use 8 stochastic estimators.
 # The amount of stochasticity is controlled by the ``mc_batch_size`` argument.
-# The larger the ``mc_batch_size``, the more stochastic the predictions will be.
+# The larger the ``mc_batch_size``, the less stochastic the predictions will be.
 # The authors suggest 32 as a good value for ``mc_batch_size`` but we use 4 here
 # to highlight the effect of stochasticity on the predictions.
 

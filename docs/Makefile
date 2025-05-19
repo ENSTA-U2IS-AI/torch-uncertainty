@@ -17,7 +17,7 @@ html-noplot:
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
 
-# ||: not to raise an error if one of the folders doesn't exist
+# ||: do not to raise an error if one of the folders doesn't exist
 clean: 
 	rm -r $(BUILDDIR) $(SOURCEDIR)/generated $(SOURCEDIR)/auto_tutorials ||:
 

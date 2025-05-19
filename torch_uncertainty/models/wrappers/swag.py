@@ -1,6 +1,5 @@
 import copy
 from collections.abc import Mapping
-from typing import NoReturn
 
 import torch
 from torch import Tensor, nn
@@ -232,10 +231,10 @@ class SWAG(SWA):
         self._load_swag_stats(state_dict)
         return super().load_state_dict(state_dict, strict, assign)
 
-    def compute_logdet(self, block: bool = False) -> NoReturn:
+    def compute_logdet(self, block: bool = False) -> None:
         raise NotImplementedError("Raise an issue if you need this feature.")
 
-    def compute_logprob(self, vec=None, block: bool = False, diag: bool = False) -> NoReturn:
+    def compute_logprob(self, vec=None, block: bool = False, diag: bool = False) -> None:
         raise NotImplementedError("Raise an issue if you need this feature.")
 
 

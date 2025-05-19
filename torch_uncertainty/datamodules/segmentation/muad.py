@@ -45,7 +45,7 @@ class MUADDataModule(TUDataModule):
             version (str, optional): Version of the dataset to use. Can be either
                 ``full`` or ``small``. Defaults to ``full``.
             eval_batch_size (int | None) : Number of samples per batch during evaluation (val
-                and test). Set to batch_size if None. Defaults to None.
+                and test). Set to :attr:`batch_size` if ``None``. Defaults to ``None``.
             eval_ood (bool): Whether to evaluate on the OOD dataset. Defaults to
                 ``False``. If set to ``True``, the OOD dataset will be used for
                 evaluation in addition of the test dataset.

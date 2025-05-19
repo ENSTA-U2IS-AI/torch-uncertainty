@@ -53,7 +53,7 @@ BATCH_SIZE = 512
 # 2. Creating the Optimizer Wrapper
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # We follow the official implementation in DEC, use the Adam optimizer
-# with the default learning rate of 0.001 and a step scheduler.
+# with the default learning rate of 0.002 and a step scheduler.
 def optim_lenet(model: nn.Module):
     return optim.Adam(model.parameters(), lr=2e-2, weight_decay=0.005)
 

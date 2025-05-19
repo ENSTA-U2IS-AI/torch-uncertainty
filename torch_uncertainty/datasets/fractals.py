@@ -28,8 +28,10 @@ class Fractals(ImageFolder):
         Args:
             root (str | Path): Root directory of dataset.
             transform (Callable[..., Any] | None): Transform to apply to the input samples.
+                Defaults to ``None``.
             target_transform (Callable[..., Any] | None): Transform to apply to the target labels.
-            download (bool): If True, downloads the dataset if not present.
+                Defaults to ``None``.
+            download (bool): If ``True``, downloads the dataset if not present. Defaults to ``False``.
 
         Note:
             There is no information on the license of the dataset. It may not

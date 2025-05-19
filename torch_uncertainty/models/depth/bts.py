@@ -53,8 +53,8 @@ class AtrousBlock2d(nn.Module):
             out_channels (int): Number of output channels.
             dilation (int): Dilation rate for the 3x3 convolution.
             norm_first (bool): Whether to apply normalization before the 1x1 convolution.
-            Defaults to True.
-            norm_momentum (float): Momentum for the normalization layer. Defaults to 0.1.
+                Defaults to ``True``.
+            norm_momentum (float): Momentum for the normalization layer. Defaults to ``0.1``.
             factory_kwargs: Additional arguments for the PyTorch layers.
         """
         super().__init__()

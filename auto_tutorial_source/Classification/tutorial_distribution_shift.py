@@ -35,7 +35,7 @@ from torch_uncertainty.routines.classification import ClassificationRoutine
 # DataModules handle data loading, preprocessing, and batching, simplifying the data pipeline. Each datamodule
 # also include the corresponding out-of-distribution and distribution shift datasets, which are then used by the routine.
 # For CIFAR-10, the corresponding distribution-shift dataset is CIFAR-10C as used in the community.
-# To enable OOD evaluation, activate the `eval_shift` flag as done below.
+# To enable Distribution Shift evaluation, activate the `eval_shift` flag as done below.
 
 # Initialize the CIFAR-10 DataModule
 datamodule = CIFAR10DataModule(

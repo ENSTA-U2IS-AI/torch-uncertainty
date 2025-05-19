@@ -64,7 +64,7 @@ model = mlp(in_features=6, num_outputs=1, hidden_dims=[10, 10])
 # This is a classification problem, and we use CrossEntropyLoss as the (negative-log-)likelihood.
 # We define the training routine using the classification routine from torch_uncertainty.routines.
 # We provide the number of classes, the model, the optimization recipe, the loss, and tell the routine
-# that our model is an ensemble at evaluation time with the `is_ensemble` flag.
+# that our model is an ensemble at evaluation time with the `is_ensemble` flag to get the corresponding metrics.
 
 
 def optim_regression(model):

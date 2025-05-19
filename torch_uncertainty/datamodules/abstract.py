@@ -61,6 +61,9 @@ class TUDataModule(ABC, LightningDataModule):
             num_tta (int): Number of test-time augmentations (TTA). Defaults to ``1`` (no TTA).
             postprocess_set (str): Which split to use as post-processing set to fit the
                 post-processing method. Defaults to ``val``.
+
+        Warning:
+            Please ensure that the :attr:`batch_size` is a multiple of :attr:`num_tta`.
         """
         super().__init__()
 

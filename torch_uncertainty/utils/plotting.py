@@ -32,10 +32,9 @@ def plot_hist(
 
     Args:
         conf (Any): The confidence values.
-        bins (int, optional): The number of bins. Defaults to 20.
-        title (str, optional): The title of the plot. Defaults to "Histogram
-            with 'auto' bins".
-        dpi (int, optional): The dpi of the plot. Defaults to 60.
+        bins (int, optional): The number of bins. Defaults to ``20``.
+        title (str, optional): The title of the plot. Defaults to ``"Histogram with 'auto' bins"``.
+        dpi (int, optional): The dpi of the plot. Defaults to ``60``.
 
     Returns:
         Tuple[Figure, Axes]: The figure and axes of the plot.

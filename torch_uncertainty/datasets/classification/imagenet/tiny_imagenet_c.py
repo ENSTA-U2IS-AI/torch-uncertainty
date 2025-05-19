@@ -52,7 +52,7 @@ class TinyImageNetC(ImageFolder):
         """The corrupted TinyImageNet-C Dataset.
 
         Args:
-            root (str): Root directory of the datasets.
+            root (str | Path): Root directory of the datasets.
             transform (callable, optional): A function/transform that takes in
                 a PIL image and returns a transformed version. E.g,
                 ``transforms.RandomCrop``. Defaults to ``None``.

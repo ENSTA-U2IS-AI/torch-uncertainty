@@ -35,7 +35,7 @@ class UCIRegressionDataModule(TUDataModule):
                 ``wine-quality-red``, and ``yacht``.
             batch_size (int): The batch size for training and testing.
             eval_batch_size (int | None) : Number of samples per batch during evaluation (val
-                and test). Set to batch_size if None. Defaults to None.
+                and test). Set to :attr:`batch_size` if ``None``. Defaults to ``None``.
             val_split (float, optional): Share of validation samples. Defaults
                 to ``0``.
             num_workers (int, optional): How many subprocesses to use for data

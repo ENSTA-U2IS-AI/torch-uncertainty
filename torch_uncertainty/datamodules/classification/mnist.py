@@ -50,7 +50,7 @@ class MNISTDataModule(TUDataModule):
             eval_shift (bool): Whether to evaluate on shifted data. Defaults to ``False``.
             batch_size (int): Number of samples per batch during training.
             eval_batch_size (int | None) : Number of samples per batch during evaluation (val
-                and test). Set to batch_size if None. Defaults to None.
+                and test). Set to :attr:`batch_size` if ``None``. Defaults to ``None``.
             ood_ds (str): Which out-of-distribution dataset to use. Defaults to
                 ``"fashion"``; `fashion` stands for FashionMNIST and `notMNIST` for notMNIST.
             val_split (float): Share of samples to use for validation. Defaults to ``0.0``.

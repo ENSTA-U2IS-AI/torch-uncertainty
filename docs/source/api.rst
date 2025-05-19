@@ -416,6 +416,7 @@ OOD Scores
     MaxSoftmaxCriterion
     EntropyCriterion
     MutualInformationCriterion
+    PostProcessingCriterion
     VariationRatioCriterion
 
 

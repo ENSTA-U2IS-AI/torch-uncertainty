@@ -195,7 +195,7 @@ def init_dataloader(dataloader: DataLoader, batch_size: int):
     )
 
 
-def _mcbn_checks(model, num_estimators, mc_batch_size, convert) -> None:
+def _mcbn_checks(model, num_estimators: int, mc_batch_size: int, convert: bool) -> None:
     if num_estimators < 1 or not isinstance(num_estimators, int):
         raise ValueError(f"num_estimators must be a positive integer, got {num_estimators}.")
     if mc_batch_size < 1 or not isinstance(mc_batch_size, int):

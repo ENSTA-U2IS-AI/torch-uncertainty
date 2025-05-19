@@ -128,7 +128,7 @@ imshow(torchvision.utils.make_grid(images[:6, ...], padding=0))
 
 routine.eval()
 logits = rearrange(routine(images), "(m b) c -> b m c", b=6)
-probs = torch.nn.functional.softmax(logits, dim=-1)
+probs = logits.softmax(dim=-1)
 
 
 for j in range(6):

@@ -32,16 +32,16 @@ class ImageNetVariation(ImageFolder):
         """Virtual base class for ImageNet variations.
 
         Args:
-        root (str): Root directory of the datasets.
-        split (str, optional): For API consistency. Defaults to None.
+        root (str | Path): Root directory of the datasets.
+        split (str, optional): For API consistency. Defaults to ``None``.
         transform (callable, optional): A function/transform that takes in
                 a PIL image and returns a transformed version. E.g,
-                ``transforms.RandomCrop``. Defaults to None.
+                ``transforms.RandomCrop``. Defaults to ``None``.
         target_transform (callable, optional): A function/transform that
-            takes in the target and transforms it. Defaults to None.
-        download (bool, optional): If True, downloads the dataset from the
+            takes in the target and transforms it. Defaults to ``None``.
+        download (bool, optional): If ``True``, downloads the dataset from the
             internet and puts it in root directory. If dataset is already
-            downloaded, it is not downloaded again. Defaults to False.
+            downloaded, it is not downloaded again. Defaults to ``False``.
         """
         if download:
             self.download()

@@ -295,7 +295,7 @@ class CovAtxRisk(Metric):
     errors: list[Tensor]
 
     def __init__(self, risk_threshold: float, **kwargs) -> None:
-        r"""Provides coverage at x Risk.
+        r"""Provide coverage at x Risk.
 
         If there are multiple coverage values corresponding to the given risk,
         i.e., the risk(coverage) is not monotonic, the coverage at x risk is
@@ -376,7 +376,7 @@ class CovAtxRisk(Metric):
 
 class CovAt5Risk(CovAtxRisk):
     def __init__(self, **kwargs) -> None:
-        r"""Provides coverage at 5% Risk.
+        r"""Provide coverage at 5% Risk.
 
         If there are multiple coverage values corresponding to 5% risk, the
         coverage at 5% risk is the maximum coverage value corresponding to 5%
@@ -400,7 +400,7 @@ class RiskAtxCov(Metric):
     errors: list[Tensor]
 
     def __init__(self, cov_threshold: float, **kwargs) -> None:
-        r"""Computes the risk at a specified coverage threshold.
+        r"""Compute the risk at a specified coverage threshold.
 
         This metric calculates the error rate (risk) at a given coverage level.
         The coverage threshold determines the fraction of samples considered,
@@ -480,7 +480,7 @@ class RiskAtxCov(Metric):
 
 class RiskAt80Cov(RiskAtxCov):
     def __init__(self, **kwargs) -> None:
-        r"""Computes the risk at 80% coverage.
+        r"""Compute the risk at 80% coverage.
 
         This is a specific case of the more general RiskAtxCov metric, where the risk level is fixed at 80%.
 
