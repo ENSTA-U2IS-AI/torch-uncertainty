@@ -112,7 +112,7 @@ class PackedLinear(nn.Module):
         if implementation not in ["sparse", "full", "einsum", "conv1d"]:
             raise ValueError(
                 f"Unknown implementation: {implementation} for PackedLinear"
-                "Available implementations are: 'legacy', 'sparse', 'full', 'einsum', 'conv1d'"
+                "Available implementations are: 'sparse', 'full', 'einsum', 'conv1d'"
             )
 
         factory_kwargs = {"device": device, "dtype": dtype}
@@ -162,11 +162,8 @@ class PackedLinear(nn.Module):
         self.reset_parameters()
 
     def reset_parameters(self) -> None:
-        if self.implementation == "legacy":
-            nn.init.kaiming_uniform_(self.weight, a=math.sqrt(5))
-        else:
-            for n in range(self.groups):
-                nn.init.kaiming_uniform_(self.weight[n], a=math.sqrt(5))
+        for n in range(self.groups):
+            nn.init.kaiming_uniform_(self.weight[n], a=math.sqrt(5))
         if self.bias is not None:
             fan_in, _ = nn.init._calculate_fan_in_and_fan_out(self.weight[0])
             bound = 1 / math.sqrt(fan_in) if fan_in > 0 else 0
