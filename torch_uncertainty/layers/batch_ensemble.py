@@ -432,6 +432,30 @@ class BatchConvTranspose2d(nn.Module):
         device=None,
         dtype=None,
     ) -> None:
+        r"""BatchEnsemble-style ConvTranspose2d layer.
+
+        Args:
+            in_channels (int): Number of channels in the input images.
+            out_channels (int): Number of channels produced by the convolution.
+            kernel_size (_size_2_t): Size of the convolving kernel.
+            num_estimators (int): Number of estimators in the ensemble referred as
+                :math:`M` here.
+            stride (_size_2_t, optional): Stride of the convolution. Defaults to ``1``.
+            padding (_size_2_t, optional): ``dilation * (kernel_size - 1) - padding`` zero-padding
+                will be added to both sides of each dimension in the input. Defaults to ``0``.
+            output_padding (_size_2_t, optional): Additional size added to one side
+                of each dimension in the output shape. Defaults to ``0``.
+            groups (int, optional): Number of blocked connections from input channels to output
+                channels. Defaults to ``1``.
+            bias (bool, optional): If ``True``, adds a learnable bias to the output. Defaults to
+                ``True``.
+            dilation (_size_2_t, optional): Spacing between kernel elements. Defaults to ``1``.
+            padding_mode (str, optional): Padding mode for the convolution. Defaults to ``"zeros"``.
+            device (Any, optional): Device to use for the parameters and
+                buffers of this module. Defaults to ``None``.
+            dtype (Any, optional): Data type to use for the parameters and
+                buffers of this module. Defaults to ``None``.
+        """
         factory_kwargs = {"device": device, "dtype": dtype}
         super().__init__()
 

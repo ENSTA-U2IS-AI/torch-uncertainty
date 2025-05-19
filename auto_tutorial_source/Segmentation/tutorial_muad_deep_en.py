@@ -92,8 +92,7 @@ datamodule.setup("fit")
 # Visualize a validation input sample (and RGB image)
 
 # Undo normalization on the image and convert to uint8.
-sample = datamodule.train[0]
-img, tgt = sample
+img, tgt = datamodule.train[0]
 t_muad_mean = torch.tensor(muad_mean, device=img.device)
 t_muad_std = torch.tensor(muad_std, device=img.device)
 img = img * t_muad_std[:, None, None] + t_muad_mean[:, None, None]
@@ -237,9 +236,7 @@ results = trainer.test(datamodule=datamodule, ckpt_path="best")
 # 8. Uncertainty evaluations with MCP
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Here we will just use as confidence score the Maximum class probability (MCP)
-
-sample_idx = 0
-img, target = datamodule.test[sample_idx]
+img, target = datamodule.test[0]
 
 batch_img = img.unsqueeze(0)
 batch_target = target.unsqueeze(0)

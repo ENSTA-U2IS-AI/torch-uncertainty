@@ -23,7 +23,7 @@ class ConformalClsTHR(Conformal):
 
         Args:
             alpha (float): The confidence level, meaning we allow :math:`1-\alpha` error.
-            model (nn.Module, optional): Model to be calibrated.
+            model (nn.Module, optional): Model to be calibrated. Defaults to ``None``.
             init_val (float, optional): Initial value for the temperature.
                 Defaults to ``1``.
             lr (float, optional): Learning rate for the optimizer. Defaults to ``0.1``.

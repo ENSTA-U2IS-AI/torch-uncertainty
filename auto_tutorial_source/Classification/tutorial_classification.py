@@ -107,8 +107,7 @@ def imshow(img) -> None:
     plt.show()
 
 
-dataiter = iter(datamodule.val_dataloader())
-images, labels = next(dataiter)
+images, labels = next(iter(datamodule.val_dataloader()))
 
 # print images
 imshow(torchvision.utils.make_grid(images[:6, ...], padding=0))

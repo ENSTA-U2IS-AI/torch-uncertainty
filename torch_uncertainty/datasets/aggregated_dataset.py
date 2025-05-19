@@ -10,8 +10,8 @@ class AggregatedDataset(Dataset):
         different batch orders.
 
         Args:
-            dataset: The dataset to be interlaced.
-            n_dataloaders: The number of dataloaders to be used for training.
+            dataset (Dataset): The dataset to be interlaced.
+            n_dataloaders (int): The number of dataloaders to be used for training.
         """
         super().__init__()
         self.dataset = dataset

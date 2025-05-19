@@ -74,11 +74,11 @@ class CIFAR10C(VisionDataset):
 
         Args:
             root (str): Root directory of the datasets.
-            transform (callable, optional): A function/transform that takes in a PIL image and returns a transformed version. E.g, ``transforms.RandomCrop``. Defaults to None.
-            target_transform (callable, optional): A function/transform that takes in the target and transforms it. Defaults to None.
+            transform (callable, optional): A function/transform that takes in a PIL image and returns a transformed version. E.g, ``transforms.RandomCrop``. Defaults to ``None``.
+            target_transform (callable, optional): A function/transform that takes in the target and transforms it. Defaults to ``None``.
             subset (str): The subset to use, one of ``all`` or the keys in ``cifarc_subsets``.
-            shift_severity (int): The shift_severity of the corruption, between 1 and 5.
-            download (bool, optional): If True, downloads the dataset from the internet and puts it in root directory. If dataset is already downloaded, it is not downloaded again. Defaults to False.
+            shift_severity (int): The shift_severity of the corruption, between ``1`` and ``5``.
+            download (bool, optional): If ``True``, downloads the dataset from the internet and puts it in root directory. If dataset is already downloaded, it is not downloaded again. Defaults to ``False``.
 
         References:
             [1] `Benchmarking neural network robustness to common corruptions and perturbations. Dan Hendrycks and Thomas Dietterich. In ICLR, 2019 <https://arxiv.org/abs/1903.12261>`_.

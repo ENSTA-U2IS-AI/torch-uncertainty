@@ -55,7 +55,7 @@ class CIFAR100DataModule(TUDataModule):
             eval_shift (bool): Whether to evaluate on shifted data. Defaults to ``False``.
             batch_size (int): Number of samples per batch during training.
             eval_batch_size (int | None) : Number of samples per batch during evaluation (val
-                and test). Set to batch_size if None. Defaults to None.
+                and test). Set to batch_size if ``None``. Defaults to ``None``.
             val_split (float): Share of samples to use for validation. Defaults
                 to ``0.0``.
             postprocess_set (str, optional): The post-hoc calibration dataset to

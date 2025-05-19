@@ -54,7 +54,7 @@ class CIFAR10DataModule(TUDataModule):
             root (str | Path): Root directory of the datasets.
             batch_size (int): Number of samples per batch during training.
             eval_batch_size (int | None) : Number of samples per batch during evaluation (val
-                and test). Set to batch_size if None. Defaults to None.
+                and test). Set to batch_size if ``None``. Defaults to ``None``.
             eval_ood (bool): Whether to evaluate on out-of-distribution data. Defaults to ``False``.
             eval_shift (bool): Whether to evaluate on shifted data. Defaults to ``False``.
             val_split (float): Share of samples to use for validation. Defaults

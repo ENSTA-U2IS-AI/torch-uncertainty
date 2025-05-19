@@ -31,7 +31,7 @@ class KITTIDataModule(DepthDataModule):
             root (str or Path): Root directory of the datasets.
             batch_size (int): Number of samples per batch during training.
             eval_batch_size (int | None) : Number of samples per batch during evaluation (val
-                and test). Set to batch_size if None. Defaults to None.
+                and test). Set to :attr:`batch_size` if ``None``. Defaults to ``None``.
             min_depth (float, optional): Minimum depth value for evaluation.
                 Defaults to ``1e-3``.
             max_depth (float, optional): Maximum depth value for training and

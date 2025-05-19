@@ -57,10 +57,3 @@ optimizer:
     momentum: 0.9
     weight_decay: 5e-4
     nesterov: true
-lr_scheduler:
-  class_path: torch.optim.lr_scheduler.MultiStepLR
-  init_args:
-    milestones:
-      - 25
-      - 50
-    gamma: 0.1

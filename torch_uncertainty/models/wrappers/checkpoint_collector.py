@@ -18,7 +18,7 @@ class CheckpointCollector(nn.Module):
 
         CheckpointCollector can be used to collect samples of the posterior distribution,
         either using classical stochastic gradient optimization methods, or SGLD and SGHMC
-        as implemented in TorchUncertainty
+        as implemented in TorchUncertainty.
 
         Args:
             model (nn.Module): The model to train and ensemble.

@@ -3,13 +3,11 @@
 Conformal Prediction on CIFAR-10 with TorchUncertainty
 ======================================================
 
-*This notebook follows the TorchUncertainty tutorial style and demonstrates how to calibrate a pretrained ResNet model using Conformal Prediction on CIFAR-10.*
 
-We evaluate the model's performance both before and after applying different conformal predictors (THR, APS, RAPS), and visualize how conformal prediction modifies the prediction sets.
+We evaluate the model's performance both before and after applying different conformal predictors (THR, APS, RAPS), and visualize how conformal prediction estimates the prediction sets.
 
 We use the pretrained ResNet models provided on Hugging Face.
 
-Throughout this tutorial, we rely on the `TorchUncertainty <https://torch-uncertainty.github.io/>`_ library which simplifies training, calibration, and evaluation of uncertainty-aware models in PyTorch.
 """
 
 # %%
@@ -39,7 +37,7 @@ model = model.cuda().eval()
 # %%
 # 2. Load CIFAR-10 dataset & define dataloaders
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-batch_size = 128
+BATCH_SIZE = 128
 transform = v2.Compose(
     [
         v2.ToImage(),
@@ -51,7 +49,7 @@ transform = v2.Compose(
 
 datamodule = CIFAR10DataModule(
     root="./data",
-    batch_size=batch_size,
+    batch_size=BATCH_SIZE,
     num_workers=8,
     eval_ood=True,
     val_split=0.2,
@@ -60,14 +58,8 @@ datamodule.setup()
 
 
 # %%
-# 3. Define training configuration (optimizer and scheduler)
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-def optim_recipe(model, lr_mult: float = 1.0):
-    optimizer = torch.optim.SGD(model.parameters(), lr=0.05 * lr_mult)
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=10)
-    return {"optimizer": optimizer, "scheduler": scheduler}
-
-
+# 3. Define Lightning Trainer
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 trainer = TUTrainer(accelerator="gpu", devices=1, max_epochs=5)
 
 
@@ -75,7 +67,7 @@ trainer = TUTrainer(accelerator="gpu", devices=1, max_epochs=5)
 # 4. Define a function to visualize prediction sets
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def visualize_prediction_sets(inputs, labels, confidence_scores, classes, num_examples=5):
-    fig, axs = plt.subplots(2, num_examples, figsize=(15, 5))
+    _, axs = plt.subplots(2, num_examples, figsize=(15, 5))
     for i in range(num_examples):
         ax = axs[0, i]
         img = inputs[i].permute(1, 2, 0).cpu().numpy() * 0.5 + 0.5  # unnormalize
@@ -92,16 +84,15 @@ def visualize_prediction_sets(inputs, labels, confidence_scores, classes, num_ex
 
 
 # %%
-# 5. Calibrate with ConformalClsTHR
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-print("\n[Phase 2]: ConformalClsTHR calibration")
+# 5. Estimate prediction sets with ConformalClsTHR
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+print("[Phase 2]: ConformalClsTHR calibration")
 conformal_model = ConformalClsTHR(alpha=0.01, device="cuda")
 
 routine_thr = ClassificationRoutine(
     num_classes=10,
     model=model,
-    loss=nn.CrossEntropyLoss(),
-    optim_recipe=optim_recipe(model),
+    loss=None,  # No loss needed for evaluation
     eval_ood=True,
     post_processing=conformal_model,
     ood_criterion="post_processing",
@@ -121,9 +112,9 @@ classes = datamodule.test.classes
 visualize_prediction_sets(inputs, labels, confidence_scores[:5].cpu(), classes)
 
 # %%
-# 7. Calibrate with ConformalClsAPS
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-print("\n[Phase 3]: ConformalClsAPS calibration")
+# 7. Estimate prediction sets with ConformalClsAPS
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+print("[Phase 3]: ConformalClsAPS calibration")
 conformal_model = ConformalClsAPS(
     alpha=0.01,
     device="cuda",
@@ -132,8 +123,7 @@ conformal_model = ConformalClsAPS(
 routine_aps = ClassificationRoutine(
     num_classes=10,
     model=model,
-    loss=nn.CrossEntropyLoss(),
-    optim_recipe=optim_recipe(model),
+    loss=None,  # No loss needed for evaluation
     eval_ood=True,
     post_processing=conformal_model,
     ood_criterion="post_processing",
@@ -144,9 +134,9 @@ confidence_scores = conformal_model.conformal(inputs.cuda())
 visualize_prediction_sets(inputs, labels, confidence_scores[:5].cpu(), classes)
 
 # %%
-# 8. Calibrate with ConformalClsRAPS
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-print("\n[Phase 4]: ConformalClsRAPS calibration")
+# 8. Estimate prediction sets with ConformalClsRAPS
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+print("[Phase 4]: ConformalClsRAPS calibration")
 conformal_model = ConformalClsRAPS(
     alpha=0.01,
     model=model,
@@ -156,8 +146,7 @@ conformal_model = ConformalClsRAPS(
 routine_raps = ClassificationRoutine(
     num_classes=10,
     model=model,
-    loss=nn.CrossEntropyLoss(),
-    optim_recipe=optim_recipe(model),
+    loss=None,  # No loss needed for evaluation
     eval_ood=True,
     post_processing=conformal_model,
     ood_criterion="post_processing",

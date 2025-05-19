@@ -105,7 +105,7 @@ def mc_dropout(
         last_layer (bool, optional): whether to apply dropout to the last layer only. Defaults to ``False``.
 
     Warning:
-        Beware that :attr:`on_batch==True` can raise weird errors if the not enough memory is available.
+        Beware that :attr:`on_batch==True` can raise weird errors if not enough memory is available.
     """
     return MCDropout(
         model=model,

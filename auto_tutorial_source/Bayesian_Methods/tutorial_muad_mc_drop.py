@@ -94,8 +94,7 @@ datamodule.setup("fit")
 # Visualize a validation input sample (and RGB image)
 
 # Undo normalization on the image and convert to uint8.
-sample = datamodule.train[0]
-img, tgt = sample
+img, tgt = datamodule.train[0]
 t_muad_mean = torch.tensor(muad_mean, device=img.device)
 t_muad_std = torch.tensor(muad_std, device=img.device)
 img = img * t_muad_std[:, None, None] + t_muad_mean[:, None, None]
@@ -245,11 +244,10 @@ batch_target = target.unsqueeze(0)
 model.eval()
 with torch.no_grad():
     # Forward propagation
-    outputs = model(batch_img)
-    outputs_proba = outputs.softmax(dim=1)
+    output_probs = model(batch_img).softmax(dim=1)
     # remove the batch dimension
-    outputs_proba = outputs_proba.squeeze(0)
-    confidence, pred = outputs_proba.max(0)
+    output_probs = output_probs.squeeze(0)
+    confidence, pred = output_probs.max(0)
 
 # Undo normalization on the image and convert to uint8.
 img = img * t_muad_std[:, None, None] + t_muad_mean[:, None, None]
@@ -297,7 +295,7 @@ mc_model = mc_dropout(
     model,
     num_estimators=num_estimators,
     last_layer=False,  # We do not want to apply dropout on the last layer
-    on_batch=False,  # To reduce memory usage, we will not repeat the batch dimension
+    on_batch=False,  # To reduce memory usage, we execute the forward passes sequentially
 )
 
 seg_routine = SegmentationRoutine(
@@ -325,11 +323,10 @@ batch_target = target.unsqueeze(0)
 mc_model.eval()
 with torch.no_grad():
     # Forward propagation
-    logits = mc_model(batch_img)
-    outputs_proba_per_est = outputs.softmax(dim=1)
-    outputs_proba = outputs_proba_per_est.mean(0)  # Average over the estimators
+    output_probs_per_est = mc_model(batch_img).softmax(dim=1)
+    output_probs = output_probs_per_est.mean(0)  # Average over the estimators
     # remove the batch dimension
-    confidence, pred = outputs_proba.max(0)
+    confidence, pred = output_probs.max(0)
 
 # Undo normalization on the image and convert to uint8.
 img = img * t_muad_std[:, None, None] + t_muad_mean[:, None, None]

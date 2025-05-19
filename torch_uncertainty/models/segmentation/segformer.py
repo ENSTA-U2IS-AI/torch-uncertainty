@@ -374,7 +374,7 @@ class MixVisionTransformer(nn.Module):
 
         self.apply(self._init_weights)
 
-    def _init_weights(self, m) -> None:
+    def _init_weights(self, m: nn.Module) -> None:
         if isinstance(m, nn.Linear):
             trunc_normal_(m.weight, std=0.02)
             nn.init.constant_(m.bias, 0)
@@ -425,7 +425,7 @@ class MixVisionTransformer(nn.Module):
 
         return outs
 
-    def forward(self, inputs):
+    def forward(self, inputs: Tensor) -> Tensor:
         return self.forward_features(inputs)
 
 

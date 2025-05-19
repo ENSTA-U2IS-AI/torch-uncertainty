@@ -30,8 +30,8 @@ In this first part, we train a Bayesian LeNet, based on the model and routines a
 To train a BNN using TorchUncertainty, we have to load the following modules:
 
 - our TUTrainer
-- the model: bayesian_lenet, which lies in the torch_uncertainty.model.lenet
-- the classification training routine from torch_uncertainty.routines
+- the model: bayesian_lenet, which lies in the torch_uncertainty.model.classification.lenet module
+- the classification training routine from torch_uncertainty.routines module
 - the Bayesian objective: the ELBOLoss, which lies in the torch_uncertainty.losses file
 - the datamodule that handles dataloaders: MNISTDataModule from torch_uncertainty.datamodules
 
@@ -93,7 +93,7 @@ model = bayesian_lenet(datamodule.num_channels, datamodule.num_classes)
 #
 # Then, we just define the loss to be used during training, which is a bit special and called
 # the evidence lower bound. We use the hyperparameters proposed in the blitz
-# library. As we are train a classification model, we use the CrossEntropyLoss
+# library. As we are training a classification model, we use the CrossEntropyLoss
 # as the negative log likelihood. We then define the training routine using the classification
 # training routine from torch_uncertainty.classification. We provide the model, the ELBO
 # loss and the optimizer to the routine.
@@ -120,7 +120,7 @@ routine = ClassificationRoutine(
 # Now that we have prepared all of this, we just have to gather everything in
 # the main function and to train the model using our wrapper of Lightning Trainer.
 # Specifically, it needs the routine, that includes the model as well as the
-# training/eval logic and the datamodule
+# training/eval logic and the datamodule.
 # The dataset will be downloaded automatically in the root/data folder, and the
 # logs will be saved in the root/logs folder.
 
@@ -132,7 +132,7 @@ trainer.test(model=routine, datamodule=datamodule)
 #
 # Now that the model is trained, let's test it on MNIST.
 # Please note that we apply a reshape to the logits to determine the dimension corresponding to the ensemble
-# and to the batch. As for TorchUncertainty 0.4.3, the ensemble dimension is merged with the batch dimension
+# and to the batch. As for TorchUncertainty 0.5.0, the ensemble dimension is merged with the batch dimension
 # in this order (num_estimator x batch, classes).
 
 import matplotlib.pyplot as plt
@@ -150,8 +150,7 @@ def imshow(img) -> None:
     plt.show()
 
 
-dataiter = iter(datamodule.val_dataloader())
-images, labels = next(dataiter)
+images, labels = next(iter(datamodule.val_dataloader()))
 
 # print images
 imshow(torchvision.utils.make_grid(images[:4, ...]))

@@ -16,6 +16,7 @@ from .classification import (
     MeanIntersectionOverUnion,
     MutualInformation,
     RiskAt80Cov,
+    RiskAtxCov,
     SetSize,
     VariationRatio,
 )

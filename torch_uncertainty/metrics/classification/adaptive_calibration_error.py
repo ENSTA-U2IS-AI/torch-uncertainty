@@ -177,62 +177,6 @@ class MulticlassAdaptiveCalibrationError(Metric):
 
 
 class AdaptiveCalibrationError:
-    r"""Computes the Adaptive Top-label Calibration Error (ACE) for classification tasks.
-
-    The Adaptive Calibration Error is a metric designed to measure the calibration
-    of predicted probabilities by dividing the probability space into bins that adapt
-    to the distribution of predicted probabilities. Unlike uniform binning, adaptive binning
-    ensures a more balanced representation of predictions across bins.
-
-    This metric is particularly useful for datasets or models where predictions are
-    concentrated in certain regions of the probability space.
-
-    Args:
-        task (str): Specifies the task type, either ``"binary"`` or ``"multiclass"``.
-        num_bins (int, optional): Number of bins to divide the probability space. Defaults to ``10``.
-        norm (str, optional): Specifies the type of norm to use: ``"l1"``, ``"l2"``, or ``"max"``. Defaults to ``"l1"``.
-        num_classes (int, optional): Number of classes for ``"multiclass"`` tasks. Required when task is ``"multiclass"``.
-        ignore_index (int, optional): Index to ignore during calculations. Defaults to ``None``.
-        validate_args (bool, optional): Whether to validate input arguments. Defaults to ``True``.
-
-    Example:
-
-        .. code-block:: python
-
-            from torch_uncertainty.metrics.classification.adaptive_calibration_error import (
-                AdaptiveCalibrationError,
-            )
-
-            # Binary classification example
-            predicted_probs = torch.tensor([0.95, 0.85, 0.15, 0.05])
-            true_labels = torch.tensor([1, 1, 0, 0])
-
-            metric = CalibrationError(
-                task="binary",
-                num_bins=5,
-                norm="l1",
-            )
-
-            calibration_error = metric(predicted_probs, true_labels)
-            print(f"Calibration Error (Binary): {calibration_error}")
-            # Output : Calibration Error (Binary): 0.1
-
-
-    Note:
-        - Adaptive binning adjusts the size of bins to ensure a more uniform distribution of samples across bins.
-        - If `task="multiclass"`, `num_classes` must be provided; otherwise, a :class:`TypeError` will be raised.
-
-    Warning:
-        - Ensure that `num_classes` matches the actual number of classes in the dataset for multiclass tasks.
-
-    References:
-        [1] `Nixon et al., Measuring calibration in deep learning, CVPR Workshops, 2019
-        <https://arxiv.org/abs/1904.01685>`_.
-
-    .. seealso::
-        - See `:class:`CalibrationError` for a metric that uses uniform binning.
-    """
-
     def __new__(
         cls,
         task: Literal["binary", "multiclass"],
@@ -243,6 +187,62 @@ class AdaptiveCalibrationError:
         validate_args: bool = True,
         **kwargs: Any,
     ) -> Metric:
+        r"""Computes the Adaptive Top-label Calibration Error (ACE) for classification tasks.
+
+        The Adaptive Calibration Error is a metric designed to measure the calibration
+        of predicted probabilities by dividing the probability space into bins that adapt
+        to the distribution of predicted probabilities. Unlike uniform binning, adaptive binning
+        ensures a more balanced representation of predictions across bins.
+
+        This metric is particularly useful for datasets or models where predictions are
+        concentrated in certain regions of the probability space.
+
+        Args:
+            task (str): Specifies the task type, either ``"binary"`` or ``"multiclass"``.
+            num_bins (int, optional): Number of bins to divide the probability space. Defaults to ``10``.
+            norm (str, optional): Specifies the type of norm to use: ``"l1"``, ``"l2"``, or ``"max"``. Defaults to ``"l1"``.
+            num_classes (int, optional): Number of classes for ``"multiclass"`` tasks. Required when task is ``"multiclass"``.
+            ignore_index (int, optional): Index to ignore during calculations. Defaults to ``None``.
+            validate_args (bool, optional): Whether to validate input arguments. Defaults to ``True``.
+            **kwargs (Any): Additional keyword arguments passed to the metric.
+
+        Example:
+
+            .. code-block:: python
+
+                from torch_uncertainty.metrics.classification.adaptive_calibration_error import (
+                    AdaptiveCalibrationError,
+                )
+
+                # Binary classification example
+                predicted_probs = torch.tensor([0.95, 0.85, 0.15, 0.05])
+                true_labels = torch.tensor([1, 1, 0, 0])
+
+                metric = CalibrationError(
+                    task="binary",
+                    num_bins=5,
+                    norm="l1",
+                )
+
+                calibration_error = metric(predicted_probs, true_labels)
+                print(f"Calibration Error (Binary): {calibration_error}")
+                # Output : Calibration Error (Binary): 0.1
+
+
+        Note:
+            - Adaptive binning adjusts the size of bins to ensure a more uniform distribution of samples across bins.
+            - If `task="multiclass"`, `num_classes` must be provided; otherwise, a :class:`TypeError` will be raised.
+
+        Warning:
+            - Ensure that `num_classes` matches the actual number of classes in the dataset for multiclass tasks.
+
+        References:
+            [1] `Nixon et al., Measuring calibration in deep learning, CVPR Workshops, 2019
+            <https://arxiv.org/abs/1904.01685>`_.
+
+        .. seealso::
+            - See `:class:`CalibrationError` for a metric that uses uniform binning.
+        """
         task = ClassificationTaskNoMultilabel.from_str(task)
         kwargs.update(
             {

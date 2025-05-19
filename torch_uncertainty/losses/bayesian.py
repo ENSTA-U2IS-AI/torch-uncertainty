@@ -7,14 +7,13 @@ from torch_uncertainty.utils.distributions import get_dist_class
 
 
 class KLDiv(nn.Module):
-    """KL divergence loss for Bayesian Neural Networks. Gathers the KL from the
-    modules computed in the forward passes.
-
-    Args:
-        model (nn.Module): Bayesian Neural Network
-    """
-
     def __init__(self, model: nn.Module) -> None:
+        """KL divergence loss for Bayesian Neural Networks. Gathers the KL from the
+        modules computed in the forward passes.
+
+        Args:
+            model (nn.Module): Bayesian Neural Network
+        """
         super().__init__()
         self.model = model
 
@@ -34,24 +33,6 @@ class KLDiv(nn.Module):
 
 
 class ELBOLoss(nn.Module):
-    """The Evidence Lower Bound (ELBO) loss for Bayesian Neural Networks.
-
-    ELBO loss for Bayesian Neural Networks. Use this loss function with the
-    objective that you seek to minimize as :attr:`inner_loss`.
-
-    Args:
-        model (nn.Module): The Bayesian Neural Network to compute the loss for
-        inner_loss (nn.Module): The loss function to use during training
-        kl_weight (float): The weight of the KL divergence term
-        num_samples (int): The number of samples to use for the ELBO loss
-        dist_family (str, optional): The distribution family to use for the
-            output of the model. ``None`` means point-wise prediction. Defaults to ``None``.
-
-    Note:
-        Set the model to None if you use the ELBOLoss within
-        the ClassificationRoutine. It will get filled automatically.
-    """
-
     def __init__(
         self,
         model: nn.Module | None,
@@ -60,6 +41,23 @@ class ELBOLoss(nn.Module):
         num_samples: int,
         dist_family: str | None = None,
     ) -> None:
+        """The Evidence Lower Bound (ELBO) loss for Bayesian Neural Networks.
+
+        ELBO loss for Bayesian Neural Networks. Use this loss function with the
+        objective that you seek to minimize as :attr:`inner_loss`.
+
+        Args:
+            model (nn.Module): The Bayesian Neural Network to compute the loss for
+            inner_loss (nn.Module): The loss function to use during training
+            kl_weight (float): The weight of the KL divergence term
+            num_samples (int): The number of samples to use for the ELBO loss
+            dist_family (str, optional): The distribution family to use for the output of the
+                model. ``None`` means point-wise prediction. Defaults to ``None``.
+
+        Note:
+            Set the model to ``None`` if you use the ELBOLoss within the ClassificationRoutine.
+            It will get filled automatically.
+        """
         super().__init__()
         _elbo_loss_checks(inner_loss, kl_weight, num_samples)
         self.set_model(model)

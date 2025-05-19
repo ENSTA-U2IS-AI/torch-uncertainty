@@ -15,13 +15,13 @@ class Cubic(TensorDataset):
 
         Args:
             lower_bound (float, optional): Lower bound of the samples. Defaults to
-            ``-4.0``.
+                ``-4.0``.
             upper_bound (float, optional): Upper bound of the samples. Defaults to
-            ``4.0``.
+                ``4.0``.
             num_samples (int, optional): Number of samples. Defaults to ``5000``.
             noise_mean (float, optional): Mean of the noise. Defaults to ``0.0``.
             noise_std (float, optional): Standard deviation of the noise. Defaults
-            to ``3.0``.
+                to ``3.0``.
         """
         noise = (noise_mean, noise_std)
 

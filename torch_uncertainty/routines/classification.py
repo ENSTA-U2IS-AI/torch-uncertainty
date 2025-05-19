@@ -663,7 +663,7 @@ def _classification_routine_checks(
     model: nn.Module,
     num_classes: int,
     is_ensemble: bool,
-    ood_criterion: type[TUOODCriterion] | str,
+    ood_criterion: TUOODCriterion | str,
     eval_grouping_loss: bool,
     num_bins_cal_err: int,
     mixup_params: dict | None,

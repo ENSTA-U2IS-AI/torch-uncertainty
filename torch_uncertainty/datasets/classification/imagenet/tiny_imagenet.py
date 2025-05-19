@@ -17,9 +17,7 @@ class TinyImageNet(Dataset):
         transform: Callable | None = None,
         target_transform: Callable | None = None,
     ) -> None:
-        """Inspired by
-        https://gist.github.com/z-a-f/b862013c0dc2b540cf96a123a6766e54.
-        """
+        """Inspired by https://gist.github.com/z-a-f/b862013c0dc2b540cf96a123a6766e54."""
         self.root = Path(root) / "tiny-imagenet-200"
 
         if split not in ["train", "val", "test"]:

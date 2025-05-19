@@ -29,7 +29,7 @@ class UCIClassificationDataModule(TUDataModule):
             dataset (type[Dataset]): The UCI classification dataset class.
             batch_size (int): The batch size for training and testing.
             eval_batch_size (int | None) : Number of samples per batch during evaluation (val
-                and test). Set to batch_size if None. Defaults to None.
+                and test). Set to :attr:`batch_size` if ``None``. Defaults to ``None``.
             val_split (float, optional): Share of validation samples among the
                 non-test samples. Defaults to ``0``.
             test_split (float, optional): Share of test samples. Defaults to ``0.2``.
@@ -65,7 +65,7 @@ class UCIClassificationDataModule(TUDataModule):
         """Split the datasets into train, val, and test.
 
         Args:
-            stage (str | None, optional): Stage to set up. Defaults to None.
+            stage (str | None, optional): Stage to set up. Defaults to ``None``.
         """
         if stage == "fit" or stage is None:
             full = self.dataset(

@@ -28,20 +28,22 @@ class SpamBase(UCIClassificationDataset):
         """The SpamBase UCI classification dataset.
 
         Args:
-            root (str): Root directory of the datasets.
-            train (bool, optional): If True, creates dataset from training set,
+            root (str | Path): Root directory of the datasets.
+            train (bool, optional): If ``True``, creates dataset from training set,
                 otherwise creates from test set.
             transform (callable, optional): A function/transform that takes in a
-                numpy array and returns a transformed version.
+                numpy array and returns a transformed version. Defaults to ``None``.
             target_transform (callable, optional): A function/transform that takes
-                in the target and transforms it.
-            download (bool, optional): If true, downloads the dataset from the
+                in the target and transforms it. Defaults to ``None``.
+            download (bool, optional): If ``True``, downloads the dataset from the
                 internet and puts it in root directory. If dataset is already
-                downloaded, it is not downloaded again.
+                downloaded, it is not downloaded again. Defaults to ``False``.
             binary (bool, optional): Whether to use binary classification. Defaults
                 to ``True``.
             test_split (float, optional): The fraction of the dataset to use as test set.
+                Defaults to ``0.2``.
             split_seed (int, optional): The random seed for splitting the dataset.
+                Defaults to ``21893027``.
 
         Note:
             License: The licenses of the datasets may differ from TorchUncertainty's
