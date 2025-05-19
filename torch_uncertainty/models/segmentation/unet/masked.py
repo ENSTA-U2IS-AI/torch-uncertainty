@@ -2,46 +2,20 @@ import torch
 from einops import repeat
 from torch import Tensor, nn
 from torchvision.transforms import functional as F
-from torchvision.transforms import v2
 
 from torch_uncertainty.layers import MaskedConv2d, MaskedConvTranspose2d
 
-
-def check_unet_parameters(
-    in_channels: int,
-    num_classes: int,
-    num_blocks: list[int],
-    bilinear: bool,
-) -> None:
-    """Check the parameters for the U-Net model.
-
-    Args:
-        in_channels (int): Number of input channels.
-        num_classes (int): Number of output classes.
-        num_blocks (list[int]): Number of channels in each layer of the U-Net.
-        bilinear (bool): Whether to use bilinear interpolation for upsampling.
-    """
-    if len(num_blocks) != 5:
-        raise ValueError(f"num_blocks must be a list of 5 integers. Got {len(num_blocks)} blocks.")
-    if not all(isinstance(i, int) for i in num_blocks):
-        raise ValueError(f"num_blocks must be a list of 5 integers. Got {num_blocks}.")
-    if not all(i > 0 for i in num_blocks):
-        raise ValueError(f"num_blocks must be a list of 5 positive integers. Got {num_blocks}.")
-    if not isinstance(in_channels, int):
-        raise TypeError(f"in_channels must be an integer. Got {in_channels}.")
-    if not isinstance(num_classes, int):
-        raise TypeError(f"num_classes must be an integer. Got {num_classes}.")
-    if not isinstance(bilinear, bool):
-        raise TypeError(f"bilinear must be a boolean. Got {bilinear}.")
-    if in_channels <= 0:
-        raise ValueError(f"in_channels must be a positive integer. Got {in_channels}.")
-    if num_classes <= 0:
-        raise ValueError(f"num_classes must be a positive integer. Got {num_classes}.")
+from .standard import check_unet_parameters
 
 
 class _DoubleConv(nn.Module):
     def __init__(
-        self, in_channels: int, out_channels: int, num_estimators: int, scale: float
+        self,
+        in_channels: int,
+        out_channels: int,
+        num_estimators: int,
+        scale: float,
+        mid_channels: int | None = None,
     ) -> None:
         """Initialize the DoubleConv module: (Conv2d => BN => ReLU) * 2.
 
@@ -50,13 +24,17 @@ class _DoubleConv(nn.Module):
             out_channels (int): Number of output channels.
             num_estimators (int): Number of estimators.
             scale (float): Scale for the MaskedConv2d layer.
+            mid_channels (int | None, optional): Number of intermediate channels.
+                If ``None``, defaults to :attr:`out_channels`. Defaults to ``None``.
         """
         super().__init__()
+        if mid_channels is None:
+            mid_channels = out_channels
         self.conv_block = nn.Sequential(
-            MaskedConv2d(in_channels, out_channels, 3, num_estimators, scale, padding=1),
-            nn.BatchNorm2d(out_channels),
+            MaskedConv2d(in_channels, mid_channels, 3, num_estimators, scale, padding=1),
+            nn.BatchNorm2d(mid_channels),
             nn.ReLU(inplace=True),
-            MaskedConv2d(out_channels, out_channels, 3, num_estimators, scale, padding=1),
+            MaskedConv2d(mid_channels, out_channels, 3, num_estimators, scale, padding=1),
             nn.BatchNorm2d(out_channels),
             nn.ReLU(inplace=True),
         )
@@ -97,24 +75,27 @@ class _Up(nn.Module):
         bilinear: bool = True,
     ) -> None:
         super().__init__()
-        self.bilinear = bilinear
 
-        self.up = MaskedConvTranspose2d(
-            in_channels // 2, in_channels // 2, 2, num_estimators, scale, stride=2
-        )
-
-        self.conv = _DoubleConv(in_channels, out_channels, num_estimators, scale)
-
-    def forward(self, x1: Tensor, x2: Tensor) -> Tensor:
-        if self.bilinear:
-            x1 = F.resize(
-                x1,
-                size=[2 * x1.size()[2], 2 * x1.size()[3]],
-                interpolation=v2.InterpolationMode.BILINEAR,
+        if bilinear:
+            self.up = nn.Upsample(scale_factor=2, mode="bilinear", align_corners=True)
+            self.conv = _DoubleConv(
+                in_channels, out_channels, num_estimators, scale, mid_channels=in_channels // 2
             )
         else:
-            x1 = self.up(x1)
-        return self.conv(torch.cat([x2, x1], dim=1))
+            self.up = MaskedConvTranspose2d(
+                in_channels, in_channels // 2, 2, num_estimators, scale, stride=2
+            )
+
+            self.conv = _DoubleConv(in_channels, out_channels, num_estimators, scale)
+
+    def forward(self, x1: Tensor, x2: Tensor) -> Tensor:
+        x1 = self.up(x1)
+        # input is CHW
+        diff_y = x2.size()[2] - x1.size()[2]
+        diff_x = x2.size()[3] - x1.size()[3]
+        x1 = F.pad(x1, [diff_x // 2, diff_y // 2, diff_x - diff_x // 2, diff_y - diff_y // 2])
+        x = torch.cat([x2, x1], dim=1)
+        return self.conv(x)
 
 
 class _OutputConv(nn.Module):

@@ -1,4 +1,4 @@
-from einops import rearrange
+from einops import rearrange, repeat
 from torch import Tensor
 
 from .standard import _UNet
@@ -25,7 +25,7 @@ class _MIMOUNet(_UNet):
 
     def forward(self, x: Tensor) -> Tensor:
         if not self.training:
-            x = x.repeat(self.num_estimators, 1, 1, 1)
+            x = repeat(x, "b ... -> (m b) ...", m=self.num_estimators)
         out = rearrange(x, "(m b) c ... -> b (m c) ...", m=self.num_estimators)
         out = super().forward(out)
         return rearrange(out, "b (m c) ... -> (m b) c ...", m=self.num_estimators)

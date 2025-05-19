@@ -1,9 +1,8 @@
-# Code from https://github.com/milesial/Pytorch-UNet
+# Code from https://github.com/milesial/Pytorch-UNet with slight modifications
 
 import torch
 from torch import Tensor, nn
 from torchvision.transforms import functional as F
-from torchvision.transforms import v2
 
 
 def check_unet_parameters(
@@ -39,25 +38,35 @@ def check_unet_parameters(
 
 
 class _DoubleConv(nn.Module):
-    def __init__(self, in_channels: int, out_channels: int) -> None:
-        """Initialize the DoubleConv module: (Conv2d => BN => ReLU) * 2.
+    """(convolution => [BN] => ReLU) * 2."""
 
-        Args:
-            in_channels (int): Number of input channels.
-            out_channels (int): Number of output channels.
-        """
+    def __init__(self, in_channels: int, out_channels: int, mid_channels: int | None = None):
         super().__init__()
-        self.conv_block = nn.Sequential(
-            nn.Conv2d(in_channels, out_channels, 3, padding=1),
-            nn.BatchNorm2d(out_channels),
+        if mid_channels is None:
+            mid_channels = out_channels
+        self.double_conv = nn.Sequential(
+            nn.Conv2d(
+                in_channels=in_channels,
+                out_channels=mid_channels,
+                kernel_size=3,
+                padding=1,
+                bias=False,
+            ),
+            nn.BatchNorm2d(num_features=mid_channels),
             nn.ReLU(inplace=True),
-            nn.Conv2d(out_channels, out_channels, 3, padding=1),
-            nn.BatchNorm2d(out_channels),
+            nn.Conv2d(
+                in_channels=mid_channels,
+                out_channels=out_channels,
+                kernel_size=3,
+                padding=1,
+                bias=False,
+            ),
+            nn.BatchNorm2d(num_features=out_channels),
             nn.ReLU(inplace=True),
         )
 
-    def forward(self, x: Tensor) -> Tensor:
-        return self.conv_block(x)
+    def forward(self, x):
+        return self.double_conv(x)
 
 
 class _Down(nn.Module):
@@ -70,34 +79,25 @@ class _Down(nn.Module):
 
 
 class _Up(nn.Module):
-    def __init__(self, in_channels: int, out_channels: int, bilinear: bool = True) -> None:
+    """Upscaling then double conv."""
+
+    def __init__(self, in_channels, out_channels, bilinear=True):
         super().__init__()
-        self.bilinear = bilinear
 
-        self.up = nn.ConvTranspose2d(in_channels // 2, in_channels // 2, 2, stride=2)
-
-        self.conv = _DoubleConv(in_channels, out_channels)
-
-    def forward(self, x1: Tensor, x2: Tensor) -> Tensor:
-        if self.bilinear:
-            x1 = F.resize(
-                x1,
-                size=[2 * x1.size()[2], 2 * x1.size()[3]],
-                interpolation=v2.InterpolationMode.BILINEAR,
-            )
+        # if bilinear, use the normal convolutions to reduce the number of channels
+        if bilinear:
+            self.up = nn.Upsample(scale_factor=2, mode="bilinear", align_corners=True)
+            self.conv = _DoubleConv(in_channels, out_channels, in_channels // 2)
         else:
-            x1 = self.up(x1)
+            self.up = nn.ConvTranspose2d(in_channels, in_channels // 2, kernel_size=2, stride=2)
+            self.conv = _DoubleConv(in_channels, out_channels)
 
+    def forward(self, x1, x2):
+        x1 = self.up(x1)
         # input is CHW
         diff_y = x2.size()[2] - x1.size()[2]
         diff_x = x2.size()[3] - x1.size()[3]
-
-        x1 = F.pad(x1, [diff_x // 2, diff_x - diff_x // 2, diff_y // 2, diff_y - diff_y // 2])
-
-        # for padding issues, see
-        # https://github.com/HaiyongJiang/U-Net-Pytorch-Unstructured-Buggy/commit/0e854509c2cea854e247a9c615f175f76fbb2e3a
-        # https://github.com/xiaopeng-liao/Pytorch-UNet/commit/8ebac70e633bac59fc22bb5195e513d5832fb3bd
-
+        x1 = F.pad(x1, [diff_x // 2, diff_y // 2, diff_x - diff_x // 2, diff_y - diff_y // 2])
         x = torch.cat([x2, x1], dim=1)
         return self.conv(x)
 
