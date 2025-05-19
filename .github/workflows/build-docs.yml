@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 env:
-  PYTHON_VERSION: "3.10"
+  PYTHON_VERSION: "3.11"
 
 jobs:
   documentation:
@@ -55,6 +55,7 @@ jobs:
         external_repository: torch-uncertainty/torch-uncertainty.github.io
         publish_branch: main
         publish_dir: docs/build/html
+      continue-on-error: true
     
     # ||: not to error if there is no running ssh-agent
     - name: Kill SSH Agent
