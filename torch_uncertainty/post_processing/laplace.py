@@ -82,4 +82,4 @@ class LaplaceApprox(PostProcessing):
         self,
         inputs: Tensor,
     ) -> Tensor:
-        return self.la(inputs, pred_type=self.pred_type, link_approx=self.link_approx)
+        return self.la(inputs, pred_type=self.pred_type, link_approx=self.link_approx).to(inputs.device)

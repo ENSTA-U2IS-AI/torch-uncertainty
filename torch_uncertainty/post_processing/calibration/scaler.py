@@ -11,7 +11,7 @@ from torch_uncertainty.post_processing import PostProcessing
 
 
 class Scaler(PostProcessing):
-    criterion = nn.NLLLoss()
+    criterion = nn.CrossEntropyLoss()
     trained = False
 
     def __init__(
@@ -61,11 +61,10 @@ class Scaler(PostProcessing):
             progress (bool, optional): Whether to show a progress bar.
                 Defaults to True.
         """
-        if self.model is None or isinstance(self.model, nn.Identity):
-            logging.warning(
-                "model is None. Fitting the temperature scaling on the x of the dataloader."
+        if self.model is None:
+            raise ValueError(
+                "Cannot fit a Scaler method without model. Call .set_model(model) first."
             )
-            self.model = nn.Identity()
 
         all_logits = []
         all_labels = []
@@ -73,7 +72,8 @@ class Scaler(PostProcessing):
         with torch.no_grad():
             for inputs, labels in tqdm(calibration_dl, disable=not progress):
                 logits = self.model(inputs.to(self.device))
-                all_logits.append(logits)
+                log_probs = self._ensemble_log_probs(logits, batch_size=inputs.size(0))
+                all_logits.append(log_probs)
                 all_labels.append(labels)
             all_logits = torch.cat(all_logits).to(self.device)
             all_labels = torch.cat(all_labels).to(self.device)
@@ -82,11 +82,7 @@ class Scaler(PostProcessing):
 
         def calib_eval() -> float:
             optimizer.zero_grad()
-            # apply scaling
-            scaled_logits = self._scale(all_logits)      
-            # ensemble: softmax → avg → log
-            log_probs = self._ensemble_log_probs(scaled_logits, batch_size=all_labels.size(0))
-            loss = self.criterion(log_probs, all_labels)
+            loss = self.criterion(self._scale(all_logits), all_labels)
             loss.backward()
             return loss
 
@@ -104,19 +100,13 @@ class Scaler(PostProcessing):
             )
         return self._scale(self.model(inputs))
 
-
     def _ensemble_probs(self, logits: Tensor, batch_size: int) -> Tensor:
-        """
-        Converts flattened-ensemble logits (shape (m·b, c)) or single-model logits (b,c)
-        into averaged probabilities of shape (b,c).
-        """
+
         logits = rearrange(logits, "(m b) c -> b m c", b=batch_size)
         return F.softmax(logits, dim=-1).mean(dim=1)
 
     def _ensemble_log_probs(self, logits: Tensor, batch_size: int) -> Tensor:
-        """
-        Like _ensemble_probs but returns log-probs for NLLLoss.
-        """
+
         probs = self._ensemble_probs(logits, batch_size)
         return torch.log(probs)
 
@@ -142,3 +132,9 @@ class Scaler(PostProcessing):
     @property
     def temperature(self) -> list:
         raise NotImplementedError
+
+
+
+
+  
+  

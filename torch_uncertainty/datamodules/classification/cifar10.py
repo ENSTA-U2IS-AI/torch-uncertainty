@@ -171,7 +171,7 @@ class CIFAR10DataModule(TUDataModule):
             )
 
         if num_tta != 1:
-            self.test_transform = train_transform
+            self.test_transform = self.train_transform
         elif test_transform is not None:
             self.test_transform = test_transform
         else:
@@ -300,16 +300,15 @@ class CIFAR10DataModule(TUDataModule):
         return self._data_loader(self.train, training=True, shuffle=True)
 
     def test_dataloader(self):
-        loaders = [self._data_loader(self.test, training=False)]
+        loaders = [self._data_loader(self.get_test_set(), training=False)]
         if self.eval_ood:
-            loaders.append(self._data_loader(self.val_ood, training=False))
+            loaders.append(self._data_loader(self.get_val_ood_set(), training=False))
 
-            loaders.extend(self._data_loader(ds, training=False) for ds in self.near_oods)
+            loaders.extend(self._data_loader(ds, training=False) for ds in self.get_near_ood_set())
 
-            loaders.extend(self._data_loader(ds, training=False) for ds in self.far_oods)
-
+            loaders.extend(self._data_loader(ds, training=False) for ds in self.get_far_ood_set())
         if self.eval_shift:
-            loaders.append(self._data_loader(self.shift_dataset, training=False))
+            loaders.append(self._data_loader(self.get_shift_set(), training=False))
         return loaders
 
     def _get_train_data(self) -> ArrayLike:
