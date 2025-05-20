@@ -342,7 +342,7 @@ Regression
 Segmentation
 ^^^^^^^^^^^^
 
-.. currentmodule:: torch_uncertainty.metrics.classification
+.. currentmodule:: torch_uncertainty.metrics.segmentation
 
 .. autosummary::
     :toctree: generated/
@@ -350,6 +350,9 @@ Segmentation
     :template: class.rst
 
     MeanIntersectionOverUnion
+    SegmentationBinaryAUROC
+    SegmentationBinaryAveragePrecision
+    SegmentationFPR95
 
 Others
 ^^^^^^

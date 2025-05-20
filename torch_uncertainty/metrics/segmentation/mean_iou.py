@@ -35,10 +35,10 @@ class MeanIntersectionOverUnion(MulticlassStatScores):
         Shape:
             As input to ``forward`` and ``update`` the metric accepts the following input:
 
-            - **preds** (:class:`~torch.Tensor`): An int tensor of shape ``(B, ...)`` or float tensor of shape ``(B, C, ..)``.
+            - **preds** (:class:`~torch.Tensor`): An int tensor of shape ``(B, *)`` or float tensor of shape ``(B, C, *)``.
               If preds is a floating point we apply ``torch.argmax`` along the ``C`` dimension to automatically convert
               probabilities/logits into an int tensor.
-            - **target** (:class:`~torch.Tensor`): An int tensor of shape ``(B, ...)``.
+            - **target** (:class:`~torch.Tensor`): An int tensor of shape ``(B, *)``.
 
             As output to ``forward`` and ``compute`` the metric returns the following output:
 

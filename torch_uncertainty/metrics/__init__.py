@@ -13,7 +13,6 @@ from .classification import (
     Disagreement,
     Entropy,
     GroupingLoss,
-    MeanIntersectionOverUnion,
     MutualInformation,
     RiskAt80Cov,
     RiskAtxCov,
@@ -32,6 +31,7 @@ from .regression import (
     ThresholdAccuracy,
 )
 from .segmentation import (
+    MeanIntersectionOverUnion,
     SegmentationBinaryAUROC,
     SegmentationBinaryAveragePrecision,
     SegmentationFPR95,
