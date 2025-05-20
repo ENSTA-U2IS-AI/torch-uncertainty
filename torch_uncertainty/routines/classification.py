@@ -642,19 +642,29 @@ class ClassificationRoutine(LightningModule):
                 )[0]
                 self.logger.experiment.add_figure("OOD Score Histogram", score_fig)
 
-        if self.save_in_csv:
-            self.save_results_to_csv(result_dict)
+        # reset metrics
+        self.test_cls_metrics.reset()
+        self.test_id_entropy.reset()
+        if self.post_processing is not None:
+            self.post_cls_metrics.reset()
+        if self.eval_grouping_loss:
+            self.test_grouping_loss.reset()
+        if self.is_ensemble:
+            self.test_id_ens_metrics.reset()
+        if self.eval_ood:
+            self.test_ood_metrics.reset()
+            self.test_ood_entropy.reset()
+            if self.is_ensemble:
+                self.test_ood_ens_metrics.reset()
+        if self.eval_shift:
+            self.test_shift_metrics.reset()
+            if self.is_ensemble:
+                self.test_shift_ens_metrics.reset()
 
-    def save_results_to_csv(self, results: dict[str, float]) -> None:
-        """Save the metric results in a csv.
-
-        Args:
-            results (dict[str, float]): the dictionary containing all the values of the metrics.
-        """
-        if self.logger is not None:
+        if self.save_in_csv and self.logger is not None:
             csv_writer(
                 Path(self.logger.log_dir) / self.csv_filename,
-                results,
+                result_dict,
             )
 
 

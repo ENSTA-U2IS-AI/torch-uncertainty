@@ -385,13 +385,16 @@ class SegmentationRoutine(LightningModule):
             else:
                 logging.info("No datamodule found, skipping segmentation plots.")
 
-        if self.save_in_csv:
-            self.save_results_to_csv(result_dict)
-
         self.test_seg_metrics.reset()
         self.test_sbsmpl_seg_metrics.reset()
         if self.eval_ood:
             self.test_ood_metrics.reset()
+
+        if self.save_in_csv and self.logger is not None:
+            csv_writer(
+                Path(self.logger.log_dir) / self.csv_filename,
+                result_dict,
+            )
 
     def log_segmentation_plots(self) -> None:
         """Build and log examples of segmentation plots from the test set."""
@@ -414,18 +417,6 @@ class SegmentationRoutine(LightningModule):
             self.logger.experiment.add_figure(
                 f"Segmentation results/{i}",
                 show(pred_mask, gt_mask),
-            )
-
-    def save_results_to_csv(self, results: dict[str, float]) -> None:
-        """Save the metric results in a csv.
-
-        Args:
-            results (dict[str, float]): the dictionary containing all the values of the metrics.
-        """
-        if self.logger is not None:
-            csv_writer(
-                Path(self.logger.log_dir) / self.csv_filename,
-                results,
             )
 
     def subsample(self, pred: Tensor, target: Tensor) -> tuple[Tensor, Tensor]:
