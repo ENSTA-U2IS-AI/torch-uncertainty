@@ -55,21 +55,7 @@ BATCH_SIZE = 512
 MAX_EPOCHS = 1
 
 # %%
-# 2. The Optimization Recipe
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~
-#
-# We use an Adam optimizer with a learning rate of 0.02.
-
-
-def optim_lenet(model: nn.Module):
-    return optim.Adam(
-        model.parameters(),
-        lr=2e-2,
-    )
-
-
-# %%
-# 3. Creating the necessary variables
+# 2. Creating the necessary variables
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 # In the following, we instantiate our trainer, define the root of the datasets and the logs.
@@ -88,7 +74,7 @@ datamodule = MNISTDataModule(root=root, batch_size=BATCH_SIZE, eval_ood=False, n
 model = bayesian_lenet(datamodule.num_channels, datamodule.num_classes)
 
 # %%
-# 4. The Loss and the Training Routine
+# 3. The Loss and the Training Routine
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 # Then, we just define the loss to be used during training, which is a bit special and called
@@ -97,6 +83,7 @@ model = bayesian_lenet(datamodule.num_channels, datamodule.num_classes)
 # as the negative log likelihood. We then define the training routine using the classification
 # training routine from torch_uncertainty.classification. We provide the model, the ELBO
 # loss and the optimizer to the routine.
+# We use an Adam optimizer with a learning rate of 0.02.
 
 loss = ELBOLoss(
     model=model,
@@ -109,12 +96,12 @@ routine = ClassificationRoutine(
     model=model,
     num_classes=datamodule.num_classes,
     loss=loss,
-    optim_recipe=optim_lenet(model),
+    optim_recipe=optim.Adam(model.parameters(), lr=2e-2),
     is_ensemble=True,
 )
 
 # %%
-# 5. Gathering Everything and Training the Model
+# 4. Gathering Everything and Training the Model
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 # Now that we have prepared all of this, we just have to gather everything in
@@ -127,7 +114,7 @@ routine = ClassificationRoutine(
 trainer.fit(model=routine, datamodule=datamodule)
 trainer.test(model=routine, datamodule=datamodule)
 # %%
-# 6. Testing the Model
+# 5. Testing the Model
 # ~~~~~~~~~~~~~~~~~~~~
 #
 # Now that the model is trained, let's test it on MNIST.

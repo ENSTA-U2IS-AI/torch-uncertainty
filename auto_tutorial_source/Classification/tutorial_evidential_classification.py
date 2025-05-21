@@ -48,18 +48,8 @@ from torch_uncertainty.routines import ClassificationRoutine
 MAX_EPOCHS = 3
 BATCH_SIZE = 512
 
-
 # %%
-# 2. Creating the Optimizer Wrapper
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# We follow the official implementation in DEC, use the Adam optimizer
-# with the default learning rate of 0.002 and a step scheduler.
-def optim_lenet(model: nn.Module):
-    return optim.Adam(model.parameters(), lr=2e-2, weight_decay=0.005)
-
-
-# %%
-# 3. Creating the necessary variables
+# 2. Creating the necessary variables
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 # In the following, we need to define the root of the logs, and to
@@ -77,7 +67,7 @@ model = lenet(
 )
 
 # %%
-# 4. The Loss and the Training Routine
+# 3. The Loss and the Training Routine
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Next, we need to define the loss to be used during training.
 # After that, we define the training routine using
@@ -85,6 +75,8 @@ model = lenet(
 # torch_uncertainty.routines.ClassificationRoutine.
 # In this routine, we provide the model, the DEC loss, the optimizer,
 # and all the default arguments.
+# We follow the official implementation in DEC, use the Adam optimizer
+# with the default learning rate of 0.002 and a weight decay of 0.005.
 
 loss = DECLoss(reg_weight=1e-2)
 
@@ -92,17 +84,17 @@ routine = ClassificationRoutine(
     model=model,
     num_classes=datamodule.num_classes,
     loss=loss,
-    optim_recipe=optim_lenet(model),
+    optim_recipe=optim.Adam(model.parameters(), lr=2e-2, weight_decay=0.005),
 )
 
 # %%
-# 5. Gathering Everything and Training the Model
+# 4. Gathering Everything and Training the Model
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 trainer.fit(model=routine, datamodule=datamodule)
 trainer.test(model=routine, datamodule=datamodule)
 # %%
-# 6. Testing the Model
+# 5. Testing the Model
 # ~~~~~~~~~~~~~~~~~~~~
 # Now that the model is trained, let's test it on MNIST.
 
