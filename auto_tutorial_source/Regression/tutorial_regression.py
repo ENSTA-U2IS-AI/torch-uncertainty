@@ -65,17 +65,11 @@ model = mlp(in_features=6, num_outputs=1, hidden_dims=[10, 10])
 # We define the training routine using the classification routine from torch_uncertainty.routines.
 # We provide the number of classes, the model, the optimization recipe, the loss, and tell the routine
 # that our model is an ensemble at evaluation time with the `is_ensemble` flag to get the corresponding metrics.
-
-
-def optim_regression(model):
-    return torch.optim.Adam(model.parameters(), lr=0.01)
-
-
 routine = RegressionRoutine(
     output_dim=1,
     model=model,
     loss=nn.MSELoss(),
-    optim_recipe=optim_regression(model),
+    optim_recipe=torch.optim.Adam(model.parameters(), lr=0.01),
     is_ensemble=True,
 )
 
@@ -113,7 +107,7 @@ prob_routine = RegressionRoutine(
     output_dim=1,
     model=prob_routine,
     loss=loss,
-    optim_recipe=optim_regression(prob_routine),
+    optim_recipe=torch.optim.Adam(prob_routine.parameters(), lr=0.01),
     dist_family="laplace",
 )
 

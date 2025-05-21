@@ -172,7 +172,7 @@ for dist_family in ["laplace", "student", "cauchy"]:
         output_dim=1,
         model=model,
         loss=loss,
-        optim_recipe=optim_regression(model),
+        optim_recipe=torch.optim.Adam(model.parameters(), lr=5e-2),
         dist_family=dist_family,
         dist_estimate="mode",
     )
