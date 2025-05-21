@@ -14,6 +14,7 @@ class ImageNetR(ImageNetVariation):
 
         Args:
             kwargs: Additional keyword arguments passed to the superclass, including:
+
                 - root (str): Root directory of the datasets.
                 - split (str, optional): For API consistency. Defaults to ``None``.
                 - transform (callable, optional): A function/transform that takes in a PIL image and
