@@ -18,7 +18,7 @@ _TorchUncertainty_ is a package designed to help leverage [uncertainty quantific
 
 :books: Our webpage and documentation is available here: [torch-uncertainty.github.io](https://torch-uncertainty.github.io). :books:
 
-TorchUncertainty contains the _official implementations_ of multiple papers from _major machine-learning and computer vision conferences_ and was be featured in tutorials at **[WACV](https://wacv2024.thecvf.com/) 2024**, **[HAICON](https://haicon24.de/) 2024** and **[ECCV](https://eccv.ecva.net/) 2024**.
+TorchUncertainty contains the _official implementations_ of multiple papers from _major machine-learning and computer vision conferences_ and was featured in tutorials at **[WACV](https://wacv2024.thecvf.com/) 2024**, **[HAICON](https://haicon24.de/) 2024** and **[ECCV](https://eccv.ecva.net/) 2024**.
 
 ---
 
