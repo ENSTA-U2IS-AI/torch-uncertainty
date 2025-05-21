@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import torch
 from einops import rearrange
 from lightning.pytorch import LightningModule
@@ -20,6 +22,7 @@ from torch_uncertainty.models import (
     EPOCH_UPDATE_MODEL,
     STEP_UPDATE_MODEL,
 )
+from torch_uncertainty.utils import csv_writer
 from torch_uncertainty.utils.distributions import (
     get_dist_class,
     get_dist_estimate,
@@ -38,6 +41,8 @@ class RegressionRoutine(LightningModule):
         optim_recipe: dict | Optimizer | None = None,
         eval_shift: bool = False,
         format_batch_fn: nn.Module | None = None,
+        save_in_csv: bool = False,
+        csv_filename: str = "results.csv",
     ) -> None:
         r"""Routine for training & testing on **regression** tasks.
 
@@ -45,19 +50,15 @@ class RegressionRoutine(LightningModule):
             model (torch.nn.Module): Model to train.
             output_dim (int): Number of outputs of the model.
             loss (torch.nn.Module): Loss function to optimize the :attr:`model`.
-            dist_family (str, optional): The distribution family to use for
-                probabilistic regression. If ``None`` then point-wise regression.
-                Defaults to ``None``.
-            dist_estimate (str, optional): The estimate to use when computing the
-                point-wise metrics. Defaults to ``"mean"``.
-            is_ensemble (bool, optional): Whether the model is an ensemble.
-                Defaults to ``False``.
-            optim_recipe (dict or torch.optim.Optimizer, optional): The optimizer and
-                optionally the scheduler to use. Defaults to ``None``.
-            eval_shift (bool, optional): Indicates whether to evaluate the Distribution
-                shift performance. Defaults to ``False``.
-            format_batch_fn (torch.nn.Module, optional): The function to format the
-                batch. Defaults to ``None``.
+            dist_family (str, optional): The distribution family to use for probabilistic regression. If ``None`` then point-wise regression. Defaults to ``None``.
+            dist_estimate (str, optional): The estimate to use when computing the point-wise metrics. Defaults to ``"mean"``.
+            is_ensemble (bool, optional): Whether the model is an ensemble. Defaults to ``False``.
+            optim_recipe (dict or torch.optim.Optimizer, optional): The optimizer and optionally the scheduler to use. Defaults to ``None``.
+            eval_shift (bool, optional): Indicates whether to evaluate the Distribution shift performance. Defaults to ``False``.
+            format_batch_fn (torch.nn.Module, optional): The function to format the batch. Defaults to ``None``.
+            save_in_csv (bool, optional): Save the results in csv. Defaults to ``False``.
+            csv_filename (str, optional): Name of the csv file. Defaults to ``"results.csv"``. Note that this is only used if
+                :attr:`save_in_csv` is ``True``.
 
         Warning:
             If :attr:`probabilistic` is True, the model must output a `PyTorch
@@ -86,6 +87,8 @@ class RegressionRoutine(LightningModule):
         self.output_dim = output_dim
         self.loss = loss
         self.is_ensemble = is_ensemble
+        self.save_in_csv = save_in_csv
+        self.csv_filename = csv_filename
         self.needs_epoch_update = isinstance(model, EPOCH_UPDATE_MODEL)
         self.needs_step_update = isinstance(model, STEP_UPDATE_MODEL)
 
@@ -301,16 +304,23 @@ class RegressionRoutine(LightningModule):
 
     def on_test_epoch_end(self) -> None:
         """Compute and log the values of the collected metrics in `test_step`."""
-        self.log_dict(
-            self.test_metrics.compute(),
-        )
+        result_dict = self.test_metrics.compute()
         self.test_metrics.reset()
 
         if self.probabilistic:
-            self.log_dict(
-                self.test_prob_metrics.compute(),
-            )
+            result_dict |= self.test_prob_metrics.compute()
+
+        self.log_dict(result_dict, sync_dist=True)
+
+        self.test_metrics.reset()
+        if self.probabilistic:
             self.test_prob_metrics.reset()
+
+        if self.save_in_csv and self.logger is not None:
+            csv_writer(
+                Path(self.logger.log_dir) / self.csv_filename,
+                result_dict,
+            )
 
 
 def _regression_routine_checks(output_dim: int) -> None:

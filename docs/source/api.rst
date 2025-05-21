@@ -55,6 +55,10 @@ Pixelwise Regression
 Baselines
 ---------
 
+.. warning:: 
+
+    The baselines will soon be removed from the library to avoid confusion with the routines.
+
 TorchUncertainty provide lightning-based models that can be easily trained and evaluated.
 These models inherit from the routines and are specifically designed to benchmark
 different methods in similar settings, here with constant architectures.
@@ -200,6 +204,7 @@ Functions
 .. autosummary::
     :toctree: generated/
     :nosignatures:
+    :template: function.rst
 
     batch_ensemble
     deep_ensembles
@@ -214,7 +219,7 @@ Classes
     :template: class.rst
 
     BatchEnsemble
-    CheckpointEnsemble
+    CheckpointCollector
     EMA
     MCDropout
     StochasticModel
@@ -234,9 +239,15 @@ Proper Scores
 .. autosummary::
     :toctree: generated/
     :nosignatures:
-    :template: class.rst
+    :template: class_with_ex.rst
 
     BrierScore
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: class.rst
+
     CategoricalNLL
 
 Out-of-Distribution Detection
@@ -247,7 +258,6 @@ Out-of-Distribution Detection
     :nosignatures:
     :template: class.rst
 
-    AURC
     FPRx
     FPR95
 
@@ -261,10 +271,11 @@ Selective Classification
     :template: class.rst
 
     AUGRC
-    RiskAtxCov
-    RiskAt80Cov
+    AURC
     CovAtxRisk
     CovAt5Risk
+    RiskAtxCov
+    RiskAt80Cov
 
 Calibration
 """""""""""
@@ -273,9 +284,20 @@ Calibration
     :toctree: generated/
     :nosignatures:
     :template: class.rst
-
+    
     AdaptiveCalibrationError
     CalibrationError
+
+Conformal Predictions
+"""""""""""""""""""""
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: class.rst
+    
+    CoverageRate
+    SetSize
 
 Diversity
 """""""""
@@ -324,7 +346,7 @@ Regression
 Segmentation
 ^^^^^^^^^^^^
 
-.. currentmodule:: torch_uncertainty.metrics.classification
+.. currentmodule:: torch_uncertainty.metrics.segmentation
 
 .. autosummary::
     :toctree: generated/
@@ -332,6 +354,9 @@ Segmentation
     :template: class.rst
 
     MeanIntersectionOverUnion
+    SegmentationBinaryAUROC
+    SegmentationBinaryAveragePrecision
+    SegmentationFPR95
 
 Others
 ^^^^^^
@@ -355,18 +380,16 @@ Losses
     :nosignatures:
     :template: class.rst
 
-    DistributionNLLLoss
-    KLDiv
-    ELBOLoss
+    BCEWithLogitsLSLoss
     BetaNLL
-    DECLoss
-    DERLoss
-    FocalLoss
     ConflictualLoss
     ConfidencePenaltyLoss
-    KLDiv
+    DECLoss
+    DERLoss
+    DistributionNLLLoss
     ELBOLoss
-    BCEWithLogitsLSLoss
+    FocalLoss
+    KLDiv
 
 Post-Processing Methods
 -----------------------
@@ -378,8 +401,8 @@ Post-Processing Methods
     :nosignatures:
     :template: class.rst
     
-    MCBatchNorm
     LaplaceApprox
+    MCBatchNorm
     
 Scaling Methods
 ^^^^^^^^^^^^^^^
@@ -389,9 +412,31 @@ Scaling Methods
     :nosignatures:
     :template: class_inherited.rst
 
+    MatrixScaler
     TemperatureScaler
     VectorScaler
-    MatrixScaler
+
+
+
+OOD Scores
+-----------------------
+
+.. currentmodule:: torch_uncertainty.ood_criteria
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: class_inherited.rst
+    
+    TUOODCriterion
+    MaxLogitCriterion
+    EnergyCriterion
+    MaxSoftmaxCriterion
+    EntropyCriterion
+    MutualInformationCriterion
+    PostProcessingCriterion
+    VariationRatioCriterion
+
 
 Datamodules
 -----------
@@ -416,9 +461,10 @@ Classification
 
     CIFAR10DataModule
     CIFAR100DataModule
+    ImageNetDataModule
     MNISTDataModule
     TinyImageNetDataModule
-    ImageNetDataModule
+    
 
 UCI Tabular Classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^

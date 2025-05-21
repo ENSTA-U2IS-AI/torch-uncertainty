@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader
 
 
 class PostProcessing(ABC, nn.Module):
-    def __init__(self, model: nn.Module | None = None):
+    def __init__(self, model: nn.Module | None = None) -> None:
         super().__init__()
         self.model = model
         self.trained = False
@@ -14,12 +14,7 @@ class PostProcessing(ABC, nn.Module):
         self.model = model
 
     @abstractmethod
-    def fit(self, dataloader: DataLoader) -> None:
-        pass
+    def fit(self, dataloader: DataLoader) -> None: ...
 
     @abstractmethod
-    def forward(
-        self,
-        inputs: Tensor,
-    ) -> Tensor:
-        pass
+    def forward(self, inputs: Tensor) -> Tensor: ...

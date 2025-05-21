@@ -8,14 +8,14 @@ from torch.utils.data import DataLoader
 
 from tests._dummies.dataset import DummyClassificationDataset
 from torch_uncertainty.layers.mc_batch_norm import MCBatchNorm2d
-from torch_uncertainty.models.lenet import lenet
+from torch_uncertainty.models.classification import lenet
 from torch_uncertainty.post_processing import MCBatchNorm
 
 
 class TestMCBatchNorm:
     """Testing the MCBatchNorm wrapper."""
 
-    def test_main(self):
+    def test_main(self) -> None:
         """Test initialization."""
         mc_model = lenet(1, 1, norm=partial(MCBatchNorm2d, num_estimators=2))
         stoch_model = MCBatchNorm(mc_model, num_estimators=2, convert=False, mc_batch_size=1)
@@ -41,7 +41,7 @@ class TestMCBatchNorm:
         stoch_model = MCBatchNorm(num_estimators=2, convert=False, mc_batch_size=1)
         stoch_model.set_model(mc_model)
 
-    def test_errors(self):
+    def test_errors(self) -> None:
         """Test errors."""
         model = nn.Identity()
         with pytest.raises(ValueError):

@@ -13,7 +13,7 @@ from torch_uncertainty.post_processing import (
 class TestTemperatureScaler:
     """Testing the TemperatureScaler class."""
 
-    def test_main(self):
+    def test_main(self) -> None:
         scaler = TemperatureScaler(model=nn.Identity(), init_val=2)
         scaler.set_temperature(1)
 
@@ -22,7 +22,7 @@ class TestTemperatureScaler:
         assert scaler.temperature[0].item() == 1.0
         assert torch.all(scaler(logits) == logits)
 
-    def test_fit_biased(self):
+    def test_fit_biased(self) -> None:
         inputs = torch.as_tensor([0.6, 0.4]).repeat(10, 1)
         labels = torch.as_tensor([0.5, 0.5]).repeat(10, 1)
 
@@ -43,15 +43,32 @@ class TestTemperatureScaler:
         )
         scaler.fit_predict(dl, progress=False)
 
-    def test_errors(self):
+        inputs = torch.as_tensor([0.6]).repeat(10, 1)
+        labels = torch.as_tensor([0.5]).repeat(10)
+        calibration_set = list(zip(inputs, labels, strict=True))
+        dl = DataLoader(calibration_set, batch_size=10)
+        scaler = TemperatureScaler(model=nn.Identity(), init_val=2, lr=1, max_iter=10)
+        scaler.fit(dl)
+
+        inputs = torch.as_tensor([0.6]).repeat(10, 1)
+        labels = torch.as_tensor([1]).repeat(10)
+        calibration_set = list(zip(inputs, labels, strict=True))
+        dl = DataLoader(calibration_set, batch_size=10)
+        scaler = TemperatureScaler(model=nn.Identity(), init_val=2, lr=1, max_iter=10)
+        scaler.fit(dl)
+
+    def test_errors(self) -> None:
         with pytest.raises(ValueError):
             TemperatureScaler(model=nn.Identity(), init_val=-1)
 
         with pytest.raises(ValueError):
             TemperatureScaler(model=nn.Identity(), lr=-1)
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Max iterations must be strictly positive. Got "):
             TemperatureScaler(model=nn.Identity(), max_iter=-1)
+
+        with pytest.raises(ValueError, match="Eps must be strictly positive. Got "):
+            TemperatureScaler(model=nn.Identity(), eps=-1)
 
         scaler = TemperatureScaler(
             model=nn.Identity(),
@@ -59,17 +76,11 @@ class TestTemperatureScaler:
         with pytest.raises(ValueError):
             scaler.set_temperature(val=-1)
 
-        scaler = TemperatureScaler(
-            model=None,
-        )
-        with pytest.raises(ValueError, match="Cannot fit a Scaler method without model."):
-            scaler.fit(None)
-
 
 class TestVectorScaler:
     """Testing the VectorScaler class."""
 
-    def test_main(self):
+    def test_main(self) -> None:
         scaler = VectorScaler(model=nn.Identity(), num_classes=1, init_w=2)
         scaler.set_temperature(1, 0)
 
@@ -81,24 +92,18 @@ class TestVectorScaler:
 
         _ = scaler.temperature
 
-    def test_errors(self):
+    def test_errors(self) -> None:
         with pytest.raises(ValueError):
             VectorScaler(model=nn.Identity(), num_classes=-1)
 
         with pytest.raises(TypeError):
             VectorScaler(model=nn.Identity(), num_classes=1.8)
 
-        with pytest.raises(ValueError):
-            VectorScaler(model=nn.Identity(), num_classes=2, lr=-1)
-
-        with pytest.raises(ValueError):
-            VectorScaler(model=nn.Identity(), num_classes=2, max_iter=-1)
-
 
 class TestMatrixScaler:
     """Testing the MatrixScaler class."""
 
-    def test_main(self):
+    def test_main(self) -> None:
         scaler = MatrixScaler(model=nn.Identity(), num_classes=1, init_w=2)
         scaler.set_temperature(1, 0)
 
@@ -110,15 +115,9 @@ class TestMatrixScaler:
 
         _ = scaler.temperature
 
-    def test_errors(self):
+    def test_errors(self) -> None:
         with pytest.raises(ValueError):
             MatrixScaler(model=nn.Identity(), num_classes=-1)
 
         with pytest.raises(TypeError):
             MatrixScaler(model=nn.Identity(), num_classes=1.8)
-
-        with pytest.raises(ValueError):
-            MatrixScaler(model=nn.Identity(), num_classes=2, lr=-1)
-
-        with pytest.raises(ValueError):
-            MatrixScaler(model=nn.Identity(), num_classes=2, max_iter=-1)

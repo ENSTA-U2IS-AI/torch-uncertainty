@@ -4,13 +4,14 @@ from torch import nn
 from torch.optim import Optimizer
 
 from torch_uncertainty.models import mc_dropout
-from torch_uncertainty.models.wideresnet import (
+from torch_uncertainty.models.classification import (
     batched_wideresnet28x10,
     masked_wideresnet28x10,
     mimo_wideresnet28x10,
     packed_wideresnet28x10,
     wideresnet28x10,
 )
+from torch_uncertainty.ood_criteria import TUOODCriterion
 from torch_uncertainty.routines.classification import (
     ClassificationRoutine,
 )
@@ -47,7 +48,7 @@ class WideResNetBaseline(ClassificationRoutine):
         gamma: int = 1,
         rho: float = 1.0,
         batch_repeat: int = 1,
-        ood_criterion: Literal["msp", "logit", "energy", "entropy", "mi", "vr"] = "msp",
+        ood_criterion: type[TUOODCriterion] | str = "msp",
         log_plots: bool = False,
         save_in_csv: bool = False,
         eval_ood: bool = False,
@@ -65,8 +66,7 @@ class WideResNetBaseline(ClassificationRoutine):
                 what expect the `LightningModule.configure_optimizers()
                 <https://pytorch-lightning.readthedocs.io/en/stable/common/lightning_module.html#configure-optimizers>`_
                 method.
-            version (str):
-                Determines which Wide-ResNet version to use:
+            version (str): Determines which Wide-ResNet version to use:
 
                 - ``"std"``: original Wide-ResNet
                 - ``"mc-dropout"``: Monte Carlo Dropout Wide-ResNet
@@ -76,7 +76,7 @@ class WideResNetBaseline(ClassificationRoutine):
                 - ``"mimo"``: MIMO Wide-ResNet
 
             style (bool, optional): (str, optional): Which ResNet style to use.
-            Defaults to ``imagenet``.
+                Defaults to ``imagenet``.
             num_estimators (int, optional): Number of estimators in the ensemble.
                 Only used if :attr:`version` is either ``"packed"``, ``"batched"``
                 or ``"masked"`` Defaults to ``None``.
@@ -96,17 +96,14 @@ class WideResNetBaseline(ClassificationRoutine):
                 to ``None``.
             gamma (int, optional): Number of groups within each estimator. Only
                 used if :attr:`version` is ``"packed"`` and scales with
-                :attr:`groups`. Defaults to ``1s``.
+                :attr:`groups`. Defaults to ``1``.
             rho (float, optional): Probability that all estimators share the same
                 input. Only used if :attr:`version` is ``"mimo"``. Defaults to
                 ``1``.
             batch_repeat (int, optional): Number of times to repeat the batch. Only
                 used if :attr:`version` is ``"mimo"``. Defaults to ``1``.
-            ood_criterion (str, optional): OOD criterion. Defaults to ``"msp"``.
-                MSP is the maximum softmax probability, logit is the maximum
-                logit, entropy is the entropy of the mean prediction, mi is the
-                mutual information of the ensemble and vr is the variation ratio
-                of the ensemble.
+            ood_criterion (TUOODCriterion, optional): Criterion for the binary OOD detection task.
+                Defaults to None which amounts to the maximum softmax probability score (MSP).
             log_plots (bool, optional): Indicates whether to log the plots or not.
                 Defaults to ``False``.
             save_in_csv (bool, optional): Indicates whether to save the results in
@@ -123,8 +120,7 @@ class WideResNetBaseline(ClassificationRoutine):
                 ``"packed"``, ``"batched"`` or ``"masked"``.
 
         Returns:
-            LightningModule: Wide-ResNet baseline ready for training and
-                evaluation.
+            LightningModule: Wide-ResNet baseline ready for training and evaluation.
         """
         params = {
             "conv_bias": False,

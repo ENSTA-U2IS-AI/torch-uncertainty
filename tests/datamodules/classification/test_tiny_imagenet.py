@@ -1,4 +1,5 @@
 import pytest
+from torch import nn
 
 from tests._dummies.dataset import DummyClassificationDataset
 from torch_uncertainty.datamodules import TinyImageNetDataModule
@@ -8,10 +9,24 @@ from torch_uncertainty.datasets.classification import TinyImageNet
 class TestTinyImageNetDataModule:
     """Testing the TinyImageNetDataModule datamodule class."""
 
-    def test_tiny_imagenet(self):
-        dm = TinyImageNetDataModule(root="./data/", batch_size=128)
+    def test_tiny_imagenet(self) -> None:
+        dm = TinyImageNetDataModule(
+            root="./data/",
+            batch_size=128,
+            train_transform=nn.Identity(),
+            test_transform=nn.Identity(),
+            num_tta=2,
+        )
+        dm = TinyImageNetDataModule(
+            root="./data/",
+            batch_size=128,
+            train_transform=nn.Identity(),
+            test_transform=nn.Identity(),
+        )
 
         assert dm.dataset == TinyImageNet
+        assert isinstance(dm.train_transform, nn.Identity)
+        assert isinstance(dm.test_transform, nn.Identity)
 
         dm = TinyImageNetDataModule(
             root="./data/",
@@ -26,6 +41,8 @@ class TestTinyImageNetDataModule:
             ood_ds="textures",
             basic_augment=False,
         )
+
+        dm = TinyImageNetDataModule(root="./data/", batch_size=128, ood_ds="openimage-o")
 
         with pytest.raises(ValueError):
             TinyImageNetDataModule(root="./data/", batch_size=128, ood_ds="other")
@@ -59,7 +76,7 @@ class TestTinyImageNetDataModule:
         dm.prepare_data()
         dm.setup("test")
 
-    def test_tiny_imagenet_cv(self):
+    def test_tiny_imagenet_cv(self) -> None:
         dm = TinyImageNetDataModule(root="./data/", batch_size=128)
         dm.dataset = lambda root, split, transform: DummyClassificationDataset(
             root, split=split, transform=transform, num_images=20

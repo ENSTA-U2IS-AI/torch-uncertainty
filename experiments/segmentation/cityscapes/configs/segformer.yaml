@@ -12,14 +12,10 @@ trainer:
       name: standard
       default_hp_metric: false
   callbacks:
-  - class_path: lightning.pytorch.callbacks.ModelCheckpoint
-    init_args:
-      monitor: val/seg/mIoU
-      mode: max
-      save_last: true
-  - class_path: lightning.pytorch.callbacks.LearningRateMonitor
-    init_args:
-      logging_interval: step
+    - class_path: torch_uncertainty.callbacks.TUSegCheckpoint
+    - class_path: lightning.pytorch.callbacks.LearningRateMonitor
+      init_args:
+        logging_interval: step
 model:
   num_classes: 19
   loss: CrossEntropyLoss
@@ -30,8 +26,8 @@ data:
   batch_size: 8
   crop_size: 1024
   eval_size:
-  - 1024
-  - 2048
+    - 1024
+    - 2048
   num_workers: 8
 optimizer:
   lr: 6e-5

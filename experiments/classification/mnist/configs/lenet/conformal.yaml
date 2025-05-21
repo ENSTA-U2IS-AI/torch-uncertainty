@@ -1,0 +1,60 @@
+# lightning.pytorch==2.1.3
+seed_everything: false
+eval_after_fit: true
+trainer:
+  accelerator: gpu
+  devices: 1
+  precision: 16-mixed
+  max_epochs: 10
+  logger:
+    class_path: lightning.pytorch.loggers.TensorBoardLogger
+    init_args:
+      save_dir: logs/lenet
+      name: conformal
+      default_hp_metric: false
+  callbacks:
+    - class_path: torch_uncertainty.callbacks.TUClsCheckpoint
+    - class_path: torch_uncertainty.callbacks.CompoundCheckpoint
+      init_args:
+        mode: max
+        compound_metric_dict:
+          val/cls/Acc: 1.0
+          val/cal/ECE: -1.0
+    - class_path: lightning.pytorch.callbacks.LearningRateMonitor
+      init_args:
+        logging_interval: step
+    - class_path: lightning.pytorch.callbacks.EarlyStopping
+      init_args:
+        monitor: val/cls/Acc
+        patience: 1000
+        check_finite: true
+model:
+  model:
+    class_path: torch_uncertainty.models.classification.lenet
+    init_args:
+      in_channels: 1
+      num_classes: 10
+      activation: torch.nn.ReLU
+      norm: torch.nn.Identity
+      groups: 1
+      dropout_rate: 0
+  num_classes: 10
+  loss: CrossEntropyLoss
+  post_processing:
+    class_path: torch_uncertainty.post_processing.conformal.ConformalClsRAPS
+    init_args:
+      alpha: 0.001
+      device: "cuda"
+  log_plots: true
+  ood_criterion: torch_uncertainty.ood_criteria.PostProcessingCriterion
+data:
+  root: ./data
+  batch_size: 128
+  num_workers: 8
+  eval_ood: true
+optimizer:
+  class_path: torch.optim.SGD
+  init_args:
+    lr: 0.05
+    momentum: 0.9
+    weight_decay: 5e-4

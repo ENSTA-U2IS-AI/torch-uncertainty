@@ -9,7 +9,7 @@ These routines make it very easy to:
 
 - train ensembles-like methods (Deep Ensembles, Packed-Ensembles, MIMO, Masksembles, etc)
 - compute and monitor uncertainty metrics: calibration, out-of-distribution detection, proper scores, grouping loss, etc.
-- leverage calibration methods automatically during evaluation
+- leverage post-processing methods automatically during evaluation
 
 Yet, we take account that their will be as many different uses of TorchUncertainty as there are of users.
 This page provides ideas on how to benefit from TorchUncertainty at all levels: from ready-to-train lightning-based models to using only specific
@@ -46,12 +46,9 @@ and its parameters.
       # ...
       eval_ood: bool = False,
       eval_grouping_loss: bool = False,
-      ood_criterion: Literal[
-        "msp", "logit", "energy", "entropy", "mi", "vr"
-      ] = "msp",
+      ood_criterion: TUOODCriterion | str = "msp",
       log_plots: bool = False,
       save_in_csv: bool = False,
-      calibration_set: Literal["val", "test"] | None = None,
     ) -> None:
       ...
 
@@ -160,7 +157,7 @@ backbone with the following code:
 
 .. code:: python
 
-    from torch_uncertainty.models.resnet import packed_resnet
+    from torch_uncertainty.models.classification import packed_resnet
 
     model = packed_resnet(
         in_channels = 3,

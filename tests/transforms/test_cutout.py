@@ -7,7 +7,7 @@ from torch_uncertainty.transforms import Cutout
 class TestCutout:
     """Testing the Cutout transform."""
 
-    def test_cutout_allchannels(self):
+    def test_cutout_allchannels(self) -> None:
         inputs = torch.rand(32, 32) + 10  # no zeros
         transform = Cutout(16)
         output = transform(inputs)
@@ -24,10 +24,10 @@ class TestCutout:
 
         assert (output == 0).sum() > 0
 
-    def test_cutout_negative_length(self):
+    def test_cutout_negative_length(self) -> None:
         with pytest.raises(ValueError):
             _ = Cutout(-1)
 
-    def test_cutout_negative_value(self):
+    def test_cutout_negative_value(self) -> None:
         with pytest.raises(ValueError):
             _ = Cutout(42, -16)

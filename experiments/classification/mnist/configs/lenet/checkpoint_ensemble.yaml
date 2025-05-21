@@ -1,0 +1,59 @@
+# lightning.pytorch==2.1.3
+seed_everything: false
+eval_after_fit: true
+trainer:
+  accelerator: gpu
+  devices: 1
+  precision: 16-mixed
+  max_epochs: 10
+  logger:
+    class_path: lightning.pytorch.loggers.TensorBoardLogger
+    init_args:
+      save_dir: logs/lenet_trajectory
+      name: standard
+      default_hp_metric: false
+  callbacks:
+    - class_path: torch_uncertainty.callbacks.TUClsCheckpoint
+    - class_path: lightning.pytorch.callbacks.LearningRateMonitor
+      init_args:
+        logging_interval: step
+    - class_path: lightning.pytorch.callbacks.EarlyStopping
+      init_args:
+        monitor: val/cls/Acc
+        patience: 1000
+        check_finite: true
+model:
+  model:
+    class_path: torch_uncertainty.models.CheckpointCollector
+    init_args:
+      model:
+        class_path: torch_uncertainty.models.classification.lenet
+        init_args:
+          in_channels: 1
+          num_classes: 10
+          activation: torch.nn.ReLU
+          norm: torch.nn.Identity
+          groups: 1
+          dropout_rate: 0
+      save_schedule:
+        - 3
+        - 6
+        - 7
+        - 8
+        - 9
+      use_final_model: True
+      store_on_cpu: True
+  num_classes: 10
+  loss: CrossEntropyLoss
+  is_ensemble: true
+data:
+  root: ./data
+  batch_size: 128
+  num_workers: 8
+optimizer:
+  class_path: torch.optim.SGD
+  init_args:
+    lr: 0.05
+    momentum: 0.9
+    weight_decay: 5e-4
+    nesterov: true

@@ -2,18 +2,11 @@ from typing import Literal
 
 from torch import nn
 
-from torch_uncertainty.models.depth.bts import bts_resnet50, bts_resnet101
+from torch_uncertainty.models.depth.bts import bts_resnet
 from torch_uncertainty.routines import PixelRegressionRoutine
 
 
 class BTSBaseline(PixelRegressionRoutine):
-    single = ["std"]
-    versions = {
-        "std": [
-            bts_resnet50,
-            bts_resnet101,
-        ]
-    }
     archs = [50, 101]
 
     def __init__(
@@ -23,10 +16,10 @@ class BTSBaseline(PixelRegressionRoutine):
         arch: int,
         max_depth: float,
         dist_family: str | None = None,
-        num_estimators: int = 1,
         pretrained_backbone: bool = True,
     ) -> None:
         params = {
+            "arch": arch,
             "dist_family": dist_family,
             "max_depth": max_depth,
             "pretrained_backbone": pretrained_backbone,
@@ -37,12 +30,11 @@ class BTSBaseline(PixelRegressionRoutine):
         if version not in self.versions:
             raise ValueError(f"Unknown version {version}")
 
-        model = self.versions[version][self.archs.index(arch)](**params)
+        model = bts_resnet(**params)
         super().__init__(
-            output_dim=1,
             model=model,
+            output_dim=1,
             loss=loss,
-            num_estimators=num_estimators,
             format_batch_fn=format_batch_fn,
             dist_family=dist_family,
         )

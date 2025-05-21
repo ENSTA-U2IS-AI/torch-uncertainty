@@ -13,16 +13,16 @@ trainer:
       name: standard
       default_hp_metric: false
   callbacks:
-  - class_path: lightning.pytorch.callbacks.ModelCheckpoint
-    init_args:
-      monitor: val/SILog
-      mode: min
-      save_last: true
-  - class_path: lightning.pytorch.callbacks.LearningRateMonitor
-    init_args:
-      logging_interval: step
+    - class_path: lightning.pytorch.callbacks.ModelCheckpoint
+      init_args:
+        monitor: val/reg/SILog
+        mode: min
+        save_last: true
+    - class_path: lightning.pytorch.callbacks.LearningRateMonitor
+      init_args:
+        logging_interval: step
 model:
-  loss: 
+  loss:
     class_path: torch_uncertainty.metrics.SILog
     init_args:
       sqrt: true
@@ -34,7 +34,7 @@ model:
 data:
   root: ./data
   batch_size: 4
-  crop_size: 
+  crop_size:
     - 352
     - 704
   eval_size:

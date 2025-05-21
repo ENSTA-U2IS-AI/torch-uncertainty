@@ -7,7 +7,7 @@ from torch_uncertainty.metrics import GroupingLoss
 class TestGroupingLoss:
     """Testing the GroupingLoss metric class."""
 
-    def test_compute(self):
+    def test_compute(self) -> None:
         metric = GroupingLoss()
         metric.update(
             torch.cat([torch.tensor([0, 1, 0, 1]), torch.ones(200) / 10]),
@@ -31,7 +31,7 @@ class TestGroupingLoss:
             torch.cat([torch.zeros((100, 10)), torch.ones((1004, 10))]),
         )
 
-    def test_errors(self):
+    def test_errors(self) -> None:
         metric = GroupingLoss()
         with pytest.raises(ValueError):
             metric.update(

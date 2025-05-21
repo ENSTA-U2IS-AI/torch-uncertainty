@@ -24,20 +24,18 @@ class AUSE(Metric):
         the true errors.
 
         Args:
-            kwargs: Additional keyword arguments, see `Advanced metric settings
-                <https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metric-kwargs>`_.
-
-        Reference:
-            From the paper
-            `Uncertainty estimates and multi-hypotheses for optical flow <https://arxiv.org/abs/1802.07095>`_.
-            In ECCV, 2018.
+            kwargs: Additional keyword arguments, see `Advanced metric settings <https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metric-kwargs>`_.
 
         Inputs:
             - :attr:`scores`: Uncertainty scores of shape :math:`(B,)`. A higher
               score means a higher uncertainty.
             - :attr:`errors`: Errors of shape :math:`(B,)`,
 
-        where :math:`B` is the batch size.
+            where :math:`B` is the batch size.
+
+        References:
+            [1] `Uncertainty estimates and multi-hypotheses for optical flow. In ECCV, 2018
+            <https://arxiv.org/abs/1802.07095>`_.
 
         Note:
             A higher AUSE means a lower quality of the uncertainty estimates.

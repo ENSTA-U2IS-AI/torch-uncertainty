@@ -25,10 +25,9 @@ class SWA(nn.Module):
             cycle_start (int): Epoch to start SWA.
             cycle_length (int): Number of epochs between SWA updates.
 
-        Reference:
-            Izmailov, P., Podoprikhin, D., Garipov, T., Vetrov, D., & Wilson, A. G.
-            (2018). Averaging Weights Leads to Wider Optima and Better Generalization.
-            In UAI 2018.
+        References:
+            [1] `Averaging Weights Leads to Wider Optima and Better Generalization.. In UAI 2018
+            <https://arxiv.org/abs/1803.05407>`_.
         """
         super().__init__()
         _swa_checks(cycle_start, cycle_length)
@@ -50,7 +49,7 @@ class SWA(nn.Module):
                 for swa_param, param in zip(
                     self.swa_model.parameters(),
                     self.core_model.parameters(),
-                    strict=False,
+                    strict=True,
                 ):
                     swa_param.data += (param.data - swa_param.data) / (self.num_avgd_models + 1)
             self.num_avgd_models += 1

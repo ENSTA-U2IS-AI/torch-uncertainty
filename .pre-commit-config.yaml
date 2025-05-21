@@ -1,40 +1,47 @@
 repos:
-- repo: local
-  hooks:
-  - id: end-of-file-fixer
-    name: end-of-file-fixer
-    entry: end-of-file-fixer
-    language: system
-    types: [text]
-  - id: check-toml
-    name: check-toml
-    entry: check-toml
-    language: system
-    types: [toml]
-  - id: check-yaml
-    name: check-yaml
-    language: system
-    entry: check-yaml
-    types: [yaml]
-  - id: check-merge-conflict
-    name: check-merge-conflict
-    entry: check-merge-conflict
-    language: system
-  - id: check-added-large-files
-    name: check-added-large-files
-    entry: check-added-large-files
-    language: system
-  - id: ruff-check
-    name: ruff-check 
-    entry: ruff check
-    language: python
-    types_or: [python, pyi]
-    require_serial: true
-    args: [--force-exclude, --fix, --exit-non-zero-on-fix, --output-format, concise]
-    exclude: ^auto_tutorials_source/
-  - id: ruff-format
-    name: ruff-format
-    entry: ruff format
-    language: python
-    types_or: [python, pyi]
-    exclude: ^auto_tutorials_source/
+  - repo: local
+    hooks:
+      - id: end-of-file-fixer
+        name: end-of-file-fixer
+        entry: end-of-file-fixer
+        language: system
+        types: [text]
+      - id: check-toml
+        name: check-toml
+        entry: check-toml
+        language: system
+        types: [toml]
+      - id: check-yaml
+        name: check-yaml
+        language: system
+        entry: check-yaml
+        types: [yaml]
+      - id: check-merge-conflict
+        name: check-merge-conflict
+        entry: check-merge-conflict
+        language: system
+      - id: check-added-large-files
+        name: check-added-large-files
+        entry: check-added-large-files
+        language: system
+      - id: ruff-check
+        name: ruff-check
+        entry: ruff check
+        language: python
+        types_or: [python, pyi]
+        require_serial: true
+        args:
+          [
+            --force-exclude,
+            --fix,
+            --exit-non-zero-on-fix,
+            --output-format,
+            concise,
+          ]
+        exclude: ^auto_tutorial_source/
+      - id: ruff-format
+        name: ruff-format
+        entry: ruff format
+        language: python
+        types_or: [python, pyi]
+        exclude: ^auto_tutorials_source/

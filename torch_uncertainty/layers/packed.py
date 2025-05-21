@@ -3,9 +3,9 @@ from collections.abc import Callable
 from typing import Any
 
 import torch
+import torch.nn.functional as F
 from einops import rearrange
 from torch import Tensor, nn
-from torch.nn import functional as F
 from torch.nn.common_types import _size_1_t, _size_2_t, _size_3_t
 
 from .functional.packed import packed_linear, packed_multi_head_attention_forward
@@ -49,8 +49,7 @@ class PackedLinear(nn.Module):
         bias: bool = True,
         first: bool = False,
         last: bool = False,
-        implementation: str = "legacy",
-        rearrange: bool = True,
+        implementation: str = "conv1d",
         device=None,
         dtype=None,
     ) -> None:
@@ -73,16 +72,25 @@ class PackedLinear(nn.Module):
                 Defaults to ``False``.
             implementation (str, optional): The implementation to use. Available implementations:
 
-                - ``"legacy"`` (default): The legacy implementation of the linear layer.
+                - ``"conv1d"`` (default): The conv1d implementation of the linear layer.
                 - ``"sparse"``: The sparse implementation of the linear layer.
                 - ``"full"``: The full implementation of the linear layer.
                 - ``"einsum"``: The einsum implementation of the linear layer.
-            rearrange (bool, optional): Rearrange the input and outputs for
-                compatibility with previous and later layers. Defaults to ``True``.
             device (torch.device, optional): The device to use for the layer's
                 parameters. Defaults to ``None``.
             dtype (torch.dtype, optional): The dtype to use for the layer's
                 parameters. Defaults to ``None``.
+
+        Shape:
+            - Input:
+                - If :attr:`first` is ``True``: :math:`(B, \ast, H_{\text{in}})` where
+                  :math:`B` is the batch size, :math:`\ast` means any number of
+                  additional dimensions and :math:`H_{\text{in}}=\text{in\_features}`.
+                - Otherwise: :math:`(B, \ast, H_{\text{in}} \times \alpha)`
+            - Output:
+                - If :attr:`last` is ``True``: :math:`(B, \ast, H_{\text{out}}\times M)` where
+                  :math:`H_{\text{out}}=\text{out\_features}` and :math:`M=\text{num\_estimators}`.
+                - Otherwise: :math:`(B, \ast, H_{\text{out}} \times \alpha)`
 
         Explanation Note:
             Increasing :attr:`alpha` will increase the number of channels of the
@@ -98,24 +106,20 @@ class PackedLinear(nn.Module):
             :attr:`n_estimators` :math:`\times`:attr:`gamma`. However, the
             number of input and output features will be changed to comply with
             this constraint.
-
-        Note:
-            The input should be of shape (`batch_size`, :attr:`in_features`, 1,
-            1). The (often) necessary rearrange operation is executed by
-            default.
         """
         check_packed_parameters_consistency(alpha, gamma, num_estimators)
 
-        if implementation not in ["legacy", "sparse", "full", "einsum"]:
+        if implementation not in ["sparse", "full", "einsum", "conv1d"]:
             raise ValueError(
                 f"Unknown implementation: {implementation} for PackedLinear"
-                "Available implementations are: 'legacy', 'sparse', 'full', 'einsum'"
+                "Available implementations are: 'sparse', 'full', 'einsum', 'conv1d'"
             )
 
         factory_kwargs = {"device": device, "dtype": dtype}
         super().__init__()
 
         self.first = first
+        self.last = last
         self.num_estimators = num_estimators
         self.rearrange = rearrange
         self.implementation = implementation
@@ -135,28 +139,16 @@ class PackedLinear(nn.Module):
                 num_estimators * gamma
             )
 
-        if self.implementation == "legacy":
-            self.weight = nn.Parameter(
-                torch.empty(
-                    (
-                        extended_out_features,
-                        extended_in_features // actual_groups,
-                        1,
-                    ),
-                    **factory_kwargs,
-                )
+        self.weight = nn.Parameter(
+            torch.empty(
+                (
+                    actual_groups,
+                    extended_out_features // actual_groups,
+                    extended_in_features // actual_groups,
+                ),
+                **factory_kwargs,
             )
-        else:
-            self.weight = nn.Parameter(
-                torch.empty(
-                    (
-                        actual_groups,
-                        extended_out_features // actual_groups,
-                        extended_in_features // actual_groups,
-                    ),
-                    **factory_kwargs,
-                )
-            )
+        )
 
         self.in_features = extended_in_features // actual_groups
         self.out_features = extended_out_features // actual_groups
@@ -170,11 +162,8 @@ class PackedLinear(nn.Module):
         self.reset_parameters()
 
     def reset_parameters(self) -> None:
-        if self.implementation == "legacy":
-            nn.init.kaiming_uniform_(self.weight, a=math.sqrt(5))
-        else:
-            for n in range(self.groups):
-                nn.init.kaiming_uniform_(self.weight[n], a=math.sqrt(5))
+        for n in range(self.groups):
+            nn.init.kaiming_uniform_(self.weight[n], a=math.sqrt(5))
         if self.bias is not None:
             fan_in, _ = nn.init._calculate_fan_in_and_fan_out(self.weight[0])
             bound = 1 / math.sqrt(fan_in) if fan_in > 0 else 0
@@ -183,25 +172,18 @@ class PackedLinear(nn.Module):
         if self.implementation == "sparse":
             self.weight = nn.Parameter(torch.block_diag(*self.weight).to_sparse())
 
-    def _rearrange_forward(self, x: Tensor) -> Tensor:
-        x = x.unsqueeze(-1)
-        if not self.first:
-            x = rearrange(x, "(m e) c h -> e (m c) h", m=self.num_estimators)
-        x = F.conv1d(x, self.weight, self.bias, 1, 0, 1, self.groups)
-        x = rearrange(x, "e (m c) h -> (m e) c h", m=self.num_estimators)
-        return x.squeeze(-1)
-
     def forward(self, inputs: Tensor) -> Tensor:
-        if self.implementation == "legacy":
-            if self.rearrange:
-                return self._rearrange_forward(inputs)
-            return F.conv1d(inputs, self.weight, self.bias, 1, 0, 1, self.groups)
-        return packed_linear(
+        out = packed_linear(
             inputs=inputs,
             weight=self.weight,
             num_groups=self.groups,
             implementation=self.implementation,
             bias=self.bias,
+        )
+        return (
+            out
+            if not self.last
+            else rearrange(out, "b ... (m h) -> (m b) ... h", m=self.num_estimators)
         )
 
 
@@ -235,28 +217,31 @@ class PackedConv1d(nn.Module):
             alpha (int): The channel multiplier of the convolutional layer.
             num_estimators (int): Number of estimators in the ensemble.
             gamma (int, optional): Defaults to ``1``.
-            stride (int or tuple, optional): Stride of the convolution.
-                Defaults to ``1``.
-            padding (int, tuple or str, optional): Padding added to both sides of
-                the input. Defaults to ``0``.
-            dilation (int or tuple, optional): Spacing between kernel elements.
-                Defaults to ``1``.
+            stride (int or tuple, optional): Stride of the convolution. Defaults to ``1``.
+            padding (int, tuple or str, optional): Padding added to both sides of the input. Defaults to ``0``.
+            dilation (int or tuple, optional): Spacing between kernel elements. Defaults to ``1``.
             groups (int, optional): Number of blocked connexions from input
-                channels to output channels for each estimator. Defaults to ``1``.
-            minimum_channels_per_group (int, optional): Smallest possible number of
-                channels per group.
-            bias (bool, optional): If ``True``, adds a learnable bias to the
-                output. Defaults to ``True``.
-            padding_mode (str, optional): ``'zeros'``, ``'reflect'``,
-                ``'replicate'`` or ``'circular'``. Defaults to ``'zeros'``.
-            first (bool, optional): Whether this is the first layer of the
-                network. Defaults to ``False``.
-            last (bool, optional): Whether this is the last layer of the network.
-                Defaults to ``False``.
+            channels to output channels for each estimator. Defaults to ``1``.
+            minimum_channels_per_group (int, optional): Smallest possible number of channels per group.
+            bias (bool, optional): If ``True``, adds a learnable bias to the output. Defaults to ``True``.
+            padding_mode (str, optional): ``'zeros'``, ``'reflect'``,``'replicate'`` or ``'circular'``. Defaults to ``'zeros'``.
+            first (bool, optional): Whether this is the first layer of the network. Defaults to ``False``.
+            last (bool, optional): Whether this is the last layer of the network. Defaults to ``False``.
             device (torch.device, optional): The device to use for the layer's
-                parameters. Defaults to ``None``.
+            parameters. Defaults to ``None``.
             dtype (torch.dtype, optional): The dtype to use for the layer's
-                parameters. Defaults to ``None``.
+            parameters. Defaults to ``None``.
+
+        Shape:
+            - Input:
+                - If :attr:`first` is ``True``: :math:`(B, C_{\text{in}}, L_{\text{in}})` where
+                  :math:`B` is the batch size, :math:`C_{\text{in}}=\text{in\_channels}`, and
+                  :math:`L_{\text{in}}` is the length of the signal sequence.
+                - Otherwise: :math:`(B, C_{\text{in}} \times \alpha, L_{\text{in}})`
+            - Output:
+                - If :attr:`last` is ``True``: :math:`(B, C_{\text{out}}\times M, L_{\text{out}})`
+                  where :math:`C_{\text{out}}=\text{out\_channels}` and :math:`M=\text{num\_estimators}`.
+                - Otherwise: :math:`(B, C_{\text{out}} \times \alpha, L_{\text{out}})`
 
         Explanation Note:
             Increasing :attr:`alpha` will increase the number of channels of the
@@ -276,7 +261,8 @@ class PackedConv1d(nn.Module):
         check_packed_parameters_consistency(alpha, gamma, num_estimators)
         factory_kwargs = {"device": device, "dtype": dtype}
         super().__init__()
-
+        self.first = first
+        self.last = last
         self.num_estimators = num_estimators
 
         # Define the number of channels of the underlying convolution
@@ -313,7 +299,12 @@ class PackedConv1d(nn.Module):
         )
 
     def forward(self, inputs: Tensor) -> Tensor:
-        return self.conv(inputs)
+        out = self.conv(inputs)
+        return (
+            out
+            if not self.last
+            else rearrange(out, "b (m c) ... -> (m b) c ...", m=self.num_estimators)
+        )
 
     @property
     def weight(self) -> Tensor:
@@ -356,28 +347,30 @@ class PackedConv2d(nn.Module):
             alpha (int): The channel multiplier of the convolutional layer.
             num_estimators (int): Number of estimators in the ensemble.
             gamma (int, optional): Defaults to ``1``.
-            stride (int or tuple, optional): Stride of the convolution.
-                Defaults to ``1``.
-            padding (int, tuple or str, optional): Padding added to all four sides
-                of the input. Defaults to ``0``.
-            dilation (int or tuple, optional): Spacing between kernel elements.
-                Defaults to ``1``.
-            groups (int, optional): Number of blocked connexions from input
-                channels to output channels for each estimator. Defaults to ``1``.
-            minimum_channels_per_group (int, optional): Smallest possible number of
-                channels per group.
-            bias (bool, optional): If ``True``, adds a learnable bias to the
-                output. Defaults to ``True``.
-            padding_mode (str, optional): ``'zeros'``, ``'reflect'``,
-                ``'replicate'`` or ``'circular'``. Defaults to ``'zeros'``.
-            first (bool, optional): Whether this is the first layer of the
-                network. Defaults to ``False``.
-            last (bool, optional): Whether this is the last layer of the network.
-                Defaults to ``False``.
-            device (torch.device, optional): The device to use for the layer's
-                parameters. Defaults to ``None``.
-            dtype (torch.dtype, optional): The dtype to use for the layer's
-                parameters. Defaults to ``None``.
+            stride (int or tuple, optional): Stride of the convolution. Defaults to ``1``.
+            padding (int, tuple or str, optional): Padding added to all four sides of the input. Defaults to ``0``.
+            dilation (int or tuple, optional): Spacing between kernel elements. Defaults to ``1``.
+            groups (int, optional): Number of blocked connexions from input channels to output channels for each
+                estimator. Defaults to ``1``.
+            minimum_channels_per_group (int, optional): Smallest possible number of channels per group.
+            bias (bool, optional): If ``True``, adds a learnable bias to the output. Defaults to ``True``.
+            padding_mode (str, optional): ``'zeros'``, ``'reflect'``,``'replicate'`` or ``'circular'``. Defaults
+                to ``'zeros'``.
+            first (bool, optional): Whether this is the first layer of the network. Defaults to ``False``.
+            last (bool, optional): Whether this is the last layer of the network. Defaults to ``False``.
+            device (torch.device, optional): The device to use for the layer's parameters. Defaults to ``None``.
+            dtype (torch.dtype, optional): The dtype to use for the layer's parameters. Defaults to ``None``.
+
+        Shape:
+            - Input:
+                - If :attr:`first` is ``True``: :math:`(B, C_{\text{in}}, H_{\text{in}}, W_{\text{in}})` where
+                  :math:`B` is the batch size, :math:`C_{\text{in}}=\text{in\_channels}`,
+                  :math:`H_{\text{in}}` and :math:`W_{\text{in}}` are the height and width of the input image.
+                - Otherwise: :math:`(B, C_{\text{in}} \times \alpha, H_{\text{in}}, W_{\text{in}})`
+            - Output:
+                - If :attr:`last` is ``True``: :math:`(B, C_{\text{out}}\times M, H_{\text{out}}, W_{\text{out}})`
+                  where :math:`C_{\text{out}}=\text{out\_channels}` and :math:`M=\text{num\_estimators}`.
+                - Otherwise: :math:`(B, C_{\text{out}} \times \alpha, H_{\text{out}}, W_{\text{out}})`
 
         Explanation Note:
             Increasing :attr:`alpha` will increase the number of channels of the
@@ -398,6 +391,8 @@ class PackedConv2d(nn.Module):
         factory_kwargs = {"device": device, "dtype": dtype}
         super().__init__()
 
+        self.first = first
+        self.last = last
         self.num_estimators = num_estimators
 
         # Define the number of channels of the underlying convolution
@@ -434,7 +429,12 @@ class PackedConv2d(nn.Module):
         )
 
     def forward(self, inputs: Tensor) -> Tensor:
-        return self.conv(inputs)
+        out = self.conv(inputs)
+        return (
+            out
+            if not self.last
+            else rearrange(out, "b (m c) ... -> (m b) c ...", m=self.num_estimators)
+        )
 
     @property
     def weight(self) -> Tensor:
@@ -477,28 +477,30 @@ class PackedConv3d(nn.Module):
             alpha (int): The channel multiplier of the convolutional layer.
             num_estimators (int): Number of estimators in the ensemble.
             gamma (int, optional): Defaults to ``1``.
-            stride (int or tuple, optional): Stride of the convolution.
-                Defaults to ``1``.
-            padding (int, tuple or str, optional): Padding added to all six sides
-                of the input. Defaults to ``0``.
-            dilation (int or tuple, optional): Spacing between kernel elements.
-                Defaults to ``1``.
+            stride (int or tuple, optional): Stride of the convolution. Defaults to ``1``.
+            padding (int, tuple or str, optional): Padding added to all six sides of the input. Defaults to ``0``.
+            dilation (int or tuple, optional): Spacing between kernel elements. Defaults to ``1``.
             groups (int, optional): Number of blocked connexions from input
-                channels to output channels for each estimator. Defaults to ``1``.
-            minimum_channels_per_group (int, optional): Smallest possible number of
-                channels per group.
-            bias (bool, optional): If ``True``, adds a learnable bias to the
-                output. Defaults to ``True``.
-            padding_mode (str, optional): ``'zeros'``, ``'reflect'``,
-                ``'replicate'`` or ``'circular'``. Defaults to ``'zeros'``.
-            first (bool, optional): Whether this is the first layer of the
-                network. Defaults to ``False``.
-            last (bool, optional): Whether this is the last layer of the network.
-                Defaults to ``False``.
-            device (torch.device, optional): The device to use for the layer's
-                parameters. Defaults to ``None``.
-            dtype (torch.dtype, optional): The dtype to use for the layer's
-                parameters. Defaults to ``None``.
+            channels to output channels for each estimator. Defaults to ``1``.
+            minimum_channels_per_group (int, optional): Smallest possible number of channels per group.
+            bias (bool, optional): If ``True``, adds a learnable bias to the output. Defaults to ``True``.
+            padding_mode (str, optional): ``'zeros'``, ``'reflect'``,``'replicate'`` or ``'circular'``. Defaults to ``'zeros'``.
+            first (bool, optional): Whether this is the first layer of the network. Defaults to ``False``.
+            last (bool, optional): Whether this is the last layer of the network. Defaults to ``False``.
+            device (torch.device, optional): The device to use for the layer's parameters. Defaults to ``None``.
+            dtype (torch.dtype, optional): The dtype to use for the layer's parameters. Defaults to ``None``.
+
+        Shape:
+            - Input:
+                - If :attr:`first` is ``True``: :math:`(B, C_{\text{in}}, D_{\text{in}}, H__{\text{in}}, W__{\text{in}})`
+                  where :math:`B` is the batch size, :math:`C_{\text{in}}=\text{in\_channels}`,
+                  :math:`D_{\text{in}}` is the depth of the input, :math:`H_{\text{in}}`
+                  and :math:`W_{\text{in}}` are height and width of the input planes.
+                - Otherwise: :math:`(B, C_{\text{in}} \times \alpha, D__{\text{in}}, H_{\text{in}}, W_{\text{in}})`
+            - Output:
+                - If :attr:`last` is ``True``: :math:`(B, C_{\text{out}}\times M, D_{\text{out}}, H__{\text{out}}, W__{\text{out}})` where
+                  :math:`C_{\text{out}}=\text{out\_channels}` and :math:`M=\text{num\_estimators}`.
+                - Otherwise: :math:`(B, C_{\text{out}} \times \alpha, D_{\text{out}}, H__{\text{out}}, W__{\text{out}})`
 
         Explanation Note:
             Increasing :attr:`alpha` will increase the number of channels of the
@@ -519,6 +521,8 @@ class PackedConv3d(nn.Module):
         super().__init__()
         check_packed_parameters_consistency(alpha, gamma, num_estimators)
 
+        self.first = first
+        self.last = last
         self.num_estimators = num_estimators
 
         # Define the number of channels of the underlying convolution
@@ -555,7 +559,12 @@ class PackedConv3d(nn.Module):
         )
 
     def forward(self, inputs: Tensor) -> Tensor:
-        return self.conv(inputs)
+        out = self.conv(inputs)
+        return (
+            out
+            if not self.last
+            else rearrange(out, "b (m c) ... -> (m b) c ...", m=self.num_estimators)
+        )
 
     @property
     def weight(self) -> Tensor:
@@ -566,6 +575,108 @@ class PackedConv3d(nn.Module):
     def bias(self) -> Tensor | None:
         r"""The bias of the underlying convolutional layer."""
         return self.conv.bias
+
+
+class PackedConvTranspose2d(nn.Module):
+    def __init__(
+        self,
+        in_channels: int,
+        out_channels: int,
+        kernel_size: _size_2_t,
+        alpha: int,
+        num_estimators: int,
+        gamma: int = 1,
+        stride: _size_2_t = 1,
+        padding: _size_2_t = 0,
+        output_padding: _size_2_t = 0,
+        dilation: _size_2_t = 1,
+        groups: int = 1,
+        minimum_channels_per_group: int = 64,
+        bias: bool = True,
+        first: bool = False,
+        last: bool = False,
+        device=None,
+        dtype=None,
+    ) -> None:
+        r"""Packed-Ensembles-style ConvTranspose2d layer with debug flags.
+
+        Args:
+            in_channels (int): Number of channels in the input.
+            out_channels (int): Number of channels produced by the transposed convolution.
+            kernel_size (int or tuple): Size of the convolving kernel.
+            alpha (int): The channel multiplier for the layer.
+            num_estimators (int): Number of estimators in the ensemble.
+            gamma (int, optional): Defaults to ``1``.
+            stride (int or tuple, optional): Stride of the convolution. Defaults to ``1``.
+            padding (int or tuple, optional): Zero-padding added to both sides of the input. Defaults to ``0``.
+            output_padding (int or tuple, optional): Additional size added to one side of the output shape. Defaults to ``0``.
+            dilation (int or tuple, optional): Spacing between kernel elements. Defaults to ``1``.
+            groups (int, optional): Number of blocked connections from input channels to output channels. Defaults to ``1``.
+            minimum_channels_per_group (int, optional): Smallest possible number of channels per group.
+            bias (bool, optional): If ``True``, adds a learnable bias to the output. Defaults to ``True``.
+            first (bool, optional): Whether this is the first layer of the network. Defaults to ``False``.
+            last (bool, optional): Whether this is the last layer of the network. Defaults to ``False``.
+            device (torch.device, optional): The device to use for the layer's parameters. Defaults to ``None``.
+            dtype (torch.dtype, optional): The dtype to use for the layer's parameters. Defaults to ``None``.
+        """
+        check_packed_parameters_consistency(alpha, gamma, num_estimators)
+        factory_kwargs = {"device": device, "dtype": dtype}
+        super().__init__()
+
+        self.num_estimators = num_estimators
+        self.first = first
+        self.last = last
+
+        # Define the number of channels for the underlying convolution
+        self.extended_in_channels = int(in_channels * (1 if first else alpha))
+        self.extended_out_channels = int(out_channels * (num_estimators if last else alpha))
+
+        # Define the number of groups of the underlying convolution
+        self.actual_groups = 1 if first else gamma * groups * num_estimators
+
+        while (
+            self.extended_in_channels % self.actual_groups != 0
+            or self.extended_in_channels // self.actual_groups < minimum_channels_per_group
+        ) and self.actual_groups // (groups * num_estimators) > 1:
+            gamma -= 1
+            self.actual_groups = gamma * groups * num_estimators
+
+        # Fix dimensions to be divisible by groups
+        if self.extended_in_channels % self.actual_groups:
+            self.extended_in_channels += (
+                num_estimators - self.extended_in_channels % self.actual_groups
+            )
+        if self.extended_out_channels % self.actual_groups:
+            self.extended_out_channels += (
+                num_estimators - self.extended_out_channels % self.actual_groups
+            )
+
+        # Initialize the transposed convolutional layer
+        self.conv_transpose = nn.ConvTranspose2d(
+            in_channels=self.extended_in_channels,
+            out_channels=self.extended_out_channels,
+            kernel_size=kernel_size,
+            stride=stride,
+            padding=padding,
+            output_padding=output_padding,
+            dilation=dilation,
+            groups=self.actual_groups,
+            bias=bias,
+            **factory_kwargs,
+        )
+
+    def forward(self, inputs: Tensor) -> Tensor:
+        return self.conv_transpose(inputs)
+
+    @property
+    def weight(self) -> Tensor:
+        r"""The weight of the underlying transposed convolutional layer."""
+        return self.conv_transpose.weight
+
+    @property
+    def bias(self) -> Tensor | None:
+        r"""The bias of the underlying transposed convolutional layer."""
+        return self.conv_transpose.bias
 
 
 class PackedLayerNorm(nn.GroupNorm):
@@ -579,25 +690,20 @@ class PackedLayerNorm(nn.GroupNorm):
         device=None,
         dtype=None,
     ) -> None:
-        r"""Packed-Ensembles-style LayerNorm layer.
+        """Packed-Ensembles-style LayerNorm layer.
 
         Args:
             embed_dim (int): the number of features in the input tensor.
             num_estimators (int): the number of estimators in the ensemble.
             alpha (float): the width multiplier of the layer.
-            eps (float, optional): a value added to the denominator for numerical stability. Defaults
-                to 1e-5.
-            affine (bool, optional): a boolean value that when set to ``True``, this module has
-                learnable per_channel affine parameters initialized to ones (for weights) and zeros
-                (for biases). Defaults to ``True``.
-            device (torch.device, optional): the device to use for the layer's parameters. Defaults
-                to ``None``.
-            dtype (torch.dtype, optional): the dtype to use for the layer's parameters. Defaults to
-                ``None``.
+            eps (float, optional): a value added to the denominator for numerical stability. Defaults to 1e-5.
+            affine (bool, optional): a boolean value that when set to ``True``, this module has learnable per_channel affine parameters initialized to ones (for weights) and zeros (for biases). Defaults to ``True``.
+            device (torch.device, optional): The device to use for the layer's parameters. Defaults to ``None``.
+            dtype (torch.dtype, optional): The dtype to use for the layer's parameters. Defaults to ``None``.
 
         Shape:
-            - Input: :math:`(B, *)` where :math:`*` means any number of additional dimensions.
-            - Output: :math:`(B, *)` (same shape as input)
+            - Input: :math:`(N, *)` where :math:`*` means any number of additional dimensions.
+            - Output: :math:`(N, *)` (same shape as input)
         """
         super().__init__(
             num_groups=num_estimators,
@@ -707,6 +813,8 @@ class PackedMultiheadAttention(nn.Module):
         self.num_estimators = num_estimators
         self.alpha = alpha
         self.gamma = gamma
+        self.first = first
+        self.last = last
 
         if not self._qkv_same_embed_dim:
             self.q_proj_weight = nn.Parameter(
@@ -766,24 +874,28 @@ class PackedMultiheadAttention(nn.Module):
         else:
             self.bias_k = self.bias_v = None
 
-        self.out_proj = PackedLinear(
-            in_features=embed_dim,
-            out_features=embed_dim,
-            alpha=alpha,
-            num_estimators=num_estimators,
-            gamma=gamma,
-            implementation="einsum",
-            bias=bias,
-            first=False,
-            last=last,
-            **factory_kwargs,
+        out_embed_dim = int(embed_dim * (num_estimators if last else alpha))
+
+        self.out_proj_weight = nn.Parameter(
+            torch.empty(
+                (
+                    self.num_groups,
+                    out_embed_dim // self.num_groups,
+                    self.embed_dim // self.num_groups,
+                ),
+                **factory_kwargs,
+            )
         )
+        if bias:
+            self.out_proj_bias = nn.Parameter(torch.empty(out_embed_dim, **factory_kwargs))
+        else:
+            self.register_parameter("out_proj_bias", None)
 
         self.add_zero_attn = add_zero_attn
 
         self._reset_parameters()
 
-    def _reset_parameters(self):
+    def _reset_parameters(self) -> None:
         if self._qkv_same_embed_dim:
             for i in range(self.in_proj_weight.size(0)):
                 nn.init.xavier_uniform_(self.in_proj_weight[i])
@@ -793,9 +905,12 @@ class PackedMultiheadAttention(nn.Module):
                 nn.init.xavier_uniform_(self.k_proj_weight[i])
                 nn.init.xavier_uniform_(self.v_proj_weight[i])
 
+        for i in range(self.out_proj_weight.size(0)):
+            nn.init.xavier_uniform_(self.out_proj_weight[i])
+
         if self.in_proj_bias is not None:
             nn.init.constant_(self.in_proj_bias, 0.0)
-            nn.init.constant_(self.out_proj.bias, 0.0)
+            nn.init.constant_(self.out_proj_bias, 0.0)
 
     def forward(
         self,
@@ -909,8 +1024,8 @@ class PackedMultiheadAttention(nn.Module):
                 self.bias_v,
                 self.add_zero_attn,
                 self.dropout,
-                self.out_proj.weight,
-                self.out_proj.bias,
+                self.out_proj_weight,
+                self.out_proj_bias,
                 training=self.training,
                 key_padding_mask=key_padding_mask,
                 need_weights=need_weights,
@@ -939,8 +1054,8 @@ class PackedMultiheadAttention(nn.Module):
                 self.bias_v,
                 self.add_zero_attn,
                 self.dropout,
-                self.out_proj.weight,
-                self.out_proj.bias,
+                self.out_proj_weight,
+                self.out_proj_bias,
                 training=self.training,
                 key_padding_mask=key_padding_mask,
                 need_weights=need_weights,
@@ -948,6 +1063,10 @@ class PackedMultiheadAttention(nn.Module):
                 average_attn_weights=average_attn_weights,
                 is_causal=is_causal,
             )
+
+        if self.last:
+            attn_output = rearrange(attn_output, "l b (m e) -> l (m b) e", m=self.num_estimators)
+
         if self.batch_first and is_batched:
             return attn_output.transpose(1, 0), None
         return attn_output, None

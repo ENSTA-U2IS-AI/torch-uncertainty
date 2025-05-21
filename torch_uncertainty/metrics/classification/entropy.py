@@ -15,7 +15,7 @@ class Entropy(Metric):
         reduction: Literal["mean", "sum", "none", None] = "mean",
         **kwargs: Any,
     ) -> None:
-        """The Shannon Entropy Metric to estimate the confidence of a single model
+        r"""The Shannon Entropy Metric to estimate the confidence of a single model
         or the mean confidence across estimators.
 
         Args:
@@ -42,6 +42,37 @@ class Entropy(Metric):
             ValueError:
                 If :attr:`reduction` is not one of ``'mean'``, ``'sum'``,
                 ``'none'`` or ``None``.
+
+        Example:
+
+        .. code-block:: python
+
+            from torch_uncertainty.metrics.classification import Entropy
+
+            probs = torch.tensor(
+                [
+                    [[0.7, 0.3], [0.6, 0.4], [0.8, 0.2]],  # Example 1, 3 estimators
+                    [[0.4, 0.6], [0.5, 0.5], [0.3, 0.7]],  # Example 2, 3 estimators
+                ]
+            )
+            metric = Entropy(reduction="mean")
+            metric.update(probs)
+            result = metric.compute()
+            print(result)  # Mean entropy value across samples
+            # tensor(0.6269)
+
+            # Using single-estimator probabilities
+            probs = torch.tensor(
+                [
+                    [0.7, 0.3],  # Example 1
+                    [0.4, 0.6],  # Example 2
+                ]
+            )
+            metric = Entropy(reduction=None)
+            metric.update(probs)
+            result = metric.compute()
+            print(result)  # Per-sample entropy values
+            # tensor([0.6109, 0.6730])
         """
         super().__init__(**kwargs)
 

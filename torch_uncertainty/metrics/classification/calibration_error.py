@@ -94,9 +94,9 @@ def _confidence_histogram_subplot(
     ax,
     accuracies: np.ndarray,
     confidences: np.ndarray,
-    title="Examples per bin",
-    xlabel="Top-class Confidence (%)",
-    ylabel="Density (%)",
+    title: str = "Examples per bin",
+    xlabel: str = "Top-class Confidence (%)",
+    ylabel: str = "Density (%)",
 ) -> None:
     sns.kdeplot(
         confidences * 100,
@@ -140,9 +140,9 @@ def reliability_chart(
     bin_confidences: np.ndarray,
     bin_sizes: np.ndarray,
     bins: np.ndarray,
-    title="Reliability Diagram",
-    figsize=(6, 6),
-    dpi=150,
+    title: str = "Reliability Diagram",
+    figsize: tuple[int, int] = (6, 6),
+    dpi: int = 150,
 ) -> _PLOT_OUT_TYPE:
     """Builds Reliability Diagram
     `Source <https://github.com/hollance/reliability-diagrams>`_.
@@ -213,18 +213,6 @@ MulticlassCalibrationError.plot = custom_plot
 
 
 class CalibrationError:
-    r"""Top-label Calibration Error.
-
-    See
-    `CalibrationError <https://torchmetrics.readthedocs.io/en/stable/classification/calibration_error.html>`_
-    for details. Our version of the metric is a wrapper around the original
-    metric providing a plotting functionality.
-
-    Reference:
-        Naeini et al. "Obtaining well calibrated probabilities using Bayesian
-            binning." In AAAI, 2015.
-    """
-
     def __new__(  # type: ignore[misc]
         cls,
         task: Literal["binary", "multiclass"],
@@ -236,7 +224,92 @@ class CalibrationError:
         validate_args: bool = True,
         **kwargs: Any,
     ) -> Metric:
-        """Initialize task metric."""
+        r"""Computes the Calibration Error for classification tasks.
+
+        This metric evaluates how well a model's predicted probabilities align with
+        the actual ground truth probabilities. Calibration is crucial in assessing
+        the reliability of probabilistic predictions, especially for downstream
+        decision-making tasks.
+
+        Three norms are available for measuring calibration error:
+
+        **Expected Calibration Error (ECE):**
+
+        .. math::
+
+            \text{ECE} = \sum_{i=1}^N b_i \lvert p_i - c_i \rvert
+
+        **Maximum Calibration Error (MCE):**
+
+        .. math::
+
+            \text{MCE} = \max_{i} \lvert p_i - c_i \rvert
+
+        **Root Mean Square Calibration Error (RMSCE):**
+
+        .. math::
+
+            \text{RMSCE} = \sqrt{\sum_{i=1}^N b_i (p_i - c_i)^2}
+
+        Here:
+            - :math:`p_i` is the accuracy of bin :math:`i` (fraction of correct predictions).
+            - :math:`c_i` is the mean predicted confidence in bin :math:`i`.
+            - :math:`b_i` is the fraction of total samples falling into bin :math:`i`.
+
+        Bins are constructed either uniformly in the range :math:`[0, 1]` or adaptively
+        (if `adaptive=True`).
+
+        Args:
+            task (str): Specifies the task type, either ``"binary"`` or ``"multiclass"``.
+            adaptive (bool, optional): Whether to use adaptive binning. Defaults to ``False``.
+            num_bins (int, optional): Number of bins to divide the probability space. Defaults to ``10``.
+            norm (str, optional): Specifies the type of norm to use: ``"l1"``, ``"l2"``, or ``"max"``.
+                Defaults to ``"l1"``.
+            num_classes (int, optional): Number of classes for ``"multiclass"`` tasks. Required when task
+                is ``"multiclass"``.
+            ignore_index (int, optional): Index to ignore during calculations. Defaults to ``None``.
+            validate_args (bool, optional): Whether to validate input arguments. Defaults to ``True``.
+            **kwargs: Additional keyword arguments for the metric.
+
+        Example:
+
+        .. code-block:: python
+
+            from torch_uncertainty.metrics.classification.calibration_error import (
+                CalibrationError,
+            )
+
+            # Example for binary classification
+            predicted_probs = torch.tensor([0.9, 0.8, 0.3, 0.2])
+            true_labels = torch.tensor([1, 1, 0, 0])
+
+            metric = CalibrationError(
+                task="binary",
+                num_bins=5,
+                norm="l1",
+                adaptive=False,
+            )
+
+            calibration_error = metric(predicted_probs, true_labels)
+            print(f"Calibration Error: {calibration_error}")
+            # Output: Calibration Error: 0.199
+
+        Note:
+            Bins are either uniformly distributed in :math:`[0, 1]` or adaptively sized
+            (if `adaptive=True`).
+
+        Warning:
+            If `task="multiclass"`, `num_classes` must be an integer; otherwise, a :class:`TypeError`
+            is raised.
+
+        References:
+            [1] `Naeini et al. Obtaining well calibrated probabilities using Bayesian binning. In AAAI, 2015
+            <https://ojs.aaai.org/index.php/AAAI/article/view/9602>`_.
+
+        .. seealso::
+            See `CalibrationError <https://torchmetrics.readthedocs.io/en/stable/classification/calibration_error.html>`_
+            for details. Our version of the metric is a wrapper around the original metric providing a plotting functionality.
+        """
         if kwargs.get("n_bins") is not None:
             raise ValueError("`n_bins` does not exist, use `num_bins`.")
         if adaptive:

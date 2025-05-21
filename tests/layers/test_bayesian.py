@@ -12,32 +12,32 @@ from torch_uncertainty.layers.bayesian import (
 from torch_uncertainty.layers.bayesian.sampler import TrainableDistribution
 
 
-@pytest.fixture()
+@pytest.fixture
 def feat_input_odd() -> torch.Tensor:
     return torch.rand((5, 10))
 
 
-@pytest.fixture()
+@pytest.fixture
 def feat_input_even() -> torch.Tensor:
     return torch.rand((8, 10))
 
 
-@pytest.fixture()
+@pytest.fixture
 def img_input_odd() -> torch.Tensor:
     return torch.rand((5, 10, 3, 3))
 
 
-@pytest.fixture()
+@pytest.fixture
 def img_input_even() -> torch.Tensor:
     return torch.rand((8, 10, 3, 3))
 
 
-@pytest.fixture()
+@pytest.fixture
 def cube_input_odd() -> torch.Tensor:
     return torch.rand((1, 10, 3, 3, 3))
 
 
-@pytest.fixture()
+@pytest.fixture
 def cube_input_even() -> torch.Tensor:
     return torch.rand((2, 10, 3, 3, 3))
 
@@ -47,7 +47,7 @@ class TestBayesLinear:
 
     def test_linear(self, feat_input_odd: torch.Tensor) -> None:
         layer = BayesLinear(10, 2, sigma_init=0)
-        print(layer)
+        print(layer)  # noqa: T201
         out = layer(feat_input_odd)
         assert out.shape == torch.Size([5, 2])
         layer.sample()
@@ -71,7 +71,7 @@ class TestBayesConv1d:
 
     def test_conv1(self, feat_input_odd: torch.Tensor) -> None:
         layer = BayesConv1d(5, 2, kernel_size=1, sigma_init=0)
-        print(layer)
+        print(layer)  # noqa: T201
         out = layer(feat_input_odd)
         assert out.shape == torch.Size([2, 10])
 
@@ -81,7 +81,7 @@ class TestBayesConv1d:
 
     def test_conv1_even(self, feat_input_even: torch.Tensor) -> None:
         layer = BayesConv1d(8, 2, kernel_size=1, sigma_init=0, padding_mode="reflect")
-        print(layer)
+        print(layer)  # noqa: T201
         out = layer(feat_input_even)
         assert out.shape == torch.Size([2, 10])
 
@@ -90,7 +90,7 @@ class TestBayesConv1d:
 
         layer.__setstate__({"padding_mode": "replicate"})
 
-    def test_error(self):
+    def test_error(self) -> None:
         with pytest.raises(ValueError):
             BayesConv1d(8, 2, kernel_size=1, sigma_init=0, padding_mode="random")
 
@@ -100,7 +100,7 @@ class TestBayesConv2d:
 
     def test_conv2(self, img_input_odd: torch.Tensor) -> None:
         layer = BayesConv2d(10, 2, kernel_size=1, sigma_init=0)
-        print(layer)
+        print(layer)  # noqa: T201
         out = layer(img_input_odd)
         assert out.shape == torch.Size([5, 2, 3, 3])
         layer.sample()
@@ -112,7 +112,6 @@ class TestBayesConv2d:
 
     def test_conv2_even(self, img_input_even: torch.Tensor) -> None:
         layer = BayesConv2d(10, 2, kernel_size=1, sigma_init=0, padding_mode="reflect")
-        print(layer)
         out = layer(img_input_even)
         assert out.shape == torch.Size([8, 2, 3, 3])
 
@@ -125,18 +124,16 @@ class TestBayesConv3d:
 
     def test_conv3(self, cube_input_odd: torch.Tensor) -> None:
         layer = BayesConv3d(10, 2, kernel_size=1, sigma_init=0)
-        print(layer)
+        print(layer)  # noqa: T201
         out = layer(cube_input_odd)
         assert out.shape == torch.Size([1, 2, 3, 3, 3])
 
         layer = BayesConv3d(10, 2, kernel_size=1, sigma_init=0, bias=False)
-        print(layer)
         out = layer(cube_input_odd)
         assert out.shape == torch.Size([1, 2, 3, 3, 3])
 
     def test_conv3_even(self, cube_input_even: torch.Tensor) -> None:
         layer = BayesConv3d(10, 2, kernel_size=1, sigma_init=0, padding_mode="reflect")
-        print(layer)
         out = layer(cube_input_even)
         assert out.shape == torch.Size([2, 2, 3, 3, 3])
 
@@ -158,7 +155,7 @@ class TestLPBNNLinear:
 
     def test_linear(self, feat_input_odd: torch.Tensor) -> None:
         layer = LPBNNLinear(10, 2, num_estimators=4)
-        print(layer)
+        print(layer)  # noqa: T201
         out = layer(feat_input_odd.repeat(4, 1))
         assert out.shape == torch.Size([5 * 4, 2])
 
@@ -180,7 +177,7 @@ class TestLPBNNConv2d:
 
     def test_conv2(self, img_input_odd: torch.Tensor) -> None:
         layer = LPBNNConv2d(10, 2, kernel_size=1, num_estimators=4)
-        print(layer)
+        print(layer)  # noqa: T201
         out = layer(img_input_odd.repeat(4, 1, 1, 1))
         assert out.shape == torch.Size([5 * 4, 2, 3, 3])
 
@@ -191,7 +188,6 @@ class TestLPBNNConv2d:
 
     def test_conv2_even(self, img_input_even: torch.Tensor) -> None:
         layer = LPBNNConv2d(10, 2, kernel_size=1, num_estimators=4, padding_mode="reflect")
-        print(layer)
         out = layer(img_input_even.repeat(4, 1, 1, 1))
         assert out.shape == torch.Size([8 * 4, 2, 3, 3])
 

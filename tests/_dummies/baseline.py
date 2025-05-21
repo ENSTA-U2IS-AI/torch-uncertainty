@@ -3,6 +3,7 @@ import copy
 from torch import nn
 
 from torch_uncertainty.models import EMA, SWA, deep_ensembles
+from torch_uncertainty.ood_criteria import TUOODCriterion
 from torch_uncertainty.optim_recipes import optim_cifar10_resnet18
 from torch_uncertainty.post_processing import TemperatureScaler
 from torch_uncertainty.routines import (
@@ -25,7 +26,7 @@ class DummyClassificationBaseline:
         baseline_type: str = "single",
         optim_recipe=optim_cifar10_resnet18,
         with_feats: bool = True,
-        ood_criterion: str = "msp",
+        ood_criterion: TUOODCriterion | str = "msp",
         eval_ood: bool = False,
         eval_shift: bool = False,
         eval_grouping_loss: bool = False,

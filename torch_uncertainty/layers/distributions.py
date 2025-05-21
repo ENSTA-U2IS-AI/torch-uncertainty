@@ -48,7 +48,9 @@ class _ExpandOutputLinear(nn.Module):
         **layer_args: Additional arguments for the base layer.
     """
 
-    def __init__(self, base_layer: type[nn.Module], event_dim: int, num_params: int, **layer_args):
+    def __init__(
+        self, base_layer: type[nn.Module], event_dim: int, num_params: int, **layer_args
+    ) -> None:
         if "out_features" not in inspect.getfullargspec(base_layer.__init__).args:
             raise ValueError(f"{base_layer.__name__} does not have an `out_features` argument.")
 
@@ -71,7 +73,9 @@ class _ExpandOutputConvNd(nn.Module):
         **layer_args: Additional arguments for the base layer.
     """
 
-    def __init__(self, base_layer: type[nn.Module], event_dim: int, num_params: int, **layer_args):
+    def __init__(
+        self, base_layer: type[nn.Module], event_dim: int, num_params: int, **layer_args
+    ) -> None:
         if "out_channels" not in inspect.getfullargspec(base_layer.__init__).args:
             raise ValueError(f"{base_layer.__name__} does not have an `out_channels` argument.")
 
@@ -299,31 +303,6 @@ class CauchyConvNd(_LocScaleConvNd):
 
 
 class StudentTLinear(_ExpandOutputLinear):
-    r"""Student's T-Distribution Linear Density Layer.
-
-    Args:
-        base_layer (type[nn.Module]): The base layer class.
-        event_dim (int): The number of event dimensions.
-        min_scale (float): The minimal value of the scale parameter.
-        min_df (float): The minimal value of the degrees of freedom parameter.
-        fixed_df (float): If not None, the degrees of freedom parameter is fixed to this value.
-            Otherwise, it is learned.
-        **layer_args: Additional arguments for the base layer.
-
-    Shape:
-        - Input: :math:`(\ast, H_{in})` where :math:`\ast` means any number of dimensions including
-          none and :math:`H_{in} = \text{in_features}`.
-        - Output: A dict with the following keys
-
-          - ``"loc"``: The mean of the Student's t-distribution of shape :math:`(\ast, H_{out})` where
-            all but the last dimension are the same as the input and
-            :math:`H_{out} = \text{out_features}`.
-          - ``"scale"``: The standard deviation of the Student's t-distribution of shape
-            :math:`(\ast, H_{out})`.
-          - ``"df"``: The degrees of freedom of the Student's t distribution of shape
-            :math:`(\ast, H_{out})` or Number.
-    """
-
     def __init__(
         self,
         base_layer: type[nn.Module],
@@ -333,6 +312,30 @@ class StudentTLinear(_ExpandOutputLinear):
         fixed_df: float | None = None,
         **layer_args,
     ) -> None:
+        r"""Student's T-Distribution Linear Density Layer.
+
+        Args:
+            base_layer (type[nn.Module]): The base layer class.
+            event_dim (int): The number of event dimensions.
+            min_scale (float): The minimal value of the scale parameter.
+            min_df (float): The minimal value of the degrees of freedom parameter.
+            fixed_df (float): If not None, the degrees of freedom parameter is fixed to this value.
+                Otherwise, it is learned.
+            **layer_args: Additional arguments for the base layer.
+
+        Shape:
+            - Input: :math:`(\ast, H_{in})` where :math:`\ast` means any number of dimensions including
+              none and :math:`H_{in} = \text{in_features}`.
+            - Output: A dict with the following keys
+
+              - ``"loc"``: The mean of the Student's t-distribution of shape :math:`(\ast, H_{out})` where
+                all but the last dimension are the same as the input and
+                :math:`H_{out} = \text{out_features}`.
+              - ``"scale"``: The standard deviation of the Student's t-distribution of shape
+                :math:`(\ast, H_{out})`.
+              - ``"df"``: The degrees of freedom of the Student's t distribution of shape
+                :math:`(\ast, H_{out})` or Number.
+        """
         super().__init__(
             base_layer=base_layer,
             event_dim=event_dim,
@@ -359,30 +362,6 @@ class StudentTLinear(_ExpandOutputLinear):
 
 
 class StudentTConvNd(_ExpandOutputConvNd):
-    r"""Student's T-Distribution Convolutional Density Layer.
-
-    Args:
-        base_layer (type[nn.Module]): The base layer class.
-        event_dim (int): The number of event dimensions.
-        min_scale (float): The minimal value of the scale parameter.
-        min_df (float): The minimal value of the degrees of freedom parameter.
-        fixed_df (float): If not None, the degrees of freedom parameter is fixed to this value.
-            Otherwise, it is learned.
-        **layer_args: Additional arguments for the base layer.
-
-    Shape:
-        - Input: :math:`(N, C_{in}, \ast)` where :math:`\ast` means any number of dimensions and
-          :math:`C_{in} = \text{in_channels}` and :math:`N` is the batch size.
-        - Output: A dict with the following keys
-
-          - ``"loc"``: The mean of the Student's t-distribution of shape :math:`(N, C_{out}, \ast)` where
-            :math:`C_{out} = \text{out_channels}`.
-          - ``"scale"``: The standard deviation of the Student's t-distribution of shape
-            :math:`(\ast, C_{out}, \ast)`.
-          - ``"df"``: The degrees of freedom of the Student's t distribution of shape
-            :math:`(\ast, C_{out}, \ast)`.
-    """
-
     def __init__(
         self,
         base_layer: type[nn.Module],
@@ -392,6 +371,29 @@ class StudentTConvNd(_ExpandOutputConvNd):
         fixed_df: float | None = None,
         **layer_args,
     ) -> None:
+        r"""Student's T-Distribution Convolutional Density Layer.
+
+        Args:
+            base_layer (type[nn.Module]): The base layer class.
+            event_dim (int): The number of event dimensions.
+            min_scale (float): The minimal value of the scale parameter.
+            min_df (float): The minimal value of the degrees of freedom parameter.
+            fixed_df (float): If not None, the degrees of freedom parameter is fixed to this value.
+                Otherwise, it is learned.
+            **layer_args: Additional arguments for the base layer.
+
+        Shape:
+            - Input: :math:`(N, C_{in}, \ast)` where :math:`\ast` means any number of dimensions and
+              :math:`C_{in} = \text{in_channels}` and :math:`N` is the batch size.
+            - Output: A dict with the following keys
+
+              - ``"loc"``: The mean of the Student's t-distribution of shape :math:`(N, C_{out}, \ast)` where
+                :math:`C_{out} = \text{out_channels}`.
+              - ``"scale"``: The standard deviation of the Student's t-distribution of shape
+                :math:`(\ast, C_{out}, \ast)`.
+              - ``"df"``: The degrees of freedom of the Student's t distribution of shape
+                :math:`(\ast, C_{out}, \ast)`.
+        """
         super().__init__(
             base_layer=base_layer,
             event_dim=event_dim,
@@ -418,35 +420,6 @@ class StudentTConvNd(_ExpandOutputConvNd):
 
 
 class NormalInverseGammaLinear(_ExpandOutputLinear):
-    r"""Normal-Inverse-Gamma Distribution Linear Density Layer.
-
-    Args:
-        base_layer (type[nn.Module]): The base layer class.
-        event_dim (int): The number of event dimensions.
-        min_lmbda (float): The minimal value of the :math:`\lambda` parameter.
-        min_alpha (float): The minimal value of the :math:`\alpha` parameter.
-        min_beta (float): The minimal value of the :math:`\beta` parameter.
-        **layer_args: Additional arguments for the base layer.
-
-    Shape:
-        - Input: :math:`(\ast, H_{in})` where :math:`\ast` means any number of dimensions including
-          none and :math:`H_{in} = \text{in_features}`.
-        - Output: A dict with the following keys
-
-          - ``"loc"``: The mean of the Normal-Inverse-Gamma distribution of shape :math:`(\ast, H_{out})` where
-            all but the last dimension are the same as the input and
-            :math:`H_{out} = \text{out_features}`.
-          - ``"lmbda"``: The lambda parameter of the Normal-Inverse-Gamma distribution of shape
-            :math:`(\ast, H_{out})`.
-          - ``"alpha"``: The alpha parameter of the Normal-Inverse-Gamma distribution of shape
-            :math:`(\ast, H_{out})`.
-          - ``"beta"``: The beta parameter of the Normal-Inverse-Gamma distribution of shape
-            :math:`(\ast, H_{out})`.
-
-    Source:
-        - `Normal-Inverse-Gamma Distribution <https://en.wikipedia.org/wiki/Normal-inverse-gamma_distribution>`_
-    """
-
     def __init__(
         self,
         base_layer: type[nn.Module],
@@ -456,6 +429,35 @@ class NormalInverseGammaLinear(_ExpandOutputLinear):
         min_beta: float = 1e-6,
         **layer_args,
     ) -> None:
+        r"""Normal-Inverse-Gamma Distribution Linear Density Layer.
+
+        Args:
+            base_layer (type[nn.Module]): The base layer class.
+            event_dim (int): The number of event dimensions.
+            min_lmbda (float): The minimal value of the :math:`\lambda` parameter.
+            min_alpha (float): The minimal value of the :math:`\alpha` parameter.
+            min_beta (float): The minimal value of the :math:`\beta` parameter.
+            **layer_args: Additional arguments for the base layer.
+
+        Shape:
+            - Input: :math:`(\ast, H_{in})` where :math:`\ast` means any number of dimensions including
+              none and :math:`H_{in} = \text{in_features}`.
+            - Output: A dict with the following keys
+
+              - ``"loc"``: The mean of the Normal-Inverse-Gamma distribution of shape :math:`(\ast, H_{out})` where
+                all but the last dimension are the same as the input and
+                :math:`H_{out} = \text{out_features}`.
+              - ``"lmbda"``: The lambda parameter of the Normal-Inverse-Gamma distribution of shape
+                :math:`(\ast, H_{out})`.
+              - ``"alpha"``: The alpha parameter of the Normal-Inverse-Gamma distribution of shape
+                :math:`(\ast, H_{out})`.
+              - ``"beta"``: The beta parameter of the Normal-Inverse-Gamma distribution of shape
+                :math:`(\ast, H_{out})`.
+
+        Source:
+            - `Normal-Inverse-Gamma Distribution <https://en.wikipedia.org/wiki/Normal-inverse-gamma_distribution>`_
+
+        """
         super().__init__(
             base_layer=base_layer,
             event_dim=event_dim,
@@ -486,34 +488,6 @@ class NormalInverseGammaLinear(_ExpandOutputLinear):
 
 
 class NormalInverseGammaConvNd(_ExpandOutputConvNd):
-    r"""Normal-Inverse-Gamma Distribution Convolutional Density Layer.
-
-    Args:
-        base_layer (type[nn.Module]): The base layer class.
-        event_dim (int): The number of event dimensions.
-        min_lmbda (float): The minimal value of the :math:`\lambda` parameter.
-        min_alpha (float): The minimal value of the :math:`\alpha` parameter.
-        min_beta (float): The minimal value of the :math:`\beta` parameter.
-        **layer_args: Additional arguments for the base layer.
-
-    Shape:
-        - Input: :math:`(N, C_{in}, \ast)` where :math:`\ast` means any number of dimensions and
-          :math:`C_{in} = \text{in_channels}` and :math:`N` is the batch size.
-        - Output: A dict with the following keys
-
-          - ``"loc"``: The mean of the Normal-Inverse-Gamma distribution of shape :math:`(N, C_{out}, \ast)` where
-            :math:`C_{out} = \text{out_channels}`.
-          - ``"lmbda"``: The lambda parameter of the Normal-Inverse-Gamma distribution of shape
-            :math:`(N, C_{out}, \ast)`.
-          - ``"alpha"``: The alpha parameter of the Normal-Inverse-Gamma distribution of shape
-            :math:`(N, C_{out}, \ast)`.
-          - ``"beta"``: The beta parameter of the Normal-Inverse-Gamma distribution of shape
-            :math:`(N, C_{out}, \ast)`.
-
-    Source:
-        - `Normal-Inverse-Gamma Distribution <https://en.wikipedia.org/wiki/Normal-inverse-gamma_distribution>`_
-    """
-
     def __init__(
         self,
         base_layer: type[nn.Module],
@@ -523,6 +497,33 @@ class NormalInverseGammaConvNd(_ExpandOutputConvNd):
         min_beta: float = 1e-6,
         **layer_args,
     ) -> None:
+        r"""Normal-Inverse-Gamma Distribution Convolutional Density Layer.
+
+        Args:
+            base_layer (type[nn.Module]): The base layer class.
+            event_dim (int): The number of event dimensions.
+            min_lmbda (float): The minimal value of the :math:`\lambda` parameter.
+            min_alpha (float): The minimal value of the :math:`\alpha` parameter.
+            min_beta (float): The minimal value of the :math:`\beta` parameter.
+            **layer_args: Additional arguments for the base layer.
+
+        Shape:
+            - Input: :math:`(N, C_{in}, \ast)` where :math:`\ast` means any number of dimensions and
+              :math:`C_{in} = \text{in_channels}` and :math:`N` is the batch size.
+            - Output: A dict with the following keys
+
+              - ``"loc"``: The mean of the Normal-Inverse-Gamma distribution of shape :math:`(N, C_{out}, \ast)` where
+                :math:`C_{out} = \text{out_channels}`.
+              - ``"lmbda"``: The lambda parameter of the Normal-Inverse-Gamma distribution of shape
+                :math:`(N, C_{out}, \ast)`.
+              - ``"alpha"``: The alpha parameter of the Normal-Inverse-Gamma distribution of shape
+                :math:`(N, C_{out}, \ast)`.
+              - ``"beta"``: The beta parameter of the Normal-Inverse-Gamma distribution of shape
+                :math:`(N, C_{out}, \ast)`.
+
+        Source:
+            - `Normal-Inverse-Gamma Distribution <https://en.wikipedia.org/wiki/Normal-inverse-gamma_distribution>`_
+        """
         super().__init__(
             base_layer=base_layer,
             event_dim=event_dim,

@@ -26,6 +26,7 @@ class DummyClassificationDataModule(TUDataModule):
         self,
         root: str | Path,
         batch_size: int,
+        eval_batch_size: int | None = None,
         num_classes: int = 2,
         num_workers: int = 1,
         eval_ood: bool = False,
@@ -38,9 +39,11 @@ class DummyClassificationDataModule(TUDataModule):
             root=root,
             val_split=None,
             batch_size=batch_size,
+            eval_batch_size=eval_batch_size,
             num_workers=num_workers,
             pin_memory=pin_memory,
             persistent_workers=persistent_workers,
+            postprocess_set="test",
         )
 
         self.eval_ood = eval_ood
@@ -104,11 +107,13 @@ class DummyClassificationDataModule(TUDataModule):
             self.shift.shift_severity = 1
 
     def test_dataloader(self) -> DataLoader | list[DataLoader]:
-        dataloader = [self._data_loader(self.test)]
+        dataloader = [self._data_loader(self.test, training=False, shuffle=False)]
         if self.eval_ood:
-            dataloader.append(self._data_loader(self.ood))
+            dataloader.append(self._data_loader(self.get_ood_set(), training=False, shuffle=False))
         if self.eval_shift:
-            dataloader.append(self._data_loader(self.shift))
+            dataloader.append(
+                self._data_loader(self.get_shift_set(), training=False, shuffle=False)
+            )
         return dataloader
 
     def _get_train_data(self) -> ArrayLike:
@@ -126,6 +131,7 @@ class DummyRegressionDataModule(TUDataModule):
         self,
         root: str | Path,
         batch_size: int,
+        eval_batch_size: int | None = None,
         out_features: int = 2,
         num_workers: int = 1,
         pin_memory: bool = True,
@@ -134,6 +140,7 @@ class DummyRegressionDataModule(TUDataModule):
         super().__init__(
             root=root,
             batch_size=batch_size,
+            eval_batch_size=eval_batch_size,
             num_workers=num_workers,
             pin_memory=pin_memory,
             persistent_workers=persistent_workers,
@@ -171,7 +178,7 @@ class DummyRegressionDataModule(TUDataModule):
             )
 
     def test_dataloader(self) -> DataLoader | list[DataLoader]:
-        return [self._data_loader(self.test)]
+        return [self._data_loader(self.test, training=False, shuffle=False)]
 
 
 class DummySegmentationDataModule(TUDataModule):
@@ -184,6 +191,7 @@ class DummySegmentationDataModule(TUDataModule):
         self,
         root: str | Path,
         batch_size: int,
+        eval_batch_size: int | None = None,
         num_classes: int = 2,
         num_workers: int = 1,
         image_size: int = 4,
@@ -195,6 +203,7 @@ class DummySegmentationDataModule(TUDataModule):
             root=root,
             val_split=None,
             batch_size=batch_size,
+            eval_batch_size=eval_batch_size,
             num_workers=num_workers,
             pin_memory=pin_memory,
             persistent_workers=persistent_workers,
@@ -256,7 +265,7 @@ class DummySegmentationDataModule(TUDataModule):
             )
 
     def test_dataloader(self) -> DataLoader | list[DataLoader]:
-        return [self._data_loader(self.test)]
+        return [self._data_loader(self.test, training=False, shuffle=False)]
 
     def _get_train_data(self) -> ArrayLike:
         return self.train.data
@@ -273,6 +282,7 @@ class DummyPixelRegressionDataModule(TUDataModule):
         self,
         root: str | Path,
         batch_size: int,
+        eval_batch_size: int | None = None,
         output_dim: int = 2,
         num_workers: int = 1,
         image_size: int = 4,
@@ -284,6 +294,7 @@ class DummyPixelRegressionDataModule(TUDataModule):
             root=root,
             val_split=None,
             batch_size=batch_size,
+            eval_batch_size=eval_batch_size,
             num_workers=num_workers,
             pin_memory=pin_memory,
             persistent_workers=persistent_workers,
@@ -345,7 +356,7 @@ class DummyPixelRegressionDataModule(TUDataModule):
             )
 
     def test_dataloader(self) -> DataLoader | list[DataLoader]:
-        return [self._data_loader(self.test)]
+        return [self._data_loader(self.test, training=False, shuffle=False)]
 
     def _get_train_data(self) -> ArrayLike:
         return self.train.data

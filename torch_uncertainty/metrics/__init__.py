@@ -9,12 +9,14 @@ from .classification import (
     CategoricalNLL,
     CovAt5Risk,
     CovAtxRisk,
+    CoverageRate,
     Disagreement,
     Entropy,
     GroupingLoss,
-    MeanIntersectionOverUnion,
     MutualInformation,
     RiskAt80Cov,
+    RiskAtxCov,
+    SetSize,
     VariationRatio,
 )
 from .regression import (
@@ -27,5 +29,11 @@ from .regression import (
     MeanSquaredLogError,
     SILog,
     ThresholdAccuracy,
+)
+from .segmentation import (
+    MeanIntersectionOverUnion,
+    SegmentationBinaryAUROC,
+    SegmentationBinaryAveragePrecision,
+    SegmentationFPR95,
 )
 from .sparsification import AUSE

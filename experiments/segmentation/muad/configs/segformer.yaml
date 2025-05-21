@@ -15,8 +15,8 @@ data:
   batch_size: 8
   crop_size: 1024
   eval_size:
-  - 1024
-  - 2048
+    - 1024
+    - 2048
   num_workers: 30
 optimizer:
   lr: 6e-5

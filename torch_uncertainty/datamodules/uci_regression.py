@@ -15,8 +15,9 @@ class UCIRegressionDataModule(TUDataModule):
     def __init__(
         self,
         root: str | Path,
-        batch_size: int,
         dataset_name: str,
+        batch_size: int,
+        eval_batch_size: int | None = None,
         val_split: float = 0.0,
         num_workers: int = 1,
         pin_memory: bool = True,
@@ -28,11 +29,13 @@ class UCIRegressionDataModule(TUDataModule):
 
         Args:
             root (string): Root directory of the datasets.
-            batch_size (int): The batch size for training and testing.
             dataset_name (string, optional): The name of the dataset. One of
-                "boston-housing", "concrete", "energy", "kin8nm",
-                "naval-propulsion-plant", "power-plant", "protein",
-                "wine-quality-red", and "yacht".
+                ``boston-housing``, ``concrete``, ``energy``, ``kin8nm``,
+                ``naval-propulsion-plant``, ``power-plant``, ``protein``,
+                ``wine-quality-red``, and ``yacht``.
+            batch_size (int): The batch size for training and testing.
+            eval_batch_size (int | None) : Number of samples per batch during evaluation (val
+                and test). Set to :attr:`batch_size` if ``None``. Defaults to ``None``.
             val_split (float, optional): Share of validation samples. Defaults
                 to ``0``.
             num_workers (int, optional): How many subprocesses to use for data
@@ -49,6 +52,7 @@ class UCIRegressionDataModule(TUDataModule):
         super().__init__(
             root=root,
             batch_size=batch_size,
+            eval_batch_size=eval_batch_size,
             val_split=val_split,
             num_workers=num_workers,
             pin_memory=pin_memory,

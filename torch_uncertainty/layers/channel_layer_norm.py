@@ -15,26 +15,26 @@ class ChannelLayerNorm(LayerNorm):
         device: torch.device | str | None = None,
         dtype: torch.dtype | str | None = None,
     ) -> None:
-        r"""Layer normalization over the channel dimension.
+        r"""Masksembles-style Conv2d layer.
 
         Args:
-        normalized_shape (int or list or torch.Size): input shape from an expected input
-            of size
+            normalized_shape (int or list or torch.Size): input shape from an expected input
+                of size
 
-            .. math::
-                [* \times \text{normalized\_shape}[0] \times \text{normalized\_shape}[1]
-                    \times \ldots \times \text{normalized\_shape}[-1]]
+                .. math::
+                    [* \times \text{normalized\_shape}[0] \times \text{normalized\_shape}[1]
+                        \times \ldots \times \text{normalized\_shape}[-1]]
 
-            If a single integer is used, it is treated as a singleton list, and this module will
-            normalize over the channel dimension which is expected to be of that specific size.
-        eps (float): a value added to the denominator for numerical stability. Default: 1e-5
-        elementwise_affine (bool): a boolean value that when set to ``True``, this module
-            has learnable per-element affine parameters initialized to ones (for weights)
-            and zeros (for biases). Default: ``True``.
-        bias (bool): If set to ``False``, the layer will not learn an additive bias (only relevant if
-            :attr:`elementwise_affine` is ``True``). Default: ``True``.
-        device (torch.device or str or None): the desired device of the module.
-        dtype (torch.dtype or str or None): the desired floating point type of the module.
+                If a single integer is used, it is treated as a singleton list, and this module will
+                normalize over the channel dimension which is expected to be of that specific size.
+            eps (float): a value added to the denominator for numerical stability. Default: 1e-5
+            elementwise_affine (bool): a boolean value that when set to ``True``, this module
+                has learnable per-element affine parameters initialized to ones (for weights)
+                and zeros (for biases). Default: ``True``.
+            bias (bool): If set to ``False``, the layer will not learn an additive bias (only relevant if
+                :attr:`elementwise_affine` is ``True``). Default: ``True``.
+            device (torch.device or str or None): the desired device of the module.
+            dtype (torch.dtype or str or None): the desired floating point type of the module.
 
         Attributes:
             weight: the learnable weights of the module of shape
@@ -48,6 +48,9 @@ class ChannelLayerNorm(LayerNorm):
             - Input: :math:`(N, *)`
             - Output: :math:`(N, *)` (same shape as input)
 
+        Reference:
+            `Masksembles for Uncertainty Estimation`, Nikita Durasov, Timur
+            Bagautdinov, Pierre Baque, Pascal Fua.
         """
         super().__init__(normalized_shape, eps, elementwise_affine, bias, device, dtype)
         self.cback = ChannelBack()

@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Literal
 
 import matplotlib.cm as cm
@@ -33,6 +34,7 @@ from torch_uncertainty.models import (
     EPOCH_UPDATE_MODEL,
     STEP_UPDATE_MODEL,
 )
+from torch_uncertainty.utils import csv_writer
 from torch_uncertainty.utils.distributions import (
     get_dist_class,
     get_dist_estimate,
@@ -58,6 +60,8 @@ class PixelRegressionRoutine(LightningModule):
         eval_shift: bool = False,
         num_image_plot: int = 4,
         log_plots: bool = False,
+        save_in_csv: bool = False,
+        csv_filename: str = "results.csv",
     ) -> None:
         r"""Routine for training & testing on **pixel regression** tasks.
 
@@ -81,6 +85,11 @@ class PixelRegressionRoutine(LightningModule):
             num_image_plot (int, optional): Number of images to plot. Defaults to ``4``.
             log_plots (bool, optional): Indicates whether to log plots from
                 metrics. Defaults to ``False``.
+            save_in_csv (bool, optional): Save the results in csv. Defaults to
+                ``False``.
+            csv_filename (str, optional): Name of the csv file. Defaults to
+                ``"results.csv"``. Note that this is only used if
+                :attr:`save_in_csv` is ``True``.
         """
         super().__init__()
         _depth_routine_checks(output_dim, num_image_plot, log_plots)
@@ -96,6 +105,8 @@ class PixelRegressionRoutine(LightningModule):
         self.dist_estimate = dist_estimate
         self.probabilistic = dist_family is not None
         self.loss = loss
+        self.save_in_csv = save_in_csv
+        self.csv_filename = csv_filename
         self.num_image_plot = num_image_plot
         self.is_ensemble = is_ensemble
         self.log_plots = log_plots
@@ -303,9 +314,7 @@ class PixelRegressionRoutine(LightningModule):
         preds, dist = self.evaluation_forward(inputs)
 
         if batch_idx == 0 and self.log_plots:
-            num_images = (
-                self.num_image_plot if self.num_image_plot < inputs.size(0) else inputs.size(0)
-            )
+            num_images = min(inputs.size(0), self.num_image_plot)
             self._plot_depth(
                 inputs[:num_images, ...],
                 preds[:num_images, ...],
@@ -339,17 +348,22 @@ class PixelRegressionRoutine(LightningModule):
 
     def on_test_epoch_end(self) -> None:
         """Compute and log the values of the collected metrics in `test_step`."""
-        self.log_dict(
-            self.test_metrics.compute(),
-            sync_dist=True,
-        )
+        result_dict = self.test_metrics.compute()
+
+        if self.probabilistic:
+            result_dict |= self.test_prob_metrics.compute()
+
+        self.log_dict(result_dict, sync_dist=True)
+
         self.test_metrics.reset()
         if self.probabilistic:
-            self.log_dict(
-                self.test_prob_metrics.compute(),
-                sync_dist=True,
-            )
             self.test_prob_metrics.reset()
+
+        if self.save_in_csv and self.logger is not None:
+            csv_writer(
+                Path(self.logger.log_dir) / self.csv_filename,
+                result_dict,
+            )
 
     def _plot_depth(
         self,

@@ -8,7 +8,7 @@ from torch_uncertainty.models import MCDropout, mc_dropout
 class TestMCDropout:
     """Testing the MC Dropout class."""
 
-    def test_mc_dropout_train(self):
+    def test_mc_dropout_train(self) -> None:
         model = dummy_model(10, 5, 0.1)
         dropout_model = mc_dropout(model, num_estimators=5)
         dropout_model.train()
@@ -20,7 +20,7 @@ class TestMCDropout:
         assert dropout_model.training
         dropout_model(torch.rand(1, 10))
 
-    def test_mc_dropout_eval(self):
+    def test_mc_dropout_eval(self) -> None:
         model = dummy_model(10, 5, 0.1)
         dropout_model = mc_dropout(model, num_estimators=5)
         dropout_model.eval()
@@ -32,7 +32,7 @@ class TestMCDropout:
         assert not dropout_model.training
         dropout_model(torch.rand(1, 10))
 
-    def test_mc_dropout_errors(self):
+    def test_mc_dropout_errors(self) -> None:
         model = dummy_model(10, 5, 0.1)
 
         with pytest.raises(ValueError, match="`num_estimators` must be strictly positive"):

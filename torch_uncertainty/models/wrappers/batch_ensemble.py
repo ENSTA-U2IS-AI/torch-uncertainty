@@ -51,11 +51,7 @@ class BatchEnsemble(nn.Module):
             initializing the routine.
 
         Example:
-            >>> model = nn.Sequential(
-            ...     nn.Linear(10, 5),
-            ...     nn.ReLU(),
-            ...     nn.Linear(5, 2)
-            ... )
+            >>> model = nn.Sequential(nn.Linear(10, 5), nn.ReLU(), nn.Linear(5, 2))
             >>> model = BatchEnsemble(model, num_estimators=4, convert_layers=True)
             >>> model
             BatchEnsemble(
@@ -112,7 +108,7 @@ class BatchEnsemble(nn.Module):
             )
 
 
-def _batch_ensemble_checks(filtered_modules, num_estimators):
+def _batch_ensemble_checks(filtered_modules: list[nn.Module], num_estimators: int) -> None:
     """Check if the model contains the required number of dropout modules."""
     if len(filtered_modules) == 0:
         raise ValueError(

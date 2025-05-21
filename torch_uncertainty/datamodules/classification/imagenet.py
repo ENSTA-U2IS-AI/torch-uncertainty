@@ -19,8 +19,8 @@ from torch_uncertainty.datasets.classification import (
     ImageNetR,
     OpenImageO,
 )
+from torch_uncertainty.datasets.utils import create_train_val_split
 from torch_uncertainty.utils import (
-    create_train_val_split,
     interpolation_modes_from_str,
 )
 
@@ -46,11 +46,15 @@ class ImageNetDataModule(TUDataModule):
         self,
         root: str | Path,
         batch_size: int,
+        eval_batch_size: int | None = None,
         eval_ood: bool = False,
         eval_shift: bool = False,
+        num_tta: int = 1,
         shift_severity: int = 1,
         val_split: float | Path | None = None,
         postprocess_set: Literal["val", "test"] = "val",
+        train_transform: nn.Module | None = None,
+        test_transform: nn.Module | None = None,
         ood_ds: str = "openimage-o",
         test_alt: str | None = None,
         procedure: str | None = None,
@@ -62,41 +66,53 @@ class ImageNetDataModule(TUDataModule):
         pin_memory: bool = True,
         persistent_workers: bool = True,
     ) -> None:
-        """DataModule for ImageNet.
+        """DataModule for the ImageNet dataset.
+
+        This datamodule uses ImageNet as In-distribution dataset, OpenImage-O, INaturalist,
+        ImageNet-0, SVHN or DTD as Out-of-distribution dataset and ImageNet-C as shifted dataset.
 
         Args:
             root (str): Root directory of the datasets.
-            eval_ood (bool): Whether to evaluate out-of-distribution
-                performance. Defaults to ``False``.
-            eval_shift (bool): Whether to evaluate on shifted data. Defaults to
-                ``False``.
-            shift_severity: int = 1,
-            batch_size (int): Number of samples per batch.
+            batch_size (int): Number of samples per batch during training.
+            eval_batch_size (int | None) : Number of samples per batch during evaluation (val
+                and test). Set to batch_size if ``None``. Defaults to ``None``.
+            eval_ood (bool): Whether to evaluate out-of-distribution performance. Defaults to ``False``.
+            eval_shift (bool): Whether to evaluate on shifted data. Defaults to ``False``.
+            num_tta (int): Number of test-time augmentations (TTA). Defaults to ``1`` (no TTA).
+            shift_severity (int): Severity of the shift. Defaults to ``1``.
             val_split (float or Path): Share of samples to use for validation
                 or path to a yaml file containing a list of validation images
                 ids. Defaults to ``0.0``.
             postprocess_set (str, optional): The post-hoc calibration dataset to
                 use for the post-processing method. Defaults to ``val``.
+            train_transform (nn.Module | None): Custom training transform. Defaults
+                to ``None``. If not provided, a default transform is used.
+            test_transform (nn.Module | None): Custom test transform. Defaults to
+                ``None``. If not provided, a default transform is used.
             ood_ds (str): Which out-of-distribution dataset to use. Defaults to
                 ``"openimage-o"``.
             test_alt (str): Which test set to use. Defaults to ``None``.
             procedure (str): Which procedure to use. Defaults to ``None``.
+                Only used if ``train_transform`` is not provided.
             train_size (int): Size of training images. Defaults to ``224``.
             interpolation (str): Interpolation method for the Resize Crops.
-                Defaults to ``"bilinear"``.
+                Defaults to ``"bilinear"``. Only used if ``train_transform`` is not
+                provided.
             basic_augment (bool): Whether to apply base augmentations. Defaults to
-                ``True``.
+                ``True``. Only used if ``train_transform`` is not provided.
             rand_augment_opt (str): Which RandAugment to use. Defaults to ``None``.
+                Only used if ``train_transform`` is not provided.
             num_workers (int): Number of workers to use for data loading. Defaults
                 to ``1``.
             pin_memory (bool): Whether to pin memory. Defaults to ``True``.
-            persistent_workers (bool): Whether to use persistent workers. Defaults
-                to ``True``.
+            persistent_workers (bool): Whether to use persistent workers. Defaults to ``True``.
         """
         super().__init__(
             root=Path(root),
             batch_size=batch_size,
+            eval_batch_size=eval_batch_size,
             val_split=val_split,
+            num_tta=num_tta,
             postprocess_set=postprocess_set,
             num_workers=num_workers,
             pin_memory=pin_memory,
@@ -141,54 +157,76 @@ class ImageNetDataModule(TUDataModule):
 
         self.procedure = procedure
 
-        if basic_augment:
-            basic_transform = v2.Compose(
-                [
-                    v2.RandomResizedCrop(train_size, interpolation=self.interpolation),
-                    v2.RandomHorizontalFlip(),
-                ]
-            )
+        if train_transform is not None:
+            self.train_transform = train_transform
         else:
-            basic_transform = nn.Identity()
-
-        if self.procedure is None:
-            if rand_augment_opt is not None:
-                main_transform = rand_augment_transform(rand_augment_opt, {})
+            if basic_augment:
+                basic_transform = v2.Compose(
+                    [
+                        v2.RandomResizedCrop(train_size, interpolation=self.interpolation),
+                        v2.RandomHorizontalFlip(),
+                    ]
+                )
             else:
-                main_transform = nn.Identity()
-        elif self.procedure == "ViT":
-            train_size = 224
-            main_transform = v2.Compose(
+                basic_transform = nn.Identity()
+
+            if self.procedure is None:
+                if rand_augment_opt is not None:
+                    main_transform = v2.Compose(
+                        [
+                            v2.ToPILImage(),
+                            rand_augment_transform(rand_augment_opt, {}),
+                            v2.ToImage(),
+                        ]
+                    )
+                else:
+                    main_transform = nn.Identity()
+            elif self.procedure == "ViT":
+                train_size = 224
+                main_transform = v2.Compose(
+                    [
+                        v2.ToPILImage(),
+                        Mixup(mixup_alpha=0.2, cutmix_alpha=1.0),
+                        rand_augment_transform("rand-m9-n2-mstd0.5", {}),
+                        v2.ToImage(),
+                    ]
+                )
+            elif self.procedure == "A3":
+                train_size = 160
+                main_transform = v2.Compose(
+                    [
+                        v2.ToPILImage(),
+                        rand_augment_transform("rand-m6-mstd0.5-inc1", {}),
+                        v2.ToImage(),
+                    ]
+                )
+            else:
+                raise ValueError("The procedure is unknown")
+
+            self.train_transform = v2.Compose(
                 [
-                    Mixup(mixup_alpha=0.2, cutmix_alpha=1.0),
-                    rand_augment_transform("rand-m9-n2-mstd0.5", {}),
+                    v2.ToImage(),
+                    basic_transform,
+                    main_transform,
+                    v2.ToDtype(dtype=torch.float32, scale=True),
+                    v2.Normalize(mean=self.mean, std=self.std),
                 ]
             )
-        elif self.procedure == "A3":
-            train_size = 160
-            main_transform = rand_augment_transform("rand-m6-mstd0.5-inc1", {})
+
+        if num_tta != 1:
+            self.test_transform = train_transform
+        elif test_transform is not None:
+            self.test_transform = test_transform
         else:
-            raise ValueError("The procedure is unknown")
-
-        self.train_transform = v2.Compose(
-            [
-                v2.ToImage(),
-                basic_transform,
-                main_transform,
-                v2.ToDtype(dtype=torch.float32, scale=True),
-                v2.Normalize(mean=self.mean, std=self.std),
-            ]
-        )
-
-        self.test_transform = v2.Compose(
-            [
-                v2.ToImage(),
-                v2.Resize(256, interpolation=self.interpolation),
-                v2.CenterCrop(224),
-                v2.ToDtype(dtype=torch.float32, scale=True),
-                v2.Normalize(mean=self.mean, std=self.std),
-            ]
-        )
+            self.test_transform = v2.Compose(
+                [
+                    v2.ToImage(),
+                    v2.Resize(256, interpolation=self.interpolation),
+                    v2.CenterCrop(224),
+                    v2.ToDtype(dtype=torch.float32, scale=True),
+                    v2.Normalize(mean=self.mean, std=self.std),
+                ]
+            )
 
     def _verify_splits(self, split: str) -> None:
         if split not in list(self.root.iterdir()):
@@ -299,11 +337,13 @@ class ImageNetDataModule(TUDataModule):
             list[DataLoader]: ImageNet test set (in distribution data), OOD dataset test split
             (out-of-distribution data), and/or ImageNetC data.
         """
-        dataloader = [self._data_loader(self.test)]
+        dataloader = [self._data_loader(self.get_test_set(), training=False, shuffle=False)]
         if self.eval_ood:
-            dataloader.append(self._data_loader(self.ood))
+            dataloader.append(self._data_loader(self.get_ood_set(), training=False, shuffle=False))
         if self.eval_shift:
-            dataloader.append(self._data_loader(self.shift))
+            dataloader.append(
+                self._data_loader(self.get_shift_set(), training=False, shuffle=False)
+            )
         return dataloader
 
 

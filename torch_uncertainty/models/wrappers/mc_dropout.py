@@ -1,4 +1,5 @@
 import torch
+from einops import repeat
 from torch import Tensor, nn
 from torch.nn.modules.dropout import _DropoutNd
 
@@ -15,11 +16,9 @@ class MCDropout(nn.Module):
 
         Args:
             model (nn.Module): model to wrap
-            num_estimators (int): number of estimators to use during the
-                evaluation
+            num_estimators (int): number of estimators to use during the evaluation
             last_layer (bool): whether to apply dropout to the last layer only.
-            on_batch (bool): Perform the MC-Dropout on the batch-size.
-                Otherwise in a for loop. Useful when constrained in memory.
+            on_batch (bool): Perform the MC-Dropout on the batch-size. Otherwise in a for loop. Useful when constrained in memory.
 
         Warning:
             This module will work only if you apply dropout through modules
@@ -85,7 +84,7 @@ class MCDropout(nn.Module):
         if self.training:
             return self.core_model(x)
         if self.on_batch:
-            x = x.repeat(self.num_estimators, 1, 1, 1)
+            x = repeat(x, "b ... -> (m b) ...", m=self.num_estimators)
             return self.core_model(x)
         # Else, for loop
         return torch.cat([self.core_model(x) for _ in range(self.num_estimators)], dim=0)
@@ -101,12 +100,12 @@ def mc_dropout(
 
     Args:
         model (nn.Module): model to wrap
-        num_estimators (int): number of estimators to use
-        last_layer (bool, optional): whether to apply dropout to the last
-            layer only. Defaults to False.
-        on_batch (bool): Increase the batch_size to perform MC-Dropout.
-            Otherwise in a for loop to reduce memory footprint. Defaults
-            to true.
+        num_estimators (int): number of estimators to use last_layer (bool, optional): whether to apply dropout to the last layer only. Defaults to ``False``.
+        on_batch (bool): Increase the batch_size to perform MC-Dropout. Otherwise in a for loop to reduce memory footprint. Defaults to ``True``.
+        last_layer (bool, optional): whether to apply dropout to the last layer only. Defaults to ``False``.
+
+    Warning:
+        Beware that :attr:`on_batch==True` can raise weird errors if not enough memory is available.
     """
     return MCDropout(
         model=model,

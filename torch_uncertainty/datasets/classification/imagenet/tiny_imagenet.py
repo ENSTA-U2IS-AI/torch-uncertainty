@@ -1,4 +1,3 @@
-import os
 from collections import defaultdict
 from collections.abc import Callable
 from pathlib import Path
@@ -11,10 +10,6 @@ from torch.utils.data import Dataset
 
 
 class TinyImageNet(Dataset):
-    """Inspired by
-    https://gist.github.com/z-a-f/b862013c0dc2b540cf96a123a6766e54.
-    """
-
     def __init__(
         self,
         root: str | Path,
@@ -22,6 +17,7 @@ class TinyImageNet(Dataset):
         transform: Callable | None = None,
         target_transform: Callable | None = None,
     ) -> None:
+        """Inspired by https://gist.github.com/z-a-f/b862013c0dc2b540cf96a123a6766e54."""
         self.root = Path(root) / "tiny-imagenet-200"
 
         if split not in ["train", "val", "test"]:
@@ -99,8 +95,7 @@ class TinyImageNet(Dataset):
 
         if self.split == "train":
             train_path = self.root / "train"
-            train_nids = os.listdir(train_path)
-            for nid in train_nids:
+            for nid in Path(train_path).iterdir():
                 anno_path = train_path / nid / (nid + "_boxes.txt")
                 imgs_path = train_path / nid / "images"
                 label_id = self.ids.index(nid)
@@ -120,6 +115,6 @@ class TinyImageNet(Dataset):
                     paths.append((fname, label_id))
 
         else:  # self.split == "test":
-            test_path = self.root / "test"
-            paths = [test_path / x for x in os.listdir(test_path)]
+            test_path = Path(self.root / "test")
+            paths = [test_path / x for x in test_path.iterdir()]
         return paths

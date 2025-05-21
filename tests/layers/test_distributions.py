@@ -7,7 +7,7 @@ from torch_uncertainty.layers.distributions import (
 )
 
 
-@pytest.fixture()
+@pytest.fixture
 def feat_input() -> torch.Tensor:
     return torch.rand((3, 8))  # (B, Hin)
 
@@ -19,7 +19,7 @@ def img_input() -> torch.Tensor:
 class TestDistributionLinear:
     """Testing the distribution linear layer classes."""
 
-    def test_normal_linear(self, feat_input: torch.Tensor):
+    def test_normal_linear(self, feat_input: torch.Tensor) -> None:
         dist_layer = get_dist_linear_layer("normal")
         layer = dist_layer(
             base_layer=torch.nn.Linear,
@@ -31,7 +31,7 @@ class TestDistributionLinear:
         assert out["loc"].shape == torch.Size([3, 2])
         assert out["scale"].shape == torch.Size([3, 2])
 
-    def test_laplace_linear(self, feat_input: torch.Tensor):
+    def test_laplace_linear(self, feat_input: torch.Tensor) -> None:
         dist_layer = get_dist_linear_layer("laplace")
         layer = dist_layer(
             base_layer=torch.nn.Linear,
@@ -43,7 +43,7 @@ class TestDistributionLinear:
         assert out["loc"].shape == torch.Size([3, 2])
         assert out["scale"].shape == torch.Size([3, 2])
 
-    def test_cauchy_linear(self, feat_input: torch.Tensor):
+    def test_cauchy_linear(self, feat_input: torch.Tensor) -> None:
         dist_layer = get_dist_linear_layer("cauchy")
         layer = dist_layer(
             base_layer=torch.nn.Linear,
@@ -55,7 +55,7 @@ class TestDistributionLinear:
         assert out["loc"].shape == torch.Size([3, 2])
         assert out["scale"].shape == torch.Size([3, 2])
 
-    def test_student_linear(self, feat_input: torch.Tensor):
+    def test_student_linear(self, feat_input: torch.Tensor) -> None:
         dist_layer = get_dist_linear_layer("student")
         layer = dist_layer(
             base_layer=torch.nn.Linear,
@@ -81,7 +81,7 @@ class TestDistributionLinear:
         assert out["df"].shape == torch.Size([3, 2])
         assert torch.allclose(out["df"], torch.tensor(3.0))
 
-    def test_nig_linear(self, feat_input: torch.Tensor):
+    def test_nig_linear(self, feat_input: torch.Tensor) -> None:
         dist_layer = get_dist_linear_layer("nig")
         layer = dist_layer(
             base_layer=torch.nn.Linear,
@@ -95,12 +95,12 @@ class TestDistributionLinear:
         assert out["alpha"].shape == torch.Size([3, 2])
         assert out["beta"].shape == torch.Size([3, 2])
 
-    def test_failures(self):
+    def test_failures(self) -> None:
         with pytest.raises(NotImplementedError):
             get_dist_linear_layer("unknown")
 
+        layer_class = get_dist_linear_layer("normal")
         with pytest.raises(ValueError):
-            layer_class = get_dist_linear_layer("normal")
             layer_class(
                 base_layer=torch.nn.Conv2d,
                 event_dim=2,
@@ -111,7 +111,7 @@ class TestDistributionLinear:
 class TestDistributionConv:
     """Testing the distribution convolutional layer classes."""
 
-    def test_normal_conv(self):
+    def test_normal_conv(self) -> None:
         dist_layer = get_dist_conv_layer("normal")
         layer = dist_layer(
             base_layer=torch.nn.Conv2d,
@@ -124,7 +124,7 @@ class TestDistributionConv:
         assert out["loc"].shape == torch.Size([3, 2, 30, 30])
         assert out["scale"].shape == torch.Size([3, 2, 30, 30])
 
-    def test_laplace_conv(self):
+    def test_laplace_conv(self) -> None:
         dist_layer = get_dist_conv_layer("laplace")
         layer = dist_layer(
             base_layer=torch.nn.Conv2d,
@@ -137,7 +137,7 @@ class TestDistributionConv:
         assert out["loc"].shape == torch.Size([3, 2, 30, 30])
         assert out["scale"].shape == torch.Size([3, 2, 30, 30])
 
-    def test_cauchy_conv(self):
+    def test_cauchy_conv(self) -> None:
         dist_layer = get_dist_conv_layer("cauchy")
         layer = dist_layer(
             base_layer=torch.nn.Conv2d,
@@ -150,7 +150,7 @@ class TestDistributionConv:
         assert out["loc"].shape == torch.Size([3, 2, 30, 30])
         assert out["scale"].shape == torch.Size([3, 2, 30, 30])
 
-    def test_student_conv(self):
+    def test_student_conv(self) -> None:
         dist_layer = get_dist_conv_layer("student")
         layer = dist_layer(
             base_layer=torch.nn.Conv2d,
@@ -178,7 +178,7 @@ class TestDistributionConv:
         assert out["df"].shape == torch.Size([3, 2, 30, 30])
         assert torch.allclose(out["df"], torch.tensor(3.0))
 
-    def test_nig_conv(self):
+    def test_nig_conv(self) -> None:
         dist_layer = get_dist_conv_layer("nig")
         layer = dist_layer(
             base_layer=torch.nn.Conv2d,
@@ -193,12 +193,12 @@ class TestDistributionConv:
         assert out["alpha"].shape == torch.Size([3, 2, 30, 30])
         assert out["beta"].shape == torch.Size([3, 2, 30, 30])
 
-    def test_failures(self):
+    def test_failures(self) -> None:
         with pytest.raises(NotImplementedError):
             get_dist_conv_layer("unknown")
 
+        layer_class = get_dist_conv_layer("normal")
         with pytest.raises(ValueError):
-            layer_class = get_dist_conv_layer("normal")
             layer_class(
                 base_layer=torch.nn.Linear,
                 event_dim=2,

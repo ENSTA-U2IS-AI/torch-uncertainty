@@ -44,7 +44,7 @@ class DummyModelMix(nn.Module):
 class TestStochasticModel:
     """Testing the StochasticModel decorator."""
 
-    def test_main(self):
+    def test_main(self) -> None:
         model = StochasticModel(DummyModelLinear(), 2)
         model.freeze()
         model(torch.randn(1, 1))
@@ -60,7 +60,7 @@ class TestStochasticModel:
         model.unfreeze()
         assert not model.core_model.layer.frozen
 
-    def test_mix(self):
+    def test_mix(self) -> None:
         model = StochasticModel(DummyModelMix(), 2)
         model.freeze()
         assert model.core_model.layer.frozen
@@ -69,7 +69,7 @@ class TestStochasticModel:
 
         state = model.sample()[0]
         keys = state.keys()
-        print(list(keys))
+        print(list(keys))  # noqa: T201
         assert list(keys) == [
             "layer.weight",
             "layer2.weight",

@@ -4,7 +4,7 @@ build-backend = "flit_core.buildapi"
 
 [project]
 name = "torch_uncertainty"
-version = "0.4.3.rc0"
+version = "0.5.0"
 authors = [
     { name = "ENSTA U2IS", email = "olivier.laurent@ensta-paris.fr" },
     { name = "Adrien Lafage", email = "adrienlafage@outlook.com" },
@@ -40,31 +40,25 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-experiments = [
-    "tensorboard",
-    "huggingface-hub",
-    "safetensors",
-]
-image = [
-    "kornia",
-    "h5py",
-    "opencv-python",
-]
+experiments = ["tensorboard", "huggingface-hub>=0.31", "safetensors"]
+image = ["kornia", "h5py", "opencv-python"]
 tabular = ["pandas"]
 dev = [
     "torch_uncertainty[experiments,image]",
-    "ruff==0.9.9",
+    "ruff==0.11.10",
     "pytest-cov",
     "pre-commit",
     "pre-commit-hooks",
 ]
 docs = [
-    "sphinx<7",
-    "tu_sphinx_theme",
+    "sphinx==7.4.7",
+    "pydata-sphinx-theme",
     "sphinx-copybutton",
     "sphinx-gallery",
     "sphinx-design",
     "sphinx-codeautolink",
+    "sphinx_design",
+    "sphinxcontrib-sass",
 ]
 all = [
     "torch_uncertainty[dev,docs,tabular]",
@@ -85,53 +79,6 @@ name = "torch_uncertainty"
 [tool.ruff]
 line-length = 100
 target-version = "py310"
-lint.extend-select = [
-    "A",
-    "ARG",
-    "B",
-    "C4",
-    "D",
-    "ERA",
-    "F",
-    "G",
-    "I",
-    "ISC",
-    "ICN",
-    "N",
-    "NPY",
-    "PERF",
-    "PIE",
-    "PTH",
-    "PYI",
-    "Q",
-    "RET",
-    "RUF",
-    "RSE",
-    "S",
-    "SIM",
-    "TCH",
-    "TID",
-    "TRY",
-    "UP",
-    "YTT",
-]
-lint.ignore = [
-    "ARG002",
-    "D100",
-    "D101",
-    "D102",
-    "D103",
-    "D104",
-    "D107",
-    "D205",
-    "D206",
-    "ISC001",
-    "N818",
-    "N812",
-    "RUF012",
-    "S101",
-    "TRY003",
-]
 
 exclude = [
     ".bzr",
@@ -151,7 +98,6 @@ exclude = [
     ".venv",
     "__pypackages__",
     "__pycache__",
-    "auto_tutorials_source/*",
     "_build",
     "buck-out",
     "build",
@@ -159,8 +105,66 @@ exclude = [
     "venv",
 ]
 
-[tool.ruff.lint.pydocstyle]
-convention = "google"
+[tool.ruff.lint]
+extend-select = [
+    "A",
+    "ARG",
+    "B",
+    "BLE",
+    "C4",
+    "D",
+    "ERA",
+    "F",
+    "FURB",
+    "G",
+    "I",
+    "INT",
+    "ISC",
+    "ICN",
+    "N",
+    "NPY",
+    "PERF",
+    "PIE",
+    "PT",
+    "PTH",
+    "PYI",
+    "Q",
+    "RET",
+    "RUF",
+    "RSE",
+    "S",
+    "SIM",
+    "T20",
+    "TC",
+    "TCH",
+    "TID",
+    "TRY",
+    "UP",
+    "YTT",
+]
+ignore = [
+    "ARG002",
+    "D100",
+    "D101",
+    "D102",
+    "D103",
+    "D104",
+    "D107",
+    "D205",
+    "D206",
+    "ISC001",
+    "N818",
+    "N812",
+    "PT011",
+    "RUF012",
+    "S101",
+    "TRY003",
+]
+pydocstyle.convention = "google"
+
+[tool.ruff.format]
+docstring-code-format = true
+docstring-code-line-length = 80
 
 [tool.coverage.run]
 branch = true
@@ -168,5 +172,9 @@ include = ["*/torch-uncertainty/*"]
 omit = ["*/tests/*", "*/datasets/*"]
 
 [tool.coverage.report]
-exclude_lines = ["coverage: ignore", "raise NotImplementedError", "raise ImportError"]
+exclude_lines = [
+    "coverage: ignore",
+    "raise NotImplementedError",
+    "raise ImportError",
+]
 ignore_errors = true

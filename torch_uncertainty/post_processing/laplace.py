@@ -19,8 +19,8 @@ class LaplaceApprox(PostProcessing):
         self,
         task: Literal["classification", "regression"],
         model: nn.Module | None = None,
-        weight_subset="last_layer",
-        hessian_struct="kron",
+        weight_subset: str = "last_layer",
+        hessian_struct: str = "kron",
         pred_type: Literal["glm", "nn"] = "glm",
         link_approx: Literal["mc", "probit", "bridge", "bridge_norm"] = "probit",
         optimize_prior_precision: bool = True,
@@ -30,7 +30,7 @@ class LaplaceApprox(PostProcessing):
         This class is a wrapper of Laplace classes from the laplace-torch library.
 
         Args:
-            task (Literal["classification", "regression"]): task type.
+            task (Literal[``"classification"``, ``"regression"``]): task type.
             model (nn.Module): model to be converted.
             weight_subset (str): subset of weights to be considered. Defaults to
                 "last_layer".
@@ -44,15 +44,15 @@ class LaplaceApprox(PostProcessing):
             optimize_prior_precision (bool, optional): whether to optimize the prior
                 precision. Defaults to True.
 
-        Reference:
-            Daxberger et al. Laplace Redux - Effortless Bayesian Deep Learning. In NeurIPS 2021.
+        References:
+            [1] `Daxberger et al. Laplace Redux - Effortless Bayesian Deep Learning. In NeurIPS 2021
+            <https://arxiv.org/abs/2106.14806>`_.
         """
         super().__init__()
         if not laplace_installed:
             raise ImportError(
-                "The laplace-torch library is not installed. Please install"
-                "torch_uncertainty with the all option:"
-                """pip install -U "torch_uncertainty[all]"."""
+                "The laplace-torch library is not installed. Please install "
+                "torch_uncertainty with the all option: pip install -U torch_uncertainty[all]"
             )
 
         self.pred_type = pred_type

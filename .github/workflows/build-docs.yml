@@ -7,12 +7,10 @@ on:
     types: [opened, reopened, ready_for_review, synchronize]
     branches:
       - main
-  schedule:
-    - cron: "00 12 * * 0" # Every Sunday noon (preserve the cache folders)
   workflow_dispatch:
 
 env:
-  PYTHON_VERSION: "3.10"
+  PYTHON_VERSION: "3.11"
 
 jobs:
   documentation:
@@ -41,7 +39,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        python3 -m pip install torch torchvision --extra-index-url https://download.pytorch.org/whl/cpu
+        python3 -m pip install torch torchvision
         python3 -m pip install .[all]
 
     - name: Sphinx build
@@ -57,8 +55,9 @@ jobs:
         external_repository: torch-uncertainty/torch-uncertainty.github.io
         publish_branch: main
         publish_dir: docs/build/html
-
+      continue-on-error: true
+    
+    # ||: not to error if there is no running ssh-agent
     - name: Kill SSH Agent
       run: |
-        killall ssh-agent
-      continue-on-error: true
+        killall ssh-agent ||:

@@ -1,7 +1,7 @@
 import torch
+import torch.nn.functional as F
 from torch import Tensor
 from torch.nn import Module, init
-from torch.nn import functional as F
 from torch.nn.common_types import _size_1_t, _size_2_t, _size_3_t
 from torch.nn.modules.utils import (
     _pair,

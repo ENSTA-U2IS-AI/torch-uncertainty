@@ -177,22 +177,19 @@ class MaskedLinear(nn.Module):
             out_features (int): Number of channels produced by the linear layer.
             num_estimators (int): The number of estimators grouped in the layer.
             scale (float): The scale parameter for the masks.
-            bias (bool, optional): It ``True``, adds a learnable bias to the
-                output. Defaults to ``True``.
-            groups (int, optional): Number of blocked connections from input
-                channels to output channels. Defaults to ``1``.
-            device (Any, optional): The desired device of returned tensor.
-                Defaults to ``None``.
-            dtype (Any, optional): The desired data type of returned tensor.
-                Defaults to ``None``.
+            bias (bool, optional): It ``True``, adds a learnable bias to the output. Defaults to ``True``.
+            groups (int, optional): Number of blocked connections from input channels to output channels. Defaults to ``1``.
+            device (Any, optional): The desired device of returned tensor. Defaults to ``None``.
+            dtype (Any, optional): The desired data type of returned tensor. Defaults to ``None``.
 
         Warning:
             Be sure to apply a repeat on the batch at the start of the training
             if you use `MaskedLinear`.
 
-        Reference:
-            `Masksembles for Uncertainty Estimation`, Nikita Durasov, Timur
-            Bagautdinov, Pierre Baque, Pascal Fua.
+        References:
+            [1] `Masksembles for Uncertainty Estimation, Nikita Durasov, Timur Bagautdinov, Pierre Baque, Pascal Fua
+            <https://arxiv.org/abs/2012.08334>`_.
+
         """
         factory_kwargs = {"device": device, "dtype": dtype}
         super().__init__()
@@ -238,28 +235,23 @@ class MaskedConv2d(nn.Module):
             kernel_size (int or tuple): Size of the convolving kernel.
             num_estimators (int): Number of estimators in the ensemble.
             scale (float): The scale parameter for the masks.
-            stride (int or tuple, optional): Stride of the convolution.
-                Defaults to ``1``.
-            padding (int, tuple or str, optional): Padding added to all four sides
-                of the input. Defaults to ``0``.
-            dilation (int or tuple, optional): Spacing between kernel elements.
-                Defaults to ``1``.
-            groups (int, optional): Number of blocked connexions from input
-                channels to output channels for each estimator. Defaults to ``1``.
-            bias (bool, optional): If ``True``, adds a learnable bias to the
-                output. Defaults to ``True``.
-            device (Any, optional): The desired device of returned tensor.
-                Defaults to ``None``.
-            dtype (Any, optional): The desired data type of returned tensor.
-                Defaults to ``None``.
+            stride (int or tuple, optional): Stride of the convolution. Defaults to ``1``.
+            padding (int, tuple or str, optional): Padding added to all four sides of the input. Defaults to ``0``.
+            dilation (int or tuple, optional): Spacing between kernel elements. Defaults to ``1``.
+            groups (int, optional): Number of blocked connexions from input channels to output channels for each estimator. Defaults to ``1``.
+            bias (bool, optional): If ``True``, adds a learnable bias to the output. Defaults to ``True``.
+            device (Any, optional): The desired device of returned tensor. Defaults to ``None``.
+            dtype (Any, optional): The desired data type of returned tensor. Defaults to ``None``.
 
         Warning:
             Be sure to apply a repeat on the batch at the start of the training
             if you use `MaskedConv2d`.
 
-        Reference:
-            `Masksembles for Uncertainty Estimation`, Nikita Durasov, Timur
-            Bagautdinov, Pierre Baque, Pascal Fua.
+        References:
+            [1] `Masksembles for Uncertainty Estimation, Nikita Durasov, Timur Bagautdinov, Pierre Baque, Pascal Fua
+            <https://arxiv.org/abs/2012.08334>`_.
+
+
         """
         factory_kwargs = {"device": device, "dtype": dtype}
         super().__init__()
@@ -280,6 +272,75 @@ class MaskedConv2d(nn.Module):
             groups=groups,
             bias=bias,
             padding_mode="zeros",
+            **factory_kwargs,
+        )
+
+    def forward(self, inputs: Tensor) -> Tensor:
+        return self.conv(self.mask(inputs))
+
+
+class MaskedConvTranspose2d(nn.Module):
+    def __init__(
+        self,
+        in_channels: int,
+        out_channels: int,
+        kernel_size: _size_2_t,
+        num_estimators: int,
+        scale: float,
+        stride: _size_2_t = 1,
+        padding: str | _size_2_t = 0,
+        output_padding: str | _size_2_t = 0,
+        groups: int = 1,
+        bias: bool = True,
+        dilation: _size_2_t = 1,
+        padding_mode: str = "zeros",
+        device: Any | None = None,
+        dtype: Any | None = None,
+    ) -> None:
+        r"""Masksembles-style ConvTranspose2d layer.
+
+        Args:
+            in_channels (int): Number of channels in the input image.
+            out_channels (int): Number of channels produced by the convolution.
+            kernel_size (int or tuple): Size of the convolving kernel.
+            num_estimators (int): Number of estimators in the ensemble.
+            scale (float): The scale parameter for the masks.
+            stride (int or tuple, optional): Stride of the convolution. Defaults to ``1``.
+            padding (int, tuple or str, optional): Padding added to all four sides of the input. Defaults to ``0``.
+            output_padding (int, tuple or str, optional): Additional size added to one side of each dimension in the output shape. Defaults to ``0``.
+            groups (int, optional): Number of blocked connexions from input channels to output channels for each estimator. Defaults to ``1``.
+            bias (bool, optional): If ``True``, adds a learnable bias to the output. Defaults to ``True``.
+            dilation (int or tuple, optional): Spacing between kernel elements. Defaults to ``1``.
+            padding_mode (str, optional): _description_. Defaults to ``'zeros'``.
+            device (Any, optional): The desired device of returned tensor. Defaults to ``None``.
+            dtype (Any, optional): The desired data type of returned tensor. Defaults to ``None``.
+
+        Warning:
+            Be sure to apply a repeat on the batch at the start of the training
+            if you use `MaskedConvTranspose2d`.
+
+        References:
+            [1] `Masksembles for Uncertainty Estimation, Nikita Durasov, Timur Bagautdinov, Pierre Baque, Pascal Fua
+            <https://arxiv.org/abs/2012.08334>`_
+        """
+        factory_kwargs = {"device": device, "dtype": dtype}
+        super().__init__()
+        if scale is None:
+            raise ValueError("You must specify the value of the arg. `scale`")
+        if scale < 1:
+            raise ValueError(f"Attribute `scale` should be >= 1, not {scale}.")
+        self.mask = Mask2d(in_channels, num_masks=num_estimators, scale=scale, **factory_kwargs)
+        self.conv = nn.ConvTranspose2d(
+            in_channels=in_channels,
+            out_channels=out_channels,
+            kernel_size=kernel_size,
+            stride=stride,
+            padding=padding,
+            output_padding=output_padding,
+            groups=groups,
+            bias=bias,
+            dilation=dilation,
+            padding_mode=padding_mode,
             **factory_kwargs,
         )
 

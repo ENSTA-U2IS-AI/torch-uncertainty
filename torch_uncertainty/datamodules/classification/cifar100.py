@@ -13,8 +13,8 @@ from torchvision.transforms import v2
 from torch_uncertainty.datamodules import TUDataModule
 from torch_uncertainty.datasets import AggregatedDataset
 from torch_uncertainty.datasets.classification import CIFAR100C
+from torch_uncertainty.datasets.utils import create_train_val_split
 from torch_uncertainty.transforms import Cutout
-from torch_uncertainty.utils import create_train_val_split
 
 
 class CIFAR100DataModule(TUDataModule):
@@ -29,11 +29,15 @@ class CIFAR100DataModule(TUDataModule):
         self,
         root: str | Path,
         batch_size: int,
+        eval_batch_size: int | None = None,
         eval_ood: bool = False,
         eval_shift: bool = False,
+        num_tta: int = 1,
         shift_severity: int = 1,
         val_split: float | None = None,
         postprocess_set: Literal["val", "test"] = "val",
+        train_transform: nn.Module | None = None,
+        test_transform: nn.Module | None = None,
         basic_augment: bool = True,
         cutout: int | None = None,
         randaugment: bool = False,
@@ -47,34 +51,39 @@ class CIFAR100DataModule(TUDataModule):
 
         Args:
             root (str): Root directory of the datasets.
-            eval_ood (bool): Whether to evaluate out-of-distribution
-                performance.
-            eval_shift (bool): Whether to evaluate on shifted data. Defaults to
-            ``False``.
-            batch_size (int): Number of samples per batch.
+            eval_ood (bool): Whether to evaluate out-of-distribution performance.
+            eval_shift (bool): Whether to evaluate on shifted data. Defaults to ``False``.
+            batch_size (int): Number of samples per batch during training.
+            eval_batch_size (int | None) : Number of samples per batch during evaluation (val
+                and test). Set to batch_size if ``None``. Defaults to ``None``.
             val_split (float): Share of samples to use for validation. Defaults
                 to ``0.0``.
             postprocess_set (str, optional): The post-hoc calibration dataset to
                 use for the post-processing method. Defaults to ``val``.
+            train_transform (nn.Module | None): Custom training transform. Defaults
+                to ``None``. If not provided, a default transform is used.
+            test_transform (nn.Module | None): Custom test transform. Defaults to
+                ``None``. If not provided, a default transform is used.
             basic_augment (bool): Whether to apply base augmentations. Defaults to
-                ``True``.
+                ``True``. Only used if train_transform is not provided.
             cutout (int): Size of cutout to apply to images. Defaults to ``None``.
+                Only used if train_transform is not provided.
             randaugment (bool): Whether to apply RandAugment. Defaults to
-                ``False``.
+                ``False``. Only used if train_transform is not provided.
             auto_augment (str): Which auto-augment to apply. Defaults to ``None``.
-            shift_severity (int): Severity of corruption to apply to
-                CIFAR100-C. Defaults to ``1``.
+            num_tta (int): Number of test-time augmentations (TTA). Defaults to ``1`` (no TTA).
+            shift_severity (int): Severity of corruption to apply to CIFAR100-C. Defaults to ``1``.
             num_dataloaders (int): Number of dataloaders to use. Defaults to ``1``.
-            num_workers (int): Number of workers to use for data loading. Defaults
-                to ``1``.
+            num_workers (int): Number of workers to use for data loading. Defaults to ``1``.
             pin_memory (bool): Whether to pin memory. Defaults to ``True``.
-            persistent_workers (bool): Whether to use persistent workers. Defaults
-                to ``True``.
+            persistent_workers (bool): Whether to use persistent workers. Defaults to ``True``.
         """
         super().__init__(
             root=root,
             batch_size=batch_size,
+            eval_batch_size=eval_batch_size,
             val_split=val_split,
+            num_tta=num_tta,
             postprocess_set=postprocess_set,
             num_workers=num_workers,
             pin_memory=pin_memory,
@@ -91,47 +100,62 @@ class CIFAR100DataModule(TUDataModule):
 
         self.shift_severity = shift_severity
 
-        if (cutout is not None) + randaugment + int(auto_augment is not None) > 1:
-            raise ValueError(
-                "Only one data augmentation can be chosen at a time. Raise a "
-                "GitHub issue if needed."
-            )
+        if train_transform is not None:
+            self.train_transform = train_transform
+        else:
+            if (cutout is not None) + randaugment + int(auto_augment is not None) > 1:
+                raise ValueError(
+                    "Only one data augmentation can be chosen at a time. Raise a "
+                    "GitHub issue if needed."
+                )
 
-        if basic_augment:
-            basic_transform = v2.Compose(
+            if basic_augment:
+                basic_transform = v2.Compose(
+                    [
+                        v2.RandomCrop(32, padding=4),
+                        v2.RandomHorizontalFlip(),
+                    ]
+                )
+            else:
+                basic_transform = nn.Identity()
+
+            if cutout:
+                main_transform = Cutout(cutout)
+            elif randaugment:
+                main_transform = v2.RandAugment(num_ops=2, magnitude=20)
+            elif auto_augment:
+                main_transform = v2.Compose(
+                    [
+                        v2.ToPILImage(),
+                        rand_augment_transform(auto_augment, {}),
+                        v2.ToImage(),
+                    ]
+                )
+            else:
+                main_transform = nn.Identity()
+
+            self.train_transform = v2.Compose(
                 [
-                    v2.RandomCrop(32, padding=4),
-                    v2.RandomHorizontalFlip(),
+                    v2.ToImage(),
+                    basic_transform,
+                    main_transform,
+                    v2.ToDtype(dtype=torch.float32, scale=True),
+                    v2.Normalize(mean=self.mean, std=self.std),
                 ]
             )
-        else:
-            basic_transform = nn.Identity()
 
-        if cutout:
-            main_transform = Cutout(cutout)
-        elif randaugment:
-            main_transform = v2.RandAugment(num_ops=2, magnitude=20)
-        elif auto_augment:
-            main_transform = rand_augment_transform(auto_augment, {})
+        if num_tta != 1:
+            self.test_transform = train_transform
+        elif test_transform is not None:
+            self.test_transform = test_transform
         else:
-            main_transform = nn.Identity()
-
-        self.train_transform = v2.Compose(
-            [
-                v2.ToImage(),
-                basic_transform,
-                main_transform,
-                v2.ToDtype(dtype=torch.float32, scale=True),
-                v2.Normalize(mean=self.mean, std=self.std),
-            ]
-        )
-        self.test_transform = v2.Compose(
-            [
-                v2.ToImage(),
-                v2.ToDtype(dtype=torch.float32, scale=True),
-                v2.Normalize(mean=self.mean, std=self.std),
-            ]
-        )
+            self.test_transform = v2.Compose(
+                [
+                    v2.ToImage(),
+                    v2.ToDtype(dtype=torch.float32, scale=True),
+                    v2.Normalize(mean=self.mean, std=self.std),
+                ]
+            )
 
     def prepare_data(self) -> None:  # coverage: ignore
         self.dataset(self.root, train=True, download=True)
@@ -206,10 +230,9 @@ class CIFAR100DataModule(TUDataModule):
         """
         if self.num_dataloaders > 1:
             return self._data_loader(
-                AggregatedDataset(self.train, self.num_dataloaders),
-                shuffle=True,
+                AggregatedDataset(self.train, self.num_dataloaders), shuffle=True, training=True
             )
-        return self._data_loader(self.train, shuffle=True)
+        return self._data_loader(self.train, training=True, shuffle=True)
 
     def test_dataloader(self) -> list[DataLoader]:
         r"""Get test dataloaders.
@@ -218,11 +241,13 @@ class CIFAR100DataModule(TUDataModule):
             list[DataLoader]: test set for in distribution data, SVHN data, and/or
             CIFAR-100C data.
         """
-        dataloader = [self._data_loader(self.test)]
+        dataloader = [self._data_loader(self.get_test_set(), training=False, shuffle=False)]
         if self.eval_ood:
-            dataloader.append(self._data_loader(self.ood))
+            dataloader.append(self._data_loader(self.get_ood_set(), training=False, shuffle=False))
         if self.eval_shift:
-            dataloader.append(self._data_loader(self.shift))
+            dataloader.append(
+                self._data_loader(self.get_shift_set(), training=False, shuffle=False)
+            )
         return dataloader
 
     def _get_train_data(self) -> ArrayLike:

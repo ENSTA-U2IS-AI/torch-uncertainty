@@ -15,6 +15,7 @@ class VectorScaler(Scaler):
         init_b: float = 0,
         lr: float = 0.1,
         max_iter: int = 200,
+        eps: float = 1e-8,
         device: Literal["cpu", "cuda"] | torch.device | None = None,
     ) -> None:
         """Vector scaling post-processing for calibrated probabilities.
@@ -22,27 +23,23 @@ class VectorScaler(Scaler):
         Args:
             model (nn.Module): Model to calibrate.
             num_classes (int): Number of classes.
-            init_w (float, optional): Initial value for the weights.
-                Defaults to 1.
-            init_b (float, optional): Initial value for the bias.
-                Defaults to 0.
-            lr (float, optional): Learning rate for the optimizer. Defaults to 0.1.
-            max_iter (int, optional): Maximum number of iterations for the
-                optimizer. Defaults to 100.
-            device (Optional[Literal["cpu", "cuda"]], optional): Device to use
-                for optimization. Defaults to None.
+            init_w (float, optional): Initial value for the weights. Defaults to ``1``.
+            init_b (float, optional): Initial value for the bias. Defaults to ``0``.
+            lr (float, optional): Learning rate for the optimizer. Defaults to ``0.1``.
+            max_iter (int, optional): Maximum number of iterations for the optimizer. Defaults to ``100``.
+            eps (float): Small value for stability. Defaults to ``1e-8``.
+            device (Optional[Literal["cpu", "cuda"]], optional): Device to use for optimization. Defaults to ``None``.
 
-        Reference:
-            Guo, C., Pleiss, G., Sun, Y., & Weinberger, K. Q. On calibration
-            of modern neural networks. In ICML 2017.
-
+        References:
+            [1] `On calibration of modern neural networks. In ICML 2017
+            <https://arxiv.org/abs/1706.04599>`_.
         """
-        super().__init__(model=model, lr=lr, max_iter=max_iter, device=device)
+        super().__init__(model=model, lr=lr, max_iter=max_iter, eps=eps, device=device)
 
         if not isinstance(num_classes, int):
-            raise TypeError("num_classes must be an integer.")
+            raise TypeError(f"num_classes must be an integer. Got {num_classes}.")
         if num_classes <= 0:
-            raise ValueError("The number of classes must be positive.")
+            raise ValueError(f"The number of classes must be positive. Got {num_classes}.")
         self.num_classes = num_classes
 
         self.set_temperature(init_w, init_b)
@@ -64,14 +61,6 @@ class VectorScaler(Scaler):
         )
 
     def _scale(self, logits: torch.Tensor) -> torch.Tensor:
-        """Scale the predictions with the optimal temperature.
-
-        Args:
-            logits (torch.Tensor): logits to be scaled.
-
-        Returns:
-            torch.Tensor: Scaled logits.
-        """
         return self.temp_w * logits + self.temp_b
 
     @property

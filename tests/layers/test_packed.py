@@ -10,6 +10,7 @@ from torch_uncertainty.layers.packed import (
     PackedConv1d,
     PackedConv2d,
     PackedConv3d,
+    PackedConvTranspose2d,
     PackedLayerNorm,
     PackedLinear,
     PackedMultiheadAttention,
@@ -18,68 +19,68 @@ from torch_uncertainty.layers.packed import (
 )
 
 
-@pytest.fixture()
+@pytest.fixture
 def feat_input() -> torch.Tensor:
     return torch.rand((6, 1))  # (Cin, Lin)
 
 
-@pytest.fixture()
+@pytest.fixture
 def feat_input_one_rearrange() -> torch.Tensor:
     return torch.rand((1 * 3, 5))
 
 
-@pytest.fixture()
+@pytest.fixture
 def feat_multi_dim() -> torch.Tensor:
     return torch.rand((1, 2, 3, 4, 6))
 
 
-@pytest.fixture()
+@pytest.fixture
 def feat_input_16_features() -> torch.Tensor:
     return torch.rand((3, 16))
 
 
-@pytest.fixture()
+@pytest.fixture
 def seq_input() -> torch.Tensor:
     return torch.rand((5, 6, 3))
 
 
-@pytest.fixture()
+@pytest.fixture
 def img_input() -> torch.Tensor:
     return torch.rand((5, 6, 3, 3))
 
 
-@pytest.fixture()
+@pytest.fixture
 def voxels_input() -> torch.Tensor:
     return torch.rand((5, 6, 3, 3, 3))
 
 
-@pytest.fixture()
+@pytest.fixture
 def unbatched_qkv() -> torch.Tensor:
     return torch.rand((3, 6))
 
 
-@pytest.fixture()
+@pytest.fixture
 def unbatched_q_kv() -> tuple[torch.Tensor, torch.Tensor]:
     return torch.rand((3, 6)), torch.rand((4, 2))
 
 
-@pytest.fixture()
+@pytest.fixture
 def unbatched_q_k_v() -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     return torch.rand((3, 6)), torch.rand((4, 2)), torch.rand((4, 4))
 
 
-@pytest.fixture()
+@pytest.fixture
 def batched_qkv() -> torch.Tensor:
     return torch.rand((2, 3, 6))
 
 
-@pytest.fixture()
+@pytest.fixture
 def extended_batched_qkv() -> torch.Tensor:
     expansion = 2
     return torch.rand((2, 3, 6 * expansion))
 
 
-@pytest.fixture()
+@pytest.fixture
 def batched_q_kv() -> tuple[torch.Tensor, torch.Tensor]:
     return (
         torch.rand((2, 3, 6)),
@@ -87,7 +88,7 @@ def batched_q_kv() -> tuple[torch.Tensor, torch.Tensor]:
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def batched_q_k_v() -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     return (
         torch.rand((2, 3, 6)),
@@ -96,7 +97,7 @@ def batched_q_k_v() -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def extended_batched_q_k_v() -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     expansion = 2
     return (
@@ -106,12 +107,12 @@ def extended_batched_q_k_v() -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def unbatched_tgt_memory() -> tuple[torch.Tensor, torch.Tensor]:
     return torch.rand((3, 6)), torch.rand((4, 6))
 
 
-@pytest.fixture()
+@pytest.fixture
 def batched_tgt_memory() -> tuple[torch.Tensor, torch.Tensor]:
     return (
         torch.rand((2, 3, 6)),
@@ -119,7 +120,7 @@ def batched_tgt_memory() -> tuple[torch.Tensor, torch.Tensor]:
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def extended_batched_tgt_memory() -> tuple[torch.Tensor, torch.Tensor]:
     expansion = 2
     return (
@@ -131,35 +132,29 @@ def extended_batched_tgt_memory() -> tuple[torch.Tensor, torch.Tensor]:
 class TestPackedLinear:
     """Testing the PackedLinear layer class."""
 
-    # Legacy tests
-    def test_linear_one_estimator_no_rearrange(self, feat_input: torch.Tensor):
-        layer = PackedLinear(6, 2, alpha=1, num_estimators=1, rearrange=False, bias=False)
-        out = layer(feat_input)
-        assert out.shape == torch.Size([2, 1])
-
-    def test_linear_two_estimators_no_rearrange(self, feat_input: torch.Tensor):
-        layer = PackedLinear(6, 2, alpha=1, num_estimators=2, rearrange=False)
-        out = layer(feat_input)
-        assert out.shape == torch.Size([2, 1])
-
-    def test_linear_one_estimator_rearrange(self, feat_input_one_rearrange: torch.Tensor):
-        layer = PackedLinear(5, 2, alpha=1, num_estimators=1, rearrange=True)
-        out = layer(feat_input_one_rearrange)
-        assert out.shape == torch.Size([3, 2])
-
-    def test_linear_two_estimator_rearrange_not_divisible(self):
-        feat = torch.rand((2 * 3, 3))
-        layer = PackedLinear(5, 1, alpha=1, num_estimators=2, rearrange=True)
-        out = layer(feat)
-        assert out.shape == torch.Size([6, 1])
+    # Conv1d implementation tests
+    def test_linear_conv1d_implementation(
+        self, feat_input_16_features: torch.Tensor, feat_multi_dim: torch.Tensor
+    ) -> None:
+        layer = PackedLinear(16, 4, alpha=2, num_estimators=1, implementation="conv1d", first=True)
+        out = layer(feat_input_16_features)
+        assert out.shape == torch.Size([3, 8])
+        layer = PackedLinear(16, 4, alpha=1, num_estimators=2, implementation="conv1d")
+        out = layer(feat_input_16_features)
+        assert out.shape == torch.Size([3, 4])
+        layer = PackedLinear(6, 2, alpha=1, num_estimators=1, implementation="conv1d")
+        out = layer(feat_multi_dim)
+        assert out.shape == torch.Size([1, 2, 3, 4, 2])
 
     # Full implementation tests
     def test_linear_full_implementation(
         self, feat_input_16_features: torch.Tensor, feat_multi_dim: torch.Tensor
-    ):
-        layer = PackedLinear(16, 4, alpha=1, num_estimators=1, implementation="full", bias=False)
+    ) -> None:
+        layer = PackedLinear(
+            16, 4, alpha=2, num_estimators=1, implementation="full", bias=False, first=True
+        )
         out = layer(feat_input_16_features)
-        assert out.shape == torch.Size([3, 4])
+        assert out.shape == torch.Size([3, 8])
         layer = PackedLinear(16, 4, alpha=1, num_estimators=2, implementation="full")
         out = layer(feat_input_16_features)
         assert out.shape == torch.Size([3, 4])
@@ -170,10 +165,10 @@ class TestPackedLinear:
     # Sparse implementation tests
     def test_linear_sparse_implementation(
         self, feat_input_16_features: torch.Tensor, feat_multi_dim: torch.Tensor
-    ):
-        layer = PackedLinear(16, 4, alpha=1, num_estimators=1, implementation="sparse")
+    ) -> None:
+        layer = PackedLinear(16, 4, alpha=2, num_estimators=1, implementation="sparse", first=True)
         out = layer(feat_input_16_features)
-        assert out.shape == torch.Size([3, 4])
+        assert out.shape == torch.Size([3, 8])
         layer = PackedLinear(16, 4, alpha=1, num_estimators=2, implementation="sparse")
         out = layer(feat_input_16_features)
         assert out.shape == torch.Size([3, 4])
@@ -184,10 +179,10 @@ class TestPackedLinear:
     # Einsum implementation tests
     def test_linear_einsum_implementation(
         self, feat_input_16_features: torch.Tensor, feat_multi_dim: torch.Tensor
-    ):
-        layer = PackedLinear(16, 4, alpha=1, num_estimators=1, implementation="einsum")
+    ) -> None:
+        layer = PackedLinear(16, 4, alpha=2, num_estimators=1, implementation="einsum", first=True)
         out = layer(feat_input_16_features)
-        assert out.shape == torch.Size([3, 4])
+        assert out.shape == torch.Size([3, 8])
         layer = PackedLinear(16, 4, alpha=1, num_estimators=2, implementation="einsum")
         out = layer(feat_input_16_features)
         assert out.shape == torch.Size([3, 4])
@@ -195,46 +190,55 @@ class TestPackedLinear:
         out = layer(feat_multi_dim)
         assert out.shape == torch.Size([1, 2, 3, 4, 2])
 
-    def test_linear_extend(self):
-        layer = PackedLinear(5, 3, alpha=1, num_estimators=2, gamma=1, implementation="legacy")
-        assert layer.weight.shape == torch.Size([4, 3, 1])
-        assert layer.bias.shape == torch.Size([4])
+    # Conv1d implementation tests
+    def test_linear_last_parameter(
+        self, feat_input_16_features: torch.Tensor, feat_multi_dim: torch.Tensor
+    ) -> None:
+        layer = PackedLinear(16, 4, alpha=1, num_estimators=1, implementation="conv1d", last=True)
+        out = layer(feat_input_16_features)
+        assert out.shape == torch.Size([3, 4])
+        layer = PackedLinear(16, 4, alpha=1, num_estimators=2, implementation="full", last=True)
+        out = layer(feat_input_16_features)
+        assert out.shape == torch.Size([6, 4])
+        layer = PackedLinear(6, 2, alpha=1, num_estimators=1, implementation="sparse", last=True)
+        out = layer(feat_multi_dim)
+        assert out.shape == torch.Size([1, 2, 3, 4, 2])
+        layer = PackedLinear(6, 2, alpha=1, num_estimators=2, implementation="einsum", last=True)
+        out = layer(feat_multi_dim)
+        assert out.shape == torch.Size([2, 2, 3, 4, 2])
+
+    def test_linear_extend(self) -> None:
         layer = PackedLinear(5, 3, alpha=1, num_estimators=2, gamma=1, implementation="full")
         assert layer.weight.shape == torch.Size([2, 2, 3])
         assert layer.bias.shape == torch.Size([4])
         # with first=True
-        layer = PackedLinear(
-            5, 3, alpha=1, num_estimators=2, gamma=1, implementation="legacy", first=True
-        )
-        assert layer.weight.shape == torch.Size([4, 5, 1])
-        assert layer.bias.shape == torch.Size([4])
         layer = PackedLinear(
             5, 3, alpha=1, num_estimators=2, gamma=1, implementation="full", first=True
         )
         assert layer.weight.shape == torch.Size([1, 4, 5])
         assert layer.bias.shape == torch.Size([4])
 
-    def test_linear_failures(self):
+    def test_linear_failures(self) -> None:
         with pytest.raises(ValueError):
-            _ = PackedLinear(5, 2, alpha=None, num_estimators=1, rearrange=True)
+            _ = PackedLinear(5, 2, alpha=None, num_estimators=1)
 
         with pytest.raises(ValueError):
-            _ = PackedLinear(5, 2, alpha=-1, num_estimators=1, rearrange=True)
+            _ = PackedLinear(5, 2, alpha=-1, num_estimators=1)
 
         with pytest.raises(ValueError):
-            _ = PackedLinear(5, 2, alpha=1, num_estimators=None, rearrange=True)
+            _ = PackedLinear(5, 2, alpha=1, num_estimators=None)
 
         with pytest.raises(TypeError):
-            _ = PackedLinear(5, 2, alpha=1, num_estimators=1.5, rearrange=True)
+            _ = PackedLinear(5, 2, alpha=1, num_estimators=1.5)
 
         with pytest.raises(ValueError):
-            _ = PackedLinear(5, 2, alpha=1, num_estimators=-1, rearrange=True)
+            _ = PackedLinear(5, 2, alpha=1, num_estimators=-1)
 
         with pytest.raises(TypeError):
-            _ = PackedLinear(5, 2, alpha=1, num_estimators=1, gamma=0.5, rearrange=True)
+            _ = PackedLinear(5, 2, alpha=1, num_estimators=1, gamma=0.5)
 
         with pytest.raises(ValueError):
-            _ = PackedLinear(5, 2, alpha=1, num_estimators=1, gamma=-1, rearrange=True)
+            _ = PackedLinear(5, 2, alpha=1, num_estimators=1, gamma=-1)
 
         with pytest.raises(ValueError):
             _ = PackedLinear(
@@ -246,43 +250,43 @@ class TestPackedLinear:
                 implementation="invalid",
             )
 
+        layer = PackedLinear(16, 4, alpha=1, num_estimators=1, implementation="full")
+        layer.implementation = "invalid"
         with pytest.raises(ValueError):
-            layer = PackedLinear(16, 4, alpha=1, num_estimators=1, implementation="full")
-            layer.implementation = "invalid"
             _ = layer(torch.rand((2, 16)))
 
 
 class TestPackedConv1d:
     """Testing the PackedConv1d layer class."""
 
-    def test_conv_one_estimator(self, seq_input: torch.Tensor):
+    def test_conv_one_estimator(self, seq_input: torch.Tensor) -> None:
         layer = PackedConv1d(6, 2, alpha=1, num_estimators=1, kernel_size=1)
         out = layer(seq_input)
         assert out.shape == torch.Size([5, 2, 3])
         assert layer.weight.shape == torch.Size([2, 6, 1])
         assert layer.bias.shape == torch.Size([2])
 
-    def test_conv_two_estimators(self, seq_input: torch.Tensor):
+    def test_conv_two_estimators(self, seq_input: torch.Tensor) -> None:
         layer = PackedConv1d(6, 2, alpha=1, num_estimators=2, kernel_size=1)
         out = layer(seq_input)
         assert out.shape == torch.Size([5, 2, 3])
 
-    def test_conv_one_estimator_gamma2(self, seq_input: torch.Tensor):
+    def test_conv_one_estimator_gamma2(self, seq_input: torch.Tensor) -> None:
         layer = PackedConv1d(6, 2, alpha=1, num_estimators=1, kernel_size=1, gamma=2)
         out = layer(seq_input)
         assert out.shape == torch.Size([5, 2, 3])
         assert layer.conv.groups == 1  # and not 2
 
-    def test_conv_two_estimators_gamma2(self, seq_input: torch.Tensor):
+    def test_conv_two_estimators_gamma2(self, seq_input: torch.Tensor) -> None:
         layer = PackedConv1d(6, 2, alpha=1, num_estimators=2, kernel_size=1, gamma=2)
         out = layer(seq_input)
         assert out.shape == torch.Size([5, 2, 3])
         assert layer.conv.groups == 2  # and not 4
 
-    def test_conv_extend(self):
+    def test_conv_extend(self) -> None:
         _ = PackedConv1d(5, 3, kernel_size=1, alpha=1, num_estimators=2, gamma=1)
 
-    def test_conv1_failures(self):
+    def test_conv1_failures(self) -> None:
         with pytest.raises(ValueError):
             _ = PackedConv1d(5, 2, kernel_size=1, alpha=-1, num_estimators=1)
 
@@ -296,32 +300,32 @@ class TestPackedConv1d:
 class TestPackedConv2d:
     """Testing the PackedConv2d layer class."""
 
-    def test_conv_one_estimator(self, img_input: torch.Tensor):
+    def test_conv_one_estimator(self, img_input: torch.Tensor) -> None:
         layer = PackedConv2d(6, 2, alpha=1, num_estimators=1, kernel_size=1)
         out = layer(img_input)
         assert out.shape == torch.Size([5, 2, 3, 3])
 
-    def test_conv_two_estimators(self, img_input: torch.Tensor):
+    def test_conv_two_estimators(self, img_input: torch.Tensor) -> None:
         layer = PackedConv2d(6, 2, alpha=1, num_estimators=2, kernel_size=1)
         out = layer(img_input)
         assert out.shape == torch.Size([5, 2, 3, 3])
 
-    def test_conv_one_estimator_gamma2(self, img_input: torch.Tensor):
+    def test_conv_one_estimator_gamma2(self, img_input: torch.Tensor) -> None:
         layer = PackedConv2d(6, 2, alpha=1, num_estimators=1, kernel_size=1, gamma=2)
         out = layer(img_input)
         assert out.shape == torch.Size([5, 2, 3, 3])
         assert layer.conv.groups == 1  # and not 2
 
-    def test_conv_two_estimators_gamma2(self, img_input: torch.Tensor):
+    def test_conv_two_estimators_gamma2(self, img_input: torch.Tensor) -> None:
         layer = PackedConv2d(6, 2, alpha=1, num_estimators=2, kernel_size=1, gamma=2)
         out = layer(img_input)
         assert out.shape == torch.Size([5, 2, 3, 3])
         assert layer.conv.groups == 2  # and not 4
 
-    def test_conv_extend(self):
+    def test_conv_extend(self) -> None:
         _ = PackedConv2d(5, 3, kernel_size=1, alpha=1, num_estimators=2, gamma=1)
 
-    def test_conv2_failures(self):
+    def test_conv2_failures(self) -> None:
         with pytest.raises(ValueError):
             _ = PackedConv2d(5, 2, kernel_size=1, alpha=-1, num_estimators=1)
 
@@ -335,34 +339,34 @@ class TestPackedConv2d:
 class TestPackedConv3d:
     """Testing the PackedConv3d layer class."""
 
-    def test_conv_one_estimator(self, voxels_input: torch.Tensor):
+    def test_conv_one_estimator(self, voxels_input: torch.Tensor) -> None:
         layer = PackedConv3d(6, 2, alpha=1, num_estimators=1, kernel_size=1)
         out = layer(voxels_input)
         assert out.shape == torch.Size([5, 2, 3, 3, 3])
         assert layer.weight.shape == torch.Size([2, 6, 1, 1, 1])
         assert layer.bias.shape == torch.Size([2])
 
-    def test_conv_two_estimators(self, voxels_input: torch.Tensor):
+    def test_conv_two_estimators(self, voxels_input: torch.Tensor) -> None:
         layer = PackedConv3d(6, 2, alpha=1, num_estimators=2, kernel_size=1)
         out = layer(voxels_input)
         assert out.shape == torch.Size([5, 2, 3, 3, 3])
 
-    def test_conv_one_estimator_gamma2(self, voxels_input: torch.Tensor):
+    def test_conv_one_estimator_gamma2(self, voxels_input: torch.Tensor) -> None:
         layer = PackedConv3d(6, 2, alpha=1, num_estimators=1, kernel_size=1, gamma=2)
         out = layer(voxels_input)
         assert out.shape == torch.Size([5, 2, 3, 3, 3])
         assert layer.conv.groups == 1  # and not 2
 
-    def test_conv_two_estimators_gamma2(self, voxels_input: torch.Tensor):
+    def test_conv_two_estimators_gamma2(self, voxels_input: torch.Tensor) -> None:
         layer = PackedConv3d(6, 2, alpha=1, num_estimators=2, kernel_size=1, gamma=2)
         out = layer(voxels_input)
         assert out.shape == torch.Size([5, 2, 3, 3, 3])
         assert layer.conv.groups == 2  # and not 4
 
-    def test_conv_extend(self):
+    def test_conv_extend(self) -> None:
         _ = PackedConv3d(5, 3, kernel_size=1, alpha=1, num_estimators=2, gamma=1)
 
-    def test_conv3_failures(self):
+    def test_conv3_failures(self) -> None:
         with pytest.raises(ValueError):
             _ = PackedConv3d(5, 2, kernel_size=1, alpha=-1, num_estimators=1)
 
@@ -373,10 +377,49 @@ class TestPackedConv3d:
             _ = PackedConv3d(5, 2, kernel_size=1, alpha=1, num_estimators=1, gamma=-1)
 
 
+class TestPackedConvTranspose2d:
+    """Testing the PackedConvTranspose2d layer class."""
+
+    def test_conv_one_estimator(self, img_input: torch.Tensor) -> None:
+        layer = PackedConvTranspose2d(6, 2, alpha=1, num_estimators=1, kernel_size=1)
+        out = layer(img_input)
+        assert out.shape == torch.Size([5, 2, 3, 3])
+
+    def test_conv_two_estimators(self, img_input: torch.Tensor) -> None:
+        layer = PackedConvTranspose2d(6, 2, alpha=1, num_estimators=2, kernel_size=1)
+        out = layer(img_input)
+        assert out.shape == torch.Size([5, 2, 3, 3])
+
+    def test_conv_one_estimator_gamma2(self, img_input: torch.Tensor) -> None:
+        layer = PackedConvTranspose2d(6, 2, alpha=1, num_estimators=1, kernel_size=1, gamma=2)
+        out = layer(img_input)
+        assert out.shape == torch.Size([5, 2, 3, 3])
+        assert layer.conv_transpose.groups == 1  # and not 2
+
+    def test_conv_two_estimators_gamma2(self, img_input: torch.Tensor) -> None:
+        layer = PackedConvTranspose2d(6, 2, alpha=1, num_estimators=2, kernel_size=1, gamma=2)
+        out = layer(img_input)
+        assert out.shape == torch.Size([5, 2, 3, 3])
+        assert layer.conv_transpose.groups == 2  # and not 4
+
+    def test_conv_extend(self) -> None:
+        _ = PackedConvTranspose2d(5, 3, kernel_size=1, alpha=1, num_estimators=2, gamma=1)
+
+    def test_conv2_failures(self) -> None:
+        with pytest.raises(ValueError):
+            _ = PackedConvTranspose2d(5, 2, kernel_size=1, alpha=-1, num_estimators=1)
+
+        with pytest.raises(TypeError):
+            _ = PackedConvTranspose2d(5, 2, kernel_size=1, alpha=1, num_estimators=1, gamma=0.5)
+
+        with pytest.raises(ValueError):
+            _ = PackedConvTranspose2d(5, 2, kernel_size=1, alpha=1, num_estimators=1, gamma=-1)
+
+
 class TestPackedLayerNorm:
     """Testing the PackedGroupNorm layer class."""
 
-    def test_one_estimator_forward(self, batched_qkv: torch.Tensor):
+    def test_one_estimator_forward(self, batched_qkv: torch.Tensor) -> None:
         packed_layer_norm = PackedLayerNorm(
             embed_dim=6,
             num_estimators=1,
@@ -389,7 +432,9 @@ class TestPackedLayerNorm:
 class TestPackedMultiheadAttention:
     """Testing the PackedMultiheadAttention layer class."""
 
-    def test_one_estimator_qkv(self, unbatched_qkv: torch.Tensor, batched_qkv: torch.Tensor):
+    def test_one_estimator_qkv(
+        self, unbatched_qkv: torch.Tensor, batched_qkv: torch.Tensor
+    ) -> None:
         attn_mask = torch.zeros(1, 3, 3, dtype=torch.bool)
 
         layer = PackedMultiheadAttention(
@@ -436,7 +481,7 @@ class TestPackedMultiheadAttention:
         self,
         unbatched_q_kv: tuple[torch.Tensor, torch.Tensor],
         batched_q_kv: tuple[torch.Tensor, torch.Tensor],
-    ):
+    ) -> None:
         layer = PackedMultiheadAttention(
             embed_dim=6,
             num_heads=2,
@@ -481,7 +526,7 @@ class TestPackedMultiheadAttention:
         self,
         unbatched_q_k_v: tuple[torch.Tensor, torch.Tensor, torch.Tensor],
         batched_q_k_v: tuple[torch.Tensor, torch.Tensor, torch.Tensor],
-    ):
+    ) -> None:
         layer = PackedMultiheadAttention(
             embed_dim=6,
             num_heads=1,
@@ -536,7 +581,9 @@ class TestPackedMultiheadAttention:
         assert out.shape == torch.Size([2, 3, 6])
         assert out.isfinite().all()
 
-    def test_two_estimators_qkv(self, unbatched_qkv: torch.Tensor, batched_qkv: torch.Tensor):
+    def test_two_estimators_qkv(
+        self, unbatched_qkv: torch.Tensor, batched_qkv: torch.Tensor
+    ) -> None:
         layer = PackedMultiheadAttention(
             embed_dim=6,
             num_heads=3,
@@ -576,7 +623,7 @@ class TestPackedMultiheadAttention:
         self,
         unbatched_q_kv: tuple[torch.Tensor, torch.Tensor],
         batched_q_kv: tuple[torch.Tensor, torch.Tensor],
-    ):
+    ) -> None:
         layer = PackedMultiheadAttention(
             embed_dim=6,
             num_heads=3,
@@ -626,7 +673,7 @@ class TestPackedMultiheadAttention:
         self,
         unbatched_q_k_v: tuple[torch.Tensor, torch.Tensor, torch.Tensor],
         extended_batched_q_k_v: tuple[torch.Tensor, torch.Tensor, torch.Tensor],
-    ):
+    ) -> None:
         layer = PackedMultiheadAttention(
             embed_dim=6,
             num_heads=3,
@@ -677,7 +724,7 @@ class TestPackedMultiheadAttention:
 class TestPackedTransformerEncoderLayer:
     """Testing the PackedTransformerEncoderLayer class."""
 
-    def test_one_estimator(self, unbatched_qkv: torch.Tensor, batched_qkv: torch.Tensor):
+    def test_one_estimator(self, unbatched_qkv: torch.Tensor, batched_qkv: torch.Tensor) -> None:
         layer = PackedTransformerEncoderLayer(
             d_model=6,
             dim_feedforward=12,
@@ -713,7 +760,9 @@ class TestPackedTransformerEncoderLayer:
         )
         assert out.shape == torch.Size([2, 3, 6])
 
-    def test_two_estimators(self, unbatched_qkv: torch.Tensor, extended_batched_qkv: torch.Tensor):
+    def test_two_estimators(
+        self, unbatched_qkv: torch.Tensor, extended_batched_qkv: torch.Tensor
+    ) -> None:
         layer = PackedTransformerEncoderLayer(
             d_model=6,
             dim_feedforward=12,
@@ -754,7 +803,7 @@ class TestPackedTransformerDecoderLayer:
         self,
         unbatched_tgt_memory: tuple[torch.Tensor, torch.Tensor],
         batched_tgt_memory: tuple[torch.Tensor, torch.Tensor],
-    ):
+    ) -> None:
         layer = PackedTransformerDecoderLayer(
             d_model=6,
             dim_feedforward=12,
@@ -800,7 +849,7 @@ class TestPackedTransformerDecoderLayer:
         self,
         unbatched_tgt_memory: tuple[torch.Tensor, torch.Tensor],
         extended_batched_tgt_memory: tuple[torch.Tensor, torch.Tensor],
-    ):
+    ) -> None:
         layer = PackedTransformerDecoderLayer(
             d_model=6,
             dim_feedforward=12,
@@ -843,7 +892,7 @@ class TestPackedFunctional:
     def test_packed_in_projection_packed(
         self,
         batched_qkv: torch.Tensor,
-    ):
+    ) -> None:
         proj_q, proj_k, proj_v = packed_in_projection_packed(
             q=batched_qkv,
             k=batched_qkv,
@@ -902,7 +951,9 @@ class TestPackedFunctional:
         assert proj_k.shape == torch.Size([2, 4, 6])
         assert proj_v.shape == torch.Size([2, 4, 6])
 
-    def test_packed_multi_head_attention_forward_failures(self, unbatched_q_k_v: torch.Tensor):
+    def test_packed_multi_head_attention_forward_failures(
+        self, unbatched_q_k_v: torch.Tensor
+    ) -> None:
         q, k, v = unbatched_q_k_v
         with pytest.raises(RuntimeError):
             _ = packed_multi_head_attention_forward(
