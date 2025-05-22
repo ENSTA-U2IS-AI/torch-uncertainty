@@ -52,7 +52,7 @@ class TestConformalClsAPS:
             out == repeat(torch.tensor([True, True, False]), "c -> b c", b=10).float() / 2
         ).all()
 
-        conformal = ConformalClsAPS(alpha=0.1, model=nn.Identity(), randomized=True)
+        conformal = ConformalClsAPS(alpha=0.1, model=nn.Identity(), randomized=True, enable_ts=True)
         conformal.fit(dl)
         out = conformal.conformal(inputs)
         assert out.shape == (10, 3)
@@ -82,7 +82,9 @@ class TestConformalClsRAPS:
             out == repeat(torch.tensor([True, True, False]), "c -> b c", b=10).float() / 2
         ).all()
 
-        conformal = ConformalClsRAPS(alpha=0.1, model=nn.Identity(), randomized=True)
+        conformal = ConformalClsRAPS(
+            alpha=0.1, model=nn.Identity(), randomized=True, enable_ts=True
+        )
         conformal.fit(dl)
         out = conformal.conformal(inputs)
         assert out.shape == (10, 3)
@@ -90,6 +92,29 @@ class TestConformalClsRAPS:
     def test_failures(self):
         with pytest.raises(RuntimeError):
             ConformalClsRAPS(alpha=0.1).quantile  # noqa: B018
+
+        with pytest.raises(ValueError, match="penalty should be non-negative. Got "):
+            _ = ConformalClsRAPS(
+                alpha=0.1,
+                penalty=-0.1,
+            )
+
+        with pytest.raises(TypeError, match="regularization_rank should be an integer. Got"):
+            _ = ConformalClsRAPS(
+                alpha=0.1,
+                regularization_rank=0.1,
+            )
+
+        with pytest.raises(ValueError, match="regularization_rank should be non-negative. Got "):
+            _ = ConformalClsRAPS(
+                alpha=0.1,
+                regularization_rank=-1,
+            )
+        conformal = ConformalClsRAPS(alpha=0.1, model=nn.Identity(), randomized=True)
+        with pytest.raises(
+            RuntimeError, match="Cannot return temperature when enable_ts is False."
+        ):
+            _ = conformal.temperature
 
 
 class TestConformalClsTHR:
@@ -120,6 +145,11 @@ class TestConformalClsTHR:
         assert (
             out == repeat(torch.tensor([True, True, False]), "c -> b c", b=10).float() / 2
         ).all()
+
+        conformal = ConformalClsTHR(
+            alpha=0.1, model=nn.Identity(), ts_init_val=2, ts_lr=1, ts_max_iter=10, enable_ts=False
+        )
+        conformal.fit(dl)
 
     def test_failures(self):
         with pytest.raises(RuntimeError):

@@ -30,7 +30,7 @@ class ConformalClsAPS(Conformal):
             ts_lr (float, optional): Learning rate for the optimizer. Defaults to ``0.1``.
             ts_max_iter (int, optional): Maximum number of iterations for the
                 optimizer. Defaults to ``100``.
-            enable_ts (bool): Whether to scale the logits. Defaults to ``True``.
+            enable_ts (bool): Whether to scale the logits. Defaults to ``False``.
             device (Literal["cpu", "cuda"] | torch.device | None, optional): device.
                 Defaults to ``None``.
 
