@@ -75,6 +75,7 @@ class TestConformalClsRAPS:
         dl = DataLoader(calibration_set, batch_size=10)
 
         conformal = ConformalClsRAPS(alpha=0.1, model=nn.Identity(), randomized=False)
+        conformal.set_model(nn.Identity())
         conformal.fit(dl)
         out = conformal.conformal(inputs)
         assert out.shape == (10, 3)
@@ -122,11 +123,8 @@ class TestConformalClsTHR:
 
     def test_main(self):
         conformal = ConformalClsTHR(alpha=0.1, model=None, ts_init_val=2)
-
         assert conformal.temperature == 2.0
-
         conformal.set_model(nn.Identity())
-
         assert isinstance(conformal.model.model, nn.Identity)
 
     def test_fit(self):

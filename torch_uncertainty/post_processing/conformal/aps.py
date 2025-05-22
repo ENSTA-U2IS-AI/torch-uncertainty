@@ -63,8 +63,6 @@ class ConformalClsAPS(Conformal):
 
     def _calculate_all_labels(self, probs):
         """Calculate APS scores for all labels."""
-        if probs.dim() == 1 or probs.dim() > 2:
-            raise ValueError("Input probabilities must be 2D.")
         indices, ordered, cumsum = self._sort_sum(probs)
         if self.randomized:
             noise = torch.rand(probs.shape, device=probs.device)
