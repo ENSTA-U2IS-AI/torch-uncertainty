@@ -87,9 +87,10 @@ class Scaler(PostProcessing):
 
         # Handle binary classification case
         if all_logits.dim() == 2 and all_logits.shape[1] == 1:
+            all_logits = all_logits.squeeze(1)
             # Stabilize optimization
-            all_logits = all_logits.clamp(self.eps, 1 - self.eps).squeeze(1)
         if all_logits.dim() == 1:
+            all_logits = all_logits.clamp(self.eps, 1 - self.eps).squeeze(1)
             # allow labels as probabilities
             if ((all_labels != 0) * (all_labels != 1)).sum(dtype=torch.int) != 0:
                 all_labels = torch.stack([1 - all_labels, all_labels], dim=1)
