@@ -34,7 +34,7 @@ class RegressionRoutine(LightningModule):
         self,
         model: nn.Module,
         output_dim: int,
-        loss: nn.Module,
+        loss: nn.Module | None = None,
         dist_family: str | None = None,
         dist_estimate: str = "mean",
         is_ensemble: bool = False,
@@ -50,6 +50,7 @@ class RegressionRoutine(LightningModule):
             model (torch.nn.Module): Model to train.
             output_dim (int): Number of outputs of the model.
             loss (torch.nn.Module): Loss function to optimize the :attr:`model`.
+                Defaults to ``None``.
             dist_family (str, optional): The distribution family to use for probabilistic regression. If ``None`` then point-wise regression. Defaults to ``None``.
             dist_estimate (str, optional): The estimate to use when computing the point-wise metrics. Defaults to ``"mean"``.
             is_ensemble (bool, optional): Whether the model is an ensemble. Defaults to ``False``.
@@ -122,9 +123,13 @@ class RegressionRoutine(LightningModule):
     def configure_optimizers(self) -> Optimizer | dict:
         return self.optim_recipe
 
-    def on_train_start(self) -> None:
+    def on_train_start(self) -> None:  # coverage: ignore
         """Put the hyperparameters in tensorboard."""
-        if self.logger is not None:  # coverage: ignore
+        if self.loss is None:
+            raise ValueError(
+                "To train a model, you must specify the `loss` argument in the routine. Got None."
+            )
+        if self.logger is not None:
             self.logger.log_hyperparams(
                 self.hparams,
             )
