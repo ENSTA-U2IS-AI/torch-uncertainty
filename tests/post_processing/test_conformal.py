@@ -17,10 +17,18 @@ class TestConformal:
 
     def test_errors(self):
         Conformal.__abstractmethods__ = set()
-        conformal = Conformal(model=None)
-        assert conformal.model is None
+        conformal = Conformal(
+            model=None,
+            alpha=0.1,
+            ts_init_val=1,
+            ts_lr=1,
+            ts_max_iter=1,
+            enable_ts=True,
+            device="cpu",
+        )
+        assert conformal.model.model is None
         conformal.set_model(nn.Identity())
-        assert isinstance(conformal.model, nn.Identity)
+        assert isinstance(conformal.model.model, nn.Identity)
         conformal.fit(None)
         conformal.forward(None)
         conformal.conformal(None)
@@ -50,10 +58,7 @@ class TestConformalClsAPS:
         assert out.shape == (10, 3)
 
     def test_failures(self):
-        with pytest.raises(NotImplementedError):
-            _ = ConformalClsAPS(alpha=0.1, score_type="test")
-
-        with pytest.raises(ValueError):
+        with pytest.raises(RuntimeError):
             _ = ConformalClsAPS(
                 alpha=0.1,
             ).quantile
@@ -83,10 +88,7 @@ class TestConformalClsRAPS:
         assert out.shape == (10, 3)
 
     def test_failures(self):
-        with pytest.raises(NotImplementedError):
-            ConformalClsRAPS(alpha=0.1, score_type="test")
-
-        with pytest.raises(ValueError):
+        with pytest.raises(RuntimeError):
             ConformalClsRAPS(alpha=0.1).quantile  # noqa: B018
 
 
@@ -94,14 +96,13 @@ class TestConformalClsTHR:
     """Testing the ConformalClsTHR class."""
 
     def test_main(self):
-        conformal = ConformalClsTHR(alpha=0.1, model=None, init_val=2)
+        conformal = ConformalClsTHR(alpha=0.1, model=None, ts_init_val=2)
 
         assert conformal.temperature == 2.0
 
         conformal.set_model(nn.Identity())
 
-        assert isinstance(conformal.model, nn.Identity)
-        assert isinstance(conformal.temperature_scaler.model, nn.Identity)
+        assert isinstance(conformal.model.model, nn.Identity)
 
     def test_fit(self):
         inputs = repeat(torch.tensor([0.6, 0.3, 0.1]), "c -> b c", b=10)
@@ -110,7 +111,9 @@ class TestConformalClsTHR:
         calibration_set = list(zip(inputs, labels, strict=True))
         dl = DataLoader(calibration_set, batch_size=10)
 
-        conformal = ConformalClsTHR(alpha=0.1, model=nn.Identity(), init_val=2, lr=1, max_iter=10)
+        conformal = ConformalClsTHR(
+            alpha=0.1, model=nn.Identity(), ts_init_val=2, ts_lr=1, ts_max_iter=10
+        )
         conformal.fit(dl)
         out = conformal.conformal(inputs)
         assert out.shape == (10, 3)
@@ -119,7 +122,7 @@ class TestConformalClsTHR:
         ).all()
 
     def test_failures(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(RuntimeError):
             _ = ConformalClsTHR(
                 alpha=0.1,
             ).quantile
