@@ -49,7 +49,6 @@ weights, config = load_hf("resnet18_c100")
 
 # Load the weights in the pre-built model
 model.load_state_dict(weights)
-
 # %%
 # 3. Setting up the Datamodule and Dataloaders
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -155,10 +154,9 @@ fig.show()
 # Temperature scaling is very efficient when the calibration set is representative of the test set.
 # In this case, we say that the calibration and test set are drawn from the same distribution.
 # However, this may not hold true in real-world cases where dataset shift could happen.
-
-# %%
+#
 # References
-# ~~~~~~~~~~
+# ----------
 #
 # - **Expected Calibration Error:** Naeini, M. P., Cooper, G. F., & Hauskrecht, M. (2015). Obtaining Well Calibrated Probabilities Using Bayesian Binning. In `AAAI 2015 <https://arxiv.org/pdf/1411.0160.pdf>`_.
 # - **Temperature Scaling:** Guo, C., Pleiss, G., Sun, Y., & Weinberger, K. Q. (2017). On calibration of modern neural networks. In `ICML 2017 <https://arxiv.org/pdf/1706.04599.pdf>`_.

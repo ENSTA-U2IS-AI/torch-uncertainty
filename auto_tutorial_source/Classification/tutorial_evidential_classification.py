@@ -35,7 +35,7 @@ We also need to define an optimizer using torch.optim, the neural network utils 
 from pathlib import Path
 
 import torch
-from torch import nn, optim
+from torch import optim
 
 from torch_uncertainty import TUTrainer
 from torch_uncertainty.datamodules import MNISTDataModule

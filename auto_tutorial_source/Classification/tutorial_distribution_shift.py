@@ -107,7 +107,9 @@ routine = ClassificationRoutine(
 # We specify the maximum number of epochs, the precision and the device to be used.
 
 # Initialize the TUTrainer with a maximum of 10 epochs and the specified device
-trainer = TUTrainer(max_epochs=10, precision="16-mixed", accelerator="cuda", devices=1)
+trainer = TUTrainer(
+    max_epochs=10, precision="16-mixed", accelerator="cuda", devices=1, enable_progress_bar=False
+)
 
 # Begin training the model using the CIFAR-10 DataModule
 trainer.fit(routine, datamodule=datamodule)
