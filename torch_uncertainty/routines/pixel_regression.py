@@ -280,7 +280,7 @@ class PixelRegressionRoutine(LightningModule):
         preds, dist = self.evaluation_forward(inputs)
 
         if batch_idx == 0 and self.log_plots:
-            self._plot_depth(
+            self._plot_pixel_regression(
                 inputs[: self.num_image_plot, ...],
                 preds[: self.num_image_plot, ...],
                 targets[: self.num_image_plot, ...],
@@ -320,7 +320,7 @@ class PixelRegressionRoutine(LightningModule):
 
         if batch_idx == 0 and self.log_plots:
             num_images = min(inputs.size(0), self.num_image_plot)
-            self._plot_depth(
+            self._plot_pixel_regression(
                 inputs[:num_images, ...],
                 preds[:num_images, ...],
                 targets[:num_images, ...],
@@ -370,7 +370,7 @@ class PixelRegressionRoutine(LightningModule):
                 result_dict,
             )
 
-    def _plot_depth(
+    def _plot_pixel_regression(
         self,
         inputs: Tensor,
         preds: Tensor,
@@ -401,7 +401,7 @@ def colorize(
     vmin: float | None = None,
     vmax: float | None = None,
     cmap: str = "magma",
-):
+) -> Tensor:
     """Colorize a tensor of depth values.
 
     Args:
