@@ -335,7 +335,7 @@ class TestClassification:
         trainer.test(model, dm)
         model(dm.get_test_set()[0][0])
 
-    def test_one_estimator_conformal(self):
+    def test_one_estimator_conformal(self) -> None:
         trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
 
         dm = DummyClassificationDataModule(
@@ -377,7 +377,7 @@ class TestClassification:
         )
         trainer.test(routine, dm)
 
-    def test_classification_failures(self):
+    def test_classification_failures(self) -> None:
         # num_classes
         with pytest.raises(ValueError):
             ClassificationRoutine(num_classes=0, model=nn.Module(), loss=None)

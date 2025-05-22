@@ -8,7 +8,7 @@ class TestDeeplab:
     """Testing the Deeplab class."""
 
     @torch.no_grad()
-    def test_main(self):
+    def test_main(self) -> None:
         model = deep_lab_v3_resnet(10, 50, "v3", 16, True, False).eval()
         model(torch.randn(1, 3, 32, 32))
         model = deep_lab_v3_resnet(10, 50, "v3", 16, False, False).eval()

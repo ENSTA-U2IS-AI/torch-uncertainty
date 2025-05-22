@@ -61,7 +61,7 @@ class ConformalClsAPS(Conformal):
         cumsum = torch.cumsum(ordered, dim=-1)
         return indices, ordered, cumsum
 
-    def _calculate_all_labels(self, probs):
+    def _calculate_all_labels(self, probs: Tensor) -> Tensor:
         """Calculate APS scores for all labels."""
         indices, ordered, cumsum = self._sort_sum(probs)
         if self.randomized:
@@ -73,7 +73,7 @@ class ConformalClsAPS(Conformal):
         _, sorted_indices = torch.sort(indices, descending=False, dim=-1)
         return ordered_scores.gather(dim=-1, index=sorted_indices)
 
-    def _calculate_single_label(self, probs, label):
+    def _calculate_single_label(self, probs: Tensor, label: Tensor) -> Tensor:
         """Calculate APS score for a single label."""
         indices, ordered, cumsum = self._sort_sum(probs)
         if self.randomized:

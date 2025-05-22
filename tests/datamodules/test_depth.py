@@ -27,7 +27,7 @@ class TestMUADDataModule:
         assert isinstance(dm.train_transform, nn.Identity)
         assert isinstance(dm.test_transform, nn.Identity)
 
-    def test_depth_dm_failures(self):
+    def test_depth_dm_failures(self) -> None:
         with pytest.raises(ValueError):
             DepthDataModule(
                 dataset=DummPixelRegressionDataset,

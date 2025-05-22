@@ -8,7 +8,7 @@ from torch_uncertainty.models import CheckpointCollector
 class TestCheckpointCollector:
     """Testing the CheckpointCollector class."""
 
-    def test_training(self):
+    def test_training(self) -> None:
         device = "cuda" if torch.cuda.is_available() else "cpu"
 
         ens = CheckpointCollector(dummy_model(1, 10), store_on_cpu=True)
@@ -49,7 +49,7 @@ class TestCheckpointCollector:
         ens.eval()
         ens(torch.randn(1, 1, device=device))
 
-    def test_failures(self):
+    def test_failures(self) -> None:
         with pytest.raises(ValueError):
             CheckpointCollector(dummy_model(1, 10), cycle_start=0)
 

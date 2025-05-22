@@ -98,7 +98,7 @@ class UpConv2d(nn.Module):
         in_channels: int,
         out_channels: int,
         ratio: int = 2,
-        **factory_kwargs,
+        **factory_kwargs: dict,
     ) -> None:
         """Upsampling convolution.
 
@@ -132,7 +132,7 @@ class Reduction1x1(nn.Module):
         num_out_filters: int,
         max_depth: float,
         is_final: bool = False,
-        **factory_kwargs,
+        **factory_kwargs: dict,
     ) -> None:
         super().__init__()
         self.max_depth = max_depth

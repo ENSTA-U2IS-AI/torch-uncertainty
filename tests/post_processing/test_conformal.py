@@ -15,7 +15,7 @@ from torch_uncertainty.post_processing import (
 class TestConformal:
     """Testing the Conformal class."""
 
-    def test_errors(self):
+    def test_errors(self) -> None:
         Conformal.__abstractmethods__ = set()
         conformal = Conformal(
             model=None,
@@ -37,7 +37,7 @@ class TestConformal:
 class TestConformalClsAPS:
     """Testing the ConformalClsRAPS class."""
 
-    def test_fit(self):
+    def test_fit(self) -> None:
         inputs = repeat(torch.tensor([0.6, 0.3, 0.1]), "c -> b c", b=10)
         labels = torch.tensor([0, 2] + [1] * 8)
 
@@ -57,7 +57,7 @@ class TestConformalClsAPS:
         out = conformal.conformal(inputs)
         assert out.shape == (10, 3)
 
-    def test_failures(self):
+    def test_failures(self) -> None:
         with pytest.raises(RuntimeError):
             _ = ConformalClsAPS(
                 alpha=0.1,
@@ -67,7 +67,7 @@ class TestConformalClsAPS:
 class TestConformalClsRAPS:
     """Testing the ConformalClsRAPS class."""
 
-    def test_fit(self):
+    def test_fit(self) -> None:
         inputs = repeat(torch.tensor([6.0, 4.0, 1.0]), "c -> b c", b=10)
         labels = torch.tensor([0, 2] + [1] * 8)
 
@@ -90,7 +90,7 @@ class TestConformalClsRAPS:
         out = conformal.conformal(inputs)
         assert out.shape == (10, 3)
 
-    def test_failures(self):
+    def test_failures(self) -> None:
         with pytest.raises(RuntimeError):
             ConformalClsRAPS(alpha=0.1).quantile  # noqa: B018
 
@@ -121,13 +121,13 @@ class TestConformalClsRAPS:
 class TestConformalClsTHR:
     """Testing the ConformalClsTHR class."""
 
-    def test_main(self):
+    def test_main(self) -> None:
         conformal = ConformalClsTHR(alpha=0.1, model=None, ts_init_val=2)
         assert conformal.temperature == 2.0
         conformal.set_model(nn.Identity())
         assert isinstance(conformal.model.model, nn.Identity)
 
-    def test_fit(self):
+    def test_fit(self) -> None:
         inputs = repeat(torch.tensor([0.6, 0.3, 0.1]), "c -> b c", b=10)
         labels = torch.tensor([0, 2] + [1] * 8)
 
@@ -149,7 +149,7 @@ class TestConformalClsTHR:
         )
         conformal.fit(dl)
 
-    def test_failures(self):
+    def test_failures(self) -> None:
         with pytest.raises(RuntimeError):
             _ = ConformalClsTHR(
                 alpha=0.1,

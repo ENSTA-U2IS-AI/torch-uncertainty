@@ -39,7 +39,7 @@ class _DeepEnsembles(nn.Module):
             preds = [model.forward(x) for model in self.core_models]
         return torch.cat(preds, dim=0)
 
-    def to(self, *args, **kwargs):
+    def to(self, *args, **kwargs: dict):
         device, dtype, non_blocking = torch._C._nn._parse_to(*args, **kwargs)[:3]
 
         if self.store_on_cpu:

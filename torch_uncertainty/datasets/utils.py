@@ -41,7 +41,7 @@ class TTADataset(Dataset):
         self.dataset = dataset
         self.num_augmentations = num_augmentations
 
-    def __len__(self):
+    def __len__(self) -> int:
         """Get the virtual length of the dataset."""
         return len(self.dataset) * self.num_augmentations
 

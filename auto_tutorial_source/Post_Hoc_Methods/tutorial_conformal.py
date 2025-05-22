@@ -65,7 +65,7 @@ trainer = TUTrainer(accelerator="gpu", devices=1, max_epochs=5, enable_progress_
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-def visualize_prediction_sets(inputs, labels, confidence_scores, classes, num_examples=5):
+def visualize_prediction_sets(inputs, labels, confidence_scores, classes, num_examples=5) -> None:
     _, axs = plt.subplots(2, num_examples, figsize=(15, 5))
     for i in range(num_examples):
         ax = axs[0, i]

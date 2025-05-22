@@ -94,7 +94,7 @@ class AbstractMixup(nn.Module):
         self.num_classes = num_classes
         self.mode = mode
 
-    def _get_params(self, batch_size: int, device: torch.device):
+    def _get_params(self, batch_size: int, device: torch.device) -> tuple[float, Tensor]:
         if self.mode == "batch":
             lam = self.rng.beta(a=self.alpha, b=self.alpha)
         else:

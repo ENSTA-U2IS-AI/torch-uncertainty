@@ -66,7 +66,7 @@ class ConformalClsRAPS(ConformalClsAPS):
         self.penalty = penalty
         self.regularization_rank = regularization_rank
 
-    def _calculate_all_labels(self, probs):
+    def _calculate_all_labels(self, probs: Tensor) -> Tensor:
         indices, ordered, cumsum = self._sort_sum(probs)
         if self.randomized:
             noise = torch.rand(probs.shape, device=probs.device)
