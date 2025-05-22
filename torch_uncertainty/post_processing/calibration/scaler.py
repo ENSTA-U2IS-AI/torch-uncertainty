@@ -90,7 +90,7 @@ class Scaler(PostProcessing):
             all_logits = all_logits.squeeze(1)
             # Stabilize optimization
         if all_logits.dim() == 1:
-            all_logits = all_logits.clamp(self.eps, 1 - self.eps).squeeze(1)
+            all_logits = all_logits.clamp(self.eps, 1 - self.eps)
             # allow labels as probabilities
             if ((all_labels != 0) * (all_labels != 1)).sum(dtype=torch.int) != 0:
                 all_labels = torch.stack([1 - all_labels, all_labels], dim=1)
