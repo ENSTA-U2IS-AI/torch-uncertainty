@@ -82,9 +82,9 @@ from torch.utils.data import DataLoader, random_split
 
 # Split datasets
 dataset = dm.test
-cal_dataset, test_dataset, other = random_split(dataset, [1000, 1000, len(dataset) - 2000])
-test_dataloader = DataLoader(test_dataset, batch_size=32)
-calibration_dataloader = DataLoader(cal_dataset, batch_size=32)
+cal_dataset, test_dataset = random_split(dataset, [2000, len(dataset) - 2000])
+test_dataloader = DataLoader(test_dataset, batch_size=128)
+calibration_dataloader = DataLoader(cal_dataset, batch_size=128)
 
 # Initialize the ECE
 ece = CalibrationError(task="multiclass", num_classes=100)
@@ -135,11 +135,14 @@ for sample, target in test_dataloader:
     probs = logits.softmax(-1)
     ece.update(probs, target)
 
-print(f"ECE after scaling - {ece.compute():.3%}.")
+print(
+    f"ECE after scaling - {ece.compute():.3%} with temperature {scaled_model.temperature[0].item():.3}."
+)
 
 # %%
 # We finally compute and plot the scaled top-label calibration figure. We see
-# that the model is now better calibrated.
+# that the model is now better calibrated. If the temperature is greater than 1,
+# the final model is less confident than before.
 fig, ax = ece.plot()
 fig.show()
 
