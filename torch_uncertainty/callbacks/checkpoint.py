@@ -60,7 +60,7 @@ class TUCheckpoint(Checkpoint):
 
 
 class TUClsCheckpoint(TUCheckpoint):
-    def __init__(self):
+    def __init__(self) -> None:
         """Keep multiple checkpoints corresponding to the best classification metric values."""
         super().__init__()
         self.callbacks = {
@@ -96,7 +96,7 @@ class TUClsCheckpoint(TUCheckpoint):
 
 
 class TUSegCheckpoint(TUCheckpoint):
-    def __init__(self):
+    def __init__(self) -> None:
         """Keep multiple checkpoints corresponding to the best segmentation metric values."""
         super().__init__()
         self.callbacks = {
@@ -132,7 +132,7 @@ class TUSegCheckpoint(TUCheckpoint):
 
 
 class TURegCheckpoint(TUCheckpoint):
-    def __init__(self, probabilistic: bool = False):
+    def __init__(self, probabilistic: bool = False) -> None:
         """Keep multiple checkpoints corresponding to the best regression metric values."""
         super().__init__()
         self.callbacks = {

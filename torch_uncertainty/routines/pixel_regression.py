@@ -51,7 +51,7 @@ class PixelRegressionRoutine(LightningModule):
         self,
         model: nn.Module,
         output_dim: int,
-        loss: nn.Module,
+        loss: nn.Module | None = None,
         dist_family: str | None = None,
         dist_estimate: str = "mean",
         is_ensemble: bool = False,
@@ -69,6 +69,7 @@ class PixelRegressionRoutine(LightningModule):
             model (nn.Module): Model to train.
             output_dim (int): Number of outputs of the model.
             loss (nn.Module): Loss function to optimize the :attr:`model`.
+                Defaults to ``None``.
             dist_family (str, optional): The distribution family to use for
                 probabilistic pixel regression. If ``None`` then point-wise regression.
                 Defaults to ``None``.
@@ -151,9 +152,13 @@ class PixelRegressionRoutine(LightningModule):
     def configure_optimizers(self) -> Optimizer | dict:
         return self.optim_recipe
 
-    def on_train_start(self) -> None:
+    def on_train_start(self) -> None:  # coverage: ignore
         """Put the hyperparameters in tensorboard."""
-        if self.logger is not None:  # coverage: ignore
+        if self.loss is None:
+            raise ValueError(
+                "To train a model, you must specify the `loss` argument in the routine. Got None."
+            )
+        if self.logger is not None:
             self.logger.log_hyperparams(
                 self.hparams,
             )
@@ -275,7 +280,7 @@ class PixelRegressionRoutine(LightningModule):
         preds, dist = self.evaluation_forward(inputs)
 
         if batch_idx == 0 and self.log_plots:
-            self._plot_depth(
+            self._plot_pixel_regression(
                 inputs[: self.num_image_plot, ...],
                 preds[: self.num_image_plot, ...],
                 targets[: self.num_image_plot, ...],
@@ -315,7 +320,7 @@ class PixelRegressionRoutine(LightningModule):
 
         if batch_idx == 0 and self.log_plots:
             num_images = min(inputs.size(0), self.num_image_plot)
-            self._plot_depth(
+            self._plot_pixel_regression(
                 inputs[:num_images, ...],
                 preds[:num_images, ...],
                 targets[:num_images, ...],
@@ -365,7 +370,7 @@ class PixelRegressionRoutine(LightningModule):
                 result_dict,
             )
 
-    def _plot_depth(
+    def _plot_pixel_regression(
         self,
         inputs: Tensor,
         preds: Tensor,
@@ -396,7 +401,7 @@ def colorize(
     vmin: float | None = None,
     vmax: float | None = None,
     cmap: str = "magma",
-):
+) -> Tensor:
     """Colorize a tensor of depth values.
 
     Args:

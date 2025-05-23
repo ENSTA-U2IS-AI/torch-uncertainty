@@ -45,7 +45,7 @@ class SegmentationRoutine(LightningModule):
         self,
         model: nn.Module,
         num_classes: int,
-        loss: nn.Module,
+        loss: nn.Module | None = None,
         optim_recipe: dict | Optimizer | None = None,
         eval_shift: bool = False,
         format_batch_fn: nn.Module | None = None,
@@ -65,6 +65,7 @@ class SegmentationRoutine(LightningModule):
             model (torch.nn.Module): Model to train.
             num_classes (int): Number of classes in the segmentation task.
             loss (torch.nn.Module): Loss function to optimize the :attr:`model`.
+                Defaults to ``None``.
             optim_recipe (dict or Optimizer, optional): The optimizer and
                 optionally the scheduler to use. Defaults to ``None``.
             eval_shift (bool, optional): Indicates whether to evaluate the Distribution
@@ -209,8 +210,12 @@ class SegmentationRoutine(LightningModule):
         """
         return self.model(inputs)
 
-    def on_train_start(self) -> None:
-        if self.logger is not None:  # coverage: ignore
+    def on_train_start(self) -> None:  # coverage: ignore
+        if self.loss is None:
+            raise ValueError(
+                "To train a model, you must specify the `loss` argument in the routine. Got None."
+            )
+        if self.logger is not None:
             self.logger.log_hyperparams(self.hparams)
 
     def on_validation_start(self) -> None:

@@ -70,7 +70,7 @@ class ClassificationRoutine(LightningModule):
         self,
         model: nn.Module,
         num_classes: int,
-        loss: nn.Module,
+        loss: nn.Module | None = None,
         is_ensemble: bool = False,
         num_tta: int = 1,
         format_batch_fn: nn.Module | None = None,
@@ -92,6 +92,7 @@ class ClassificationRoutine(LightningModule):
             model (torch.nn.Module): Model to train.
             num_classes (int): Number of classes.
             loss (torch.nn.Module): Loss function to optimize the :attr:`model`.
+                Defaults to ``None``.
             is_ensemble (bool, optional): Indicates whether the model is an
                 ensemble at test time or not. Defaults to ``False``.
             num_tta (int): Number of test-time augmentations (TTA). If ``1``: no TTA.
@@ -371,9 +372,13 @@ class ClassificationRoutine(LightningModule):
     def configure_optimizers(self) -> Optimizer | dict:
         return self.optim_recipe
 
-    def on_train_start(self) -> None:
+    def on_train_start(self) -> None:  # coverage: ignore
         """Put the hyperparameters in tensorboard."""
-        if self.logger is not None:  # coverage: ignore
+        if self.loss is None:
+            raise ValueError(
+                "To train a model, you must specify the `loss` argument in the routine. Got None."
+            )
+        if self.logger is not None:
             self.logger.log_hyperparams(
                 self.hparams,
             )

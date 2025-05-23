@@ -18,10 +18,11 @@ trainer:
         logging_interval: step
 model:
   model:
-    class_path: torch_uncertainty.models.segmentation.deep_lab_v3_resnet50
+    class_path: torch_uncertainty.models.segmentation.deep_lab_v3_resnet
     init_args:
       num_classes: 15
       style: v3+
+      arch: 50
   num_classes: 15
   loss:
     class_path: torch.nn.CrossEntropyLoss
@@ -45,6 +46,7 @@ model:
             - 5.2729
             - 17.8703
             - 50.4984
+  log_plots: true
 data:
   root: ./data
   batch_size: 12

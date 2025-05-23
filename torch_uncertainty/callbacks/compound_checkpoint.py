@@ -23,7 +23,7 @@ class CompoundCheckpoint(ModelCheckpoint):
         every_n_epochs: int | None = None,
         save_on_train_epoch_end: bool | None = None,
         enable_version_counter: bool = True,
-    ):
+    ) -> None:
         """Save the checkpoints maximizing or minimizing a given linear form on the metric values."""
         self.compound_metric_dict = compound_metric_dict
         super().__init__(

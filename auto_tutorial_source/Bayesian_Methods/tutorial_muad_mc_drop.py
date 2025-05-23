@@ -212,7 +212,7 @@ seg_routine = SegmentationRoutine(
     optim_recipe={"optimizer": optimizer, "lr_scheduler": lr_updater},
 )
 
-trainer = TUTrainer(accelerator="gpu", devices=1, max_epochs=NB_EPOCHS, enable_progress_bar=True)
+trainer = TUTrainer(accelerator="gpu", devices=1, max_epochs=NB_EPOCHS, enable_progress_bar=False)
 # %%
 # 6. Training the model
 # ~~~~~~~~~~~~~~~~~~~~~

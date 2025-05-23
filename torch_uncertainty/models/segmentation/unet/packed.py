@@ -1,6 +1,6 @@
 import torch
 from einops import rearrange
-from torch import nn
+from torch import Tensor, nn
 from torchvision.transforms import functional as F
 
 from torch_uncertainty.layers.packed import (
@@ -52,7 +52,7 @@ class _PackedDoubleConv(nn.Module):
             nn.ReLU(inplace=True),
         )
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         return self.conv(x)
 
 
@@ -70,7 +70,7 @@ class _PackedInconv(nn.Module):
             first=True,
         )
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         return self.conv(x)
 
 
@@ -90,7 +90,7 @@ class _PackedDown(nn.Module):
             ),
         )
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         return self.mpconv(x)
 
 
@@ -135,7 +135,7 @@ class _PackedUp(nn.Module):
                 gamma=gamma,
             )
 
-    def forward(self, x1, x2):
+    def forward(self, x1: Tensor, x2: Tensor) -> Tensor:
         x1 = self.up(x1)
         diff_y = x2.size(2) - x1.size(2)
         diff_x = x2.size(3) - x1.size(3)
@@ -162,7 +162,7 @@ class _PackedOutconv(nn.Module):
             last=True,
         )
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         return self.conv(x)
 
 
@@ -215,7 +215,7 @@ class _PackedUNet(nn.Module):
         # Final output
         self.outc = _PackedOutconv(num_blocks[0], num_classes, alpha, num_estimators, gamma)
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         # Downsampling
         x1 = self.inc(x)
         x2 = self.down1(x1)

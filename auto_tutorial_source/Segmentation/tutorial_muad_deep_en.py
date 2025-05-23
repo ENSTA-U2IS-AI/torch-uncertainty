@@ -220,7 +220,11 @@ ens_routine = SegmentationRoutine(
 )
 
 trainer = TUTrainer(
-    accelerator="gpu", devices=1, max_epochs=NB_EPOCHS, enable_progress_bar=True, precision=16
+    accelerator="gpu",
+    devices=1,
+    max_epochs=NB_EPOCHS,
+    enable_progress_bar=False,
+    precision="16-mixed",
 )
 
 # %%

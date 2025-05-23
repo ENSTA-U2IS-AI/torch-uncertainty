@@ -13,7 +13,7 @@ class _MIMOUNet(_UNet):
         num_estimators: int,
         bilinear: bool = False,
         dropout_rate: float = 0.0,
-    ):
+    ) -> None:
         super().__init__(
             in_channels=in_channels * num_estimators,
             num_classes=num_classes * num_estimators,

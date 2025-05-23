@@ -16,7 +16,7 @@ class CoverageRate(Metric):
         average: str = "micro",
         validate_args: bool = True,
         **kwargs,
-    ):
+    ) -> None:
         """Empirical coverage rate metric.
 
         Args:
