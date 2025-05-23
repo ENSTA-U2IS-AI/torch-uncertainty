@@ -44,7 +44,6 @@ from torch_uncertainty.models import (
 )
 from torch_uncertainty.ood.ood_criteria import (
     OODCriterionInputType,
-    PostProcessingCriterion,
     TUOODCriterion,
     get_ood_criterion,
 )
@@ -277,20 +276,12 @@ class ClassificationRoutine(LightningModule):
                 }
             )
 
-        if self.is_ensemble:
-            self.test_ood_ens_metrics_near = {}
-            self.test_ood_ens_metrics_far = {}
-        else:
-            self.test_ood_metrics_near = {}
-            self.test_ood_metrics_far = {}
-
-        if self.is_conformal:
-            cfm_metrics = MetricCollection(
-                {
-                    "CovAcc": CoverageRate(),
-                },
-            )
-            self.test_cfm_metrics = cfm_metrics.clone(prefix="test/cls/")
+            if self.is_ensemble:
+                self.test_ood_ens_metrics_near = {}
+                self.test_ood_ens_metrics_far = {}
+            else:
+                self.test_ood_metrics_near = {}
+                self.test_ood_metrics_far = {}
 
         if self.eval_shift:
             self.test_shift_metrics = cls_metrics.clone(prefix="shift/")
@@ -823,11 +814,6 @@ class ClassificationRoutine(LightningModule):
                 result_far = far_metrics.compute()
                 self.log_dict(result_far)
 
-        if self.is_conformal:
-            tmp_metrics = self.test_cfm_metrics.compute()
-            self.log_dict(tmp_metrics, sync_dist=True)
-            result_dict.update(tmp_metrics)
-
         if self.eval_shift:
             result_dict |= self.test_shift_metrics.compute() | {
                 "shift/severity": self.trainer.datamodule.shift_severity,
@@ -877,11 +863,19 @@ class ClassificationRoutine(LightningModule):
             self.test_grouping_loss.reset()
         if self.is_ensemble:
             self.test_id_ens_metrics.reset()
+
         if self.eval_ood:
-            self.test_ood_metrics.reset()
-            self.test_ood_entropy.reset()
             if self.is_ensemble:
-                self.test_ood_ens_metrics.reset()
+                for near_metrics in self.test_ood_ens_metrics_near.values():
+                    near_metrics.reset()
+                for far_metrics in self.test_ood_ens_metrics_far.values():
+                    far_metrics.reset()
+            else:
+                for near_metrics in self.test_ood_metrics_near.values():
+                    near_metrics.reset()
+                for far_metrics in self.test_ood_metrics_far.values():
+                    far_metrics.reset()
+
         if self.eval_shift:
             self.test_shift_metrics.reset()
             if self.is_ensemble:
@@ -927,11 +921,6 @@ def _classification_routine_checks(
     if is_ensemble and ood_criterion.single_only:
         raise NotImplementedError(
             "Logit-based criteria are not implemented for ensembles. Raise an issue if needed."
-        )
-
-    if isinstance(ood_criterion, PostProcessingCriterion) and post_processing is None:
-        raise ValueError(
-            "You cannot set ood_criterion=PostProcessingCriterion when post_processing is None."
         )
 
     if is_ensemble and eval_grouping_loss:

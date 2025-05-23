@@ -170,13 +170,16 @@ class CIFAR10DataModule(TUDataModule):
             )
 
         if num_tta != 1:
-            self.test_transform = train_transform
+            self.test_transform = self.train_transform
         elif test_transform is not None:
             self.test_transform = test_transform
         else:
             self.test_transform = v2.Compose(
                 [
                     v2.ToImage(),
+                    v2.Resize(32),
+                    v2.CenterCrop(32),
+                    v2.CenterCrop(32),
                     v2.ToDtype(dtype=torch.float32, scale=True),
                     v2.Normalize(mean=self.mean, std=self.std),
                 ]

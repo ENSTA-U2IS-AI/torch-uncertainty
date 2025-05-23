@@ -48,6 +48,7 @@ class OODCriterionInputType(Enum):
 
 
 class TUOODCriterion(ABC, nn.Module):
+    single_only = True
     input_type: OODCriterionInputType
     ensemble_only = False
 
@@ -138,6 +139,7 @@ class EnergyCriterion(TUOODCriterion):
 
 
 class MaxSoftmaxCriterion(TUOODCriterion):
+    single_only = False
     input_type = OODCriterionInputType.PROB
 
     def __init__(self) -> None:
@@ -169,6 +171,7 @@ class MaxSoftmaxCriterion(TUOODCriterion):
 
 
 class EntropyCriterion(TUOODCriterion):
+    single_only = False
     input_type = OODCriterionInputType.ESTIMATOR_PROB
 
     def __init__(self) -> None:
@@ -200,6 +203,7 @@ class EntropyCriterion(TUOODCriterion):
 
 
 class MutualInformationCriterion(TUOODCriterion):
+    single_only = False
     ensemble_only = True
     input_type = OODCriterionInputType.ESTIMATOR_PROB
 
@@ -235,6 +239,7 @@ class MutualInformationCriterion(TUOODCriterion):
 
 
 class VariationRatioCriterion(TUOODCriterion):
+    single_only = False
     ensemble_only = True
     input_type = OODCriterionInputType.ESTIMATOR_PROB
 
