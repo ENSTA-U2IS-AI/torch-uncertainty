@@ -41,7 +41,7 @@ class CamVidDataModule(TUDataModule):
             root (str or Path): Root directory of the datasets.
             batch_size (int): Number of samples per batch during training.
             eval_batch_size (int | None) : Number of samples per batch during evaluation (val
-                and test). Set to batch_size if None. Defaults to None.
+                and test). Set to :attr:`batch_size` if ``None``. Defaults to ``None``.
             crop_size (sequence or int, optional): Desired input image and
                 segmentation mask sizes during training. If :attr:`crop_size` is an
                 int instead of sequence like :math:`(H, W)`, a square crop
@@ -141,6 +141,7 @@ class CamVidDataModule(TUDataModule):
 
             self.train_transform = v2.Compose(
                 [
+                    v2.Resize(size=self.eval_size, antialias=True),
                     basic_transform,
                     v2.ToDtype(
                         dtype={

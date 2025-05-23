@@ -79,6 +79,6 @@ class MIMOBatchFormat(nn.Module):
             [torch.index_select(targets, dim=0, index=indices) for indices in shuffle_indices],
             dim=0,
         )
-        inputs = rearrange(inputs, "m b ... -> (m b) ...", m=self.num_estimators)
-        targets = rearrange(targets, "m b -> (m b)", m=self.num_estimators)
+        inputs = rearrange(inputs, "m b ... -> (m b) ...")
+        targets = rearrange(targets, "m b ... -> (m b) ...")
         return inputs, targets

@@ -4,7 +4,7 @@ build-backend = "flit_core.buildapi"
 
 [project]
 name = "torch_uncertainty"
-version = "0.4.3.rc0"
+version = "0.5.1"
 authors = [
     { name = "ENSTA U2IS", email = "olivier.laurent@ensta-paris.fr" },
     { name = "Adrien Lafage", email = "adrienlafage@outlook.com" },
@@ -40,31 +40,25 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-experiments = [
-    "tensorboard",
-    "huggingface-hub>=0.31",
-    "safetensors",
-]
-image = [
-    "kornia",
-    "h5py",
-    "opencv-python",
-]
+experiments = ["tensorboard", "huggingface-hub>=0.31", "safetensors"]
+image = ["kornia", "h5py", "opencv-python"]
 tabular = ["pandas"]
 dev = [
     "torch_uncertainty[experiments,image]",
-    "ruff==0.9.9",
+    "ruff==0.11.10",
     "pytest-cov",
     "pre-commit",
     "pre-commit-hooks",
 ]
 docs = [
-    "sphinx<7",
-    "tu_sphinx_theme",
+    "sphinx==7.4.7",
+    "pydata-sphinx-theme",
     "sphinx-copybutton",
     "sphinx-gallery",
     "sphinx-design",
     "sphinx-codeautolink",
+    "sphinx_design",
+    "sphinxcontrib-sass",
 ]
 all = [
     "torch_uncertainty[dev,docs,tabular]",
@@ -85,7 +79,34 @@ name = "torch_uncertainty"
 [tool.ruff]
 line-length = 100
 target-version = "py310"
-lint.extend-select = [
+
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "__pypackages__",
+    "__pycache__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "venv",
+]
+
+[tool.ruff.lint]
+extend-select = [
     "A",
     "ARG",
     "B",
@@ -121,7 +142,7 @@ lint.extend-select = [
     "UP",
     "YTT",
 ]
-lint.ignore = [
+ignore = [
     "ARG002",
     "D100",
     "D101",
@@ -139,35 +160,11 @@ lint.ignore = [
     "S101",
     "TRY003",
 ]
+pydocstyle.convention = "google"
 
-exclude = [
-    ".bzr",
-    ".direnv",
-    ".eggs",
-    ".git",
-    ".git-rewrite",
-    ".hg",
-    ".ipynb_checkpoints",
-    ".mypy_cache",
-    ".nox",
-    ".pants.d",
-    ".pytype",
-    ".ruff_cache",
-    ".svn",
-    ".tox",
-    ".venv",
-    "__pypackages__",
-    "__pycache__",
-    "auto_tutorials_source/*",
-    "_build",
-    "buck-out",
-    "build",
-    "dist",
-    "venv",
-]
-
-[tool.ruff.lint.pydocstyle]
-convention = "google"
+[tool.ruff.format]
+docstring-code-format = true
+docstring-code-line-length = 80
 
 [tool.coverage.run]
 branch = true
@@ -175,5 +172,9 @@ include = ["*/torch-uncertainty/*"]
 omit = ["*/tests/*", "*/datasets/*"]
 
 [tool.coverage.report]
-exclude_lines = ["coverage: ignore", "raise NotImplementedError", "raise ImportError"]
+exclude_lines = [
+    "coverage: ignore",
+    "raise NotImplementedError",
+    "raise ImportError",
+]
 ignore_errors = true

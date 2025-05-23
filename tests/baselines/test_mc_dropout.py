@@ -11,7 +11,7 @@ from torch_uncertainty.baselines.classification import (
 class TestStandardBaseline:
     """Testing the ResNetBaseline baseline class."""
 
-    def test_standard(self):
+    def test_standard(self) -> None:
         net = ResNetBaseline(
             num_classes=10,
             in_channels=3,
@@ -29,7 +29,7 @@ class TestStandardBaseline:
 class TestStandardWideBaseline:
     """Testing the WideResNetBaseline baseline class."""
 
-    def test_standard(self):
+    def test_standard(self) -> None:
         net = WideResNetBaseline(
             num_classes=10,
             in_channels=3,
@@ -46,7 +46,7 @@ class TestStandardWideBaseline:
 class TestStandardVGGBaseline:
     """Testing the VGGBaseline baseline class."""
 
-    def test_standard(self):
+    def test_standard(self) -> None:
         net = VGGBaseline(
             num_classes=10,
             in_channels=3,

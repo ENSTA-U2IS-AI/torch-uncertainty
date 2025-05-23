@@ -46,7 +46,7 @@ and its parameters.
       # ...
       eval_ood: bool = False,
       eval_grouping_loss: bool = False,
-      ood_criterion: type[TUOODCriterion] | str = "msp",
+      ood_criterion: TUOODCriterion | str = "msp",
       log_plots: bool = False,
       save_in_csv: bool = False,
     ) -> None:

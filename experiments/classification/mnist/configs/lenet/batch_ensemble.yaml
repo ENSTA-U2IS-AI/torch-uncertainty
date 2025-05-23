@@ -14,20 +14,20 @@ trainer:
       name: batch_ensemble
       default_hp_metric: false
   callbacks:
-  - class_path: torch_uncertainty.callbacks.TUClsCheckpoint
-  - class_path: lightning.pytorch.callbacks.LearningRateMonitor
-    init_args:
-      logging_interval: step
-  - class_path: lightning.pytorch.callbacks.EarlyStopping
-    init_args:
-      monitor: val/cls/Acc
-      patience: 1000
-      check_finite: true
-model:  
+    - class_path: torch_uncertainty.callbacks.TUClsCheckpoint
+    - class_path: lightning.pytorch.callbacks.LearningRateMonitor
+      init_args:
+        logging_interval: step
+    - class_path: lightning.pytorch.callbacks.EarlyStopping
+      init_args:
+        monitor: val/cls/Acc
+        patience: 1000
+        check_finite: true
+model:
   # ClassificationRoutine
-  model:  
+  model:
     # BatchEnsemble
-    class_path: torch_uncertainty.models.lenet.batchensemble_lenet
+    class_path: torch_uncertainty.models.classification.lenet.batchensemble_lenet
     init_args:
       in_channels: 1
       num_classes: 10
@@ -57,10 +57,3 @@ optimizer:
     momentum: 0.9
     weight_decay: 5e-4
     nesterov: true
-lr_scheduler:
-  class_path: torch.optim.lr_scheduler.MultiStepLR
-  init_args:
-    milestones:
-    - 25
-    - 50
-    gamma: 0.1

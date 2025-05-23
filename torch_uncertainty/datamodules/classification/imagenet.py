@@ -79,7 +79,7 @@ class ImageNetDataModule(TUDataModule):
             root (str): Root directory of the datasets.
             batch_size (int): Number of samples per batch during training.
             eval_batch_size (int | None) : Number of samples per batch during evaluation (val
-                and test). Set to batch_size if None. Defaults to None.
+                and test). Set to batch_size if ``None``. Defaults to ``None``.
             eval_ood (bool): Whether to evaluate out-of-distribution performance. Defaults to ``False``.
             near_ood_datasets (list, optional): list of near OOD dataset classes must be subclass of torch.utils.data.Dataset. Defaults to SSB-hard, NINCO (OpenOOD splits)
             far_ood_datasets (list, optional): list of far OOD dataset classes must be subclass of torch.utils.data.Dataset. Defaults to iNaturalist, Textures, OpenImage-O (OpenOOD splits)
@@ -111,8 +111,7 @@ class ImageNetDataModule(TUDataModule):
             num_workers (int): Number of workers to use for data loading. Defaults
                 to ``1``.
             pin_memory (bool): Whether to pin memory. Defaults to ``True``.
-            persistent_workers (bool): Whether to use persistent workers. Defaults
-                to ``True``.
+            persistent_workers (bool): Whether to use persistent workers. Defaults to ``True``.
         """
         super().__init__(
             root=Path(root),

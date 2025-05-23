@@ -1,0 +1,188 @@
+{% extends "layout.html" %}
+
+{% block extrahead %}
+{{ super() }}
+<!-- Load the compiled index.css only for this page -->
+<link rel="stylesheet" type="text/css" href="{{ pathto('_static/index.css', 1) }}">
+{% endblock extrahead %}
+
+{% block docs_navbar %}
+{{ super() }}
+
+<!-- Gradient Banner Section -->
+<div style="padding: 3rem;">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-md-6" style="margin-top: 1rem";>
+        <h1 style="font-family: 'Roboto', sans-serif; font-weight: 350; letter-spacing: 1px;">
+          TorchUncertainty
+        </h1>
+        <h4 style="margin-top: 0rem; margin-left: 0.20rem; font-weight: 200;">Practitioner-friendly Uncertainty</h4>
+        <!-- Buttons with original style -->
+        <a class="btn btn-warning mb-2 me-2" style="font-size: 1.1rem; font-weight: 500; background-color: #E821EE; border-color: #E821EE;color: white;" href="{{ pathto('installation') }}">Getting Started</a>
+        <a class="btn btn-light mb-2" style="font-size: 1.1rem; font-weight: 500; background-color: #fcfbf4;color: black;" href="{{ pathto('api') }}">API Documentation</a>
+      </div>
+      <div class="col-md-6">
+        <ul style="list-style-type: none; padding-left: 0; font-size: 1.1rem;">
+          <li>Easy-to-use PyTorch uncertainty quantification tools</li>
+          <li>Seamless integration with Lightning</li>
+          <li>Classification, regression, and segmentation tasks</li>
+          <li>Open-source</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock docs_navbar %}
+
+{% block docs_main %}
+<div class="container py-4" role="main">
+  <div class="row">
+    <!-- Card 1: Classification -->
+    <div class="col-md-4 mb-3 d-flex align-items-stretch">
+      <div class="card shadow-sm h-100 d-flex flex-column">
+        <div class="card-body flex-grow-1">
+          <!-- Title with link placeholder -->
+          <h5 class="card-title text-start">
+            <a href="{{ pathto('api') }}#classification">Classification</a>
+          </h5>
+          <p>Identifying categories while quantifying uncertainty.</p>
+          <p><strong>Applications:</strong> Risk-sensitive predictions, anomaly detection...</p>
+          <!-- Algorithms with link placeholders -->
+          <p>
+            <strong>Algorithms:</strong> 
+            <a href="{{ pathto('generated/torch_uncertainty.models.deep_ensembles') }}#torch_uncertainty.models.deep_ensembles">Deep Ensembles</a>, 
+            <a href="{{ pathto('api') }}#layers">Packed Ensembles</a>, 
+            <a href="{{ pathto('api') }}#bayesian-layers">Bayesian Neural Networks</a>
+          </p>
+        </div>
+        <img src="{{ pathto('_static/class.png', 1) }}" alt="Classification" class="card-img-bottom img-fluid">
+        <div class="mt-auto">
+          <!-- Example button link placeholder (optional) -->
+          <a href="{{ pathto('auto_tutorials/index') }}#classification" class="btn btn-primary w-100">Examples</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 2: Regression -->
+    <div class="col-md-4 mb-3 d-flex align-items-stretch">
+      <div class="card shadow-sm h-100 d-flex flex-column">
+        <div class="card-body flex-grow-1">
+          <h5 class="card-title text-start">
+            <a href="{{ pathto('api') }}#regression">Regression</a>
+          </h5>
+          <p>Predicting continuous-valued outputs with uncertainty bounds.</p>
+          <p><strong>Applications:</strong> Forecasting, scientific analysis...</p>
+          <p>
+            <strong>Algorithms:</strong> 
+            <a href="{{ pathto('generated/torch_uncertainty.losses.DERLoss') }}#torch_uncertainty.losses.DERLoss">Deep Evidential Regression</a>
+          </p>
+        </div>
+        <img src="{{ pathto('_static/reg.png', 1) }}" alt="Regression" class="card-img-bottom img-fluid">
+        <div class="mt-auto">
+          <a href="{{ pathto('auto_tutorials/index') }}#regression-with-uncertainty" class="btn btn-primary w-100">Examples</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 3: Segmentation -->
+    <div class="col-md-4 mb-3 d-flex align-items-stretch">
+      <div class="card shadow-sm h-100 d-flex flex-column">
+        <div class="card-body flex-grow-1">
+          <h5 class="card-title text-start">
+            <a href="{{ pathto('api') }}#segmentation">Segmentation</a>
+          </h5>
+          <p>Pixel-wise predictions with uncertainty metrics.</p>
+          <p><strong>Applications:</strong> Image segmentation.</p>
+          <p>
+            <strong>Algorithms:</strong>
+            <a href="{{ pathto('generated/torch_uncertainty.models.deep_ensembles') }}#torch_uncertainty.models.deep_ensembles">Deep Ensembles</a>, 
+            <a href="{{ pathto('api') }}#layers">Packed Ensembles</a>,
+          </p>
+        </div>
+        <img src="{{ pathto('_static/seg.png', 1) }}" alt="Segmentation" class="card-img-bottom img-fluid">
+        <div class="mt-auto">
+          <a href="{{ pathto('auto_tutorials/index') }}#segmentation" class="btn btn-primary w-100">Examples</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 4: Post-hoc Methods -->
+    <div class="col-md-4 mb-3 d-flex align-items-stretch">
+      <div class="card shadow-sm h-100 d-flex flex-column">
+        <div class="card-body flex-grow-1">
+          <h5 class="card-title text-start">
+            <a href="{{ pathto('api') }}#post-processing-methods">Post-hoc Methods</a>
+          </h5>
+          <p>Improving model predictions with post-hoc methods.</p>
+          <p><strong>Applications:</strong> Risk management, decision-making systems...</p>
+          <p>
+            <strong>Algorithms:</strong> 
+            <a href="{{ pathto('generated/torch_uncertainty.post_processing.TemperatureScaler') }}#torch_uncertainty.post_processing.TemperatureScaler">Temperature Scaling</a>,
+            <a href="{{ pathto('generated/torch_uncertainty.post_processing.ConformalRAPS') }}#torch_uncertainty.post_processing.ConformalRAPS">Conformal RAPS</a>
+          </p>
+        </div>
+        <img src="{{ pathto('_static/cali.png', 1) }}" alt="Post-hoc Methods" class="card-img-bottom img-fluid">
+        <div class="mt-auto">
+          <a href="{{ pathto('auto_tutorials/index') }}#post-hoc-methods" class="btn btn-primary w-100">Examples</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 5: Bayesian Methods -->
+    <div class="col-md-4 mb-3 d-flex align-items-stretch">
+      <div class="card shadow-sm h-100 d-flex flex-column">
+        <div class="card-body flex-grow-1">
+          <h5 class="card-title text-start">
+            <a href="{{ pathto('api') }}#bayesian-layers">Bayesian Methods</a>
+          </h5>
+          <p>
+            Bayesian-inspired approaches to estimate model uncertainty 
+            by treating parameters or predictions as probabilistic distributions.
+          </p>
+          <p>
+            <strong>Applications:</strong> 
+            Uncertainty quantification, decision-making under uncertainty, probabilistic predictions.
+          </p>
+          <p>
+            <strong>Algorithms:</strong> 
+            <a href="{{ pathto('generated/torch_uncertainty.models.mc_dropout') }}#torch_uncertainty.models.mc_dropout">Monte Carlo Dropout</a>, 
+            <a href="{{ pathto('generated/torch_uncertainty.losses.ELBOLoss') }}#torch_uncertainty.losses.ELBOLoss">Variational Inference</a>, 
+            <a href="{{ pathto('generated/torch_uncertainty.post_processing.MCBatchNorm') }}#torch_uncertainty.post_processing.MCBatchNorm">MCBN</a>
+          </p>
+        </div>
+        <img src="{{ pathto('_static/bayes.png', 1) }}" alt="Bayesian Methods" class="card-img-bottom img-fluid">
+        <div class="mt-auto">
+          <a href="{{ pathto('auto_tutorials/index') }}#bayesian-methods" class="btn btn-primary w-100">Examples</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 6: Ensemble Methods -->
+    <div class="col-md-4 mb-3 d-flex align-items-stretch">
+      <div class="card shadow-sm h-100 d-flex flex-column">
+        <div class="card-body flex-grow-1">
+          <h5 class="card-title text-start">
+            <a href="{{ pathto('api') }}#ensemble-layers">Ensemble Methods</a>
+          </h5>
+          <p>
+            Combining predictions from multiple models to improve accuracy 
+            and provide reliable uncertainty estimates.
+          </p>
+          <p><strong>Applications:</strong> Robust predictions, anomaly detection, improved generalization.</p>
+          <p>
+            <strong>Algorithms:</strong> 
+            <a href="{{ pathto('generated/torch_uncertainty.models.deep_ensembles') }}#torch_uncertainty.models.deep_ensembles">Deep Ensembles</a>, 
+            <a href="{{ pathto('api') }}#layers">Packed Ensembles</a>
+          </p>
+        </div>
+        <img src="{{ pathto('_static/ensembles.png', 1) }}" alt="Ensemble Methods" class="card-img-bottom img-fluid">
+        <div class="mt-auto">
+          <a href="{{ pathto('auto_tutorials/index') }}#ensemble-methods" class="btn btn-primary w-100">Examples</a>
+        </div>
+      </div>
+    </div>
+    
+  </div> <!-- row -->
+</div> <!-- container -->
+{% endblock docs_main %}

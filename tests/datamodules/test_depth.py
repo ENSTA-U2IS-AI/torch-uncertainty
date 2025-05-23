@@ -14,7 +14,7 @@ from torch_uncertainty.datasets import MUAD, KITTIDepth, NYUv2
 class TestMUADDataModule:
     """Testing the MUADDataModule datamodule."""
 
-    def test_depth_dm(self):
+    def test_depth_dm(self) -> None:
         dm = DepthDataModule(
             dataset=DummPixelRegressionDataset,
             root="./data/",
@@ -27,7 +27,7 @@ class TestMUADDataModule:
         assert isinstance(dm.train_transform, nn.Identity)
         assert isinstance(dm.test_transform, nn.Identity)
 
-    def test_depth_dm_failures(self):
+    def test_depth_dm_failures(self) -> None:
         with pytest.raises(ValueError):
             DepthDataModule(
                 dataset=DummPixelRegressionDataset,
@@ -48,7 +48,7 @@ class TestMUADDataModule:
                 crop_size=(224, 224),
             )
 
-    def test_muad_main(self):
+    def test_muad_main(self) -> None:
         dm = MUADDataModule(root="./data/", min_depth=0, max_depth=100, batch_size=128)
 
         assert dm.dataset == MUAD
@@ -80,7 +80,7 @@ class TestMUADDataModule:
 class TestNYUDataModule:
     """Testing the NYUv2DataModule datamodule."""
 
-    def test_nyu_main(self):
+    def test_nyu_main(self) -> None:
         dm = NYUv2DataModule(root="./data/", max_depth=100, batch_size=128)
 
         assert dm.dataset == NYUv2
@@ -108,6 +108,6 @@ class TestNYUDataModule:
         dm.train_dataloader()
         dm.val_dataloader()
 
-    def test_kitti_main(self):
+    def test_kitti_main(self) -> None:
         dm = KITTIDataModule(root="./data/", max_depth=100, batch_size=128)
         assert dm.dataset == KITTIDepth

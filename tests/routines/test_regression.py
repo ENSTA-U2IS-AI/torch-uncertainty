@@ -14,7 +14,7 @@ from torch_uncertainty.routines import RegressionRoutine
 class TestRegression:
     """Testing the Regression routine."""
 
-    def test_one_estimator_one_output(self):
+    def test_one_estimator_one_output(self) -> None:
         trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
 
         root = Path(__file__).parent.absolute().parents[0] / "data"
@@ -51,7 +51,7 @@ class TestRegression:
         trainer.test(model, dm)
         model(dm.get_test_set()[0][0])
 
-    def test_one_estimator_two_outputs(self):
+    def test_one_estimator_two_outputs(self) -> None:
         trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
 
         root = Path(__file__).parent.absolute().parents[0] / "data"
@@ -84,7 +84,7 @@ class TestRegression:
         trainer.test(model, dm)
         model(dm.get_test_set()[0][0])
 
-    def test_two_estimators_one_output(self):
+    def test_two_estimators_one_output(self) -> None:
         trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
 
         root = Path(__file__).parent.absolute().parents[0] / "data"
@@ -117,7 +117,7 @@ class TestRegression:
         trainer.test(model, dm)
         model(dm.get_test_set()[0][0])
 
-    def test_two_estimators_two_outputs(self):
+    def test_two_estimators_two_outputs(self) -> None:
         trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
 
         root = Path(__file__).parent.absolute().parents[0] / "data"
@@ -150,7 +150,7 @@ class TestRegression:
         trainer.test(model, dm)
         model(dm.get_test_set()[0][0])
 
-    def test_regression_failures(self):
+    def test_regression_failures(self) -> None:
         with pytest.raises(ValueError, match="output_dim must be positive"):
             RegressionRoutine(
                 dist_family="normal",

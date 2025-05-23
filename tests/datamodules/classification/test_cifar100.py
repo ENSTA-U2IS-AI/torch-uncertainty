@@ -10,7 +10,14 @@ from torch_uncertainty.transforms import Cutout
 class TestCIFAR100DataModule:
     """Testing the CIFAR100DataModule datamodule class."""
 
-    def test_cifar100(self):
+    def test_cifar100(self) -> None:
+        dm = CIFAR100DataModule(
+            root="./data/",
+            batch_size=128,
+            train_transform=nn.Identity(),
+            test_transform=nn.Identity(),
+            num_tta=2,
+        )
         dm = CIFAR100DataModule(
             root="./data/",
             batch_size=128,
@@ -72,7 +79,7 @@ class TestCIFAR100DataModule:
 
         dm = CIFAR100DataModule(root="./data/", batch_size=128, auto_augment="rand-m9-n2-mstd0.5")
 
-    def test_cifar100_cv(self):
+    def test_cifar100_cv(self) -> None:
         dm = CIFAR100DataModule(root="./data/", batch_size=128)
         dm.dataset = lambda root, train, download, transform: DummyClassificationDataset(
             root,

@@ -10,28 +10,6 @@ from torchvision.datasets.utils import (
 
 
 class TinyImageNetC(ImageFolder):
-    """The corrupted TinyImageNet-C Dataset.
-
-    Args:
-        root (str): Root directory of the datasets.
-        transform (callable, optional): A function/transform that takes in
-            a PIL image and returns a transformed version. E.g,
-            ``transforms.RandomCrop``. Defaults to None.
-        target_transform (callable, optional): A function/transform that
-            takes in the target and transforms it. Defaults to None.
-        subset (str): The subset to use, one of ``all`` or the keys in
-            ``cifarc_subsets``.
-        shift_severity (int): The shift_severity of the corruption, between 1 and 5.
-        download (bool, optional): If True, downloads the dataset from the
-            internet and puts it in root directory. If dataset is already
-            downloaded, it is not downloaded again. Defaults to False.
-
-    References:
-        Benchmarking neural network robustness to common corruptions and
-            perturbations. Dan Hendrycks and Thomas Dietterich.
-            In ICLR, 2019.
-    """
-
     base_folder = "Tiny-ImageNet-C"
     tgz_md5 = [
         "f9c9a9dbdc11469f0b850190f7ad8be1",
@@ -71,6 +49,26 @@ class TinyImageNetC(ImageFolder):
         shift_severity: int = 1,
         download: bool = False,
     ) -> None:
+        """The corrupted TinyImageNet-C Dataset.
+
+        Args:
+            root (str | Path): Root directory of the datasets.
+            transform (callable, optional): A function/transform that takes in
+                a PIL image and returns a transformed version. E.g,
+                ``transforms.RandomCrop``. Defaults to ``None``.
+            target_transform (callable, optional): A function/transform that
+                takes in the target and transforms it. Defaults to ``None``.
+            subset (str): The subset to use, one of ``all`` or the keys in
+                ``cifarc_subsets``.
+            shift_severity (int): The shift_severity of the corruption, between ``1`` and ``5``.
+            download (bool, optional): If True, downloads the dataset from the
+                internet and puts it in root directory. If dataset is already
+                downloaded, it is not downloaded again. Defaults to ``False``.
+
+        References:
+            [1] `Benchmarking neural network robustness to common corruptions and perturbations. Dan Hendrycks and Thomas Dietterich. In ICLR, 2019
+            <https://arxiv.org/abs/1903.12261>`_.
+        """
         self.root = Path(root)
 
         if download:
@@ -99,9 +97,9 @@ class TinyImageNetC(ImageFolder):
         self._make_c_dataset(self.subset, self.shift_severity)
 
     def _make_c_dataset(self, subset: str, shift_severity: int) -> None:
-        r"""Build the corrupted dataset according to the chosen subset and
-            shift_severity. If the subset is 'all', gather all corruption types
-            in the dataset.
+        """Build the corrupted dataset according to the chosen subset and
+        shift_severity. If the subset is 'all', gather all corruption types
+        in the dataset.
 
         Args:
             subset (str): The name of the corruption subset to be used. Choose

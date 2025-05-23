@@ -10,7 +10,7 @@ from torch_uncertainty.baselines.classification import (
 class TestBatchedBaseline:
     """Testing the BatchedResNet baseline class."""
 
-    def test_batched_18(self):
+    def test_batched_18(self) -> None:
         net = ResNetBaseline(
             num_classes=10,
             in_channels=3,
@@ -24,7 +24,7 @@ class TestBatchedBaseline:
 
         _ = net(torch.rand(1, 3, 32, 32))
 
-    def test_batched_50(self):
+    def test_batched_50(self) -> None:
         net = ResNetBaseline(
             num_classes=10,
             in_channels=3,
@@ -42,7 +42,7 @@ class TestBatchedBaseline:
 class TestBatchedWideBaseline:
     """Testing the BatchedWideResNet baseline class."""
 
-    def test_batched(self):
+    def test_batched(self) -> None:
         net = WideResNetBaseline(
             num_classes=10,
             in_channels=3,

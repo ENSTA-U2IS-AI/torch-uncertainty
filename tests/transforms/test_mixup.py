@@ -14,7 +14,7 @@ def batch_input() -> tuple[torch.Tensor, torch.Tensor]:
 class TestAbstractMixup:
     """Testing AbstractMixup augmentation."""
 
-    def test_abstract_mixup(self, batch_input):
+    def test_abstract_mixup(self, batch_input) -> None:
         with pytest.raises(NotImplementedError):
             AbstractMixup()(*batch_input)
 
@@ -22,11 +22,11 @@ class TestAbstractMixup:
 class TestMixup:
     """Testing Mixup augmentation."""
 
-    def test_batch_mixup(self, batch_input):
+    def test_batch_mixup(self, batch_input) -> None:
         mixup = Mixup(alpha=1.0, mode="batch", num_classes=2)
         _ = mixup(*batch_input)
 
-    def test_elem_mixup(self, batch_input):
+    def test_elem_mixup(self, batch_input) -> None:
         mixup = Mixup(alpha=1.0, mode="elem", num_classes=2)
         _ = mixup(*batch_input)
 
@@ -34,11 +34,11 @@ class TestMixup:
 class TestMixupIO:
     """Testing MixupIO augmentation."""
 
-    def test_batch_mixupio(self, batch_input):
+    def test_batch_mixupio(self, batch_input) -> None:
         mixup = MixupIO(alpha=1.0, mode="batch", num_classes=2)
         _ = mixup(*batch_input)
 
-    def test_elem_mixupio(self, batch_input):
+    def test_elem_mixupio(self, batch_input) -> None:
         mixup = MixupIO(alpha=1.0, mode="elem", num_classes=2)
         _ = mixup(*batch_input)
 
@@ -46,11 +46,11 @@ class TestMixupIO:
 class TestRegMixup:
     """Testing RegMixup augmentation."""
 
-    def test_batch_regmixup(self, batch_input):
+    def test_batch_regmixup(self, batch_input) -> None:
         mixup = RegMixup(alpha=1.0, mode="batch", num_classes=2)
         _ = mixup(*batch_input)
 
-    def test_elem_regmixup(self, batch_input):
+    def test_elem_regmixup(self, batch_input) -> None:
         mixup = RegMixup(alpha=1.0, mode="elem", num_classes=2)
         _ = mixup(*batch_input)
 
@@ -58,14 +58,14 @@ class TestRegMixup:
 class TestWarpingMixup:
     """Testing WarpingMixup augmentation."""
 
-    def test_batch_kernel_warpingmixup(self, batch_input):
+    def test_batch_kernel_warpingmixup(self, batch_input) -> None:
         mixup = WarpingMixup(alpha=1.0, mode="batch", num_classes=2, apply_kernel=True)
         _ = mixup(*batch_input, batch_input[0])
 
-    def test_elem_kernel_warpingmixup(self, batch_input):
+    def test_elem_kernel_warpingmixup(self, batch_input) -> None:
         mixup = WarpingMixup(alpha=1.0, mode="elem", num_classes=2, apply_kernel=True)
         _ = mixup(*batch_input, batch_input[0])
 
-    def test_elem_warpingmixup(self, batch_input):
+    def test_elem_warpingmixup(self, batch_input) -> None:
         mixup = WarpingMixup(alpha=1.0, mode="elem", num_classes=2, apply_kernel=False)
         _ = mixup(*batch_input, batch_input[0])

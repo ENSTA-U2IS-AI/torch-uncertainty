@@ -10,7 +10,16 @@ from torch_uncertainty.transforms import Cutout
 class TestMNISTDataModule:
     """Testing the MNISTDataModule datamodule class."""
 
-    def test_mnist_cutout(self):
+    def test_mnist_cutout(self) -> None:
+        dm = MNISTDataModule(
+            root="./data/",
+            batch_size=128,
+            train_transform=nn.Identity(),
+            test_transform=nn.Identity(),
+            eval_ood=True,
+            ood_transform=nn.Identity(),
+            num_tta=2,
+        )
         dm = MNISTDataModule(
             root="./data/",
             batch_size=128,

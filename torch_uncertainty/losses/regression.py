@@ -13,7 +13,7 @@ class DistributionNLLLoss(nn.Module):
 
         Args:
             reduction (str, optional): specifies the reduction to apply to the
-            output:``'none'`` | ``'mean'`` | ``'sum'``. Defaults to "mean".
+                output:``'none'`` | ``'mean'`` | ``'sum'``. Defaults to "mean".
         """
         super().__init__()
         self.reduction = reduction
@@ -29,8 +29,8 @@ class DistributionNLLLoss(nn.Module):
         Args:
             dist (Distribution): The predicted distributions
             targets (Tensor): The target values
-            padding_mask (Tensor, optional): The padding mask. Defaults to None.
-                Sets the loss to 0 for padded values.
+            padding_mask (Tensor, optional): The padding mask. Defaults to ``None.``
+                Sets the loss to ``0`` for padded values.
         """
         loss = -dist.log_prob(targets)
         if padding_mask is not None:
@@ -53,11 +53,12 @@ class DERLoss(DistributionNLLLoss):
         Args:
             reg_weight (float): The weight of the regularization term.
             reduction (str, optional): specifies the reduction to apply to the
-            output:``'none'`` | ``'mean'`` | ``'sum'``.
+                output:``'none'`` | ``'mean'`` | ``'sum'``.
 
-        Reference:
-            Amini, A., Schwarting, W., Soleimany, A., & Rus, D. (2019). Deep
-            evidential regression. https://arxiv.org/abs/1910.02600.
+        References:
+            [1] `Amini, A., Schwarting, W., Soleimany, A., & Rus, D. (2019). Deep evidential regression
+            <https://arxiv.org/abs/1910.02600>`_.
+
         """
         super().__init__(reduction=None)
 
@@ -100,16 +101,16 @@ class BetaNLL(nn.Module):
         """The Beta Negative Log-likelihood loss.
 
         Args:
-            beta (float): TParameter from range [0, 1] controlling relative
-            weighting between data points, where `0` corresponds to
-            high weight on low error points and `1` to an equal weighting.
+            beta (float): Parameter from range [0, 1] controlling relative
+                weighting between data points, where `0` corresponds to
+                high weight on low error points and `1` to an equal weighting.
             reduction (str, optional): specifies the reduction to apply to the
-            output:``'none'`` | ``'mean'`` | ``'sum'``.
+                output:``'none'`` | ``'mean'`` | ``'sum'``.
 
-        Reference:
-            Seitzer, M., Tavakoli, A., Antic, D., & Martius, G. (2022). On the
-            pitfalls of heteroscedastic uncertainty estimation with probabilistic
-            neural networks. https://arxiv.org/abs/2203.09168.
+        References:
+            [1] `Seitzer, M., Tavakoli, A., Antic, D., & Martius, G. (2022). On the pitfalls of heteroscedastic uncertainty estimation with probabilistic neural networks
+            <https://arxiv.org/abs/2203.09168>`_.
+
         """
         super().__init__()
 

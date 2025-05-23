@@ -27,13 +27,15 @@ class ABNN(PostProcessing):
         use_original_model: bool = True,
         precision: str = "32",
         model: nn.Module | None = None,
-    ):
+    ) -> None:
         """ABNN post-processing.
 
         Args:
             num_classes (int): Number of classes of the inner model.
-            random_prior (float): Random prior specializing estimators on
+                random_prior (float): Random prior specializing estimators on
                 certain classes.
+            random_prior (float): Random prior value to specialize
+                estimators on certain classes.
             alpha (float): Alpha value for ABNN to control the diversity of
                 the predictions.
             num_models (int): Number of stochastic models.
@@ -41,15 +43,12 @@ class ABNN(PostProcessing):
             base_lr (float): Base learning rate.
             device (torch.device): Device to use.
             max_epochs (int, optional): Number of training epochs. Defaults
-                to 5.
+                to ``5``.
             use_original_model (bool, optional): Use original model during
-                evaluation. Defaults to True.
+                evaluation. Defaults to ``True``.
             precision (str, optional): Machine precision for training & eval.
-                Defaults to "32".
-            model (nn.Module | None, optional): Model to use. Defaults to None.
-
-        Reference:
-
+                Defaults to ``"32"``.
+            model (nn.Module | None, optional): Model to use. Defaults to ``None``.
         """
         super().__init__(model)
         _abnn_checks(

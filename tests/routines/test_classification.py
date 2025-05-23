@@ -12,6 +12,7 @@ from torch_uncertainty import TUTrainer
 from torch_uncertainty.losses import DECLoss, ELBOLoss
 from torch_uncertainty.ood.ood_criteria import (
     EntropyCriterion,
+    PostProcessingCriterion,
 )
 from torch_uncertainty.post_processing import ConformalClsTHR
 from torch_uncertainty.routines import ClassificationRoutine
@@ -21,7 +22,7 @@ from torch_uncertainty.transforms import RepeatTarget
 class TestClassification:
     """Testing the classification routine."""
 
-    def test_one_estimator_binary(self):
+    def test_one_estimator_binary(self) -> None:
         trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
 
         dm = DummyClassificationDataModule(
@@ -43,7 +44,7 @@ class TestClassification:
         trainer.test(model, dm)
         model(dm.get_test_set()[0][0])
 
-    def test_two_estimators_binary(self):
+    def test_two_estimators_binary(self) -> None:
         trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
 
         dm = DummyClassificationDataModule(
@@ -66,7 +67,7 @@ class TestClassification:
         trainer.test(model, dm)
         model(dm.get_test_set()[0][0])
 
-    def test_one_estimator_two_classes(self):
+    def test_one_estimator_two_classes(self) -> None:
         trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
 
         dm = DummyClassificationDataModule(
@@ -93,7 +94,7 @@ class TestClassification:
         trainer.test(model, dm)
         model(dm.get_test_set()[0][0])
 
-    def test_one_estimator_two_classes_timm(self):
+    def test_one_estimator_two_classes_timm(self) -> None:
         trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
 
         dm = DummyClassificationDataModule(
@@ -120,7 +121,7 @@ class TestClassification:
         trainer.test(model, dm)
         model(dm.get_test_set()[0][0])
 
-    def test_one_estimator_two_classes_mixup(self):
+    def test_one_estimator_two_classes_mixup(self) -> None:
         trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
 
         dm = DummyClassificationDataModule(
@@ -146,7 +147,7 @@ class TestClassification:
         trainer.test(model, dm)
         model(dm.get_test_set()[0][0])
 
-    def test_one_estimator_two_classes_mixup_io(self):
+    def test_one_estimator_two_classes_mixup_io(self) -> None:
         trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
 
         dm = DummyClassificationDataModule(
@@ -172,7 +173,7 @@ class TestClassification:
         trainer.test(model, dm)
         model(dm.get_test_set()[0][0])
 
-    def test_one_estimator_two_classes_regmixup(self):
+    def test_one_estimator_two_classes_regmixup(self) -> None:
         trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
 
         dm = DummyClassificationDataModule(
@@ -198,7 +199,7 @@ class TestClassification:
         trainer.test(model, dm)
         model(dm.get_test_set()[0][0])
 
-    def test_one_estimator_two_classes_kernel_warping_emb(self):
+    def test_one_estimator_two_classes_kernel_warping_emb(self) -> None:
         trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
 
         dm = DummyClassificationDataModule(
@@ -224,7 +225,7 @@ class TestClassification:
         trainer.test(model, dm)
         model(dm.get_test_set()[0][0])
 
-    def test_one_estimator_two_classes_kernel_warping_inp(self):
+    def test_one_estimator_two_classes_kernel_warping_inp(self) -> None:
         trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
 
         dm = DummyClassificationDataModule(
@@ -251,7 +252,7 @@ class TestClassification:
         trainer.test(model, dm)
         model(dm.get_test_set()[0][0])
 
-    def test_one_estimator_two_classes_calibrated_with_ood(self):
+    def test_one_estimator_two_classes_calibrated_with_ood(self) -> None:
         trainer = TUTrainer(accelerator="cpu", fast_dev_run=True, logger=True)
 
         dm = DummyClassificationDataModule(
@@ -277,7 +278,7 @@ class TestClassification:
         trainer.test(model, dm)
         model(dm.get_test_set()[0][0])
 
-    def test_two_estimators_two_classes_mi(self):
+    def test_two_estimators_two_classes_mi(self) -> None:
         trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
 
         dm = DummyClassificationDataModule(
@@ -302,7 +303,7 @@ class TestClassification:
         trainer.test(model, dm)
         model(dm.get_test_set()[0][0])
 
-    def test_two_estimator_two_classes_elbo_vr_logs(self):
+    def test_two_estimator_two_classes_elbo_vr_logs(self) -> None:
         trainer = TUTrainer(
             accelerator="cpu",
             max_epochs=1,
@@ -334,7 +335,7 @@ class TestClassification:
         trainer.test(model, dm)
         model(dm.get_test_set()[0][0])
 
-    def test_one_estimator_conformal(self):
+    def test_one_estimator_conformal(self) -> None:
         trainer = TUTrainer(accelerator="cpu", fast_dev_run=True)
 
         dm = DummyClassificationDataModule(
@@ -353,12 +354,14 @@ class TestClassification:
             model=model,
             loss=None,
             num_classes=3,
-            is_conformal=True,
-            post_processing=ConformalClsTHR(),
+            post_processing=ConformalClsTHR(alpha=0.1),
+            ood_criterion=PostProcessingCriterion(),
+            eval_ood=True,
         )
         trainer.test(routine, dm)
 
         model = ConformalClsTHR(
+            alpha=0.1,
             model=dummy_model(
                 in_channels=dm.num_channels,
                 num_classes=dm.num_classes,
@@ -370,12 +373,11 @@ class TestClassification:
             model=model,
             loss=None,
             num_classes=3,
-            is_conformal=True,
             post_processing=None,
         )
         trainer.test(routine, dm)
 
-    def test_classification_failures(self):
+    def test_classification_failures(self) -> None:
         # num_classes
         with pytest.raises(ValueError):
             ClassificationRoutine(num_classes=0, model=nn.Module(), loss=None)
@@ -467,4 +469,16 @@ class TestClassification:
                 loss=None,
                 is_ensemble=True,
                 post_processing=nn.Module(),
+            )
+
+        with pytest.raises(
+            ValueError,
+            match="You cannot set ood_criterion=PostProcessingCriterion when post_processing is None.",
+        ):
+            ClassificationRoutine(
+                num_classes=10,
+                model=nn.Module(),
+                loss=None,
+                post_processing=None,
+                ood_criterion=PostProcessingCriterion(),
             )

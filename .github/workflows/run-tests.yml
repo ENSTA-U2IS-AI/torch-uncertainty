@@ -75,7 +75,7 @@ jobs:
     - name: Test with pytest and compute coverage
       if: steps.changed-files-specific.outputs.only_changed != 'true'
       run: |
-        python3 -m pytest --cov --cov-report xml --durations 10 --junitxml=junit.xml
+        python3 -m pytest tests --cov --cov-report xml --cov-report term --durations 10 --junitxml=junit.xml
 
     - name: Upload coverage to Codecov
       if: steps.changed-files-specific.outputs.only_changed != 'true' && (github.event_name != 'pull_request' || github.base_ref == 'dev')

@@ -22,7 +22,7 @@ def create_train_val_split(
         tuple[Dataset, Dataset]: The training and the validation splits.
     """
     train, val = random_split(dataset, [1 - val_split_rate, val_split_rate])
-    val = copy.deepcopy(val)
+    val = copy.deepcopy(val)  # Ensure train.dataset.transform is not modified next line
     val.dataset.transform = val_transforms
     return train, val
 
@@ -41,7 +41,7 @@ class TTADataset(Dataset):
         self.dataset = dataset
         self.num_augmentations = num_augmentations
 
-    def __len__(self):
+    def __len__(self) -> int:
         """Get the virtual length of the dataset."""
         return len(self.dataset) * self.num_augmentations
 

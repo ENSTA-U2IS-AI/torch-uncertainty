@@ -61,15 +61,20 @@ class CIFAR100DataModule(TUDataModule):
 
         Args:
             root (str): Root directory of the datasets.
+        <<<<<<< HEAD
             eval_ood (bool): Whether to evaluate out-of-distribution
                 performance.
             near_ood_datasets (list, optional): list of near OOD dataset classes must be subclass of torch.utils.data.Dataset. Defaults to  CIFAR-10, Tiny ImageNet (OpenOOD splits)
             far_ood_datasets (list, optional): list of far OOD dataset classes must be subclass of torch.utils.data.Dataset. Defaults to MNIST, SVHN, Textures, Places365 (OpenOOD splits)
             eval_shift (bool): Whether to evaluate on shifted data. Defaults to
             ``False``.
+        =======
+            eval_ood (bool): Whether to evaluate out-of-distribution performance.
+            eval_shift (bool): Whether to evaluate on shifted data. Defaults to ``False``.
+        >>>>>>> origin/dev
             batch_size (int): Number of samples per batch during training.
             eval_batch_size (int | None) : Number of samples per batch during evaluation (val
-                and test). Set to batch_size if None. Defaults to None.
+                and test). Set to batch_size if ``None``. Defaults to ``None``.
             val_split (float): Share of samples to use for validation. Defaults
                 to ``0.0``.
             postprocess_set (str, optional): The post-hoc calibration dataset to
@@ -88,11 +93,9 @@ class CIFAR100DataModule(TUDataModule):
             num_tta (int): Number of test-time augmentations (TTA). Defaults to ``1`` (no TTA).
             shift_severity (int): Severity of corruption to apply to CIFAR100-C. Defaults to ``1``.
             num_dataloaders (int): Number of dataloaders to use. Defaults to ``1``.
-            num_workers (int): Number of workers to use for data loading. Defaults
-                to ``1``.
+            num_workers (int): Number of workers to use for data loading. Defaults to ``1``.
             pin_memory (bool): Whether to pin memory. Defaults to ``True``.
-            persistent_workers (bool): Whether to use persistent workers. Defaults
-                to ``True``.
+            persistent_workers (bool): Whether to use persistent workers. Defaults to ``True``.
         """
         super().__init__(
             root=root,

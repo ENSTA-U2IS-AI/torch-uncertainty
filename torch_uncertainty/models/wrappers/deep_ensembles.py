@@ -39,7 +39,7 @@ class _DeepEnsembles(nn.Module):
             preds = [model.forward(x) for model in self.core_models]
         return torch.cat(preds, dim=0)
 
-    def to(self, *args, **kwargs):
+    def to(self, *args, **kwargs: dict):
         device, dtype, non_blocking = torch._C._nn._parse_to(*args, **kwargs)[:3]
 
         if self.store_on_cpu:
@@ -103,8 +103,7 @@ def deep_ensembles(
     Args:
         models (list[nn.Module] | nn.Module): The model to be ensembled.
         num_estimators (int | None): The number of estimators in the ensemble.
-        task (Literal["classification", "regression", "segmentation", "pixel_regression"]): The model task.
-            Defaults to "classification".
+        task (Literal[``"classification"``, ``"regression"``, ``"segmentation"``, ``"pixel_regression"``]): The model task. Defaults to ``"classification"``.
         probabilistic (bool): Whether the regression model is probabilistic.
         reset_model_parameters (bool): Whether to reset the model parameters
             when :attr:models is a module or a list of length 1. Defaults to ``True``.
@@ -125,11 +124,11 @@ def deep_ensembles(
         _DeepEnsembles | _RegDeepEnsembles: The ensembled model.
 
     Raises:
-        ValueError: If :attr:num_estimators is not specified and :attr:models
+        ValueError: If :attr:`num_estimators` is not specified and :attr:`models`
             is a module (or singleton list).
-        ValueError: If :attr:num_estimators is less than 2 and :attr:models is
+        ValueError: If :attr:`num_estimators` is less than 2 and :attr:`models` is
             a module (or singleton list).
-        ValueError: If :attr:num_estimators is defined while :attr:models is
+        ValueError: If :attr:`num_estimators` is defined while :attr:`models` is
             a (non-singleton) list.
 
     Warning:
@@ -137,9 +136,9 @@ def deep_ensembles(
         only supported for inference.
 
     References:
-        Balaji Lakshminarayanan, Alexander Pritzel, and Charles Blundell.
-        Simple and scalable predictive uncertainty estimation using deep
-        ensembles. In NeurIPS, 2017.
+            [1] `Simple and scalable predictive uncertainty estimation using deep ensembles. In NeurIPS, 2017
+            <https://arxiv.org/abs/1612.01474>`_.
+
     """
     if isinstance(models, list) and len(models) == 0:
         raise ValueError("Models must not be an empty list.")

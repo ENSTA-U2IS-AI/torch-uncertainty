@@ -68,7 +68,7 @@ class ResNetBaseline(ClassificationRoutine):
         gamma: int = 1,
         rho: float = 1.0,
         batch_repeat: int = 1,
-        ood_criterion: type[TUOODCriterion] | str = "msp",
+        ood_criterion: TUOODCriterion | str = "msp",
         log_plots: bool = False,
         save_in_csv: bool = False,
         eval_ood: bool = False,
@@ -88,8 +88,7 @@ class ResNetBaseline(ClassificationRoutine):
                 what expect the `LightningModule.configure_optimizers()
                 <https://pytorch-lightning.readthedocs.io/en/stable/common/lightning_module.html#configure-optimizers>`_
                 method.
-            version (str):
-                Determines which ResNet version to use:
+            version (str): Determines which ResNet version to use:
 
                 - ``"std"``: original ResNet
                 - ``"packed"``: Packed-Ensembles ResNet
@@ -98,8 +97,7 @@ class ResNetBaseline(ClassificationRoutine):
                 - ``"mimo"``: MIMO ResNet
                 - ``"mc-dropout"``: Monte-Carlo Dropout ResNet
 
-            arch (int):
-                Determines which ResNet architecture to use:
+            arch (int): Determines which ResNet architecture to use, one of:
 
                 - ``18``: ResNet-18
                 - ``32``: ResNet-32
@@ -107,8 +105,7 @@ class ResNetBaseline(ClassificationRoutine):
                 - ``101``: ResNet-101
                 - ``152``: ResNet-152
 
-            style (str, optional): Which ResNet style to use. Defaults to
-            ``imagenet``.
+            style (str, optional): Which ResNet style to use. Defaults to ``imagenet``.
             normalization_layer (type[nn.Module], optional): Normalization layer
                 to use. Defaults to ``nn.BatchNorm2d``.
             num_estimators (int, optional): Number of estimators in the ensemble.
@@ -153,8 +150,7 @@ class ResNetBaseline(ClassificationRoutine):
                 a csv file or not. Defaults to ``False``.
             eval_ood (bool, optional): Indicates whether to evaluate the
                 OOD detection or not. Defaults to ``False``.
-            eval_shift (bool): Whether to evaluate on shifted data. Defaults to
-            ``False``.
+            eval_shift (bool): Whether to evaluate on shifted data. Defaults to ``False``.
             eval_grouping_loss (bool, optional): Indicates whether to evaluate the
                 grouping loss or not. Defaults to ``False``.
             num_bins_cal_err (int, optional): Number of calibration bins.

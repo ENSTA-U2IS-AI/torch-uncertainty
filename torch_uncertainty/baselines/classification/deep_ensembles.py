@@ -25,7 +25,7 @@ class DeepEnsemblesBaseline(ClassificationRoutine):
         eval_ood: bool = False,
         eval_shift: bool = False,
         eval_grouping_loss: bool = False,
-        ood_criterion: type[TUOODCriterion] | str = "msp",
+        ood_criterion: TUOODCriterion | str = "msp",
         log_plots: bool = False,
     ) -> None:
         log_path = Path(log_path)

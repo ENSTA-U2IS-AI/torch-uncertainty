@@ -15,7 +15,7 @@ from torch_uncertainty.utils.distributions import NormalInverseGamma
 class TestDistributionNLL:
     """Testing the DistributionNLLLoss class."""
 
-    def test_sum(self):
+    def test_sum(self) -> None:
         loss = DistributionNLLLoss(reduction="sum")
         dist = Normal(0, 1)
         loss(dist, torch.tensor([0.0]))
@@ -24,7 +24,7 @@ class TestDistributionNLL:
 class TestDERLoss:
     """Testing the DERLoss class."""
 
-    def test_main(self):
+    def test_main(self) -> None:
         loss = DERLoss(reg_weight=1e-2)
         layer = NormalInverseGamma
         inputs = layer(torch.ones(1), torch.ones(1), torch.ones(1), torch.ones(1))
@@ -60,7 +60,7 @@ class TestDERLoss:
             targets,
         ) == pytest.approx([2 * math.log(2), 2 * math.log(2)])
 
-    def test_failures(self):
+    def test_failures(self) -> None:
         with pytest.raises(
             ValueError,
             match="The regularization weight should be non-negative, but got ",
@@ -74,7 +74,7 @@ class TestDERLoss:
 class TestBetaNLL:
     """Testing the BetaNLL class."""
 
-    def test_main(self):
+    def test_main(self) -> None:
         loss = BetaNLL(beta=0.5)
 
         inputs = torch.tensor([[1.0, 1.0]], dtype=torch.float32)
@@ -105,7 +105,7 @@ class TestBetaNLL:
             targets.repeat(2, 1),
         ) == pytest.approx([0.0, 0.0])
 
-    def test_failures(self):
+    def test_failures(self) -> None:
         with pytest.raises(ValueError, match="The beta parameter should be in range "):
             BetaNLL(beta=-1)
 

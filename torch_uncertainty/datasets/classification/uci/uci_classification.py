@@ -13,28 +13,6 @@ from torchvision.datasets.utils import (
 
 
 class UCIClassificationDataset(ABC, Dataset):
-    """The UCI classification dataset base class.
-
-    Args:
-        root (str): Root directory of the datasets.
-        train (bool, optional): If True, creates dataset from training set,
-            otherwise creates from test set.
-        transform (callable, optional): A function/transform that takes in a
-            numpy array and returns a transformed version.
-        target_transform (callable, optional): A function/transform that takes
-            in the target and transforms it.
-        download (bool, optional): If true, downloads the dataset from the
-            internet and puts it in root directory. If dataset is already
-            downloaded, it is not downloaded again.
-        binary (bool, optional): Whether to use binary classification. Defaults
-            to ``True``.
-
-    Note - License:
-        The licenses of the datasets may differ from TorchUncertainty's
-        license. Check before use.
-
-    """
-
     md5_zip: str = ""
     url: str = ""
     filename: str = ""
@@ -53,6 +31,30 @@ class UCIClassificationDataset(ABC, Dataset):
         test_split: float = 0.2,
         split_seed: int = 21893027,
     ) -> None:
+        """The UCI classification dataset base class.
+
+        Args:
+            root (str | Path): Root directory of the datasets.
+            train (bool, optional): If ``True``, creates dataset from training set,
+                otherwise creates from test set.
+            transform (callable, optional): A function/transform that takes in a
+                numpy array and returns a transformed version. Defaults to ``None``.
+            target_transform (callable, optional): A function/transform that takes
+                in the target and transforms it. Defaults to ``None``.
+            download (bool, optional): If ``True``, downloads the dataset from the
+                internet and puts it in root directory. If dataset is already
+                downloaded, it is not downloaded again. Defaults to ``False``.
+            binary (bool, optional): Whether to use binary classification. Defaults
+                to ``True``.
+            test_split (float, optional): The fraction of the dataset to use as test set.
+                Defaults to ``0.2``.
+            split_seed (int, optional): The random seed for splitting the dataset.
+                Defaults to ``21893027``.
+
+        Note:
+            The licenses of the datasets may differ from TorchUncertainty's
+            license. Check before use.
+        """
         super().__init__()
         self.root = Path(root)
         self.train = train
@@ -96,9 +98,11 @@ class UCIClassificationDataset(ABC, Dataset):
         )
 
     def _standardize(self) -> None:
+        """Standardize the dataset."""
         self.data = (self.data - self.data_mean) / self.data_std
 
     def _compute_statistics(self) -> None:
+        """Compute the statistics of the dataset."""
         self.data_mean = self.data.mean(dim=0)
         self.data_std = self.data.std(dim=0)
         self.data_std[self.data_std == 0] = 1
@@ -120,7 +124,14 @@ class UCIClassificationDataset(ABC, Dataset):
         """Create dataset from extracted files."""
 
     def __getitem__(self, index: int) -> tuple[torch.Tensor, torch.Tensor]:
-        """Get sample and target for a given index."""
+        """Get sample and target for a given index.
+
+        Args:
+            index (int): Index
+
+        Returns:
+            tuple: (sample, target) where sample is a tensor and target is a tensor
+        """
         data = self.data[index, :]
         if self.transform is not None:
             data = self.transform(data)

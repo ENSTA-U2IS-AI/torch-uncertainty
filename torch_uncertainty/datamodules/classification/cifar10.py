@@ -64,7 +64,7 @@ class CIFAR10DataModule(TUDataModule):
             root (str | Path): Root directory of the datasets.
             batch_size (int): Number of samples per batch during training.
             eval_batch_size (int | None) : Number of samples per batch during evaluation (val
-                and test). Set to batch_size if None. Defaults to None.
+                and test). Set to batch_size if ``None``. Defaults to ``None``.
             eval_ood (bool): Whether to evaluate on out-of-distribution data. Defaults to ``False``.
             near_ood_datasets (list, optional): list of near OOD dataset classes must be subclass of torch.utils.data.Dataset. Defaults to CIFAR-100, Tiny ImageNet (OpenOOD splits)
             far_ood_datasets (list, optional): list of far OOD dataset classes must be subclass of torch.utils.data.Dataset. Defaults to MNIST, SVHN, Textures, Places365 (OpenOOD splits)
@@ -93,8 +93,7 @@ class CIFAR10DataModule(TUDataModule):
                 CIFAR10-C. Defaults to ``1``.
             num_dataloaders (int): Number of dataloaders to use. Defaults to ``1``.
             pin_memory (bool): Whether to pin memory. Defaults to ``True``.
-            persistent_workers (bool): Whether to use persistent workers. Defaults
-                to ``True``.
+            persistent_workers (bool): Whether to use persistent workers. Defaults to ``True``.
         """
         super().__init__(
             root=root,

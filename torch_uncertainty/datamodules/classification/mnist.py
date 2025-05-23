@@ -50,7 +50,7 @@ class MNISTDataModule(TUDataModule):
             eval_shift (bool): Whether to evaluate on shifted data. Defaults to ``False``.
             batch_size (int): Number of samples per batch during training.
             eval_batch_size (int | None) : Number of samples per batch during evaluation (val
-                and test). Set to batch_size if None. Defaults to None.
+                and test). Set to :attr:`batch_size` if ``None``. Defaults to ``None``.
             ood_ds (str): Which out-of-distribution dataset to use. Defaults to
                 ``"fashion"``; `fashion` stands for FashionMNIST and `notMNIST` for notMNIST.
             val_split (float): Share of samples to use for validation. Defaults to ``0.0``.
@@ -156,6 +156,11 @@ class MNISTDataModule(TUDataModule):
             self.shift_dataset(self.root, download=True)
 
     def setup(self, stage: Literal["fit", "test"] | None = None) -> None:
+        """Set up the datasets for training, validation, and testing.
+
+        Args:
+            stage (Literal["fit", "test"] | None): Stage of the setup process. Defaults to ``None``.
+        """
         if stage == "fit" or stage is None:
             full = self.dataset(
                 self.root,
@@ -201,7 +206,7 @@ class MNISTDataModule(TUDataModule):
             )
 
     def test_dataloader(self) -> list[DataLoader]:
-        r"""Get the test dataloaders for MNIST.
+        """Get the test dataloaders for MNIST.
 
         Return:
             list[DataLoader]: Dataloaders of the MNIST test set (in

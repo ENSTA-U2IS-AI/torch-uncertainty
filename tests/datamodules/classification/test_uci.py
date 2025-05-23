@@ -12,7 +12,7 @@ from torch_uncertainty.datamodules.classification import (
 class TestHTRU2DataModule:
     """Testing the HTRU2DataModule datamodule class."""
 
-    def test_htru2(self):
+    def test_htru2(self) -> None:
         dm = HTRU2DataModule(root="./data/", batch_size=128)
 
         dm.prepare_data()

@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Literal
 
 import torch
 from torch import nn
@@ -14,6 +15,8 @@ from torch_uncertainty.transforms import RandomRescale
 
 
 class MUADDataModule(TUDataModule):
+    num_classes = 15
+    num_channels = 3
     training_task = "segmentation"
     mean = (0.485, 0.456, 0.406)
     std = (0.229, 0.224, 0.225)
@@ -22,7 +25,9 @@ class MUADDataModule(TUDataModule):
         self,
         root: str | Path,
         batch_size: int,
+        version: Literal["full", "small"] = "full",
         eval_batch_size: int | None = None,
+        eval_ood: bool = False,
         crop_size: _size_2_t = 1024,
         eval_size: _size_2_t = (1024, 2048),
         train_transform: nn.Module | None = None,
@@ -37,8 +42,13 @@ class MUADDataModule(TUDataModule):
         Args:
             root (str or Path): Root directory of the datasets.
             batch_size (int): Number of samples per batch during training.
+            version (str, optional): Version of the dataset to use. Can be either
+                ``full`` or ``small``. Defaults to ``full``.
             eval_batch_size (int | None) : Number of samples per batch during evaluation (val
-                and test). Set to batch_size if None. Defaults to None.
+                and test). Set to :attr:`batch_size` if ``None``. Defaults to ``None``.
+            eval_ood (bool): Whether to evaluate on the OOD dataset. Defaults to
+                ``False``. If set to ``True``, the OOD dataset will be used for
+                evaluation in addition of the test dataset.
             crop_size (sequence or int, optional): Desired input image and
                 segmentation mask sizes during training. If :attr:`crop_size` is an
                 int instead of sequence like :math:`(H, W)`, a square crop
@@ -62,11 +72,10 @@ class MUADDataModule(TUDataModule):
                 for validation. Defaults to ``None``.
             num_workers (int, optional): Number of dataloaders to use. Defaults to
                 ``1``.
-            pin_memory (bool, optional):  Whether to pin memory. Defaults to
+            pin_memory (bool, optional): Whether to pin memory. Defaults to
                 ``True``.
             persistent_workers (bool, optional): Whether to use persistent workers.
                 Defaults to ``True``.
-
 
         Note:
             By default this datamodule injects the following transforms into the training and
@@ -78,20 +87,23 @@ class MUADDataModule(TUDataModule):
 
                 from torchvision.transforms import v2
 
-                v2.Compose([
-                    v2.ToImage(),
-                    RandomRescale(min_scale=0.5, max_scale=2.0, antialias=True),
-                    v2.RandomCrop(size=crop_size, pad_if_needed=True),
-                    v2.ColorJitter(brightness=0.5, contrast=0.5, saturation=0.5),
-                    v2.RandomHorizontalFlip(),
-                    v2.ToDtype({
-                        tv_tensors.Image: torch.float32,
-                        tv_tensors.Mask: torch.int64,
-                        "others": None
-                    }, scale=True),
-                    v2.Normalize(mean=[0.485, 0.456, 0.406],
-                                std=[0.229, 0.224, 0.225])
-                ])
+                v2.Compose(
+                    [
+                        RandomRescale(min_scale=0.5, max_scale=2.0, antialias=True),
+                        v2.RandomCrop(size=crop_size, pad_if_needed=True),
+                        v2.ColorJitter(brightness=0.5, contrast=0.5, saturation=0.5),
+                        v2.RandomHorizontalFlip(),
+                        v2.ToDtype(
+                            {
+                                tv_tensors.Image: torch.float32,
+                                tv_tensors.Mask: torch.int64,
+                                "others": None,
+                            },
+                            scale=True,
+                        ),
+                        v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+                    ]
+                )
 
             Validation/Test transforms:
 
@@ -99,17 +111,20 @@ class MUADDataModule(TUDataModule):
 
                 from torchvision.transforms import v2
 
-                v2.Compose([
-                    v2.ToImage(),
-                    v2.Resize(size=eval_size, antialias=True),
-                    v2.ToDtype({
-                        tv_tensors.Image: torch.float32,
-                        tv_tensors.Mask: torch.int64,
-                        "others": None
-                    }, scale=True),
-                    v2.Normalize(mean=[0.485, 0.456, 0.406],
-                                std=[0.229, 0.224, 0.225])
-                ])
+                v2.Compose(
+                    [
+                        v2.Resize(size=eval_size, antialias=True),
+                        v2.ToDtype(
+                            {
+                                tv_tensors.Image: torch.float32,
+                                tv_tensors.Mask: torch.int64,
+                                "others": None,
+                            },
+                            scale=True,
+                        ),
+                        v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+                    ]
+                )
 
             This behavior can be modified by setting up ``train_transform``
             and ``test_transform`` at initialization.
@@ -125,33 +140,57 @@ class MUADDataModule(TUDataModule):
         )
 
         self.dataset = MUAD
+        self.version = version
+        self.eval_ood = eval_ood
         self.crop_size = _pair(crop_size)
         self.eval_size = _pair(eval_size)
+
+        # FIXME: should be the same split names (update huggingface dataset)
+        self.test_split = "test" if version == "small" else "test_id"
+        self.ood_split = "ood" if version == "small" else "test_ood"
 
         if train_transform is not None:
             self.train_transform = train_transform
         else:
-            self.train_transform = v2.Compose(
-                [
-                    RandomRescale(min_scale=0.5, max_scale=2.0, antialias=True),
-                    v2.RandomCrop(
-                        size=self.crop_size,
-                        pad_if_needed=True,
-                        fill={tv_tensors.Image: 0, tv_tensors.Mask: 255},
-                    ),
-                    v2.ColorJitter(brightness=0.5, contrast=0.5, saturation=0.5),
-                    v2.RandomHorizontalFlip(),
-                    v2.ToDtype(
-                        dtype={
-                            tv_tensors.Image: torch.float32,
-                            tv_tensors.Mask: torch.int64,
-                            "others": None,
-                        },
-                        scale=True,
-                    ),
-                    v2.Normalize(mean=self.mean, std=self.std),
-                ]
-            )
+            if version == "small":
+                self.train_transform = v2.Compose(
+                    [
+                        v2.Resize(size=self.eval_size, antialias=True),
+                        v2.RandomHorizontalFlip(),
+                        v2.ToDtype(
+                            dtype={
+                                tv_tensors.Image: torch.float32,
+                                tv_tensors.Mask: torch.int64,
+                                "others": None,
+                            },
+                            scale=True,
+                        ),
+                        v2.Normalize(mean=self.mean, std=self.std),
+                    ]
+                )
+            else:
+                self.train_transform = v2.Compose(
+                    [
+                        v2.Resize(size=self.eval_size, antialias=True),
+                        RandomRescale(min_scale=0.5, max_scale=2.0, antialias=True),
+                        v2.RandomCrop(
+                            size=self.crop_size,
+                            pad_if_needed=True,
+                            fill={tv_tensors.Image: 0, tv_tensors.Mask: 255},
+                        ),
+                        v2.ColorJitter(brightness=0.5, contrast=0.5, saturation=0.5),
+                        v2.RandomHorizontalFlip(),
+                        v2.ToDtype(
+                            dtype={
+                                tv_tensors.Image: torch.float32,
+                                tv_tensors.Mask: torch.int64,
+                                "others": None,
+                            },
+                            scale=True,
+                        ),
+                        v2.Normalize(mean=self.mean, std=self.std),
+                    ]
+                )
 
         if test_transform is not None:
             self.test_transform = test_transform
@@ -172,14 +211,39 @@ class MUADDataModule(TUDataModule):
             )
 
     def prepare_data(self) -> None:  # coverage: ignore
-        self.dataset(root=self.root, split="train", target_type="semantic", download=True)
-        self.dataset(root=self.root, split="val", target_type="semantic", download=True)
+        self.dataset(
+            root=self.root,
+            split="train",
+            version=self.version,
+            target_type="semantic",
+            download=True,
+        )
+        self.dataset(
+            root=self.root, split="val", version=self.version, target_type="semantic", download=True
+        )
+        self.dataset(
+            root=self.root,
+            split=self.test_split,
+            version=self.version,
+            target_type="semantic",
+            download=True,
+        )
+
+        if self.eval_ood:
+            self.dataset(
+                root=self.root,
+                split=self.ood_split,
+                version=self.version,
+                target_type="semantic",
+                download=True,
+            )
 
     def setup(self, stage: str | None = None) -> None:
         if stage == "fit" or stage is None:
             full = self.dataset(
                 root=self.root,
                 split="train",
+                version=self.version,
                 target_type="semantic",
                 transforms=self.train_transform,
             )
@@ -195,6 +259,7 @@ class MUADDataModule(TUDataModule):
                 self.val = self.dataset(
                     root=self.root,
                     split="val",
+                    version=self.version,
                     target_type="semantic",
                     transforms=self.test_transform,
                 )
@@ -202,10 +267,26 @@ class MUADDataModule(TUDataModule):
         if stage == "test" or stage is None:
             self.test = self.dataset(
                 root=self.root,
-                split="val",
+                split=self.test_split,
+                version=self.version,
                 target_type="semantic",
                 transforms=self.test_transform,
             )
+            if self.eval_ood:
+                self.ood = self.dataset(
+                    root=self.root,
+                    split=self.ood_split,
+                    version=self.version,
+                    target_type="semantic",
+                    transforms=self.test_transform,
+                )
 
         if stage not in ["fit", "test", None]:
             raise ValueError(f"Stage {stage} is not supported.")
+
+    def test_dataloader(self) -> torch.utils.data.DataLoader:
+        """Returns the test dataloader."""
+        dataloader = [self._data_loader(self.get_test_set(), training=False, shuffle=False)]
+        if self.eval_ood:
+            dataloader.append(self._data_loader(self.get_ood_set(), training=False, shuffle=False))
+        return dataloader

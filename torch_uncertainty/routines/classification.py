@@ -36,6 +36,7 @@ from torch_uncertainty.metrics import (
     GroupingLoss,
     MutualInformation,
     RiskAt80Cov,
+    SetSize,
 )
 from torch_uncertainty.models import (
     EPOCH_UPDATE_MODEL,
@@ -43,6 +44,7 @@ from torch_uncertainty.models import (
 )
 from torch_uncertainty.ood.ood_criteria import (
     OODCriterionInputType,
+    PostProcessingCriterion,
     TUOODCriterion,
     get_ood_criterion,
 )
@@ -80,17 +82,16 @@ class ClassificationRoutine(LightningModule):
         self,
         model: nn.Module,
         num_classes: int,
-        loss: nn.Module,
+        loss: nn.Module | None = None,
         is_ensemble: bool = False,
         num_tta: int = 1,
         format_batch_fn: nn.Module | None = None,
         optim_recipe: dict | Optimizer | None = None,
         mixup_params: dict | None = None,
         eval_ood: bool = False,
-        is_conformal: bool = False,
         eval_shift: bool = False,
         eval_grouping_loss: bool = False,
-        ood_criterion: type[TUOODCriterion] | str = "msp",
+        ood_criterion: TUOODCriterion | str = "msp",
         post_processing: PostProcessing | None = None,
         num_bins_cal_err: int = 15,
         log_plots: bool = False,
@@ -103,12 +104,13 @@ class ClassificationRoutine(LightningModule):
             model (torch.nn.Module): Model to train.
             num_classes (int): Number of classes.
             loss (torch.nn.Module): Loss function to optimize the :attr:`model`.
+                Defaults to ``None``.
             is_ensemble (bool, optional): Indicates whether the model is an
                 ensemble at test time or not. Defaults to ``False``.
             num_tta (int): Number of test-time augmentations (TTA). If ``1``: no TTA.
                 Defaults to ``1``.
             format_batch_fn (torch.nn.Module, optional): Function to format the batch.
-                Defaults to :class:`torch.nn.Identity()`.
+                Defaults to ``None``.
             optim_recipe (dict or torch.optim.Optimizer, optional): The optimizer and
                 optionally the scheduler to use. Defaults to ``None``.
             mixup_params (dict, optional): Mixup parameters. Can include mixup type,
@@ -119,12 +121,10 @@ class ClassificationRoutine(LightningModule):
                 detection performance. Defaults to ``False``.
             eval_shift (bool, optional): Indicates whether to evaluate the Distribution
                 shift performance. Defaults to ``False``.
-            is_conformal (bool, optional): Indicates whether to use conformal prediction
-                as uncertainty criterion. Defaults to ``False``.
             eval_grouping_loss (bool, optional): Indicates whether to evaluate the
                 grouping loss or not. Defaults to ``False``.
-            ood_criterion (TUOODCriterion, optional): Criterion for the binary OOD detection task.
-                Defaults to None which amounts to the maximum softmax probability score (MSP).
+            ood_criterion (TUOODCriterion | str, optional): Criterion for the binary OOD detection
+                task. Defaults to ``msp``, the Maximum Softmax Probability score.
             post_processing (PostProcessing, optional): Post-processing method
                 to train on the calibration set. No post-processing if None.
                 Defaults to ``None``.
@@ -132,7 +132,7 @@ class ClassificationRoutine(LightningModule):
                 error metrics. Defaults to ``15``.
             log_plots (bool, optional): Indicates whether to log plots from
                 metrics. Defaults to ``False``.
-            save_in_csv(bool, optional): Save the results in csv. Defaults to
+            save_in_csv (bool, optional): Save the results in csv. Defaults to
                 ``False``.
             csv_filename (str, optional): Name of the csv file. Defaults to
                 ``"results.csv"``. Note that this is only used if
@@ -179,7 +179,6 @@ class ClassificationRoutine(LightningModule):
 
         self.num_classes = num_classes
         self.eval_ood = eval_ood
-        self.is_conformal = is_conformal
         self.eval_shift = eval_shift
         self.eval_grouping_loss = eval_grouping_loss
         self.num_tta = num_tta
@@ -257,7 +256,14 @@ class ClassificationRoutine(LightningModule):
 
         self.test_cls_metrics = cls_metrics.clone(prefix="test/")
 
-        if self.post_processing is not None:
+        if self.post_processing is not None and isinstance(self.post_processing, Conformal):
+            self.post_cls_metrics = MetricCollection(
+                {
+                    "test/post/CoverageRate": CoverageRate(),
+                    "test/post/SetSize": SetSize(),
+                },
+            )
+        elif self.post_processing is not None:
             self.post_cls_metrics = cls_metrics.clone(prefix="test/post/")
 
         self.test_id_entropy = Entropy()
@@ -488,7 +494,11 @@ class ClassificationRoutine(LightningModule):
 
     def on_train_start(self) -> None:
         """Put the hyperparameters in tensorboard."""
-        if self.logger is not None:  # coverage: ignore
+        if self.loss is None:
+            raise ValueError(
+                "To train a model, you must specify the `loss` argument in the routine. Got None."
+            )
+        if self.logger is not None:
             self.logger.log_hyperparams(
                 self.hparams,
             )
@@ -522,14 +532,6 @@ class ClassificationRoutine(LightningModule):
                 )
             }
 
-        if (
-            self.eval_ood
-            and self.log_plots
-            and isinstance(self.logger, Logger)
-            and self.is_conformal
-        ):
-            self.id_conformal_storage = []
-            self.ood_conformal_storage = []
         if hasattr(self.model, "need_bn_update"):
             self.model.bn_update(self.trainer.train_dataloader, device=self.device)
 
@@ -625,32 +627,28 @@ class ClassificationRoutine(LightningModule):
         inputs, targets = batch
         # remove duplicates when doing TTA
         targets = targets[:: self.num_tta]
-
         logits = self.forward(inputs, save_feats=self.eval_grouping_loss)
         logits = rearrange(logits, "(m b) c -> b m c", b=targets.size(0))
         probs_per_est = torch.sigmoid(logits) if self.binary_cls else F.softmax(logits, dim=-1)
         probs = probs_per_est.mean(dim=1)
-        if self.is_conformal:
-            if isinstance(self.post_processing, Conformal):
-                pred_conformal, confs_conformal = self.post_processing.conformal(inputs)
-            else:
-                pred_conformal, confs_conformal = self.model.conformal(inputs)
 
-        if self.ood_criterion.input_type == OODCriterionInputType.LOGIT and not self.is_conformal:
+        if self.post_processing is not None:
+            pp_logits = self.post_processing(inputs)
+            if isinstance(self.post_processing, LaplaceApprox | Conformal):
+                pp_probs = pp_logits
+            else:
+                pp_probs = F.softmax(pp_logits, dim=-1)
+
+        if self.ood_criterion.input_type == OODCriterionInputType.LOGIT:
             ood_scores = self.ood_criterion(logits)
-        elif self.ood_criterion.input_type == OODCriterionInputType.PROB and not self.is_conformal:
+        elif self.ood_criterion.input_type == OODCriterionInputType.PROB:
             ood_scores = self.ood_criterion(probs)
-        elif (
-            self.ood_criterion.input_type == OODCriterionInputType.DATASET and not self.is_conformal
-        ):
+        elif self.ood_criterion.input_type == OODCriterionInputType.ESTIMATOR_PROB:
+            ood_scores = self.ood_criterion(probs_per_est)
+        elif self.ood_criterion.input_type == OODCriterionInputType.DATASET:
             with torch.inference_mode(False), torch.enable_grad():
                 x = inputs.detach().clone().requires_grad_(True)
                 ood_scores = self.ood_criterion(self.model, x).to(self.device)
-        else:
-            if not self.is_conformal:
-                ood_scores = self.ood_criterion(probs_per_est)
-            else:
-                ood_scores = confs_conformal
 
         indices = self.trainer.datamodule.get_indices()
 
@@ -659,6 +657,8 @@ class ClassificationRoutine(LightningModule):
                 probs.squeeze(-1) if self.binary_cls else probs,
                 targets,
             )
+            self.test_id_entropy.update(probs)
+
             if self.eval_grouping_loss:
                 self.test_grouping_loss.update(probs, targets, self.features)
 
@@ -676,9 +676,6 @@ class ClassificationRoutine(LightningModule):
 
             if self.is_ensemble:
                 self.test_id_ens_metrics.update(probs_per_est)
-
-            if self.is_conformal:
-                self.test_cfm_metrics.update(pred_conformal, targets)
 
             if self.post_processing is not None:
                 pp_logits = self.post_processing(inputs)
@@ -779,7 +776,7 @@ class ClassificationRoutine(LightningModule):
         self.log_dict(res_dict, logger=True, sync_dist=True)
         # Progress bar only
         self.log(
-            "Acc%",
+            "Acc",
             res_dict["val/cls/Acc"] * 100,
             prog_bar=True,
             logger=False,
@@ -798,20 +795,13 @@ class ClassificationRoutine(LightningModule):
         self.log_dict(id_metrics)
 
         if self.post_processing is not None:
-            tmp_metrics = self.post_cls_metrics.compute()
-            self.log_dict(tmp_metrics, sync_dist=True)
-            result_dict.update(tmp_metrics)
+            result_dict |= self.post_cls_metrics.compute()
 
         if self.eval_grouping_loss:
-            self.log_dict(
-                self.test_grouping_loss.compute(),
-                sync_dist=True,
-            )
+            result_dict |= self.test_grouping_loss.compute()
 
         if self.is_ensemble:
-            tmp_metrics = self.test_id_ens_metrics.compute()
-            self.log_dict(tmp_metrics, sync_dist=True)
-            result_dict.update(tmp_metrics)
+            result_dict |= self.test_id_ens_metrics.compute()
 
         if self.is_ensemble and self.eval_ood:
             for near_metrics in self.test_ood_ens_metrics_near.values():
@@ -839,16 +829,14 @@ class ClassificationRoutine(LightningModule):
             result_dict.update(tmp_metrics)
 
         if self.eval_shift:
-            tmp_metrics = self.test_shift_metrics.compute()
-            shift_severity = self.trainer.datamodule.shift_severity
-            tmp_metrics["shift/severity"] = shift_severity
-            self.log_dict(tmp_metrics, sync_dist=True)
-            result_dict.update(tmp_metrics)
+            result_dict |= self.test_shift_metrics.compute() | {
+                "shift/severity": self.trainer.datamodule.shift_severity,
+            }
 
             if self.is_ensemble:
-                tmp_metrics = self.test_shift_ens_metrics.compute()
-                self.log_dict(tmp_metrics, sync_dist=True)
-                result_dict.update(tmp_metrics)
+                result_dict |= self.test_shift_ens_metrics.compute()
+
+        self.log_dict(result_dict, sync_dist=True)
 
         if isinstance(self.logger, Logger) and self.log_plots:
             self.logger.experiment.add_figure(
@@ -863,7 +851,7 @@ class ClassificationRoutine(LightningModule):
                 self.test_cls_metrics["sc/AUGRC"].plot()[0],
             )
 
-            if self.post_processing is not None:
+            if self.post_processing is not None and not isinstance(self.post_processing, Conformal):
                 self.logger.experiment.add_figure(
                     "Reliabity diagram after calibration",
                     self.post_cls_metrics["cal/ECE"].plot()[0],
@@ -880,19 +868,29 @@ class ClassificationRoutine(LightningModule):
                     )[0]
                     self.logger.experiment.add_figure(f"OOD Score/{name}", fig_score)
 
-        if self.save_in_csv:
-            self.save_results_to_csv(result_dict)
+        # reset metrics
+        self.test_cls_metrics.reset()
+        self.test_id_entropy.reset()
+        if self.post_processing is not None:
+            self.post_cls_metrics.reset()
+        if self.eval_grouping_loss:
+            self.test_grouping_loss.reset()
+        if self.is_ensemble:
+            self.test_id_ens_metrics.reset()
+        if self.eval_ood:
+            self.test_ood_metrics.reset()
+            self.test_ood_entropy.reset()
+            if self.is_ensemble:
+                self.test_ood_ens_metrics.reset()
+        if self.eval_shift:
+            self.test_shift_metrics.reset()
+            if self.is_ensemble:
+                self.test_shift_ens_metrics.reset()
 
-    def save_results_to_csv(self, results: dict[str, float]) -> None:
-        """Save the metric results in a csv.
-
-        Args:
-            results (dict[str, float]): the dictionary containing all the values of the metrics.
-        """
-        if self.logger is not None:
+        if self.save_in_csv and self.logger is not None:
             csv_writer(
                 Path(self.logger.log_dir) / self.csv_filename,
-                results,
+                result_dict,
             )
 
 
@@ -900,7 +898,7 @@ def _classification_routine_checks(
     model: nn.Module,
     num_classes: int,
     is_ensemble: bool,
-    ood_criterion: type[TUOODCriterion] | str,
+    ood_criterion: TUOODCriterion | str,
     eval_grouping_loss: bool,
     num_bins_cal_err: int,
     mixup_params: dict | None,
@@ -920,10 +918,20 @@ def _classification_routine_checks(
         post_processing (PostProcessing | None): the post-processing module.
         format_batch_fn (nn.Module | None): the function for formatting the batch for ensembles.
     """
-    ood_criterion_cls = get_ood_criterion(ood_criterion)
-    if not is_ensemble and ood_criterion_cls.ensemble_only:
+    ood_criterion = get_ood_criterion(ood_criterion)
+    if not is_ensemble and ood_criterion.ensemble_only:
         raise ValueError(
             "You cannot use mutual information or variation ratio with a single model."
+        )
+
+    if is_ensemble and ood_criterion.single_only:
+        raise NotImplementedError(
+            "Logit-based criteria are not implemented for ensembles. Raise an issue if needed."
+        )
+
+    if isinstance(ood_criterion, PostProcessingCriterion) and post_processing is None:
+        raise ValueError(
+            "You cannot set ood_criterion=PostProcessingCriterion when post_processing is None."
         )
 
     if is_ensemble and eval_grouping_loss:

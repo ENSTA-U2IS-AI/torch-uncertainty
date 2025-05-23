@@ -4,6 +4,7 @@ from .classification import (
     BCEWithLogitsLSLoss,
     ConfidencePenaltyLoss,
     ConflictualLoss,
+    CrossEntropyMaxSupLoss,
     DECLoss,
     FocalLoss,
 )

@@ -9,7 +9,10 @@ class EMA(nn.Module):
         model: nn.Module,
         momentum: float,
     ) -> None:
-        """Exponential Moving Average.
+        """Exponential Moving Average (EMA).
+
+        The :attr:`model` given as argument is used to compute the gradient during the training.
+        The EMA model is regularly updated with the inner-model and used at evaluation time.
 
         The :attr:`model` given as argument is used to compute the gradient during the training.
         The EMA model is regularly updated with the inner-model and used at evaluation time.

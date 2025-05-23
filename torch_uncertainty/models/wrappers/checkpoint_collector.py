@@ -18,7 +18,7 @@ class CheckpointCollector(nn.Module):
 
         CheckpointCollector can be used to collect samples of the posterior distribution,
         either using classical stochastic gradient optimization methods, or SGLD and SGHMC
-        as implemented in TorchUncertainty
+        as implemented in TorchUncertainty.
 
         Args:
             model (nn.Module): The model to train and ensemble.
@@ -113,20 +113,20 @@ class CheckpointCollector(nn.Module):
         preds: list[Tensor] = []
         if not len(self.saved_models):
             if self.store_on_cpu:
-                self.core_model.to(x.device)
-                preds = self.core_model.forward(x)
+                preds = self.core_model.to(x.device).forward(x)
                 self.core_model.cpu()
                 return preds
             return self.core_model.forward(x)
         if self.store_on_cpu:
             for model in self.saved_models:
-                model.to(x.device)
-                preds.append(model.forward(x))
+                preds.append(model.to(x.device).forward(x))
                 model.cpu()
         else:
             preds = [model.forward(x) for model in self.saved_models]
         if self.use_final_model:
-            preds.append(self.core_model.forward(x))
+            preds.append(self.core_model.to(x.device).forward(x))
+            if self.store_on_cpu:
+                self.core_model.cpu()
         return torch.cat(preds, dim=0)
 
     def forward(self, x: Tensor) -> Tensor:
@@ -144,8 +144,7 @@ class CheckpointCollector(nn.Module):
         """
         if self.training:
             if self.store_on_cpu:
-                self.core_model.to(x.device)
-                preds = self.core_model.forward(x)
+                preds = self.core_model.to(x.device).forward(x)
                 self.core_model.cpu()
                 return preds
             return self.core_model.forward(x)

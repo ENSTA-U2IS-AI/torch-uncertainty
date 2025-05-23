@@ -60,7 +60,7 @@ class TinyImageNetDataModule(TUDataModule):
             root (str): Root directory of the datasets.
             batch_size (int): Number of samples per batch during training.
             eval_batch_size (int | None) : Number of samples per batch during evaluation (val
-                and test). Set to batch_size if None. Defaults to None.
+                and test). Set to :attr:`batch_size` if ``None``. Defaults to ``None``.
             eval_ood (bool): Whether to evaluate out-of-distribution performance. Defaults to ``False``.
             eval_shift (bool): Whether to evaluate on shifted data. Defaults to ``False``.
             num_tta (int): Number of test-time augmentations (TTA). Defaults to ``1`` (no TTA).

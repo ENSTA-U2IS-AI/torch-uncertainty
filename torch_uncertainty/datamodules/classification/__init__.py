@@ -11,4 +11,5 @@ from .uci import (
     HTRU2DataModule,
     OnlineShoppersDataModule,
     SpamBaseDataModule,
+    UCIClassificationDataModule,
 )

@@ -90,7 +90,7 @@ class TestBayesConv1d:
 
         layer.__setstate__({"padding_mode": "replicate"})
 
-    def test_error(self):
+    def test_error(self) -> None:
         with pytest.raises(ValueError):
             BayesConv1d(8, 2, kernel_size=1, sigma_init=0, padding_mode="random")
 

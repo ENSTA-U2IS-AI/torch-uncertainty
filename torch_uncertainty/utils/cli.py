@@ -76,7 +76,7 @@ class TULightningCLI(LightningCLI):
         run: bool = True,
         auto_configure_optimizers: bool = True,
         eval_after_fit_default: bool = False,
-        **kwargs: Any,
+        **kwargs: dict,
     ) -> None:
         """Custom LightningCLI for torch-uncertainty.
 
