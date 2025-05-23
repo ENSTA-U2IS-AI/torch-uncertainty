@@ -4,7 +4,7 @@ import torch.nn as nn
 
 class AdaScaleANet(nn.Module):
     def __init__(self, backbone):
-        super(AdaScaleANet, self).__init__()
+        super().__init__()
         self.backbone = backbone
         self.logit_scaling = False
 
@@ -27,7 +27,7 @@ class AdaScaleANet(nn.Module):
 
 class AdaScaleLNet(AdaScaleANet):
     def __init__(self, backbone):
-        super(AdaScaleLNet, self).__init__(backbone)
+        super().__init__()
         self.logit_scaling = True
 
 
@@ -35,7 +35,9 @@ def ada_scale(x, percentiles):
     assert x.dim() == 2
     b, c = x.shape
     assert percentiles.shape == (b,)
-    assert torch.all(percentiles > 0) and torch.all(percentiles < 100)
+    assert x.dim() == 2, "input tensor must be 2D"
+    assert torch.all(percentiles > 0), "percentiles must be > 0"
+    assert torch.all(percentiles < 100), "percentiles must be < 100"
     n = x.shape[1:].numel()
     ks = n - torch.round(n * percentiles.cuda() / 100.0).to(torch.int)
     max_k = ks.max()
@@ -44,5 +46,4 @@ def ada_scale(x, percentiles):
     batch_sums = x.sum(dim=1, keepdim=True)
     masked_values = values * mask
     topk_sums = masked_values.sum(dim=1, keepdim=True)
-    scales = batch_sums / topk_sums
-    return scales
+    return batch_sums / topk_sums

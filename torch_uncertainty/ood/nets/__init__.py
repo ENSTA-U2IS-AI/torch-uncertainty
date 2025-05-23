@@ -1,5 +1,5 @@
 # ruff: noqa: F401
-from .AdascaleNet import AdaScaleANet, AdaScaleLNet
-from .AshNet import ASHNet
-from .ReactNet import ReactNet
-from .ScaleNet import ScaleNet
+from .adascale_net import AdaScaleANet, AdaScaleLNet
+from .ash_net import ASHNet
+from .react_net import ReactNet
+from .scale_net import ScaleNet

@@ -1,3 +1,7 @@
+import logging
+import os
+import urllib.request
+import zipfile
 from collections import defaultdict
 from collections.abc import Callable
 from pathlib import Path
@@ -7,6 +11,8 @@ import numpy as np
 import torch
 from PIL import Image
 from torch.utils.data import Dataset
+
+logger = logging.getLogger(__name__)
 
 
 class TinyImageNet(Dataset):
@@ -25,17 +31,14 @@ class TinyImageNet(Dataset):
         self.root = Path(root) / "tiny-imagenet-200"
 
         if download and not self.root.exists():
-            import urllib.request
-            import zipfile
-
             url = "http://cs231n.stanford.edu/tiny-imagenet-200.zip"
             zip_path = Path(root) / "tiny-imagenet-200.zip"
-            print("Downloading tiny-imagenet-200 dataset...")
-            urllib.request.urlretrieve(url, zip_path)
-            print("Extracting dataset...")
+            logger.info("Downloading tiny-imagenet-200 dataset...")
+            urllib.request.urlretrieve(url, zip_path)  # noqa: S310
+            logger.info("Extracting dataset...")
             with zipfile.ZipFile(zip_path, "r") as zf:
                 zf.extractall(root)
-            os.remove(zip_path)
+            zip_path.unlink()
 
         if split not in ["train", "val", "test"]:
             raise ValueError(f"Split {split} is not supported.")

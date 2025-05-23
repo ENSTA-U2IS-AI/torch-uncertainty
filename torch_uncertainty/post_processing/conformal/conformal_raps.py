@@ -65,8 +65,7 @@ class ConformalClsRAPS(Conformal):
         logits = self.model(inputs)
         logits = rearrange(logits, "(m b) c -> b m c", b=inputs.size(0))
         probs_per_est = F.softmax(logits, dim=-1)
-        probs = probs_per_est.mean(dim=1)
-        return probs
+        return probs_per_est.mean(dim=1)
 
     def _sort_sum(self, probs: Tensor):
         """Sort probabilities and compute cumulative sums."""

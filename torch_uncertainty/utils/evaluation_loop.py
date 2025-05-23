@@ -58,7 +58,7 @@ class TUEvaluationLoop(_EvaluationLoop):
                     metric_name = key.split("/")[-1]
                     metrics["cal"].update({metric_name: value})
                 elif key.startswith("ood"):
-                    # Initialize the ood dict if it isn’t already.
+                    # Initialize the ood dict if it isnt already.
                     if "ood" not in metrics:
                         metrics["ood"] = {
                             "individual": {"near": {}, "far": {}},

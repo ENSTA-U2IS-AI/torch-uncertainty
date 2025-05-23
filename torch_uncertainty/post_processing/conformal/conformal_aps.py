@@ -1,4 +1,5 @@
 import logging
+from functools import partial
 from typing import Literal
 
 import torch
@@ -13,25 +14,22 @@ from .abstract import Conformal
 class ConformalClsAPS(Conformal):
     def __init__(
         self,
+        alpha: float,
         model: nn.Module | None = None,
         score_type: str = "softmax",
         randomized: bool = True,
-        numclass: int = 10,
         device: Literal["cpu", "cuda"] | torch.device | None = None,
-        alpha: float = 0.1,
     ) -> None:
         r"""Conformal prediction with APS scores.
 
         Args:
-            model (nn.Module): Trained classification model.
+            alpha (float): The confidence level meaning we allow :math:`1-\alpha` error.
+            model (nn.Module): Trained classification model. Defaults to ``None``.
             score_type (str): Type of score transformation. Only ``"softmax"`` is supported for now.
-            randomized (bool): Whether to use randomized smoothing in APS.
-            numclass (int):  the number of class of the model. We need it to divide conformal set size by
-            the number of classes to have an uncertainty criterion bounded by one.
+                Defaults to ``"softmax"``.
+            randomized (bool): Whether to use randomized smoothing in APS. Defaults to ``True``.
             device (Literal["cpu", "cuda"] | torch.device | None, optional): device.
                 Defaults to ``None``.
-            alpha (float): The confidence level meaning we allow :math:`1-\alpha` error. Defaults
-                to ``0.1``.
 
         Reference:
             - TODO:
@@ -39,27 +37,25 @@ class ConformalClsAPS(Conformal):
         super().__init__(model=model)
         self.randomized = randomized
         self.alpha = alpha
-        self.numclass = numclass
         self.device = device or "cpu"
         self.q_hat = None
 
         if score_type == "softmax":
-            self.transform = lambda x: torch.softmax(x, dim=-1)
+            self.transform = partial(torch.softmax, dim=-1)
         else:
             raise NotImplementedError("Only softmax is supported for now.")
 
-    def forward(self, inputs: Tensor) -> Tensor:
+    def model_forward(self, inputs: Tensor) -> Tensor:
         """Apply the model and return transformed scores (softmax)."""
         if self.model is None or isinstance(self.model, nn.Identity):
             logging.warning(
-                "model is None. Fitting the temperature scaling on the x of the dataloader."
+                "model is None. Fitting post_processing method on the dataloader's data directly."
             )
             self.model = nn.Identity()
         logits = self.model(inputs)
         logits = rearrange(logits, "(m b) c -> b m c", b=inputs.size(0))
         probs_per_est = F.softmax(logits, dim=-1)
-        probs = probs_per_est.mean(dim=1)
-        return probs
+        return probs_per_est.mean(dim=1)
 
     def _sort_sum(self, probs: Tensor):
         """Sort probabilities and compute cumulative sums."""
@@ -90,8 +86,7 @@ class ConformalClsAPS(Conformal):
         if self.randomized:
             u = torch.rand(probs.shape, device=probs.device)
         else:
-            u = torch.zeros_like(probs)
-
+            u = torch.zeros_like(probs, device=probs.device)
         ordered_scores = cumsum - ordered * u
         sorted_indices = torch.sort(indices, descending=False, dim=-1).indices
         return ordered_scores.gather(dim=-1, index=sorted_indices)
@@ -104,7 +99,7 @@ class ConformalClsAPS(Conformal):
 
         for images, labels in dataloader:
             images, labels = images.to(self.device), labels.to(self.device)
-            probs = self.forward(images)
+            probs = self.model_forward(images)
             scores = self._calculate_single_label(probs, labels)
             aps_scores.append(scores)
 
@@ -112,30 +107,14 @@ class ConformalClsAPS(Conformal):
         self.q_hat = torch.quantile(aps_scores, 1 - self.alpha)
 
     @torch.no_grad()
-    def conformal(self, inputs: Tensor) -> tuple[Tensor, Tensor]:
+    def conformal(self, inputs: Tensor) -> Tensor:
         """Compute the prediction set for each input."""
         self.model.eval()
-        inputs = inputs.to(self.device)
-        probs = self.forward(inputs)
+        probs = self.model_forward(inputs.to(self.device))
         all_scores = self._calculate_all_labels(probs)
-
         pred_set = all_scores <= self.quantile
-        set_size = pred_set.sum(dim=1).float() / float(self.numclass)
-
-        return pred_set, set_size
-
-    def conformal_visu(self, inputs: Tensor) -> tuple[Tensor, Tensor]:
-        """Perform conformal prediction on the test set and return the classical
-        confidence for visualiation.
-        """
-        self.model.eval()
-        with torch.no_grad():
-            inputs = inputs.to(self.device)
-            probs = self.forward(inputs)
-            all_scores = 1 - self._calculate_all_labels(probs)
-            pred_set = all_scores <= self.quantile
-
-            return (pred_set, all_scores)
+        confidence_score = 1 / pred_set.sum(dim=1, keepdim=True)
+        return pred_set.float() * confidence_score
 
     @property
     def quantile(self) -> Tensor:

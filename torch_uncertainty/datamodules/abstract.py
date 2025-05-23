@@ -107,7 +107,7 @@ class TUDataModule(ABC, LightningDataModule):
         return self.test
 
     def get_ood_set(self) -> Dataset:
-        """Get the ood set. // legacy"""
+        """Get the ood set // legacy."""
         if self.num_tta > 1:
             return TTADataset(self.ood, self.num_tta)
         return self.ood
@@ -179,6 +179,8 @@ class TUDataModule(ABC, LightningDataModule):
             training (bool): Whether it is a training or evaluation dataloader.
             shuffle (bool, optional): Whether to shuffle the dataset. Defaults
                 to False.
+            drop_last (bool, optional): Whether to drop the last incomplete batch
+            if the dataset size is not divisible by the batch size. Defaults to False.
 
         Return:
             DataLoader: Dataloader for the given dataset.

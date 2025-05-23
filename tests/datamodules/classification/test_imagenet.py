@@ -30,13 +30,11 @@ class TestImageNetDataModule:
         dm.shift_dataset = DummyClassificationDataset
         dm.setup("fit")
         dm.setup("test")
-        # dm.train_dataloader()
         dm.val_dataloader()
         dm.test_dataloader()
 
         dm.val_split = None
         dm.setup("fit")
-        # dm.train_dataloader()
         dm.val_dataloader()
         dm.test_dataloader()
 

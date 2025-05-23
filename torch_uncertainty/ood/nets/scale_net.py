@@ -5,7 +5,7 @@ import torch.nn as nn
 
 class ScaleNet(nn.Module):
     def __init__(self, backbone):
-        super(ScaleNet, self).__init__()
+        super().__init__()
         self.backbone = backbone
 
     def forward(self, x, return_feature=False, return_feature_list=False):
@@ -18,8 +18,7 @@ class ScaleNet(nn.Module):
         _, feature = self.backbone(x, return_feature=True)
         feature = scale(feature.view(feature.size(0), -1, 1, 1), percentile)
         feature = feature.view(feature.size(0), -1)
-        logits_cls = self.backbone.get_fc_layer()(feature)
-        return logits_cls
+        return self.backbone.get_fc_layer()(feature)
 
     def get_fc(self):
         fc = self.backbone.fc
@@ -27,7 +26,7 @@ class ScaleNet(nn.Module):
 
 
 def scale(x, percentile=65):
-    input = x.clone()
+    x_clone = x.clone()
     assert x.dim() == 4
     assert 0 <= percentile <= 100
     b, c, h, w = x.shape
@@ -46,4 +45,4 @@ def scale(x, percentile=65):
     # apply sharpening
     scale = s1 / s2
 
-    return input * torch.exp(scale[:, None, None, None])
+    return x_clone * torch.exp(scale[:, None, None, None])

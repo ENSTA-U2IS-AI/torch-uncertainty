@@ -5,7 +5,7 @@ import torch.nn as nn
 
 class ASHNet(nn.Module):
     def __init__(self, backbone):
-        super(ASHNet, self).__init__()
+        super().__init__()
         self.backbone = backbone
 
     def forward(self, x, return_feature=False, return_feature_list=False):
@@ -18,8 +18,7 @@ class ASHNet(nn.Module):
         _, feature = self.backbone(x, return_feature=True)
         feature = ash_b(feature.view(feature.size(0), -1, 1, 1), percentile)
         feature = feature.view(feature.size(0), -1)
-        logits_cls = self.backbone.get_fc_layer()(feature)
-        return logits_cls
+        return self.backbone.get_fc_layer()(feature)
 
     def get_fc(self):
         fc = self.backbone.fc
@@ -77,9 +76,8 @@ def ash_s(x, percentile=65):
 
     # apply sharpening
     scale = s1 / s2
-    x = x * torch.exp(scale[:, None, None, None])
 
-    return x
+    return x * torch.exp(scale[:, None, None, None])
 
 
 def ash_rand(x, percentile=65, r1=0, r2=10):
