@@ -2,7 +2,7 @@ import pytest
 import torch
 
 from tests._dummies.model import dummy_model
-from torch_uncertainty.models import MCDropout, mc_dropout
+from torch_uncertainty.models import mc_dropout
 
 
 class TestMCDropout:
@@ -36,7 +36,7 @@ class TestMCDropout:
         model = dummy_model(10, 5, 0.1)
 
         with pytest.raises(ValueError, match="`num_estimators` must be strictly positive"):
-            MCDropout(model=model, num_estimators=-1, last_layer=True, on_batch=True)
+            mc_dropout(model=model, num_estimators=-1, last_layer=True, on_batch=True)
 
         dropout_model = mc_dropout(model, 5)
         with pytest.raises(TypeError, match="Training mode is expected to be boolean"):
