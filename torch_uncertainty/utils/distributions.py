@@ -1,3 +1,4 @@
+from importlib import util
 from numbers import Number
 
 import torch
@@ -11,6 +12,13 @@ from torch.distributions import (
     constraints,
 )
 from torch.distributions.utils import broadcast_all
+
+if util.find_spec("scipy"):
+    from scipy.special import stdtr, stdtrit
+
+    scipy_installed = True
+else:  # coverage: ignore
+    scipy_installed = False
 
 
 def get_dist_class(dist_family: str) -> type[Distribution]:
@@ -31,7 +39,7 @@ def get_dist_class(dist_family: str) -> type[Distribution]:
     if dist_family == "cauchy":
         return Cauchy
     if dist_family == "student":
-        return StudentT
+        return TUStudentT
     raise NotImplementedError(
         f"{dist_family} distribution is not supported. Raise an issue if needed."
     )
@@ -54,6 +62,37 @@ def get_dist_estimate(dist: Distribution, dist_estimate: str) -> Tensor:
     raise NotImplementedError(
         f"{dist_estimate} estimate is not supported.Raise an issue if needed."
     )
+
+
+class TUStudentT(StudentT):
+    def cdf(self, value: Tensor) -> Tensor:
+        if not scipy_installed:  # coverage: ignore
+            raise ImportError(
+                "Please install torch_uncertainty with the distribution option:"
+                """pip install -U "torch_uncertainty[distribution]"."""
+            )
+        if self._validate_args:
+            self._validate_sample(value)
+
+        x = ((value - self.loc) / self.scale).detach().cpu().numpy()
+        df = self.df.detach().cpu().numpy()
+
+        return torch.tensor(stdtr(df, x), device=self.loc.device)
+
+    def icdf(self, value: Tensor) -> Tensor:
+        if not scipy_installed:  # coverage: ignore
+            raise ImportError(
+                "Please install torch_uncertainty with the distribution option:"
+                """pip install -U "torch_uncertainty[distribution]"."""
+            )
+
+        if self._validate_args:
+            self._validate_sample(value)
+
+        p = value.detach().cpu().numpy()
+        df = self.df.detach().cpu().numpy()
+
+        return torch.tensor(stdtrit(df, p), device=self.loc.device) * self.scale + self.loc
 
 
 class NormalInverseGamma(Distribution):

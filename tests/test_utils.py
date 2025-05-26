@@ -15,6 +15,7 @@ from torch_uncertainty.utils import (
     hub,
     plot_hist,
 )
+from torch_uncertainty.utils.distributions import TUStudentT
 
 
 class TestUtils:
@@ -91,7 +92,7 @@ class TestDistributions:
         dist = distributions.get_dist_class("cauchy")
         assert dist == torch.distributions.Cauchy
         dist = distributions.get_dist_class("student")
-        assert dist == torch.distributions.StudentT
+        assert dist == TUStudentT
 
     def test_get_dist_estimate(self) -> None:
         dist = torch.distributions.Normal(0.0, 1.0)
