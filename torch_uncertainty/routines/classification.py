@@ -609,11 +609,36 @@ class ClassificationRoutine(LightningModule):
         batch_idx: int,
         dataloader_idx: int = 0,
     ) -> None:
-        # skip any OOD val loaders
-        if self.eval_ood:
-            indices = self.trainer.datamodule.get_indices()
-            if dataloader_idx == indices["val_ood"]:
-                return
+        # skip non necessary test loaders
+        indices = self.trainer.datamodule.get_indices()
+
+        if self.eval_ood and dataloader_idx == indices.get("val_ood"):
+            return
+
+        if not self.eval_ood and dataloader_idx in indices.get("near_oods", []) + indices.get(
+            "far_oods", []
+        ):
+            return
+
+        if not self.eval_shift and dataloader_idx in indices.get("shift", []):
+            return
+
+        if not self.eval_ood:
+            near_ood_indices = indices.get("near_oods", [])
+            far_ood_indices = indices.get("far_oods", [])
+            if near_ood_indices or far_ood_indices:
+                logger.info(
+                    "You set `eval_ood` to `True` in the datamodule and not in the routine. "
+                    "You should remove it from the datamodule to avoid unnecessary overhead."
+                )
+
+        if not self.eval_shift:
+            shift_indices = indices.get("shift", [])
+            if shift_indices:
+                logger.info(
+                    "You set `eval_shift` to `True` in the datamodule and not in the routine. "
+                    "You should remove it from the datamodule to avoid unnecessary overhead."
+                )
 
         inputs, targets = batch
         # remove duplicates when doing TTA
@@ -716,7 +741,7 @@ class ClassificationRoutine(LightningModule):
                             ood_scores, torch.zeros_like(targets)
                         )
 
-        elif self.eval_ood and dataloader_idx in indices.get("near_oods", []):
+        if self.eval_ood and dataloader_idx in indices.get("near_oods", []):
             ds_index = indices["near_oods"].index(dataloader_idx)
             ds_name = self.trainer.datamodule.near_oods[ds_index].dataset_name
             if self.is_ensemble:
@@ -736,7 +761,7 @@ class ClassificationRoutine(LightningModule):
                 if self.log_plots:
                     self.ood_score_storage[ds_name].append(-ood_scores.detach().cpu())
 
-        elif self.eval_ood and dataloader_idx in indices.get("far_oods", []):
+        if self.eval_ood and dataloader_idx in indices.get("far_oods", []):
             ds_index = indices["far_oods"].index(dataloader_idx)
             ds_name = self.trainer.datamodule.far_oods[ds_index].dataset_name
             if self.is_ensemble:
@@ -756,7 +781,7 @@ class ClassificationRoutine(LightningModule):
             if self.log_plots:
                 self.ood_score_storage[ds_name].append(-ood_scores.detach().cpu())
 
-        elif self.eval_shift and dataloader_idx in indices.get("shift", []):
+        if self.eval_shift and dataloader_idx in indices.get("shift", []):
             self.test_shift_metrics.update(probs, targets)
             if self.is_ensemble:
                 self.test_shift_ens_metrics.update(probs_per_est)

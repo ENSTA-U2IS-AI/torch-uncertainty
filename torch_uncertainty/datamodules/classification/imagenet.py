@@ -268,29 +268,21 @@ class ImageNetDataModule(TUDataModule):
             self.train = None
 
         if stage == "test":
-            if self.test_alt is not None:
-                self.test = self.dataset(
-                    self.root,
-                    split="val",
-                    transform=self.test_transform,
-                    download=False,
-                )
-            else:
-                self.data_dir = getattr(
-                    self, "data_dir", download_and_extract_hf_dataset("imagenet1k", self.root)
-                )
-                imagenet1k_splits = SPLITS_BASE / "imagenet1k"
-                test_txt = imagenet1k_splits / "test_imagenet.txt"
-                self.test = FileListDataset(
-                    root=self.data_dir,
-                    list_file=test_txt,
-                    transform=self.test_transform,
-                )
-
             if self.eval_ood:
                 self.val_ood, near_default, far_default = get_ood_datasets(
                     root=self.root,
                     dataset_id="imagenet1k",
+                    transform=self.test_transform,
+                )
+
+                self.data_dir = getattr(
+                    self, "data_dir", download_and_extract_hf_dataset("imagenet1k", self.root)
+                )
+                imagenet1k_splits = SPLITS_BASE / "imagenet1k"
+                test_txt = imagenet1k_splits / "test_ood_imagenet.txt"
+                self.test = FileListDataset(
+                    root=self.data_dir,
+                    list_file=test_txt,
                     transform=self.test_transform,
                 )
 
@@ -314,14 +306,33 @@ class ImageNetDataModule(TUDataModule):
 
                 self.near_ood_names = [ds.dataset_name for ds in self.near_oods]
                 self.far_ood_names = [ds.dataset_name for ds in self.far_oods]
+            else:
+                if self.test_alt is not None:
+                    self.test = self.dataset(
+                        self.root,
+                        split="val",
+                        transform=self.test_transform,
+                        download=False,
+                    )
+                else:
+                    self.data_dir = getattr(
+                        self, "data_dir", download_and_extract_hf_dataset("imagenet1k", self.root)
+                    )
+                    imagenet1k_splits = SPLITS_BASE / "imagenet1k"
+                    test_txt = imagenet1k_splits / "test_imagenet.txt"
+                    self.test = FileListDataset(
+                        root=self.data_dir,
+                        list_file=test_txt,
+                        transform=self.test_transform,
+                    )
 
-        if self.eval_shift:
-            self.shift = self.shift_dataset(
-                self.root,
-                download=False,
-                transform=self.test_transform,
-                shift_severity=self.shift_severity,
-            )
+            if self.eval_shift:
+                self.shift = self.shift_dataset(
+                    self.root,
+                    download=False,
+                    transform=self.test_transform,
+                    shift_severity=self.shift_severity,
+                )
 
     def train_dataloader(self) -> DataLoader:
         # look for a train/ folder under the HF extraction root
