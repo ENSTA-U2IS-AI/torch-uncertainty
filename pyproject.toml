@@ -4,7 +4,7 @@ build-backend = "flit_core.buildapi"
 
 [project]
 name = "torch_uncertainty"
-version = "0.5.1"
+version = "0.5.2"
 authors = [
     { name = "ENSTA U2IS", email = "olivier.laurent@ensta-paris.fr" },
     { name = "Adrien Lafage", email = "adrienlafage@outlook.com" },
@@ -41,7 +41,7 @@ dependencies = [
 
 [project.optional-dependencies]
 experiments = ["tensorboard", "huggingface-hub>=0.31", "safetensors"]
-image = ["kornia", "h5py", "opencv-python"]
+image = ["kornia", "h5py", "opencv-python", "torch-uncertainty-assets"]
 tabular = ["pandas"]
 dev = [
     "torch_uncertainty[experiments,image]",

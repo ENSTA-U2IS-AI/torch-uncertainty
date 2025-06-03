@@ -7,9 +7,9 @@ from matplotlib.figure import Figure
 from torch import Tensor
 
 
-def show(prediction: Tensor, target: Tensor) -> Figure:
+def show_segmentation_predictions(prediction: Tensor, target: Tensor) -> Figure:
     imgs = [prediction, target]
-    fig, axs = plt.subplots(ncols=len(imgs), figsize=(12, 6))
+    fig, axs = plt.subplots(ncols=2, figsize=(12, 6), dpi=300)
     for i, img in enumerate(imgs):
         img = img.detach()
         img = F.to_pil_image(img)
@@ -18,7 +18,6 @@ def show(prediction: Tensor, target: Tensor) -> Figure:
 
     axs[0].set(title="Prediction")
     axs[1].set(title="Ground Truth")
-
     return fig
 
 

@@ -584,7 +584,7 @@ class Frost(TUCorruption):
         super().__init__(severity)
         self.rng = np.random.default_rng(seed)
         self.mix = [(1, 0.4), (0.8, 0.6), (0.7, 0.7), (0.65, 0.7), (0.6, 0.75)][severity - 1]
-        self.frost_ds = FrostImages("./data", download=True, transform=ToTensor())
+        self.frost_ds = FrostImages(transform=ToTensor())
 
     def forward(self, img: Tensor) -> Tensor:
         if self.severity == 0:
