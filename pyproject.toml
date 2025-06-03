@@ -41,7 +41,7 @@ dependencies = [
 
 [project.optional-dependencies]
 experiments = ["tensorboard", "huggingface-hub>=0.31", "safetensors"]
-image = ["kornia", "h5py", "opencv-python"]
+image = ["kornia", "h5py", "opencv-python", "torch-uncertainty-assets"]
 tabular = ["pandas"]
 dev = [
     "torch_uncertainty[experiments,image]",
