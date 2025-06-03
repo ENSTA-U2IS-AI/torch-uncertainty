@@ -56,7 +56,3 @@ class FrostImages(VisionDataset):
     def __len__(self) -> int:
         """Get the length of the dataset."""
         return len(self.samples)
-
-
-if __name__ == "__main__":
-    ds = FrostImages()
