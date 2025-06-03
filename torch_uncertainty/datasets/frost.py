@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from importlib import util
 from importlib.abc import Traversable
 from importlib.resources import files
 from pathlib import Path
@@ -7,14 +8,14 @@ from typing import Any
 from PIL import Image
 from torchvision.datasets import VisionDataset
 
+FROST_ASSETS_MOD = "torch_uncertainty_assets.frost"
+tu_assets_installed = util.find_spec("torch_uncertainty_assets")
+
 
 def pil_loader(path: Path | Traversable) -> Image.Image:
     with path.open("rb") as f:
         img = Image.open(f)
         return img.convert("RGB")
-
-
-FROST_ASSETS_MOD = "torch_uncertainty_assets.frost"
 
 
 class FrostImages(VisionDataset):
@@ -23,6 +24,12 @@ class FrostImages(VisionDataset):
         transform: Callable[..., Any] | None = None,
         target_transform: Callable[..., Any] | None = None,
     ) -> None:
+        if not tu_assets_installed:  # coverage: ignore
+            raise ImportError(
+                "The torch-uncertainty-assets library is not installed. Please install"
+                "torch_uncertainty with the image option:"
+                """pip install -U "torch_uncertainty[image]"."""
+            )
         super().__init__(
             FROST_ASSETS_MOD,
             transform=transform,
@@ -49,3 +56,7 @@ class FrostImages(VisionDataset):
     def __len__(self) -> int:
         """Get the length of the dataset."""
         return len(self.samples)
+
+
+if __name__ == "__main__":
+    ds = FrostImages()
