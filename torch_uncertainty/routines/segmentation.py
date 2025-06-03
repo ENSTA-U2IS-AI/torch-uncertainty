@@ -37,7 +37,7 @@ from torch_uncertainty.ood_criteria import (
 )
 from torch_uncertainty.post_processing import PostProcessing
 from torch_uncertainty.utils import csv_writer
-from torch_uncertainty.utils.plotting import show
+from torch_uncertainty.utils.plotting import show_segmentation_predictions
 
 
 class SegmentationRoutine(LightningModule):
@@ -421,7 +421,7 @@ class SegmentationRoutine(LightningModule):
 
             self.logger.experiment.add_figure(
                 f"Segmentation results/{i}",
-                show(pred_mask, gt_mask),
+                show_segmentation_predictions(pred_mask, gt_mask),
             )
 
     def subsample(self, pred: Tensor, target: Tensor) -> tuple[Tensor, Tensor]:
