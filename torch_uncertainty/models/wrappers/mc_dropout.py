@@ -1,10 +1,12 @@
+from typing import Literal
+
 import torch
 from einops import repeat
 from torch import Tensor, nn
 from torch.nn.modules.dropout import _DropoutNd
 
 
-class MCDropout(nn.Module):
+class _MCDropout(nn.Module):
     def __init__(
         self,
         model: nn.Module,
@@ -90,12 +92,63 @@ class MCDropout(nn.Module):
         return torch.cat([self.core_model(x) for _ in range(self.num_estimators)], dim=0)
 
 
+class _RegMCDropout(_MCDropout):
+    def __init__(
+        self,
+        model: nn.Module,
+        num_estimators: int,
+        last_layer: bool,
+        on_batch: bool,
+        probabilistic: bool,
+    ):
+        super().__init__(
+            model=model, num_estimators=num_estimators, last_layer=last_layer, on_batch=on_batch
+        )
+        self.probabilistic = probabilistic
+
+    def forward(
+        self,
+        x: Tensor,
+    ) -> Tensor:
+        """Forward pass of the model.
+
+        During training, the forward pass is the same as of the core model.
+        During evaluation, the forward pass is repeated `num_estimators` times
+        either on the batch size or in a for loop depending on
+        :attr:`last_layer`.
+
+        Args:
+            x (Tensor): input tensor of shape (B, ...)
+
+        Returns:
+            Tensor: output tensor of shape (:attr:`num_estimators` * B, ...)
+        """
+        if self.training:
+            return self.core_model(x)
+
+        if self.on_batch:
+            x = repeat(x, "b ... -> (m b) ...", m=self.num_estimators)
+            return self.core_model(x)
+
+        out = [self.core_model(x) for _ in range(self.num_estimators)]
+        if self.probabilistic:
+            key_set = {tuple(o.keys()) for o in out}
+            if len(key_set) != 1:
+                raise ValueError("The output of the models must have the same keys.")
+            return {k: torch.cat([o[k] for o in out], dim=0) for k in key_set.pop()}
+        return torch.cat(out, dim=0)
+
+
 def mc_dropout(
     model: nn.Module,
     num_estimators: int,
     last_layer: bool = False,
     on_batch: bool = True,
-) -> MCDropout:
+    task: Literal[
+        "classification", "regression", "segmentation", "pixel_regression"
+    ] = "classification",
+    probabilistic: bool | None = None,
+) -> _MCDropout:
     """MC Dropout wrapper for a model.
 
     Args:
@@ -103,16 +156,35 @@ def mc_dropout(
         num_estimators (int): number of estimators to use last_layer (bool, optional): whether to apply dropout to the last layer only. Defaults to ``False``.
         on_batch (bool): Increase the batch_size to perform MC-Dropout. Otherwise in a for loop to reduce memory footprint. Defaults to ``True``.
         last_layer (bool, optional): whether to apply dropout to the last layer only. Defaults to ``False``.
+        task (Literal[``"classification"``, ``"regression"``, ``"segmentation"``, ``"pixel_regression"``]): The model task. Defaults to ``"classification"``.
+        probabilistic (bool): Whether the regression model is probabilistic.
 
     Warning:
         Beware that :attr:`on_batch==True` can raise weird errors if not enough memory is available.
     """
-    return MCDropout(
-        model=model,
-        num_estimators=num_estimators,
-        last_layer=last_layer,
-        on_batch=on_batch,
-    )
+    match task:
+        case "classification" | "segmentation":
+            return _MCDropout(
+                model=model,
+                num_estimators=num_estimators,
+                last_layer=last_layer,
+                on_batch=on_batch,
+            )
+        case "regression" | "pixel_regression":
+            if probabilistic is None:
+                raise ValueError("`probabilistic` must be set for regression tasks.")
+            return _RegMCDropout(
+                model=model,
+                num_estimators=num_estimators,
+                last_layer=last_layer,
+                on_batch=on_batch,
+                probabilistic=probabilistic,
+            )
+        case _:
+            raise ValueError(
+                f"Task {task} not supported. Supported tasks are: "
+                "`classification`, `regression`, `segmentation`, `pixel_regression`."
+            )
 
 
 def _dropout_checks(filtered_modules: list[nn.Module], num_estimators: int) -> None:

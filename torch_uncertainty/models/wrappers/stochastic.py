@@ -5,13 +5,25 @@ from torch_uncertainty.layers.bayesian import bayesian_modules
 
 
 class StochasticModel(nn.Module):
-    def __init__(self, model: nn.Module, num_samples: int) -> None:
+    def __init__(
+        self,
+        model: nn.Module,
+        num_samples: int,
+        probabilistic: bool = False,
+    ) -> None:
         super().__init__()
         self.core_model = model
         self.num_samples = num_samples
+        self.probabilistic = probabilistic
 
     def eval_forward(self, x: Tensor) -> Tensor:
-        return torch.cat([self.core_model.forward(x) for _ in range(self.num_samples)], dim=0)
+        out = [self.core_model(x) for _ in range(self.num_samples)]
+        if self.probabilistic:
+            key_set = {tuple(o.keys()) for o in out}
+            if len(key_set) != 1:
+                raise ValueError("The output of the models must have the same keys.")
+            return {k: torch.cat([o[k] for o in out], dim=0) for k in key_set.pop()}
+        return torch.cat(out, dim=0)
 
     def forward(self, x: Tensor) -> Tensor:
         if self.training:

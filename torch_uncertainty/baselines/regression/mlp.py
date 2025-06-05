@@ -60,5 +60,6 @@ class MLPBaseline(RegressionRoutine):
             dist_family=dist_family,
             is_ensemble=version in ENSEMBLE_METHODS,
             format_batch_fn=format_batch_fn,
+            save_in_csv=True,
         )
         self.save_hyperparameters(ignore=["loss"])
