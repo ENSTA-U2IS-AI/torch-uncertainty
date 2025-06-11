@@ -121,6 +121,12 @@ class TUDataModule(ABC, LightningDataModule):
             return TTADataset(self.val_ood, self.num_tta)
         return self.val_ood
 
+    def get_test_ood_set(self) -> Dataset:
+        """Get the shifted set."""
+        if self.num_tta > 1:
+            return TTADataset(self.test_ood, self.num_tta)
+        return self.test_ood
+
     def get_near_ood_set(self) -> Dataset:
         """Get the near_ood sets."""
         if self.num_tta > 1:

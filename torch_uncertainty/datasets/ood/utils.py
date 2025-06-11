@@ -59,6 +59,9 @@ class FileListDataset(Dataset):
 
 OOD_SPLITS = {
     "CIFAR10": {
+        "test": {
+            "cifar10": "splits/cifar10/test_ood_cifar10.txt",
+        },
         "val": {
             "tinyimagenet": "splits/cifar10/val_tin.txt",
         },
@@ -74,6 +77,9 @@ OOD_SPLITS = {
         },
     },
     "CIFAR100": {
+        "test": {
+            "cifar100": "splits/cifar100/test_ood_cifar100.txt",
+        },
         "val": {
             "tinyimagenet": "splits/cifar100/val_tin.txt",
         },
@@ -89,6 +95,9 @@ OOD_SPLITS = {
         },
     },
     "imagenet200": {
+        "test": {
+            "imagenet1k": "splits/imagenet200/test_ood_imagenet200.txt",
+        },
         "val": {
             "openimage_o": "splits/imagenet200/val_openimage_o.txt",
         },
@@ -103,6 +112,9 @@ OOD_SPLITS = {
         },
     },
     "imagenet1k": {
+        "test": {
+            "imagenet1k": "splits/imagenet1k/test_ood_imagenet.txt",
+        },
         "val": {
             "openimage_o": "splits/imagenet1k/val_openimage_o.txt",
         },
@@ -292,10 +304,13 @@ def get_ood_datasets(
         txt = splits_base / rel_txt
         return FileListDataset(root=data_dir, list_file=txt, transform=transform, name=name)
 
+    test_name, test_txt = next(iter(cfg["test"].items()))
+    test_ood = build(test_name, test_txt)
+
     val_name, val_txt = next(iter(cfg["val"].items()))
     val_ood = build(val_name, val_txt)
 
     near_oods = {n: build(n, p) for n, p in cfg["near"].items()}
     far_oods = {n: build(n, p) for n, p in cfg["far"].items()}
 
-    return val_ood, near_oods, far_oods
+    return test_ood, val_ood, near_oods, far_oods

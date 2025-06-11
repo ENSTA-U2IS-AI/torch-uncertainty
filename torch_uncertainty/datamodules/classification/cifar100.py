@@ -221,7 +221,7 @@ class CIFAR100DataModule(TUDataModule):
                 transform=self.test_transform,
             )
             if self.eval_ood:
-                self.val_ood, near_default, far_default = get_ood_datasets(
+                self.test_ood, self.val_ood, near_default, far_default = get_ood_datasets(
                     root=self.root,
                     dataset_id="CIFAR100",
                     transform=self.test_transform,
@@ -272,18 +272,6 @@ class CIFAR100DataModule(TUDataModule):
             )
         return self._data_loader(self.train, training=True, shuffle=True)
 
-    def test_dataloader(self):
-        loaders = [self._data_loader(self.get_test_set(), training=False)]
-        if self.eval_ood:
-            loaders.append(self._data_loader(self.get_val_ood_set(), training=False))
-
-            loaders.extend(self._data_loader(ds, training=False) for ds in self.get_near_ood_set())
-
-            loaders.extend(self._data_loader(ds, training=False) for ds in self.get_far_ood_set())
-        if self.eval_shift:
-            loaders.append(self._data_loader(self.get_shift_set(), training=False))
-        return loaders
-
     def _get_train_data(self) -> ArrayLike:
         if self.val_split:
             return self.train.dataset.data[self.train.indices]
@@ -294,12 +282,28 @@ class CIFAR100DataModule(TUDataModule):
             return np.array(self.train.dataset.targets)[self.train.indices]
         return np.array(self.train.targets)
 
+    def test_dataloader(self):
+        loaders = [self._data_loader(self.get_test_set(), training=False)]
+        if self.eval_ood:
+            loaders.append(self._data_loader(self.get_test_ood_set(), training=False))
+
+            loaders.append(self._data_loader(self.get_val_ood_set(), training=False))
+
+            loaders.extend(self._data_loader(ds, training=False) for ds in self.get_near_ood_set())
+
+            loaders.extend(self._data_loader(ds, training=False) for ds in self.get_far_ood_set())
+        if self.eval_shift:
+            loaders.append(self._data_loader(self.get_shift_set(), training=False))
+        return loaders
+
     def get_indices(self):
         idx = 0
         indices = {}
         indices["test"] = [idx]
         idx += 1
         if self.eval_ood:
+            indices["test_ood"] = [idx]
+            idx += 1
             indices["val_ood"] = [idx]
             idx += 1
             n_near = len(self.near_oods)
@@ -309,6 +313,7 @@ class CIFAR100DataModule(TUDataModule):
             indices["far_oods"] = list(range(idx, idx + n_far))
             idx += n_far
         else:
+            indices["test_ood"] = []
             indices["val_ood"] = []
             indices["near_oods"] = []
             indices["far_oods"] = []
