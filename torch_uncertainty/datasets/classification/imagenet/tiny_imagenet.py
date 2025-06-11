@@ -133,6 +133,6 @@ class TinyImageNet(Dataset):
 
         else:  # self.split == "test":
             test_path = self.root / "test" / "images"
-            paths = [(test_path / x, -1) for x in os.listdir(test_path)]
+            paths = [(test_path / x, -1) for x in os.listdir(test_path)]  # noqa: PTH208
 
         return paths
