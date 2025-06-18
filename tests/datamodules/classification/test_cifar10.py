@@ -49,7 +49,6 @@ class TestCIFAR10DataModule:
         dm.val_dataloader()
         dm.test_dataloader()
 
-        dm.eval_ood = True
         dm.eval_shift = True
         dm.prepare_data()
         dm.setup("test")
@@ -82,7 +81,6 @@ class TestCIFAR10DataModule:
             num_dataloaders=1,
             val_split=0.1,
             num_tta=64,
-            eval_ood=True,
             eval_shift=True,
         )
         dm.dataset = DummyClassificationDataset

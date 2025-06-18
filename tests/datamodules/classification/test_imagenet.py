@@ -46,7 +46,6 @@ class TestImageNetDataModule:
         dm.val_dataloader()
         dm.test_dataloader()
 
-        dm.eval_ood = True
         dm.eval_shift = True
         dm.prepare_data()
         dm.setup("test")
