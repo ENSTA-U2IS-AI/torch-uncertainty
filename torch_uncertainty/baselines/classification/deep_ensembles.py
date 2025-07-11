@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Literal
 
 from torch_uncertainty.models import deep_ensembles
-from torch_uncertainty.ood_criteria import TUOODCriterion
+from torch_uncertainty.ood.ood_criteria import TUOODCriterion
 from torch_uncertainty.routines.classification import ClassificationRoutine
 from torch_uncertainty.utils import get_version
 

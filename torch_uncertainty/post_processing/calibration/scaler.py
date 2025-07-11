@@ -3,6 +3,8 @@ from abc import abstractmethod
 from typing import Literal
 
 import torch
+import torch.nn.functional as F
+from einops import rearrange
 from torch import Tensor, nn
 from torch.optim import LBFGS
 from torch.utils.data import DataLoader
@@ -73,14 +75,14 @@ class Scaler(PostProcessing):
             logging.warning(
                 "model is None. Fitting post_processing method on the dataloader's data directly."
             )
-            self.model = nn.Identity()
 
         all_logits = []
         all_labels = []
         with torch.no_grad():
             for inputs, labels in tqdm(dataloader, disable=not progress):
                 logits = self.model(inputs.to(self.device))
-                all_logits.append(logits)
+                log_probs = self._ensemble_log_probs(logits, batch_size=inputs.size(0))
+                all_logits.append(log_probs)
                 all_labels.append(labels)
             all_logits = torch.cat(all_logits).to(self.device)
             all_labels = torch.cat(all_labels).to(self.device)
@@ -120,7 +122,14 @@ class Scaler(PostProcessing):
             )
         return self._scale(self.model(inputs))
 
-    @abstractmethod
+    def _ensemble_probs(self, logits: Tensor, batch_size: int) -> Tensor:
+        logits = rearrange(logits, "(m b) c -> b m c", b=batch_size)
+        return F.softmax(logits, dim=-1).mean(dim=1)
+
+    def _ensemble_log_probs(self, logits: Tensor, batch_size: int) -> Tensor:
+        probs = self._ensemble_probs(logits, batch_size)
+        return torch.log(probs)
+
     def _scale(self, logits: Tensor) -> Tensor:
         """Scale the logits with the optimal temperature.
 
@@ -130,7 +139,6 @@ class Scaler(PostProcessing):
         Returns:
             Tensor: Scaled logits.
         """
-        ...
 
     def fit_predict(
         self,

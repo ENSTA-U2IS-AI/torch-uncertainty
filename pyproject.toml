@@ -37,6 +37,10 @@ dependencies = [
     "torchvision>=0.16",
     "einops",
     "seaborn",
+    "scikit-learn",
+    "scipy",
+    "faiss-cpu",
+    "statsmodels"
 ]
 
 [project.optional-dependencies]
@@ -62,9 +66,7 @@ docs = [
 ]
 all = [
     "torch_uncertainty[dev,docs,tabular]",
-    "scikit-learn",
     "laplace-torch",
-    "scipy",
     "glest==0.0.1a1",
 ]
 
