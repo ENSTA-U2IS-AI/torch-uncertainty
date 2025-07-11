@@ -704,6 +704,9 @@ class PackedLayerNorm(nn.GroupNorm):
         Shape:
             - Input: :math:`(N, *)` where :math:`*` means any number of additional dimensions.
             - Output: :math:`(N, *)` (same shape as input)
+
+        Warnings:
+            This layer is only suitable to replace ``nn.LayerNorm`` when only the last dimension is normalized.
         """
         super().__init__(
             num_groups=num_estimators,
@@ -715,7 +718,10 @@ class PackedLayerNorm(nn.GroupNorm):
         )
 
     def forward(self, inputs: Tensor) -> Tensor:
-        x = rearrange(inputs, "b ... h -> b h ...")
+        shapes = {f"d{i}": size for i, size in enumerate(inputs.shape[1:-1])}
+        shape_str = " ".join(shapes.keys())
+
+        x = rearrange(inputs, "b ... h -> (b ...) h")
         x = F.group_norm(
             x,
             self.num_groups,
@@ -723,7 +729,7 @@ class PackedLayerNorm(nn.GroupNorm):
             self.bias,
             self.eps,
         )
-        return rearrange(x, "b h ... -> b ... h")
+        return rearrange(x, f"(b {shape_str}) h -> b {shape_str} h", **shapes)
 
 
 class PackedMultiheadAttention(nn.Module):

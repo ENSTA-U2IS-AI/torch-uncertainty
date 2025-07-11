@@ -1,6 +1,7 @@
 import pytest
 import torch
 from einops import repeat
+from torch import nn
 
 from torch_uncertainty.layers.functional.packed import (
     packed_in_projection_packed,
@@ -420,13 +421,15 @@ class TestPackedLayerNorm:
     """Testing the PackedGroupNorm layer class."""
 
     def test_one_estimator_forward(self, batched_qkv: torch.Tensor) -> None:
+        layer_norm = nn.LayerNorm(6)
         packed_layer_norm = PackedLayerNorm(
             embed_dim=6,
             num_estimators=1,
             alpha=1,
         )
-        out = packed_layer_norm(batched_qkv)
-        assert out.shape == torch.Size([2, 3, 6])
+        pe_out = packed_layer_norm(batched_qkv)
+        layer_norm_out = layer_norm(batched_qkv)
+        assert torch.allclose(pe_out, layer_norm_out)
 
 
 class TestPackedMultiheadAttention:
