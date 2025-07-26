@@ -26,10 +26,10 @@ class QuantileCalibrationError(BinaryCalibrationError):
         target: Tensor,
         padding_mask: Tensor | None = None,
     ) -> None:
-        reduce_last_dim = False
+        reduce_event_dims = False
         if isinstance(dist, Independent):
             iid_dist = dist.base_dist
-            reduce_last_dim = True
+            reduce_event_dims = True
         else:
             iid_dist = dist
 
@@ -54,11 +54,12 @@ class QuantileCalibrationError(BinaryCalibrationError):
             b_min = iid_dist.icdf((1 - conf) / 2)
             bound_log_prob = iid_dist.log_prob(b_min)
             target_log_prob = dist.log_prob(target)
-            if reduce_last_dim:
-                bound_log_prob = bound_log_prob.sum(dim=-1)
-                corrects[..., i] = bound_log_prob <= target_log_prob
-            else:
-                corrects[..., i] = (bound_log_prob <= target_log_prob).prod(dim=-1)
+            if reduce_event_dims:
+                bound_log_prob = bound_log_prob.sum(
+                    dim=list(range(-dist.reinterpreted_batch_ndims, 0))
+                )
+
+            corrects[..., i] = (bound_log_prob <= target_log_prob).float()
 
         if padding_mask is not None:
             confidences = confidences[~padding_mask]
