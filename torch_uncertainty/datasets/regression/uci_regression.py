@@ -233,7 +233,7 @@ class UCIRegression(Dataset):
                 names=boston_column_names,
                 header=None,
                 sep=r"\s+",
-            )
+            ).to_numpy()
         elif self.dataset_name == "concrete":
             array = pd.read_excel(path / "Concrete_Data.xls").to_numpy()
         elif self.dataset_name == "energy-efficiency":

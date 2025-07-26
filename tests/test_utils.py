@@ -15,6 +15,7 @@ from torch_uncertainty.utils import (
     hub,
     plot_hist,
 )
+from torch_uncertainty.utils.distributions import TUStudentT
 
 
 class TestUtils:
@@ -91,10 +92,24 @@ class TestDistributions:
         dist = distributions.get_dist_class("cauchy")
         assert dist == torch.distributions.Cauchy
         dist = distributions.get_dist_class("student")
-        assert dist == torch.distributions.StudentT
+        assert dist == TUStudentT
 
     def test_get_dist_estimate(self) -> None:
         dist = torch.distributions.Normal(0.0, 1.0)
         mean = distributions.get_dist_estimate(dist, "mean")
         mode = distributions.get_dist_estimate(dist, "mode")
         assert mean == mode
+
+    def test_tu_student_t(self) -> None:
+        dist = TUStudentT(df=2.0, loc=0.0, scale=1.0)
+        assert torch.allclose(dist.cdf(torch.tensor(0.0)), torch.tensor(0.5))
+        assert torch.allclose(dist.icdf(torch.tensor(0.5)), torch.tensor(0.0))
+        assert dist.mean == torch.tensor(0.0)
+        assert dist.mode == torch.tensor(0.0)
+        assert dist.variance == torch.tensor(float("inf"))
+
+        dist = TUStudentT(df=1.0, loc=0.0, scale=1.0)
+        assert dist.variance.isnan().all()
+
+        dist = TUStudentT(df=3.0, loc=0.0, scale=1.0)
+        assert dist.variance == torch.tensor(3.0)

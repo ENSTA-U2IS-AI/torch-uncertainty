@@ -26,8 +26,8 @@ class _MIMOUNet(_UNet):
     def forward(self, x: Tensor) -> Tensor:
         if not self.training:
             x = repeat(x, "b ... -> (m b) ...", m=self.num_estimators)
-        out = rearrange(x, "(m b) c ... -> b (m c) ...", m=self.num_estimators)
-        out = super().forward(out)
+        x = rearrange(x, "(m b) c ... -> b (m c) ...", m=self.num_estimators)
+        out = super().forward(x)
         return rearrange(out, "b (m c) ... -> (m b) c ...", m=self.num_estimators)
 
 

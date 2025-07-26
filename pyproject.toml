@@ -43,6 +43,7 @@ dependencies = [
 experiments = ["tensorboard", "huggingface-hub>=0.31", "safetensors"]
 image = ["kornia", "h5py", "opencv-python", "torch-uncertainty-assets"]
 tabular = ["pandas"]
+distribution = ["scipy"]
 dev = [
     "torch_uncertainty[experiments,image]",
     "ruff==0.11.10",
@@ -61,10 +62,9 @@ docs = [
     "sphinxcontrib-sass",
 ]
 all = [
-    "torch_uncertainty[dev,docs,tabular]",
+    "torch_uncertainty[dev,docs,tabular,distribution]",
     "scikit-learn",
     "laplace-torch",
-    "scipy",
     "glest==0.0.1a1",
 ]
 
