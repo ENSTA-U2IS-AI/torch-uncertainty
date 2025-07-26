@@ -10,7 +10,7 @@ class SegmentationFPR95(Metric):
     higher_is_better = False
     full_state_update = False
 
-    def __init__(self, pos_label: int, **kwargs):
+    def __init__(self, pos_label: int, **kwargs) -> None:
         """FPR95 metric for segmentation tasks.
         Compute the mean FPR95 per batch across all batches.
 

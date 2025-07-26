@@ -17,7 +17,7 @@ class SegmentationBinaryAveragePrecision(Metric):
         ignore_index: int | None = None,
         validate_args: bool = True,
         **kwargs: Any,
-    ):
+    ) -> None:
         """SegmentationBinaryAveragePrecision computes the Average Precision (AP) for binary segmentation tasks.
         It aggregates the mean AP across batches and computes the average AP over all batches processed.
         """

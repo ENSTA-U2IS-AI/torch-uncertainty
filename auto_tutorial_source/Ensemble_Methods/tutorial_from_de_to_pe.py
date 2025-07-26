@@ -152,7 +152,7 @@ from torch_uncertainty import TUTrainer
 from torch_uncertainty.routines import ClassificationRoutine
 
 # Create the trainer that will handle the training
-trainer = TUTrainer(accelerator="gpu", devices=1, max_epochs=MAX_EPOCHS)
+trainer = TUTrainer(accelerator="gpu", devices=1, max_epochs=MAX_EPOCHS, enable_progress_bar=False)
 
 # The routine is a wrapper of the model that contains the training logic with the metrics, etc
 routine = ClassificationRoutine(

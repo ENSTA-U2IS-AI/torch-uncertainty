@@ -40,7 +40,9 @@ def check_unet_parameters(
 class _DoubleConv(nn.Module):
     """(convolution => [BN] => ReLU) * 2."""
 
-    def __init__(self, in_channels: int, out_channels: int, mid_channels: int | None = None):
+    def __init__(
+        self, in_channels: int, out_channels: int, mid_channels: int | None = None
+    ) -> None:
         super().__init__()
         if mid_channels is None:
             mid_channels = out_channels
@@ -65,7 +67,7 @@ class _DoubleConv(nn.Module):
             nn.ReLU(inplace=True),
         )
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         return self.double_conv(x)
 
 
@@ -81,7 +83,7 @@ class _Down(nn.Module):
 class _Up(nn.Module):
     """Upscaling then double conv."""
 
-    def __init__(self, in_channels, out_channels, bilinear=True):
+    def __init__(self, in_channels: int, out_channels: int, bilinear: bool = True) -> None:
         super().__init__()
 
         # if bilinear, use the normal convolutions to reduce the number of channels
@@ -92,7 +94,7 @@ class _Up(nn.Module):
             self.up = nn.ConvTranspose2d(in_channels, in_channels // 2, kernel_size=2, stride=2)
             self.conv = _DoubleConv(in_channels, out_channels)
 
-    def forward(self, x1, x2):
+    def forward(self, x1: Tensor, x2: Tensor) -> Tensor:
         x1 = self.up(x1)
         # input is CHW
         diff_y = x2.size()[2] - x1.size()[2]

@@ -40,7 +40,7 @@ class TestHub:
         hub.load_hf("test", version=1)
         hub.load_hf("test", version=2)
 
-    def test_hub_notexists(self):
+    def test_hub_notexists(self) -> None:
         with (
             contextlib.suppress(ValueError),
             pytest.raises((RepositoryNotFoundError, HfHubHTTPError)),

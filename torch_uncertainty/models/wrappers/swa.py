@@ -65,7 +65,7 @@ class SWA(nn.Module):
             return self.core_model.forward(x)
         return self.eval_forward(x)
 
-    def bn_update(self, loader: DataLoader, device) -> None:
+    def bn_update(self, loader: DataLoader, device: str | torch.device | None) -> None:
         if self.need_bn_update and self.swa_model is not None:
             torch.optim.swa_utils.update_bn(loader, self.swa_model, device=device)
             self.need_bn_update = False

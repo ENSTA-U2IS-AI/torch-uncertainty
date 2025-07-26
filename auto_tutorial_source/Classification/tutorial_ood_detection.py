@@ -91,7 +91,9 @@ routine = ClassificationRoutine(
 # we will train for a single epoch and load a model from `TorchUncertainty's HuggingFace <https://huggingface.co/torch-uncertainty>`_.
 
 # Initialize the TUTrainer
-trainer = TUTrainer(max_epochs=1, precision="16-mixed", accelerator="cuda", devices=1)
+trainer = TUTrainer(
+    max_epochs=1, precision="16-mixed", accelerator="cuda", devices=1, enable_progress_bar=False
+)
 
 # Train the model for 1 epoch using the CIFAR-10 DataModule
 trainer.fit(routine, datamodule=datamodule)

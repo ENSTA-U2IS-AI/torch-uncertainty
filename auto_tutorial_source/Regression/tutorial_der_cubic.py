@@ -96,6 +96,7 @@ model = mlp(
 # %%
 # 4. The Loss and the Training Routine
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
 # Next, we need to define the loss to be used during training. To do this, we
 # set the weight of the regularizer of the DER Loss. After that, we define the
 # training routine using the probabilistic regression training routine from
@@ -115,6 +116,7 @@ routine = RegressionRoutine(
 # %%
 # 5. Gathering Everything and Training the Model
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
 # Finally, we train the model using the trainer and the regression routine. We also
 # test the model using the same trainer
 

@@ -484,7 +484,7 @@ class MLPHead(nn.Module):
 def resize(
     inputs: Tensor,
     size: torch.Size | None = None,
-    scale_factor=None,
+    scale_factor: float | tuple[float] | None = None,
     mode: str = "nearest",
     align_corners: bool | None = None,
     warning: bool = True,
