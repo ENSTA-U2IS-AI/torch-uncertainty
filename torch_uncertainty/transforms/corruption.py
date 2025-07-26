@@ -35,7 +35,6 @@ import math as m
 
 import numpy as np
 import torch
-from kornia.augmentation import RandomSaltAndPepperNoise
 from PIL import Image
 
 if util.find_spec("scipy"):
@@ -56,6 +55,7 @@ from torchvision.transforms import (
 )
 
 if util.find_spec("kornia"):
+    from kornia.augmentation import RandomSaltAndPepperNoise
     from kornia.color import rgb_to_grayscale
     from kornia.filters import filter2d, gaussian_blur2d, motion_blur
 
