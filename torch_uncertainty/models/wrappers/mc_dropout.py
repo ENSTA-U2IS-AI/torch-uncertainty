@@ -132,6 +132,10 @@ class _RegMCDropout(_MCDropout):
 
         out = [self.core_model(x) for _ in range(self.num_estimators)]
         if self.probabilistic:
+            if not all(isinstance(o, dict) for o in out):
+                raise ValueError(
+                    "When `probabilistic=True`, the model must return a dictionary of distribution parameters."
+                )
             key_set = {tuple(o.keys()) for o in out}
             if len(key_set) != 1:
                 raise ValueError("The output of the models must have the same keys.")
