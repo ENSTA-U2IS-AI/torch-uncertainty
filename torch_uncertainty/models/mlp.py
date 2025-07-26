@@ -137,18 +137,10 @@ class _MIMOMLP(_MLP):
         x = rearrange(x, "(m b) ... c -> b ... (m c)", m=self.num_estimators)
         out = super().forward(x)
         if self.probabilistic:
-            if not self.training:
-                out = {
-                    k: rearrange(v, "b ... (m c) -> b m ... c", m=self.num_estimators).mean(1)
-                    for k, v in out.items()
-                }
-            else:
-                out = {
-                    k: rearrange(v, "b ... (m c) -> (m b) ... c", m=self.num_estimators)
-                    for k, v in out.items()
-                }
-
-            return out
+            return {
+                k: rearrange(v, "b ... (m c) -> (m b) ... c", m=self.num_estimators)
+                for k, v in out.items()
+            }
 
         return rearrange(out, "b ... (m c) -> (m b) ... c", m=self.num_estimators)
 
