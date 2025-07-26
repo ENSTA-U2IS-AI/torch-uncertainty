@@ -52,13 +52,11 @@ class StochasticModel(nn.Module):
         return sampled_models
 
     def freeze(self) -> None:
-        for module_name in self.core_model._modules:
-            module = self.core_model._modules[module_name]
+        for module in self.core_model.modules():
             if isinstance(module, bayesian_modules):
                 module.freeze()
 
     def unfreeze(self) -> None:
-        for module_name in self.core_model._modules:
-            module = self.core_model._modules[module_name]
+        for module in self.core_model.modules():
             if isinstance(module, bayesian_modules):
                 module.unfreeze()
