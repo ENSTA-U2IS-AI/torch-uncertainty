@@ -1,3 +1,7 @@
+import logging
+import os
+import urllib.request
+import zipfile
 from collections import defaultdict
 from collections.abc import Callable
 from pathlib import Path
@@ -8,6 +12,8 @@ import torch
 from PIL import Image
 from torch.utils.data import Dataset
 
+logger = logging.getLogger(__name__)
+
 
 class TinyImageNet(Dataset):
     def __init__(
@@ -16,9 +22,20 @@ class TinyImageNet(Dataset):
         split: Literal["train", "val", "test"] = "train",
         transform: Callable | None = None,
         target_transform: Callable | None = None,
+        download: bool = False,  # added download attribute
     ) -> None:
         """Inspired by https://gist.github.com/z-a-f/b862013c0dc2b540cf96a123a6766e54."""
         self.root = Path(root) / "tiny-imagenet-200"
+
+        if download and not self.root.exists():
+            url = "http://cs231n.stanford.edu/tiny-imagenet-200.zip"
+            zip_path = Path(root) / "tiny-imagenet-200.zip"
+            logger.info("Downloading tiny-imagenet-200 dataset...")
+            urllib.request.urlretrieve(url, zip_path)  # noqa: S310
+            logger.info("Extracting dataset...")
+            with zipfile.ZipFile(zip_path, "r") as zf:
+                zf.extractall(root)
+            zip_path.unlink()
 
         if split not in ["train", "val", "test"]:
             raise ValueError(f"Split {split} is not supported.")
@@ -115,6 +132,7 @@ class TinyImageNet(Dataset):
                     paths.append((fname, label_id))
 
         else:  # self.split == "test":
-            test_path = Path(self.root / "test")
-            paths = [test_path / x for x in test_path.iterdir()]
+            test_path = self.root / "test" / "images"
+            paths = [(test_path / x, -1) for x in os.listdir(test_path)]  # noqa: PTH208
+
         return paths

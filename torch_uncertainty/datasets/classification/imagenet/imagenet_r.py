@@ -6,6 +6,7 @@ class ImageNetR(ImageNetVariation):
     filename = "imagenet-r.tar"
     tgz_md5 = "a61312130a589d0ca1a8fca1f2bd3337"
     dataset_name = "imagenet-r"
+    root_appendix = "imagenet-r"
 
     def __init__(self, **kwargs) -> None:
         """Initializes the ImageNetR dataset class.

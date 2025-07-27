@@ -79,9 +79,10 @@ class TUDataModule(ABC, LightningDataModule):
         self.pin_memory = pin_memory
         self.persistent_workers = persistent_workers
 
-        if batch_size % num_tta:
+        if batch_size % num_tta != 0:
             raise ValueError(
-                f"The number of Test-time augmentations num_tta should divide batch_size. Got {num_tta} and {batch_size}."
+                f"The number of Test-time augmentations num_tta should divide batch_size. "
+                f"Got num_tta={num_tta} and batch_size={batch_size}."
             )
         self.num_tta = num_tta
         if postprocess_set == "test":
@@ -109,10 +110,34 @@ class TUDataModule(ABC, LightningDataModule):
         return self.test
 
     def get_ood_set(self) -> Dataset:
-        """Get the shifted set."""
+        """Get the ood set // legacy."""
         if self.num_tta > 1:
             return TTADataset(self.ood, self.num_tta)
         return self.ood
+
+    def get_val_ood_set(self) -> Dataset:
+        """Get the shifted set."""
+        if self.num_tta > 1:
+            return TTADataset(self.val_ood, self.num_tta)
+        return self.val_ood
+
+    def get_test_ood_set(self) -> Dataset:
+        """Get the shifted set."""
+        if self.num_tta > 1:
+            return TTADataset(self.test_ood, self.num_tta)
+        return self.test_ood
+
+    def get_near_ood_set(self) -> Dataset:
+        """Get the near_ood sets."""
+        if self.num_tta > 1:
+            return [TTADataset(ds, self.num_tta) for ds in self.near_oods]
+        return self.near_oods
+
+    def get_far_ood_set(self) -> Dataset:
+        """Get the far_ood sets."""
+        if self.num_tta > 1:
+            return [TTADataset(ds, self.num_tta) for ds in self.far_oods]
+        return self.far_oods
 
     def get_shift_set(self) -> Dataset:
         """Get the shifted set."""
@@ -153,7 +178,9 @@ class TUDataModule(ABC, LightningDataModule):
         """
         return self.val_dataloader() if self.postprocess_set == "val" else self.test_dataloader()[0]
 
-    def _data_loader(self, dataset: Dataset, training: bool, shuffle: bool = False) -> DataLoader:
+    def _data_loader(
+        self, dataset: Dataset, training: bool, shuffle: bool = False, drop_last=False
+    ) -> DataLoader:
         """Create a dataloader for a given dataset.
 
         Args:
@@ -161,6 +188,8 @@ class TUDataModule(ABC, LightningDataModule):
             training (bool): Whether it is a training or evaluation dataloader.
             shuffle (bool, optional): Whether to shuffle the dataset. Defaults
                 to False.
+            drop_last (bool, optional): Whether to drop the last incomplete batch
+            if the dataset size is not divisible by the batch size. Defaults to False.
 
         Return:
             DataLoader: Dataloader for the given dataset.
@@ -172,6 +201,7 @@ class TUDataModule(ABC, LightningDataModule):
             num_workers=self.num_workers,
             pin_memory=self.pin_memory,
             persistent_workers=self.persistent_workers,
+            drop_last=drop_last,
         )
 
     # These two functions have to be defined in each datamodule
