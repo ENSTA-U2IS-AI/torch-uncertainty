@@ -9,7 +9,7 @@ trainer:
   logger:
     class_path: lightning.pytorch.loggers.TensorBoardLogger
     init_args:
-      save_dir: logs/concrete/mlp/point_wise
+      save_dir: logs/concrete/mlp/cauchy
       name: standard
       default_hp_metric: false
   callbacks:
@@ -30,8 +30,11 @@ model:
       num_outputs: 1
       hidden_dims:
         - 50
+      dist_family: cauchy
   output_dim: 1
-  loss: MSELoss
+  loss: torch_uncertainty.losses.DistributionNLLLoss
+  dist_family: cauchy
+  dist_estimate: mode
   save_in_csv: true
 data:
   root: ./data

@@ -27,7 +27,6 @@ from .wrappers import (
     SWAG,
     BatchEnsemble,
     CheckpointCollector,
-    MCDropout,
     StochasticModel,
     Zero,
     batch_ensemble,

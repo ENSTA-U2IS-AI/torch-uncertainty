@@ -9,11 +9,13 @@ trainer:
   logger:
     class_path: lightning.pytorch.loggers.TensorBoardLogger
     init_args:
-      save_dir: logs/concrete/mlp/point_wise
-      name: standard
+      save_dir: logs/concrete/mlp/normal
+      name: mc_dropout
       default_hp_metric: false
   callbacks:
     - class_path: torch_uncertainty.callbacks.TURegCheckpoint
+      init_args:
+        probabilistic: true
     - class_path: lightning.pytorch.callbacks.LearningRateMonitor
       init_args:
         logging_interval: step
@@ -24,14 +26,24 @@ trainer:
         check_finite: true
 model:
   model:
-    class_path: torch_uncertainty.models.mlp.mlp
+    class_path: torch_uncertainty.models.mc_dropout
     init_args:
-      in_features: 8
-      num_outputs: 1
-      hidden_dims:
-        - 50
+      model:
+        class_path: torch_uncertainty.models.mlp.mlp
+        init_args:
+          in_features: 8
+          num_outputs: 1
+          hidden_dims:
+            - 50
+          dist_family: normal
+          dropout_rate: 0.1
+      num_estimators: 10
+      on_batch: false
+      task: regression
+      probabilistic: true
   output_dim: 1
-  loss: MSELoss
+  loss: torch_uncertainty.losses.DistributionNLLLoss
+  dist_family: normal
   save_in_csv: true
 data:
   root: ./data
