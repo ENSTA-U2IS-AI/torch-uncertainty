@@ -11,6 +11,7 @@ from torch.distributions import (
     Independent,
 )
 from torch.optim import Optimizer
+from torch.utils.flop_counter import FlopCounterMode
 from torchmetrics import MeanAbsoluteError, MeanSquaredError, MetricCollection
 
 from torch_uncertainty.losses import ELBOLoss
@@ -139,6 +140,9 @@ class RegressionRoutine(LightningModule):
             self.val_prob_metrics = reg_prob_metrics.clone(prefix="val/")
             self.test_prob_metrics = reg_prob_metrics.clone(prefix="test/")
 
+        self.test_num_flops: int | None = None
+        self.num_params: int | None = None
+
     def configure_optimizers(self) -> Optimizer | dict:
         return self.optim_recipe
 
@@ -170,6 +174,9 @@ class RegressionRoutine(LightningModule):
         """
         if hasattr(self.model, "need_bn_update"):
             self.model.bn_update(self.trainer.train_dataloader, device=self.device)
+
+        if self.num_params is None:
+            self.num_params = sum(p.numel() for p in self.model.parameters())
 
     def forward(self, inputs: Tensor) -> Tensor | dict[str, Tensor]:
         """Forward pass of the routine.
@@ -298,6 +305,13 @@ class RegressionRoutine(LightningModule):
             )
 
         inputs, targets = batch
+
+        if self.test_num_flops is None:
+            flop_counter = FlopCounterMode(display=False)
+            with flop_counter:
+                self.forward(inputs)
+            self.test_num_flops = flop_counter.get_total_flops()
+
         if self.one_dim_regression:
             targets = targets.unsqueeze(-1)
         preds, dist = self.evaluation_forward(inputs)
@@ -324,7 +338,10 @@ class RegressionRoutine(LightningModule):
 
     def on_test_epoch_end(self) -> None:
         """Compute and log the values of the collected metrics in `test_step`."""
-        result_dict = self.test_metrics.compute()
+        result_dict = self.test_metrics.compute() | {
+            "test/cplx/flops": self.test_num_flops,
+            "test/cplx/params": self.num_params,
+        }
         self.test_metrics.reset()
 
         if self.probabilistic:
