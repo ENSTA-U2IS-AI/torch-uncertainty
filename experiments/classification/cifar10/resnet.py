@@ -1,9 +1,41 @@
 import torch
 from lightning.pytorch.cli import LightningArgumentParser
+from torch import nn
 
 from torch_uncertainty import TULightningCLI
-from torch_uncertainty.baselines.classification import ResNetBaseline
 from torch_uncertainty.datamodules import CIFAR10DataModule
+from torch_uncertainty.models.classification import resnet
+from torch_uncertainty.routines.classification import ClassificationRoutine
+
+
+class ResNetModel(ClassificationRoutine):
+    def __init__(
+        self,
+        num_classes: int,
+        loss: nn.Module,
+        arch: int = 18,
+        in_channels: int = 3,
+        style: str = "cifar",
+        normalization_layer: type[nn.Module] = nn.BatchNorm2d,
+        optim_recipe: dict | None = None,
+        **kwargs,
+    ) -> None:
+        """ResNet model for classification."""
+        model = resnet(
+            arch=arch,
+            num_classes=num_classes,
+            in_channels=in_channels,
+            style=style,
+            normalization_layer=normalization_layer,
+        )
+        super().__init__(
+            num_classes=num_classes,
+            model=model,
+            loss=loss,
+            optim_recipe=optim_recipe,
+            **kwargs,
+        )
+        self.save_hyperparameters(ignore=["loss"])
 
 
 class ResNetCLI(TULightningCLI):
@@ -14,7 +46,7 @@ class ResNetCLI(TULightningCLI):
 
 
 def cli_main() -> ResNetCLI:
-    return ResNetCLI(ResNetBaseline, CIFAR10DataModule)
+    return ResNetCLI(ResNetModel, CIFAR10DataModule)
 
 
 if __name__ == "__main__":

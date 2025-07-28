@@ -1,9 +1,33 @@
 import torch
 from lightning.pytorch.cli import LightningArgumentParser
+from torch import nn
 
 from torch_uncertainty import TULightningCLI
-from torch_uncertainty.baselines.segmentation import SegFormerBaseline
 from torch_uncertainty.datamodules.segmentation import CamVidDataModule
+from torch_uncertainty.models.segmentation.segformer import seg_former
+from torch_uncertainty.routines.segmentation import SegmentationRoutine
+
+
+class SegFormerModel(SegmentationRoutine):
+    def __init__(
+        self,
+        num_classes: int,
+        loss: nn.Module,
+        arch: int = 0,
+        optim_recipe: dict | None = None,
+        **kwargs,
+    ) -> None:
+        """SegFormer model for segmentation."""
+        model = seg_former(num_classes=num_classes, arch=arch)
+        super().__init__(
+            num_classes=num_classes,
+            model=model,
+            loss=loss,
+            optim_recipe=optim_recipe,
+            format_batch_fn=nn.Identity(),
+            **kwargs,
+        )
+        self.save_hyperparameters(ignore=["loss"])
 
 
 class SegFormerCLI(TULightningCLI):
@@ -13,7 +37,7 @@ class SegFormerCLI(TULightningCLI):
 
 
 def cli_main() -> SegFormerCLI:
-    return SegFormerCLI(SegFormerBaseline, CamVidDataModule)
+    return SegFormerCLI(SegFormerModel, CamVidDataModule)
 
 
 if __name__ == "__main__":
