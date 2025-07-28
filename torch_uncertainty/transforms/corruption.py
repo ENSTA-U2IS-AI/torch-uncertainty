@@ -206,6 +206,11 @@ class ImpulseNoise(TUCorruption):
 
 def disk(radius: int, alias_blur: float = 0.1, dtype=torch.float32):
     """Generate a Gaussian disk of shape (1, radius, radius) for filtering."""
+    if not kornia_installed:
+        raise ImportError(
+            "Please install torch_uncertainty with the image option:"
+            """pip install -U "torch_uncertainty[image]"."""
+        )
     if radius <= 8:
         size = torch.arange(-8, 8 + 1)
         ksize = (3, 3)
