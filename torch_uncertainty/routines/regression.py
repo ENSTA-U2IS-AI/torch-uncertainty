@@ -1,3 +1,4 @@
+import warnings
 from pathlib import Path
 
 from einops import rearrange
@@ -330,10 +331,19 @@ class RegressionRoutine(LightningModule):
             result_dict |= self.test_prob_metrics.compute()
 
             if isinstance(self.logger, Logger) and self.log_plots:
-                self.logger.experiment.add_figure(
-                    "Calibration/Reliability diagram",
-                    self.test_prob_metrics["cal/QCE"].plot()[0],
-                )
+                try:
+                    self.logger.experiment.add_figure(
+                        "Calibration/Reliability diagram",
+                        self.test_prob_metrics["cal/QCE"].plot()[0],
+                    )
+                except NotImplementedError:
+                    warnings.warn(
+                        "The distribution does not support the `icdf()` method. "
+                        "This metric will therefore return `nan` values. "
+                        "Please use a distribution that implements `icdf()`.",
+                        UserWarning,
+                        stacklevel=2,
+                    )
 
         self.log_dict(result_dict, sync_dist=True)
 

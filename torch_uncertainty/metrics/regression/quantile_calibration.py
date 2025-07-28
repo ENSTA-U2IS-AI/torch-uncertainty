@@ -73,6 +73,13 @@ class QuantileCalibrationError(BinaryCalibrationError):
         return super().compute()
 
     def plot(self) -> _PLOT_OUT_TYPE:
+        if self.not_implemented_error:
+            raise NotImplementedError(
+                "The distribution does not support the `icdf()` method. "
+                "This metric will therefore return `nan` values. "
+                "Please use a distribution that implements `icdf()`."
+            )
+
         confidences = dim_zero_cat(self.confidences)
         accuracies = dim_zero_cat(self.accuracies)
 

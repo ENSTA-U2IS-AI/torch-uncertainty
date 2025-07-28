@@ -155,3 +155,17 @@ class TestMCDropout:
         del model.dropout
         with pytest.raises(ValueError):
             dropout_model = mc_dropout(model, 5)
+
+        model = mc_dropout(
+            dummy_model(10, 5, 0.1),
+            num_estimators=5,
+            task="regression",
+            probabilistic=True,
+            on_batch=False,
+        )
+        model.eval()
+        with pytest.raises(
+            ValueError,
+            match="When `probabilistic=True`, the model must return a dictionary of distribution parameters.",
+        ):
+            model(torch.rand(1, 10))

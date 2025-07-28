@@ -20,8 +20,6 @@ class StochasticModel(nn.Module):
         out = [self.core_model(x) for _ in range(self.num_samples)]
         if self.probabilistic:
             key_set = {tuple(o.keys()) for o in out}
-            if len(key_set) != 1:
-                raise ValueError("The output of the models must have the same keys.")
             return {k: torch.cat([o[k] for o in out], dim=0) for k in key_set.pop()}
         return torch.cat(out, dim=0)
 

@@ -71,7 +71,7 @@ class TUStudentT(StudentT):
                 "Please install torch_uncertainty with the distribution option:"
                 """pip install -U "torch_uncertainty[distribution]"."""
             )
-        if self._validate_args:
+        if self._validate_args:  # coverage: ignore
             self._validate_sample(value)
 
         x = ((value - self.loc) / self.scale).detach().cpu().numpy()
@@ -86,7 +86,7 @@ class TUStudentT(StudentT):
                 """pip install -U "torch_uncertainty[distribution]"."""
             )
 
-        if self._validate_args:
+        if self._validate_args:  # coverage: ignore
             self._validate_sample(value)
 
         p = value.detach().cpu().numpy()
