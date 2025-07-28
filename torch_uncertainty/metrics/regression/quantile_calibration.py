@@ -14,11 +14,11 @@ from torch_uncertainty.metrics.classification.calibration_error import reliabili
 
 
 class QuantileCalibrationError(BinaryCalibrationError):
+    not_implemented_error = False
+
     def __init__(self, num_bins=15, norm="l1", ignore_index=None, validate_args=True, **kwargs):
         super().__init__(num_bins, norm, ignore_index, validate_args, **kwargs)
         self.conf_intervals = torch.linspace(0.05, 0.95, self.n_bins + 1)
-
-        self.not_implemented_error = False
 
     def update(
         self,
@@ -48,7 +48,7 @@ class QuantileCalibrationError(BinaryCalibrationError):
             return
 
         confidences = self.conf_intervals.expand(*dist.batch_shape, -1)
-        corrects = torch.empty_like(confidences)
+        correct_mask = torch.empty_like(confidences)
 
         for i, conf in enumerate(self.conf_intervals):
             b_min = iid_dist.icdf((1 - conf) / 2)
@@ -59,13 +59,13 @@ class QuantileCalibrationError(BinaryCalibrationError):
                     dim=list(range(-dist.reinterpreted_batch_ndims, 0))
                 )
 
-            corrects[..., i] = (bound_log_prob <= target_log_prob).float()
+            correct_mask[..., i] = (bound_log_prob <= target_log_prob).float()
 
         if padding_mask is not None:
             confidences = confidences[~padding_mask]
-            corrects = corrects[~padding_mask]
+            correct_mask = correct_mask[~padding_mask]
 
-        super().update(confidences.flatten(), corrects.flatten())
+        super().update(confidences.flatten(), correct_mask.flatten())
 
     def compute(self) -> Tensor:
         if self.not_implemented_error:

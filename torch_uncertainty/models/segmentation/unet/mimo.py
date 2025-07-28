@@ -27,8 +27,7 @@ class _MIMOUNet(_UNet):
         if not self.training:
             x = repeat(x, "b ... -> (m b) ...", m=self.num_estimators)
         x = rearrange(x, "(m b) c ... -> b (m c) ...", m=self.num_estimators)
-        out = super().forward(x)
-        return rearrange(out, "b (m c) ... -> (m b) c ...", m=self.num_estimators)
+        return rearrange(super().forward(x), "b (m c) ... -> (m b) c ...", m=self.num_estimators)
 
 
 def _mimo_unet(
