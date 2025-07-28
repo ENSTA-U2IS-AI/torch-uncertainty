@@ -1,9 +1,10 @@
 import torch
+from torch import nn
+
 from lightning.pytorch.cli import LightningArgumentParser
 from torch.optim.lr_scheduler import PolynomialLR
 
 from torch_uncertainty import TULightningCLI
-from torch_uncertainty.baselines.depth import BTSBaseline
 from torch_uncertainty.datamodules.depth import NYUv2DataModule
 
 
@@ -14,7 +15,7 @@ class BTSCLI(TULightningCLI):
 
 
 def cli_main() -> BTSCLI:
-    return BTSCLI(BTSBaseline, NYUv2DataModule)
+    return BTSCLI(BTSModel, NYUv2DataModule)
 
 
 if __name__ == "__main__":

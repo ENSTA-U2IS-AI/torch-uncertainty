@@ -1,8 +1,19 @@
-from pathlib import Path
+# NOTE: This experiment has been temporarily disabled because it relied on the
+# DeepEnsemblesBaseline which was part of the removed baselines abstraction layer.
+# To re-enable, refactor to use ClassificationRoutine directly with deep_ensembles
+# from torch_uncertainty.models
 
-from torch_uncertainty import cli_main, init_args
-from torch_uncertainty.baselines import DeepEnsemblesBaseline
-from torch_uncertainty.datamodules import CIFAR100DataModule
+# from pathlib import Path
+# 
+# from torch_uncertainty import cli_main, init_args
+# from torch_uncertainty.baselines import DeepEnsemblesBaseline
+# from torch_uncertainty.datamodules import CIFAR100DataModule
+
+if __name__ == "__main__":
+    raise NotImplementedError(
+        "This experiment needs to be refactored after baseline removal. "
+        "Use ClassificationRoutine with deep_ensembles directly."
+    )
 
 if __name__ == "__main__":
     args = init_args(DeepEnsemblesBaseline, CIFAR100DataModule)

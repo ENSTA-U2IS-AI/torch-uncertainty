@@ -1,30 +1,41 @@
-from pathlib import Path
+# NOTE: This experiment has been temporarily disabled because it relied on the
+# DeepEnsemblesBaseline which was part of the removed baselines abstraction layer.
+# To re-enable, refactor to use ClassificationRoutine directly with deep_ensembles
+# from torch_uncertainty.models
 
-from torch_uncertainty import cli_main, init_args
-from torch_uncertainty.baselines import DeepEnsemblesBaseline
-from torch_uncertainty.datamodules import CIFAR10DataModule
+# from pathlib import Path
+# 
+# from torch_uncertainty import cli_main, init_args
+# from torch_uncertainty.baselines import DeepEnsemblesBaseline
+# from torch_uncertainty.datamodules import CIFAR10DataModule
+# 
+# if __name__ == "__main__":
+#     args = init_args(DeepEnsemblesBaseline, CIFAR10DataModule)
+#     if args.root == "./data/":
+#         root = Path(__file__).parent.absolute().parents[2]
+#     else:
+#         root = Path(args.root)
+# 
+#     net_name = f"de-{args.backbone}-cifar10"
+# 
+#     # datamodule
+#     args.root = str(root / "data")
+#     dm = CIFAR10DataModule(**vars(args))
+# 
+#     # model
+#     args.task = "classification"
+#     model = DeepEnsemblesBaseline(
+#         **vars(args),
+#         num_classes=dm.num_classes,
+#         in_channels=dm.num_channels,
+#     )
+# 
+#     args.test = -1
+# 
+#     cli_main(model, dm, root, net_name, args)
 
 if __name__ == "__main__":
-    args = init_args(DeepEnsemblesBaseline, CIFAR10DataModule)
-    if args.root == "./data/":
-        root = Path(__file__).parent.absolute().parents[2]
-    else:
-        root = Path(args.root)
-
-    net_name = f"de-{args.backbone}-cifar10"
-
-    # datamodule
-    args.root = str(root / "data")
-    dm = CIFAR10DataModule(**vars(args))
-
-    # model
-    args.task = "classification"
-    model = DeepEnsemblesBaseline(
-        **vars(args),
-        num_classes=dm.num_classes,
-        in_channels=dm.num_channels,
+    raise NotImplementedError(
+        "This experiment needs to be refactored after baseline removal. "
+        "Use ClassificationRoutine with deep_ensembles directly."
     )
-
-    args.test = -1
-
-    cli_main(model, dm, root, net_name, args)

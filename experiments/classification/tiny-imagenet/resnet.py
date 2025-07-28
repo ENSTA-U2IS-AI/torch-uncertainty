@@ -1,8 +1,9 @@
 import torch
+from torch import nn
+
 from lightning.pytorch.cli import LightningArgumentParser
 
 from torch_uncertainty import TULightningCLI
-from torch_uncertainty.baselines.classification import ResNetBaseline
 from torch_uncertainty.datamodules import TinyImageNetDataModule
 
 
@@ -14,7 +15,7 @@ class ResNetCLI(TULightningCLI):
 
 
 def cli_main() -> ResNetCLI:
-    return ResNetCLI(ResNetBaseline, TinyImageNetDataModule)
+    return ResNetCLI(ResNetModel, TinyImageNetDataModule)
 
 
 if __name__ == "__main__":

@@ -1,8 +1,9 @@
 import torch
+from torch import nn
+
 from lightning.pytorch.cli import LightningArgumentParser
 
 from torch_uncertainty import TULightningCLI
-from torch_uncertainty.baselines.classification import WideResNetBaseline
 from torch_uncertainty.datamodules import CIFAR10DataModule
 
 
@@ -14,7 +15,7 @@ class ResNetCLI(TULightningCLI):
 
 
 def cli_main() -> ResNetCLI:
-    return ResNetCLI(WideResNetBaseline, CIFAR10DataModule)
+    return ResNetCLI(WideResNetModel, CIFAR10DataModule)
 
 
 if __name__ == "__main__":
