@@ -8,6 +8,7 @@ from lightning.pytorch.loggers import Logger
 from lightning.pytorch.utilities.types import STEP_OUTPUT
 from torch import Tensor, nn
 from torch.optim import Optimizer
+from torch.utils.flop_counter import FlopCounterMode
 from torchmetrics import Accuracy, MetricCollection
 from torchvision.transforms.v2 import ToDtype
 from torchvision.transforms.v2 import functional as F
@@ -196,6 +197,11 @@ class SegmentationRoutine(LightningModule):
             )
             self.test_ood_metrics = ood_metrics.clone(prefix="ood/")
 
+        self.train_num_flops: int | None = None
+        self.val_num_flops: int | None = None
+        self.test_num_flops: int | None = None
+        self.num_params: int | None = None
+
     def configure_optimizers(self) -> Optimizer | dict:
         return self.optim_recipe
 
@@ -236,6 +242,9 @@ class SegmentationRoutine(LightningModule):
         if hasattr(self.model, "need_bn_update"):
             self.model.bn_update(self.trainer.train_dataloader, device=self.device)
 
+        if self.num_params is None:
+            self.num_params = sum(p.numel() for p in self.model.parameters())
+
     def training_step(self, batch: tuple[Tensor, Tensor]) -> STEP_OUTPUT:
         """Perform a single training step based on the input tensors.
 
@@ -255,6 +264,7 @@ class SegmentationRoutine(LightningModule):
         if self.needs_step_update:
             self.model.update_wrapper(self.current_epoch)
         self.log("train_loss", loss, prog_bar=True, logger=True)
+
         return loss
 
     def validation_step(self, batch: tuple[Tensor, Tensor]) -> None:
@@ -297,6 +307,13 @@ class SegmentationRoutine(LightningModule):
             dataloader_idx (int, optional): the index of the dataloader. Defaults to ``0``.
         """
         img, targets = batch
+
+        if self.test_num_flops is None:
+            flop_counter = FlopCounterMode(display=False)
+            with flop_counter:
+                self.forward(img)
+            self.test_num_flops = flop_counter.get_total_flops()
+
         logits = self.forward(img)
         targets = F.resize(
             targets,
@@ -367,6 +384,10 @@ class SegmentationRoutine(LightningModule):
         """Compute, log, and plot the values of the collected metrics in `test_step`."""
         result_dict = self.test_seg_metrics.compute()
         result_dict |= self.test_sbsmpl_seg_metrics.compute()
+        result_dict |= {
+            "test/cplx/flops": self.test_num_flops,
+            "test/cplx/params": self.num_params,
+        }
         if self.eval_ood:
             result_dict |= self.test_ood_metrics.compute()
 
