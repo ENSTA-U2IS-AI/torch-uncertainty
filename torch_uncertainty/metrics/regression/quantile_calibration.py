@@ -14,9 +14,25 @@ from torch_uncertainty.metrics.classification.calibration_error import reliabili
 
 
 class QuantileCalibrationError(BinaryCalibrationError):
+    is_differentiable = False
+    higher_is_better = False
+    full_state_update = False
     not_implemented_error = False
 
     def __init__(self, num_bins=15, norm="l1", ignore_index=None, validate_args=True, **kwargs):
+        """Quantile Calibration Error for regression tasks.
+
+        This metric computes the calibration error of quantile predictions
+        against the ground truth values.
+
+        Args:
+            num_bins (int, optional): Number of bins to use for calibration. Defaults to `15`.
+            norm (str, optional): Norm to use for calibration error computation. Defaults to `"l1"`.
+            ignore_index (int, optional): Index to ignore during calibration. Defaults to `None`.
+            validate_args (bool, optional): Whether to validate the input arguments. Defaults to `True`.
+            kwargs: Additional keyword arguments, see `Advanced metric settings
+              <https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metric-kwargs>`_.
+        """
         super().__init__(num_bins, norm, ignore_index, validate_args, **kwargs)
         self.conf_intervals = torch.linspace(0.05, 0.95, self.n_bins + 1)
 
@@ -26,6 +42,13 @@ class QuantileCalibrationError(BinaryCalibrationError):
         target: Tensor,
         padding_mask: Tensor | None = None,
     ) -> None:
+        """Update the metric with new predictions and targets.
+
+        Args:
+            dist (Distribution): The predicted distribution.
+            target (Tensor): The ground truth values.
+            padding_mask (Tensor | None, optional): A mask to ignore certain values. Defaults to `None`.
+        """
         reduce_event_dims = False
         if isinstance(dist, Independent):
             iid_dist = dist.base_dist
@@ -68,11 +91,24 @@ class QuantileCalibrationError(BinaryCalibrationError):
         super().update(confidences.flatten(), correct_mask.flatten())
 
     def compute(self) -> Tensor:
+        """Compute the quantile calibration error.
+
+        Returns:
+            Tensor: The quantile calibration error.
+
+        Warning:
+            If the distribution does not support the `icdf()` method, this will return `nan` values.
+        """
         if self.not_implemented_error:
             return torch.tensor(float("nan"))
         return super().compute()
 
     def plot(self) -> _PLOT_OUT_TYPE:
+        """Plot the quantile calibration reliability diagram.
+
+        Raises:
+            NotImplementedError: If the distribution does not support the `icdf()` method.
+        """
         if self.not_implemented_error:
             raise NotImplementedError(
                 "The distribution does not support the `icdf()` method. "
