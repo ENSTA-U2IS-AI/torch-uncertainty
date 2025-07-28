@@ -49,7 +49,7 @@ class PackedLinear(nn.Module):
         bias: bool = True,
         first: bool = False,
         last: bool = False,
-        implementation: str = "conv1d",
+        implementation: str = "einsum",
         device=None,
         dtype=None,
     ) -> None:
@@ -72,10 +72,10 @@ class PackedLinear(nn.Module):
                 Defaults to ``False``.
             implementation (str, optional): The implementation to use. Available implementations:
 
-                - ``"conv1d"`` (default): The conv1d implementation of the linear layer.
+                - ``"conv1d"``: The conv1d implementation of the linear layer.
                 - ``"sparse"``: The sparse implementation of the linear layer.
                 - ``"full"``: The full implementation of the linear layer.
-                - ``"einsum"``: The einsum implementation of the linear layer.
+                - ``"einsum"`` (default): The einsum implementation of the linear layer.
             device (torch.device, optional): The device to use for the layer's
                 parameters. Defaults to ``None``.
             dtype (torch.dtype, optional): The dtype to use for the layer's
