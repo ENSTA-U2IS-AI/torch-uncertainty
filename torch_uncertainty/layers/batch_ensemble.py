@@ -3,7 +3,7 @@ import math
 import torch
 from einops import repeat
 from torch import Tensor, nn
-from torch.nn.common_types import _size_2_t
+from torch.nn.common_types import _size_1_t, _size_2_t
 from torch.nn.modules.utils import _pair
 
 
@@ -175,6 +175,238 @@ class BatchLinear(nn.Module):
             f" out_features={self.out_features},"
             f" num_estimators={self.num_estimators},"
             f" bias={self.bias is not None}"
+        )
+
+
+class BatchConv1d(nn.Module):
+    __constants__ = [
+        "stride",
+        "padding",
+        "dilation",
+        "groups",
+        "in_channels",
+        "out_channels",
+        "kernel_size",
+        "num_estimators",
+    ]
+    in_channels: int
+    out_channels: int
+    kernel_size: tuple[int, ...]
+    num_estimators: int
+    stride: tuple[int, ...]
+    padding: str | tuple[int, ...]
+    dilation: tuple[int, ...]
+    groups: int
+    weight: Tensor
+    r_group: Tensor
+    s_group: Tensor
+    bias: Tensor | None
+
+    def __init__(
+        self,
+        in_channels: int,
+        out_channels: int,
+        kernel_size: _size_1_t,
+        num_estimators: int,
+        stride: _size_1_t = 1,
+        padding: str | _size_1_t = 0,
+        dilation: _size_1_t = 1,
+        groups: int = 1,
+        bias: bool = True,
+        device=None,
+        dtype=None,
+    ) -> None:
+        r"""BatchEnsemble-style Conv1d layer.
+
+        Applies a 1d convolution over an input signal composed of several input
+        planes using BatchEnsemble method to the incoming data.
+
+        In the simplest case, the output value of the layer with input size
+        :math:`(N, C_{in}, L_{in})` and output
+        :math:`(N, C_{out}, L_{out})` can be precisely described as:
+
+        .. math::
+            \text{out}(N_i, C_{\text{out}_j})=\
+                &\widehat{b}(N_i,C_{\text{out}_j})
+            +\widehat{s_{group}}(N_{i},C_{\text{out}_j}) \\
+                &\times \sum_{k = 0}^{C_{\text{in}} - 1}
+            \text{weight}(C_{\text{out}_j}, k)\star (\text{input}(N_i, k)
+            \times \widehat{r_{group}}(N_i, k))
+
+        Reference:
+            Introduced by the paper `BatchEnsemble: An Alternative Approach to
+            Efficient Ensemble and Lifelong Learning
+            <https://arxiv.org/abs/2002.06715>`_, we present here an implementation
+            of a Conv2d BatchEnsemble layer in `PyTorch <https://pytorch.org>`_
+            heavily inspired by its `official implementation
+            <https://github.com/google/edward2>`_ in `TensorFlow
+            <https://www.tensorflow.org>`_.
+
+        Args:
+            in_channels (int): Number of channels in the input images.
+            out_channels (int): Number of channels produced by the convolution.
+            kernel_size (int): Size of the convolving kernel.
+            num_estimators (int): Number of estimators in the ensemble referred as
+                :math:`M` here.
+            stride (int, optional): Stride of the convolution. Defaults to
+                ``1``.
+            padding (int or str, optional): Padding added to all four sides
+                of the input. Defaults to ``0``.
+            dilation (int, optional): Spacing between kernel elements.
+                Defaults to ``1``.
+            groups (int, optional): Number of blocked connections from input
+                channels to output channels. Defaults to ``1``.
+            bias (bool, optional): If ``True``, adds a learnable bias to the
+                output. Defaults to ``True``.
+            device (Any, optional): Device to use for the parameters and
+                buffers of this module. Defaults to ``None``.
+            dtype (Any, optional): Data type to use for the parameters and
+                buffers of this module. Defaults to ``None``.
+
+        Attributes:
+            weight: The learnable weights of the module of shape
+                :math:`(\text{out_channels}, \frac{\text{in_channels}}
+                {\text{groups}},`:math:`\text{kernel_size})` shared between the
+                estimators. The values of these weights are sampled from
+                :math:`\mathcal{U}(-\sqrt{k}, \sqrt{k})` where
+                :math:`k = \frac{\text{groups}}{C_\text{in} *
+                \prod_{i=0}^{1}\text{kernel_size}[i]}`.
+            r_group: The learnable matrice of shape :math:`(M, C_{in})` where each row
+                consist of the vector :math:`r_{i}` corresponding to the
+                :math:`i^{th}` ensemble member. The values are initialized from
+                :math:`\mathcal{N}(1.0, 0.5)`.
+            s_group: The learnable matrice of shape :math:`(M, C_{out})` where each row
+                consist of the vector :math:`s_{i}` corresponding to the
+                :math:`i^{th}` ensemble member. The values are initialized from
+                :math:`\mathcal{N}(1.0, 0.5)`.
+            bias: The learnable bias (:math:`b`) of shape :math:`(M, C_{out})`
+                where each row corresponds to the bias of the :math:`i^{th}`
+                ensemble member. If :attr:`bias` is ``True``, the values are
+                initialized from :math:`\mathcal{U}(-\sqrt{k}, \sqrt{k})` where
+                :math:`k=\frac{\text{groups}}{C_\text{in}*\prod_{i=0}^{1}
+                \text{kernel_size}[i]}`.
+
+        Shape:
+            - Input: :math:`(N, C_{in}, L_{in})`.
+            - Output: :math:`(N, C_{out}, L_{out})`.
+
+        .. math::
+            L_{out} = \left\lfloor\frac{L_{in} + 2 \times \text{padding} -
+            \text{dilation} \times (\text{kernel_size} - 1) - 1}
+            {\text{stride}} + 1\right\rfloor
+
+        Warning:
+            Ensure that `batch_size` is divisible by :attr:`num_estimators` when calling :func:`forward()`.
+            In a BatchEnsemble architecture, the input batch is typically **repeated** `num_estimators`
+            times along the first axis. Incorrect batch size may lead to unexpected results.
+
+            To simplify batch handling, wrap your model with `BatchEnsembleWrapper`, which automatically
+            repeats the batch before passing it through the network. See `BatchEnsembleWrapper` for details.
+
+        Examples:
+            >>> # With square kernels, four estimators and equal stride
+            >>> m = BatchConv1d(3, 32, 3, 4, stride=1)
+            >>> input = torch.randn(8, 3, 16)
+            >>> output = m(input)
+            >>> print(output.size())
+            torch.Size([8, 32, 14])
+        """
+        factory_kwargs = {"device": device, "dtype": dtype}
+        super().__init__()
+
+        self.in_channels = in_channels
+        self.out_channels = out_channels
+        self.kernel_size = kernel_size
+        self.num_estimators = num_estimators
+        self.stride = _pair(stride)
+        self.padding = padding if isinstance(padding, str) else _pair(padding)
+        self.dilation = _pair(dilation)
+
+        self.conv = nn.Conv1d(
+            in_channels=in_channels,
+            out_channels=out_channels,
+            kernel_size=kernel_size,
+            stride=stride,
+            padding=padding,
+            dilation=dilation,
+            groups=groups,
+            bias=False,
+            **factory_kwargs,
+        )
+        self.r_group = nn.Parameter(torch.empty((num_estimators, in_channels), **factory_kwargs))
+        self.s_group = nn.Parameter(torch.empty((num_estimators, out_channels), **factory_kwargs))
+        if bias:
+            self.bias = nn.Parameter(torch.empty((num_estimators, out_channels), **factory_kwargs))
+        else:
+            self.register_parameter("bias", None)
+
+        self.reset_parameters()
+
+    @classmethod
+    def from_conv1d(cls, conv1d: nn.Conv1d, num_estimators: int) -> "BatchConv1d":
+        r"""Create a BatchEnsemble-style Conv1d layer from an existing Conv1d layer.
+
+        Args:
+            conv1d (nn.Conv1d): The Conv1d layer to convert.
+            num_estimators (int): Number of ensemble members.
+
+        Returns:
+            BatchConv1d: The converted BatchEnsemble-style Conv1d layer.
+
+        Warning:
+            All parameters of the original Conv1d layer will be discarded.
+
+        Example:
+            >>> conv1d = nn.Conv1d(3, 32, kernel_size=3)
+            >>> be_conv1d = BatchConv1d.from_conv1d(conv1d, num_estimators=3)
+        """
+        return cls(
+            in_channels=conv1d.in_channels,
+            out_channels=conv1d.out_channels,
+            kernel_size=conv1d.kernel_size,
+            stride=conv1d.stride,
+            padding=conv1d.padding,
+            dilation=conv1d.dilation,
+            groups=conv1d.groups,
+            bias=conv1d.bias is not None,
+            num_estimators=num_estimators,
+            device=conv1d.weight.device,
+            dtype=conv1d.weight.dtype,
+        )
+
+    def reset_parameters(self) -> None:
+        nn.init.normal_(self.r_group, mean=1.0, std=0.5)
+        nn.init.normal_(self.s_group, mean=1.0, std=0.5)
+        if self.bias is not None:
+            fan_in, _ = nn.init._calculate_fan_in_and_fan_out(self.conv.weight)
+            bound = 1 / math.sqrt(fan_in) if fan_in > 0 else 0
+            nn.init.uniform_(self.bias, -bound, bound)
+
+    def forward(self, inputs: Tensor) -> Tensor:
+        batch_size = inputs.size(0)
+        examples_per_estimator = batch_size // self.num_estimators
+        extra = batch_size % self.num_estimators
+
+        r_group = repeat(self.r_group, "m h -> (m b) h 1", b=examples_per_estimator)
+        r_group = torch.cat([r_group, r_group[:extra]], dim=0)
+        s_group = repeat(self.s_group, "m h -> (m b) h 1", b=examples_per_estimator)
+        s_group = torch.cat([s_group, s_group[:extra]], dim=0)
+
+        if self.bias is not None:
+            bias = repeat(self.bias, "m h -> (m b) h 1", b=examples_per_estimator)
+            bias = torch.cat([bias, bias[:extra]], dim=0)
+        else:
+            bias = None
+
+        return self.conv(inputs * r_group) * s_group + (bias if bias is not None else 0)
+
+    def extra_repr(self) -> str:
+        return (
+            f"in_channels={self.in_channels},"
+            f" out_channels={self.out_channels},"
+            f" kernel_size={self.kernel_size},"
+            f" num_estimators={self.num_estimators},"
+            f" stride={self.stride}"
         )
 
 
