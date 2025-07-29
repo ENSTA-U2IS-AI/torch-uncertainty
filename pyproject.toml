@@ -6,9 +6,9 @@ build-backend = "flit_core.buildapi"
 name = "torch_uncertainty"
 version = "0.6.0"
 authors = [
-    { name = "ENSTA U2IS", email = "olivier.laurent@ensta-paris.fr" },
+    { name = "ENSTA U2IS AI", email = "olivier.laurent@ensta.fr" },
     { name = "Adrien Lafage", email = "adrienlafage@outlook.com" },
-    { name = "Olivier Laurent", email = "olivier.laurent@ensta-paris.fr" },
+    { name = "Olivier Laurent", email = "olivier.ar.laurent@gmail.com" },
 ]
 description = "Uncertainty quantification library in PyTorch"
 readme = "README.md"
