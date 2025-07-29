@@ -25,11 +25,24 @@ PERCENTAGE_METRICS = [
     "aECE",
 ]
 
+INT_METRICS = [
+    "flops",
+    "params",
+]
+
 
 def _add_row(table: Table, metric_name: str, value: Tensor) -> None:
     if metric_name in PERCENTAGE_METRICS:
-        value = value * 100
-        table.add_row(metric_name, f"{value.item():.3f}%")
+        table.add_row(metric_name, f"{value.item():.3%}")
+    elif metric_name in INT_METRICS:
+        if value.item() >= 1e9:  # coverage: ignore
+            table.add_row(metric_name, f"{value.item() / 1e9:.2f} G")
+        elif value.item() >= 1e6:  # coverage: ignore
+            table.add_row(metric_name, f"{value.item() / 1e6:.2f} M")
+        elif value.item() >= 1e3:
+            table.add_row(metric_name, f"{value.item() / 1e3:.2f} K")
+        else:
+            table.add_row(metric_name, f"{int(value.item()):}")
     else:
         table.add_row(metric_name, f"{value.item():.5f}")
 
@@ -88,6 +101,11 @@ class TUEvaluationLoop(_EvaluationLoop):
                         metrics["reg"] = {}
                     metric_name = key.split("/")[-1]
                     metrics["reg"].update({metric_name: value})
+                elif key.startswith("test/cplx"):
+                    if "cplx" not in metrics:
+                        metrics["cplx"] = {}
+                    metric_name = key.split("/")[-1]
+                    metrics["cplx"].update({metric_name: value})
 
         tables = []
 
@@ -175,6 +193,15 @@ class TUEvaluationLoop(_EvaluationLoop):
             for metric_name, value in shift_metrics.items():
                 if metric_name == "severity":
                     continue
+                _add_row(table, metric_name, value)
+            tables.append(table)
+
+        if "cplx" in metrics:
+            table = Table()
+            table.add_column(first_col_name, justify="center", style="cyan", width=12)
+            table.add_column("Complexity", justify="center", style="magenta", width=25)
+            cplx_metrics = OrderedDict(sorted(metrics["cplx"].items()))
+            for metric_name, value in cplx_metrics.items():
                 _add_row(table, metric_name, value)
             tables.append(table)
 
