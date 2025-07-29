@@ -46,7 +46,7 @@ tabular = ["pandas"]
 distribution = ["scipy"]
 dev = [
     "torch_uncertainty[experiments,image]",
-    "ruff==0.11.10",
+    "ruff==0.12.5",
     "pytest-cov",
     "pre-commit",
     "pre-commit-hooks",
