@@ -31,6 +31,9 @@ from torch_uncertainty.utils.distributions import (
 
 
 class RegressionRoutine(LightningModule):
+    test_num_flops: int | None = None
+    num_params: int | None = None
+
     def __init__(
         self,
         model: nn.Module,
@@ -139,9 +142,6 @@ class RegressionRoutine(LightningModule):
             )
             self.val_prob_metrics = reg_prob_metrics.clone(prefix="val/")
             self.test_prob_metrics = reg_prob_metrics.clone(prefix="test/")
-
-        self.test_num_flops: int | None = None
-        self.num_params: int | None = None
 
     def configure_optimizers(self) -> Optimizer | dict:
         return self.optim_recipe

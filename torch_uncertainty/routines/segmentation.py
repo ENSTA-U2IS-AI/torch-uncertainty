@@ -42,6 +42,9 @@ from torch_uncertainty.utils.plotting import show_segmentation_predictions
 
 
 class SegmentationRoutine(LightningModule):
+    test_num_flops: int | None = None
+    num_params: int | None = None
+
     def __init__(
         self,
         model: nn.Module,
@@ -197,11 +200,6 @@ class SegmentationRoutine(LightningModule):
             )
             self.test_ood_metrics = ood_metrics.clone(prefix="ood/")
 
-        self.train_num_flops: int | None = None
-        self.val_num_flops: int | None = None
-        self.test_num_flops: int | None = None
-        self.num_params: int | None = None
-
     def configure_optimizers(self) -> Optimizer | dict:
         return self.optim_recipe
 
@@ -264,7 +262,6 @@ class SegmentationRoutine(LightningModule):
         if self.needs_step_update:
             self.model.update_wrapper(self.current_epoch)
         self.log("train_loss", loss, prog_bar=True, logger=True)
-
         return loss
 
     def validation_step(self, batch: tuple[Tensor, Tensor]) -> None:
