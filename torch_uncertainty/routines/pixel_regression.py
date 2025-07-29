@@ -47,6 +47,8 @@ class PixelRegressionRoutine(LightningModule):
         "mean": [-0.485 / 0.229, -0.456 / 0.224, -0.406 / 0.255],
         "std": [1 / 0.229, 1 / 0.224, 1 / 0.255],
     }
+    test_num_flops: int | None = None
+    num_params: int | None = None
 
     def __init__(
         self,
@@ -149,9 +151,6 @@ class PixelRegressionRoutine(LightningModule):
             depth_prob_metrics = MetricCollection({"reg/NLL": DistributionNLL(reduction="mean")})
             self.val_prob_metrics = depth_prob_metrics.clone(prefix="val/")
             self.test_prob_metrics = depth_prob_metrics.clone(prefix="test/")
-
-        self.test_num_flops: int | None = None
-        self.num_params: int | None = None
 
     def configure_optimizers(self) -> Optimizer | dict:
         return self.optim_recipe
