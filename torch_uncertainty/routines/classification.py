@@ -67,6 +67,9 @@ MIXUP_PARAMS = {
 
 
 class ClassificationRoutine(LightningModule):
+    test_num_flops: int | None = None
+    num_params: int | None = None
+
     def __init__(
         self,
         model: nn.Module,
@@ -294,9 +297,6 @@ class ClassificationRoutine(LightningModule):
             grouping_loss = MetricCollection({"cls/grouping_loss": GroupingLoss()})
             self.val_grouping_loss = grouping_loss.clone(prefix="val/")
             self.test_grouping_loss = grouping_loss.clone(prefix="test/")
-
-        self.test_num_flops: int | None = None
-        self.num_params: int | None = None
 
     def _init_mixup(self, mixup_params: dict | None) -> Callable:
         """Setup the optional mixup augmentation based on the :attr:`mixup_params` dict.
