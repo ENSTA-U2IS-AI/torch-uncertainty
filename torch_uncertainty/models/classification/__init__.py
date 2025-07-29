@@ -1,4 +1,5 @@
 # ruff: noqa: F401
+from .inception_time import inception_time
 from .lenet import batchensemble_lenet, bayesian_lenet, lenet, packed_lenet
 from .resnet import batched_resnet, lpbnn_resnet, masked_resnet, mimo_resnet, packed_resnet, resnet
 from .vgg import packed_vgg, vgg
