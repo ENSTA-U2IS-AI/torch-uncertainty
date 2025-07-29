@@ -74,6 +74,7 @@ jobs:
     - name: Install the optional dependencies
       if: steps.changed-files-specific.outputs.only_changed != 'true'
       run: |
+        python3 -m pip install .[all]
 
     - name: Check style & format
       if: steps.changed-files-specific.outputs.only_changed != 'true'
