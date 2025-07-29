@@ -55,7 +55,7 @@ class _InceptionTime(nn.Module):
         kernel_size: int = 40,
         embed_dim: int = 32,
         num_blocks: int = 6,
-        dropout: float = 0.1,
+        dropout: float = 0.0,
         residual: bool = True,
     ):
         super().__init__()
@@ -123,7 +123,7 @@ def inception_time(
     kernel_size: int = 40,
     embed_dim: int = 32,
     num_blocks: int = 6,
-    dropout: float = 0.1,
+    dropout: float = 0.0,
     residual: bool = True,
 ) -> _InceptionTime:
     """Create an InceptionTime model.
