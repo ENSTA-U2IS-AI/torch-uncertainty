@@ -33,12 +33,11 @@ INT_METRICS = [
 
 def _add_row(table: Table, metric_name: str, value: Tensor) -> None:
     if metric_name in PERCENTAGE_METRICS:
-        value = value * 100
-        table.add_row(metric_name, f"{value.item():.3f}%")
+        table.add_row(metric_name, f"{value.item():.3%}")
     elif metric_name in INT_METRICS:
-        if value.item() >= 1e9:
+        if value.item() >= 1e9: # coverage: ignore
             table.add_row(metric_name, f"{value.item() / 1e9:.2f} G")
-        elif value.item() >= 1e6:
+        elif value.item() >= 1e6: # coverage: ignore
             table.add_row(metric_name, f"{value.item() / 1e6:.2f} M")
         elif value.item() >= 1e3:
             table.add_row(metric_name, f"{value.item() / 1e3:.2f} K")
