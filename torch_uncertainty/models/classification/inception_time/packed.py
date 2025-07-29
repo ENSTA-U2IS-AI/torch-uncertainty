@@ -92,6 +92,7 @@ class _PackedInceptionTime(nn.Module):
         kernel_size: int = 40,
         embed_dim: int = 32,
         num_blocks: int = 6,
+        dropout: float = 0.1,
         residual: bool = True,
     ):
         super().__init__()
@@ -107,14 +108,17 @@ class _PackedInceptionTime(nn.Module):
 
         for i in range(num_blocks):
             self.layers.append(
-                _PackedInceptionBlock(
-                    in_channels=in_channels if i == 0 else embed_dim * 4,
-                    out_channels=embed_dim,
-                    kernel_size=kernel_size,
-                    num_estimators=num_estimators,
-                    alpha=alpha,
-                    gamma=gamma,
-                    first=(i == 0),
+                nn.Sequential(
+                    _PackedInceptionBlock(
+                        in_channels=in_channels if i == 0 else embed_dim * 4,
+                        out_channels=embed_dim,
+                        kernel_size=kernel_size,
+                        num_estimators=num_estimators,
+                        alpha=alpha,
+                        gamma=gamma,
+                        first=(i == 0),
+                    ),
+                    nn.Dropout(dropout) if dropout > 0 else nn.Identity(),
                 )
             )
             if self.shortcut is not None and i % 3 == 2:
@@ -179,6 +183,7 @@ def packed_inception_time(
     kernel_size: int = 40,
     embed_dim: int = 32,
     num_blocks: int = 6,
+    dropout: float = 0.1,
     residual: bool = True,
 ) -> _PackedInceptionTime:
     """Create a Packed-Ensembles InceptionTime model.
@@ -192,6 +197,7 @@ def packed_inception_time(
         kernel_size (int): Size of the convolutional kernels.
         embed_dim (int): Dimension of the embedding.
         num_blocks (int): Number of inception blocks.
+        dropout (float): Dropout rate.
         residual (bool): Whether to use residual connections.
 
     Returns:
@@ -206,5 +212,6 @@ def packed_inception_time(
         kernel_size,
         embed_dim,
         num_blocks,
+        dropout,
         residual,
     )

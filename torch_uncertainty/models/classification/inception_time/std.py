@@ -55,6 +55,7 @@ class _InceptionTime(nn.Module):
         kernel_size: int = 40,
         embed_dim: int = 32,
         num_blocks: int = 6,
+        dropout: float = 0.1,
         residual: bool = True,
     ):
         super().__init__()
@@ -70,10 +71,13 @@ class _InceptionTime(nn.Module):
 
         for i in range(num_blocks):
             self.layers.append(
-                _InceptionBlock(
-                    in_channels if i == 0 else embed_dim * 4,
-                    embed_dim,
-                    kernel_size,
+                nn.Sequential(
+                    _InceptionBlock(
+                        in_channels if i == 0 else embed_dim * 4,
+                        embed_dim,
+                        kernel_size,
+                    ),
+                    nn.Dropout(dropout) if dropout > 0 else nn.Identity(),
                 )
             )
             if self.shortcut is not None and i % 3 == 2:
@@ -119,6 +123,7 @@ def inception_time(
     kernel_size: int = 40,
     embed_dim: int = 32,
     num_blocks: int = 6,
+    dropout: float = 0.1,
     residual: bool = True,
 ) -> _InceptionTime:
     """Create an InceptionTime model.
@@ -129,9 +134,12 @@ def inception_time(
         kernel_size (int): Size of the convolutional kernels.
         embed_dim (int): Dimension of the embedding.
         num_blocks (int): Number of inception blocks.
+        dropout (float): Dropout rate.
         residual (bool): Whether to use residual connections.
 
     Returns:
         _InceptionTime: An instance of the InceptionTime model.
     """
-    return _InceptionTime(in_channels, num_classes, kernel_size, embed_dim, num_blocks, residual)
+    return _InceptionTime(
+        in_channels, num_classes, kernel_size, embed_dim, num_blocks, dropout, residual
+    )

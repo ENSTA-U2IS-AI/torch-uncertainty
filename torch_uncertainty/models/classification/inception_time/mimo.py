@@ -13,6 +13,7 @@ class _MIMOInceptionTime(_InceptionTime):
         kernel_size: int = 40,
         embed_dim: int = 32,
         num_blocks: int = 6,
+        dropout: float = 0.1,
         residual: bool = True,
     ):
         super().__init__(
@@ -21,6 +22,7 @@ class _MIMOInceptionTime(_InceptionTime):
             kernel_size=kernel_size,
             embed_dim=embed_dim,
             num_blocks=num_blocks,
+            dropout=dropout,
             residual=residual,
         )
         self.num_estimators = num_estimators
@@ -40,6 +42,7 @@ def mimo_inception_time(
     kernel_size: int = 40,
     embed_dim: int = 32,
     num_blocks: int = 6,
+    dropout: float = 0.1,
     residual: bool = True,
 ) -> _MIMOInceptionTime:
     """Creates a MIMO InceptionTime model.
@@ -51,6 +54,7 @@ def mimo_inception_time(
         kernel_size (int): Size of the convolutional kernel.
         embed_dim (int): Dimension of the embedding.
         num_blocks (int): Number of inception blocks.
+        dropout (float): Dropout rate.
         residual (bool): Whether to use residual connections.
 
     Returns:
@@ -63,5 +67,6 @@ def mimo_inception_time(
         kernel_size=kernel_size,
         embed_dim=embed_dim,
         num_blocks=num_blocks,
+        dropout=dropout,
         residual=residual,
     )

@@ -64,6 +64,7 @@ class _BatchedInceptionTime(nn.Module):
         kernel_size: int = 40,
         embed_dim: int = 32,
         num_blocks: int = 6,
+        dropout: float = 0.1,
         residual: bool = True,
     ):
         super().__init__()
@@ -80,11 +81,15 @@ class _BatchedInceptionTime(nn.Module):
 
         for i in range(num_blocks):
             self.layers.append(
-                _BatchedInceptionBlock(
-                    in_channels if i == 0 else embed_dim * 4,
-                    embed_dim,
-                    kernel_size,
-                    num_estimators,
+                nn.Sequential(
+                    _BatchedInceptionBlock(
+                        in_channels if i == 0 else embed_dim * 4,
+                        embed_dim,
+                        kernel_size,
+                        num_estimators,
+                        bottleneck=True,
+                    ),
+                    nn.Dropout(dropout) if dropout > 0 else nn.Identity(),
                 )
             )
             if self.shortcut is not None and i % 3 == 2:
@@ -132,6 +137,7 @@ def batched_inception_time(
     kernel_size: int = 40,
     embed_dim: int = 32,
     num_blocks: int = 6,
+    dropout: float = 0.1,
     residual: bool = True,
 ) -> _BatchedInceptionTime:
     """Create a BatchEnsemble InceptionTime model.
@@ -143,11 +149,19 @@ def batched_inception_time(
         kernel_size (int): Size of the convolutional kernels.
         embed_dim (int): Dimension of the embedding.
         num_blocks (int): Number of inception blocks.
+        dropout (float): Dropout rate.
         residual (bool): Whether to use residual connections.
 
     Returns:
         _BatchedInceptionTime: An instance of the InceptionTime model.
     """
     return _BatchedInceptionTime(
-        in_channels, num_classes, num_estimators, kernel_size, embed_dim, num_blocks, residual
+        in_channels,
+        num_classes,
+        num_estimators,
+        kernel_size,
+        embed_dim,
+        num_blocks,
+        dropout,
+        residual,
     )
