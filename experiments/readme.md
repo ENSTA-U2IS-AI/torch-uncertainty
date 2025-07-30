@@ -19,7 +19,7 @@ Torch-Uncertainty proposes various benchmarks to evaluate uncertainty quantifica
   * CricketX
   * CricketY
   * CricketZ
-  * Lightning2
+  * InlineSkate
   * Lightning7
   * Mallat
   * OliveOil
