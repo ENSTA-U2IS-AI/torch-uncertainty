@@ -1,3 +1,5 @@
+from functools import partial
+
 from torch import Generator
 from torch.utils.data import DataLoader, random_split
 
@@ -50,15 +52,16 @@ class UCRUEADataModule(TUDataModule):
         self.dataset_name = dataset_name
         self.eval_ood = eval_ood
         self.gen = Generator().manual_seed(split_seed)
+        self.dataset = partial(UCRUEADataset, dataset_name=dataset_name)
 
     def prepare_data(self):
         """Download the dataset if it does not exist."""
-        self.dataset = UCRUEADataset(self.dataset_name)
+        self.dataset()
 
     def setup(self, stage: str | None = None):
         """Setup the dataset for training, validation, and testing."""
         if stage == "fit" or stage is None:
-            full_dataset = UCRUEADataset(self.dataset_name, split="train", create_ood=True)
+            full_dataset = self.dataset(split="train", create_ood=True)
 
             if self.val_split is not None:
                 self.train, self.val = random_split(
@@ -66,12 +69,12 @@ class UCRUEADataModule(TUDataModule):
                 )
             else:
                 self.train = full_dataset
-                self.val = UCRUEADataset(self.dataset_name, split="test", create_ood=True)
+                self.val = self.dataset(split="test", create_ood=True)
 
         if stage == "test" or stage is None:
-            self.test = UCRUEADataset(self.dataset_name, split="test", create_ood=True)
+            self.test = self.dataset(split="test", create_ood=True)
             if self.eval_ood:
-                self.ood = UCRUEADataset(self.dataset_name, split="ood", create_ood=True)
+                self.ood = self.dataset(split="ood", create_ood=True)
 
     def test_dataloader(self) -> list[DataLoader]:
         r"""Get test dataloaders.
