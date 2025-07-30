@@ -2,6 +2,7 @@ import torch
 
 from torch_uncertainty.models.classification import (
     batched_inception_time,
+    bayesian_inception_time,
     inception_time,
     mimo_inception_time,
     packed_inception_time,
@@ -25,9 +26,9 @@ class TestPackedInceptionTime:
 
     @torch.no_grad()
     def test_main(self) -> None:
-        packed_inception_time(
-            in_channels=1, num_classes=10, num_estimators=2, alpha=2, gamma=1
-        )(torch.randn(1, 1, 32))
+        packed_inception_time(in_channels=1, num_classes=10, num_estimators=2, alpha=2, gamma=1)(
+            torch.randn(1, 1, 32)
+        )
 
 
 class TestBatchedInceptionTime:
@@ -35,8 +36,9 @@ class TestBatchedInceptionTime:
 
     @torch.no_grad()
     def test_main(self) -> None:
-        batched_inception_time(in_channels=1, num_classes=10, num_estimators=2)(torch.randn(1, 1, 32))
-
+        batched_inception_time(in_channels=1, num_classes=10, num_estimators=2)(
+            torch.randn(1, 1, 32)
+        )
 
 
 class TestMIMOInceptionTime:
@@ -47,3 +49,11 @@ class TestMIMOInceptionTime:
         mimo_inception_time(in_channels=1, num_classes=10, num_estimators=2).train()(
             torch.rand((2, 1, 28))
         )
+
+
+class TestBayesianInceptionTime:
+    """Testing the ResNet MIMO class."""
+
+    @torch.no_grad()
+    def test_main(self) -> None:
+        bayesian_inception_time(in_channels=1, num_classes=10).train()(torch.rand((2, 1, 28)))
