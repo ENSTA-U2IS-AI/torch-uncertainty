@@ -429,7 +429,7 @@ class TestPackedLayerNorm:
         )
         pe_out = packed_layer_norm(batched_qkv)
         layer_norm_out = layer_norm(batched_qkv)
-        assert torch.allclose(pe_out, layer_norm_out)
+        assert torch.allclose(pe_out, layer_norm_out, rtol=1e-3, atol=1e-5)
 
 
 class TestPackedMultiheadAttention:

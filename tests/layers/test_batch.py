@@ -1,12 +1,17 @@
 import pytest
 import torch
 
-from torch_uncertainty.layers.batch_ensemble import BatchConv2d, BatchConvTranspose2d, BatchLinear
+from torch_uncertainty.layers.batch_ensemble import BatchConv1d, BatchConv2d, BatchConvTranspose2d, BatchLinear
 
 
 @pytest.fixture
 def feat_input() -> torch.Tensor:
     return torch.rand((4, 6))
+
+
+@pytest.fixture
+def oned_input() -> torch.Tensor:
+    return torch.rand((5, 6, 3))
 
 
 @pytest.fixture
@@ -44,6 +49,18 @@ class TestBatchLinear:
         out = layer(feat_input)
         assert out.shape == torch.Size([4, 3])
 
+
+class TestBatchConv1d:
+    """Testing the BatchConv1d layer class."""
+
+    def test_conv_one_estimator(self, oned_input: torch.Tensor) -> None:
+        layer = BatchConv1d(6, 2, num_estimators=1, kernel_size=1)
+        print(layer)  # noqa: T201
+        out = layer(oned_input)
+        assert out.shape == torch.Size([5, 2, 3])
+
+        layer = BatchConv1d(6, 2, num_estimators=1, kernel_size=1, bias=False)
+        assert layer(oned_input).shape == torch.Size([5, 2, 3])
 
 class TestBatchConv2d:
     """Testing the BatchConv2d layer class."""

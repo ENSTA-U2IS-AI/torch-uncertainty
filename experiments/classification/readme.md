@@ -29,3 +29,10 @@ network impedes convergence for all tested hyperparameters.
 ### Tiny-ImageNet200
 
 * ResNet
+
+
+## Time-Series Classification
+
+### UCR/UEA
+
+* InceptionTime

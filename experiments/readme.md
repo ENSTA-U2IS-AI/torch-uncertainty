@@ -4,15 +4,46 @@ Torch-Uncertainty proposes various benchmarks to evaluate uncertainty quantifica
 
 ## Classification
 
-*Work in progress*
+### Images
+
+* CIFAR-10
+* CIFAR-100
+* MNIST
+* Tiny-ImageNet200
+
+### Time-series
+
+* UCR/UEA
+  * Adiac
+  * Beef
+  * CricketX
+  * CricketY
+  * CricketZ
+  * Lightning2
+  * Lightning7
+  * Mallat
+  * OliveOil
+  * TwoPatterns
 
 ## Segmentation
 
-*Work in progress*
+### Road Traffic
+
+* Cityscapes
+* CamVid
+* MUAD
 
 ## Regression
 
-*Work in progress*
+* UCI Regression
+  * Boston Housing
+  * Concrete
+  * Energy Efficiency
+  * Kin8nm
+  * Naval Propulsion
+  * Power Plant
+  * Protein
+  * Wine Quality
 
 ## Pixel Regression
 

@@ -1,5 +1,5 @@
 # ruff: noqa: F401
-from .batch_ensemble import BatchConv2d, BatchConvTranspose2d, BatchLinear
+from .batch_ensemble import BatchConv1d, BatchConv2d, BatchConvTranspose2d, BatchLinear
 from .bayesian import BayesConv1d, BayesConv2d, BayesConv3d, BayesLinear
 from .channel_layer_norm import ChannelLayerNorm
 from .distributions import (
