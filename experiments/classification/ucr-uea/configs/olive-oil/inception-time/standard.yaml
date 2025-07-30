@@ -4,11 +4,11 @@ trainer:
   accelerator: gpu
   devices: 1
   precision: 16-mixed
-  max_epochs: 5
+  max_epochs: 50
   logger:
     class_path: lightning.pytorch.loggers.TensorBoardLogger
     init_args:
-      save_dir: logs/inception-time
+      save_dir: logs/olive-oil/inception-time
       name: standard
       default_hp_metric: false
   callbacks:
@@ -23,7 +23,7 @@ model:
   loss: CrossEntropyLoss
   save_in_csv: true
 data:
-  dataset_name: TwoPatterns
+  dataset_name: OliveOil
   batch_size: 16
   num_workers: 4
   eval_ood: true
