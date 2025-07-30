@@ -12,3 +12,4 @@ from .uci import (
     SpamBaseDataModule,
     UCIClassificationDataModule,
 )
+from .ucr_uea import UCRUEADataModule

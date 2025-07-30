@@ -26,7 +26,7 @@ class FrostImages(VisionDataset):
     ) -> None:
         if not tu_assets_installed:  # coverage: ignore
             raise ImportError(
-                "The torch-uncertainty-assets library is not installed. Please install"
+                "The torch-uncertainty-assets library is not installed. Please install "
                 "torch_uncertainty with the image option:"
                 """pip install -U "torch_uncertainty[image]"."""
             )

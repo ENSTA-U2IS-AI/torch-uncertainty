@@ -15,6 +15,7 @@ from torch.distributions import (
     MixtureSameFamily,
 )
 from torch.optim import Optimizer
+from torch.utils.flop_counter import FlopCounterMode
 from torchmetrics import MeanSquaredError, MetricCollection
 from torchvision.transforms.v2 import functional as F
 from torchvision.utils import make_grid
@@ -46,6 +47,8 @@ class PixelRegressionRoutine(LightningModule):
         "mean": [-0.485 / 0.229, -0.456 / 0.224, -0.406 / 0.255],
         "std": [1 / 0.229, 1 / 0.224, 1 / 0.255],
     }
+    test_num_flops: int | None = None
+    num_params: int | None = None
 
     def __init__(
         self,
@@ -181,6 +184,9 @@ class PixelRegressionRoutine(LightningModule):
         if hasattr(self.model, "need_bn_update"):
             self.model.bn_update(self.trainer.train_dataloader, device=self.device)
 
+        if self.num_params is None:
+            self.num_params = sum(p.numel() for p in self.model.parameters())
+
     def forward(self, inputs: Tensor) -> Tensor | Distribution:
         """Forward pass of the routine.
 
@@ -313,6 +319,11 @@ class PixelRegressionRoutine(LightningModule):
                 "Depth OOD detection not implemented yet. Raise an issue if needed."
             )
         inputs, targets = batch
+        if self.test_num_flops is None:
+            flop_counter = FlopCounterMode(display=False)
+            with flop_counter:
+                self.forward(inputs)
+            self.test_num_flops = flop_counter.get_total_flops()
         if self.one_dim_depth:
             targets = targets.unsqueeze(1)
         targets = rearrange(targets, "b c h w -> b h w c")
@@ -354,6 +365,10 @@ class PixelRegressionRoutine(LightningModule):
     def on_test_epoch_end(self) -> None:
         """Compute and log the values of the collected metrics in `test_step`."""
         result_dict = self.test_metrics.compute()
+        result_dict |= {
+            "test/cplx/flops": self.test_num_flops,
+            "test/cplx/params": self.num_params,
+        }
 
         if self.probabilistic:
             result_dict |= self.test_prob_metrics.compute()

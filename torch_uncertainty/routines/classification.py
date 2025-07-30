@@ -10,6 +10,7 @@ from lightning.pytorch.utilities.types import STEP_OUTPUT
 from timm.data import Mixup as timm_Mixup
 from torch import Tensor, nn
 from torch.optim import Optimizer
+from torch.utils.flop_counter import FlopCounterMode
 from torchmetrics import Accuracy, MetricCollection
 from torchmetrics.classification import (
     BinaryAUROC,
@@ -66,6 +67,9 @@ MIXUP_PARAMS = {
 
 
 class ClassificationRoutine(LightningModule):
+    test_num_flops: int | None = None
+    num_params: int | None = None
+
     def __init__(
         self,
         model: nn.Module,
@@ -410,6 +414,9 @@ class ClassificationRoutine(LightningModule):
         if hasattr(self.model, "need_bn_update"):
             self.model.bn_update(self.trainer.train_dataloader, device=self.device)
 
+        if self.num_params is None:
+            self.num_params = sum(p.numel() for p in self.model.parameters())
+
     def forward(self, inputs: Tensor, save_feats: bool = False) -> Tensor:
         """Forward pass of the inner model.
 
@@ -436,7 +443,7 @@ class ClassificationRoutine(LightningModule):
         """Perform a single training step based on the input tensors.
 
         Args:
-            batch (tuple[Tensor, Tensor]): the training data and their corresponding targets
+            batch (tuple[Tensor, Tensor]): the training data and their corresponding targets.
 
         Returns:
             Tensor: the loss corresponding to this training step.
@@ -505,6 +512,13 @@ class ClassificationRoutine(LightningModule):
                 distribution-shifted.
         """
         inputs, targets = batch
+
+        if self.test_num_flops is None:
+            flop_counter = FlopCounterMode(display=False)
+            with flop_counter:
+                self.forward(inputs)
+            self.test_num_flops = flop_counter.get_total_flops()
+
         # remove duplicates when doing TTA
         targets = targets[:: self.num_tta]
         logits = self.forward(inputs, save_feats=self.eval_grouping_loss)
@@ -587,7 +601,9 @@ class ClassificationRoutine(LightningModule):
     def on_test_epoch_end(self) -> None:
         """Compute, log, and plot the values of the collected metrics in `test_step`."""
         result_dict = self.test_cls_metrics.compute() | {
-            "test/cls/Entropy": self.test_id_entropy.compute()
+            "test/cls/Entropy": self.test_id_entropy.compute(),
+            "test/cplx/flops": self.test_num_flops,
+            "test/cplx/params": self.num_params,
         }
 
         if self.post_processing is not None:

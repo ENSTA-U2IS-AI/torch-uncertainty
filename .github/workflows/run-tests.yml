@@ -60,10 +60,20 @@ jobs:
           ~/.cache/torch-uncertainty/
         key: torch-uncertainty-${{ runner.os }}
 
-    - name: Install dependencies
+    - name: Install the minimal dependencies
       if: steps.changed-files-specific.outputs.only_changed != 'true'
       run: |
         python3 -m pip install torch torchvision
+        python3 -m pip install .
+        
+    - name: Check that torch-uncertainty can be imported
+      if: steps.changed-files-specific.outputs.only_changed != 'true'
+      run: |
+        python3 -c "import torch_uncertainty as tu"
+      
+    - name: Install the optional dependencies
+      if: steps.changed-files-specific.outputs.only_changed != 'true'
+      run: |
         python3 -m pip install .[all]
 
     - name: Check style & format

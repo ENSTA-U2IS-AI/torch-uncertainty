@@ -343,6 +343,16 @@ Regression
     SILog
     ThresholdAccuracy
 
+Calibration
+"""""""""""
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: class.rst
+
+    QuantileCalibrationError
+
 Segmentation
 ^^^^^^^^^^^^
 
