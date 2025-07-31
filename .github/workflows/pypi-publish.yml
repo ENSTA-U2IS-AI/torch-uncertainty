@@ -9,6 +9,8 @@ jobs:
     name: Publish on PyPI
     if: ${{ github.event.release.target_commitish == 'main'}}
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write  # IMPORTANT: mandatory for trusted publishing
     steps:
       - uses: actions/checkout@v4
 
