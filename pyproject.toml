@@ -32,25 +32,33 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
-    "timm",
-    "lightning[pytorch-extra]>=2.0",
+    "timm<2.0",
+    "lightning[pytorch-extra]>=2.0, <2.6",
     "torchvision>=0.16",
     "einops",
     "seaborn",
 ]
 
 [project.optional-dependencies]
-experiments = ["tensorboard", "huggingface-hub>=0.31", "safetensors"]
-image = ["kornia", "h5py", "opencv-python", "torch-uncertainty-assets"]
-tabular = ["pandas"]
-distribution = ["scipy"]
+experiments = ["tensorboard<3.0", 
+    "huggingface-hub>=0.31", 
+    "safetensors"
+]
+image = ["kornia", 
+    "h5py<4.0", 
+    "opencv-python<5.0", 
+    "torch-uncertainty-assets"
+]
+tabular = ["pandas<3.0"]
+distribution = ["scipy<2.0"]
 timeseries = ["tslearn"]
 dev = [
     "torch_uncertainty[experiments,image]",
     "ruff==0.12.5",
-    "pytest-cov",
-    "pre-commit",
-    "pre-commit-hooks",
+    "pytest<9.0",
+    "pytest-cov<7.0",
+    "pre-commit<5.0",
+    "pre-commit-hooks<6.0",
 ]
 docs = [
     "sphinx==7.4.7",
@@ -64,7 +72,7 @@ docs = [
 ]
 all = [
     "torch_uncertainty[dev,docs,tabular,distribution,timeseries]",
-    "scikit-learn",
+    "scikit-learn<2.0",
     "laplace-torch",
     "glest==0.0.1a1",
 ]
