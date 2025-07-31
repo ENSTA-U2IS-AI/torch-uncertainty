@@ -1,11 +1,18 @@
 import warnings
 from collections.abc import Callable
+from importlib import util
 
 import numpy as np
 import torch
 from einops import rearrange
 from torch.utils.data import Dataset
-from tslearn.datasets import UCR_UEA_datasets
+
+if util.find_spec("tslearn"):
+    from tslearn.datasets import UCR_UEA_datasets
+
+    tslearn_installed = True
+else:  # coverage: ignore
+    tslearn_installed = False
 
 
 class UCRUEADataset(Dataset):
@@ -32,6 +39,13 @@ class UCRUEADataset(Dataset):
         Raises:
             ValueError: If `split` is set to "ood" but `create_ood` is not set to True.
         """
+        if not tslearn_installed:  # coverage: ignore
+            raise ImportError(
+                "The tslearn library is not installed. Please install "
+                "torch_uncertainty with the timeseries option: "
+                """pip install -U "torch_uncertainty[timeseries]"."""
+            )
+
         if split == "ood" and not create_ood:
             raise ValueError(
                 "Cannot use split 'ood' without setting create_ood to True. "
