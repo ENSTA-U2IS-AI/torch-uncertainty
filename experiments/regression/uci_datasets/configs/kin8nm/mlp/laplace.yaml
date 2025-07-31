@@ -24,7 +24,7 @@ trainer:
         monitor: val/reg/NLL
         patience: 1000
         check_finite: true
-model:
+routine:
   output_dim: 1
   in_features: 8
   hidden_dims:

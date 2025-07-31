@@ -16,7 +16,7 @@ trainer:
     - class_path: lightning.pytorch.callbacks.LearningRateMonitor
       init_args:
         logging_interval: step
-model:
+routine:
   num_classes: 19
   loss: CrossEntropyLoss
   version: std
