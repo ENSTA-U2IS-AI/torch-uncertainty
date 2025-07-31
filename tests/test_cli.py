@@ -1,6 +1,7 @@
 import sys
 
-from torch_uncertainty.baselines.classification import ResNetBaseline
+from torch_uncertainty.models import resnet
+from torch_uncertainty.routines import ClassificationRoutine
 from torch_uncertainty.datamodules import CIFAR10DataModule
 from torch_uncertainty.utils.cli import TULightningCLI, TUSaveConfigCallback
 
@@ -12,14 +13,16 @@ class TestCLI:
         """Test CLI initialization."""
         sys.argv = [
             "file.py",
-            "--model.in_channels",
+            "--model.model.class_path",
+            "torch_uncertainty.models.resnet",
+            "--model.model.init_args.in_channels",
             "3",
+            "--model.model.init_args.num_classes",
+            "10",
+            "--model.model.init_args.arch",
+            "18",
             "--model.num_classes",
             "10",
-            "--model.version",
-            "std",
-            "--model.arch",
-            "18",
             "--model.loss.class_path",
             "torch.nn.CrossEntropyLoss",
             "--data.root",
@@ -30,7 +33,7 @@ class TestCLI:
             "--trainer.callbacks.monitor=val/cls/Acc",
             "--trainer.callbacks.mode=max",
         ]
-        cli = TULightningCLI(ResNetBaseline, CIFAR10DataModule, run=False)
+        cli = TULightningCLI(ClassificationRoutine, CIFAR10DataModule, run=False)
         assert cli.eval_after_fit_default is False
         assert cli.save_config_callback == TUSaveConfigCallback
         assert isinstance(cli.trainer.callbacks[0], TUSaveConfigCallback)
