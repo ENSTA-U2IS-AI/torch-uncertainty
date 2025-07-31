@@ -41,8 +41,8 @@ class UCRUEADataset(Dataset):
         """
         if not tslearn_installed:  # coverage: ignore
             raise ImportError(
-                "The tslearn library is not installed. Please install"
-                "torch_uncertainty with the timeseries option:"
+                "The tslearn library is not installed. Please install "
+                "torch_uncertainty with the timeseries option: "
                 """pip install -U "torch_uncertainty[timeseries]"."""
             )
 
