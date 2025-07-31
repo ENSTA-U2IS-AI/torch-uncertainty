@@ -145,6 +145,43 @@ class TULightningCLI(LightningCLI):
             **kwargs,
         )
 
+    def add_core_arguments_to_parser(self, parser: LightningArgumentParser) -> None:
+        """Adds arguments from the core classes to the parser."""
+        parser.add_lightning_class_args(self.trainer_class, "trainer")
+        trainer_defaults = {
+            "trainer." + k: v for k, v in self.trainer_defaults.items() if k != "callbacks"
+        }
+        parser.set_defaults(trainer_defaults)
+
+        parser.add_lightning_class_args(
+            self._model_class, "routine", subclass_mode=self.subclass_mode_model
+        )
+
+        if self.datamodule_class is not None:
+            parser.add_lightning_class_args(
+                self._datamodule_class, "data", subclass_mode=self.subclass_mode_data
+            )
+        else:
+            # this should not be required because the user might want to use the `LightningModule` dataloaders
+            parser.add_lightning_class_args(
+                self._datamodule_class,
+                "data",
+                subclass_mode=self.subclass_mode_data,
+                required=False,
+            )
+
+    def instantiate_classes(self) -> None:
+        """Instantiates the classes and sets their attributes."""
+        self.config_init = self.parser.instantiate_classes(self.config)
+        self.datamodule = self._get(self.config_init, "data")
+        self.routine = self._get(self.config_init, "routine")
+        self._add_configure_optimizers_method_to_model(self.subcommand)
+        self.trainer = self.instantiate_trainer()
+
+    @property
+    def model(self):
+        return self.routine
+
     def add_default_arguments_to_parser(self, parser: LightningArgumentParser) -> None:
         """Adds default arguments to the parser."""
         parser.add_argument(
