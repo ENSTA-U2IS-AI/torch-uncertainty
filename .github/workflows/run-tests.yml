@@ -69,7 +69,7 @@ jobs:
     - name: Check that torch-uncertainty can be imported
       if: steps.changed-files-specific.outputs.only_changed != 'true'
       run: |
-        python3 -c "import torch_uncertainty as tu"
+        python3 -c "import torch_uncertainty; from torch_uncertainty.datamodules import MNISTDataModule"
       
     - name: Install the optional dependencies
       if: steps.changed-files-specific.outputs.only_changed != 'true'
