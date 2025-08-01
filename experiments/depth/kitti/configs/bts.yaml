@@ -21,7 +21,7 @@ trainer:
     - class_path: lightning.pytorch.callbacks.LearningRateMonitor
       init_args:
         logging_interval: step
-model:
+routine:
   loss:
     class_path: torch_uncertainty.metrics.SILog
     init_args:
