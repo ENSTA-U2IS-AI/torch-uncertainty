@@ -16,11 +16,11 @@ class EMA(nn.Module):
 
         Args:
             model (nn.Module): The model to train.
-            momentum (float): The momentum of the moving average. The larger the momentum, 
+            momentum (float): The momentum of the moving average. The larger the momentum,
                 the more stable the model.
 
-        Note: 
-            The momentum value used is often large, such as 0.98.
+        Note:
+            The momentum value is often large, such as 0.9 or 0.95.
         """
         super().__init__()
         _ema_checks(momentum)
