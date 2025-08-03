@@ -28,7 +28,7 @@ trainer:
         monitor: val/cls/Acc
         patience: 1000
         check_finite: true
-model:
+routine:
   model:
     class_path: torch_uncertainty.models.classification.lenet
     init_args:

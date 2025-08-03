@@ -23,7 +23,7 @@ trainer:
         patience: 1000
         check_finite: true
   gradient_clip_val: 5
-model:
+routine:
   model:
     class_path: torch_uncertainty.models.wrappers.CheckpointCollector
     init_args:

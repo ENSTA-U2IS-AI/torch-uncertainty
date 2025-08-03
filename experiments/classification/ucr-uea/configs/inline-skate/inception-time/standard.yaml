@@ -13,7 +13,7 @@ trainer:
       default_hp_metric: false
   callbacks:
     - class_path: torch_uncertainty.callbacks.TUClsCheckpoint
-model:
+routine:
   model:
     class_path: torch_uncertainty.models.classification.inception_time
     init_args:
