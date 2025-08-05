@@ -1,4 +1,4 @@
-# ruff: noqa: E402, E703, D212, D415, T201
+# ruff: noqa: E402, D212, D415, T201
 """
 Training a LeNet with Monte Carlo Batch Normalization
 =====================================================

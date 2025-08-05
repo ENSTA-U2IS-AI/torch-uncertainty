@@ -132,6 +132,7 @@ class DummyRegressionBaseline:
                 loss=loss,
                 optim_recipe=optim_recipe(model),
                 dist_family=dist_family,
+                log_plots=True,
             )
         # baseline_type == "ensemble":
         model = deep_ensembles(
@@ -147,6 +148,7 @@ class DummyRegressionBaseline:
             optim_recipe=optim_recipe(model),
             format_batch_fn=RepeatTarget(2),
             dist_family=dist_family,
+            log_plots=True,
         )
 
 

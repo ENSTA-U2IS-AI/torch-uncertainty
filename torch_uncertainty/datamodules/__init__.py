@@ -14,6 +14,7 @@ from .classification import (
     TinyImageNetDataModule,
     UCIClassificationDataModule,
     Sst2DataModule,
+    UCRUEADataModule,
 )
 from .segmentation import CamVidDataModule, CityscapesDataModule, MUADDataModule
 from .uci_regression import UCIRegressionDataModule

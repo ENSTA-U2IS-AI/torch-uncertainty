@@ -151,6 +151,12 @@ class TURegCheckpoint(TUCheckpoint):
                 mode="min",
                 auto_insert_metric_name=False,
             )
+            self.callbacks["qce"] = ModelCheckpoint(
+                filename="epoch={epoch}-step={step}-val_qce={val/cal/QCE:.3f}",
+                monitor="val/cal/QCE",
+                mode="min",
+                auto_insert_metric_name=False,
+            )
 
     @property
     def best_model_path(self) -> str:

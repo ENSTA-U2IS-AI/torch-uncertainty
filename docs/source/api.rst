@@ -221,7 +221,6 @@ Classes
     BatchEnsemble
     CheckpointCollector
     EMA
-    MCDropout
     StochasticModel
     SWA
     SWAG
@@ -342,6 +341,16 @@ Regression
     MeanSquaredLogError
     SILog
     ThresholdAccuracy
+
+Calibration
+"""""""""""
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: class.rst
+
+    QuantileCalibrationError
 
 Segmentation
 ^^^^^^^^^^^^

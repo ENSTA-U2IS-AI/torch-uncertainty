@@ -4,7 +4,6 @@ from torch import nn
 
 
 class Identity(nn.Module):
-    # ruff: noqa: ARG002
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__()
 

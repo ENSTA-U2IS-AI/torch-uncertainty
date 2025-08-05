@@ -1,4 +1,4 @@
-# ruff: noqa: E402, E703, D212, D415, T201
+# ruff: noqa: E402, D212, D415, T201
 """
 Training a Bayesian Neural Network in 20 seconds
 ================================================
@@ -119,7 +119,7 @@ trainer.test(model=routine, datamodule=datamodule)
 #
 # Now that the model is trained, let's test it on MNIST.
 # Please note that we apply a reshape to the logits to determine the dimension corresponding to the ensemble
-# and to the batch. As for TorchUncertainty 0.5.1, the ensemble dimension is merged with the batch dimension
+# and to the batch. As for TorchUncertainty 0.5.2, the ensemble dimension is merged with the batch dimension
 # in this order (num_estimator x batch, classes).
 
 import matplotlib.pyplot as plt

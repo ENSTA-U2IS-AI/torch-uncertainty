@@ -35,7 +35,6 @@ import math as m
 
 import numpy as np
 import torch
-from kornia.augmentation import RandomSaltAndPepperNoise
 from PIL import Image
 
 if util.find_spec("scipy"):
@@ -56,6 +55,7 @@ from torchvision.transforms import (
 )
 
 if util.find_spec("kornia"):
+    from kornia.augmentation import RandomSaltAndPepperNoise
     from kornia.color import rgb_to_grayscale
     from kornia.filters import filter2d, gaussian_blur2d, motion_blur
 
@@ -584,7 +584,7 @@ class Frost(TUCorruption):
         super().__init__(severity)
         self.rng = np.random.default_rng(seed)
         self.mix = [(1, 0.4), (0.8, 0.6), (0.7, 0.7), (0.65, 0.7), (0.6, 0.75)][severity - 1]
-        self.frost_ds = FrostImages("./data", download=True, transform=ToTensor())
+        self.frost_ds = FrostImages(transform=ToTensor())
 
     def forward(self, img: Tensor) -> Tensor:
         if self.severity == 0:
