@@ -1,13 +1,18 @@
+from collections import OrderedDict
+from collections.abc import Callable
+from functools import partial
+from typing import NamedTuple
 
 import torch
 import torch.nn as nn
-
-import math
-from collections import OrderedDict
-from functools import partial
-from typing import Any, Callable, Dict, List, NamedTuple, Optional
-from torch_uncertainty.layers import PackedLayerNorm,PackedLinear,PackedMultiheadAttention,PackedConv2d
 from einops import rearrange
+
+from torch_uncertainty.layers import (
+    PackedConv2d,
+    PackedLayerNorm,
+    PackedLinear,
+    PackedMultiheadAttention,
+)
 
 
 class ConvStemConfig(NamedTuple):
@@ -17,16 +22,22 @@ class ConvStemConfig(NamedTuple):
     norm_layer: Callable[..., nn.Module] = nn.BatchNorm2d
     activation_layer: Callable[..., nn.Module] = nn.ReLU
 
+
 class MLPBlock(nn.Module):
     """Transformer MLP block."""
-    def __init__(self, in_dim: int, mlp_dim: int, dropout: float,num_estimators=1, alpha=1):
+
+    def __init__(self, in_dim: int, mlp_dim: int, dropout: float, num_estimators=1, alpha=1):
         super().__init__()
         self.layers = nn.Sequential(
-            PackedLinear(in_dim, mlp_dim,num_estimators=num_estimators,alpha=alpha,implementation="einsum"),
+            PackedLinear(
+                in_dim, mlp_dim, num_estimators=num_estimators, alpha=alpha, implementation="einsum"
+            ),
             nn.GELU(),
             nn.Dropout(dropout),
-            PackedLinear(mlp_dim, in_dim,num_estimators=num_estimators,alpha=alpha,implementation="einsum"),
-            nn.Dropout(dropout)
+            PackedLinear(
+                mlp_dim, in_dim, num_estimators=num_estimators, alpha=alpha, implementation="einsum"
+            ),
+            nn.Dropout(dropout),
         )
 
         for m in self.modules():
@@ -38,6 +49,7 @@ class MLPBlock(nn.Module):
     def forward(self, x):
         return self.layers(x)
 
+
 class EncoderBlock(nn.Module):
     """Transformer encoder block."""
 
@@ -48,24 +60,33 @@ class EncoderBlock(nn.Module):
         mlp_dim: int,
         dropout: float,
         attention_dropout: float,
-        norm_layer: Callable[..., torch.nn.Module] = partial(nn.LayerNorm, eps=1e-6),
-        num_estimators=1, 
+        norm_layer: Callable[..., torch.nn.Module] = partial(nn.LayerNorm, eps=1e-6),  # noqa: B008
+        num_estimators=1,
         alpha=1,
     ):
         super().__init__()
         self.num_heads = num_heads
 
         # Attention block
-        self.ln_1 = PackedLayerNorm(hidden_dim,num_estimators,alpha)
-        self.self_attention = PackedMultiheadAttention(hidden_dim, num_heads, dropout=attention_dropout,num_estimators=num_estimators,alpha=alpha,batch_first=True)
+        self.ln_1 = PackedLayerNorm(hidden_dim, num_estimators, alpha)
+        self.self_attention = PackedMultiheadAttention(
+            hidden_dim,
+            num_heads,
+            dropout=attention_dropout,
+            num_estimators=num_estimators,
+            alpha=alpha,
+            batch_first=True,
+        )
         self.dropout = nn.Dropout(dropout)
 
         # MLP block
-        self.ln_2 = PackedLayerNorm(hidden_dim,num_estimators,alpha)
-        self.mlp = MLPBlock(hidden_dim, mlp_dim, dropout,num_estimators, alpha)
+        self.ln_2 = PackedLayerNorm(hidden_dim, num_estimators, alpha)
+        self.mlp = MLPBlock(hidden_dim, mlp_dim, dropout, num_estimators, alpha)
 
-    def forward(self, input: torch.Tensor):
-        torch._assert(input.dim() == 3, f"Expected (batch_size, seq_length, hidden_dim) got {input.shape}")
+    def forward(self, input: torch.Tensor):  # noqa: A002
+        torch._assert(
+            input.dim() == 3, f"Expected (batch_size, seq_length, hidden_dim) got {input.shape}"
+        )
         x = self.ln_1(input)
         x, _ = self.self_attention(x, x, x, need_weights=False)
         x = self.dropout(x)
@@ -88,12 +109,14 @@ class Encoder(nn.Module):
         mlp_dim: int,
         dropout: float,
         attention_dropout: float,
-        norm_layer: Callable[..., torch.nn.Module] = partial(nn.LayerNorm, eps=1e-6),
-        num_estimators=1, 
+        norm_layer: Callable[..., torch.nn.Module] = partial(nn.LayerNorm, eps=1e-6),  # noqa: B008
+        num_estimators=1,
         alpha=1,
     ):
         super().__init__()
-        self.pos_embedding = nn.Parameter(torch.empty(1, seq_length, int(hidden_dim*alpha)).normal_(std=0.02))
+        self.pos_embedding = nn.Parameter(
+            torch.empty(1, seq_length, int(hidden_dim * alpha)).normal_(std=0.02)
+        )
         self.dropout = nn.Dropout(dropout)
         layers: OrderedDict[str, nn.Module] = OrderedDict()
         for i in range(num_layers):
@@ -104,19 +127,21 @@ class Encoder(nn.Module):
                 dropout,
                 attention_dropout,
                 norm_layer,
-                num_estimators, 
+                num_estimators,
                 alpha,
             )
         self.layers = nn.Sequential(layers)
-        self.ln = PackedLayerNorm(hidden_dim,num_estimators,alpha)
+        self.ln = PackedLayerNorm(hidden_dim, num_estimators, alpha)
 
-    def forward(self, input: torch.Tensor):
-        torch._assert(input.dim() == 3, f"Expected (batch_size, seq_length, hidden_dim) got {input.shape}")
-        input = input + self.pos_embedding
+    def forward(self, input: torch.Tensor):  # noqa: A002
+        torch._assert(
+            input.dim() == 3, f"Expected (batch_size, seq_length, hidden_dim) got {input.shape}"
+        )
+        input = input + self.pos_embedding  # noqa: A001
         return self.ln(self.layers(self.dropout(input)))
 
-class PackedVit(nn.Module):
 
+class PackedVit(nn.Module):
     def __init__(
         self,
         image_size: int,
@@ -128,10 +153,10 @@ class PackedVit(nn.Module):
         dropout: float = 0.0,
         attention_dropout: float = 0.0,
         num_classes: int = 1000,
-        representation_size: Optional[int] = None,
-        norm_layer: Callable[..., nn.Module] = partial(nn.LayerNorm, eps=1e-6),
-        conv_stem_configs: Optional[List[ConvStemConfig]] = None,
-        num_estimators=1, 
+        representation_size: int | None = None,
+        norm_layer: Callable[..., nn.Module] = partial(nn.LayerNorm, eps=1e-6),  # noqa: B008
+        conv_stem_configs: list[ConvStemConfig] | None = None,
+        num_estimators=1,
         alpha=1,
     ):
         super().__init__()
@@ -144,24 +169,39 @@ class PackedVit(nn.Module):
             seq_proj = nn.Sequential()
             prev_channels = 3
             for i, conv_stem_layer_config in enumerate(conv_stem_configs):
-                seq_proj.add_module(f"conv_{i}", nn.Conv2d(
-                    in_channels=prev_channels,
-                    out_channels=conv_stem_layer_config.out_channels,
-                    kernel_size=conv_stem_layer_config.kernel_size,
-                    stride=conv_stem_layer_config.stride
-                ))
-                seq_proj.add_module(f"bn_{i}", conv_stem_layer_config.norm_layer(conv_stem_layer_config.out_channels))
+                seq_proj.add_module(
+                    f"conv_{i}",
+                    nn.Conv2d(
+                        in_channels=prev_channels,
+                        out_channels=conv_stem_layer_config.out_channels,
+                        kernel_size=conv_stem_layer_config.kernel_size,
+                        stride=conv_stem_layer_config.stride,
+                    ),
+                )
+                seq_proj.add_module(
+                    f"bn_{i}",
+                    conv_stem_layer_config.norm_layer(conv_stem_layer_config.out_channels),
+                )
                 seq_proj.add_module(f"relu_{i}", conv_stem_layer_config.activation_layer())
                 prev_channels = conv_stem_layer_config.out_channels
-            seq_proj.add_module("conv_last", nn.Conv2d(in_channels=prev_channels, out_channels=hidden_dim, kernel_size=1))
+            seq_proj.add_module(
+                "conv_last",
+                nn.Conv2d(in_channels=prev_channels, out_channels=hidden_dim, kernel_size=1),
+            )
             self.conv_proj = seq_proj
         else:
             self.conv_proj = PackedConv2d(
-                in_channels=3, out_channels=hidden_dim, kernel_size=patch_size, stride=patch_size,first=True,num_estimators=num_estimators,alpha=alpha
+                in_channels=3,
+                out_channels=hidden_dim,
+                kernel_size=patch_size,
+                stride=patch_size,
+                first=True,
+                num_estimators=num_estimators,
+                alpha=alpha,
             )
 
         seq_length = (image_size // patch_size) ** 2
-        self.class_token = nn.Parameter(torch.zeros(1, 1, int(hidden_dim*alpha)))
+        self.class_token = nn.Parameter(torch.zeros(1, 1, int(hidden_dim * alpha)))
         seq_length += 1
 
         self.encoder = Encoder(
@@ -174,16 +214,36 @@ class PackedVit(nn.Module):
             attention_dropout,
             norm_layer,
             num_estimators,
-            alpha
+            alpha,
         )
 
         heads_layers: OrderedDict[str, nn.Module] = OrderedDict()
         if representation_size is None:
-            heads_layers["head"] = PackedLinear(hidden_dim, num_classes,num_estimators=num_estimators,alpha=alpha,implementation="einsum",last=True)
+            heads_layers["head"] = PackedLinear(
+                hidden_dim,
+                num_classes,
+                num_estimators=num_estimators,
+                alpha=alpha,
+                implementation="einsum",
+                last=True,
+            )
         else:
-            heads_layers["pre_logits"] = PackedLinear(hidden_dim, representation_size,num_estimators=num_estimators,alpha=alpha,implementation="einsum")
+            heads_layers["pre_logits"] = PackedLinear(
+                hidden_dim,
+                representation_size,
+                num_estimators=num_estimators,
+                alpha=alpha,
+                implementation="einsum",
+            )
             heads_layers["act"] = nn.Tanh()
-            heads_layers["head"] = PackedLinear(representation_size, num_classes,num_estimators=num_estimators,alpha=alpha,implementation="einsum",last=True)
+            heads_layers["head"] = PackedLinear(
+                representation_size,
+                num_classes,
+                num_estimators=num_estimators,
+                alpha=alpha,
+                implementation="einsum",
+                last=True,
+            )
 
         self.heads = nn.Sequential(heads_layers)
         self.alpha = alpha
@@ -192,14 +252,18 @@ class PackedVit(nn.Module):
     def _process_input(self, x: torch.Tensor) -> torch.Tensor:
         n, c, h, w = x.shape
         p = self.patch_size
-        torch._assert(h == self.image_size, f"Wrong image height! Expected {self.image_size} but got {h}!")
-        torch._assert(w == self.image_size, f"Wrong image width! Expected {self.image_size} but got {w}!")
+        torch._assert(
+            h == self.image_size, f"Wrong image height! Expected {self.image_size} but got {h}!"
+        )
+        torch._assert(
+            w == self.image_size, f"Wrong image width! Expected {self.image_size} but got {w}!"
+        )
         n_h = h // p
         n_w = w // p
         x = self.conv_proj(x)
         x = x.reshape(n, int(self.hidden_dim * self.alpha), n_h * n_w)
         x = x.permute(0, 2, 1)
-        return x
+        return x  # noqa: RET504
 
     def forward(self, x: torch.Tensor):
         x = self._process_input(x)
@@ -209,5 +273,5 @@ class PackedVit(nn.Module):
         x = self.encoder(x)
         x = x[:, 0]
         x = self.heads(x)
-        out = rearrange(x, 'b (m c) -> (m b) c', m=self.num_estimators)
-        return out
+        out = rearrange(x, "b (m c) -> (m b) c", m=self.num_estimators)
+        return out  # noqa: RET504

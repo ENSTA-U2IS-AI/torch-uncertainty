@@ -2,7 +2,7 @@
 Benchamrk bert with torch-uncertainty on SST2
 ===============================================
 
-This tutorial is about using torch-uncertainty to benchmark a bert model on the sst2 dataset with various robustness metricis 
+This tutorial is about using torch-uncertainty to benchmark a bert model on the sst2 dataset with various robustness metricis
 and apply easily a postprocess step (MC dropout) on top either of the single model or deep ensemble.
 
 Dataset
@@ -23,14 +23,17 @@ from collections import OrderedDict
 from huggingface_hub import hf_hub_download
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
-def load_tu_ckpt_into_hf(backbone, repo_id: str, filename: str, strict: bool = True, map_location="cpu"):
+
+def load_tu_ckpt_into_hf(
+    backbone, repo_id: str, filename: str, strict: bool = True, map_location="cpu"
+):
     ckpt_path = hf_hub_download(repo_id=repo_id, filename=filename)
 
     sd = torch.load(ckpt_path, map_location=map_location)
     sd = sd.get("state_dict", sd)
 
     def with_prefix(prefix):
-        return OrderedDict((k[len(prefix):], v) for k, v in sd.items() if k.startswith(prefix))
+        return OrderedDict((k[len(prefix) :], v) for k, v in sd.items() if k.startswith(prefix))
 
     for pref in ("model.backbone.", "model.", "backbone."):
         sub = with_prefix(pref)
@@ -46,8 +49,9 @@ class HFClassifier(nn.Module):
         self.backbone = AutoModelForSequenceClassification.from_pretrained(
             model_name, num_labels=num_labels, local_files_only=local_files_only
         )
+
     def forward(self, *args, **kwargs):
-        inputs = args[0] if (len(args)==1 and isinstance(args[0], dict)) else kwargs
+        inputs = args[0] if (len(args) == 1 and isinstance(args[0], dict)) else kwargs
         return self.backbone(**inputs).logits
 
 
@@ -71,13 +75,12 @@ from torch_uncertainty import TUTrainer
 from torch_uncertainty.datamodules import Sst2DataModule
 
 
-
 dm = Sst2DataModule(
     batch_size=64,
-    eval_ood=True,  
+    eval_ood=True,
 )
 
-trainer = TUTrainer(accelerator="gpu",enable_progress_bar=True,devices=1)
+trainer = TUTrainer(accelerator="gpu", enable_progress_bar=True, devices=1)
 
 routine = ClassificationRoutine(
     num_classes=2,
@@ -98,9 +101,9 @@ res = trainer.test(routine, datamodule=dm)
 from torch_uncertainty.models import mc_dropout
 
 mc_net = mc_dropout(
-    model=net1,               
-    num_estimators=8,       
-    on_batch=False,     
+    model=net1,
+    num_estimators=8,
+    on_batch=False,
 )
 
 routine = ClassificationRoutine(
@@ -137,6 +140,7 @@ load_tu_ckpt_into_hf(
 
 
 from torch_uncertainty.models import deep_ensembles
+
 deep = deep_ensembles([net1, net2, net3])
 
 

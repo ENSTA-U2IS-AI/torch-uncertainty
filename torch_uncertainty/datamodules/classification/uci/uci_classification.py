@@ -60,7 +60,6 @@ class UCIClassificationDataModule(TUDataModule):
         """Download the dataset."""
         self.dataset(root=self.root, download=True)
 
-    # ruff: noqa: ARG002
     def setup(self, stage: str | None = None) -> None:
         """Split the datasets into train, val, and test.
 

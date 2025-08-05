@@ -2,7 +2,7 @@
 ViT baslines with torch-uncertainty on imagenet1k
 ===============================================
 
-This tutorial is about using torch-uncertainty to benchmark a ViT model on imagenet1k with various robustness metricis 
+This tutorial is about using torch-uncertainty to benchmark a ViT model on imagenet1k with various robustness metricis
 and apply easily a postprocess step on top either of the single model or deep ensemble.
 
 Dataset
@@ -22,23 +22,18 @@ import torch.nn as nn
 from torchvision.models import vit_b_16
 from huggingface_hub import hf_hub_download
 
-def load_model_from_hf(repo_id: str,
-                       filename: str,
-                       device: str = "cpu",
-                       revision: str = "main"):
+
+def load_model_from_hf(repo_id: str, filename: str, device: str = "cpu", revision: str = "main"):
     ckpt_path = hf_hub_download(
-        repo_id=repo_id,
-        filename=filename,
-        repo_type="model",    
-        revision=revision
+        repo_id=repo_id, filename=filename, repo_type="model", revision=revision
     )
     ckpt = torch.load(ckpt_path, map_location="cpu")
     state = ckpt.get("state_dict", ckpt)
 
     new_state = {}
     for k, v in state.items():
-        name = k[len("model."):] if k.startswith("model.") else k
-        new_state[name] = v    
+        name = k[len("model.") :] if k.startswith("model.") else k
+        new_state[name] = v
 
     renamed = {}
     for k, v in new_state.items():
@@ -54,6 +49,7 @@ def load_model_from_hf(repo_id: str,
 
     model.eval().to(device)
     return model
+
 
 model1 = load_model_from_hf(
     repo_id="torch-uncertainty/vit-b-16-im1k",
@@ -81,10 +77,10 @@ dm = ImageNetDataModule(
     num_workers=4,
     pin_memory=True,
     interpolation="bicubic",
-    eval_ood=True,  
+    eval_ood=True,
 )
 
-trainer = TUTrainer(accelerator="gpu",enable_progress_bar=True,devices=1)
+trainer = TUTrainer(accelerator="gpu", enable_progress_bar=True, devices=1)
 
 routine = ClassificationRoutine(
     num_classes=1000,
@@ -117,7 +113,7 @@ routine = ClassificationRoutine(
     loss=nn.CrossEntropyLoss(),
     eval_ood=True,
 )
-res = trainer.test(routine,datamodule=dm)
+res = trainer.test(routine, datamodule=dm)
 
 
 # %%
@@ -139,7 +135,8 @@ model3 = load_model_from_hf(
 
 
 from torch_uncertainty.models import deep_ensembles
-deep = deep_ensembles([model1, model2,model3])
+
+deep = deep_ensembles([model1, model2, model3])
 
 
 routine = ClassificationRoutine(
@@ -166,7 +163,7 @@ routine = ClassificationRoutine(
     loss=nn.CrossEntropyLoss(),
     eval_ood=True,
 )
-res = trainer.test(routine,datamodule=dm)
+res = trainer.test(routine, datamodule=dm)
 
 # %%
 # 5. Load and benchmark packed ensemble of ViT model
@@ -185,7 +182,7 @@ def load_packedvit_from_hf(
     ckpt_path = hf_hub_download(
         repo_id=repo_id,
         filename=filename,
-        repo_type="model",   
+        repo_type="model",
         revision=revision,
     )
 
@@ -193,8 +190,7 @@ def load_packedvit_from_hf(
     state = ckpt.get("state_dict", ckpt)
 
     clean_state = {
-        k.replace("model.", "").replace("routine.model.", ""): v
-        for k, v in state.items()
+        k.replace("model.", "").replace("routine.model.", ""): v for k, v in state.items()
     }
 
     model = PackedVit(
@@ -214,6 +210,7 @@ def load_packedvit_from_hf(
 
     return model
 
+
 packed = load_packedvit_from_hf(
     repo_id="torch-uncertainty/vit-b-16-im1k",
     filename="packed.ckpt",
@@ -227,7 +224,6 @@ routine = ClassificationRoutine(
     eval_ood=True,
 )
 res = trainer.test(routine, datamodule=dm)
-
 
 
 # %%
@@ -246,4 +242,4 @@ routine = ClassificationRoutine(
     loss=nn.CrossEntropyLoss(),
     eval_ood=True,
 )
-res = trainer.test(routine,datamodule=dm)
+res = trainer.test(routine, datamodule=dm)

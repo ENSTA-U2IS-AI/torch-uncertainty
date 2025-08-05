@@ -40,7 +40,9 @@ dependencies = [
     "scikit-learn",
     "scipy",
     "faiss-cpu",
-    "statsmodels"
+    "statsmodels",
+    "datasets",
+    "transformers",
 ]
 
 [project.optional-dependencies]

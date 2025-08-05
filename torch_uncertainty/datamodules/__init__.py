@@ -11,9 +11,9 @@ from .classification import (
     MNISTDataModule,
     OnlineShoppersDataModule,
     SpamBaseDataModule,
+    Sst2DataModule,
     TinyImageNetDataModule,
     UCIClassificationDataModule,
-    Sst2DataModule,
 )
 from .segmentation import CamVidDataModule, CityscapesDataModule, MUADDataModule
 from .uci_regression import UCIRegressionDataModule
