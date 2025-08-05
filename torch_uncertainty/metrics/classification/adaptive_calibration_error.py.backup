@@ -149,15 +149,20 @@ class BinaryAdaptiveCalibrationError(Metric):
         np_conf_bin = conf_bin.cpu().numpy()
         np_prop_bin = prop_bin.cpu().numpy()
 
-        # For visualization purposes, use uniform bin boundaries to match the plotting expectations
-        # Note: This is just for visualization - the actual adaptive computation uses adaptive binning
-        bin_boundaries = torch.linspace(
-            0,
-            1,
-            self.n_bins + 1,
-            dtype=torch.float,
-            device=confidences.device,
-        )[:-1]  # Remove the last boundary to match the number of bins
+        # For adaptive binning, create bin boundaries that represent the adaptive splits
+        # We'll use quantiles to approximate the adaptive bin boundaries
+        sorted_confidences = torch.sort(confidences)[0]
+        n_samples = len(sorted_confidences)
+        
+        # Create bin boundaries based on quantiles
+        bin_boundaries = torch.zeros(self.n_bins + 1, device=confidences.device)
+        bin_boundaries[0] = 0.0
+        bin_boundaries[-1] = 1.0
+        
+        for i in range(1, self.n_bins):
+            quantile_idx = int(i * n_samples / self.n_bins)
+            if quantile_idx < n_samples:
+                bin_boundaries[i] = sorted_confidences[quantile_idx].item()
         
         np_bin_boundaries = bin_boundaries.cpu().numpy()
 
@@ -231,15 +236,20 @@ class MulticlassAdaptiveCalibrationError(Metric):
         np_conf_bin = conf_bin.cpu().numpy()
         np_prop_bin = prop_bin.cpu().numpy()
 
-        # For visualization purposes, use uniform bin boundaries to match the plotting expectations
-        # Note: This is just for visualization - the actual adaptive computation uses adaptive binning
-        bin_boundaries = torch.linspace(
-            0,
-            1,
-            self.n_bins + 1,
-            dtype=torch.float,
-            device=confidences.device,
-        )[:-1]  # Remove the last boundary to match the number of bins
+        # For adaptive binning, create bin boundaries that represent the adaptive splits
+        # We'll use quantiles to approximate the adaptive bin boundaries
+        sorted_confidences = torch.sort(confidences)[0]
+        n_samples = len(sorted_confidences)
+        
+        # Create bin boundaries based on quantiles
+        bin_boundaries = torch.zeros(self.n_bins + 1, device=confidences.device)
+        bin_boundaries[0] = 0.0
+        bin_boundaries[-1] = 1.0
+        
+        for i in range(1, self.n_bins):
+            quantile_idx = int(i * n_samples / self.n_bins)
+            if quantile_idx < n_samples:
+                bin_boundaries[i] = sorted_confidences[quantile_idx].item()
         
         np_bin_boundaries = bin_boundaries.cpu().numpy()
 
