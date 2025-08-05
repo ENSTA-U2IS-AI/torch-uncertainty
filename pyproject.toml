@@ -42,7 +42,7 @@ dependencies = [
     "faiss-cpu",
     "statsmodels",
     "transformers",
-    "pyarrow==21.0.0",
+    "pyarrow==20.0.0",
     "datasets",
 ]
 
