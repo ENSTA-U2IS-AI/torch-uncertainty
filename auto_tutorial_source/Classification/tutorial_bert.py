@@ -68,7 +68,7 @@ load_tu_ckpt_into_hf(
 # 2. Benchmark the single model
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 #
-# We define first the imagnet1k datamodule then run the classification routine as follows.
+# We define first the sst2 datamodule then run the classification routine as follows.
 
 from torch_uncertainty.routines import ClassificationRoutine
 from torch_uncertainty import TUTrainer
@@ -117,7 +117,7 @@ res = trainer.test(routine, datamodule=dm)
 
 
 # %%
-# 4. Load and benchmark a deep ensemble of ViT models
+# 4. Load and benchmark a deep ensemble of bert models
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 # Let us load the remaining models of the deep ensemble and then benchmark them easily with torch unceratinty.
 
