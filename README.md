@@ -105,6 +105,7 @@ Check out all our tutorials at [torch-uncertainty.github.io/auto_tutorials](http
 
 The following projects use TorchUncertainty:
 
+- _Towards Understanding and Quantifying Uncertainty for Text-to-Image Generation_ - [CVPR 2025](https://openaccess.thecvf.com/content/CVPR2025/papers/Franchi_Towards_Understanding_and_Quantifying_Uncertainty_for_Text-to-Image_Generation_CVPR_2025_paper.pdf)
 - _Towards Understanding Why Label Smoothing Degrades Selective Classification and How to Fix It_ - [ICLR 2025](https://arxiv.org/abs/2403.14715)
 - _A Symmetry-Aware Exploration of Bayesian Neural Network Posteriors_ - [ICLR 2024](https://arxiv.org/abs/2310.08287)
 

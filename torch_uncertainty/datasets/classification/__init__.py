@@ -19,3 +19,4 @@ from .uci import (
     OnlineShoppers,
     SpamBase,
 )
+from .ucr_uea import UCRUEADataset

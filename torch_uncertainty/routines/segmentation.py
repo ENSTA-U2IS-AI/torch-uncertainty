@@ -8,6 +8,7 @@ from lightning.pytorch.loggers import Logger
 from lightning.pytorch.utilities.types import STEP_OUTPUT
 from torch import Tensor, nn
 from torch.optim import Optimizer
+from torch.utils.flop_counter import FlopCounterMode
 from torchmetrics import Accuracy, MetricCollection
 from torchvision.transforms.v2 import ToDtype
 from torchvision.transforms.v2 import functional as F
@@ -37,10 +38,13 @@ from torch_uncertainty.ood_criteria import (
 )
 from torch_uncertainty.post_processing import PostProcessing
 from torch_uncertainty.utils import csv_writer
-from torch_uncertainty.utils.plotting import show
+from torch_uncertainty.utils.plotting import show_segmentation_predictions
 
 
 class SegmentationRoutine(LightningModule):
+    test_num_flops: int | None = None
+    num_params: int | None = None
+
     def __init__(
         self,
         model: nn.Module,
@@ -236,6 +240,9 @@ class SegmentationRoutine(LightningModule):
         if hasattr(self.model, "need_bn_update"):
             self.model.bn_update(self.trainer.train_dataloader, device=self.device)
 
+        if self.num_params is None:
+            self.num_params = sum(p.numel() for p in self.model.parameters())
+
     def training_step(self, batch: tuple[Tensor, Tensor]) -> STEP_OUTPUT:
         """Perform a single training step based on the input tensors.
 
@@ -297,6 +304,13 @@ class SegmentationRoutine(LightningModule):
             dataloader_idx (int, optional): the index of the dataloader. Defaults to ``0``.
         """
         img, targets = batch
+
+        if self.test_num_flops is None:
+            flop_counter = FlopCounterMode(display=False)
+            with flop_counter:
+                self.forward(img)
+            self.test_num_flops = flop_counter.get_total_flops()
+
         logits = self.forward(img)
         targets = F.resize(
             targets,
@@ -367,6 +381,10 @@ class SegmentationRoutine(LightningModule):
         """Compute, log, and plot the values of the collected metrics in `test_step`."""
         result_dict = self.test_seg_metrics.compute()
         result_dict |= self.test_sbsmpl_seg_metrics.compute()
+        result_dict |= {
+            "test/cplx/flops": self.test_num_flops,
+            "test/cplx/params": self.num_params,
+        }
         if self.eval_ood:
             result_dict |= self.test_ood_metrics.compute()
 
@@ -421,7 +439,7 @@ class SegmentationRoutine(LightningModule):
 
             self.logger.experiment.add_figure(
                 f"Segmentation results/{i}",
-                show(pred_mask, gt_mask),
+                show_segmentation_predictions(pred_mask, gt_mask),
             )
 
     def subsample(self, pred: Tensor, target: Tensor) -> tuple[Tensor, Tensor]:

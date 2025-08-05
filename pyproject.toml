@@ -4,11 +4,11 @@ build-backend = "flit_core.buildapi"
 
 [project]
 name = "torch_uncertainty"
-version = "0.5.1"
+version = "0.7.0.post1"
 authors = [
-    { name = "ENSTA U2IS", email = "olivier.laurent@ensta-paris.fr" },
+    { name = "ENSTA U2IS AI", email = "olivier.laurent@ensta.fr" },
     { name = "Adrien Lafage", email = "adrienlafage@outlook.com" },
-    { name = "Olivier Laurent", email = "olivier.laurent@ensta-paris.fr" },
+    { name = "Olivier Laurent", email = "olivier.ar.laurent@gmail.com" },
 ]
 description = "Uncertainty quantification library in PyTorch"
 readme = "README.md"
@@ -47,11 +47,13 @@ dependencies = [
 
 [project.optional-dependencies]
 experiments = ["tensorboard", "huggingface-hub>=0.31", "safetensors"]
-image = ["kornia", "h5py", "opencv-python"]
+image = ["kornia", "h5py", "opencv-python", "torch-uncertainty-assets"]
 tabular = ["pandas"]
+distribution = ["scipy"]
+timeseries = ["tslearn"]
 dev = [
     "torch_uncertainty[experiments,image]",
-    "ruff==0.11.10",
+    "ruff==0.12.5",
     "pytest-cov",
     "pre-commit",
     "pre-commit-hooks",
@@ -67,7 +69,8 @@ docs = [
     "sphinxcontrib-sass",
 ]
 all = [
-    "torch_uncertainty[dev,docs,tabular]",
+    "torch_uncertainty[dev,docs,tabular,distribution,timeseries]",
+    "scikit-learn",
     "laplace-torch",
     "glest==0.0.1a1",
 ]

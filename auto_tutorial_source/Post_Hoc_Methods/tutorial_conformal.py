@@ -1,4 +1,4 @@
-# ruff: noqa: E402, E703, D212, D415, T201
+# ruff: noqa: D212, D415, T201
 """
 Conformal Prediction on CIFAR-10 with TorchUncertainty
 ======================================================

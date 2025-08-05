@@ -1,22 +1,23 @@
+import warnings
 from pathlib import Path
 
-import torch
 from einops import rearrange
 from lightning.pytorch import LightningModule
+from lightning.pytorch.loggers import Logger
 from lightning.pytorch.utilities.types import STEP_OUTPUT
 from torch import Tensor, nn
 from torch.distributions import (
-    Categorical,
     Distribution,
     Independent,
-    MixtureSameFamily,
 )
 from torch.optim import Optimizer
+from torch.utils.flop_counter import FlopCounterMode
 from torchmetrics import MeanAbsoluteError, MeanSquaredError, MetricCollection
 
 from torch_uncertainty.losses import ELBOLoss
 from torch_uncertainty.metrics import (
     DistributionNLL,
+    QuantileCalibrationError,
 )
 from torch_uncertainty.models import (
     EPOCH_UPDATE_MODEL,
@@ -30,6 +31,9 @@ from torch_uncertainty.utils.distributions import (
 
 
 class RegressionRoutine(LightningModule):
+    test_num_flops: int | None = None
+    num_params: int | None = None
+
     def __init__(
         self,
         model: nn.Module,
@@ -41,6 +45,8 @@ class RegressionRoutine(LightningModule):
         optim_recipe: dict | Optimizer | None = None,
         eval_shift: bool = False,
         format_batch_fn: nn.Module | None = None,
+        log_plots: bool = False,
+        num_bins_cal_err: int = 15,
         save_in_csv: bool = False,
         csv_filename: str = "results.csv",
     ) -> None:
@@ -57,6 +63,10 @@ class RegressionRoutine(LightningModule):
             optim_recipe (dict or torch.optim.Optimizer, optional): The optimizer and optionally the scheduler to use. Defaults to ``None``.
             eval_shift (bool, optional): Indicates whether to evaluate the Distribution shift performance. Defaults to ``False``.
             format_batch_fn (torch.nn.Module, optional): The function to format the batch. Defaults to ``None``.
+            log_plots (bool, optional): Indicates whether to log figures in the logger.
+                Defaults to ``False``.
+            num_bins_cal_err (int, optional): Number of bins to compute calibration
+                error metrics. Defaults to ``15``.
             save_in_csv (bool, optional): Save the results in csv. Defaults to ``False``.
             csv_filename (str, optional): Name of the csv file. Defaults to ``"results.csv"``. Note that this is only used if
                 :attr:`save_in_csv` is ``True``.
@@ -88,13 +98,19 @@ class RegressionRoutine(LightningModule):
         self.output_dim = output_dim
         self.loss = loss
         self.is_ensemble = is_ensemble
+        self.log_plots = log_plots
         self.save_in_csv = save_in_csv
         self.csv_filename = csv_filename
         self.needs_epoch_update = isinstance(model, EPOCH_UPDATE_MODEL)
         self.needs_step_update = isinstance(model, STEP_UPDATE_MODEL)
+        self.num_bins_cal_err = num_bins_cal_err
 
         if format_batch_fn is None:
             format_batch_fn = nn.Identity()
+
+        self.is_elbo = isinstance(self.loss, ELBOLoss)
+        if self.is_elbo:
+            self.loss.set_model(self.model)
 
         self.optim_recipe = optim_recipe
         self.format_batch_fn = format_batch_fn
@@ -109,14 +125,21 @@ class RegressionRoutine(LightningModule):
                 "reg/MSE": MeanSquaredError(squared=True),
                 "reg/RMSE": MeanSquaredError(squared=False),
             },
-            compute_groups=True,
+            compute_groups=[["reg/MAE"], ["reg/MSE", "reg/RMSE"]],
         )
 
         self.val_metrics = reg_metrics.clone(prefix="val/")
         self.test_metrics = reg_metrics.clone(prefix="test/")
 
         if self.probabilistic:
-            reg_prob_metrics = MetricCollection({"reg/NLL": DistributionNLL(reduction="mean")})
+            reg_prob_metrics = MetricCollection(
+                {
+                    "reg/NLL": DistributionNLL(reduction="mean"),
+                    "cal/QCE": QuantileCalibrationError(
+                        num_bins=self.num_bins_cal_err,
+                    ),
+                }
+            )
             self.val_prob_metrics = reg_prob_metrics.clone(prefix="val/")
             self.test_prob_metrics = reg_prob_metrics.clone(prefix="test/")
 
@@ -151,6 +174,9 @@ class RegressionRoutine(LightningModule):
         """
         if hasattr(self.model, "need_bn_update"):
             self.model.bn_update(self.trainer.train_dataloader, device=self.device)
+
+        if self.num_params is None:
+            self.num_params = sum(p.numel() for p in self.model.parameters())
 
     def forward(self, inputs: Tensor) -> Tensor | dict[str, Tensor]:
         """Forward pass of the routine.
@@ -231,14 +257,10 @@ class RegressionRoutine(LightningModule):
 
         if self.probabilistic:
             dist_params = {
-                k: rearrange(v, "(m b) c -> b m c", b=batch_size) for k, v in preds.items()
+                k: rearrange(v, "(m b) c -> b m c", b=batch_size).mean(1) for k, v in preds.items()
             }
-            # Adding the Independent wrapper to the distribution to create a MixtureSameFamily.
-            # As required by the torch.distributions API, the last dimension is the event dimension.
-            comp = Independent(get_dist_class(self.dist_family)(**dist_params), 1)
-            mix = Categorical(torch.ones(comp.batch_shape, device=self.device))
-            dist = MixtureSameFamily(mix, comp)
-            preds = get_dist_estimate(comp, self.dist_estimate).mean(1)
+            dist = Independent(get_dist_class(self.dist_family)(**dist_params), 1)
+            preds = get_dist_estimate(dist, self.dist_estimate)
             return preds, dist
 
         preds = rearrange(preds, "(m b) c -> b m c", b=batch_size)
@@ -283,6 +305,13 @@ class RegressionRoutine(LightningModule):
             )
 
         inputs, targets = batch
+
+        if self.test_num_flops is None:
+            flop_counter = FlopCounterMode(display=False)
+            with flop_counter:
+                self.forward(inputs)
+            self.test_num_flops = flop_counter.get_total_flops()
+
         if self.one_dim_regression:
             targets = targets.unsqueeze(-1)
         preds, dist = self.evaluation_forward(inputs)
@@ -304,16 +333,42 @@ class RegressionRoutine(LightningModule):
         )
         self.val_metrics.reset()
         if self.probabilistic:
-            self.log_dict(self.val_prob_metrics.compute(), sync_dist=True)
+            prob_dict = self.val_prob_metrics.compute()
+            self.log_dict(prob_dict, logger=True, sync_dist=True)
+            self.log(
+                "NLL",
+                prob_dict["val/reg/NLL"],
+                prog_bar=True,
+                logger=False,
+                sync_dist=True,
+            )
             self.val_prob_metrics.reset()
 
     def on_test_epoch_end(self) -> None:
         """Compute and log the values of the collected metrics in `test_step`."""
-        result_dict = self.test_metrics.compute()
+        result_dict = self.test_metrics.compute() | {
+            "test/cplx/flops": self.test_num_flops,
+            "test/cplx/params": self.num_params,
+        }
         self.test_metrics.reset()
 
         if self.probabilistic:
             result_dict |= self.test_prob_metrics.compute()
+
+            if isinstance(self.logger, Logger) and self.log_plots:
+                try:
+                    self.logger.experiment.add_figure(
+                        "Calibration/Reliability diagram",
+                        self.test_prob_metrics["cal/QCE"].plot()[0],
+                    )
+                except NotImplementedError:
+                    warnings.warn(
+                        "The distribution does not support the `icdf()` method. "
+                        "This metric will therefore return `nan` values. "
+                        "Please use a distribution that implements `icdf()`.",
+                        UserWarning,
+                        stacklevel=2,
+                    )
 
         self.log_dict(result_dict, sync_dist=True)
 

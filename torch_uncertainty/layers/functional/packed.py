@@ -53,7 +53,7 @@ def packed_linear(
         inputs = rearrange(inputs, "... d -> (...) d 1")
         weight = rearrange(weight, "m i j -> (m i) j 1")
         out = F.conv1d(inputs, weight, bias, stride=1, padding=0, dilation=1, groups=num_groups)
-        return out.reshape(input_size[:-1] + (-1,))
+        return out.reshape((*input_size[:-1], -1))
     raise ValueError(f"Unknown implementation: {implementation}")
 
 

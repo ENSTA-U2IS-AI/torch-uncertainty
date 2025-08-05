@@ -23,11 +23,13 @@ This folder contains the code to train models on the UCI regression datasets. Th
 **General command to train a model:**
 
 ```bash
+cd experiments/regression/uci_datasets
 python mlp.py fit --config configs/{dataset}/{network}/{dist_family}.yaml
 ```
 
 *Example:*
 
 ```bash
+cd experiments/regression/uci_datasets
 python mlp.py fit --config configs/kinn8nm/mlp/laplace.yaml
 ```

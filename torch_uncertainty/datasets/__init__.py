@@ -21,6 +21,7 @@ from .classification import (
     SpamBase,
     TinyImageNet,
     TinyImageNetC,
+    UCRUEADataset,
 )
 from .fractals import Fractals
 from .frost import FrostImages

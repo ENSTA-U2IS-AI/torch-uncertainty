@@ -30,7 +30,7 @@ class DummyClassificationDataset(Dataset):
 
     def __init__(
         self,
-        root: Path,
+        root: Path = "",
         train: bool = True,
         transform: Callable[..., Any] | None = None,
         target_transform: Callable[..., Any] | None = None,
