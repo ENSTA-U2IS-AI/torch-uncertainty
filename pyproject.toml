@@ -37,6 +37,13 @@ dependencies = [
     "torchvision>=0.16",
     "einops",
     "seaborn",
+    "scikit-learn",
+    "scipy",
+    "faiss-cpu",
+    "statsmodels",
+    "transformers",
+    "pyarrow==20.0.0",
+    "datasets",
 ]
 
 [project.optional-dependencies]

@@ -33,7 +33,6 @@ class TestCIFAR100DataModule:
         assert isinstance(dm.train_transform.transforms[2], Cutout)
 
         dm.dataset = DummyClassificationDataset
-        dm.ood_dataset = DummyClassificationDataset
         dm.shift_dataset = DummyClassificationDataset
 
         dm.prepare_data()
@@ -43,7 +42,6 @@ class TestCIFAR100DataModule:
         dm.val_dataloader()
         dm.test_dataloader()
 
-        dm.eval_ood = True
         dm.eval_shift = True
         dm.prepare_data()
         dm.setup("test")
@@ -58,7 +56,6 @@ class TestCIFAR100DataModule:
             basic_augment=False,
         )
         dm.dataset = DummyClassificationDataset
-        dm.ood_dataset = DummyClassificationDataset
         dm.shift_dataset = DummyClassificationDataset
         dm.setup()
         dm.setup("test")
