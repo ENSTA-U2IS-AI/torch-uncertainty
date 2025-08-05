@@ -41,8 +41,9 @@ dependencies = [
     "scipy",
     "faiss-cpu",
     "statsmodels",
-    "datasets",
     "transformers",
+    "pyarrow==21.0.0",
+    "datasets",
 ]
 
 [project.optional-dependencies]
