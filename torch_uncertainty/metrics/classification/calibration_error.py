@@ -311,7 +311,7 @@ class CalibrationError:
             for details. Our version of the metric is a wrapper around the original metric providing a plotting functionality.
         """
         if kwargs.get("n_bins") is not None:
-            raise ValueError("`n_bins` does not exist, use `num_bins`.")
+            raise ValueError("`n_bins` does not exist in TorchUncertainty, use `num_bins`.")
         if adaptive:
             return AdaptiveCalibrationError(
                 task=task,

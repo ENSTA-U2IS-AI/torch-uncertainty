@@ -8,7 +8,7 @@ from torch_uncertainty.layers import BatchLinear, BayesLinear, MaskedLinear, Pac
 from torch_uncertainty.layers.distributions import get_dist_linear_layer
 from torch_uncertainty.models import StochasticModel
 
-__all__ = ["bayesian_mlp", "mlp", "packed_mlp"]
+__all__ = ["batched_mlp", "bayesian_mlp", "mimo_mlp", "mlp", "packed_mlp"]
 
 
 class _MLP(nn.Module):

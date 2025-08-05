@@ -6,6 +6,7 @@ from torch import Tensor
 from torch.distributions import (
     Cauchy,
     Distribution,
+    Gamma,
     Laplace,
     Normal,
     StudentT,
@@ -34,14 +35,16 @@ def get_dist_class(dist_family: str) -> type[Distribution]:
         return Normal
     if dist_family == "laplace":
         return Laplace
-    if dist_family == "nig":
-        return NormalInverseGamma
     if dist_family == "cauchy":
         return Cauchy
+    if dist_family == "gamma":
+        return Gamma
     if dist_family == "student":
         return TUStudentT
+    if dist_family == "nig":
+        return NormalInverseGamma
     raise NotImplementedError(
-        f"{dist_family} distribution is not supported. Raise an issue if needed."
+        f"{dist_family} distribution is currently not supported. Raise an issue if needed."
     )
 
 
@@ -60,7 +63,7 @@ def get_dist_estimate(dist: Distribution, dist_estimate: str) -> Tensor:
     if dist_estimate == "mode":
         return dist.mode
     raise NotImplementedError(
-        f"{dist_estimate} estimate is not supported.Raise an issue if needed."
+        f"{dist_estimate} estimate is not supported. Raise an issue if needed."
     )
 
 
@@ -68,7 +71,7 @@ class TUStudentT(StudentT):
     def cdf(self, value: Tensor) -> Tensor:
         if not scipy_installed:  # coverage: ignore
             raise ImportError(
-                "Please install torch_uncertainty with the distribution option:"
+                "Please install torch_uncertainty with the distribution option: "
                 """pip install -U "torch_uncertainty[distribution]"."""
             )
         if self._validate_args:  # coverage: ignore
@@ -82,7 +85,7 @@ class TUStudentT(StudentT):
     def icdf(self, value: Tensor) -> Tensor:
         if not scipy_installed:  # coverage: ignore
             raise ImportError(
-                "Please install torch_uncertainty with the distribution option:"
+                "Please install torch_uncertainty with the distribution option: "
                 """pip install -U "torch_uncertainty[distribution]"."""
             )
 

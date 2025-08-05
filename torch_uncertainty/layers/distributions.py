@@ -12,6 +12,8 @@ def get_dist_linear_layer(dist_family: str) -> type[nn.Module]:
         return LaplaceLinear
     if dist_family == "cauchy":
         return CauchyLinear
+    if dist_family == "gamma":
+        return GammaLinear
     if dist_family == "student":
         return StudentTLinear
     if dist_family == "nig":
@@ -28,6 +30,8 @@ def get_dist_conv_layer(dist_family: str) -> type[nn.Module]:
         return LaplaceConvNd
     if dist_family == "cauchy":
         return CauchyConvNd
+    if dist_family == "gamma":
+        return GammaConvNd
     if dist_family == "student":
         return StudentTConvNd
     if dist_family == "nig":
@@ -300,6 +304,84 @@ class CauchyConvNd(_LocScaleConvNd):
           - ``"scale"``: The standard deviation of the Cauchy distribution of shape
             :math:`(\ast, C_{out}, \ast)`.
     """
+
+
+class GammaLinear(_ExpandOutputLinear):
+    """Gamma distribution Linear Density Layer.
+
+    Args:
+        base_layer (type[nn.Module]): The base layer class.
+        event_dim (int): The number of event dimensions.
+        min_scale (float): The minimal value of the scale parameter.
+        **layer_args: Additional arguments for the base layer.
+
+    Note:
+        You should avoid null targets when using the Gamma distribution.
+    """
+
+    def __init__(
+        self,
+        base_layer: type[nn.Module],
+        event_dim: int,
+        min_concentration: float = 1e-6,
+        min_rate: float = 1e-6,
+        **layer_args,
+    ) -> None:
+        super().__init__(
+            base_layer=base_layer,
+            event_dim=event_dim,
+            num_params=2,
+            **layer_args,
+        )
+        self.min_concentration = min_concentration
+        self.min_rate = min_rate
+
+    def forward(self, x: Tensor) -> dict[str, Tensor]:
+        x = super().forward(x)
+        concentration = torch.clamp(
+            F.softplus(x[..., : self.event_dim]), min=self.min_concentration
+        )
+        rate = torch.clamp(
+            F.softplus(x[..., self.event_dim : 2 * self.event_dim]), min=self.min_rate
+        )
+        return {"concentration": concentration, "rate": rate}
+
+
+class GammaConvNd(_ExpandOutputConvNd):
+    """Gamma distribution Convolutional Density Layer.
+
+    Args:
+        base_layer (type[nn.Module]): The base layer class.
+        event_dim (int): The number of event dimensions.
+        min_scale (float): The minimal value of the scale parameter.
+        **layer_args: Additional arguments for the base layer.
+
+    Note:
+        You should avoid null targets when using the Gamma distribution.
+    """
+
+    def __init__(
+        self,
+        base_layer: type[nn.Module],
+        event_dim: int,
+        min_scale: float = 1e-6,
+        **layer_args,
+    ) -> None:
+        super().__init__(
+            base_layer=base_layer,
+            event_dim=event_dim,
+            num_params=2,
+            **layer_args,
+        )
+        self.min_scale = min_scale
+
+    def forward(self, x: Tensor) -> dict[str, Tensor]:
+        x = super().forward(x)
+        loc = x[:, : self.event_dim]
+        scale = torch.clamp(
+            F.softplus(x[:, self.event_dim : 2 * self.event_dim]), min=self.min_scale
+        )
+        return {"loc": loc, "scale": scale}
 
 
 class StudentTLinear(_ExpandOutputLinear):

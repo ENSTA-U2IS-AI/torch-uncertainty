@@ -200,8 +200,8 @@ class RegressionRoutine(LightningModule):
                     pred = {k: v.squeeze(-1) for k, v in pred.items()}
             else:
                 raise TypeError(
-                    "If the model is probabilistic, the output must be a dictionary ",
-                    "of PyTorch distributions.",
+                    "The model is probabilistic: the output must be a dictionary ",
+                    "of PyTorch distribution parameters.",
                 )
         else:
             if self.one_dim_regression:
@@ -333,7 +333,15 @@ class RegressionRoutine(LightningModule):
         )
         self.val_metrics.reset()
         if self.probabilistic:
-            self.log_dict(self.val_prob_metrics.compute(), sync_dist=True)
+            prob_dict = self.val_prob_metrics.compute()
+            self.log_dict(prob_dict, logger=True, sync_dist=True)
+            self.log(
+                "NLL",
+                prob_dict["val/reg/NLL"],
+                prog_bar=True,
+                logger=False,
+                sync_dist=True,
+            )
             self.val_prob_metrics.reset()
 
     def on_test_epoch_end(self) -> None:
