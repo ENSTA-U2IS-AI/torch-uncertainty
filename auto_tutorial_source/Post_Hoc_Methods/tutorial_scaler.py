@@ -101,6 +101,7 @@ print(f"ECE before scaling - {ece.compute():.3%}.")
 # We also compute and plot the top-label calibration figure. We see that the
 # model is not well calibrated.
 fig, ax = ece.plot()
+fig.tight_layout()
 fig.show()
 
 # %%
@@ -143,6 +144,7 @@ print(
 # that the model is now better calibrated. If the temperature is greater than 1,
 # the final model is less confident than before.
 fig, ax = ece.plot()
+fig.tight_layout()
 fig.show()
 
 # %%
