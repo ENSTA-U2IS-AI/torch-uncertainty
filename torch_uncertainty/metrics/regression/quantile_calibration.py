@@ -8,7 +8,6 @@ from torchmetrics.functional.classification.calibration_error import (
     _binning_bucketize,
 )
 from torchmetrics.utilities.data import dim_zero_cat
-from torchmetrics.utilities.plot import _PLOT_OUT_TYPE
 
 from torch_uncertainty.metrics.classification.calibration_error import reliability_chart
 
@@ -18,23 +17,34 @@ class QuantileCalibrationError(BinaryCalibrationError):
     higher_is_better = False
     full_state_update = False
     not_implemented_error = False
+    empirical_quantiles = False
 
-    def __init__(self, num_bins=15, norm="l1", ignore_index=None, validate_args=True, **kwargs):
+    def __init__(self, num_bins=15, norm="l1", allow_empirical_quantiles: bool = True, num_empirical_quantile_samples: int = int(1e5), ignore_index=None, validate_args=True, **kwargs) -> None:
         """Quantile Calibration Error for regression tasks.
 
         This metric computes the calibration error of quantile predictions
-        against the ground truth values.
+        against the ground truth values. This metric assumes the symmetry of both the predicted distribution
+        and the actual results.
+
+        TODO: change the plot, allow for non-symmetric distributions
 
         Args:
-            num_bins (int, optional): Number of bins to use for calibration. Defaults to `15`.
-            norm (str, optional): Norm to use for calibration error computation. Defaults to `"l1"`.
-            ignore_index (int, optional): Index to ignore during calibration. Defaults to `None`.
-            validate_args (bool, optional): Whether to validate the input arguments. Defaults to `True`.
+            num_bins (int): Number of bins to use for calibration. Defaults to `15`.
+            norm (str): Norm to use for calibration error computation. Defaults to `"l1"`.
+            allow_empirical_quantiles (bool): If the distribution has no icdf, compute samples and 
+                estimate the quantiles. This will lead to approximations, especially for tail quantiles.
+                Defaults to ``True``.
+            num_empirical_quantile_samples (int): Number of samples to use when computing the quantiles 
+                empirically. The larger the better, especially for tail quantiles. Defaults to ``int(1e5)``.
+            ignore_index (int): Index to ignore during calibration. Defaults to `None`.
+            validate_args (bool): Whether to validate the input arguments. Defaults to `True`.
             kwargs: Additional keyword arguments, see `Advanced metric settings
               <https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metric-kwargs>`_.
         """
         super().__init__(num_bins, norm, ignore_index, validate_args, **kwargs)
         self.conf_intervals = torch.linspace(0.05, 0.95, self.n_bins + 1)
+        self.allow_empirical_quantiles = allow_empirical_quantiles
+        self.num_empirical_quantile_samples = num_empirical_quantile_samples
 
     def update(
         self,
@@ -58,30 +68,41 @@ class QuantileCalibrationError(BinaryCalibrationError):
 
         try:
             iid_dist.icdf((1 - self.conf_intervals[0]) / 2)
-
         except NotImplementedError:
-            warnings.warn(
-                "The distribution does not support the `icdf()` method. "
-                "This metric will therefore return `nan` values. "
-                "Please use a distribution that implements `icdf()`.",
-                UserWarning,
-                stacklevel=2,
-            )
-            self.not_implemented_error = True
-            return
+            if self.allow_empirical_quantiles:
+                self.empirical_quantiles = True
+                warnings.warn(
+                    "Empirical quantiles will be used for computing the QCE. Proceed with great caution.",
+                    stacklevel=2,
+                )
+            else:
+                warnings.warn(
+                    "The distribution does not support the `icdf()` method. "
+                    "This metric will therefore return `nan` values. "
+                    "Please use a distribution that implements `icdf()`, or allow empirical quantiles.",
+                    UserWarning,
+                    stacklevel=2,
+                )
+                self.not_implemented_error = True
+                return
 
         confidences = self.conf_intervals.expand(*dist.batch_shape, -1)
         correct_mask = torch.empty_like(confidences)
 
+        if self.empirical_quantiles:
+            iid_dist_samples = iid_dist.sample((self.num_empirical_quantile_samples,)).squeeze(-1)
+        
+        target_log_prob = dist.log_prob(target)
         for i, conf in enumerate(self.conf_intervals):
-            b_min = iid_dist.icdf((1 - conf) / 2)
+            if not self.empirical_quantiles:
+                b_min = iid_dist.icdf((1 - conf) / 2)
+            else:
+                b_min = iid_dist_samples.quantile((1 - conf.to(iid_dist_samples.device)) / 2, dim=0)
             bound_log_prob = iid_dist.log_prob(b_min)
-            target_log_prob = dist.log_prob(target)
             if reduce_event_dims:
                 bound_log_prob = bound_log_prob.sum(
                     dim=list(range(-dist.reinterpreted_batch_ndims, 0))
                 )
-
             correct_mask[..., i] = (bound_log_prob <= target_log_prob).float()
 
         if padding_mask is not None:
@@ -103,7 +124,7 @@ class QuantileCalibrationError(BinaryCalibrationError):
             return torch.tensor(float("nan"))
         return super().compute()
 
-    def plot(self) -> _PLOT_OUT_TYPE:
+    def plot(self) -> tuple[object, object]:
         """Plot the quantile calibration reliability diagram.
 
         Raises:
