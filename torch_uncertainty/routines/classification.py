@@ -826,7 +826,6 @@ class ClassificationRoutine(LightningModule):
         id_metrics = self.test_cls_metrics.compute()
         self.log_dict(id_metrics)
 
-
         if self.post_processing is not None:
             result_dict |= self.post_cls_metrics.compute()
 
