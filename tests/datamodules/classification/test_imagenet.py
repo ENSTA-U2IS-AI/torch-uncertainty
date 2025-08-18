@@ -10,7 +10,7 @@ from torch_uncertainty.datamodules import ImageNetDataModule
 class TestImageNetDataModule:
     """Testing the ImageNetDataModule datamodule class."""
 
-    def test_imagenet(self) -> None:
+    def test_imagenet(self, monkeypatch) -> None:
         dm = ImageNetDataModule(
             root="./data/",
             batch_size=128,
@@ -29,6 +29,18 @@ class TestImageNetDataModule:
         assert isinstance(dm.train_transform, nn.Identity)
         assert isinstance(dm.test_transform, nn.Identity)
         dm.dataset = DummyClassificationDataset
+
+        fake_root = "./data/"
+        mod_name = ImageNetDataModule.__module__
+
+        def _fake_download_and_extract(name, dest_root):  # noqa: ARG001
+            return str(fake_root)
+
+        monkeypatch.setattr(
+            f"{mod_name}.download_and_extract_hf_dataset",
+            _fake_download_and_extract,
+            raising=True,
+        )
 
         dm.prepare_data()
         dm.setup()
