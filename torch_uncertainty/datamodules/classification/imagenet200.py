@@ -19,9 +19,9 @@ from torch_uncertainty.datasets.classification import (
     ImageNetR,
 )
 from torch_uncertainty.datasets.ood.utils import (
-    SPLITS_BASE,
     FileListDataset,
     download_and_extract_hf_dataset,
+    download_and_extract_splits_from_hf,
     get_ood_datasets,
 )
 from torch_uncertainty.utils import (
@@ -219,14 +219,14 @@ class ImageNet200DataModule(TUDataModule):
     def setup(self, stage: Literal["fit", "test"] | None = None) -> None:
         if stage not in (None, "fit", "test"):
             raise ValueError(f"Stage {stage} is not supported.")
-
+        splits_base = download_and_extract_splits_from_hf(root=self.root)
         if stage == "fit":
             if self.test_alt is not None:
                 raise ValueError("The test_alt argument is not supported for training.")
 
             # To change for more flexible splits later
             self.data_dir = download_and_extract_hf_dataset("imagenet1k", self.root)
-            imagenet1k_splits = SPLITS_BASE / "imagenet200"
+            imagenet1k_splits = splits_base / "imagenet200"
             val_txt = imagenet1k_splits / "val_imagenet200.txt"
             self.val = FileListDataset(
                 root=self.data_dir,
@@ -247,7 +247,7 @@ class ImageNet200DataModule(TUDataModule):
                 self.data_dir = getattr(
                     self, "data_dir", download_and_extract_hf_dataset("imagenet1k", self.root)
                 )
-                imagenet1k_splits = SPLITS_BASE / "imagenet200"
+                imagenet1k_splits = splits_base / "imagenet200"
                 test_txt = imagenet1k_splits / "test_imagenet200.txt"
                 self.test = FileListDataset(
                     root=self.data_dir,

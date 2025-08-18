@@ -9,7 +9,6 @@ from huggingface_hub import hf_hub_download
 from PIL import Image
 from torch.utils.data import Dataset
 
-SPLITS_BASE = Path(__file__).parent / "splits"
 logger = logging.getLogger(__name__)
 
 
@@ -294,14 +293,20 @@ def get_ood_datasets(
 ) -> tuple[FileListDataset, dict[str, FileListDataset], dict[str, FileListDataset]]:
     """Ensure all OOD splits are downloaded and extracted via HF_REPO_INFO."""
     root = Path(root)
-    splits_base = Path(__file__).parent
+    splits_base = download_and_extract_splits_from_hf(root=Path(root))
+
+    def _resolve_txt(rel_txt: str) -> Path:
+        rel = rel_txt.lstrip("/")
+        rel = rel.removeprefix("splits/")
+        return splits_base / rel
+
     cfg = OOD_SPLITS.get(dataset_id)
     if cfg is None:
         raise KeyError(f"No OOD_SPLITS for {dataset_id}")
 
     def build(name: str, rel_txt: str):
         data_dir = download_and_extract_hf_dataset(name, root)
-        txt = splits_base / rel_txt
+        txt = _resolve_txt(rel_txt)
         return FileListDataset(root=data_dir, list_file=txt, transform=transform, name=name)
 
     test_name, test_txt = next(iter(cfg["test"].items()))
@@ -314,3 +319,68 @@ def get_ood_datasets(
     far_oods = {n: build(n, p) for n, p in cfg["far"].items()}
 
     return test_ood, val_ood, near_oods, far_oods
+
+
+def download_and_extract_splits_from_hf(
+    root: str | Path,
+    repo_id="torch-uncertainty/ood-datasets-splits",
+    zip_filename="splits.zip",
+) -> Path:
+    """Download a zip that contains the 'splits/' tree from HF and extract it once.
+    Returns the path to the extracted 'splits' directory (or the extracted root if it already is 'splits/').
+    """
+    root = Path(root)
+    root.mkdir(parents=True, exist_ok=True)
+
+    target_dir = root / Path(zip_filename).stem  # e.g. <root>/splits
+
+    def _is_valid_splits_dir(p: Path) -> bool:
+        # valid if it has a 'splits/' subdir OR known subfolders OR any .txt files inside
+        if (p / "splits").exists():
+            return True
+        for sub in ("cifar10", "cifar100", "imagenet1k", "imagenet200"):
+            if (p / sub).exists():
+                return True
+        return any(p.rglob("*.txt"))
+
+    # EARLY RETURN ONLY IF VALID
+    if target_dir.exists() and _is_valid_splits_dir(target_dir):
+        return (target_dir / "splits") if (target_dir / "splits").exists() else target_dir
+
+    # (Re)create and fetch
+    target_dir.mkdir(parents=True, exist_ok=True)
+    logger.info("📥 Downloading splits from HF Hub (%s/%s)…", repo_id, zip_filename)
+    zip_path = hf_hub_download(
+        repo_id=repo_id,
+        filename=zip_filename,
+        repo_type="dataset",  # change to "model" if hosted as a model
+    )
+
+    def _extract_zip(zp: Path, out: Path):
+        with zipfile.ZipFile(zp, "r") as zf:
+            _safe_extract_zip(zf, out)
+
+    try:
+        _extract_zip(Path(zip_path), target_dir)
+    except (zipfile.BadZipFile, OSError) as e:
+        logger.warning("Splits zip extract failed (%s), re-downloading and retrying…", e)
+        Path(zip_path).unlink(missing_ok=True)
+        zip_path = hf_hub_download(
+            repo_id=repo_id,
+            filename=zip_filename,
+            repo_type="dataset",
+            force_download=True,
+        )
+        _extract_zip(Path(zip_path), target_dir)
+
+    # Choose the actual splits dir to return
+    final_dir = (target_dir / "splits") if (target_dir / "splits").exists() else target_dir
+
+    # VALIDATE POST-EXTRACT
+    if not _is_valid_splits_dir(final_dir):
+        raise FileNotFoundError(
+            f"No split files found under {final_dir}. "
+            f"Check the structure of {repo_id}:{zip_filename}."
+        )
+
+    return final_dir
