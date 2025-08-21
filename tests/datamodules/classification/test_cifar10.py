@@ -89,6 +89,8 @@ class TestCIFAR10DataModule:
         dm.get_val_set()
         dm.get_test_set()
         dm.get_shift_set()
+        idx = dm.get_indices()
+        assert idx["shift"] == [1]
 
         with pytest.raises(ValueError):
             dm = CIFAR10DataModule(
