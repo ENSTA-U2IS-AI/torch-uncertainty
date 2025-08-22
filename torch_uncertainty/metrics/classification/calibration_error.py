@@ -15,7 +15,6 @@ from torchmetrics.functional.classification.calibration_error import (
 from torchmetrics.metric import Metric
 from torchmetrics.utilities.data import dim_zero_cat
 from torchmetrics.utilities.enums import ClassificationTaskNoMultilabel
-from torchmetrics.utilities.plot import _PLOT_OUT_TYPE
 
 from .adaptive_calibration_error import AdaptiveCalibrationError
 
@@ -143,7 +142,7 @@ def reliability_chart(
     title: str = "Reliability Diagram",
     figsize: tuple[int, int] = (6, 6),
     dpi: int = 150,
-) -> _PLOT_OUT_TYPE:
+) -> tuple[object, object]:
     """Builds Reliability Diagram
     `Source <https://github.com/hollance/reliability-diagrams>`_.
     """
@@ -177,7 +176,7 @@ def reliability_chart(
     return fig, ax
 
 
-def custom_plot(self) -> _PLOT_OUT_TYPE:
+def custom_plot(self) -> tuple[object, object]:
     confidences = dim_zero_cat(self.confidences)
     accuracies = dim_zero_cat(self.accuracies)
 
@@ -311,7 +310,7 @@ class CalibrationError:
             for details. Our version of the metric is a wrapper around the original metric providing a plotting functionality.
         """
         if kwargs.get("n_bins") is not None:
-            raise ValueError("`n_bins` does not exist, use `num_bins`.")
+            raise ValueError("`n_bins` does not exist in TorchUncertainty, use `num_bins`.")
         if adaptive:
             return AdaptiveCalibrationError(
                 task=task,

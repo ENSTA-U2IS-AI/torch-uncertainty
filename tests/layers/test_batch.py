@@ -1,7 +1,12 @@
 import pytest
 import torch
 
-from torch_uncertainty.layers.batch_ensemble import BatchConv1d, BatchConv2d, BatchConvTranspose2d, BatchLinear
+from torch_uncertainty.layers.batch_ensemble import (
+    BatchConv1d,
+    BatchConv2d,
+    BatchConvTranspose2d,
+    BatchLinear,
+)
 
 
 @pytest.fixture
@@ -61,6 +66,7 @@ class TestBatchConv1d:
 
         layer = BatchConv1d(6, 2, num_estimators=1, kernel_size=1, bias=False)
         assert layer(oned_input).shape == torch.Size([5, 2, 3])
+
 
 class TestBatchConv2d:
     """Testing the BatchConv2d layer class."""
