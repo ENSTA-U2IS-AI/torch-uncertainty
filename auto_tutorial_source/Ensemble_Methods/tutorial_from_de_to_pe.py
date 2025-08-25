@@ -3,7 +3,11 @@
 Improved Ensemble parameter-efficiency with Packed-Ensembles
 ============================================================
 
-*This tutorial is adapted from a notebook part of a lecture given at the `Helmholtz AI Conference <https://haicon24.de/>`_ by Sebastian Starke, Peter Steinbach, Gianni Franchi, and Olivier Laurent.*
+*This tutorial is adapted from a notebook part of a lecture given at the* |conference|_ *by Sebastian Starke, Peter Steinbach, Gianni Franchi, and Olivier Laurent.*
+
+.. _conference: https://haicon24.de/
+
+.. |conference| replace:: *Helmholtz AI Conference*
 
 In this notebook will work on the MNIST dataset that was introduced by Corinna Cortes, Christopher J.C. Burges, and later modified by Yann LeCun in the foundational paper:
 
@@ -12,6 +16,7 @@ In this notebook will work on the MNIST dataset that was introduced by Corinna C
 The MNIST dataset consists of 70 000 images of handwritten digits from 0 to 9. The images are grayscale and 28x28-pixel sized. The task is to classify the images into their respective digits. The dataset can be automatically downloaded using the `torchvision` library.
 
 In this notebook, we will train a model and an ensemble on this task and evaluate their performance. The performance will consist in the following metrics:
+
 - Accuracy: the proportion of correctly classified images,
 - Brier score: a measure of the quality of the predicted probabilities,
 - Calibration error: a measure of the calibration of the predicted probabilities,
@@ -174,13 +179,16 @@ perf = trainer.test(routine, dataloaders=[test_dl, ood_dl])
 # This table provides a lot of information:
 #
 # **OOD Detection: Binary Classification MNIST vs. FashionMNIST**
+#
 # - AUPR/AUROC/FPR95: Measures the quality of the OOD detection. The higher the better for AUPR and AUROC, the lower the better for FPR95.
 #
 # **Calibration: Reliability of the Predictions**
+#
 # - ECE: Expected Calibration Error. The lower the better.
 # - aECE: Adaptive Expected Calibration Error. The lower the better. (~More precise version of the ECE)
 #
 # **Classification Performance**
+#
 # - Accuracy: The ratio of correctly classified images. The higher the better.
 # - Brier: The quality of the predicted probabilities (Mean Squared Error of the predictions vs. ground-truth). The lower the better.
 # - Negative Log-Likelihood: The value of the loss on the test set. The lower the better.
@@ -236,7 +244,7 @@ ens_perf = trainer.test(ens_routine, dataloaders=[test_dl, ood_dl])
 # We need to multiply the learning rate by 2 to account for the fact that we have 2 models
 # in the ensemble and that we average the loss over all the predictions.
 #
-# #### Downloading the pre-trained models
+# **Downloading the pre-trained models**
 #
 # We have put the pre-trained models on Hugging Face that you can download with the utility function
 # "hf_hub_download" imported just below. These models are trained for 75 epochs and are therefore not
@@ -393,9 +401,11 @@ packed_perf = trainer.test(packed_routine, dataloaders=[test_dl, ood_dl])
 # In constrast to calibration, the values of the confidence scores are not important, only the order of the scores. *Ideally, the best model will order all the correct predictions first, and all the incorrect predictions last.* In this case, there will be a threshold so that all the predictions above the threshold are correct, and all the predictions below the threshold are incorrect.
 #
 # In TorchUncertainty, we look at 3 different metrics for selective classification:
+#
 # - **AURC**: The area under the Risk (% of errors) vs. Coverage (% of classified samples) curve. This curve expresses how the risk of the model evolves as we increase the coverage (the proportion of predictions that are above the selection threshold). This metric will be minimized by a model able to perfectly separate the correct and incorrect predictions.
 #
 # The following metrics are computed at a fixed risk and coverage level and that have practical interests. The idea of these metrics is that you can set the selection threshold to achieve a certain level of risk and coverage, as required by the technical constraints of your application:
+#
 # - **Coverage at 5% Risk**: The proportion of predictions that are above the selection threshold when it is set for the risk to egal 5%. Set the risk threshold to your application constraints. The higher the better.
 # - **Risk at 80% Coverage**: The proportion of errors when the coverage is set to 80%. Set the coverage threshold to your application constraints. The lower the better.
 #
