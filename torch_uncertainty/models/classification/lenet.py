@@ -139,7 +139,7 @@ def batchensemble_lenet(
         dropout_rate=dropout_rate,
     )
     return BatchEnsemble(
-        model=model,
+        core_model=model,
         num_estimators=num_estimators,
         repeat_training_inputs=repeat_training_inputs,
         convert_layers=True,

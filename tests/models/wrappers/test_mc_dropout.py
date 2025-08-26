@@ -135,7 +135,7 @@ class TestMCDropout:
             mc_dropout(model, num_estimators=5, task="regression")
 
         with pytest.raises(ValueError, match="`num_estimators` must be strictly positive"):
-            mc_dropout(model=model, num_estimators=-1, last_layer=True, on_batch=True)
+            mc_dropout(core_model=model, num_estimators=-1, last_layer=True, on_batch=True)
 
         dropout_model = mc_dropout(model, 5)
         with pytest.raises(TypeError, match="Training mode is expected to be boolean"):

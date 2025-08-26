@@ -6,7 +6,7 @@ from torch import Tensor, nn
 class EMA(nn.Module):
     def __init__(
         self,
-        model: nn.Module,
+        core_model: nn.Module,
         momentum: float,
     ) -> None:
         """Exponential Moving Average (EMA).
@@ -18,13 +18,13 @@ class EMA(nn.Module):
         The EMA model is regularly updated with the inner-model and used at evaluation time.
 
         Args:
-            model (nn.Module): The model to train and ensemble.
+            core_model (nn.Module): The model to train and ensemble.
             momentum (float): The momentum of the moving average.
         """
         super().__init__()
         _ema_checks(momentum)
-        self.core_model = model
-        self.ema_model = copy.deepcopy(model)
+        self.core_model = core_model
+        self.ema_model = copy.deepcopy(core_model)
         self.momentum = momentum
         self.remainder = 1 - momentum
 

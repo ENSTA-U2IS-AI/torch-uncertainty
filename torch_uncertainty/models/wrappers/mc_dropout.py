@@ -9,7 +9,7 @@ from torch.nn.modules.dropout import _DropoutNd
 class _MCDropout(nn.Module):
     def __init__(
         self,
-        model: nn.Module,
+        core_model: nn.Module,
         num_estimators: int,
         last_layer: bool,
         on_batch: bool,
@@ -17,7 +17,7 @@ class _MCDropout(nn.Module):
         """MC Dropout wrapper for a model containing nn.Dropout modules.
 
         Args:
-            model (nn.Module): model to wrap
+            core_model (nn.Module): model to wrap
             num_estimators (int): number of estimators to use during the evaluation
             last_layer (bool): whether to apply dropout to the last layer only.
             on_batch (bool): Perform the MC-Dropout on the batch-size. Otherwise in a for loop. Useful when constrained in memory.
@@ -35,7 +35,7 @@ class _MCDropout(nn.Module):
         filtered_modules = list(
             filter(
                 lambda m: isinstance(m, _DropoutNd),
-                model.modules(),
+                core_model.modules(),
             )
         )
         if last_layer:
@@ -44,7 +44,7 @@ class _MCDropout(nn.Module):
         _dropout_checks(filtered_modules, num_estimators)
         self.last_layer = last_layer
         self.on_batch = on_batch
-        self.core_model = model
+        self.core_model = core_model
         self.num_estimators = num_estimators
         self.filtered_modules = filtered_modules
 
@@ -95,14 +95,17 @@ class _MCDropout(nn.Module):
 class _RegMCDropout(_MCDropout):
     def __init__(
         self,
-        model: nn.Module,
+        core_model: nn.Module,
         num_estimators: int,
         last_layer: bool,
         on_batch: bool,
         probabilistic: bool,
     ):
         super().__init__(
-            model=model, num_estimators=num_estimators, last_layer=last_layer, on_batch=on_batch
+            core_model=core_model,
+            num_estimators=num_estimators,
+            last_layer=last_layer,
+            on_batch=on_batch,
         )
         self.probabilistic = probabilistic
 
@@ -142,7 +145,7 @@ class _RegMCDropout(_MCDropout):
 
 
 def mc_dropout(
-    model: nn.Module,
+    core_model: nn.Module,
     num_estimators: int,
     last_layer: bool = False,
     on_batch: bool = True,
@@ -154,7 +157,7 @@ def mc_dropout(
     """MC Dropout wrapper for a model.
 
     Args:
-        model (nn.Module): model to wrap
+        core_model (nn.Module): model to wrap
         num_estimators (int): number of estimators to use last_layer (bool, optional): whether to apply dropout to the last layer only. Defaults to ``False``.
         on_batch (bool): Increase the batch_size to perform MC-Dropout. Otherwise in a for loop to reduce memory footprint. Defaults to ``True``.
         last_layer (bool, optional): whether to apply dropout to the last layer only. Defaults to ``False``.
@@ -167,7 +170,7 @@ def mc_dropout(
     match task:
         case "classification" | "segmentation":
             return _MCDropout(
-                model=model,
+                core_model=core_model,
                 num_estimators=num_estimators,
                 last_layer=last_layer,
                 on_batch=on_batch,
@@ -176,7 +179,7 @@ def mc_dropout(
             if probabilistic is None:
                 raise ValueError("`probabilistic` must be set for regression tasks.")
             return _RegMCDropout(
-                model=model,
+                core_model=core_model,
                 num_estimators=num_estimators,
                 last_layer=last_layer,
                 on_batch=on_batch,

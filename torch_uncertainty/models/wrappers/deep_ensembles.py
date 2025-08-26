@@ -9,13 +9,13 @@ from torch import Tensor, nn
 class _DeepEnsembles(nn.Module):
     def __init__(
         self,
-        models: list[nn.Module],
+        core_models: list[nn.Module],
         store_on_cpu: bool = False,
     ) -> None:
         """Create a classification deep ensembles from a list of models."""
         super().__init__()
-        self.core_models = nn.ModuleList(models)
-        self.num_estimators = len(models)
+        self.core_models = nn.ModuleList(core_models)
+        self.num_estimators = len(core_models)
         self.store_on_cpu = store_on_cpu
 
     def forward(self, x: Tensor) -> Tensor:
@@ -52,11 +52,11 @@ class _RegDeepEnsembles(_DeepEnsembles):
     def __init__(
         self,
         probabilistic: bool,
-        models: list[nn.Module],
+        core_models: list[nn.Module],
         store_on_cpu: bool = False,
     ) -> None:
         """Create a regression deep ensembles from a list of models."""
-        super().__init__(models=models, store_on_cpu=store_on_cpu)
+        super().__init__(core_models=core_models, store_on_cpu=store_on_cpu)
         self.probabilistic = probabilistic
 
     def forward(self, x: Tensor) -> Tensor | dict[str, Tensor]:
@@ -87,7 +87,7 @@ class _RegDeepEnsembles(_DeepEnsembles):
 
 
 def deep_ensembles(
-    models: list[nn.Module] | nn.Module,
+    core_models: list[nn.Module] | nn.Module,
     num_estimators: int | None = None,
     task: Literal[
         "classification", "regression", "segmentation", "pixel_regression"
@@ -101,12 +101,12 @@ def deep_ensembles(
     """Build a Deep Ensembles out of the original models.
 
     Args:
-        models (list[nn.Module] | nn.Module): The model to be ensembled.
+        core_models (list[nn.Module] | nn.Module): The model to be ensembled.
         num_estimators (int | None): The number of estimators in the ensemble.
         task (Literal[``"classification"``, ``"regression"``, ``"segmentation"``, ``"pixel_regression"``]): The model task. Defaults to ``"classification"``.
         probabilistic (bool): Whether the regression model is probabilistic.
         reset_model_parameters (bool): Whether to reset the model parameters
-            when :attr:models is a module or a list of length 1. Defaults to ``True``.
+            when :attr:core_models is a module or a list of length 1. Defaults to ``True``.
         store_on_cpu (bool): Whether to store the models on CPU. Defaults to ``False``.
             This is useful for large models that do not fit in GPU memory. Only one
             model will be stored on GPU at a time during forward. The rest will be stored on CPU.
@@ -140,26 +140,28 @@ def deep_ensembles(
             <https://arxiv.org/abs/1612.01474>`_.
 
     """
-    if isinstance(models, list) and len(models) == 0:
+    if isinstance(core_models, list) and len(core_models) == 0:
         raise ValueError("Models must not be an empty list.")
-    if (isinstance(models, list) and len(models) == 1) or isinstance(models, nn.Module):
+    if (isinstance(core_models, list) and len(core_models) == 1) or isinstance(
+        core_models, nn.Module
+    ):
         if num_estimators is None:
             raise ValueError("if models is a module, num_estimators must be specified.")
         if num_estimators < 2:
             raise ValueError(f"num_estimators must be at least 2. Got {num_estimators}.")
 
-        if isinstance(models, list):
-            models = models[0]
+        if isinstance(core_models, list):
+            core_models = core_models[0]
 
-        models = [copy.deepcopy(models) for _ in range(num_estimators)]
+        core_models = [copy.deepcopy(core_models) for _ in range(num_estimators)]
 
         if reset_model_parameters:
-            for model in models:
+            for model in core_models:
                 for layer in model.modules():
                     if hasattr(layer, "reset_parameters"):
                         layer.reset_parameters()
 
-    elif isinstance(models, list) and len(models) > 1 and num_estimators is not None:
+    elif isinstance(core_models, list) and len(core_models) > 1 and num_estimators is not None:
         raise ValueError("num_estimators must be None if you provided a non-singleton list.")
 
     if ckpt_paths is not None:  # coverage: ignore
@@ -175,11 +177,11 @@ def deep_ensembles(
             if len(ckpt_paths) == 0:
                 raise ValueError("No checkpoint files found in the directory.")
 
-        if len(models) != len(ckpt_paths):
+        if len(core_models) != len(ckpt_paths):
             raise ValueError(
                 "The number of models and the number of checkpoint paths must be the same."
             )
-        for model, ckpt_path in zip(models, ckpt_paths, strict=True):
+        for model, ckpt_path in zip(core_models, ckpt_paths, strict=True):
             if isinstance(ckpt_path, str | Path):
                 loaded_data = torch.load(ckpt_path, map_location="cpu")
                 if "state_dict" in loaded_data:
@@ -198,12 +200,12 @@ def deep_ensembles(
 
     match task:
         case "classification" | "segmentation":
-            return _DeepEnsembles(models=models, store_on_cpu=store_on_cpu)
+            return _DeepEnsembles(core_models=core_models, store_on_cpu=store_on_cpu)
         case "regression" | "pixel_regression":
             if probabilistic is None:
                 raise ValueError("probabilistic must be specified for regression models.")
             return _RegDeepEnsembles(
-                probabilistic=probabilistic, models=models, store_on_cpu=store_on_cpu
+                probabilistic=probabilistic, core_models=core_models, store_on_cpu=store_on_cpu
             )
         case _:
             raise ValueError(f"Unknown task: {task}.")
