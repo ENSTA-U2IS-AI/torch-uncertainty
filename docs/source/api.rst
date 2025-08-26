@@ -159,7 +159,6 @@ Classes
     BatchEnsemble
     CheckpointCollector
     EMA
-    MCDropout
     StochasticModel
     SWA
     SWAG
