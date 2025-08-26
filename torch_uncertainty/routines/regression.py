@@ -200,8 +200,8 @@ class RegressionRoutine(LightningModule):
                     pred = {k: v.squeeze(-1) for k, v in pred.items()}
             else:
                 raise TypeError(
-                    "If the model is probabilistic, the output must be a dictionary ",
-                    "of PyTorch distributions.",
+                    "The model is probabilistic: the output must be a dictionary ",
+                    "of PyTorch distribution parameters.",
                 )
         else:
             if self.one_dim_regression:
