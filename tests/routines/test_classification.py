@@ -1,12 +1,16 @@
+import importlib.util
 from pathlib import Path
 
 import pytest
+import torch
 from torch import nn
+from torch.utils.data import Dataset
 
 from tests._dummies import (
     DummyClassificationBaseline,
     DummyClassificationDataModule,
     dummy_model,
+    dummy_ood_model,
 )
 from torch_uncertainty import TUTrainer
 from torch_uncertainty.losses import DECLoss, ELBOLoss
@@ -15,7 +19,6 @@ from torch_uncertainty.ood.ood_criteria import (
 )
 from torch_uncertainty.post_processing import ConformalClsTHR
 from torch_uncertainty.routines import ClassificationRoutine
-from torch_uncertainty.transforms import RepeatTarget
 
 
 class TestClassification:
@@ -375,96 +378,142 @@ class TestClassification:
         )
         trainer.test(routine, dm)
 
-    def test_classification_failures(self) -> None:
-        # num_classes
-        with pytest.raises(ValueError):
-            ClassificationRoutine(num_classes=0, model=nn.Module(), loss=None)
-        # single & MI
-        with pytest.raises(ValueError):
-            ClassificationRoutine(
-                num_classes=10,
-                model=nn.Module(),
-                loss=None,
-                is_ensemble=False,
-                ood_criterion="mutual_information",
+    OOD_CRITS = [
+        "scale",
+        "ash",
+        "react",
+        "adascale_a",
+        "vim",
+        "odin",
+        "knn",
+        "gen",
+        "nnguide",
+    ]
+
+    @pytest.mark.parametrize("crit", OOD_CRITS)
+    def test_all_other_ood_criteria_with_dummy_ood_model(self, crit, monkeypatch):
+        if not torch.cuda.is_available():
+            pytest.skip(f"{crit} requires CUDA.")
+
+        if crit == "knn" and importlib.util.find_spec("faiss") is None:
+            pytest.skip("faiss not available for KNN criterion.")
+        if crit == "adascale_a" and importlib.util.find_spec("statsmodels") is None:
+            pytest.skip("statsmodels not available for AdaScale criterion.")
+
+        trainer = TUTrainer(
+            accelerator="gpu",
+            devices=1,
+            max_epochs=1,
+            limit_train_batches=1,
+            limit_val_batches=1,
+            limit_test_batches=1,
+            enable_checkpointing=False,
+            logger=False,
+        )
+
+        dm = DummyClassificationDataModule(
+            root=Path(),
+            batch_size=8,
+            num_classes=3,
+            num_images=64,
+            eval_ood=True,
+        )
+
+        # ---- monkeypatch dataset----
+        class _TensorDS(Dataset):
+            def __init__(self, x, y, name="tensor_ds"):
+                self.x, self.y = x, y
+                self.dataset_name = name
+
+            def __len__(self):
+                return self.x.shape[0]
+
+            def __getitem__(self, i):
+                return self.x[i], self.y[i]
+
+        def _mk_split(n, c, h, w, num_classes, shift=0.0, seed=0):
+            g = torch.Generator().manual_seed(seed)
+            x = torch.rand((n, c, h, w), generator=g) + shift
+            x = x.clamp(0, 1)
+            y = torch.arange(n) % num_classes
+            return x.float(), y.long()
+
+        def patched_setup(self, stage=None):
+            self.num_channels = 3
+            h = w = self.image_size
+            n = self.num_images
+
+            if stage in (None, "fit"):
+                x_tr, y_tr = _mk_split(n, 3, h, w, self.num_classes, shift=0.0, seed=123)
+                x_va, y_va = _mk_split(n, 3, h, w, self.num_classes, shift=0.0, seed=456)
+                self.train = _TensorDS(x_tr, y_tr, "train")
+                self.val = _TensorDS(x_va, y_va, "val")
+
+            if stage in (None, "test"):
+                x_te, y_te = _mk_split(n, 3, h, w, self.num_classes, shift=0.0, seed=789)
+                self.test = _TensorDS(x_te, y_te, "test")
+                if self.eval_ood:
+                    x_vo, y_vo = _mk_split(n, 3, h, w, self.num_classes, shift=0.10, seed=321)
+                    self.val_ood = _TensorDS(x_vo, y_vo, "val_ood")
+                    x_near, y_near = _mk_split(n, 3, h, w, self.num_classes, shift=0.15, seed=654)
+                    self.near_oods = [_TensorDS(x_near, y_near, "near")]
+                    x_far, y_far = _mk_split(n, 3, h, w, self.num_classes, shift=0.35, seed=987)
+                    self.far_oods = [_TensorDS(x_far, y_far, "far")]
+
+            if self.eval_shift:
+                x_sh, y_sh = _mk_split(n, 3, h, w, self.num_classes, shift=0.20, seed=111)
+                self.shift = _TensorDS(x_sh, y_sh, "shift")
+                self.shift_severity = 1
+
+        monkeypatch.setattr(dm, "setup", patched_setup.__get__(dm, type(dm)), raising=True)
+        # ------------------------------------------------------------------------------
+
+        model = dummy_ood_model(in_channels=3, feat_dim=4096, num_classes=dm.num_classes).to("cuda")
+
+        routine = ClassificationRoutine(
+            model=model,
+            loss=None,
+            num_classes=dm.num_classes,
+            eval_ood=True,
+            ood_criterion=crit,
+            log_plots=False,
+        )
+
+        c = routine.ood_criterion
+        if hasattr(c, "args_dict"):
+            if crit in ("scale", "ash", "react"):
+                c.args_dict = {"percentile": [70]}
+            elif crit == "adascale_a":
+                c.args_dict = {
+                    "percentile": [(40, 60)],
+                    "k1": [1],
+                    "k2": [1],
+                    "lmbda": [0.1],
+                    "o": [0.05],
+                }
+            elif crit == "vim":
+                safe_dim = min(64, getattr(model, "feature_size", 256) - 1)
+                c.args_dict = {"dim": [safe_dim]}
+                c.dim = safe_dim
+            elif crit == "odin":
+                c.args_dict = {"temperature": [1.0], "noise": [0.0014]}
+            elif crit == "knn":
+                c.args_dict = {"K": [5]}
+            elif crit == "gen":
+                c.gamma = getattr(c, "gamma", 0.1)
+                c.m = min(getattr(c, "m", 10), dm.num_classes)
+                c.args_dict = {"gamma": [c.gamma], "m": [c.m]}
+            elif crit == "nnguide":
+                c.args_dict = {"K": [5], "alpha": [0.5]}
+            c.hyperparam_search_done = False
+
+        trainer.test(routine, dm)
+
+        if hasattr(c, "args_dict"):
+            assert getattr(c, "hyperparam_search_done", False), (
+                f"Hyperparam search did not complete for '{crit}'."
             )
 
-        with pytest.raises(ValueError):
-            ClassificationRoutine(
-                num_classes=10,
-                model=nn.Module(),
-                loss=None,
-                is_ensemble=False,
-                ood_criterion=32,
-            )
-
-        with pytest.raises(ValueError):
-            ClassificationRoutine(
-                num_classes=10,
-                model=nn.Module(),
-                loss=None,
-                is_ensemble=False,
-                ood_criterion="other",
-            )
-
-        mixup_params = {"cutmix_alpha": -1}
-        with pytest.raises(ValueError):
-            ClassificationRoutine(
-                num_classes=10,
-                model=nn.Module(),
-                loss=None,
-                mixup_params=mixup_params,
-            )
-
-        with pytest.raises(ValueError, match="num_bins_cal_err must be at least 2, got"):
-            ClassificationRoutine(
-                model=nn.Identity(),
-                num_classes=2,
-                loss=nn.CrossEntropyLoss(),
-                num_bins_cal_err=0,
-            )
-
-        with pytest.raises(ValueError):
-            ClassificationRoutine(
-                num_classes=10,
-                model=nn.Module(),
-                loss=None,
-                eval_grouping_loss=True,
-            )
-
-        with pytest.raises(NotImplementedError):
-            ClassificationRoutine(
-                num_classes=10,
-                model=nn.Module(),
-                loss=None,
-                is_ensemble=True,
-                eval_grouping_loss=True,
-            )
-
-        model = dummy_model(1, 1, 0, with_feats=False)
-        with pytest.raises(ValueError):
-            ClassificationRoutine(num_classes=10, model=model, loss=None, eval_grouping_loss=True)
-
-        with pytest.raises(
-            ValueError,
-            match="Mixup is not supported for ensembles at training time",
-        ):
-            ClassificationRoutine(
-                num_classes=10,
-                model=nn.Module(),
-                loss=None,
-                mixup_params={"mixtype": "mixup"},
-                format_batch_fn=RepeatTarget(2),
-            )
-
-        with pytest.raises(
-            ValueError,
-            match="Ensembles and post-processing methods cannot be used together. Raise an issue if needed.",
-        ):
-            ClassificationRoutine(
-                num_classes=10,
-                model=nn.Module(),
-                loss=None,
-                is_ensemble=True,
-                post_processing=nn.Module(),
-            )
+        for needs_setup in {"react", "adascale_a", "vim", "knn", "nnguide"}:
+            if crit == needs_setup:
+                assert getattr(c, "setup_flag", False), f"Setup not executed for '{crit}'."

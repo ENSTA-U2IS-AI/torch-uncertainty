@@ -17,5 +17,5 @@ from .dataset import (
     DummyRegressionDataset,
     DummySegmentationDataset,
 )
-from .model import dummy_model
+from .model import dummy_model, dummy_ood_model
 from .transform import DummyTransform
