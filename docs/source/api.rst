@@ -430,7 +430,7 @@ Scaling Methods
 OOD Scores
 -----------------------
 
-.. currentmodule:: torch_uncertainty.ood_criteria
+.. currentmodule:: torch_uncertainty.ood.ood_criteria
 
 .. autosummary::
     :toctree: generated/
