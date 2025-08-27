@@ -1,149 +1,224 @@
-# ruff: noqa: E402, D212, D415
 """
-Out-of-distribution detection with TorchUncertainty
-===================================================
+Simple Ood Evaluation
+================================================
 
-This tutorial demonstrates how to perform OOD detection using
-TorchUncertainty's ClassificationRoutine with a ResNet18 model trained on CIFAR-10,
-evaluating its performance with SVHN as the OOD dataset.
 
-We will:
+In this tutorial, we’ll demonstrate how to perform out-of-distribution (OOD) evaluation using TorchUncertainty’s datamodules and routines. You’ll learn to:
 
-- Set up the CIFAR-10 datamodule.
-- Initialize and shortly train a ResNet18 model using the ClassificationRoutine.
-- Evaluate the model's performance on both in-distribution and out-of-distribution data.
-- Analyze uncertainty metrics for OOD detection.
+1. **Set up a CIFAR-100 datamodule** that automatically handles in-distribution, near-OOD, and far-OOD splits.
+2. **Run the `ClassificationRoutine`** to compute both in-distribution accuracy and OOD metrics (AUROC, AUPR, FPR95).
+3. **Plug in your own OOD datasets** for fully custom evaluation.
+
+Foreword on Out-of-Distribution Detection
+-----------------------------------------
+
+Out-of-Distribution (OOD) detection measures a model’s ability to recognize inputs that differ from its training distribution. TorchUncertainty integrates common OOD metrics directly into the Lightning test loop, including:
+
+- **AUROC** (Area Under the ROC Curve)
+- **AUPR** (Area Under the Precision-Recall Curve)
+- **FPR95** (False Positive Rate at 95% True Positive Rate)
+
+With just a few lines of code you can compare in-distribution performance to OOD detection performance under both “near” and “far” shifts. Per default, TorchUncertainty uses the
+popular OpenOOD library to define the near and far OOD datasets and splits. You can also use your own datasets by passing them to the datamodule.
+
+Supported Datamodules and Default OOD Splits
+--------------------------------------------
+
+.. list-table:: Datamodules & Default OOD Splits
+   :header-rows: 1
+   :widths: 20 15 20 20
+
+   * - **Datamodule**
+     - **In-Domain**
+     - **Default Near-OOD (Hard)**
+     - **Default Far-OOD (Easy)**
+   * - ``CIFAR10DataModule``
+     - CIFAR-10
+     - CIFAR-100, Tiny ImageNet
+     - MNIST, SVHN, Textures, Places365
+   * - ``CIFAR100DataModule``
+     - CIFAR-100
+     - CIFAR-10, Tiny ImageNet
+     - MNIST, SVHN, Textures, Places365
+   * - ``ImageNetDataModule``
+     - ImageNet-1K
+     - SSB-hard, NINCO
+     - iNaturalist, Textures, OpenImage-O
+   * - ``ImageNet200DataModule``
+     - ImageNet200
+     - SSB-hard, NINCO
+     - iNaturalist, Textures, OpenImage-O
+
+Supported OOD Criteria
+----------------------
+
+.. list-table:: Supported OOD Criteria
+   :header-rows: 1
+   :widths: 15 50
+
+   * - **Criterion**
+     - **Original Reference (Year, Venue)**
+   * - ``msp``
+     - Hendrycks & Gimpel, A Baseline for Detecting Misclassified and Out-of-Distribution Examples in Neural Networks `ICLR Workshop 2017 <https://arxiv.org/abs/1610.02136>`_.
+   * - ``Maxlogit``
+     - /
+   * - ``energy``
+     - Liu et al., Energy-based Out-of-Distribution Detection `NeurIPS 2020 <https://arxiv.org/abs/2010.03759>`_.
+   * - ``odin``
+     - Liang, Li & Srikant, Enhancing The Reliability of Out-of-Distribution Image Detection in Neural Networks `ICML 2018 <https://arxiv.org/abs/1706.02690>`_.
+   * - ``entropy``
+     - /
+   * - ``mutual_information``
+     - /
+   * - ``variation_ratio``
+     - /
+   * - ``scale``
+     - Scaling Out-of-Distribution Detection for Real-World Settings Hendrycks et al. `ICML 2022 <https://proceedings.mlr.press/v162/hendrycks22a/hendrycks22a.pdf>`_.
+   * - ``ash``
+     - AASH: Extremely Simple Activation Shaping for OOD Detection, Djurisic et al. `ICLR 2023 <https://arxiv.org/pdf/2209.09858>`_.
+   * - ``react``
+     - ReAct: Out-of-distribution Detection with Rectified Activations, Sun et al. `NeurIPS 2021 <https://proceedings.neurips.cc/paper/2021/file/01894d6f048493d2cacde3c579c315a3-Paper.pdf>`_.
+   * - ``adascale_a``
+     - AdaSCALE: Adaptive Scaling for OOD Detection `Regmi et al. <https://arxiv.org/pdf/2503.08023>`_.
+   * - ``vim``
+     - ViM: Out-of-Distribution with Virtual-Logit Matching, Wang et al. `CVPR 2022 <https://openaccess.thecvf.com/content/CVPR2022/papers/Wang_ViM_Out-of-Distribution_With_Virtual-Logit_Matching_CVPR_2022_paper.pdf>`_.
+   * - ``knn``
+     - Out-of-Distribution Detection with Deep Nearest Neighbors, Sun et al. `ICML 2022 <https://arxiv.org/abs/2106.01477>`_.
+   * - ``gen``
+     - GEN: Generalized ENtropy Score for OOD Detection, Liu et al. `CVPR 2023 <https://openaccess.thecvf.com/content/CVPR2023/papers/Liu_GEN_Pushing_the_Limits_of_Softmax-Based_Out-of-Distribution_Detection_CVPR_2023_paper.pdf>`_.
+   * - ``nnguide``
+     - NNGuide: Nearest-Neighbor Guidance for OOD Detection, Park et al. `ICCV 2023 <https://openaccess.thecvf.com/content/ICCV2023/papers/Park_Nearest_Neighbor_Guidance_for_Out-of-Distribution_Detection_ICCV_2023_paper.pdf>`_.
+
+.. note::
+
+   - All of these criteria can be passed as the `ood_criterion` argument to
+     `ClassificationRoutine`.
+   - Methods marked “ensemble-only” will require multiple stochastic passes.
+
+
+
+.. note::
+
+   - **Near-OOD** splits are semantically similar to the in-domain data.
+   - **Far-OOD** splits come from more distant distributions (e.g., ImageNet variants).
+   - Override defaults by passing your own ``near_ood_datasets`` / ``far_ood_datasets``.
+
+
+1. Loading the utilities
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+To eval ood using TorchUncertainty, we have to load the following:
+
+- the model:ResNet18_32x32 trained on in-domain data cifar100
+- the classification routine from torch_uncertainty.routines
+- the datamodule that handles dataloaders: CIFAR100DataModule from torch_uncertainty.datamodules.
 """
 
 # %%
-# Imports and Setup
-# ------------------
-#
-# First, we need to import the necessary libraries and set up our environment.
-# This includes importing PyTorch, TorchUncertainty components, and TorchUncertainty's Trainer (built on top of Lightning's),
-# as well as two criteria for OOD detection, the maximum softmax probability [1] and the Max Logit [2].
-from torch import nn, optim
-
-from torch_uncertainty import TUTrainer
-from torch_uncertainty.datamodules import CIFAR10DataModule
-from torch_uncertainty.models.classification.resnet import resnet
-from torch_uncertainty.ood_criteria import MaxLogitCriterion, MaxSoftmaxCriterion
-from torch_uncertainty.routines.classification import ClassificationRoutine
+from pathlib import Path
 
 # %%
-# DataModule Setup
-# ----------------
-#
-# TorchUncertainty provides convenient DataModules for standard datasets like CIFAR-10.
-# DataModules handle data loading, preprocessing, and batching, simplifying the data pipeline. Each datamodule
-# also include the corresponding out-of-distribution and distribution shift datasets, which are then used by the routine.
-# For CIFAR-10, the corresponding OOD-detection dataset is SVHN as used in the community.
-# To enable OOD evaluation, activate the `eval_ood` flag as done below.
+# 2. Load the trained model
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~
+# In this tutorial we will be loading a pretrained model, but you can also train your own using the same classification routine and still get ood related metrics at test phase.
 
-datamodule = CIFAR10DataModule(root="./data", batch_size=512, num_workers=8, eval_ood=True)
-
-# %%
-# Model Initialization
-# --------------------
-#
-# We use the ResNet18 architecture, a widely adopted convolutional neural network known for its deep residual learning capabilities.
-# The model is initialized with 10 output classes corresponding to the CIFAR-10 dataset categories. When training on CIFAR, do not forget to
-# set the style of the resnet to CIFAR, otherwise it will lose more information in the first convolution.
-
-# Initialize the ResNet18 model
-model = resnet(arch=18, in_channels=3, num_classes=10, style="cifar", conv_bias=False)
-
-# %%
-# Define the Classification Routine
-# ---------------------------------
-#
-# The `ClassificationRoutine` is one of the most crucial building blocks in TorchUncertainty.
-# It streamlines the training and evaluation processes.
-# It integrates the model, loss function, and optimizer into a cohesive routine compatible with PyTorch Lightning's Trainer.
-# This abstraction simplifies the implementation of standard training loops and evaluation protocols.
-# To come back to what matters in this tutorial, the routine also handles OOD detection. To enable it,
-# just activate the `eval_ood` flag. Note that you can also evaluate the distribution-shift performance
-# of the model at the same time by also setting `eval_shift` to True.
-
-# Loss function
-criterion = nn.CrossEntropyLoss()
-
-# Optimizer
-optimizer = optim.Adam(model.parameters(), lr=0.001)
-
-# Initialize the ClassificationRoutine, you could replace MaxSoftmaxCriterion by "msp"
-routine = ClassificationRoutine(
-    model=model,
-    num_classes=10,
-    loss=criterion,
-    optim_recipe=optimizer,
-    eval_ood=True,
-    ood_criterion=MaxSoftmaxCriterion,
-)
-
-# %%
-# Test the Training of the Model
-# ------------------------------
-#
-# With the routine defined, we can now set up the Trainer and commence training.
-# The Trainer handles the training loop, including epoch management, logging, and checkpointing.
-# We specify the maximum number of epochs, the precision and the device to be used. To reduce the tutorial building time,
-# we will train for a single epoch and load a model from `TorchUncertainty's HuggingFace <https://huggingface.co/torch-uncertainty>`_.
-
-# Initialize the TUTrainer
-trainer = TUTrainer(
-    max_epochs=1, precision="16-mixed", accelerator="cuda", devices=1, enable_progress_bar=False
-)
-
-# Train the model for 1 epoch using the CIFAR-10 DataModule
-trainer.fit(routine, datamodule=datamodule)
-
-# %%
-# Load the model from HuggingFace
-# -------------------------------
-#
-# We simply download a ResNet-18 trained on CIFAR-10 from `TorchUncertainty's HuggingFace <https://huggingface.co/torch-uncertainty>`_ and load it with
-# the `load_from_checkpoint` method.
 
 import torch
+from torch_uncertainty.models.resnet import resnet
 from huggingface_hub import hf_hub_download
 
-path = hf_hub_download(
-    repo_id="torch-uncertainty/resnet18_c10",
-    filename="resnet18_c10.ckpt",
+net = resnet(in_channels=3, arch=18, num_classes=100, style="cifar", conv_bias=False)
+
+# load the model
+path = hf_hub_download(repo_id="torch-uncertainty/resnet18_c100", filename="resnet18_c100.ckpt")
+net.load_state_dict(torch.load(path))
+
+net.cuda()
+net.eval()
+
+
+# %%
+# 3. Defining the necessary datamodules
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+# In the following, we instantiate our trainer, define the root of the datasets and the logs.
+# We also create the datamodule that handles the cifar100 dataset, dataloaders and transforms.
+# Datamodules can also handle OOD detection by setting the eval_ood parameter to True.
+
+from torch_uncertainty.datamodules import CIFAR100DataModule
+from torch_uncertainty.routines import ClassificationRoutine
+import torch.nn as nn
+from pathlib import Path
+from torch_uncertainty import TUTrainer
+
+
+root = Path("data1")
+datamodule = CIFAR100DataModule(root=root, batch_size=200, eval_ood=True, eval_shift=True)
+trainer = TUTrainer(accelerator="gpu", enable_progress_bar=True)
+
+
+# %%
+# 4. Define the classification routine and launch the test
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Define the classification routine for evaluation. We use the CrossEntropyLoss
+# as the loss function since we are working on a classification task.
+# The routine is configured to handle OOD detection and distributional shifts using the specified model, loss function, and evaluation criteria.
+
+routine = ClassificationRoutine(
+    num_classes=datamodule.num_classes,
+    eval_ood=True,
+    model=net,
+    loss=nn.CrossEntropyLoss(),
+    eval_shift=True,
+    ood_criterion="ash",
 )
-state_dict = torch.load(path, map_location="cpu", weights_only=True)
-routine.model.load_state_dict(state_dict)
+
+# Perform testing using the defined routine and datamodule.
+results = trainer.test(model=routine, datamodule=datamodule)
+
 
 # %%
-# Evaluating on In-Distribution and Out-of-distribution Data
-# ----------------------------------------------------------
-#
-# Now that the model is trained, we can evaluate its performance on the original in-distribution test set,
-# as well as the OOD set. Typing the next line will automatically compute the in-distribution and OOD detection metrics.
+# Here, we show the various test metrics along with the ood eval metrics, auroc,aupr and fpr95 on Near and far ood datasets defined per defualt according to OpenOOD splits (link to library)
 
-# Evaluate the model on the CIFAR-10 (IID) and SVHN (OOD) test sets
-results = trainer.test(routine, datamodule=datamodule)
 
 # %%
-# Changing the OOD Criterion
-# --------------------------
-#
-# The previous metrics for Out-of-distribution detection have been computed using the maximum softmax probability score [1],
-# which corresponds to the likelihood of the prediction. We could use other scores such as the maximum logit [2]. To do this,
-# just change the routine's `ood_criterion` and perform a second test.
-routine.ood_criterion = MaxLogitCriterion()
+# 5. Defining custom ood datasets
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# If you don't want to use the open ood datasets or dataset splits, you can pass your own datasets in a list to near_ood_datasets or far_ood_datasets datamodule arguments
+# and use them for ood evaluation but make sure they inherit from the
+# Dataset class from torch.utils.data, below is an example of such a case.
 
-results = trainer.test(routine, datamodule=datamodule)
+from torchvision.datasets import CIFAR10, MNIST
+from torchvision.transforms import v2
+
+
+test_transform = v2.Compose(
+    [
+        v2.ToImage(),
+        v2.Resize(32),
+        v2.CenterCrop(32),
+        v2.ToDtype(dtype=torch.float32, scale=True),
+        v2.Normalize(mean=(0.5071, 0.4867, 0.4408), std=(0.5071, 0.4867, 0.4408)),
+    ]
+)
+
+custom_dataset1 = CIFAR10(root=root, train=False, download=True, transform=test_transform)
+custom_dataset2 = MNIST(root=root, train=False, download=True, transform=test_transform)
+
+datamodule = CIFAR100DataModule(
+    root=root,
+    batch_size=200,
+    eval_ood=True,
+    eval_shift=True,
+    near_ood_datasets=[custom_dataset1],
+    far_ood_datasets=[custom_dataset2],
+)
+
+# Perform testing using the CUSTOM defined ood datasets.
+results = trainer.test(model=routine, datamodule=datamodule)
+
 
 # %%
-# Note that you could create your own class if you want to implement a custom OOD detection score. When changing the
-# Out-of-distribution criterion, all the In-distribution metrics remain the same. The only values that change
-# are those of the regrouped in the OOD Detection category. Here we see that the AUPR, AUROC and FPR95 are worse using the maximum
-# logit score compared to the maximum softmax probability but it could depend on the model you are using.
-#
 # References
 # ----------
-#
-# [1] Hendrycks, D., & Gimpel, K. (2016). A baseline for detecting misclassified and out-of-distribution examples in neural networks. In ICLR 2017.
-# [2] Hendrycks, D., Basart, S., Mazeika, M., Zou, A., Kwon, J., Mostajabi, M., ... & Song, D. (2019). Scaling out-of-distribution detection for real-world settings. In ICML 2022.
+# - **OpenOOD:** Jingyang Zhang & al. (`Neurips 2025 <https://arxiv.org/pdf/2306.09301>`_). OpenOOD v1.5: Enhanced Benchmark for Out-of-Distribution Detection.
