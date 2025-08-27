@@ -1,3 +1,6 @@
+import warnings
+from urllib.error import URLError
+
 import pytest
 
 from torch_uncertainty.datamodules.classification import (
@@ -13,27 +16,30 @@ class TestHTRU2DataModule:
     """Testing the HTRU2DataModule datamodule class."""
 
     def test_htru2(self) -> None:
-        dm = HTRU2DataModule(root="./data/", batch_size=128)
+        try:
+            dm = HTRU2DataModule(root="./data/", batch_size=128)
 
-        dm.prepare_data()
-        dm.setup()
+            dm.prepare_data()
+            dm.setup()
 
-        dm.train_dataloader()
-        dm.val_dataloader()
-        dm.test_dataloader()
+            dm.train_dataloader()
+            dm.val_dataloader()
+            dm.test_dataloader()
 
-        dm.setup("test")
-        dm.test_dataloader()
+            dm.setup("test")
+            dm.test_dataloader()
 
-        dm = HTRU2DataModule(root="./data/", batch_size=128, val_split=0.1)
+            dm = HTRU2DataModule(root="./data/", batch_size=128, val_split=0.1)
 
-        dm.prepare_data()
-        dm.setup()
+            dm.prepare_data()
+            dm.setup()
 
-        with pytest.raises(ValueError):
-            dm.setup("other")
+            with pytest.raises(ValueError):
+                dm.setup("other")
 
-        dm = BankMarketingDataModule(root="./data/", batch_size=128)
-        dm = DOTA2GamesDataModule(root="./data/", batch_size=128)
-        dm = OnlineShoppersDataModule(root="./data/", batch_size=128)
-        dm = SpamBaseDataModule(root="./data/", batch_size=128)
+            dm = BankMarketingDataModule(root="./data/", batch_size=128)
+            dm = DOTA2GamesDataModule(root="./data/", batch_size=128)
+            dm = OnlineShoppersDataModule(root="./data/", batch_size=128)
+            dm = SpamBaseDataModule(root="./data/", batch_size=128)
+        except URLError as e:
+            warnings.warn(f"Data download failed due to network error: {e}", stacklevel=2)
