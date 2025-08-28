@@ -416,7 +416,9 @@ class TestClassification:
             batch_size=8,
             num_classes=3,
             num_images=64,
+            num_workers=0,
             eval_ood=True,
+            persistent_workers=False,
         )
 
         # ---- monkeypatch dataset----
