@@ -93,7 +93,7 @@ class TestCIFAR10DataModule:
         assert idx["shift"] == [1]
 
         with pytest.raises(ValueError):
-            dm = CIFAR10DataModule(
+            CIFAR10DataModule(
                 root="./data/",
                 batch_size=128,
                 cutout=8,
@@ -111,13 +111,13 @@ class TestCIFAR10DataModule:
             dm.setup("fit")
 
         with pytest.raises(ValueError, match="Test set "):
-            dm = CIFAR10DataModule(
+            CIFAR10DataModule(
                 root="./data/",
                 batch_size=128,
                 test_alt="x",
             )
 
-        dm = CIFAR10DataModule(
+        CIFAR10DataModule(
             root="./data/",
             batch_size=128,
             num_dataloaders=2,
@@ -215,11 +215,9 @@ class TestCIFAR10DataModule:
 
         assert hasattr(dm, "near_oods")
         assert len(dm.near_oods) == 2
-
         assert hasattr(dm, "far_oods")
         assert len(dm.far_oods) == 3
 
-        # dataset_name must exist for all OOD datasets
         for ds in [dm.val_ood, *dm.near_oods, *dm.far_oods]:
             assert hasattr(ds, "dataset_name")
             assert ds.dataset_name in {"dummy", ds.__class__.__name__.lower()}
@@ -227,7 +225,6 @@ class TestCIFAR10DataModule:
         assert dm.near_ood_names == [ds.dataset_name for ds in dm.near_oods]
         assert dm.far_ood_names == [ds.dataset_name for ds in dm.far_oods]
 
-        # test_dataloader order & count:
         loaders = dm.test_dataloader()
         expected = 1 + 1 + 1 + len(dm.near_oods) + len(dm.far_oods)
         assert len(loaders) == expected
@@ -240,4 +237,71 @@ class TestCIFAR10DataModule:
         assert idx["far_oods"] == list(
             range(3 + len(dm.near_oods), 3 + len(dm.near_oods) + len(dm.far_oods))
         )
+        assert idx["shift"] == []
+
+    def test_user_supplied_near_far_ood_typecheck_and_override(self, monkeypatch, tmp_path):
+        """Covers user-provided OOD lists (type checks and overrides)."""
+        # invalid near
+        dm_bad_near = CIFAR10DataModule(
+            root=tmp_path,
+            batch_size=16,
+            eval_ood=True,
+            near_ood_datasets=[123],
+        )
+        dm_bad_near.dataset = DummyClassificationDataset
+        dm_bad_near.shift_dataset = DummyClassificationDataset
+        with pytest.raises(TypeError, match="near_ood_datasets must be Dataset objects"):
+            dm_bad_near.setup("test")
+
+        # invalid far
+        dm_bad_far = CIFAR10DataModule(
+            root=tmp_path,
+            batch_size=16,
+            eval_ood=True,
+            far_ood_datasets=[object()],
+        )
+        dm_bad_far.dataset = DummyClassificationDataset
+        dm_bad_far.shift_dataset = DummyClassificationDataset
+        with pytest.raises(TypeError, match="far_ood_datasets must be Dataset objects"):
+            dm_bad_far.setup("test")
+
+        # valid override
+        near_custom = [DummyClassificationDataset(root="./data/", num_images=2)]
+        far_custom = [DummyClassificationDataset(root="./data/", num_images=1)]
+
+        dm = CIFAR10DataModule(
+            root=tmp_path,
+            batch_size=16,
+            eval_ood=True,
+            near_ood_datasets=near_custom,
+            far_ood_datasets=far_custom,
+        )
+        dm.dataset = DummyClassificationDataset
+        dm.shift_dataset = DummyClassificationDataset
+
+        def _fake_get_ood(**_):
+            return (
+                DummyClassificationDataset(root="./data/", num_images=1),
+                DummyClassificationDataset(root="./data/", num_images=1),
+                {"near_default": DummyClassificationDataset(root="./data/", num_images=1)},
+                {"far_default": DummyClassificationDataset(root="./data/", num_images=1)},
+            )
+
+        monkeypatch.setattr(
+            "torch_uncertainty.datamodules.classification.cifar10.get_ood_datasets",
+            _fake_get_ood,
+        )
+        dm.setup("test")
+
+        assert dm.near_oods is near_custom
+        assert dm.far_oods is far_custom
+        for ds in [dm.val_ood, *dm.near_oods, *dm.far_oods]:
+            assert hasattr(ds, "dataset_name")
+
+        idx = dm.get_indices()
+        assert idx["test"] == [0]
+        assert idx["test_ood"] == [1]
+        assert idx["val_ood"] == [2]
+        assert idx["near_oods"] == [3]
+        assert idx["far_oods"] == [4]
         assert idx["shift"] == []

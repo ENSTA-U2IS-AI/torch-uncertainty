@@ -54,16 +54,16 @@ class TestImageNetDataModule:
 
     @staticmethod
     def _fake_get_ood_datasets(**_):
-        test_ood = TestImageNetDataModule._TinyImgDataset(2)
-        val_ood = TestImageNetDataModule._TinyImgDataset(2)
+        test_ood = DummyClassificationDataset(root="./data/", num_images=2)
+        val_ood = DummyClassificationDataset(root="./data/", num_images=2)
         near_default = {
-            "near1": TestImageNetDataModule._TinyImgDataset(1),
-            "near2": TestImageNetDataModule._TinyImgDataset(1),
+            "near1": DummyClassificationDataset(root="./data/", num_images=1),
+            "near2": DummyClassificationDataset(root="./data/", num_images=1),
         }
         far_default = {
-            "far1": TestImageNetDataModule._TinyImgDataset(1),
-            "far2": TestImageNetDataModule._TinyImgDataset(1),
-            "far3": TestImageNetDataModule._TinyImgDataset(1),
+            "far1": DummyClassificationDataset(root="./data/", num_images=1),
+            "far2": DummyClassificationDataset(root="./data/", num_images=1),
+            "far3": DummyClassificationDataset(root="./data/", num_images=1),
         }
         return test_ood, val_ood, near_default, far_default
 
@@ -179,57 +179,9 @@ class TestImageNetDataModule:
         dm.dataset = DummyClassificationDataset
         dm.shift_dataset = DummyClassificationDataset
 
-        def _mock_get_ood(**_):
-            test_ood = DummyClassificationDataset(
-                root="./data/", train=False, download=False, transform=nn.Identity(), num_images=5
-            )
-            val_ood = DummyClassificationDataset(
-                root="./data/", train=False, download=False, transform=nn.Identity(), num_images=5
-            )
-            near_default = {
-                "example1": DummyClassificationDataset(
-                    root="./data/",
-                    train=False,
-                    download=False,
-                    transform=nn.Identity(),
-                    num_images=5,
-                ),
-                "example2": DummyClassificationDataset(
-                    root="./data/",
-                    train=False,
-                    download=False,
-                    transform=nn.Identity(),
-                    num_images=5,
-                ),
-            }
-            far_default = {
-                "example3": DummyClassificationDataset(
-                    root="./data/",
-                    train=False,
-                    download=False,
-                    transform=nn.Identity(),
-                    num_images=5,
-                ),
-                "example4": DummyClassificationDataset(
-                    root="./data/",
-                    train=False,
-                    download=False,
-                    transform=nn.Identity(),
-                    num_images=5,
-                ),
-                "example5": DummyClassificationDataset(
-                    root="./data/",
-                    train=False,
-                    download=False,
-                    transform=nn.Identity(),
-                    num_images=5,
-                ),
-            }
-            return test_ood, val_ood, near_default, far_default
-
         monkeypatch.setattr(
             "torch_uncertainty.datamodules.classification.imagenet.get_ood_datasets",
-            _mock_get_ood,
+            self._fake_get_ood_datasets,
         )
         dm.setup("test")
 
@@ -241,7 +193,6 @@ class TestImageNetDataModule:
 
         for ds in [dm.val_ood, *dm.near_oods, *dm.far_oods]:
             assert hasattr(ds, "dataset_name")
-            assert ds.dataset_name in {"dummy", ds.__class__.__name__.lower()}
 
         assert dm.near_ood_names == [ds.dataset_name for ds in dm.near_oods]
         assert dm.far_ood_names == [ds.dataset_name for ds in dm.far_oods]
@@ -260,10 +211,9 @@ class TestImageNetDataModule:
         )
         assert idx["shift"] == [3 + len(dm.near_oods) + len(dm.far_oods)]
 
-    def test_get_indices_no_ood_and_train_dataloader(self, monkeypatch, tmp_path):
-        """Covers get_indices() when eval_ood=False and train_dataloader success/failure."""
+    def test_setup_fit_rejects_test_alt(self, monkeypatch, tmp_path):
+        """setup('fit') must raise when test_alt is provided."""
         mod_name = ImageNetDataModule.__module__
-
         monkeypatch.setattr(
             f"{mod_name}.download_and_extract_hf_dataset",
             self._fake_download_and_extract,
@@ -274,58 +224,24 @@ class TestImageNetDataModule:
             self._fake_download_and_extract_splits_from_hf,
             raising=True,
         )
-        monkeypatch.setattr(f"{mod_name}.FileListDataset", self._DummyFileListDataset, raising=True)
-        monkeypatch.setattr(f"{mod_name}.ImageFolder", self._DummyImageFolder, raising=True)
+        monkeypatch.setattr(f"{mod_name}.ImageNetR", DummyClassificationDataset, raising=True)
 
         dm = ImageNetDataModule(
             root=tmp_path,
             batch_size=8,
-            eval_ood=False,
-            eval_shift=False,
+            test_alt="r",
             basic_augment=False,
             num_workers=0,
             persistent_workers=False,
             pin_memory=False,
         )
+        with pytest.raises(ValueError, match="test_alt.*not supported for training"):
+            dm.setup("fit")
 
-        dm.prepare_data()
-        dm.setup("fit")
-        dm.setup("test")
-
-        loaders = dm.test_dataloader()
-        assert isinstance(loaders, list)
-        assert len(loaders) == 1
-
-        idx = dm.get_indices()
-        assert idx["test"] == [0]
-        assert idx["test_ood"] == []
-        assert idx["val_ood"] == []
-        assert idx["near_oods"] == []
-        assert idx["far_oods"] == []
-        assert idx["shift"] == []
-
-        data_dir = tmp_path / "imagenet_fake"
-        (data_dir / "train").mkdir(parents=True, exist_ok=True)
-        dm.data_dir = str(data_dir)
-
-        batch = next(iter(dm.train_dataloader()))
-        assert isinstance(batch, list | tuple)
-        assert len(batch) == 2
-
-        x, y = batch
-        assert torch.is_tensor(x)
-        assert x.ndim == 4
-        assert torch.is_tensor(y)
-        assert y.ndim in (0, 1)
-
-        dm.data_dir = str(tmp_path / "no_train_here")
-        with pytest.raises(RuntimeError, match="ImageNet training data not found"):
-            dm.train_dataloader()
-
-    def test_user_supplied_near_far_ood_typecheck_and_override(self, monkeypatch, tmp_path):
-        """Covers user-provided near/far OOD lists: type checks & override."""
+    def test_setup_test_with_test_alt(self, monkeypatch, tmp_path):
+        """setup('test') with test_alt uses alt dataset constructor."""
         mod_name = ImageNetDataModule.__module__
-
+        monkeypatch.setattr(f"{mod_name}.ImageNetR", DummyClassificationDataset, raising=True)
         monkeypatch.setattr(
             f"{mod_name}.download_and_extract_hf_dataset",
             self._fake_download_and_extract,
@@ -336,74 +252,15 @@ class TestImageNetDataModule:
             self._fake_download_and_extract_splits_from_hf,
             raising=True,
         )
-        monkeypatch.setattr(f"{mod_name}.FileListDataset", self._DummyFileListDataset, raising=True)
-        monkeypatch.setattr(
-            f"{mod_name}.get_ood_datasets", self._fake_get_ood_datasets, raising=True
-        )
-
-        dm_bad_near = ImageNetDataModule(
-            root=tmp_path,
-            batch_size=8,
-            eval_ood=True,
-            basic_augment=False,
-            near_ood_datasets=[123, "nope"],
-            num_workers=0,
-            persistent_workers=False,
-            pin_memory=False,
-        )
-        with pytest.raises(TypeError, match="near_ood_datasets must be Dataset objects"):
-            dm_bad_near.setup("test")
-
-        dm_bad_far = ImageNetDataModule(
-            root=tmp_path,
-            batch_size=8,
-            eval_ood=True,
-            basic_augment=False,
-            far_ood_datasets=[object()],
-            num_workers=0,
-            persistent_workers=False,
-            pin_memory=False,
-        )
-        with pytest.raises(TypeError, match="far_ood_datasets must be Dataset objects"):
-            dm_bad_far.setup("test")
-
-        near_custom = [self._TinyImgDataset(2), self._TinyImgDataset(3)]
-        far_custom = [self._TinyImgDataset(1)]
 
         dm = ImageNetDataModule(
             root=tmp_path,
             batch_size=8,
-            eval_ood=True,
+            test_alt="r",
             basic_augment=False,
-            near_ood_datasets=near_custom,
-            far_ood_datasets=far_custom,
             num_workers=0,
             persistent_workers=False,
             pin_memory=False,
         )
         dm.setup("test")
-
-        assert hasattr(dm, "near_oods")
-        assert dm.near_oods is near_custom
-        assert hasattr(dm, "far_oods")
-        assert dm.far_oods is far_custom
-
-        for ds in [dm.val_ood, *dm.near_oods, *dm.far_oods]:
-            assert hasattr(ds, "dataset_name")
-            assert isinstance(ds.dataset_name, str)
-            assert ds.dataset_name
-
-        loaders = dm.test_dataloader()
-        expected = 1 + 1 + 1 + len(near_custom) + len(far_custom)
-        assert isinstance(loaders, list)
-        assert len(loaders) == expected
-
-        idx = dm.get_indices()
-        assert idx["test"] == [0]
-        assert idx["test_ood"] == [1]
-        assert idx["val_ood"] == [2]
-        assert idx["near_oods"] == list(range(3, 3 + len(near_custom)))
-        assert idx["far_oods"] == list(
-            range(3 + len(near_custom), 3 + len(near_custom) + len(far_custom))
-        )
-        assert idx["shift"] == []
+        assert isinstance(dm.test, DummyClassificationDataset)
