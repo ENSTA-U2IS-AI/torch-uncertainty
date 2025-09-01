@@ -23,24 +23,31 @@ trainer:
         patience: 1000
         check_finite: true
 model:
+  model:
+    class_path: torch_uncertainty.models.classification.wideresnet28x10
+    init_args:
+      in_channels: 3
+      num_classes: 100
+      style: cifar
+      dropout_rate: 0.3
   num_classes: 100
-  in_channels: 3
   loss: CrossEntropyLoss
-  version: std
-  style: cifar
-  dropout_rate: 0.3
 data:
   root: ./data
   batch_size: 128
   auto_augment: rand-m9-n2-mstd1
 optimizer:
-  lr: 0.1
-  momentum: 0.9
-  weight_decay: 5e-4
-  nesterov: true
+  class_path: torch.optim.SGD
+  init_args:
+    lr: 0.1
+    momentum: 0.9
+    weight_decay: 5e-4
+    nesterov: true
 lr_scheduler:
-  milestones:
+  class_path: torch.optim.lr_scheduler.MultiStepLR
+  init_args:
+    milestones:
     - 60
     - 120
     - 160
-  gamma: 0.2
+    gamma: 0.2
