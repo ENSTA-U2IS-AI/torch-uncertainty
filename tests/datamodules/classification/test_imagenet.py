@@ -264,3 +264,164 @@ class TestImageNetDataModule:
         )
         dm.setup("test")
         assert isinstance(dm.test, DummyClassificationDataset)
+
+    def test_guard_test_alt_with_eval_ood(self):
+        with pytest.raises(ValueError, match="test_alt.*not supported.*ood_eval"):
+            ImageNetDataModule(
+                root="./data/",
+                batch_size=8,
+                test_alt="r",
+                eval_ood=True,
+            )
+
+    def test_near_far_instances_used_and_named(self, monkeypatch, tmp_path):
+        mod_name = ImageNetDataModule.__module__
+        monkeypatch.setattr(
+            f"{mod_name}.download_and_extract_hf_dataset",
+            self._fake_download_and_extract,
+            raising=True,
+        )
+        monkeypatch.setattr(
+            f"{mod_name}.download_and_extract_splits_from_hf",
+            self._fake_download_and_extract_splits_from_hf,
+            raising=True,
+        )
+        monkeypatch.setattr(
+            f"{mod_name}.FileListDataset",
+            self._DummyFileListDataset,
+            raising=True,
+        )
+        monkeypatch.setattr(
+            "torch_uncertainty.datamodules.classification.imagenet.get_ood_datasets",
+            self._fake_get_ood_datasets,
+        )
+
+        class NearDS(Dataset):
+            def __len__(self):
+                return 1
+
+            def __getitem__(self, i):
+                return torch.zeros(3, 224, 224), 0
+
+        class FarDS(Dataset):
+            def __len__(self):
+                return 1
+
+            def __getitem__(self, i):
+                return torch.zeros(3, 224, 224), 0
+
+        near_list = [NearDS(), NearDS()]
+        far_list = [FarDS()]
+
+        dm = ImageNetDataModule(
+            root=tmp_path,
+            batch_size=8,
+            eval_ood=True,
+            train_transform=nn.Identity(),
+            test_transform=nn.Identity(),
+            near_ood_datasets=near_list,
+            far_ood_datasets=far_list,
+        )
+        dm.setup("test")
+
+        assert dm.near_oods is near_list
+        assert dm.far_oods is far_list
+        assert all(hasattr(ds, "dataset_name") for ds in dm.near_oods)
+        assert all(hasattr(ds, "dataset_name") for ds in dm.far_oods)
+        assert {ds.dataset_name for ds in dm.near_oods} == {"neards"}
+        assert {ds.dataset_name for ds in dm.far_oods} == {"fards"}
+
+    def test_near_far_type_errors(self, monkeypatch, tmp_path):
+        # Avoid split file access so we can reach the TypeError branches
+        mod_name = ImageNetDataModule.__module__
+        monkeypatch.setattr(
+            f"{mod_name}.download_and_extract_hf_dataset",
+            self._fake_download_and_extract,
+            raising=True,
+        )
+        monkeypatch.setattr(
+            f"{mod_name}.download_and_extract_splits_from_hf",
+            self._fake_download_and_extract_splits_from_hf,
+            raising=True,
+        )
+        monkeypatch.setattr(
+            f"{mod_name}.FileListDataset",
+            self._DummyFileListDataset,
+            raising=True,
+        )
+        monkeypatch.setattr(
+            "torch_uncertainty.datamodules.classification.imagenet.get_ood_datasets",
+            self._fake_get_ood_datasets,
+        )
+
+        dm_bad_near = ImageNetDataModule(
+            root=tmp_path,
+            batch_size=8,
+            eval_ood=True,
+            near_ood_datasets=[123],
+            test_transform=nn.Identity(),
+        )
+        with pytest.raises(TypeError, match="near_ood_datasets.*Dataset"):
+            dm_bad_near.setup("test")
+
+        dm_bad_far = ImageNetDataModule(
+            root=tmp_path,
+            batch_size=8,
+            eval_ood=True,
+            far_ood_datasets=["nope"],
+            test_transform=nn.Identity(),
+        )
+        with pytest.raises(TypeError, match="far_ood_datasets.*Dataset"):
+            dm_bad_far.setup("test")
+
+    def test_train_dataloader_success_and_missing(self, monkeypatch, tmp_path):
+        mod_name = ImageNetDataModule.__module__
+        monkeypatch.setattr(
+            f"{mod_name}.download_and_extract_hf_dataset",
+            self._fake_download_and_extract,
+            raising=True,
+        )
+        monkeypatch.setattr(
+            f"{mod_name}.download_and_extract_splits_from_hf",
+            self._fake_download_and_extract_splits_from_hf,
+            raising=True,
+        )
+        monkeypatch.setattr(f"{mod_name}.ImageFolder", self._DummyImageFolder, raising=True)
+
+        dm = ImageNetDataModule(
+            root=tmp_path,
+            batch_size=4,
+            train_transform=nn.Identity(),
+            test_transform=nn.Identity(),
+        )
+        dm.data_dir = str(tmp_path)
+        (tmp_path / "train").mkdir(parents=True, exist_ok=True)
+        loader = dm.train_dataloader()
+        batch = next(iter(loader))
+        assert isinstance(batch, list | tuple)
+        assert len(batch) == 2
+
+        dm2 = ImageNetDataModule(
+            root=tmp_path / "other",
+            batch_size=4,
+            train_transform=nn.Identity(),
+            test_transform=nn.Identity(),
+        )
+        dm2.data_dir = str(tmp_path / "no_train_here")
+        with pytest.raises(RuntimeError, match="ImageNet training data not found"):
+            dm2.train_dataloader()
+
+    def test_get_indices_without_ood_or_shift(self, tmp_path):
+        dm = ImageNetDataModule(
+            root=tmp_path,
+            batch_size=8,
+            eval_ood=False,
+            eval_shift=False,
+        )
+        idx = dm.get_indices()
+        assert idx["test"] == [0]
+        assert idx["test_ood"] == []
+        assert idx["val_ood"] == []
+        assert idx["near_oods"] == []
+        assert idx["far_oods"] == []
+        assert idx["shift"] == []
