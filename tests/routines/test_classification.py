@@ -21,6 +21,7 @@ from torch_uncertainty.ood.ood_criteria import (
 )
 from torch_uncertainty.post_processing import ConformalClsTHR
 from torch_uncertainty.routines import ClassificationRoutine
+from torch_uncertainty.transforms import RepeatTarget
 
 
 class TestClassification:
@@ -682,4 +683,152 @@ class TestClassification:
         assert any(
             "`eval_shift` to `True` in the datamodule and not in the routine" in r.message
             for r in caplog.records
+        )
+
+    def test_guardrails__classification_routine_checks(self):
+        # ---- Local dummy models (minimal & fast) ----
+
+        class BareModel(nn.Module):
+            """No feats_forward, no classifier attrs."""
+
+            def __init__(self, num_classes=3):
+                super().__init__()
+                self.fc = nn.Linear(4, num_classes)
+
+            def forward(self, x):
+                b = x.size(0) if hasattr(x, "size") else 2
+                return self.fc(torch.zeros((b, 4)))
+
+        class FeatsWithHead(nn.Module):
+            """Has feats_forward + classification_head."""
+
+            def __init__(self, num_classes=3):
+                super().__init__()
+                self.backbone = nn.Linear(4, 8)
+                self.classification_head = nn.Linear(8, num_classes)
+
+            def feats_forward(self, x):
+                b = x.size(0) if hasattr(x, "size") else 2
+                return self.backbone(torch.zeros((b, 4)))
+
+            def forward(self, x):
+                return self.classification_head(self.feats_forward(x))
+
+        class FeatsWithLinear(nn.Module):
+            """Has feats_forward + linear."""
+
+            def __init__(self, num_classes=3):
+                super().__init__()
+                self.backbone = nn.Linear(4, 8)
+                self.linear = nn.Linear(8, num_classes)
+
+            def feats_forward(self, x):
+                b = x.size(0) if hasattr(x, "size") else 2
+                return self.backbone(torch.zeros((b, 4)))
+
+            def forward(self, x):
+                return self.linear(self.feats_forward(x))
+
+        class FeatsNoHeadNoLinear(nn.Module):
+            """Has feats_forward but neither classification_head nor linear."""
+
+            def feats_forward(self, x):
+                b = x.size(0) if hasattr(x, "size") else 2
+                return torch.zeros((b, 8))
+
+            def forward(self, x):
+                b = x.size(0) if hasattr(x, "size") else 2
+                return torch.zeros((b, 3))
+
+        for crit in ("mutual_information", "variation_ratio"):
+            with pytest.raises(ValueError, match="mutual information|variation ratio"):
+                ClassificationRoutine(
+                    model=BareModel(),
+                    num_classes=3,
+                    is_ensemble=False,
+                    ood_criterion=crit,
+                )
+
+        with pytest.raises(NotImplementedError, match="Logit-based criteria"):
+            ClassificationRoutine(
+                model=BareModel(),
+                num_classes=3,
+                is_ensemble=True,
+                ood_criterion="logit",
+            )
+
+        with pytest.raises(NotImplementedError, match="Grouping loss for ensembles"):
+            ClassificationRoutine(
+                model=FeatsWithHead(),
+                num_classes=3,
+                is_ensemble=True,
+                eval_grouping_loss=True,
+            )
+
+        with pytest.raises(ValueError, match="positive integer"):
+            ClassificationRoutine(
+                model=BareModel(),
+                num_classes=0,
+            )
+
+        with pytest.raises(ValueError, match="feats_forward"):
+            ClassificationRoutine(
+                model=BareModel(),
+                num_classes=3,
+                eval_grouping_loss=True,
+            )
+
+        with pytest.raises(ValueError, match="classification_head|linear"):
+            ClassificationRoutine(
+                model=FeatsNoHeadNoLinear(),
+                num_classes=3,
+                eval_grouping_loss=True,
+            )
+
+        with pytest.raises(ValueError, match="at least 2"):
+            ClassificationRoutine(
+                model=BareModel(),
+                num_classes=3,
+                num_bins_cal_err=1,
+            )
+
+        with pytest.raises(ValueError, match="Mixup is not supported for ensembles"):
+            ClassificationRoutine(
+                model=BareModel(),
+                num_classes=3,
+                is_ensemble=True,
+                mixup_params={"mixup_alpha": 1.0},
+                format_batch_fn=RepeatTarget(num_repeats=2),
+            )
+
+        with pytest.raises(ValueError, match="Ensembles and post-processing"):
+            ClassificationRoutine(
+                model=BareModel(),
+                num_classes=3,
+                is_ensemble=True,
+                post_processing=ConformalClsTHR(alpha=0.1),
+            )
+
+        ClassificationRoutine(
+            model=BareModel(),
+            num_classes=3,
+            is_ensemble=False,
+            ood_criterion="msp",
+            eval_grouping_loss=False,
+            num_bins_cal_err=15,
+            mixup_params=None,
+            post_processing=None,
+            format_batch_fn=None,
+        )
+
+        ClassificationRoutine(
+            model=FeatsWithHead(),
+            num_classes=3,
+            eval_grouping_loss=True,
+        )
+
+        ClassificationRoutine(
+            model=FeatsWithLinear(),
+            num_classes=3,
+            eval_grouping_loss=True,
         )
