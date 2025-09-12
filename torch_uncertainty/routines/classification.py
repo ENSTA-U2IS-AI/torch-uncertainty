@@ -440,17 +440,10 @@ class ClassificationRoutine(LightningModule):
                 # ID val
                 for x, _ in id_val:
                     x = x.to(self.device)
-                    logits = self.model(x)
 
-                    if crit.input_type == OODCriterionInputType.LOGIT:
-                        s = crit(logits).cpu().numpy()
-                    elif crit.input_type == OODCriterionInputType.PROB:
-                        probs = F.softmax(logits, dim=-1)
-                        s = crit(probs).cpu().numpy()
-                    else:  # DATASET
-                        with torch.inference_mode(False), torch.enable_grad():
-                            x_input = x.detach().clone().requires_grad_(True)
-                            s = crit(self.model, x_input).cpu().numpy()
+                    with torch.inference_mode(False), torch.enable_grad():
+                        x_input = x.detach().clone().requires_grad_(True)
+                        s = crit(self.model, x_input).cpu().numpy()
 
                     all_scores.append(s)
                     all_labels.append(np.zeros_like(s))
@@ -458,17 +451,10 @@ class ClassificationRoutine(LightningModule):
                 # OODval splits
                 for x, _ in ood_val:
                     x = x.to(self.device)
-                    logits = self.model(x)
 
-                    if crit.input_type == OODCriterionInputType.LOGIT:
-                        s = crit(logits).cpu().numpy()
-                    elif crit.input_type == OODCriterionInputType.PROB:
-                        probs = F.softmax(logits, dim=-1)
-                        s = crit(probs).cpu().numpy()
-                    else:  # DATASET
-                        with torch.inference_mode(False), torch.enable_grad():
-                            x_input = x.detach().clone().requires_grad_(True)
-                            s = crit(self.model, x_input).cpu().numpy()
+                    with torch.inference_mode(False), torch.enable_grad():
+                        x_input = x.detach().clone().requires_grad_(True)
+                        s = crit(self.model, x_input).cpu().numpy()
 
                     all_scores.append(s)
                     all_labels.append(np.ones_like(s))

@@ -655,3 +655,31 @@ class TestClassification:
             )
         )
         routine.test_step((x, y), batch_idx=0, dataloader_idx=7)
+
+    def test_logs_when_eval_flags_mismatch_datamodule(self, caplog):
+        model = dummy_ood_model(in_channels=3, feat_dim=64, num_classes=3)
+        routine = ClassificationRoutine(
+            model=model, loss=None, num_classes=3, eval_ood=False, eval_shift=False
+        )
+        routine.ood_criterion = MaxSoftmaxCriterion()
+
+        class _DM:
+            def get_indices(self):
+                return {"val_ood": 9, "near_oods": [2], "far_oods": [3], "shift": [4]}
+
+        routine._trainer = types.SimpleNamespace(barebones=True, datamodule=_DM())
+
+        x = torch.rand(2, 3, 8, 8)
+        y = torch.tensor([0, 1])
+
+        with caplog.at_level(logging.INFO):
+            routine.test_step((x, y), batch_idx=0, dataloader_idx=0)
+
+        assert any(
+            "`eval_ood` to `True` in the datamodule and not in the routine" in r.message
+            for r in caplog.records
+        )
+        assert any(
+            "`eval_shift` to `True` in the datamodule and not in the routine" in r.message
+            for r in caplog.records
+        )

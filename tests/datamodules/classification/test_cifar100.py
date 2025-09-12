@@ -254,3 +254,73 @@ class TestCIFAR100DataModule:
         assert idx["near_oods"] == [3]
         assert idx["far_oods"] == [4]
         assert idx["shift"] == []
+
+    def test_assigns_dataset_name_when_missing(self, monkeypatch):
+        """If OOD datasets lack `dataset_name`, setup() should assign class-name.lower()."""
+        dm = CIFAR100DataModule(
+            root="./data/",
+            batch_size=16,
+            train_transform=nn.Identity(),
+            test_transform=nn.Identity(),
+            eval_ood=True,
+        )
+        dm.dataset = DummyClassificationDataset
+        dm.shift_dataset = DummyClassificationDataset
+
+        class _NoNameDS:
+            def __init__(
+                self, root="./data/", train=False, download=False, transform=None, num_images=3
+            ):
+                self.data = list(range(num_images))
+                self.transform = transform
+
+            def __len__(self):
+                return len(self.data)
+
+            def __getitem__(self, i):
+                x = self.data[i]
+                return (x if self.transform is None else self.transform(x)), 0
+
+        def _mock_get_ood(**_):
+            test_ood = _NoNameDS(num_images=3)
+            val_ood = _NoNameDS(num_images=4)
+            near_default = {"nearA": _NoNameDS(num_images=5)}
+            far_default = {"farB": _NoNameDS(num_images=6)}
+            return test_ood, val_ood, near_default, far_default
+
+        monkeypatch.setattr(
+            "torch_uncertainty.datamodules.classification.cifar100.get_ood_datasets",
+            _mock_get_ood,
+        )
+
+        dm.setup("test")
+
+        assert hasattr(dm.val_ood, "dataset_name")
+        assert dm.val_ood.dataset_name == "_nonameds"
+        for ds in dm.near_oods + dm.far_oods:
+            assert hasattr(ds, "dataset_name")
+            assert ds.dataset_name == "_nonameds"
+
+        assert dm.near_ood_names == [ds.dataset_name for ds in dm.near_oods]
+        assert dm.far_ood_names == [ds.dataset_name for ds in dm.far_oods]
+
+    def test_get_indices_empty_when_eval_ood_false(self):
+        dm = CIFAR100DataModule(
+            root="./data/",
+            batch_size=16,
+            train_transform=nn.Identity(),
+            test_transform=nn.Identity(),
+            eval_ood=False,
+            eval_shift=False,
+        )
+        dm.dataset = DummyClassificationDataset
+        dm.shift_dataset = DummyClassificationDataset
+        dm.setup("test")
+
+        idx = dm.get_indices()
+        assert idx["test"] == [0]
+        assert idx["test_ood"] == []
+        assert idx["val_ood"] == []
+        assert idx["near_oods"] == []
+        assert idx["far_oods"] == []
+        assert idx["shift"] == []
