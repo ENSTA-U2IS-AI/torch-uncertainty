@@ -1,3 +1,5 @@
+import logging
+import types
 from pathlib import Path
 
 import pytest
@@ -15,6 +17,7 @@ from torch_uncertainty import TUTrainer
 from torch_uncertainty.losses import DECLoss, ELBOLoss
 from torch_uncertainty.ood.ood_criteria import (
     EntropyCriterion,
+    MaxSoftmaxCriterion,
 )
 from torch_uncertainty.post_processing import ConformalClsTHR
 from torch_uncertainty.routines import ClassificationRoutine
@@ -518,3 +521,137 @@ class TestClassification:
         for needs_setup in {"react", "adascale_a", "vim", "knn", "nnguide"}:
             if crit == needs_setup:
                 assert getattr(c, "setup_flag", False), f"Setup not executed for '{crit}'."
+
+    def test_setup_logs_when_no_train_loader(self, caplog, monkeypatch):
+        dm = DummyClassificationDataModule(
+            root=Path(),
+            batch_size=4,
+            num_classes=3,
+            num_images=16,
+            eval_ood=True,
+        )
+
+        def _raise_train_loader(*_a, **_k):
+            raise RuntimeError("no train loader")
+
+        monkeypatch.setattr(
+            ClassificationRoutine, "_hyperparam_search_ood", lambda _self: None, raising=True
+        )
+        monkeypatch.setattr(dm, "train_dataloader", _raise_train_loader, raising=True)
+
+        model = dummy_ood_model(in_channels=3, feat_dim=64, num_classes=3)
+        routine = ClassificationRoutine(
+            model=model,
+            loss=None,
+            num_classes=3,
+            eval_ood=True,
+        )
+        routine.ood_criterion = MaxSoftmaxCriterion()  # no setup() side-effects
+
+        routine.trainer = types.SimpleNamespace(datamodule=dm)
+
+        with caplog.at_level(logging.INFO):
+            routine.setup("test")
+        assert any("No train loader detected" in r.message for r in caplog.records)
+
+    def test_create_near_far_metric_dicts_non_ensemble(self):
+        model = dummy_ood_model(in_channels=3, feat_dim=64, num_classes=3)
+        routine = ClassificationRoutine(
+            model=model, loss=None, num_classes=3, eval_ood=True, is_ensemble=False
+        )
+        routine.ood_criterion = MaxSoftmaxCriterion()
+
+        x = torch.rand(4, 3, 8, 8)
+        y = torch.tensor([0, 1, 2, 0])
+
+        class _DS:
+            def __init__(self, name):
+                self.dataset_name = name
+
+        routine.trainer = types.SimpleNamespace(
+            datamodule=types.SimpleNamespace(
+                get_indices=lambda: {"val_ood": 9, "near_oods": [2], "far_oods": [3], "shift": []},
+                near_oods=[_DS("nearX")],
+                far_oods=[_DS("farY")],
+            )
+        )
+
+        routine.test_step((x, y), batch_idx=0, dataloader_idx=2)  # near
+        assert "nearX" in routine.test_ood_metrics_near
+
+        routine.test_step((x, y), batch_idx=0, dataloader_idx=3)  # far
+        assert "farY" in routine.test_ood_metrics_far
+
+    def test_create_near_far_metric_dicts_ensemble_and_aggregator(self):
+        model = dummy_ood_model(in_channels=3, feat_dim=64, num_classes=3)
+        routine = ClassificationRoutine(
+            model=model, loss=None, num_classes=3, eval_ood=True, is_ensemble=True
+        )
+        routine.ood_criterion = MaxSoftmaxCriterion()
+
+        x = torch.rand(4, 3, 8, 8)
+        y = torch.tensor([0, 1, 2, 0])
+
+        class _DS:
+            def __init__(self, name):
+                self.dataset_name = name
+
+        routine.trainer = types.SimpleNamespace(
+            datamodule=types.SimpleNamespace(
+                get_indices=lambda: {
+                    "val_ood": 9,
+                    "near_oods": [5],
+                    "far_oods": [6],
+                    "shift": [7],
+                },
+                near_oods=[_DS("n1")],
+                far_oods=[_DS("f1")],
+            )
+        )
+
+        routine.test_step((x, y), batch_idx=0, dataloader_idx=1)  # aggregator
+        assert "n1" in routine.test_ood_ens_metrics_near
+        assert "f1" in routine.test_ood_ens_metrics_far
+
+        routine.test_step((x, y), batch_idx=0, dataloader_idx=5)  # near
+        routine.test_step((x, y), batch_idx=0, dataloader_idx=6)  # far
+        assert "n1" in routine.test_ood_ens_metrics_near
+        assert "f1" in routine.test_ood_ens_metrics_far
+
+    def test_skip_when_val_ood_loader(self):
+        model = dummy_ood_model(in_channels=3, feat_dim=64, num_classes=3)
+        routine = ClassificationRoutine(model=model, loss=None, num_classes=3, eval_ood=True)
+        routine.ood_criterion = MaxSoftmaxCriterion()
+
+        routine.trainer = types.SimpleNamespace(
+            datamodule=types.SimpleNamespace(
+                get_indices=lambda: {"val_ood": 4, "near_oods": [], "far_oods": [], "shift": []}
+            )
+        )
+        x = torch.rand(2, 3, 8, 8)
+        y = torch.tensor([0, 1])
+        routine.test_step((x, y), batch_idx=0, dataloader_idx=4)
+
+    def test_init_metrics_creates_shift_ens_metrics_when_ensemble_and_eval_shift(self):
+        model = dummy_ood_model(in_channels=3, feat_dim=64, num_classes=3)
+        routine = ClassificationRoutine(
+            model=model, loss=None, num_classes=3, eval_shift=True, is_ensemble=True
+        )
+        assert hasattr(routine, "test_shift_ens_metrics")
+
+    def test_shift_ens_update_path(self):
+        model = dummy_ood_model(in_channels=3, feat_dim=64, num_classes=3)
+        routine = ClassificationRoutine(
+            model=model, loss=None, num_classes=3, eval_shift=True, is_ensemble=True
+        )
+        routine.ood_criterion = MaxSoftmaxCriterion()
+
+        x = torch.rand(4, 3, 8, 8)
+        y = torch.tensor([0, 1, 2, 0])
+
+        routine.trainer = types.SimpleNamespace(
+            datamodule=types.SimpleNamespace(
+                get_indices=lambda: {"val_ood": 99, "near_oods": [], "far_oods": [], "shift": [7]}
+            )
+        )
+        routine.test_step((x, y), batch_idx=0, dataloader_idx=7)

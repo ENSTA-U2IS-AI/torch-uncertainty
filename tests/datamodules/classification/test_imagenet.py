@@ -425,3 +425,74 @@ class TestImageNetDataModule:
         assert idx["near_oods"] == []
         assert idx["far_oods"] == []
         assert idx["shift"] == []
+
+    def test_tta_wraps_ood_sets(self, monkeypatch, tmp_path):
+        mod_name = ImageNetDataModule.__module__
+
+        monkeypatch.setattr(
+            f"{mod_name}.download_and_extract_hf_dataset",
+            self._fake_download_and_extract,
+            raising=True,
+        )
+        monkeypatch.setattr(
+            f"{mod_name}.download_and_extract_splits_from_hf",
+            self._fake_download_and_extract_splits_from_hf,
+            raising=True,
+        )
+        monkeypatch.setattr(
+            f"{mod_name}.FileListDataset",
+            self._DummyFileListDataset,
+            raising=True,
+        )
+        monkeypatch.setattr(
+            "torch_uncertainty.datamodules.classification.imagenet.get_ood_datasets",
+            self._fake_get_ood_datasets,
+        )
+
+        dm = ImageNetDataModule(
+            root=tmp_path,
+            batch_size=8,
+            eval_ood=True,
+            num_tta=2,
+            train_transform=nn.Identity(),
+            test_transform=nn.Identity(),
+            num_workers=0,
+            persistent_workers=False,
+            pin_memory=False,
+        )
+
+        dm.setup("test")
+
+        val_ood_wrapped = dm.get_val_ood_set()
+        test_ood_wrapped = dm.get_test_ood_set()
+        near_wrapped = dm.get_near_ood_set()
+        far_wrapped = dm.get_far_ood_set()
+
+        assert len(val_ood_wrapped) == len(dm.val_ood) * dm.num_tta
+        assert len(test_ood_wrapped) == len(dm.test_ood) * dm.num_tta
+        assert all(
+            len(w) == len(b) * dm.num_tta for w, b in zip(near_wrapped, dm.near_oods, strict=False)
+        )
+        assert all(
+            len(w) == len(b) * dm.num_tta for w, b in zip(far_wrapped, dm.far_oods, strict=False)
+        )
+
+        def _assert_first_block_repeat(wrapped_ds, num_tta: int):
+            if len(wrapped_ds) == 0 or num_tta < 2:
+                return
+            x0, y0 = wrapped_ds[0]
+            x1, y1 = wrapped_ds[1]
+            assert y0 == y1
+            if torch.is_tensor(x0) and torch.is_tensor(x1):
+                assert x0.shape == x1.shape
+            else:
+                assert type(x0) is type(x1)
+                if hasattr(x0, "size") and hasattr(x1, "size"):
+                    assert x0.size == x1.size
+
+        _assert_first_block_repeat(val_ood_wrapped, dm.num_tta)
+        _assert_first_block_repeat(test_ood_wrapped, dm.num_tta)
+        for w in near_wrapped:
+            _assert_first_block_repeat(w, dm.num_tta)
+        for w in far_wrapped:
+            _assert_first_block_repeat(w, dm.num_tta)
