@@ -364,7 +364,8 @@ class GammaConvNd(_ExpandOutputConvNd):
         self,
         base_layer: type[nn.Module],
         event_dim: int,
-        min_scale: float = 1e-6,
+        min_concentration: float = 1e-6,
+        min_rate: float = 1e-6,
         **layer_args,
     ) -> None:
         super().__init__(
@@ -373,15 +374,14 @@ class GammaConvNd(_ExpandOutputConvNd):
             num_params=2,
             **layer_args,
         )
-        self.min_scale = min_scale
+        self.min_concentration = min_concentration
+        self.min_rate = min_rate
 
     def forward(self, x: Tensor) -> dict[str, Tensor]:
         x = super().forward(x)
-        loc = x[:, : self.event_dim]
-        scale = torch.clamp(
-            F.softplus(x[:, self.event_dim : 2 * self.event_dim]), min=self.min_scale
-        )
-        return {"loc": loc, "scale": scale}
+        concentration = torch.clamp(F.softplus(x[:, : self.event_dim]), min=self.min_concentration)
+        rate = torch.clamp(F.softplus(x[:, self.event_dim : 2 * self.event_dim]), min=self.min_rate)
+        return {"concentration": concentration, "rate": rate}
 
 
 class StudentTLinear(_ExpandOutputLinear):
