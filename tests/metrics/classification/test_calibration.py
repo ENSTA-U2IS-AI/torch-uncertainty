@@ -50,7 +50,7 @@ class TestCalibrationError:
         with pytest.raises(TypeError, match="is expected to be `int`"):
             CalibrationError(task="multiclass", num_classes=None)
         with pytest.raises(
-            ValueError, match="`n_bins` does not exist in TorchUncertainty, use `num_bins`."
+            ValueError, match=r"`n_bins` does not exist(?: in TorchUncertainty)?, use `num_bins`\."
         ):
             CalibrationError(task="multiclass", num_classes=2, n_bins=1)
 

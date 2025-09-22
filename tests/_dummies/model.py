@@ -162,3 +162,44 @@ def dummy_segmentation_model(
         image_size=image_size,
         dist_family=dist_family,
     )
+
+
+class dummy_ood_model(nn.Module):  # noqa: N801
+    def __init__(self, in_channels=3, feat_dim=4096, num_classes=3):
+        super().__init__()
+        self.feat = nn.Sequential(
+            nn.Conv2d(in_channels, 8, 3, 1, 1),
+            nn.ReLU(),
+            nn.AdaptiveAvgPool2d(1),
+            nn.Flatten(),
+            nn.Linear(8, feat_dim),
+            nn.ReLU(),
+        )
+        self.norm = nn.LayerNorm(feat_dim)
+        self.fc = nn.Linear(feat_dim, num_classes)
+
+        for m in self.modules():
+            if isinstance(m, nn.Linear):
+                nn.init.uniform_(m.weight, -0.02, 0.02)
+                nn.init.zeros_(m.bias)
+            if isinstance(m, nn.Conv2d):
+                nn.init.uniform_(m.weight, -0.02, 0.02)
+                nn.init.zeros_(m.bias)
+
+        self.feature_size = feat_dim
+
+    def forward(self, x, return_feature=False, return_feature_list=False):
+        f = self.feat(x)
+        f = torch.tanh(self.norm(f))
+        logits = self.fc(f)
+        if return_feature:
+            return logits, f
+        return logits
+
+    def get_fc(self):
+        w = self.fc.weight.detach().cpu().numpy()
+        b = self.fc.bias.detach().cpu().numpy()
+        return w, b
+
+    def get_fc_layer(self):
+        return self.fc

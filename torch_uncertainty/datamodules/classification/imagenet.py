@@ -1,4 +1,4 @@
-import copy
+import logging
 from pathlib import Path
 from typing import Literal
 
@@ -7,8 +7,8 @@ import yaml
 from timm.data.auto_augment import rand_augment_transform
 from timm.data.mixup import Mixup
 from torch import nn
-from torch.utils.data import DataLoader, Subset
-from torchvision.datasets import DTD, SVHN, ImageNet, INaturalist
+from torch.utils.data import DataLoader, Dataset
+from torchvision.datasets import ImageFolder
 from torchvision.transforms import v2
 
 from torch_uncertainty.datamodules import TUDataModule
@@ -17,25 +17,28 @@ from torch_uncertainty.datasets.classification import (
     ImageNetC,
     ImageNetO,
     ImageNetR,
-    OpenImageO,
 )
-from torch_uncertainty.datasets.utils import create_train_val_split
+from torch_uncertainty.datasets.ood.utils import (
+    FileListDataset,
+    download_and_extract_hf_dataset,
+    download_and_extract_splits_from_hf,
+    get_ood_datasets,
+)
 from torch_uncertainty.utils import (
     interpolation_modes_from_str,
 )
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(message)s",
+)
+logging.getLogger("faiss").setLevel(logging.WARNING)
 
 
 class ImageNetDataModule(TUDataModule):
     num_classes = 1000
     num_channels = 3
     test_datasets = ["r", "o", "a"]
-    ood_datasets = [
-        "inaturalist",
-        "imagenet-o",
-        "svhn",
-        "textures",
-        "openimage-o",
-    ]
     training_task = "classification"
     mean = (0.485, 0.456, 0.406)
     std = (0.229, 0.224, 0.225)
@@ -55,7 +58,6 @@ class ImageNetDataModule(TUDataModule):
         postprocess_set: Literal["val", "test"] = "val",
         train_transform: nn.Module | None = None,
         test_transform: nn.Module | None = None,
-        ood_ds: str = "openimage-o",
         test_alt: str | None = None,
         procedure: str | None = None,
         train_size: int = 224,
@@ -65,6 +67,8 @@ class ImageNetDataModule(TUDataModule):
         num_workers: int = 1,
         pin_memory: bool = True,
         persistent_workers: bool = True,
+        near_ood_datasets: list | None = None,
+        far_ood_datasets: list | None = None,
     ) -> None:
         """DataModule for the ImageNet dataset.
 
@@ -77,6 +81,8 @@ class ImageNetDataModule(TUDataModule):
             eval_batch_size (int | None) : Number of samples per batch during evaluation (val
                 and test). Set to batch_size if ``None``. Defaults to ``None``.
             eval_ood (bool): Whether to evaluate out-of-distribution performance. Defaults to ``False``.
+            near_ood_datasets (list, optional): list of near OOD dataset classes must be subclass of torch.utils.data.Dataset. Defaults to SSB-hard, NINCO (OpenOOD splits)
+            far_ood_datasets (list, optional): list of far OOD dataset classes must be subclass of torch.utils.data.Dataset. Defaults to iNaturalist, Textures, OpenImage-O (OpenOOD splits)
             eval_shift (bool): Whether to evaluate on shifted data. Defaults to ``False``.
             num_tta (int): Number of test-time augmentations (TTA). Defaults to ``1`` (no TTA).
             shift_severity (int): Severity of the shift. Defaults to ``1``.
@@ -120,18 +126,21 @@ class ImageNetDataModule(TUDataModule):
         )
 
         self.eval_ood = eval_ood
+        self.num_tta = num_tta
         self.eval_shift = eval_shift
         self.shift_severity = shift_severity
         if val_split and not isinstance(val_split, float):
             val_split = Path(val_split)
             self.train_indices, self.val_indices = read_indices(val_split)
         self.val_split = val_split
-        self.ood_ds = ood_ds
         self.test_alt = test_alt
         self.interpolation = interpolation_modes_from_str(interpolation)
 
+        if self.test_alt is not None and eval_ood:
+            raise ValueError("For now test_alt argument is not supported when ood_eval=True.")
+
         if test_alt is None:
-            self.dataset = ImageNet
+            self.dataset = None
         elif test_alt == "r":
             self.dataset = ImageNetR
         elif test_alt == "o":
@@ -141,18 +150,9 @@ class ImageNetDataModule(TUDataModule):
         else:
             raise ValueError(f"The alternative {test_alt} is not known.")
 
-        if ood_ds == "inaturalist":
-            self.ood_dataset = INaturalist
-        elif ood_ds == "imagenet-o":
-            self.ood_dataset = ImageNetO
-        elif ood_ds == "svhn":
-            self.ood_dataset = SVHN
-        elif ood_ds == "textures":
-            self.ood_dataset = DTD
-        elif ood_ds == "openimage-o":
-            self.ood_dataset = OpenImageO
-        else:
-            raise ValueError(f"The dataset {ood_ds} is not supported.")
+        self.near_ood_datasets = near_ood_datasets or []
+        self.far_ood_datasets = far_ood_datasets or []
+
         self.shift_dataset = ImageNetC
 
         self.procedure = procedure
@@ -213,8 +213,8 @@ class ImageNetDataModule(TUDataModule):
                 ]
             )
 
-        if num_tta != 1:
-            self.test_transform = train_transform
+        if self.num_tta != 1:
+            self.test_transform = self.train_transform
         elif test_transform is not None:
             self.test_transform = test_transform
         else:
@@ -229,41 +229,17 @@ class ImageNetDataModule(TUDataModule):
             )
 
     def _verify_splits(self, split: str) -> None:
-        if split not in list(self.root.iterdir()):
-            raise FileNotFoundError(
-                f"a {split} Imagenet split was not found in {self.root},"
-                f" make sure the folder contains a subfolder named {split}"
-            )
+        split_dir = self.root / split
+        if not split_dir.is_dir():
+            raise FileNotFoundError(f"a {split} Imagenet split was not found in {split_dir}")
 
     def prepare_data(self) -> None:  # coverage: ignore
         if self.test_alt is not None:
-            self.data = self.dataset(
+            self.test = self.dataset(
                 self.root,
                 split="val",
                 download=True,
             )
-        if self.eval_ood:
-            if self.ood_ds == "inaturalist":
-                self.ood = self.ood_dataset(
-                    self.root,
-                    version="2021_valid",
-                    download=True,
-                    transform=self.test_transform,
-                )
-            elif self.ood_ds != "textures":
-                self.ood = self.ood_dataset(
-                    self.root,
-                    split="test",
-                    download=True,
-                    transform=self.test_transform,
-                )
-            else:
-                self.ood = self.ood_dataset(
-                    self.root,
-                    split="train",
-                    download=True,
-                    transform=self.test_transform,
-                )
         if self.eval_shift:
             self.shift_dataset(
                 self.root,
@@ -273,78 +249,138 @@ class ImageNetDataModule(TUDataModule):
             )
 
     def setup(self, stage: Literal["fit", "test"] | None = None) -> None:
-        if stage == "fit" or stage is None:
+        if stage not in (None, "fit", "test"):
+            raise ValueError(f"Stage {stage} is not supported.")
+        splits_base = download_and_extract_splits_from_hf(root=self.root)
+
+        if stage == "fit":
             if self.test_alt is not None:
                 raise ValueError("The test_alt argument is not supported for training.")
-            full = self.dataset(
-                self.root,
-                split="train",
-                transform=self.train_transform,
+
+            # To change for more flexible splits later
+            self.data_dir = download_and_extract_hf_dataset("imagenet1k", self.root)
+            imagenet1k_splits = splits_base / "imagenet1k"
+            val_txt = imagenet1k_splits / "val_imagenet.txt"
+            self.val = FileListDataset(
+                root=self.data_dir,
+                list_file=val_txt,
+                transform=self.test_transform,
             )
-            if self.val_split and isinstance(self.val_split, float):
-                self.train, self.val = create_train_val_split(
-                    full,
-                    self.val_split,
-                    self.test_transform,
-                )
-            elif isinstance(self.val_split, Path):
-                self.train = Subset(full, self.train_indices)
-                # TODO: improve the performance
-                self.val = copy.deepcopy(Subset(full, self.val_indices))
-                self.val.dataset.transform = self.test_transform
-            else:
-                self.train = full
-                self.val = self.dataset(
+            self.train = None
+
+        if stage == "test":
+            if self.test_alt is not None:
+                self.test = self.dataset(
                     self.root,
                     split="val",
                     transform=self.test_transform,
-                )
-        if stage == "test" or stage is None:
-            self.test = self.dataset(
-                self.root,
-                split="val",
-                transform=self.test_transform,
-            )
-        if stage not in ["fit", "test", None]:
-            raise ValueError(f"Stage {stage} is not supported.")
-
-        if self.eval_ood:
-            if self.ood_ds == "inaturalist":
-                self.ood = self.ood_dataset(
-                    self.root,
-                    version="2021_valid",
-                    transform=self.test_transform,
+                    download=False,
                 )
             else:
-                self.ood = self.ood_dataset(
-                    self.root,
+                self.data_dir = getattr(
+                    self, "data_dir", download_and_extract_hf_dataset("imagenet1k", self.root)
+                )
+                imagenet1k_splits = splits_base / "imagenet1k"
+                test_txt = imagenet1k_splits / "test_imagenet.txt"
+
+                self.test = FileListDataset(
+                    root=self.data_dir,
+                    list_file=test_txt,
                     transform=self.test_transform,
-                    download=True,
                 )
 
-        if self.eval_shift:
-            self.shift = self.shift_dataset(
-                self.root,
-                download=False,
-                transform=self.test_transform,
-                shift_severity=self.shift_severity,
-            )
+            if self.eval_ood:
+                self.test_ood, self.val_ood, near_default, far_default = get_ood_datasets(
+                    root=self.root,
+                    dataset_id="imagenet1k",
+                    transform=self.test_transform,
+                )
 
-    def test_dataloader(self) -> list[DataLoader]:
-        """Get the test dataloaders for ImageNet.
+                if self.near_ood_datasets:
+                    if not all(isinstance(ds, Dataset) for ds in self.near_ood_datasets):
+                        raise TypeError("All entries in near_ood_datasets must be Dataset objects")
+                    self.near_oods = self.near_ood_datasets
+                else:
+                    self.near_oods = list(near_default.values())
 
-        Return:
-            list[DataLoader]: ImageNet test set (in distribution data), OOD dataset test split
-            (out-of-distribution data), and/or ImageNetC data.
-        """
-        dataloader = [self._data_loader(self.get_test_set(), training=False, shuffle=False)]
+                if self.far_ood_datasets:
+                    if not all(isinstance(ds, Dataset) for ds in self.far_ood_datasets):
+                        raise TypeError("All entries in far_ood_datasets must be Dataset objects")
+                    self.far_oods = self.far_ood_datasets
+                else:
+                    self.far_oods = list(far_default.values())
+
+                for ds in [self.val_ood, *self.near_oods, *self.far_oods]:
+                    if not hasattr(ds, "dataset_name"):
+                        ds.dataset_name = ds.__class__.__name__.lower()
+
+                self.near_ood_names = [ds.dataset_name for ds in self.near_oods]
+                self.far_ood_names = [ds.dataset_name for ds in self.far_oods]
+
+            if self.eval_shift:
+                self.shift = self.shift_dataset(
+                    self.root,
+                    download=False,
+                    transform=self.test_transform,
+                    shift_severity=self.shift_severity,
+                )
+
+    def train_dataloader(self) -> DataLoader:
+        # look for a train/ folder under the HF extraction root
+        train_dir = Path(self.data_dir) / "train"
+        if train_dir.is_dir():
+            ds_train = ImageFolder(train_dir, transform=self.train_transform)
+            return self._data_loader(ds_train, training=True, shuffle=True)
+        raise RuntimeError(
+            "ImageNet training data not found under:\n"
+            f"    {train_dir}\n"
+            "Please download the ILSVRC2012 train split manually from\n"
+            "https://www.image-net.org/download/ and unpack it under that folder."
+        )
+
+    def val_dataloader(self) -> DataLoader:
+        return self._data_loader(self.val, training=False)
+
+    def test_dataloader(self):
+        loaders = [self._data_loader(self.get_test_set(), training=False)]
         if self.eval_ood:
-            dataloader.append(self._data_loader(self.get_ood_set(), training=False, shuffle=False))
+            loaders.append(self._data_loader(self.get_test_ood_set(), training=False))
+
+            loaders.append(self._data_loader(self.get_val_ood_set(), training=False))
+
+            loaders.extend(self._data_loader(ds, training=False) for ds in self.get_near_ood_set())
+
+            loaders.extend(self._data_loader(ds, training=False) for ds in self.get_far_ood_set())
         if self.eval_shift:
-            dataloader.append(
-                self._data_loader(self.get_shift_set(), training=False, shuffle=False)
-            )
-        return dataloader
+            loaders.append(self._data_loader(self.get_shift_set(), training=False))
+        return loaders
+
+    def get_indices(self):
+        idx = 0
+        indices = {}
+        indices["test"] = [idx]
+        idx += 1
+        if self.eval_ood:
+            indices["test_ood"] = [idx]
+            idx += 1
+            indices["val_ood"] = [idx]
+            idx += 1
+            n_near = len(self.near_oods)
+            indices["near_oods"] = list(range(idx, idx + n_near))
+            idx += n_near
+            n_far = len(self.far_oods)
+            indices["far_oods"] = list(range(idx, idx + n_far))
+            idx += n_far
+        else:
+            indices["test_ood"] = []
+            indices["val_ood"] = []
+            indices["near_oods"] = []
+            indices["far_oods"] = []
+        if self.eval_shift:
+            indices["shift"] = [idx]
+        else:
+            indices["shift"] = []
+        return indices
 
 
 def read_indices(path: Path) -> list[str]:  # coverage: ignore

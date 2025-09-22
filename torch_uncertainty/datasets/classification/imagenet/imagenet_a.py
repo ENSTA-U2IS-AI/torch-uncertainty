@@ -6,6 +6,7 @@ class ImageNetA(ImageNetVariation):
     filename = "imagenet-a.tar"
     tgz_md5 = "c3e55429088dc681f30d81f4726b6595"
     dataset_name = "imagenet-a"
+    root_appendix = "imagenet-a"
 
     def __init__(self, **kwargs) -> None:
         """Initializes the ImageNetA dataset class.

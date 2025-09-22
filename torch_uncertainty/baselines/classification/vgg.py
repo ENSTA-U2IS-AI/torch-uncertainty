@@ -8,7 +8,7 @@ from torch_uncertainty.models.classification import (
     packed_vgg,
     vgg,
 )
-from torch_uncertainty.ood_criteria import TUOODCriterion
+from torch_uncertainty.ood.ood_criteria import TUOODCriterion
 from torch_uncertainty.routines.classification import ClassificationRoutine
 from torch_uncertainty.transforms import RepeatTarget
 
