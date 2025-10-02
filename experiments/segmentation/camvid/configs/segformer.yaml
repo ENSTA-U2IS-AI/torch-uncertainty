@@ -21,6 +21,7 @@ model:
     init_args:
       num_classes: 11
       arch: 0
+  num_classes: 11
   loss: CrossEntropyLoss
 data:
   root: ./data

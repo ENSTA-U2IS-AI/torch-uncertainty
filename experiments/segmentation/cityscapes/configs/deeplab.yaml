@@ -18,13 +18,17 @@ trainer:
       init_args:
         logging_interval: step
 model:
+  model:
+    class_path: torch_uncertainty.models.segmentation.deep_lab_v3_resnet
+    init_args:
+      num_classes: 19
+      version: std
+      arch: 50
+      style: v3+
+      output_stride: 16
+      separable: false
   num_classes: 19
   loss: CrossEntropyLoss
-  version: std
-  arch: 50
-  style: v3+
-  output_stride: 16
-  separable: false
 data:
   root: ./data/Cityscapes
   batch_size: 8
@@ -40,4 +44,6 @@ optimizer:
     weight_decay: 1e-4
     momentum: 0.9
 lr_scheduler:
-  total_iters: 200
+  class_path: torch.optim.lr_scheduler.PolynomialLR
+  init_args:
+    total_iters: 200

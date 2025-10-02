@@ -17,10 +17,13 @@ trainer:
       init_args:
         logging_interval: step
 model:
+  model:
+    class_path: torch_uncertainty.models.segmentation.seg_former
+    init_args:
+      num_classes: 19
+      arch: 0
   num_classes: 19
   loss: CrossEntropyLoss
-  version: std
-  arch: 0
 data:
   root: ./data/Cityscapes
   batch_size: 8
@@ -30,7 +33,11 @@ data:
     - 2048
   num_workers: 8
 optimizer:
-  lr: 6e-5
+  class_path: torch.optim.AdamW
+  init_args:
+    lr: 6e-5
 lr_scheduler:
-  step_size: 10000
-  gamma: 0.1
+  class_path: torch.optim.lr_scheduler.StepLR
+  init_args:
+    step_size: 10000
+    gamma: 0.1
