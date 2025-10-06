@@ -86,6 +86,9 @@ class TestDeepEnsemblesModel:
         assert de.core_models[1].linear.weight.device == torch.device("cpu")
 
     def test_errors(self) -> None:
+        with pytest.raises(ValueError):
+            deep_ensembles([])
+
         model_1 = dummy_model(1, 10)
         with pytest.raises(ValueError):
             deep_ensembles(model_1, num_estimators=None)
