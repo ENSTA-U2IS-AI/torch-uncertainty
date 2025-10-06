@@ -126,3 +126,41 @@ class TestAdaptiveCalibrationError:
     def test_errors(self) -> None:
         with pytest.raises(TypeError, match="is expected to be `int`"):
             AdaptiveCalibrationError(task="multiclass", num_classes=None)
+
+    def test_plot_binary(self) -> None:
+        """Test plot functionality for binary adaptive calibration error."""
+        metric = AdaptiveCalibrationError(task="binary", num_bins=2, norm="l1")
+        metric.update(
+            torch.as_tensor([0.25, 0.25, 0.55, 0.75, 0.75]),
+            torch.as_tensor([0, 0, 1, 1, 1]),
+        )
+        fig, ax = metric.plot()
+        assert isinstance(fig, plt.Figure)
+        assert ax[0].get_xlabel() == "Top-class Confidence (%)"
+        assert ax[0].get_ylabel() == "Success Rate (%)"
+        assert ax[1].get_xlabel() == "Top-class Confidence (%)"
+        assert ax[1].get_ylabel() == "Density (%)"
+
+        plt.close(fig)
+
+    def test_plot_multiclass(self) -> None:
+        """Test plot functionality for multiclass adaptive calibration error."""
+        metric = AdaptiveCalibrationError(task="multiclass", num_bins=3, norm="l1", num_classes=3)
+        metric.update(
+            torch.as_tensor(
+                [
+                    [0.25, 0.20, 0.55],
+                    [0.55, 0.05, 0.40],
+                    [0.10, 0.30, 0.60],
+                    [0.90, 0.05, 0.05],
+                ]
+            ),
+            torch.as_tensor([0, 1, 2, 0]),
+        )
+        fig, ax = metric.plot()
+        assert isinstance(fig, plt.Figure)
+        assert ax[0].get_xlabel() == "Top-class Confidence (%)"
+        assert ax[0].get_ylabel() == "Success Rate (%)"
+        assert ax[1].get_xlabel() == "Top-class Confidence (%)"
+        assert ax[1].get_ylabel() == "Density (%)"
+        plt.close(fig)
