@@ -6,7 +6,7 @@ from torch.special import entr
 
 class Zero(nn.Module):
     def __init__(
-        self, model: nn.Module, num_tta: int, filter_views: float = 0.1, eps: float = 1e-8
+        self, core_model: nn.Module, num_tta: int, filter_views: float = 0.1, eps: float = 1e-8
     ) -> None:
         """Zero for test-time adaptation.
 
@@ -16,7 +16,7 @@ class Zero(nn.Module):
         passed as argument (:attr:`model`).
 
         Args:
-            model (nn.Module): The inner model to train.
+            core_model (nn.Module): The inner model to train.
             num_tta (int): The number of views at evaluation time.
             filter_views (float): Filter out 1-:attr:`filter_views` of the predictions of the augmented views.
                 Defaults to ``0.1``.
@@ -24,7 +24,7 @@ class Zero(nn.Module):
         """
         super().__init__()
         _zero_checks(num_tta, filter_views, eps)
-        self.core_model = model
+        self.core_model = core_model
         self.filter = filter_views
         self.kept_views = int(filter_views * num_tta)
         self.num_tta = num_tta

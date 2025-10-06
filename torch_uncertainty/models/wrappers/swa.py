@@ -10,7 +10,7 @@ class SWA(nn.Module):
 
     def __init__(
         self,
-        model: nn.Module,
+        core_model: nn.Module,
         cycle_start: int,
         cycle_length: int,
     ) -> None:
@@ -21,7 +21,7 @@ class SWA(nn.Module):
         uses the base model for training.
 
         Args:
-            model (nn.Module): PyTorch model to be trained.
+            core_model (nn.Module): PyTorch model to be trained.
             cycle_start (int): Epoch to start SWA.
             cycle_length (int): Number of epochs between SWA updates.
 
@@ -31,7 +31,7 @@ class SWA(nn.Module):
         """
         super().__init__()
         _swa_checks(cycle_start, cycle_length)
-        self.core_model = model
+        self.core_model = core_model
         self.cycle_start = cycle_start
         self.cycle_length = cycle_length
 

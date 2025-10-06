@@ -7,12 +7,12 @@ from torch_uncertainty.layers.bayesian import bayesian_modules
 class StochasticModel(nn.Module):
     def __init__(
         self,
-        model: nn.Module,
+        core_model: nn.Module,
         num_samples: int,
         probabilistic: bool = False,
     ) -> None:
         super().__init__()
-        self.core_model = model
+        self.core_model = core_model
         self.num_samples = num_samples
         self.probabilistic = probabilistic
 

@@ -8,7 +8,7 @@ from torch_uncertainty.layers import BatchConv2d, BatchLinear
 class BatchEnsemble(nn.Module):
     def __init__(
         self,
-        model: nn.Module,
+        core_model: nn.Module,
         num_estimators: int,
         repeat_training_inputs: bool = False,
         convert_layers: bool = False,
@@ -23,7 +23,7 @@ class BatchEnsemble(nn.Module):
         ensuring that each estimator receives the correct data format.
 
         Args:
-            model (nn.Module): The BatchEnsemble model.
+            core_model (nn.Module): The BatchEnsemble model.
             num_estimators (int): Number of ensemble members.
             repeat_training_inputs (optional, bool): Whether to repeat the input batch during training.
                 If ``True``, the input batch is repeated during both training and evaluation. If ``False``,
@@ -33,17 +33,17 @@ class BatchEnsemble(nn.Module):
                 BatchEnsemble counterparts. Default is ``False``.
 
         Raises:
-            ValueError: If neither ``BatchLinear`` nor ``BatchConv2d`` layers are found in the model at the
+            ValueError: If neither ``BatchLinear`` nor ``BatchConv2d`` layers are found in the core_model at the
                 end of initialization.
             ValueError: If ``num_estimators`` is less than or equal to ``0``.
             ValueError: If ``convert_layers=True`` and neither ``nn.Linear`` nor ``nn.Conv2d`` layers are
-                found in the model.
+                found in the core_model.
 
         Warning:
             If ``convert_layers==True``, the wrapper will attempt to convert all ``nn.Linear`` and ``nn.Conv2d``
-            layers in the model to their BatchEnsemble counterparts. If the model contains other types of
+            layers in the core_model to their BatchEnsemble counterparts. If the core_model contains other types of
             layers, the conversion won't happen for these layers. If don't have any ``nn.Linear`` or ``nn.Conv2d``
-            layers in the model, the wrapper will raise an error during conversion.
+            layers in the core_model, the wrapper will raise an error during conversion.
 
         Warning:
             If ``repeat_training_inputs==True`` and you want to use one of the ``torch_uncertainty.routines``
@@ -51,11 +51,11 @@ class BatchEnsemble(nn.Module):
             initializing the routine.
 
         Example:
-            >>> model = nn.Sequential(nn.Linear(10, 5), nn.ReLU(), nn.Linear(5, 2))
-            >>> model = BatchEnsemble(model, num_estimators=4, convert_layers=True)
+            >>> core_model = nn.Sequential(nn.Linear(10, 5), nn.ReLU(), nn.Linear(5, 2))
+            >>> model = BatchEnsemble(core_model, num_estimators=4, convert_layers=True)
             >>> model
             BatchEnsemble(
-            (model): Sequential(
+            (core_model): Sequential(
                 (0): BatchLinear(in_features=10, out_features=5, num_estimators=4)
                 (1): ReLU()
                 (2): BatchLinear(in_features=5, out_features=2, num_estimators=4)
@@ -63,7 +63,7 @@ class BatchEnsemble(nn.Module):
             )
         """
         super().__init__()
-        self.model = model
+        self.core_model = core_model
         self.num_estimators = num_estimators
         self.repeat_training_inputs = repeat_training_inputs
 
@@ -72,7 +72,7 @@ class BatchEnsemble(nn.Module):
 
         filtered_modules = [
             module
-            for module in self.model.modules()
+            for module in self.core_model.modules()
             if isinstance(module, BatchLinear | BatchConv2d)
         ]
         _batch_ensemble_checks(filtered_modules, num_estimators)
@@ -81,22 +81,22 @@ class BatchEnsemble(nn.Module):
         """Repeat the input if ``self.training==False`` or ``repeat_training_inputs==True`` and pass it through the model."""
         if not self.training or self.repeat_training_inputs:
             x = repeat(x, "b ... -> (m b) ...", m=self.num_estimators)
-        return self.model(x)
+        return self.core_model(x)
 
     def _convert_layers(self) -> None:
         """Convert the model's layers to BatchEnsemble layers."""
         no_valid_layers = True
-        for name, layer in self.model.named_modules():
+        for name, layer in self.core_model.named_modules():
             if isinstance(layer, nn.Linear):
                 setattr(
-                    self.model,
+                    self.core_model,
                     name,
                     BatchLinear.from_linear(layer, num_estimators=self.num_estimators),
                 )
                 no_valid_layers = False
             elif isinstance(layer, nn.Conv2d):
                 setattr(
-                    self.model,
+                    self.core_model,
                     name,
                     BatchConv2d.from_conv2d(layer, num_estimators=self.num_estimators),
                 )
@@ -121,7 +121,7 @@ def _batch_ensemble_checks(filtered_modules: list[nn.Module], num_estimators: in
 
 
 def batch_ensemble(
-    model: nn.Module,
+    core_model: nn.Module,
     num_estimators: int,
     repeat_training_inputs: bool = False,
     convert_layers: bool = False,
@@ -129,7 +129,7 @@ def batch_ensemble(
     """BatchEnsemble wrapper for a model.
 
     Args:
-        model (nn.Module): model to wrap
+        core_model (nn.Module): model to wrap
         num_estimators (int): number of ensemble members
         repeat_training_inputs (bool, optional): whether to repeat the input batch during training.
             If ``True``, the input batch is repeated during both training and evaluation. If ``False``,
@@ -139,10 +139,10 @@ def batch_ensemble(
             BatchEnsemble counterparts. Default is ``False``.
 
     Returns:
-        BatchEnsemble: BatchEnsemble wrapper for the model
+        BatchEnsemble: BatchEnsemble wrapper for the :attr:`core_model`
     """
     return BatchEnsemble(
-        model=model,
+        core_model=core_model,
         num_estimators=num_estimators,
         repeat_training_inputs=repeat_training_inputs,
         convert_layers=convert_layers,

@@ -9,8 +9,8 @@ trainer:
   logger:
     class_path: lightning.pytorch.loggers.TensorBoardLogger
     init_args:
-      save_dir: logs/resnet50
-      name: masked
+      save_dir: logs/wideresnet28x10
+      name: deep_ensembles
       default_hp_metric: false
   callbacks:
     - class_path: torch_uncertainty.callbacks.TUClsCheckpoint
@@ -24,16 +24,22 @@ trainer:
         check_finite: true
 model:
   model:
-    class_path: torch_uncertainty.models.classification.masked_resnet
+    class_path: torch_uncertainty.models.deep_ensembles
     init_args:
-      in_channels: 3
-      num_classes: 100
-      arch: 50
+      core_models:
+        class_path: torch_uncertainty.models.classification.wideresnet28x10
+        init_args:
+          in_channels: 3
+          num_classes: 10
+          style: cifar
+          dropout_rate: 0.3
       num_estimators: 4
-      scale: 2
-      style: cifar
-  num_classes: 100
+      task: classification
+      # eventually you can pass the checkpoints of standard wideresnet28x10 models here
+      # ckpt_paths: [path/to/ckpt1, path/to/ckpt2, path/to/ckpt3, path/to/ckpt4]
+  num_classes: 10
   loss: CrossEntropyLoss
+  is_ensemble: true
   format_batch_fn:
     class_path: torch_uncertainty.transforms.RepeatTarget
     init_args:
@@ -44,7 +50,7 @@ data:
 optimizer:
   class_path: torch.optim.SGD
   init_args:
-    lr: 0.1
+    lr: 0.4  # initial learning rate times 4 (num_estimators)
     momentum: 0.9
     weight_decay: 5e-4
     nesterov: true

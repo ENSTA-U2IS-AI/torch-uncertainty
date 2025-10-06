@@ -7,7 +7,7 @@ from torch import Tensor, nn
 class CheckpointCollector(nn.Module):
     def __init__(
         self,
-        model: nn.Module,
+        core_model: nn.Module,
         cycle_start: int | None = None,
         cycle_length: int | None = None,
         save_schedule: list[int] | None = None,
@@ -21,7 +21,7 @@ class CheckpointCollector(nn.Module):
         as implemented in TorchUncertainty.
 
         Args:
-            model (nn.Module): The model to train and ensemble.
+            core_model (nn.Module): The model to train and ensemble.
             cycle_start (int): Epoch to start ensembling. Defaults to ``None``.
             cycle_length (int): Number of epochs between model collections. Defaults to ``None``.
             save_schedule (list[int] | None): The epochs at which to save the model. Defaults to ``None``.
@@ -52,7 +52,7 @@ class CheckpointCollector(nn.Module):
                 f"The combination of arguments: cycle_start: {cycle_start}, cycle_length: {cycle_length}, save_schedule: {save_schedule} is not known."
             )
 
-        self.core_model = model
+        self.core_model = core_model
         self.cycle_start = cycle_start
         self.cycle_length = cycle_length
         self.save_schedule = save_schedule

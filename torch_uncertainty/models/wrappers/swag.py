@@ -14,7 +14,7 @@ class SWAG(SWA):
 
     def __init__(
         self,
-        model: nn.Module,
+        core_model: nn.Module,
         cycle_start: int,
         cycle_length: int,
         scale: float = 1.0,
@@ -36,7 +36,7 @@ class SWAG(SWA):
         the batchnorm statistics of the current SWAG samples.
 
         Args:
-            model (nn.Module): PyTorch model to be trained.
+            core_model (nn.Module): PyTorch model to be trained.
             cycle_start (int): Begininning of the first SWAG averaging cycle.
             cycle_length (int): Number of epochs between SWAG updates. The first update occurs at :attr:`cycle_start` + :attr:`cycle_length`.
             scale (float, optional): Scale of the Gaussian. Defaults to ``1.0``.
@@ -52,7 +52,7 @@ class SWAG(SWA):
         Note:
             Modified from https://github.com/wjmaddox/swa_gaussian.
         """
-        super().__init__(model, cycle_start, cycle_length)
+        super().__init__(core_model, cycle_start, cycle_length)
         _swag_checks(scale, max_num_models, var_clamp)
 
         self.num_estimators = num_estimators

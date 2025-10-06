@@ -1,5 +1,6 @@
 # ruff: noqa: F401
 from .deeplab import deep_lab_v3_resnet
+from .segformer import seg_former
 from .unet import (
     batched_small_unet,
     batched_unet,

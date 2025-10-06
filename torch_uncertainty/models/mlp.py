@@ -173,7 +173,7 @@ def _mlp(
     )
     if stochastic:
         return StochasticModel(
-            model=model, num_samples=num_samples, probabilistic=dist_family is not None
+            core_model=model, num_samples=num_samples, probabilistic=dist_family is not None
         )
     return model
 

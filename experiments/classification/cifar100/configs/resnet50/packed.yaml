@@ -23,26 +23,38 @@ trainer:
         patience: 1000
         check_finite: true
 model:
+  model:
+    class_path: torch_uncertainty.models.classification.packed_resnet
+    init_args:
+      in_channels: 3
+      num_classes: 10
+      arch: 50
+      style: cifar
+      num_estimators: 4
+      alpha: 2
+      gamma: 2
   num_classes: 100
-  in_channels: 3
   loss: CrossEntropyLoss
-  version: packed
-  arch: 50
-  style: cifar
-  num_estimators: 4
-  alpha: 2
-  gamma: 2
+  is_ensemble: true
+  format_batch_fn:
+    class_path: torch_uncertainty.transforms.RepeatTarget
+    init_args:
+      num_repeats: 4
 data:
   root: ./data
   batch_size: 128
 optimizer:
-  lr: 0.1
-  momentum: 0.9
-  weight_decay: 5e-4
-  nesterov: true
+  class_path: torch.optim.SGD
+  init_args:
+    lr: 0.1
+    momentum: 0.9
+    weight_decay: 5e-4
+    nesterov: true
 lr_scheduler:
-  milestones:
+  class_path: torch.optim.lr_scheduler.MultiStepLR
+  init_args:
+    milestones:
     - 60
     - 120
     - 160
-  gamma: 0.2
+    gamma: 0.2
