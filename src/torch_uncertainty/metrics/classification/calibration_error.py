@@ -140,6 +140,10 @@ def reliability_chart(
     bin_sizes: np.ndarray,
     bins: np.ndarray,
     title: str = "Reliability Diagram",
+    rd_xlabel: str = "Top-class Confidence (%)",
+    rd_ylabel: str = "Success Rate (%)",
+    ch_xlabel: str = "Top-class Confidence (%)",
+    ch_ylabel: str = "Density (%)",
     figsize: tuple[int, int] = (6, 6),
     dpi: int = 150,
 ) -> tuple[object, object]:
@@ -168,15 +172,26 @@ def reliability_chart(
         bin_sizes,
         bins,
         title=title,
+        xlabel=rd_xlabel,
+        ylabel=rd_ylabel,
     )
 
     # confidence histogram subplot
-    _confidence_histogram_subplot(ax[1], accuracies, confidences, title="")
+    _confidence_histogram_subplot(
+        ax[1], accuracies, confidences, title="", xlabel=ch_xlabel, ylabel=ch_ylabel
+    )
     ax[1].yaxis.set_major_formatter(mticker.PercentFormatter(1.0))
     return fig, ax
 
 
-def custom_plot(self) -> tuple[object, object]:
+def custom_plot(
+    self,
+    title: str = "Reliability Diagram",
+    rd_xlabel: str = "Top-class Confidence (%)",
+    rd_ylabel: str = "Success Rate (%)",
+    ch_xlabel: str = "Top-class Confidence (%)",
+    ch_ylabel: str = "Density (%)",
+) -> tuple[object, object]:
     confidences = dim_zero_cat(self.confidences)
     accuracies = dim_zero_cat(self.accuracies)
 
@@ -203,6 +218,11 @@ def custom_plot(self) -> tuple[object, object]:
         bin_confidences=np_conf_bin,
         bin_sizes=np_prop_bin,
         bins=np_bin_boundaries,
+        title=title,
+        rd_xlabel=rd_xlabel,
+        rd_ylabel=rd_ylabel,
+        ch_xlabel=ch_xlabel,
+        ch_ylabel=ch_ylabel,
     )
 
 
