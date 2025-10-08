@@ -34,23 +34,16 @@ If you are interested in contributing to torch_uncertainty, we first advise you
 to follow the following steps to reproduce a clean development environment
 ensuring continuous integration does not break.
 
-1. Check that you have PyTorch already installed on your system
+1. Install ``uv`` following the steps `here <https://docs.astral.sh/uv/getting-started/installation/>`_
 2. Clone the repository
-3. Install torch-uncertainty in editable mode with the dev packages:
-   :cmd:`python3 -m pip install -e .[dev]`
-4. Install pre-commit hooks with :cmd:`pre-commit install`
+3. Install torch-uncertainty with the dev packages change ``gpu`` to ``cpu`` if needed:
+   :cmd:`uv sync --extra gpu`
+4. Install pre-commit hooks with :cmd:`uv run pre-commit install`
 
 Build the documentation locally
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To build the documentation, reinstall TorchUncertainty with the packages of the docs
-group:
-
-.. parsed-literal::
-
-    python3 -m pip install -e .[dev,docs]
-
-Then navigate to ``./docs`` and build the documentation with:
+To build the documentation on Linux, navigate to ``./docs`` and build the documentation with:
 
 .. parsed-literal::
 
@@ -73,7 +66,7 @@ run, at the root of the folder:
 
 .. parsed-literal::
 
-    python3 -m pytest tests
+    uv run pytest tests
 
 Try to include an emoji at the start of each commit message following the suggestions
 from `this page <https://gist.github.com/parmentf/035de27d6ed1dce0b36a>`_.
