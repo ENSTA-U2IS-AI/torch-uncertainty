@@ -31,11 +31,6 @@ jobs:
         python-version: ${{ matrix.python-version }}
         enable-cache: "true"
 
-    # Update full Python version
-    - name: Full Python version
-      run: |
-        echo "PYTHON_VERSION=$(uv run python -c "import platform; print(platform.python_version())")" >> $GITHUB_ENV
-
     - name: Get changed files
       id: changed-files-specific
       uses: tj-actions/changed-files@v46
@@ -78,7 +73,12 @@ jobs:
     - name: Test with pytest and compute coverage
       if: steps.changed-files-specific.outputs.only_changed != 'true'
       run: |
-        uv run pytest tests --cov --cov-report xml --cov-report term --durations 10 --junitxml=junit.xml
+        uv run --frozen pytest tests --cov --cov-report xml --cov-report term --durations 10 --junitxml=junit.xml
+
+    # Store Python version
+    - name: Full Python version
+      run: |
+        echo "PYTHON_VERSION=$(uv run python -c "import platform; print(platform.python_version())")" >> $GITHUB_ENV
 
     - name: Upload coverage to Codecov
       if: steps.changed-files-specific.outputs.only_changed != 'true' && (github.event_name != 'pull_request' || github.base_ref == 'dev')
