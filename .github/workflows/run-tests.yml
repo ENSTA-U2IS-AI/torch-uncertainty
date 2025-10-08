@@ -72,8 +72,8 @@ jobs:
     - name: Check style & format
       if: steps.changed-files-specific.outputs.only_changed != 'true'
       run: |
-        uv run ruff check torch_uncertainty --no-fix --statistics
-        uv run ruff format torch_uncertainty --check
+        uv run ruff check src/torch_uncertainty --no-fix --statistics
+        uv run ruff format src/torch_uncertainty --check
 
     - name: Test with pytest and compute coverage
       if: steps.changed-files-specific.outputs.only_changed != 'true'

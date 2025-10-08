@@ -1,8 +1,7 @@
 import sys
 
-from torch_uncertainty.models import resnet
-from torch_uncertainty.routines import ClassificationRoutine
 from torch_uncertainty.datamodules import CIFAR10DataModule
+from torch_uncertainty.routines import ClassificationRoutine
 from torch_uncertainty.utils.cli import TULightningCLI, TUSaveConfigCallback
 
 
