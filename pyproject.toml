@@ -223,6 +223,7 @@ include = ["*/torch-uncertainty/*"]
 omit = [
     "*/tests/*",
     "*/datasets/*",
+    ".venv/*",
     "*/venv/*",
 ]
 
