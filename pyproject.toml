@@ -220,7 +220,11 @@ docstring-code-line-length = 80
 [tool.coverage.run]
 branch = true
 include = ["*/torch-uncertainty/*"]
-omit = ["*/tests/*", "*/datasets/*"]
+omit = [
+    "*/tests/*",
+    "*/datasets/*",
+    "*/venv/*",
+]
 
 [tool.coverage.report]
 exclude_lines = [
