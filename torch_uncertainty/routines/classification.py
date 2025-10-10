@@ -830,6 +830,7 @@ class ClassificationRoutine(LightningModule):
             for far_metrics in self.test_ood_ens_metrics_far.values():
                 result_far = far_metrics.compute()
                 self.log_dict(result_far)
+                result_dict.update(result_far)
 
         elif self.eval_ood:
             for near_metrics in self.test_ood_metrics_near.values():
@@ -840,6 +841,7 @@ class ClassificationRoutine(LightningModule):
             for far_metrics in self.test_ood_metrics_far.values():
                 result_far = far_metrics.compute()
                 self.log_dict(result_far)
+                result_dict.update(result_far)
 
         if self.eval_shift:
             result_dict |= self.test_shift_metrics.compute() | {
