@@ -22,6 +22,7 @@ from torch_uncertainty.ood.ood_criteria import (
 from torch_uncertainty.post_processing import ConformalClsTHR
 from torch_uncertainty.routines import ClassificationRoutine
 from torch_uncertainty.transforms import RepeatTarget
+from torch_uncertainty.utils.evaluation_loop import TUEvaluationLoop
 
 
 class TestClassification:
@@ -555,7 +556,7 @@ class TestClassification:
             routine.setup("test")
         assert any("No train loader detected" in r.message for r in caplog.records)
 
-    def test_create_near_far_metric_dicts_non_ensemble(self):
+    def test_create_near_far_metric_dicts_non_ensemble(self, capsys):
         model = dummy_ood_model(in_channels=3, feat_dim=64, num_classes=3)
         routine = ClassificationRoutine(
             model=model, loss=None, num_classes=3, eval_ood=True, is_ensemble=False
@@ -582,6 +583,28 @@ class TestClassification:
 
         routine.test_step((x, y), batch_idx=0, dataloader_idx=3)  # far
         assert "farY" in routine.test_ood_metrics_far
+
+        fake_results = [
+            {
+                "ood_near_nearX_auroc": torch.tensor(0.91),
+                "ood_near_nearX_fpr95": torch.tensor(0.09),
+                "ood_near_nearX_aupr": torch.tensor(0.88),
+                "ood_near_dsB_auroc": torch.tensor(0.92),
+                "ood_near_dsB_fpr95": torch.tensor(0.08),
+                "ood_near_dsB_aupr": torch.tensor(0.86),
+                "ood_far_farY_auroc": torch.tensor(0.81),
+                "ood_far_farY_fpr95": torch.tensor(0.19),
+                "ood_far_farY_aupr": torch.tensor(0.72),
+                "ood_far_dsD_auroc": torch.tensor(0.79),
+                "ood_far_dsD_fpr95": torch.tensor(0.21),
+                "ood_far_dsD_aupr": torch.tensor(0.70),
+            }
+        ]
+        TUEvaluationLoop._print_results(fake_results, stage="test")
+        out = capsys.readouterr().out
+        assert "OOD Results" in out
+        assert "NearOOD Average" in out
+        assert "FarOOD Average" in out
 
     def test_create_near_far_metric_dicts_ensemble_and_aggregator(self):
         model = dummy_ood_model(in_channels=3, feat_dim=64, num_classes=3)
