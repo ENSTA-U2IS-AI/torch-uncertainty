@@ -1,14 +1,10 @@
+from pathlib import Path
+
 from .base import ImageNetVariation
 
 
 class ImageNetC(ImageNetVariation):
-    """The corrupted ImageNet-C dataset.
-
-    References:
-        Benchmarking neural network robustness to common corruptions and
-        perturbations. Dan Hendrycks and Thomas Dietterich.
-        In ICLR, 2019.
-    """
+    """The corrupted ImageNet-C dataset."""
 
     url = [
         "https://zenodo.org/record/2235448/files/blur.tar",
@@ -17,13 +13,7 @@ class ImageNetC(ImageNetVariation):
         "https://zenodo.org/record/2235448/files/noise.tar",
         "https://zenodo.org/record/2235448/files/weather.tar",
     ]
-    filename = [
-        "blur.tar",
-        "digital.tar",
-        "extra.tar",
-        "noise.tar",
-        "weather.tar",
-    ]
+    filename = ["blur.tar", "digital.tar", "extra.tar", "noise.tar", "weather.tar"]
     tgz_md5 = [
         "2d8e81fdd8e07fef67b9334fa635e45c",
         "89157860d7b10d5797849337ca2e5c03",
@@ -35,21 +25,25 @@ class ImageNetC(ImageNetVariation):
     root_appendix = "imagenet-c"
 
     def __init__(self, **kwargs) -> None:
-        """Initializes the ImageNetC dataset class.
+        severity = kwargs.pop("shift_severity", 1)
+        try:
+            severity = int(severity)
+        except Exception as e:
+            raise ValueError(f"shift_severity must be an int in [1..5], got {severity!r}") from e
+        if severity not in (1, 2, 3, 4, 5):
+            raise ValueError(f"shift_severity must be in [1..5], got {severity}")
 
-        This is a subclass of ImageNetVariation that supports additional keyword arguments.
-
-        Args:
-            kwargs: Additional keyword arguments passed to the superclass, including:
-
-                - root (str): Root directory of the datasets.
-                - split (str, optional): For API consistency. Defaults to ``None``.
-                - transform (callable, optional): A function/transform that takes in a PIL image and
-                  returns a transformed version. E.g., transforms.RandomCrop. Defaults to ``None``.
-                - target_transform (callable, optional): A function/transform that takes in the target
-                  and transforms it. Defaults to ``None``.
-                - download (bool, optional): If ``True``, downloads the dataset from the internet
-                  and puts it in the root directory. If the dataset is already downloaded, it is
-                  not downloaded again. Defaults to ``False``.
-        """
         super().__init__(**kwargs)
+
+        sev_str = str(severity)
+        filtered = [(p, t) for (p, t) in self.samples if Path(p).parts[-3] == sev_str]
+        if not filtered:
+            raise RuntimeError(
+                f"ImageNet-C: no samples matched shift_severity={severity}. "
+                "Check extraction under <root>/imagenet-c/<corruption>/<severity>/..."
+            )
+
+        self.samples = filtered
+        self.imgs = filtered
+        self.targets = [t for _, t in filtered]
+        self.shift_severity = severity

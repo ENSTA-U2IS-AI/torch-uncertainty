@@ -58,8 +58,12 @@ class TinyImageNetC(ImageFolder):
                 ``transforms.RandomCrop``. Defaults to ``None``.
             target_transform (callable, optional): A function/transform that
                 takes in the target and transforms it. Defaults to ``None``.
-            subset (str): The subset to use, one of ``all`` or the keys in
-                ``cifarc_subsets``.
+            subset (str): The target corruption to use type should be one of
+                {`brightness`, `contrast`, `defocus_blur`, `elastic_transform`,
+                `fog`, `frost`, `gaussian_blur`, `gaussian_noise`, `glass_blur`,
+                `impulse_noise`, `jpeg_compression`, `motion_blur`, `pixelate`,
+                `saturate`, `shot_noise`, `snow`, `spatter`, `speckle_noise`,
+                `zoom_blur`}. Defaults to ``all`` for all corruptions.
             shift_severity (int): The shift_severity of the corruption, between ``1`` and ``5``.
             download (bool, optional): If True, downloads the dataset from the
                 internet and puts it in root directory. If dataset is already

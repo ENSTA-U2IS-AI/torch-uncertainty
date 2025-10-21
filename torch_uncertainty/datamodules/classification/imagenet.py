@@ -236,13 +236,13 @@ class ImageNetDataModule(TUDataModule):
     def prepare_data(self) -> None:  # coverage: ignore
         if self.test_alt is not None:
             self.test = self.dataset(
-                self.root,
+                root=self.root,
                 split="val",
                 download=True,
             )
         if self.eval_shift:
             self.shift_dataset(
-                self.root,
+                root=self.root,
                 download=True,
                 transform=self.test_transform,
                 shift_severity=self.shift_severity,
@@ -271,7 +271,7 @@ class ImageNetDataModule(TUDataModule):
         if stage == "test":
             if self.test_alt is not None:
                 self.test = self.dataset(
-                    self.root,
+                    root=self.root,
                     split="val",
                     transform=self.test_transform,
                     download=False,
@@ -319,7 +319,7 @@ class ImageNetDataModule(TUDataModule):
 
             if self.eval_shift:
                 self.shift = self.shift_dataset(
-                    self.root,
+                    root=self.root,
                     download=False,
                     transform=self.test_transform,
                     shift_severity=self.shift_severity,
