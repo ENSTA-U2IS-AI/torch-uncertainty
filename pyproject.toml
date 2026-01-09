@@ -12,7 +12,7 @@ authors = [
 ]
 description = "Uncertainty quantification library in PyTorch"
 readme = "README.md"
-requires-python = ">=3.10,<3.14"
+requires-python = ">=3.10,<=3.14"
 keywords = [
     "bayesian-network",
     "ensembles",
@@ -34,7 +34,7 @@ classifiers = [
 dependencies = [
     "timm",
     "lightning[pytorch-extra]>=2.0",
-    "torch>=2.1,<=2.8.0",
+    "torch>=2.1,<2.9",
     "torchvision>=0.16",
     "einops",
     "seaborn",
@@ -78,16 +78,17 @@ distribution = ["scipy"]
 timeseries = ["tslearn"]
 others = [
   "scikit-learn",
+  "curvlinops-for-pytorch<3",
   "laplace-torch",
   "glest==0.0.1a1",
 ]
 
 cpu = [
-  "torch>=2.1.0,<=2.9.0",
+  "torch>=2.1.0,<2.9",
   "torchvision>=0.16.0",
 ]
 gpu = [
-  "torch>=2.1.0,<=2.9.0",
+  "torch>=2.1.0,<2.9",
   "torchvision>=0.16.0",
 ]
 
@@ -129,7 +130,7 @@ name = "torch_uncertainty"
 
 [tool.ruff]
 line-length = 100
-target-version = "py310"
+target-version = "py312"
 
 exclude = [
     ".bzr",
