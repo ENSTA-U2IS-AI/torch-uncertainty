@@ -1,7 +1,7 @@
 import contextlib
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any, override
+from typing import Any
 
 from lightning.fabric.utilities.cloud_io import get_filesystem
 from lightning.pytorch import LightningDataModule, LightningModule, Trainer
@@ -11,6 +11,7 @@ from lightning.pytorch.cli import (
     LightningCLI,
     SaveConfigCallback,
 )
+from typing_extensions import override
 
 from torch_uncertainty.utils.trainer import TUTrainer
 
