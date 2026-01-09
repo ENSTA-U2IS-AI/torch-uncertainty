@@ -93,12 +93,13 @@ jobs:
 
     - name: Upload test results to Codecov
       if: steps.changed-files-specific.outputs.only_changed != 'true' && (github.event_name != 'pull_request' || github.base_ref == 'dev')
-      uses: codecov/test-results-action@v1
+      uses: codecov/codecov-action@v5
       continue-on-error: true
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         flags: pytest
         env_vars: PYTHON_VERSION
+        report_type: test_results
 
     - name: Test sphinx build without tutorials
       if: steps.changed-files-specific.outputs.only_changed != 'true'
