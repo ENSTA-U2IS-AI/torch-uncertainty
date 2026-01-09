@@ -83,11 +83,11 @@ others = [
 ]
 
 cpu = [
-  "torch>=2.1.0,<=2.8.0",
+  "torch>=2.1.0,<=2.9.0",
   "torchvision>=0.16.0",
 ]
 gpu = [
-  "torch>=2.1.0,<=2.8.0",
+  "torch>=2.1.0,<=2.9.0",
   "torchvision>=0.16.0",
 ]
 
