@@ -36,9 +36,12 @@ ensuring continuous integration does not break.
 
 1. Install ``uv`` following the steps `here <https://docs.astral.sh/uv/getting-started/installation/>`_
 2. Clone the repository
-3. Install torch-uncertainty with the dev packages change ``gpu`` to ``cpu`` if needed:
-   :cmd:`uv sync --extra gpu`
+3. Install torch-uncertainty with the dev packages 
+   :cmd:`uv sync --extra gpu` for GPU-based systems
+   :cmd:`uv sync --extra cpu` if no GPUs are available
 4. Install pre-commit hooks with :cmd:`uv run pre-commit install`
+
+Note: failure to include the extra flag will result in the GPU version of PyTorch without CUDA and might cause issues.
 
 Build the documentation locally
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
