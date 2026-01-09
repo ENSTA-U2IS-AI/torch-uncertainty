@@ -1,8 +1,7 @@
-from typing import Any
+from typing import Any, override
 
 from lightning.pytorch import LightningModule, Trainer
 from lightning.pytorch.callbacks import Checkpoint, ModelCheckpoint
-from typing_extensions import override
 
 
 class TUCheckpoint(Checkpoint):
