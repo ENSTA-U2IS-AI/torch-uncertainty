@@ -1,6 +1,6 @@
 [build-system]
-requires = ["flit_core >=3.2,<4"]
-build-backend = "flit_core.buildapi"
+requires = ["uv_build>=0.8.22,<0.9.0"]
+build-backend = "uv_build"
 
 [project]
 name = "torch_uncertainty"
@@ -12,7 +12,7 @@ authors = [
 ]
 description = "Uncertainty quantification library in PyTorch"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.10,<=3.14"
 keywords = [
     "bayesian-network",
     "ensembles",
@@ -34,23 +34,27 @@ classifiers = [
 dependencies = [
     "timm",
     "lightning[pytorch-extra]>=2.0",
+    "torch>=2.1,<2.9",
     "torchvision>=0.16",
     "einops",
     "seaborn",
 ]
 
-[project.optional-dependencies]
-experiments = ["tensorboard", "huggingface-hub>=0.31", "safetensors"]
-image = ["kornia", "h5py", "opencv-python", "torch-uncertainty-assets"]
-tabular = ["pandas"]
-distribution = ["scipy"]
-timeseries = ["tslearn"]
+[dependency-groups]
 dev = [
-    "torch_uncertainty[experiments,image]",
-    "ruff==0.12.5",
-    "pytest-cov",
-    "pre-commit",
-    "pre-commit-hooks",
+  {include-group = "lint"},
+  {include-group = "test"},
+  {include-group = "docs"},
+]
+
+lint = [
+  "ruff==0.12.5",
+  "pre-commit",
+  "pre-commit-hooks",
+]
+test = [
+  "torch_uncertainty[all]",
+  "pytest-cov",
 ]
 docs = [
     "sphinx==7.4.7",
@@ -62,12 +66,59 @@ docs = [
     "sphinx_design",
     "sphinxcontrib-sass",
 ]
+
+
+[project.optional-dependencies]
 all = [
-    "torch_uncertainty[dev,docs,tabular,distribution,timeseries]",
-    "scikit-learn",
-    "laplace-torch",
-    "glest==0.0.1a1",
+  "torch_uncertainty[experiments,image,distribution,timeseries,others]",
 ]
+experiments = ["tensorboard", "huggingface-hub>=0.31", "safetensors"]
+image = ["kornia", "h5py", "opencv-python", "torch-uncertainty-assets"]
+distribution = ["scipy"]
+timeseries = ["tslearn"]
+others = [
+  "scikit-learn",
+  "curvlinops-for-pytorch<3",
+  "laplace-torch",
+  "glest==0.0.1a1",
+]
+
+cpu = [
+  "torch>=2.1.0,<2.9",
+  "torchvision>=0.16.0",
+]
+gpu = [
+  "torch>=2.1.0,<2.9",
+  "torchvision>=0.16.0",
+]
+
+[tool.uv]
+conflicts = [
+  [
+    { extra = "cpu" },
+    { extra = "gpu" },
+  ],
+]
+
+[tool.uv.sources]
+torch = [
+  { index = "pytorch-cpu", extra = "cpu" },
+  { index = "pytorch-cu128", extra = "gpu" },
+]
+torchvision = [
+  { index = "pytorch-cpu", extra = "cpu" },
+  { index = "pytorch-cu128", extra = "gpu" },
+]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
 
 [project.urls]
 homepage = "https://torch-uncertainty.github.io/"
@@ -170,7 +221,12 @@ docstring-code-line-length = 80
 [tool.coverage.run]
 branch = true
 include = ["*/torch-uncertainty/*"]
-omit = ["*/tests/*", "*/datasets/*"]
+omit = [
+    "*/tests/*",
+    "*/datasets/*",
+    ".venv/*",
+    "*/venv/*",
+]
 
 [tool.coverage.report]
 exclude_lines = [
