@@ -58,7 +58,7 @@ class CIFAR10C(VisionDataset):
         ["labels.npy", "c439b113295ed5254878798ffe28fd54"],
         ["pixelate.npy", "0f14f7e2db14288304e1de10df16832f"],
     ]
-    url = "https://zenodo.org/record/2535967/files/CIFAR-10-C.tar"
+    url = "https://huggingface.co/datasets/torch-uncertainty/CIFAR-C/resolve/main/CIFAR-10-C.tar"
     filename = "CIFAR-10-C.tar"
 
     def __init__(

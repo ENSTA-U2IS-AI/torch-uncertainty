@@ -70,6 +70,9 @@ class CIFAR10H(CIFAR10):
 
     def download_h(self) -> None:
         """Download the CIFAR-10H dataset file."""
+        if self._check_specific_integrity():
+            logging.info("Files already downloaded and verified")
+            return
         download_url(
             self.h_url,
             self.root,

@@ -1,3 +1,4 @@
+import logging
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any, Literal
@@ -73,6 +74,9 @@ class CIFAR10N(CIFAR10):
         return check_integrity(fpath, md5)
 
     def download_n(self) -> None:
+        if self._check_specific_integrity():
+            logging.info("Files already downloaded and verified")
+            return
         download_and_extract_archive(
             self.n_url,
             self.root,
