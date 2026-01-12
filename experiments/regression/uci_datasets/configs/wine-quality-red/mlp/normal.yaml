@@ -24,7 +24,7 @@ trainer:
         monitor: val/reg/NLL
         patience: 1000
         check_finite: true
-model:
+routine:
   model:
     class_path: torch_uncertainty.models.mlp.mlp
     init_args:

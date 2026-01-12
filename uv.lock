@@ -3860,7 +3860,7 @@ requires-dist = [
     { name = "huggingface-hub", marker = "extra == 'experiments'", specifier = ">=0.31" },
     { name = "kornia", marker = "extra == 'image'" },
     { name = "laplace-torch", marker = "extra == 'others'" },
-    { name = "lightning", extras = ["pytorch-extra"], specifier = ">=2.0" },
+    { name = "lightning", extras = ["pytorch-extra"], specifier = ">=2.0,<2.7" },
     { name = "opencv-python", marker = "extra == 'image'" },
     { name = "safetensors", marker = "extra == 'experiments'" },
     { name = "scikit-learn", marker = "extra == 'others'" },
