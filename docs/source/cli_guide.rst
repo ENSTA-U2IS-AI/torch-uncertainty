@@ -4,6 +4,10 @@ CLI Guide
 Introduction to the Lightning CLI
 ---------------------------------
 
+.. warning::
+
+    Deprecated: This guide needs to be updated to reflect the latest changes (removal of the torch_uncertainty.baselines module, etc.)
+
 The Lightning CLI tool eases the implementation of a CLI to instanciate models to train and evaluate them on
 some data. The CLI tool is a wrapper around the ``Trainer`` class and provides a set of subcommands to train
 and test a ``LightningModule`` on a ``LightningDataModule``. To better match our needs, we created an inherited

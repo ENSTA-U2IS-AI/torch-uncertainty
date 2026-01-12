@@ -22,15 +22,16 @@ trainer:
       init_args:
         logging_interval: step
 routine:
+  model:
+    class_path: torch_uncertainty.models.depth.bts_resnet
+    init_args:
+      arch: 50
+      max_depth: 10.0
+      pretrained_backbone: true
   loss:
     class_path: torch_uncertainty.metrics.SILog
     init_args:
-      sqrt: true
-  version: std
-  arch: 50
-  max_depth: 10.0
-  num_estimators: 1
-  pretrained_backbone: true
+      sqrt: true  
 data:
   root: ./data
   batch_size: 8
@@ -44,9 +45,13 @@ data:
   max_depth: 10.0
   min_depth: 1e-3
 optimizer:
-  lr: 1e-4
-  weight_decay: 1e-2
-  eps: 1e-3
+  class_path: torch.optim.AdamW
+  init_args:
+    lr: 1e-4
+    weight_decay: 1e-2
+    eps: 1e-3
 lr_scheduler:
-  power: 0.9
-  total_iters: 100
+  class_path: torch.optim.lr_scheduler.PolynomialLR
+  init_args:
+    power: 0.9
+    total_iters: 100

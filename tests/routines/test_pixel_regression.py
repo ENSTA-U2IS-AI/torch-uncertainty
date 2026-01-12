@@ -90,7 +90,7 @@ class TestPixelRegression:
 
         trainer = TUTrainer(accelerator="cpu", fast_dev_run=True, logger=None)
         model = DummyPixelRegressionBaseline(
-            dist_family="normal",
+            dist_family="gamma",
             in_channels=dm.num_channels,
             output_dim=dm.output_dim,
             image_size=dm.image_size,

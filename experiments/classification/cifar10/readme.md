@@ -20,13 +20,6 @@ python resnet.py fit --config configs/resnet18/standard.yaml
 python resnet.py fit --config configs/resnet50/packed.yaml
 ```
 
-
-**Note:** In addition we provide a default resnet config file (`configs/resnet.yaml`) to enable the training of any ResNet model. Here a basic example to train a MIMO ResNet101 model with $4$ estimators and $\rho=1.0$:
-
-```bash
-python resnet.py fit --config configs/resnet.yaml --model.arch 101 --model.version mimo --model.num_estimators 4 --model.rho 1.0
-```
-
 ## Available configurations:
 
 ### ResNet

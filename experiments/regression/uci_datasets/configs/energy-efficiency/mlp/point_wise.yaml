@@ -23,16 +23,22 @@ trainer:
         patience: 1000
         check_finite: true
 routine:
+  model:
+    class_path: torch_uncertainty.models.mlp.mlp
+    init_args:
+      in_features: 8
+      num_outputs: 1
+      hidden_dims:
+        - 50
   output_dim: 1
-  in_features: 8
-  hidden_dims:
-    - 50
   loss: MSELoss
-  version: std
+  save_in_csv: true
 data:
   root: ./data
   batch_size: 128
   dataset_name: concrete
 optimizer:
-  lr: 5e-3
-  weight_decay: 0
+  class_path: torch.optim.Adam
+  init_args:
+    lr: 5e-3
+    weight_decay: 0
