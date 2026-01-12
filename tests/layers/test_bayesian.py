@@ -194,9 +194,9 @@ class TestLPBNNConv2d:
         out = layer(img_input_even)
 
     def test_errors(self) -> None:
-        with pytest.raises(ValueError, match="std_factor must be"):
+        with pytest.raises(ValueError, match=r"std_factor must be"):
             LPBNNConv2d(10, 2, kernel_size=1, num_estimators=1, std_factor=-1)
-        with pytest.raises(ValueError, match="num_estimators must be"):
+        with pytest.raises(ValueError, match=r"num_estimators must be"):
             LPBNNConv2d(10, 2, kernel_size=1, num_estimators=-1)
-        with pytest.raises(ValueError, match="hidden_size must be"):
+        with pytest.raises(ValueError, match=r"hidden_size must be"):
             LPBNNConv2d(10, 2, kernel_size=1, num_estimators=1, hidden_size=-1)

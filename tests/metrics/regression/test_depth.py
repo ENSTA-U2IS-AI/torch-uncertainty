@@ -95,9 +95,9 @@ class TestThresholdAccuracy:
         assert metric.compute() == 0.5
 
     def test_error(self) -> None:
-        with pytest.raises(ValueError, match="Power must be"):
+        with pytest.raises(ValueError, match=r"Power must be"):
             ThresholdAccuracy(power=-1)
-        with pytest.raises(ValueError, match="Lambda must be"):
+        with pytest.raises(ValueError, match=r"Lambda must be"):
             ThresholdAccuracy(power=1, lmbda=0.5)
 
 

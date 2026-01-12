@@ -9,7 +9,7 @@ trainer:
   logger:
     class_path: lightning.pytorch.loggers.TensorBoardLogger
     init_args:
-      save_dir: logs/concrete/mlp/laplace
+      save_dir: logs/protein/mlp/laplace
       name: standard
       default_hp_metric: false
   callbacks:
@@ -24,18 +24,24 @@ trainer:
         monitor: val/reg/NLL
         patience: 1000
         check_finite: true
-model:
+routine:
+  model:
+    class_path: torch_uncertainty.models.mlp.mlp
+    init_args:
+      in_features: 9
+      num_outputs: 1
+      hidden_dims:
+        - 50
+      dist_family: laplace
   output_dim: 1
-  in_features: 9
-  hidden_dims:
-    - 50
   loss: torch_uncertainty.losses.DistributionNLLLoss
-  version: std
-  distribution: laplace
+  save_in_csv: true
 data:
   root: ./data
   batch_size: 128
-  dataset_name: concrete
+  dataset_name: protein
 optimizer:
-  lr: 5e-3
-  weight_decay: 0
+  class_path: torch.optim.Adam
+  init_args:
+    lr: 5e-3
+    weight_decay: 0

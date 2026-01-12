@@ -1,4 +1,4 @@
-# ruff: noqa: E402, E703, D212, D415, T201
+# ruff: noqa: E402, D212, D415
 """
 Corrupting Images with TorchUncertainty to Benchmark Robustness
 ===============================================================
@@ -14,6 +14,7 @@ torchvision and matplotlib.
 """
 
 # %%
+from pathlib import Path
 from urllib import request
 
 import matplotlib.pyplot as plt
@@ -30,8 +31,20 @@ urls = [
 
 
 def download_img(url, i):
-    request.urlretrieve(url, f"tmp_{i}.png")  # noqa: S310
-    return Image.open(f"tmp_{i}.png").convert("RGB")
+    # Create a request with proper headers to avoid 403 Forbidden error
+    if not url.startswith(("http:", "https:")):
+        raise ValueError("URL must start with 'http:' or 'https:'")
+
+    req = request.Request(  # noqa: S310
+        url,
+        headers={
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+        },
+    )
+    filename = Path(f"tmp_{i}.png")
+    with request.urlopen(req) as response, filename.open("wb") as f:  # noqa: S310
+        f.write(response.read())
+    return Image.open(filename).convert("RGB")
 
 
 images_ds = [download_img(url, i) for i, url in enumerate(urls)]

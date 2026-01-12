@@ -17,5 +17,5 @@ class TestCoverageRate:
         assert all(metric(pred) == torch.tensor([4, 2, 4, 2]))
 
     def test_invalid_args(self) -> None:
-        with pytest.raises(ValueError, match="Expected argument"):
+        with pytest.raises(ValueError, match=r"Expected argument"):
             SetSize(reduction="42")

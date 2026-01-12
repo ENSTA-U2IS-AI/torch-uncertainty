@@ -19,11 +19,11 @@ class TestZero:
         assert out.shape == (2, 3)
 
     def test_failures(self) -> None:
-        with pytest.raises(ValueError, match="must be in the range"):
+        with pytest.raises(ValueError, match=r"must be in the range"):
             Zero(nn.Identity(), num_tta=12, filter_views=2.1)
         with pytest.raises(
-            ValueError, match="should be greater than 1/filter_views to use Zero. Got "
+            ValueError, match=r"should be greater than 1/filter_views to use Zero. Got "
         ):
             Zero(nn.Identity(), num_tta=12, filter_views=0.001)
-        with pytest.raises(ValueError, match="should be strictly positive."):
+        with pytest.raises(ValueError, match=r"should be strictly positive."):
             Zero(nn.Identity(), num_tta=12, filter_views=1, eps=-1)

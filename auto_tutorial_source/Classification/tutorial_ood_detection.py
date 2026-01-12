@@ -1,4 +1,4 @@
-# ruff: noqa: E402, E703, D212, D415, T201
+# ruff: noqa: E402, D212, D415
 """
 Out-of-distribution detection with TorchUncertainty
 ===================================================
@@ -146,4 +146,5 @@ results = trainer.test(routine, datamodule=datamodule)
 # ----------
 #
 # [1] Hendrycks, D., & Gimpel, K. (2016). A baseline for detecting misclassified and out-of-distribution examples in neural networks. In ICLR 2017.
+#
 # [2] Hendrycks, D., Basart, S., Mazeika, M., Zou, A., Kwon, J., Mostajabi, M., ... & Song, D. (2019). Scaling out-of-distribution detection for real-world settings. In ICML 2022.

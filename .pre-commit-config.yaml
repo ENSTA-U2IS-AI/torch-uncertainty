@@ -24,6 +24,7 @@ repos:
         name: check-added-large-files
         entry: check-added-large-files
         language: system
+        exclude: uv.lock
       - id: ruff-check
         name: ruff-check
         entry: ruff check

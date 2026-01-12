@@ -21,16 +21,17 @@ trainer:
     - class_path: lightning.pytorch.callbacks.LearningRateMonitor
       init_args:
         logging_interval: step
-model:
+routine:
+  model:
+    class_path: torch_uncertainty.models.depth.bts_resnet
+    init_args:
+      arch: 50
+      max_depth: 80.0
+      pretrained_backbone: true
   loss:
     class_path: torch_uncertainty.metrics.SILog
     init_args:
-      sqrt: true
-  version: std
-  arch: 50
-  max_depth: 80.0
-  num_estimators: 1
-  pretrained_backbone: true
+      sqrt: true  
 data:
   root: ./data
   batch_size: 4
@@ -42,7 +43,11 @@ data:
     - 1216
   num_workers: 4
 optimizer:
-  lr: 1e-4
+  class_path: torch.optim.AdamW
+  init_args:
+    lr: 1e-4
 lr_scheduler:
-  power: 0.9
-  total_iters: 50
+  class_path: torch.optim.lr_scheduler.PolynomialLR
+  init_args:
+    power: 0.9
+    total_iters: 50

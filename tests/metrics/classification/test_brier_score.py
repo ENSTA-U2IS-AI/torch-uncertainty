@@ -179,5 +179,5 @@ class TestBrierScore:
             metric.update(torch.ones(2, 2, 2, 2), torch.ones(2, 2, 2, 2))
 
     def test_bad_argument(self) -> None:
-        with pytest.raises(ValueError, match="Expected argument `reduction` to be one of"):
+        with pytest.raises(ValueError, match=r"Expected argument `reduction` to be one of"):
             _ = BrierScore(num_classes=2, reduction="geometric_mean")

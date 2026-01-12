@@ -17,24 +17,19 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.10"]
+        python-version:
+          - "3.10"
     env:
       PYTHON_VERSION: ${{ matrix.python-version }}
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
 
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
+    - name: Install uv and set the Python version
+      uses: astral-sh/setup-uv@v6
       with:
+        version: "0.9.0"
         python-version: ${{ matrix.python-version }}
-        cache: "pip"
-        cache-dependency-path: "pyproject.toml"
-
-    # Update full Python version
-    - name: Full Python version
-      run: |
-        echo "PYTHON_VERSION=$(python -c "import platform; print(platform.python_version())")"
-        echo "PYTHON_VERSION=$(python -c "import platform; print(platform.python_version())")" >> $GITHUB_ENV
+        enable-cache: "true"
 
     - name: Get changed files
       id: changed-files-specific
@@ -60,22 +55,30 @@ jobs:
           ~/.cache/torch-uncertainty/
         key: torch-uncertainty-${{ runner.os }}
 
-    - name: Install dependencies
+    - name: Install the project
+      if: steps.changed-files-specific.outputs.only_changed != 'true'
+      run: uv sync --locked --dev --extra cpu
+
+    - name: Check that torch-uncertainty can be imported
       if: steps.changed-files-specific.outputs.only_changed != 'true'
       run: |
-        python3 -m pip install torch torchvision
-        python3 -m pip install .[all]
+        uv run python -c "import torch_uncertainty; from torch_uncertainty.datamodules import MNISTDataModule"
 
     - name: Check style & format
       if: steps.changed-files-specific.outputs.only_changed != 'true'
       run: |
-        python3 -m ruff check torch_uncertainty --no-fix --statistics
-        python3 -m ruff format torch_uncertainty --check
+        uv run ruff check src/torch_uncertainty --no-fix --statistics
+        uv run ruff format src/torch_uncertainty --check
 
     - name: Test with pytest and compute coverage
       if: steps.changed-files-specific.outputs.only_changed != 'true'
       run: |
-        python3 -m pytest tests --cov --cov-report xml --cov-report term --durations 10 --junitxml=junit.xml
+        uv run --frozen pytest tests --cov --cov-report xml --cov-report term --durations 10 --junitxml=junit.xml
+
+    # Store Python version
+    - name: Full Python version
+      run: |
+        echo "PYTHON_VERSION=$(uv run python -c "import platform; print(platform.python_version())")" >> $GITHUB_ENV
 
     - name: Upload coverage to Codecov
       if: steps.changed-files-specific.outputs.only_changed != 'true' && (github.event_name != 'pull_request' || github.base_ref == 'dev')
@@ -90,12 +93,13 @@ jobs:
 
     - name: Upload test results to Codecov
       if: steps.changed-files-specific.outputs.only_changed != 'true' && (github.event_name != 'pull_request' || github.base_ref == 'dev')
-      uses: codecov/test-results-action@v1
+      uses: codecov/codecov-action@v5
       continue-on-error: true
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         flags: pytest
         env_vars: PYTHON_VERSION
+        report_type: test_results
 
     - name: Test sphinx build without tutorials
       if: steps.changed-files-specific.outputs.only_changed != 'true'

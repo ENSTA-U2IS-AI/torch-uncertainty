@@ -1,4 +1,4 @@
-# ruff: noqa: E402, E703, D212, D415, T201
+# ruff: noqa: E402, D212, D415, T201
 """
 Training a Bayesian Neural Network in 20 seconds
 ================================================
@@ -16,8 +16,7 @@ seen as Dirac distributions on the weights).
 For more information on Bayesian Neural Networks, we refer to the following resources:
 
 - Weight Uncertainty in Neural Networks `ICML2015 <https://arxiv.org/pdf/1505.05424.pdf>`_
-- Hands-on Bayesian Neural Networks - a Tutorial for Deep Learning Users `IEEE Computational Intelligence Magazine
-    <https://arxiv.org/pdf/2007.06823.pdf>`_
+- Hands-on Bayesian Neural Networks - a Tutorial for Deep Learning Users `IEEE Computational Intelligence Magazine <https://arxiv.org/pdf/2007.06823.pdf>`_
 
 Training a Bayesian LeNet using TorchUncertainty models and Lightning
 ---------------------------------------------------------------------

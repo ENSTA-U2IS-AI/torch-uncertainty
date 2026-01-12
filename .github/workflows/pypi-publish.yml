@@ -1,33 +1,34 @@
-# This workflows will upload a Python Package using Twine when a release is created
 name: Publish
+
+env:
+  PYTHON_VERSION: "3.13"
 
 on:
   release:
     types: [published]
-  workflow_dispatch:
 
 jobs:
   deploy:
+    name: Publish on PyPI
+    if: ${{ github.event.release.target_commitish == 'main'}}
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write  # IMPORTANT: mandatory for trusted publishing
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Install uv and set the Python version
+        uses: astral-sh/setup-uv@v6
         with:
-          python-version: "3.10"
+          version: "0.9.0"
+          python-version: ${{ env.PYTHON_VERSION }}
+          enable-cache: "true"
 
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
 
-      - name: Install Flit
-        run: python3 -m pip install flit
-
       - name: Build packages
-        run: python3 -m flit build
+        run: uv build
 
       - name: Publish a Python distribution to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          user: __token__
-          password: ${{ secrets.PYPI_PASSWORD }}

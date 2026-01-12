@@ -55,6 +55,18 @@ class TestDistributionLinear:
         assert out["loc"].shape == torch.Size([3, 2])
         assert out["scale"].shape == torch.Size([3, 2])
 
+    def test_gamma_linear(self, feat_input: torch.Tensor) -> None:
+        dist_layer = get_dist_linear_layer("gamma")
+        layer = dist_layer(
+            base_layer=torch.nn.Linear,
+            event_dim=2,
+            in_features=8,
+        )
+        out = layer(feat_input)
+        assert out.keys() == {"concentration", "rate"}
+        assert out["concentration"].shape == torch.Size([3, 2])
+        assert out["rate"].shape == torch.Size([3, 2])
+
     def test_student_linear(self, feat_input: torch.Tensor) -> None:
         dist_layer = get_dist_linear_layer("student")
         layer = dist_layer(
@@ -149,6 +161,19 @@ class TestDistributionConv:
         assert out.keys() == {"loc", "scale"}
         assert out["loc"].shape == torch.Size([3, 2, 30, 30])
         assert out["scale"].shape == torch.Size([3, 2, 30, 30])
+
+    def test_gamma_conv(self) -> None:
+        dist_layer = get_dist_conv_layer("gamma")
+        layer = dist_layer(
+            base_layer=torch.nn.Conv2d,
+            event_dim=2,
+            in_channels=2,
+            kernel_size=3,
+        )
+        out = layer(img_input())
+        assert out.keys() == {"concentration", "rate"}
+        assert out["concentration"].shape == torch.Size([3, 2, 30, 30])
+        assert out["rate"].shape == torch.Size([3, 2, 30, 30])
 
     def test_student_conv(self) -> None:
         dist_layer = get_dist_conv_layer("student")

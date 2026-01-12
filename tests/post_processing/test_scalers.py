@@ -64,10 +64,10 @@ class TestTemperatureScaler:
         with pytest.raises(ValueError):
             TemperatureScaler(model=nn.Identity(), lr=-1)
 
-        with pytest.raises(ValueError, match="Max iterations must be strictly positive. Got "):
+        with pytest.raises(ValueError, match=r"Max iterations must be strictly positive. Got "):
             TemperatureScaler(model=nn.Identity(), max_iter=-1)
 
-        with pytest.raises(ValueError, match="Eps must be strictly positive. Got "):
+        with pytest.raises(ValueError, match=r"Eps must be strictly positive. Got "):
             TemperatureScaler(model=nn.Identity(), eps=-1)
 
         scaler = TemperatureScaler(
