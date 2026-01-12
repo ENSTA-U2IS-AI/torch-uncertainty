@@ -42,7 +42,7 @@ jobs:
         uv sync --locked --dev --extra gpu
 
     - name: Sphinx build
-      if: !github.event.pull_request.draft
+      if: github.event.pull_request.draft == false
       run: |
         cd docs && make clean && make html
 
