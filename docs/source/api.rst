@@ -52,68 +52,6 @@ Pixelwise Regression
 
     PixelRegressionRoutine
 
-Baselines
----------
-
-.. warning:: 
-
-    The baselines will soon be removed from the library to avoid confusion with the routines.
-
-TorchUncertainty provide lightning-based models that can be easily trained and evaluated.
-These models inherit from the routines and are specifically designed to benchmark
-different methods in similar settings, here with constant architectures.
-
-.. currentmodule:: torch_uncertainty.baselines.classification
-
-Classification
-^^^^^^^^^^^^^^
-
-.. autosummary::
-    :toctree: generated/
-    :nosignatures:
-    :template: class.rst
-
-    ResNetBaseline
-    VGGBaseline
-    WideResNetBaseline
-
-.. currentmodule:: torch_uncertainty.baselines.regression
-
-Regression
-^^^^^^^^^^
-
-.. autosummary::
-    :toctree: generated/
-    :nosignatures:
-    :template: class.rst
-
-    MLPBaseline
-
-.. currentmodule:: torch_uncertainty.baselines.segmentation
-
-Segmentation
-^^^^^^^^^^^^
-
-.. autosummary::
-    :toctree: generated/
-    :nosignatures:
-    :template: class.rst
-
-    DeepLabBaseline
-    SegFormerBaseline
-
-.. currentmodule:: torch_uncertainty.baselines.depth
-
-Monocular Depth Estimation 
-^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. autosummary::
-    :toctree: generated/
-    :nosignatures:
-    :template: class.rst
-
-    BTSBaseline
-
 Layers
 ------
 
@@ -221,7 +159,6 @@ Classes
     BatchEnsemble
     CheckpointCollector
     EMA
-    MCDropout
     StochasticModel
     SWA
     SWAG

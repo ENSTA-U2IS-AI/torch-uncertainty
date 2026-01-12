@@ -42,7 +42,7 @@ Create a new conda environment and activate it:
 
 .. parsed-literal::
 
-    conda create -n uncertainty python=3.10
+    conda create -n uncertainty python=3.12
     conda activate uncertainty
 
 Install the package using pip in editable mode:
@@ -65,6 +65,8 @@ You can install the package with the following options:
 * image: includes all the dependencies for the image processing module
     including opencv and scikit-image
 * tabular: includes pandas
+* timeseries: includes tslearn
+* others: with glest, laplace-torch and scikit-learn
 * all: includes all the aforementioned dependencies
 
 For example, to install the package with the dependencies for the development

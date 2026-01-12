@@ -111,10 +111,10 @@ class TestCIFAR10DataModule:
             batch_size=128,
             test_alt="h",
         )
-        with pytest.raises(ValueError, match="CIFAR-H can only be used in testing."):
+        with pytest.raises(ValueError, match=r"CIFAR-H can only be used in testing."):
             dm.setup("fit")
 
-        with pytest.raises(ValueError, match="Test set "):
+        with pytest.raises(ValueError, match=r"Test set "):
             dm = CIFAR10DataModule(
                 root="./data/",
                 batch_size=128,

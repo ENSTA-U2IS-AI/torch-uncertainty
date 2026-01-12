@@ -418,7 +418,7 @@ class TestClassification:
                 mixup_params=mixup_params,
             )
 
-        with pytest.raises(ValueError, match="num_bins_cal_err must be at least 2, got"):
+        with pytest.raises(ValueError, match=r"num_bins_cal_err must be at least 2, got"):
             ClassificationRoutine(
                 model=nn.Identity(),
                 num_classes=2,
@@ -449,7 +449,7 @@ class TestClassification:
 
         with pytest.raises(
             ValueError,
-            match="Mixup is not supported for ensembles at training time",
+            match=r"Mixup is not supported for ensembles at training time",
         ):
             ClassificationRoutine(
                 num_classes=10,
@@ -461,7 +461,7 @@ class TestClassification:
 
         with pytest.raises(
             ValueError,
-            match="Ensembles and post-processing methods cannot be used together. Raise an issue if needed.",
+            match=r"Ensembles and post-processing methods cannot be used together. Raise an issue if needed.",
         ):
             ClassificationRoutine(
                 num_classes=10,
@@ -473,7 +473,7 @@ class TestClassification:
 
         with pytest.raises(
             ValueError,
-            match="You cannot set ood_criterion=PostProcessingCriterion when post_processing is None.",
+            match=r"You cannot set ood_criterion=PostProcessingCriterion when post_processing is None.",
         ):
             ClassificationRoutine(
                 num_classes=10,

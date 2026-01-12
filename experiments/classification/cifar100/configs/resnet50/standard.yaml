@@ -22,24 +22,31 @@ trainer:
       monitor: val/cls/Acc
       patience: 1000
       check_finite: true
-model:
+routine:
+  model:
+    class_path: torch_uncertainty.models.classification.resnet
+    init_args:
+      in_channels: 3
+      num_classes: 100
+      arch: 50
+      style: cifar
   num_classes: 100
-  in_channels: 3
   loss: CrossEntropyLoss
-  version: std
-  arch: 50
-  style: cifar
 data:
   root: ./data
   batch_size: 128
 optimizer:
-  lr: 0.1
-  momentum: 0.9
-  weight_decay: 5e-4
-  nesterov: true
+  class_path: torch.optim.SGD
+  init_args:
+    lr: 0.1
+    momentum: 0.9
+    weight_decay: 5e-4
+    nesterov: true
 lr_scheduler:
-  milestones:
-  - 60
-  - 120
-  - 160
-  gamma: 0.2
+  class_path: torch.optim.lr_scheduler.MultiStepLR
+  init_args:
+    milestones:
+    - 60
+    - 120
+    - 160
+    gamma: 0.2

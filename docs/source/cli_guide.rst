@@ -11,31 +11,25 @@ class from the ``LightningCLI`` class, namely ``TULightningCLI``.
 
 .. note::
     ``TULightningCLI`` adds a new argument to the ``LightningCLI`` class: :attr:`eval_after_fit` to know whether
-    an evaluation on the test set should be performed after the training phase.
+    an evaluation on the test set should be performed after the training phase. It is better to restrict the usage
+    of this parameter for single node training to avoid small test performance inconsistencies.
 
-Let's see how to implement the CLI, by checking out the ``experiments/classification/cifar10/resnet.py``.
+Let's see how to implement the CLI, by checking out the ``experiments/classification/cifar10/main.py``.
 
 .. code:: python
 
     import torch
-    from lightning.pytorch.cli import LightningArgumentParser
-
-    from torch_uncertainty.baselines.classification import ResNetBaseline
-    from torch_uncertainty.datamodules import CIFAR10DataModule
     from torch_uncertainty import TULightningCLI
+    from torch_uncertainty.datamodules import CIFAR10DataModule
+    from torch_uncertainty.routines import ClassificationRoutine
 
 
-    class ResNetCLI(TULightningCLI):
-        def add_arguments_to_parser(self, parser: LightningArgumentParser) -> None:
-            parser.add_optimizer_args(torch.optim.SGD)
-            parser.add_lr_scheduler_args(torch.optim.lr_scheduler.MultiStepLR)
-
-
-    def cli_main() -> ResNetCLI:
-        return ResNetCLI(ResNetBaseline, CIFAR10DataModule)
+    def cli_main() -> TULightningCLI:
+        return TULightningCLI(ClassificationRoutine, CIFAR10DataModule)
 
 
     if __name__ == "__main__":
+        torch.set_float32_matmul_precision("medium")
         cli = cli_main()
         if (
             (not cli.trainer.fast_dev_run)
@@ -44,39 +38,20 @@ Let's see how to implement the CLI, by checking out the ``experiments/classifica
         ):
             cli.trainer.test(datamodule=cli.datamodule, ckpt_path="best")
 
-This file enables both training and testing ResNet architectures on the CIFAR-10 dataset.
-The ``ResNetCLI`` class inherits from the ``TULightningCLI`` class and implements the
-``add_arguments_to_parser`` method to add the optimizer and learning rate scheduler arguments
-into the parser. In this case, we use the ``torch.optim.SGD`` optimizer and the
-``torch.optim.lr_scheduler.MultiStepLR`` learning rate scheduler.
+This file enables both training and testing on the CIFAR-10 dataset. The model, optimizer and
+learning rate schedulers will be set in the configuration file as shown below.
 
 .. code:: python
 
-    class ResNetCLI(TULightningCLI):
-        def add_arguments_to_parser(self, parser: LightningArgumentParser) -> None:
-            parser.add_optimizer_args(torch.optim.SGD)
-            parser.add_lr_scheduler_args(torch.optim.lr_scheduler.MultiStepLR)
-
-The ``LightningCLI`` takes a ``LightningModule`` and a ``LightningDataModule`` as arguments.
-Here the ``cli_main`` function creates an instance of the ``ResNetCLI`` class by taking the ``ResNetBaseline``
-model and the ``CIFAR10DataModule`` as arguments.
-
-.. code:: python
-
-    def cli_main() -> ResNetCLI:
-        return ResNetCLI(ResNetBaseline, CIFAR10DataModule)
-
-.. note::
-
-    The ``ResNetBaseline`` is a subclass of the ``ClassificationRoutine`` seemlessly instanciating a
-    ResNet model based on a :attr:`version` and an :attr:`arch` to be passed to the routine.
+    def cli_main() -> TULightningCLI:
+        return TULightningCLI(ClassificationRoutine, CIFAR10DataModule)
 
 Depending on the CLI subcommand calling ``cli_main()`` will either train or test the model on the using
 the CIFAR-10 dataset. But what are these subcommands?
 
 .. parsed-literal::
 
-    python resnet.py --help
+    python main.py --help
 
 This command will display the available subcommands of the CLI tool.
 
@@ -91,40 +66,10 @@ This command will display the available subcommands of the CLI tool.
         test                Perform one evaluation epoch over the test set.
         predict             Run evaluation on your data.
 
-You can execute whichever subcommand you like and set up all your hyperparameters directly using the command line
+You can execute whichever subcommand you like and set up all your hyperparameters directly using the command line.
 
-.. parsed-literal::
+Due to the large number of hyperparameters, we advise against it and suggest using configuration files. Let's see how to do that.
 
-    python resnet.py fit --trainer.max_epochs 75 --trainer.accelerators gpu --trainer.devices 1 --model.version std --model.arch 18 --model.in_channels 3 --model.num_classes 10 --model.loss CrossEntropyLoss --model.style cifar --data.root ./data --data.batch_size 128 --optimizer.lr 0.05 --lr_scheduler.milestones [25,50]
-
-All arguments in the ``__init__()`` methods of the ``Trainer``, ``LightningModule`` (here ``ResNetBaseline``),
-``LightningDataModule`` (here ``CIFAR10DataModule``), ``torch.optim.SGD``, and ``torch.optim.lr_scheduler.MultiStepLR``
-classes are configurable using the CLI tool using the ``--trainer``, ``--model``, ``--data``, ``--optimizer``, and
-``--lr_scheduler`` prefixes, respectively.
-
-However for a large number of hyperparameters, it is not practical to pass them all in the command line.
-It is more convenient to use configuration files to store these hyperparameters and ease the burden of
-repeating them each time you want to train or test a model. Let's see how to do that.
-
-.. note::
-
-    Note that ``Pytorch`` classes are supported by the CLI tool, so you can use them directly: ``--model.loss CrossEntropyLoss``
-    and they would be automatically instanciated by the CLI tool with their default arguments (i.e., ``CrossEntropyLoss()``).
-
-.. tip::
-
-    Add the following after calling ``cli=cli_main()`` to eventually evaluate the model on the test set
-    after training, if the ``eval_after_fit`` argument is set to ``True`` and ``trainer.fast_dev_run``
-    is set to ``False``.
-
-    .. code:: python
-
-        if (
-            (not cli.trainer.fast_dev_run)
-            and cli.subcommand == "fit"
-            and cli._get(cli.config, "eval_after_fit")
-        ):
-            cli.trainer.test(datamodule=cli.datamodule, ckpt_path="best")
 
 Configuration files
 -------------------
@@ -141,39 +86,49 @@ Taking the previous example, we can create a configuration file named ``config.y
       max_epochs: 75
       accelerators: gpu
       devices: 1
-    model:
-      version: std
-      arch: 18
-      in_channels: 3
+    routine:
+      model:
+        class_path: torch_uncertainty.models.classification.resnet
+        init_args:
+        in_channels: 3
+        num_classes: 10
+        arch: 18
+        style: cifar
       num_classes: 10
       loss: CrossEntropyLoss
-      style: cifar
     data:
       root: ./data
       batch_size: 128
-    optimizer:
+  optimizer:
+    class_path: torch.optim.SGD
+    init_args:
       lr: 0.05
-    lr_scheduler:
+      momentum: 0.9
+      weight_decay: 5e-4
+  lr_scheduler:
+    class_path: torch.optim.lr_scheduler.MultiStepLR
+    init_args:
       milestones:
         - 25
         - 50
+      gamma: 0.1
 
 Then, we can run the following command to train the model:
 
 .. parsed-literal::
 
-    python resnet.py fit --config config.yaml
+    python main.py fit --config config.yaml
 
 By default, executing the command above will store the experiment results in a directory named ``lightning_logs``,
 and the last state of the model will be saved in a directory named ``lightning_logs/version_{int}/checkpoints``.
-In addition, all arguments passed to instanciate the ``Trainer``, ``ResNetBaseline``, ``CIFAR10DataModule``,
+In addition, all arguments passed to instanciate the ``Trainer``, ``CIFAR10DataModule``,
 ``torch.optim.SGD``, and ``torch.optim.lr_scheduler.MultiStepLR`` classes will be saved in a file named
 ``lightning_logs/version_{int}/config.yaml``. When testing the model, we advise to use this configuration file
 to ensure that the same hyperparameters are used for training and testing.
 
 .. parsed-literal::
 
-    python resnet.py test --config lightning_logs/version_{int}/config.yaml --ckpt_path lightning_logs/version_{int}/checkpoints/{filename}.ckpt
+    python main.py test --config lightning_logs/version_{int}/config.yaml --ckpt_path lightning_logs/version_{int}/checkpoints/{filename}.ckpt
 
 Experiment folder usage
 -----------------------
@@ -188,28 +143,31 @@ mainly organized as follows:
     ├── classification
     │   ├── cifar10
     │   │   ├── configs
-    │   │   ├── resnet.py
-    │   │   ├── vgg.py
-    │   │   └── wideresnet.py
+    │   │   │   ├── resnet18
+    │   │   │   │   ├── standard.yaml
+    │   │   │   │   ├── packed.yaml
+    │   │   │   │   ├── ...
+    │   │   │   ├── resnet50
+    │   │   │   ├── wideresnet28x10
+    │   │   ├── main.py
     │   └── cifar100
     │       ├── configs
-    │       ├── resnet.py
-    │       ├── vgg.py
-    │       └── wideresnet.py
+    │       │   ├── ...
+    │       ├── main.py
     ├── regression
     │   └── uci_datasets
     │       ├── configs
-    │       └── mlp.py
+    │       └── main.py
     └── segmentation
         ├── cityscapes
         │   ├── configs
-        │   └── segformer.py
+        │   └── main.py
         └── muad
             ├── configs
-            └── segformer.py
+            └── main.py
 
 For each task (**classification**, **regression**, and **segmentation**), we have a directory containing the datasets
-(e.g., CIFAR10, CIFAR100, UCI datasets, Cityscapes, and Muad) and for each dataset, we have a directory containing
+(e.g., CIFAR10, CIFAR100, UCI datasets, Cityscapes, and MUAD) and for each dataset, we have a directory containing
 the configuration files and the CLI files for different backbones.
 
 You can directly use the CLI files with the command line or use the predefined configuration files to train and test
@@ -224,17 +182,17 @@ a ResNet-18 model on the CIFAR-10 dataset with a batch size of :math:`256`, you 
 
 .. parsed-literal::
 
-    python resnet.py fit --config configs/resnet18/standard.yaml --data.batch_size 256
+    python main.py fit --config configs/resnet18/standard.yaml --data.batch_size 256
 
 To use the weights argument of the ``torch.nn.CrossEntropyLoss`` class, you can use the following command:
 
 .. parsed-literal::
 
-    python resnet.py fit --config configs/resnet18/standard.yaml --model.loss CrossEntropyLoss --model.loss.weight Tensor --model.loss.weight.dict_kwargs.data [1,2,3,4,5,6,7,8,9,10]
+    python main.py fit --config configs/resnet18/standard.yaml --routine.loss CrossEntropyLoss --routine.loss.weight Tensor --routine.loss.weight.dict_kwargs.data [1,2,3,4,5,6,7,8,9,10]
 
 
 In addition, we provide a default configuration file for some backbones in the ``configs`` directory. For example,
-``experiments/classification/cifar10/configs/resnet.yaml`` contains the default hyperparameters to train a ResNet model
+``experiments/classification/cifar10/configs/resnet18/standard.yaml`` contains the default hyperparameters to train a ResNet-18 model
 on the CIFAR-10 dataset. Yet, some hyperparameters are purposely missing to be set by the user using the command line.
 
 For instance, to train a Packed ResNet-34 model on the CIFAR-10 dataset with :math:`4` estimators and a :math:`\alpha` value of :math:`2`,
@@ -242,7 +200,7 @@ you can use the following command:
 
 .. parsed-literal::
 
-    python resnet.py fit --config configs/resnet.yaml --trainer.max_epochs 75 --model.version packed --model.arch 34 --model.num_estimators 4 --model.alpha 2 --optimizer.lr 0.05 --lr_scheduler.milestones [25,50]
+    python main.py fit --config configs/resnet18/standard.yaml --trainer.max_epochs 75 --routine.model.version packed --routine.model.arch 34 --routine.model.num_estimators 4 --routine.model.alpha 2 --optimizer.lr 0.05 --lr_scheduler.milestones [25,50]
 
 
 .. tip::

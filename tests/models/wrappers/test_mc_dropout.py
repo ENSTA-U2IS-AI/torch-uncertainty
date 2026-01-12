@@ -127,27 +127,27 @@ class TestMCDropout:
 
         with pytest.raises(
             ValueError,
-            match="Task invalid not supported. Supported tasks are: `classification`, `regression`, `segmentation`, `pixel_regression`.",
+            match=r"Task invalid not supported. Supported tasks are: `classification`, `regression`, `segmentation`, `pixel_regression`.",
         ):
             mc_dropout(model, num_estimators=5, task="invalid")
 
-        with pytest.raises(ValueError, match="`probabilistic` must be set for regression tasks."):
+        with pytest.raises(ValueError, match=r"`probabilistic` must be set for regression tasks."):
             mc_dropout(model, num_estimators=5, task="regression")
 
-        with pytest.raises(ValueError, match="`num_estimators` must be strictly positive"):
-            mc_dropout(model=model, num_estimators=-1, last_layer=True, on_batch=True)
+        with pytest.raises(ValueError, match=r"`num_estimators` must be strictly positive"):
+            mc_dropout(core_model=model, num_estimators=-1, last_layer=True, on_batch=True)
 
         dropout_model = mc_dropout(model, 5)
-        with pytest.raises(TypeError, match="Training mode is expected to be boolean"):
+        with pytest.raises(TypeError, match=r"Training mode is expected to be boolean"):
             dropout_model.train(mode=1)
 
-        with pytest.raises(TypeError, match="Training mode is expected to be boolean"):
+        with pytest.raises(TypeError, match=r"Training mode is expected to be boolean"):
             dropout_model.train(mode=None)
 
         model = dummy_model(10, 5, 0.0)
         with pytest.raises(
             ValueError,
-            match="At least one dropout module must have a dropout rate",
+            match=r"At least one dropout module must have a dropout rate",
         ):
             dropout_model = mc_dropout(model, 5)
 
@@ -166,6 +166,6 @@ class TestMCDropout:
         model.eval()
         with pytest.raises(
             ValueError,
-            match="When `probabilistic=True`, the model must return a dictionary of distribution parameters.",
+            match=r"When `probabilistic=True`, the model must return a dictionary of distribution parameters.",
         ):
             model(torch.rand(1, 10))

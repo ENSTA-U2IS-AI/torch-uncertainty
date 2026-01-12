@@ -17,22 +17,30 @@ trainer:
     - class_path: lightning.pytorch.callbacks.LearningRateMonitor
       init_args:
         logging_interval: step
-model:
+routine:
+  model:
+    class_path: torch_uncertainty.models.segmentation.deep_lab_v3_resnet
+    init_args:
+      num_classes: 11
+      version: std
+      arch: 50
+      style: v3+
+      output_stride: 16
+      separable: false
   num_classes: 11
   loss: CrossEntropyLoss
-  version: std
-  arch: 50
-  style: v3+
-  output_stride: 16
-  separable: false
 data:
   root: ./data
   batch_size: 8
   num_workers: 8
 optimizer:
-  lr: 0.002
-  weight_decay: 1e-4
-  momentum: 0.9
+  class_path: torch.optim.SGD
+  init_args:
+    lr: 0.002
+    weight_decay: 1e-4
+    momentum: 0.9
 lr_scheduler:
-  power: 1.0
-  total_iters: 120
+  class_path: torch.optim.lr_scheduler.PolynomialLR
+  init_args:
+    power: 1.0
+    total_iters: 120

@@ -16,7 +16,7 @@ trainer:
     - class_path: lightning.pytorch.callbacks.LearningRateMonitor
       init_args:
         logging_interval: step
-model:
+routine:
   model:
     class_path: torch_uncertainty.models.segmentation.packed_unet
     init_args:

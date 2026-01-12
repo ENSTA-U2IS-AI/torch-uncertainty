@@ -27,11 +27,11 @@ class TestDECLoss:
     def test_failures(self) -> None:
         with pytest.raises(
             ValueError,
-            match="The regularization weight should be non-negative, but got",
+            match=r"The regularization weight should be non-negative, but got",
         ):
             DECLoss(reg_weight=-1)
 
-        with pytest.raises(ValueError, match="The annealing step should be positive, but got "):
+        with pytest.raises(ValueError, match=r"The annealing step should be positive, but got "):
             DECLoss(annealing_step=0)
 
         loss = DECLoss(annealing_step=10)
@@ -42,10 +42,10 @@ class TestDECLoss:
                 current_epoch=None,
             )
 
-        with pytest.raises(ValueError, match=" is not a valid value for reduction."):
+        with pytest.raises(ValueError, match=r" is not a valid value for reduction."):
             DECLoss(reduction="median")
 
-        with pytest.raises(ValueError, match="is not a valid value for mse/log/digamma loss."):
+        with pytest.raises(ValueError, match=r"is not a valid value for mse/log/digamma loss."):
             DECLoss(loss_type="regression")
 
 
@@ -63,16 +63,16 @@ class TestConfidencePenaltyLoss:
     def test_failures(self) -> None:
         with pytest.raises(
             ValueError,
-            match="The regularization weight should be non-negative, but got",
+            match=r"The regularization weight should be non-negative, but got",
         ):
             ConfidencePenaltyLoss(reg_weight=-1)
 
-        with pytest.raises(ValueError, match="is not a valid value for reduction."):
+        with pytest.raises(ValueError, match=r"is not a valid value for reduction."):
             ConfidencePenaltyLoss(reduction="median")
 
         with pytest.raises(
             ValueError,
-            match="The epsilon value should be non-negative, but got",
+            match=r"The epsilon value should be non-negative, but got",
         ):
             ConfidencePenaltyLoss(eps=-1)
 
@@ -91,11 +91,11 @@ class TestConflictualLoss:
     def test_failures(self) -> None:
         with pytest.raises(
             ValueError,
-            match="The regularization weight should be non-negative, but got",
+            match=r"The regularization weight should be non-negative, but got",
         ):
             ConflictualLoss(reg_weight=-1)
 
-        with pytest.raises(ValueError, match="is not a valid value for reduction."):
+        with pytest.raises(ValueError, match=r"is not a valid value for reduction."):
             ConflictualLoss(reduction="median")
 
 
@@ -113,11 +113,11 @@ class TestFocalLoss:
     def test_failures(self) -> None:
         with pytest.raises(
             ValueError,
-            match="The gamma term of the focal loss should be non-negative, but got",
+            match=r"The gamma term of the focal loss should be non-negative, but got",
         ):
             FocalLoss(gamma=-1)
 
-        with pytest.raises(ValueError, match="is not a valid value for reduction."):
+        with pytest.raises(ValueError, match=r"is not a valid value for reduction."):
             FocalLoss(gamma=1, reduction="median")
 
 
@@ -137,7 +137,7 @@ class TestBCEWithLogitsLSLoss:
     def test_failures(self) -> None:
         with pytest.raises(
             ValueError,
-            match="The label smoothing term of the BCE loss should be non-negative, but got",
+            match=r"The label smoothing term of the BCE loss should be non-negative, but got",
         ):
             BCEWithLogitsLSLoss(label_smoothing=-1)
 

@@ -10,20 +10,20 @@ on:
   workflow_dispatch:
 
 env:
-  PYTHON_VERSION: "3.11"
+  PYTHON_VERSION: "3.13"
 
 jobs:
   documentation:
-    runs-on: self-hosted
+    runs-on: [self-hosted]
     steps:
     - uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
+    - name: Install uv and set the Python version
+      uses: astral-sh/setup-uv@v6
       with:
+        version: "0.9.0"
         python-version: ${{ env.PYTHON_VERSION }}
-        cache: "pip"
-        cache-dependency-path: "pyproject.toml"
+        enable-cache: "true"
 
     - name: Full Python version
       run: |
@@ -34,13 +34,12 @@ jobs:
       id: cache-folder
       with:
         path: |
-          ~/.cache/torch-uncertainty/
+          ~/auto_tutorial_source
         key: torch-uncertainty-${{ runner.os }}
 
     - name: Install dependencies
       run: |
-        python3 -m pip install torch torchvision
-        python3 -m pip install .[all]
+        uv sync --locked --dev --extra gpu
 
     - name: Sphinx build
       if: github.event.pull_request.draft == false

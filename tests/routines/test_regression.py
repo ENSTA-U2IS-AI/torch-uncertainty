@@ -151,7 +151,7 @@ class TestRegression:
         model(dm.get_test_set()[0][0])
 
     def test_regression_failures(self) -> None:
-        with pytest.raises(ValueError, match="output_dim must be positive"):
+        with pytest.raises(ValueError, match=r"output_dim must be positive"):
             RegressionRoutine(
                 dist_family="normal",
                 output_dim=0,

@@ -17,9 +17,9 @@ class TestDeeplab:
         model = deep_lab_v3_resnet(10, 101, "v3+", 8, False, False).eval()
 
     def test_errors(self) -> None:
-        with pytest.raises(ValueError, match="Unknown backbone:"):
+        with pytest.raises(ValueError, match=r"Unknown backbone:"):
             _DeepLabV3(10, "other", "v3", 16, True, False)
-        with pytest.raises(ValueError, match="output_stride: "):
+        with pytest.raises(ValueError, match=r"output_stride: "):
             deep_lab_v3_resnet(10, 50, "v3", 15, True, False)
-        with pytest.raises(ValueError, match="Unknown style: "):
+        with pytest.raises(ValueError, match=r"Unknown style: "):
             deep_lab_v3_resnet(10, 50, "v2", 16, True, False)

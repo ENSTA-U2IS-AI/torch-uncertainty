@@ -18,9 +18,9 @@ class TestVGGs:
         )
 
     def test_errors(self) -> None:
-        with pytest.raises(ValueError, match="Unknown VGG arch"):
+        with pytest.raises(ValueError, match=r"Unknown VGG arch"):
             vgg(in_channels=1, num_classes=10, arch=12, style="cifar")
-        with pytest.raises(ValueError, match="Unknown VGG arch"):
+        with pytest.raises(ValueError, match=r"Unknown VGG arch"):
             packed_vgg(
                 in_channels=2,
                 num_classes=10,

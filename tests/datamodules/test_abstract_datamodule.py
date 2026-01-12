@@ -19,7 +19,7 @@ class TestTUDataModule:
         with pytest.raises(NotImplementedError):
             dm._get_train_data()
 
-        with pytest.raises(ValueError, match="The number of Test-time augmentations"):
+        with pytest.raises(ValueError, match=r"The number of Test-time augmentations"):
             dm = TUDataModule(
                 root="root",
                 batch_size=128,

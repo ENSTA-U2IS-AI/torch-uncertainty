@@ -63,11 +63,11 @@ class TestDERLoss:
     def test_failures(self) -> None:
         with pytest.raises(
             ValueError,
-            match="The regularization weight should be non-negative, but got ",
+            match=r"The regularization weight should be non-negative, but got ",
         ):
             DERLoss(reg_weight=-1)
 
-        with pytest.raises(ValueError, match="is not a valid value for reduction."):
+        with pytest.raises(ValueError, match=r"is not a valid value for reduction."):
             DERLoss(reg_weight=1.0, reduction="median")
 
 
@@ -106,8 +106,8 @@ class TestBetaNLL:
         ) == pytest.approx([0.0, 0.0])
 
     def test_failures(self) -> None:
-        with pytest.raises(ValueError, match="The beta parameter should be in range "):
+        with pytest.raises(ValueError, match=r"The beta parameter should be in range "):
             BetaNLL(beta=-1)
 
-        with pytest.raises(ValueError, match="is not a valid value for reduction."):
+        with pytest.raises(ValueError, match=r"is not a valid value for reduction."):
             BetaNLL(beta=1.0, reduction="median")

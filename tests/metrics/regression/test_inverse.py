@@ -26,7 +26,7 @@ class TestMeanAbsoluteErrorInverse:
         MeanAbsoluteErrorInverse(unit="km")
 
     def test_error(self) -> None:
-        with pytest.raises(ValueError, match="unit must be one of 'mm'"):
+        with pytest.raises(ValueError, match=r"unit must be one of 'mm'"):
             MeanAbsoluteErrorInverse(unit="cm")
 
 

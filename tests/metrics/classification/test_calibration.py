@@ -47,9 +47,11 @@ class TestCalibrationError:
         plt.close(fig)
 
     def test_errors(self) -> None:
-        with pytest.raises(TypeError, match="is expected to be `int`"):
+        with pytest.raises(TypeError, match=r"is expected to be `int`"):
             CalibrationError(task="multiclass", num_classes=None)
-        with pytest.raises(ValueError, match="`n_bins` does not exist, use `num_bins`."):
+        with pytest.raises(
+            ValueError, match=r"`n_bins` does not exist in TorchUncertainty, use `num_bins`."
+        ):
             CalibrationError(task="multiclass", num_classes=2, n_bins=1)
 
 
@@ -122,5 +124,5 @@ class TestAdaptiveCalibrationError:
         assert ace.compute().item() > ece.compute().item()
 
     def test_errors(self) -> None:
-        with pytest.raises(TypeError, match="is expected to be `int`"):
+        with pytest.raises(TypeError, match=r"is expected to be `int`"):
             AdaptiveCalibrationError(task="multiclass", num_classes=None)
