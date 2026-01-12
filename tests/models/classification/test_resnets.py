@@ -92,7 +92,7 @@ class TestLPBNNResnet:
     def test_error(self) -> None:
         with pytest.raises(ValueError):
             lpbnn_resnet(1, 10, 20, 2, style="test")
-        with pytest.raises(ValueError, match="Unknown ResNet architecture. Got"):
+        with pytest.raises(ValueError, match=r"Unknown ResNet architecture. Got"):
             lpbnn_resnet(1, 10, 42, 2, style="test")
 
 

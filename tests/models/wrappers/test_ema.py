@@ -17,5 +17,5 @@ class TestEMA:
         ema.update_wrapper(0)
 
     def test_failures(self) -> None:
-        with pytest.raises(ValueError, match="must be in"):
+        with pytest.raises(ValueError, match=r"must be in"):
             EMA(nn.Module(), momentum=-1)

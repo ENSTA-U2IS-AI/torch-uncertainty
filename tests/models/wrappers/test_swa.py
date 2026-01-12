@@ -28,9 +28,9 @@ class TestSWA:
         swa(torch.randn(1, 1))
 
     def test_failures(self) -> None:
-        with pytest.raises(ValueError, match="`cycle_start` must be non-negative."):
+        with pytest.raises(ValueError, match=r"`cycle_start` must be non-negative."):
             SWA(nn.Module(), cycle_start=-1, cycle_length=1)
-        with pytest.raises(ValueError, match="`cycle_length` must be strictly positive."):
+        with pytest.raises(ValueError, match=r"`cycle_length` must be strictly positive."):
             SWA(nn.Module(), cycle_start=1, cycle_length=0)
 
 
@@ -95,17 +95,17 @@ class TestSWAG:
 
     def test_failures(self) -> None:
         swag = SWAG(nn.Module(), scale=1, cycle_start=1, cycle_length=1)
-        with pytest.raises(NotImplementedError, match="Raise an issue if you need this feature"):
+        with pytest.raises(NotImplementedError, match=r"Raise an issue if you need this feature"):
             swag.sample(scale=1, block=True)
-        with pytest.raises(ValueError, match="`scale` must be non-negative."):
+        with pytest.raises(ValueError, match=r"`scale` must be non-negative."):
             SWAG(nn.Module(), scale=-1, cycle_start=1, cycle_length=1)
-        with pytest.raises(ValueError, match="`max_num_models` must be non-negative."):
+        with pytest.raises(ValueError, match=r"`max_num_models` must be non-negative."):
             SWAG(nn.Module(), max_num_models=-1, cycle_start=1, cycle_length=1)
-        with pytest.raises(ValueError, match="`var_clamp` must be non-negative. "):
+        with pytest.raises(ValueError, match=r"`var_clamp` must be non-negative. "):
             SWAG(nn.Module(), var_clamp=-1, cycle_start=1, cycle_length=1)
         swag = SWAG(nn.Module(), cycle_start=1, cycle_length=1, diag_covariance=True)
         with pytest.raises(
             ValueError,
-            match="Cannot sample full rank from diagonal covariance matrix.",
+            match=r"Cannot sample full rank from diagonal covariance matrix.",
         ):
             swag.sample(scale=1, diag_covariance=False)

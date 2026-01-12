@@ -15,7 +15,7 @@ class VariationRatio(Metric):
     def __init__(
         self,
         probabilistic: bool = True,
-        reduction: Literal["mean", "sum", "none", None] = "mean",
+        reduction: Literal["mean", "sum", "none"] | None = "mean",
         **kwargs,
     ) -> None:
         r"""Compute the Variation Ratio.

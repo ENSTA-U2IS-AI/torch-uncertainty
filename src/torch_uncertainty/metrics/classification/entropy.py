@@ -12,7 +12,7 @@ class Entropy(Metric):
 
     def __init__(
         self,
-        reduction: Literal["mean", "sum", "none", None] = "mean",
+        reduction: Literal["mean", "sum", "none"] | None = "mean",
         **kwargs: Any,
     ) -> None:
         r"""The Shannon Entropy Metric to estimate the confidence of a single model

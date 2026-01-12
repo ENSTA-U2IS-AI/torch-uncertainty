@@ -68,17 +68,17 @@ class TestELBOLoss:
         model = BayesLinear(1, 1)
         criterion = nn.BCEWithLogitsLoss()
 
-        with pytest.raises(TypeError, match="The inner_loss should be an instance of a class."):
+        with pytest.raises(TypeError, match=r"The inner_loss should be an instance of a class."):
             ELBOLoss(model, nn.BCEWithLogitsLoss, kl_weight=1, num_samples=1)
 
-        with pytest.raises(ValueError, match="The KL weight should be non-negative. Got "):
+        with pytest.raises(ValueError, match=r"The KL weight should be non-negative. Got "):
             ELBOLoss(model, criterion, kl_weight=-1, num_samples=1)
 
         with pytest.raises(
             ValueError,
-            match="The number of samples should not be lower than 1.",
+            match=r"The number of samples should not be lower than 1.",
         ):
             ELBOLoss(model, criterion, kl_weight=1, num_samples=-1)
 
-        with pytest.raises(TypeError, match="The number of samples should be an integer. "):
+        with pytest.raises(TypeError, match=r"The number of samples should be an integer. "):
             ELBOLoss(model, criterion, kl_weight=1e-5, num_samples=1.5)

@@ -94,26 +94,26 @@ class TestConformalClsRAPS:
         with pytest.raises(RuntimeError):
             ConformalClsRAPS(alpha=0.1).quantile  # noqa: B018
 
-        with pytest.raises(ValueError, match="penalty should be non-negative. Got "):
+        with pytest.raises(ValueError, match=r"penalty should be non-negative. Got "):
             _ = ConformalClsRAPS(
                 alpha=0.1,
                 penalty=-0.1,
             )
 
-        with pytest.raises(TypeError, match="regularization_rank should be an integer. Got"):
+        with pytest.raises(TypeError, match=r"regularization_rank should be an integer. Got"):
             _ = ConformalClsRAPS(
                 alpha=0.1,
                 regularization_rank=0.1,
             )
 
-        with pytest.raises(ValueError, match="regularization_rank should be non-negative. Got "):
+        with pytest.raises(ValueError, match=r"regularization_rank should be non-negative. Got "):
             _ = ConformalClsRAPS(
                 alpha=0.1,
                 regularization_rank=-1,
             )
         conformal = ConformalClsRAPS(alpha=0.1, model=nn.Identity(), randomized=True)
         with pytest.raises(
-            RuntimeError, match="Cannot return temperature when enable_ts is False."
+            RuntimeError, match=r"Cannot return temperature when enable_ts is False."
         ):
             _ = conformal.temperature
 

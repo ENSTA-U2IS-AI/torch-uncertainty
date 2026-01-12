@@ -14,7 +14,7 @@ class CategoricalNLL(Metric):
 
     def __init__(
         self,
-        reduction: Literal["mean", "sum", "none", None] = "mean",
+        reduction: Literal["mean", "sum", "none"] | None = "mean",
         **kwargs: Any,
     ) -> None:
         r"""Computes the Negative Log-Likelihood (NLL) metric for classification tasks.

@@ -16,7 +16,7 @@ class BrierScore(Metric):
         self,
         num_classes: int,
         top_class: bool = False,
-        reduction: Literal["mean", "sum", "none", None] = "mean",
+        reduction: Literal["mean", "sum", "none"] | None = "mean",
         **kwargs,
     ) -> None:
         r"""Compute the Brier score.

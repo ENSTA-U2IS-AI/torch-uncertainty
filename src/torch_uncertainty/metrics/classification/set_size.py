@@ -14,7 +14,7 @@ class SetSize(Metric):
 
     def __init__(
         self,
-        reduction: Literal["mean", "sum", "none", None] = "mean",
+        reduction: Literal["mean", "sum", "none"] | None = "mean",
         **kwargs,
     ) -> None:
         """Set size to compute the efficiency of conformal prediction methods.

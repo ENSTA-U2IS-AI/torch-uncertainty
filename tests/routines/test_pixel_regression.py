@@ -108,7 +108,7 @@ class TestPixelRegression:
         colorize(torch.ones((10, 10)), 0, 0)
 
     def test_depth_errors(self) -> None:
-        with pytest.raises(ValueError, match="output_dim must be positive"):
+        with pytest.raises(ValueError, match=r"output_dim must be positive"):
             PixelRegressionRoutine(
                 model=nn.Identity(),
                 output_dim=0,
@@ -116,7 +116,7 @@ class TestPixelRegression:
                 dist_family=None,
             )
 
-        with pytest.raises(ValueError, match="num_image_plot must be positive"):
+        with pytest.raises(ValueError, match=r"num_image_plot must be positive"):
             PixelRegressionRoutine(
                 model=nn.Identity(),
                 output_dim=1,

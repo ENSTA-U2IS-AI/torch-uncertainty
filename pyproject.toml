@@ -48,7 +48,7 @@ dev = [
 ]
 
 lint = [
-  "ruff==0.12.5",
+  "ruff==0.14.11",
   "pre-commit",
   "pre-commit-hooks",
 ]

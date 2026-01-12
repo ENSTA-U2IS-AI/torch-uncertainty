@@ -101,9 +101,9 @@ class TestCovAtxRisk:
         assert metric(torch.zeros(0), torch.zeros(0)).isnan()
 
     def test_errors(self) -> None:
-        with pytest.raises(TypeError, match="Expected threshold to be of type float"):
+        with pytest.raises(TypeError, match=r"Expected threshold to be of type float"):
             CovAtxRisk(risk_threshold="0.5")
-        with pytest.raises(ValueError, match="Threshold should be in the range"):
+        with pytest.raises(ValueError, match=r"Threshold should be in the range"):
             CovAtxRisk(risk_threshold=-0.5)
 
 
