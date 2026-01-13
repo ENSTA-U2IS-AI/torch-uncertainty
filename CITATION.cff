@@ -1,0 +1,25 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite its corresponding paper."
+title: "Torch-Uncertainty: A Deep Learning Framework for Uncertainty Quantification"
+authors:
+  - family-names: "Lafage"
+    given-names: "Adrien"
+  - family-names: "Laurent"
+    given-names: "Olivier"
+date-released: 2023-02-15
+license: "Apache-2.0"
+url: "https://github.com/ENSTA-U2IS-AI/torch-uncertainty"
+preferred-citation:
+  type: "conference-paper"
+  title: "Torch-Uncertainty: A Deep Learning Framework for Uncertainty Quantification"
+  authors:
+    - family-names: "Lafage"
+      given-names: "Adrien"
+    - family-names: "Laurent"
+      given-names: "Olivier"
+    - family-names: "Gabetni"
+      given-names: "Firas"
+    - family-names: "Franchi"
+      given-names: "Gianni"
+  booktitle: "NeurIPS Datasets and Benchmarks Track"
+  year: 2025

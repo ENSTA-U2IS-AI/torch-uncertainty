@@ -110,3 +110,16 @@ The following projects use TorchUncertainty:
 - _A Symmetry-Aware Exploration of Bayesian Neural Network Posteriors_ - [ICLR 2024](https://arxiv.org/abs/2310.08287)
 
 **If you are using TorchUncertainty in your project, please let us know, and we will add your project to this list!**
+
+## Citation
+
+If you use this software, please cite its corresponding paper:
+
+```
+@inproceedings{lafage2025torch_uncertainty,
+    title={Torch-Uncertainty: A Deep Learning Framework for Uncertainty Quantification},
+    author={Lafage, Adrien and Laurent, Olivier and Gabetni, Firas and Franchi, Gianni},
+    booktitle={NeurIPS Datasets and Benchmarks Track},
+    year={2025}
+}
+```
