@@ -11,6 +11,7 @@ on:
 
 env:
   PYTHON_VERSION: "3.13"
+  BRANCH_NAME: ${{ github.head_ref || github.ref_name }} 
 
 jobs:
   documentation:
@@ -35,7 +36,7 @@ jobs:
       with:
         path: |
           ~/auto_tutorial_source
-        key: torch-uncertainty-${{ runner.os }}
+        key: torch-uncertainty-${{ runner.os }}-${{ env.BRANCH_NAME }}
 
     - name: Install dependencies
       run: |
