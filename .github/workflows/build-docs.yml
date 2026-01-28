@@ -11,6 +11,7 @@ on:
 
 env:
   PYTHON_VERSION: "3.13"
+  BRANCH_NAME: ${{ github.head_ref || github.ref_name }} 
 
 jobs:
   documentation:
@@ -34,8 +35,8 @@ jobs:
       id: cache-folder
       with:
         path: |
-          ~/.cache/torch-uncertainty/
-        key: torch-uncertainty-${{ runner.os }}
+          auto_tutorial_source
+        key: torch-uncertainty-${{ runner.os }}-${{ env.BRANCH_NAME }}
 
     - name: Install dependencies
       run: |
@@ -47,7 +48,7 @@ jobs:
         cd docs && make clean && make html
 
     - name: Deploy on GitHub pages
-      uses: peaceiris/actions-gh-pages@v3
+      uses: peaceiris/actions-gh-pages@v4
       if: ${{ github.event_name != 'pull_request' }}
       with:
         deploy_key: ${{ secrets.ACTIONS_DEPLOY_KEY }}
