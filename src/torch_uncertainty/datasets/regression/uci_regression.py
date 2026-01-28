@@ -94,7 +94,7 @@ class UCIRegression(Dataset):
         "https://archive.ics.uci.edu/static/public/165/concrete+compressive+strength.zip",
         "https://archive.ics.uci.edu/static/public/242/energy+efficiency.zip",
         "https://archive.ics.uci.edu/static/public/374/appliances+energy+prediction.zip",
-        "https://zenodo.org/records/14645866/files/kin8nm.csv",
+        "https://huggingface.co/datasets/torch-uncertainty/kin8nm/raw/main/kin8nm.csv",
         "https://raw.githubusercontent.com/luishpinto/cm-naval-propulsion-plant/master/data.csv",
         "https://archive.ics.uci.edu/static/public/294/combined+cycle+power+plant.zip",
         "https://archive.ics.uci.edu/static/public/265/physicochemical+"
